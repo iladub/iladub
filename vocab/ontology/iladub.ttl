@@ -1,0 +1,121 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/etkl/iladub> a owl:Ontology ;
+    dcterms:title "iladub — assertion / proposition vocabulary"@en ;
+    dcterms:description """Vocabulary for iladub's two-layer epistemics. iladub ASSERTS only
+what it can ground in provided ontologies (the grounded graph), and PROPOSES everything else
+as quarantined CandidateConcepts carrying a suggested upper-ontology anchor (e.g. gist),
+their provenance, the suggester, and a confidence. A proposal may enter the grounded graph
+ONLY as the product of a promotion decision, modelled with the hol vocabulary — so admitting
+a proposition is itself an accountable, auditable decision. The tool that reads decisions out
+of documents uses the same decision model to govern its own reading."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-05-31"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "iladub" ;
+    vann:preferredNamespaceUri "https://w3id.org/etkl/iladub#" ;
+    rdfs:seeAlso <https://w3id.org/etkl/hol> , <https://w3id.org/etkl> .
+
+#################################################################
+#  Status individuals (the assertion / proposition boundary)
+#################################################################
+
+iladub:Status a owl:Class ; rdfs:label "Status"@en ;
+    rdfs:comment "Epistemic status of a node in a iladub output."@en .
+
+iladub:proposed a iladub:Status ; rdfs:label "proposed"@en ;
+    rdfs:comment "A proposition: not grounded, quarantined, must not enter the grounded graph except via promotion."@en .
+iladub:asserted a iladub:Status ; rdfs:label "asserted"@en ;
+    rdfs:comment "A grounded assertion: contract-bound and SHACL-validated."@en .
+iladub:rejected a iladub:Status ; rdfs:label "rejected"@en ;
+    rdfs:comment "A proposition reviewed and declined."@en .
+
+#################################################################
+#  Classes
+#################################################################
+
+iladub:CandidateConcept a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Candidate Concept"@en ;
+    rdfs:comment "Content iladub could not ground in a provided ontology. A PROPOSITION: it carries surface text, provenance, a suggested upper-ontology anchor, a suggester and a confidence. It lives in the proposal graph and is never asserted."@en .
+
+iladub:GroundedNode a owl:Class ;
+    rdfs:label "Grounded Node"@en ;
+    rdfs:comment "A node admitted to the grounded graph. Every grounded node MUST have been produced by a promotion decision (enforced in SHACL)."@en .
+
+iladub:PromotionDecision a owl:Class ;
+    rdfs:subClassOf hol:DecisionHolon ;
+    rdfs:label "Promotion Decision"@en ;
+    rdfs:comment "The accountable act of reviewing a CandidateConcept and accepting / refining / rejecting it. A hol:DecisionHolon whose evidence is the candidate and its anchor, whose chosen option is the outcome, and whose product (if accepted) is the grounded node. This is the iladub<->hol bridge."@en .
+
+iladub:Suggester a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Suggester"@en ;
+    rdfs:comment "What proposed a candidate's anchor: a model, a heuristic rule, or a person."@en .
+
+iladub:SourceRegion a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Source Region"@en ;
+    rdfs:comment "The region of the source document a candidate or grounded node came from (provenance to the page)."@en .
+
+#################################################################
+#  Properties — candidate / proposal side
+#################################################################
+
+iladub:status a owl:ObjectProperty ;
+    rdfs:label "status"@en ; rdfs:range iladub:Status ;
+    rdfs:comment "The epistemic status of a node."@en .
+
+iladub:surfaceText a owl:DatatypeProperty ;
+    rdfs:label "surface text"@en ; rdfs:domain iladub:CandidateConcept ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The literal text in the document that triggered the candidate (may be language-tagged)."@en .
+
+iladub:suggestedAnchor a owl:ObjectProperty ;
+    rdfs:label "suggested anchor"@en ; rdfs:domain iladub:CandidateConcept ;
+    rdfs:comment "A suggested upper-ontology type for the candidate (e.g. a gist class). A PROPOSITION, never an assertion."@en .
+
+iladub:suggestedBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasAttributedTo ;
+    rdfs:label "suggested by"@en ; rdfs:domain iladub:CandidateConcept ; rdfs:range iladub:Suggester ;
+    rdfs:comment "The agent (model / rule / person) that proposed the anchor."@en .
+
+iladub:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ; rdfs:domain iladub:CandidateConcept ; rdfs:range xsd:decimal ;
+    rdfs:comment "Suggester confidence in [0,1]."@en .
+
+iladub:fromRegion a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:label "from region"@en ; rdfs:range iladub:SourceRegion ;
+    rdfs:comment "The source-document region this node came from."@en .
+
+#################################################################
+#  Properties — promotion / grounding side
+#################################################################
+
+iladub:reviews a owl:ObjectProperty ;
+    rdfs:subPropertyOf hol:consideredEvidence ;
+    rdfs:label "reviews"@en ; rdfs:domain iladub:PromotionDecision ; rdfs:range iladub:CandidateConcept ;
+    rdfs:comment "The candidate concept this promotion decision reviews."@en .
+
+iladub:wasPromotedBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasGeneratedBy ;
+    rdfs:label "was promoted by"@en ; rdfs:domain iladub:GroundedNode ; rdfs:range iladub:PromotionDecision ;
+    rdfs:comment "The promotion decision that produced this grounded node. REQUIRED for every grounded node."@en .
+
+iladub:groundsTo a owl:ObjectProperty ;
+    rdfs:label "grounds to"@en ; rdfs:domain iladub:GroundedNode ;
+    rdfs:comment "The provided-ontology concept the grounded node is now bound to (the assertion)."@en .

@@ -1,0 +1,119 @@
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/etkl/hol> a owl:Ontology ;
+    dcterms:title "hol — holonic decision-context vocabulary"@en ;
+    dcterms:description """Represents decisions as holons: units that are at once a
+self-contained, accountable deliberation and a part of a larger decision holarchy. A
+hol:DecisionHolon is a prov:Activity that records the evidence considered, the constraints
+in force, the option space deliberated (the no-change option counts), the single chosen
+option, the accountable agent, a rationale, and what the decision produced — plus its place
+in a holarchy and the autonomy scope it acted within. It captures what most data models
+(e.g. FHIR) structurally cannot: the rejected option and why, situated meaning, a holarchy
+of authority, the deontic layer, and decision lineage."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-05-31"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "hol" ;
+    vann:preferredNamespaceUri "https://w3id.org/etkl/hol#" ;
+    rdfs:seeAlso <https://w3id.org/etkl> , <https://w3id.org/etkl/iladub> .
+
+#################################################################
+#  Classes
+#################################################################
+
+hol:DecisionHolon a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Decision Holon"@en ;
+    rdfs:comment "An accountable, re-evaluable decision that is simultaneously a whole (a self-contained deliberation) and a part (a member of a larger decision holarchy)."@en .
+
+hol:Option a owl:Class ;
+    rdfs:label "Option"@en ;
+    rdfs:comment "A candidate course of action in a decision's option space. The no-change option is a legitimate option."@en .
+
+hol:Scope a owl:Class ;
+    rdfs:label "Autonomy Scope"@en ;
+    rdfs:comment "The bounds of authority within which a decision (especially an automated one) may act."@en .
+
+#################################################################
+#  Properties — deliberation
+#################################################################
+
+hol:consideredEvidence a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:used ;
+    rdfs:label "considered evidence"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range prov:Entity ;
+    rdfs:comment "An item of evidence the decision took into account."@en .
+
+hol:constrainedBy a owl:ObjectProperty ;
+    rdfs:label "constrained by"@en ; rdfs:domain hol:DecisionHolon ;
+    rdfs:comment "A constraint that reframed the option space (e.g. a contraindication)."@en .
+
+hol:optionSpace a owl:ObjectProperty ;
+    rdfs:label "option space"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Option ;
+    rdfs:comment "An option that was available to the decision. A real decision has at least two."@en .
+
+hol:chosen a owl:ObjectProperty ;
+    rdfs:label "chosen"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Option ;
+    rdfs:comment "The single option the decision selected. Must be a member of the option space."@en .
+
+hol:decidedBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasAssociatedWith ;
+    rdfs:label "decided by"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range prov:Agent ;
+    rdfs:comment "The accountable agent (human or automated) that made the decision."@en .
+
+hol:rationale a owl:DatatypeProperty ;
+    rdfs:label "rationale"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range rdfs:Literal ;
+    rdfs:comment "Why the chosen option was selected (may be language-tagged)."@en .
+
+hol:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range xsd:decimal ;
+    rdfs:comment "Decider confidence in the choice, in [0,1]."@en .
+
+hol:produced a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:generated ;
+    rdfs:label "produced"@en ; rdfs:domain hol:DecisionHolon ;
+    rdfs:comment "The node or artifact the decision produced (e.g. a prescription, a grounded node)."@en .
+
+#################################################################
+#  Properties — option detail
+#################################################################
+
+hol:rejectedBecause a owl:DatatypeProperty ;
+    rdfs:label "rejected because"@en ; rdfs:domain hol:Option ; rdfs:range rdfs:Literal ;
+    rdfs:comment "Why this option was not chosen (may be language-tagged)."@en .
+
+hol:dominatedBy a owl:ObjectProperty ;
+    rdfs:label "dominated by"@en ; rdfs:domain hol:Option ; rdfs:range hol:Option ;
+    rdfs:comment "Another option that dominated this one in the deliberation."@en .
+
+#################################################################
+#  Properties — holarchy, governance, lineage
+#################################################################
+
+hol:partOf a owl:ObjectProperty ;
+    rdfs:label "part of"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
+    rdfs:comment "The larger decision holon this one composes into (local ⊂ protocol ⊂ guideline ⊂ policy)."@en .
+
+hol:governedBy a owl:ObjectProperty ;
+    rdfs:label "governed by"@en ; rdfs:domain hol:DecisionHolon ;
+    rdfs:comment "The policy, guideline or protocol that governs the decision."@en .
+
+hol:withinScope a owl:ObjectProperty ;
+    rdfs:label "within scope"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Scope ;
+    rdfs:comment "The autonomy scope the decision acted within."@en .
+
+hol:revisitIf a owl:DatatypeProperty ;
+    rdfs:label "revisit if"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range rdfs:Literal ;
+    rdfs:comment "A condition that, if it becomes true, should reopen this decision (decision lineage)."@en .

@@ -1,0 +1,75 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+iladub:prefixes
+    sh:declare [ sh:prefix "iladub" ; sh:namespace "https://w3id.org/etkl/iladub#"^^xsd:anyURI ] .
+
+#################################################################
+#  A CandidateConcept (a PROPOSITION) must be honest about itself:
+#  surface text, a suggested anchor, a suggester, a confidence,
+#  provenance, and status = proposed.
+#################################################################
+
+iladub:CandidateConceptShape a sh:NodeShape ;
+    sh:targetClass iladub:CandidateConcept ;
+    sh:property [ sh:path iladub:surfaceText ; sh:minCount 1 ;
+        sh:message "A candidate must record the surface text that triggered it." ] ;
+    sh:property [ sh:path iladub:suggestedAnchor ; sh:minCount 1 ;
+        sh:message "A candidate must carry a suggested anchor (the proposition)." ] ;
+    sh:property [ sh:path iladub:suggestedBy ; sh:minCount 1 ;
+        sh:message "A candidate must record who/what suggested it." ] ;
+    sh:property [ sh:path iladub:confidence ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ;
+        sh:message "A candidate must carry a confidence in [0,1]." ] ;
+    sh:property [ sh:path iladub:fromRegion ; sh:minCount 1 ;
+        sh:message "A candidate must record its source region (provenance)." ] ;
+    sh:property [ sh:path iladub:status ; sh:hasValue iladub:proposed ;
+        sh:message "A candidate's status must be 'proposed'." ] .
+
+#################################################################
+#  THE INVARIANT: a grounded node may exist ONLY if it was produced
+#  by a promotion decision. No silent path from proposal to assertion.
+#################################################################
+
+iladub:GroundedNodeShape a sh:NodeShape ;
+    sh:targetClass iladub:GroundedNode ;
+    sh:property [ sh:path iladub:wasPromotedBy ; sh:minCount 1 ;
+        sh:message "INVARIANT: every grounded node must be produced by a promotion decision." ] ;
+    sh:property [ sh:path iladub:groundsTo ; sh:minCount 1 ;
+        sh:message "A grounded node must bind to a provided-ontology concept (the assertion)." ] ;
+    sh:property [ sh:path iladub:status ; sh:hasValue iladub:asserted ;
+        sh:message "A grounded node's status must be 'asserted'." ] .
+
+#################################################################
+#  A PromotionDecision must be an accountable decision: it reviews a
+#  candidate and (via hol) has an agent, an option space and a choice.
+#  The hol shapes validate the decision mechanics; here we add the
+#  iladub-specific requirement that it actually reviews a candidate.
+#################################################################
+
+iladub:PromotionDecisionShape a sh:NodeShape ;
+    sh:targetClass iladub:PromotionDecision ;
+    sh:property [ sh:path iladub:reviews ; sh:minCount 1 ;
+        sh:message "A promotion decision must review at least one candidate concept." ] ;
+    sh:property [ sh:path hol:decidedBy ; sh:minCount 1 ;
+        sh:message "A promotion decision must record an accountable agent (human or rule)." ] .
+
+#################################################################
+#  CROSS-CHECK: a proposed candidate must NOT also be asserted.
+#  Catches any attempt to assert a proposition directly.
+#################################################################
+
+iladub:NoLeakShape a sh:NodeShape ;
+    sh:targetClass iladub:CandidateConcept ;
+    sh:sparql [
+        sh:message "A proposition must not also carry status 'asserted' — propositions enter the grounded graph only via promotion." ;
+        sh:prefixes iladub:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this iladub:status iladub:asserted .
+            }
+        """ ;
+    ] .
