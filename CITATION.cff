@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "iladub"
+message: "If you use this software or the ET(K)L method, please cite it using these metadata."
+type: software
+authors:
+  - family-names: "Rosselet"
+    given-names: "François"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"  # add once registered
+abstract: >-
+  iladub is a toolkit for compiling documents into semantic, structured
+  representations. It is the reference implementation of the ET(K)L method.
+version: "0.0.2"
+date-released: "2026-05-31"
+license: Apache-2.0
+repository-code: "https://github.com/iladub/iladub"
+url: "https://github.com/iladub/iladub"
+identifiers:
+  - type: url
+    value: "https://w3id.org/etkl"
+    description: "ET(K)L method / vocabulary persistent namespace"
+  - type: url
+    value: "https://pypi.org/project/iladub/"
+    description: "Python Package Index release"
+keywords:
+  - documents
+  - semantic
+  - ontology
+  - etkl
+  - knowledge graph

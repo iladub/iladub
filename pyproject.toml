@@ -4,18 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iladub"
-version = "0.0.1"
+version = "0.0.2"
 description = "Semantic document compiling"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "François Rosselet" }]
-keywords = ["documents", "semantic", "compiler", "extraction", "nlp"]
+keywords = ["documents", "semantic", "compiler", "extraction", "nlp", "etkl", "ontology"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -28,6 +28,7 @@ dependencies = []
 Homepage = "https://github.com/iladub/iladub"
 Repository = "https://github.com/iladub/iladub"
 Issues = "https://github.com/iladub/iladub/issues"
+"ET(K)L namespace" = "https://w3id.org/etkl"
 
 [project.optional-dependencies]
 dev = [
