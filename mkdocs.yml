@@ -34,6 +34,11 @@ theme:
 nav:
   - Home: index.md
   - The ET(K)L method: etkl.md
+  - Architecture: architecture.md
+  - hol — decision context: hol.md
+  - Assertions & propositions: assertion-proposition.md
+  - Use case — clinical → FHIR: use-case-fhir.md
+  - Naming: naming.md
 
 markdown_extensions:
   - admonition
