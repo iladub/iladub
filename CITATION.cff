@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Rosselet"
     given-names: "François"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"  # add once registered
+    orcid: "https://orcid.org/0009-0002-8318-1072"
 abstract: >-
   iladub is a toolkit for compiling documents into semantic, structured
   representations. It is the reference implementation of the ET(K)L method.

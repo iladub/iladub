@@ -30,6 +30,7 @@ print(iladub.__version__)
 - **PyPI** — <https://pypi.org/project/iladub/>
 - **Source** — <https://github.com/iladub/iladub>
 - **ET(K)L namespace** — <https://w3id.org/etkl>
+- **Author** — François Rosselet ([ORCID 0009-0002-8318-1072](https://orcid.org/0009-0002-8318-1072))
 
 ## License
 
