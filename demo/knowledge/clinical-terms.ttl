@@ -1,0 +1,39 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/clinical#> .
+
+#  Synthetic multilingual SKOS terminology for the demo. Notations are
+#  illustrative SNOMED CT / LOINC codes — confirm terminology licensing
+#  before redistributing real mappings. The German labels are the surface
+#  forms recognised in the consultation report; the English prefLabels are
+#  used as the FHIR Coding.display.
+
+ex:dm2 a skos:Concept ;
+    skos:prefLabel "Type 2 diabetes mellitus"@en , "Typ-2-Diabetes mellitus"@de ;
+    skos:altLabel "Diabetes mellitus Typ 2"@de ;
+    skos:notation "44054006" .
+
+ex:ckd a skos:Concept ;
+    skos:prefLabel "Chronic kidney disease"@en , "Chronische Niereninsuffizienz"@de ;
+    skos:altLabel "Niereninsuffizienz"@de ;
+    skos:notation "709044004" .
+
+ex:egfr a skos:Concept ;
+    skos:prefLabel "eGFR"@en ;
+    skos:altLabel "glomeruläre Filtrationsrate"@de , "eGFR"@de ;
+    skos:notation "62238-1" .
+
+ex:metformin a skos:Concept ;
+    skos:prefLabel "Metformin"@en ;
+    skos:altLabel "Metformin"@de ;
+    skos:notation "372567009" .
+
+ex:insulin a skos:Concept ;
+    skos:prefLabel "Insulin"@en ;
+    skos:altLabel "Insulin"@de ;
+    skos:notation "325072002" .
+
+ex:gender-female a skos:Concept ;
+    skos:prefLabel "female"@en ;
+    skos:altLabel "Frau"@de , "weiblich"@de ;
+    skos:notation "248152002" .

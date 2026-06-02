@@ -1,0 +1,59 @@
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/clinical#> .
+
+#  A SEMANTIC DATA CONTRACT mapping recognised clinical concepts to FHIR
+#  resource types. Each ResourceRule says which resource a concept becomes
+#  and which element carries its code; spine resources (patient, practitioner,
+#  organization, encounter, composition) have no trigger and are always built.
+
+ex:consultation-contract a etkl:SemanticDataContract ;
+    rdfs:label "Konsultationsbericht → FHIR contract"@en ;
+    etkl:requiresKnowledge ex:clinical-knowledge ;
+    etkl:hasTargetShape ex:CompositionShape ;
+    etkl:buildsResource
+        ex:map-patient , ex:map-practitioner , ex:map-organization ,
+        ex:map-encounter , ex:map-composition ,
+        ex:map-condition-dm , ex:map-condition-ckd , ex:map-egfr ,
+        ex:map-metformin , ex:map-insulin .
+
+ex:clinical-knowledge a etkl:KnowledgeModule ;
+    rdfs:label "Clinical SKOS terminology (synthetic)"@en .
+
+ex:CompositionShape a sh:NodeShape ;
+    sh:targetClass fhir:Composition .
+
+# --- spine resources (no trigger concept; always assembled) ---
+ex:map-patient      a etkl:ResourceRule ; etkl:resourceType fhir:Patient .
+ex:map-practitioner a etkl:ResourceRule ; etkl:resourceType fhir:Practitioner .
+ex:map-organization a etkl:ResourceRule ; etkl:resourceType fhir:Organization .
+ex:map-encounter    a etkl:ResourceRule ; etkl:resourceType fhir:Encounter .
+ex:map-composition  a etkl:ResourceRule ; etkl:resourceType fhir:Composition .
+
+# --- coded clinical resources (only emitted if their concept is recognised) ---
+ex:map-condition-dm a etkl:ResourceRule ;
+    etkl:resourceType fhir:Condition ;
+    etkl:triggerConcept ex:dm2 ;
+    etkl:bindsElement fhir:Condition.code .
+
+ex:map-condition-ckd a etkl:ResourceRule ;
+    etkl:resourceType fhir:Condition ;
+    etkl:triggerConcept ex:ckd ;
+    etkl:bindsElement fhir:Condition.code .
+
+ex:map-egfr a etkl:ResourceRule ;
+    etkl:resourceType fhir:Observation ;
+    etkl:triggerConcept ex:egfr ;
+    etkl:bindsElement fhir:Observation.code .
+
+ex:map-metformin a etkl:ResourceRule ;
+    etkl:resourceType fhir:MedicationStatement ;
+    etkl:triggerConcept ex:metformin ;
+    etkl:bindsElement fhir:MedicationStatement.medication .
+
+ex:map-insulin a etkl:ResourceRule ;
+    etkl:resourceType fhir:MedicationRequest ;
+    etkl:triggerConcept ex:insulin ;
+    etkl:bindsElement fhir:MedicationRequest.medication .
