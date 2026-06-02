@@ -16,6 +16,8 @@
         <link rel="prev" href="..">
       
       
+        <link rel="next" href="../architecture/">
+      
       
         
       
@@ -347,10 +349,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#vocabulary" class="md-nav__link">
+  <a href="#the-inversion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vocabulary
+        The inversion
       
     </span>
   </a>
@@ -358,10 +360,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#citing" class="md-nav__link">
+  <a href="#core-constructs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Citing
+        Core constructs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conformance-checkable-not-aspirational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conformance (checkable, not aspirational)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
       
     </span>
   </a>
@@ -372,6 +396,141 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hol — decision context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assertion-proposition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assertions & propositions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-fhir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use case — clinical → FHIR
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../naming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Naming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -403,10 +562,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#vocabulary" class="md-nav__link">
+  <a href="#the-inversion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vocabulary
+        The inversion
       
     </span>
   </a>
@@ -414,10 +573,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#citing" class="md-nav__link">
+  <a href="#core-constructs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Citing
+        Core constructs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conformance-checkable-not-aspirational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conformance (checkable, not aspirational)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
       
     </span>
   </a>
@@ -445,21 +626,58 @@
 
 
 <h1 id="the-etkl-method">The ET(K)L method<a class="headerlink" href="#the-etkl-method" title="Permanent link">&para;</a></h1>
-<p><strong>iladub</strong> is the reference implementation of the <strong>ET(K)L</strong> method.</p>
-<p>Persistent namespace: <strong><a href="https://w3id.org/etkl"><code>https://w3id.org/etkl</code></a></strong></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This page is a placeholder. The method description, vocabulary, and ontology
-are under active development. Terms will resolve under the <code>w3id.org/etkl</code>
-namespace.</p>
-</div>
-<h2 id="vocabulary">Vocabulary<a class="headerlink" href="#vocabulary" title="Permanent link">&para;</a></h2>
-<p>The ET(K)L vocabulary and ontology artifacts live under
-<a href="https://github.com/iladub/iladub/tree/main/vocab"><code>vocab/</code></a> and are licensed
-<a href="https://github.com/iladub/iladub/blob/main/vocab/LICENSE">CC-BY-4.0</a>.</p>
-<h2 id="citing">Citing<a class="headerlink" href="#citing" title="Permanent link">&para;</a></h2>
-<p>See <a href="https://github.com/iladub/iladub/blob/main/CITATION.cff"><code>CITATION.cff</code></a> in the
-repository for citation metadata.</p>
+<p><strong>ET(K)L</strong> = Extract, Transform-with-<strong>(K)</strong>nowledge, Load. Knowledge engineering is
+the <em>first</em> milestone of the pipeline, not the last.</p>
+<h2 id="the-inversion">The inversion<a class="headerlink" href="#the-inversion" title="Permanent link">&para;</a></h2>
+<p>Conventional ETL treats semantics as a downstream concern: extract raw data, transform
+with hand-written mappings, load, and <em>then</em> maybe align to an ontology.</p>
+<p>ET(K)L: a <strong>semantic data contract</strong> declares the target semantics, and an
+<strong>ontology/knowledge module</strong> is ingested as an <strong>argument</strong> of the transformation
+function — not reconstructed by a mapping at the end. Knowledge enters first (through
+the contract, applied already at extraction) and as an argument (at transform).</p>
+<h2 id="core-constructs">Core constructs<a class="headerlink" href="#core-constructs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>etkl:SemanticDataContract</code></td>
+<td>Declares target SHACL shape(s), terminology bindings, required knowledge modules.</td>
+</tr>
+<tr>
+<td><code>etkl:KnowledgeModule</code></td>
+<td>A reusable OWL/SKOS/SHACL artifact, passable as a transform argument.</td>
+</tr>
+<tr>
+<td><code>etkl:Extraction</code></td>
+<td>Knowledge-guided reading of a source — applies the contract while reading.</td>
+</tr>
+<tr>
+<td><code>etkl:Transformation</code></td>
+<td>Takes a knowledge module as an argument (<code>etkl:hasKnowledgeArgument</code>).</td>
+</tr>
+<tr>
+<td><code>etkl:Load</code></td>
+<td>Loads the contract-validated output graph.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="conformance-checkable-not-aspirational">Conformance (checkable, not aspirational)<a class="headerlink" href="#conformance-checkable-not-aspirational" title="Permanent link">&para;</a></h2>
+<p>A pipeline is ET(K)L-conformant when SHACL confirms:
+- every contract declares ≥1 target shape and references ≥1 knowledge module;
+- every transformation has ≥1 knowledge argument and a governing contract;
+- every extraction applies a contract (knowledge-guided);
+- every source document declares its format.</p>
+<p>This makes "knowledge is not optional, and it comes first" a <em>checkable property</em>.</p>
+<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<p>ET(K)L is modular. <code>hol</code> (decision context) and <code>iladub</code> (document compiling +
+assertion/proposition) plug in by being referenced from a contract and passed as
+transform arguments.</p>
+<p>Persistent namespace: <code>https://w3id.org/etkl</code>.</p>
 
 
 

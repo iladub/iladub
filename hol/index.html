@@ -10,25 +10,31 @@
       
       
       
+        <link rel="canonical" href="https://iladub.dev/hol/">
       
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../assertion-proposition/">
       
       
         
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>iladub</title>
+        <title>hol — decision context - iladub</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -47,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#hol-the-holonic-decision-context-layer" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="iladub" class="md-header__button md-logo" aria-label="iladub" data-md-component="logo">
+    <a href=".." title="iladub" class="md-header__button md-logo" aria-label="iladub" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -103,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              hol — decision context
             
           </span>
         </div>
@@ -221,7 +232,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="iladub" class="md-nav__button md-logo" aria-label="iladub" data-md-component="logo">
+    <a href=".." title="iladub" class="md-nav__button md-logo" aria-label="iladub" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -251,7 +262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -278,7 +289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/etkl/" class="md-nav__link">
+      <a href="../etkl/" class="md-nav__link">
         
   
   
@@ -305,7 +316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -329,10 +340,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/hol/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    hol — decision context
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -348,6 +386,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-fhir-and-most-data-models-cannot-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What FHIR (and most data models) cannot capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -359,7 +450,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/assertion-proposition/" class="md-nav__link">
+      <a href="../assertion-proposition/" class="md-nav__link">
         
   
   
@@ -386,7 +477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/use-case-fhir/" class="md-nav__link">
+      <a href="../use-case-fhir/" class="md-nav__link">
         
   
   
@@ -413,7 +504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/naming/" class="md-nav__link">
+      <a href="../naming/" class="md-nav__link">
         
   
   
@@ -450,6 +541,49 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-fhir-and-most-data-models-cannot-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What FHIR (and most data models) cannot capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -462,8 +596,57 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+  
+
+
+<h1 id="hol-the-holonic-decision-context-layer">hol — the holonic decision-context layer<a class="headerlink" href="#hol-the-holonic-decision-context-layer" title="Permanent link">&para;</a></h1>
+<p><code>hol</code> represents <strong>decisions as holons</strong>: units that are at once a self-contained,
+accountable deliberation <em>and</em> a part of a larger decision holarchy. It sits <em>above</em> a
+data graph (e.g. a FHIR-derived graph) and captures what data models structurally cannot.</p>
+<p>Namespace: <code>https://w3id.org/etkl/hol#</code>.</p>
+<h2 id="what-fhir-and-most-data-models-cannot-capture">What FHIR (and most data models) cannot capture<a class="headerlink" href="#what-fhir-and-most-data-models-cannot-capture" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The deliberation space</strong> — the options considered and <em>why one was rejected</em>, not
+  just the recorded outcome.</li>
+<li><strong>Situated meaning</strong> — the frame that makes a fact decision-relevant (the same lab
+  value means different things in different decision contexts).</li>
+<li><strong>A holarchy of authority</strong> — local decision ⊂ protocol ⊂ guideline ⊂ policy.</li>
+<li><strong>The deontic/commitment layer</strong> — obligations, expectations, validity conditions.</li>
+<li><strong>Decision lineage</strong> — what evidence supported a decision, and what upstream change
+  should reopen it (<code>hol:revisitIf</code> / <code>onChange</code>).</li>
+</ul>
+<h2 id="core-shape">Core shape<a class="headerlink" href="#core-shape" title="Permanent link">&para;</a></h2>
+<p>A <code>hol:DecisionHolon</code> (⊑ <code>prov:Activity</code>) records: <code>consideredEvidence</code>,
+<code>constrainedBy</code>, an <code>optionSpace</code> (≥2 — the no-change option counts), exactly one
+<code>chosen</code> option (which must be in the option space — SPARQL-enforced), <code>decidedBy</code> (an
+agent, human or automated), a <code>rationale</code>, optional <code>confidence</code> ∈ [0,1], <code>produced</code>
+(the resulting node), <code>governedBy</code> (policy), <code>partOf</code> (holarchy), <code>withinScope</code>
+(autonomy scope).</p>
+<h2 id="why-it-matters">Why it matters<a class="headerlink" href="#why-it-matters" title="Permanent link">&para;</a></h2>
+<p>For agentic AI safety: an agent reasoning inside a holon knows its autonomy scope, the
+constraints reframing its options, the option space it must justify against, and how
+its decision composes upward. That is the difference between emitting a plausible
+output and making an <em>accountable, re-evaluable</em> decision.</p>
+<p>It is also the most domain-neutral, transferable part of the project — the same holon
+models a clinical therapy switch or a trading hedge decision unchanged. That makes it
+the original contribution, distinct from the (reusable) terminology/shape bridging.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -537,10 +720,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/", "features": ["navigation.instant", "navigation.sections", "navigation.top", "content.code.copy", "search.suggest"], "search": "/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.sections", "navigation.top", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
