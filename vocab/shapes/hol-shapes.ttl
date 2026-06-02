@@ -1,0 +1,42 @@
+@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+hol:prefixes
+    sh:declare [ sh:prefix "hol" ; sh:namespace "https://w3id.org/etkl/hol#"^^xsd:anyURI ] .
+
+#################################################################
+#  A decision holon must be an accountable, real decision:
+#  a deliberated option space (>= 2), exactly one chosen option,
+#  and a recorded agent. (The no-change option counts toward the 2.)
+#################################################################
+
+hol:DecisionHolonShape a sh:NodeShape ;
+    sh:targetClass hol:DecisionHolon ;
+    sh:property [ sh:path hol:optionSpace ; sh:minCount 2 ;
+        sh:message "A real decision deliberates at least two options (the no-change option counts)." ] ;
+    sh:property [ sh:path hol:chosen ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A decision must record exactly one chosen option." ] ;
+    sh:property [ sh:path hol:decidedBy ; sh:minCount 1 ;
+        sh:message "A decision must record an accountable agent (human or automated)." ] ;
+    sh:sparql [
+        sh:message "The chosen option must be one of the options in the option space." ;
+        sh:prefixes hol:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this hol:chosen ?o .
+                FILTER NOT EXISTS { $this hol:optionSpace ?o }
+            }
+        """ ;
+    ] .
+
+#################################################################
+#  Confidence, where present, must be in [0,1].
+#################################################################
+
+hol:ConfidenceShape a sh:NodeShape ;
+    sh:targetClass hol:DecisionHolon ;
+    sh:property [ sh:path hol:confidence ; sh:maxCount 1 ;
+        sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ;
+        sh:message "Confidence, if given, must be a single decimal in [0,1]." ] .

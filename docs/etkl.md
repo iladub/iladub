@@ -1,21 +1,42 @@
 # The ET(K)L method
 
-**iladub** is the reference implementation of the **ET(K)L** method.
+**ET(K)L** = Extract, Transform-with-**(K)**nowledge, Load. Knowledge engineering is
+the *first* milestone of the pipeline, not the last.
 
-Persistent namespace: **[`https://w3id.org/etkl`](https://w3id.org/etkl)**
+## The inversion
 
-!!! note
-    This page is a placeholder. The method description, vocabulary, and ontology
-    are under active development. Terms will resolve under the `w3id.org/etkl`
-    namespace.
+Conventional ETL treats semantics as a downstream concern: extract raw data, transform
+with hand-written mappings, load, and *then* maybe align to an ontology.
 
-## Vocabulary
+ET(K)L: a **semantic data contract** declares the target semantics, and an
+**ontology/knowledge module** is ingested as an **argument** of the transformation
+function — not reconstructed by a mapping at the end. Knowledge enters first (through
+the contract, applied already at extraction) and as an argument (at transform).
 
-The ET(K)L vocabulary and ontology artifacts live under
-[`vocab/`](https://github.com/iladub/iladub/tree/main/vocab) and are licensed
-[CC-BY-4.0](https://github.com/iladub/iladub/blob/main/vocab/LICENSE).
+## Core constructs
 
-## Citing
+| Construct | Role |
+|---|---|
+| `etkl:SemanticDataContract` | Declares target SHACL shape(s), terminology bindings, required knowledge modules. |
+| `etkl:KnowledgeModule` | A reusable OWL/SKOS/SHACL artifact, passable as a transform argument. |
+| `etkl:Extraction` | Knowledge-guided reading of a source — applies the contract while reading. |
+| `etkl:Transformation` | Takes a knowledge module as an argument (`etkl:hasKnowledgeArgument`). |
+| `etkl:Load` | Loads the contract-validated output graph. |
 
-See [`CITATION.cff`](https://github.com/iladub/iladub/blob/main/CITATION.cff) in the
-repository for citation metadata.
+## Conformance (checkable, not aspirational)
+
+A pipeline is ET(K)L-conformant when SHACL confirms:
+- every contract declares ≥1 target shape and references ≥1 knowledge module;
+- every transformation has ≥1 knowledge argument and a governing contract;
+- every extraction applies a contract (knowledge-guided);
+- every source document declares its format.
+
+This makes "knowledge is not optional, and it comes first" a *checkable property*.
+
+## Modules
+
+ET(K)L is modular. `hol` (decision context) and `iladub` (document compiling +
+assertion/proposition) plug in by being referenced from a contract and passed as
+transform arguments.
+
+Persistent namespace: `https://w3id.org/etkl`.

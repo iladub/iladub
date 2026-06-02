@@ -1,0 +1,19 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  AN ILLEGAL LEAK: a CandidateConcept (a proposition) that tries to
+#  carry status 'asserted' directly, with no promotion decision.
+#  The NoLeakShape (and the status hasValue check) MUST reject this.
+
+ex:leak a iladub:CandidateConcept ;
+    iladub:surfaceText "Niereninsuffizienz"@de ;
+    iladub:suggestedAnchor gist:Category ;
+    iladub:suggestedBy ex:extractor-v0 ;
+    iladub:confidence 0.71 ;
+    iladub:fromRegion ex:region-x ;
+    iladub:status iladub:asserted .
+
+ex:extractor-v0 a iladub:Suggester ; rdfs:label "iladub extractor v0"@en .
+ex:region-x a iladub:SourceRegion ; rdfs:label "page 1"@en .
