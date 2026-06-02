@@ -1,0 +1,113 @@
+@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/etkl> a owl:Ontology ;
+    dcterms:title "ET(K)L — Extract, Transform-with-(K)nowledge, Load"@en ;
+    dcterms:description """The umbrella vocabulary for the ET(K)L method: knowledge
+engineering is the first milestone of the pipeline, not the last. A SemanticDataContract
+declares the target semantics (target SHACL shapes and required knowledge modules), and a
+KnowledgeModule is passed as an argument of the Transformation — never reconstructed by a
+mapping at the end. Conformance is checkable: every contract declares a target shape and a
+knowledge module; every transformation has a knowledge argument and a governing contract;
+every extraction applies a contract; every source declares its format."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-05-31"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "etkl" ;
+    vann:preferredNamespaceUri "https://w3id.org/etkl#" ;
+    rdfs:seeAlso <https://w3id.org/etkl/hol> , <https://w3id.org/etkl/iladub> .
+
+#################################################################
+#  Core classes
+#################################################################
+
+etkl:SemanticDataContract a owl:Class ;
+    rdfs:label "Semantic Data Contract"@en ;
+    rdfs:comment "Declares the target semantics of a transformation: the target SHACL shape(s), terminology bindings, and the knowledge module(s) the transform requires. The contract is an ontology, not a JSON/YAML schema."@en .
+
+etkl:KnowledgeModule a owl:Class ;
+    rdfs:label "Knowledge Module"@en ;
+    rdfs:comment "A reusable OWL/SKOS/SHACL artifact that can be passed as an argument to a transformation."@en .
+
+etkl:Extraction a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Extraction"@en ;
+    rdfs:comment "Knowledge-guided reading of a source: it applies a contract while reading, so knowledge enters first."@en .
+
+etkl:Transformation a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Transformation"@en ;
+    rdfs:comment "Takes a knowledge module as an argument and is governed by a contract."@en .
+
+etkl:Load a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Load"@en ;
+    rdfs:comment "Loads the contract-validated output graph."@en .
+
+etkl:SourceDocument a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Source Document"@en ;
+    rdfs:comment "An input document. It declares its format."@en .
+
+etkl:FieldRule a owl:Class ;
+    rdfs:label "Field Rule"@en ;
+    rdfs:comment "A contract rule binding a target property to an extraction pattern."@en .
+
+#################################################################
+#  Core properties
+#################################################################
+
+etkl:hasTargetShape a owl:ObjectProperty ;
+    rdfs:label "has target shape"@en ; rdfs:domain etkl:SemanticDataContract ;
+    rdfs:comment "A SHACL node shape the contract's output must conform to."@en .
+
+etkl:requiresKnowledge a owl:ObjectProperty ;
+    rdfs:label "requires knowledge"@en ; rdfs:domain etkl:SemanticDataContract ; rdfs:range etkl:KnowledgeModule ;
+    rdfs:comment "A knowledge module the contract requires the transform to be given."@en .
+
+etkl:targetClass a owl:ObjectProperty ;
+    rdfs:label "target class"@en ; rdfs:domain etkl:SemanticDataContract ;
+    rdfs:comment "The class the contract's primary output resource is an instance of."@en .
+
+etkl:hasKnowledgeArgument a owl:ObjectProperty ;
+    rdfs:label "has knowledge argument"@en ; rdfs:domain etkl:Transformation ; rdfs:range etkl:KnowledgeModule ;
+    rdfs:comment "The knowledge module supplied to this transformation as an argument."@en .
+
+etkl:governedByContract a owl:ObjectProperty ;
+    rdfs:label "governed by contract"@en ; rdfs:domain etkl:Transformation ; rdfs:range etkl:SemanticDataContract ;
+    rdfs:comment "The contract that governs this transformation."@en .
+
+etkl:appliesContract a owl:ObjectProperty ;
+    rdfs:label "applies contract"@en ; rdfs:domain etkl:Extraction ; rdfs:range etkl:SemanticDataContract ;
+    rdfs:comment "The contract this extraction applies while reading (knowledge-first)."@en .
+
+etkl:hasFormat a owl:DatatypeProperty ;
+    rdfs:label "has format"@en ; rdfs:domain etkl:SourceDocument ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The declared format of the source document (e.g. txt, pdf, xlsx, html)."@en .
+
+#################################################################
+#  Extraction field rules (used by the reference pipeline)
+#################################################################
+
+etkl:hasFieldRule a owl:ObjectProperty ;
+    rdfs:label "has field rule"@en ; rdfs:domain etkl:SemanticDataContract ; rdfs:range etkl:FieldRule ;
+    rdfs:comment "A rule binding a target property to an extraction pattern."@en .
+
+etkl:onProperty a owl:ObjectProperty ;
+    rdfs:label "on property"@en ; rdfs:domain etkl:FieldRule ;
+    rdfs:comment "The target property a field rule populates."@en .
+
+etkl:matchesPattern a owl:DatatypeProperty ;
+    rdfs:label "matches pattern"@en ; rdfs:domain etkl:FieldRule ; rdfs:range xsd:string ;
+    rdfs:comment "A regular expression whose first capture group is the extracted value."@en .

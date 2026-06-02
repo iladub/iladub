@@ -1,0 +1,17 @@
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  NON-CONFORMANT: a contract that declares a target shape but NO knowledge
+#  module, and a transformation with NO knowledge argument. ET(K)L says
+#  knowledge is not optional — these must fail.
+
+ex:bad-contract a etkl:SemanticDataContract ;
+    rdfs:label "Knowledge-free contract (illegal)"@en ;
+    etkl:hasTargetShape ex:SomeShape .
+
+ex:SomeShape a sh:NodeShape .
+
+ex:bad-transform a etkl:Transformation ;
+    etkl:governedByContract ex:bad-contract .

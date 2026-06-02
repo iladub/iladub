@@ -1,0 +1,31 @@
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  A minimal ET(K)L-CONFORMANT pipeline description: knowledge is declared
+#  by the contract, supplied as a transform argument, the extraction applies
+#  the contract, and the source declares its format.
+
+ex:patient-knowledge a etkl:KnowledgeModule ;
+    rdfs:label "Patient terminology module"@en .
+
+ex:patient-contract a etkl:SemanticDataContract ;
+    rdfs:label "Patient admission contract"@en ;
+    etkl:hasTargetShape ex:PatientShape ;
+    etkl:requiresKnowledge ex:patient-knowledge .
+
+ex:PatientShape a sh:NodeShape ;
+    rdfs:label "Patient target shape"@en .
+
+ex:admission-doc a etkl:SourceDocument ;
+    etkl:hasFormat "txt" .
+
+ex:read-admission a etkl:Extraction ;
+    etkl:appliesContract ex:patient-contract ;
+    prov:used ex:admission-doc .
+
+ex:build-patient a etkl:Transformation ;
+    etkl:governedByContract ex:patient-contract ;
+    etkl:hasKnowledgeArgument ex:patient-knowledge .

@@ -1,0 +1,37 @@
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#  ET(K)L conformance is a CHECKABLE property: "knowledge is not
+#  optional, and it comes first" is enforced here, not just asserted.
+#################################################################
+
+#  Every contract declares >= 1 target shape and >= 1 knowledge module.
+etkl:SemanticDataContractShape a sh:NodeShape ;
+    sh:targetClass etkl:SemanticDataContract ;
+    sh:property [ sh:path etkl:hasTargetShape ; sh:minCount 1 ;
+        sh:message "A contract must declare at least one target shape." ] ;
+    sh:property [ sh:path etkl:requiresKnowledge ; sh:minCount 1 ;
+        sh:message "A contract must reference at least one knowledge module (knowledge is not optional)." ] .
+
+#  Every transformation has >= 1 knowledge argument and a governing contract.
+etkl:TransformationShape a sh:NodeShape ;
+    sh:targetClass etkl:Transformation ;
+    sh:property [ sh:path etkl:hasKnowledgeArgument ; sh:minCount 1 ;
+        sh:message "A transformation must take at least one knowledge module as an argument (knowledge comes first)." ] ;
+    sh:property [ sh:path etkl:governedByContract ; sh:minCount 1 ;
+        sh:message "A transformation must be governed by a contract." ] .
+
+#  Every extraction applies a contract (knowledge-guided reading).
+etkl:ExtractionShape a sh:NodeShape ;
+    sh:targetClass etkl:Extraction ;
+    sh:property [ sh:path etkl:appliesContract ; sh:minCount 1 ;
+        sh:message "An extraction must apply a contract while reading." ] .
+
+#  Every source document declares its format.
+etkl:SourceDocumentShape a sh:NodeShape ;
+    sh:targetClass etkl:SourceDocument ;
+    sh:property [ sh:path etkl:hasFormat ; sh:minCount 1 ;
+        sh:message "A source document must declare its format." ] .
