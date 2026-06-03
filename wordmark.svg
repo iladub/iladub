@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  iladub wordmark — the "íl · dub" masthead.
+  Cuneiform signs (verified against Oracc Sign List / ePSD / Wiktionary):
+    𒅍  U+1214D  CUNEIFORM SIGN IL2  — íl (il₂): "to carry / lift"; noun "carrier, porter"
+    𒁾  U+12077  CUNEIFORM SIGN DUB  — dub: "clay tablet, document"
+  íl + dub = "the document-carrier".
+
+  Note: the cuneiform is rendered via <text> and needs a cuneiform font
+  (e.g. Noto Sans Cuneiform) to display. For guaranteed rendering everywhere,
+  outline these two glyphs to <path> in a production build.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" role="img" aria-label="iladub — the document-carrier">
+  <title>iladub — the document-carrier (íl · dub)</title>
+
+  <!-- clay tablet tile -->
+  <rect x="24" y="34" width="132" height="132" rx="22" ry="22" fill="#cdb892"/>
+  <rect x="24" y="34" width="132" height="132" rx="22" ry="22" fill="none" stroke="#a8916a" stroke-width="2"/>
+
+  <!-- the two cuneiform signs, impressed into the tablet -->
+  <text x="90" y="118" text-anchor="middle"
+        font-family="'Noto Sans Cuneiform','Segoe UI Historic','Akkadian',serif"
+        font-size="62" fill="#4a3b22">&#x1214D;&#x12077;</text>
+
+  <!-- wordmark -->
+  <text x="188" y="108"
+        font-family="'Inter','Helvetica Neue',Arial,sans-serif"
+        font-size="74" font-weight="700" fill="#00897b"
+        letter-spacing="-1">iladub</text>
+
+  <!-- transliteration + tagline -->
+  <text x="190" y="146"
+        font-family="'Inter','Helvetica Neue',Arial,sans-serif"
+        font-size="22" font-weight="500" fill="#4a3b22"
+        letter-spacing="0.5">íl · dub — the document-carrier</text>
+</svg>
