@@ -129,8 +129,11 @@ muddied authorship provenance.)
       namespaces actually resolve (required for FAIR).
       (Done 2026-06-02: w3id.org PR #6144 merged by dgarijo; content negotiation verified
       — RDF → raw `.ttl` on `main`, browsers → `iladub.dev`. All three IRIs resolve 200.)
-- [ ] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
+- [x] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
       to the "íl + dub" transliteration.
+      (Verified 2026-06-03: `𒅍` = U+1214D "CUNEIFORM SIGN IL2" = *íl/il₂*, "to carry,"
+      noun "carrier, porter"; `𒁾` = U+12077 DUB = "tablet/document". `𒅍𒁾` = "the
+      document-carrier". Sources: Oracc Sign List IL₂, ePSD, Wiktionary U+1214D.)
 - [x] Confirm `vocab/LICENSE` (CC-BY-4.0) exists and `CITATION.cff` is at repo root.
       (Verified 2026-05-31: `vocab/LICENSE` is CC-BY-4.0, `CITATION.cff` at root.)
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
