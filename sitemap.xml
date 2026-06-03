@@ -2,30 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://iladub.dev/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/architecture/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/assertion-proposition/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/etkl/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/hol/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
+    </url>
+    <url>
+         <loc>https://iladub.dev/holonic-interaction/</loc>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/naming/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/use-case-fhir/</loc>
-         <lastmod>2026-06-02</lastmod>
+         <lastmod>2026-06-03</lastmod>
     </url>
 </urlset>
