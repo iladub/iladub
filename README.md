@@ -14,6 +14,20 @@ whose persistent namespace is [`https://w3id.org/etkl`](https://w3id.org/etkl).
 
 ## The first documents
 
+<p align="center">
+  <a href="https://en.wikipedia.org/wiki/Kushim_(Uruk_period)">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/54/Clay_Tablet_-_Louvre_-_AO29562_%28cropped%29.jpg" alt="A late-4th-millennium-BC Sumerian proto-cuneiform clay tablet, a barley account held in the Louvre (AO 29562)" width="360">
+  </a>
+</p>
+
+<p align="center"><sub>
+  A late-4th-millennium-BC Sumerian account tablet (Louvre, AO&nbsp;29562) — a barley ledger
+  possibly bearing <a href="https://en.wikipedia.org/wiki/Kushim_(Uruk_period)">Kushim</a>,
+  the earliest personal name known to history. Photo Poulpy, crop Zunkir, via
+  <a href="https://commons.wikimedia.org/wiki/File:Clay_Tablet_-_Louvre_-_AO29562_(cropped).jpg">Wikimedia&nbsp;Commons</a>,
+  <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC&nbsp;BY-SA&nbsp;3.0</a>.
+</sub></p>
+
 More than five thousand years ago, in the city-states of Sumer, people pressed a reed
 stylus into wet clay and made the first marks that were not pictures but *records*. The
 earliest of these tablets were not poems or laws — they were **accounts**: so many
