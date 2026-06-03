@@ -35,6 +35,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Why iladub: story.md
   - The ET(K)L method: etkl.md
   - Architecture: architecture.md
   - Holonic interaction: holonic-interaction.md
