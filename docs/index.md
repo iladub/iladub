@@ -23,7 +23,7 @@ brings it forward. We still write documents **for humans**; a machine, like a no
 before the clay, sees only marks. Reading a document means recovering the **knowledge**
 behind it — the concepts and *how they relate* — at the level knowledge actually lives:
 **holonic graphs**, on top of meta- and hypergraphs. iladub compiles human documents into
-that level, knowledge-first. [Read the full story →](https://github.com/iladub/iladub#readme)
+that level, knowledge-first. [Read the full story →](story.md)
 
 ## What it does
 
