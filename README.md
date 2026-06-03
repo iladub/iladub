@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/iladub-wordmark.png" alt="iladub — íl · dub, the document-carrier" width="440">
+</p>
+
 # iladub
 
 > **The document-carrier** — compiling human documents into knowledge machines can read.
