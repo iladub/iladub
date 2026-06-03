@@ -125,8 +125,10 @@ muddied authorship provenance.)
 
 ## Open items (verify; do not assert as done)
 
-- [ ] Register the `w3id.org/etkl` (and `/etkl/iladub`, `/etkl/hol`) redirects so the
+- [x] Register the `w3id.org/etkl` (and `/etkl/iladub`, `/etkl/hol`) redirects so the
       namespaces actually resolve (required for FAIR).
+      (Done 2026-06-02: w3id.org PR #6144 merged by dgarijo; content negotiation verified
+      — RDF → raw `.ttl` on `main`, browsers → `iladub.dev`. All three IRIs resolve 200.)
 - [ ] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
       to the "íl + dub" transliteration.
 - [x] Confirm `vocab/LICENSE` (CC-BY-4.0) exists and `CITATION.cff` is at repo root.
