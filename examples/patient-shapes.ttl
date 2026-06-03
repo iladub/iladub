@@ -1,0 +1,13 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  The contract's TARGET SHAPE: only a patient with at least a name and an
+#  MRN conforms and may be loaded.
+
+ex:PatientShape a sh:NodeShape ;
+    sh:targetClass ex:Patient ;
+    sh:property [ sh:path ex:name ; sh:minCount 1 ;
+        sh:message "A patient must have a name." ] ;
+    sh:property [ sh:path ex:mrn ; sh:minCount 1 ;
+        sh:message "A patient must have a medical record number." ] .

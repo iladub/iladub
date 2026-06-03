@@ -111,3 +111,27 @@ etkl:onProperty a owl:ObjectProperty ;
 etkl:matchesPattern a owl:DatatypeProperty ;
     rdfs:label "matches pattern"@en ; rdfs:domain etkl:FieldRule ; rdfs:range xsd:string ;
     rdfs:comment "A regular expression whose first capture group is the extracted value."@en .
+
+#################################################################
+#  Contract-driven assembly rules (concept -> output resource)
+#################################################################
+
+etkl:ResourceRule a owl:Class ;
+    rdfs:label "Resource Rule"@en ;
+    rdfs:comment "A contract rule that says which output resource a recognised concept becomes and which element carries its code. Drives contract-defined assembly (e.g. concept -> FHIR resource)."@en .
+
+etkl:buildsResource a owl:ObjectProperty ;
+    rdfs:label "builds resource"@en ; rdfs:domain etkl:SemanticDataContract ; rdfs:range etkl:ResourceRule ;
+    rdfs:comment "A resource rule the contract uses to build an output resource."@en .
+
+etkl:resourceType a owl:ObjectProperty ;
+    rdfs:label "resource type"@en ; rdfs:domain etkl:ResourceRule ;
+    rdfs:comment "The type the rule's output resource is an instance of (e.g. a FHIR resource type)."@en .
+
+etkl:triggerConcept a owl:ObjectProperty ;
+    rdfs:label "trigger concept"@en ; rdfs:domain etkl:ResourceRule ;
+    rdfs:comment "The recognised concept whose presence triggers this rule. Only emit what the source supports."@en .
+
+etkl:bindsElement a owl:ObjectProperty ;
+    rdfs:label "binds element"@en ; rdfs:domain etkl:ResourceRule ;
+    rdfs:comment "The element/property on the output resource that carries the trigger concept's code."@en .
