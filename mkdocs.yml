@@ -35,6 +35,7 @@ nav:
   - Home: index.md
   - The ET(K)L method: etkl.md
   - Architecture: architecture.md
+  - Holonic interaction: holonic-interaction.md
   - hol — decision context: hol.md
   - Assertions & propositions: assertion-proposition.md
   - Use case — clinical → FHIR: use-case-fhir.md

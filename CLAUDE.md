@@ -68,6 +68,28 @@ It is the document-compiling front end of the **ET(K)L** method
 7. **Only emit what the source supports.** Never fabricate resources/data to achieve
    "full coverage." Credibility over completeness.
 
+## Holonic interaction model (align with CGA, don't reinvent)
+
+iladub is modeled as **interacting holons**, not just isolated definitions — *how
+holons interact is the architecture*. A **RawDocumentHolon** and the **SemanticHolons**
+(ontologies / SKOS terminology) interact through a governed **grounding portal**;
+concept-matching at that portal is governed by **PromotionDecisions** at the contract
+**membrane** (SHACL); what passes is assembled into a **CleanDocumentHolon** whose
+**membrane-health is its cleanliness**. Assertions are *inside* the membrane;
+propositions are candidates *at* it. See `docs/holonic-interaction.md`.
+
+- We **align with**, and do **not** reinvent, the holonic-graph model: Kurt Cagle's
+  four-layer holon (interior / boundary / projection / context; boundary = Markov
+  blanket; portals as liminal holons) and its reference ontology, **CGA** (Zach Welz's
+  `holonic` library).
+- **Alignment, not import** (CGA's own stance): iladub's holon types and grounding
+  portal live in the `iladub`/`hol` namespaces and are aligned via `rdfs:subClassOf`
+  to `cga:` (e.g. `iladub:CleanDocumentHolon ⊑ cga:Holon`,
+  `iladub:GroundingPortal ⊑ cga:TransformPortal`) — never copied, never hard-imported.
+- `hol` therefore generalizes from "decision-context only" toward "holon + interaction,"
+  with `hol:DecisionHolon` as one holon type and `iladub:PromotionDecision` as the
+  governed membrane-crossing.
+
 ## Serialization & stack conventions
 
 - Ontologies, shapes, contracts, examples → **RDF Turtle** (`.ttl`) for authoring,
@@ -103,11 +125,17 @@ muddied authorship provenance.)
 
 ## Open items (verify; do not assert as done)
 
-- [ ] Register the `w3id.org/etkl` (and `/etkl/iladub`, `/etkl/hol`) redirects so the
+- [x] Register the `w3id.org/etkl` (and `/etkl/iladub`, `/etkl/hol`) redirects so the
       namespaces actually resolve (required for FAIR).
+      (Done 2026-06-02: w3id.org PR #6144 merged by dgarijo; content negotiation verified
+      — RDF → raw `.ttl` on `main`, browsers → `iladub.dev`. All three IRIs resolve 200.)
 - [ ] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
       to the "íl + dub" transliteration.
 - [x] Confirm `vocab/LICENSE` (CC-BY-4.0) exists and `CITATION.cff` is at repo root.
       (Verified 2026-05-31: `vocab/LICENSE` is CC-BY-4.0, `CITATION.cff` at root.)
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
+- [ ] Express the holonic interaction model in `vocab/` (holon types + grounding portal
+      + membrane shapes) with an optional CGA alignment module (alignment-not-import),
+      plus a worked raw→clean traversal example. Design fixed in
+      `docs/holonic-interaction.md`; ontology work not yet started.
