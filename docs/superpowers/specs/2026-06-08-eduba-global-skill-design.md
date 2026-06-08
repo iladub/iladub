@@ -56,6 +56,8 @@ local path such as `/Volumes/WD Green/dev/git/vault`).
    protocol; it points at `AGENTS.md` Role A so it auto-tracks future changes.
 7. **Global, not per-project.** Lives in `~/.claude/skills/`, available in every project
    and session.
+8. **Two entrypoints.** Build both the auto-invoked skill and a thin `/eduba` command.
+9. **No iladub repo change.** `iladub/CLAUDE.md` is left untouched.
 
 ## Architecture
 
@@ -111,10 +113,12 @@ Procedure:
 6. **Never write** to vault. Writing (`/ingest` `/query` `/lint`) stays on the machine with
    the local clone.
 
-### Component 3 — `/eduba` slash command (optional, thin)
+### Component 3 — `/eduba` slash command (thin wrapper)
 
 Location: `~/.claude/commands/eduba.md`. Explicit entrypoint (`/eduba <question>`) running
-the same procedure. Complements — does not replace — automatic skill invocation.
+the same procedure as the skill. Both entrypoints ship: the **skill** gives automatic,
+model-invoked grounding during iladub work; the **command** is a ~15-line wrapper for
+explicit on-demand queries. Complements — does not replace — automatic skill invocation.
 
 ### Component 4 — Discovery / search behavior
 
@@ -122,13 +126,11 @@ the same procedure. Complements — does not replace — automatic skill invocat
 - For deeper full-text search, `gh search code --repo Frosselet/vault <term>` (authed).
 - If only index-navigation is available, the skill **says so** — no silent coverage gaps.
 
-### Component 5 — iladub linkage
+### iladub linkage — none (decided)
 
-A short subsection added to `iladub/CLAUDE.md` declaring vault the canonical **grounding
-knowledge source** for ET(K)L / holon theory, reachable via the global `eduba` skill, so
-design work in this repo consults the curated theory rather than re-deriving it. Scope:
-one paragraph + the repo slug + the "private, authed access" note; not a re-litigation of
-any existing decision.
+No change to `iladub/CLAUDE.md`. The capability is purely a global `~/.claude/` skill;
+iladub's repo files stay untouched. Grounding happens via automatic skill invocation (and
+explicit `/eduba`), not via a pointer committed into this repo.
 
 ## Installing on a second machine (the corporate laptop)
 
