@@ -57,7 +57,8 @@ def build_decision_holon(result: DecisionResult,
                          subject: URIRef = TX["m4-decision"],
                          process: URIRef | None = None,
                          agent: URIRef = TX["surgeon-1"],
-                         evidence: tuple[URIRef, ...] = ()) -> Graph:
+                         evidence: tuple[URIRef, ...] = (),
+                         revisit_if: tuple[str, ...] = ()) -> Graph:
     """Emit the decision as a hol:DecisionHolon that conforms to hol:DecisionHolonShape:
     a deliberated option space (accept + decline), exactly one chosen option, an
     accountable agent, the rejected option's reason, and (optionally) its place in a
@@ -80,4 +81,6 @@ def build_decision_holon(result: DecisionResult,
         g.add((subject, HOL.consideredEvidence, e))
     if process is not None:
         g.add((subject, HOL.withinProcess, process))
+    for key in revisit_if:
+        g.add((subject, HOL.revisitIf, Literal(key)))
     return g

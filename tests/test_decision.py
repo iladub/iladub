@@ -63,3 +63,11 @@ def test_decision_holon_conforms_when_wired_to_process():
     knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
     result = validate(g, shapes, knowledge)
     assert result.conforms, result.report_text
+
+
+def test_decision_holon_emits_revisit_if_keys():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240)
+    g = build_decision_holon(evaluate_m4(ctx), revisit_if=("ischemiaExceeded", "donorDeterioration"))
+    keys = {str(o) for o in g.objects(None, HOL.revisitIf)}
+    assert keys == {"ischemiaExceeded", "donorDeterioration"}
