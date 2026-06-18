@@ -92,3 +92,24 @@ def test_forward_pass_lists_next_milestone_needs():
     plan = next_capture_plan(tl, m4, _context(TX.organ, TX.aboGroup), TX["offer"])
     assert plan.milestone_id == next(m.id for m in tl.ordered() if m.order == 5)
     assert TX.recipientReady in plan.needed
+
+
+from iladub.allen import Interval
+from iladub.timeline import feasibility
+
+
+def test_feasibility_for_clock_milestone_heart():
+    tl = Timeline.from_graph(_heart_graph())
+    m6 = next(m for m in tl.ordered() if m.order == 6)   # windowLimit 240
+    f = feasibility(m6, cross_clamp_minute=0, transport=Interval(0, 95))
+    assert f.feasible is True
+    assert f.slack_minutes == 145
+    assert f.relation in {"starts", "during", "overlaps", "finishes", "equals"}
+
+
+def test_feasibility_infeasible_when_window_exceeded():
+    tl = Timeline.from_graph(_heart_graph())
+    m6 = next(m for m in tl.ordered() if m.order == 6)
+    f = feasibility(m6, cross_clamp_minute=0, transport=Interval(0, 270))
+    assert f.feasible is False
+    assert f.slack_minutes == -30

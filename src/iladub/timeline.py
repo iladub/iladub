@@ -124,3 +124,22 @@ class Cursor:
             return False
         self._index += 1
         return True
+
+
+@dataclass(frozen=True)
+class Feasibility:
+    relation: str
+    feasible: bool
+    slack_minutes: int
+
+
+def feasibility(milestone: Milestone, cross_clamp_minute: int,
+                transport: Interval) -> Feasibility:
+    if milestone.window_limit_minutes is None:
+        raise ValueError(f"milestone {milestone.id} has no window to assess")
+    window = Interval(cross_clamp_minute, cross_clamp_minute + milestone.window_limit_minutes)
+    return Feasibility(
+        relation=relation(transport, window),
+        feasible=feasible(window, transport),
+        slack_minutes=window.end - transport.end,
+    )
