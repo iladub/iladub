@@ -1,0 +1,5 @@
+@prefix tx: <https://example.org/transplant#> .
+tx:offer a tx:OrganOffer ;
+    tx:organ tx:organ-heart ;
+    tx:aboGroup "O" ;
+    tx:ejectionFraction "60" .

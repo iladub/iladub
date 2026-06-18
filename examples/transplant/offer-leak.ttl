@@ -1,0 +1,3 @@
+@prefix tx: <https://example.org/transplant#> .
+tx:offer a tx:OrganOffer ;
+    tx:ejectionFraction "60" .
