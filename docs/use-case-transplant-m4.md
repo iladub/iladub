@@ -31,3 +31,19 @@ Swap the TimelineContract, get a new chain; no engine change.
 
 > Deterministic — no LLM. Event-driven reopening (`hol:revisitIf`) and live wiring of the
 > forward pass to the extraction funnel are the next slice (SP3).
+
+## When reality perturbs the plan (SP3a)
+
+The timeline anticipates (SP2); SP3a reacts. An **event** (`iladub.events.Event` — a named
+`condition` + payload) is matched against a decision's declared `hol:revisitIf` keys. If it
+fires, `iladub.reopen.reopen` **re-evaluates** the decision with the event payload and emits a
+new `hol:DecisionHolon` that `hol:supersedes` the prior one and is `hol:triggeredBy` the event.
+The prior decision is preserved — an accountable audit trail.
+
+Worked example: M4 *accepts* a heart (projected ischemia 95 min). A transport-delay event
+`Event("ischemiaExceeded", {"projected_ischemia_minutes": 270})` reopens the decision, which
+now *declines* (270 > 240-min window) — superseding the acceptance, with the triggering event
+recorded and both decisions retained.
+
+> Deterministic — no LLM. Reopening is at the decision level; rewinding the timeline cursor and
+> wiring the forward pass to the extraction funnel remain the next slice (SP3b).
