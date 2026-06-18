@@ -1,0 +1,19 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+tx:scheme-abo   a skos:ConceptScheme ; skos:prefLabel "ABO blood groups"@en .
+tx:scheme-organ a skos:ConceptScheme ; skos:prefLabel "Transplantable organs"@en .
+
+tx:abo-O  a skos:Concept ; skos:inScheme tx:scheme-abo ;
+    skos:prefLabel "O"@en ; skos:notation "112144000" .
+tx:abo-A  a skos:Concept ; skos:inScheme tx:scheme-abo ;
+    skos:prefLabel "A"@en ; skos:notation "112149005" .
+tx:abo-B  a skos:Concept ; skos:inScheme tx:scheme-abo ;
+    skos:prefLabel "B"@en ; skos:notation "112150005" .
+tx:abo-AB a skos:Concept ; skos:inScheme tx:scheme-abo ;
+    skos:prefLabel "AB"@en ; skos:notation "112151009" .
+
+tx:organ-heart a skos:Concept ; skos:inScheme tx:scheme-organ ;
+    skos:prefLabel "Heart"@en , "Herz"@de , "Cœur"@fr ; skos:notation "80891009" .
+tx:organ-liver a skos:Concept ; skos:inScheme tx:scheme-organ ;
+    skos:prefLabel "Liver"@en , "Leber"@de ; skos:notation "10200004" .

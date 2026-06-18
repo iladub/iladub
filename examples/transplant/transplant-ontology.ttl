@@ -1,0 +1,21 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fhir: <http://hl7.org/fhir/> .
+
+tx:OrganOffer  a owl:Class ; rdfs:label "Organ Offer"@en .
+tx:Organ       a owl:Class ; rdfs:label "Organ"@en ;
+    rdfs:comment "Maps to FHIR BiologicallyDerivedProduct."@en .
+tx:Recipient   a owl:Class ; rdfs:label "Recipient"@en .
+
+tx:organ              a owl:ObjectProperty   ; rdfs:domain tx:OrganOffer ; rdfs:range tx:Organ .
+tx:aboGroup           a owl:DatatypeProperty ; rdfs:label "ABO group"@en .
+tx:ejectionFraction   a owl:DatatypeProperty ; rdfs:label "ejection fraction (%)"@en .
+tx:sizeMetric         a owl:DatatypeProperty ; rdfs:label "size metric"@en .
+tx:serology           a owl:DatatypeProperty ; rdfs:label "serology flag"@en .
+tx:hlaTyping          a owl:DatatypeProperty ; rdfs:label "HLA typing"@en .
+tx:causeOfDeath       a owl:DatatypeProperty ; rdfs:label "cause of death category"@en .
+tx:projectedTransportMinutes a owl:DatatypeProperty ; rdfs:label "projected transport minutes"@en .
+tx:coldIschemiaLimitMinutes  a owl:DatatypeProperty ; rdfs:label "cold ischemia limit (min)"@en .
+tx:urgencyStatus      a owl:DatatypeProperty ; rdfs:label "urgency status"@en .
+tx:ready              a owl:DatatypeProperty ; rdfs:label "recipient ready"@en .
