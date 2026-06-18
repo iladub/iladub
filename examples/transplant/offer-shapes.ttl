@@ -1,0 +1,9 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+tx:OrganOfferShape a sh:NodeShape ;
+    sh:targetClass tx:OrganOffer ;
+    sh:property [ sh:path tx:organ    ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path tx:aboGroup ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:datatype <http://www.w3.org/2001/XMLSchema#string> ] ;
+    sh:property [ sh:path tx:ejectionFraction ; sh:maxCount 1 ] .

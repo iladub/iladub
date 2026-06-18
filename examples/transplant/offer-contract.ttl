@@ -1,0 +1,21 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+tx:offer-contract a etkl:SemanticDataContract ;
+    rdfs:label "Heart offer → M4 decision-context"@en ;
+    etkl:targetClass tx:OrganOffer ;
+    etkl:requiresKnowledge tx:scheme-abo , tx:scheme-organ ;
+    etkl:hasField
+        tx:f-organ , tx:f-abo , tx:f-ef , tx:f-size ,
+        tx:f-serology , tx:f-hla , tx:f-cod , tx:f-transport .
+
+# Each field: which property it fills, which agent extracts it, optional SKOS scheme.
+tx:f-organ    a etkl:Field ; etkl:fillsProperty tx:organ ;        tx:agent "donor_clinical" ; etkl:admissibleScheme tx:scheme-organ .
+tx:f-ef       a etkl:Field ; etkl:fillsProperty tx:ejectionFraction ; tx:agent "donor_clinical" .
+tx:f-cod      a etkl:Field ; etkl:fillsProperty tx:causeOfDeath ;  tx:agent "donor_clinical" .
+tx:f-size     a etkl:Field ; etkl:fillsProperty tx:sizeMetric ;    tx:agent "donor_clinical" .
+tx:f-abo      a etkl:Field ; etkl:fillsProperty tx:aboGroup ;      tx:agent "immunology" ; etkl:admissibleScheme tx:scheme-abo .
+tx:f-hla      a etkl:Field ; etkl:fillsProperty tx:hlaTyping ;     tx:agent "immunology" .
+tx:f-serology a etkl:Field ; etkl:fillsProperty tx:serology ;      tx:agent "immunology" .
+tx:f-transport a etkl:Field ; etkl:fillsProperty tx:projectedTransportMinutes ; tx:agent "logistics" .

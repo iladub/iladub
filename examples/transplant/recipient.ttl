@@ -1,0 +1,9 @@
+@prefix tx: <https://example.org/transplant#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+tx:recipient-001 a tx:Recipient ;
+    tx:aboGroup "O" ;
+    tx:sizeMetric "72kg" ;
+    tx:urgencyStatus "high" ;
+    tx:ready true ;
+    tx:coldIschemiaLimitMinutes 240 .
