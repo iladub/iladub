@@ -37,6 +37,11 @@ Issues = "https://github.com/iladub/iladub/issues"
 "ET(K)L namespace" = "https://w3id.org/etkl"
 
 [project.optional-dependencies]
+baml = [
+    "baml-py>=0.60",
+    "pydantic>=2.6",
+    "typing_extensions>=4.10",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
