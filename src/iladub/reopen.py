@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import Callable
 
 from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF
 
 from .decision import DecisionResult, build_decision_holon
 from .events import Event
