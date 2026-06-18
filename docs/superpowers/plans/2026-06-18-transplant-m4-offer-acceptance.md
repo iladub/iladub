@@ -672,23 +672,23 @@ git commit -m "feat(m4): three focused BAML extraction agents"
 
 Create `tests/test_extract_baml.py`:
 ```python
-import baml_client
+from baml_client import sync_client
 from baml_client.types import DonorClinical, Immunology, Logistics, CodedConcept
 from iladub.extract_baml import extract_offer
 
 
 def _patch(monkeypatch):
     cc = lambda v, q, c=0.9: CodedConcept(value=v, source_quote=q, confidence=c)
-    monkeypatch.setattr(baml_client.b, "ExtractDonorClinical",
+    monkeypatch.setattr(sync_client.b, "ExtractDonorClinical",
         lambda doc: DonorClinical(organ=cc("Heart", "Organ offered: HEART"),
                                   ejectionFraction=cc("60", "LVEF 60%"),
                                   causeOfDeath=cc("anoxic brain injury", "anoxic brain injury"),
                                   sizeMetric=cc("78 kg", "Donor size: 78 kg")), raising=True)
-    monkeypatch.setattr(baml_client.b, "ExtractImmunology",
+    monkeypatch.setattr(sync_client.b, "ExtractImmunology",
         lambda doc: Immunology(aboGroup=cc("O", "Blood group: O"),
                                hlaTyping=cc("A2, B7, DR15", "HLA: A2, B7, DR15"),
                                serology=cc("HIV negative", "HIV negative")), raising=True)
-    monkeypatch.setattr(baml_client.b, "ExtractLogistics",
+    monkeypatch.setattr(sync_client.b, "ExtractLogistics",
         lambda doc: Logistics(projectedTransportMinutes=cc("95", "estimated transport 95 minutes")),
         raising=True)
 
@@ -718,7 +718,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-import baml_client
+from baml_client import sync_client
 
 
 @dataclass(frozen=True)
@@ -748,7 +748,7 @@ def _cc(obj) -> CodedConcept | None:
 
 
 def extract_offer(doc_text: str) -> OfferExtraction:
-    b = baml_client.b
+    b = sync_client.b
     with ThreadPoolExecutor(max_workers=3) as pool:
         f_clin = pool.submit(b.ExtractDonorClinical, doc_text)
         f_imm = pool.submit(b.ExtractImmunology, doc_text)
@@ -1135,7 +1135,7 @@ git commit -m "feat(m4): deterministic accept/decline decision as a hol:Decision
 Create `tests/test_m4_pipeline.py`:
 ```python
 import os
-import baml_client
+from baml_client import sync_client
 from baml_client.types import DonorClinical, Immunology, Logistics, CodedConcept
 from iladub.m4 import compile_offer
 
@@ -1145,17 +1145,17 @@ TXD = os.path.join(ROOT, "examples", "transplant")
 
 def _patch(monkeypatch):
     cc = lambda v, q, c=0.9: CodedConcept(value=v, source_quote=q, confidence=c)
-    monkeypatch.setattr(baml_client.b, "ExtractDonorClinical",
+    monkeypatch.setattr(sync_client.b, "ExtractDonorClinical",
         lambda doc: DonorClinical(organ=cc("Heart", "Organ offered: HEART"),
                                   ejectionFraction=cc("60", "LVEF 60%"),
                                   causeOfDeath=cc("takotsubo-pattern abnormality",
                                                   "transient takotsubo-pattern wall-motion abnormality"),
                                   sizeMetric=cc("78 kg", "Donor size: 78 kg")), raising=True)
-    monkeypatch.setattr(baml_client.b, "ExtractImmunology",
+    monkeypatch.setattr(sync_client.b, "ExtractImmunology",
         lambda doc: Immunology(aboGroup=cc("O", "Blood group: O"),
                                hlaTyping=cc("A2, B7, DR15", "HLA: A2, B7, DR15"),
                                serology=cc("HIV negative", "HIV negative")), raising=True)
-    monkeypatch.setattr(baml_client.b, "ExtractLogistics",
+    monkeypatch.setattr(sync_client.b, "ExtractLogistics",
         lambda doc: Logistics(projectedTransportMinutes=cc("95", "estimated transport 95 minutes")),
         raising=True)
 
