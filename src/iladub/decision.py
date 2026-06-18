@@ -79,5 +79,5 @@ def build_decision_holon(result: DecisionResult,
     for e in evidence:
         g.add((subject, HOL.consideredEvidence, e))
     if process is not None:
-        g.add((subject, HOL.partOf, process))
+        g.add((subject, HOL.withinProcess, process))
     return g

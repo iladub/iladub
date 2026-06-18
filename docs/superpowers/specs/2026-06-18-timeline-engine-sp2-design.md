@@ -115,7 +115,7 @@ Rewrite `src/iladub/decision.py`'s `build_decision_holon` to emit the real `hol`
 - two `hol:Option` nodes (accept, decline); `hol:chosen` → the recommendation;
   `hol:rejectedBecause` on the rejected option (carrying the reason);
 - `hol:consideredEvidence` → the context nodes; `hol:decidedBy` → a synthetic agent;
-- `hol:partOf` → the `hol:Process` (the timeline); `hol:rationale` retained.
+- `hol:withinProcess` → the `hol:Process` (the timeline; `hol:partOf` stays decision→decision); `hol:rationale` retained.
 
 `evaluate_m4`'s decision *logic* is unchanged; only the emitted graph is enriched. SP1's
 existing tests still pass (they assert the `DecisionHolon` type and the `DecisionResult`
@@ -143,7 +143,7 @@ dataclass fields, not the specific predicates).
 - **Two-instance test:** the *same* engine loads heart and kidney TimelineContracts and
   advances each through its milestones; the heart window is 240 and kidney 1800 — same code.
 - decision upgrade: `build_decision_holon` emits two `hol:Option`s, a `hol:chosen`, a
-  `hol:rejectedBecause`, and `hol:partOf` the Process; SP1 decision tests still green.
+  `hol:rejectedBecause`, and `hol:withinProcess` the Process; SP1 decision tests still green.
 - SHACL: `heart-timeline-conformant.ttl` conforms to the timeline shapes; `-leak.ttl` fails.
 
 ## 10. Files

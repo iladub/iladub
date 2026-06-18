@@ -53,3 +53,13 @@ def test_decision_holon_conforms_to_hol_shapes():
     knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
     result = validate(g, shapes, knowledge)
     assert result.conforms, result.report_text
+
+
+def test_decision_holon_conforms_when_wired_to_process():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240)
+    g = build_decision_holon(evaluate_m4(ctx), process=HOL["heart-process"])
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    result = validate(g, shapes, knowledge)
+    assert result.conforms, result.report_text

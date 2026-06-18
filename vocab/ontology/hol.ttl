@@ -152,3 +152,7 @@ hol:clockStop a owl:DatatypeProperty ;
 hol:windowLimitMinutes a owl:DatatypeProperty ;
     rdfs:label "window limit (minutes)"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:integer ;
     rdfs:comment "The maximum duration of the interval this milestone opens (e.g. cold-ischemia limit)."@en .
+
+hol:withinProcess a owl:ObjectProperty ;
+    rdfs:label "within process"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Process ;
+    rdfs:comment "The process holarchy this milestone decision belongs to (decision → process; distinct from hol:partOf, which is decision → decision)."@en .
