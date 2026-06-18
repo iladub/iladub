@@ -1,0 +1,29 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix etkl: <https://w3id.org/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+tx:heart-process a hol:Process ;
+    rdfs:label "Heart DBD transplant (M4–M8)"@en ;
+    hol:hasMilestone tx:m4 , tx:m5 , tx:m6 , tx:m7 , tx:m8 .
+
+tx:m4 a hol:Milestone ; rdfs:label "Offer → Acceptance"@en ; hol:order 4 ;
+    hol:requiresContext tx:ctx-m4 .
+tx:m5 a hol:Milestone ; rdfs:label "Mobilization"@en ; hol:order 5 ;
+    hol:requiresContext tx:ctx-m5 .
+tx:m6 a hol:Milestone ; rdfs:label "Cross-clamp"@en ; hol:order 6 ;
+    hol:clockStart true ; hol:windowLimitMinutes 240 .
+tx:m7 a hol:Milestone ; rdfs:label "Transport"@en ; hol:order 7 ;
+    hol:requiresContext tx:ctx-m7 .
+tx:m8 a hol:Milestone ; rdfs:label "Reperfusion"@en ; hol:order 8 ;
+    hol:clockStop true .
+
+tx:ctx-m4 a etkl:SemanticDataContract ; etkl:hasField tx:tf-organ , tx:tf-abo .
+tx:ctx-m5 a etkl:SemanticDataContract ; etkl:hasField tx:tf-recipient-ready .
+tx:ctx-m7 a etkl:SemanticDataContract ; etkl:hasField tx:tf-transport , tx:tf-crossclamp .
+
+tx:tf-organ          a etkl:Field ; etkl:fillsProperty tx:organ .
+tx:tf-abo            a etkl:Field ; etkl:fillsProperty tx:aboGroup .
+tx:tf-recipient-ready a etkl:Field ; etkl:fillsProperty tx:recipientReady .
+tx:tf-transport      a etkl:Field ; etkl:fillsProperty tx:projectedTransportMinutes .
+tx:tf-crossclamp     a etkl:Field ; etkl:fillsProperty tx:crossClampTime .
