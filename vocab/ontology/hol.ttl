@@ -156,3 +156,24 @@ hol:windowLimitMinutes a owl:DatatypeProperty ;
 hol:withinProcess a owl:ObjectProperty ;
     rdfs:label "within process"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Process ;
     rdfs:comment "The process holarchy this milestone decision belongs to (decision → process; distinct from hol:partOf, which is decision → decision)."@en .
+
+#################################################################
+#  Events & decision lineage (SP3a)
+#################################################################
+
+hol:Event a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Event"@en ;
+    rdfs:comment "A perturbation that may reopen a decision when it matches the decision's hol:revisitIf."@en .
+
+hol:condition a owl:DatatypeProperty ;
+    rdfs:label "condition"@en ; rdfs:domain hol:Event ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The named trigger key this event carries (matched against a decision's hol:revisitIf)."@en .
+
+hol:supersedes a owl:ObjectProperty ;
+    rdfs:label "supersedes"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
+    rdfs:comment "This (re-evaluated) decision supersedes a prior decision — decision lineage."@en .
+
+hol:triggeredBy a owl:ObjectProperty ;
+    rdfs:label "triggered by"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Event ;
+    rdfs:comment "The event that caused this decision to be reopened."@en .

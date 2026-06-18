@@ -52,3 +52,12 @@ hol:MilestoneShape a sh:NodeShape ;
         sh:message "A milestone must declare exactly one integer order." ] ;
     sh:property [ sh:path hol:windowLimitMinutes ; sh:maxCount 1 ; sh:datatype xsd:integer ;
         sh:message "windowLimitMinutes, if present, is a single integer." ] .
+
+#################################################################
+#  An event must declare exactly one condition (SP3a).
+#################################################################
+
+hol:EventShape a sh:NodeShape ;
+    sh:targetClass hol:Event ;
+    sh:property [ sh:path hol:condition ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "An event must declare exactly one condition." ] .
