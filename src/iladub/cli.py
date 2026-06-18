@@ -5,6 +5,7 @@ import argparse
 import sys
 
 from .contract import SemanticDataContract
+from .m4 import compile_offer
 from .pipeline import ContractViolation, Pipeline
 
 
@@ -18,6 +19,9 @@ def main(argv=None) -> int:
     run.add_argument("--knowledge", required=True, help="Knowledge module (.ttl).")
     run.add_argument("--input", required=True, help="Source document to compile.")
     run.add_argument("--out", help="Where to write the output graph (Turtle). Defaults to stdout.")
+
+    m4 = sub.add_parser("m4", help="Compile a transplant organ offer into an M4 decision (live; needs ANTHROPIC_API_KEY).")
+    m4.add_argument("doc", help="Path to the organ-offer document (.txt/.pdf).")
 
     args = parser.parse_args(argv)
 
@@ -37,6 +41,15 @@ def main(argv=None) -> int:
         else:
             print(data)
             print(f"# Conforms: {result.conforms}. {len(graph)} triples.", file=sys.stderr)
+        return 0
+    if args.command == "m4":
+        result = compile_offer(args.doc)
+        n_props = len(set(result.extraction_graph.propositions.subjects(None, None)))
+        print(f"Recommendation: {result.decision.recommendation} "
+              f"(rejected: {result.decision.rejected_option})")
+        print(f"Reason: {result.decision.reason}")
+        print(f"Context conforms: {result.validation.conforms}")
+        print(f"Quarantined propositions: {n_props}")
         return 0
     return 2
 
