@@ -72,3 +72,23 @@ class Timeline:
             if m.id == milestone.id:
                 return seq[i + 1] if i + 1 < len(seq) else None
         return None
+
+
+@dataclass(frozen=True)
+class Readiness:
+    present: tuple[URIRef, ...]
+    missing: tuple[URIRef, ...]
+
+    @property
+    def ready(self) -> bool:
+        return not self.missing
+
+
+def readiness(milestone: Milestone, context_graph: Graph, subject: URIRef) -> Readiness:
+    present, missing = [], []
+    for prop in milestone.requires:
+        if (subject, prop, None) in context_graph:
+            present.append(prop)
+        else:
+            missing.append(prop)
+    return Readiness(tuple(present), tuple(missing))

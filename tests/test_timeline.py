@@ -38,3 +38,29 @@ def test_m4_requires_organ_and_abo():
     tl = Timeline.from_graph(_heart_graph())
     m4 = next(m for m in tl.ordered() if m.order == 4)
     assert set(m4.requires) == {TX.organ, TX.aboGroup}
+
+
+from iladub.timeline import readiness
+
+
+def _context(*present_props):
+    g = Graph()
+    for p in present_props:
+        g.add((TX["offer"], p, __import__("rdflib").Literal("x")))
+    return g
+
+
+def test_readiness_reports_missing_required_property():
+    tl = Timeline.from_graph(_heart_graph())
+    m4 = next(m for m in tl.ordered() if m.order == 4)
+    r = readiness(m4, _context(TX.organ), TX["offer"])   # abo missing
+    assert TX.aboGroup in r.missing
+    assert r.ready is False
+
+
+def test_readiness_true_when_all_present():
+    tl = Timeline.from_graph(_heart_graph())
+    m4 = next(m for m in tl.ordered() if m.order == 4)
+    r = readiness(m4, _context(TX.organ, TX.aboGroup), TX["offer"])
+    assert r.ready is True
+    assert r.missing == ()
