@@ -64,3 +64,31 @@ def test_readiness_true_when_all_present():
     r = readiness(m4, _context(TX.organ, TX.aboGroup), TX["offer"])
     assert r.ready is True
     assert r.missing == ()
+
+
+from iladub.timeline import Cursor, next_capture_plan
+
+
+def test_cursor_advances_when_current_ready():
+    tl = Timeline.from_graph(_heart_graph())
+    cur = Cursor(tl)                       # starts at M4
+    assert cur.current.order == 4
+    moved = cur.advance(_context(TX.organ, TX.aboGroup), TX["offer"])
+    assert moved is True
+    assert cur.current.order == 5
+
+
+def test_cursor_blocks_when_current_not_ready():
+    tl = Timeline.from_graph(_heart_graph())
+    cur = Cursor(tl)
+    moved = cur.advance(_context(TX.organ), TX["offer"])   # abo missing
+    assert moved is False
+    assert cur.current.order == 4
+
+
+def test_forward_pass_lists_next_milestone_needs():
+    tl = Timeline.from_graph(_heart_graph())
+    m4 = next(m for m in tl.ordered() if m.order == 4)
+    plan = next_capture_plan(tl, m4, _context(TX.organ, TX.aboGroup), TX["offer"])
+    assert plan.milestone_id == next(m.id for m in tl.ordered() if m.order == 5)
+    assert TX.recipientReady in plan.needed

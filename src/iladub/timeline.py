@@ -92,3 +92,35 @@ def readiness(milestone: Milestone, context_graph: Graph, subject: URIRef) -> Re
         else:
             missing.append(prop)
     return Readiness(tuple(present), tuple(missing))
+
+
+@dataclass(frozen=True)
+class CapturePlan:
+    milestone_id: URIRef
+    needed: tuple[URIRef, ...]
+
+
+def next_capture_plan(timeline: "Timeline", current: Milestone,
+                      context_graph: Graph, subject: URIRef) -> "CapturePlan | None":
+    nxt = timeline.next_after(current)
+    if nxt is None:
+        return None
+    return CapturePlan(nxt.id, readiness(nxt, context_graph, subject).missing)
+
+
+class Cursor:
+    def __init__(self, timeline: "Timeline"):
+        self.timeline = timeline
+        self._index = 0
+
+    @property
+    def current(self) -> Milestone:
+        return self.timeline.ordered()[self._index]
+
+    def advance(self, context_graph: Graph, subject: URIRef) -> bool:
+        if not readiness(self.current, context_graph, subject).ready:
+            return False
+        if self._index + 1 >= len(self.timeline.ordered()):
+            return False
+        self._index += 1
+        return True
