@@ -113,3 +113,20 @@ def test_feasibility_infeasible_when_window_exceeded():
     f = feasibility(m6, cross_clamp_minute=0, transport=Interval(0, 270))
     assert f.feasible is False
     assert f.slack_minutes == -30
+
+
+def _kidney_graph():
+    return Graph().parse(os.path.join(TXD, "kidney-timeline.ttl"), format="turtle")
+
+
+def test_same_engine_drives_two_distinct_chains():
+    heart = Timeline.from_graph(_heart_graph())
+    kidney = Timeline.from_graph(_kidney_graph())
+    assert [m.order for m in heart.ordered()] == [4, 5, 6, 7, 8]
+    assert [m.order for m in kidney.ordered()] == [1, 2, 3, 4]
+    heart_clock = next(m for m in heart.ordered() if m.window_limit_minutes)
+    kidney_clock = next(m for m in kidney.ordered() if m.window_limit_minutes)
+    assert heart_clock.window_limit_minutes == 240
+    assert kidney_clock.window_limit_minutes == 1800
+    assert feasibility(kidney_clock, 0, Interval(0, 600)).feasible is True
+    assert feasibility(heart_clock, 0, Interval(0, 600)).feasible is False
