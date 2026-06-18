@@ -117,3 +117,38 @@ hol:withinScope a owl:ObjectProperty ;
 hol:revisitIf a owl:DatatypeProperty ;
     rdfs:label "revisit if"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range rdfs:Literal ;
     rdfs:comment "A condition that, if it becomes true, should reopen this decision (decision lineage)."@en .
+
+#################################################################
+#  Timeline / process holarchy (SP2)
+#################################################################
+
+hol:Process a owl:Class ;
+    rdfs:label "Process"@en ;
+    rdfs:comment "A holon whose parts are milestone decisions ordered over time — a time-critical supply chain."@en .
+
+hol:Milestone a owl:Class ;
+    rdfs:label "Milestone"@en ;
+    rdfs:comment "A decision point in a process, with a required-context contract and optional clock role."@en .
+
+hol:hasMilestone a owl:ObjectProperty ;
+    rdfs:label "has milestone"@en ; rdfs:domain hol:Process ; rdfs:range hol:Milestone .
+
+hol:order a owl:DatatypeProperty ;
+    rdfs:label "order"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:integer ;
+    rdfs:comment "Position of the milestone in the process sequence."@en .
+
+hol:requiresContext a owl:ObjectProperty ;
+    rdfs:label "requires context"@en ; rdfs:domain hol:Milestone ; rdfs:range etkl:SemanticDataContract ;
+    rdfs:comment "The required-context contract that must be ready before this milestone's decision."@en .
+
+hol:clockStart a owl:DatatypeProperty ;
+    rdfs:label "clock start"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:boolean ;
+    rdfs:comment "True if this milestone starts the dominant time-critical interval."@en .
+
+hol:clockStop a owl:DatatypeProperty ;
+    rdfs:label "clock stop"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:boolean ;
+    rdfs:comment "True if this milestone stops the dominant time-critical interval."@en .
+
+hol:windowLimitMinutes a owl:DatatypeProperty ;
+    rdfs:label "window limit (minutes)"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:integer ;
+    rdfs:comment "The maximum duration of the interval this milestone opens (e.g. cold-ischemia limit)."@en .

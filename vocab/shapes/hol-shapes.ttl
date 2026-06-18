@@ -40,3 +40,15 @@ hol:ConfidenceShape a sh:NodeShape ;
     sh:property [ sh:path hol:confidence ; sh:maxCount 1 ;
         sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ;
         sh:message "Confidence, if given, must be a single decimal in [0,1]." ] .
+
+#################################################################
+#  A milestone must declare its order (SP2).
+#################################################################
+
+hol:MilestoneShape a sh:NodeShape ;
+    sh:targetClass hol:Milestone ;
+    sh:property [ sh:path hol:order ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:message "A milestone must declare exactly one integer order." ] ;
+    sh:property [ sh:path hol:windowLimitMinutes ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+        sh:message "windowLimitMinutes, if present, is a single integer." ] .
