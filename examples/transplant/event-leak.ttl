@@ -1,0 +1,3 @@
+@prefix tx:  <https://example.org/transplant#> .
+@prefix hol: <https://w3id.org/etkl/hol#> .
+tx:ev a hol:Event .
