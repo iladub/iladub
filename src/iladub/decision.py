@@ -54,10 +54,30 @@ def evaluate_m4(ctx: M4Context) -> DecisionResult:
 
 
 def build_decision_holon(result: DecisionResult,
-                         subject: URIRef = TX["m4-decision"]) -> Graph:
+                         subject: URIRef = TX["m4-decision"],
+                         process: URIRef | None = None,
+                         agent: URIRef = TX["surgeon-1"],
+                         evidence: tuple[URIRef, ...] = ()) -> Graph:
+    """Emit the decision as a hol:DecisionHolon that conforms to hol:DecisionHolonShape:
+    a deliberated option space (accept + decline), exactly one chosen option, an
+    accountable agent, the rejected option's reason, and (optionally) its place in a
+    process holarchy."""
     g = Graph()
+    accept, decline = TX["opt-accept"], TX["opt-decline"]
     g.add((subject, RDF.type, HOL.DecisionHolon))
-    g.add((subject, HOL.recommendation, Literal(result.recommendation)))
-    g.add((subject, HOL.rejectedOption, Literal(result.rejected_option)))
+    g.add((accept, RDF.type, HOL.Option))
+    g.add((decline, RDF.type, HOL.Option))
+    g.add((subject, HOL.optionSpace, accept))
+    g.add((subject, HOL.optionSpace, decline))
+
+    chosen = accept if result.recommendation == "accept" else decline
+    rejected = decline if result.recommendation == "accept" else accept
+    g.add((subject, HOL.chosen, chosen))
+    g.add((rejected, HOL.rejectedBecause, Literal(result.reason)))
+    g.add((subject, HOL.decidedBy, agent))
     g.add((subject, HOL.rationale, Literal(result.reason)))
+    for e in evidence:
+        g.add((subject, HOL.consideredEvidence, e))
+    if process is not None:
+        g.add((subject, HOL.partOf, process))
     return g
