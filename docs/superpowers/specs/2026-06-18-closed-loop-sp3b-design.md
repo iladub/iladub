@@ -62,11 +62,12 @@ Behaviour:
 1. `readiness_before = readiness(cursor.current, context_graph, subject)`.
 2. `captured = capture_fn()`; merge every triple of `captured` into `context_graph` (in place).
 3. `readiness_after = readiness(cursor.current, context_graph, subject)`.
-4. `advanced = cursor.advance(context_graph, subject)` — SP2's `Cursor.advance` already only
+4. `next_plan = next_capture_plan(timeline, cursor.current, context_graph, subject)` — computed
+   **before** advancing, so it reports the *next* milestone and the needs it still has (e.g. M5's
+   `tx:recipientReady`). This is the forward look: "what does the milestone we're about to enter
+   still need." (Resolves the §8 open item.)
+5. `advanced = cursor.advance(context_graph, subject)` — SP2's `Cursor.advance` already only
    moves when the current milestone is ready and there is a next milestone.
-5. `next_plan = next_capture_plan(timeline, cursor.current, context_graph, subject)` — after a
-   successful advance `cursor.current` is the new milestone, so this is the forward look at what
-   the milestone *after* it needs; if no advance, it looks at the next milestone from here.
 6. return the `CaptureStep`.
 
 `capture_fn` is a zero-argument callable returning a grounded `Graph`. Merging the *full*
