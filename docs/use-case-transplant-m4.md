@@ -66,3 +66,20 @@ the timeline knows the next decision will require.
 > The loop is deterministic; the LLM is confined to `capture_fn` (the SP1 funnel), monkeypatched
 > offline and exercised live behind `BAML_LIVE=1`. This completes the compile → anticipate →
 > react → drive-capture arc (SP1 → SP2 → SP3a → SP3b).
+
+## Targeted capture (SP3c)
+
+SP3b drove capture by running the whole offer funnel. SP3c makes the funnel **contract-generic**:
+each milestone's required-context contract declares its own extractor (`iladub:extractor`), and
+`iladub.bridge.generate_context_baml` emits — at build time — a BAML class + function for exactly
+that contract's fields. `iladub.m4.capture_for_milestone` reads the declaration, runs the
+milestone's extractor, and grounds it via `iladub.to_rdf.ground_typed` (a field with an
+`etkl:admissibleScheme` must ground; otherwise it is a free literal).
+
+Worked example: the cursor reaches M5, which needs `tx:recipientReady`. A recipient-status report
+arrives; the loop runs **only** `ExtractRecipientContext` (not the organ/ABO agents), grounds
+`tx:recipientReady`, and advances to M6. Extraction is now driven by what *this* milestone needs.
+
+> Build-time-faithful: the per-milestone extractor is generated, committed, and sync-tested before
+> any document is compiled. M4 still uses the SP1 offer funnel; generating extractors for every
+> milestone (and retiring the fixed agents) is the natural next step.
