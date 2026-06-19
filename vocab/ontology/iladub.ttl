@@ -119,3 +119,13 @@ iladub:wasPromotedBy a owl:ObjectProperty ;
 iladub:groundsTo a owl:ObjectProperty ;
     rdfs:label "grounds to"@en ; rdfs:domain iladub:GroundedNode ;
     rdfs:comment "The provided-ontology concept the grounded node is now bound to (the assertion)."@en .
+
+#################################################################
+#  Contract-generic extraction binding (SP3c)
+#################################################################
+
+iladub:extractor a owl:DatatypeProperty ;
+    rdfs:label "extractor"@en ;
+    rdfs:domain etkl:SemanticDataContract ;
+    rdfs:range rdfs:Literal ;
+    rdfs:comment "Name of the build-time-generated BAML function that extracts this contract's fields."@en .
