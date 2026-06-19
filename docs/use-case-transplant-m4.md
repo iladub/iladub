@@ -47,3 +47,22 @@ recorded and both decisions retained.
 
 > Deterministic — no LLM. Reopening is at the decision level; rewinding the timeline cursor and
 > wiring the forward pass to the extraction funnel remain the next slice (SP3b).
+
+## Closing the loop (SP3b)
+
+The timeline now both anticipates and acts on its anticipation. `iladub.loop.advance_with_capture`
+readies the current milestone by **driving capture**: when the milestone is missing required
+context, it runs a supplied `capture_fn`, merges the grounded result into the context, re-checks
+`readiness`, and advances the cursor — then reports the **forward look** (what the next milestone
+still needs). For the transplant case, `iladub.m4.capture_context` is that `capture_fn`: it runs
+the SP1 funnel (`extract_offer` → `to_rdf`) over an incoming document.
+
+Worked example: the cursor sits at M4 with an empty context. A donor offer arrives;
+`advance_with_capture` runs the funnel, grounds `tx:organ`/`tx:aboGroup`, M4 becomes ready, and
+the cursor advances to M5 — whose remaining need (`tx:recipientReady`, absent from the offer) is
+flagged for the next capture from a different source. Capture is *anticipated* — driven by what
+the timeline knows the next decision will require.
+
+> The loop is deterministic; the LLM is confined to `capture_fn` (the SP1 funnel), monkeypatched
+> offline and exercised live behind `BAML_LIVE=1`. This completes the compile → anticipate →
+> react → drive-capture arc (SP1 → SP2 → SP3a → SP3b).
