@@ -72,3 +72,30 @@ def test_capture_context_grounds_organ_and_abo(monkeypatch):
     g = capture_context(OFFER)
     assert (TX["offer"], TX.organ, Literal("Heart")) in g
     assert (TX["offer"], TX.aboGroup, Literal("O")) in g
+
+
+import pytest
+
+
+def test_closed_loop_readies_m4_from_offer_and_advances(monkeypatch):
+    _patch_agents(monkeypatch)
+    tl = _heart()
+    cursor = Cursor(tl)                 # at M4
+    ctx = Graph()                       # empty
+    step = advance_with_capture(tl, cursor, ctx, lambda: capture_context(OFFER), TX["offer"])
+    assert step.readiness_before.ready is False
+    assert step.readiness_after.ready is True
+    assert step.advanced is True
+    assert cursor.current.order == 5
+    assert step.next_plan is not None and TX.recipientReady in step.next_plan.needed
+
+
+@pytest.mark.skipif(os.environ.get("BAML_LIVE") != "1",
+                    reason="set BAML_LIVE=1 to call the real API")
+def test_closed_loop_live():
+    tl = _heart()
+    cursor = Cursor(tl)
+    ctx = Graph()
+    step = advance_with_capture(tl, cursor, ctx, lambda: capture_context(OFFER), TX["offer"])
+    assert step.advanced is True
+    assert cursor.current.order == 5
