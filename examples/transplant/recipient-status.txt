@@ -1,0 +1,4 @@
+RECIPIENT STATUS REPORT (synthetic)
+Recipient ref: ZRH-CAND-204
+Recipient readiness: READY. Admitted; anaesthesia briefed.
+Final crossmatch: negative.

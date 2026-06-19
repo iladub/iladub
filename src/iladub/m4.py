@@ -26,6 +26,26 @@ class M4Result:
     decision_graph: Graph
 
 
+from rdflib import Namespace as _Namespace
+
+_HOL = _Namespace("https://w3id.org/etkl/hol#")
+_ILADUB = _Namespace("https://w3id.org/etkl/iladub#")
+
+
+def capture_for_milestone(milestone, timeline_graph: Graph, document_text: str,
+                          terms: Graph, subject, b=None) -> Graph:
+    """Run the milestone's declared (contract-targeted) extractor over a document and
+    return the grounded graph on `subject`. The extractor is named by the milestone's
+    requiresContext contract via iladub:extractor."""
+    from baml_client import sync_client
+    from .to_rdf import ground_typed
+    b = b if b is not None else sync_client.b
+    contract_node = timeline_graph.value(milestone.id, _HOL.requiresContext)
+    fn_name = str(timeline_graph.value(contract_node, _ILADUB.extractor))
+    typed = getattr(b, fn_name)(document_text)
+    return ground_typed(typed, timeline_graph, contract_node, terms, subject).graph
+
+
 def capture_context(offer_path: str,
                     terms_path: str = os.path.join(_TXD, "transplant-terms.ttl")) -> Graph:
     """Run the SP1 funnel over a document and return the grounded (asserted) graph,
