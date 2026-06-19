@@ -15,6 +15,7 @@ from rdflib.namespace import RDF, SKOS
 TX = Namespace("https://example.org/transplant#")
 ILADUB = Namespace("https://w3id.org/etkl/iladub#")
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
+ETKL = Namespace("https://w3id.org/etkl#")
 
 OFFER = TX["offer"]
 
@@ -49,6 +50,36 @@ def _resolves(terms: Graph, value: str) -> bool:
         if str(notation).strip().lower() == v:
             return True
     return False
+
+
+def ground_typed(typed_obj, contract_graph: Graph, contract_node: URIRef,
+                 terms: Graph, subject: URIRef) -> ExtractionGraph:
+    """Map a typed extraction object to RDF, driven by ONE contract (contract_node):
+    each etkl:hasField's fillsProperty local-name is read off typed_obj; a field WITH an
+    etkl:admissibleScheme must ground (unresolved -> CandidateConcept), a field WITHOUT one
+    is asserted as a free literal on `subject`."""
+    eg = ExtractionGraph()
+    n = 0
+    for field in contract_graph.objects(contract_node, ETKL.hasField):
+        prop = contract_graph.value(field, ETKL.fillsProperty)
+        if prop is None:
+            continue
+        cc = getattr(typed_obj, str(prop).rsplit("#", 1)[-1], None)
+        if cc is None:
+            continue
+        must_ground = contract_graph.value(field, ETKL.admissibleScheme) is not None
+        if (not must_ground) or _resolves(terms, cc.value):
+            eg.graph.add((subject, prop, Literal(cc.value)))
+        else:
+            n += 1
+            cand = ILADUB[f"candidate-{n}"]
+            region = BNode()
+            eg.propositions.add((cand, RDF.type, ILADUB.CandidateConcept))
+            eg.propositions.add((cand, ILADUB.confidence, Literal(cc.confidence, datatype=XSD.decimal)))
+            eg.propositions.add((cand, ILADUB.fromRegion, region))
+            eg.propositions.add((region, RDF.type, ILADUB.SourceRegion))
+            eg.propositions.add((region, ILADUB.surfaceText, Literal(cc.source_quote)))
+    return eg
 
 
 def to_rdf(extraction, terms: Graph) -> ExtractionGraph:

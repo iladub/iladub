@@ -22,8 +22,10 @@ tx:ctx-m4 a etkl:SemanticDataContract ; etkl:hasField tx:tf-organ , tx:tf-abo .
 tx:ctx-m5 a etkl:SemanticDataContract ; etkl:hasField tx:tf-recipient-ready .
 tx:ctx-m7 a etkl:SemanticDataContract ; etkl:hasField tx:tf-transport , tx:tf-crossclamp .
 
-tx:tf-organ          a etkl:Field ; etkl:fillsProperty tx:organ .
-tx:tf-abo            a etkl:Field ; etkl:fillsProperty tx:aboGroup .
+tx:tf-organ          a etkl:Field ; etkl:fillsProperty tx:organ ;
+    etkl:admissibleScheme tx:scheme-organ .
+tx:tf-abo            a etkl:Field ; etkl:fillsProperty tx:aboGroup ;
+    etkl:admissibleScheme tx:scheme-abo .
 tx:tf-recipient-ready a etkl:Field ; etkl:fillsProperty tx:recipientReady .
 tx:tf-transport      a etkl:Field ; etkl:fillsProperty tx:projectedTransportMinutes .
 tx:tf-crossclamp     a etkl:Field ; etkl:fillsProperty tx:crossClampTime .
