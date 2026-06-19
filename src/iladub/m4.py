@@ -26,6 +26,15 @@ class M4Result:
     decision_graph: Graph
 
 
+def capture_context(offer_path: str,
+                    terms_path: str = os.path.join(_TXD, "transplant-terms.ttl")) -> Graph:
+    """Run the SP1 funnel over a document and return the grounded (asserted) graph,
+    suitable as a capture_fn body for the timeline loop (loop.advance_with_capture)."""
+    text = read_document(offer_path)
+    terms = Graph().parse(terms_path, format="turtle")
+    return to_rdf(extract_offer(text), terms).graph
+
+
 def compile_offer(doc_path: str,
                   terms_path: str = os.path.join(_TXD, "transplant-terms.ttl"),
                   shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),

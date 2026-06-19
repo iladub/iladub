@@ -42,3 +42,33 @@ def test_no_advance_when_capture_insufficient():
     assert step.advanced is False
     assert cursor.current.order == 4
     assert TX.aboGroup in step.still_missing
+
+
+from baml_client import sync_client
+from baml_client.types import DonorClinical, Immunology, Logistics, CodedConcept
+from iladub.m4 import capture_context
+
+OFFER = os.path.join(TXD, "offer.txt")
+
+
+def _patch_agents(monkeypatch):
+    cc = lambda v, q, c=0.9: CodedConcept(value=v, source_quote=q, confidence=c)
+    monkeypatch.setattr(sync_client.b, "ExtractDonorClinical",
+        lambda doc: DonorClinical(organ=cc("Heart", "Organ offered: HEART"),
+                                  ejectionFraction=cc("60", "LVEF 60%"),
+                                  causeOfDeath=cc("anoxic brain injury", "anoxic brain injury"),
+                                  sizeMetric=cc("78 kg", "Donor size: 78 kg")), raising=True)
+    monkeypatch.setattr(sync_client.b, "ExtractImmunology",
+        lambda doc: Immunology(aboGroup=cc("O", "Blood group: O"),
+                               hlaTyping=cc("A2, B7, DR15", "HLA: A2, B7, DR15"),
+                               serology=cc("HIV negative", "HIV negative")), raising=True)
+    monkeypatch.setattr(sync_client.b, "ExtractLogistics",
+        lambda doc: Logistics(projectedTransportMinutes=cc("95", "estimated transport 95 minutes")),
+        raising=True)
+
+
+def test_capture_context_grounds_organ_and_abo(monkeypatch):
+    _patch_agents(monkeypatch)
+    g = capture_context(OFFER)
+    assert (TX["offer"], TX.organ, Literal("Heart")) in g
+    assert (TX["offer"], TX.aboGroup, Literal("O")) in g
