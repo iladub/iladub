@@ -57,3 +57,18 @@ def test_graph_selector_extracts_block(tmp_path):
     write_databook(fm, blocks, "", str(p))
     g = read_databook(str(p)).graph("asserted")
     assert len(g) == 1
+
+def test_validate_frontmatter_required_keys():
+    assert validate_frontmatter({"id": "x", "title": "t", "type": "databook",
+                                 "version": "1.0.0", "created": "2026-06-23"}) == []
+    errs = validate_frontmatter({"id": "x"})
+    assert any("title" in e for e in errs)
+
+def test_validate_frontmatter_requires_process_stamp():
+    fm = {"id": "x", "title": "t", "type": "databook", "version": "1.0.0",
+          "created": "2026-06-23"}
+    errs = validate_frontmatter(fm, require_process=True)
+    assert any("process" in e for e in errs)
+    fm["process"] = {"transformer": "BAML", "transformer_type": "llm",
+                     "inputs": [], "timestamp": "2026-06-23T00:00:00Z"}
+    assert validate_frontmatter(fm, require_process=True) == []
