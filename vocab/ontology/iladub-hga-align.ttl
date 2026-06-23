@@ -1,0 +1,80 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix holon:  <http://w3id.org/holon/> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#  OPTIONAL alignment module: anchors iladub's holon types under the
+#  W3C Holon Community Group ontology (HGA), `holon:` =
+#  http://w3id.org/holon/  (NOTE: http, not https — keep it exact).
+#
+#  ALIGNMENT, NOT IMPORT (the CG's own stance): this file carries only
+#  rdfs:subClassOf / annotation axioms and deliberately does NOT
+#  owl:import HGA. iladub's core stays standalone and reasoner-free;
+#  load this module only when you want iladub classified under HGA.
+#
+#  Anchor decided 2026-06-23: Cagle's W3C HGA (not Welz's CGA).
+#  Class IRIs verified against w3c-cg/holon HEAD 2fcc928 (2026-06-23).
+#################################################################
+
+<https://w3id.org/etkl/iladub/hga-alignment> a owl:Ontology ;
+    dcterms:title "iladub → HGA alignment (W3C Holon CG)"@en ;
+    dcterms:description """Optional, separately loadable alignment of iladub's holon types
+and grounding portal to the W3C Holon Community Group's Holon Graph Architecture (HGA,
+`holon:`). Alignment-not-import: no owl:imports; rdfs:subClassOf axioms only."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-06-23"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/etkl/iladub/holons> ,
+                 <https://github.com/w3c-cg/holon> .
+
+#################################################################
+#  Holon-type alignment
+#  HGA's holon:DataHolon = "information-bearing artefact; documents,
+#  records, reports; produced and consumed by the pipeline" — the
+#  natural anchor for iladub's document/semantic holons.
+#################################################################
+
+iladub:DocumentHolon      rdfs:subClassOf holon:DataHolon .
+iladub:RawDocumentHolon   rdfs:subClassOf holon:DataHolon .
+iladub:CleanDocumentHolon rdfs:subClassOf holon:DataHolon .
+iladub:SemanticHolon      rdfs:subClassOf holon:DataHolon .
+
+#  HGA's holon:Portal is a *navigational link between holons*
+#  (sourceHolon / portalTarget / portalStatus, ODRL-gated PortalLock).
+#  iladub:GroundingPortal subclasses it and ADDS the concept-matching
+#  transform — that extension is iladub's, not inherited from HGA.
+iladub:GroundingPortal    rdfs:subClassOf holon:Portal .
+
+#################################################################
+#  Grounding-model alignment (informative)
+#  HGA's holon:GroundingRecord already carries sourceString /
+#  matchedIRI / groundingConfidence / matchType (ExactMatch=1.0,
+#  SemanticMatch≥0.90, FuzzyMatch[0.50,0.90), NoMatch=0.0), and routes
+#  Fuzzy/NoMatch to holon:CandidateStatus. iladub maps onto this:
+#    - a GroundingRecord at holon:CandidateStatus ≈ iladub:CandidateConcept
+#      (a PROPOSITION, at the membrane, not admitted);
+#    - a GroundingRecord at holon:RegisteredStatus ≈ a grounded assertion
+#      (inside the membrane).
+#  These are close, not strict-equivalent, mappings — recorded as notes,
+#  not owl:equivalentClass.
+#
+#  iladub's CONTRIBUTION over HGA: HGA promotes Candidate→Registered with
+#  a bare confidence gate. iladub requires that crossing to be the product
+#  of an accountable iladub:PromotionDecision (a hol:DecisionHolon).
+#  That governance is enforced by iladub-hga-shapes.ttl
+#  (iladub:HgaGroundingGovernanceShape over holon:GroundingRecord).
+#################################################################
+
+iladub:CandidateConcept rdfs:seeAlso holon:GroundingRecord ;
+    rdfs:comment "Aligns with a holon:GroundingRecord at holon:CandidateStatus (a proposition at the membrane)."@en .
+
+iladub:GroundedNode rdfs:seeAlso holon:GroundingRecord ;
+    rdfs:comment "Aligns with a holon:GroundingRecord at holon:RegisteredStatus — but, per iladub, registration is admissible only as the product of an iladub:PromotionDecision."@en .

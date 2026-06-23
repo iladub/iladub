@@ -1,0 +1,52 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix holon:  <http://w3id.org/holon/> .
+@prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  GOVERNED GROUNDING (conforms).
+#  The full bridge: a PROPOSITION (iladub:CandidateConcept) — which HGA would
+#  hold at holon:CandidateStatus — is reviewed by an accountable
+#  iladub:PromotionDecision, which PRODUCES a holon:GroundingRecord that then
+#  carries holon:RegisteredStatus. iladub's invariant layered onto HGA's
+#  lifecycle. Passes both iladub-shapes.ttl and iladub-hga-shapes.ttl.
+
+#  The proposition, honest about itself.
+ex:cand-egfr a iladub:CandidateConcept ;
+    iladub:surfaceText "eGFR"@en ;
+    iladub:suggestedAnchor gist:Magnitude ;
+    iladub:suggestedBy ex:extractor-v0 ;
+    iladub:confidence 0.74 ;
+    iladub:fromRegion ex:region-p1-tbl2 ;
+    iladub:status iladub:proposed .
+
+#  The accountable membrane-crossing.
+ex:promo-egfr a iladub:PromotionDecision , hol:DecisionHolon ;
+    rdfs:label "Promote 'eGFR' grounding to registered"@en ;
+    iladub:reviews ex:cand-egfr ;
+    hol:decidedBy ex:curator-aliki ;
+    hol:optionSpace ex:opt-accept , ex:opt-reject ;
+    hol:chosen ex:opt-accept ;
+    hol:rationale "Fuzzy on surface form, but the table header and units make the match certain."@en ;
+    hol:confidence 0.93 ;
+    hol:produced ex:gr-egfr .
+
+#  The HGA-native grounding record the decision produced: registered only
+#  BECAUSE the promotion produced it (the governance shape checks exactly this).
+ex:gr-egfr a holon:GroundingRecord ;
+    holon:sourceString "eGFR" ;
+    holon:matchType holon:FuzzyMatch ;
+    holon:groundingConfidence 0.74 ;
+    holon:matchedIRI ex:GlomerularFiltrationRate ;
+    holon:registrationStatus holon:RegisteredStatus ;
+    iladub:fromRegion ex:region-p1-tbl2 .
+
+ex:opt-accept a hol:Option ; rdfs:label "accept the match and register"@en .
+ex:opt-reject a hol:Option ; rdfs:label "reject"@en ;
+    hol:rejectedBecause "Surface form alone is ambiguous, but context resolves it."@en .
+
+ex:extractor-v0 a iladub:Suggester ; rdfs:label "iladub extractor v0 (model)"@en .
+ex:curator-aliki a prov:Agent ; rdfs:label "Dr. A. Curator"@en .
+ex:region-p1-tbl2 a iladub:SourceRegion ; rdfs:label "page 1, table 2"@en .

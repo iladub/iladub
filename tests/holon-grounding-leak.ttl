@@ -1,0 +1,19 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix holon:  <http://w3id.org/holon/> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  AN ILLEGAL LEAK: a holon:GroundingRecord that reaches
+#  holon:RegisteredStatus on the bare confidence gate alone, with NO
+#  iladub:PromotionDecision producing it. iladub:HgaGroundingGovernanceShape
+#  MUST reject this.
+
+ex:gr-bad a holon:GroundingRecord ;
+    holon:sourceString "Wirkstoffspiegel" ;
+    holon:matchType holon:FuzzyMatch ;
+    holon:groundingConfidence 0.55 ;
+    holon:matchedIRI ex:DrugConcentration ;
+    holon:registrationStatus holon:RegisteredStatus ;
+    iladub:fromRegion ex:region-p2 .
+
+ex:region-p2 a iladub:SourceRegion ; rdfs:label "page 2"@en .
