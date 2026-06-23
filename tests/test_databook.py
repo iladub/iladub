@@ -1,7 +1,4 @@
-import os
 from iladub.databook import read_databook, write_databook, Block, validate_frontmatter
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SAMPLE = """---
 id: https://example.org/db/sample

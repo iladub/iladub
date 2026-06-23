@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 import yaml
 from rdflib import Graph
@@ -20,14 +19,18 @@ _FENCE_OPEN = re.compile(r"^```(\w*)\s*$")
 _FENCE_CLOSE = re.compile(r"^```\s*$")
 
 _RDF_LANGS = {"turtle", "turtle12", "trig", "shacl", "ntriples"}
+_RDFLIB_FORMAT = {
+    "turtle": "turtle", "turtle12": "turtle",
+    "trig": "trig", "shacl": "turtle", "ntriples": "nt",
+}
 
 
 @dataclass
 class Block:
     lang: str
     content: str
-    id: Optional[str] = None
-    graph_iri: Optional[str] = None
+    id: str | None = None
+    graph_iri: str | None = None
 
 
 @dataclass
@@ -46,13 +49,13 @@ class Databook:
                 continue
             if want and b.id not in want and b.lang not in want:
                 continue
-            g.parse(data=b.content, format="turtle")
+            g.parse(data=b.content, format=_RDFLIB_FORMAT.get(b.lang, b.lang))
         return g
 
 
 def read_databook(path: str) -> Databook:
     with open(path, encoding="utf-8") as fh:
-        raw = fh.read()
+        raw = fh.read().replace("\r\n", "\n")
     m = _FM_RE.match(raw)
     if not m:
         raise ValueError(f"{path}: missing YAML frontmatter")
@@ -77,11 +80,15 @@ def read_databook(path: str) -> Databook:
             while i < len(lines) and not _FENCE_CLOSE.match(lines[i]):
                 body.append(lines[i])
                 i += 1
+            if i >= len(lines):
+                raise ValueError(f"{path}: unterminated fenced block (lang={lang!r})")
             i += 1  # consume closing fence
             blocks.append(Block(lang=lang, content="\n".join(body),
                                 id=pending.get("id"), graph_iri=pending.get("graph")))
             pending = {}
             continue
+        if pending:
+            pending = {}  # metadata comment not immediately followed by a fence
         prose_lines.append(line)
         i += 1
     return Databook(frontmatter=frontmatter,
