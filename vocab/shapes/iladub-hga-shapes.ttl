@@ -1,0 +1,40 @@
+@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix holon:  <http://w3id.org/holon/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#  iladub governance layered onto HGA's grounding lifecycle.
+#
+#  HGA routes low-confidence matches to holon:CandidateStatus and
+#  promotes Candidate→Registered with a bare confidence gate. iladub's
+#  invariant is stronger: a holon:GroundingRecord may carry
+#  holon:RegisteredStatus ONLY as the product of an accountable
+#  iladub:PromotionDecision (a hol:DecisionHolon, linked by hol:produced).
+#  This extends iladub's "no grounded node without a promotion decision"
+#  invariant (iladub-shapes.ttl) onto HGA's native GroundingRecord.
+#
+#  Requires the HGA alignment posture; load alongside iladub-shapes.ttl.
+#################################################################
+
+iladub:hgaPrefixes
+    sh:declare [ sh:prefix "iladub" ; sh:namespace "https://w3id.org/etkl/iladub#"^^xsd:anyURI ] ,
+               [ sh:prefix "hol"    ; sh:namespace "https://w3id.org/etkl/hol#"^^xsd:anyURI ] ,
+               [ sh:prefix "holon"  ; sh:namespace "http://w3id.org/holon/"^^xsd:anyURI ] .
+
+iladub:HgaGroundingGovernanceShape a sh:NodeShape ;
+    sh:targetClass holon:GroundingRecord ;
+    sh:sparql [
+        sh:message "iladub governance: a holon:GroundingRecord may reach holon:RegisteredStatus only as the product of an iladub:PromotionDecision (hol:produced). HGA's bare confidence gate is not sufficient." ;
+        sh:prefixes iladub:hgaPrefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this holon:registrationStatus holon:RegisteredStatus .
+                FILTER NOT EXISTS {
+                    ?d a iladub:PromotionDecision ; hol:produced $this .
+                }
+            }
+        """ ;
+    ] .

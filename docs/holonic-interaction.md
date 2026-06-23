@@ -120,17 +120,36 @@ one tree.
 
 iladub follows the same principle it applies to provenance ("don't reinvent"): iladub's
 holon types and its grounding portal are defined in the `iladub`/`hol` namespaces and
-**aligned** to CGA (e.g. `iladub:CleanDocumentHolon rdfs:subClassOf cga:Holon`,
-`iladub:GroundingPortal rdfs:subClassOf cga:TransformPortal`,
-`iladub:PromotionDecision` as the governed crossing), not copied from it.
+**aligned** to the W3C Holon CG ontology, not copied from it.
+
+> **Anchor (settled 2026-06-23):** the alignment target is **Cagle's W3C Holon CG /
+> HGA** (`holon:` = `http://w3id.org/holon/`), *not* Welz's CGA (`urn:holonic:ontology:`),
+> which remains useful conceptual prior art. HGA's `holon:DataHolon` ("information-bearing
+> artefact … produced and consumed by the pipeline") is the natural anchor for iladub's
+> document/semantic holons; `holon:Portal` (a *navigational* link) anchors the grounding
+> portal, which **adds** the concept-matching transform. Note HGA has **no `holon:Boundary`
+> class** (boundary semantics ride on `holon:boundaryMode` + SHACL shapes). See
+> `CLAUDE.md` ("Holonic interaction model").
+
+## What is built
+
+- `vocab/ontology/iladub-holons.ttl` — the holon types + grounding portal + membrane
+  health, in the `iladub` namespace, **standalone** (no HGA dependency).
+- `vocab/ontology/iladub-hga-align.ttl` — the **optional** HGA alignment
+  (alignment-not-import): `rdfs:subClassOf holon:DataHolon` / `holon:Portal` axioms only.
+- `vocab/shapes/iladub-hga-shapes.ttl` — `iladub:HgaGroundingGovernanceShape`: a
+  `holon:GroundingRecord` may reach `holon:RegisteredStatus` **only** as the product of an
+  `iladub:PromotionDecision` (iladub's invariant layered onto HGA's bare confidence gate).
+- `examples/holon-grounding-conformant.ttl` + `tests/holon-grounding-leak.ttl` — a
+  conforming governed-grounding traversal and a negative case; exercised by
+  `tests/test_hga_alignment.py`.
 
 ## Planned work (not done yet)
 
-- Express the holon types and the grounding portal in `vocab/ontology/` with an
-  optional CGA alignment module (alignment-not-import).
-- Add SHACL shapes for the membrane and a worked example (a raw document holon → clean
-  document holon traversal) with a conforming case and a negative case.
-- A membrane-health check that reports a compiled document's cleanliness.
+- A membrane-health check that computes and reports a compiled document's cleanliness
+  (`iladub:membraneHealth` → Intact / Weakened / Compromised) from validation results.
+- A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
+  (the current example covers the grounding-governance crossing only).
 
 ## Sources
 

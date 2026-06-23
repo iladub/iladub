@@ -68,7 +68,7 @@ It is the document-compiling front end of the **ET(K)L** method
 7. **Only emit what the source supports.** Never fabricate resources/data to achieve
    "full coverage." Credibility over completeness.
 
-## Holonic interaction model (align with CGA, don't reinvent)
+## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
 iladub is modeled as **interacting holons**, not just isolated definitions — *how
 holons interact is the architecture*. A **RawDocumentHolon** and the **SemanticHolons**
@@ -78,17 +78,43 @@ concept-matching at that portal is governed by **PromotionDecisions** at the con
 **membrane-health is its cleanliness**. Assertions are *inside* the membrane;
 propositions are candidates *at* it. See `docs/holonic-interaction.md`.
 
-- We **align with**, and do **not** reinvent, the holonic-graph model: Kurt Cagle's
-  four-layer holon (interior / boundary / projection / context; boundary = Markov
-  blanket; portals as liminal holons) and its reference ontology, **CGA** (Zach Welz's
-  `holonic` library).
-- **Alignment, not import** (CGA's own stance): iladub's holon types and grounding
-  portal live in the `iladub`/`hol` namespaces and are aligned via `rdfs:subClassOf`
-  to `cga:` (e.g. `iladub:CleanDocumentHolon ⊑ cga:Holon`,
-  `iladub:GroundingPortal ⊑ cga:TransformPortal`) — never copied, never hard-imported.
+- We **align with**, and do **not** reinvent, the holonic-graph model. The **anchor
+  is Cagle's W3C HGA** (`holon:` = `http://w3id.org/holon/`), the W3C Holon CG's
+  reference ontology — *not* Welz's CGA (`urn:holonic:ontology:`), which remains useful
+  conceptual prior art but is no longer the alignment target (decided 2026-06-23).
+- **Alignment, not import:** iladub's holon types and grounding portal live in the
+  `iladub`/`hol` namespaces and are aligned via `rdfs:subClassOf` to `holon:`
+  (e.g. `iladub:CleanDocumentHolon ⊑ holon:DataHolon` (or `holon:Holon`),
+  `iladub:RawDocumentHolon ⊑ holon:DataHolon`, `iladub:GroundingPortal ⊑ holon:Portal`)
+  — never copied, never hard-imported. Reuse HGA's grounding lifecycle where it fits:
+  iladub's `iladub:PromotionDecision` governs the `holon:GroundingRecord` →
+  `holon:RegisteredStatus` transition that HGA leaves to a bare confidence gate.
 - `hol` therefore generalizes from "decision-context only" toward "holon + interaction,"
   with `hol:DecisionHolon` as one holon type and `iladub:PromotionDecision` as the
   governed membrane-crossing.
+
+### Posture toward the W3C Holon Community Group (settled 2026-06-23)
+
+Cagle now chairs the **W3C Holon Community Group** (github.com/w3c-cg/holon), with his
+own ontology **HGA** (`http://w3id.org/holon/`) and a **DataBook** authoring format.
+This is the standardization venue for the general holon substrate. **iladub anchors to
+HGA** (`holon:`), not Welz's CGA (`urn:holonic:ontology:`) — settled 2026-06-23; see the
+alignment bullets above.
+
+- **iladub does NOT compete with or reinvent what the CG builds.** Be a good citizen:
+  align (not import), and contribute iladub's distinctive parts upstream rather than
+  duplicating the substrate.
+- **Defer to the CG (do not build a parallel version):** core holon vocabulary,
+  portal/boundary machinery, the Markov-blanket / Friston–Bayesian layer, federation,
+  generic event/projection/camera infra, the DataBook format + CLI.
+- **iladub focuses on its differentiators:** (1) **document compilation** — the ET(K)L
+  RawDocument→grounding-portal→CleanDocument front end; (2) **promotion epistemics** —
+  SHACL-enforced "every grounded node is produced by an `iladub:PromotionDecision`,"
+  which is *stronger* than HGA's confidence-gate (HGA routes low-confidence to
+  `CandidateStatus` but does not require an accountable decision); (3) the **semantic
+  data contract as ontology**; (4) **provenance-to-the-page**; (5) **domain-neutral
+  worked examples** (healthcare/insurance) that can feed CG WG V (Industry Utilisation).
+  Bring (2) to CG WG IV (Validation/Verification/Security).
 
 ## Serialization & stack conventions
 
@@ -138,7 +164,11 @@ muddied authorship provenance.)
       (Verified 2026-05-31: `vocab/LICENSE` is CC-BY-4.0, `CITATION.cff` at root.)
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
-- [ ] Express the holonic interaction model in `vocab/` (holon types + grounding portal
-      + membrane shapes) with an optional CGA alignment module (alignment-not-import),
-      plus a worked raw→clean traversal example. Design fixed in
-      `docs/holonic-interaction.md`; ontology work not yet started.
+- [ ] Express the holonic interaction model in `vocab/` — but **scope it to iladub's
+      differentiators** (grounding portal + membrane/promotion shapes + the
+      RawDocument→CleanDocument traversal), *not* a parallel general holon ontology;
+      defer the substrate to the W3C Holon CG and align by `rdfs:subClassOf`. Design
+      fixed in `docs/holonic-interaction.md`; ontology work not yet started.
+- [x] Decide the alignment anchor. (Settled 2026-06-23: anchor to **Cagle's W3C HGA**,
+      `holon:` = `http://w3id.org/holon/`; Welz CGA is no longer the target. See the
+      "Holonic interaction model" alignment bullets above.)
