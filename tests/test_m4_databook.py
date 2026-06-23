@@ -64,3 +64,33 @@ def test_compile_offer_databook_emits_clean_holon(monkeypatch, tmp_path):
     inputs = db.frontmatter["process"]["inputs"]
     assert len(inputs) == 4
     assert {"primary", "contract", "knowledge", "constraint"} <= {i["role"] for i in inputs}
+
+
+def test_curated_clean_conformant_passes_shacl():
+    db = read_databook(os.path.join(TXD, "offer.clean.databook.md"))
+    asserted = db.graph("asserted")
+    shapes = Graph().parse(os.path.join(TXD, "offer-shapes.ttl"), format="turtle")
+    know = Graph().parse(os.path.join(TXD, "transplant-ontology.ttl"), format="turtle")
+    conforms, _, _ = shacl_validate(asserted, shacl_graph=shapes, ont_graph=know,
+                                    inference="rdfs", advanced=True)
+    assert conforms
+    from iladub.databook import validate_frontmatter
+    assert validate_frontmatter(db.frontmatter, require_process=True) == []
+
+
+def test_curated_clean_leak_fails_shacl():
+    db = read_databook(os.path.join(TXD, "offer.clean.leak.databook.md"))
+    asserted = db.graph("asserted")
+    shapes = Graph().parse(os.path.join(TXD, "offer-shapes.ttl"), format="turtle")
+    know = Graph().parse(os.path.join(TXD, "transplant-ontology.ttl"), format="turtle")
+    conforms, _, _ = shacl_validate(asserted, shacl_graph=shapes, ont_graph=know,
+                                    inference="rdfs", advanced=True)
+    assert not conforms
+
+
+def test_frontmatter_leak_detected():
+    from iladub.databook import validate_frontmatter
+    db = read_databook(os.path.join(TXD, "offer.clean.leak.databook.md"))
+    fm = dict(db.frontmatter)
+    fm.pop("process")
+    assert validate_frontmatter(fm, require_process=True)
