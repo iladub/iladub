@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from rdflib import Graph
 
@@ -87,3 +88,60 @@ def compile_offer(doc_path: str,
                   ischemia_limit_minutes: int = 240) -> M4Result:
     return _compile_text(read_document(doc_path), terms_path, shapes_path,
                          ontology_path, recipient_abo, ischemia_limit_minutes)
+
+
+def compile_offer_databook(in_path: str, out_path: str,
+                           terms_path: str = os.path.join(_TXD, "transplant-terms.ttl"),
+                           shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),
+                           ontology_path: str = os.path.join(_TXD, "transplant-ontology.ttl"),
+                           recipient_abo: str = "O",
+                           ischemia_limit_minutes: int = 240) -> M4Result:
+    """Compile a raw-offer DataBook (RawDocumentHolon) into a CleanDocumentHolon DataBook:
+    grounded graph + propositions + M4 decision holon + a process provenance stamp."""
+    from .databook import read_databook, write_databook, Block
+
+    raw = read_databook(in_path)
+    res = _compile_text(raw.prose, terms_path, shapes_path, ontology_path,
+                        recipient_abo, ischemia_limit_minutes)
+
+    raw_iri = raw.frontmatter.get("id", "urn:offer")
+    clean_iri = raw_iri + ".clean"
+    base = "https://example.org/transplant/knowledge/"
+
+    blocks = [
+        Block(lang="turtle", id="asserted", graph_iri=clean_iri + "#asserted",
+              content=res.extraction_graph.graph.serialize(format="turtle").strip()),
+        Block(lang="turtle", id="propositions", graph_iri=clean_iri + "#propositions",
+              content=res.extraction_graph.propositions.serialize(format="turtle").strip()),
+        Block(lang="turtle", id="decision", graph_iri=clean_iri + "#decision",
+              content=res.decision_graph.serialize(format="turtle").strip()),
+    ]
+    frontmatter = {
+        "id": clean_iri,
+        "title": "Donor organ offer ET-2026-0091 (compiled)",
+        "type": "databook",
+        "version": "1.0.0",
+        "created": "2026-06-23",
+        "process": {
+            "transformer": "BAML + Claude",
+            "transformer_type": "llm",
+            "transformer_iri": "https://api.anthropic.com/v1/models/claude-opus-4-8",
+            "inputs": [
+                {"iri": raw_iri, "role": "primary"},
+                {"iri": base + "offer-contract", "role": "contract"},
+                {"iri": base + "transplant-terms", "role": "knowledge"},
+                {"iri": base + "offer-shapes", "role": "constraint"},
+            ],
+            "agent": {"name": "iladub", "role": "orchestrator"},
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    }
+    prose = (
+        "## M4 — Offer acceptance decision\n\n"
+        f"Recommendation: **{res.decision.recommendation}**. {res.decision.reason}\n\n"
+        "`#asserted` carries the grounded offer; `#propositions` holds what could not be "
+        "grounded (quarantined, never asserted); `#decision` is the accountable M4 "
+        "`hol:DecisionHolon`."
+    )
+    write_databook(frontmatter, blocks, prose, out_path)
+    return res
