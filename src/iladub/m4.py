@@ -55,15 +55,13 @@ def capture_context(offer_path: str,
     return to_rdf(extract_offer(text), terms).graph
 
 
-def compile_offer(doc_path: str,
+def _compile_text(text: str,
                   terms_path: str = os.path.join(_TXD, "transplant-terms.ttl"),
                   shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),
                   ontology_path: str = os.path.join(_TXD, "transplant-ontology.ttl"),
                   recipient_abo: str = "O",
                   ischemia_limit_minutes: int = 240) -> M4Result:
-    text = read_document(doc_path)
     terms = Graph().parse(terms_path, format="turtle")
-
     extraction = extract_offer(text)
     eg = to_rdf(extraction, terms)
 
@@ -79,3 +77,13 @@ def compile_offer(doc_path: str,
                                      ischemia_limit_minutes=ischemia_limit_minutes))
     return M4Result(extraction_graph=eg, validation=result, decision=decision,
                     decision_graph=build_decision_holon(decision))
+
+
+def compile_offer(doc_path: str,
+                  terms_path: str = os.path.join(_TXD, "transplant-terms.ttl"),
+                  shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),
+                  ontology_path: str = os.path.join(_TXD, "transplant-ontology.ttl"),
+                  recipient_abo: str = "O",
+                  ischemia_limit_minutes: int = 240) -> M4Result:
+    return _compile_text(read_document(doc_path), terms_path, shapes_path,
+                         ontology_path, recipient_abo, ischemia_limit_minutes)
