@@ -1,27 +1,25 @@
 import os
-from rdflib import Namespace
-from rdflib.namespace import RDF
+import pytest
+from baml_client import sync_client
+from baml_client.types import DonorClinical, Immunology, Logistics, CodedConcept
 from iladub.databook import read_databook
+from iladub.m4 import compile_offer_databook
+from pyshacl import validate as shacl_validate
+from rdflib import Graph, Namespace
+from rdflib.namespace import RDF
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TXD = os.path.join(ROOT, "examples", "transplant")
+
+HOL = Namespace("https://w3id.org/etkl/hol#")
+TX = Namespace("https://example.org/transplant#")
+ILADUB = Namespace("https://w3id.org/etkl/iladub#")
 
 def test_raw_offer_databook_loads():
     db = read_databook(os.path.join(TXD, "offer.databook.md"))
     assert db.frontmatter["id"].endswith("offer-2026-0091")
     assert db.frontmatter["source"]["reference"] == "ET-2026-0091"
     assert "Organ offered: HEART" in db.prose
-
-import pytest
-from baml_client import sync_client
-from baml_client.types import DonorClinical, Immunology, Logistics, CodedConcept
-from iladub.m4 import compile_offer_databook
-from pyshacl import validate as shacl_validate
-from rdflib import Graph
-
-HOL = Namespace("https://w3id.org/etkl/hol#")
-TX = Namespace("https://example.org/transplant#")
-ILADUB = Namespace("https://w3id.org/etkl/iladub#")
 
 def _patch(monkeypatch):
     cc = lambda v, q, c=0.9: CodedConcept(value=v, source_quote=q, confidence=c)
@@ -63,4 +61,6 @@ def test_compile_offer_databook_emits_clean_holon(monkeypatch, tmp_path):
     assert (TX["m4-decision"], HOL.chosen, TX["opt-accept"]) in dec
 
     assert "process" in db.frontmatter
-    assert db.frontmatter["process"]["inputs"]
+    inputs = db.frontmatter["process"]["inputs"]
+    assert len(inputs) == 4
+    assert {"primary", "contract", "knowledge", "constraint"} <= {i["role"] for i in inputs}

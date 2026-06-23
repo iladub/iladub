@@ -98,13 +98,14 @@ def compile_offer_databook(in_path: str, out_path: str,
                            ischemia_limit_minutes: int = 240) -> M4Result:
     """Compile a raw-offer DataBook (RawDocumentHolon) into a CleanDocumentHolon DataBook:
     grounded graph + propositions + M4 decision holon + a process provenance stamp."""
-    from .databook import read_databook, write_databook, Block
+    from .databook import read_databook, write_databook, Block, validate_frontmatter
 
     raw = read_databook(in_path)
+    raw_iri = raw.frontmatter.get("id")
+    if not raw_iri:
+        raise ValueError(f"{in_path}: raw DataBook has no 'id' frontmatter key")
     res = _compile_text(raw.prose, terms_path, shapes_path, ontology_path,
                         recipient_abo, ischemia_limit_minutes)
-
-    raw_iri = raw.frontmatter.get("id", "urn:offer")
     clean_iri = raw_iri + ".clean"
     base = "https://example.org/transplant/knowledge/"
 
@@ -118,10 +119,10 @@ def compile_offer_databook(in_path: str, out_path: str,
     ]
     frontmatter = {
         "id": clean_iri,
-        "title": "Donor organ offer ET-2026-0091 (compiled)",
+        "title": raw.frontmatter.get("title", "offer").replace("(raw)", "(compiled)"),
         "type": "databook",
         "version": "1.0.0",
-        "created": "2026-06-23",
+        "created": datetime.now(timezone.utc).date().isoformat(),
         "process": {
             "transformer": "BAML + Claude",
             "transformer_type": "llm",
@@ -143,5 +144,8 @@ def compile_offer_databook(in_path: str, out_path: str,
         "grounded (quarantined, never asserted); `#decision` is the accountable M4 "
         "`hol:DecisionHolon`."
     )
+    problems = validate_frontmatter(frontmatter, require_process=True)
+    if problems:
+        raise ValueError(f"clean DataBook frontmatter invalid: {problems}")
     write_databook(frontmatter, blocks, prose, out_path)
     return res
