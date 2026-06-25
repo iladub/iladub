@@ -35,3 +35,9 @@ etkl:SourceDocumentShape a sh:NodeShape ;
     sh:targetClass etkl:SourceDocument ;
     sh:property [ sh:path etkl:hasFormat ; sh:minCount 1 ;
         sh:message "A source document must declare its format." ] .
+
+#  Every contract field binds a target property.
+etkl:FieldShape a sh:NodeShape ;
+    sh:targetClass etkl:Field ;
+    sh:property [ sh:path etkl:fillsProperty ; sh:minCount 1 ;
+        sh:message "A contract field must declare the property it fills." ] .

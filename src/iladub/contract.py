@@ -2,13 +2,13 @@
 
 A contract is an ontology, not a JSON/YAML schema: it declares the target
 class and SHACL shape(s) the output must conform to, the knowledge module(s)
-the transform requires, and the field rules that bind target properties to
-extraction patterns. Knowledge enters first (via the contract) and is carried
+the transform requires, and the fields that bind target properties to
+extractable values. Knowledge enters first (via the contract) and is carried
 as an argument to the transform.
 """
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
@@ -41,16 +41,3 @@ class SemanticDataContract:
         if node is None:
             return []
         return [c for c in self.graph.objects(node, ETKL.targetClass)]
-
-    def target_paths(self) -> List[Tuple[URIRef, str]]:
-        """Return (property, regex-pattern) pairs from the contract's field rules."""
-        node = self._contract_node()
-        if node is None:
-            return []
-        rules = []
-        for rule in self.graph.objects(node, ETKL.hasFieldRule):
-            prop = self.graph.value(rule, ETKL.onProperty)
-            pattern = self.graph.value(rule, ETKL.matchesPattern)
-            if prop is not None and pattern is not None:
-                rules.append((prop, str(pattern)))
-        return rules

@@ -139,7 +139,7 @@ hol:order a owl:DatatypeProperty ;
 
 hol:requiresContext a owl:ObjectProperty ;
     rdfs:label "requires context"@en ; rdfs:domain hol:Milestone ; rdfs:range etkl:SemanticDataContract ;
-    rdfs:comment "The required-context contract that must be ready before this milestone's decision."@en .
+    rdfs:comment "The required-context contract that must be ready before this milestone's decision. Range is etkl:SemanticDataContract by design: hol is part of the ET(K)L family (etkl ⊇ hol ⊇ iladub), so this is within-family layering, not a domain coupling."@en .
 
 hol:clockStart a owl:DatatypeProperty ;
     rdfs:label "clock start"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:boolean ;
