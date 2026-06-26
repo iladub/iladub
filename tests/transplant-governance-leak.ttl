@@ -1,0 +1,15 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  AN ILLEGAL DIRECT AI GRANT: an AI/software agent is made an access
+#  assignee directly, with no user to inherit from. This is the RAG
+#  over-exposure failure mode — the AI would answer from data no
+#  interacting user is entitled to. gsh:AiInheritsUserShape MUST reject it.
+
+tx:policy-bad a odrl:Policy ;
+    odrl:permission [ odrl:action odrl:read ; odrl:assignee tx:ai-rogue ] .
+
+tx:ai-rogue a prov:SoftwareAgent ;
+    rdfs:label "rogue AI assistant with a direct access grant (no user)"@en .

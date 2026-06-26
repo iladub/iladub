@@ -1,0 +1,78 @@
+@prefix tx:    <https://example.org/transplant#> .
+@prefix odrl:  <http://www.w3.org/ns/odrl/2/> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix hproj: <http://w3id.org/holon/projection/> .
+@prefix risk:  <https://w3id.org/etkl/risk#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  INFORMATION GOVERNANCE on the transplant showcase — concentric openness:
+#  the SAME donor offer is projected differently per role, governed by ODRL
+#  policy-as-data on the membrane; the AI assistant inherits the interacting
+#  clinician's access (it can never see what they can't); a constitutional risk
+#  sensitivity lives at the board apex. Access uses plain odrl:/prov: (which
+#  align to HGA hpol:/hview:). Synthetic, domain-neutral.
+
+#################################################################
+#  The canonical donor offer (the full graph)
+#################################################################
+tx:donor-7 a tx:Donor ;
+    tx:donorIdentity "ET-DONOR-2026-0091 (synthetic PHI)" ;          # RESTRICTED: donor-identifying info
+    tx:socialHistory "synthetic restricted social/behavioural history" ; # RESTRICTED
+    tx:organ tx:organ-heart ;     # shared de-identified clinical offer
+    tx:lvef 38 ;                  # shared clinical
+    tx:aboGroup "O" .             # shared clinical
+
+#################################################################
+#  Roles (assignees)
+#################################################################
+tx:role-opo           a prov:Agent ; rdfs:label "OPO / procurement (donor side)"@en .
+tx:role-donor-region  a prov:Agent ; rdfs:label "Donor-region clinical team"@en .
+tx:role-recipient-ctr a prov:Agent ; rdfs:label "Recipient transplant centre"@en .
+tx:role-board         a prov:Agent ; rdfs:label "Transplant board (apex)"@en .
+
+#################################################################
+#  ODRL access policy (policy-as-data on the membrane). OPO and board
+#  see donor-identifying detail; the recipient centre sees only the
+#  de-identified clinical offer (donor PHI withheld pre-allocation).
+#  (odrl:target points at the data fields it governs — illustrative.)
+#################################################################
+tx:policy a odrl:Policy ;
+    odrl:permission
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;
+        odrl:target tx:donorIdentity , tx:socialHistory , tx:organ , tx:lvef , tx:aboGroup ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-donor-region ;
+        odrl:target tx:donorIdentity , tx:organ , tx:lvef , tx:aboGroup ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ;
+        odrl:target tx:organ , tx:lvef , tx:aboGroup ] ,            # NO donorIdentity / socialHistory
+      [ odrl:action odrl:read ; odrl:assignee tx:role-board ;
+        odrl:target tx:donorIdentity , tx:socialHistory , tx:organ , tx:lvef , tx:aboGroup ] .
+
+#################################################################
+#  Role-polymorphic projections (ViewerPass). In production these are
+#  derived by named CONSTRUCT queries under each role's policy;
+#  materialised here for illustration + test. Same donor, different view.
+#################################################################
+tx:view-opo a hproj:Projection ; tx:forRole tx:role-opo ;
+    tx:donorIdentity "ET-DONOR-2026-0091 (synthetic PHI)" ;
+    tx:organ tx:organ-heart ; tx:lvef 38 ; tx:aboGroup "O" .
+
+tx:view-recipient a hproj:Projection ; tx:forRole tx:role-recipient-ctr ;
+    tx:organ tx:organ-heart ; tx:lvef 38 ; tx:aboGroup "O" .   # donorIdentity / socialHistory WITHHELD
+
+#################################################################
+#  AI inherits the user: the assistant acts on behalf of a clinician,
+#  so it sees exactly the recipient-centre projection — never donor PHI.
+#################################################################
+tx:clinician-aliki a prov:Person ; rdfs:label "Dr. A. (recipient-centre clinician)"@en ;
+    tx:hasRole tx:role-recipient-ctr .
+tx:ai-assistant a prov:SoftwareAgent ; rdfs:label "iladub AI assistant"@en ;
+    prov:actedOnBehalfOf tx:clinician-aliki .   # inherits the clinician's access; holds no grant of its own
+
+#################################################################
+#  Constitutional risk at the board apex (governance ↔ risk):
+#  an absolute contraindication is in force everywhere beneath the board.
+#################################################################
+tx:board-ctx a risk:RiskContext ; rdfs:label "Transplant board (apex)"@en ;
+    risk:sensitivity tx:s-contraindication .
+tx:s-contraindication a risk:Sensitivity ;
+    risk:reads tx:activeMalignancy ; risk:when "active malignancy present" ; risk:severity risk:Critical .
