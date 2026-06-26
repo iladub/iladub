@@ -1,0 +1,13 @@
+@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix tx:   <https://example.org/transplant#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  AN ILLEGAL EMPIRIC RISK STAMP: a domain subject (a donor) carries a
+#  risk:severity directly, as if risk were an intrinsic attribute. This is
+#  the category error that leaks risk everywhere the subject is referenced.
+#  risk:NoEmpiricRiskShape MUST reject this (the donor is neither a
+#  risk:RiskAssessment nor a risk:Sensitivity).
+
+tx:donor-bad a tx:Donor ;
+    rdfs:label "Donor with an illegal empiric risk stamp"@en ;
+    risk:severity risk:Critical .

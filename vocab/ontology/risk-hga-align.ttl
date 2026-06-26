@@ -1,0 +1,34 @@
+@prefix risk:   <https://w3id.org/etkl/risk#> .
+@prefix holon:  <http://w3id.org/holon/> .
+@prefix hproj:  <http://w3id.org/holon/projection/> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+
+#################################################################
+#  Ontology metadata
+#  OPTIONAL alignment of the contextual-risk vocabulary to the W3C
+#  Holon CG ontology (HGA). ALIGNMENT, NOT IMPORT: rdfs:subClassOf /
+#  rdfs:subPropertyOf axioms only; no owl:imports. risk.ttl stays
+#  standalone and reasoner-free. Anchor: HGA holon: / hproj:.
+#  Class IRIs per w3c-cg/holon (http://w3id.org/holon/ — http, not https).
+#################################################################
+
+<https://w3id.org/etkl/risk/hga-alignment> a owl:Ontology ;
+    dcterms:title "risk → HGA alignment (W3C Holon CG)"@en ;
+    dcterms:description """Optional, separately loadable alignment of the contextual-risk
+vocabulary to HGA. A RiskContext is a holon; its nesting is holon containment; a RiskAssessment
+is a projection. Access control is not aligned here — it rides HGA hpol: (ODRL)."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-06-26"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/etkl/risk> , <https://github.com/w3c-cg/holon> .
+
+#  A risk context is a holon; nesting is holon containment (top-down inheritance).
+risk:RiskContext    rdfs:subClassOf  holon:Holon .
+risk:withinContext  rdfs:subPropertyOf  holon:partOf .
+
+#  A realised risk is a derived, outward-facing view of the subject's condition in a context.
+risk:RiskAssessment rdfs:subClassOf  hproj:Projection .
