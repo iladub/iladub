@@ -113,8 +113,17 @@ alignment bullets above.
   which is *stronger* than HGA's confidence-gate (HGA routes low-confidence to
   `CandidateStatus` but does not require an accountable decision); (3) the **semantic
   data contract as ontology**; (4) **provenance-to-the-page**; (5) **domain-neutral
-  worked examples** (healthcare/insurance) that can feed CG WG V (Industry Utilisation).
-  Bring (2) to CG WG IV (Validation/Verification/Security).
+  worked examples** (healthcare/insurance) that can feed CG WG V (Industry Utilisation);
+  (6) **contextual-risk governance** (`etkl/risk`) — a genuine *gap* in HGA (which has
+  `hpol:` for access and `hbayes:` for probabilistic uncertainty, but nothing for
+  contextual risk). Hosted in the ET(K)L family for now; a candidate CG contribution.
+- **Information governance — align, don't reinvent the access half; contribute the risk half.**
+  Access control rides HGA `hpol:` (ODRL) + `hview:` (ViewerPass) — do not build a parallel
+  access layer. Risk is **contextual, not empiric**: `risk(condition, context) = condition ⊗
+  effective_sensitivity(context)`, sensitivity inherited **top-down only**, a `risk:RiskAssessment`
+  is a derived `hproj:Projection` (never a stored label — SHACL-enforced). AI access must equal
+  the interacting user's access (the agent carries the user's identity; the membrane is the gate).
+  See `docs/superpowers/specs/2026-06-24-maritime-voyage-holon-design.md` §9.
 
 ## Serialization & stack conventions
 
@@ -123,6 +132,8 @@ alignment bullets above.
 - Validation → **pySHACL** (`inference="rdfs"`, `advanced=True` for SPARQL constraints).
 - `iladub:` namespace = `https://w3id.org/etkl/iladub#`.
   `hol:` = `https://w3id.org/etkl/hol#`. `etkl:` = `https://w3id.org/etkl#`.
+  `risk:` = `https://w3id.org/etkl/risk#` (contextual-risk module; HGA alignment in
+  `vocab/ontology/risk-hga-align.ttl`).
 - Decision/provenance reuse standards: `hol:DecisionHolon ⊑ prov:Activity`;
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.

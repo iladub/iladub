@@ -1,0 +1,112 @@
+@prefix risk:   <https://w3id.org/etkl/risk#> .
+@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#  Contextual-risk vocabulary — domain-neutral, for any organisation
+#  operating supply chains (used by tx:/mar:/… , not tied to a domain).
+#  STANDALONE and reasoner-free: no dependency on the W3C Holon CG
+#  ontology. The alignment to HGA (`holon:`/`hproj:`) lives in the
+#  optional `risk-hga-align.ttl` (alignment-not-import). Access control
+#  is NOT redefined here — it rides HGA `hpol:` (ODRL) + `hview:`.
+#  Hosted in iladub/ET(K)L until/unless an equivalent ships in HGA;
+#  a candidate contribution to the W3C Holon CG.
+#################################################################
+
+<https://w3id.org/etkl/risk> a owl:Ontology ;
+    dcterms:title "risk — contextual-risk vocabulary"@en ;
+    dcterms:description """Risk is CONTEXTUAL, not empiric: it is never an attribute of a thing
+(`x risk "High"` is a category error that leaks everywhere it is referenced), but a relation
+between an empiric Condition and a RiskContext. Realized risk = condition ⊗
+effective_sensitivity(context), where effective_sensitivity is the TOP-DOWN closure of a
+context's own sensitivities and those it inherits from its containing contexts (constitutional
+sensitivities cascade down to all; narrow sensitivities stay local; nothing called 'risk' ever
+flows upward). A RiskAssessment is a DERIVED, context-local projection — never stored on the
+subject (enforced by SHACL). Each Sensitivity also declares the conditions it reads, so risk
+rules generate the context's required read-scope (governance and risk are one model)."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-06-26"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "risk" ;
+    vann:preferredNamespaceUri "https://w3id.org/etkl/risk#" ;
+    rdfs:seeAlso <https://w3id.org/etkl> , <https://github.com/w3c-cg/holon> .
+
+#################################################################
+#  Classes
+#################################################################
+
+risk:RiskContext a owl:Class ;
+    rdfs:label "Risk Context"@en ;
+    rdfs:comment "A context within which risk is evaluated. It carries sensitivities and nests in a holarchy via risk:withinContext; a context INHERITS the sensitivities of its containing contexts (top-down only). The apex context's sensitivities are constitutional — in force everywhere beneath it."@en .
+
+risk:Sensitivity a owl:Class ;
+    rdfs:label "Sensitivity"@en ;
+    rdfs:comment "A context's rule that a given empiric condition matters here, and how much (a severity). The per-context 'rate' (like a unit price) by which a condition becomes risk: a context with zero sensitivity to a condition realises zero risk from it. A Sensitivity declares the condition(s) it reads — which generates the context's required read-scope."@en .
+
+risk:RiskAssessment a owl:Class ;
+    rdfs:label "Risk Assessment"@en ;
+    rdfs:comment "The realised risk of a subject's condition in a particular context: risk(condition, context) = condition ⊗ effective_sensitivity(context). A DERIVED, context-local projection — NEVER a stored attribute of the subject. The same condition yields different RiskAssessments in different contexts."@en .
+
+risk:Severity a owl:Class ;
+    rdfs:label "Severity"@en ;
+    rdfs:comment "An ordinal risk severity level."@en .
+
+#  Severity scale (ordinal via risk:order)
+risk:Ok       a risk:Severity ; rdfs:label "ok"@en       ; risk:order 0 ;
+    rdfs:comment "The condition carries no risk in this context (effective sensitivity is zero or below threshold)."@en .
+risk:Watch    a risk:Severity ; rdfs:label "watch"@en    ; risk:order 1 ;
+    rdfs:comment "Monitor; not yet actionable."@en .
+risk:Breach   a risk:Severity ; rdfs:label "breach"@en   ; risk:order 2 ;
+    rdfs:comment "A threshold/rule is breached in this context; actionable here."@en .
+risk:Critical a risk:Severity ; rdfs:label "critical"@en ; risk:order 3 ;
+    rdfs:comment "Severe; typically the realisation of a constitutional (apex) sensitivity."@en .
+
+#################################################################
+#  Properties — context & sensitivity
+#################################################################
+
+risk:withinContext a owl:ObjectProperty ;
+    rdfs:label "within context"@en ; rdfs:domain risk:RiskContext ; rdfs:range risk:RiskContext ;
+    rdfs:comment "The containing context this context nests in. Inheritance of sensitivity is TOP-DOWN ONLY: a context inherits its ancestors' sensitivities, never the reverse. (Aligned to holon:partOf.)"@en .
+
+risk:sensitivity a owl:ObjectProperty ;
+    rdfs:label "sensitivity"@en ; rdfs:domain risk:RiskContext ; rdfs:range risk:Sensitivity ;
+    rdfs:comment "A sensitivity this context declares (in addition to those it inherits from its containing contexts)."@en .
+
+risk:reads a owl:ObjectProperty ;
+    rdfs:label "reads"@en ; rdfs:domain risk:Sensitivity ;
+    rdfs:comment "An empiric condition (a property / measurement kind / fact type) this sensitivity depends on. Declares the context's required read-scope — risk rules generate access scope."@en .
+
+risk:when a owl:DatatypeProperty ;
+    rdfs:label "when"@en ; rdfs:domain risk:Sensitivity ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The predicate over the read condition under which this sensitivity applies (e.g. \"lvef < 45\"). Declarative; in practice a SHACL/SPARQL expression."@en .
+
+risk:severity a owl:ObjectProperty ;
+    rdfs:label "severity"@en ; rdfs:range risk:Severity ;
+    rdfs:comment "The severity — of a Sensitivity (the rule's level) or of a RiskAssessment (the realised level). MUST NOT be carried by any other (domain) subject: risk is contextual, never an empiric stamp."@en .
+
+#################################################################
+#  Properties — realised assessment (a projection)
+#################################################################
+
+risk:ofSubject a owl:ObjectProperty ;
+    rdfs:label "of subject"@en ; rdfs:domain risk:RiskAssessment ;
+    rdfs:comment "The subject whose condition this assessment evaluates."@en .
+
+risk:inContext a owl:ObjectProperty ;
+    rdfs:label "in context"@en ; rdfs:domain risk:RiskAssessment ; rdfs:range risk:RiskContext ;
+    rdfs:comment "The context this assessment is local to. The same subject/condition assessed in another context may have a different severity."@en .
+
+risk:fromCondition a owl:ObjectProperty ;
+    rdfs:label "from condition"@en ; rdfs:domain risk:RiskAssessment ;
+    rdfs:comment "The empiric condition (property / fact) the assessment was derived from. Optional provenance link back to the fact."@en .
+
+#  Note: risk:effectiveSensitivity (the top-down closure of risk:sensitivity over
+#  risk:withinContext) is DERIVED, never asserted — compute it; do not store it.

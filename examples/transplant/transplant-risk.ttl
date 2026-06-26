@@ -1,0 +1,64 @@
+@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix tx:   <https://example.org/transplant#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  CONTEXTUAL RISK on the transplant domain — the same risk: pattern as the
+#  maritime use case, plugged into a second domain with ZERO pattern change
+#  (the interoperability fitness test). Same Condition, different RiskContext,
+#  different realised risk; constitutional sensitivity cascades top-down.
+
+#################################################################
+#  Empiric conditions — FACTS about the donor. They carry NO risk label.
+#################################################################
+
+tx:donor-7 a tx:Donor ;
+    tx:lvef 38 ;                         # marginal ejection fraction (a measurement)
+    tx:wallMotion tx:takotsuboPattern .  # the transient finding from the M4 offer
+
+#################################################################
+#  RiskContexts + their sensitivities (the "unit price" per context)
+#################################################################
+
+#  Apex: the transplant board. Its sensitivities are CONSTITUTIONAL —
+#  inherited by every recipient context beneath it (top-down).
+tx:board a risk:RiskContext ;
+    rdfs:label "Transplant board (apex)"@en ;
+    risk:sensitivity tx:s-absolute-contraindication .
+
+tx:s-absolute-contraindication a risk:Sensitivity ;
+    risk:reads tx:activeMalignancy ;
+    risk:when "active malignancy present" ;
+    risk:severity risk:Critical .
+
+#  Stable recipient context — low risk tolerance (can wait for a better organ).
+tx:ctx-stable a risk:RiskContext ; risk:withinContext tx:board ;
+    rdfs:label "Stable recipient"@en ;
+    risk:sensitivity tx:s-stable-lvef .
+
+tx:s-stable-lvef a risk:Sensitivity ;
+    risk:reads tx:lvef ; risk:when "lvef < 45" ; risk:severity risk:Breach .
+
+#  Critically-ill recipient context — high risk tolerance (no alternative).
+tx:ctx-critical a risk:RiskContext ; risk:withinContext tx:board ;
+    rdfs:label "Critically-ill recipient"@en ;
+    risk:sensitivity tx:s-critical-lvef .
+
+tx:s-critical-lvef a risk:Sensitivity ;
+    risk:reads tx:lvef ; risk:when "lvef < 30" ; risk:severity risk:Breach .
+
+#################################################################
+#  Realised risk = DERIVED projections, per context. Computed, never
+#  stored on tx:donor-7. Same LVEF 38, opposite outcomes:
+#    stable   : 38 < 45  -> Breach
+#    critical : 38 !< 30 -> Ok
+#  (A constitutional Critical would also appear in any context if the
+#   donor had active malignancy — inherited from tx:board.)
+#################################################################
+
+tx:ra-donor7-stable a risk:RiskAssessment ;
+    risk:ofSubject tx:donor-7 ; risk:inContext tx:ctx-stable ;
+    risk:fromCondition tx:lvef ; risk:severity risk:Breach .
+
+tx:ra-donor7-critical a risk:RiskAssessment ;
+    risk:ofSubject tx:donor-7 ; risk:inContext tx:ctx-critical ;
+    risk:fromCondition tx:lvef ; risk:severity risk:Ok .

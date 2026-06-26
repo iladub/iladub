@@ -1,0 +1,54 @@
+@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+risk:prefixes
+    sh:declare [ sh:prefix "risk" ; sh:namespace "https://w3id.org/etkl/risk#"^^xsd:anyURI ] .
+
+#################################################################
+#  THE INVARIANT: risk is contextual, never empiric. A risk:severity
+#  may be carried ONLY by a risk:Sensitivity (a rule) or a
+#  risk:RiskAssessment (a contextual projection) — never stamped on a
+#  domain subject (a cargo, a deal, a donor). Catches the category error
+#  `x risk:severity "High"` that would leak everywhere x is referenced.
+#################################################################
+
+risk:NoEmpiricRiskShape a sh:NodeShape ;
+    sh:targetSubjectsOf risk:severity ;
+    sh:sparql [
+        sh:message "Risk severity may only be carried by a risk:Sensitivity (a rule) or a risk:RiskAssessment (a contextual projection) — never stamped on a domain subject. Risk is contextual, not empiric." ;
+        sh:prefixes risk:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS { $this a risk:RiskAssessment }
+                FILTER NOT EXISTS { $this a risk:Sensitivity }
+            }
+        """ ;
+    ] .
+
+#################################################################
+#  A RiskAssessment is a well-formed contextual projection: it names
+#  its subject, its context, and at least one severity.
+#################################################################
+
+risk:RiskAssessmentShape a sh:NodeShape ;
+    sh:targetClass risk:RiskAssessment ;
+    sh:property [ sh:path risk:ofSubject ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A risk assessment must name exactly one subject." ] ;
+    sh:property [ sh:path risk:inContext ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A risk assessment must be local to exactly one context." ] ;
+    sh:property [ sh:path risk:severity ; sh:minCount 1 ;
+        sh:message "A risk assessment must carry at least one severity." ] .
+
+#################################################################
+#  A Sensitivity must declare its severity AND the condition(s) it
+#  reads — the latter is what generates the context's read-scope.
+#################################################################
+
+risk:SensitivityShape a sh:NodeShape ;
+    sh:targetClass risk:Sensitivity ;
+    sh:property [ sh:path risk:severity ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A sensitivity must declare exactly one severity." ] ;
+    sh:property [ sh:path risk:reads ; sh:minCount 1 ;
+        sh:message "A sensitivity must declare the condition(s) it reads (this generates the context's required read-scope)." ] .
