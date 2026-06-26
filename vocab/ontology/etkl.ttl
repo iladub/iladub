@@ -23,7 +23,7 @@ every extraction applies a contract; every source declares its format."""@en ;
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-05-31"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     vann:preferredNamespacePrefix "etkl" ;
     vann:preferredNamespaceUri "https://w3id.org/etkl#" ;
     rdfs:seeAlso <https://w3id.org/etkl/hol> , <https://w3id.org/etkl/iladub> .
@@ -60,9 +60,9 @@ etkl:SourceDocument a owl:Class ;
     rdfs:label "Source Document"@en ;
     rdfs:comment "An input document. It declares its format."@en .
 
-etkl:FieldRule a owl:Class ;
-    rdfs:label "Field Rule"@en ;
-    rdfs:comment "A contract rule binding a target property to an extraction pattern."@en .
+etkl:Field a owl:Class ;
+    rdfs:label "Field"@en ;
+    rdfs:comment "A contract field: binds a target property to an extractable value, optionally constrained to an admissible terminology scheme. Read by the knowledge-guided (BAML) extractor."@en .
 
 #################################################################
 #  Core properties
@@ -97,20 +97,20 @@ etkl:hasFormat a owl:DatatypeProperty ;
     rdfs:comment "The declared format of the source document (e.g. txt, pdf, xlsx, html)."@en .
 
 #################################################################
-#  Extraction field rules (used by the reference pipeline)
+#  Contract fields (knowledge-guided extraction binding)
 #################################################################
 
-etkl:hasFieldRule a owl:ObjectProperty ;
-    rdfs:label "has field rule"@en ; rdfs:domain etkl:SemanticDataContract ; rdfs:range etkl:FieldRule ;
-    rdfs:comment "A rule binding a target property to an extraction pattern."@en .
+etkl:hasField a owl:ObjectProperty ;
+    rdfs:label "has field"@en ; rdfs:domain etkl:SemanticDataContract ; rdfs:range etkl:Field ;
+    rdfs:comment "A field the contract declares for extraction."@en .
 
-etkl:onProperty a owl:ObjectProperty ;
-    rdfs:label "on property"@en ; rdfs:domain etkl:FieldRule ;
-    rdfs:comment "The target property a field rule populates."@en .
+etkl:fillsProperty a owl:ObjectProperty ;
+    rdfs:label "fills property"@en ; rdfs:domain etkl:Field ;
+    rdfs:comment "The target property this field populates on the output resource."@en .
 
-etkl:matchesPattern a owl:DatatypeProperty ;
-    rdfs:label "matches pattern"@en ; rdfs:domain etkl:FieldRule ; rdfs:range xsd:string ;
-    rdfs:comment "A regular expression whose first capture group is the extracted value."@en .
+etkl:admissibleScheme a owl:ObjectProperty ;
+    rdfs:label "admissible scheme"@en ; rdfs:domain etkl:Field ;
+    rdfs:comment "A SKOS concept scheme the field's value must ground to. A field WITH an admissible scheme must resolve (else the value becomes an iladub:CandidateConcept); a field WITHOUT one is asserted as a free literal."@en .
 
 #################################################################
 #  Contract-driven assembly rules (concept -> output resource)

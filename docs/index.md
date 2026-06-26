@@ -52,11 +52,9 @@ pip install iladub
 ## Quickstart
 
 ```bash
-iladub run \
-  --contract  examples/patient-contract.ttl \
-  --shapes    examples/patient-shapes.ttl \
-  --knowledge examples/patient-knowledge.ttl \
-  --input     examples/sample-admission.txt
+# Compile a synthetic transplant organ offer into an M4 acceptance decision
+# (live; needs ANTHROPIC_API_KEY)
+iladub m4 examples/transplant/offer.txt
 ```
 
 ## Links
