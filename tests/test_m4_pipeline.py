@@ -35,6 +35,13 @@ def test_compile_offer_validates_and_recommends_accept(monkeypatch):
     assert len(list(res.extraction_graph.propositions.subjects(RDF.type, ILADUB.CandidateConcept))) == 1
 
 
+def test_compile_offer_declines_marginal_organ_for_strict_recipient(monkeypatch):
+    _patch(monkeypatch)  # offer LVEF = 60
+    res = compile_offer(os.path.join(TXD, "offer.txt"), recipient_lvef_floor=65)
+    assert res.decision.recommendation == "decline"
+    assert res.decision.risk_severity == "breach"
+
+
 import pytest
 
 

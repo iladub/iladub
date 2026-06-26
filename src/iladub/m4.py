@@ -61,7 +61,9 @@ def _compile_text(text: str,
                   shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),
                   ontology_path: str = os.path.join(_TXD, "transplant-ontology.ttl"),
                   recipient_abo: str = "O",
-                  ischemia_limit_minutes: int = 240) -> M4Result:
+                  ischemia_limit_minutes: int = 240,
+                  recipient_lvef_floor: int | None = None,
+                  absolute_contraindication: bool = False) -> M4Result:
     terms = Graph().parse(terms_path, format="turtle")
     extraction = extract_offer(text)
     eg = to_rdf(extraction, terms)
@@ -73,9 +75,14 @@ def _compile_text(text: str,
     minutes = int(extraction.projected_transport_minutes.value) \
         if extraction.projected_transport_minutes else ischemia_limit_minutes + 1
     donor_abo = extraction.abo_group.value if extraction.abo_group else ""
+    lvef = int(extraction.ejection_fraction.value) \
+        if extraction.ejection_fraction and extraction.ejection_fraction.value.strip().isdigit() else None
     decision = evaluate_m4(M4Context(donor_abo=donor_abo, recipient_abo=recipient_abo,
                                      projected_ischemia_minutes=minutes,
-                                     ischemia_limit_minutes=ischemia_limit_minutes))
+                                     ischemia_limit_minutes=ischemia_limit_minutes,
+                                     organ_lvef=lvef,
+                                     recipient_lvef_floor=recipient_lvef_floor,
+                                     absolute_contraindication=absolute_contraindication))
     return M4Result(extraction_graph=eg, validation=result, decision=decision,
                     decision_graph=build_decision_holon(decision))
 
@@ -85,9 +92,12 @@ def compile_offer(doc_path: str,
                   shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl"),
                   ontology_path: str = os.path.join(_TXD, "transplant-ontology.ttl"),
                   recipient_abo: str = "O",
-                  ischemia_limit_minutes: int = 240) -> M4Result:
+                  ischemia_limit_minutes: int = 240,
+                  recipient_lvef_floor: int | None = None,
+                  absolute_contraindication: bool = False) -> M4Result:
     return _compile_text(read_document(doc_path), terms_path, shapes_path,
-                         ontology_path, recipient_abo, ischemia_limit_minutes)
+                         ontology_path, recipient_abo, ischemia_limit_minutes,
+                         recipient_lvef_floor, absolute_contraindication)
 
 
 def compile_offer_databook(in_path: str, out_path: str,
