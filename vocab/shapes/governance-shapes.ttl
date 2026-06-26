@@ -1,0 +1,50 @@
+@prefix gsh:  <https://w3id.org/etkl/governance-shapes#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#  SHACL governance invariants over ODRL access policies + PROV
+#  agency. This is NOT a new ontology — access governance is plain
+#  odrl: + prov: (which align to HGA hpol: / hview:); these shapes
+#  only enforce the invariants we care about. Shape IRIs live in a
+#  shapes-only namespace.
+#################################################################
+
+gsh:prefixes
+    sh:declare [ sh:prefix "prov" ; sh:namespace "http://www.w3.org/ns/prov#"^^xsd:anyURI ] ,
+               [ sh:prefix "odrl" ; sh:namespace "http://www.w3.org/ns/odrl/2/"^^xsd:anyURI ] .
+
+#################################################################
+#  THE INVARIANT: AI inherits the user. A software agent must never
+#  hold an access grant directly — it must act on behalf of a (human)
+#  user, so the membrane evaluates the USER's policy, not the AI's.
+#  This is what stops the RAG over-exposure leak.
+#################################################################
+
+gsh:AiInheritsUserShape a sh:NodeShape ;
+    sh:targetObjectsOf odrl:assignee ;
+    sh:sparql [
+        sh:message "An AI / software agent may not be an access assignee directly — it must act on behalf of a user (prov:actedOnBehalfOf), so it inherits exactly that user's access." ;
+        sh:prefixes gsh:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this a prov:SoftwareAgent .
+                FILTER NOT EXISTS { $this prov:actedOnBehalfOf ?user }
+            }
+        """ ;
+    ] .
+
+#################################################################
+#  A permission is well-formed: it names an action and an assignee
+#  (the role/user it grants to).
+#################################################################
+
+gsh:PermissionShape a sh:NodeShape ;
+    sh:targetObjectsOf odrl:permission ;
+    sh:property [ sh:path odrl:action ; sh:minCount 1 ;
+        sh:message "A permission must specify an action." ] ;
+    sh:property [ sh:path odrl:assignee ; sh:minCount 1 ;
+        sh:message "A permission must name an assignee (the role/user it grants to)." ] .

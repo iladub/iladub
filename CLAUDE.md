@@ -122,8 +122,9 @@ alignment bullets above.
   access layer. Risk is **contextual, not empiric**: `risk(condition, context) = condition ⊗
   effective_sensitivity(context)`, sensitivity inherited **top-down only**, a `risk:RiskAssessment`
   is a derived `hproj:Projection` (never a stored label — SHACL-enforced). AI access must equal
-  the interacting user's access (the agent carries the user's identity; the membrane is the gate).
-  See `docs/superpowers/specs/2026-06-24-maritime-voyage-holon-design.md` §9.
+  the interacting user's access (the agent carries the user's identity; the membrane is the gate;
+  enforced by `gsh:AiInheritsUserShape`). Worked example:
+  `examples/transplant/transplant-governance.ttl` + `vocab/shapes/governance-shapes.ttl`.
 
 ## Serialization & stack conventions
 
