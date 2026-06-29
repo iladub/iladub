@@ -4,8 +4,24 @@ Worked example: a heart (240-min cold-ischemia window, O blood group) offered to
 candidate centres. Which can it reach in time and admissibly? The feasible set is the
 "for-orders" candidate cloud; per-recipient organ risk then decides the nomination.
 """
-from iladub.feasibility import Organ, Candidate, feasible_recipients
+import os
+import pytest
+from rdflib import Graph, Namespace
+from rdflib.namespace import RDF
+
+from iladub.feasibility import Organ, Candidate, feasible_recipients, nominate
 from iladub.decision import M4Context, evaluate_m4
+from iladub.validate import validate
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HOL = Namespace("https://w3id.org/etkl/hol#")
+TX = Namespace("https://example.org/transplant#")
+
+
+def _hol_conforms(g):
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    return validate(g, shapes, knowledge).conforms
 
 
 def _heart():
@@ -70,3 +86,34 @@ def test_candidate_cloud_then_risk_aware_nomination():
                         organ_lvef=38, recipient_lvef_floor=floors[f.recipient])
         decisions[f.recipient] = evaluate_m4(ctx).recommendation
     assert decisions == {"stable-centre": "decline", "critical-centre": "accept"}
+
+
+# --- nomination: the candidate cloud → an accountable decision that grounds one ---
+
+def test_nominate_grounds_chosen_recipient_and_conforms():
+    feas, _ = feasible_recipients(_heart(), [
+        Candidate("zurich", abo="O", transport_minutes=95),
+        Candidate("paris",  abo="A", transport_minutes=120),
+    ])
+    g = nominate(feas, chosen="zurich", agent="surgeon-1",
+                 rationale="most slack and best clinical fit")
+    assert (TX["nomination"], RDF.type, HOL.DecisionHolon) in g
+    assert (TX["nomination"], HOL.chosen, TX["recipient-zurich"]) in g
+    assert (TX["nomination"], HOL.produced, TX["recipient-zurich"]) in g   # the grounded destination
+    assert (TX["recipient-paris"], HOL.rejectedBecause, None) in g
+    assert _hol_conforms(g)
+
+
+def test_nominate_can_decline_all():
+    feas, _ = feasible_recipients(_heart(), [Candidate("zurich", abo="O", transport_minutes=95)])
+    g = nominate(feas, chosen="nobody", agent="surgeon-1",
+                 rationale="hold for a better-matched organ")
+    assert (TX["nomination"], HOL.chosen, TX["opt-no-allocation"]) in g
+    assert len(list(g.triples((None, HOL.produced, None)))) == 0          # nothing grounded
+    assert (TX["recipient-zurich"], HOL.rejectedBecause, None) in g
+    assert _hol_conforms(g)
+
+
+def test_nominate_requires_a_feasible_recipient():
+    with pytest.raises(ValueError):
+        nominate([], chosen="x", agent="surgeon-1", rationale="—")
