@@ -31,6 +31,25 @@ already computes `risk_severity`; escalation is a clean vertical layer on top of
 **not** modify the M4 evaluator or pipeline (it parallels `reopen.py`, which is also a
 standalone capability, not auto-invoked by `compile_offer`).
 
+## Posture toward HGA — defer the substrate, keep the accountable decision
+
+`hol` now anchors to Cagle's W3C HGA (`holon:`), so escalation must **align to / defer to**
+HGA substrate rather than reinvent it. Verified against `w3c-cg/holon` HEAD (the HGA
+namespace registry + events/policy passes):
+
+| Escalation aspect | HGA term (exact IRI) | Verdict |
+| --- | --- | --- |
+| The event that surfaces | `hev:HolonEvent` / `hev:ViolationEvent` / `hev:CommandEvent` (`http://w3id.org/holon/event/`) | **Defer + align.** Our SP3a `hol:Event` overlaps this and had no alignment axiom. |
+| Upward *propagation* (a critical event surfacing to the apex) | `hmk:PropagationSignal` polarity `Distress`→`Resolution` (`http://w3id.org/holon/markov/`) | **Defer-to-CG** (Markov layer, per CLAUDE.md). This *is* the cascade mechanism — iladub does not model it. |
+| Access / traversal bounds | `hpol:BoundaryPolicy` (read/write ODRL, `http://w3id.org/holon/policy/`) | **Distinct concept** — access control, *not* decision autonomy. `hol:Scope`/`hol:maxSeverity` is therefore not a duplicate. |
+
+**The iladub differentiator (same shape as the promotion-decision contribution):** HGA
+propagates a `Distress` signal and routes it by `hpol:` policy but — like its bare grounding
+confidence-gate — **never requires the resolution to be an accountable, agent-attributed
+decision.** HGA has no `DecisionHolon`. Apex escalation = *the HGA distress-propagation
+substrate resolves into an accountable `hol:DecisionHolon` at the apex, SHACL-enforced.* That
+is iladub's contribution and stays in `hol`.
+
 ## What already exists (build on, don't reinvent)
 
 - **`vocab/ontology/risk.ttl`** — constitutional (apex) sensitivities cascade top-down; an
