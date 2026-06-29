@@ -66,6 +66,10 @@ is iladub's contribution and stays in `hol`.
   risk:Severity` for breach/critical.
 - **examples** — `transplant-risk.ttl` and `transplant-governance.ttl` already define the
   `tx:board` apex context and `tx:role-board` agent.
+- **source-ownership boundary** (`CLAUDE.md` § Source ownership; `tests/test_source_ownership.py`)
+  — we develop only `etkl`/`hol`/`iladub`/`risk`; HGA terms (`holon:`/`hev:`/`hpol:`/`hmk:`/…)
+  appear only as *objects* in `*-hga-align.ttl` and HGA-bridging shapes/examples, never as a
+  triple subject. Every component below is authored to stay inside this line.
 
 ## Components
 
@@ -84,7 +88,33 @@ the other — the ordinal bridge lives only in the escalation shape and examples
   `risk:Severity`. The comment names `risk:Severity` as the typical filler without coupling
   the ontology.
 
-### 2. Enforcement — `vocab/shapes/escalation-shapes.ttl` (new; one concern per file)
+`hol.ttl` stays **standalone** — no `holon:`/`hev:`/`hpol:` reference (the
+`test_source_ownership` standalone rule). HGA anchoring lives only in the alignment module
+(component 2).
+
+### 2. HGA alignment — `vocab/ontology/hol-hga-align.ttl` (new; optional, separately loadable)
+
+The first `hol`↔HGA alignment module, escalation-scoped. **Ours**: every triple's subject is a
+`hol:` term (or this module's own `owl:Ontology` IRI); HGA terms appear only as objects
+(alignment-not-import — no `owl:imports`, mirroring `iladub-hga-align.ttl` /
+`risk-hga-align.ttl`, and passing `test_source_ownership`). Axioms:
+
+- `hol:partOf rdfs:subPropertyOf holon:partOf` — the authority holarchy is HGA containment.
+- `hol:Event rdfs:subClassOf hev:HolonEvent` — our SP3a event is an HGA event envelope.
+- `hol:escalatedTo rdfs:seeAlso hmk:PropagationSignal` (note: the `Distress`→`Resolution`
+  propagation, *resolved as an accountable decision* — iladub's gap-fill; **not** a subproperty,
+  HGA has no decision→decision edge).
+- `hol:DecisionHolon rdfs:seeAlso hbayes:PolicySelection` (note: HGA's belief-driven choice has
+  no accountable-deliberation holon; `DecisionHolon` is the differentiator — **not** a subclass).
+- `hol:Scope rdfs:seeAlso hpol:BoundaryPolicy` (note: HGA `hpol:` governs *access*, not
+  *decision autonomy* — distinct concept, **not** a subclass).
+
+Each `seeAlso` carries a contribution `rdfs:comment` of the form "HGA propagates
+`hmk:Distress` and routes by `hpol:` policy, but does not require the membrane-crossing to be an
+accountable decision; iladub requires apex escalation to produce a `hol:DecisionHolon`, enforced
+by `esc:EscalationShape`."
+
+### 3. Enforcement — `vocab/shapes/escalation-shapes.ttl` (new; one concern per file)
 
 `esc:EscalationShape` — a SPARQL constraint (`advanced=True`, as `validate()` already uses).
 Targets `hol:DecisionHolon`. For a decision `D` with `hol:constrainedBy` a severity `S` and
@@ -97,7 +127,10 @@ The ordinals (`risk:order`) are read from `risk.ttl` in the knowledge graph at v
 itself is exempt: its own scope ceiling covers the severity (`S.order <= M.order`), so the
 constraint does not fire on it.
 
-### 3. Capability — `src/iladub/escalate.py` (new; parallels `reopen.py`)
+`escalation-shapes.ttl` references only our namespaces (`hol:`, `risk:`) — it stays inside the
+source-ownership boundary (no HGA term).
+
+### 4. Capability — `src/iladub/escalate.py` (new; parallels `reopen.py`)
 
 Standalone vertical layer. `evaluate_m4` and the M4 pipeline are **unchanged**.
 
@@ -137,7 +170,7 @@ def escalate(local_subject, realized_severity, *, new_subject, scope,
 exactly one `hol:chosen`, `hol:decidedBy`, `hol:rationale`, and `hol:rejectedBecause` on the
 rejected option.
 
-### 4. Worked example + negative test — `examples/transplant/`
+### 5. Worked example + negative test — `examples/transplant/`
 
 **`transplant-escalation.ttl` (conformant).** A donor with active malignancy realizes a
 constitutional `risk:Critical`. The local M4 decision is `hol:withinScope` a recipient-centre
@@ -152,7 +185,7 @@ risk:Critical`), `hol:triggeredBy tx:constitutional-event`. Conforms to
 within the recipient-centre scope, with **no** `hol:escalatedTo` — a constitutional matter
 resolved within local autonomy. Must be flagged by `esc:EscalationShape`.
 
-### 5. Tests — `tests/test_escalate.py`
+### 6. Tests — `tests/test_escalate.py`
 
 - `requires_escalation` — true when realized > ceiling (critical vs breach), false when within
   (breach vs breach; breach vs critical).
@@ -163,6 +196,11 @@ resolved within local autonomy. Must be flagged by `esc:EscalationShape`.
 - The merged (local + apex) graph conforms to `hol-shapes.ttl` + `escalation-shapes.ttl`.
 - SHACL pair (mirrors the existing leak-test style, e.g. `test_event_shacl.py`):
   `transplant-escalation.ttl` conforms; `transplant-escalation-leak.ttl` does **not**.
+
+The alignment module (component 2) is covered by the existing `tests/test_source_ownership.py`
+(it must point outward only) plus an assertion in `tests/test_hga_alignment.py` that the
+`hol-hga-align.ttl` axioms are present and that `hol.ttl` stays standalone (no `holon:` leak) —
+mirroring the existing `test_holons_module_standalone` / `test_alignment_axioms_present`.
 
 ## Out of scope (explicit)
 
