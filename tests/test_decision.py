@@ -6,6 +6,8 @@ from iladub.decision import evaluate_m4, build_decision_holon, M4Context
 from iladub.validate import validate
 
 HOL = Namespace("https://w3id.org/etkl/hol#")
+RISK = Namespace("https://w3id.org/etkl/risk#")
+TX = Namespace("https://example.org/transplant#")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -71,3 +73,44 @@ def test_decision_holon_emits_revisit_if_keys():
     g = build_decision_holon(evaluate_m4(ctx), revisit_if=("ischemiaExceeded", "donorDeterioration"))
     keys = {str(o) for o in g.objects(None, HOL.revisitIf)}
     assert keys == {"ischemiaExceeded", "donorDeterioration"}
+
+
+# --- contextual organ risk: same organ, different recipient context → different decision ---
+
+def test_marginal_organ_declined_for_low_tolerance_recipient():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240,
+                    organ_lvef=38, recipient_lvef_floor=45)   # stable recipient, low tolerance
+    r = evaluate_m4(ctx)
+    assert r.recommendation == "decline"
+    assert r.risk_severity == "breach"
+    assert "38" in r.reason
+
+
+def test_same_organ_accepted_for_high_tolerance_recipient():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240,
+                    organ_lvef=38, recipient_lvef_floor=30)   # critical recipient, high tolerance
+    r = evaluate_m4(ctx)
+    assert r.recommendation == "accept"      # SAME organ, ABO, ischemia — context flips the decision
+    assert r.risk_severity == "ok"
+
+
+def test_absolute_contraindication_declines_regardless():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240,
+                    absolute_contraindication=True)
+    r = evaluate_m4(ctx)
+    assert r.recommendation == "decline"
+    assert r.risk_severity == "critical"
+
+
+def test_risk_decline_records_constraint_and_conforms():
+    ctx = M4Context(donor_abo="O", recipient_abo="O",
+                    projected_ischemia_minutes=95, ischemia_limit_minutes=240,
+                    organ_lvef=38, recipient_lvef_floor=45)
+    g = build_decision_holon(evaluate_m4(ctx))
+    assert (TX["m4-decision"], HOL.constrainedBy, RISK["Breach"]) in g
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    assert validate(g, shapes, knowledge).conforms

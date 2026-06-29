@@ -11,6 +11,7 @@ from rdflib.namespace import RDF
 HOL = Namespace("https://w3id.org/etkl/hol#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 TX = Namespace("https://example.org/transplant#")
+RISK = Namespace("https://w3id.org/etkl/risk#")
 
 # ABO donor->recipient compatibility (simplified, synthetic).
 _ABO_OK = {
@@ -27,6 +28,13 @@ class M4Context:
     recipient_abo: str
     projected_ischemia_minutes: int
     ischemia_limit_minutes: int
+    # Contextual organ risk (per recipient context): the SAME organ can be a Breach
+    # for one recipient context and Ok for another. organ_lvef is the empiric
+    # condition; recipient_lvef_floor is THIS recipient context's sensitivity
+    # (below it → Breach); absolute_contraindication is a constitutional Critical.
+    organ_lvef: int | None = None
+    recipient_lvef_floor: int | None = None
+    absolute_contraindication: bool = False
 
 
 @dataclass
@@ -36,21 +44,42 @@ class DecisionResult:
     reason: str
     abo_compatible: bool
     ischemia_feasible: bool
+    risk_severity: str = "ok"  # contextual organ risk: "ok" | "breach" | "critical"
+
+
+def _organ_risk(ctx: M4Context) -> str:
+    """Contextual organ risk. An absolute contraindication is Critical (a constitutional
+    apex sensitivity, in force for every recipient); a marginal organ — LVEF below THIS
+    recipient context's floor — is a Breach; otherwise Ok. The same organ can be Breach
+    for a low-tolerance (stable) recipient and Ok for a high-tolerance (critical) one."""
+    if ctx.absolute_contraindication:
+        return "critical"
+    if ctx.organ_lvef is not None and ctx.recipient_lvef_floor is not None \
+            and ctx.organ_lvef < ctx.recipient_lvef_floor:
+        return "breach"
+    return "ok"
 
 
 def evaluate_m4(ctx: M4Context) -> DecisionResult:
     abo_ok = (ctx.donor_abo, ctx.recipient_abo) in _ABO_OK
     feasible = ctx.projected_ischemia_minutes <= ctx.ischemia_limit_minutes
-    if abo_ok and feasible:
-        return DecisionResult("accept", "decline",
-                              "ABO compatible and within cold-ischemia window.",
-                              abo_ok, feasible)
-    if not feasible:
+    risk = _organ_risk(ctx)
+
+    if risk == "critical":
+        reason = "absolute contraindication present (constitutional risk)"
+    elif not feasible:
         reason = (f"projected ischemia {ctx.projected_ischemia_minutes} min "
                   f"> limit {ctx.ischemia_limit_minutes} min")
-    else:
+    elif not abo_ok:
         reason = f"ABO incompatible: donor {ctx.donor_abo} -> recipient {ctx.recipient_abo}"
-    return DecisionResult("decline", "accept", reason, abo_ok, feasible)
+    elif risk == "breach":
+        reason = (f"marginal organ (LVEF {ctx.organ_lvef}) below this recipient's "
+                  f"tolerance (floor {ctx.recipient_lvef_floor})")
+    else:
+        return DecisionResult("accept", "decline",
+                              "ABO compatible and within cold-ischemia window.",
+                              abo_ok, feasible, risk)
+    return DecisionResult("decline", "accept", reason, abo_ok, feasible, risk)
 
 
 def build_decision_holon(result: DecisionResult,
@@ -77,6 +106,10 @@ def build_decision_holon(result: DecisionResult,
     g.add((rejected, HOL.rejectedBecause, Literal(result.reason)))
     g.add((subject, HOL.decidedBy, agent))
     g.add((subject, HOL.rationale, Literal(result.reason)))
+    # When contextual risk constrained the option space, record it (links to etkl/risk).
+    _sev = {"breach": "Breach", "critical": "Critical"}.get(result.risk_severity)
+    if _sev is not None:
+        g.add((subject, HOL.constrainedBy, RISK[_sev]))
     for e in evidence:
         g.add((subject, HOL.consideredEvidence, e))
     if process is not None:
