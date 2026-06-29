@@ -126,6 +126,35 @@ alignment bullets above.
   enforced by `gsh:AiInheritsUserShape`). Worked example:
   `examples/transplant/transplant-governance.ttl` + `vocab/shapes/governance-shapes.ttl`.
 
+## Source ownership (non-negotiable; the line we never cross)
+
+We **develop** only the namespaces we own. HGA (Cagle's W3C Holon CG ontology) is an
+**external source of truth we consume** — never one we author, edit, or redefine. Mixing the
+two corrupts authorship provenance and the alignment story. This is settled (2026-06-29) and
+**CI-enforced** by `tests/test_source_ownership.py`.
+
+| We OWN — develop freely (`https://w3id.org/etkl…`) | HGA — Cagle's; CONSUME only, never touch (`http://w3id.org/holon/…`) |
+| --- | --- |
+| `etkl:` · `hol:` · `iladub:` · `risk:` (+ their shapes, examples, Python) | `holon:` · `hev:` · `hpol:` · `hmk:` · `hproj:` · `hbayes:` · `hprov:` · `hspec:` · `hmedia:` · `hvc:` |
+
+**The invariant (one line):** *In every authored RDF file, the subject of every triple is a
+term we own. HGA terms appear ONLY as objects/types/targets — never as a subject.* We never
+write `holon:X a owl:Class` or add any property to an HGA term; we only point our terms at
+theirs (`our:T rdfs:subClassOf holon:T`).
+
+Concrete rules:
+1. **Edit only our four namespaces.** Adding `hol:escalatedTo` to `hol.ttl` is fine;
+   declaring or annotating `hev:HolonEvent` anywhere is forbidden.
+2. **HGA IRIs live only in `*-hga-align.ttl` modules and in HGA-bridging shapes/examples, as
+   objects.** Core ontologies (`hol.ttl`, `risk.ttl`, `iladub*.ttl`, `etkl.ttl`) stay
+   **standalone** — zero `w3id.org/holon` references (alignment-not-import; reasoner-free).
+3. **Any local HGA copy is read-only and segregated** — fetched at test time or kept under a
+   clearly-marked `vendor/hga/` snapshot (`@ <sha>`, "NOT OURS"). Never under `vocab/`.
+
+iladub's role is to **complement HGA's gaps** (the accountable `hol:DecisionHolon`, promotion
+epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`subPropertyOf`/
+`seeAlso` — never to re-author the substrate.
+
 ## Serialization & stack conventions
 
 - Ontologies, shapes, contracts, examples → **RDF Turtle** (`.ttl`) for authoring,
