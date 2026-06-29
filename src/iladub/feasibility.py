@@ -18,8 +18,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple
 
+from rdflib import Graph, Literal, Namespace
+
+from rdflib.namespace import RDF
+
 from .allen import Interval, feasible
 from .decision import _ABO_OK
+
+HOL = Namespace("https://w3id.org/etkl/hol#")
+TX = Namespace("https://example.org/transplant#")
 
 
 @dataclass
@@ -78,3 +85,51 @@ def feasible_recipients(organ: Organ,
                                       window.end - transport.end))
     feas.sort(key=lambda f: f.slack_minutes, reverse=True)
     return feas, infeas
+
+
+def nominate(feasible_set: List[FeasibleRecipient], chosen: str, *,
+             agent: str, rationale: str, subject=None) -> Graph:
+    """Nominate a recipient from the feasible cloud, as a hol:DecisionHolon — the SAME
+    accountable decision model M4 uses.
+
+    The feasible-recipient cloud is the deliberated **option space** (candidate
+    destinations — propositions, the "for-orders" cloud). The nominated recipient is
+    ``hol:chosen`` and becomes the **grounded destination** (``hol:produced``); every other
+    option is rejected with a reason. A 'no allocation' option is always deliberated, so a
+    real choice is recorded even with a single feasible recipient, and if ``chosen`` is not
+    among the feasible recipients the decision declines (nothing is grounded). The membrane
+    crossing that grounds a proposition is, here too, an accountable decision.
+
+    Requires at least one feasible recipient (else there is nothing to nominate)."""
+    if not feasible_set:
+        raise ValueError("no feasible recipients to nominate among")
+    subj = subject if subject is not None else TX["nomination"]
+    decline = TX["opt-no-allocation"]
+    options = {"_decline_": decline}
+    slack = {}
+    for f in feasible_set:
+        options[f.recipient] = TX[f"recipient-{f.recipient}"]
+        slack[f.recipient] = f.slack_minutes
+
+    g = Graph()
+    g.add((subj, RDF.type, HOL.DecisionHolon))
+    g.add((subj, HOL.decidedBy, TX[agent]))
+    g.add((subj, HOL.rationale, Literal(rationale)))
+    for opt in options.values():
+        g.add((opt, RDF.type, HOL.Option))
+        g.add((subj, HOL.optionSpace, opt))
+
+    chosen_key = chosen if chosen in options else "_decline_"
+    chosen_opt = options[chosen_key]
+    g.add((subj, HOL.chosen, chosen_opt))
+
+    for key, opt in options.items():
+        if opt == chosen_opt:
+            continue
+        reason = ("a feasible recipient was available and nominated" if key == "_decline_"
+                  else f"not nominated (slack {slack[key]} min)")
+        g.add((opt, HOL.rejectedBecause, Literal(reason)))
+
+    if chosen_key != "_decline_":
+        g.add((subj, HOL.produced, chosen_opt))  # the nominated recipient = the grounded destination
+    return g
