@@ -1,0 +1,46 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  Apex escalation on the transplant showcase. A donor with an absolute contraindication
+#  realises a constitutional risk:Critical. The local (recipient-centre) decision's autonomy
+#  ceiling is risk:Breach, so Critical (order 3) > Breach (order 2): it CANNOT be resolved
+#  locally and escalates to the transplant board, which makes the binding call. Synthetic.
+
+tx:donor-9 a tx:Donor ; tx:activeMalignancy true .
+
+#  Autonomy scopes (decision-authority ceilings).
+tx:scope-recipient a hol:Scope ; rdfs:label "Recipient-centre autonomy"@en ;
+    hol:maxSeverity risk:Breach .
+tx:scope-board a hol:Scope ; rdfs:label "Transplant-board autonomy (apex)"@en ;
+    hol:maxSeverity risk:Critical .
+
+#  LOCAL decision: realises Critical within a Breach-ceiling scope -> must escalate.
+tx:m4-decision a hol:DecisionHolon ;
+    hol:optionSpace tx:opt-accept , tx:opt-decline ;
+    hol:chosen tx:opt-decline ;
+    hol:decidedBy tx:surgeon-1 ;
+    hol:rationale "absolute contraindication present (constitutional risk)" ;
+    hol:constrainedBy risk:Critical ;
+    hol:withinScope tx:scope-recipient ;
+    hol:escalatedTo tx:board-decision .
+tx:opt-accept a hol:Option ;
+    hol:rejectedBecause "absolute contraindication present (constitutional risk)" .
+tx:opt-decline a hol:Option .
+
+#  APEX decision: the board makes the binding call. Its ceiling is Critical, so the
+#  escalation shape does not fire on it (3 > 3 is false).
+tx:board-decision a hol:DecisionHolon ;
+    hol:optionSpace tx:opt-confirm-decline , tx:opt-override ;
+    hol:chosen tx:opt-confirm-decline ;
+    hol:decidedBy tx:role-board ;
+    hol:rationale "constitutional matter (absoluteContraindication) escalated to the board apex" ;
+    hol:constrainedBy risk:Critical ;
+    hol:withinScope tx:scope-board ;
+    hol:triggeredBy tx:constitutional-event .
+tx:opt-confirm-decline a hol:Option .
+tx:opt-override a hol:Option ;
+    hol:rejectedBecause "override rejected: a constitutional contraindication is absolute" .
+
+tx:constitutional-event a hol:Event ; hol:condition "absoluteContraindication" .

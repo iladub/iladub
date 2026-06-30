@@ -1,0 +1,22 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  NEGATIVE: a constitutional matter resolved within local autonomy. The local decision
+#  realises risk:Critical within a Breach-ceiling scope but has NO hol:escalatedTo. The
+#  escalation shape MUST flag this (Critical 3 > Breach 2, not escalated). MUST FAIL.
+
+tx:scope-recipient a hol:Scope ; rdfs:label "Recipient-centre autonomy"@en ;
+    hol:maxSeverity risk:Breach .
+
+tx:m4-decision a hol:DecisionHolon ;
+    hol:optionSpace tx:opt-accept , tx:opt-decline ;
+    hol:chosen tx:opt-decline ;
+    hol:decidedBy tx:surgeon-1 ;
+    hol:rationale "absolute contraindication present (constitutional risk)" ;
+    hol:constrainedBy risk:Critical ;
+    hol:withinScope tx:scope-recipient .
+tx:opt-accept a hol:Option ;
+    hol:rejectedBecause "absolute contraindication present (constitutional risk)" .
+tx:opt-decline a hol:Option .
