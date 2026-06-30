@@ -112,11 +112,11 @@ The first `hol`↔HGA alignment module, escalation-scoped. **Ours**: every tripl
 Each `seeAlso` carries a contribution `rdfs:comment` of the form "HGA propagates
 `hmk:Distress` and routes by `hpol:` policy, but does not require the membrane-crossing to be an
 accountable decision; iladub requires apex escalation to produce a `hol:DecisionHolon`, enforced
-by `esc:EscalationShape`."
+by `hol:EscalationShape`."
 
 ### 3. Enforcement — `vocab/shapes/escalation-shapes.ttl` (new; one concern per file)
 
-`esc:EscalationShape` — a SPARQL constraint (`advanced=True`, as `validate()` already uses).
+`hol:EscalationShape` — a SPARQL constraint (`advanced=True`, as `validate()` already uses).
 Targets `hol:DecisionHolon`. For a decision `D` with `hol:constrainedBy` a severity `S` and
 `hol:withinScope` a scope whose `hol:maxSeverity` is `M`:
 
@@ -183,7 +183,7 @@ risk:Critical`), `hol:triggeredBy tx:constitutional-event`. Conforms to
 
 **`transplant-escalation-leak.ttl` (must FAIL).** The same Critical-constrained local decision
 within the recipient-centre scope, with **no** `hol:escalatedTo` — a constitutional matter
-resolved within local autonomy. Must be flagged by `esc:EscalationShape`.
+resolved within local autonomy. Must be flagged by `hol:EscalationShape`.
 
 ### 6. Tests — `tests/test_escalate.py`
 
