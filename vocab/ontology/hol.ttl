@@ -177,3 +177,15 @@ hol:supersedes a owl:ObjectProperty ;
 hol:triggeredBy a owl:ObjectProperty ;
     rdfs:label "triggered by"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Event ;
     rdfs:comment "The event that caused this decision to be reopened."@en .
+
+#################################################################
+#  Apex escalation — vertical authority-holarchy lineage
+#################################################################
+
+hol:escalatedTo a owl:ObjectProperty ;
+    rdfs:label "escalated to"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
+    rdfs:comment "This decision escalated the matter to a higher-authority decision because it exceeded the decision's autonomy scope (authority-holarchy lineage; the vertical analog of hol:supersedes)."@en .
+
+hol:maxSeverity a owl:ObjectProperty ;
+    rdfs:label "max severity"@en ; rdfs:domain hol:Scope ;
+    rdfs:comment "The highest severity the scope's holder may resolve within its own autonomy; a realized severity above it must be escalated. The filler is an ordinal severity resource (in practice a risk:Severity) — hol stays standalone, so the range is left open."@en .
