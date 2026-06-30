@@ -16,6 +16,8 @@
 #  standalone and reasoner-free. HGA terms appear ONLY as objects
 #  (CLAUDE.md § Source ownership). Anchor: HGA holon:/hev:/hmk:/hpol:/hbayes:
 #  (http://w3id.org/holon/... — http, not https). Escalation-scoped.
+#  HGA sub-namespace IRIs (holon:/hev:/hmk:/hpol:/hbayes:) verified against
+#  w3c-cg/holon HEAD 8612f5e (2026-06-24).
 #################################################################
 
 <https://w3id.org/etkl/hol/hga-alignment> a owl:Ontology ;

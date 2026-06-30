@@ -14,8 +14,10 @@ SH  = os.path.join(ROOT, "vocab", "shapes")
 EX  = os.path.join(ROOT, "examples")
 TST = os.path.join(ROOT, "tests")
 
-HOLON = "http://w3id.org/holon/"
+HOLON  = "http://w3id.org/holon/"
 ILADUB = "https://w3id.org/etkl/iladub#"
+HEV    = "http://w3id.org/holon/event/"
+HOL_NS = "https://w3id.org/etkl/hol#"
 
 def _g(*paths):
     g = Graph()
@@ -59,10 +61,6 @@ def test_ungoverned_grounding_rejected():
     """A registered GroundingRecord with no promotion decision MUST fail."""
     c, _ = _v([os.path.join(TST, "holon-grounding-leak.ttl")], HGA_SHAPES, ONTS)
     assert not c
-
-
-HEV = "http://w3id.org/holon/event/"
-HOL_NS = "https://w3id.org/etkl/hol#"
 
 
 def test_hol_alignment_axioms_present():
