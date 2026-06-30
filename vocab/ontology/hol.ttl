@@ -184,7 +184,7 @@ hol:triggeredBy a owl:ObjectProperty ;
 
 hol:escalatedTo a owl:ObjectProperty ;
     rdfs:label "escalated to"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
-    rdfs:comment "This decision escalated the matter to a higher-authority decision because it exceeded the decision's autonomy scope (authority-holarchy lineage; the vertical analog of hol:supersedes)."@en .
+    rdfs:comment "This decision escalated the matter to a higher-authority decision because the local decision's autonomy scope was insufficient to resolve it (authority-holarchy lineage; the vertical analog of hol:supersedes)."@en .
 
 hol:maxSeverity a owl:ObjectProperty ;
     rdfs:label "max severity"@en ; rdfs:domain hol:Scope ;

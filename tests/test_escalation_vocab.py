@@ -21,8 +21,11 @@ def test_maxseverity_is_objectproperty_on_scope():
     g = _hol()
     assert (HOL.maxSeverity, RDF.type, OWL.ObjectProperty) in g
     assert (HOL.maxSeverity, RDFS.domain, HOL.Scope) in g
+    # range intentionally left open — hol stays standalone (risk:Severity lives in a separate module)
+    assert next(g.objects(HOL.maxSeverity, RDFS.range), None) is None
 
 
 def test_hol_stays_standalone_no_hga():
-    text = open(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), encoding="utf-8").read()
+    with open(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), encoding="utf-8") as fh:
+        text = fh.read()
     assert "w3id.org/holon" not in text
