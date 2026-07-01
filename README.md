@@ -162,9 +162,12 @@ connected FHIR graph with a decision recorded over it — lives in
 
 ## The project family
 
-- **ET(K)L** (`etkl`) — the method and its umbrella vocabulary.
-- **dec** — the holonic decision-context module (and, increasingly, holon interaction).
-- **iladub** — the document compiler and its assertion/proposition epistemics (this repo).
+**iladub** is the namespace root and the owned artifact — `iladub = a thin core + etkl + dec`:
+
+- **iladub** (thin core) — the assertion/proposition epistemics (assert only what you can ground; propose the rest; never let a proposition pass as an assertion).
+- **etkl** — the knowledge-first K-transform that compiles a raw document into a grounded holon conformed to a destination schema (the contract).
+- **dec** — decidability/decisionality (`DecisionHolon`, escalation, risk); a portable extension of the W3C Holon CG substrate (HGA).
+- **HGA** (`holon:`) — the external holon substrate; consumed via alignment, never cloned.
 
 ## Development
 

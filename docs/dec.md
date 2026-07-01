@@ -34,5 +34,6 @@ its decision composes upward. That is the difference between emitting a plausibl
 output and making an *accountable, re-evaluable* decision.
 
 It is also the most domain-neutral, transferable part of the project — the same holon
-models a clinical therapy switch or a trading hedge decision unchanged. That makes it
-the original contribution, distinct from the (reusable) terminology/shape bridging.
+models a clinical therapy switch or a trading hedge decision unchanged. That portability
+is what makes dec cleanly separable — a component designed to be upstreamed to HGA once
+the substrate supports strict decidability.

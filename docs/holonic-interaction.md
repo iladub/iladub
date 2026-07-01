@@ -5,9 +5,10 @@
 
 Defining holons is the easy half. The architecture lives in **how they interact**.
 This page models iladub as a small set of holons connected by a governed interaction —
-aligned with the holonic-graph architecture (Kurt Cagle) and its reference ontology,
-the Context-Graph Architecture / CGA (Zach Welz's `holonic` library), rather than
-reinventing one.
+aligned with Kurt Cagle's holonic-graph architecture and its reference ontology,
+**HGA** (`holon:`), rather than reinventing one. (Zach Welz's Context-Graph Architecture /
+CGA remains useful conceptual prior art, but is no longer the alignment target — see the
+anchor note below.)
 
 ## What a holon is (and why interaction is the point)
 
@@ -67,7 +68,7 @@ specifically an **alignment holon**.
 
 ## The interaction primitives
 
-These are what `dec` was missing — and what make the model an *interaction* model:
+These are what a decision-holon-only model lacks — and what make the model an *interaction* model:
 
 1. **The membrane.** A holon's boundary is its SHACL shapes. Validating the interior
    against the boundary yields a health — **Intact / Weakened / Compromised**. For the
