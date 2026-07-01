@@ -1,6 +1,6 @@
 """Source-ownership boundary (durable decision — see CLAUDE.md § Source ownership).
 
-We DEVELOP only our own namespaces (etkl / hol / iladub / risk, all under
+We DEVELOP only our own namespaces (etkl / dec / iladub / risk, all under
 https://w3id.org/iladub/etkl…). HGA (Cagle's W3C Holon CG ontology, http://w3id.org/holon/
 and its sub-namespaces hev:/hpol:/hmk:/hproj:/hbayes:/hprov:/hspec:/hmedia:/hvc:) is an
 EXTERNAL source of truth we CONSUME. We never define, redefine, or extend an HGA term.
@@ -75,7 +75,7 @@ def test_no_authored_file_redefines_an_hga_term():
 
 
 def test_alignment_modules_only_point_outward():
-    """An *-hga-align.ttl is OURS: every subject is one of our terms (etkl/hol/iladub/
+    """An *-hga-align.ttl is OURS: every subject is one of our terms (etkl/dec/iladub/
     risk) or our own ontology-metadata IRI; HGA IRIs appear only as objects."""
     ours = "https://w3id.org/iladub"
     offenders = []

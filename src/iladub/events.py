@@ -1,5 +1,5 @@
 """Events that may reopen a decision. An Event carries a named condition key
-(matched against a decision's hol:revisitIf) and a payload of new values folded
+(matched against a decision's dec:revisitIf) and a payload of new values folded
 into re-evaluation."""
 from __future__ import annotations
 

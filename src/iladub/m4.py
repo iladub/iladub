@@ -152,7 +152,7 @@ def compile_offer_databook(in_path: str, out_path: str,
         f"Recommendation: **{res.decision.recommendation}**. {res.decision.reason}\n\n"
         "`#asserted` carries the grounded offer; `#propositions` holds what could not be "
         "grounded (quarantined, never asserted); `#decision` is the accountable M4 "
-        "`hol:DecisionHolon`."
+        "`dec:DecisionHolon`."
     )
     problems = validate_frontmatter(frontmatter, require_process=True)
     if problems:

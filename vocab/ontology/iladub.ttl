@@ -19,7 +19,7 @@
 what it can ground in provided ontologies (the grounded graph), and PROPOSES everything else
 as quarantined CandidateConcepts carrying a suggested upper-ontology anchor (e.g. gist),
 their provenance, the suggester, and a confidence. A proposal may enter the grounded graph
-ONLY as the product of a promotion decision, modelled with the hol vocabulary — so admitting
+ONLY as the product of a promotion decision, modelled with the dec vocabulary — so admitting
 a proposition is itself an accountable, auditable decision. The tool that reads decisions out
 of documents uses the same decision model to govern its own reading."""@en ;
     dcterms:creator "François Rosselet" ;
@@ -60,7 +60,7 @@ iladub:GroundedNode a owl:Class ;
 iladub:PromotionDecision a owl:Class ;
     rdfs:subClassOf dec:DecisionHolon ;
     rdfs:label "Promotion Decision"@en ;
-    rdfs:comment "The accountable act of reviewing a CandidateConcept and accepting / refining / rejecting it. A dec:DecisionHolon whose evidence is the candidate and its anchor, whose chosen option is the outcome, and whose product (if accepted) is the grounded node. This is the iladub<->hol bridge."@en .
+    rdfs:comment "The accountable act of reviewing a CandidateConcept and accepting / refining / rejecting it. A dec:DecisionHolon whose evidence is the candidate and its anchor, whose chosen option is the outcome, and whose product (if accepted) is the grounded node. This is the iladub<->dec bridge."@en .
 
 iladub:Suggester a owl:Class ;
     rdfs:subClassOf prov:Agent ;

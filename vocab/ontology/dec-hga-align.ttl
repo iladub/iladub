@@ -10,9 +10,9 @@
 @prefix dcterms:<http://purl.org/dc/terms/> .
 
 #################################################################
-#  OPTIONAL alignment of the hol decision-context vocabulary to the
+#  OPTIONAL alignment of the dec decision-context vocabulary to the
 #  W3C Holon CG ontology (HGA). ALIGNMENT, NOT IMPORT: rdfs:subClassOf /
-#  rdfs:subPropertyOf / rdfs:seeAlso only; no owl:imports. hol.ttl stays
+#  rdfs:subPropertyOf / rdfs:seeAlso only; no owl:imports. dec.ttl stays
 #  standalone and reasoner-free. HGA terms appear ONLY as objects
 #  (CLAUDE.md § Source ownership). Anchor: HGA holon:/hev:/hmk:/hpol:/hbayes:
 #  (http://w3id.org/holon/... — http, not https). Escalation-scoped.
@@ -21,9 +21,9 @@
 #################################################################
 
 <https://w3id.org/iladub/dec/hga-alignment> a owl:Ontology ;
-    dcterms:title "hol → HGA alignment (W3C Holon CG)"@en ;
-    dcterms:description """Optional, separately loadable alignment of hol to HGA. The authority
-holarchy is HGA containment; the hol event is an HGA event envelope; iladub's accountable
+    dcterms:title "dec → HGA alignment (W3C Holon CG)"@en ;
+    dcterms:description """Optional, separately loadable alignment of dec to HGA. The authority
+holarchy is HGA containment; the dec event is an HGA event envelope; iladub's accountable
 DecisionHolon, escalation edge, and autonomy scope are gap-fills HGA has no equivalent for
 (recorded as rdfs:seeAlso, not subclass)."""@en ;
     dcterms:creator "François Rosselet" ;

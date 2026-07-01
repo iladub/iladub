@@ -21,7 +21,7 @@ def test_maxseverity_is_objectproperty_on_scope():
     g = _hol()
     assert (DEC.maxSeverity, RDF.type, OWL.ObjectProperty) in g
     assert (DEC.maxSeverity, RDFS.domain, DEC.Scope) in g
-    # range intentionally left open — hol stays standalone (risk:Severity lives in a separate module)
+    # range intentionally left open — dec stays standalone (risk:Severity lives in a separate module)
     assert next(g.objects(DEC.maxSeverity, RDFS.range), None) is None
 
 

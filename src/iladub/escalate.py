@@ -37,12 +37,12 @@ def escalate(local_subject: URIRef, realized_severity: str, *,
              event_subject: URIRef = TX["constitutional-event"],
              condition: str = "absoluteContraindication",
              override: bool = False) -> EscalationOutcome:
-    """Build the binding apex hol:DecisionHolon and wire authority-holarchy lineage.
+    """Build the binding apex dec:DecisionHolon and wire authority-holarchy lineage.
 
     The apex option space is {confirm-decline, override}; chosen = confirm-decline by default
     (override=True selects override, with the other rejectedBecause). The apex decision is
-    constrainedBy the realized severity, triggeredBy a constitutional hol:Event, decidedBy the
-    board agent, and withinScope `scope`; local_subject hol:escalatedTo new_subject.
+    constrainedBy the realized severity, triggeredBy a constitutional dec:Event, decidedBy the
+    board agent, and withinScope `scope`; local_subject dec:escalatedTo new_subject.
     """
     g = Graph()
     confirm = URIRef(str(new_subject) + "-opt-confirm-decline")

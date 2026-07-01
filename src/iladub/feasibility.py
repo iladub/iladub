@@ -89,12 +89,12 @@ def feasible_recipients(organ: Organ,
 
 def nominate(feasible_set: List[FeasibleRecipient], chosen: str, *,
              agent: str, rationale: str, subject=None) -> Graph:
-    """Nominate a recipient from the feasible cloud, as a hol:DecisionHolon — the SAME
+    """Nominate a recipient from the feasible cloud, as a dec:DecisionHolon — the SAME
     accountable decision model M4 uses.
 
     The feasible-recipient cloud is the deliberated **option space** (candidate
     destinations — propositions, the "for-orders" cloud). The nominated recipient is
-    ``hol:chosen`` and becomes the **grounded destination** (``hol:produced``); every other
+    ``dec:chosen`` and becomes the **grounded destination** (``dec:produced``); every other
     option is rejected with a reason. A 'no allocation' option is always deliberated, so a
     real choice is recorded even with a single feasible recipient, and if ``chosen`` is not
     among the feasible recipients the decision declines (nothing is grounded). The membrane

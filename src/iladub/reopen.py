@@ -1,5 +1,5 @@
 """Event-driven decision reopening: when an event matches a decision's declared
-hol:revisitIf keys, re-evaluate the decision and emit a superseding decision holon
+dec:revisitIf keys, re-evaluate the decision and emit a superseding decision holon
 with full lineage. Domain-agnostic — the caller supplies how to re-evaluate."""
 from __future__ import annotations
 

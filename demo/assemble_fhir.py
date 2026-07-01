@@ -5,7 +5,7 @@ Pipeline:
   2. TRANSFORM (knowledge as argument): the contract's ResourceRules say which
      FHIR resource each concept becomes and which element carries its code; the
      assembler wires subject/requester/author references between them.
-  3. A hol:DecisionHolon is attached over the FHIR layer.
+  3. A dec:DecisionHolon is attached over the FHIR layer.
   4. LOAD: validate against CH-Core-style SHACL shapes.
 
 Only resources the report actually supports are emitted (no fabricated data).
@@ -48,7 +48,7 @@ egfr_val = find(r"eGFR liegt\s+aktuell bei\s+(\d+)", find(r"eGFR\D+(\d+)\s*ml/mi
 practitioner = "Dr. med. T. Weber"
 
 g = Graph()
-for p, ns in [("fhir", FHIR), ("ex", EX), ("hol", DEC), ("prov", PROV), ("skos", SKOS)]:
+for p, ns in [("fhir", FHIR), ("ex", EX), ("dec", DEC), ("prov", PROV), ("skos", SKOS)]:
     g.bind(p, ns)
 
 # --- core actors / spine ---------------------------------------------------

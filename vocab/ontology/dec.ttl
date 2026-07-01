@@ -13,7 +13,7 @@
 #################################################################
 
 <https://w3id.org/iladub/dec> a owl:Ontology ;
-    dcterms:title "hol — holonic decision-context vocabulary"@en ;
+    dcterms:title "dec — decision-context vocabulary"@en ;
     dcterms:description """Represents decisions as holons: units that are at once a
 self-contained, accountable deliberation and a part of a larger decision holarchy. A
 dec:DecisionHolon is a prov:Activity that records the evidence considered, the constraints
@@ -26,7 +26,7 @@ of authority, the deontic layer, and decision lineage."""@en ;
     dcterms:created "2026-05-31"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
-    vann:preferredNamespacePrefix "hol" ;
+    vann:preferredNamespacePrefix "dec" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/dec#" ;
     rdfs:seeAlso <https://w3id.org/iladub/etkl> , <https://w3id.org/iladub> .
 
@@ -139,7 +139,7 @@ dec:order a owl:DatatypeProperty ;
 
 dec:requiresContext a owl:ObjectProperty ;
     rdfs:label "requires context"@en ; rdfs:domain dec:Milestone ; rdfs:range etkl:SemanticDataContract ;
-    rdfs:comment "The required-context contract that must be ready before this milestone's decision. Range is etkl:SemanticDataContract by design: hol is part of the ET(K)L family (etkl ⊇ hol ⊇ iladub), so this is within-family layering, not a domain coupling."@en .
+    rdfs:comment "The required-context contract that must be ready before this milestone's decision. Range is etkl:SemanticDataContract by design: dec is part of the ET(K)L family (etkl ⊇ dec ⊇ iladub), so this is within-family layering, not a domain coupling."@en .
 
 dec:clockStart a owl:DatatypeProperty ;
     rdfs:label "clock start"@en ; rdfs:domain dec:Milestone ; rdfs:range xsd:boolean ;
@@ -188,4 +188,4 @@ dec:escalatedTo a owl:ObjectProperty ;
 
 dec:maxSeverity a owl:ObjectProperty ;
     rdfs:label "max severity"@en ; rdfs:domain dec:Scope ;
-    rdfs:comment "The highest severity the scope's holder may resolve within its own autonomy; a realized severity above it must be escalated. The filler is an ordinal severity resource (in practice a risk:Severity) — hol stays standalone, so the range is left open."@en .
+    rdfs:comment "The highest severity the scope's holder may resolve within its own autonomy; a realized severity above it must be escalated. The filler is an ordinal severity resource (in practice a risk:Severity) — dec stays standalone, so the range is left open."@en .

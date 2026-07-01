@@ -1,5 +1,5 @@
 """Generic timeline engine: drive a time-critical supply chain from a declarative
-TimelineContract (a hol:Process of hol:Milestones). Domain-agnostic — it knows
+TimelineContract (a dec:Process of dec:Milestones). Domain-agnostic — it knows
 nothing about organs, only about order, required context, and clocks."""
 from __future__ import annotations
 

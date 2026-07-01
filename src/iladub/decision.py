@@ -1,5 +1,5 @@
 """Deterministic M4 accept/decline evaluation on clean concepts, recorded as a
-hol:DecisionHolon. This is 'logic application on clean concepts' — the funnel
+dec:DecisionHolon. This is 'logic application on clean concepts' — the funnel
 produced the validated context; here we decide and account for it."""
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def build_decision_holon(result: DecisionResult,
                          agent: URIRef = TX["surgeon-1"],
                          evidence: tuple[URIRef, ...] = (),
                          revisit_if: tuple[str, ...] = ()) -> Graph:
-    """Emit the decision as a hol:DecisionHolon that conforms to hol:DecisionHolonShape:
+    """Emit the decision as a dec:DecisionHolon that conforms to dec:DecisionHolonShape:
     a deliberated option space (accept + decline), exactly one chosen option, an
     accountable agent, the rejected option's reason, and (optionally) its place in a
     process holarchy."""

@@ -45,8 +45,8 @@ iladub:GroundedNodeShape a sh:NodeShape ;
 
 #################################################################
 #  A PromotionDecision must be an accountable decision: it reviews a
-#  candidate and (via hol) has an agent, an option space and a choice.
-#  The hol shapes validate the decision mechanics; here we add the
+#  candidate and (via dec) has an agent, an option space and a choice.
+#  The dec shapes validate the decision mechanics; here we add the
 #  iladub-specific requirement that it actually reviews a candidate.
 #################################################################
 
