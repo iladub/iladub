@@ -15,7 +15,6 @@ EX  = os.path.join(ROOT, "examples")
 TST = os.path.join(ROOT, "tests")
 
 HOLON  = "http://w3id.org/holon/"
-ILADUB = "https://w3id.org/etkl/iladub#"
 ETKL   = "https://w3id.org/etkl#"
 HEV    = "http://w3id.org/holon/event/"
 HOL_NS = "https://w3id.org/etkl/hol#"

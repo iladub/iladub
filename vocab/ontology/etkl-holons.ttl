@@ -25,15 +25,15 @@
 they interact. A RawDocumentHolon and the SemanticHolons (provided ontologies / SKOS
 terminology) interact through a governed GroundingPortal, producing a CleanDocumentHolon
 whose interior is the grounded graph and whose cleanliness IS its membrane health.
-Defined in the iladub namespace and standalone; the optional HGA alignment module anchors
+Defined in the etkl namespace and standalone; the optional HGA alignment module anchors
 these under the W3C Holon CG ontology by rdfs:subClassOf."""@en ;
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-06-23"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
-    vann:preferredNamespacePrefix "iladub" ;
-    vann:preferredNamespaceUri "https://w3id.org/etkl/iladub#" ;
-    rdfs:seeAlso <https://w3id.org/etkl/iladub> ,
+    vann:preferredNamespacePrefix "etkl" ;
+    vann:preferredNamespaceUri "https://w3id.org/etkl#" ;
+    rdfs:seeAlso <https://w3id.org/etkl> ,
                  <https://w3id.org/etkl/iladub/hga-alignment> .
 
 #################################################################

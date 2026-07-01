@@ -11,7 +11,7 @@
 
 #################################################################
 #  Ontology metadata
-#  OPTIONAL alignment module: anchors iladub's holon types under the
+#  OPTIONAL alignment module: anchors etkl's holon-production fabric (and iladub's core grounding epistemics) under the
 #  W3C Holon Community Group ontology (HGA), `holon:` =
 #  http://w3id.org/holon/  (NOTE: http, not https — keep it exact).
 #
@@ -26,8 +26,7 @@
 
 <https://w3id.org/etkl/iladub/hga-alignment> a owl:Ontology ;
     dcterms:title "iladub → HGA alignment (W3C Holon CG)"@en ;
-    dcterms:description """Optional, separately loadable alignment of iladub's holon types
-and grounding portal to the W3C Holon Community Group's Holon Graph Architecture (HGA,
+    dcterms:description """Optional, separately loadable alignment of etkl's holon-production fabric and iladub's core grounding epistemics to the W3C Holon Community Group's Holon Graph Architecture (HGA,
 `holon:`). Alignment-not-import: no owl:imports; rdfs:subClassOf axioms only."""@en ;
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-06-23"^^xsd:date ;
