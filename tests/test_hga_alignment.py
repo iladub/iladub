@@ -16,6 +16,7 @@ TST = os.path.join(ROOT, "tests")
 
 HOLON  = "http://w3id.org/holon/"
 ILADUB = "https://w3id.org/etkl/iladub#"
+ETKL   = "https://w3id.org/etkl#"
 HEV    = "http://w3id.org/holon/event/"
 HOL_NS = "https://w3id.org/etkl/hol#"
 
@@ -30,7 +31,7 @@ def _v(data, shapes, ont):
                        inference="rdfs", advanced=True)
     return c, t
 
-ONTS = [os.path.join(ONT, "iladub.ttl"), os.path.join(ONT, "iladub-holons.ttl")]
+ONTS = [os.path.join(ONT, "iladub.ttl"), os.path.join(ONT, "etkl-holons.ttl")]
 SHAPES = [os.path.join(SH, "iladub-shapes.ttl"), os.path.join(SH, "iladub-hga-shapes.ttl")]
 HGA_SHAPES = [os.path.join(SH, "iladub-hga-shapes.ttl")]
 
@@ -44,13 +45,13 @@ def test_alignment_axioms_present():
         ("GroundingPortal",    "Portal"),
     }
     for sub, obj in expected:
-        assert (URIRef(ILADUB + sub), RDFS.subClassOf, URIRef(HOLON + obj)) in g, \
-            f"missing alignment: iladub:{sub} rdfs:subClassOf holon:{obj}"
+        assert (URIRef(ETKL + sub), RDFS.subClassOf, URIRef(HOLON + obj)) in g, \
+            f"missing alignment: etkl:{sub} rdfs:subClassOf holon:{obj}"
 
 def test_holons_module_standalone():
     """The core holon-types module must NOT hard-depend on the holon: namespace."""
-    text = open(os.path.join(ONT, "iladub-holons.ttl")).read()
-    assert "w3id.org/holon" not in text, "core holon module leaked an HGA dependency"
+    text = open(os.path.join(ONT, "etkl-holons.ttl")).read()
+    assert "w3id.org/holon" not in text, "etkl-holons.ttl leaked an HGA dependency"
 
 def test_governed_grounding_conformant():
     """A registered GroundingRecord produced by a PromotionDecision conforms."""

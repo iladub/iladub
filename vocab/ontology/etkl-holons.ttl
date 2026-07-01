@@ -1,4 +1,5 @@
 @prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix etkl:   <https://w3id.org/etkl#> .
 @prefix hol:    <https://w3id.org/etkl/hol#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -10,7 +11,7 @@
 
 #################################################################
 #  Ontology metadata
-#  iladub's holon-interaction types. STANDALONE and reasoner-free:
+#  etkl's holon-production fabric (moved from the iladub core 2026-07-01). STANDALONE and reasoner-free:
 #  this file has NO dependency on the W3C Holon CG ontology. The
 #  alignment to HGA (`holon:`) lives in the optional, separately
 #  loadable module `iladub-hga-align.ttl` (alignment-not-import).
@@ -19,7 +20,7 @@
 #################################################################
 
 <https://w3id.org/etkl/iladub/holons> a owl:Ontology ;
-    dcterms:title "iladub — holon-interaction types"@en ;
+    dcterms:title "etkl — holon-production fabric"@en ;
     dcterms:description """The holons iladub compiles with, and the portal through which
 they interact. A RawDocumentHolon and the SemanticHolons (provided ontologies / SKOS
 terminology) interact through a governed GroundingPortal, producing a CleanDocumentHolon
@@ -39,31 +40,31 @@ these under the W3C Holon CG ontology by rdfs:subClassOf."""@en ;
 #  Holon types
 #################################################################
 
-iladub:DocumentHolon a owl:Class ;
+etkl:DocumentHolon a owl:Class ;
     rdfs:label "Document Holon"@en ;
     rdfs:comment "A document as a holon: an information-bearing artefact with an interior, a membrane, a projection and a context. Abstract parent of the raw and clean document holons."@en .
 
-iladub:RawDocumentHolon a owl:Class ;
-    rdfs:subClassOf iladub:DocumentHolon ;
+etkl:RawDocumentHolon a owl:Class ;
+    rdfs:subClassOf etkl:DocumentHolon ;
     rdfs:label "Raw Document Holon"@en ;
     rdfs:comment "The source document as a holon. Interior: the Document Region Graph (prose, tables, figures, reading order). Projection: the surface concepts / mentions it offers for grounding. Context: acquisition provenance."@en .
 
-iladub:SemanticHolon a owl:Class ;
-    rdfs:subClassOf iladub:DocumentHolon ;
+etkl:SemanticHolon a owl:Class ;
+    rdfs:subClassOf etkl:DocumentHolon ;
     rdfs:label "Semantic Holon"@en ;
     rdfs:comment "A knowledge module — a provided ontology or SKOS terminology — as a holon. Interior: the vocabulary. Projection: the concepts available for grounding. It is the grounding source the portal reconciles against."@en .
 
-iladub:AlignmentHolon a owl:Class ;
-    rdfs:subClassOf iladub:SemanticHolon ;
+etkl:AlignmentHolon a owl:Class ;
+    rdfs:subClassOf etkl:SemanticHolon ;
     rdfs:label "Alignment Holon"@en ;
     rdfs:comment "A SemanticHolon whose purpose is to bridge vocabularies (e.g. SNOMED ↔ a domain concept)."@en .
 
-iladub:CleanDocumentHolon a owl:Class ;
-    rdfs:subClassOf iladub:DocumentHolon ;
+etkl:CleanDocumentHolon a owl:Class ;
+    rdfs:subClassOf etkl:DocumentHolon ;
     rdfs:label "Clean Document Holon"@en ;
     rdfs:comment "The compiled output as a holon. Interior: the grounded graph + the promotion decisions that produced it. Membrane: the contract's SHACL shapes. Projection: the FAIR graph machines consume. Context: provenance-to-region + the decision log. Its cleanliness is its membrane health."@en .
 
-iladub:GroundingPortal a owl:Class ;
+etkl:GroundingPortal a owl:Class ;
     rdfs:label "Grounding Portal"@en ;
     rdfs:comment "The governed, liminal interaction through which a RawDocumentHolon and the SemanticHolons reconcile concepts — itself a holon. Unlike a bare navigational link, the grounding portal carries the concept-matching TRANSFORM, and convergence (table cell / prose / figure resolving to the SAME concept IRI) is region-holons reconciled through it. Crossing the portal is governed by iladub:PromotionDecision."@en .
 
@@ -71,32 +72,32 @@ iladub:GroundingPortal a owl:Class ;
 #  Membrane health — "clean" is not a vibe, it is membrane health
 #################################################################
 
-iladub:MembraneHealth a owl:Class ;
+etkl:MembraneHealth a owl:Class ;
     rdfs:label "Membrane Health"@en ;
     rdfs:comment "The health of a holon's boundary: the result of validating its interior against its membrane (SHACL shapes). For a CleanDocumentHolon this is the document's quality signal."@en .
 
-iladub:Intact      a iladub:MembraneHealth ; rdfs:label "intact"@en ;
+etkl:Intact      a etkl:MembraneHealth ; rdfs:label "intact"@en ;
     rdfs:comment "Interior fully conforms to the membrane."@en .
-iladub:Weakened    a iladub:MembraneHealth ; rdfs:label "weakened"@en ;
+etkl:Weakened    a etkl:MembraneHealth ; rdfs:label "weakened"@en ;
     rdfs:comment "Interior conforms but warnings are present."@en .
-iladub:Compromised a iladub:MembraneHealth ; rdfs:label "compromised"@en ;
+etkl:Compromised a etkl:MembraneHealth ; rdfs:label "compromised"@en ;
     rdfs:comment "Interior violates the membrane: the holon is not clean."@en .
 
-iladub:membraneHealth a owl:ObjectProperty ;
+etkl:membraneHealth a owl:ObjectProperty ;
     rdfs:label "membrane health"@en ;
-    rdfs:domain iladub:DocumentHolon ; rdfs:range iladub:MembraneHealth ;
+    rdfs:domain etkl:DocumentHolon ; rdfs:range etkl:MembraneHealth ;
     rdfs:comment "The membrane-health signal computed for this holon."@en .
 
 #################################################################
 #  Interaction properties
 #################################################################
 
-iladub:throughPortal a owl:ObjectProperty ;
+etkl:throughPortal a owl:ObjectProperty ;
     rdfs:label "through portal"@en ;
-    rdfs:domain iladub:CleanDocumentHolon ; rdfs:range iladub:GroundingPortal ;
+    rdfs:domain etkl:CleanDocumentHolon ; rdfs:range etkl:GroundingPortal ;
     rdfs:comment "The grounding portal through which this clean document holon was compiled."@en .
 
-iladub:reconciles a owl:ObjectProperty ;
+etkl:reconciles a owl:ObjectProperty ;
     rdfs:label "reconciles"@en ;
-    rdfs:domain iladub:GroundingPortal ; rdfs:range iladub:SourceRegion ;
+    rdfs:domain etkl:GroundingPortal ; rdfs:range iladub:SourceRegion ;
     rdfs:comment "A source region the portal reconciled onto a shared concept IRI (the convergence principle)."@en .

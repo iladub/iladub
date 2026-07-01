@@ -1,4 +1,5 @@
 @prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix etkl:   <https://w3id.org/etkl#> .
 @prefix hol:    <https://w3id.org/etkl/hol#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -42,16 +43,16 @@ and grounding portal to the W3C Holon Community Group's Holon Graph Architecture
 #  natural anchor for iladub's document/semantic holons.
 #################################################################
 
-iladub:DocumentHolon      rdfs:subClassOf holon:DataHolon .
-iladub:RawDocumentHolon   rdfs:subClassOf holon:DataHolon .
-iladub:CleanDocumentHolon rdfs:subClassOf holon:DataHolon .
-iladub:SemanticHolon      rdfs:subClassOf holon:DataHolon .
+etkl:DocumentHolon      rdfs:subClassOf holon:DataHolon .
+etkl:RawDocumentHolon   rdfs:subClassOf holon:DataHolon .
+etkl:CleanDocumentHolon rdfs:subClassOf holon:DataHolon .
+etkl:SemanticHolon      rdfs:subClassOf holon:DataHolon .
 
 #  HGA's holon:Portal is a *navigational link between holons*
 #  (sourceHolon / portalTarget / portalStatus, ODRL-gated PortalLock).
-#  iladub:GroundingPortal subclasses it and ADDS the concept-matching
+#  etkl:GroundingPortal subclasses it and ADDS the concept-matching
 #  transform — that extension is iladub's, not inherited from HGA.
-iladub:GroundingPortal    rdfs:subClassOf holon:Portal .
+etkl:GroundingPortal    rdfs:subClassOf holon:Portal .
 
 #################################################################
 #  Grounding-model alignment (informative)
