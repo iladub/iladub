@@ -51,16 +51,16 @@ def test_etkl_knowledge_free_pipeline_rejected():
 def test_hol_decision_conformant():
     c, t = _validate(
         [os.path.join(EX, "promotion.ttl")],
-        os.path.join(SH, "hol-shapes.ttl"),
-        [os.path.join(ONT, "hol.ttl")],
+        os.path.join(SH, "dec-shapes.ttl"),
+        [os.path.join(ONT, "dec.ttl")],
     )
     assert c, t
 
 
 def test_hol_rubber_stamp_rejected():
     c, _ = _validate(
-        [os.path.join(TST, "hol-bad.ttl")],
-        os.path.join(SH, "hol-shapes.ttl"),
-        [os.path.join(ONT, "hol.ttl")],
+        [os.path.join(TST, "dec-bad.ttl")],
+        os.path.join(SH, "dec-shapes.ttl"),
+        [os.path.join(ONT, "dec.ttl")],
     )
     assert not c

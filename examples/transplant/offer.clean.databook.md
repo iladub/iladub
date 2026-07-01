@@ -40,7 +40,7 @@ tx:offer a tx:OrganOffer ;
 <!-- databook:id: propositions -->
 <!-- databook:graph: https://example.org/transplant/databooks/offer-2026-0091.clean#propositions -->
 ```turtle
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix iladub: <https://w3id.org/iladub#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 iladub:candidate-1 a iladub:CandidateConcept ;
     iladub:confidence "0.9"^^xsd:decimal ;
@@ -52,13 +52,13 @@ iladub:candidate-1 a iladub:CandidateConcept ;
 <!-- databook:graph: https://example.org/transplant/databooks/offer-2026-0091.clean#decision -->
 ```turtle
 @prefix tx: <https://example.org/transplant#> .
-@prefix hol: <https://w3id.org/etkl/hol#> .
-tx:m4-decision a hol:DecisionHolon ;
-    hol:optionSpace tx:opt-accept , tx:opt-decline ;
-    hol:chosen tx:opt-accept ;
-    hol:decidedBy tx:surgeon-1 ;
-    hol:rationale "ABO compatible and within cold-ischemia window." .
-tx:opt-accept a hol:Option .
-tx:opt-decline a hol:Option ;
-    hol:rejectedBecause "ABO compatible and within cold-ischemia window." .
+@prefix dec: <https://w3id.org/iladub/dec#> .
+tx:m4-decision a dec:DecisionHolon ;
+    dec:optionSpace tx:opt-accept , tx:opt-decline ;
+    dec:chosen tx:opt-accept ;
+    dec:decidedBy tx:surgeon-1 ;
+    dec:rationale "ABO compatible and within cold-ischemia window." .
+tx:opt-accept a dec:Option .
+tx:opt-decline a dec:Option ;
+    dec:rejectedBecause "ABO compatible and within cold-ischemia window." .
 ```

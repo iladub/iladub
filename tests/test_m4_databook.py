@@ -11,9 +11,9 @@ from rdflib.namespace import RDF
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TXD = os.path.join(ROOT, "examples", "transplant")
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 TX = Namespace("https://example.org/transplant#")
-ILADUB = Namespace("https://w3id.org/etkl/iladub#")
+ILADUB = Namespace("https://w3id.org/iladub#")
 
 def test_raw_offer_databook_loads():
     db = read_databook(os.path.join(TXD, "offer.databook.md"))
@@ -58,7 +58,7 @@ def test_compile_offer_databook_emits_clean_holon(monkeypatch, tmp_path):
     assert len(list(props.subjects(RDF.type, ILADUB.CandidateConcept))) == 1
 
     dec = db.graph("decision")
-    assert (TX["m4-decision"], HOL.chosen, TX["opt-accept"]) in dec
+    assert (TX["m4-decision"], DEC.chosen, TX["opt-accept"]) in dec
 
     assert "process" in db.frontmatter
     inputs = db.frontmatter["process"]["inputs"]

@@ -13,7 +13,7 @@ from typing import List, Optional
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
-ETKL = Namespace("https://w3id.org/etkl#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
 
 class SemanticDataContract:

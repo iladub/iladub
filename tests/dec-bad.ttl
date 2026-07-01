@@ -1,4 +1,4 @@
-@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ex:   <https://example.org/demo#> .
@@ -6,10 +6,10 @@
 #  NON-CONFORMANT: a "decision" with a single option and no chosen option.
 #  A real decision deliberates >= 2 options and records exactly one choice.
 
-ex:rubber-stamp a hol:DecisionHolon ;
+ex:rubber-stamp a dec:DecisionHolon ;
     rdfs:label "Rubber-stamp (illegal)"@en ;
-    hol:decidedBy ex:agent ;
-    hol:optionSpace ex:only-option .
+    dec:decidedBy ex:agent ;
+    dec:optionSpace ex:only-option .
 
-ex:only-option a hol:Option ; rdfs:label "the only option"@en .
+ex:only-option a dec:Option ; rdfs:label "the only option"@en .
 ex:agent a prov:Agent ; rdfs:label "An agent"@en .

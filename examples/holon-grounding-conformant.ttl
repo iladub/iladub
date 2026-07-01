@@ -1,5 +1,5 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
 @prefix prov:   <http://www.w3.org/ns/prov#> .
@@ -23,15 +23,15 @@ ex:cand-egfr a iladub:CandidateConcept ;
     iladub:status iladub:proposed .
 
 #  The accountable membrane-crossing.
-ex:promo-egfr a iladub:PromotionDecision , hol:DecisionHolon ;
+ex:promo-egfr a iladub:PromotionDecision , dec:DecisionHolon ;
     rdfs:label "Promote 'eGFR' grounding to registered"@en ;
     iladub:reviews ex:cand-egfr ;
-    hol:decidedBy ex:curator-aliki ;
-    hol:optionSpace ex:opt-accept , ex:opt-reject ;
-    hol:chosen ex:opt-accept ;
-    hol:rationale "Fuzzy on surface form, but the table header and units make the match certain."@en ;
-    hol:confidence 0.93 ;
-    hol:produced ex:gr-egfr .
+    dec:decidedBy ex:curator-aliki ;
+    dec:optionSpace ex:opt-accept , ex:opt-reject ;
+    dec:chosen ex:opt-accept ;
+    dec:rationale "Fuzzy on surface form, but the table header and units make the match certain."@en ;
+    dec:confidence 0.93 ;
+    dec:produced ex:gr-egfr .
 
 #  The HGA-native grounding record the decision produced: registered only
 #  BECAUSE the promotion produced it (the governance shape checks exactly this).
@@ -43,9 +43,9 @@ ex:gr-egfr a holon:GroundingRecord ;
     holon:registrationStatus holon:RegisteredStatus ;
     iladub:fromRegion ex:region-p1-tbl2 .
 
-ex:opt-accept a hol:Option ; rdfs:label "accept the match and register"@en .
-ex:opt-reject a hol:Option ; rdfs:label "reject"@en ;
-    hol:rejectedBecause "Surface form alone is ambiguous, but context resolves it."@en .
+ex:opt-accept a dec:Option ; rdfs:label "accept the match and register"@en .
+ex:opt-reject a dec:Option ; rdfs:label "reject"@en ;
+    dec:rejectedBecause "Surface form alone is ambiguous, but context resolves it."@en .
 
 ex:extractor-v0 a iladub:Suggester ; rdfs:label "iladub extractor v0 (model)"@en .
 ex:curator-aliki a prov:Agent ; rdfs:label "Dr. A. Curator"@en .

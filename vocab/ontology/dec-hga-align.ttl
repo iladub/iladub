@@ -1,4 +1,4 @@
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix hev:    <http://w3id.org/holon/event/> .
 @prefix hmk:    <http://w3id.org/holon/markov/> .
@@ -20,7 +20,7 @@
 #  w3c-cg/holon HEAD 8612f5e (2026-06-24).
 #################################################################
 
-<https://w3id.org/etkl/hol/hga-alignment> a owl:Ontology ;
+<https://w3id.org/iladub/dec/hga-alignment> a owl:Ontology ;
     dcterms:title "hol → HGA alignment (W3C Holon CG)"@en ;
     dcterms:description """Optional, separately loadable alignment of hol to HGA. The authority
 holarchy is HGA containment; the hol event is an HGA event envelope; iladub's accountable
@@ -30,20 +30,20 @@ DecisionHolon, escalation edge, and autonomy scope are gap-fills HGA has no equi
     dcterms:created "2026-06-30"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
-    rdfs:seeAlso <https://w3id.org/etkl/hol> , <https://github.com/w3c-cg/holon> .
+    rdfs:seeAlso <https://w3id.org/iladub/dec> , <https://github.com/w3c-cg/holon> .
 
 #  The authority holarchy is HGA holon containment (same anchor risk:withinContext uses).
-hol:partOf rdfs:subPropertyOf holon:partOf .
+dec:partOf rdfs:subPropertyOf holon:partOf .
 
-#  An hol:Event is an HGA event envelope — defer the event substrate to the CG.
-hol:Event rdfs:subClassOf hev:HolonEvent .
+#  An dec:Event is an HGA event envelope — defer the event substrate to the CG.
+dec:Event rdfs:subClassOf hev:HolonEvent .
 
 #  iladub GAP-FILLERS over HGA — seeAlso, NOT subclass (HGA has no equivalent):
-hol:escalatedTo rdfs:seeAlso hmk:PropagationSignal ;
-    rdfs:comment "HGA propagates a hmk:PropagationSignal (Distress->Resolution) and routes it by hpol: policy, but does not require the resolution to be an accountable decision. hol:escalatedTo records that the propagation was resolved by an accountable apex hol:DecisionHolon — enforced by hol:EscalationShape."@en .
+dec:escalatedTo rdfs:seeAlso hmk:PropagationSignal ;
+    rdfs:comment "HGA propagates a hmk:PropagationSignal (Distress->Resolution) and routes it by hpol: policy, but does not require the resolution to be an accountable decision. dec:escalatedTo records that the propagation was resolved by an accountable apex dec:DecisionHolon — enforced by dec:EscalationShape."@en .
 
-hol:DecisionHolon rdfs:seeAlso hbayes:PolicySelection ;
-    rdfs:comment "HGA's hbayes:PolicySelection is a belief-driven choice, not an accountable, agent-attributed, re-evaluable deliberation. hol:DecisionHolon is iladub's gap-fill — stronger than HGA's confidence/belief gate."@en .
+dec:DecisionHolon rdfs:seeAlso hbayes:PolicySelection ;
+    rdfs:comment "HGA's hbayes:PolicySelection is a belief-driven choice, not an accountable, agent-attributed, re-evaluable deliberation. dec:DecisionHolon is iladub's gap-fill — stronger than HGA's confidence/belief gate."@en .
 
-hol:Scope rdfs:seeAlso hpol:BoundaryPolicy ;
-    rdfs:comment "HGA hpol:BoundaryPolicy governs access (who may read/write a holon), NOT decision autonomy. hol:Scope (with hol:maxSeverity) bounds the severity a decision-maker may resolve before escalating — a distinct concept."@en .
+dec:Scope rdfs:seeAlso hpol:BoundaryPolicy ;
+    rdfs:comment "HGA hpol:BoundaryPolicy governs access (who may read/write a holon), NOT decision autonomy. dec:Scope (with dec:maxSeverity) bounds the severity a decision-maker may resolve before escalating — a distinct concept."@en .

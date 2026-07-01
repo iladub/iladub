@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
-RISK = Namespace("https://w3id.org/etkl/risk#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
+RISK = Namespace("https://w3id.org/iladub/risk#")
 TX = Namespace("https://example.org/transplant#")
 
 # Mirrors risk:order in risk.ttl (kept honest by test_severity_order_mirrors_risk_ttl).
@@ -47,27 +47,27 @@ def escalate(local_subject: URIRef, realized_severity: str, *,
     g = Graph()
     confirm = URIRef(str(new_subject) + "-opt-confirm-decline")
     over = URIRef(str(new_subject) + "-opt-override")
-    g.add((new_subject, RDF.type, HOL.DecisionHolon))
-    g.add((confirm, RDF.type, HOL.Option))
-    g.add((over, RDF.type, HOL.Option))
-    g.add((new_subject, HOL.optionSpace, confirm))
-    g.add((new_subject, HOL.optionSpace, over))
+    g.add((new_subject, RDF.type, DEC.DecisionHolon))
+    g.add((confirm, RDF.type, DEC.Option))
+    g.add((over, RDF.type, DEC.Option))
+    g.add((new_subject, DEC.optionSpace, confirm))
+    g.add((new_subject, DEC.optionSpace, over))
 
     chosen = over if override else confirm
     rejected = confirm if override else over
     rejected_reason = ("decline overridden by board judgment" if override
                        else "override rejected: a constitutional contraindication is absolute")
-    g.add((new_subject, HOL.chosen, chosen))
-    g.add((rejected, HOL.rejectedBecause, Literal(rejected_reason)))
-    g.add((new_subject, HOL.decidedBy, agent))
-    g.add((new_subject, HOL.rationale,
+    g.add((new_subject, DEC.chosen, chosen))
+    g.add((rejected, DEC.rejectedBecause, Literal(rejected_reason)))
+    g.add((new_subject, DEC.decidedBy, agent))
+    g.add((new_subject, DEC.rationale,
            Literal(f"constitutional matter ({condition}) escalated to the board apex")))
-    g.add((new_subject, HOL.constrainedBy, _SEVERITY_IRI[realized_severity]))
-    g.add((new_subject, HOL.withinScope, scope))
+    g.add((new_subject, DEC.constrainedBy, _SEVERITY_IRI[realized_severity]))
+    g.add((new_subject, DEC.withinScope, scope))
 
-    g.add((event_subject, RDF.type, HOL.Event))
-    g.add((event_subject, HOL.condition, Literal(condition)))
-    g.add((new_subject, HOL.triggeredBy, event_subject))
+    g.add((event_subject, RDF.type, DEC.Event))
+    g.add((event_subject, DEC.condition, Literal(condition)))
+    g.add((new_subject, DEC.triggeredBy, event_subject))
 
-    g.add((local_subject, HOL.escalatedTo, new_subject))
+    g.add((local_subject, DEC.escalatedTo, new_subject))
     return EscalationOutcome(apex_subject=new_subject, chosen=chosen, graph=g)

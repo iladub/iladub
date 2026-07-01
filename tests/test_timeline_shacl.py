@@ -7,8 +7,8 @@ TXD = os.path.join(ROOT, "examples", "transplant")
 
 
 def _shapes_knowledge():
-    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
-    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "dec-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "dec.ttl"), format="turtle")
     return shapes, knowledge
 
 

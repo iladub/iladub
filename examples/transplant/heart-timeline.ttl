@@ -1,23 +1,23 @@
 @prefix tx:     <https://example.org/transplant#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 
-tx:heart-process a hol:Process ;
+tx:heart-process a dec:Process ;
     rdfs:label "Heart DBD transplant (M4–M8)"@en ;
-    hol:hasMilestone tx:m4 , tx:m5 , tx:m6 , tx:m7 , tx:m8 .
+    dec:hasMilestone tx:m4 , tx:m5 , tx:m6 , tx:m7 , tx:m8 .
 
-tx:m4 a hol:Milestone ; rdfs:label "Offer → Acceptance"@en ; hol:order 4 ;
-    hol:requiresContext tx:ctx-m4 .
-tx:m5 a hol:Milestone ; rdfs:label "Mobilization"@en ; hol:order 5 ;
-    hol:requiresContext tx:ctx-m5 .
-tx:m6 a hol:Milestone ; rdfs:label "Cross-clamp"@en ; hol:order 6 ;
-    hol:clockStart true ; hol:windowLimitMinutes 240 .
-tx:m7 a hol:Milestone ; rdfs:label "Transport"@en ; hol:order 7 ;
-    hol:requiresContext tx:ctx-m7 .
-tx:m8 a hol:Milestone ; rdfs:label "Reperfusion"@en ; hol:order 8 ;
-    hol:clockStop true .
+tx:m4 a dec:Milestone ; rdfs:label "Offer → Acceptance"@en ; dec:order 4 ;
+    dec:requiresContext tx:ctx-m4 .
+tx:m5 a dec:Milestone ; rdfs:label "Mobilization"@en ; dec:order 5 ;
+    dec:requiresContext tx:ctx-m5 .
+tx:m6 a dec:Milestone ; rdfs:label "Cross-clamp"@en ; dec:order 6 ;
+    dec:clockStart true ; dec:windowLimitMinutes 240 .
+tx:m7 a dec:Milestone ; rdfs:label "Transport"@en ; dec:order 7 ;
+    dec:requiresContext tx:ctx-m7 .
+tx:m8 a dec:Milestone ; rdfs:label "Reperfusion"@en ; dec:order 8 ;
+    dec:clockStop true .
 
 tx:ctx-m4 a etkl:SemanticDataContract ; etkl:hasField tx:tf-organ , tx:tf-abo .
 tx:ctx-m5 a etkl:SemanticDataContract ; etkl:hasField tx:tf-recipient-ready ;

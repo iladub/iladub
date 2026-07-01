@@ -5,8 +5,8 @@ from rdflib.namespace import RDF
 from iladub.decision import evaluate_m4, build_decision_holon, M4Context
 from iladub.validate import validate
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
-RISK = Namespace("https://w3id.org/etkl/risk#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
+RISK = Namespace("https://w3id.org/iladub/risk#")
 TX = Namespace("https://example.org/transplant#")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,7 +32,7 @@ def test_decision_holon_is_a_hol_decision_holon():
     ctx = M4Context(donor_abo="O", recipient_abo="O",
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240)
     g = build_decision_holon(evaluate_m4(ctx))
-    holons = list(g.subjects(RDF.type, HOL.DecisionHolon))
+    holons = list(g.subjects(RDF.type, DEC.DecisionHolon))
     assert len(holons) == 1
 
 
@@ -40,8 +40,8 @@ def test_decision_holon_has_two_options_and_one_chosen():
     ctx = M4Context(donor_abo="O", recipient_abo="O",
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240)
     g = build_decision_holon(evaluate_m4(ctx))
-    options = list(g.subjects(RDF.type, HOL.Option))
-    chosen = list(g.objects(None, HOL.chosen))
+    options = list(g.subjects(RDF.type, DEC.Option))
+    chosen = list(g.objects(None, DEC.chosen))
     assert len(options) == 2
     assert len(chosen) == 1
     assert chosen[0] in options
@@ -51,8 +51,8 @@ def test_decision_holon_conforms_to_hol_shapes():
     ctx = M4Context(donor_abo="O", recipient_abo="O",
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240)
     g = build_decision_holon(evaluate_m4(ctx))
-    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
-    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "dec-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "dec.ttl"), format="turtle")
     result = validate(g, shapes, knowledge)
     assert result.conforms, result.report_text
 
@@ -60,9 +60,9 @@ def test_decision_holon_conforms_to_hol_shapes():
 def test_decision_holon_conforms_when_wired_to_process():
     ctx = M4Context(donor_abo="O", recipient_abo="O",
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240)
-    g = build_decision_holon(evaluate_m4(ctx), process=HOL["heart-process"])
-    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
-    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    g = build_decision_holon(evaluate_m4(ctx), process=DEC["heart-process"])
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "dec-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "dec.ttl"), format="turtle")
     result = validate(g, shapes, knowledge)
     assert result.conforms, result.report_text
 
@@ -71,7 +71,7 @@ def test_decision_holon_emits_revisit_if_keys():
     ctx = M4Context(donor_abo="O", recipient_abo="O",
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240)
     g = build_decision_holon(evaluate_m4(ctx), revisit_if=("ischemiaExceeded", "donorDeterioration"))
-    keys = {str(o) for o in g.objects(None, HOL.revisitIf)}
+    keys = {str(o) for o in g.objects(None, DEC.revisitIf)}
     assert keys == {"ischemiaExceeded", "donorDeterioration"}
 
 
@@ -110,7 +110,7 @@ def test_risk_decline_records_constraint_and_conforms():
                     projected_ischemia_minutes=95, ischemia_limit_minutes=240,
                     organ_lvef=38, recipient_lvef_floor=45)
     g = build_decision_holon(evaluate_m4(ctx))
-    assert (TX["m4-decision"], HOL.constrainedBy, RISK["Breach"]) in g
-    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
-    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    assert (TX["m4-decision"], DEC.constrainedBy, RISK["Breach"]) in g
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "dec-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "dec.ttl"), format="turtle")
     assert validate(g, shapes, knowledge).conforms

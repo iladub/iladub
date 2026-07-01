@@ -1,10 +1,10 @@
-@prefix hol:  <https://w3id.org/etkl/hol#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-hol:prefixes
-    sh:declare [ sh:prefix "hol" ; sh:namespace "https://w3id.org/etkl/hol#"^^xsd:anyURI ] .
+dec:prefixes
+    sh:declare [ sh:prefix "dec" ; sh:namespace "https://w3id.org/iladub/dec#"^^xsd:anyURI ] .
 
 #################################################################
 #  A decision holon must be an accountable, real decision:
@@ -12,21 +12,21 @@ hol:prefixes
 #  and a recorded agent. (The no-change option counts toward the 2.)
 #################################################################
 
-hol:DecisionHolonShape a sh:NodeShape ;
-    sh:targetClass hol:DecisionHolon ;
-    sh:property [ sh:path hol:optionSpace ; sh:minCount 2 ;
+dec:DecisionHolonShape a sh:NodeShape ;
+    sh:targetClass dec:DecisionHolon ;
+    sh:property [ sh:path dec:optionSpace ; sh:minCount 2 ;
         sh:message "A real decision deliberates at least two options (the no-change option counts)." ] ;
-    sh:property [ sh:path hol:chosen ; sh:minCount 1 ; sh:maxCount 1 ;
+    sh:property [ sh:path dec:chosen ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A decision must record exactly one chosen option." ] ;
-    sh:property [ sh:path hol:decidedBy ; sh:minCount 1 ;
+    sh:property [ sh:path dec:decidedBy ; sh:minCount 1 ;
         sh:message "A decision must record an accountable agent (human or automated)." ] ;
     sh:sparql [
         sh:message "The chosen option must be one of the options in the option space." ;
-        sh:prefixes hol:prefixes ;
+        sh:prefixes dec:prefixes ;
         sh:select """
             SELECT $this WHERE {
-                $this hol:chosen ?o .
-                FILTER NOT EXISTS { $this hol:optionSpace ?o }
+                $this dec:chosen ?o .
+                FILTER NOT EXISTS { $this dec:optionSpace ?o }
             }
         """ ;
     ] .
@@ -35,9 +35,9 @@ hol:DecisionHolonShape a sh:NodeShape ;
 #  Confidence, where present, must be in [0,1].
 #################################################################
 
-hol:ConfidenceShape a sh:NodeShape ;
-    sh:targetClass hol:DecisionHolon ;
-    sh:property [ sh:path hol:confidence ; sh:maxCount 1 ;
+dec:ConfidenceShape a sh:NodeShape ;
+    sh:targetClass dec:DecisionHolon ;
+    sh:property [ sh:path dec:confidence ; sh:maxCount 1 ;
         sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ;
         sh:message "Confidence, if given, must be a single decimal in [0,1]." ] .
 
@@ -45,19 +45,19 @@ hol:ConfidenceShape a sh:NodeShape ;
 #  A milestone must declare its order (SP2).
 #################################################################
 
-hol:MilestoneShape a sh:NodeShape ;
-    sh:targetClass hol:Milestone ;
-    sh:property [ sh:path hol:order ; sh:minCount 1 ; sh:maxCount 1 ;
+dec:MilestoneShape a sh:NodeShape ;
+    sh:targetClass dec:Milestone ;
+    sh:property [ sh:path dec:order ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:datatype xsd:integer ;
         sh:message "A milestone must declare exactly one integer order." ] ;
-    sh:property [ sh:path hol:windowLimitMinutes ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+    sh:property [ sh:path dec:windowLimitMinutes ; sh:maxCount 1 ; sh:datatype xsd:integer ;
         sh:message "windowLimitMinutes, if present, is a single integer." ] .
 
 #################################################################
 #  An event must declare exactly one condition (SP3a).
 #################################################################
 
-hol:EventShape a sh:NodeShape ;
-    sh:targetClass hol:Event ;
-    sh:property [ sh:path hol:condition ; sh:minCount 1 ; sh:maxCount 1 ;
+dec:EventShape a sh:NodeShape ;
+    sh:targetClass dec:Event ;
+    sh:property [ sh:path dec:condition ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An event must declare exactly one condition." ] .

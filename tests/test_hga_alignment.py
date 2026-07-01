@@ -15,9 +15,9 @@ EX  = os.path.join(ROOT, "examples")
 TST = os.path.join(ROOT, "tests")
 
 HOLON  = "http://w3id.org/holon/"
-ETKL   = "https://w3id.org/etkl#"
+ETKL   = "https://w3id.org/iladub/etkl#"
 HEV    = "http://w3id.org/holon/event/"
-HOL_NS = "https://w3id.org/etkl/hol#"
+DEC_NS = "https://w3id.org/iladub/dec#"
 
 def _g(*paths):
     g = Graph()
@@ -65,12 +65,12 @@ def test_ungoverned_grounding_rejected():
 
 def test_hol_alignment_axioms_present():
     """The hol->HGA module anchors the authority holarchy and event envelope to HGA."""
-    g = _g(os.path.join(ONT, "hol-hga-align.ttl"))
-    assert (URIRef(HOL_NS + "partOf"), RDFS.subPropertyOf, URIRef(HOLON + "partOf")) in g
-    assert (URIRef(HOL_NS + "Event"), RDFS.subClassOf, URIRef(HEV + "HolonEvent")) in g
+    g = _g(os.path.join(ONT, "dec-hga-align.ttl"))
+    assert (URIRef(DEC_NS + "partOf"), RDFS.subPropertyOf, URIRef(HOLON + "partOf")) in g
+    assert (URIRef(DEC_NS + "Event"), RDFS.subClassOf, URIRef(HEV + "HolonEvent")) in g
 
 
 def test_hol_module_standalone():
     """The core hol vocabulary must NOT hard-depend on the holon: namespace."""
-    text = open(os.path.join(ONT, "hol.ttl")).read()
+    text = open(os.path.join(ONT, "dec.ttl")).read()
     assert "w3id.org/holon" not in text, "core hol module leaked an HGA dependency"

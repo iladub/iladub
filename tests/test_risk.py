@@ -13,7 +13,7 @@ SH  = os.path.join(ROOT, "vocab", "shapes")
 EX  = os.path.join(ROOT, "examples", "transplant")
 TST = os.path.join(ROOT, "tests")
 
-RISK  = "https://w3id.org/etkl/risk#"
+RISK  = "https://w3id.org/iladub/risk#"
 HOLON = "http://w3id.org/holon/"
 HPROJ = "http://w3id.org/holon/projection/"
 

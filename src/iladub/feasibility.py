@@ -25,7 +25,7 @@ from rdflib.namespace import RDF
 from .allen import Interval, feasible
 from .decision import _ABO_OK
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 TX = Namespace("https://example.org/transplant#")
 
 
@@ -112,24 +112,24 @@ def nominate(feasible_set: List[FeasibleRecipient], chosen: str, *,
         slack[f.recipient] = f.slack_minutes
 
     g = Graph()
-    g.add((subj, RDF.type, HOL.DecisionHolon))
-    g.add((subj, HOL.decidedBy, TX[agent]))
-    g.add((subj, HOL.rationale, Literal(rationale)))
+    g.add((subj, RDF.type, DEC.DecisionHolon))
+    g.add((subj, DEC.decidedBy, TX[agent]))
+    g.add((subj, DEC.rationale, Literal(rationale)))
     for opt in options.values():
-        g.add((opt, RDF.type, HOL.Option))
-        g.add((subj, HOL.optionSpace, opt))
+        g.add((opt, RDF.type, DEC.Option))
+        g.add((subj, DEC.optionSpace, opt))
 
     chosen_key = chosen if chosen in options else "_decline_"
     chosen_opt = options[chosen_key]
-    g.add((subj, HOL.chosen, chosen_opt))
+    g.add((subj, DEC.chosen, chosen_opt))
 
     for key, opt in options.items():
         if opt == chosen_opt:
             continue
         reason = ("a feasible recipient was available and nominated" if key == "_decline_"
                   else f"not nominated (slack {slack[key]} min)")
-        g.add((opt, HOL.rejectedBecause, Literal(reason)))
+        g.add((opt, DEC.rejectedBecause, Literal(reason)))
 
     if chosen_key != "_decline_":
-        g.add((subj, HOL.produced, chosen_opt))  # the nominated recipient = the grounded destination
+        g.add((subj, DEC.produced, chosen_opt))  # the nominated recipient = the grounded destination
     return g

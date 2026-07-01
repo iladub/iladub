@@ -7,7 +7,7 @@ from iladub.to_rdf import to_rdf
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TXD = os.path.join(ROOT, "examples", "transplant")
 TX = Namespace("https://example.org/transplant#")
-ILADUB = Namespace("https://w3id.org/etkl/iladub#")
+ILADUB = Namespace("https://w3id.org/iladub#")
 
 
 def _terms():

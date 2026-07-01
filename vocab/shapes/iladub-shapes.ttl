@@ -1,11 +1,11 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 
 iladub:prefixes
-    sh:declare [ sh:prefix "iladub" ; sh:namespace "https://w3id.org/etkl/iladub#"^^xsd:anyURI ] .
+    sh:declare [ sh:prefix "iladub" ; sh:namespace "https://w3id.org/iladub#"^^xsd:anyURI ] .
 
 #################################################################
 #  A CandidateConcept (a PROPOSITION) must be honest about itself:
@@ -54,7 +54,7 @@ iladub:PromotionDecisionShape a sh:NodeShape ;
     sh:targetClass iladub:PromotionDecision ;
     sh:property [ sh:path iladub:reviews ; sh:minCount 1 ;
         sh:message "A promotion decision must review at least one candidate concept." ] ;
-    sh:property [ sh:path hol:decidedBy ; sh:minCount 1 ;
+    sh:property [ sh:path dec:decidedBy ; sh:minCount 1 ;
         sh:message "A promotion decision must record an accountable agent (human or rule)." ] .
 
 #################################################################

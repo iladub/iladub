@@ -1,6 +1,6 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -13,7 +13,7 @@
 #  Ontology metadata
 #################################################################
 
-<https://w3id.org/etkl/iladub> a owl:Ontology ;
+<https://w3id.org/iladub> a owl:Ontology ;
     dcterms:title "iladub — assertion / proposition vocabulary"@en ;
     dcterms:description """Vocabulary for iladub's two-layer epistemics. iladub ASSERTS only
 what it can ground in provided ontologies (the grounded graph), and PROPOSES everything else
@@ -27,8 +27,8 @@ of documents uses the same decision model to govern its own reading."""@en ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
     vann:preferredNamespacePrefix "iladub" ;
-    vann:preferredNamespaceUri "https://w3id.org/etkl/iladub#" ;
-    rdfs:seeAlso <https://w3id.org/etkl/hol> , <https://w3id.org/etkl> .
+    vann:preferredNamespaceUri "https://w3id.org/iladub#" ;
+    rdfs:seeAlso <https://w3id.org/iladub/dec> , <https://w3id.org/iladub/etkl> .
 
 #################################################################
 #  Status individuals (the assertion / proposition boundary)
@@ -58,9 +58,9 @@ iladub:GroundedNode a owl:Class ;
     rdfs:comment "A node admitted to the grounded graph. Every grounded node MUST have been produced by a promotion decision (enforced in SHACL)."@en .
 
 iladub:PromotionDecision a owl:Class ;
-    rdfs:subClassOf hol:DecisionHolon ;
+    rdfs:subClassOf dec:DecisionHolon ;
     rdfs:label "Promotion Decision"@en ;
-    rdfs:comment "The accountable act of reviewing a CandidateConcept and accepting / refining / rejecting it. A hol:DecisionHolon whose evidence is the candidate and its anchor, whose chosen option is the outcome, and whose product (if accepted) is the grounded node. This is the iladub<->hol bridge."@en .
+    rdfs:comment "The accountable act of reviewing a CandidateConcept and accepting / refining / rejecting it. A dec:DecisionHolon whose evidence is the candidate and its anchor, whose chosen option is the outcome, and whose product (if accepted) is the grounded node. This is the iladub<->hol bridge."@en .
 
 iladub:Suggester a owl:Class ;
     rdfs:subClassOf prov:Agent ;
@@ -107,7 +107,7 @@ iladub:fromRegion a owl:ObjectProperty ;
 #################################################################
 
 iladub:reviews a owl:ObjectProperty ;
-    rdfs:subPropertyOf hol:consideredEvidence ;
+    rdfs:subPropertyOf dec:consideredEvidence ;
     rdfs:label "reviews"@en ; rdfs:domain iladub:PromotionDecision ; rdfs:range iladub:CandidateConcept ;
     rdfs:comment "The candidate concept this promotion decision reviews."@en .
 

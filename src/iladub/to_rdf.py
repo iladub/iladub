@@ -13,9 +13,9 @@ from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, SKOS
 
 TX = Namespace("https://example.org/transplant#")
-ILADUB = Namespace("https://w3id.org/etkl/iladub#")
+ILADUB = Namespace("https://w3id.org/iladub#")
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
-ETKL = Namespace("https://w3id.org/etkl#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
 OFFER = TX["offer"]
 

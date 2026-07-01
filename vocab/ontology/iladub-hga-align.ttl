@@ -1,6 +1,6 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -24,7 +24,7 @@
 #  Class IRIs verified against w3c-cg/holon HEAD 2fcc928 (2026-06-23).
 #################################################################
 
-<https://w3id.org/etkl/iladub/hga-alignment> a owl:Ontology ;
+<https://w3id.org/iladub/hga-alignment> a owl:Ontology ;
     dcterms:title "iladub → HGA alignment (W3C Holon CG)"@en ;
     dcterms:description """Optional, separately loadable alignment of etkl's holon-production fabric and iladub's core grounding epistemics to the W3C Holon Community Group's Holon Graph Architecture (HGA,
 `holon:`). Alignment-not-import: no owl:imports; rdfs:subClassOf axioms only."""@en ;
@@ -32,7 +32,7 @@
     dcterms:created "2026-06-23"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
-    rdfs:seeAlso <https://w3id.org/etkl/iladub/holons> ,
+    rdfs:seeAlso <https://w3id.org/iladub/etkl/holons> ,
                  <https://github.com/w3c-cg/holon> .
 
 #################################################################
@@ -68,7 +68,7 @@ etkl:GroundingPortal    rdfs:subClassOf holon:Portal .
 #
 #  iladub's CONTRIBUTION over HGA: HGA promotes Candidate→Registered with
 #  a bare confidence gate. iladub requires that crossing to be the product
-#  of an accountable iladub:PromotionDecision (a hol:DecisionHolon).
+#  of an accountable iladub:PromotionDecision (a dec:DecisionHolon).
 #  That governance is enforced by iladub-hga-shapes.ttl
 #  (iladub:HgaGroundingGovernanceShape over holon:GroundingRecord).
 #################################################################

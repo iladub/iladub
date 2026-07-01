@@ -1,5 +1,5 @@
-@prefix hol:    <https://w3id.org/etkl/hol#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -12,11 +12,11 @@
 #  Ontology metadata
 #################################################################
 
-<https://w3id.org/etkl/hol> a owl:Ontology ;
+<https://w3id.org/iladub/dec> a owl:Ontology ;
     dcterms:title "hol — holonic decision-context vocabulary"@en ;
     dcterms:description """Represents decisions as holons: units that are at once a
 self-contained, accountable deliberation and a part of a larger decision holarchy. A
-hol:DecisionHolon is a prov:Activity that records the evidence considered, the constraints
+dec:DecisionHolon is a prov:Activity that records the evidence considered, the constraints
 in force, the option space deliberated (the no-change option counts), the single chosen
 option, the accountable agent, a rationale, and what the decision produced — plus its place
 in a holarchy and the autonomy scope it acted within. It captures what most data models
@@ -27,23 +27,23 @@ of authority, the deontic layer, and decision lineage."""@en ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
     vann:preferredNamespacePrefix "hol" ;
-    vann:preferredNamespaceUri "https://w3id.org/etkl/hol#" ;
-    rdfs:seeAlso <https://w3id.org/etkl> , <https://w3id.org/etkl/iladub> .
+    vann:preferredNamespaceUri "https://w3id.org/iladub/dec#" ;
+    rdfs:seeAlso <https://w3id.org/iladub/etkl> , <https://w3id.org/iladub> .
 
 #################################################################
 #  Classes
 #################################################################
 
-hol:DecisionHolon a owl:Class ;
+dec:DecisionHolon a owl:Class ;
     rdfs:subClassOf prov:Activity ;
     rdfs:label "Decision Holon"@en ;
     rdfs:comment "An accountable, re-evaluable decision that is simultaneously a whole (a self-contained deliberation) and a part (a member of a larger decision holarchy)."@en .
 
-hol:Option a owl:Class ;
+dec:Option a owl:Class ;
     rdfs:label "Option"@en ;
     rdfs:comment "A candidate course of action in a decision's option space. The no-change option is a legitimate option."@en .
 
-hol:Scope a owl:Class ;
+dec:Scope a owl:Class ;
     rdfs:label "Autonomy Scope"@en ;
     rdfs:comment "The bounds of authority within which a decision (especially an automated one) may act."@en .
 
@@ -51,141 +51,141 @@ hol:Scope a owl:Class ;
 #  Properties — deliberation
 #################################################################
 
-hol:consideredEvidence a owl:ObjectProperty ;
+dec:consideredEvidence a owl:ObjectProperty ;
     rdfs:subPropertyOf prov:used ;
-    rdfs:label "considered evidence"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range prov:Entity ;
+    rdfs:label "considered evidence"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range prov:Entity ;
     rdfs:comment "An item of evidence the decision took into account."@en .
 
-hol:constrainedBy a owl:ObjectProperty ;
-    rdfs:label "constrained by"@en ; rdfs:domain hol:DecisionHolon ;
+dec:constrainedBy a owl:ObjectProperty ;
+    rdfs:label "constrained by"@en ; rdfs:domain dec:DecisionHolon ;
     rdfs:comment "A constraint that reframed the option space (e.g. a contraindication)."@en .
 
-hol:optionSpace a owl:ObjectProperty ;
-    rdfs:label "option space"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Option ;
+dec:optionSpace a owl:ObjectProperty ;
+    rdfs:label "option space"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:Option ;
     rdfs:comment "An option that was available to the decision. A real decision has at least two."@en .
 
-hol:chosen a owl:ObjectProperty ;
-    rdfs:label "chosen"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Option ;
+dec:chosen a owl:ObjectProperty ;
+    rdfs:label "chosen"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:Option ;
     rdfs:comment "The single option the decision selected. Must be a member of the option space."@en .
 
-hol:decidedBy a owl:ObjectProperty ;
+dec:decidedBy a owl:ObjectProperty ;
     rdfs:subPropertyOf prov:wasAssociatedWith ;
-    rdfs:label "decided by"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range prov:Agent ;
+    rdfs:label "decided by"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range prov:Agent ;
     rdfs:comment "The accountable agent (human or automated) that made the decision."@en .
 
-hol:rationale a owl:DatatypeProperty ;
-    rdfs:label "rationale"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range rdfs:Literal ;
+dec:rationale a owl:DatatypeProperty ;
+    rdfs:label "rationale"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range rdfs:Literal ;
     rdfs:comment "Why the chosen option was selected (may be language-tagged)."@en .
 
-hol:confidence a owl:DatatypeProperty ;
-    rdfs:label "confidence"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range xsd:decimal ;
+dec:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range xsd:decimal ;
     rdfs:comment "Decider confidence in the choice, in [0,1]."@en .
 
-hol:produced a owl:ObjectProperty ;
+dec:produced a owl:ObjectProperty ;
     rdfs:subPropertyOf prov:generated ;
-    rdfs:label "produced"@en ; rdfs:domain hol:DecisionHolon ;
+    rdfs:label "produced"@en ; rdfs:domain dec:DecisionHolon ;
     rdfs:comment "The node or artifact the decision produced (e.g. a prescription, a grounded node)."@en .
 
 #################################################################
 #  Properties — option detail
 #################################################################
 
-hol:rejectedBecause a owl:DatatypeProperty ;
-    rdfs:label "rejected because"@en ; rdfs:domain hol:Option ; rdfs:range rdfs:Literal ;
+dec:rejectedBecause a owl:DatatypeProperty ;
+    rdfs:label "rejected because"@en ; rdfs:domain dec:Option ; rdfs:range rdfs:Literal ;
     rdfs:comment "Why this option was not chosen (may be language-tagged)."@en .
 
-hol:dominatedBy a owl:ObjectProperty ;
-    rdfs:label "dominated by"@en ; rdfs:domain hol:Option ; rdfs:range hol:Option ;
+dec:dominatedBy a owl:ObjectProperty ;
+    rdfs:label "dominated by"@en ; rdfs:domain dec:Option ; rdfs:range dec:Option ;
     rdfs:comment "Another option that dominated this one in the deliberation."@en .
 
 #################################################################
 #  Properties — holarchy, governance, lineage
 #################################################################
 
-hol:partOf a owl:ObjectProperty ;
-    rdfs:label "part of"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
+dec:partOf a owl:ObjectProperty ;
+    rdfs:label "part of"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:DecisionHolon ;
     rdfs:comment "The larger decision holon this one composes into (local ⊂ protocol ⊂ guideline ⊂ policy)."@en .
 
-hol:governedBy a owl:ObjectProperty ;
-    rdfs:label "governed by"@en ; rdfs:domain hol:DecisionHolon ;
+dec:governedBy a owl:ObjectProperty ;
+    rdfs:label "governed by"@en ; rdfs:domain dec:DecisionHolon ;
     rdfs:comment "The policy, guideline or protocol that governs the decision."@en .
 
-hol:withinScope a owl:ObjectProperty ;
-    rdfs:label "within scope"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Scope ;
+dec:withinScope a owl:ObjectProperty ;
+    rdfs:label "within scope"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:Scope ;
     rdfs:comment "The autonomy scope the decision acted within."@en .
 
-hol:revisitIf a owl:DatatypeProperty ;
-    rdfs:label "revisit if"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range rdfs:Literal ;
+dec:revisitIf a owl:DatatypeProperty ;
+    rdfs:label "revisit if"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range rdfs:Literal ;
     rdfs:comment "A condition that, if it becomes true, should reopen this decision (decision lineage)."@en .
 
 #################################################################
 #  Timeline / process holarchy (SP2)
 #################################################################
 
-hol:Process a owl:Class ;
+dec:Process a owl:Class ;
     rdfs:label "Process"@en ;
     rdfs:comment "A holon whose parts are milestone decisions ordered over time — a time-critical supply chain."@en .
 
-hol:Milestone a owl:Class ;
+dec:Milestone a owl:Class ;
     rdfs:label "Milestone"@en ;
     rdfs:comment "A decision point in a process, with a required-context contract and optional clock role."@en .
 
-hol:hasMilestone a owl:ObjectProperty ;
-    rdfs:label "has milestone"@en ; rdfs:domain hol:Process ; rdfs:range hol:Milestone .
+dec:hasMilestone a owl:ObjectProperty ;
+    rdfs:label "has milestone"@en ; rdfs:domain dec:Process ; rdfs:range dec:Milestone .
 
-hol:order a owl:DatatypeProperty ;
-    rdfs:label "order"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:integer ;
+dec:order a owl:DatatypeProperty ;
+    rdfs:label "order"@en ; rdfs:domain dec:Milestone ; rdfs:range xsd:integer ;
     rdfs:comment "Position of the milestone in the process sequence."@en .
 
-hol:requiresContext a owl:ObjectProperty ;
-    rdfs:label "requires context"@en ; rdfs:domain hol:Milestone ; rdfs:range etkl:SemanticDataContract ;
+dec:requiresContext a owl:ObjectProperty ;
+    rdfs:label "requires context"@en ; rdfs:domain dec:Milestone ; rdfs:range etkl:SemanticDataContract ;
     rdfs:comment "The required-context contract that must be ready before this milestone's decision. Range is etkl:SemanticDataContract by design: hol is part of the ET(K)L family (etkl ⊇ hol ⊇ iladub), so this is within-family layering, not a domain coupling."@en .
 
-hol:clockStart a owl:DatatypeProperty ;
-    rdfs:label "clock start"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:boolean ;
+dec:clockStart a owl:DatatypeProperty ;
+    rdfs:label "clock start"@en ; rdfs:domain dec:Milestone ; rdfs:range xsd:boolean ;
     rdfs:comment "True if this milestone starts the dominant time-critical interval."@en .
 
-hol:clockStop a owl:DatatypeProperty ;
-    rdfs:label "clock stop"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:boolean ;
+dec:clockStop a owl:DatatypeProperty ;
+    rdfs:label "clock stop"@en ; rdfs:domain dec:Milestone ; rdfs:range xsd:boolean ;
     rdfs:comment "True if this milestone stops the dominant time-critical interval."@en .
 
-hol:windowLimitMinutes a owl:DatatypeProperty ;
-    rdfs:label "window limit (minutes)"@en ; rdfs:domain hol:Milestone ; rdfs:range xsd:integer ;
+dec:windowLimitMinutes a owl:DatatypeProperty ;
+    rdfs:label "window limit (minutes)"@en ; rdfs:domain dec:Milestone ; rdfs:range xsd:integer ;
     rdfs:comment "The maximum duration of the interval this milestone opens (e.g. cold-ischemia limit)."@en .
 
-hol:withinProcess a owl:ObjectProperty ;
-    rdfs:label "within process"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Process ;
-    rdfs:comment "The process holarchy this milestone decision belongs to (decision → process; distinct from hol:partOf, which is decision → decision)."@en .
+dec:withinProcess a owl:ObjectProperty ;
+    rdfs:label "within process"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:Process ;
+    rdfs:comment "The process holarchy this milestone decision belongs to (decision → process; distinct from dec:partOf, which is decision → decision)."@en .
 
 #################################################################
 #  Events & decision lineage (SP3a)
 #################################################################
 
-hol:Event a owl:Class ;
+dec:Event a owl:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:label "Event"@en ;
-    rdfs:comment "A perturbation that may reopen a decision when it matches the decision's hol:revisitIf."@en .
+    rdfs:comment "A perturbation that may reopen a decision when it matches the decision's dec:revisitIf."@en .
 
-hol:condition a owl:DatatypeProperty ;
-    rdfs:label "condition"@en ; rdfs:domain hol:Event ; rdfs:range rdfs:Literal ;
-    rdfs:comment "The named trigger key this event carries (matched against a decision's hol:revisitIf)."@en .
+dec:condition a owl:DatatypeProperty ;
+    rdfs:label "condition"@en ; rdfs:domain dec:Event ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The named trigger key this event carries (matched against a decision's dec:revisitIf)."@en .
 
-hol:supersedes a owl:ObjectProperty ;
-    rdfs:label "supersedes"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
+dec:supersedes a owl:ObjectProperty ;
+    rdfs:label "supersedes"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:DecisionHolon ;
     rdfs:comment "This (re-evaluated) decision supersedes a prior decision — decision lineage."@en .
 
-hol:triggeredBy a owl:ObjectProperty ;
-    rdfs:label "triggered by"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:Event ;
+dec:triggeredBy a owl:ObjectProperty ;
+    rdfs:label "triggered by"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:Event ;
     rdfs:comment "The event that caused this decision to be reopened."@en .
 
 #################################################################
 #  Apex escalation — vertical authority-holarchy lineage
 #################################################################
 
-hol:escalatedTo a owl:ObjectProperty ;
-    rdfs:label "escalated to"@en ; rdfs:domain hol:DecisionHolon ; rdfs:range hol:DecisionHolon ;
-    rdfs:comment "This decision escalated the matter to a higher-authority decision because the local decision's autonomy scope was insufficient to resolve it (authority-holarchy lineage; the vertical analog of hol:supersedes)."@en .
+dec:escalatedTo a owl:ObjectProperty ;
+    rdfs:label "escalated to"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:DecisionHolon ;
+    rdfs:comment "This decision escalated the matter to a higher-authority decision because the local decision's autonomy scope was insufficient to resolve it (authority-holarchy lineage; the vertical analog of dec:supersedes)."@en .
 
-hol:maxSeverity a owl:ObjectProperty ;
-    rdfs:label "max severity"@en ; rdfs:domain hol:Scope ;
+dec:maxSeverity a owl:ObjectProperty ;
+    rdfs:label "max severity"@en ; rdfs:domain dec:Scope ;
     rdfs:comment "The highest severity the scope's holder may resolve within its own autonomy; a realized severity above it must be escalated. The filler is an ordinal severity resource (in practice a risk:Severity) — hol stays standalone, so the range is left open."@en .

@@ -23,6 +23,6 @@ def test_promotion_grounds():
     c,t=_v([os.path.join(EX,"proposal.ttl"),os.path.join(EX,"promotion.ttl")],S,[O]); assert c,t
 def test_promotion_is_real_decision_holon():
     c,t=_v([os.path.join(EX,"proposal.ttl"),os.path.join(EX,"promotion.ttl")],
-           os.path.join(SH,"hol-shapes.ttl"),[os.path.join(ONT,"hol.ttl")]); assert c,t
+           os.path.join(SH,"dec-shapes.ttl"),[os.path.join(ONT,"dec.ttl")]); assert c,t
 def test_leak_rejected():
     c,_=_v([os.path.join(TST,"leak-attempt.ttl")],S,[O]); assert not c

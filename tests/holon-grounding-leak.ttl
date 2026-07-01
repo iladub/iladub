@@ -1,4 +1,4 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix iladub: <https://w3id.org/iladub#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ex:     <https://example.org/demo#> .

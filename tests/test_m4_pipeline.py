@@ -31,7 +31,7 @@ def test_compile_offer_validates_and_recommends_accept(monkeypatch):
     assert res.decision.recommendation == "accept"
     from rdflib.namespace import RDF
     from rdflib import Namespace
-    ILADUB = Namespace("https://w3id.org/etkl/iladub#")
+    ILADUB = Namespace("https://w3id.org/iladub#")
     assert len(list(res.extraction_graph.propositions.subjects(RDF.type, ILADUB.CandidateConcept))) == 1
 
 

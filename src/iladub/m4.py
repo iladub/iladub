@@ -29,8 +29,8 @@ class M4Result:
 
 from rdflib import Namespace as _Namespace
 
-_HOL = _Namespace("https://w3id.org/etkl/hol#")
-_ILADUB = _Namespace("https://w3id.org/etkl/iladub#")
+_DEC = _Namespace("https://w3id.org/iladub/dec#")
+_ILADUB = _Namespace("https://w3id.org/iladub#")
 
 
 def capture_for_milestone(milestone, timeline_graph: Graph, document_text: str,
@@ -41,7 +41,7 @@ def capture_for_milestone(milestone, timeline_graph: Graph, document_text: str,
     from baml_client import sync_client
     from .to_rdf import ground_typed
     b = b if b is not None else sync_client.b
-    contract_node = timeline_graph.value(milestone.id, _HOL.requiresContext)
+    contract_node = timeline_graph.value(milestone.id, _DEC.requiresContext)
     fn_name = str(timeline_graph.value(contract_node, _ILADUB.extractor))
     typed = getattr(b, fn_name)(document_text)
     return ground_typed(typed, timeline_graph, contract_node, terms, subject).graph

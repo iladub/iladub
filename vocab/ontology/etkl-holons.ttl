@@ -1,6 +1,6 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -19,7 +19,7 @@
 #  model").
 #################################################################
 
-<https://w3id.org/etkl/iladub/holons> a owl:Ontology ;
+<https://w3id.org/iladub/etkl/holons> a owl:Ontology ;
     dcterms:title "etkl — holon-production fabric"@en ;
     dcterms:description """The holons iladub compiles with, and the portal through which
 they interact. A RawDocumentHolon and the SemanticHolons (provided ontologies / SKOS
@@ -32,9 +32,9 @@ these under the W3C Holon CG ontology by rdfs:subClassOf."""@en ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
     vann:preferredNamespacePrefix "etkl" ;
-    vann:preferredNamespaceUri "https://w3id.org/etkl#" ;
-    rdfs:seeAlso <https://w3id.org/etkl> ,
-                 <https://w3id.org/etkl/iladub/hga-alignment> .
+    vann:preferredNamespaceUri "https://w3id.org/iladub/etkl#" ;
+    rdfs:seeAlso <https://w3id.org/iladub/etkl> ,
+                 <https://w3id.org/iladub/hga-alignment> .
 
 #################################################################
 #  Holon types
