@@ -102,10 +102,10 @@ propositions are candidates *at* it. See `docs/holonic-interaction.md`.
   is Cagle's W3C HGA** (`holon:` = `http://w3id.org/holon/`), the W3C Holon CG's
   reference ontology — *not* Welz's CGA (`urn:holonic:ontology:`), which remains useful
   conceptual prior art but is no longer the alignment target (decided 2026-06-23).
-- **Alignment, not import:** iladub's holon types and grounding portal live in the
-  `iladub`/`dec` namespaces and are aligned via `rdfs:subClassOf` to `holon:`
-  (e.g. `iladub:CleanDocumentHolon ⊑ holon:DataHolon` (or `holon:Holon`),
-  `iladub:RawDocumentHolon ⊑ holon:DataHolon`, `iladub:GroundingPortal ⊑ holon:Portal`)
+- **Alignment, not import:** the doc-holon fabric and grounding portal live in the
+  `etkl` namespace and are aligned via `rdfs:subClassOf` to `holon:`
+  (e.g. `etkl:CleanDocumentHolon ⊑ holon:DataHolon` (or `holon:Holon`),
+  `etkl:RawDocumentHolon ⊑ holon:DataHolon`, `etkl:GroundingPortal ⊑ holon:Portal`)
   — never copied, never hard-imported. Reuse HGA's grounding lifecycle where it fits:
   iladub's `iladub:PromotionDecision` governs the `holon:GroundingRecord` →
   `holon:RegisteredStatus` transition that HGA leaves to a bare confidence gate.

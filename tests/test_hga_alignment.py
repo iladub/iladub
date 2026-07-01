@@ -63,14 +63,14 @@ def test_ungoverned_grounding_rejected():
     assert not c
 
 
-def test_hol_alignment_axioms_present():
+def test_dec_alignment_axioms_present():
     """The dec->HGA module anchors the authority holarchy and event envelope to HGA."""
     g = _g(os.path.join(ONT, "dec-hga-align.ttl"))
     assert (URIRef(DEC_NS + "partOf"), RDFS.subPropertyOf, URIRef(HOLON + "partOf")) in g
     assert (URIRef(DEC_NS + "Event"), RDFS.subClassOf, URIRef(HEV + "HolonEvent")) in g
 
 
-def test_hol_module_standalone():
+def test_dec_module_standalone():
     """The core dec vocabulary must NOT hard-depend on the holon: namespace."""
     text = open(os.path.join(ONT, "dec.ttl")).read()
     assert "w3id.org/holon" not in text, "core dec module leaked an HGA dependency"

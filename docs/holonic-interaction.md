@@ -134,8 +134,8 @@ holon types and its grounding portal are defined in the `iladub`/`dec` namespace
 
 ## What is built
 
-- `vocab/ontology/iladub-holons.ttl` — the holon types + grounding portal + membrane
-  health, in the `iladub` namespace, **standalone** (no HGA dependency).
+- `vocab/ontology/etkl-holons.ttl` — the holon types + grounding portal + membrane
+  health, in the `etkl` namespace, **standalone** (no HGA dependency).
 - `vocab/ontology/iladub-hga-align.ttl` — the **optional** HGA alignment
   (alignment-not-import): `rdfs:subClassOf holon:DataHolon` / `holon:Portal` axioms only.
 - `vocab/shapes/iladub-hga-shapes.ttl` — `iladub:HgaGroundingGovernanceShape`: a
@@ -148,7 +148,7 @@ holon types and its grounding portal are defined in the `iladub`/`dec` namespace
 ## Planned work (not done yet)
 
 - A membrane-health check that computes and reports a compiled document's cleanliness
-  (`iladub:membraneHealth` → Intact / Weakened / Compromised) from validation results.
+  (`etkl:membraneHealth` → Intact / Weakened / Compromised) from validation results.
 - A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
   (the current example covers the grounding-governance crossing only).
 
