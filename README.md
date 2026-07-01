@@ -9,7 +9,7 @@
 **iladub** (𒅍𒁾 · Sumerian *íl*, "to lift, to carry, to bring forward" + *dub*, "clay
 tablet, document") compiles unstructured human documents into FAIR, contract-defined
 semantic knowledge graphs. It is the reference implementation of the **ET(K)L** method,
-whose persistent namespace is [`https://w3id.org/etkl`](https://w3id.org/etkl).
+whose persistent namespace is [`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
 
 > [!NOTE]
 > Early development — APIs are not yet stable.
@@ -163,7 +163,7 @@ connected FHIR graph with a decision recorded over it — lives in
 ## The project family
 
 - **ET(K)L** (`etkl`) — the method and its umbrella vocabulary.
-- **hol** — the holonic decision-context module (and, increasingly, holon interaction).
+- **dec** — the holonic decision-context module (and, increasingly, holon interaction).
 - **iladub** — the document compiler and its assertion/proposition epistemics (this repo).
 
 ## Development

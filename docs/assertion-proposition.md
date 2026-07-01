@@ -2,7 +2,7 @@
 
 iladub's epistemic core. A carrier is trusted only if it does not invent its cargo.
 
-Namespace: `https://w3id.org/etkl/iladub#`.
+Namespace: `https://w3id.org/iladub#`.
 
 ## The two layers
 
@@ -16,7 +16,7 @@ Namespace: `https://w3id.org/etkl/iladub#`.
 ## Promotion is a decision
 
 A proposition enters the grounded graph **only** as the product of an
-`iladub:PromotionDecision` (⊑ `hol:DecisionHolon`): it `reviews` the candidate, has an
+`iladub:PromotionDecision` (⊑ `dec:DecisionHolon`): it `reviews` the candidate, has an
 option space (accept-as-anchor / refine-to-domain-concept / reject), a chosen outcome,
 an accountable agent, and (if accepted) `produces` the grounded node.
 
@@ -34,6 +34,6 @@ gaps and offers a starting point. Coverage and tool co-evolve.
 - A candidate must **not** also be `asserted` (no-leak SPARQL check).
 
 **Never let a proposition pass as an assertion.** This is a checkable property, not a
-discipline you hope holds. Decision-lineage (`hol:revisitIf`) can reopen past
+discipline you hope holds. Decision-lineage (`dec:revisitIf`) can reopen past
 promotions when the bridge later gains coverage; automated promotion is bounded by the
 holon's `autonomyScope`.

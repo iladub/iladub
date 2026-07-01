@@ -67,7 +67,7 @@ specifically an **alignment holon**.
 
 ## The interaction primitives
 
-These are what `hol` was missing — and what make the model an *interaction* model:
+These are what `dec` was missing — and what make the model an *interaction* model:
 
 1. **The membrane.** A holon's boundary is its SHACL shapes. Validating the interior
    against the boundary yields a health — **Intact / Weakened / Compromised**. For the
@@ -102,7 +102,7 @@ iladub already implements the membrane — it just did not name it. The mapping 
 | the **grounded graph** | the clean document holon's **interior** |
 | a **`iladub:CandidateConcept`** (proposition) | a candidate *at the membrane*, not yet admitted |
 | a **grounded assertion** | content *inside* the interior — it crossed the membrane |
-| a **`iladub:PromotionDecision`** (`hol:DecisionHolon`) | the **governed membrane-crossing** — an auditable concept-matching decision |
+| a **`iladub:PromotionDecision`** (`dec:DecisionHolon`) | the **governed membrane-crossing** — an auditable concept-matching decision |
 | **convergence** on shared concept IRIs | **portal** reconciliation across region-holons |
 | **provenance to the page** | the **context** layer |
 
@@ -119,7 +119,7 @@ reasoner-free core and align to other vocabularies rather than forcing everythin
 one tree.
 
 iladub follows the same principle it applies to provenance ("don't reinvent"): iladub's
-holon types and its grounding portal are defined in the `iladub`/`hol` namespaces and
+holon types and its grounding portal are defined in the `iladub`/`dec` namespaces and
 **aligned** to the W3C Holon CG ontology, not copied from it.
 
 > **Anchor (settled 2026-06-23):** the alignment target is **Cagle's W3C Holon CG /
