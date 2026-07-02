@@ -1,190 +1,209 @@
 # w3id.org redirect configuration — iladub namespace migration
 
-This is a **draft** of the redirect configuration to be submitted as a pull request to
-[perma-id/w3id.org](https://github.com/perma-id/w3id.org) under the author's GitHub
-account, where a w3id maintainer will merge it (as dgarijo merged the original `etkl`
-entry in PR #6144). **This file is NOT yet submitted.**
+**Draft** to submit as a PR to [perma-id/w3id.org](https://github.com/perma-id/w3id.org)
+(the community redirect registry — a maintainer merges it, as dgarijo merged the original
+`etkl` entry). **Not yet submitted.** Style matches the existing `w3id.org/etkl` entry
+(single `HTTP_ACCEPT` alternation cond, `R=302` content-negotiation, header + `README.md`).
 
-The migration moves all semantic artifacts from `https://w3id.org/etkl/*` to
-`https://w3id.org/iladub/*`. Two changes are required in the perma-id repo:
+The migration moves all artifacts from `https://w3id.org/etkl/*` to `https://w3id.org/iladub/*`.
+Two perma-id changes: **add** a new `iladub/` entry (below), and **replace** the existing
+`etkl/` entry with 301 redirects to the new homes.
 
-1. A new `iladub/.htaccess` entry (content negotiation for the new namespace).
-2. Additions to the existing `etkl/.htaccess` (301 permanent redirects from every old path to its new equivalent, so dated links in published ontologies and citations continue to resolve).
-
-**Redirect codes used:**
-- `303 See Other` for RDF content-negotiation rules — the classic Linked Data convention
-  (the IRI identifies a concept, not the document; 303 signals that you are being sent
-  elsewhere for a representation of it).
-- `301 Moved Permanently` for the old→new `etkl` → `iladub` redirects — the IRIs have
-  genuinely moved; caches and crawlers should update.
+> **⚠️ Ordering dependency.** The RDF targets point at files on
+> `github.com/iladub/iladub` **`main`** (`vocab/ontology/dec.ttl`, `etkl-holons.ttl`, …).
+> Those filenames only exist on `main` **after PR #19 (the migration) merges**. Submit/merge
+> this w3id PR **after** #19 lands on `main`, or the RDF redirects will 404. (Once #19 merges,
+> the *old* `etkl` entry also breaks — it points at `hol.ttl`, now renamed — so land the two
+> close together.)
+>
+> **Redirect codes:** `302` for content negotiation (matches the existing `etkl` entry's
+> convention), `301` for the permanent old→new `etkl`→`iladub` moves.
 
 ---
 
-## Block 1 — new `iladub/.htaccess`
-
-This file lives at `w3id.org/iladub/.htaccess` in the perma-id repo. It handles
-content negotiation for all nine ontology/shape paths plus the base IRI.
+## File 1 — new `iladub/.htaccess`
 
 ```apache
+# # /iladub/
+#
+# Persistent namespace root for iladub and its modules:
+#
+#   https://w3id.org/iladub               — iladub core: assertion/proposition epistemics
+#   https://w3id.org/iladub/etkl          — ET(K)L method (knowledge-first transform)
+#   https://w3id.org/iladub/etkl/holons   — the doc-holon fabric (Raw/Clean/Portal/membrane)
+#   https://w3id.org/iladub/dec           — dec: decidability / decision-context vocabulary
+#   https://w3id.org/iladub/risk          — contextual-risk vocabulary
+#   https://w3id.org/iladub/hga-alignment      — iladub/etkl ↔ W3C Holon CG (HGA) alignment
+#   https://w3id.org/iladub/dec/hga-alignment  — dec ↔ HGA alignment
+#   https://w3id.org/iladub/risk/hga-alignment — risk ↔ HGA alignment
+#   https://w3id.org/iladub/governance-shapes  — governance SHACL shapes
+#
+# Content is negotiated: RDF clients receive Turtle from the source repository
+# (github.com/iladub/iladub), browsers are sent to the documentation site
+# (https://iladub.dev).
+#
+# ## Contact
+# François Rosselet
+# GitHub username: Frosselet
+
 Options +FollowSymLinks
 RewriteEngine on
 
-# ---------------------------------------------------------------------------
-# Base IRI: https://w3id.org/iladub
-# Core epistemics ontology → iladub.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/iladub.ttl [QSA,R=303,L]
+# ---- https://w3id.org/iladub/etkl/holons  (most specific first) ----------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^etkl/holons/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/etkl-holons.ttl [R=302,L]
+RewriteRule ^etkl/holons/?$ https://iladub.dev/holonic-interaction/ [R=302,L]
 
-RewriteRule ^/?$ https://iladub.dev [QSA,R=303,L]
+# ---- https://w3id.org/iladub/dec/hga-alignment --------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^dec/hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/dec-hga-align.ttl [R=302,L]
+RewriteRule ^dec/hga-alignment/?$ https://iladub.dev/holonic-interaction/ [R=302,L]
 
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/etkl  — the ET(K)L method ontology → etkl.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^etkl/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/etkl.ttl [QSA,R=303,L]
+# ---- https://w3id.org/iladub/risk/hga-alignment -------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^risk/hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/risk-hga-align.ttl [R=302,L]
+RewriteRule ^risk/hga-alignment/?$ https://iladub.dev/holonic-interaction/ [R=302,L]
 
-RewriteRule ^etkl/?$ https://iladub.dev/etkl [QSA,R=303,L]
+# ---- https://w3id.org/iladub/hga-alignment ------------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/iladub-hga-align.ttl [R=302,L]
+RewriteRule ^hga-alignment/?$ https://iladub.dev/holonic-interaction/ [R=302,L]
 
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/dec  — decidability / decision-context ontology → dec.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^dec/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/dec.ttl [QSA,R=303,L]
+# ---- https://w3id.org/iladub/etkl ---------------------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^etkl/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/etkl.ttl [R=302,L]
+RewriteRule ^etkl/?$ https://iladub.dev/etkl/ [R=302,L]
 
-RewriteRule ^dec/?$ https://iladub.dev/dec [QSA,R=303,L]
+# ---- https://w3id.org/iladub/dec ----------------------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^dec/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/dec.ttl [R=302,L]
+RewriteRule ^dec/?$ https://iladub.dev/dec/ [R=302,L]
 
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/risk  — contextual-risk ontology → risk.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^risk/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/risk.ttl [QSA,R=303,L]
+# ---- https://w3id.org/iladub/risk ---------------------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^risk/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/risk.ttl [R=302,L]
+RewriteRule ^risk/?$ https://iladub.dev/ [R=302,L]
 
-RewriteRule ^risk/?$ https://iladub.dev/risk [QSA,R=303,L]
+# ---- https://w3id.org/iladub/governance-shapes --------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^governance-shapes/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/shapes/governance-shapes.ttl [R=302,L]
+RewriteRule ^governance-shapes/?$ https://iladub.dev/ [R=302,L]
 
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/etkl/holons  — holonic fabric ontology → etkl-holons.ttl
-# (must come before bare ^etkl/?)
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^etkl/holons/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/etkl-holons.ttl [QSA,R=303,L]
+# ---- https://w3id.org/iladub (core) -------------------------------------
+RewriteCond %{HTTP_ACCEPT} (text/turtle|application/rdf\+xml|application/n-triples|application/ld\+json|text/n3) [NC]
+RewriteRule ^$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/iladub.ttl [R=302,L]
+RewriteRule ^$ https://iladub.dev/assertion-proposition/ [R=302,L]
 
-RewriteRule ^etkl/holons/?$ https://iladub.dev/etkl/holons [QSA,R=303,L]
-
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/hga-alignment  — iladub↔HGA alignment → iladub-hga-align.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/iladub-hga-align.ttl [QSA,R=303,L]
-
-RewriteRule ^hga-alignment/?$ https://iladub.dev/hga-alignment [QSA,R=303,L]
-
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/dec/hga-alignment  — dec↔HGA alignment → dec-hga-align.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^dec/hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/dec-hga-align.ttl [QSA,R=303,L]
-
-RewriteRule ^dec/hga-alignment/?$ https://iladub.dev/dec/hga-alignment [QSA,R=303,L]
-
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/risk/hga-alignment  — risk↔HGA alignment → risk-hga-align.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^risk/hga-alignment/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/risk-hga-align.ttl [QSA,R=303,L]
-
-RewriteRule ^risk/hga-alignment/?$ https://iladub.dev/risk/hga-alignment [QSA,R=303,L]
-
-# ---------------------------------------------------------------------------
-# https://w3id.org/iladub/governance-shapes  — governance SHACL shapes → governance-shapes.ttl
-# ---------------------------------------------------------------------------
-RewriteCond %{HTTP_ACCEPT} text/turtle [OR]
-RewriteCond %{HTTP_ACCEPT} text/n3 [OR]
-RewriteCond %{HTTP_ACCEPT} application/rdf\+xml [OR]
-RewriteCond %{HTTP_ACCEPT} application/ld\+json
-RewriteRule ^governance-shapes/?$ https://raw.githubusercontent.com/iladub/iladub/main/vocab/shapes/governance-shapes.ttl [QSA,R=303,L]
-
-RewriteRule ^governance-shapes/?$ https://iladub.dev/governance-shapes [QSA,R=303,L]
+# ---- fallback: any other /iladub/* path -> documentation site -----------
+RewriteRule ^(.*)$ https://iladub.dev/ [R=302,L]
 ```
 
----
+## File 2 — new `iladub/README.md`
 
-## Block 2 — additions to the existing `etkl/.htaccess`
+```markdown
+# /iladub/
 
-These rules are **prepended** to the existing `w3id.org/etkl/.htaccess`. They must
-come before any existing content-negotiation rules so that old IRIs redirect permanently
-to their new locations before any content negotiation fires. Most-specific (longest)
-paths are listed first to prevent shorter patterns from swallowing them.
+Persistent namespace root for **iladub** — the document-carrier that compiles
+unstructured documents into FAIR, contract-defined semantic knowledge graphs.
+`iladub = a thin epistemic core + etkl (the K-transform) + dec (decidability)`, aligned
+to the W3C Holon CG substrate (HGA).
+
+| Persistent IRI | Resolves to |
+| --- | --- |
+| `https://w3id.org/iladub` | iladub core — assertion/proposition epistemics |
+| `https://w3id.org/iladub/etkl` | ET(K)L method (knowledge-first transform) |
+| `https://w3id.org/iladub/etkl/holons` | the doc-holon fabric |
+| `https://w3id.org/iladub/dec` | `dec` — decidability / decision-context vocabulary |
+| `https://w3id.org/iladub/risk` | contextual-risk vocabulary |
+| `https://w3id.org/iladub/hga-alignment` | iladub/etkl ↔ HGA alignment |
+| `https://w3id.org/iladub/dec/hga-alignment` | dec ↔ HGA alignment |
+| `https://w3id.org/iladub/risk/hga-alignment` | risk ↔ HGA alignment |
+| `https://w3id.org/iladub/governance-shapes` | governance SHACL shapes |
+
+Requests are **content-negotiated**: RDF clients (`Accept: text/turtle`,
+`application/rdf+xml`, `application/ld+json`, …) are redirected to the Turtle files in the
+source repository; browsers are redirected to the documentation site.
+
+This supersedes the former `w3id.org/etkl` layout, whose paths now 301-redirect here.
+
+- **Documentation:** https://iladub.dev
+- **Source & ontologies:** https://github.com/iladub/iladub (under `vocab/`)
+- **License:** ontologies are CC-BY-4.0; code is Apache-2.0.
+
+## Maintainer
+
+- **François Rosselet**
+- GitHub: [@Frosselet](https://github.com/Frosselet)
+```
+
+## File 3 — replace `etkl/.htaccess` (old paths → 301 → iladub)
 
 ```apache
-# ---------------------------------------------------------------------------
-# 301 Permanent redirects: old etkl/* paths → new iladub/* paths
-# (namespace migration; prepend to existing etkl/.htaccess content-neg rules)
-# Most-specific paths first.
-# ---------------------------------------------------------------------------
+# # /etkl/
+#
+# MIGRATED 2026-07-01 → the iladub namespace root (https://w3id.org/iladub).
+# Every former /etkl/* path now 301-redirects to its new home under /iladub/.
+# See the /iladub/ entry for content negotiation.
+#
+# ## Contact
+# François Rosselet
+# GitHub username: Frosselet
 
-# /etkl/iladub/holons → /iladub/etkl/holons
-RewriteRule ^iladub/holons/?$ https://w3id.org/iladub/etkl/holons [R=301,L]
+Options +FollowSymLinks
+RewriteEngine on
 
-# /etkl/iladub/hga-alignment → /iladub/hga-alignment
+# 301 permanent redirects: old /etkl/* -> new /iladub/*  (most specific first)
+RewriteRule ^iladub/holons/?$        https://w3id.org/iladub/etkl/holons [R=301,L]
 RewriteRule ^iladub/hga-alignment/?$ https://w3id.org/iladub/hga-alignment [R=301,L]
+RewriteRule ^hol/hga-alignment/?$    https://w3id.org/iladub/dec/hga-alignment [R=301,L]
+RewriteRule ^risk/hga-alignment/?$   https://w3id.org/iladub/risk/hga-alignment [R=301,L]
+RewriteRule ^iladub/?$               https://w3id.org/iladub [R=301,L]
+RewriteRule ^hol/?$                  https://w3id.org/iladub/dec [R=301,L]
+RewriteRule ^risk/?$                 https://w3id.org/iladub/risk [R=301,L]
+RewriteRule ^governance-shapes/?$    https://w3id.org/iladub/governance-shapes [R=301,L]
+RewriteRule ^$                       https://w3id.org/iladub/etkl [R=301,L]
+# any other former /etkl/* subpath -> the new root
+RewriteRule ^(.*)$                   https://w3id.org/iladub/ [R=301,L]
+```
 
-# /etkl/hol/hga-alignment → /iladub/dec/hga-alignment
-RewriteRule ^hol/hga-alignment/?$ https://w3id.org/iladub/dec/hga-alignment [R=301,L]
+## File 4 — update `etkl/README.md`
 
-# /etkl/risk/hga-alignment → /iladub/risk/hga-alignment
-RewriteRule ^risk/hga-alignment/?$ https://w3id.org/iladub/risk/hga-alignment [R=301,L]
+Prepend a migration note to the existing `etkl/README.md`:
 
-# /etkl/iladub → /iladub  (after the more-specific /iladub/holons and /iladub/hga-alignment)
-RewriteRule ^iladub/?$ https://w3id.org/iladub [R=301,L]
-
-# /etkl/hol → /iladub/dec
-RewriteRule ^hol/?$ https://w3id.org/iladub/dec [R=301,L]
-
-# /etkl/risk → /iladub/risk
-RewriteRule ^risk/?$ https://w3id.org/iladub/risk [R=301,L]
-
-# /etkl/governance-shapes → /iladub/governance-shapes
-RewriteRule ^governance-shapes/?$ https://w3id.org/iladub/governance-shapes [R=301,L]
-
-# /etkl → /iladub/etkl  (bare etkl path; must be last so it doesn't shadow sub-paths)
-RewriteRule ^/?$ https://w3id.org/iladub/etkl [R=301,L]
+```markdown
+> **Migrated 2026-07-01.** This namespace moved to the **iladub** root:
+> [`https://w3id.org/iladub`](https://w3id.org/iladub). Every former `/etkl/*` IRI now
+> 301-redirects to its new home under `/iladub/` (e.g. `/etkl/hol` → `/iladub/dec`,
+> `/etkl/iladub` → `/iladub`, `/etkl` → `/iladub/etkl`). See the `/iladub/` entry.
 ```
 
 ---
 
-## Submission checklist
+## Submission steps
 
-- Fork `perma-id/w3id.org` (github.com/perma-id/w3id.org).
-- Add the file `iladub/.htaccess` containing Block 1 above.
-- Edit `etkl/.htaccess` to **prepend** Block 2 above (before any existing content-negotiation rules).
-- Open a PR referencing this migration (mention PR #6144 for context and dgarijo as the prior approver).
-- After the PR is merged by a w3id maintainer, verify the following:
-  - RDF client resolves to the raw Turtle file: `curl -sI -H "Accept: text/turtle" https://w3id.org/iladub/dec` → `303 See Other` → `Location: https://raw.githubusercontent.com/iladub/iladub/main/vocab/ontology/dec.ttl`.
-  - Browser redirect works: `curl -sI https://w3id.org/iladub` → `303 See Other` → `Location: https://iladub.dev`.
-  - Old etkl path redirects permanently: `curl -sI https://w3id.org/etkl/hol` → `301 Moved Permanently` → `Location: https://w3id.org/iladub/dec`.
-  - Spot-check a deep path: `curl -sI https://w3id.org/etkl/iladub/holons` → `301 Moved Permanently` → `Location: https://w3id.org/iladub/etkl/holons`.
+Run **after PR #19 merges to `iladub/iladub@main`** (so the RDF targets resolve):
+
+```bash
+# 1. Fork + clone perma-id/w3id.org
+gh repo fork perma-id/w3id.org --clone --remote
+
+# 2. On a branch, add the new iladub/ entry and rewrite the etkl/ entry
+#    - create  iladub/.htaccess        (File 1)
+#    - create  iladub/README.md        (File 2)
+#    - replace etkl/.htaccess          (File 3)
+#    - prepend etkl/README.md note     (File 4)
+
+# 3. PR
+gh pr create --repo perma-id/w3id.org \
+  --title "Add /iladub namespace; migrate /etkl -> /iladub (301)" \
+  --body "New persistent namespace root https://w3id.org/iladub (content-negotiated to \
+github.com/iladub/iladub Turtle + iladub.dev). Supersedes the /etkl entry, whose paths now \
+301-redirect to /iladub/*. Admin: @Frosselet (same as the existing /etkl entry)."
+```
+
+**Verify after merge:**
+- `curl -sIL -H "Accept: text/turtle" https://w3id.org/iladub/dec` → 302 → the raw `dec.ttl`.
+- `curl -sI https://w3id.org/iladub` → 302 → `https://iladub.dev/assertion-proposition/`.
+- `curl -sI https://w3id.org/etkl/hol` → 301 → `https://w3id.org/iladub/dec`.
+- `curl -sI https://w3id.org/etkl/iladub/holons` → 301 → `https://w3id.org/iladub/etkl/holons`.
+```
