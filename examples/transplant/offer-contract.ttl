@@ -1,5 +1,5 @@
 @prefix tx:   <https://example.org/transplant#> .
-@prefix etkl: <https://w3id.org/etkl#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 tx:offer-contract a etkl:SemanticDataContract ;

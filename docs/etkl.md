@@ -35,8 +35,7 @@ This makes "knowledge is not optional, and it comes first" a *checkable property
 
 ## Modules
 
-ET(K)L is modular. `hol` (decision context) and `iladub` (document compiling +
-assertion/proposition) plug in by being referenced from a contract and passed as
-transform arguments.
+ET(K)L is modular. `dec` (decidability/decisionality) and the `iladub` core
+(assertion/proposition epistemics) plug in; `etkl` produces the holons.
 
-Persistent namespace: `https://w3id.org/etkl`.
+Persistent namespace: `https://w3id.org/iladub/etkl`.

@@ -1,4 +1,4 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
+@prefix iladub: <https://w3id.org/iladub#> .
 @prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
 @prefix prov:   <http://www.w3.org/ns/prov#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .

@@ -1,28 +1,28 @@
-@prefix iladub: <https://w3id.org/etkl/iladub#> .
-@prefix hol:    <https://w3id.org/etkl/hol#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix prov:   <http://www.w3.org/ns/prov#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ex:     <https://example.org/demo#> .
 
-#  A PROMOTION is itself an accountable decision (a hol:DecisionHolon).
+#  A PROMOTION is itself an accountable decision (a dec:DecisionHolon).
 #  It reviews the candidate, deliberates an option space, chooses one
 #  option, is made by an agent, and (if accepted) PRODUCES a grounded node.
 
 ex:promo-wirkstoffspiegel
-    a iladub:PromotionDecision , hol:DecisionHolon ;
+    a iladub:PromotionDecision , dec:DecisionHolon ;
     rdfs:label "Promote 'Wirkstoffspiegel' candidate"@en ;
     iladub:reviews ex:cand-wirkstoffspiegel ;
-    hol:decidedBy ex:curator-aliki ;
-    hol:optionSpace ex:opt-accept-anchor , ex:opt-refine , ex:opt-reject ;
-    hol:chosen ex:opt-refine ;
-    hol:rationale "Grounds cleanly to a domain concept; refine beyond the bare gist anchor."@en ;
-    hol:confidence 0.9 ;
-    hol:produced ex:grounded-drug-level .
+    dec:decidedBy ex:curator-aliki ;
+    dec:optionSpace ex:opt-accept-anchor , ex:opt-refine , ex:opt-reject ;
+    dec:chosen ex:opt-refine ;
+    dec:rationale "Grounds cleanly to a domain concept; refine beyond the bare gist anchor."@en ;
+    dec:confidence 0.9 ;
+    dec:produced ex:grounded-drug-level .
 
-ex:opt-accept-anchor a hol:Option ; rdfs:label "accept as the gist anchor"@en .
-ex:opt-refine        a hol:Option ; rdfs:label "refine to a domain concept"@en .
-ex:opt-reject        a hol:Option ; rdfs:label "reject"@en ;
-    hol:rejectedBecause "The text clearly denotes a measurable quantity."@en .
+ex:opt-accept-anchor a dec:Option ; rdfs:label "accept as the gist anchor"@en .
+ex:opt-refine        a dec:Option ; rdfs:label "refine to a domain concept"@en .
+ex:opt-reject        a dec:Option ; rdfs:label "reject"@en ;
+    dec:rejectedBecause "The text clearly denotes a measurable quantity."@en .
 
 ex:curator-aliki a prov:Agent ; rdfs:label "Dr. A. Curator"@en .
 

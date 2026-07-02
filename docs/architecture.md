@@ -15,7 +15,7 @@ typed object, from wherever it lives — table cell, prose, or figure.
 
 ACQUIRE → compile to a Document Region Graph (DRG) → contract-driven semantic
 compilation (narrative / table / figure parsers) → convergence on shared concept IRIs
-→ SHACL validation → FAIR semantic graph (typed resources + hol decisions + provenance)
+→ SHACL validation → FAIR semantic graph (typed resources + dec decisions + provenance)
 
 - **Acquire (E):** fetch/scrape/upload; capture acquisition provenance.
 - **Document Region Graph:** each format → typed regions (`Narrative`, `Table`,

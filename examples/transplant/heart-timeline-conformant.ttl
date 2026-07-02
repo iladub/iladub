@@ -1,3 +1,3 @@
 @prefix tx:  <https://example.org/transplant#> .
-@prefix hol: <https://w3id.org/etkl/hol#> .
-tx:cm a hol:Milestone ; hol:order 6 ; hol:windowLimitMinutes 240 .
+@prefix dec: <https://w3id.org/iladub/dec#> .
+tx:cm a dec:Milestone ; dec:order 6 ; dec:windowLimitMinutes 240 .

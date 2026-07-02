@@ -1,10 +1,10 @@
-@prefix risk: <https://w3id.org/etkl/risk#> .
+@prefix risk: <https://w3id.org/iladub/risk#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 risk:prefixes
-    sh:declare [ sh:prefix "risk" ; sh:namespace "https://w3id.org/etkl/risk#"^^xsd:anyURI ] .
+    sh:declare [ sh:prefix "risk" ; sh:namespace "https://w3id.org/iladub/risk#"^^xsd:anyURI ] .
 
 #################################################################
 #  THE INVARIANT: risk is contextual, never empiric. A risk:severity

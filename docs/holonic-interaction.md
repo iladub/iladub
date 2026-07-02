@@ -5,9 +5,10 @@
 
 Defining holons is the easy half. The architecture lives in **how they interact**.
 This page models iladub as a small set of holons connected by a governed interaction —
-aligned with the holonic-graph architecture (Kurt Cagle) and its reference ontology,
-the Context-Graph Architecture / CGA (Zach Welz's `holonic` library), rather than
-reinventing one.
+aligned with Kurt Cagle's holonic-graph architecture and its reference ontology,
+**HGA** (`holon:`), rather than reinventing one. (Zach Welz's Context-Graph Architecture /
+CGA remains useful conceptual prior art, but is no longer the alignment target — see the
+anchor note below.)
 
 ## What a holon is (and why interaction is the point)
 
@@ -67,7 +68,7 @@ specifically an **alignment holon**.
 
 ## The interaction primitives
 
-These are what `hol` was missing — and what make the model an *interaction* model:
+These are what a decision-holon-only model lacks — and what make the model an *interaction* model:
 
 1. **The membrane.** A holon's boundary is its SHACL shapes. Validating the interior
    against the boundary yields a health — **Intact / Weakened / Compromised**. For the
@@ -102,7 +103,7 @@ iladub already implements the membrane — it just did not name it. The mapping 
 | the **grounded graph** | the clean document holon's **interior** |
 | a **`iladub:CandidateConcept`** (proposition) | a candidate *at the membrane*, not yet admitted |
 | a **grounded assertion** | content *inside* the interior — it crossed the membrane |
-| a **`iladub:PromotionDecision`** (`hol:DecisionHolon`) | the **governed membrane-crossing** — an auditable concept-matching decision |
+| a **`iladub:PromotionDecision`** (`dec:DecisionHolon`) | the **governed membrane-crossing** — an auditable concept-matching decision |
 | **convergence** on shared concept IRIs | **portal** reconciliation across region-holons |
 | **provenance to the page** | the **context** layer |
 
@@ -119,7 +120,7 @@ reasoner-free core and align to other vocabularies rather than forcing everythin
 one tree.
 
 iladub follows the same principle it applies to provenance ("don't reinvent"): iladub's
-holon types and its grounding portal are defined in the `iladub`/`hol` namespaces and
+holon types and its grounding portal are defined in the `iladub`/`dec` namespaces and
 **aligned** to the W3C Holon CG ontology, not copied from it.
 
 > **Anchor (settled 2026-06-23):** the alignment target is **Cagle's W3C Holon CG /
@@ -133,8 +134,8 @@ holon types and its grounding portal are defined in the `iladub`/`hol` namespace
 
 ## What is built
 
-- `vocab/ontology/iladub-holons.ttl` — the holon types + grounding portal + membrane
-  health, in the `iladub` namespace, **standalone** (no HGA dependency).
+- `vocab/ontology/etkl-holons.ttl` — the holon types + grounding portal + membrane
+  health, in the `etkl` namespace, **standalone** (no HGA dependency).
 - `vocab/ontology/iladub-hga-align.ttl` — the **optional** HGA alignment
   (alignment-not-import): `rdfs:subClassOf holon:DataHolon` / `holon:Portal` axioms only.
 - `vocab/shapes/iladub-hga-shapes.ttl` — `iladub:HgaGroundingGovernanceShape`: a
@@ -147,7 +148,7 @@ holon types and its grounding portal are defined in the `iladub`/`hol` namespace
 ## Planned work (not done yet)
 
 - A membrane-health check that computes and reports a compiled document's cleanliness
-  (`iladub:membraneHealth` → Intact / Weakened / Compromised) from validation results.
+  (`etkl:membraneHealth` → Intact / Weakened / Compromised) from validation results.
 - A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
   (the current example covers the grounding-governance crossing only).
 

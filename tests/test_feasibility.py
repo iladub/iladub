@@ -14,13 +14,13 @@ from iladub.decision import M4Context, evaluate_m4
 from iladub.validate import validate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 TX = Namespace("https://example.org/transplant#")
 
 
 def _hol_conforms(g):
-    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "hol-shapes.ttl"), format="turtle")
-    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "hol.ttl"), format="turtle")
+    shapes = Graph().parse(os.path.join(ROOT, "vocab", "shapes", "dec-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ROOT, "vocab", "ontology", "dec.ttl"), format="turtle")
     return validate(g, shapes, knowledge).conforms
 
 
@@ -97,10 +97,10 @@ def test_nominate_grounds_chosen_recipient_and_conforms():
     ])
     g = nominate(feas, chosen="zurich", agent="surgeon-1",
                  rationale="most slack and best clinical fit")
-    assert (TX["nomination"], RDF.type, HOL.DecisionHolon) in g
-    assert (TX["nomination"], HOL.chosen, TX["recipient-zurich"]) in g
-    assert (TX["nomination"], HOL.produced, TX["recipient-zurich"]) in g   # the grounded destination
-    assert (TX["recipient-paris"], HOL.rejectedBecause, None) in g
+    assert (TX["nomination"], RDF.type, DEC.DecisionHolon) in g
+    assert (TX["nomination"], DEC.chosen, TX["recipient-zurich"]) in g
+    assert (TX["nomination"], DEC.produced, TX["recipient-zurich"]) in g   # the grounded destination
+    assert (TX["recipient-paris"], DEC.rejectedBecause, None) in g
     assert _hol_conforms(g)
 
 
@@ -108,9 +108,9 @@ def test_nominate_can_decline_all():
     feas, _ = feasible_recipients(_heart(), [Candidate("zurich", abo="O", transport_minutes=95)])
     g = nominate(feas, chosen="nobody", agent="surgeon-1",
                  rationale="hold for a better-matched organ")
-    assert (TX["nomination"], HOL.chosen, TX["opt-no-allocation"]) in g
-    assert len(list(g.triples((None, HOL.produced, None)))) == 0          # nothing grounded
-    assert (TX["recipient-zurich"], HOL.rejectedBecause, None) in g
+    assert (TX["nomination"], DEC.chosen, TX["opt-no-allocation"]) in g
+    assert len(list(g.triples((None, DEC.produced, None)))) == 0          # nothing grounded
+    assert (TX["recipient-zurich"], DEC.rejectedBecause, None) in g
     assert _hol_conforms(g)
 
 

@@ -10,7 +10,7 @@
 tablet, document") compiles unstructured human documents into FAIR, contract-defined
 semantic knowledge graphs. It is the reference implementation of the **ET(K)L** method
 (*Extract, Transform-with-(K)nowledge, Load*), whose persistent namespace is
-[`https://w3id.org/etkl`](https://w3id.org/etkl).
+[`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
 
 !!! note
     Early development — APIs are not yet stable.
@@ -41,7 +41,7 @@ that level, knowledge-first. [Read the full story →](story.md)
 - [Architecture](architecture.md) — the compile pipeline, end to end.
 - [Assertions & propositions](assertion-proposition.md) — the epistemic boundary.
 - [Holonic interaction](holonic-interaction.md) — holons, and how they interact.
-- [hol — decision context](hol.md) · [Use case: clinical → FHIR](use-case-fhir.md) · [Naming](naming.md)
+- [dec — decision context](dec.md) · [Use case: clinical → FHIR](use-case-fhir.md) · [Naming](naming.md)
 
 ## Installation
 
@@ -61,7 +61,7 @@ iladub m4 examples/transplant/offer.txt
 
 - **PyPI** — <https://pypi.org/project/iladub/>
 - **Source** — <https://github.com/iladub/iladub>
-- **ET(K)L namespace** — <https://w3id.org/etkl>
+- **ET(K)L namespace** — <https://w3id.org/iladub/etkl>
 - **Author** — François Rosselet ([ORCID 0009-0002-8318-1072](https://orcid.org/0009-0002-8318-1072))
 
 ## License

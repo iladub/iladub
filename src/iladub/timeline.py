@@ -1,5 +1,5 @@
 """Generic timeline engine: drive a time-critical supply chain from a declarative
-TimelineContract (a hol:Process of hol:Milestones). Domain-agnostic — it knows
+TimelineContract (a dec:Process of dec:Milestones). Domain-agnostic — it knows
 nothing about organs, only about order, required context, and clocks."""
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from rdflib.namespace import RDF
 
 from .allen import Interval, feasible, relation
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
-ETKL = Namespace("https://w3id.org/etkl#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
 
 @dataclass(frozen=True)
@@ -26,7 +26,7 @@ class Milestone:
 
 def _required_properties(g: Graph, milestone: URIRef) -> tuple[URIRef, ...]:
     props: list[URIRef] = []
-    for ctx in g.objects(milestone, HOL.requiresContext):
+    for ctx in g.objects(milestone, DEC.requiresContext):
         for field in g.objects(ctx, ETKL.hasField):
             prop = g.value(field, ETKL.fillsProperty)
             if prop is not None:
@@ -48,17 +48,17 @@ class Timeline:
 
     @classmethod
     def from_graph(cls, g: Graph) -> "Timeline":
-        process = g.value(predicate=RDF.type, object=HOL.Process)
+        process = g.value(predicate=RDF.type, object=DEC.Process)
         milestones: list[Milestone] = []
-        for m in g.objects(process, HOL.hasMilestone):
-            order = g.value(m, HOL.order)
-            limit = g.value(m, HOL.windowLimitMinutes)
+        for m in g.objects(process, DEC.hasMilestone):
+            order = g.value(m, DEC.order)
+            limit = g.value(m, DEC.windowLimitMinutes)
             milestones.append(Milestone(
                 id=m,
                 order=int(order) if order is not None else 0,
                 requires=_required_properties(g, m),
-                clock_start=_flag(g, m, HOL.clockStart),
-                clock_stop=_flag(g, m, HOL.clockStop),
+                clock_start=_flag(g, m, DEC.clockStart),
+                clock_stop=_flag(g, m, DEC.clockStop),
                 window_limit_minutes=int(limit) if limit is not None else None,
             ))
         return cls(process, milestones)

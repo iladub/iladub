@@ -2,11 +2,11 @@
 
 This directory holds the **ET(K)L** vocabulary and ontology artifacts.
 
-Persistent namespace: **[`https://w3id.org/etkl`](https://w3id.org/etkl)**
+Persistent namespace: **[`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl)**
 
 > [!NOTE]
-> Vocabulary content is being developed. Terms published here resolve under the
-> `w3id.org/etkl` namespace.
+> Vocabulary content is being developed. Terms published here will resolve under
+> `https://w3id.org/iladub` once the new w3id redirect PR merges.
 
 ## License
 

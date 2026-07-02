@@ -1,5 +1,5 @@
-@prefix risk:   <https://w3id.org/etkl/risk#> .
-@prefix etkl:   <https://w3id.org/etkl#> .
+@prefix risk:   <https://w3id.org/iladub/risk#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -19,7 +19,7 @@
 #  a candidate contribution to the W3C Holon CG.
 #################################################################
 
-<https://w3id.org/etkl/risk> a owl:Ontology ;
+<https://w3id.org/iladub/risk> a owl:Ontology ;
     dcterms:title "risk — contextual-risk vocabulary"@en ;
     dcterms:description """Risk is CONTEXTUAL, not empiric: it is never an attribute of a thing
 (`x risk "High"` is a category error that leaks everywhere it is referenced), but a relation
@@ -35,8 +35,8 @@ rules generate the context's required read-scope (governance and risk are one mo
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0" ;
     vann:preferredNamespacePrefix "risk" ;
-    vann:preferredNamespaceUri "https://w3id.org/etkl/risk#" ;
-    rdfs:seeAlso <https://w3id.org/etkl> , <https://github.com/w3c-cg/holon> .
+    vann:preferredNamespaceUri "https://w3id.org/iladub/risk#" ;
+    rdfs:seeAlso <https://w3id.org/iladub/etkl> , <https://github.com/w3c-cg/holon> .
 
 #################################################################
 #  Classes

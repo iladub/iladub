@@ -15,7 +15,7 @@ DEMO = os.path.join(ROOT, "demo")
 OUT = os.path.join(DEMO, "out", "consultation-fhir.ttl")
 
 FHIR = Namespace("http://hl7.org/fhir/")
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 EX = Namespace("https://example.org/clinical#")
 
 
@@ -37,13 +37,13 @@ def test_demo_assembles_expected_fhir_resources():
 def test_demo_attaches_decision_holon():
     g = _run_demo()
     dh = EX["decision-switch-insulin"]
-    assert (dh, RDF.type, HOL.DecisionHolon) in g
+    assert (dh, RDF.type, DEC.DecisionHolon) in g
     # the chosen option must be the insulin switch, and it must be in the option space
-    assert (dh, HOL.chosen, EX["opt-switch-insulin"]) in g
-    assert (dh, HOL.optionSpace, EX["opt-switch-insulin"]) in g
-    assert (dh, HOL.optionSpace, EX["opt-keep-metformin"]) in g
+    assert (dh, DEC.chosen, EX["opt-switch-insulin"]) in g
+    assert (dh, DEC.optionSpace, EX["opt-switch-insulin"]) in g
+    assert (dh, DEC.optionSpace, EX["opt-keep-metformin"]) in g
     # the decision produced the insulin MedicationRequest
-    assert (dh, HOL.produced, None) in g
+    assert (dh, DEC.produced, None) in g
 
 
 def test_demo_only_emits_supported_resources():

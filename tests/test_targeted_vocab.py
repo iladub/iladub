@@ -3,7 +3,7 @@ from rdflib import Graph, Namespace
 from rdflib.namespace import RDF, OWL
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ILADUB = Namespace("https://w3id.org/etkl/iladub#")
+ILADUB = Namespace("https://w3id.org/iladub#")
 
 
 def test_iladub_defines_extractor_property():

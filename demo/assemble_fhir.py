@@ -5,7 +5,7 @@ Pipeline:
   2. TRANSFORM (knowledge as argument): the contract's ResourceRules say which
      FHIR resource each concept becomes and which element carries its code; the
      assembler wires subject/requester/author references between them.
-  3. A hol:DecisionHolon is attached over the FHIR layer.
+  3. A dec:DecisionHolon is attached over the FHIR layer.
   4. LOAD: validate against CH-Core-style SHACL shapes.
 
 Only resources the report actually supports are emitted (no fabricated data).
@@ -25,9 +25,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 FHIR = Namespace("http://hl7.org/fhir/")
 EX   = Namespace("https://example.org/clinical#")
-HOL  = Namespace("https://w3id.org/etkl/hol#")
+DEC  = Namespace("https://w3id.org/iladub/dec#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
-ETKL = Namespace("https://w3id.org/etkl#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
 knowledge = Graph().parse(os.path.join(HERE, "knowledge", "clinical-terms.ttl"), format="turtle")
 contract  = Graph().parse(os.path.join(HERE, "contracts", "consultation-contract.ttl"), format="turtle")
@@ -48,7 +48,7 @@ egfr_val = find(r"eGFR liegt\s+aktuell bei\s+(\d+)", find(r"eGFR\D+(\d+)\s*ml/mi
 practitioner = "Dr. med. T. Weber"
 
 g = Graph()
-for p, ns in [("fhir", FHIR), ("ex", EX), ("hol", HOL), ("prov", PROV), ("skos", SKOS)]:
+for p, ns in [("fhir", FHIR), ("ex", EX), ("dec", DEC), ("prov", PROV), ("skos", SKOS)]:
     g.bind(p, ns)
 
 # --- core actors / spine ---------------------------------------------------
@@ -149,25 +149,25 @@ for rule_uri in clinical_rules:
 # --- the decision holon over the FHIR layer ---------------------------------
 dh = EX["decision-switch-insulin"]
 opt_keep, opt_switch = EX["opt-keep-metformin"], EX["opt-switch-insulin"]
-g.add((opt_keep, RDF.type, HOL.Option))
+g.add((opt_keep, RDF.type, DEC.Option))
 g.add((opt_keep, RDFS.label, Literal("Metformin beibehalten", lang="de")))
-g.add((opt_keep, HOL.rejectedBecause, Literal("Kontraindikation bei Niereninsuffizienz", lang="de")))
-g.add((opt_keep, HOL.dominatedBy, opt_switch))
-g.add((opt_switch, RDF.type, HOL.Option))
+g.add((opt_keep, DEC.rejectedBecause, Literal("Kontraindikation bei Niereninsuffizienz", lang="de")))
+g.add((opt_keep, DEC.dominatedBy, opt_switch))
+g.add((opt_switch, RDF.type, DEC.Option))
 g.add((opt_switch, RDFS.label, Literal("Umstellung auf Insulin", lang="de")))
 
-g.add((dh, RDF.type, HOL.DecisionHolon))
+g.add((dh, RDF.type, DEC.DecisionHolon))
 g.add((dh, RDFS.label, Literal("Therapieumstellung Diabetes (Zürich)", lang="de")))
-g.add((dh, HOL.decidedBy, prac))
+g.add((dh, DEC.decidedBy, prac))
 for c in (made.get(str(EX["map-condition-dm"])), made.get(str(EX["map-egfr"]))):
-    if c: g.add((dh, HOL.consideredEvidence, c))
-if ckd: g.add((dh, HOL.constrainedBy, ckd))
-g.add((dh, HOL.optionSpace, opt_keep))
-g.add((dh, HOL.optionSpace, opt_switch))
-g.add((dh, HOL.chosen, opt_switch))
-g.add((dh, HOL.rationale, Literal("Niereninsuffizienz, Metformin kontraindiziert", lang="de")))
-g.add((dh, HOL.governedBy, Literal("SGED Richtlinie Diabetes 2024", lang="de")))
-if insulin_req: g.add((dh, HOL.produced, insulin_req))
+    if c: g.add((dh, DEC.consideredEvidence, c))
+if ckd: g.add((dh, DEC.constrainedBy, ckd))
+g.add((dh, DEC.optionSpace, opt_keep))
+g.add((dh, DEC.optionSpace, opt_switch))
+g.add((dh, DEC.chosen, opt_switch))
+g.add((dh, DEC.rationale, Literal("Niereninsuffizienz, Metformin kontraindiziert", lang="de")))
+g.add((dh, DEC.governedBy, Literal("SGED Richtlinie Diabetes 2024", lang="de")))
+if insulin_req: g.add((dh, DEC.produced, insulin_req))
 
 g.serialize(destination=os.path.join(HERE, "out", "consultation-fhir.ttl"), format="turtle")
 

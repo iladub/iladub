@@ -1,10 +1,10 @@
-# hol — the holonic decision-context layer
+# dec — the decision-context layer
 
-`hol` represents **decisions as holons**: units that are at once a self-contained,
+`dec` represents **decisions as holons**: units that are at once a self-contained,
 accountable deliberation *and* a part of a larger decision holarchy. It sits *above* a
 data graph (e.g. a FHIR-derived graph) and captures what data models structurally cannot.
 
-Namespace: `https://w3id.org/etkl/hol#`.
+Namespace: `https://w3id.org/iladub/dec#`.
 
 ## What FHIR (and most data models) cannot capture
 
@@ -15,11 +15,11 @@ Namespace: `https://w3id.org/etkl/hol#`.
 - **A holarchy of authority** — local decision ⊂ protocol ⊂ guideline ⊂ policy.
 - **The deontic/commitment layer** — obligations, expectations, validity conditions.
 - **Decision lineage** — what evidence supported a decision, and what upstream change
-  should reopen it (`hol:revisitIf` / `onChange`).
+  should reopen it (`dec:revisitIf` / `onChange`).
 
 ## Core shape
 
-A `hol:DecisionHolon` (⊑ `prov:Activity`) records: `consideredEvidence`,
+A `dec:DecisionHolon` (⊑ `prov:Activity`) records: `consideredEvidence`,
 `constrainedBy`, an `optionSpace` (≥2 — the no-change option counts), exactly one
 `chosen` option (which must be in the option space — SPARQL-enforced), `decidedBy` (an
 agent, human or automated), a `rationale`, optional `confidence` ∈ [0,1], `produced`
@@ -34,5 +34,6 @@ its decision composes upward. That is the difference between emitting a plausibl
 output and making an *accountable, re-evaluable* decision.
 
 It is also the most domain-neutral, transferable part of the project — the same holon
-models a clinical therapy switch or a trading hedge decision unchanged. That makes it
-the original contribution, distinct from the (reusable) terminology/shape bridging.
+models a clinical therapy switch or a trading hedge decision unchanged. That portability
+is what makes dec cleanly separable — a component designed to be upstreamed to HGA once
+the substrate supports strict decidability.

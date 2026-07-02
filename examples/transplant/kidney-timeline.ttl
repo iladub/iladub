@@ -1,22 +1,22 @@
 @prefix tx:   <https://example.org/transplant#> .
-@prefix hol:  <https://w3id.org/etkl/hol#> .
-@prefix etkl: <https://w3id.org/etkl#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 # Kidneys tolerate long cold ischemia; the chain differs from heart: fewer,
 # less time-frantic milestones, and machine perfusion replaces a cross-clamp race.
-tx:kidney-process a hol:Process ;
+tx:kidney-process a dec:Process ;
     rdfs:label "Kidney transplant chain"@en ;
-    hol:hasMilestone tx:k1 , tx:k2 , tx:k3 , tx:k4 .
+    dec:hasMilestone tx:k1 , tx:k2 , tx:k3 , tx:k4 .
 
-tx:k1 a hol:Milestone ; rdfs:label "Accept"@en ; hol:order 1 ;
-    hol:requiresContext tx:kctx-1 .
-tx:k2 a hol:Milestone ; rdfs:label "Recovery (cold-store start)"@en ; hol:order 2 ;
-    hol:clockStart true ; hol:windowLimitMinutes 1800 .
-tx:k3 a hol:Milestone ; rdfs:label "Machine perfusion + transport"@en ; hol:order 3 ;
-    hol:requiresContext tx:kctx-3 .
-tx:k4 a hol:Milestone ; rdfs:label "Implant (reperfusion)"@en ; hol:order 4 ;
-    hol:clockStop true .
+tx:k1 a dec:Milestone ; rdfs:label "Accept"@en ; dec:order 1 ;
+    dec:requiresContext tx:kctx-1 .
+tx:k2 a dec:Milestone ; rdfs:label "Recovery (cold-store start)"@en ; dec:order 2 ;
+    dec:clockStart true ; dec:windowLimitMinutes 1800 .
+tx:k3 a dec:Milestone ; rdfs:label "Machine perfusion + transport"@en ; dec:order 3 ;
+    dec:requiresContext tx:kctx-3 .
+tx:k4 a dec:Milestone ; rdfs:label "Implant (reperfusion)"@en ; dec:order 4 ;
+    dec:clockStop true .
 
 tx:kctx-1 a etkl:SemanticDataContract ; etkl:hasField tx:tf-abo .
 tx:kctx-3 a etkl:SemanticDataContract ; etkl:hasField tx:tf-transport .

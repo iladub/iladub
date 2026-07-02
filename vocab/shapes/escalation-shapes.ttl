@@ -1,0 +1,32 @@
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix risk: <https://w3id.org/iladub/risk#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#  THE INVARIANT: a decision whose realized severity (dec:constrainedBy a risk:Severity)
+#  exceeds its autonomy scope ceiling (dec:withinScope / dec:maxSeverity) MUST be escalated
+#  (dec:escalatedTo a higher-authority decision). A constitutional matter cannot be resolved
+#  within local autonomy. The apex decision, whose own ceiling covers the severity, is exempt
+#  (the FILTER ?so > ?co does not fire on it). Severity ordering is read from risk:order.
+
+dec:escPrefixes
+    sh:declare [ sh:prefix "dec"  ; sh:namespace "https://w3id.org/iladub/dec#"^^xsd:anyURI ] ,
+               [ sh:prefix "risk" ; sh:namespace "https://w3id.org/iladub/risk#"^^xsd:anyURI ] .
+
+dec:EscalationShape a sh:NodeShape ;
+    sh:targetClass dec:DecisionHolon ;
+    sh:sparql [
+        sh:message "A decision whose realized severity exceeds its autonomy scope ceiling must be escalated (dec:escalatedTo a higher-authority decision). A constitutional matter cannot be resolved within local autonomy." ;
+        sh:prefixes dec:escPrefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this dec:constrainedBy ?sev .
+                $this dec:withinScope ?scope .
+                ?scope dec:maxSeverity ?ceil .
+                ?sev  risk:order ?so .
+                ?ceil risk:order ?co .
+                FILTER (?so > ?co)
+                FILTER NOT EXISTS { $this dec:escalatedTo ?apex }
+            }
+        """ ;
+    ] .

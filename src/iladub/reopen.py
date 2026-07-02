@@ -1,5 +1,5 @@
 """Event-driven decision reopening: when an event matches a decision's declared
-hol:revisitIf keys, re-evaluate the decision and emit a superseding decision holon
+dec:revisitIf keys, re-evaluate the decision and emit a superseding decision holon
 with full lineage. Domain-agnostic — the caller supplies how to re-evaluate."""
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ from rdflib import Graph, Namespace, URIRef
 from .decision import DecisionResult, build_decision_holon
 from .events import Event
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 TX = Namespace("https://example.org/transplant#")
 
 
 def revisit_conditions(decision_graph: Graph, subject: URIRef) -> set[str]:
-    return {str(o) for o in decision_graph.objects(subject, HOL.revisitIf)}
+    return {str(o) for o in decision_graph.objects(subject, DEC.revisitIf)}
 
 
 def should_reopen(decision_graph: Graph, subject: URIRef, event: Event) -> bool:
@@ -36,6 +36,6 @@ def reopen(prior_subject: URIRef, event: Event,
     new_result = re_evaluate(event)
     graph = build_decision_holon(new_result, subject=new_subject, agent=agent)
     graph += event.to_rdf(event_subject)
-    graph.add((new_subject, HOL.supersedes, prior_subject))
-    graph.add((new_subject, HOL.triggeredBy, event_subject))
+    graph.add((new_subject, DEC.supersedes, prior_subject))
+    graph.add((new_subject, DEC.triggeredBy, event_subject))
     return ReopenOutcome(new_result, graph)

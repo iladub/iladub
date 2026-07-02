@@ -1,5 +1,5 @@
 """Deterministic M4 accept/decline evaluation on clean concepts, recorded as a
-hol:DecisionHolon. This is 'logic application on clean concepts' — the funnel
+dec:DecisionHolon. This is 'logic application on clean concepts' — the funnel
 produced the validated context; here we decide and account for it."""
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 TX = Namespace("https://example.org/transplant#")
-RISK = Namespace("https://w3id.org/etkl/risk#")
+RISK = Namespace("https://w3id.org/iladub/risk#")
 
 # ABO donor->recipient compatibility (simplified, synthetic).
 _ABO_OK = {
@@ -88,32 +88,32 @@ def build_decision_holon(result: DecisionResult,
                          agent: URIRef = TX["surgeon-1"],
                          evidence: tuple[URIRef, ...] = (),
                          revisit_if: tuple[str, ...] = ()) -> Graph:
-    """Emit the decision as a hol:DecisionHolon that conforms to hol:DecisionHolonShape:
+    """Emit the decision as a dec:DecisionHolon that conforms to dec:DecisionHolonShape:
     a deliberated option space (accept + decline), exactly one chosen option, an
     accountable agent, the rejected option's reason, and (optionally) its place in a
     process holarchy."""
     g = Graph()
     accept, decline = TX["opt-accept"], TX["opt-decline"]
-    g.add((subject, RDF.type, HOL.DecisionHolon))
-    g.add((accept, RDF.type, HOL.Option))
-    g.add((decline, RDF.type, HOL.Option))
-    g.add((subject, HOL.optionSpace, accept))
-    g.add((subject, HOL.optionSpace, decline))
+    g.add((subject, RDF.type, DEC.DecisionHolon))
+    g.add((accept, RDF.type, DEC.Option))
+    g.add((decline, RDF.type, DEC.Option))
+    g.add((subject, DEC.optionSpace, accept))
+    g.add((subject, DEC.optionSpace, decline))
 
     chosen = accept if result.recommendation == "accept" else decline
     rejected = decline if result.recommendation == "accept" else accept
-    g.add((subject, HOL.chosen, chosen))
-    g.add((rejected, HOL.rejectedBecause, Literal(result.reason)))
-    g.add((subject, HOL.decidedBy, agent))
-    g.add((subject, HOL.rationale, Literal(result.reason)))
+    g.add((subject, DEC.chosen, chosen))
+    g.add((rejected, DEC.rejectedBecause, Literal(result.reason)))
+    g.add((subject, DEC.decidedBy, agent))
+    g.add((subject, DEC.rationale, Literal(result.reason)))
     # When contextual risk constrained the option space, record it (links to etkl/risk).
     _sev = {"breach": "Breach", "critical": "Critical"}.get(result.risk_severity)
     if _sev is not None:
-        g.add((subject, HOL.constrainedBy, RISK[_sev]))
+        g.add((subject, DEC.constrainedBy, RISK[_sev]))
     for e in evidence:
-        g.add((subject, HOL.consideredEvidence, e))
+        g.add((subject, DEC.consideredEvidence, e))
     if process is not None:
-        g.add((subject, HOL.withinProcess, process))
+        g.add((subject, DEC.withinProcess, process))
     for key in revisit_if:
-        g.add((subject, HOL.revisitIf, Literal(key)))
+        g.add((subject, DEC.revisitIf, Literal(key)))
     return g

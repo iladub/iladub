@@ -11,16 +11,36 @@ documents into FAIR, contract-defined semantic knowledge graphs that machines ca
 
 It is the document-compiling front end of the **ET(K)L** method
 (*Extract, Transform-with-(K)nowledge, Load*), whose persistent namespace is
-`https://w3id.org/etkl`.
+`https://w3id.org/iladub/etkl`.
 
-## The project family (separate, coherent artifacts)
+## The project family — `iladub` is the root (decided 2026-07-01)
 
-- **ET(K)L method + vocabulary** (`etkl`) — the method spec and umbrella ontology.
-- **hol** — the holonic decision-context module; the layer FHIR (and most data
-  models) have no equivalent of.
-- **iladub** — the document compiler + its assertion/proposition epistemics
-  (this repo / package).
-- **iladub.dev** — the docs site (Material for MkDocs).
+`iladub` is the namespace **root** and the owned artifact: it predates HGA, and `etkl` + `dec`
+are related concepts arranged freely before Cagle's Holon Graph existed. iladub adopts the
+holon graph as the architecture *for* its work and **consumes HGA as the external substrate**.
+
+> **iladub = a thin epistemic core + `etkl` + `dec`** — the carrier that lifts knowledge from
+> raw documents into HGA holons and governs the decisions made about them.
+
+- **iladub** (thin **core**) — the assertion/proposition epistemics (the signature: assert
+  only what you can ground, propose everything else, never let a proposition pass as an
+  assertion). `CandidateConcept`, `GroundedNode`, `PromotionDecision`.
+- **etkl** — the narrow-scope **K-transform**: raw document → grounded holon, conformed to a
+  destination holon's required schema (the contract). Includes the doc-holon fabric
+  (Raw/Clean/Semantic/GroundingPortal/MembraneHealth). *Could* one day be an HGA contribution
+  (HGA defines holons; it doesn't build them from unstructured data) — not now.
+- **dec** — **decidability / decisionality**: `DecisionHolon`, escalation, events, timeline
+  (and `risk`, contextual risk, as a decidability measure). An HGA extension, built now
+  because HGA isn't ready for strict decidability yet; **deliberately portable** — designed to
+  be upstreamed to / replaced by an HGA equivalent later.
+- **HGA** (`holon:`) — external substrate; consumed, aligned (`rdfs:subClassOf`/`seeAlso`),
+  **never cloned** (see § Source ownership).
+- **iladub.dev** — the docs site (Material for MkDocs). *(PyPI package name `iladub` and
+  `iladub.dev` are unaffected by the namespace re-rooting: namespace ≠ package.)*
+
+**Migration status:** The re-rooting from the previous `…/etkl/*` layout was completed
+2026-07-01. The old IRIs will 301-redirect to the new roots once the w3id PR merges (see
+the migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migration.md`).
 
 ## Licensing (non-negotiable, applies everywhere)
 
@@ -50,11 +70,11 @@ It is the document-compiling front end of the **ET(K)L** method
      suggester, and a confidence. Never dropped, never faked.
    - A proposition enters the grounded graph **only** as the product of a
      **promotion decision** (`iladub:PromotionDecision`, a subclass of
-     `hol:DecisionHolon`). This is enforced by SHACL: *every grounded node must be
+     `dec:DecisionHolon`). This is enforced by SHACL: *every grounded node must be
      produced by a promotion decision.*
 
 4. **A promotion is a decision holon.** Admitting a proposition is an accountable,
-   agent-attributed, auditable act using the *same* `hol` vocabulary that models
+   agent-attributed, auditable act using the *same* `dec` vocabulary that models
    decisions in document *content*. The tool that reads decisions out of documents
    governs its own reading with the same decision model.
 
@@ -82,15 +102,15 @@ propositions are candidates *at* it. See `docs/holonic-interaction.md`.
   is Cagle's W3C HGA** (`holon:` = `http://w3id.org/holon/`), the W3C Holon CG's
   reference ontology — *not* Welz's CGA (`urn:holonic:ontology:`), which remains useful
   conceptual prior art but is no longer the alignment target (decided 2026-06-23).
-- **Alignment, not import:** iladub's holon types and grounding portal live in the
-  `iladub`/`hol` namespaces and are aligned via `rdfs:subClassOf` to `holon:`
-  (e.g. `iladub:CleanDocumentHolon ⊑ holon:DataHolon` (or `holon:Holon`),
-  `iladub:RawDocumentHolon ⊑ holon:DataHolon`, `iladub:GroundingPortal ⊑ holon:Portal`)
+- **Alignment, not import:** the doc-holon fabric and grounding portal live in the
+  `etkl` namespace and are aligned via `rdfs:subClassOf` to `holon:`
+  (e.g. `etkl:CleanDocumentHolon ⊑ holon:DataHolon` (or `holon:Holon`),
+  `etkl:RawDocumentHolon ⊑ holon:DataHolon`, `etkl:GroundingPortal ⊑ holon:Portal`)
   — never copied, never hard-imported. Reuse HGA's grounding lifecycle where it fits:
   iladub's `iladub:PromotionDecision` governs the `holon:GroundingRecord` →
   `holon:RegisteredStatus` transition that HGA leaves to a bare confidence gate.
-- `hol` therefore generalizes from "decision-context only" toward "holon + interaction,"
-  with `hol:DecisionHolon` as one holon type and `iladub:PromotionDecision` as the
+- `dec` therefore generalizes from "decision-context only" toward "holon + interaction,"
+  with `dec:DecisionHolon` as one holon type and `iladub:PromotionDecision` as the
   governed membrane-crossing.
 
 ### Posture toward the W3C Holon Community Group (settled 2026-06-23)
@@ -126,16 +146,44 @@ alignment bullets above.
   enforced by `gsh:AiInheritsUserShape`). Worked example:
   `examples/transplant/transplant-governance.ttl` + `vocab/shapes/governance-shapes.ttl`.
 
+## Source ownership (non-negotiable; the line we never cross)
+
+We **develop** only the namespaces we own. HGA (Cagle's W3C Holon CG ontology) is an
+**external source of truth we consume** — never one we author, edit, or redefine. Mixing the
+two corrupts authorship provenance and the alignment story. This is settled (2026-06-29) and
+**CI-enforced** by `tests/test_source_ownership.py`.
+
+| We OWN — develop freely (root `https://w3id.org/iladub…`) | HGA — Cagle's; CONSUME only, never touch (`http://w3id.org/holon/…`) |
+| --- | --- |
+| the thin core `iladub:` · `etkl:` · `dec:` · `risk:` (+ their shapes, examples, Python) | `holon:` · `hev:` · `hpol:` · `hmk:` · `hproj:` · `hbayes:` · `hprov:` · `hspec:` · `hmedia:` · `hvc:` |
+
+**The invariant (one line):** *In every authored RDF file, the subject of every triple is a
+term we own. HGA terms appear ONLY as objects/types/targets — never as a subject.* We never
+write `holon:X a owl:Class` or add any property to an HGA term; we only point our terms at
+theirs (`our:T rdfs:subClassOf holon:T`).
+
+Concrete rules:
+1. **Edit only our four namespaces.** Adding `dec:escalatedTo` to `dec.ttl` is fine;
+   declaring or annotating `hev:HolonEvent` anywhere is forbidden.
+2. **HGA IRIs live only in `*-hga-align.ttl` modules and in HGA-bridging shapes/examples, as
+   objects.** Core ontologies (`dec.ttl`, `risk.ttl`, `iladub.ttl`, `etkl.ttl`, `etkl-holons.ttl`) stay
+   **standalone** — zero `w3id.org/holon` references (alignment-not-import; reasoner-free).
+3. **Any local HGA copy is read-only and segregated** — fetched at test time or kept under a
+   clearly-marked `vendor/hga/` snapshot (`@ <sha>`, "NOT OURS"). Never under `vocab/`.
+
+iladub's role is to **complement HGA's gaps** (the accountable `dec:DecisionHolon`, promotion
+epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`subPropertyOf`/
+`seeAlso` — never to re-author the substrate.
+
 ## Serialization & stack conventions
 
 - Ontologies, shapes, contracts, examples → **RDF Turtle** (`.ttl`) for authoring,
   **JSON-LD** for interchange.
 - Validation → **pySHACL** (`inference="rdfs"`, `advanced=True` for SPARQL constraints).
-- `iladub:` namespace = `https://w3id.org/etkl/iladub#`.
-  `hol:` = `https://w3id.org/etkl/hol#`. `etkl:` = `https://w3id.org/etkl#`.
-  `risk:` = `https://w3id.org/etkl/risk#` (contextual-risk module; HGA alignment in
-  `vocab/ontology/risk-hga-align.ttl`).
-- Decision/provenance reuse standards: `hol:DecisionHolon ⊑ prov:Activity`;
+- Namespaces: `iladub:` = `https://w3id.org/iladub#`, `etkl:` = `https://w3id.org/iladub/etkl#`,
+  `dec:` = `https://w3id.org/iladub/dec#`, `risk:` = `https://w3id.org/iladub/risk#`;
+  HGA alignment modules are `*-hga-align.ttl`.
+- Decision/provenance reuse standards: `dec:DecisionHolon ⊑ prov:Activity`;
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.
 - Every vocabulary/shape ships with a worked example that conforms **and** a negative
@@ -163,10 +211,11 @@ muddied authorship provenance.)
 
 ## Open items (verify; do not assert as done)
 
-- [x] Register the `w3id.org/etkl` (and `/etkl/iladub`, `/etkl/hol`) redirects so the
-      namespaces actually resolve (required for FAIR).
-      (Done 2026-06-02: w3id.org PR #6144 merged by dgarijo; content negotiation verified
-      — RDF → raw `.ttl` on `main`, browsers → `iladub.dev`. All three IRIs resolve 200.)
+- [x] Register w3id.org redirects for the old `…/etkl/*` namespace tree (done 2026-06-02,
+      w3id PR #6144, merged by dgarijo; content negotiation verified). The 2026-07-01
+      re-rooting to `https://w3id.org/iladub` requires a new w3id PR — pending.
+- [ ] Open a new w3id PR to add `iladub` redirect rules (core, etkl, dec, risk) pointing
+      at the canonical `.ttl` files on `main` / `iladub.dev` (follow same pattern as PR #6144).
 - [x] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
       to the "íl + dub" transliteration.
       (Verified 2026-06-03: `𒅍` = U+1214D "CUNEIFORM SIGN IL2" = *íl/il₂*, "to carry,"

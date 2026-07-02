@@ -4,7 +4,7 @@
 
 A time-critical crash test: compile a raw, synthetic heart-offer document into the
 SHACL-validated, provenanced context the accept/decline decision (milestone M4) requires —
-then record the decision as a `hol:DecisionHolon` with its rejected option.
+then record the decision as a `dec:DecisionHolon` with its rejected option.
 
 The trust gradient: deterministic build-time RDF→BAML type generation → controlled,
 schema-constrained multi-agent LLM extraction → deterministic grounding (assert/propose) →
@@ -19,7 +19,7 @@ Run it live (calls Anthropic): `BAML_LIVE=1 iladub m4 examples/transplant/offer.
 ## The timeline around the decision (SP2)
 
 M4 is one milestone in a known supply chain. The **timeline engine** (`iladub.timeline`)
-drives that chain from a declarative `hol:Process` of `hol:Milestone`s: it tracks where we
+drives that chain from a declarative `dec:Process` of `dec:Milestone`s: it tracks where we
 are (a cursor), checks whether each milestone's required context is **ready**, runs the
 **forward pass** (what the *next* milestone needs that isn't captured yet — anti-crisis
 anticipation), and computes **clock feasibility** via Allen's interval algebra
@@ -29,15 +29,15 @@ The engine is domain-agnostic: the same code drives `heart-timeline.ttl` (≈240
 and `kidney-timeline.ttl` (≈1800-min window) — distinct supply chains within one domain.
 Swap the TimelineContract, get a new chain; no engine change.
 
-> Deterministic — no LLM. Event-driven reopening (`hol:revisitIf`) and live wiring of the
+> Deterministic — no LLM. Event-driven reopening (`dec:revisitIf`) and live wiring of the
 > forward pass to the extraction funnel are the next slice (SP3).
 
 ## When reality perturbs the plan (SP3a)
 
 The timeline anticipates (SP2); SP3a reacts. An **event** (`iladub.events.Event` — a named
-`condition` + payload) is matched against a decision's declared `hol:revisitIf` keys. If it
+`condition` + payload) is matched against a decision's declared `dec:revisitIf` keys. If it
 fires, `iladub.reopen.reopen` **re-evaluates** the decision with the event payload and emits a
-new `hol:DecisionHolon` that `hol:supersedes` the prior one and is `hol:triggeredBy` the event.
+new `dec:DecisionHolon` that `dec:supersedes` the prior one and is `dec:triggeredBy` the event.
 The prior decision is preserved — an accountable audit trail.
 
 Worked example: M4 *accepts* a heart (projected ischemia 95 min). A transport-delay event

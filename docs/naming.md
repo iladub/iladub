@@ -32,4 +32,4 @@ option and verified free across PyPI, GitHub, npm, crates.io, and .com/.io/.org/
 ## Claimed identity
 
 - PyPI: `iladub` · GitHub: `iladub/iladub` · Domain: `iladub.dev`
-- Namespace: `https://w3id.org/etkl/iladub` (redirect: open item)
+- Namespace: `https://w3id.org/iladub` (redirect: open item)

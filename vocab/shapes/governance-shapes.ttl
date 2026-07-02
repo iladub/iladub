@@ -1,4 +1,4 @@
-@prefix gsh:  <https://w3id.org/etkl/governance-shapes#> .
+@prefix gsh:  <https://w3id.org/iladub/governance-shapes#> .
 @prefix odrl: <http://www.w3.org/ns/odrl/2/> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .

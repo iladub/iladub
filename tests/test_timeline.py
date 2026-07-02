@@ -4,7 +4,7 @@ from rdflib.namespace import RDF
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TXD = os.path.join(ROOT, "examples", "transplant")
-HOL = Namespace("https://w3id.org/etkl/hol#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 TX = Namespace("https://example.org/transplant#")
 
 
@@ -14,7 +14,7 @@ def _heart_graph():
 
 def test_heart_process_has_five_milestones():
     g = _heart_graph()
-    ms = list(g.objects(TX["heart-process"], HOL.hasMilestone))
+    ms = list(g.objects(TX["heart-process"], DEC.hasMilestone))
     assert len(ms) == 5
 
 

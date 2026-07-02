@@ -1,0 +1,46 @@
+@prefix tx:   <https://example.org/transplant#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix risk: <https://w3id.org/iladub/risk#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  Apex escalation on the transplant showcase. A donor with an absolute contraindication
+#  realises a constitutional risk:Critical. The local (recipient-centre) decision's autonomy
+#  ceiling is risk:Breach, so Critical (order 3) > Breach (order 2): it CANNOT be resolved
+#  locally and escalates to the transplant board, which makes the binding call. Synthetic.
+
+tx:donor-9 a tx:Donor ; tx:activeMalignancy true .
+
+#  Autonomy scopes (decision-authority ceilings).
+tx:scope-recipient a dec:Scope ; rdfs:label "Recipient-centre autonomy"@en ;
+    dec:maxSeverity risk:Breach .
+tx:scope-board a dec:Scope ; rdfs:label "Transplant-board autonomy (apex)"@en ;
+    dec:maxSeverity risk:Critical .
+
+#  LOCAL decision: realises Critical within a Breach-ceiling scope -> must escalate.
+tx:m4-decision a dec:DecisionHolon ;
+    dec:optionSpace tx:opt-accept , tx:opt-decline ;
+    dec:chosen tx:opt-decline ;
+    dec:decidedBy tx:surgeon-1 ;
+    dec:rationale "absolute contraindication present (constitutional risk)" ;
+    dec:constrainedBy risk:Critical ;
+    dec:withinScope tx:scope-recipient ;
+    dec:escalatedTo tx:board-decision .
+tx:opt-accept a dec:Option ;
+    dec:rejectedBecause "absolute contraindication present (constitutional risk)" .
+tx:opt-decline a dec:Option .
+
+#  APEX decision: the board makes the binding call. Its ceiling is Critical, so the
+#  escalation shape does not fire on it (3 > 3 is false).
+tx:board-decision a dec:DecisionHolon ;
+    dec:optionSpace tx:opt-confirm-decline , tx:opt-override ;
+    dec:chosen tx:opt-confirm-decline ;
+    dec:decidedBy tx:role-board ;
+    dec:rationale "constitutional matter (absoluteContraindication) escalated to the board apex" ;
+    dec:constrainedBy risk:Critical ;
+    dec:withinScope tx:scope-board ;
+    dec:triggeredBy tx:constitutional-event .
+tx:opt-confirm-decline a dec:Option .
+tx:opt-override a dec:Option ;
+    dec:rejectedBecause "override rejected: a constitutional contraindication is absolute" .
+
+tx:constitutional-event a dec:Event ; dec:condition "absoluteContraindication" .

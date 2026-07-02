@@ -9,7 +9,7 @@ from __future__ import annotations
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF, SKOS
 
-ETKL = Namespace("https://w3id.org/etkl#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 TX = Namespace("https://example.org/transplant#")
 
 # Maps the contract's agent tag to a generated BAML class name.

@@ -18,10 +18,10 @@ multilingual (de/fr/it), and **not** tied to any commodity-trading employer's do
   with subject/requester/author/reason references wired between them.
 - Terminology is bound to SKOS-projected concepts (SNOMED/LOINC) with multilingual
   labels; a value can be read in German and rendered in French — *concepts, not strings*.
-- The therapy change is captured as a `hol:DecisionHolon` over the FHIR layer:
+- The therapy change is captured as a `dec:DecisionHolon` over the FHIR layer:
   evidence (the conditions/observation), the rejected option and why, the deciding
   clinician, the governing guideline, and `produced` → the MedicationRequest.
-- Validated against CH-Core-style FHIR shapes **and** the `hol` decision shapes.
+- Validated against CH-Core-style FHIR shapes **and** the `dec` decision shapes.
 
 ## The point
 

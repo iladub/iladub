@@ -1,4 +1,4 @@
-"""Conformance tests for the ET(K)L and hol vocabularies: a worked example
+"""Conformance tests for the ET(K)L and dec vocabularies: a worked example
 that CONFORMS and a negative example that must FAIL, for each shape set."""
 import os
 from rdflib import Graph
@@ -46,21 +46,21 @@ def test_etkl_knowledge_free_pipeline_rejected():
     assert not c
 
 
-# --- hol decision accountability ---
+# --- dec decision accountability ---
 
 def test_hol_decision_conformant():
     c, t = _validate(
         [os.path.join(EX, "promotion.ttl")],
-        os.path.join(SH, "hol-shapes.ttl"),
-        [os.path.join(ONT, "hol.ttl")],
+        os.path.join(SH, "dec-shapes.ttl"),
+        [os.path.join(ONT, "dec.ttl")],
     )
     assert c, t
 
 
 def test_hol_rubber_stamp_rejected():
     c, _ = _validate(
-        [os.path.join(TST, "hol-bad.ttl")],
-        os.path.join(SH, "hol-shapes.ttl"),
-        [os.path.join(ONT, "hol.ttl")],
+        [os.path.join(TST, "dec-bad.ttl")],
+        os.path.join(SH, "dec-shapes.ttl"),
+        [os.path.join(ONT, "dec.ttl")],
     )
     assert not c

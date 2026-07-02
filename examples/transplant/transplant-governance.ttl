@@ -2,7 +2,7 @@
 @prefix odrl:  <http://www.w3.org/ns/odrl/2/> .
 @prefix prov:  <http://www.w3.org/ns/prov#> .
 @prefix hproj: <http://w3id.org/holon/projection/> .
-@prefix risk:  <https://w3id.org/etkl/risk#> .
+@prefix risk:  <https://w3id.org/iladub/risk#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 
 #  INFORMATION GOVERNANCE on the transplant showcase — concentric openness:

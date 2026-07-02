@@ -14,8 +14,10 @@ SH  = os.path.join(ROOT, "vocab", "shapes")
 EX  = os.path.join(ROOT, "examples")
 TST = os.path.join(ROOT, "tests")
 
-HOLON = "http://w3id.org/holon/"
-ILADUB = "https://w3id.org/etkl/iladub#"
+HOLON  = "http://w3id.org/holon/"
+ETKL   = "https://w3id.org/iladub/etkl#"
+HEV    = "http://w3id.org/holon/event/"
+DEC_NS = "https://w3id.org/iladub/dec#"
 
 def _g(*paths):
     g = Graph()
@@ -28,7 +30,7 @@ def _v(data, shapes, ont):
                        inference="rdfs", advanced=True)
     return c, t
 
-ONTS = [os.path.join(ONT, "iladub.ttl"), os.path.join(ONT, "iladub-holons.ttl")]
+ONTS = [os.path.join(ONT, "iladub.ttl"), os.path.join(ONT, "etkl-holons.ttl")]
 SHAPES = [os.path.join(SH, "iladub-shapes.ttl"), os.path.join(SH, "iladub-hga-shapes.ttl")]
 HGA_SHAPES = [os.path.join(SH, "iladub-hga-shapes.ttl")]
 
@@ -42,13 +44,13 @@ def test_alignment_axioms_present():
         ("GroundingPortal",    "Portal"),
     }
     for sub, obj in expected:
-        assert (URIRef(ILADUB + sub), RDFS.subClassOf, URIRef(HOLON + obj)) in g, \
-            f"missing alignment: iladub:{sub} rdfs:subClassOf holon:{obj}"
+        assert (URIRef(ETKL + sub), RDFS.subClassOf, URIRef(HOLON + obj)) in g, \
+            f"missing alignment: etkl:{sub} rdfs:subClassOf holon:{obj}"
 
 def test_holons_module_standalone():
     """The core holon-types module must NOT hard-depend on the holon: namespace."""
-    text = open(os.path.join(ONT, "iladub-holons.ttl")).read()
-    assert "w3id.org/holon" not in text, "core holon module leaked an HGA dependency"
+    text = open(os.path.join(ONT, "etkl-holons.ttl")).read()
+    assert "w3id.org/holon" not in text, "etkl-holons.ttl leaked an HGA dependency"
 
 def test_governed_grounding_conformant():
     """A registered GroundingRecord produced by a PromotionDecision conforms."""
@@ -59,3 +61,16 @@ def test_ungoverned_grounding_rejected():
     """A registered GroundingRecord with no promotion decision MUST fail."""
     c, _ = _v([os.path.join(TST, "holon-grounding-leak.ttl")], HGA_SHAPES, ONTS)
     assert not c
+
+
+def test_dec_alignment_axioms_present():
+    """The dec->HGA module anchors the authority holarchy and event envelope to HGA."""
+    g = _g(os.path.join(ONT, "dec-hga-align.ttl"))
+    assert (URIRef(DEC_NS + "partOf"), RDFS.subPropertyOf, URIRef(HOLON + "partOf")) in g
+    assert (URIRef(DEC_NS + "Event"), RDFS.subClassOf, URIRef(HEV + "HolonEvent")) in g
+
+
+def test_dec_module_standalone():
+    """The core dec vocabulary must NOT hard-depend on the holon: namespace."""
+    text = open(os.path.join(ONT, "dec.ttl")).read()
+    assert "w3id.org/holon" not in text, "core dec module leaked an HGA dependency"
