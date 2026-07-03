@@ -21,6 +21,39 @@ object to a store that speaks its modality.
 
 ## Compile → one holon, many targets
 
+```mermaid
+flowchart LR
+  subgraph SRC["One source document (PDF)"]
+    direction TB
+    P["Prose<br/>history · assessment · plan"]
+    L["Serial-labs table"]
+    M["Medication table"]
+    F["Ultrasound figure"]
+    B["The file itself"]
+  end
+
+  SRC ==>|"ET(K)L: recover + ground"| H(("Holon graph<br/>identity · grounding · provenance"))
+
+  H -->|ex:hasNarrative| T["Full-text search<br/><code>ex:note-text</code>"]
+  H -->|ex:hasObservation| TS["Time-series DB<br/><code>ex:creatinineSeries</code>"]
+  H -->|ex:hasMedRecord| R["Relational / columnar<br/><code>ex:medAdminTable</code>"]
+  H -->|ex:depicts| O["Object storage + media<br/><code>ex:figure-renalUS</code>"]
+  H -->|prov:wasDerivedFrom| BL["Object storage / blob<br/><code>ex:sourceDoc</code>"]
+  H -->|embedding| V["Vector index<br/><code>ex:note-text</code> ~ NN"]
+
+  P -.-> T
+  L -.-> TS
+  M -.-> R
+  F -.-> O
+  B -.-> BL
+```
+
+<figure markdown="span">
+  <figcaption>One document → one holon → many modality-native stores. Solid edges are the
+  graph's IRI references (each with provenance to page); dotted edges show which source region
+  feeds which store. The holon is the integration layer; nothing is flattened.</figcaption>
+</figure>
+
 Compilation grounds the document against a [semantic contract](etkl.md) into a **holon graph**
 (the canonical output), then loads each object into its
 [modality-native store](modality-native-targets.md) — every satellite **addressed from the
