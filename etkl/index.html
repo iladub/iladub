@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://iladub.dev/etkl/">
       
       
-        <link rel="prev" href="../story/">
+        <link rel="prev" href="../narrative/scope-evolution/">
       
       
         <link rel="next" href="../architecture/">
@@ -311,6 +311,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -486,14 +513,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../hol/" class="md-nav__link">
+      <a href="../dec/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -539,6 +566,58 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../use-case-fhir/" class="md-nav__link">
         
@@ -547,7 +626,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -556,6 +635,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -726,10 +841,9 @@ the contract, applied already at extraction) and as an argument (at transform).<
 - every source document declares its format.</p>
 <p>This makes "knowledge is not optional, and it comes first" a <em>checkable property</em>.</p>
 <h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
-<p>ET(K)L is modular. <code>hol</code> (decision context) and <code>iladub</code> (document compiling +
-assertion/proposition) plug in by being referenced from a contract and passed as
-transform arguments.</p>
-<p>Persistent namespace: <code>https://w3id.org/etkl</code>.</p>
+<p>ET(K)L is modular. <code>dec</code> (decidability/decisionality) and the <code>iladub</code> core
+(assertion/proposition epistemics) plug in; <code>etkl</code> produces the holons.</p>
+<p>Persistent namespace: <code>https://w3id.org/iladub/etkl</code>.</p>
 
 
 

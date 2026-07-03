@@ -436,6 +436,33 @@
   
   
     <li class="md-nav__item">
+      <a href="narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="etkl/" class="md-nav__link">
         
   
@@ -517,14 +544,14 @@
   
   
     <li class="md-nav__item">
-      <a href="hol/" class="md-nav__link">
+      <a href="dec/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -570,6 +597,58 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="use-case-fhir/" class="md-nav__link">
         
@@ -578,7 +657,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -587,6 +666,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -751,9 +866,12 @@
 </blockquote>
 <p><strong>iladub</strong> (𒅍𒁾 · Sumerian <em>íl</em> "to lift, to carry, to bring forward" + <em>dub</em> "clay
 tablet, document") compiles unstructured human documents into FAIR, contract-defined
-semantic knowledge graphs. It is the reference implementation of the <strong>ET(K)L</strong> method
-(<em>Extract, Transform-with-(K)nowledge, Load</em>), whose persistent namespace is
-<a href="https://w3id.org/etkl"><code>https://w3id.org/etkl</code></a>.</p>
+semantic knowledge graphs — and, increasingly, into <strong>active, governed holons</strong>:
+knowledge units that carry their own boundary, interact with their context, and change
+state only through accountable decisions. It is the reference implementation of the
+<strong>ET(K)L</strong> method (<em>Extract, Transform-with-(K)nowledge, Load</em>), whose persistent
+namespace is <a href="https://w3id.org/iladub/etkl"><code>https://w3id.org/iladub/etkl</code></a>.
+<a href="narrative/scope-evolution/">Where this is going →</a></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Early development — APIs are not yet stable.</p>
@@ -775,30 +893,33 @@ that level, knowledge-first. <a href="story/">Read the full story →</a></p>
   decision</strong>.</li>
 <li>Carries <strong>provenance to the page</strong> and converges table, prose, and figure mentions onto
   the <strong>same concept IRIs</strong>.</li>
+<li>Produces <strong>active, governed holons</strong>, not just static graphs — units whose boundary is
+  <em>both</em> a semantic membrane and an <strong>access boundary</strong>: every state change at the
+  interface is an accountable decision, and any agent inherits exactly the interacting
+  user's access.</li>
 </ul>
 <h2 id="explore">Explore<a class="headerlink" href="#explore" title="Permanent link">&para;</a></h2>
 <ul>
+<li><a href="narrative/scope-evolution/">Scope &amp; vision</a> — from a document compiler to interacting, governed holons.</li>
 <li><a href="etkl/">The ET(K)L method</a> — knowledge as the argument of the transform.</li>
 <li><a href="architecture/">Architecture</a> — the compile pipeline, end to end.</li>
 <li><a href="assertion-proposition/">Assertions &amp; propositions</a> — the epistemic boundary.</li>
 <li><a href="holonic-interaction/">Holonic interaction</a> — holons, and how they interact.</li>
-<li><a href="hol/">hol — decision context</a> · <a href="use-case-fhir/">Use case: clinical → FHIR</a> · <a href="naming/">Naming</a></li>
+<li><a href="dec/">dec — decision context</a> · <a href="use-case-fhir/">Clinical → FHIR</a> · <a href="use-case-transplant-m4/">Transplant — M4</a> · <a href="naming/">Naming</a></li>
 </ul>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>iladub
 </code></pre></div>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>iladub<span class="w"> </span>run<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--contract<span class="w">  </span>examples/patient-contract.ttl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--shapes<span class="w">    </span>examples/patient-shapes.ttl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--knowledge<span class="w"> </span>examples/patient-knowledge.ttl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--input<span class="w">     </span>examples/sample-admission.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Compile a synthetic transplant organ offer into an M4 acceptance decision</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># (live; needs ANTHROPIC_API_KEY)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>iladub<span class="w"> </span>m4<span class="w"> </span>examples/transplant/offer.txt
 </code></pre></div>
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>PyPI</strong> — <a href="https://pypi.org/project/iladub/">https://pypi.org/project/iladub/</a></li>
 <li><strong>Source</strong> — <a href="https://github.com/iladub/iladub">https://github.com/iladub/iladub</a></li>
-<li><strong>ET(K)L namespace</strong> — <a href="https://w3id.org/etkl">https://w3id.org/etkl</a></li>
+<li><strong>ET(K)L namespace</strong> — <a href="https://w3id.org/iladub/etkl">https://w3id.org/iladub/etkl</a></li>
 <li><strong>Author</strong> — François Rosselet (<a href="https://orcid.org/0009-0002-8318-1072">ORCID 0009-0002-8318-1072</a>)</li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>

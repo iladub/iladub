@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://iladub.dev/hol/">
+        <link rel="canonical" href="https://iladub.dev/dec/">
       
       
         <link rel="prev" href="../holonic-interaction/">
@@ -27,7 +27,7 @@
     
     
       
-        <title>hol — decision context - iladub</title>
+        <title>dec — decision context - iladub</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hol-the-holonic-decision-context-layer" class="md-skip">
+        <a href="#dec-the-decision-context-layer" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              hol — decision context
+              dec — decision context
             
           </span>
         </div>
@@ -314,6 +314,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../etkl/" class="md-nav__link">
         
   
@@ -411,7 +438,7 @@
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -429,7 +456,7 @@
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -528,6 +555,58 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../use-case-fhir/" class="md-nav__link">
         
@@ -536,7 +615,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -545,6 +624,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -655,11 +770,11 @@
   
 
 
-<h1 id="hol-the-holonic-decision-context-layer">hol — the holonic decision-context layer<a class="headerlink" href="#hol-the-holonic-decision-context-layer" title="Permanent link">&para;</a></h1>
-<p><code>hol</code> represents <strong>decisions as holons</strong>: units that are at once a self-contained,
+<h1 id="dec-the-decision-context-layer">dec — the decision-context layer<a class="headerlink" href="#dec-the-decision-context-layer" title="Permanent link">&para;</a></h1>
+<p><code>dec</code> represents <strong>decisions as holons</strong>: units that are at once a self-contained,
 accountable deliberation <em>and</em> a part of a larger decision holarchy. It sits <em>above</em> a
 data graph (e.g. a FHIR-derived graph) and captures what data models structurally cannot.</p>
-<p>Namespace: <code>https://w3id.org/etkl/hol#</code>.</p>
+<p>Namespace: <code>https://w3id.org/iladub/dec#</code>.</p>
 <h2 id="what-fhir-and-most-data-models-cannot-capture">What FHIR (and most data models) cannot capture<a class="headerlink" href="#what-fhir-and-most-data-models-cannot-capture" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The deliberation space</strong> — the options considered and <em>why one was rejected</em>, not
@@ -669,10 +784,10 @@ data graph (e.g. a FHIR-derived graph) and captures what data models structurall
 <li><strong>A holarchy of authority</strong> — local decision ⊂ protocol ⊂ guideline ⊂ policy.</li>
 <li><strong>The deontic/commitment layer</strong> — obligations, expectations, validity conditions.</li>
 <li><strong>Decision lineage</strong> — what evidence supported a decision, and what upstream change
-  should reopen it (<code>hol:revisitIf</code> / <code>onChange</code>).</li>
+  should reopen it (<code>dec:revisitIf</code> / <code>onChange</code>).</li>
 </ul>
 <h2 id="core-shape">Core shape<a class="headerlink" href="#core-shape" title="Permanent link">&para;</a></h2>
-<p>A <code>hol:DecisionHolon</code> (⊑ <code>prov:Activity</code>) records: <code>consideredEvidence</code>,
+<p>A <code>dec:DecisionHolon</code> (⊑ <code>prov:Activity</code>) records: <code>consideredEvidence</code>,
 <code>constrainedBy</code>, an <code>optionSpace</code> (≥2 — the no-change option counts), exactly one
 <code>chosen</code> option (which must be in the option space — SPARQL-enforced), <code>decidedBy</code> (an
 agent, human or automated), a <code>rationale</code>, optional <code>confidence</code> ∈ [0,1], <code>produced</code>
@@ -684,8 +799,9 @@ constraints reframing its options, the option space it must justify against, and
 its decision composes upward. That is the difference between emitting a plausible
 output and making an <em>accountable, re-evaluable</em> decision.</p>
 <p>It is also the most domain-neutral, transferable part of the project — the same holon
-models a clinical therapy switch or a trading hedge decision unchanged. That makes it
-the original contribution, distinct from the (reusable) terminology/shape bridging.</p>
+models a clinical therapy switch or a trading hedge decision unchanged. That portability
+is what makes dec cleanly separable — a component designed to be upstreamed to HGA once
+the substrate supports strict decidability.</p>
 
 
 

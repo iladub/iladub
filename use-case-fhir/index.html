@@ -16,7 +16,7 @@
         <link rel="prev" href="../assertion-proposition/">
       
       
-        <link rel="next" href="../naming/">
+        <link rel="next" href="../use-case-transplant-m4/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Use case — clinical → FHIR - iladub</title>
+        <title>Clinical → FHIR - iladub</title>
       
     
     
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Use case — clinical → FHIR
+              Clinical → FHIR
             
           </span>
         </div>
@@ -314,6 +314,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../etkl/" class="md-nav__link">
         
   
@@ -395,14 +422,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../hol/" class="md-nav__link">
+      <a href="../dec/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -450,6 +477,60 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -465,7 +546,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -483,7 +564,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -533,6 +614,42 @@
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -650,10 +767,10 @@ multilingual (de/fr/it), and <strong>not</strong> tied to any commodity-trading 
   with subject/requester/author/reason references wired between them.</li>
 <li>Terminology is bound to SKOS-projected concepts (SNOMED/LOINC) with multilingual
   labels; a value can be read in German and rendered in French — <em>concepts, not strings</em>.</li>
-<li>The therapy change is captured as a <code>hol:DecisionHolon</code> over the FHIR layer:
+<li>The therapy change is captured as a <code>dec:DecisionHolon</code> over the FHIR layer:
   evidence (the conditions/observation), the rejected option and why, the deciding
   clinician, the governing guideline, and <code>produced</code> → the MedicationRequest.</li>
-<li>Validated against CH-Core-style FHIR shapes <strong>and</strong> the <code>hol</code> decision shapes.</li>
+<li>Validated against CH-Core-style FHIR shapes <strong>and</strong> the <code>dec</code> decision shapes.</li>
 </ul>
 <h2 id="the-point">The point<a class="headerlink" href="#the-point" title="Permanent link">&para;</a></h2>
 <p>FHIR can carry the new prescription. It cannot carry <em>the option that was rejected, and

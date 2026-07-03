@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://iladub.dev/assertion-proposition/">
       
       
-        <link rel="prev" href="../hol/">
+        <link rel="prev" href="../dec/">
       
       
         <link rel="next" href="../use-case-fhir/">
@@ -314,6 +314,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../etkl/" class="md-nav__link">
         
   
@@ -395,14 +422,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../hol/" class="md-nav__link">
+      <a href="../dec/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -528,6 +555,58 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../use-case-fhir/" class="md-nav__link">
         
@@ -536,7 +615,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -545,6 +624,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -657,7 +772,7 @@
 
 <h1 id="assertions-propositions">Assertions &amp; propositions<a class="headerlink" href="#assertions-propositions" title="Permanent link">&para;</a></h1>
 <p>iladub's epistemic core. A carrier is trusted only if it does not invent its cargo.</p>
-<p>Namespace: <code>https://w3id.org/etkl/iladub#</code>.</p>
+<p>Namespace: <code>https://w3id.org/iladub#</code>.</p>
 <h2 id="the-two-layers">The two layers<a class="headerlink" href="#the-two-layers" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Assertions</strong> — content groundable in a provided ontology. Typed, contract-bound,
@@ -669,7 +784,7 @@
 </ul>
 <h2 id="promotion-is-a-decision">Promotion is a decision<a class="headerlink" href="#promotion-is-a-decision" title="Permanent link">&para;</a></h2>
 <p>A proposition enters the grounded graph <strong>only</strong> as the product of an
-<code>iladub:PromotionDecision</code> (⊑ <code>hol:DecisionHolon</code>): it <code>reviews</code> the candidate, has an
+<code>iladub:PromotionDecision</code> (⊑ <code>dec:DecisionHolon</code>): it <code>reviews</code> the candidate, has an
 option space (accept-as-anchor / refine-to-domain-concept / reject), a chosen outcome,
 an accountable agent, and (if accepted) <code>produces</code> the grounded node.</p>
 <p>The gist anchor survives as <strong>lineage</strong> (<code>rdfs:subClassOf gist:…</code>), not as the
@@ -685,7 +800,7 @@ gaps and offers a starting point. Coverage and tool co-evolve.</p>
 <li>A candidate must <strong>not</strong> also be <code>asserted</code> (no-leak SPARQL check).</li>
 </ul>
 <p><strong>Never let a proposition pass as an assertion.</strong> This is a checkable property, not a
-discipline you hope holds. Decision-lineage (<code>hol:revisitIf</code>) can reopen past
+discipline you hope holds. Decision-lineage (<code>dec:revisitIf</code>) can reopen past
 promotions when the bridge later gains coverage; automated promotion is bounded by the
 holon's <code>autonomyScope</code>.</p>
 

@@ -16,7 +16,7 @@
         <link rel="prev" href="../architecture/">
       
       
-        <link rel="next" href="../hol/">
+        <link rel="next" href="../dec/">
       
       
         
@@ -314,6 +314,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../narrative/scope-evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope & vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../etkl/" class="md-nav__link">
         
   
@@ -494,6 +521,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-is-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#planned-work-not-done-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -530,14 +568,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../hol/" class="md-nav__link">
+      <a href="../dec/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    hol — decision context
+    dec — decision context
   
 
     
@@ -583,6 +621,58 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use cases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Use cases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../use-case-fhir/" class="md-nav__link">
         
@@ -591,7 +681,7 @@
   <span class="md-ellipsis">
     
   
-    Use case — clinical → FHIR
+    Clinical → FHIR
   
 
     
@@ -600,6 +690,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -724,6 +850,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-is-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#planned-work-not-done-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -772,9 +909,10 @@ a planned follow-up; this page fixes the model before any <code>.ttl</code> is w
 </blockquote>
 <p>Defining holons is the easy half. The architecture lives in <strong>how they interact</strong>.
 This page models iladub as a small set of holons connected by a governed interaction —
-aligned with the holonic-graph architecture (Kurt Cagle) and its reference ontology,
-the Context-Graph Architecture / CGA (Zach Welz's <code>holonic</code> library), rather than
-reinventing one.</p>
+aligned with Kurt Cagle's holonic-graph architecture and its reference ontology,
+<strong>HGA</strong> (<code>holon:</code>), rather than reinventing one. (Zach Welz's Context-Graph Architecture /
+CGA remains useful conceptual prior art, but is no longer the alignment target — see the
+anchor note below.)</p>
 <h2 id="what-a-holon-is-and-why-interaction-is-the-point">What a holon is (and why interaction is the point)<a class="headerlink" href="#what-a-holon-is-and-why-interaction-is-the-point" title="Permanent link">&para;</a></h2>
 <p>A <strong>holon</strong> (Koestler) is something that is <em>simultaneously a whole and a part</em>. In the
 holonic-graph reading, every holon has four orthogonal aspects expressed as named
@@ -852,7 +990,7 @@ whose <strong>membrane-health is its cleanliness</strong>.</p>
 <p>A SemanticHolon that exists to bridge vocabularies (e.g. SNOMED ↔ a domain concept) is
 specifically an <strong>alignment holon</strong>.</p>
 <h2 id="the-interaction-primitives">The interaction primitives<a class="headerlink" href="#the-interaction-primitives" title="Permanent link">&para;</a></h2>
-<p>These are what <code>hol</code> was missing — and what make the model an <em>interaction</em> model:</p>
+<p>These are what a decision-holon-only model lacks — and what make the model an <em>interaction</em> model:</p>
 <ol>
 <li>
 <p><strong>The membrane.</strong> A holon's boundary is its SHACL shapes. Validating the interior
@@ -910,7 +1048,7 @@ specifically an <strong>alignment holon</strong>.</p>
 <td>content <em>inside</em> the interior — it crossed the membrane</td>
 </tr>
 <tr>
-<td>a <strong><code>iladub:PromotionDecision</code></strong> (<code>hol:DecisionHolon</code>)</td>
+<td>a <strong><code>iladub:PromotionDecision</code></strong> (<code>dec:DecisionHolon</code>)</td>
 <td>the <strong>governed membrane-crossing</strong> — an auditable concept-matching decision</td>
 </tr>
 <tr>
@@ -933,17 +1071,37 @@ provenance). Its author recommends <strong>alignment, not import</strong>: keep 
 reasoner-free core and align to other vocabularies rather than forcing everything into
 one tree.</p>
 <p>iladub follows the same principle it applies to provenance ("don't reinvent"): iladub's
-holon types and its grounding portal are defined in the <code>iladub</code>/<code>hol</code> namespaces and
-<strong>aligned</strong> to CGA (e.g. <code>iladub:CleanDocumentHolon rdfs:subClassOf cga:Holon</code>,
-<code>iladub:GroundingPortal rdfs:subClassOf cga:TransformPortal</code>,
-<code>iladub:PromotionDecision</code> as the governed crossing), not copied from it.</p>
+holon types and its grounding portal are defined in the <code>iladub</code>/<code>dec</code> namespaces and
+<strong>aligned</strong> to the W3C Holon CG ontology, not copied from it.</p>
+<blockquote>
+<p><strong>Anchor (settled 2026-06-23):</strong> the alignment target is <strong>Cagle's W3C Holon CG /
+HGA</strong> (<code>holon:</code> = <code>http://w3id.org/holon/</code>), <em>not</em> Welz's CGA (<code>urn:holonic:ontology:</code>),
+which remains useful conceptual prior art. HGA's <code>holon:DataHolon</code> ("information-bearing
+artefact … produced and consumed by the pipeline") is the natural anchor for iladub's
+document/semantic holons; <code>holon:Portal</code> (a <em>navigational</em> link) anchors the grounding
+portal, which <strong>adds</strong> the concept-matching transform. Note HGA has <strong>no <code>holon:Boundary</code>
+class</strong> (boundary semantics ride on <code>holon:boundaryMode</code> + SHACL shapes). See
+<code>CLAUDE.md</code> ("Holonic interaction model").</p>
+</blockquote>
+<h2 id="what-is-built">What is built<a class="headerlink" href="#what-is-built" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>vocab/ontology/etkl-holons.ttl</code> — the holon types + grounding portal + membrane
+  health, in the <code>etkl</code> namespace, <strong>standalone</strong> (no HGA dependency).</li>
+<li><code>vocab/ontology/iladub-hga-align.ttl</code> — the <strong>optional</strong> HGA alignment
+  (alignment-not-import): <code>rdfs:subClassOf holon:DataHolon</code> / <code>holon:Portal</code> axioms only.</li>
+<li><code>vocab/shapes/iladub-hga-shapes.ttl</code> — <code>iladub:HgaGroundingGovernanceShape</code>: a
+  <code>holon:GroundingRecord</code> may reach <code>holon:RegisteredStatus</code> <strong>only</strong> as the product of an
+  <code>iladub:PromotionDecision</code> (iladub's invariant layered onto HGA's bare confidence gate).</li>
+<li><code>examples/holon-grounding-conformant.ttl</code> + <code>tests/holon-grounding-leak.ttl</code> — a
+  conforming governed-grounding traversal and a negative case; exercised by
+  <code>tests/test_hga_alignment.py</code>.</li>
+</ul>
 <h2 id="planned-work-not-done-yet">Planned work (not done yet)<a class="headerlink" href="#planned-work-not-done-yet" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Express the holon types and the grounding portal in <code>vocab/ontology/</code> with an
-  optional CGA alignment module (alignment-not-import).</li>
-<li>Add SHACL shapes for the membrane and a worked example (a raw document holon → clean
-  document holon traversal) with a conforming case and a negative case.</li>
-<li>A membrane-health check that reports a compiled document's cleanliness.</li>
+<li>A membrane-health check that computes and reports a compiled document's cleanliness
+  (<code>etkl:membraneHealth</code> → Intact / Weakened / Compromised) from validation results.</li>
+<li>A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
+  (the current example covers the grounding-governance crossing only).</li>
 </ul>
 <h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
 <ul>
