@@ -48,6 +48,7 @@ nav:
   - Scope & vision: narrative/scope-evolution.md
   - The ET(K)L method: etkl.md
   - Architecture: architecture.md
+  - Modality-native targets: modality-native-targets.md
   - Holonic interaction: holonic-interaction.md
   - dec — decision context: dec.md
   - Assertions & propositions: assertion-proposition.md
