@@ -49,6 +49,13 @@ the same number means different things in different contexts. Digesting a docume
 reading its characters. It is reconstructing the web of meaning a human author assumed
 you already had.
 
+This is why iladub rejects the very idea of *unstructured* data. That web of meaning **is**
+structure — **human-addressed structure**, complete for the reader the author had in mind,
+merely latent to a machine that knows only arrays and dictionaries. The work is not to *add*
+structure to formless text; it is to **recover** the structure that is already there and carry
+it across — without flattening it into tokens at the input or rows at the output.
+[There is no unstructured data →](manifesto.md)
+
 ## What it takes for a machine to read a document
 
 Recovering that web of meaning needs more than a flat list of facts. It needs the right

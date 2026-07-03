@@ -7,9 +7,14 @@
 > **The document-carrier** — compiling human documents into knowledge machines can read.
 
 **iladub** (𒅍𒁾 · Sumerian *íl*, "to lift, to carry, to bring forward" + *dub*, "clay
-tablet, document") compiles unstructured human documents into FAIR, contract-defined
-semantic knowledge graphs. It is the reference implementation of the **ET(K)L** method,
-whose persistent namespace is [`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
+tablet, document") compiles **human-addressed documents** — reports, notes, papers,
+contracts, in any format — into FAIR, contract-defined semantic knowledge graphs. It is
+the reference implementation of the **ET(K)L** method, whose persistent namespace is
+[`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
+
+> **There is no unstructured data** — only human-addressed structure a machine has not been
+> taught to read. iladub recovers it and carries it forward, without flattening it into
+> tokens at the input or rows at the output. See the manifesto → <https://iladub.dev/manifesto/>
 
 > [!NOTE]
 > Early development — APIs are not yet stable.

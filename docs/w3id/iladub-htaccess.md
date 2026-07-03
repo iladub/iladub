@@ -104,7 +104,7 @@ RewriteRule ^(.*)$ https://iladub.dev/ [R=302,L]
 # /iladub/
 
 Persistent namespace root for **iladub** — the document-carrier that compiles
-unstructured documents into FAIR, contract-defined semantic knowledge graphs.
+human-addressed documents into FAIR, contract-defined semantic knowledge graphs.
 `iladub = a thin epistemic core + etkl (the K-transform) + dec (decidability)`, aligned
 to the W3C Holon CG substrate (HGA).
 
