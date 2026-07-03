@@ -287,6 +287,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../manifesto/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    There is no unstructured data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../story/" class="md-nav__link">
         
   
@@ -399,6 +426,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#every-document-is-already-structured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Every document is already structured
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#the-inversion" class="md-nav__link">
@@ -580,10 +618,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -601,8 +639,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -729,6 +767,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#every-document-is-already-structured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Every document is already structured
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-inversion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -795,6 +844,31 @@
 <h1 id="the-etkl-method">The ET(K)L method<a class="headerlink" href="#the-etkl-method" title="Permanent link">&para;</a></h1>
 <p><strong>ET(K)L</strong> = Extract, Transform-with-<strong>(K)</strong>nowledge, Load. Knowledge engineering is
 the <em>first</em> milestone of the pipeline, not the last.</p>
+<blockquote>
+<p>ET(K)L treats <strong>every source as a fully-structured document whose structure is
+addressed to a human</strong>. Compilation does not <em>add</em> structure to "unstructured" data —
+it <strong>recovers</strong> the author's structure, makes it explicit, and <strong>carries</strong> it into a
+machine-addressed, modality-native form without losing intent or context. The knowledge
+module is the interpreter's competence supplied as an argument; the contract declares the
+target semantics; <a href="../assertion-proposition/">assert-vs-propose</a> keeps recovery honest.
+See <a href="../manifesto/">the manifesto</a>.</p>
+</blockquote>
+<h2 id="every-document-is-already-structured">Every document is already structured<a class="headerlink" href="#every-document-is-already-structured" title="Permanent link">&para;</a></h2>
+<p>There is no unstructured data — only <strong>human-addressed structure</strong> with a <strong>latent
+schema</strong>. The failure of ordinary parsers (and of LLM pipelines built the same way) is a
+mindset that cannot tell a <strong>tabular report</strong> from an <strong>array with headers</strong>: it reads a
+document as text, then tokens, discarding the intent and context the author encoded for a
+human reader. ET(K)L rebalances this by fixing what each stage <em>means</em>:</p>
+<ul>
+<li><strong>Extract</strong> is not tokenising — it is <strong>recovering the author's structure</strong> (reading as
+  intended). This is only possible with an interpreter, which is why <strong>K</strong> is required to
+  read at all.</li>
+<li><strong>Transform</strong> translates that recovered, human-addressed structure into a
+  machine-addressed one — a <strong>holon graph</strong>, governed by the contract.</li>
+<li><strong>Load</strong> targets whatever <strong>modality-native</strong> store fits the object (graph, text,
+  time-series, vector, image, blob) — never a relational table <em>by default</em>. Flattening
+  the target back into rows is the same reduction as tokenising the source: <strong>neolegacy</strong>.</li>
+</ul>
 <h2 id="the-inversion">The inversion<a class="headerlink" href="#the-inversion" title="Permanent link">&para;</a></h2>
 <p>Conventional ETL treats semantics as a downstream concern: extract raw data, transform
 with hand-written mappings, load, and <em>then</em> maybe align to an ontology.</p>
@@ -821,15 +895,15 @@ the contract, applied already at extraction) and as an argument (at transform).<
 </tr>
 <tr>
 <td><code>etkl:Extraction</code></td>
-<td>Knowledge-guided reading of a source — applies the contract while reading.</td>
+<td>Knowledge-guided reading of a source — <strong>recovers the author's human-addressed structure</strong>, applying the contract while reading.</td>
 </tr>
 <tr>
 <td><code>etkl:Transformation</code></td>
-<td>Takes a knowledge module as an argument (<code>etkl:hasKnowledgeArgument</code>).</td>
+<td>Takes a knowledge module as an argument (<code>etkl:hasKnowledgeArgument</code>); translates human-addressed structure into a machine-addressed holon graph.</td>
 </tr>
 <tr>
 <td><code>etkl:Load</code></td>
-<td>Loads the contract-validated output graph.</td>
+<td>Loads the contract-validated output into a <strong>modality-native</strong> store (holon graph by default) — never relational-by-default.</td>
 </tr>
 </tbody>
 </table>

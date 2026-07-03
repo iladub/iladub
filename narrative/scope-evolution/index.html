@@ -287,6 +287,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../manifesto/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    There is no unstructured data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../story/" class="md-nav__link">
         
   
@@ -652,10 +679,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -673,8 +700,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -954,8 +981,9 @@ as an assertion — and every grounded node is the product of an accountable pro
 <h3 id="1-etkl-the-document-compiler">1. <code>etkl</code> — the document compiler<a class="headerlink" href="#1-etkl-the-document-compiler" title="Permanent link">&para;</a></h3>
 <p><strong>Extract, Transform-with-(K)nowledge, Load.</strong> Traditional ETL maps fields <em>structurally</em>;
 <code>etkl</code> grounds <em>meaning</em> against a <strong>contract-as-ontology</strong>, with a knowledge module passed as
-an <em>argument</em> to the transform. Knowledge — not mappings — is the shape-change engine.
-Structured or unstructured input → a grounded artifact conformed to a destination contract.</p>
+an <em>argument</em> to the transform. Knowledge — not mappings — is the shape-change engine. Any
+<strong>human-addressed document, in any format</strong> → a grounded artifact conformed to a destination
+contract. (There is no "unstructured" input — only <a href="../../manifesto/">structure addressed to a human</a>.)</p>
 <h3 id="2-decidability-the-context-graph">2. Decidability — the context graph<a class="headerlink" href="#2-decidability-the-context-graph" title="Permanent link">&para;</a></h3>
 <p><code>dec</code> added the decisions that <em>change state</em> — both decisions found in document <strong>content</strong>
 and the compiler's own <strong>promotion</strong> decisions — as accountable, traceable holons
@@ -1012,7 +1040,7 @@ are <strong>replaceable and composable</strong> — different examples can foreg
 (compartmentalization, escalation, risk-scoped projection, decision-traced state change,
 access-inheritance), and better ones may be introduced per facet.</p>
 <ul>
-<li><strong>Contract-conformance case (the compiler).</strong> An unstructured document compiled to a grounded,
+<li><strong>Contract-conformance case (the compiler).</strong> A human-addressed document compiled to a grounded,
   contract-conformed holon (e.g. clinical text → a standards-conformed clinical resource). Proves
   <code>etkl</code>: grounding + conformance. Still largely a <em>static</em> holon — a well-shaped record.</li>
 <li><strong>The transplant case (the active, governed holon).</strong> A case holon whose state changes
@@ -1027,9 +1055,10 @@ primitive. A single semaphore need not represent every facet; a family of them c
 <hr />
 <h2 id="one-paragraph-restatement">One-paragraph restatement<a class="headerlink" href="#one-paragraph-restatement" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p>iladub began as <strong><code>etkl</code></strong> — a knowledge-driven document compiler that grounds structured or
-unstructured content against a contract-as-ontology (knowledge, not mappings, as the shape-change
-engine), under one invariant: assert only what you can ground, propose the rest, and never let a
+<p>iladub began as <strong><code>etkl</code></strong> — a knowledge-driven document compiler that treats every source as a
+fully-structured, human-addressed document and grounds it against a contract-as-ontology
+(knowledge, not mappings, as the shape-change engine), under one invariant: assert only what you
+can ground, propose the rest, and never let a
 proposition pass as an assertion. It then absorbed <strong>decidability</strong> (<code>dec</code>): the decisions that
 change state — in document <em>content</em> and in the compiler's own promotions — became accountable,
 traceable holons. The pivot was recognizing that what <code>etkl</code> produces and governs are
