@@ -33,15 +33,26 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
+# Internal material under docs/ — NEVER build into the published site.
+# (mkdocs >=1.5 excludes these from the build entirely, not just the nav.)
+# Confidential work (decision notes, benchmarks) lives OUTSIDE docs/ in a
+# gitignored internal/ directory, so it can never reach the repo or the site.
+exclude_docs: |
+  superpowers/
+  w3id/
+
 nav:
   - Home: index.md
   - Why iladub: story.md
+  - Scope & vision: narrative/scope-evolution.md
   - The ET(K)L method: etkl.md
   - Architecture: architecture.md
   - Holonic interaction: holonic-interaction.md
   - dec — decision context: dec.md
   - Assertions & propositions: assertion-proposition.md
-  - Use case — clinical → FHIR: use-case-fhir.md
+  - Use cases:
+      - Clinical → FHIR: use-case-fhir.md
+      - Transplant — M4 acceptance: use-case-transplant-m4.md
   - Naming: naming.md
 
 markdown_extensions:
