@@ -47,8 +47,8 @@ competence the author assumed. So iladub:
 2. **Formalises before it migrates.** It makes the document's *own* structure explicit as a
    first-class artifact *before* translating it toward any machine target.
 3. **Carries, it does not destroy.** It translates human-addressed structure into a
-   **machine-addressed, modality-native** form — a **holon graph**, never a row-by-default —
-   losing neither intent nor context.
+   **machine-addressed, [modality-native](modality-native-targets.md)** form — a **holon
+   graph**, never a row-by-default — losing neither intent nor context.
 4. **Stays honest.** It asserts only what it can ground, proposes everything else, and never
    lets a proposition pass as an assertion.
 
