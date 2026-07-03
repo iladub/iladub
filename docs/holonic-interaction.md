@@ -33,19 +33,29 @@ iladub compiles a document by letting a **raw document holon** interact with
 **semantic holons** (the provided ontologies and terminologies) through a governed
 **portal**, producing a **clean document holon** whose interior is the grounded graph.
 
-```
-   RawDocumentHolon ───────────[ GroundingPortal ]───────────▶ CleanDocumentHolon
-   (the source doc)         (bidirectional, liminal —            (the compiled output)
-        │                    itself a holon: the                        ▲
-        │ interior: the       "semantic interaction")                   │ interior: grounded graph
-        │ Document Region          │     ▲                              │   + the promotion decisions
-        │ Graph (prose,            │     │ candidate groundings         │ boundary: the contract's
-        │ tables, figures,         ▼     │ proposed back                 │   SHACL shapes (the membrane)
-        │ provenance-to-page)  ┌────────────────────┐                   │ context: provenance-to-region
-        ▼                      │   SemanticHolons   │                   │ projection: the FAIR graph
-   projection: surface ──────▶ │  ontologies + SKOS │                     machines consume
-   concepts / mentions         │  (grounding source)│
-                               └────────────────────┘
+```mermaid
+flowchart LR
+  subgraph RAW["RawDocumentHolon (source)"]
+    DRG["interior:<br/>Document Region Graph<br/>prose · tables · figures · provenance"]
+  end
+
+  subgraph SEM["SemanticHolons"]
+    ONT["ontologies + SKOS<br/>grounding source"]
+  end
+
+  PORTAL(["GroundingPortal — liminal holon<br/>concept-matching · convergence on shared IRIs"])
+
+  DRG -->|"surface concepts / mentions"| PORTAL
+  ONT -.->|"available concepts"| PORTAL
+  PORTAL -.->|"candidate groundings proposed back"| DRG
+  PORTAL ==>|"PromotionDecision<br/>governed membrane-crossing"| MEM
+
+  subgraph CLEAN["CleanDocumentHolon (compiled output)"]
+    MEM{{"boundary:<br/>contract SHACL shapes (the membrane)"}}
+    MEM -->|"crossed ✔ — assertion"| INT["interior:<br/>grounded graph + promotion decisions"]
+    MEM -.->|"held at the membrane"| CAND["CandidateConcept<br/>(proposition)"]
+    INT --> PROJ["projection:<br/>the FAIR graph machines consume"]
+  end
 ```
 
 In one sentence:
