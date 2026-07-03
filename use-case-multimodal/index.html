@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://iladub.dev/use-case-transplant-m4/">
+        <link rel="canonical" href="https://iladub.dev/use-case-multimodal/">
       
       
-        <link rel="prev" href="../use-case-multimodal/">
+        <link rel="prev" href="../use-case-fhir/">
       
       
-        <link rel="next" href="../naming/">
+        <link rel="next" href="../use-case-transplant-m4/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Transplant — M4 acceptance - iladub</title>
+        <title>One document, many stores - iladub</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#reference-use-case-transplant-m4-offer-acceptance" class="md-skip">
+        <a href="#use-case-one-document-many-modality-native-targets" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Transplant — M4 acceptance
+              One document, many stores
             
           </span>
         </div>
@@ -609,34 +609,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../use-case-multimodal/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    One document, many stores
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -656,7 +628,7 @@
   <span class="md-ellipsis">
     
   
-    Transplant — M4 acceptance
+    One document, many stores
   
 
     
@@ -674,7 +646,7 @@
   <span class="md-ellipsis">
     
   
-    Transplant — M4 acceptance
+    One document, many stores
   
 
     
@@ -700,10 +672,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-m4-pipeline-sp1" class="md-nav__link">
+  <a href="#the-source" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The M4 pipeline (SP1)
+        The source
       
     </span>
   </a>
@@ -711,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-timeline-around-the-decision-sp2" class="md-nav__link">
+  <a href="#compile-one-holon-many-targets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The timeline around the decision (SP2)
+        Compile → one holon, many targets
       
     </span>
   </a>
@@ -722,10 +694,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-reality-perturbs-the-plan-sp3a" class="md-nav__link">
+  <a href="#what-the-graph-holds-illustrative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When reality perturbs the plan (SP3a)
+        What the graph holds (illustrative)
       
     </span>
   </a>
@@ -733,21 +705,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#closing-the-loop-sp3b" class="md-nav__link">
+  <a href="#the-payoff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Closing the loop (SP3b)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#targeted-capture-sp3c" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Targeted capture (SP3c)
+        The payoff
       
     </span>
   </a>
@@ -758,6 +719,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-case-transplant-m4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transplant — M4 acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -824,10 +813,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-m4-pipeline-sp1" class="md-nav__link">
+  <a href="#the-source" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The M4 pipeline (SP1)
+        The source
       
     </span>
   </a>
@@ -835,10 +824,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-timeline-around-the-decision-sp2" class="md-nav__link">
+  <a href="#compile-one-holon-many-targets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The timeline around the decision (SP2)
+        Compile → one holon, many targets
       
     </span>
   </a>
@@ -846,10 +835,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-reality-perturbs-the-plan-sp3a" class="md-nav__link">
+  <a href="#what-the-graph-holds-illustrative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When reality perturbs the plan (SP3a)
+        What the graph holds (illustrative)
       
     </span>
   </a>
@@ -857,21 +846,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#closing-the-loop-sp3b" class="md-nav__link">
+  <a href="#the-payoff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Closing the loop (SP3b)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#targeted-capture-sp3c" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Targeted capture (SP3c)
+        The payoff
       
     </span>
   </a>
@@ -898,80 +876,129 @@
   
 
 
-<h1 id="reference-use-case-transplant-m4-offer-acceptance">Reference use case — Transplant M4 (Offer → Acceptance)<a class="headerlink" href="#reference-use-case-transplant-m4-offer-acceptance" title="Permanent link">&para;</a></h1>
-<h2 id="the-m4-pipeline-sp1">The M4 pipeline (SP1)<a class="headerlink" href="#the-m4-pipeline-sp1" title="Permanent link">&para;</a></h2>
-<p>A time-critical crash test: compile a raw, synthetic heart-offer document into the
-SHACL-validated, provenanced context the accept/decline decision (milestone M4) requires —
-then record the decision as a <code>dec:DecisionHolon</code> with its rejected option.</p>
-<p>The trust gradient: deterministic build-time RDF→BAML type generation → controlled,
-schema-constrained multi-agent LLM extraction → deterministic grounding (assert/propose) →
-deterministic SHACL validation → deterministic decision on clean concepts.</p>
-<p>Run the offline demo: <code>python -m pytest tests/test_m4_pipeline.py -v</code>.
-Run it live (calls Anthropic): <code>BAML_LIVE=1 iladub m4 examples/transplant/offer.txt</code>.</p>
+<h1 id="use-case-one-document-many-modality-native-targets">Use case — one document, many modality-native targets<a class="headerlink" href="#use-case-one-document-many-modality-native-targets" title="Permanent link">&para;</a></h1>
+<p>One clinical encounter note. Not one table extracted into one spreadsheet — <strong>one document
+compiled into a holon graph that addresses several modality-native stores</strong>, each holding the
+part of the document it can hold faithfully. This is <a href="../manifesto/">the manifesto's</a> Load half
+made concrete: the object's modality chooses the store; the graph is the integration layer.</p>
+<h2 id="the-source">The source<a class="headerlink" href="#the-source" title="Permanent link">&para;</a></h2>
+<p>A synthetic nephrology follow-up note (a PDF) containing:</p>
+<ul>
+<li><strong>prose</strong> — history, assessment, and plan;</li>
+<li>a <strong>serial-labs table</strong> — creatinine, eGFR, potassium across several dates;</li>
+<li>a <strong>medication table</strong> — a genuinely rectangular administration record;</li>
+<li>a <strong>figure</strong> — a renal ultrasound image with a caption;</li>
+<li>and the <strong>file itself</strong> — the source PDF.</li>
+</ul>
+<p>Ordinary extraction would pick one of these (usually the labs table), flatten it to rows, and
+lose the rest. iladub recovers the document's own human-addressed structure and routes each
+object to a store that speaks its modality.</p>
+<h2 id="compile-one-holon-many-targets">Compile → one holon, many targets<a class="headerlink" href="#compile-one-holon-many-targets" title="Permanent link">&para;</a></h2>
+<p>Compilation grounds the document against a <a href="../etkl/">semantic contract</a> into a <strong>holon graph</strong>
+(the canonical output), then loads each object into its
+<a href="../modality-native-targets/">modality-native store</a> — every satellite <strong>addressed from the
+graph by IRI</strong>, with <strong>provenance to the source page</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Object in the document</th>
+<th>Modality</th>
+<th>Target store kind</th>
+<th>Addressed from the graph as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Patient, conditions, meds, findings (grounded, typed)</td>
+<td>graph / semantic</td>
+<td>RDF triplestore (the holon)</td>
+<td>the holon itself — identity + grounding</td>
+</tr>
+<tr>
+<td>History / assessment / plan narrative</td>
+<td>document / text</td>
+<td>full-text search store</td>
+<td><code>ex:note-text</code></td>
+</tr>
+<tr>
+<td>Creatinine · eGFR · potassium over dates</td>
+<td>time series</td>
+<td>time-series database</td>
+<td><code>ex:creatinineSeries</code></td>
+</tr>
+<tr>
+<td>Medication administration record (rectangular)</td>
+<td>tabular</td>
+<td>relational / columnar</td>
+<td><code>ex:medAdminTable</code></td>
+</tr>
+<tr>
+<td>Renal ultrasound image + caption</td>
+<td>image / media</td>
+<td>object storage + media service</td>
+<td><code>ex:figure-renalUS</code></td>
+</tr>
+<tr>
+<td>The source PDF</td>
+<td>blob</td>
+<td>object storage</td>
+<td><code>ex:sourceDoc</code></td>
+</tr>
+<tr>
+<td>Embedding of each narrative region</td>
+<td>vector</td>
+<td>vector index</td>
+<td><code>ex:note-text</code> → nearest-neighbour handle</td>
+</tr>
+</tbody>
+</table>
+<p>The graph does not <em>store</em> the pixels, the series, or the PDF — it <strong>names</strong> them, records what
+they mean, who asserted them, and the page they came from.</p>
+<p><em>(Illustrative example. Any SNOMED CT / LOINC identifiers shown are for illustration only —
+confirm terminology licensing before redistributing real mappings, and keep example documents
+synthetic.)</em></p>
+<h2 id="what-the-graph-holds-illustrative">What the graph holds (illustrative)<a class="headerlink" href="#what-the-graph-holds-illustrative" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">@prefix</span><span class="w"> </span><span class="nn">ex:</span><span class="w">   </span><span class="nv">&lt;https://example.org/ns#&gt;</span><span class="w"> </span><span class="p">.</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">@prefix</span><span class="w"> </span><span class="nn">prov:</span><span class="w"> </span><span class="nv">&lt;http://www.w3.org/ns/prov#&gt;</span><span class="w"> </span><span class="p">.</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">@prefix</span><span class="w"> </span><span class="nn">dcat:</span><span class="w"> </span><span class="nv">&lt;http://www.w3.org/ns/dcat#&gt;</span><span class="w"> </span><span class="p">.</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nn">ex</span><span class="p">:</span><span class="nt">encounter-2026-06-01</span> <span class="kt">a</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">ClinicalEncounter</span> <span class="p">;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">subject</span>          <span class="nn">ex</span><span class="p">:</span><span class="nt">patient-anon-01</span> <span class="p">;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">hasNarrative</span>     <span class="nn">ex</span><span class="p">:</span><span class="nt">note-text</span> <span class="p">;</span>          <span class="c"># → search store</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">hasObservation</span>   <span class="nn">ex</span><span class="p">:</span><span class="nt">creatinineSeries</span> <span class="p">;</span>   <span class="c"># → time-series store</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">hasMedRecord</span>     <span class="nn">ex</span><span class="p">:</span><span class="nt">medAdminTable</span> <span class="p">;</span>       <span class="c"># → relational store</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">depicts</span>          <span class="nn">ex</span><span class="p">:</span><span class="nt">figure-renalUS</span> <span class="p">;</span>      <span class="c"># → object storage + media</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nn">prov</span><span class="p">:</span><span class="nt">wasDerivedFrom</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">sourceDoc</span> <span class="p">.</span>           <span class="c"># → object storage (blob)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nn">ex</span><span class="p">:</span><span class="nt">creatinineSeries</span> <span class="kt">a</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">TimeSeries</span> <span class="p">;</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="nn">ex</span><span class="p">:</span><span class="nt">loinc</span>            <span class="s">&quot;2160-0&quot;</span> <span class="p">;</span>               <span class="c"># illustrative</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="nn">dcat</span><span class="p">:</span><span class="nt">accessURL</span>      <span class="nv">&lt;tsdb://renal/creatinine/anon-01&gt;</span> <span class="p">;</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="nn">prov</span><span class="p">:</span><span class="nt">wasDerivedFrom</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">region-p2-table1</span> <span class="p">.</span>    <span class="c"># provenance: page 2, table 1</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="nn">ex</span><span class="p">:</span><span class="nt">figure-renalUS</span> <span class="kt">a</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">MediaObject</span> <span class="p">;</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="nn">dcat</span><span class="p">:</span><span class="nt">accessURL</span>      <span class="nv">&lt;s3://media/anon-01/renalUS.png&gt;</span> <span class="p">;</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="nn">prov</span><span class="p">:</span><span class="nt">wasDerivedFrom</span> <span class="nn">ex</span><span class="p">:</span><span class="nt">region-p3-fig1</span> <span class="p">.</span>      <span class="c"># provenance: page 3, figure 1</span>
+</code></pre></div>
+<p>Each satellite carries a <code>dcat:accessURL</code> to its modality-native store and <code>prov:wasDerivedFrom</code>
+back to the exact region of the source. <strong>The identifiers are the integration.</strong></p>
+<h2 id="the-payoff">The payoff<a class="headerlink" href="#the-payoff" title="Permanent link">&para;</a></h2>
+<p>A single traversal that starts at <code>ex:patient-anon-01</code> can reach:</p>
+<ul>
+<li>the <strong>grounded facts</strong> (in the graph),</li>
+<li>the <strong>narrative</strong> (a search store) — <em>"what did the clinician actually say?"</em>,</li>
+<li>the <strong>creatinine trend</strong> (a time-series store) — <em>"is renal function worsening?"</em>,</li>
+<li>the <strong>ultrasound image</strong> (object storage) — <em>"show me the finding"</em>,</li>
+<li>and <strong>similar notes</strong> (a vector index) — <em>"find comparable cases"</em>,</li>
+</ul>
+<p>…each answered by the store that speaks that modality, all tied together by the graph, none of
+it flattened — and <strong>portable</strong>, because the canonical form is open (RDF / JSON-LD / SHACL /
+PROV-O). No engine is load-bearing; swap any satellite and the holon still holds.</p>
 <blockquote>
-<p>Synthetic data only. Clinical codes are illustrative; confirm terminology licensing
-before any real use. This is a demonstrator, not medical guidance.</p>
+<p>One document did not become one table. It became a <strong>holon that knows where every part of
+itself lives, what it means, and where it came from.</strong></p>
 </blockquote>
-<h2 id="the-timeline-around-the-decision-sp2">The timeline around the decision (SP2)<a class="headerlink" href="#the-timeline-around-the-decision-sp2" title="Permanent link">&para;</a></h2>
-<p>M4 is one milestone in a known supply chain. The <strong>timeline engine</strong> (<code>iladub.timeline</code>)
-drives that chain from a declarative <code>dec:Process</code> of <code>dec:Milestone</code>s: it tracks where we
-are (a cursor), checks whether each milestone's required context is <strong>ready</strong>, runs the
-<strong>forward pass</strong> (what the <em>next</em> milestone needs that isn't captured yet — anti-crisis
-anticipation), and computes <strong>clock feasibility</strong> via Allen's interval algebra
-(<code>iladub.allen</code>) — does transport finish before the cold-ischemia window closes?</p>
-<p>The engine is domain-agnostic: the same code drives <code>heart-timeline.ttl</code> (≈240-min window)
-and <code>kidney-timeline.ttl</code> (≈1800-min window) — distinct supply chains within one domain.
-Swap the TimelineContract, get a new chain; no engine change.</p>
-<blockquote>
-<p>Deterministic — no LLM. Event-driven reopening (<code>dec:revisitIf</code>) and live wiring of the
-forward pass to the extraction funnel are the next slice (SP3).</p>
-</blockquote>
-<h2 id="when-reality-perturbs-the-plan-sp3a">When reality perturbs the plan (SP3a)<a class="headerlink" href="#when-reality-perturbs-the-plan-sp3a" title="Permanent link">&para;</a></h2>
-<p>The timeline anticipates (SP2); SP3a reacts. An <strong>event</strong> (<code>iladub.events.Event</code> — a named
-<code>condition</code> + payload) is matched against a decision's declared <code>dec:revisitIf</code> keys. If it
-fires, <code>iladub.reopen.reopen</code> <strong>re-evaluates</strong> the decision with the event payload and emits a
-new <code>dec:DecisionHolon</code> that <code>dec:supersedes</code> the prior one and is <code>dec:triggeredBy</code> the event.
-The prior decision is preserved — an accountable audit trail.</p>
-<p>Worked example: M4 <em>accepts</em> a heart (projected ischemia 95 min). A transport-delay event
-<code>Event("ischemiaExceeded", {"projected_ischemia_minutes": 270})</code> reopens the decision, which
-now <em>declines</em> (270 &gt; 240-min window) — superseding the acceptance, with the triggering event
-recorded and both decisions retained.</p>
-<blockquote>
-<p>Deterministic — no LLM. Reopening is at the decision level; rewinding the timeline cursor and
-wiring the forward pass to the extraction funnel remain the next slice (SP3b).</p>
-</blockquote>
-<h2 id="closing-the-loop-sp3b">Closing the loop (SP3b)<a class="headerlink" href="#closing-the-loop-sp3b" title="Permanent link">&para;</a></h2>
-<p>The timeline now both anticipates and acts on its anticipation. <code>iladub.loop.advance_with_capture</code>
-readies the current milestone by <strong>driving capture</strong>: when the milestone is missing required
-context, it runs a supplied <code>capture_fn</code>, merges the grounded result into the context, re-checks
-<code>readiness</code>, and advances the cursor — then reports the <strong>forward look</strong> (what the next milestone
-still needs). For the transplant case, <code>iladub.m4.capture_context</code> is that <code>capture_fn</code>: it runs
-the SP1 funnel (<code>extract_offer</code> → <code>to_rdf</code>) over an incoming document.</p>
-<p>Worked example: the cursor sits at M4 with an empty context. A donor offer arrives;
-<code>advance_with_capture</code> runs the funnel, grounds <code>tx:organ</code>/<code>tx:aboGroup</code>, M4 becomes ready, and
-the cursor advances to M5 — whose remaining need (<code>tx:recipientReady</code>, absent from the offer) is
-flagged for the next capture from a different source. Capture is <em>anticipated</em> — driven by what
-the timeline knows the next decision will require.</p>
-<blockquote>
-<p>The loop is deterministic; the LLM is confined to <code>capture_fn</code> (the SP1 funnel), monkeypatched
-offline and exercised live behind <code>BAML_LIVE=1</code>. This completes the compile → anticipate →
-react → drive-capture arc (SP1 → SP2 → SP3a → SP3b).</p>
-</blockquote>
-<h2 id="targeted-capture-sp3c">Targeted capture (SP3c)<a class="headerlink" href="#targeted-capture-sp3c" title="Permanent link">&para;</a></h2>
-<p>SP3b drove capture by running the whole offer funnel. SP3c makes the funnel <strong>contract-generic</strong>:
-each milestone's required-context contract declares its own extractor (<code>iladub:extractor</code>), and
-<code>iladub.bridge.generate_context_baml</code> emits — at build time — a BAML class + function for exactly
-that contract's fields. <code>iladub.m4.capture_for_milestone</code> reads the declaration, runs the
-milestone's extractor, and grounds it via <code>iladub.to_rdf.ground_typed</code> (a field with an
-<code>etkl:admissibleScheme</code> must ground; otherwise it is a free literal).</p>
-<p>Worked example: the cursor reaches M5, which needs <code>tx:recipientReady</code>. A recipient-status report
-arrives; the loop runs <strong>only</strong> <code>ExtractRecipientContext</code> (not the organ/ABO agents), grounds
-<code>tx:recipientReady</code>, and advances to M6. Extraction is now driven by what <em>this</em> milestone needs.</p>
-<blockquote>
-<p>Build-time-faithful: the per-milestone extractor is generated, committed, and sync-tested before
-any document is compiled. M4 still uses the SP1 offer funnel; generating extractors for every
-milestone (and retiring the fixed agents) is the natural next step.</p>
-</blockquote>
+<p>See also: <a href="../manifesto/">the manifesto</a> · <a href="../modality-native-targets/">modality-native targets</a>
+· <a href="../architecture/">architecture</a>.</p>
 
 
 
