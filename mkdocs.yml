@@ -54,6 +54,7 @@ nav:
   - Assertions & propositions: assertion-proposition.md
   - Use cases:
       - Clinical → FHIR: use-case-fhir.md
+      - One document, many stores: use-case-multimodal.md
       - Transplant — M4 acceptance: use-case-transplant-m4.md
   - Naming: naming.md
 
