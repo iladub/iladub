@@ -8,9 +8,12 @@
 
 **iladub** (𒅍𒁾 · Sumerian *íl* "to lift, to carry, to bring forward" + *dub* "clay
 tablet, document") compiles unstructured human documents into FAIR, contract-defined
-semantic knowledge graphs. It is the reference implementation of the **ET(K)L** method
-(*Extract, Transform-with-(K)nowledge, Load*), whose persistent namespace is
-[`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
+semantic knowledge graphs — and, increasingly, into **active, governed holons**:
+knowledge units that carry their own boundary, interact with their context, and change
+state only through accountable decisions. It is the reference implementation of the
+**ET(K)L** method (*Extract, Transform-with-(K)nowledge, Load*), whose persistent
+namespace is [`https://w3id.org/iladub/etkl`](https://w3id.org/iladub/etkl).
+[Where this is going →](narrative/scope-evolution.md)
 
 !!! note
     Early development — APIs are not yet stable.
@@ -34,14 +37,19 @@ that level, knowledge-first. [Read the full story →](story.md)
   decision**.
 - Carries **provenance to the page** and converges table, prose, and figure mentions onto
   the **same concept IRIs**.
+- Produces **active, governed holons**, not just static graphs — units whose boundary is
+  *both* a semantic membrane and an **access boundary**: every state change at the
+  interface is an accountable decision, and any agent inherits exactly the interacting
+  user's access.
 
 ## Explore
 
+- [Scope & vision](narrative/scope-evolution.md) — from a document compiler to interacting, governed holons.
 - [The ET(K)L method](etkl.md) — knowledge as the argument of the transform.
 - [Architecture](architecture.md) — the compile pipeline, end to end.
 - [Assertions & propositions](assertion-proposition.md) — the epistemic boundary.
 - [Holonic interaction](holonic-interaction.md) — holons, and how they interact.
-- [dec — decision context](dec.md) · [Use case: clinical → FHIR](use-case-fhir.md) · [Naming](naming.md)
+- [dec — decision context](dec.md) · [Clinical → FHIR](use-case-fhir.md) · [Transplant — M4](use-case-transplant-m4.md) · [Naming](naming.md)
 
 ## Installation
 

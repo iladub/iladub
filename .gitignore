@@ -35,3 +35,6 @@ htmlcov/
 .vscode/
 *.swp
 .DS_Store
+
+# Confidential / internal — never commit (client/domain specifics)
+internal/

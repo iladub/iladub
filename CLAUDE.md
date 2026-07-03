@@ -39,8 +39,10 @@ holon graph as the architecture *for* its work and **consumes HGA as the externa
   `iladub.dev` are unaffected by the namespace re-rooting: namespace ≠ package.)*
 
 **Migration status:** The re-rooting from the previous `…/etkl/*` layout was completed
-2026-07-01. The old IRIs will 301-redirect to the new roots once the w3id PR merges (see
-the migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migration.md`).
+2026-07-01, and the w3id redirects are **live** (PR #6281, merged; verified 2026-07-02):
+`w3id.org/iladub{,/etkl,/dec,/risk}` content-negotiate to the canonical `vocab/ontology/*.ttl`
+on `main`, HTML → `iladub.dev`, and old `…/etkl` 301-redirects into the new roots. (See the
+migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migration.md`.)
 
 ## Licensing (non-negotiable, applies everywhere)
 
@@ -212,10 +214,11 @@ muddied authorship provenance.)
 ## Open items (verify; do not assert as done)
 
 - [x] Register w3id.org redirects for the old `…/etkl/*` namespace tree (done 2026-06-02,
-      w3id PR #6144, merged by dgarijo; content negotiation verified). The 2026-07-01
-      re-rooting to `https://w3id.org/iladub` requires a new w3id PR — pending.
-- [ ] Open a new w3id PR to add `iladub` redirect rules (core, etkl, dec, risk) pointing
-      at the canonical `.ttl` files on `main` / `iladub.dev` (follow same pattern as PR #6144).
+      w3id PR #6144, merged by dgarijo; content negotiation verified).
+- [x] Open a new w3id PR to add `iladub` redirect rules (core, etkl, dec, risk) for the
+      2026-07-01 re-rooting. **Done: w3id PR #6281 merged; verified 2026-07-02** —
+      `w3id.org/iladub{,/etkl,/dec,/risk}` content-negotiate to the canonical
+      `vocab/ontology/*.ttl` on `main`, HTML → `iladub.dev`, old `…/etkl` 301s into the new roots.
 - [x] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
       to the "íl + dub" transliteration.
       (Verified 2026-06-03: `𒅍` = U+1214D "CUNEIFORM SIGN IL2" = *íl/il₂*, "to carry,"
