@@ -21,6 +21,36 @@ ACQUIRE → compile to a Document Region Graph (DRG) → contract-driven semanti
 compilation (narrative / table / figure parsers) → convergence on shared concept IRIs
 → SHACL validation → FAIR semantic graph (typed resources + dec decisions + provenance)
 
+```mermaid
+flowchart TB
+  SRC["Source document<br/>(any format)"] -->|"Acquire (E) · + provenance"| DRG
+
+  subgraph DRG["Document Region Graph — structure-preserving"]
+    direction LR
+    N["Narrative"]
+    T["Table"]
+    F["Figure"]
+    O["Heading · List · Caption · KeyValue"]
+  end
+
+  K[["Semantic contract<br/>+ knowledge module (K)"]]
+
+  DRG -->|"narrative · table · figure parsers"| COMP["Contract-driven compilation T(K)<br/>recover author's structure → typed objects"]
+  K -.->|"argument · knowledge-first"| COMP
+
+  COMP --> CONV["Convergence<br/>table cell · prose · figure → same concept IRIs"]
+  CONV --> VAL{"SHACL validation<br/>against the contract"}
+  VAL -->|"grounds ✔ — assertion"| OUT["FAIR holon graph<br/>typed resources + dec decisions + provenance-to-page"]
+  VAL -.->|"ungroundable"| PROP["CandidateConcept<br/>(proposition · promotion decision)"]
+  OUT --> MN["modality-native targets<br/>graph · text · time-series · vector · image · blob"]
+```
+
+<figure markdown="span">
+  <figcaption>Knowledge enters first, as an argument. Each region is parsed with the right
+  tool, candidates converge on shared IRIs, and only what SHACL-conforms is asserted — the rest
+  is proposed, never faked. The output loads modality-native, never relational-by-default.</figcaption>
+</figure>
+
 - **Acquire (E):** fetch/scrape/upload; capture acquisition provenance.
 - **Document Region Graph:** each format → typed regions (`Narrative`, `Table`,
   `Figure`, `Heading`, `List`, `Caption`, `KeyValue`) preserving structure, reading
