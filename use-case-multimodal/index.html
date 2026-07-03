@@ -894,6 +894,36 @@ made concrete: the object's modality chooses the store; the graph is the integra
 lose the rest. iladub recovers the document's own human-addressed structure and routes each
 object to a store that speaks its modality.</p>
 <h2 id="compile-one-holon-many-targets">Compile → one holon, many targets<a class="headerlink" href="#compile-one-holon-many-targets" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  subgraph SRC["One source document (PDF)"]
+    direction TB
+    P["Prose&lt;br/&gt;history · assessment · plan"]
+    L["Serial-labs table"]
+    M["Medication table"]
+    F["Ultrasound figure"]
+    B["The file itself"]
+  end
+
+  SRC ==&gt;|"ET(K)L: recover + ground"| H(("Holon graph&lt;br/&gt;identity · grounding · provenance"))
+
+  H --&gt;|ex:hasNarrative| T["Full-text search&lt;br/&gt;&lt;code&gt;ex:note-text&lt;/code&gt;"]
+  H --&gt;|ex:hasObservation| TS["Time-series DB&lt;br/&gt;&lt;code&gt;ex:creatinineSeries&lt;/code&gt;"]
+  H --&gt;|ex:hasMedRecord| R["Relational / columnar&lt;br/&gt;&lt;code&gt;ex:medAdminTable&lt;/code&gt;"]
+  H --&gt;|ex:depicts| O["Object storage + media&lt;br/&gt;&lt;code&gt;ex:figure-renalUS&lt;/code&gt;"]
+  H --&gt;|prov:wasDerivedFrom| BL["Object storage / blob&lt;br/&gt;&lt;code&gt;ex:sourceDoc&lt;/code&gt;"]
+  H --&gt;|embedding| V["Vector index&lt;br/&gt;&lt;code&gt;ex:note-text&lt;/code&gt; ~ NN"]
+
+  P -.-&gt; T
+  L -.-&gt; TS
+  M -.-&gt; R
+  F -.-&gt; O
+  B -.-&gt; BL</code></pre>
+<figure markdown="span">
+  <figcaption>One document → one holon → many modality-native stores. Solid edges are the
+  graph's IRI references (each with provenance to page); dotted edges show which source region
+  feeds which store. The holon is the integration layer; nothing is flattened.</figcaption>
+</figure>
+
 <p>Compilation grounds the document against a <a href="../etkl/">semantic contract</a> into a <strong>holon graph</strong>
 (the canonical output), then loads each object into its
 <a href="../modality-native-targets/">modality-native store</a> — every satellite <strong>addressed from the
