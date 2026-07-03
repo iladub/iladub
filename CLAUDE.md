@@ -6,8 +6,9 @@ It records decisions that are settled and should not be re-litigated without cau
 ## What iladub is
 
 **iladub** — Sumerian *íl* ("to lift, carry, deliver, bring forward") + *dub*
-("clay tablet, document") = "the document-carrier." It compiles unstructured human
-documents into FAIR, contract-defined semantic knowledge graphs that machines can read.
+("clay tablet, document") = "the document-carrier." It compiles **human-addressed
+documents** (any format) into FAIR, contract-defined semantic knowledge graphs that
+machines can read.
 
 It is the document-compiling front end of the **ET(K)L** method
 (*Extract, Transform-with-(K)nowledge, Load*), whose persistent namespace is
@@ -28,7 +29,7 @@ holon graph as the architecture *for* its work and **consumes HGA as the externa
 - **etkl** — the narrow-scope **K-transform**: raw document → grounded holon, conformed to a
   destination holon's required schema (the contract). Includes the doc-holon fabric
   (Raw/Clean/Semantic/GroundingPortal/MembraneHealth). *Could* one day be an HGA contribution
-  (HGA defines holons; it doesn't build them from unstructured data) — not now.
+  (HGA defines holons; it doesn't build them from raw human-addressed documents) — not now.
 - **dec** — **decidability / decisionality**: `DecisionHolon`, escalation, events, timeline
   (and `risk`, contextual risk, as a decidability measure). An HGA extension, built now
   because HGA isn't ready for strict decidability yet; **deliberately portable** — designed to
@@ -53,6 +54,16 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
 - Author: François Rosselet. © 2026.
 
 ## Core design principles (do not violate)
+
+0. **There is no unstructured data.** Structure is interpreter-relative; a document
+   the industry calls "unstructured" is **human-addressed structure with a latent
+   schema** — complete relative to its intended (human) interpreter, not absent.
+   ET(K)L **recovers** the author's structure (it does not tokenise the source) and
+   **carries** it into a **machine-addressed, modality-native** form (it does not
+   flatten the target into rows). Using AI to produce SQL-ingestable rows by default is
+   *neolegacy* and is forbidden. Never write "unstructured" as if structure were
+   missing; the framing is **human-addressed vs machine-addressed structure**, in
+   filigran everywhere we state. See `docs/manifesto.md`.
 
 1. **Knowledge-first.** Knowledge engineering is the *first* milestone of the
    pipeline, not the last. A semantic data contract declares the target semantics,

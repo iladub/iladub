@@ -43,6 +43,7 @@ exclude_docs: |
 
 nav:
   - Home: index.md
+  - There is no unstructured data: manifesto.md
   - Why iladub: story.md
   - Scope & vision: narrative/scope-evolution.md
   - The ET(K)L method: etkl.md

@@ -1,15 +1,19 @@
 # Architecture
 
-iladub compiles human documents into FAIR, contract-defined semantic graphs.
-It does not extract tables into spreadsheets; it carries *meaning* forward.
+iladub compiles human-addressed documents into FAIR, contract-defined semantic graphs.
+It does not extract tables into spreadsheets; it **recovers** an existing, human-addressed
+structure and carries its *meaning* forward — never flattening it into tokens at the input
+or rows at the output. See [the manifesto](manifesto.md).
 
 ## Why not "just extract the tables"
 
-Extracting only tabular data lets the destination format (a spreadsheet) dictate what
-is captured, and discards the context around the table — which is often richer than
-the table itself. iladub inverts this: compile the *whole* document into a
-structure-preserving intermediate, then let a semantic contract decide what becomes a
-typed object, from wherever it lives — table cell, prose, or figure.
+A **tabular report** is a rhetorical act — its caption, units, chosen rows and columns,
+footnotes, and the story in the prose around it — not an **array with headers**. Extracting
+only the cells lets the destination format (a spreadsheet, a SQL table) dictate what is
+captured and discards that context — which is often richer than the table itself. iladub
+inverts this: compile the *whole* document into a structure-preserving intermediate, then let
+a semantic contract decide what becomes a typed object, from wherever it lives — table cell,
+prose, or figure — and load it into a **modality-native** store, never relational-by-default.
 
 ## Pipeline
 

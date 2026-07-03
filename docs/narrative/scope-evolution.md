@@ -24,8 +24,9 @@ That epistemic invariant *is* the thin `iladub:` core (`CandidateConcept`, `Grou
 
 **Extract, Transform-with-(K)nowledge, Load.** Traditional ETL maps fields *structurally*;
 `etkl` grounds *meaning* against a **contract-as-ontology**, with a knowledge module passed as
-an *argument* to the transform. Knowledge — not mappings — is the shape-change engine.
-Structured or unstructured input → a grounded artifact conformed to a destination contract.
+an *argument* to the transform. Knowledge — not mappings — is the shape-change engine. Any
+**human-addressed document, in any format** → a grounded artifact conformed to a destination
+contract. (There is no "unstructured" input — only [structure addressed to a human](../manifesto.md).)
 
 ### 2. Decidability — the context graph
 
@@ -93,7 +94,7 @@ are **replaceable and composable** — different examples can foreground differe
 (compartmentalization, escalation, risk-scoped projection, decision-traced state change,
 access-inheritance), and better ones may be introduced per facet.
 
-- **Contract-conformance case (the compiler).** An unstructured document compiled to a grounded,
+- **Contract-conformance case (the compiler).** A human-addressed document compiled to a grounded,
   contract-conformed holon (e.g. clinical text → a standards-conformed clinical resource). Proves
   `etkl`: grounding + conformance. Still largely a *static* holon — a well-shaped record.
 - **The transplant case (the active, governed holon).** A case holon whose state changes
@@ -110,9 +111,10 @@ primitive. A single semaphore need not represent every facet; a family of them c
 
 ## One-paragraph restatement
 
-> iladub began as **`etkl`** — a knowledge-driven document compiler that grounds structured or
-> unstructured content against a contract-as-ontology (knowledge, not mappings, as the shape-change
-> engine), under one invariant: assert only what you can ground, propose the rest, and never let a
+> iladub began as **`etkl`** — a knowledge-driven document compiler that treats every source as a
+> fully-structured, human-addressed document and grounds it against a contract-as-ontology
+> (knowledge, not mappings, as the shape-change engine), under one invariant: assert only what you
+> can ground, propose the rest, and never let a
 > proposition pass as an assertion. It then absorbed **decidability** (`dec`): the decisions that
 > change state — in document *content* and in the compiler's own promotions — became accountable,
 > traceable holons. The pivot was recognizing that what `etkl` produces and governs are
