@@ -1033,6 +1033,21 @@ as an assertion — and every grounded node is the product of an accountable pro
 <code>PromotionDecision</code>). <code>etkl</code>, <code>dec</code>, holons, and the storage substrate are all in service of it.</p>
 <hr />
 <h2 id="the-arc">The arc<a class="headerlink" href="#the-arc" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  subgraph CORE["invariant core · assert / propose · every grounded node ← a promotion decision"]
+    direction LR
+    E["1 · etkl&lt;br/&gt;document compiler&lt;br/&gt;recover + ground"]
+    DEC["2 · decidability (dec)&lt;br/&gt;context graph&lt;br/&gt;+ accountable decisions"]
+    HOL["3 · holon reframe&lt;br/&gt;record → interacting holon"]
+    SUB["4 · active substrate&lt;br/&gt;membrane enforced at runtime"]
+    E --&gt; DEC --&gt; HOL --&gt; SUB
+  end
+  SUB ==&gt; OUT(("active, governed holon&lt;br/&gt;semantic + access boundary"))</code></pre>
+<figure markdown="span">
+  <figcaption>Each phase adds a layer, on the same invariant core — and the output changes
+  category: from a static record to an active, governed holon.</figcaption>
+</figure>
+
 <h3 id="1-etkl-the-document-compiler">1. <code>etkl</code> — the document compiler<a class="headerlink" href="#1-etkl-the-document-compiler" title="Permanent link">&para;</a></h3>
 <p><strong>Extract, Transform-with-(K)nowledge, Load.</strong> Traditional ETL maps fields <em>structurally</em>;
 <code>etkl</code> grounds <em>meaning</em> against a <strong>contract-as-ontology</strong>, with a knowledge module passed as

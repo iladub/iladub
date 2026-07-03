@@ -1014,19 +1014,28 @@ expected." Interaction, not definition, is where the work happens.</p>
 <p>iladub compiles a document by letting a <strong>raw document holon</strong> interact with
 <strong>semantic holons</strong> (the provided ontologies and terminologies) through a governed
 <strong>portal</strong>, producing a <strong>clean document holon</strong> whose interior is the grounded graph.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>   RawDocumentHolon ───────────[ GroundingPortal ]───────────▶ CleanDocumentHolon
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   (the source doc)         (bidirectional, liminal —            (the compiled output)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        │                    itself a holon: the                        ▲
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        │ interior: the       &quot;semantic interaction&quot;)                   │ interior: grounded graph
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        │ Document Region          │     ▲                              │   + the promotion decisions
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        │ Graph (prose,            │     │ candidate groundings         │ boundary: the contract&#39;s
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        │ tables, figures,         ▼     │ proposed back                 │   SHACL shapes (the membrane)
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        │ provenance-to-page)  ┌────────────────────┐                   │ context: provenance-to-region
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        ▼                      │   SemanticHolons   │                   │ projection: the FAIR graph
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   projection: surface ──────▶ │  ontologies + SKOS │                     machines consume
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   concepts / mentions         │  (grounding source)│
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                               └────────────────────┘
-</code></pre></div>
+<pre class="mermaid"><code>flowchart LR
+  subgraph RAW["RawDocumentHolon (source)"]
+    DRG["interior:&lt;br/&gt;Document Region Graph&lt;br/&gt;prose · tables · figures · provenance"]
+  end
+
+  subgraph SEM["SemanticHolons"]
+    ONT["ontologies + SKOS&lt;br/&gt;grounding source"]
+  end
+
+  PORTAL(["GroundingPortal — liminal holon&lt;br/&gt;concept-matching · convergence on shared IRIs"])
+
+  DRG --&gt;|"surface concepts / mentions"| PORTAL
+  ONT -.-&gt;|"available concepts"| PORTAL
+  PORTAL -.-&gt;|"candidate groundings proposed back"| DRG
+  PORTAL ==&gt;|"PromotionDecision&lt;br/&gt;governed membrane-crossing"| MEM
+
+  subgraph CLEAN["CleanDocumentHolon (compiled output)"]
+    MEM{{"boundary:&lt;br/&gt;contract SHACL shapes (the membrane)"}}
+    MEM --&gt;|"crossed ✔ — assertion"| INT["interior:&lt;br/&gt;grounded graph + promotion decisions"]
+    MEM -.-&gt;|"held at the membrane"| CAND["CandidateConcept&lt;br/&gt;(proposition)"]
+    INT --&gt; PROJ["projection:&lt;br/&gt;the FAIR graph machines consume"]
+  end</code></pre>
 <p>In one sentence:</p>
 <blockquote>
 <p>A <strong>RawDocumentHolon</strong> and the <strong>SemanticHolons</strong> interact through a grounding
