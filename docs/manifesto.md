@@ -28,6 +28,24 @@ The mistake appears at *both* ends of the usual pipeline:
 - **At the output** — the recovered meaning is poured back into a relational table, because
   "structured data" has come to mean "rows a SQL engine can ingest."
 
+```mermaid
+flowchart LR
+  D["Human-addressed document<br/>intent · context · structure"]
+  D --> P{"a parser reads it as…"}
+  P -->|"text → tokens ❌"| TR["array with headers<br/>intent and context lost"]
+  P -->|"recover the author's structure ✔"| H(("holon graph"))
+  H --> L{"…then loads it into"}
+  L -->|"SQL rows, by default ❌"| RR["a relational table<br/>context boiled off"]
+  L -->|"modality-native stores ✔"| MN["graph · text · time-series<br/>vector · image · blob"]
+  TR -.->|"same mistake:<br/>machine-addressed-or-nothing"| RR
+```
+
+<figure markdown="span">
+  <figcaption>The two reductions sit at the two ends of the pipeline — tokenise the input,
+  flatten the output. Both ❌ branches are the same mistake. iladub takes the ✔ path at each
+  end: recover the author's structure, carry it into a holon, load it modality-native.</figcaption>
+</figure>
+
 These are the *same* reduction — **machine-addressed-or-nothing** — applied once to the source
 and once to the target. Using modern, multimodal AI to keep doing this is **neolegacy**: new
 capability spent perpetuating an old flattening. Machines now read more than tables; stores are
