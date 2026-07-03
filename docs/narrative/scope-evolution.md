@@ -20,6 +20,24 @@ That epistemic invariant *is* the thin `iladub:` core (`CandidateConcept`, `Grou
 
 ## The arc
 
+```mermaid
+flowchart LR
+  subgraph CORE["invariant core · assert / propose · every grounded node ← a promotion decision"]
+    direction LR
+    E["1 · etkl<br/>document compiler<br/>recover + ground"]
+    DEC["2 · decidability (dec)<br/>context graph<br/>+ accountable decisions"]
+    HOL["3 · holon reframe<br/>record → interacting holon"]
+    SUB["4 · active substrate<br/>membrane enforced at runtime"]
+    E --> DEC --> HOL --> SUB
+  end
+  SUB ==> OUT(("active, governed holon<br/>semantic + access boundary"))
+```
+
+<figure markdown="span">
+  <figcaption>Each phase adds a layer, on the same invariant core — and the output changes
+  category: from a static record to an active, governed holon.</figcaption>
+</figure>
+
 ### 1. `etkl` — the document compiler
 
 **Extract, Transform-with-(K)nowledge, Load.** Traditional ETL maps fields *structurally*;
