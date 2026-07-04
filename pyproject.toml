@@ -43,6 +43,11 @@ baml = [
     "pydantic>=2.6",
     "typing_extensions>=4.10",
 ]
+etkl = [
+    "pdfplumber>=0.11",
+    "numpy>=1.26",
+    "reportlab>=4.0",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
@@ -66,3 +71,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
