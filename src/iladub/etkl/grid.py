@@ -43,12 +43,20 @@ def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
     extremes. Confidence scales with the number of rows supporting the profile
     (thin bands -> low confidence -> lower decidability ceiling downstream).
 
+    Raises ValueError if the band contains no words.
+
     Tuning guidance:
       - ncols too high (column split): raise min_gutter_bins (e.g. 5 or 6).
       - ncols too low (columns merged): lower gutter_pct (e.g. 0.95).
+      - sample_target (default 4): rows giving full confidence; >=4 data rows
+        yield a stable occupancy profile; lower it (e.g. 3) if a
+        clearly-structured table reads as low-confidence.
     """
-    xs0 = min(w.x0 for ln in band.lines for w in ln.words)
-    xs1 = max(w.x1 for ln in band.lines for w in ln.words)
+    all_words = [w for ln in band.lines for w in ln.words]
+    if not all_words:
+        raise ValueError("infer_leaf_grid: band has no words")
+    xs0 = min(w.x0 for w in all_words)
+    xs1 = max(w.x1 for w in all_words)
     blank = _column_blank_profile(band, xs0, xs1)
     is_gutter = blank >= gutter_pct
 
