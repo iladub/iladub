@@ -31,7 +31,7 @@ def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:
     med_gap = median(positive) if positive else 0.0
     groups: list[list[Line]] = [[ls[0]]]
     for i in range(1, len(ls)):
-        gap = ls[i].top - ls[i - 1].bottom
+        gap = gaps[i - 1]
         if med_gap > 0 and gap > gap_factor * med_gap:
             groups.append([])
         groups[-1].append(ls[i])
