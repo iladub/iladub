@@ -21,15 +21,17 @@ class LeafGrid:
     confidence: float              # 0..1, from row-sample size
 
 
-def _column_blank_profile(band: Band, x0: float, x1: float,
-                          bin_w: float = 1.0) -> np.ndarray:
-    """Per x-bin, the fraction of band rows that are BLANK at that x."""
-    nbins = max(1, int(np.ceil((x1 - x0) / bin_w)))
+def _column_blank_profile(band: Band, x0: float, x1: float) -> np.ndarray:
+    """Per x-bin, the fraction of band rows that are BLANK at that x.
+
+    Bins are 1 point wide; the bin index equals floor(x - x0).
+    """
+    nbins = max(1, int(np.ceil(x1 - x0)))
     ink = np.zeros((len(band.lines), nbins), dtype=bool)
     for r, line in enumerate(band.lines):
         for w in line.words:
-            a = int((w.x0 - x0) / bin_w)
-            b = int(np.ceil((w.x1 - x0) / bin_w))
+            a = int(w.x0 - x0)
+            b = int(np.ceil(w.x1 - x0))
             ink[r, max(0, a):min(nbins, b)] = True
     return 1.0 - ink.mean(axis=0)  # blank fraction per bin
 
@@ -44,6 +46,9 @@ def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
     (thin bands -> low confidence -> lower decidability ceiling downstream).
 
     Raises ValueError if the band contains no words.
+
+    A band whose words all have zero width yields ncols == 0; callers slicing
+    boundaries should guard for it.
 
     Tuning guidance:
       - ncols too high (column split): raise min_gutter_bins (e.g. 5 or 6).

@@ -51,6 +51,11 @@ def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:
     Two words share a line when their tops differ by at most `y_tol`
     (default: 0.6 x median glyph height). Lines are returned top-to-bottom,
     words within a line left-to-right.
+
+    Note: grouping compares each word's `top` to the group leader's `top`; for
+    very small fonts (tol below accumulated intra-line y-drift) a long line can
+    over-split — acceptable for a 1pt-precision floor, revisit with a
+    sliding-window median if needed.
     """
     if not words:
         return []
