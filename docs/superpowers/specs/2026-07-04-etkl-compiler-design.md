@@ -253,3 +253,25 @@ geometry is faster (fewer calls), more precise (oracle), and less endpoint-depen
 5. **Continued tables** across pages.
 6. **CocoIndex/LanceDB** productionised flow + load of the resulting holons into the immutable-ledger
    enforcing substrate (per the internal substrate decision — later, once the holon is correctly built).
+
+## 12. Increment 1b notes (carried from the 1a final review)
+
+The 1a foundation (`src/iladub/etkl/`: geometry · bands · grid) is built and tested. Design inputs for
+1b (header tiling → validator → `dec`):
+
+- **Gutter-center vs range for snapping.** `LeafGrid.boundaries` are gutter *centers* + the two ink
+  extremes. For header-label snapping, index a word by `bisect.bisect_right(boundaries, word.x0) - 1`,
+  but **extend the first/last boundary outward** (or clamp index `< 0` to column 0) since header words can
+  sit left of `boundaries[0]`. Keep `LeafGrid` as-is — extension is a *snapping policy*, not a geometry
+  change.
+- **Snap radius:** prefer `min(column widths)/2` over `pitch/2` (median) for tables with one wide label
+  column and narrow value columns.
+- **`ncols == 0`** is possible for a wordless/zero-width band (now documented); 1b must guard before
+  slicing boundaries.
+- **Fixtures:** before writing 1b snapping code, add fixtures with (a) a centered-over-column header and
+  (b) a header spanning two body columns (colspan) — the flush-left `simple_table_pdf` is the easy case only.
+- **Confidence → `dec`:** thread the body band's `confidence` through; the combined decidability bound is
+  the floor of header-confidence and body-confidence, not a re-derivation.
+- **Test isolation (debt):** the fixture-free unit tests currently sit behind module-level
+  `importorskip("pdfplumber"/"reportlab")`, so they skip when the extras are absent. When 1b adds more
+  unit tests, move the deps-free ones into a `tests/etkl/test_units.py` with no importorskip.
