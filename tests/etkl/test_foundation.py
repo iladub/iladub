@@ -1,3 +1,7 @@
+import pytest
+pytest.importorskip("pdfplumber")
+pytest.importorskip("reportlab")
+
 import pdfplumber
 from tests.etkl.fixtures import simple_table_pdf
 
