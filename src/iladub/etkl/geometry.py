@@ -11,6 +11,7 @@ No bands, no grid logic — those live in later tasks.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from statistics import median
 
 import pdfplumber
 
@@ -47,14 +48,14 @@ def extract_words(pdf_path: str, page_number: int = 0) -> list[Word]:
 def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:
     """Group words into lines by vertical proximity of their `top`.
 
-    Two words share a line when their tops differ by less than `y_tol`
+    Two words share a line when their tops differ by at most `y_tol`
     (default: 0.6 x median glyph height). Lines are returned top-to-bottom,
     words within a line left-to-right.
     """
     if not words:
         return []
     ws = sorted(words, key=lambda w: (round(w.top, 1), w.x0))
-    med_h = sorted(w.bottom - w.top for w in ws)[len(ws) // 2]
+    med_h = median(w.bottom - w.top for w in ws)
     tol = y_tol if y_tol is not None else 0.6 * med_h
     groups: list[list[Word]] = [[ws[0]]]
     for w in ws[1:]:
@@ -62,7 +63,7 @@ def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:
             groups.append([])
         groups[-1].append(w)
     lines = []
-    for g in groups:
-        g = sorted(g, key=lambda w: w.x0)
-        lines.append(Line(tuple(g), min(w.top for w in g), max(w.bottom for w in g)))
+    for group in groups:
+        ordered = sorted(group, key=lambda w: w.x0)
+        lines.append(Line(tuple(ordered), min(w.top for w in ordered), max(w.bottom for w in ordered)))
     return sorted(lines, key=lambda ln: ln.top)

@@ -1,4 +1,8 @@
-from iladub.etkl.geometry import extract_words, text_lines, Word
+import pytest
+pytest.importorskip("pdfplumber")
+pytest.importorskip("reportlab")
+
+from iladub.etkl.geometry import extract_words, text_lines
 from tests.etkl.fixtures import simple_table_pdf, PAGE_H
 
 
