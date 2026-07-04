@@ -4,7 +4,6 @@ reportlab draws at exact points from the page's bottom-left origin. pdfplumber
 reports `top` from the page's TOP, so a string drawn at reportlab y maps to
 pdfplumber top = page_height - y (minus font ascent, but tests use tolerances).
 """
-from __future__ import annotations
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
@@ -33,5 +32,9 @@ def simple_table_pdf(path: str) -> dict:
         for x, cell in zip(cols, row):
             c.drawString(x, y, cell)
     c.save()
-    return {"cols": cols, "n_body_rows": 3, "n_table_rows": 4,
-            "title": "Complete Blood Count"}
+    return {
+        "cols": cols,
+        "n_body_rows": 3,
+        "n_table_rows": 4,
+        "title": "Complete Blood Count",
+    }
