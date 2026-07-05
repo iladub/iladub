@@ -34,8 +34,33 @@ So adopting loop engineering isn't a rewrite — it's **naming and completing th
 4. **State is the spine.** Each loop keeps a `STATE.md`-style record of what it knows and decides, and
    accrues durable **skills** (learned generator/kind patterns) so it gets better over time.
 
-## Two invariants stamped on every iladub loop
+## A loop is *done* only when it **closes** (definition of done)
 
+**Done = a proof, not parts.** An increment ships only when, run on **real input**, it takes the maker's
+output through the **whole** Verifier (round-trip **and** SHACL) to a **score**, with everything it cannot
+validate emitted **in-band** as a `dec` proposition / escalation. Two things are both "*not started*", never
+"done":
+
+- **Horizontal layers** — a maker with no verifier, or a verifier with no maker, wired to nothing so **no
+  score exists**. The loop never closed. This is the "rot": real code, zero proof.
+- **Silent gaps** — a limitation that lives as a prose caveat you have to *discover*, instead of an
+  escalation the loop *emits* or an explicit field-of-possibles item written **on the canvas**.
+
+**Incompleteness is allowed exactly one way — in-band.** *"70% validated, 30% escalated"* is a **closed**
+loop with an honest score. *"Half the pipeline built"* is **not started**. No limit may reach the user as a
+question they had to ask.
+
+## Slice **vertically**, never horizontally
+
+The first increment is the **thinnest end-to-end path that closes**: compile the *simplest* kind (a flat
+record table) fully — measure → structure → round-trip + SHACL → validated holon — and **escalate every
+other region** as a `dec` proposition. Later increments **widen the field of possibles** (one more kind, one
+more signal), never build one more *layer* across all cases.
+
+## Three invariants stamped on every iladub loop
+
+- **A loop closes or it isn't shipped.** End-to-end proof on real input, residue escalated in-band — see
+  the definition of done above.
 - **Verifier = the deterministic oracle; maker = the proposer.** Determinism validates; the model only
   generates the *residue* the geometry can't decide. (The determinism cursor.)
 - **No overfitting.** The gate must hold for *every* document. A loop tuned to make one example pass is a
