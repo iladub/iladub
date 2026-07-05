@@ -60,3 +60,83 @@ def lab_report_pdf(path: str) -> dict:
         "title": "HEMATOLOGY REPORT",
         "bands_expected": 3,  # title, meta line, table
     }
+
+
+# --- Hard case: a pivoted report with a 2-level, merged, centered header ------
+
+# 7 leaf columns. (left_x, right_x, align) — align drives how each cell's text
+# is placed inside its column, so the ink lands in DIFFERENT places per column.
+_PIV_LEAVES = [
+    (50.0, 150.0, "left"),    # 0  Analyte  (row-header, no parent)
+    (160.0, 215.0, "right"),  # 1  Current · Result
+    (225.0, 280.0, "left"),   # 2  Current · Unit
+    (290.0, 335.0, "center"), # 3  Current · Flag
+    (365.0, 420.0, "right"),  # 4  Prior · Result
+    (430.0, 485.0, "left"),   # 5  Prior · Unit
+    (495.0, 545.0, "center"), # 6  Prior · Flag
+]
+# Parent super-headers, each spanning a contiguous run of leaf columns.
+_PIV_PARENTS = [("Current Visit", 1, 3), ("Prior Visit", 4, 6)]
+_PIV_SUB = ["Analyte", "Result", "Unit", "Flag", "Result", "Unit", "Flag"]
+_PIV_BODY = [
+    ("Hemoglobin", "13.2", "g/dL", "LOW", "12.8", "g/dL", "LOW"),
+    ("Hematocrit", "39.5", "%", "LOW", "38.1", "%", "LOW"),
+    ("WBC", "7.8", "x10^9/L", "", "9.2", "x10^9/L", "HIGH"),
+    ("Platelets", "252", "x10^9/L", "", "248", "x10^9/L", ""),
+    ("MCV", "88.4", "fL", "", "87.9", "fL", ""),
+]
+
+
+def _place(c, text, left, right, align, y):
+    if not text:
+        return
+    if align == "right":
+        c.drawRightString(right, y, text)
+    elif align == "center":
+        c.drawCentredString((left + right) / 2.0, y, text)
+    else:
+        c.drawString(left, y, text)
+
+
+def pivoted_report_pdf(path: str) -> dict:
+    """A pivoted lab report: two visit groups, each a merged parent header
+    ('Current Visit' / 'Prior Visit') CENTERED over three leaf columns, with
+    a wrapped ('Result' over '(SI)') sub-header, and per-column alignment
+    (numbers right-aligned, flags centered, labels left). This is the case
+    increment 1a's whole-band grid is NOT designed to fully solve."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+
+    c.setFont("Courier-Bold", 14)
+    c.drawString(50.0, PAGE_H - 55.0, "SERIAL CBC — VISIT COMPARISON")
+
+    top = PAGE_H - 95.0
+    # parent header row (merged, centered over each group)
+    c.setFont("Courier-Bold", 10)
+    for label, i, j in _PIV_PARENTS:
+        left = _PIV_LEAVES[i][0]
+        right = _PIV_LEAVES[j][1]
+        c.drawCentredString((left + right) / 2.0, top, label)
+    # sub-header row 1 (leaf names)
+    for (left, right, align), name in zip(_PIV_LEAVES, _PIV_SUB):
+        _place(c, name, left, right, "center" if name != "Analyte" else "left", top - 15.0)
+    # sub-header row 2 (a WRAPPED second header line under the two Result cols)
+    for idx in (1, 4):
+        left, right, _ = _PIV_LEAVES[idx]
+        c.drawCentredString((left + right) / 2.0, top - 28.0, "(SI)")
+
+    # body
+    c.setFont("Courier", 10)
+    body_top = top - 50.0
+    for r, row in enumerate(_PIV_BODY):
+        y = body_top - r * 18.0
+        for (left, right, align), cell in zip(_PIV_LEAVES, row):
+            _place(c, cell, left, right, align, y)
+
+    c.save()
+    return {
+        "n_leaf_cols": len(_PIV_LEAVES),           # 7
+        "parents": _PIV_PARENTS,                    # merged super-headers
+        "n_body_rows": len(_PIV_BODY),              # 5
+        "n_header_rows": 3,                          # parent + leaf + wrapped (SI)
+        "title": "SERIAL CBC — VISIT COMPARISON",
+    }
