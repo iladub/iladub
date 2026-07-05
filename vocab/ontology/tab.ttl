@@ -1,0 +1,54 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+<https://w3id.org/iladub/tab> a owl:Ontology ;
+    rdfs:label "iladub tabular-topology ontology"@en ;
+    dct:description "Domain-neutral topology of tables as intentional transformation stacks (flat -> pivot -> cosmetic). Standalone core; alignment to csvw:/qb:/prov:/holon: lives in tab-*-align.ttl."@en ;
+    dct:creator "François Rosselet" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+# --- the table (a holon) and its kinds -----------------------------------------
+tab:Table a owl:Class ; rdfs:label "Table"@en ;
+    rdfs:comment "A table-holon: entries indexed by header paths; not an array."@en .
+tab:HierarchicalTable a owl:Class ; rdfs:subClassOf tab:Table ;
+    rdfs:label "Hierarchical table"@en ;
+    rdfs:comment "A table with a multi-level header tree on a column or row axis."@en .
+
+# --- cells and their roles (Wang: label vs entry) ------------------------------
+tab:Cell a owl:Class ; rdfs:label "Cell"@en .
+tab:LabelCell a owl:Class ; rdfs:subClassOf tab:Cell ; rdfs:label "Label cell"@en ;
+    rdfs:comment "A cell that locates entries (a header or stub label)."@en .
+tab:EntryCell a owl:Class ; rdfs:subClassOf tab:Cell ; rdfs:label "Entry cell"@en ;
+    rdfs:comment "A cell that carries a fact, addressed by a column path x row path."@en .
+
+# --- header trees and leaves ---------------------------------------------------
+tab:HeaderNode a owl:Class ; rdfs:label "Header node"@en ;
+    rdfs:comment "A node in a header tree; covers a contiguous run of leaf columns."@en .
+tab:LeafColumn a owl:Class ; rdfs:label "Leaf column"@en .
+tab:LeafRow a owl:Class ; rdfs:label "Leaf row"@en .
+
+tab:parentHeader a owl:ObjectProperty ; rdfs:label "parent header"@en ;
+    rdfs:domain tab:HeaderNode ; rdfs:range tab:HeaderNode ;
+    rdfs:comment "Links a header node to its parent (child span must be a subset of the parent's)."@en .
+tab:coversColumn a owl:ObjectProperty ; rdfs:label "covers column"@en ;
+    rdfs:domain tab:HeaderNode ; rdfs:range tab:LeafColumn ;
+    rdfs:comment "A leaf column in this header node's span."@en .
+tab:headerLevel a owl:DatatypeProperty ; rdfs:label "header level"@en ;
+    rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
+    rdfs:comment "Depth of this node (0 = topmost)."@en .
+
+# --- table composition ---------------------------------------------------------
+tab:hasHeaderNode a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:HeaderNode .
+tab:hasLeafColumn a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:LeafColumn .
+tab:hasLeafRow a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:LeafRow .
+tab:hasCell a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:Cell .
+
+# --- the access function (Wang's map: entry <- column path x row path) ---------
+tab:atColumn a owl:ObjectProperty ; rdfs:label "at column"@en ;
+    rdfs:domain tab:EntryCell ; rdfs:range tab:LeafColumn .
+tab:atRow a owl:ObjectProperty ; rdfs:label "at row"@en ;
+    rdfs:domain tab:EntryCell ; rdfs:range tab:LeafRow .
