@@ -1,0 +1,67 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+tab:prefixes
+    sh:declare [ sh:prefix "tab" ; sh:namespace "https://w3id.org/iladub/tab#"^^xsd:anyURI ] .
+
+#################################################################
+#  Coverage: every leaf column that belongs to a table must be
+#  covered by at least one header node.
+#################################################################
+
+tab:CoverageShape a sh:NodeShape ;
+    sh:targetClass tab:LeafColumn ;
+    sh:sparql [
+        sh:message "Leaf column is not covered by any header node (coverage gap)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasLeafColumn $this .
+                FILTER NOT EXISTS { ?h tab:coversColumn $this }
+            }
+        """ ] .
+
+#################################################################
+#  No-overlap: two distinct header nodes at the SAME level must
+#  not cover the same leaf column.
+#
+#  Targets subjects of tab:hasHeaderNode so this works for any
+#  table subclass without needing the ontology loaded in the data
+#  graph for RDFS subclass inference.
+#################################################################
+
+tab:NoOverlapShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:hasHeaderNode ;
+    sh:sparql [
+        sh:message "Two header nodes at the same level cover the same column (overlap)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:hasHeaderNode ?h1 .
+                $this tab:hasHeaderNode ?h2 .
+                FILTER(str(?h1) < str(?h2))
+                ?h1 tab:headerLevel ?l .
+                ?h2 tab:headerLevel ?l .
+                ?h1 tab:coversColumn ?c .
+                ?h2 tab:coversColumn ?c .
+            }
+        """ ] .
+
+#################################################################
+#  Refinement: a child header's covered columns must be a subset
+#  of its parent's covered columns.
+#################################################################
+
+tab:RefinementShape a sh:NodeShape ;
+    sh:targetClass tab:HeaderNode ;
+    sh:sparql [
+        sh:message "A header node covers a column its parent does not (refinement break)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:parentHeader ?p .
+                $this tab:coversColumn ?c .
+                FILTER NOT EXISTS { ?p tab:coversColumn ?c }
+            }
+        """ ] .
