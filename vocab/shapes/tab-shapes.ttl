@@ -68,3 +68,61 @@ tab:RefinementShape a sh:NodeShape ;
                 FILTER NOT EXISTS { ?p tab:coversColumn ?c }
             }
         """ ] .
+
+#################################################################
+#  Access cardinality: an entry cell has exactly one column and
+#  one row.
+#################################################################
+
+tab:EntryCellShape a sh:NodeShape ;
+    sh:targetClass tab:EntryCell ;
+    sh:property [ sh:path tab:atColumn ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "An entry cell must sit at exactly one leaf column." ] ;
+    sh:property [ sh:path tab:atRow ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "An entry cell must sit at exactly one leaf row." ] .
+
+#################################################################
+#  Orphan guard: an entry cell's column must be a leaf column of
+#  the table that owns the cell.
+#################################################################
+
+tab:EntryColumnBoundShape a sh:NodeShape ;
+    sh:targetClass tab:EntryCell ;
+    sh:sparql [
+        sh:message "Entry cell sits at a column that is not a leaf column of its table (orphan)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasCell $this .
+                $this tab:atColumn ?c .
+                FILTER NOT EXISTS { ?tbl tab:hasLeafColumn ?c }
+            }
+        """ ] .
+
+#################################################################
+#  Unambiguous column path: each leaf column is covered by
+#  exactly one LEAF header of its own table (a header with no
+#  children). Zero or two+ => ambiguous / undefined path.
+#################################################################
+
+tab:UnambiguousAccessShape a sh:NodeShape ;
+    sh:targetClass tab:LeafColumn ;
+    sh:sparql [
+        sh:message "Leaf column does not have exactly one leaf-header of its table (ambiguous column path)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasLeafColumn $this .
+                {
+                    SELECT $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
+                        ?t2 tab:hasLeafColumn $this .
+                        OPTIONAL {
+                            ?t2 tab:hasHeaderNode ?h .
+                            ?h tab:coversColumn $this .
+                            FILTER NOT EXISTS { ?child tab:parentHeader ?h }
+                        }
+                    } GROUP BY $this
+                }
+                FILTER(?n != 1)
+            }
+        """ ] .

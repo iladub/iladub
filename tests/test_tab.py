@@ -87,3 +87,23 @@ def test_multitable_coverage_gap_fails():
     c, t = _v(os.path.join(TST, "tab-multitable-coverage-leak.ttl"))
     assert not c
     assert "CoverageShape" in t
+
+
+def test_orphan_entry_fails():
+    """An entry cell whose column is not a leaf column of its table must fail."""
+    c, t = _v(os.path.join(TST, "tab-orphan-entry-leak.ttl"))
+    assert not c
+    assert "EntryColumnBoundShape" in t
+
+
+def test_ambiguous_access_fails():
+    """A leaf column with two leaf-headers (ambiguous column path) must fail."""
+    c, t = _v(os.path.join(TST, "tab-ambiguous-access-leak.ttl"))
+    assert not c
+    assert "UnambiguousAccessShape" in t
+
+
+def test_conformant_passes_full_verifier():
+    """The conformant example passes ALL shapes together (tiling + access)."""
+    c, t = _v(CONFORMANT)
+    assert c, t

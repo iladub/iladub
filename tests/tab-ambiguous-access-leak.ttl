@@ -1,0 +1,9 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c1 ;
+    tab:hasHeaderNode ex:lA, ex:lB .
+ex:c1 a tab:LeafColumn .
+# two LEAF headers (neither has children) both cover c1 -> ambiguous column path
+ex:lA a tab:HeaderNode ; tab:headerLevel 1 ; tab:coversColumn ex:c1 .
+ex:lB a tab:HeaderNode ; tab:headerLevel 1 ; tab:coversColumn ex:c1 .
