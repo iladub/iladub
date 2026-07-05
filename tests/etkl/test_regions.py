@@ -41,6 +41,7 @@ def test_pivot_band_is_unsupported(tmp_path):
 def test_wide_cell_collapses_to_unsupported(tmp_path):
     bands = _bands(wide_cell_table_pdf, tmp_path)
     assert RegionKind.RECORD_TABLE not in {classify(b).kind for b in bands}
+    assert RegionKind.UNSUPPORTED_TABLE in {classify(b).kind for b in bands}
 
 
 def test_assign_cells_groups_by_column(tmp_path):
