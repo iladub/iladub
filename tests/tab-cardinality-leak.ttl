@@ -1,0 +1,9 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c1, ex:c2 ;
+    tab:hasHeaderNode ex:h1 ;
+    tab:hasCell ex:eBad .
+ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn . ex:r0 a tab:LeafRow .
+ex:h1 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1, ex:c2 .
+ex:eBad a tab:EntryCell ; tab:atColumn ex:c1, ex:c2 ; tab:atRow ex:r0 .   # two atColumn -> cardinality violation
