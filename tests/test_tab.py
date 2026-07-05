@@ -1,6 +1,7 @@
 """Tabular-topology ontology (tab:) — vocabulary + SHACL verifier-core tests."""
 import os
 from rdflib import Graph, Namespace, RDF, RDFS, OWL
+from pyshacl import validate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONT = os.path.join(ROOT, "vocab", "ontology")
@@ -48,3 +49,31 @@ def test_conformant_example_structure():
     assert len(list(g.objects(tbl, TAB.hasLeafColumn))) == 5
     assert len(list(g.objects(tbl, TAB.hasLeafRow))) == 2
     assert len(list(g.subjects(RDF.type, TAB.EntryCell))) == 8
+
+
+SHAPES = os.path.join(SH, "tab-shapes.ttl")
+
+
+def _v(*data):
+    c, _, t = validate(_g(*data), shacl_graph=_g(SHAPES), inference="rdfs", advanced=True)
+    return c, t
+
+
+def test_conformant_passes_tiling():
+    c, t = _v(CONFORMANT)
+    assert c, t
+
+
+def test_uncovered_column_fails():
+    c, _ = _v(os.path.join(TST, "tab-uncovered-column-leak.ttl"))
+    assert not c
+
+
+def test_overlapping_headers_fail():
+    c, _ = _v(os.path.join(TST, "tab-overlap-leak.ttl"))
+    assert not c
+
+
+def test_refinement_break_fails():
+    c, _ = _v(os.path.join(TST, "tab-refinement-leak.ttl"))
+    assert not c
