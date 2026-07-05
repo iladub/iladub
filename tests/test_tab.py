@@ -52,11 +52,21 @@ def test_conformant_example_structure():
 
 
 SHAPES = os.path.join(SH, "tab-shapes.ttl")
+PHYS_SH = os.path.join(SH, "tab-physical-shapes.ttl")
 
 
 def _v(*data):
     c, _, t = validate(_g(*data), shacl_graph=_g(SHAPES), inference="rdfs", advanced=True)
     return c, t
+
+
+def _vp(*data_paths):
+    """Validate data against topology + physical shapes together."""
+    data = _g(*data_paths)
+    shapes = _g(os.path.join(SH, "tab-shapes.ttl"), PHYS_SH)
+    conforms, _, text = validate(data, shacl_graph=shapes, ont_graph=_g(TAB_TTL),
+                                 inference="rdfs", advanced=True)
+    return conforms, text
 
 
 def test_conformant_passes_tiling():
@@ -134,3 +144,14 @@ def test_tab_physical_terms_present():
 def test_tab_recordtable_is_table_subclass():
     g = _g(TAB_TTL)
     assert (TAB.RecordTable, RDFS.subClassOf, TAB.Table) in g
+
+
+def test_record_conformant_passes_physical():
+    c, t = _vp(os.path.join(EX, "record-conformant.ttl"))
+    assert c, t
+
+
+def test_missing_physical_fails():
+    c, t = _vp(os.path.join(TST, "tab-missing-physical-leak.ttl"))
+    assert not c
+    assert "EntryCellPhysicalShape" in t

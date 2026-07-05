@@ -1,0 +1,19 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://w3id.org/iladub/tab/shapes/physical> a <http://www.w3.org/2002/07/owl#Ontology> ;
+    dcterms:title "tab physical-layer SHACL shapes"@en ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:creator "François Rosselet" .
+
+# An asserted EntryCell must carry its measured geometry and surface text —
+# so the holon can be round-tripped and traced to the page (provenance-to-page).
+tab:EntryCellPhysicalShape a sh:NodeShape ;
+    sh:targetClass tab:EntryCell ;
+    sh:property [ sh:name "EntryCellPhysicalShape" ; sh:path tab:cellText ; sh:minCount 1 ] ;
+    sh:property [ sh:name "EntryCellPhysicalShape" ; sh:path tab:onPage ;
+                  sh:minCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:name "EntryCellPhysicalShape" ; sh:path tab:hasBBox ;
+                  sh:minCount 1 ; sh:class tab:BBox ] .
