@@ -57,29 +57,39 @@ Public API (`__init__.py`) gains: `compile_tables`, `CompilationReport`, `Region
 
 ## The round-trip oracle **is** the kind-classifier (one test, two jobs)
 
-A line's words **tile the detected leaf columns** iff every word box ⊆ exactly one column span
-and crosses **no detected gutter** (the gutters #31 already found as blank-on-≥98%-of-rows). That
-single gutter-containment question does both jobs:
+**Empirical caveat that shapes the gate (verified on the fixtures 2026-07-05):** a merged header
+*collapses* the profiled grid — `infer_leaf_grid` reads the pivot fixture's 7 real columns as **5**,
+because the centered parent labels fill the gutters. Under that coarse grid *every* word still sits
+inside some column span, so a naive "does every line tile?" test returns **True for the pivot** and
+would silently assert a wrong 5-column table. Raw tiling does **not** discriminate. The robust signal
+is the **header's regularity**, not tiling.
 
-- **Every** line (header + data) tiles cleanly → **flat record table**; each data cell that tiles → **assert**.
-- The **header** line's words cross gutters (a merged/centered parent spanning multiple columns —
-  exactly the pivot fixture) → **not** a flat record → escalate whole, `suggestedAnchor = tab:HierarchicalTable`.
-- A **data** word straddles a gutter → **that cell** escalates (`ROUND_TRIP_FAIL`).
+**Two-layer gate:**
 
-**What a "cell" is:** a cell = the set of words of one data row that fall within one leaf-column
-span. `cellText` = those words joined (in x-order). The gate passes for a cell iff **every** word
-of the cell lies within that column's span and **none** crosses a gutter — i.e., the cell's ink does
-not leak into an adjacent column. A single word straddling a gutter is the failure signal.
+1. **Region gate (kind classifier) — header regularity.** A band is a **RECORD_TABLE** iff:
+   `len(lines) ≥ 2`; `infer_leaf_grid` gives `ncols ≥ 2`; **and the header line (line 0) has exactly
+   `ncols` words, the i-th lying within column i's span** — one clean label per column. A merged /
+   centered parent header leaves columns unlabeled and doubles others (pivot line 0: 4 words over 5
+   columns; c0/c2/c4 empty) → gate fails → **UNSUPPORTED_TABLE** (escalate whole,
+   `suggestedAnchor = tab:HierarchicalTable`). `< 2` lines or `ncols < 2` → **NON_TABLE**.
 
-**The gutter is the oracle — no tuned epsilon.** The spatial-ASCII of measured-vs-reconstructed is
-rendered as the human-legible **evidence** attached to each verdict (the canvas's "round-trip diff
-image"), but the pass/fail gate is the numeric containment test.
+2. **Per-cell round-trip (within a RECORD_TABLE region).** A **cell** = the words of one data row
+   that fall within one leaf-column span; `cellText` = those words joined in x-order (multi-word data
+   cells are fine). The cell round-trips iff **every** word of the cell lies within that column's
+   span (no straddle). Cells are asserted individually; any that fail → escalated (`ROUND_TRIP_FAIL`).
 
-```
-GATE per cell:  measured_box ⊆ assigned_column_span  AND  crosses no gutter
-OBSERVABLE:     measured          reconstructed
-                Hb |13.2|g/dL     Hb |13.2|g/dL     ✓
-                WBC|7.8 |x10^9    WBC|7.8 |x10^9    ✓
+**The gutter is the oracle — no tuned epsilon.** At small scale the region gate dominates: a
+straddling data cell usually *fills* its gutter, collapsing the grid, and is caught at the region
+level. The per-cell gate is the general mechanism for the surviving-gutter case (one wide row among
+many keeps a gutter blank on ≥98% of rows) and is proven directly by a **unit test**. Spatial-ASCII
+of measured-vs-reconstructed is the human-legible **evidence** attached to each verdict.
+
+```text
+REGION GATE:  header has exactly ncols words, i-th within column i  → RECORD_TABLE else escalate
+CELL GATE:    every word of the cell ⊆ its column span               → assert else escalate
+OBSERVABLE:   measured          reconstructed
+              Hb |13.2|g/dL     Hb |13.2|g/dL     ✓
+              WBC|7.8 |x10^9    WBC|7.8 |x10^9    ✓
 ```
 
 ### Structural hypothesis for a record region
@@ -176,8 +186,11 @@ entrypoint. This report **is** the loop's score — the canvas's **L1 "report" t
    conforms, graph has the expected columns/rows/entries with `cellText`+bbox+prov.
 2. **`test_pivot_escalates`** — `pivoted_report_pdf` → the pivot region is an `iladub:CandidateConcept`
    (`suggestedAnchor` pivot/hierarchical), **not** asserted; `score < 1.0`; no crash, no fake assertion.
-3. **`test_roundtrip_catches_misassignment`** — a word straddling a gutter escalates that cell,
-   `score < 1.0`. Proves the oracle **bites** (the anti-silent-wrong test).
+3. **`test_cell_gate_catches_straddle`** (unit) — feed the per-cell gate a synthetic word whose box
+   crosses a column boundary → returns `False`; a wholly-contained word → `True`. Proves the oracle
+   **bites** (the anti-silent-wrong test), reliably and without a pathological PDF. Companion
+   integration test **`test_wide_cell_collapses_to_escalation`**: a table with a gutter-filling wide
+   cell profiles too few columns → the region escalates as `UNSUPPORTED_TABLE` (never a wrong assert).
 4. **`test_nontable_band_escalates`** — a title/prose band → `NOT_A_TABLE`, excluded from the ratio.
 5. **`test_report_serializes`** — `report.to_turtle()` re-parses and conforms to `tab:` SHACL.
 6. **`test_entrycell_physical_shape_negative`** — the new physical-layer leak fixture fails SHACL.
