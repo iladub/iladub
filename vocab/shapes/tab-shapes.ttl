@@ -100,6 +100,24 @@ tab:EntryColumnBoundShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
+#  Orphan guard (row): an entry cell's row must be a leaf row
+#  of the table that owns the cell.
+#################################################################
+
+tab:EntryRowBoundShape a sh:NodeShape ;
+    sh:targetClass tab:EntryCell ;
+    sh:sparql [
+        sh:message "Entry cell sits at a row that is not a leaf row of its table (orphan row)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasCell $this .
+                $this tab:atRow ?r .
+                FILTER NOT EXISTS { ?tbl tab:hasLeafRow ?r }
+            }
+        """ ] .
+
+#################################################################
 #  Unambiguous column path: each leaf column is covered by
 #  exactly one LEAF header of its own table (a header with no
 #  children). Zero or two+ => ambiguous / undefined path.

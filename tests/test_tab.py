@@ -114,3 +114,10 @@ def test_entry_cardinality_fails():
     c, t = _v(os.path.join(TST, "tab-cardinality-leak.ttl"))
     assert not c
     assert "EntryCellShape" in t
+
+
+def test_orphan_row_fails():
+    """An entry cell whose row is not a leaf row of its table must fail."""
+    c, t = _v(os.path.join(TST, "tab-orphan-row-leak.ttl"))
+    assert not c
+    assert "EntryRowBoundShape" in t
