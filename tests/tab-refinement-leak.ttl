@@ -1,0 +1,9 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c1, ex:c2, ex:c9 ;
+    tab:hasHeaderNode ex:hParent, ex:lChild .
+ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn . ex:c9 a tab:LeafColumn .
+ex:hParent a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1, ex:c2 .
+ex:lChild  a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hParent ;
+    tab:coversColumn ex:c1, ex:c9 .   # c9 not in parent's span -> refinement break
