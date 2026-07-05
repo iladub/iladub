@@ -8,7 +8,7 @@ from tests.etkl.fixtures import simple_table_pdf
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.regions import classify
 from iladub.etkl.holon import (assert_record_region, escalate_region,
-                               TAB, ILADUB, PROV)
+                               TAB, ILADUB, PROV, DEC)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ONT = os.path.join(ROOT, "vocab", "ontology", "tab.ttl")
@@ -73,3 +73,64 @@ def test_header_labels_are_carried(tmp_path):
     assert {"Analyte", "Value", "Unit"} <= label_texts, label_texts
     # each header node links to its label
     assert any(g.triples((None, TAB.hasLabel, None)))
+
+
+def test_straddling_cell_is_proposed_not_asserted():
+    """A data cell whose ink crosses a column gutter must be emitted as an
+    iladub:CandidateConcept (ROUND_TRIP_FAIL), never silently dropped or
+    asserted as a TAB:EntryCell.
+    """
+    from iladub.etkl.regions import Cell, ClassifiedRegion, RegionKind
+    from iladub.etkl.grid import LeafGrid
+    from iladub.etkl.geometry import Word
+    from iladub.etkl.bands import Band
+    from iladub.etkl.geometry import Line
+
+    # boundaries: two columns [0..100) and [100..200)
+    boundaries = (0.0, 100.0, 200.0)
+    grid = LeafGrid(boundaries=boundaries, ncols=2, pitch=100.0, confidence=1.0)
+
+    # header row: one clean word per column
+    hw0 = Word("ColA", 10.0, 60.0, 0.0, 10.0, page=0)
+    hw1 = Word("ColB", 110.0, 160.0, 0.0, 10.0, page=0)
+    hdr_line = Line(words=(hw0, hw1), top=0.0, bottom=10.0)
+
+    # data row: col-0 clean, col-1 straddles the 100.0 boundary (x0=80 < 100)
+    dw0 = Word("CleanVal", 10.0, 60.0, 20.0, 30.0, page=0)
+    dw1 = Word("STRADDLE", 80.0, 140.0, 20.0, 30.0, page=0)
+    data_line = Line(words=(dw0, dw1), top=20.0, bottom=30.0)
+
+    band = Band(lines=(hdr_line, data_line), top=0.0, bottom=30.0)
+
+    # cells built as assign_cells would produce them
+    header_cell0 = Cell(row=0, col=0, words=(hw0,))
+    header_cell1 = Cell(row=0, col=1, words=(hw1,))
+    clean_cell   = Cell(row=1, col=0, words=(dw0,))
+    straddle_cell = Cell(row=1, col=1, words=(dw1,))
+
+    region = ClassifiedRegion(
+        kind=RegionKind.RECORD_TABLE,
+        band=band,
+        grid=grid,
+        cells=(header_cell0, header_cell1, clean_cell, straddle_cell),
+        reason="flat single-level header",
+    )
+
+    g = Graph()
+    n_asserted = assert_record_region(
+        g, region, URIRef("urn:straddle-t"), URIRef("urn:doc"), page=1
+    )
+
+    # the straddling data cell is proposed, not asserted
+    assert (None, RDF.type, ILADUB.CandidateConcept) in g
+    rationales = {str(o) for o in g.objects(None, DEC.rationale)}
+    assert "ROUND_TRIP_FAIL" in rationales
+
+    # and it is NOT emitted as an EntryCell fact
+    entry_texts = {str(o) for s in g.subjects(RDF.type, TAB.EntryCell)
+                   for o in g.objects(s, TAB.cellText)}
+    assert "STRADDLE" not in entry_texts
+
+    # the clean data cell IS asserted; total asserted = 1 (not 2)
+    assert n_asserted == 1
+    assert "CleanVal" in entry_texts

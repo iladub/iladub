@@ -9,14 +9,13 @@ from __future__ import annotations
 from typing import Sequence
 
 from .bands import Band
+from .geometry import COORD_EPS
 from .regions import Cell
-
-_EPS = 0.01
 
 
 def cell_round_trips(cell: Cell, boundaries: Sequence[float]) -> bool:
     lo, hi = boundaries[cell.col], boundaries[cell.col + 1]
-    return all(w.x0 >= lo - _EPS and w.x1 <= hi + _EPS for w in cell.words)
+    return all(w.x0 >= lo - COORD_EPS and w.x1 <= hi + COORD_EPS for w in cell.words)
 
 
 def render_ascii(band: Band, width: int = 80) -> str:

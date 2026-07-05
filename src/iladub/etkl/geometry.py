@@ -15,6 +15,9 @@ from statistics import median
 
 import pdfplumber
 
+# Sub-point float tolerance for boundary containment checks.
+COORD_EPS: float = 0.01
+
 
 @dataclass(frozen=True)
 class Word:

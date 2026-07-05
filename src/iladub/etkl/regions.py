@@ -14,10 +14,8 @@ from enum import Enum
 from typing import Sequence
 
 from .bands import Band
-from .geometry import Word
+from .geometry import Word, COORD_EPS
 from .grid import LeafGrid, infer_leaf_grid
-
-_EPS = 0.01
 
 
 class RegionKind(Enum):
@@ -71,7 +69,7 @@ def assign_cells(band: Band, grid: LeafGrid) -> tuple[Cell, ...]:
 
 
 def _word_in_column(w: Word, col: int, boundaries: Sequence[float]) -> bool:
-    return w.x0 >= boundaries[col] - _EPS and w.x1 <= boundaries[col + 1] + _EPS
+    return w.x0 >= boundaries[col] - COORD_EPS and w.x1 <= boundaries[col + 1] + COORD_EPS
 
 
 def classify(band: Band) -> ClassifiedRegion:
@@ -82,6 +80,12 @@ def classify(band: Band) -> ClassifiedRegion:
         return ClassifiedRegion(RegionKind.NON_TABLE, band, grid, (), "fewer than 2 columns")
     header = band.lines[0]
     b = grid.boundaries
+    # A flat record header must have exactly one single-word label per column.
+    # This is a deliberate SAFETY proxy, not an arbitrary limit: a multi-word
+    # header label is geometrically indistinguishable from two columns whose
+    # gutter collapsed (see wide_cell_table_pdf), so admitting multi-word headers
+    # would risk silently asserting a merged-column table. Multi-word / multi-level
+    # headers are therefore escalated by design (a future field-of-possibles increment).
     # header regularity: exactly ncols words, the i-th (left-to-right) within column i
     if len(header.words) != grid.ncols:
         return ClassifiedRegion(

@@ -70,7 +70,18 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
             g.add((_region_uri(table_uri, "h", cell.col), TAB.hasLabel, lc))
             continue
         if not cell_round_trips(cell, b):
-            continue  # a straddling cell is not asserted (would be escalated per-cell)
+            # residue: a data cell whose ink crosses a gutter is NOT asserted.
+            # Emit it as an in-band proposition — never silently dropped.
+            cc = _region_uri(table_uri, f"cc{cell.row}_", cell.col)
+            x0, top, _, _ = cell.bbox
+            g.add((cc, RDF.type, ILADUB.CandidateConcept))
+            g.add((cc, ILADUB.surfaceText, Literal(cell.text)))
+            g.add((cc, DEC.rationale, Literal("ROUND_TRIP_FAIL")))
+            g.add((cc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+            g.add((cc, TAB.hasBBox, _bbox_node(g, cell)))
+            g.add((cc, PROV.wasDerivedFrom,
+                   URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+            continue
         e = _region_uri(table_uri, f"e{cell.row}_", cell.col)
         g.add((e, RDF.type, TAB.EntryCell))
         g.add((table_uri, TAB.hasCell, e))
