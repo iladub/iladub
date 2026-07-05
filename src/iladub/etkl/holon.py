@@ -58,7 +58,17 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
     b = region.grid.boundaries
     for cell in region.cells:
         if cell.row == 0:
-            continue  # header labels are structural, not scored facts
+            # header label: carry its text + geometry (context is not discarded)
+            # and link it to its column's HeaderNode. LabelCells are structural,
+            # not scored facts.
+            lc = _region_uri(table_uri, "lc", cell.col)
+            g.add((lc, RDF.type, TAB.LabelCell))
+            g.add((table_uri, TAB.hasCell, lc))
+            g.add((lc, TAB.cellText, Literal(cell.text)))
+            g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+            g.add((lc, TAB.hasBBox, _bbox_node(g, cell)))
+            g.add((_region_uri(table_uri, "h", cell.col), TAB.hasLabel, lc))
+            continue
         if not cell_round_trips(cell, b):
             continue  # a straddling cell is not asserted (would be escalated per-cell)
         e = _region_uri(table_uri, f"e{cell.row}_", cell.col)

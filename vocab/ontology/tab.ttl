@@ -49,6 +49,9 @@ tab:parentHeader a owl:ObjectProperty ; rdfs:label "parent header"@en ;
 tab:coversColumn a owl:ObjectProperty ; rdfs:label "covers column"@en ;
     rdfs:domain tab:HeaderNode ; rdfs:range tab:LeafColumn ;
     rdfs:comment "A leaf column in this header node's span."@en .
+tab:hasLabel a owl:ObjectProperty ; rdfs:label "has label"@en ;
+    rdfs:domain tab:HeaderNode ; rdfs:range tab:LabelCell ;
+    rdfs:comment "Links a header node to the LabelCell carrying its surface text + geometry."@en .
 tab:headerLevel a owl:DatatypeProperty ; rdfs:label "header level"@en ;
     rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
     rdfs:comment "Depth of this node (0 = topmost)."@en .

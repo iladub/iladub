@@ -137,7 +137,7 @@ def test_tab_physical_terms_present():
     g = _g(TAB_TTL)
     for cls in ["RecordTable", "BBox"]:
         assert (TAB[cls], RDF.type, OWL.Class) in g, f"missing class tab:{cls}"
-    for prop in ["cellText", "onPage", "hasBBox", "x0", "y0", "x1", "y1"]:
+    for prop in ["cellText", "onPage", "hasBBox", "x0", "y0", "x1", "y1", "hasLabel"]:
         assert (TAB[prop], RDF.type, None) in g, f"missing property tab:{prop}"
 
 

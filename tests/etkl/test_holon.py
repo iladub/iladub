@@ -58,3 +58,18 @@ def test_escalate_produces_candidate():
                     confidence=0.4)
     assert (URIRef("urn:reg"), RDF.type, ILADUB.CandidateConcept) in g
     assert any(True for _ in g.triples((None, ILADUB.surfaceText, None)))
+    assert any(g.triples((URIRef("urn:reg"), ILADUB.suggestedAnchor, None)))
+    from iladub.etkl.holon import DEC
+    assert any(g.triples((URIRef("urn:reg"), DEC.confidence, None)))
+    assert any(g.triples((URIRef("urn:reg"), DEC.rationale, None)))
+    assert any(g.triples((URIRef("urn:reg"), PROV.wasDerivedFrom, None)))
+
+
+def test_header_labels_are_carried(tmp_path):
+    g = Graph()
+    assert_record_region(g, _record_region(tmp_path), URIRef("urn:t"), URIRef("urn:doc"), page=0)
+    label_texts = {str(o) for s in g.subjects(RDF.type, TAB.LabelCell)
+                   for o in g.objects(s, TAB.cellText)}
+    assert {"Analyte", "Value", "Unit"} <= label_texts, label_texts
+    # each header node links to its label
+    assert any(g.triples((None, TAB.hasLabel, None)))
