@@ -155,7 +155,7 @@ Validate against **RealHiTBench + CHiTab** (diverse real hierarchical tables) an
 the **round-trip oracle**. A kind's shape must pass **across the benchmark**, not on one hand-made PDF.
 Report coverage per kind + escalation rate. Any shape that only passes a single example is rejected.
 
-## 12. Open decisions
+## 12. Decisions (resolved 2026-07-05 — all recommendations adopted)
 
 1. **Namespace** — a new owned module `tab:` = `https://w3id.org/iladub/tab#` (w3id-redirected like the
    others) **vs** folding into `etkl:`. *Recommendation:* a separate `tab:` module — a table ontology is
