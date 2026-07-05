@@ -13,12 +13,15 @@ tab:prefixes
 tab:CoverageShape a sh:NodeShape ;
     sh:targetClass tab:LeafColumn ;
     sh:sparql [
-        sh:message "Leaf column is not covered by any header node (coverage gap)." ;
+        sh:message "Leaf column is not covered by any header node of its table (coverage gap)." ;
         sh:prefixes tab:prefixes ;
         sh:select """
             SELECT $this WHERE {
                 ?tbl tab:hasLeafColumn $this .
-                FILTER NOT EXISTS { ?h tab:coversColumn $this }
+                FILTER NOT EXISTS {
+                    ?tbl tab:hasHeaderNode ?h .
+                    ?h tab:coversColumn $this
+                }
             }
         """ ] .
 

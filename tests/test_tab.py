@@ -65,15 +65,25 @@ def test_conformant_passes_tiling():
 
 
 def test_uncovered_column_fails():
-    c, _ = _v(os.path.join(TST, "tab-uncovered-column-leak.ttl"))
+    c, t = _v(os.path.join(TST, "tab-uncovered-column-leak.ttl"))
     assert not c
+    assert "CoverageShape" in t
 
 
 def test_overlapping_headers_fail():
-    c, _ = _v(os.path.join(TST, "tab-overlap-leak.ttl"))
+    c, t = _v(os.path.join(TST, "tab-overlap-leak.ttl"))
     assert not c
+    assert "NoOverlapShape" in t
 
 
 def test_refinement_break_fails():
-    c, _ = _v(os.path.join(TST, "tab-refinement-leak.ttl"))
+    c, t = _v(os.path.join(TST, "tab-refinement-leak.ttl"))
     assert not c
+    assert "RefinementShape" in t
+
+
+def test_multitable_coverage_gap_fails():
+    """A coverage gap in one table must NOT be silenced by another table's header."""
+    c, t = _v(os.path.join(TST, "tab-multitable-coverage-leak.ttl"))
+    assert not c
+    assert "CoverageShape" in t
