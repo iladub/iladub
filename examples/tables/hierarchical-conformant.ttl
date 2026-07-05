@@ -1,0 +1,34 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2, ex:c3, ex:c4 ;
+    tab:hasLeafRow    ex:r0, ex:r1 ;
+    tab:hasHeaderNode ex:hAnalyte, ex:hCurrent, ex:hPrior,
+                      ex:lResultC, ex:lUnitC, ex:lResultP, ex:lUnitP ;
+    tab:hasCell ex:e10, ex:e11, ex:e20, ex:e21, ex:e30, ex:e31, ex:e40, ex:e41 .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:c3 a tab:LeafColumn . ex:c4 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .    ex:r1 a tab:LeafRow .
+
+# top level (0): stub + two merged parents — tiles c0..c4, no overlap
+ex:hAnalyte a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .
+ex:hCurrent a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1, ex:c2 .
+ex:hPrior   a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c3, ex:c4 .
+
+# leaf level (1): children refine their parents
+ex:lResultC a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hCurrent ; tab:coversColumn ex:c1 .
+ex:lUnitC   a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hCurrent ; tab:coversColumn ex:c2 .
+ex:lResultP a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hPrior ; tab:coversColumn ex:c3 .
+ex:lUnitP   a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hPrior ; tab:coversColumn ex:c4 .
+
+# entries: c1..c4 x r0,r1 (c0 is the stub; its cells are LabelCells, omitted here)
+ex:e10 a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r0 .
+ex:e11 a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r1 .
+ex:e20 a tab:EntryCell ; tab:atColumn ex:c2 ; tab:atRow ex:r0 .
+ex:e21 a tab:EntryCell ; tab:atColumn ex:c2 ; tab:atRow ex:r1 .
+ex:e30 a tab:EntryCell ; tab:atColumn ex:c3 ; tab:atRow ex:r0 .
+ex:e31 a tab:EntryCell ; tab:atColumn ex:c3 ; tab:atRow ex:r1 .
+ex:e40 a tab:EntryCell ; tab:atColumn ex:c4 ; tab:atRow ex:r0 .
+ex:e41 a tab:EntryCell ; tab:atColumn ex:c4 ; tab:atRow ex:r1 .
