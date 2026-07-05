@@ -1,7 +1,6 @@
 """Tabular-topology ontology (tab:) — vocabulary + SHACL verifier-core tests."""
 import os
 from rdflib import Graph, Namespace, RDF, RDFS, OWL
-from pyshacl import validate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONT = os.path.join(ROOT, "vocab", "ontology")
