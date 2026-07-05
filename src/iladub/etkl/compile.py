@@ -83,10 +83,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         if region.kind is RegionKind.RECORD_TABLE:
             table_uri = URIRef(f"{_DOC}#table{idx}")
             n = assert_record_region(graph, region, table_uri, _DOC, page_number)
-            total = sum(1 for c in region.cells if c.row > 0)
-            escalated_here = total - n
-            asserted_total += n
-            escalated_total += escalated_here
+            b = region.grid.boundaries
+            data_cells = [c for c in region.cells if c.row > 0]
+            asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
+            escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
             reports.append(RegionReport(region.kind, "asserted", n, None,
                                         str(TAB.RecordTable), ascii_view))
         else:  # UNSUPPORTED_TABLE

@@ -42,3 +42,18 @@ def test_report_serializes_and_reparses(tmp_path):
     report = compile_tables(str(p))
     ttl = report.to_turtle()
     assert Graph().parse(data=ttl, format="turtle")
+
+
+def test_mixed_document_score_is_token_coherent(tmp_path):
+    from iladub.etkl.holon import TAB, ILADUB
+    p = tmp_path / "mixed.pdf"
+    from tests.etkl.fixtures import record_and_pivot_pdf
+    record_and_pivot_pdf(str(p))
+    report = compile_tables(str(p))
+    # both branches exercised
+    assert any(r.kind is RegionKind.RECORD_TABLE and r.verdict == "asserted" for r in report.regions)
+    assert any(r.verdict == "escalated" for r in report.regions)
+    assert (None, None, TAB.RecordTable) in report.graph
+    assert (None, None, ILADUB.CandidateConcept) in report.graph
+    # score is a coherent token ratio strictly inside (0, 1) — not the old mixed-unit nonsense
+    assert 0.0 < report.score < 1.0, report.score

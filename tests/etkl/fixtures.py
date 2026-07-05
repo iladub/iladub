@@ -90,6 +90,79 @@ def pivoted_table_pdf(path: str) -> dict:
     return {"n_leaf_cols": 7, "title": "SERIAL CBC"}
 
 
+def record_and_pivot_pdf(path: str) -> dict:
+    """One record table (top) + one pivot table (bottom) on a single page.
+
+    The two tables are separated by a large vertical gap (~186 pt in pdfplumber
+    coords) so detect_bands always assigns them to distinct bands.  The record
+    table has no prose title so the page yields exactly two bands:
+      Band 1 → RECORD_TABLE (asserted)
+      Band 2 → UNSUPPORTED_TABLE (escalated)
+
+    Verified empirically: the record rows are spaced 18 pt apart (gap ≈ 8 pt
+    each); the pivot rows are spaced 15–18 pt apart (gaps ≈ 3–12 pt); the
+    inter-table gap is ≈186 pt >> 1.8 × median_gap, so banding splits cleanly.
+    Returns a truth dict with the record column positions.
+    """
+    # ── Record table (no title) ──────────────────────────────────────────────
+    cols = [72.0, 240.0, 400.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rec_rows = [
+        ("Analyte", "Value", "Unit"),
+        ("Hemoglobin", "13.2", "g/dL"),
+        ("Hematocrit", "39.5", "%"),
+        ("Platelets", "250", "x10^9/L"),
+    ]
+    rec_y0 = PAGE_H - 100.0
+    for i, row in enumerate(rec_rows):
+        y = rec_y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+
+    # ── Pivot table (no title) ───────────────────────────────────────────────
+    # Adapted from pivoted_table_pdf — same merged-header structure, starts
+    # far below the record table so the inter-band gap is >> 1.8 × median gap.
+    piv_top = PAGE_H - 350.0            # pdfplumber top ≈ 350 for the parent-header line
+    leaves = [(50.0, 150.0, "left"), (160.0, 215.0, "right"), (225.0, 280.0, "left"),
+              (290.0, 335.0, "center"), (365.0, 420.0, "right"), (430.0, 485.0, "left"),
+              (495.0, 545.0, "center")]
+    parents = [("Current Visit", 1, 3), ("Prior Visit", 4, 6)]
+    subs = ["Analyte", "Result", "Unit", "Flag", "Result", "Unit", "Flag"]
+    body = [("Hemoglobin", "13.2", "g/dL", "LOW", "12.8", "g/dL", "LOW"),
+            ("Hematocrit", "39.5", "%", "LOW", "38.1", "%", "LOW"),
+            ("WBC", "7.8", "x10^9/L", "", "9.2", "x10^9/L", "HIGH"),
+            ("Platelets", "252", "x10^9/L", "", "248", "x10^9/L", ""),
+            ("MCV", "88.4", "fL", "", "87.9", "fL", "")]
+
+    def place(c, text, left, right, align, y):
+        if not text:
+            return
+        if align == "right":
+            c.drawRightString(right, y, text)
+        elif align == "center":
+            c.drawCentredString((left + right) / 2.0, y, text)
+        else:
+            c.drawString(left, y, text)
+
+    c.setFont("Courier-Bold", 10)
+    for label, i, j in parents:
+        c.drawCentredString((leaves[i][0] + leaves[j][1]) / 2.0, piv_top, label)
+    for (l, r, align), name in zip(leaves, subs):
+        place(c, name, l, r, "center" if name != "Analyte" else "left", piv_top - 15.0)
+    for idx in (1, 4):
+        l, r, _ = leaves[idx]
+        c.drawCentredString((l + r) / 2.0, piv_top - 28.0, "(SI)")
+    c.setFont("Courier", 10)
+    for i, row in enumerate(body):
+        y = piv_top - 50.0 - i * 18.0
+        for (l, r, align), cell in zip(leaves, row):
+            place(c, cell, l, r, align, y)
+
+    c.save()
+    return {"rec_cols": cols, "rec_n_body_rows": 3, "piv_n_leaf_cols": 7}
+
+
 def wide_cell_table_pdf(path: str) -> dict:
     """A clean 3-col header, but one data value is wide enough to fill the
     gutter — collapses the profiled grid; must escalate the whole region."""
