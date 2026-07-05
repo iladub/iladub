@@ -36,3 +36,15 @@ def test_tab_core_is_standalone():
                  "w3.org/ns/prov")
     for s in set(g.subjects()):
         assert not any(f in str(s) for f in forbidden), f"core references external subject {s}"
+
+
+CONFORMANT = os.path.join(EX, "hierarchical-conformant.ttl")
+
+
+def test_conformant_example_structure():
+    g = _g(CONFORMANT)
+    # 5 leaf columns, 2 leaf rows, 8 entry cells (cols c1..c4 x rows r0,r1)
+    tbl = next(g.subjects(RDF.type, TAB.HierarchicalTable))
+    assert len(list(g.objects(tbl, TAB.hasLeafColumn))) == 5
+    assert len(list(g.objects(tbl, TAB.hasLeafRow))) == 2
+    assert len(list(g.subjects(RDF.type, TAB.EntryCell))) == 8
