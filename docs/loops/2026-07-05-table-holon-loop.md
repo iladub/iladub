@@ -91,3 +91,14 @@ it must certify.)*
   graph. (Where 1a is today, plus the topology profile.)
 - **L2 assisted** — emit the table-holon; a human reviews every escalation.
 - **L3 unattended** — autonomous within Limits, once the verifier is trusted across diverse documents.
+
+### Increments (status)
+- [x] **1 — record-table closing slice** (2026-07-05): flat record table compiled end-to-end to a
+      validated `tab:` holon with a score; every other region escalated in-band as an
+      `iladub:CandidateConcept`. Closes the loop at L1 for the record kind. (Delivered by the
+      table-holon-closing-slice PR: spec + plan under `docs/superpowers/`.)
+- [ ] Field of possibles (each a future increment, escalated today): multi-level/merged headers
+      (pivot/hierarchical) · matrix/cross-tab · key-value · stacked · multi-word headers ·
+      **multi-band tables (header banded away from body — needs band-grouping)** ·
+      measured-vs-reconstructed ASCII diff view · domain grounding (value → LOINC/UCUM) ·
+      retry/repair control · cross-run STATE ledger.
