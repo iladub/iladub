@@ -121,3 +121,16 @@ def test_orphan_row_fails():
     c, t = _v(os.path.join(TST, "tab-orphan-row-leak.ttl"))
     assert not c
     assert "EntryRowBoundShape" in t
+
+
+def test_tab_physical_terms_present():
+    g = _g(TAB_TTL)
+    for cls in ["RecordTable", "BBox"]:
+        assert (TAB[cls], RDF.type, OWL.Class) in g, f"missing class tab:{cls}"
+    for prop in ["cellText", "onPage", "hasBBox", "x0", "y0", "x1", "y1"]:
+        assert (TAB[prop], RDF.type, None) in g, f"missing property tab:{prop}"
+
+
+def test_tab_recordtable_is_table_subclass():
+    g = _g(TAB_TTL)
+    assert (TAB.RecordTable, RDFS.subClassOf, TAB.Table) in g

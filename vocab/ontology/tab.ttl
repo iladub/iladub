@@ -76,3 +76,25 @@ tab:atColumn a owl:ObjectProperty ; rdfs:label "at column"@en ;
     rdfs:domain tab:EntryCell ; rdfs:range tab:LeafColumn .
 tab:atRow a owl:ObjectProperty ; rdfs:label "at row"@en ;
     rdfs:domain tab:EntryCell ; rdfs:range tab:LeafRow .
+
+# --- kinds (v1) ----------------------------------------------------------------
+tab:RecordTable a owl:Class ; rdfs:subClassOf tab:Table ;
+    rdfs:label "Record table"@en ;
+    rdfs:comment "A flat table: a single-level header with one label per leaf column, and rows of entries."@en .
+
+# --- physical layer (geometry + surface text; needed for round-trip + provenance) ---
+tab:cellText a owl:DatatypeProperty ; rdfs:label "cell text"@en ;
+    rdfs:domain tab:Cell ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The surface text a cell carries. Language-tagged literals are allowed; NOT constrained to xsd:string."@en .
+tab:onPage a owl:DatatypeProperty ; rdfs:label "on page"@en ;
+    rdfs:domain tab:Cell ; rdfs:range xsd:integer ;
+    rdfs:comment "Zero-based index of the page the cell was measured on."@en .
+tab:hasBBox a owl:ObjectProperty ; rdfs:label "has bbox"@en ;
+    rdfs:domain tab:Cell ; rdfs:range tab:BBox ;
+    rdfs:comment "The measured bounding box of the cell, in PDF points."@en .
+tab:BBox a owl:Class ; rdfs:label "Bounding box"@en ;
+    rdfs:comment "A rectangle in PDF points: x0/x1 from the page left, y0/y1 (top/bottom) from the page top."@en .
+tab:x0 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "x0"@en .
+tab:y0 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "y0"@en .
+tab:x1 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "x1"@en .
+tab:y1 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "y1"@en .
