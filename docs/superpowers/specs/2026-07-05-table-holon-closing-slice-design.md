@@ -172,7 +172,7 @@ report.score                 # 0.71
 report.regions[0]            # RegionReport(kind=RECORD_TABLE, verdict=asserted, cells=15)
 report.regions[1]            # RegionReport(kind=UNSUPPORTED_TABLE, verdict=escalated,
                              #              reason=KIND_NOT_SUPPORTED, anchor=tab:HierarchicalTable)
-report.regions[1].ascii_diff # the spatial-ASCII evidence (str)
+report.regions[1].ascii      # the spatial-ASCII evidence (str)
 report.graph                 # rdflib Graph: tab: holon + iladub: candidates
 report.to_turtle()           # serialize holon + propositions
 ```
