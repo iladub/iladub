@@ -76,9 +76,9 @@ tab:RefinementShape a sh:NodeShape ;
 
 tab:EntryCellShape a sh:NodeShape ;
     sh:targetClass tab:EntryCell ;
-    sh:property [ sh:path tab:atColumn ; sh:minCount 1 ; sh:maxCount 1 ;
+    sh:property [ sh:name "EntryCellShape" ; sh:path tab:atColumn ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An entry cell must sit at exactly one leaf column." ] ;
-    sh:property [ sh:path tab:atRow ; sh:minCount 1 ; sh:maxCount 1 ;
+    sh:property [ sh:name "EntryCellShape" ; sh:path tab:atRow ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An entry cell must sit at exactly one leaf row." ] .
 
 #################################################################
@@ -114,14 +114,14 @@ tab:UnambiguousAccessShape a sh:NodeShape ;
             SELECT $this WHERE {
                 ?tbl tab:hasLeafColumn $this .
                 {
-                    SELECT $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
-                        ?t2 tab:hasLeafColumn $this .
+                    SELECT ?tbl $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
+                        ?tbl tab:hasLeafColumn $this .
                         OPTIONAL {
-                            ?t2 tab:hasHeaderNode ?h .
+                            ?tbl tab:hasHeaderNode ?h .
                             ?h tab:coversColumn $this .
                             FILTER NOT EXISTS { ?child tab:parentHeader ?h }
                         }
-                    } GROUP BY $this
+                    } GROUP BY ?tbl $this
                 }
                 FILTER(?n != 1)
             }

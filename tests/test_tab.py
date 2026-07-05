@@ -107,3 +107,10 @@ def test_conformant_passes_full_verifier():
     """The conformant example passes ALL shapes together (tiling + access)."""
     c, t = _v(CONFORMANT)
     assert c, t
+
+
+def test_entry_cardinality_fails():
+    """An entry cell with two atColumn violates the exactly-one cardinality."""
+    c, t = _v(os.path.join(TST, "tab-cardinality-leak.ttl"))
+    assert not c
+    assert "EntryCellShape" in t
