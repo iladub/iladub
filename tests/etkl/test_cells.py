@@ -5,7 +5,7 @@ from collections import Counter
 
 from tests.etkl.fixtures import pivoted_table_pdf, verbose_header_table_pdf
 from iladub.etkl import extract_words, text_lines, detect_bands, infer_leaf_grid
-from iladub.etkl.cells import recover_leaf_grid
+from iladub.etkl.cells import recover_leaf_grid, group_wrapped
 from iladub.etkl.bands import Band
 
 
@@ -51,3 +51,17 @@ def test_recovers_grid_under_verbose_header(tmp_path):
 
     # New suffix-max code must recover the true 3-column leaf grid.
     assert recover_leaf_grid(band).ncols == 3
+
+
+from iladub.etkl.regions import column_of
+
+
+def test_si_wrap_merges_into_result(tmp_path):
+    band = _piv_band(tmp_path)
+    grid = recover_leaf_grid(band)
+    rows = group_wrapped(band, grid)
+    # every '(SI)' token must be absorbed into a Result cell, not a standalone cell
+    standalone = [c for row in rows for c in row if c.text.strip() == "(SI)"]
+    assert standalone == []
+    merged = [c for row in rows for c in row if "(SI)" in c.text and "Result" in c.text]
+    assert len(merged) == 2   # the two Result columns
