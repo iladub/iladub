@@ -1,0 +1,10 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+ex:t a tab:RecordTable ;
+    tab:hasLeafColumn ex:c0 ; tab:hasLeafRow ex:r0 ;
+    tab:hasHeaderNode ex:h0 ; tab:hasCell ex:e0 .
+ex:c0 a tab:LeafColumn . ex:r0 a tab:LeafRow .
+ex:h0 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .
+# EntryCell missing cellText/onPage/hasBBox — must fail EntryCellPhysicalShape
+ex:e0 a tab:EntryCell ; tab:atColumn ex:c0 ; tab:atRow ex:r0 .

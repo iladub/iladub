@@ -1,0 +1,14 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+# tbl1 owns c_orphan but NO header OF tbl1 covers it -> a real coverage gap in tbl1
+ex:tbl1 a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:cA, ex:c_orphan ;
+    tab:hasHeaderNode ex:h1 .
+ex:h1 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cA .
+ex:cA a tab:LeafColumn . ex:c_orphan a tab:LeafColumn .
+# tbl2's ALIEN header covers c_orphan -> the OLD unscoped shape wrongly passed because of this
+ex:tbl2 a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:cB ;
+    tab:hasHeaderNode ex:h_alien .
+ex:h_alien a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cB, ex:c_orphan .
+ex:cB a tab:LeafColumn .

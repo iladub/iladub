@@ -1,0 +1,32 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# A flat 3-column record table: single-level header, one label per column.
+ex:t a tab:RecordTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2 ;
+    tab:hasLeafRow    ex:r0 ;
+    tab:hasHeaderNode ex:h0, ex:h1, ex:h2 ;
+    tab:hasCell ex:e0, ex:e1, ex:e2 .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+# flat header: one node per column at level 0 (tiles c0..c2, no overlap, no parents)
+ex:h0 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .
+ex:h1 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1 .
+ex:h2 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c2 .
+
+# one data row of entries, each carrying text + page + bbox + provenance
+ex:e0 a tab:EntryCell ; tab:atColumn ex:c0 ; tab:atRow ex:r0 ;
+    tab:cellText "Hemoglobin" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 72.0 ; tab:y0 662.0 ; tab:x1 130.0 ; tab:y1 672.0 ] ;
+    prov:wasDerivedFrom <https://example.org/doc#p0-72-662> .
+ex:e1 a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r0 ;
+    tab:cellText "13.2" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 240.0 ; tab:y0 662.0 ; tab:x1 268.0 ; tab:y1 672.0 ] ;
+    prov:wasDerivedFrom <https://example.org/doc#p0-240-662> .
+ex:e2 a tab:EntryCell ; tab:atColumn ex:c2 ; tab:atRow ex:r0 ;
+    tab:cellText "g/dL" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 400.0 ; tab:y0 662.0 ; tab:x1 428.0 ; tab:y1 672.0 ] ;
+    prov:wasDerivedFrom <https://example.org/doc#p0-400-662> .

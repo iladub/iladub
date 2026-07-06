@@ -43,9 +43,22 @@ baml = [
     "pydantic>=2.6",
     "typing_extensions>=4.10",
 ]
+etkl = [
+    "pdfplumber>=0.11",
+    "numpy>=1.26",
+]
+demo = [
+    # ET(K)L showcase notebook (no LLM/baml dependency)
+    "matplotlib>=3.8",
+    "pypdfium2>=4",
+    "reportlab>=4.0",   # generate the synthetic demo PDFs live
+    "ipykernel>=6",
+    "jupyterlab>=4",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
+    "reportlab>=4.0",
 ]
 docs = [
     "mkdocs-material>=9",
@@ -66,3 +79,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

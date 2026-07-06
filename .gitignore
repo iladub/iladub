@@ -38,3 +38,4 @@ htmlcov/
 
 # Confidential / internal — never commit (client/domain specifics)
 internal/
+.venv/

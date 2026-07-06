@@ -1,0 +1,7 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c5 ;
+    tab:hasHeaderNode ex:hAnalyte .
+ex:c0 a tab:LeafColumn . ex:c5 a tab:LeafColumn .
+ex:hAnalyte a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .   # c5 uncovered

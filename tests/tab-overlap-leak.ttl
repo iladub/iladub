@@ -1,0 +1,8 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c1 ;
+    tab:hasHeaderNode ex:hA, ex:hB .
+ex:c1 a tab:LeafColumn .
+ex:hA a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1 .
+ex:hB a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1 .   # overlap at level 0
