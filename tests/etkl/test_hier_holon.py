@@ -67,8 +67,10 @@ def test_stub_column_promoted_to_level_zero(tmp_path):
     """Analyte (col 0, no merged parent) must be emitted as a level-0 HeaderNode.
 
     The conformant example shows stubs at level 0 covering only their own column.
-    A parent=None node at level>0 must be promoted to level 0 in emission to satisfy
-    the CoverageShape + NoOverlapShape + UnambiguousAccessShape tiling invariants.
+    A parent=None node is a root by definition; emitting it at the maker's syntactic
+    level would be structurally incorrect regardless of which SHACL shapes happen to
+    fire.  The current shapes do not trigger on this node for the pivot fixture, but
+    level-0 emission is semantically required — it is not a shape-coerced workaround.
     """
     p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
     band = detect_bands(text_lines(extract_words(str(p))))[-1]

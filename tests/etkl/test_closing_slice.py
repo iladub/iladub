@@ -28,6 +28,10 @@ def test_pivot_now_compiles_hierarchically(tmp_path):
     report = compile_tables(str(p))
     assert (None, None, TAB.HierarchicalTable) in report.graph, "pivot must compile to HierarchicalTable"
     assert report.score > 0.0, "must assert at least some body tokens"
+    assert report.score < 1.0, (
+        "pivot score must be < 1.0: header words (Current Visit, Prior Visit, sub-labels, (SI))"
+        " inflate the denominator so the ratio of asserted body tokens is strictly less than 1"
+    )
     # safety guard: never a wrong record assertion
     assert not any(r.kind is RegionKind.RECORD_TABLE for r in report.regions)
 
