@@ -2,6 +2,7 @@
 
 increment 1a: geometry -> bands -> body leaf-grid.
 closing slice: classify -> round-trip -> validated table-holon + score.
+loop 2: hierarchical header tree + multi-level holon emission.
 """
 
 from .geometry import Word, Line, extract_words, text_lines
@@ -10,6 +11,8 @@ from .grid import LeafGrid, infer_leaf_grid
 from .regions import RegionKind, Cell, ClassifiedRegion, classify, assign_cells, column_of
 from .roundtrip import cell_round_trips, render_ascii
 from .compile import compile_tables, CompilationReport, RegionReport
+from .hierarchical import classify_hierarchical, HierRegion
+from .cells import recover_leaf_grid
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -18,4 +21,6 @@ __all__ = [
     "RegionKind", "Cell", "ClassifiedRegion", "classify", "assign_cells", "column_of",
     "cell_round_trips", "render_ascii",
     "compile_tables", "CompilationReport", "RegionReport",
+    "classify_hierarchical", "HierRegion",
+    "recover_leaf_grid",
 ]
