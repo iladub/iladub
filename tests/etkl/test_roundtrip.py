@@ -59,3 +59,43 @@ def test_region_round_trip_detects_missing_word(tmp_path):
     stray = Line((Word("XXX", 5.0, 20.0, 400.0, 410.0),), 400.0, 410.0)
     band2 = Band(band.lines + (stray,), band.top, 410.0)
     assert region_round_trips(reg, band2) is False
+
+
+def test_render_region_ascii_legible(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.hierarchical import classify_hierarchical
+    from iladub.etkl.roundtrip import render_region_ascii
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    reg = classify_hierarchical(band)
+    out = render_region_ascii(reg)
+    assert len(out.splitlines()) >= 2
+    assert "Current" in out and "Prior" in out      # merged parents rendered
+    assert "Hemoglobin" in out                        # a body row rendered
+
+
+def test_region_round_trip_rejects_gap_word(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.hierarchical import classify_hierarchical
+    from iladub.etkl.roundtrip import region_round_trips
+    from iladub.etkl.bands import Band
+    from iladub.etkl.geometry import Word, Line
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    reg = classify_hierarchical(band)
+    # a word INSIDE the horizontal grid but at a y in NEITHER a header level nor a
+    # body row band (placements == 0) must fail the exactly-one gate
+    gx = (reg.grid.boundaries[0] + reg.grid.boundaries[-1]) / 2.0
+    # Place gap_y midway between last header line and first body row, clearly in neither
+    last_header_y = max(w.top for ln in band.lines[:reg.body_line] for w in ln.words)
+    first_body_y = reg.rows[0].top
+    gap_y = (last_header_y + first_body_y) / 2.0
+    w = Word("GAP", gx, gx + 10.0, gap_y, gap_y + 8.0)
+    band2 = Band(band.lines + (Line((w,), gap_y, gap_y + 8.0),), band.top, band.bottom)
+    assert region_round_trips(reg, band2) is False
