@@ -86,11 +86,13 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
       - and line i+1 does not itself tile a fresh full row (it has fewer occupied
         columns than the anchor).
 
-    Using ``gap < lead`` (strictly less than the median) is the structural oracle:
-    wrap-continuation lines are typeset tighter than row-to-row spacing.  Using
-    ``gap <= lead * k`` for k > 1 (as in the original brief) incorrectly admits
-    rows whose spacing equals the median, causing body rows with missing data cells
-    to be absorbed into the row above.
+    Using ``gap < lead * 0.9`` is the structural oracle: wrap-continuation lines
+    are typeset *clearly* tighter than the row pitch, so a 10 % margin keeps the
+    wrap gap (≈ 13 pts in the reference fixture) well inside the threshold and the
+    body-row pitch (≈ 18 pts = lead) well outside it.  The margin is structural,
+    not tuned to the fixture — ``lead`` is the median of the document's own gaps,
+    adaptive by construction.  The ultimate guard against a mis-grouping is the
+    downstream round-trip and SHACL validation, not this threshold alone.
     """
     b = grid.boundaries
     lines = list(band.lines)
@@ -118,9 +120,10 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         for col, words in by_col.items():
             merged_into[i].setdefault(col, []).extend(words)
         # Pull wrap-continuations from subsequent contiguous lines.
-        # Oracle: gap < lead — continuation lines are typeset tighter than row pitch.
+        # Oracle: gap < lead * 0.9 — a continuation gap is clearly smaller than
+        # the row pitch; the 10 % margin gives headroom against real-PDF float noise.
         j = i + 1
-        while j < len(lines) and (tops[j] - tops[j - 1]) < lead:
+        while j < len(lines) and (tops[j] - tops[j - 1]) < lead * 0.9:
             cols_j = per_line[j]
             # Continuation only if every word on line j sits in a column already open
             # on the anchor, AND line j does not tile a fresh full row (fewer cols).

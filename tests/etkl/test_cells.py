@@ -53,9 +53,6 @@ def test_recovers_grid_under_verbose_header(tmp_path):
     assert recover_leaf_grid(band).ncols == 3
 
 
-from iladub.etkl.regions import column_of
-
-
 def test_si_wrap_merges_into_result(tmp_path):
     band = _piv_band(tmp_path)
     grid = recover_leaf_grid(band)
@@ -65,3 +62,12 @@ def test_si_wrap_merges_into_result(tmp_path):
     assert standalone == []
     merged = [c for row in rows for c in row if "(SI)" in c.text and "Result" in c.text]
     assert len(merged) == 2   # the two Result columns
+
+
+def test_body_rows_stay_distinct(tmp_path):
+    band = _piv_band(tmp_path)
+    grid = recover_leaf_grid(band)
+    rows = group_wrapped(band, grid)
+    analytes = {"Hemoglobin", "Hematocrit", "WBC", "Platelets", "MCV"}
+    analyte_rows = [r for r in rows if r and r[0].text in analytes]
+    assert len(analyte_rows) == 5   # not over-absorbed into fewer rows
