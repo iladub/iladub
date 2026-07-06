@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, RDF
 
 from .geometry import extract_words, text_lines
 from .bands import detect_bands
@@ -89,21 +89,43 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
             reports.append(RegionReport(region.kind, "asserted", n, None,
                                         str(TAB.RecordTable), ascii_view))
-        else:  # UNSUPPORTED_TABLE
-            cand_uri = URIRef(f"{_DOC}#region{idx}")
-            escalate_region(graph, cand_uri, _DOC, ascii_view,
-                            reason="KIND_NOT_SUPPORTED",
-                            anchor=TAB.HierarchicalTable, confidence=0.4)
-            tokens = sum(len(ln.words) for ln in band.lines)
-            escalated_total += tokens
-            reports.append(RegionReport(region.kind, "escalated", 0,
-                                        "KIND_NOT_SUPPORTED",
-                                        str(TAB.HierarchicalTable), ascii_view))
+        else:  # UNSUPPORTED_TABLE — try the hierarchical maker first
+            from .hierarchical import classify_hierarchical
+            from .holon import assert_hier_region
+            hreg = classify_hierarchical(band)
+            if hreg is not None:
+                table_uri = URIRef(f"{_DOC}#htable{idx}")
+                n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
+                tokens = sum(len(ln.words) for ln in band.lines)
+                asserted_total += n
+                escalated_total += max(0, tokens - n)
+                reports.append(RegionReport(
+                    region.kind,
+                    "asserted" if n else "escalated",
+                    n,
+                    None if n else "ROUND_TRIP_FAIL",
+                    str(TAB.HierarchicalTable),
+                    ascii_view,
+                ))
+            else:
+                # Not hierarchical — escalate whole region in-band
+                cand_uri = URIRef(f"{_DOC}#region{idx}")
+                escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                reason="KIND_NOT_SUPPORTED",
+                                anchor=TAB.HierarchicalTable, confidence=0.4)
+                tokens = sum(len(ln.words) for ln in band.lines)
+                escalated_total += tokens
+                reports.append(RegionReport(region.kind, "escalated", 0,
+                                            "KIND_NOT_SUPPORTED",
+                                            str(TAB.HierarchicalTable), ascii_view))
 
     denom = asserted_total + escalated_total
     score = 1.0 if denom == 0 else asserted_total / denom
 
-    if validate_shapes and (None, None, TAB.RecordTable) in graph:
+    if validate_shapes and (
+        any(graph.subjects(RDF.type, TAB.RecordTable))
+        or any(graph.subjects(RDF.type, TAB.HierarchicalTable))
+    ):
         conforms, text = _validate(graph)
         if not conforms:
             raise AssertionError(f"asserted holon failed tab: SHACL:\n{text}")

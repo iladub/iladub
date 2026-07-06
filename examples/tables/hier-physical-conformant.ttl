@@ -1,0 +1,33 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# A 2-level hierarchical table: one stub column (c0) + two leaf columns (c1, c2)
+# under one merged parent header (hCur). The two entry cells carry full physical
+# metadata (cellText + onPage + hasBBox) — conformant with tab:WrappedCellShape.
+ex:t a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2 ;
+    tab:hasLeafRow ex:r0 ;
+    tab:hasHeaderNode ex:hStub, ex:hCur, ex:lRes, ex:lUnit ;
+    tab:hasCell ex:e1, ex:e2 .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+# level 0: stub covers c0; merged parent covers c1+c2
+ex:hStub a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .
+ex:hCur  a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1, ex:c2 .
+
+# level 1: two leaf children refine hCur
+ex:lRes  a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hCur ; tab:coversColumn ex:c1 .
+ex:lUnit a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hCur ; tab:coversColumn ex:c2 .
+
+# one body row: two entry cells with full physical metadata
+ex:e1 a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r0 ;
+    tab:cellText "13.2" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 160.0 ; tab:y0 705.0 ; tab:x1 188.0 ; tab:y1 715.0 ] ;
+    prov:wasDerivedFrom <https://example.org/doc#p0-160-705> .
+ex:e2 a tab:EntryCell ; tab:atColumn ex:c2 ; tab:atRow ex:r0 ;
+    tab:cellText "g/dL" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 225.0 ; tab:y0 705.0 ; tab:x1 260.0 ; tab:y1 715.0 ] ;
+    prov:wasDerivedFrom <https://example.org/doc#p0-225-705> .
