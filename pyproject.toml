@@ -48,9 +48,10 @@ etkl = [
     "numpy>=1.26",
 ]
 demo = [
-    # ET(K)L increment-1a showcase notebook (no LLM/baml dependency)
+    # ET(K)L showcase notebook (no LLM/baml dependency)
     "matplotlib>=3.8",
     "pypdfium2>=4",
+    "reportlab>=4.0",   # generate the synthetic demo PDFs live
     "ipykernel>=6",
     "jupyterlab>=4",
 ]

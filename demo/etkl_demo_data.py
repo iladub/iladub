@@ -62,6 +62,51 @@ def lab_report_pdf(path: str) -> dict:
     }
 
 
+# --- Supported case: a flat record table with single-word column headers ------
+
+# 4 columns, single-word headers -> the kind the closing slice fully compiles.
+_REC_COLS = [60.0, 250.0, 350.0, 460.0]
+_REC_HEADER = ("Analyte", "Result", "Unit", "Flag")
+_REC_ROWS = [
+    ("Hemoglobin", "13.2", "g/dL", "LOW"),
+    ("Hematocrit", "39.5", "%", "LOW"),
+    ("WBC", "7.8", "x10^9/L", "HIGH"),
+    ("Platelets", "252", "x10^9/L", "OK"),
+    ("MCV", "88.4", "fL", "OK"),
+    ("Neutrophils", "62.1", "%", "OK"),
+]
+
+
+def record_report_pdf(path: str) -> dict:
+    """A flat record table (single-word headers, one value per cell) — the kind
+    the closing slice compiles end-to-end into a validated table-holon. Title
+    and meta bands sit above it so the classifier must also reject non-tables."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+
+    c.setFont("Courier-Bold", 15)
+    c.drawString(60.0, PAGE_H - 60.0, "HEMATOLOGY PANEL")
+    c.setFont("Courier", 10)
+    c.drawString(60.0, PAGE_H - 100.0, "Patient: Jane Doe        MRN: 000-42-1337")
+
+    top = PAGE_H - 150.0
+    c.setFont("Courier-Bold", 10)
+    for x, h in zip(_REC_COLS, _REC_HEADER):
+        c.drawString(x, top, h)
+    c.setFont("Courier", 10)
+    for i, row in enumerate(_REC_ROWS, start=1):
+        y = top - i * 18.0
+        for x, cell in zip(_REC_COLS, row):
+            c.drawString(x, y, cell)
+
+    c.save()
+    return {
+        "cols": _REC_COLS,
+        "n_table_cols": len(_REC_COLS),
+        "n_body_rows": len(_REC_ROWS),
+        "title": "HEMATOLOGY PANEL",
+    }
+
+
 # --- Hard case: a pivoted report with a 2-level, merged, centered header ------
 
 # 7 leaf columns. (left_x, right_x, align) — align drives how each cell's text
