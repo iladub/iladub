@@ -97,8 +97,17 @@ it must certify.)*
       validated `tab:` holon with a score; every other region escalated in-band as an
       `iladub:CandidateConcept`. Closes the loop at L1 for the record kind. (Delivered by the
       table-holon-closing-slice PR: spec + plan under `docs/superpowers/`.)
-- [ ] Field of possibles (each a future increment, escalated today): multi-level/merged headers
-      (pivot/hierarchical) · matrix/cross-tab · key-value · stacked · multi-word headers ·
+- [x] **2 — hierarchical headers + wrapped text** (2026-07-06): a merged/`pivot` **column**-header
+      table with wrapped labels (the `pivoted_report_pdf` case) compiled end-to-end to a validated
+      multi-level `tab:HierarchicalTable` — leaf-grid recovery (excluding spanning rows), row-clock
+      logical rows, type-homogeneity header/body split, centered-span tree inference, and a **2-D
+      round-trip** oracle; residue escalated in-band. Certified by the reused refinement/coverage
+      SHACL + a new `WrappedCellShape`. (Delivered by the hierarchical-headers-loop PR.)
+- [ ] Field of possibles (each a future increment, escalated today): **row-header hierarchies
+      (pivot / aggregation-by-index — needs `tab:coversRow`, the row analog of `coversColumn`)** ·
+      matrix/cross-tab · key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·
-      measured-vs-reconstructed ASCII diff view · domain grounding (value → LOINC/UCUM) ·
+      **signal-tagging (font/colour/ruled-lines — an evidence fallback only when the geometry is
+      insufficient)** · rich-format adapters (xlsx/xls/docx/html feeding the same `SourceCell`
+      intermediate) · measured-vs-reconstructed ASCII diff view · domain grounding (value → LOINC/UCUM) ·
       retry/repair control · cross-run STATE ledger.
