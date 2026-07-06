@@ -16,6 +16,10 @@ def _piv(tmp_path):
 def test_is_numeric():
     assert is_numeric("13.2") and is_numeric("252") and is_numeric("7.8")
     assert not is_numeric("Result") and not is_numeric("g/dL")
+    # Missing-data sentinels parse as float but are not finite — must return False.
+    assert not is_numeric("nan")
+    assert not is_numeric("inf")
+    assert not is_numeric("-inf")
 
 
 def test_boundary_after_header_rows(tmp_path):

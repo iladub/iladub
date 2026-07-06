@@ -21,6 +21,7 @@ invariant of merged headers, not a constant tuned to a specific fixture.
 """
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from typing import Sequence
@@ -32,13 +33,18 @@ from .regions import column_of
 
 
 def is_numeric(s: str) -> bool:
-    """True if s (after stripping commas and percent signs) parses as a float."""
+    """True if s (after stripping commas and percent signs) parses as a finite float.
+
+    Strings that parse as float but are not finite numbers — "nan", "inf", "-inf" —
+    return False. These are common missing-data sentinels that must not be treated as
+    numeric data values (e.g. "nan" would otherwise pass float() and be misclassified
+    as a body-column value, corrupting the header/body split).
+    """
     t = re.sub(r"[,%]", "", s.strip())
     if not t:
         return False
     try:
-        float(t)
-        return True
+        return math.isfinite(float(t))
     except ValueError:
         return False
 
@@ -62,7 +68,15 @@ def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     Iterates candidate splits from line 1 onward. A split is accepted when at
     least one leaf column has exclusively numeric text from that line to the end
     of the band (the label→data transition). Returns None if no such split exists
-    (all-text table or ambiguous) → caller escalates.
+    (e.g. an all-text table) → caller escalates.
+
+    Design note — numeric-homogeneity as the operative proxy:
+    This function uses numeric-column homogeneity as the intentional operative proxy
+    for the spec's "type-homogeneous" header/body boundary: returns the first line
+    index at/after which at least one leaf column is all-numeric down the remaining
+    lines. This correctly yields None-escalation for all-text tables (no column ever
+    homogenizes to numeric), which is the desired behavior — the caller (or downstream
+    SHACL) handles the ambiguity rather than guessing a boundary.
     """
     lines = list(band.lines)
     for start in range(1, len(lines)):
@@ -93,6 +107,18 @@ def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
 
     For single-column cells the left and right extents are equal and no
     extension occurs.
+
+    Design note — centered-merge assumption:
+    This symmetrization assumes merged headers are centered over their span
+    (i.e. the PDF was authored with "Merge & Center"). A narrow centered label
+    correctly recovers its full column run. Corner cases that are NOT in scope:
+    - A single word that merely straddles one gutter (an anomaly) may be
+      over-spanned by one column. This is caught downstream by NoOverlapShape /
+      CoverageShape and correctly ESCALATES — it is not asserted wrong.
+    - A left- or right-aligned merge (not centered) is out of scope for this
+      oracle; such alignment is uncommon in formal report tables.
+    Do NOT add a `cc != lc and cc != rc` guard: it would block the pivot's
+    "Prior Visit" header (cc=5, lc=4, rc=5) from extending to col 6.
     """
     ncols = len(b) - 1
     cx = (cell.x0 + cell.x1) / 2.0
@@ -146,11 +172,15 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
             nodes.append(HeaderNode(lvl, covers, cell.text, None))
 
     # Link each node to its nearest parent (level − 1 whose covers ⊇ this node's).
+    # Break after the first match so the first qualifying parent wins deterministically
+    # (nodes are ordered top-to-bottom, left-to-right, so "first" = leftmost ancestor
+    # at the parent level whose covers contain this node's covers).
     linked: list[HeaderNode] = []
     for n in nodes:
         parent_idx: int | None = None
         for j, m in enumerate(nodes):
             if m.level == n.level - 1 and set(n.covers) <= set(m.covers):
                 parent_idx = j
+                break
         linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx))
     return tuple(linked)
