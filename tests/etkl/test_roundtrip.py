@@ -28,3 +28,34 @@ def test_render_ascii_places_words_left_to_right():
                  Word("B", 400.0, 410.0, 100.0, 110.0)), 100.0, 110.0)
     out = render_ascii(Band((line,), 100.0, 110.0), width=40)
     assert out.index("A") < out.index("B")
+
+
+def test_region_round_trips_pivot(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.hierarchical import classify_hierarchical
+    from iladub.etkl.roundtrip import region_round_trips
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    reg = classify_hierarchical(band)
+    assert region_round_trips(reg, band) is True
+
+
+def test_region_round_trip_detects_missing_word(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.hierarchical import classify_hierarchical
+    from iladub.etkl.roundtrip import region_round_trips
+    from iladub.etkl.bands import Band
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    reg = classify_hierarchical(band)
+    # inject a stray word far outside the grid: must fail to place -> round-trip False
+    from iladub.etkl.geometry import Word, Line
+    stray = Line((Word("XXX", 5.0, 20.0, 400.0, 410.0),), 400.0, 410.0)
+    band2 = Band(band.lines + (stray,), band.top, 410.0)
+    assert region_round_trips(reg, band2) is False
