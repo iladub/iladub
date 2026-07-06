@@ -77,6 +77,30 @@ def test_render_region_ascii_legible(tmp_path):
     assert "Hemoglobin" in out                        # a body row rendered
 
 
+def test_region_round_trip_rejects_straddling_body_cell(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.hierarchical import classify_hierarchical
+    from iladub.etkl.roundtrip import region_round_trips
+    from iladub.etkl.bands import Band
+    from iladub.etkl.geometry import Word, Line
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    reg = classify_hierarchical(band)
+    # Inject a word in a body row whose x-extent crosses boundary[1] (139.5).
+    # center 140.0 is inside the grid; cy is within row 0's padded extent.
+    # This is the silent-wrong scenario: word is assigned to col 1 by center
+    # but its ink spills into col 0 — region_round_trips must now reject it.
+    b = reg.grid.boundaries            # (50.0, 139.5, 220.0, ...)
+    body_top = reg.rows[0].top         # ~136.94
+    straddle = Word("STRAD", b[1] - 9.5, b[1] + 10.5, body_top, body_top + 10.0)
+    new_line = Line((straddle,), body_top, body_top + 10.0)
+    band2 = Band(band.lines + (new_line,), band.top, band.bottom)
+    assert region_round_trips(reg, band2) is False
+
+
 def test_region_round_trip_rejects_gap_word(tmp_path):
     import pytest
     pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")

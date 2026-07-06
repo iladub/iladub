@@ -121,13 +121,13 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
     If region_round_trips is False, escalates the whole region (ROUND_TRIP_FAIL)
     and returns 0.
     """
-    from .roundtrip import region_round_trips
+    from .roundtrip import region_round_trips, render_region_ascii
     from .regions import column_of
 
     if not region_round_trips(region, band):
         rt_uri = URIRef(f"{table_uri}-rt")
-        escalate_region(g, rt_uri, doc_uri, "", "ROUND_TRIP_FAIL",
-                        TAB.HierarchicalTable, 0.3)
+        escalate_region(g, rt_uri, doc_uri, render_region_ascii(region),
+                        "ROUND_TRIP_FAIL", TAB.HierarchicalTable, 0.3)
         return 0
 
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))

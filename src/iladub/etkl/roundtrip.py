@@ -23,7 +23,7 @@ from typing import Sequence
 
 from .bands import Band
 from .geometry import COORD_EPS
-from .regions import Cell
+from .regions import Cell, column_of
 
 
 def cell_round_trips(cell: Cell, boundaries: Sequence[float]) -> bool:
@@ -57,6 +57,7 @@ def region_round_trips(region, band) -> bool:
     win = (min(gaps) / 2.0) if gaps else 8.0
     # Row extents: padded by 1 pt to absorb float rounding on anchor-cell tops.
     row_extents = [(r.top - 1.0, r.bottom + 1.0) for r in region.rows]
+    EPS = 0.5  # float slop for column-containment (matches horizontal-gate slop)
     for ln in band.lines:
         for w in ln.words:
             cx = (w.x0 + w.x1) / 2.0
@@ -65,12 +66,17 @@ def region_round_trips(region, band) -> bool:
                 return False                        # outside the leaf grid
             cy = (w.top + w.bottom) / 2.0
             # Exactly-one vertical slot: header level OR body row, not both, not neither.
-            placements = (
-                sum(1 for ht in header_tops if abs(w.top - ht) < win)
-                + sum(1 for lo, hi in row_extents if lo <= cy <= hi)
-            )
+            header_hits = sum(1 for ht in header_tops if abs(w.top - ht) < win)
+            body_hits = sum(1 for lo, hi in row_extents if lo <= cy <= hi)
+            placements = header_hits + body_hits
             if placements != 1:
                 return False                        # zero or double placement
+            # Column containment — body words only.
+            # Merged parent headers legitimately span multiple columns; exempt them.
+            if body_hits == 1:
+                col = column_of(cx, b)
+                if not (b[col] - EPS <= w.x0 and w.x1 <= b[col + 1] + EPS):
+                    return False                    # body word straddles a leaf-column gutter
     return True
 
 

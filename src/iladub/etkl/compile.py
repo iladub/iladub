@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, RDF
 
 from .geometry import extract_words, text_lines
 from .bands import detect_bands
@@ -123,8 +123,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     score = 1.0 if denom == 0 else asserted_total / denom
 
     if validate_shapes and (
-        (None, None, TAB.RecordTable) in graph
-        or (None, None, TAB.HierarchicalTable) in graph
+        any(graph.subjects(RDF.type, TAB.RecordTable))
+        or any(graph.subjects(RDF.type, TAB.HierarchicalTable))
     ):
         conforms, text = _validate(graph)
         if not conforms:
