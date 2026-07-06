@@ -6,7 +6,6 @@ gutters and collapse the column count (a 7-col pivot reads as 5 over all rows).
 """
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass
 
 from .bands import Band
@@ -31,19 +30,35 @@ class SourceCell:
 
 
 def recover_leaf_grid(band: Band) -> LeafGrid:
-    """Leaf grid from the band's TILING rows only.
+    """Leaf grid = the most-stable column count across row-suffixes.
 
-    A tiling row has the modal-maximum number of word clusters; spanning rows
-    (merged parent headers) have fewer, wider clusters and are excluded so their
-    ink does not collapse the gutters. Falls back to the whole band if no
-    majority tiling set exists.
+    Spanning or verbose header rows cause instability at the top of the suffix
+    range — either collapsing the column count (few wide clusters) or inflating
+    it (many short tokens whose inter-word gaps look like gutters). The stable
+    leaf count is the MODE (most frequent column count) across all qualifying
+    suffixes of ≥2 rows. Among suffixes achieving the modal count, the longest
+    (most rows = strongest gutter evidence) is returned. Falls back to
+    infer_leaf_grid(band) if nothing qualifies (e.g. a single-line band).
     """
-    counts = [len(ln.words) for ln in band.lines]
-    if not counts:
+    lines = list(band.lines)
+    results: list[tuple[int, int, LeafGrid]] = []  # (ncols, n_rows, grid)
+    for start in range(max(1, len(lines) - 1)):
+        sub = lines[start:]
+        if len(sub) < 2:
+            break
+        try:
+            g = infer_leaf_grid(Band(tuple(sub), min(l.top for l in sub), max(l.bottom for l in sub)))
+        except ValueError:
+            continue
+        results.append((g.ncols, len(sub), g))
+    if not results:
         return infer_leaf_grid(band)
-    top_count = max(Counter(counts).items(), key=lambda kv: (kv[0], kv[1]))[0]
-    tiling = [ln for ln in band.lines if len(ln.words) >= top_count]
-    if len(tiling) < 1:
-        return infer_leaf_grid(band)
-    sub = Band(tuple(tiling), min(l.top for l in tiling), max(l.bottom for l in tiling))
-    return infer_leaf_grid(sub)
+    # Modal column count — the count that most suffixes agree on.
+    # Tie-break toward the higher count (finer grid = more columns revealed).
+    freq: dict[int, int] = {}
+    for ncols, _, _ in results:
+        freq[ncols] = freq.get(ncols, 0) + 1
+    modal_count = max(freq, key=lambda k: (freq[k], k))
+    # Among all suffixes achieving the modal count, take the longest (strongest evidence).
+    best = max((r for r in results if r[0] == modal_count), key=lambda r: r[1])
+    return best[2]

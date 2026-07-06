@@ -163,6 +163,41 @@ def record_and_pivot_pdf(path: str) -> dict:
     return {"rec_cols": cols, "rec_n_body_rows": 3, "piv_n_leaf_cols": 7}
 
 
+def verbose_header_table_pdf(path: str) -> dict:
+    """A 3-column table whose FIRST row is a single merged/centered title with MORE
+    word tokens than any data row (the old max-by-tokens code would mistake the
+    title row for the tiling set and return ncols < 3). Layout:
+
+      Row 0 (title):  "Quarterly Revenue Summary By Product Line"  (centred, spanning)
+      Row 1 (labels): "Product"   "Q1"   "Q2"
+      Rows 2-4 (data): one short word per column
+    """
+    cols = [72.0, 240.0, 400.0]          # left x of each of the 3 columns
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    # Title row — draw as a single centred string spanning all three columns so
+    # pdfplumber sees it as one word cluster covering the full width.
+    title = "Quarterly Revenue Summary By Product Line"
+    span_centre = (cols[0] + cols[-1] + 200.0) / 2.0   # ≈ centre of the table
+    y0 = PAGE_H - 130.0
+    c.drawCentredString(span_centre, y0, title)
+    # Leaf-label row (Row 1)
+    labels = ("Product", "Q1", "Q2")
+    y1 = y0 - 18.0
+    for x, lbl in zip(cols, labels):
+        c.drawString(x, y1, lbl)
+    # Data rows (Rows 2-4)
+    data = [("Alpha", "100", "120"),
+            ("Beta",  "200", "210"),
+            ("Gamma", "150", "160")]
+    for i, row in enumerate(data):
+        y = y1 - (i + 1) * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_leaf_cols": 3}
+
+
 def wide_cell_table_pdf(path: str) -> dict:
     """A clean 3-col header, but one data value is wide enough to fill the
     gutter — collapses the profiled grid; must escalate the whole region."""
