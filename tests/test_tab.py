@@ -155,3 +155,14 @@ def test_missing_physical_fails():
     c, t = _vp(os.path.join(TST, "tab-missing-physical-leak.ttl"))
     assert not c
     assert "EntryCellPhysicalShape" in t
+
+
+def test_wrapped_conformant_passes(tmp_path=None):
+    c, t = _vp(os.path.join(EX, "hier-physical-conformant.ttl"))
+    assert c, t
+
+
+def test_wrapped_leak_fails():
+    c, t = _vp(os.path.join(TST, "tab-wrapped-leak.ttl"))
+    assert not c
+    assert "WrappedCellShape" in t

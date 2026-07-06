@@ -17,3 +17,26 @@ tab:EntryCellPhysicalShape a sh:NodeShape ;
                   sh:minCount 1 ; sh:datatype xsd:integer ] ;
     sh:property [ sh:name "EntryCellPhysicalShape" ; sh:path tab:hasBBox ;
                   sh:minCount 1 ; sh:class tab:BBox ] .
+
+# A carried cell that has measured geometry (hasBBox) must also carry its
+# surface text — wrapped physical lines are merged into one cell before
+# assertion, so a textless bbox-carrying cell signals a dropped continuation.
+# This constraint fires ONLY when hasBBox is present (conditional via SPARQL)
+# so topology-only Cell instances without bbox are not affected.
+tab:WrappedCellShape a sh:NodeShape ;
+    sh:targetClass tab:Cell ;
+    sh:property [ sh:name "WrappedCellShape" ; sh:path tab:hasBBox ; sh:maxCount 1 ] ;
+    sh:sparql [
+        sh:name "WrappedCellShape" ;
+        sh:message "A tab:Cell with a hasBBox must have non-empty cellText (drop-continuation guard)." ;
+        sh:select """
+            PREFIX tab: <https://w3id.org/iladub/tab#>
+            SELECT $this WHERE {
+                $this tab:hasBBox ?bbox .
+                FILTER NOT EXISTS {
+                    $this tab:cellText ?t .
+                    FILTER(strlen(str(?t)) > 0)
+                }
+            }
+        """ ;
+    ] .
