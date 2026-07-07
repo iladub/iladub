@@ -81,14 +81,26 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             continue
 
         if region.kind is RegionKind.RECORD_TABLE:
-            table_uri = URIRef(f"{_DOC}#table{idx}")
-            n = assert_record_region(graph, region, table_uri, _DOC, page_number)
-            b = region.grid.boundaries
-            data_cells = [c for c in region.cells if c.row > 0]
-            asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
-            escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
-            reports.append(RegionReport(region.kind, "asserted", n, None,
-                                        str(TAB.RecordTable), ascii_view))
+            from .orientation import looks_transposed
+            if looks_transposed(region):
+                # transposed: records run along columns — asserting a RecordTable here
+                # would invert the semantics (a silent-wrong). Escalate in-band instead.
+                cand_uri = URIRef(f"{_DOC}#region{idx}")
+                escalate_region(graph, cand_uri, _DOC, ascii_view, "TRANSPOSED",
+                                TAB.TransposedTable, 0.4)
+                escalated_total += sum(len(ln.words) for ln in band.lines)
+                reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
+                                            str(TAB.TransposedTable), ascii_view))
+            else:
+                # ---- existing RECORD_TABLE assert logic, unchanged ----
+                table_uri = URIRef(f"{_DOC}#table{idx}")
+                n = assert_record_region(graph, region, table_uri, _DOC, page_number)
+                b = region.grid.boundaries
+                data_cells = [c for c in region.cells if c.row > 0]
+                asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
+                escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
+                reports.append(RegionReport(region.kind, "asserted", n, None,
+                                            str(TAB.RecordTable), ascii_view))
         else:  # UNSUPPORTED_TABLE — try the hierarchical maker first
             from .hierarchical import classify_hierarchical
             from .holon import assert_hier_region

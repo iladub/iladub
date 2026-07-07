@@ -215,6 +215,37 @@ def wide_cell_table_pdf(path: str) -> dict:
     return {"cols": cols}
 
 
+def all_text_table_pdf(path: str) -> dict:
+    """A normal all-text record table: single-word headers, all-text body cells.
+
+    No numeric values anywhere — the type-orientation oracle must not flag this
+    as transposed (text is symmetric; both axes carry labels).  This fixture
+    guards the conservative 'text is symmetric, never flagged' property.
+
+    Layout:
+      Region | Manager | Backup
+      North  | Alice   | Bob
+      South  | Carol   | Dave
+      East   | Eve     | Frank
+    """
+    cols = [72.0, 240.0, 400.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [
+        ("Region", "Manager", "Backup"),
+        ("North", "Alice", "Bob"),
+        ("South", "Carol", "Dave"),
+        ("East", "Eve", "Frank"),
+    ]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_body_rows": 3}
+
+
 def transposed_table_pdf(path: str) -> dict:
     """A TRANSPOSED table: field names run down the first column, each other column
     is a record. The 'Age' row is all-numeric ACROSS the record columns, while no
