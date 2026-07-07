@@ -57,6 +57,14 @@ record table) fully — measure → structure → round-trip + SHACL → validat
 other region** as a `dec` proposition. Later increments **widen the field of possibles** (one more kind, one
 more signal), never build one more *layer* across all cases.
 
+## Showcase the developed capability — it is part of the loop
+
+A loop is **not done** until its companion showcase (the `demo/etkl_*_showcase.ipynb` notebook) demonstrates
+the *new* capability on real input and is **re-run** so its outputs are fresh and consistent with its prose.
+Building the capability but leaving the showcase asserting the old behaviour ships a **stale claim** — the
+same defect as a silent gap, and it self-contradicts the moment anyone re-runs the notebook. Each loop's
+canvas/PR therefore carries a showcase-update deliverable alongside the code and the verifier.
+
 ## Three invariants stamped on every iladub loop
 
 - **A loop closes or it isn't shipped.** End-to-end proof on real input, residue escalated in-band — see
