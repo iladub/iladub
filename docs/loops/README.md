@@ -65,6 +65,11 @@ Building the capability but leaving the showcase asserting the old behaviour shi
 same defect as a silent gap, and it self-contradicts the moment anyone re-runs the notebook. Each loop's
 canvas/PR therefore carries a showcase-update deliverable alongside the code and the verifier.
 
+**Every showcase example leads with the *original* source document** — rendered as its own step
+(`viz.render_page` → `show_page`) *before* any analysis — so the reader always sees the real, human-addressed
+input first and the "so what" lands, then watches the deterministic structure ET(K)L recovers (or honestly
+refuses) from it.
+
 ## Three invariants stamped on every iladub loop
 
 - **A loop closes or it isn't shipped.** End-to-end proof on real input, residue escalated in-band — see
