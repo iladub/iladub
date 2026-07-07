@@ -246,6 +246,26 @@ def all_text_table_pdf(path: str) -> dict:
     return {"cols": cols, "n_body_rows": 3}
 
 
+def false_transposed_pdf(path: str) -> dict:
+    """Trips looks_transposed (the 'Count' row is all-numeric across cols, and NO
+    column is all-numeric) yet is NOT a genuine transposition: the 'Mix' row is
+    type-mixed (5 numeric, ok text), so transpose_is_coherent is False. Guards the
+    compile-direction silent-wrong: a false-positive detection must ESCALATE, not
+    compile an inverted RecordTable."""
+    cols = [72.0, 240.0, 400.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Item", "A", "B"), ("Count", "10", "20"),
+            ("Note", "hi", "bye"), ("Mix", "5", "ok")]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols}
+
+
 def transposed_table_pdf(path: str) -> dict:
     """A TRANSPOSED table: field names run down the first column, each other column
     is a record. The 'Age' row is all-numeric ACROSS the record columns, while no

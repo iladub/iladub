@@ -81,16 +81,28 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             continue
 
         if region.kind is RegionKind.RECORD_TABLE:
-            from .orientation import looks_transposed
+            from .orientation import looks_transposed, transpose_is_coherent
             if looks_transposed(region):
-                # transposed: records run along columns — asserting a RecordTable here
-                # would invert the semantics (a silent-wrong). Escalate in-band instead.
-                cand_uri = URIRef(f"{_DOC}#region{idx}")
-                escalate_region(graph, cand_uri, _DOC, ascii_view, "TRANSPOSED",
-                                TAB.TransposedTable, 0.4)
-                escalated_total += sum(len(ln.words) for ln in band.lines)
-                reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
-                                            str(TAB.TransposedTable), ascii_view))
+                if transpose_is_coherent(region):
+                    # compile by axis-flip: records run along columns -> a correct,
+                    # un-inverted RecordTable (tab:sourceOrientation "transposed").
+                    from .holon import assert_transposed_region
+                    table_uri = URIRef(f"{_DOC}#ttable{idx}")
+                    n = assert_transposed_region(graph, region, table_uri, _DOC, page_number)
+                    b = region.grid.boundaries
+                    value_cells = [c for c in region.cells if c.col >= 1]
+                    asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
+                    escalated_total += sum(len(c.words) for c in value_cells if not cell_round_trips(c, b))
+                    reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                str(TAB.RecordTable), ascii_view))
+                else:
+                    # detected but not confidently compilable — escalate (Loop 3 behaviour)
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view, "TRANSPOSED",
+                                    TAB.TransposedTable, 0.4)
+                    escalated_total += sum(len(ln.words) for ln in band.lines)
+                    reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
+                                                str(TAB.TransposedTable), ascii_view))
             else:
                 # ---- existing RECORD_TABLE assert logic, unchanged ----
                 table_uri = URIRef(f"{_DOC}#table{idx}")

@@ -109,8 +109,15 @@ it must certify.)*
       (structure) catches. A **type-orientation oracle** (`looks_transposed`: a numeric row but no
       numeric column — iladub's first *semantic* oracle) now escalates it as `TRANSPOSED`; normal
       tables unaffected. Detect-and-escalate only. (Delivered by the transposition-detect-escalate PR.)
-- [ ] Field of possibles (each a future increment, escalated today): **compile transposed tables
-      (axis-flip, then reuse the record/hierarchy maker)** · **row-header hierarchies
+- [x] **4 — compile transposed tables (axis-flip)** (2026-07-07): a detected transposed table now
+      COMPILES into a correct, un-inverted `tab:RecordTable` (`tab:sourceOrientation "transposed"`)
+      by axis-flip — a *logical relabel over unmoved physical cells*, so provenance-to-the-page
+      survives (every value still traces to its original box). A **second oracle**
+      (`transpose_is_coherent`: every field-row is type-homogeneous) gates the compile against the
+      *reverse* silent-wrong — a false-positive detection escalates rather than asserting an inverted
+      table. Certified cell-by-cell by the existing round-trip + `tab:` SHACL. Closes the
+      detect→compile arc opened by increment 3. (Delivered by the compile-transposed-tables PR.)
+- [ ] Field of possibles (each a future increment, escalated today): **row-header hierarchies
       (pivot / aggregation-by-index — needs `tab:coversRow`, the row analog of `coversColumn`)** ·
       matrix/cross-tab · key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·

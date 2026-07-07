@@ -13,7 +13,8 @@ from .roundtrip import cell_round_trips, render_ascii
 from .compile import compile_tables, CompilationReport, RegionReport
 from .hierarchical import classify_hierarchical, HierRegion
 from .cells import recover_leaf_grid
-from .orientation import looks_transposed
+from .orientation import looks_transposed, transpose_is_coherent
+from .holon import assert_record_region, assert_transposed_region
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -24,5 +25,6 @@ __all__ = [
     "compile_tables", "CompilationReport", "RegionReport",
     "classify_hierarchical", "HierRegion",
     "recover_leaf_grid",
-    "looks_transposed",
+    "looks_transposed", "transpose_is_coherent", "assert_transposed_region",
+    "assert_record_region",
 ]

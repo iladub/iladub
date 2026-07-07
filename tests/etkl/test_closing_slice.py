@@ -76,17 +76,54 @@ def test_mixed_document_score_is_token_coherent(tmp_path):
     assert 0.0 < report.score < 1.0, report.score
 
 
-def test_transposed_escalates_not_asserted(tmp_path):
+def test_transposed_now_compiles(tmp_path):
+    # Loop 4: the transposed table Loop 3 escalated now COMPILES by axis-flip.
     from tests.etkl.fixtures import transposed_table_pdf
-    from iladub.etkl.holon import TAB, ILADUB, DEC
-    from rdflib import RDF
+    from iladub.etkl.holon import TAB, ILADUB
+    from rdflib import RDF, Literal
     p = tmp_path / "t.pdf"; transposed_table_pdf(str(p))
     report = compile_tables(str(p))
-    # the silent-wrong is closed: NO RecordTable asserted; escalated as TRANSPOSED
+    assert (None, None, TAB.RecordTable) in report.graph
+    t = next(report.graph.subjects(RDF.type, TAB.RecordTable))
+    assert (t, TAB.sourceOrientation, Literal("transposed")) in report.graph
+    # header recovered from physical column 0: Name, Age, City
+    labels = {str(o) for s in report.graph.subjects(RDF.type, TAB.LabelCell)
+              for o in report.graph.objects(s, TAB.cellText)}
+    assert {"Name", "Age", "City"} <= labels
+    # 2 records (Alice, Bob) -> 2 leaf rows; no TRANSPOSED escalation
+    assert len(list(report.graph.subjects(RDF.type, TAB.LeafRow))) == 2
+    assert (None, None, ILADUB.CandidateConcept) not in report.graph
+    assert report.score == 1.0
+
+
+def test_false_positive_transpose_escalates(tmp_path):
+    # a region that trips looks_transposed but is NOT coherent must ESCALATE, not
+    # compile an inverted RecordTable (the compile-direction silent-wrong guard).
+    from tests.etkl.fixtures import false_transposed_pdf
+    from iladub.etkl.holon import TAB, ILADUB, DEC
+    from rdflib import RDF
+    p = tmp_path / "fp.pdf"; false_transposed_pdf(str(p))
+    report = compile_tables(str(p))
     assert (None, None, TAB.RecordTable) not in report.graph
     cand = next(report.graph.subjects(RDF.type, ILADUB.CandidateConcept))
     assert str(next(report.graph.objects(cand, DEC.rationale))) == "TRANSPOSED"
-    assert report.score == 0.0
+
+
+def test_transposed_provenance_survives_flip(tmp_path):
+    # Alice's Age value "30" must trace to the PHYSICAL "30" word on the page,
+    # proving the flip is a logical relabel, not a coordinate transform.
+    from tests.etkl.fixtures import transposed_table_pdf
+    from iladub.etkl import extract_words
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "t.pdf"; transposed_table_pdf(str(p))
+    word30 = next(w for w in extract_words(str(p)) if w.text == "30")
+    report = compile_tables(str(p))
+    e = next(s for s in report.graph.subjects(RDF.type, TAB.EntryCell)
+             if str(next(report.graph.objects(s, TAB.cellText))) == "30")
+    bb = next(report.graph.objects(e, TAB.hasBBox))
+    assert abs(float(next(report.graph.objects(bb, TAB.x0))) - word30.x0) < 0.01
+    assert int(next(report.graph.objects(e, TAB.onPage))) == 0
 
 
 def test_normal_table_still_compiles(tmp_path):
