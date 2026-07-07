@@ -213,3 +213,18 @@ def wide_cell_table_pdf(path: str) -> dict:
             c.drawString(x, y, cell)
     c.save()
     return {"cols": cols}
+
+
+def transposed_table_pdf(path: str) -> dict:
+    """A TRANSPOSED table: field names run down the first column, each other column
+    is a record. The 'Age' row is all-numeric ACROSS the record columns, while no
+    column is all-numeric — the transposition signature."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 11)
+    rows = [("Name", "Alice", "Bob"), ("Age", "30", "25"), ("City", "NYC", "LA")]
+    for i, row in enumerate(rows):
+        y = PAGE_H - 120.0 - i * 20.0
+        for x, cell in zip((80.0, 240.0, 400.0), row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"n_cols": 3, "n_rows": 3}
