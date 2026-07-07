@@ -172,3 +172,12 @@ def test_tab_transposedtable_term():
     g = _g(TAB_TTL)
     assert (TAB.TransposedTable, RDF.type, OWL.Class) in g
     assert (TAB.TransposedTable, RDFS.subClassOf, TAB.Table) in g
+
+
+def test_tab_sourceorientation_term():
+    from rdflib import OWL as _OWL, Namespace as _NS
+    XSD = _NS("http://www.w3.org/2001/XMLSchema#")
+    g = _g(TAB_TTL)
+    assert (TAB.sourceOrientation, RDF.type, OWL.DatatypeProperty) in g
+    assert (TAB.sourceOrientation, RDFS.domain, TAB.Table) in g
+    assert (TAB.sourceOrientation, RDFS.range, XSD.string) in g

@@ -134,3 +134,80 @@ def test_straddling_cell_is_proposed_not_asserted():
     # the clean data cell IS asserted; total asserted = 1 (not 2)
     assert n_asserted == 1
     assert "CleanVal" in entry_texts
+
+
+# ---------------------------------------------------------------------------
+# assert_transposed_region
+# ---------------------------------------------------------------------------
+from rdflib import Graph, URIRef, Literal, RDF
+from iladub.etkl.geometry import Word
+from iladub.etkl.grid import LeafGrid
+from iladub.etkl.regions import Cell, ClassifiedRegion, RegionKind
+from iladub.etkl.holon import assert_transposed_region, TAB, ILADUB, DEC, PROV
+
+
+def _word(text, x0, x1, top=100.0, bottom=110.0):
+    return Word(text=text, x0=x0, x1=x1, top=top, bottom=bottom, page=0)
+
+
+def _cell(row, col, text, x0, x1, top):
+    return Cell(row=row, col=col, words=(_word(text, x0, x1, top, top + 10.0),))
+
+
+def _transposed_region(straddle=False):
+    # 3 physical cols (Field | rec1 | rec2), boundaries at 60/220/380/540.
+    grid = LeafGrid(boundaries=(60.0, 220.0, 380.0, 540.0), ncols=3, pitch=160.0, confidence=1.0)
+    cells = [
+        _cell(0, 0, "Field", 60.0, 110.0, 100.0),
+        _cell(0, 1, "Alice", 220.0, 270.0, 100.0),
+        _cell(0, 2, "Bob", 380.0, 420.0, 100.0),
+        _cell(1, 0, "Age", 60.0, 100.0, 120.0),
+        _cell(1, 1, "30", 220.0, 250.0, 120.0),
+        _cell(1, 2, "25", 380.0, 410.0, 120.0),
+        _cell(2, 0, "City", 60.0, 110.0, 140.0),
+        # straddle=True makes this value cross the 380 gutter (x1=420 > 380)
+        _cell(2, 1, "NYC", 350.0 if straddle else 220.0, 420.0 if straddle else 270.0, 140.0),
+        _cell(2, 2, "LA", 380.0, 410.0, 140.0),
+    ]
+    return ClassifiedRegion(RegionKind.RECORD_TABLE, None, grid, tuple(cells), "test")
+
+
+def test_transposed_maker_builds_record_table():
+    g = Graph()
+    t = URIRef("https://example.org/t")
+    n = assert_transposed_region(g, _transposed_region(), t, URIRef("https://example.org/doc"), 0)
+    assert (t, RDF.type, TAB.RecordTable) in g
+    assert (t, TAB.sourceOrientation, Literal("transposed")) in g
+    # header labels come from physical column 0 (read down): Field, Age, City
+    labels = {str(o) for s in g.subjects(RDF.type, TAB.LabelCell)
+              for o in g.objects(s, TAB.cellText)}
+    assert {"Field", "Age", "City"} <= labels
+    # 3 logical cols, 2 logical rows (records), 6 entry cells
+    assert len(list(g.subjects(RDF.type, TAB.LeafColumn))) == 3
+    assert len(list(g.subjects(RDF.type, TAB.LeafRow))) == 2
+    assert n == 6
+
+
+def test_transposed_provenance_is_physical():
+    g = Graph()
+    t = URIRef("https://example.org/t")
+    assert_transposed_region(g, _transposed_region(), t, URIRef("https://example.org/doc"), 0)
+    # the entry carrying "30" must keep the PHYSICAL bbox of the "30" word (x0=220),
+    # not a flipped coordinate.
+    e = next(s for s in g.subjects(RDF.type, TAB.EntryCell)
+             if str(next(g.objects(s, TAB.cellText))) == "30")
+    bb = next(g.objects(e, TAB.hasBBox))
+    assert float(next(g.objects(bb, TAB.x0))) == 220.0
+    assert int(next(g.objects(e, TAB.onPage))) == 0
+
+
+def test_transposed_straddle_escalates_that_cell():
+    g = Graph()
+    t = URIRef("https://example.org/t")
+    n = assert_transposed_region(g, _transposed_region(straddle=True), t,
+                                 URIRef("https://example.org/doc"), 0)
+    # the straddling value cell is NOT asserted; it becomes a ROUND_TRIP_FAIL proposition
+    assert n == 5
+    rationales = {str(o) for s in g.subjects(RDF.type, ILADUB.CandidateConcept)
+                  for o in g.objects(s, DEC.rationale)}
+    assert "ROUND_TRIP_FAIL" in rationales

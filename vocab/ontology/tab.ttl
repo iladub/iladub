@@ -86,7 +86,12 @@ tab:RecordTable a owl:Class ; rdfs:subClassOf tab:Table ;
     rdfs:comment "A flat table: a single-level header with one label per leaf column, and rows of entries."@en .
 tab:TransposedTable a owl:Class ; rdfs:subClassOf tab:Table ;
     rdfs:label "Transposed table"@en ;
-    rdfs:comment "A table whose records run along columns and whose fields run down the first column (rows are attributes). Recognized but not yet compiled — used as an escalation anchor."@en .
+    rdfs:comment "A table whose records run along columns and whose fields run down the first column (rows are attributes). Compiled by axis-flip into a tab:RecordTable with tab:sourceOrientation \"transposed\"; also the escalation anchor when a detected transposition is not confidently compilable."@en .
+
+tab:sourceOrientation a owl:DatatypeProperty ;
+    rdfs:domain tab:Table ; rdfs:range xsd:string ;
+    rdfs:label "source orientation"@en ;
+    rdfs:comment "The physical orientation of the source region a table-holon was recovered from: \"transposed\" when records ran along physical columns and the holon was recovered by axis-flip. Absent means upright. The holon's logical kind is unaffected."@en .
 
 # --- physical layer (geometry + surface text; needed for round-trip + provenance) ---
 tab:cellText a owl:DatatypeProperty ; rdfs:label "cell text"@en ;

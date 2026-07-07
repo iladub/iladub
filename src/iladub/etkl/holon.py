@@ -34,6 +34,36 @@ def _region_uri(base: URIRef, kind: str, idx: int) -> URIRef:
     return URIRef(f"{base}-{kind}{idx}")
 
 
+def _emit_entry_cell(g: Graph, table_uri: URIRef, doc_uri: URIRef, page: int,
+                     e_uri: URIRef, col_uri: URIRef, row_uri: URIRef, cell) -> None:
+    """Emit one tab:EntryCell with structural links + provenance. Shared by the
+    upright and transposed makers so provenance is single-sourced."""
+    g.add((e_uri, RDF.type, TAB.EntryCell))
+    g.add((table_uri, TAB.hasCell, e_uri))
+    g.add((e_uri, TAB.atColumn, col_uri))
+    g.add((e_uri, TAB.atRow, row_uri))
+    g.add((e_uri, TAB.cellText, Literal(cell.text)))
+    g.add((e_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
+    g.add((e_uri, TAB.hasBBox, _bbox_node(g, cell)))
+    x0, top, _, _ = cell.bbox
+    g.add((e_uri, PROV.wasDerivedFrom,
+           URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+
+
+def _emit_roundtrip_fail_cell(g: Graph, doc_uri: URIRef, page: int,
+                              cc_uri: URIRef, cell) -> None:
+    """Emit a ROUND_TRIP_FAIL proposition for a data cell whose ink crosses a
+    gutter — never silently dropped. Shared by both makers."""
+    x0, top, _, _ = cell.bbox
+    g.add((cc_uri, RDF.type, ILADUB.CandidateConcept))
+    g.add((cc_uri, ILADUB.surfaceText, Literal(cell.text)))
+    g.add((cc_uri, DEC.rationale, Literal("ROUND_TRIP_FAIL")))
+    g.add((cc_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
+    g.add((cc_uri, TAB.hasBBox, _bbox_node(g, cell)))
+    g.add((cc_uri, PROV.wasDerivedFrom,
+           URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+
+
 def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
                          doc_uri: URIRef, page: int) -> int:
     g.add((table_uri, RDF.type, TAB.RecordTable))
@@ -70,30 +100,75 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
             g.add((_region_uri(table_uri, "h", cell.col), TAB.hasLabel, lc))
             continue
         if not cell_round_trips(cell, b):
-            # residue: a data cell whose ink crosses a gutter is NOT asserted.
-            # Emit it as an in-band proposition — never silently dropped.
             cc = _region_uri(table_uri, f"cc{cell.row}_", cell.col)
-            x0, top, _, _ = cell.bbox
-            g.add((cc, RDF.type, ILADUB.CandidateConcept))
-            g.add((cc, ILADUB.surfaceText, Literal(cell.text)))
-            g.add((cc, DEC.rationale, Literal("ROUND_TRIP_FAIL")))
-            g.add((cc, TAB.onPage, Literal(page, datatype=XSD.integer)))
-            g.add((cc, TAB.hasBBox, _bbox_node(g, cell)))
-            g.add((cc, PROV.wasDerivedFrom,
-                   URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+            _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
             continue
         e = _region_uri(table_uri, f"e{cell.row}_", cell.col)
-        g.add((e, RDF.type, TAB.EntryCell))
-        g.add((table_uri, TAB.hasCell, e))
-        g.add((e, TAB.atColumn, cols[cell.col]))
-        g.add((e, TAB.atRow, rows[cell.row]))
-        g.add((e, TAB.cellText, Literal(cell.text)))
-        g.add((e, TAB.onPage, Literal(page, datatype=XSD.integer)))
-        g.add((e, TAB.hasBBox, _bbox_node(g, cell)))
-        x0, top, _, _ = cell.bbox
-        g.add((e, PROV.wasDerivedFrom,
-               URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+        _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[cell.col], rows[cell.row], cell)
         asserted += 1
+    return asserted
+
+
+def assert_transposed_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
+                             doc_uri: URIRef, page: int) -> int:
+    """Compile a detected transposed region into an un-inverted tab:RecordTable by
+    axis-flip. The flip is a LOGICAL relabel over unmoved physical cells: logical
+    column k <- physical row k (header label = cell (k,0)); logical row m <-
+    physical column m>=1; EntryCell (row m, col k) <- physical cell (row k, col m),
+    carrying that cell's own words so bbox/page/provenance are the true physical
+    measurement, never a flipped coordinate. Certification is the SAME per-cell
+    round-trip on the ORIGINAL grid; straddling cells escalate ROUND_TRIP_FAIL.
+    Returns the asserted EntryCell count.
+    """
+    g.add((table_uri, RDF.type, TAB.RecordTable))
+    g.add((table_uri, TAB.sourceOrientation, Literal("transposed")))
+    b = region.grid.boundaries
+
+    by_rc = {(c.row, c.col): c for c in region.cells}
+    phys_rows = sorted({c.row for c in region.cells})              # -> logical columns
+    phys_cols = sorted({c.col for c in region.cells if c.col >= 1})  # -> logical rows
+
+    cols = {}
+    for k in phys_rows:
+        col_uri = _region_uri(table_uri, "c", k)
+        cols[k] = col_uri
+        g.add((col_uri, RDF.type, TAB.LeafColumn))
+        g.add((table_uri, TAB.hasLeafColumn, col_uri))
+        h = _region_uri(table_uri, "h", k)
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+        g.add((h, TAB.coversColumn, col_uri))
+        g.add((table_uri, TAB.hasHeaderNode, h))
+        label = by_rc.get((k, 0))
+        if label is not None:
+            lc = _region_uri(table_uri, "lc", k)
+            g.add((lc, RDF.type, TAB.LabelCell))
+            g.add((table_uri, TAB.hasCell, lc))
+            g.add((lc, TAB.cellText, Literal(label.text)))
+            g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+            g.add((lc, TAB.hasBBox, _bbox_node(g, label)))
+            g.add((h, TAB.hasLabel, lc))
+
+    rows = {}
+    for m in phys_cols:
+        row_uri = _region_uri(table_uri, "r", m)
+        rows[m] = row_uri
+        g.add((row_uri, RDF.type, TAB.LeafRow))
+        g.add((table_uri, TAB.hasLeafRow, row_uri))
+
+    asserted = 0
+    for k in phys_rows:
+        for m in phys_cols:
+            cell = by_rc.get((k, m))
+            if cell is None:
+                continue
+            if cell_round_trips(cell, b):
+                e = _region_uri(table_uri, f"e{m}_", k)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[k], rows[m], cell)
+                asserted += 1
+            else:
+                cc = _region_uri(table_uri, f"cc{m}_", k)
+                _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
     return asserted
 
 
