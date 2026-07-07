@@ -206,3 +206,32 @@ def ambiguous_report_pdf(path: str) -> dict:
             c.drawString(x, y, cell)
     c.save()
     return {"title": "Regions (all-text, ambiguous)"}
+
+
+# --- Transposed case: fields down the first column, records along the others ---
+
+def transposed_report_pdf(path: str) -> dict:
+    """A TRANSPOSED patient table: the field names ('Age', 'Sex', 'City') run DOWN
+    the first column, and each OTHER column is a record (a patient). The 'Age' row
+    is numeric ACROSS the record columns, while each record column mixes types
+    (a number, then text) — so no column is all-numeric. That asymmetry is the
+    transposition signature. Geometrically a valid grid, so the round-trip and the
+    tab: SHACL both pass; only the semantic (type-orientation) oracle catches it,
+    and ET(K)L escalates rather than assert an inverted RecordTable.
+
+    (A *fully*-numeric transposed table is genuinely ambiguous — both axes look
+    numeric — and is left unflagged, like the all-text case.)"""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 11)
+    rows = [
+        ("Field", "Alice", "Bob"),   # header: field-label column + one column per patient
+        ("Age",   "30",    "25"),    # numeric ACROSS the record columns
+        ("Sex",   "F",     "M"),
+        ("City",  "NYC",   "LA"),
+    ]
+    for i, row in enumerate(rows):
+        y = PAGE_H - 110.0 - i * 20.0
+        for x, cell in zip((70.0, 250.0, 400.0), row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"title": "Transposed patient table (records along columns)"}

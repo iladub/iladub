@@ -74,3 +74,46 @@ def test_mixed_document_score_is_token_coherent(tmp_path):
     #   numerator  = record body words + pivot body words (both asserted)
     #   denominator = above + pivot header words (not body cells)
     assert 0.0 < report.score < 1.0, report.score
+
+
+def test_transposed_escalates_not_asserted(tmp_path):
+    from tests.etkl.fixtures import transposed_table_pdf
+    from iladub.etkl.holon import TAB, ILADUB, DEC
+    from rdflib import RDF
+    p = tmp_path / "t.pdf"; transposed_table_pdf(str(p))
+    report = compile_tables(str(p))
+    # the silent-wrong is closed: NO RecordTable asserted; escalated as TRANSPOSED
+    assert (None, None, TAB.RecordTable) not in report.graph
+    cand = next(report.graph.subjects(RDF.type, ILADUB.CandidateConcept))
+    assert str(next(report.graph.objects(cand, DEC.rationale))) == "TRANSPOSED"
+    assert report.score == 0.0
+
+
+def test_normal_table_still_compiles(tmp_path):
+    # the critical no-false-positive guard: a normal numeric record table is unaffected
+    from tests.etkl.fixtures import simple_table_pdf
+    from iladub.etkl.holon import TAB
+    p = tmp_path / "cbc.pdf"; simple_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.RecordTable) in report.graph
+    assert report.score == 1.0
+
+
+def test_all_text_record_not_flagged_transposed(tmp_path):
+    """An all-text record table (Region/Manager/Backup) must still compile as a
+    RecordTable and must NOT be escalated as TRANSPOSED.
+
+    Guards the conservative 'text is symmetric, never flagged' property: since no
+    body row has all-numeric cells in non-label columns, looks_transposed returns
+    False and the existing assert path runs unchanged.
+    """
+    from tests.etkl.fixtures import all_text_table_pdf
+    from iladub.etkl.holon import TAB, ILADUB, DEC
+    from rdflib import RDF
+    p = tmp_path / "text.pdf"; all_text_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.RecordTable) in report.graph, "all-text table must still be a RecordTable"
+    # No TRANSPOSED escalation
+    for cand in report.graph.subjects(RDF.type, ILADUB.CandidateConcept):
+        rationale = str(next(report.graph.objects(cand, DEC.rationale), ""))
+        assert rationale != "TRANSPOSED", "all-text table must NOT be flagged TRANSPOSED"

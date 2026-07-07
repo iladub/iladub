@@ -166,3 +166,9 @@ def test_wrapped_leak_fails():
     c, t = _vp(os.path.join(TST, "tab-wrapped-leak.ttl"))
     assert not c
     assert "WrappedCellShape" in t
+
+
+def test_tab_transposedtable_term():
+    g = _g(TAB_TTL)
+    assert (TAB.TransposedTable, RDF.type, OWL.Class) in g
+    assert (TAB.TransposedTable, RDFS.subClassOf, TAB.Table) in g
