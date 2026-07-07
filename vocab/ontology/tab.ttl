@@ -84,6 +84,9 @@ tab:atRow a owl:ObjectProperty ; rdfs:label "at row"@en ;
 tab:RecordTable a owl:Class ; rdfs:subClassOf tab:Table ;
     rdfs:label "Record table"@en ;
     rdfs:comment "A flat table: a single-level header with one label per leaf column, and rows of entries."@en .
+tab:TransposedTable a owl:Class ; rdfs:subClassOf tab:Table ;
+    rdfs:label "Transposed table"@en ;
+    rdfs:comment "A table whose records run along columns and whose fields run down the first column (rows are attributes). Recognized but not yet compiled — used as an escalation anchor."@en .
 
 # --- physical layer (geometry + surface text; needed for round-trip + provenance) ---
 tab:cellText a owl:DatatypeProperty ; rdfs:label "cell text"@en ;
