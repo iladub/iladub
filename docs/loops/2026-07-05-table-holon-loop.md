@@ -103,7 +103,14 @@ it must certify.)*
       logical rows, type-homogeneity header/body split, centered-span tree inference, and a **2-D
       round-trip** oracle; residue escalated in-band. Certified by the reused refinement/coverage
       SHACL + a new `WrappedCellShape`. (Delivered by the hierarchical-headers-loop PR.)
-- [ ] Field of possibles (each a future increment, escalated today): **row-header hierarchies
+- [x] **3 — detect & escalate transposed tables** (2026-07-07): a transposed table (fields down the
+      first column, records along the others) previously compiled to a silently-*inverted*
+      `tab:RecordTable` at score 1.0 — a silent-wrong neither the round-trip (geometry) nor the SHACL
+      (structure) catches. A **type-orientation oracle** (`looks_transposed`: a numeric row but no
+      numeric column — iladub's first *semantic* oracle) now escalates it as `TRANSPOSED`; normal
+      tables unaffected. Detect-and-escalate only. (Delivered by the transposition-detect-escalate PR.)
+- [ ] Field of possibles (each a future increment, escalated today): **compile transposed tables
+      (axis-flip, then reuse the record/hierarchy maker)** · **row-header hierarchies
       (pivot / aggregation-by-index — needs `tab:coversRow`, the row analog of `coversColumn`)** ·
       matrix/cross-tab · key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·

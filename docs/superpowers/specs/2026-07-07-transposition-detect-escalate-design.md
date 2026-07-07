@@ -137,10 +137,12 @@ count as escalated in the score, exactly like any other escalated region; nothin
 
 - **Compiling** transposed tables — the *next* loop: once detected, transpose the cell grid and run it
   through the existing record / hierarchy maker on the flipped axis, emitting a correct holon.
-- **All-text transposition** — with no type signal on either axis, both orientations are equally valid; it
-  is genuinely undetectable from geometry, so it is left unflagged (documented, like the all-text
-  header/body boundary case). It remains a *possible* silent-wrong for the all-text transposed case, but one
-  no deterministic oracle can resolve without external evidence (signal-tagging / a contract).
+- **All-text *or* fully-numeric transposition** — when *both* axes carry the same type signal (every cell
+  text, or every cell numeric), the two orientations are equally valid and type-orientation cannot choose;
+  such tables are left unflagged (documented, like the all-text header/body boundary case). They remain a
+  *possible* silent-wrong that no deterministic type oracle can resolve without external evidence
+  (signal-tagging / a contract). The oracle catches the common, resolvable case: a table with **mixed**
+  field types (some numeric fields, some text), where the numeric asymmetry between the axes is decisive.
 - **Non-numeric typed signals** (dates, currencies, codes) — `is_numeric` only for v1; `looks_transposed`
   can later take a richer `is_typed` without changing its shape.
 
