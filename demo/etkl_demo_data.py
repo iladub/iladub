@@ -185,3 +185,24 @@ def pivoted_report_pdf(path: str) -> dict:
         "n_header_rows": 3,                          # parent + leaf + wrapped (SI)
         "title": "SERIAL CBC — VISIT COMPARISON",
     }
+
+
+# --- Ambiguous case: all-text, merged header, no numeric column -> escalates ---
+
+def ambiguous_report_pdf(path: str) -> dict:
+    """A merged-header table with an all-text body and NO numeric column, so the
+    header/body boundary is genuinely undecidable. Row 0 is a single centered
+    label ('Regions') whose word count (1) != the leaf-column count (3), so it is
+    not a flat record; and no column ever becomes type-homogeneous (every cell is
+    a text label), so the hierarchical maker cannot place the boundary. ET(K)L
+    escalates the whole region rather than guess."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    ys = [PAGE_H - 100.0, PAGE_H - 118.0, PAGE_H - 136.0, PAGE_H - 154.0]
+    c.drawCentredString((60.0 + 390.0) / 2.0, ys[0], "Regions")   # centered merged header
+    rows = [("Region", "North", "South"), ("Area", "Alpha", "Beta"), ("Zone", "Red", "Blue")]
+    for y, row in zip(ys[1:], rows):
+        for x, cell in zip((60.0, 220.0, 360.0), row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"title": "Regions (all-text, ambiguous)"}
