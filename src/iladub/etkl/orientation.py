@@ -36,3 +36,26 @@ def looks_transposed(region) -> bool:
     typed_col = any(vals and all(is_numeric(v) for v in vals) for vals in cols.values())
 
     return typed_row and not typed_col
+
+
+def transpose_is_coherent(region) -> bool:
+    """True iff EVERY physical row is type-homogeneous across its value columns
+    (columns >= 1) — the signature of a genuine transposition, where each row is a
+    single-typed field. The second oracle of the compile gate: `looks_transposed`
+    detects, `transpose_is_coherent` decides whether to compile.
+
+    A coincidentally-flagged upright record table has rows that mix a text label, a
+    number and a unit, so at least one row is not homogeneous and this returns
+    False — the region is then escalated (detect-and-escalate stays the floor),
+    never compiled into an inverted table. Rows with no value column (only col 0)
+    are vacuously coherent.
+    """
+    rows: dict[int, list[str]] = {}
+    for c in region.cells:
+        if c.col >= 1:
+            rows.setdefault(c.row, []).append(c.text)
+    for vals in rows.values():
+        if vals and not (all(is_numeric(v) for v in vals)
+                         or all(not is_numeric(v) for v in vals)):
+            return False
+    return True
