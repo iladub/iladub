@@ -139,7 +139,7 @@ def test_straddling_cell_is_proposed_not_asserted():
 # ---------------------------------------------------------------------------
 # assert_transposed_region
 # ---------------------------------------------------------------------------
-from rdflib import Graph, URIRef, Literal, RDF
+from rdflib import Literal
 from iladub.etkl.geometry import Word
 from iladub.etkl.grid import LeafGrid
 from iladub.etkl.regions import Cell, ClassifiedRegion, RegionKind

@@ -2,7 +2,7 @@ import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
 from tests.etkl.fixtures import transposed_table_pdf, simple_table_pdf
-from tests.etkl.fixtures import all_text_table_pdf, false_transposed_pdf
+from tests.etkl.fixtures import false_transposed_pdf
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.regions import classify
 from iladub.etkl.orientation import looks_transposed
