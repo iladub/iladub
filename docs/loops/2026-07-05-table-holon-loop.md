@@ -152,6 +152,14 @@ it must certify.)*
       segments to exactly one region** (the cross-tab, whose `Q1|Q2` gutter looks like a boundary, stays whole
       because its right half is data-only). No new vocabulary. Limits (documented): non-record side-by-side and
       different-header no-gap stacks. (Delivered by the multi-table-segmentation PR.)
+- [x] **8-pre — header-span coverage repair** (2026-07-09, hardening): Loop 2's text-extent span recovery
+      **under-covered a short parent label over a wide column span** (a `Region` header over four wide numeric
+      columns recovered `[1,2,3]`, orphaning `West`). `headers.repair_coverage` now extends a coarse header
+      node to absorb contiguous adjacent orphaned leaf columns (excluding the col-0 stub), before parent-linking
+      — additive and tiling-preserving, so it is a **no-op on every already-tiling tree** (zero regression,
+      full suite green) and leaves multi-word / wrapped labels untouched. Enables a single-spanning-parent pivot
+      to be read as a **named dimension** end-to-end (the structural prerequisite for Loop 8a's denormalization
+      recovery). (Delivered by the header-span-hardening PR.)
 - [ ] Field of possibles (each a future increment, escalated today):
       key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·
