@@ -7,21 +7,12 @@ tree — it is read as-is. (Aggregation evidence and 3NF emission are later slic
 """
 from __future__ import annotations
 
-import math
-import re
 from dataclasses import dataclass
 
-from rdflib import RDF, Namespace
+from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib.namespace import XSD
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
-
-
-def _num(s):
-    try:
-        v = float(re.sub(r"[,%$]", "", s.strip()))
-        return v if math.isfinite(v) else None
-    except (ValueError, AttributeError):
-        return None
 
 
 def _label(g, node):
@@ -83,10 +74,6 @@ def recover_dimensions(g, t):
     coversRow). A flat single-level axis yields one value-level dimension."""
     return (_axis_dimensions(g, t, "column", TAB.coversColumn, _leaf_cols(g, t))
             + _axis_dimensions(g, t, "row", TAB.coversRow, _leaf_rows(g, t)))
-
-
-from rdflib import Literal, URIRef
-from rdflib.namespace import XSD
 
 
 def annotate_dimensions(g, t, dims):
