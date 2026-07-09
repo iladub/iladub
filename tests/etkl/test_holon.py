@@ -300,3 +300,53 @@ def test_column_header_label_cell_has_provenance(tmp_path):
     assert abs(float(x0_vals[0]) - value_word.x0) < 0.01, (
         f"LabelCell 'Value' x0 {float(x0_vals[0])} != word x0 {value_word.x0}"
     )
+
+
+def test_matrix_maker_builds_both_axes(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import crosstab_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.matrix import classify_matrix
+    from iladub.etkl.holon import assert_matrix_region, TAB
+    from rdflib import Graph, URIRef, RDF
+
+    p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    mreg = classify_matrix(band)
+    g = Graph(); t = URIRef("https://example.org/t")
+    n = assert_matrix_region(g, mreg, band, t, URIRef("https://example.org/doc"), 0)
+
+    assert (t, RDF.type, TAB.HierarchicalTable) in g
+    assert len(list(g.objects(t, TAB.hasLeafColumn))) == 6      # data columns only (Design A)
+    assert len(list(g.objects(t, TAB.hasLeafRow))) == 2
+    assert n == 12                                              # 6 data cols x 2 rows
+    assert (None, TAB.coversColumn, None) in g                  # column tree
+    assert (None, TAB.coversRow, None) in g                     # row tree
+    # a column-group header 'Q1' covers 3 leaf columns
+    q1 = next(s for s in g.subjects(RDF.type, TAB.HeaderNode)
+              if (s, TAB.hasLabel, None) in g
+              and str(next(g.objects(next(g.objects(s, TAB.hasLabel)), TAB.cellText))) == "Q1")
+    assert len(list(g.objects(q1, TAB.coversColumn))) == 3
+
+
+def test_matrix_provenance_is_physical(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import crosstab_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.matrix import classify_matrix
+    from iladub.etkl.holon import assert_matrix_region, TAB
+    from rdflib import Graph, URIRef, RDF
+
+    p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
+    words = extract_words(str(p))
+    north = next(w for w in words if w.text == "North")
+    band = detect_bands(text_lines(words))[-1]
+    mreg = classify_matrix(band)
+    g = Graph(); t = URIRef("https://example.org/t")
+    assert_matrix_region(g, mreg, band, t, URIRef("https://example.org/doc"), 0)
+    lc = next(s for s in g.subjects(RDF.type, TAB.LabelCell)
+              if str(next(g.objects(s, TAB.cellText))) == "North")
+    bb = next(g.objects(lc, TAB.hasBBox))
+    assert abs(float(next(g.objects(bb, TAB.x0))) - north.x0) < 0.01
