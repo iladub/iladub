@@ -272,6 +272,101 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
     return asserted
 
 
+def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
+                         doc_uri: URIRef, page: int) -> int:
+    """Emit a tab:HierarchicalTable for a cross-tab: a column tree (coversColumn) over
+    the data leaf columns + a row tree (coversRow) over the leaf rows, entries at
+    (data-col x leaf-row). Composes the Loop 2 column-header and Loop 5 row-header
+    emission patterns; reuses the shared entry emitters. Both axes' LabelCells carry
+    physical bbox/onPage. Returns the asserted entry count.
+
+    (band is accepted for signature symmetry with the other makers but is unused:
+    all column-label geometry is pre-computed on mreg.col_tree by classify_matrix.)"""
+    from .regions import column_of
+    g.add((table_uri, RDF.type, TAB.HierarchicalTable))
+    b = mreg.grid.boundaries
+
+    def _label(uri_key, idx, text, x0, top, x1, bottom):
+        lc = _region_uri(table_uri, uri_key, idx)
+        g.add((lc, RDF.type, TAB.LabelCell))
+        g.add((table_uri, TAB.hasCell, lc))
+        g.add((lc, TAB.cellText, Literal(text)))
+        g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+        bb = BNode()
+        g.add((bb, RDF.type, TAB.BBox))
+        g.add((bb, TAB.x0, Literal(round(x0, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.y0, Literal(round(top, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.x1, Literal(round(x1, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.y1, Literal(round(bottom, 2), datatype=XSD.decimal)))
+        g.add((lc, TAB.hasBBox, bb))
+        return lc
+
+    # data leaf columns
+    col_uris = {}
+    for c in mreg.data_cols:
+        cu = _region_uri(table_uri, "c", c)
+        col_uris[c] = cu
+        g.add((cu, RDF.type, TAB.LeafColumn))
+        g.add((table_uri, TAB.hasLeafColumn, cu))
+
+    # column-header tree (coversColumn + parentHeader + LabelCell)
+    cnode_uris = {}
+    for idx, nd in enumerate(mreg.col_tree):
+        h = _region_uri(table_uri, "ch", idx)
+        cnode_uris[idx] = h
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((table_uri, TAB.hasHeaderNode, h))
+        g.add((h, TAB.headerLevel, Literal(nd.level, datatype=XSD.integer)))
+        for c in nd.covers:
+            g.add((h, TAB.coversColumn, col_uris[c]))
+        g.add((h, TAB.hasLabel, _label("chl", idx, nd.text, nd.x0, nd.top, nd.x1, nd.bottom)))
+    for idx, nd in enumerate(mreg.col_tree):
+        if nd.parent is not None:
+            g.add((cnode_uris[idx], TAB.parentHeader, cnode_uris[nd.parent]))
+
+    # leaf rows
+    row_uris = {}
+    for i in range(len(mreg.leaf_rows)):
+        ru = _region_uri(table_uri, "r", i)
+        row_uris[i] = ru
+        g.add((ru, RDF.type, TAB.LeafRow))
+        g.add((table_uri, TAB.hasLeafRow, ru))
+
+    # row-header tree (coversRow + parentHeader + LabelCell)
+    rnode_uris = {}
+    for idx, nd in enumerate(mreg.row_tree):
+        h = _region_uri(table_uri, "rh", idx)
+        rnode_uris[idx] = h
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((table_uri, TAB.hasHeaderNode, h))
+        g.add((h, TAB.headerLevel, Literal(nd.level, datatype=XSD.integer)))
+        for rr in nd.covers_rows:
+            g.add((h, TAB.coversRow, row_uris[rr]))
+        g.add((h, TAB.hasLabel, _label("rhl", idx, nd.text, nd.x0, nd.top, nd.x1, nd.bottom)))
+    for idx, nd in enumerate(mreg.row_tree):
+        if nd.parent is not None:
+            g.add((rnode_uris[idx], TAB.parentHeader, rnode_uris[nd.parent]))
+
+    # entries at (data column x leaf row)
+    asserted = 0
+    for i, rb in enumerate(mreg.leaf_rows):
+        by_col = {column_of((sc.x0 + sc.x1) / 2.0, b): sc for sc in rb.cells}
+        for c in mreg.data_cols:
+            sc = by_col.get(c)
+            if sc is None:
+                continue
+            # column-specific containment (NOT cell_round_trips, which checks full-table extent)
+            fits = all(b[c] - 0.5 <= w.x0 and w.x1 <= b[c + 1] + 0.5 for w in sc.words)
+            if fits:
+                e = _region_uri(table_uri, f"e{i}_", c)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], sc)
+                asserted += 1
+            else:
+                cc = _region_uri(table_uri, f"cc{i}_", c)
+                _emit_roundtrip_fail_cell(g, doc_uri, page, cc, sc)
+    return asserted
+
+
 def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str,
                     reason: str, anchor: URIRef, confidence: float) -> None:
     g.add((cand_uri, RDF.type, ILADUB.CandidateConcept))

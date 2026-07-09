@@ -179,3 +179,29 @@ def test_row_grouped_not_a_flat_record(tmp_path):
     p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
     report = compile_tables(str(p))
     assert (None, None, TAB.RecordTable) not in report.graph
+
+
+def test_crosstab_compiles(tmp_path):
+    from tests.etkl.fixtures import crosstab_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.HierarchicalTable) in report.graph
+    tbl = next(report.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafColumn))) == 6   # data-only
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafRow))) == 2
+    assert (None, TAB.coversColumn, None) in report.graph                 # column tree
+    assert (None, TAB.coversRow, None) in report.graph                    # row tree
+    assert report.score == 1.0
+
+
+def test_pivot_still_column_hierarchy(tmp_path):
+    # regression: Loop 2's pivot is NOT stolen by the matrix gate (stub_data_split None)
+    from tests.etkl.fixtures import pivoted_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "piv.pdf"; pivoted_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.HierarchicalTable) in report.graph
+    assert (None, TAB.coversRow, None) not in report.graph                # column-only, no row axis

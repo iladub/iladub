@@ -139,35 +139,64 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
                 reports.append(RegionReport(region.kind, "asserted", n, None,
                                             str(TAB.RecordTable), ascii_view))
-        else:  # UNSUPPORTED_TABLE — try the hierarchical maker first
-            from .hierarchical import classify_hierarchical
-            from .holon import assert_hier_region
-            hreg = classify_hierarchical(band)
-            if hreg is not None:
-                table_uri = URIRef(f"{_DOC}#htable{idx}")
-                n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
-                tokens = sum(len(ln.words) for ln in band.lines)
-                asserted_total += n
-                escalated_total += max(0, tokens - n)
-                reports.append(RegionReport(
-                    region.kind,
-                    "asserted" if n else "escalated",
-                    n,
-                    None if n else "ROUND_TRIP_FAIL",
-                    str(TAB.HierarchicalTable),
-                    ascii_view,
-                ))
+        else:  # UNSUPPORTED_TABLE
+            from .matrix import is_matrix_candidate
+            if is_matrix_candidate(band):
+                from .matrix import classify_matrix, matrix_tiles
+                from .holon import assert_matrix_region
+                mreg = classify_matrix(band)
+                if mreg is not None and matrix_tiles(mreg):
+                    table_uri = URIRef(f"{_DOC}#mtable{idx}")
+                    n = assert_matrix_region(graph, mreg, band, table_uri, _DOC, page_number)
+                    b = mreg.grid.boundaries
+                    for rb in mreg.leaf_rows:
+                        for sc in rb.cells:
+                            col = column_of((sc.x0 + sc.x1) / 2.0, b)
+                            if col in mreg.data_cols:
+                                fits = all(b[col] - 0.5 <= w.x0 and w.x1 <= b[col + 1] + 0.5 for w in sc.words)
+                                if fits:
+                                    asserted_total += len(sc.words)
+                                else:
+                                    escalated_total += len(sc.words)
+                    reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                str(TAB.HierarchicalTable), ascii_view))
+                else:
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view, "MATRIX_AMBIGUOUS",
+                                    TAB.HierarchicalTable, 0.4)
+                    escalated_total += sum(len(ln.words) for ln in band.lines)
+                    reports.append(RegionReport(region.kind, "escalated", 0, "MATRIX_AMBIGUOUS",
+                                                str(TAB.HierarchicalTable), ascii_view))
             else:
-                # Not hierarchical — escalate whole region in-band
-                cand_uri = URIRef(f"{_DOC}#region{idx}")
-                escalate_region(graph, cand_uri, _DOC, ascii_view,
-                                reason="KIND_NOT_SUPPORTED",
-                                anchor=TAB.HierarchicalTable, confidence=0.4)
-                tokens = sum(len(ln.words) for ln in band.lines)
-                escalated_total += tokens
-                reports.append(RegionReport(region.kind, "escalated", 0,
-                                            "KIND_NOT_SUPPORTED",
-                                            str(TAB.HierarchicalTable), ascii_view))
+                # ---- existing Loop 2 hierarchical path, UNCHANGED ----
+                from .hierarchical import classify_hierarchical
+                from .holon import assert_hier_region
+                hreg = classify_hierarchical(band)
+                if hreg is not None:
+                    table_uri = URIRef(f"{_DOC}#htable{idx}")
+                    n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
+                    tokens = sum(len(ln.words) for ln in band.lines)
+                    asserted_total += n
+                    escalated_total += max(0, tokens - n)
+                    reports.append(RegionReport(
+                        region.kind,
+                        "asserted" if n else "escalated",
+                        n,
+                        None if n else "ROUND_TRIP_FAIL",
+                        str(TAB.HierarchicalTable),
+                        ascii_view,
+                    ))
+                else:
+                    # Not hierarchical — escalate whole region in-band
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                    reason="KIND_NOT_SUPPORTED",
+                                    anchor=TAB.HierarchicalTable, confidence=0.4)
+                    tokens = sum(len(ln.words) for ln in band.lines)
+                    escalated_total += tokens
+                    reports.append(RegionReport(region.kind, "escalated", 0,
+                                                "KIND_NOT_SUPPORTED",
+                                                str(TAB.HierarchicalTable), ascii_view))
 
     denom = asserted_total + escalated_total
     score = 1.0 if denom == 0 else asserted_total / denom

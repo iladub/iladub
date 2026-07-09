@@ -128,9 +128,20 @@ it must certify.)*
       geometry; blank-below = ditto-grouping is a documented *reading convention* (the mirror of Loop 2's
       centered-merge). Column and row hierarchies are now one machinery reflected across the diagonal.
       (Delivered by the row-header-hierarchies PR.)
+- [x] **6 — compile matrix / cross-tab tables** (2026-07-09): the culmination of increments 2 and 5 — a
+      table with **both** a hierarchical column header (over the data columns) **and** a stub row axis, each
+      body cell addressed by the cross-product `(column-path × row-path)`. Previously a cross-tab classified
+      UNSUPPORTED and lost its row axis (the stub became a phantom uncovered leaf column). Now `classify_matrix`
+      **composes** Loop 2's column tree (`coversColumn`) and Loop 5's row tree (`coversRow`) and
+      `assert_matrix_region` emits both — certified by the **union of the existing column + row SHACL, with NO
+      new vocabulary or shapes** (the `atColumn × atRow` access function was built for this since increment 1).
+      The one new algorithm is a **proximity (Voronoi) column-span builder**: short cross-tab labels (`Q1`, `Q2`)
+      over wide numeric groups defeat text-extent span recovery, so each data column is assigned to its nearest
+      parent-label center (a documented *centered-merge* convention). Detection (`UNSUPPORTED` +
+      `header_body_split ≥ 2` + `stub_data_split not None`) cleanly separates it from the increment-2 pivot
+      (covered stub) and increment-5 row-hierarchy (flat column header); a non-tiling matrix escalates
+      `MATRIX_AMBIGUOUS`. (Delivered by the matrix-crosstab PR.)
 - [ ] Field of possibles (each a future increment, escalated today):
-      **matrix/cross-tab (both axes hierarchical at once — run the column + row builders and let the access
-      function `atColumn × atRow` compose)** ·
       key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·
       **signal-tagging (font/colour/ruled-lines — an evidence fallback only when the geometry is
