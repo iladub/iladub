@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Sequence
 
 from .bands import Band
@@ -137,6 +137,35 @@ def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
     return tuple(range(lc, rc + 1))
 
 
+def repair_coverage(nodes: list[HeaderNode], ncols: int) -> list[HeaderNode]:
+    """Extend each coarse (non-leaf) header node to absorb contiguous adjacent leaf
+    columns that have no parent at that node's level, excluding column 0 (the stub).
+
+    A short parent label over a wide span is under-covered by text-extent recovery
+    (its ink does not reach the outer columns), orphaning a leaf column at that level.
+    This repair fills such coverage gaps by extending the spatially adjacent parent —
+    additive only (never removes or overlaps), so the result still tiles. It is a
+    no-op when the tree already tiles (no orphans), leaving existing pivots unchanged.
+    """
+    if not nodes:
+        return nodes
+    out = list(nodes)
+    max_level = max(n.level for n in out)
+    for lvl in range(max_level):                      # non-leaf levels only
+        covered: set[int] = set()
+        for n in out:
+            if n.level == lvl:
+                covered.update(n.covers)
+        orphans = [c for c in range(ncols) if c not in covered and c != 0]
+        for c in orphans:
+            for i, n in enumerate(out):
+                if n.level == lvl and n.covers and (max(n.covers) == c - 1 or min(n.covers) == c + 1):
+                    out[i] = replace(n, covers=tuple(sorted(set(n.covers) | {c})))
+                    covered.add(c)
+                    break
+    return out
+
+
 def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[HeaderNode, ...] | None:
     """Header-tree from the header lines (0..body_line-1).
 
@@ -170,6 +199,8 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
         for cell in row:
             covers = _covers_for_cell(cell, b)
             nodes.append(HeaderNode(lvl, covers, cell.text, None))
+
+    nodes = repair_coverage(nodes, grid.ncols)   # fill short-parent-over-wide-span coverage gaps
 
     # Link each node to its nearest parent (level − 1 whose covers ⊇ this node's).
     # Break after the first match so the first qualifying parent wins deterministically
