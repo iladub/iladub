@@ -9,6 +9,8 @@ certify the resulting structure.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
+
 from .bands import Band
 from .grid import LeafGrid
 from .headers import header_body_split, is_numeric, _col_values
@@ -68,9 +70,6 @@ def looks_row_grouped(region) -> bool:
     if len(_present_rows(leaf_rows, grid, k - 1)) != n:
         return False                      # finest stub not fully populated -> leaf rows unidentifiable
     return any(len(_present_rows(leaf_rows, grid, s)) < n for s in range(k - 1))
-
-
-from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -135,11 +134,11 @@ def row_tree_tiles(tree, n_leaf_rows: int) -> bool:
 
 @dataclass(frozen=True)
 class RowHierRegion:
-    grid: object
-    tree: tuple
+    grid: LeafGrid
+    tree: tuple[RowHeaderNode, ...]
     leaf_rows: tuple
-    stub_cols: tuple
-    data_cols: tuple
+    stub_cols: tuple[int, ...]
+    data_cols: tuple[int, ...]
     body_line: int
 
 
