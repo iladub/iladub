@@ -323,3 +323,31 @@ def single_stub_blank_pdf(path: str) -> dict:
                 c.drawString(x, y, cell)
     c.save()
     return {"cols": cols}
+
+
+def crosstab_table_pdf(path: str) -> dict:
+    """A cross-tab: hierarchical COLUMN header (Q1/Q2 each over Rev/Cost/Unit) + a
+    flat stub ROW axis (North/South) + a numeric data matrix. Short column-group
+    labels over wide numeric groups — the case Loop 2's text-extent span recovery
+    under-covers and proximity handles. Blank corner (the stub has no header)."""
+    stub_x = 55.0
+    data_x = [140.0, 210.0, 280.0, 380.0, 450.0, 520.0]   # Q1:Rev,Cost,Unit | Q2:Rev,Cost,Unit
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[2]) / 2.0, top, "Q1")
+    c.drawCentredString((data_x[3] + data_x[5]) / 2.0, top, "Q2")
+    for x, name in zip(data_x, ["Rev", "Cost", "Unit", "Rev", "Cost", "Unit"]):
+        c.drawCentredString(x, top - 13.0, name)
+    c.setFont("Courier", 9)
+    body = [("North", ["100", "60", "5", "110", "65", "6"]),
+            ("South", ["120", "70", "7", "130", "75", "8"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 30.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"n_data_cols": 6, "n_leaf_rows": 2,
+            "col_groups": {"Q1": [1, 2, 3], "Q2": [4, 5, 6]},
+            "row_axis": ["North", "South"]}
