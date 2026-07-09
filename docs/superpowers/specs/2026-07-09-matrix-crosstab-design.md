@@ -92,10 +92,16 @@ bottom = level 0..split-1):
 `None` if a level has no labels or the assignment is degenerate. Only the **data** columns are assigned; the
 stub column(s) get no column-header node (they are the row axis).
 
-**Why proximity, not text-extent (no overfitting):** proximity uses the *structural* fact that a centered
+**Why proximity, not text-extent (no overfitting):** proximity uses the *structural* fact that a **centered**
 parent label marks the center of its span; nearest-center assignment is exact for any label width, whereas
-text-extent recovery is a heuristic that only works when the label happens to be wide. This is a more robust
-oracle, not a constant tuned to the fixture.
+text-extent recovery only works when the label happens to be wide. It is a more robust oracle for the common
+case — but note (honestly) that nearest-center assignment is itself a **reading convention**: it assumes
+parent headers are *centered* over their column groups (the same centered-merge convention Loop 2 documents,
+and the mirror of Loop 5's blank-below convention). A left- or right-**aligned** parent label would be
+mis-assigned. Like every prior loop, the compiler *applies the centered-merge convention* and certifies the
+resulting structure with the SHACL + round-trip; it does not claim to recover a non-centered author's intent.
+Because Voronoi assignment always *partitions* the data columns, `col_tree_tiles` (like `row_tree_tiles`) is a
+**structural backstop** against degenerate geometry, not the convention-vs-reality discriminator.
 
 ## §5 — `classify_matrix(band) -> MatrixRegion | None`
 
@@ -170,8 +176,12 @@ byte-for-byte unchanged in the `else`.
    `row_grouped_table_pdf` (RECORD_TABLE) is **not**.
 4. **`test_matrix_provenance`** — an entry (`North`×`Q1/Rev` = 100) and both a column LabelCell (`Q1`) and a
    row LabelCell (`North`) carry physical bbox/onPage matching their measured words.
-5. **`test_matrix_ambiguous_escalates`** — a fixture whose column tree does not tile (overlapping/short-gap
-   parents) → escalates `MATRIX_AMBIGUOUS`, no HierarchicalTable.
+5. **`test_col_tree_tiles_rejects_pathology`** (unit, the backstop) — a hand-built non-partitioning column
+   tree (a gap and an overlap) → `col_tree_tiles` False; and **`test_classify_matrix_none_escalates`** — a
+   region that is `UNSUPPORTED` + `stub_data_split` but where `classify_matrix` returns `None` (e.g.
+   `header_body_split < 2`, a degenerate single-level header) does **not** enter the matrix path. (Given
+   Voronoi always partitions, a *detected* matrix compiles; the backstop and detection preconditions bound
+   it — there is no claimed semantic escalation, mirroring Loop 5's honest framing.)
 6. **`test_loop2_pivot_still_compiles` / `test_row_grouped_still_compiles`** (regression) — Loops 2 and 5
    fixtures compile exactly as before; the matrix gate does not steal them.
 7. **No regression** — full suite green; the Loop 2 hierarchical `else` branch is byte-for-byte unchanged.
