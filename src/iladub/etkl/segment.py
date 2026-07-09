@@ -15,6 +15,12 @@ from .headers import header_body_split, is_numeric
 from .regions import classify, RegionKind, column_of
 
 
+# A genuine side-by-side boundary gutter is much wider than the table's internal
+# column gutters; a uniform table's widest gutter barely exceeds the others.
+# This mirrors detect_bands' 1.8× median rule — a relative oracle, not a constant.
+_GUTTER_DOMINANCE = 2.0
+
+
 def _band_from_lines(lines) -> Band:
     lines = tuple(lines)
     return Band(lines, min(l.top for l in lines), max(l.bottom for l in lines))
@@ -49,7 +55,13 @@ def _col_ink_extents(band: Band, grid):
 
 
 def _widest_gutter_cut(band: Band):
-    """(cut_x, left_words, right_words) at the widest inter-column ink gap, or None."""
+    """(cut_x, left_words, right_words) at the widest inter-column ink gap, or None.
+
+    Gap-dominance guard: requires at least 2 gaps and the widest gap must be at
+    least _GUTTER_DOMINANCE times the second-widest. A genuine side-by-side
+    boundary gutter is much wider than all internal gutters; a uniform table's
+    widest gutter barely exceeds the others (ratio 1.05–1.59 in probes). This is
+    the same relative-oracle approach as detect_bands' 1.8× median rule."""
     if len(band.lines) < 2:
         return None
     grid = infer_leaf_grid(band)
@@ -60,7 +72,15 @@ def _widest_gutter_cut(band: Band):
             if c in ext and c + 1 in ext]
     if not gaps:
         return None
-    wc, _ = max(gaps, key=lambda z: z[1])
+    # Gap-dominance guard: need ≥ 2 gaps to compare widest vs second-widest.
+    if len(gaps) < 2:
+        return None
+    gaps_by_size = sorted(gaps, key=lambda z: z[1], reverse=True)
+    widest_val = gaps_by_size[0][1]
+    second_val = gaps_by_size[1][1]
+    if widest_val < _GUTTER_DOMINANCE * second_val:
+        return None
+    wc = gaps_by_size[0][0]
     cut = (ext[wc][1] + ext[wc + 1][0]) / 2.0
     words = [w for ln in band.lines for w in ln.words]
     left = [w for w in words if (w.x0 + w.x1) / 2.0 < cut]

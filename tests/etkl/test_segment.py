@@ -2,7 +2,8 @@ import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
 from tests.etkl.fixtures import (side_by_side_pdf, stacked_repeated_header_pdf,
-                                 simple_table_pdf, crosstab_table_pdf, pivoted_table_pdf)
+                                 simple_table_pdf, crosstab_table_pdf, pivoted_table_pdf,
+                                 uniform_wide_record_pdf)
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.segment import find_repeated_header, find_table_gutter, has_own_stub
 
@@ -60,6 +61,18 @@ from tests.etkl.fixtures import (all_text_table_pdf, row_grouped_table_pdf,
                                  row_hierarchy_wide_pdf)
 
 
+def test_uniform_4col_not_split(tmp_path):
+    """A uniform 4-column record table must NOT be split and must NOT be ambiguous.
+
+    The three inter-column gutters are roughly equal; the widest-to-second-widest
+    ratio is ≈1.1–1.3, well below the _GUTTER_DOMINANCE threshold of 2.0.
+    Guards the gap-dominance fix for the 4-col uniform-table false-positive."""
+    band = _band(uniform_wide_record_pdf, tmp_path)
+    assert find_table_gutter(band) is None
+    assert len(segment(band)) == 1
+    assert is_multi_table_ambiguous(band) is False
+
+
 def test_side_by_side_segments_to_two(tmp_path):
     subs = segment(_band(side_by_side_pdf, tmp_path))
     assert len(subs) == 2
@@ -90,7 +103,7 @@ def test_single_tables_never_split(tmp_path):
     # THE invariant — every existing single table segments to exactly one region
     for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
                   crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf,
-                  row_hierarchy_wide_pdf):
+                  row_hierarchy_wide_pdf, uniform_wide_record_pdf):
         assert len(segment(_band(maker, tmp_path))) == 1, maker.__name__
 
 
@@ -107,5 +120,5 @@ def test_single_tables_not_ambiguous(tmp_path):
     # This pins the has_own_stub ncols<2 guard's contract.
     for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
                   crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf,
-                  row_hierarchy_wide_pdf):
+                  row_hierarchy_wide_pdf, uniform_wide_record_pdf):
         assert is_multi_table_ambiguous(_band(maker, tmp_path)) is False, maker.__name__

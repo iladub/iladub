@@ -247,6 +247,24 @@ def test_crosstab_still_single_table(tmp_path):
     assert len(list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))) == 1
 
 
+def test_uniform_4col_compiles_one_table(tmp_path):
+    """A 4-column uniform-spacing record table (Name/Age/City/Country) must compile
+    to exactly ONE tab:RecordTable — not two (the pre-fix false-positive split).
+
+    Guards the gap-dominance fix end-to-end: before the fix, the widest inter-column
+    gutter was certified and the band was torn into two 2-column RecordTables; after
+    the fix, the widest-to-second-widest ratio (~1.1–1.3) is below _GUTTER_DOMINANCE
+    (2.0) so no cut is made and the whole band compiles as a single RecordTable."""
+    from tests.etkl.fixtures import uniform_wide_record_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "u4c.pdf"; uniform_wide_record_pdf(str(p))
+    report = compile_tables(str(p))
+    rec_tables = list(report.graph.subjects(RDF.type, TAB.RecordTable))
+    assert len(rec_tables) == 1, f"expected 1 RecordTable, got {len(rec_tables)}"
+    assert report.score == 1.0
+
+
 def test_row_hierarchy_wide_compiles_one_table(tmp_path):
     """A row-hierarchy table with 2 numeric data columns (Headcount + Budget) must
     compile to exactly ONE tab:HierarchicalTable (with coversRow) and ZERO

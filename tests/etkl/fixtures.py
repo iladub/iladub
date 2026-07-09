@@ -410,6 +410,40 @@ def record_plus_stub_hier_pdf(path: str) -> dict:
     return {"right_stub": "Dept"}
 
 
+def uniform_wide_record_pdf(path: str) -> dict:
+    """A single 4-column record table with roughly uniform column spacing.
+
+    Layout:
+      Name    | Age | City  | Country
+      Alice   | 30  | NYC   | USA
+      Bob     | 25  | LA    | UK
+      Charlie | 35  | Paris | France
+
+    Columns at x = 72, 200, 330, 460. The three inter-column gutters are all
+    roughly equal (~84–112 pt), so the widest-to-second-widest ratio is ≈1.1–1.3
+    — well below the _GUTTER_DOMINANCE threshold of 2.0.
+
+    Guards the gap-dominance fix: this table must NEVER be split and must NOT
+    be escalated as MULTI_TABLE_AMBIGUOUS.
+    """
+    cols = [72.0, 200.0, 330.0, 460.0]     # Name, Age, City, Country
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [
+        ("Name",    "Age", "City",  "Country"),
+        ("Alice",   "30",  "NYC",   "USA"),
+        ("Bob",     "25",  "LA",    "UK"),
+        ("Charlie", "35",  "Paris", "France"),
+    ]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_body_rows": 3}
+
+
 def row_hierarchy_wide_pdf(path: str) -> dict:
     """A ROW-header hierarchy with TWO numeric data columns (Headcount + Budget).
 
