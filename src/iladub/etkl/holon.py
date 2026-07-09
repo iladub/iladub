@@ -172,6 +172,96 @@ def assert_transposed_region(g: Graph, region: ClassifiedRegion, table_uri: URIR
     return asserted
 
 
+def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
+                           doc_uri: URIRef, page: int) -> int:
+    """Emit a tab:HierarchicalTable with a ROW-header tree (Design A: stub columns are
+    the row-header axis; only data columns are leaf columns). Returns the asserted
+    entry count. Reuses the shared entry/round-trip emitters; row-header LabelCells and
+    entries both carry physical provenance.
+    """
+    from .regions import column_of
+    g.add((table_uri, RDF.type, TAB.HierarchicalTable))
+    b = rreg.grid.boundaries
+
+    # header line labels, by column (flat single-level column header assumed)
+    header_by_col: dict[int, str] = {}
+    if band.lines:
+        for w in band.lines[0].words:
+            header_by_col[column_of((w.x0 + w.x1) / 2.0, b)] = w.text
+
+    # data leaf columns + flat column header nodes
+    col_uris = {}
+    for c in rreg.data_cols:
+        cu = _region_uri(table_uri, "c", c)
+        col_uris[c] = cu
+        g.add((cu, RDF.type, TAB.LeafColumn))
+        g.add((table_uri, TAB.hasLeafColumn, cu))
+        h = _region_uri(table_uri, "ch", c)
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+        g.add((h, TAB.coversColumn, cu))
+        g.add((table_uri, TAB.hasHeaderNode, h))
+        if c in header_by_col:
+            lc = _region_uri(table_uri, "clc", c)
+            g.add((lc, RDF.type, TAB.LabelCell))
+            g.add((table_uri, TAB.hasCell, lc))
+            g.add((lc, TAB.cellText, Literal(header_by_col[c])))
+            g.add((h, TAB.hasLabel, lc))
+
+    # leaf rows
+    row_uris = {}
+    for i in range(len(rreg.leaf_rows)):
+        ru = _region_uri(table_uri, "r", i)
+        row_uris[i] = ru
+        g.add((ru, RDF.type, TAB.LeafRow))
+        g.add((table_uri, TAB.hasLeafRow, ru))
+
+    # row-header tree (coversRow + parentHeader + LabelCell with physical provenance)
+    node_uris = {}
+    for idx, nd in enumerate(rreg.tree):
+        h = _region_uri(table_uri, "rh", idx)
+        node_uris[idx] = h
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((table_uri, TAB.hasHeaderNode, h))
+        g.add((h, TAB.headerLevel, Literal(nd.level, datatype=XSD.integer)))
+        for rr in nd.covers_rows:
+            g.add((h, TAB.coversRow, row_uris[rr]))
+        lc = _region_uri(table_uri, "rlc", idx)
+        g.add((lc, RDF.type, TAB.LabelCell))
+        g.add((table_uri, TAB.hasCell, lc))
+        g.add((lc, TAB.cellText, Literal(nd.text)))
+        g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+        bb = BNode()
+        g.add((bb, RDF.type, TAB.BBox))
+        g.add((bb, TAB.x0, Literal(round(nd.x0, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.y0, Literal(round(nd.top, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.x1, Literal(round(nd.x1, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.y1, Literal(round(nd.bottom, 2), datatype=XSD.decimal)))
+        g.add((lc, TAB.hasBBox, bb))
+        g.add((h, TAB.hasLabel, lc))
+    for idx, nd in enumerate(rreg.tree):
+        if nd.parent is not None:
+            g.add((node_uris[idx], TAB.parentHeader, node_uris[nd.parent]))
+
+    # entries: (data column x leaf row), certified per-cell by the round-trip
+    asserted = 0
+    for i, rb in enumerate(rreg.leaf_rows):
+        by_col = {column_of((c.x0 + c.x1) / 2.0, b): c for c in rb.cells}
+        for c in rreg.data_cols:
+            cell = by_col.get(c)
+            if cell is None:
+                continue
+            fits = all(b[c] - 0.5 <= w.x0 and w.x1 <= b[c + 1] + 0.5 for w in cell.words)
+            if fits:
+                e = _region_uri(table_uri, f"e{i}_", c)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], cell)
+                asserted += 1
+            else:
+                cc = _region_uri(table_uri, f"cc{i}_", c)
+                _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
+    return asserted
+
+
 def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str,
                     reason: str, anchor: URIRef, confidence: float) -> None:
     g.add((cand_uri, RDF.type, ILADUB.CandidateConcept))

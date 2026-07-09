@@ -211,3 +211,55 @@ def test_transposed_straddle_escalates_that_cell():
     rationales = {str(o) for s in g.subjects(RDF.type, ILADUB.CandidateConcept)
                   for o in g.objects(s, DEC.rationale)}
     assert "ROUND_TRIP_FAIL" in rationales
+
+
+def test_row_hier_maker_builds_row_tree(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.rowheaders import classify_row_hier
+    from iladub.etkl.holon import assert_row_hier_region, TAB
+    from rdflib import Graph, URIRef, RDF, Literal
+
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    rreg = classify_row_hier(band)
+    g = Graph(); t = URIRef("https://example.org/t")
+    n = assert_row_hier_region(g, rreg, band, t, URIRef("https://example.org/doc"), 0)
+
+    assert (t, RDF.type, TAB.HierarchicalTable) in g
+    assert len(list(g.objects(t, TAB.hasLeafColumn))) == 1          # Value only (Design A)
+    assert len(list(g.objects(t, TAB.hasLeafRow))) == 5
+    assert n == 5                                                   # 5 entries (Value x 5 rows)
+    # row-header tree: North covers 3 rows, South covers 2
+    def covers(text):
+        h = next(s for s in g.subjects(RDF.type, TAB.HeaderNode)
+                 if (s, TAB.hasLabel, None) in g
+                 and str(next(g.objects(next(g.objects(s, TAB.hasLabel)), TAB.cellText))) == text)
+        return len(list(g.objects(h, TAB.coversRow)))
+    assert covers("North") == 3
+    assert covers("South") == 2
+
+
+def test_row_hier_provenance_is_physical(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.rowheaders import classify_row_hier
+    from iladub.etkl.holon import assert_row_hier_region, TAB
+    from rdflib import Graph, URIRef, RDF
+
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+    words = extract_words(str(p))
+    north = next(w for w in words if w.text == "North")
+    band = detect_bands(text_lines(words))[-1]
+    rreg = classify_row_hier(band)
+    g = Graph(); t = URIRef("https://example.org/t")
+    assert_row_hier_region(g, rreg, band, t, URIRef("https://example.org/doc"), 0)
+    # the 'North' row-header LabelCell keeps the physical bbox of the 'North' word
+    lc = next(s for s in g.subjects(RDF.type, TAB.LabelCell)
+              if str(next(g.objects(s, TAB.cellText))) == "North")
+    bb = next(g.objects(lc, TAB.hasBBox))
+    assert abs(float(next(g.objects(bb, TAB.x0))) - north.x0) < 0.01
