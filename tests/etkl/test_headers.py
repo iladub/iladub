@@ -37,3 +37,34 @@ def test_tree_has_two_merged_parents(tmp_path):
     parents = [n for n in tree if len(n.covers) >= 2]
     assert len(parents) == 2                      # Current Visit, Prior Visit
     assert {len(p.covers) for p in parents} == {3}   # each spans 3 leaf columns
+
+
+def test_repair_noop_on_tiling_tree():
+    from iladub.etkl.headers import repair_coverage, HeaderNode
+    nodes = [HeaderNode(0, (1, 2, 3), "A", None), HeaderNode(0, (4, 5, 6), "B", None),
+             HeaderNode(1, (0,), "stub", None)] + [HeaderNode(1, (i,), str(i), None) for i in range(1, 7)]
+    out = repair_coverage(list(nodes), 7)
+    assert {(n.level, n.covers, n.text) for n in out} == {(n.level, n.covers, n.text) for n in nodes}
+
+
+def test_repair_absorbs_adjacent_orphan_not_stub():
+    from iladub.etkl.headers import repair_coverage, HeaderNode
+    nodes = [HeaderNode(0, (1, 2, 3), "Region", None),
+             HeaderNode(1, (0,), "Year", None)] + [HeaderNode(1, (i,), n, None)
+             for i, n in zip(range(1, 5), ["North", "South", "East", "West"])]
+    out = repair_coverage(list(nodes), 5)
+    region = next(n for n in out if n.text == "Region")
+    assert set(region.covers) == {1, 2, 3, 4}          # West absorbed
+    assert 0 not in region.covers                      # stub NOT absorbed
+
+
+def test_short_parent_covers_full_span_end_to_end(tmp_path):
+    from tests.etkl.fixtures import region_pivot_pdf
+    from iladub.etkl import compile_tables
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
+    rep = compile_tables(str(p))
+    region = next(h for h in rep.graph.subjects(RDF.type, TAB.HeaderNode)
+                  if str(rep.graph.value(rep.graph.value(h, TAB.hasLabel), TAB.cellText)) == "Region")
+    assert len(list(rep.graph.objects(region, TAB.coversColumn))) == 4

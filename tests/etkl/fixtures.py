@@ -481,3 +481,25 @@ def row_hierarchy_wide_pdf(path: str) -> dict:
     c.save()
     return {"cols": cols, "n_leaf_rows": 4, "n_data_cols": 2,
             "groups": {"North": 2, "South": 2}}
+
+
+def region_pivot_pdf(path: str) -> dict:
+    """A single spanning parent 'Region' over four WIDE numeric leaf columns
+    (North/South/East/West) + a 'Year' stub. The short 'Region' label under-covers
+    its span under text-extent recovery; repair_coverage must extend it to all four."""
+    leaves = [150.0, 250.0, 350.0, 450.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString((leaves[0] + leaves[3]) / 2.0, PAGE_H - 90.0, "Region")
+    for x, n in zip(leaves, ["North", "South", "East", "West"]):
+        c.drawCentredString(x, PAGE_H - 104.0, n)
+    c.drawString(60.0, PAGE_H - 104.0, "Year")
+    c.setFont("Courier", 10)
+    for i, (yr, vals) in enumerate([("2020", ["10", "20", "30", "40"]),
+                                    ("2021", ["11", "21", "31", "41"])]):
+        y = PAGE_H - 122.0 - i * 16.0
+        c.drawString(60.0, y, yr)
+        for x, v in zip(leaves, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"parent": "Region", "values": ["North", "South", "East", "West"], "stub": "Year"}
