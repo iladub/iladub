@@ -1,0 +1,14 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# A PivotedDimension representing the "Region" dimension recovered from a column-axis
+# header hierarchy. Has onAxis and at least one hasDimensionValue -> conforms.
+ex:dimRegion a tab:PivotedDimension ;
+    tab:dimensionName "Region" ;
+    tab:onAxis "column" ;
+    tab:atLevel 0 ;
+    tab:hasDimensionValue "North" ;
+    tab:hasDimensionValue "South" ;
+    tab:hasDimensionValue "East" ;
+    tab:hasDimensionValue "West" .

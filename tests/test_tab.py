@@ -208,3 +208,19 @@ def test_existing_column_examples_still_pass_with_row_shapes():
     # the guarded row shapes must NOT break a table that has leaf rows but no row axis
     c, t = _v(CONFORMANT)
     assert c, t
+
+
+PIVDIM_CONF = os.path.join(EX, "pivoted-dimension-conformant.ttl")
+PIVDIM_NEG = os.path.join(EX, "pivoted-dimension-negative.ttl")
+
+
+def test_tab_pivoted_dimension_terms():
+    g = _g(TAB_TTL)
+    assert (TAB.PivotedDimension, RDF.type, OWL.Class) in g
+    for prop in ["dimensionName", "onAxis", "atLevel", "hasDimensionValue"]:
+        assert (TAB[prop], RDF.type, None) in g, f"missing tab:{prop}"
+
+
+def test_pivoted_dimension_shapes():
+    c, t = _v(PIVDIM_CONF); assert c, t
+    c, t = _v(PIVDIM_NEG); assert not c

@@ -112,3 +112,12 @@ tab:x0 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; 
 tab:y0 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "y0"@en .
 tab:x1 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "x1"@en .
 tab:y1 a owl:DatatypeProperty ; rdfs:domain tab:BBox ; rdfs:range xsd:decimal ; rdfs:label "y1"@en .
+
+# --- pivoted dimensions (denormalisation evidence) ---------------------------
+tab:PivotedDimension a owl:Class ; rdfs:label "Pivoted dimension"@en ;
+    rdfs:comment "A dimension recovered from a header axis: a normalized column/attribute a report pivoted into the header hierarchy."@en .
+tab:dimensionName a owl:DatatypeProperty ; rdfs:domain tab:PivotedDimension ; rdfs:range xsd:string ; rdfs:label "dimension name"@en .
+tab:onAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "on axis"@en ;
+    rdfs:comment "row | column."@en .
+tab:atLevel a owl:DatatypeProperty ; rdfs:domain tab:PivotedDimension ; rdfs:range xsd:integer ; rdfs:label "at level"@en .
+tab:hasDimensionValue a owl:DatatypeProperty ; rdfs:domain tab:PivotedDimension ; rdfs:range xsd:string ; rdfs:label "has dimension value"@en .
