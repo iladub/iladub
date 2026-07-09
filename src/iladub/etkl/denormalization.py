@@ -62,8 +62,11 @@ def _axis_dimensions(g, t, axis, covers_pred, leaves):
     dims, pending_name = [], None
     for lvl in sorted(by_level):
         level_nodes = by_level[lvl]
-        if len(level_nodes) == 1 and len(level_nodes[0][2]) == n:
-            pending_name = level_nodes[0][1]          # a spanning parent names the level below
+        multi = [ln for ln in level_nodes if len(ln[2]) > 1]
+        singles_cov = set().union(*[ln[2] for ln in level_nodes if len(ln[2]) == 1]) if any(len(ln[2]) == 1 for ln in level_nodes) else set()
+        leafset = set(leaves)
+        if len(multi) == 1 and (multi[0][2] | singles_cov) >= leafset and not (multi[0][2] & singles_cov):
+            pending_name = multi[0][1]           # a spanning parent (modulo single-leaf stubs) names the level below
             continue
         ordered = sorted(level_nodes, key=lambda z: min(str(c) for c in z[2]))
         seen, values = set(), []

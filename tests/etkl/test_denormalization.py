@@ -42,6 +42,24 @@ def test_sibling_parents_are_values_unnamed():
     assert set(dims[1].values) == {"Rev", "Cost"}
 
 
+def test_spanning_parent_with_stub_names_dimension():
+    """Region (level 0, covers cols 1-4) + single-leaf stub Year (level 0, covers col 0).
+    The multi-leaf parent Region, together with stub Year, covers all leaves → names the
+    dimension below (North/South/East/West)."""
+    g = Graph(); t = EX.tbl
+    # col 0 = stub; cols 1-4 = data
+    all_cols = [EX["c%d" % i] for i in range(5)]
+    for c in all_cols:
+        g.add((c, RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, c))
+    _hdr(g, t, EX.hYear,   0, "Year",   TAB.coversColumn, [all_cols[0]])
+    _hdr(g, t, EX.hRegion, 0, "Region", TAB.coversColumn, all_cols[1:])
+    for c, nm in zip(all_cols[1:], ["North", "South", "East", "West"]):
+        _hdr(g, t, URIRef(str(c) + "-h"), 1, nm, TAB.coversColumn, [c])
+    dims = [d for d in recover_dimensions(g, t) if d.axis == "column"]
+    region_dim = next(d for d in dims if d.name == "Region")
+    assert set(region_dim.values) == {"North", "South", "East", "West"}
+
+
 def test_flat_level_is_value_dimension():
     g = Graph(); t = EX.tbl; cols = _cols(g, t, 3)
     for c, nm in zip(cols, ["Analyte", "Value", "Unit"]):
@@ -59,11 +77,7 @@ def test_region_pivot_end_to_end(tmp_path):
     p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
     rep = compile_tables(str(p))
     t = next(rep.graph.subjects(_RDF.type, TAB.HierarchicalTable))
-    # The hierarchical compiler orphan-promotes the Year stub to level 0 alongside
-    # Region, so level 0 has two nodes (Year + Region) → both become VALUES at level 0,
-    # and North/South/East/West become VALUES at level 1 (no pending_name from level 0).
-    # repair_coverage ensures Region spans all 4 data columns (the 8-pre unblock),
-    # making North/South/East/West fully recoverable as a column dimension.
-    dims = [d for d in recover_dimensions(rep.graph, t) if d.axis == "column"]
-    leaf_dim = next(d for d in dims if "North" in d.values)  # level-1 dimension
-    assert set(leaf_dim.values) == {"North", "South", "East", "West"}
+    # Region (level 0, multi-leaf) + Year stub (level 0, single-leaf) → Region names
+    # the dimension of the level below; North/South/East/West are its values.
+    region_dim = next(d for d in recover_dimensions(rep.graph, t) if d.name == "Region")
+    assert set(region_dim.values) == {"North", "South", "East", "West"}
