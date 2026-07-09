@@ -6,7 +6,8 @@ from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
 from iladub.etkl.headers import header_body_split
 from iladub.etkl.matrix import (infer_column_tree_by_proximity, col_tree_tiles,
-                                is_matrix_candidate, ColHeaderNode)
+                                is_matrix_candidate, ColHeaderNode,
+                                classify_matrix, matrix_tiles, MatrixRegion)
 
 
 def _band(maker, tmp_path):
@@ -43,9 +44,6 @@ def test_is_matrix_candidate(tmp_path):
     assert is_matrix_candidate(_band(pivoted_table_pdf, tmp_path)) is False
     # flat single-level table: header_body_split 1 -> not a matrix
     assert is_matrix_candidate(_band(simple_table_pdf, tmp_path)) is False
-
-
-from iladub.etkl.matrix import classify_matrix, matrix_tiles, MatrixRegion
 
 
 def test_classify_matrix_composes_both_axes(tmp_path):

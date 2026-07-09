@@ -278,7 +278,10 @@ def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
     the data leaf columns + a row tree (coversRow) over the leaf rows, entries at
     (data-col x leaf-row). Composes the Loop 2 column-header and Loop 5 row-header
     emission patterns; reuses the shared entry emitters. Both axes' LabelCells carry
-    physical bbox/onPage. Returns the asserted entry count."""
+    physical bbox/onPage. Returns the asserted entry count.
+
+    (band is accepted for signature symmetry with the other makers but is unused:
+    all column-label geometry is pre-computed on mreg.col_tree by classify_matrix.)"""
     from .regions import column_of
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))
     b = mreg.grid.boundaries
