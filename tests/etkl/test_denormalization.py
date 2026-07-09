@@ -68,6 +68,20 @@ def test_flat_level_is_value_dimension():
     assert len(d) == 1 and set(d[0].values) == {"Analyte", "Value", "Unit"}
 
 
+def test_annotate_dimensions_writes_triples():
+    from iladub.etkl.denormalization import recover_dimensions, annotate_dimensions
+    g = Graph(); t = EX.tbl; cols = _cols(g, t, 4)
+    _hdr(g, t, EX.hRegion, 0, "Region", TAB.coversColumn, cols)
+    for c, nm in zip(cols, ["North", "South", "East", "West"]):
+        _hdr(g, t, URIRef(str(c) + "-h"), 1, nm, TAB.coversColumn, [c])
+    dims = recover_dimensions(g, t)
+    annotate_dimensions(g, t, dims)
+    du = next(g.subjects(RDF.type, TAB.PivotedDimension))
+    assert str(g.value(du, TAB.dimensionName)) == "Region"
+    assert {str(v) for v in g.objects(du, TAB.hasDimensionValue)} == {"North", "South", "East", "West"}
+    assert str(g.value(du, TAB.onAxis)) == "column"
+
+
 def test_region_pivot_end_to_end(tmp_path):
     import pytest
     pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")

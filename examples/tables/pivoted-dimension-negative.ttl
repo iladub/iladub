@@ -1,0 +1,10 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# A PivotedDimension missing onAxis -> violates PivotedDimensionShape (onAxis minCount 1).
+ex:dimBroken a tab:PivotedDimension ;
+    tab:dimensionName "Quarter" ;
+    tab:atLevel 0 ;
+    tab:hasDimensionValue "Q1" ;
+    tab:hasDimensionValue "Q2" .

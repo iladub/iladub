@@ -83,3 +83,23 @@ def recover_dimensions(g, t):
     coversRow). A flat single-level axis yields one value-level dimension."""
     return (_axis_dimensions(g, t, "column", TAB.coversColumn, _leaf_cols(g, t))
             + _axis_dimensions(g, t, "row", TAB.coversRow, _leaf_rows(g, t)))
+
+
+from rdflib import Literal, URIRef
+from rdflib.namespace import XSD
+
+
+def annotate_dimensions(g, t, dims):
+    """Write PivotedDimension evidence into the graph; return the dimension node uris."""
+    out = []
+    for d in dims:
+        du = URIRef("%s-dim-%s-%d" % (t, d.axis, d.level))
+        g.add((du, RDF.type, TAB.PivotedDimension))
+        g.add((du, TAB.onAxis, Literal(d.axis)))
+        g.add((du, TAB.atLevel, Literal(d.level, datatype=XSD.integer)))
+        if d.name:
+            g.add((du, TAB.dimensionName, Literal(d.name)))
+        for v in d.values:
+            g.add((du, TAB.hasDimensionValue, Literal(v)))
+        out.append(du)
+    return out

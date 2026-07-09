@@ -195,6 +195,13 @@ tab:RowRefinementShape a sh:NodeShape ;
             }
         """ ] .
 
+tab:PivotedDimensionShape a sh:NodeShape ;
+    sh:targetClass tab:PivotedDimension ;
+    sh:property [ sh:path tab:hasDimensionValue ; sh:minCount 1 ;
+                  sh:message "A pivoted dimension needs at least one value." ] ;
+    sh:property [ sh:path tab:onAxis ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A pivoted dimension sits on exactly one axis." ] .
+
 tab:UnambiguousRowAccessShape a sh:NodeShape ;
     sh:targetClass tab:LeafRow ;
     sh:sparql [
