@@ -14,7 +14,8 @@ from .compile import compile_tables, CompilationReport, RegionReport
 from .hierarchical import classify_hierarchical, HierRegion
 from .cells import recover_leaf_grid
 from .orientation import looks_transposed, transpose_is_coherent
-from .holon import assert_record_region, assert_transposed_region
+from .rowheaders import looks_row_grouped, classify_row_hier, row_tree_tiles, RowHierRegion, RowHeaderNode
+from .holon import assert_record_region, assert_transposed_region, assert_row_hier_region
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -27,4 +28,6 @@ __all__ = [
     "recover_leaf_grid",
     "looks_transposed", "transpose_is_coherent", "assert_transposed_region",
     "assert_record_region",
+    "looks_row_grouped", "classify_row_hier", "row_tree_tiles", "RowHierRegion", "RowHeaderNode",
+    "assert_row_hier_region",
 ]

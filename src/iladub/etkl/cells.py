@@ -30,6 +30,10 @@ class SourceCell:
     def n_lines(self) -> int:
         return len({round(w.top, 1) for w in self.words})
 
+    @property
+    def bbox(self) -> tuple[float, float, float, float]:
+        return (self.x0, self.top, self.x1, self.bottom)
+
 
 def recover_leaf_grid(band: Band) -> LeafGrid:
     """Leaf grid = the most-stable column count across row-suffixes.

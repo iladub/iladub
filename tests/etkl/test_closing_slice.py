@@ -154,3 +154,28 @@ def test_all_text_record_not_flagged_transposed(tmp_path):
     for cand in report.graph.subjects(RDF.type, ILADUB.CandidateConcept):
         rationale = str(next(report.graph.objects(cand, DEC.rationale), ""))
         assert rationale != "TRANSPOSED", "all-text table must NOT be flagged TRANSPOSED"
+
+
+def test_row_grouped_compiles(tmp_path):
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.HierarchicalTable) in report.graph
+    tbl = next(report.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafColumn))) == 1   # Value (Design A)
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafRow))) == 5
+    # a row-header tree exists (coversRow), and it's not the flat-record flattening
+    assert (None, TAB.coversRow, None) in report.graph
+    assert report.score == 1.0
+
+
+def test_row_grouped_not_a_flat_record(tmp_path):
+    # the closing point: it must NOT compile as a flat RecordTable
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, None, TAB.RecordTable) not in report.graph

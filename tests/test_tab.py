@@ -181,3 +181,30 @@ def test_tab_sourceorientation_term():
     assert (TAB.sourceOrientation, RDF.type, OWL.DatatypeProperty) in g
     assert (TAB.sourceOrientation, RDFS.domain, TAB.Table) in g
     assert (TAB.sourceOrientation, RDFS.range, XSD.string) in g
+
+
+ROW_CONFORMANT = os.path.join(EX, "row-hierarchy-conformant.ttl")
+ROW_NEGATIVE = os.path.join(EX, "row-hierarchy-negative.ttl")
+
+
+def test_tab_coversrow_term():
+    g = _g(TAB_TTL)
+    assert (TAB.coversRow, RDF.type, OWL.ObjectProperty) in g
+    assert (TAB.coversRow, RDFS.domain, TAB.HeaderNode) in g
+    assert (TAB.coversRow, RDFS.range, TAB.LeafRow) in g
+
+
+def test_row_hierarchy_conformant_passes():
+    c, t = _v(ROW_CONFORMANT)
+    assert c, t
+
+
+def test_row_hierarchy_negative_fails():
+    c, t = _v(ROW_NEGATIVE)
+    assert not c
+
+
+def test_existing_column_examples_still_pass_with_row_shapes():
+    # the guarded row shapes must NOT break a table that has leaf rows but no row axis
+    c, t = _v(CONFORMANT)
+    assert c, t

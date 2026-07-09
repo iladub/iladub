@@ -279,3 +279,47 @@ def transposed_table_pdf(path: str) -> dict:
             c.drawString(x, y, cell)
     c.save()
     return {"n_cols": 3, "n_rows": 3}
+
+
+def row_grouped_table_pdf(path: str) -> dict:
+    """A ROW-header hierarchy: 'Region' groups (North/South) run DOWN the first stub
+    column via the blank-below (forward-fill) encoding; 'Metric' is a fully-populated
+    finer stub; 'Value' is the numeric data column. North spans Revenue/Cost/Margin;
+    South spans Revenue/Cost. Today this flattens to a RecordTable; the loop compiles
+    the row-header tree."""
+    cols = [72.0, 200.0, 360.0]           # Region, Metric, Value
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Region", "Metric", "Value"),
+            ("North", "Revenue", "100"),
+            ("", "Cost", "60"),
+            ("", "Margin", "40"),
+            ("South", "Revenue", "120"),
+            ("", "Cost", "70")]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            if cell:
+                c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_leaf_rows": 5, "n_data_cols": 1,
+            "groups": {"North": 3, "South": 2}}
+
+
+def single_stub_blank_pdf(path: str) -> dict:
+    """One stub column ('Region') with blank-below, but NO fully-populated finer stub
+    column — just Region + Value(numeric). The sub-rows have no identity, so this must
+    NOT be detected as row-grouped (leaf rows unidentifiable)."""
+    cols = [72.0, 300.0]                   # Region, Value
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Region", "Value"), ("North", "100"), ("", "60"), ("South", "120")]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            if cell:
+                c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols}

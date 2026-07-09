@@ -144,3 +144,76 @@ tab:UnambiguousAccessShape a sh:NodeShape ;
                 FILTER(?n != 1)
             }
         """ ] .
+
+#################################################################
+#  Row-axis mirror of the column tiling invariants. Coverage and
+#  UnambiguousRowAccess are GUARDED to fire only for tables that
+#  have a row axis (>=1 coversRow), so flat/column-only tables
+#  (leaf rows, no row-headers) still pass.
+#################################################################
+
+tab:RowCoverageShape a sh:NodeShape ;
+    sh:targetClass tab:LeafRow ;
+    sh:sparql [
+        sh:message "Leaf row is not covered by any row-header of its table (row coverage gap)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasLeafRow $this .
+                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow }
+                FILTER NOT EXISTS { ?tbl tab:hasHeaderNode ?h . ?h tab:coversRow $this }
+            }
+        """ ] .
+
+tab:RowNoOverlapShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:hasHeaderNode ;
+    sh:sparql [
+        sh:message "Two header nodes at the same level cover the same row (row overlap)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:hasHeaderNode ?h1 .
+                $this tab:hasHeaderNode ?h2 .
+                FILTER(str(?h1) < str(?h2))
+                ?h1 tab:headerLevel ?l .
+                ?h2 tab:headerLevel ?l .
+                ?h1 tab:coversRow ?r .
+                ?h2 tab:coversRow ?r .
+            }
+        """ ] .
+
+tab:RowRefinementShape a sh:NodeShape ;
+    sh:targetClass tab:HeaderNode ;
+    sh:sparql [
+        sh:message "A header node covers a row its parent does not (row refinement break)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:parentHeader ?p .
+                $this tab:coversRow ?r .
+                FILTER NOT EXISTS { ?p tab:coversRow ?r }
+            }
+        """ ] .
+
+tab:UnambiguousRowAccessShape a sh:NodeShape ;
+    sh:targetClass tab:LeafRow ;
+    sh:sparql [
+        sh:message "Leaf row does not have exactly one leaf-header of its table (ambiguous row path)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?tbl tab:hasLeafRow $this .
+                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow }
+                {
+                    SELECT ?tbl $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
+                        ?tbl tab:hasLeafRow $this .
+                        OPTIONAL {
+                            ?tbl tab:hasHeaderNode ?h .
+                            ?h tab:coversRow $this .
+                            FILTER NOT EXISTS { ?child tab:parentHeader ?h }
+                        }
+                    } GROUP BY ?tbl $this
+                }
+                FILTER(?n != 1)
+            }
+        """ ] .
