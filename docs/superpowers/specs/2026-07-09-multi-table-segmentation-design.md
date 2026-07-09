@@ -69,11 +69,15 @@ downstream (`classify`, all makers) is unchanged — each certified sub-band is 
 - **Horizontal proposer — `find_table_gutter(band) -> float | None`:** the x of the widest **full-height**
   whitespace gutter (blank on every row) between leaf-grid columns. Split words at that x into left/right
   sub-bands. Certify: **both** sides `classify` as `RECORD_TABLE` → accept; else reject (return `None`).
-- **Certification & escalation:** a proposed cut is taken only when certified. When a horizontal gutter is a
-  strong outlier **and exactly one** side certifies as a table while the other is a degenerate fragment (a
-  boundary-ish but unclean signal), `segment` marks the band `MULTI_TABLE_AMBIGUOUS` so `compile_tables`
-  escalates it in-band rather than fusing. (A cross-tab produces *neither* a repeated header *nor* a
-  both-RECORD split *nor* a lone-valid-side signal → it is never touched → compiles as a cross-tab.)
+- **Certification & escalation (threshold-free, via the stub asymmetry).** A split is taken only when
+  certified (both sides `RECORD_TABLE`). The residual case — a genuine second table that is *not* cleanly two
+  records — is caught by `is_multi_table_ambiguous(band)`: a widest full-height gutter where the left side is a
+  valid table **and the right side has its own stub** (`has_own_stub`: the right's leftmost column has
+  majority-text body cells = its own row identity), yet the pair does not both-classify `RECORD_TABLE`. Such a
+  band escalates `MULTI_TABLE_AMBIGUOUS` in-band rather than fusing. This needs **no width threshold**: the
+  cross-tab is excluded because its right half is *data-only* (`has_own_stub` False — probed), so a cross-tab
+  produces neither a repeated header, nor a both-RECORD split, nor an own-stub-right signal → it is never
+  touched → compiles as a cross-tab.
 
 Recursion makes composites work: a side-by-side pair where one side is itself stacked splits horizontally
 first, then each side re-segments vertically.
@@ -108,8 +112,10 @@ the loop safe; it is tested before any positive split test.
    simple/record/pivoted/all-text/**crosstab**/row-grouped/transposed. The cross-tab guard is explicit.
 4. **`test_find_repeated_header`** / **`test_find_table_gutter`** (unit) — the proposers fire on the
    multi-table fixtures and return empty/None on the single-table ones.
-5. **`test_multi_table_ambiguous_escalates`** — a band with a boundary-ish gutter but only one certifiable
-   side → escalates `MULTI_TABLE_AMBIGUOUS`, no fused assertion.
+5. **`test_multi_table_ambiguous_escalates`** — a side-by-side band whose right side has its own stub but is
+   not a clean record (record + a stubbed hierarchical table abreast) → `is_multi_table_ambiguous` True →
+   escalates `MULTI_TABLE_AMBIGUOUS`, no fused assertion. Plus **`test_crosstab_not_ambiguous`** — the
+   cross-tab's `has_own_stub(right)` is False, so it is neither split nor escalated (compiles as a cross-tab).
 6. **`test_vertically_gapped_unaffected`** — the existing `record_and_pivot`-style two-gap page still yields
    its two regions (segmentation of each gapped band is a no-op).
 7. **No regression** — full suite green; every prior fixture compiles exactly as before.
@@ -136,8 +142,8 @@ the kind of provable safety property the doctrine is built around.
 
 | File | Change |
 |------|--------|
-| `src/iladub/etkl/segment.py` (create) | `find_repeated_header`, `find_table_gutter`, `segment` (recursive) |
-| `src/iladub/etkl/compile.py` (modify) | iterate `segment`-ed sub-bands; escalate `MULTI_TABLE_AMBIGUOUS` |
+| `src/iladub/etkl/segment.py` (create) | `find_repeated_header`, `find_table_gutter`, `has_own_stub`, `segment` (recursive), `is_multi_table_ambiguous` |
+| `src/iladub/etkl/compile.py` (modify) | iterate `segment`-ed sub-bands; escalate `MULTI_TABLE_AMBIGUOUS` via `is_multi_table_ambiguous` |
 | `src/iladub/etkl/__init__.py` (modify) | export `segment` |
 | `tests/etkl/fixtures.py` (modify) | `side_by_side_pdf`, `stacked_repeated_header_pdf`, `multi_table_ambiguous_pdf` |
 | `demo/etkl_demo_data.py` (modify) | `multi_table_report_pdf` |
