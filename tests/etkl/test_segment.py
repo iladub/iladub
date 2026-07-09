@@ -86,3 +86,11 @@ def test_multi_table_ambiguous(tmp_path):
 
 def test_crosstab_not_ambiguous(tmp_path):
     assert is_multi_table_ambiguous(_band(crosstab_table_pdf, tmp_path)) is False
+
+
+def test_single_tables_not_ambiguous(tmp_path):
+    # no ordinary single table may be flagged MULTI_TABLE_AMBIGUOUS (would wrongly escalate).
+    # This pins the has_own_stub ncols<2 guard's contract.
+    for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
+                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf):
+        assert is_multi_table_ambiguous(_band(maker, tmp_path)) is False, maker.__name__
