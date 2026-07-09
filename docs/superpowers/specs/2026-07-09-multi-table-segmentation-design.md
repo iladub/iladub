@@ -110,6 +110,11 @@ the loop safe; it is tested before any positive split test.
 - **Stacked tables with *different* headers and no gap** need a column-schema-discontinuity detector (harder);
   v1 handles the repeated-**same**-header case. Different-header stacks in practice usually have a gap
   (already segmented by `detect_bands`).
+- **A single table with one dominant internal gutter** (a lone inter-column gap ≥ 2.0× all its others) **and
+  two independently-valid text halves** will be split. This is the residual of the gap-dominance convention:
+  such a layout is two column-groups pushed far apart, which reads as two side-by-side tables to any human, so
+  the split is semantically defensible — but it is not proof of two tables. Routine uniform tables (all
+  column gaps comparable, ratio ≈ 1.0–1.6) are never affected; only a >2.0× dominant gutter triggers it.
 - Segmentation is geometric/lexical (gutter width, header repetition), certified by the classifiers — no
   model calls, consistent with the whole compiler.
 
