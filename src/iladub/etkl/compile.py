@@ -14,7 +14,7 @@ from rdflib import Graph, URIRef, RDF
 
 from .geometry import extract_words, text_lines
 from .bands import detect_bands
-from .regions import classify, RegionKind
+from .regions import classify, RegionKind, column_of
 from .roundtrip import cell_round_trips, render_ascii
 from .holon import assert_record_region, escalate_region, TAB
 
@@ -82,6 +82,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
 
         if region.kind is RegionKind.RECORD_TABLE:
             from .orientation import looks_transposed, transpose_is_coherent
+            from .rowheaders import looks_row_grouped
             if looks_transposed(region):
                 if transpose_is_coherent(region):
                     # compile by axis-flip: records run along columns -> a correct,
@@ -103,6 +104,31 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
                                                 str(TAB.TransposedTable), ascii_view))
+            elif looks_row_grouped(region):
+                from .rowheaders import classify_row_hier, row_tree_tiles
+                from .holon import assert_row_hier_region
+                rreg = classify_row_hier(band)
+                if rreg is not None and row_tree_tiles(rreg.tree, len(rreg.leaf_rows)):
+                    table_uri = URIRef(f"{_DOC}#rhtable{idx}")
+                    n = assert_row_hier_region(graph, rreg, band, table_uri, _DOC, page_number)
+                    b = rreg.grid.boundaries
+                    for rb in rreg.leaf_rows:
+                        for c in rb.cells:
+                            col = column_of((c.x0 + c.x1) / 2.0, b)
+                            if col in rreg.data_cols:
+                                fits = all(b[col] - 0.5 <= w.x0 and w.x1 <= b[col + 1] + 0.5 for w in c.words)
+                                (asserted_total, escalated_total) = (
+                                    (asserted_total + len(c.words), escalated_total) if fits
+                                    else (asserted_total, escalated_total + len(c.words)))
+                    reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                str(TAB.HierarchicalTable), ascii_view))
+                else:
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view, "ROW_GROUP_AMBIGUOUS",
+                                    TAB.HierarchicalTable, 0.4)
+                    escalated_total += sum(len(ln.words) for ln in band.lines)
+                    reports.append(RegionReport(region.kind, "escalated", 0, "ROW_GROUP_AMBIGUOUS",
+                                                str(TAB.HierarchicalTable), ascii_view))
             else:
                 # ---- existing RECORD_TABLE assert logic, unchanged ----
                 table_uri = URIRef(f"{_DOC}#table{idx}")
