@@ -52,3 +52,37 @@ def test_has_own_stub(tmp_path):
 
     assert has_own_stub(right_half(side_by_side_pdf)) is True
     assert has_own_stub(right_half(crosstab_table_pdf)) is False
+
+
+from iladub.etkl.segment import segment, is_multi_table_ambiguous
+from tests.etkl.fixtures import (all_text_table_pdf, row_grouped_table_pdf,
+                                 transposed_table_pdf, record_plus_stub_hier_pdf)
+
+
+def test_side_by_side_segments_to_two(tmp_path):
+    subs = segment(_band(side_by_side_pdf, tmp_path))
+    assert len(subs) == 2
+    from iladub.etkl.regions import classify, RegionKind
+    assert all(classify(s).kind is RegionKind.RECORD_TABLE for s in subs)
+
+
+def test_stacked_repeated_segments_to_two(tmp_path):
+    subs = segment(_band(stacked_repeated_header_pdf, tmp_path))
+    assert len(subs) == 2
+    # each stack starts with the header, not a fused body
+    assert all(tuple(w.text for w in s.lines[0].words) == ("Analyte", "Value", "Unit") for s in subs)
+
+
+def test_single_tables_never_split(tmp_path):
+    # THE invariant — every existing single table segments to exactly one region
+    for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
+                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf):
+        assert len(segment(_band(maker, tmp_path))) == 1, maker.__name__
+
+
+def test_multi_table_ambiguous(tmp_path):
+    assert is_multi_table_ambiguous(_band(record_plus_stub_hier_pdf, tmp_path)) is True
+
+
+def test_crosstab_not_ambiguous(tmp_path):
+    assert is_multi_table_ambiguous(_band(crosstab_table_pdf, tmp_path)) is False

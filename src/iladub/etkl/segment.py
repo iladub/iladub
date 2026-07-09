@@ -105,3 +105,40 @@ def has_own_stub(band: Band) -> bool:
     if not body:
         return False
     return sum(1 for t in body if not is_numeric(t)) / len(body) > 0.5
+
+
+def segment(band: Band) -> list[Band]:
+    """Recursively split a band into single-table sub-bands. Vertical (repeated
+    header) first, then horizontal (certified gutter); returns [band] when no
+    certified cut exists. Never splits a single table (certification guarantees it)."""
+    reps = find_repeated_header(band)
+    if reps:
+        cuts = [0] + reps + [len(band.lines)]
+        out: list[Band] = []
+        for a, z in zip(cuts, cuts[1:]):
+            grp = band.lines[a:z]
+            if grp:
+                out.extend(segment(_band_from_lines(grp)))
+        return out
+    cut = find_table_gutter(band)
+    if cut is not None:
+        words = [w for ln in band.lines for w in ln.words]
+        left = [w for w in words if (w.x0 + w.x1) / 2.0 < cut]
+        right = [w for w in words if (w.x0 + w.x1) / 2.0 >= cut]
+        return segment(_band_from_words(left)) + segment(_band_from_words(right))
+    return [band]
+
+
+def is_multi_table_ambiguous(band: Band) -> bool:
+    """True iff there is a genuine second table that segment could not cleanly split:
+    a widest full-height gutter where the left is a valid table and the right has its
+    OWN stub, yet the pair is not both-RECORD (so find_table_gutter declined). The
+    cross-tab is excluded because its right half is data-only (has_own_stub False)."""
+    if find_repeated_header(band) or find_table_gutter(band) is not None:
+        return False                    # cleanly splittable — not ambiguous
+    got = _widest_gutter_cut(band)
+    if got is None:
+        return False
+    _, left, right = got
+    lk = classify(_band_from_words(left)).kind
+    return lk is not RegionKind.NON_TABLE and has_own_stub(_band_from_words(right))
