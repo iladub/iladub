@@ -183,11 +183,11 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))
     b = rreg.grid.boundaries
 
-    # header line labels, by column (flat single-level column header assumed)
-    header_by_col: dict[int, str] = {}
+    # header line labels, by column — keep the Word object for geometry (provenance-to-the-page)
+    header_by_col: dict[int, object] = {}
     if band.lines:
         for w in band.lines[0].words:
-            header_by_col[column_of((w.x0 + w.x1) / 2.0, b)] = w.text
+            header_by_col[column_of((w.x0 + w.x1) / 2.0, b)] = w
 
     # data leaf columns + flat column header nodes
     col_uris = {}
@@ -202,10 +202,19 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
         g.add((h, TAB.coversColumn, cu))
         g.add((table_uri, TAB.hasHeaderNode, h))
         if c in header_by_col:
+            hw = header_by_col[c]
             lc = _region_uri(table_uri, "clc", c)
             g.add((lc, RDF.type, TAB.LabelCell))
             g.add((table_uri, TAB.hasCell, lc))
-            g.add((lc, TAB.cellText, Literal(header_by_col[c])))
+            g.add((lc, TAB.cellText, Literal(hw.text)))
+            g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+            bb = BNode()
+            g.add((bb, RDF.type, TAB.BBox))
+            g.add((bb, TAB.x0, Literal(round(hw.x0, 2), datatype=XSD.decimal)))
+            g.add((bb, TAB.y0, Literal(round(hw.top, 2), datatype=XSD.decimal)))
+            g.add((bb, TAB.x1, Literal(round(hw.x1, 2), datatype=XSD.decimal)))
+            g.add((bb, TAB.y1, Literal(round(hw.bottom, 2), datatype=XSD.decimal)))
+            g.add((lc, TAB.hasBBox, bb))
             g.add((h, TAB.hasLabel, lc))
 
     # leaf rows
@@ -246,11 +255,12 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
     # entries: (data column x leaf row), certified per-cell by the round-trip
     asserted = 0
     for i, rb in enumerate(rreg.leaf_rows):
-        by_col = {column_of((c.x0 + c.x1) / 2.0, b): c for c in rb.cells}
+        by_col = {column_of((sc.x0 + sc.x1) / 2.0, b): sc for sc in rb.cells}
         for c in rreg.data_cols:
             cell = by_col.get(c)
             if cell is None:
                 continue
+            # column-specific containment check (NOT cell_round_trips, which checks full-table extent)
             fits = all(b[c] - 0.5 <= w.x0 and w.x1 <= b[c + 1] + 0.5 for w in cell.words)
             if fits:
                 e = _region_uri(table_uri, f"e{i}_", c)

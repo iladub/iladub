@@ -263,3 +263,40 @@ def test_row_hier_provenance_is_physical(tmp_path):
               if str(next(g.objects(s, TAB.cellText))) == "North")
     bb = next(g.objects(lc, TAB.hasBBox))
     assert abs(float(next(g.objects(bb, TAB.x0))) - north.x0) < 0.01
+
+
+def test_column_header_label_cell_has_provenance(tmp_path):
+    """Fix #1: data-column header LabelCell must carry tab:onPage + tab:hasBBox
+    with physical coordinates from the header word (provenance-to-the-page §6).
+    """
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.rowheaders import classify_row_hier
+    from iladub.etkl.holon import assert_row_hier_region, TAB
+    from rdflib import Graph, URIRef, RDF
+
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+    words = extract_words(str(p))
+    value_word = next(w for w in words if w.text == "Value")
+    band = detect_bands(text_lines(words))[-1]
+    rreg = classify_row_hier(band)
+    g = Graph(); t = URIRef("https://example.org/t")
+    assert_row_hier_region(g, rreg, band, t, URIRef("https://example.org/doc"), 0)
+
+    # the 'Value' data-column header LabelCell must have onPage and hasBBox
+    lc = next(s for s in g.subjects(RDF.type, TAB.LabelCell)
+              if str(next(g.objects(s, TAB.cellText))) == "Value")
+    # tab:onPage must be present
+    pages = list(g.objects(lc, TAB.onPage))
+    assert pages, "LabelCell 'Value' is missing tab:onPage"
+    # tab:hasBBox must be present and x0 must match the physical word's x0
+    bboxes = list(g.objects(lc, TAB.hasBBox))
+    assert bboxes, "LabelCell 'Value' is missing tab:hasBBox"
+    bb = bboxes[0]
+    x0_vals = list(g.objects(bb, TAB.x0))
+    assert x0_vals, "BBox node is missing tab:x0"
+    assert abs(float(x0_vals[0]) - value_word.x0) < 0.01, (
+        f"LabelCell 'Value' x0 {float(x0_vals[0])} != word x0 {value_word.x0}"
+    )
