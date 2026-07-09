@@ -99,3 +99,51 @@ def is_matrix_candidate(band: Band) -> bool:
         return False
     split = header_body_split(band, grid)
     return split is not None and split >= 2 and stub_data_split(band, grid) is not None
+
+
+@dataclass(frozen=True)
+class MatrixRegion:
+    grid: LeafGrid
+    col_tree: tuple[ColHeaderNode, ...]
+    row_tree: tuple
+    leaf_rows: tuple
+    stub_cols: tuple[int, ...]
+    data_cols: tuple[int, ...]
+    body_line: int
+
+
+def classify_matrix(band):
+    """Chain the stages into a MatrixRegion (or None). Mirror of classify_row_hier,
+    with a proximity column tree over the data columns as the extra axis."""
+    from .rows import logical_rows
+    from .rowheaders import infer_row_header_tree
+    grid = recover_leaf_grid(band)
+    if grid.ncols < 3:
+        return None
+    split = header_body_split(band, grid)
+    if split is None or split < 2:
+        return None
+    k = stub_data_split(band, grid)
+    if k is None:
+        return None
+    stub_cols = tuple(range(k))
+    data_cols = tuple(range(k, grid.ncols))
+    col_tree = infer_column_tree_by_proximity(band, grid, split, data_cols)
+    if col_tree is None:
+        return None
+    leaf_rows = logical_rows(band, grid, band.lines[split].top)
+    if not leaf_rows:
+        return None
+    row_tree = infer_row_header_tree(band, grid, stub_cols, leaf_rows)
+    if row_tree is None:
+        return None
+    return MatrixRegion(grid, col_tree, tuple(row_tree), tuple(leaf_rows),
+                        stub_cols, data_cols, split)
+
+
+def matrix_tiles(mreg) -> bool:
+    """Both axes tile: the column tree partitions the data columns AND the row tree
+    partitions the leaf rows. Structural backstop before emission."""
+    from .rowheaders import row_tree_tiles
+    return (col_tree_tiles(mreg.col_tree, mreg.data_cols)
+            and row_tree_tiles(mreg.row_tree, len(mreg.leaf_rows)))

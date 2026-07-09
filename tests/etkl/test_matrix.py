@@ -43,3 +43,29 @@ def test_is_matrix_candidate(tmp_path):
     assert is_matrix_candidate(_band(pivoted_table_pdf, tmp_path)) is False
     # flat single-level table: header_body_split 1 -> not a matrix
     assert is_matrix_candidate(_band(simple_table_pdf, tmp_path)) is False
+
+
+from iladub.etkl.matrix import classify_matrix, matrix_tiles, MatrixRegion
+
+
+def test_classify_matrix_composes_both_axes(tmp_path):
+    mreg = classify_matrix(_band(crosstab_table_pdf, tmp_path))
+    assert mreg is not None
+    assert mreg.stub_cols == (0,)
+    assert mreg.data_cols == (1, 2, 3, 4, 5, 6)
+    assert len(mreg.leaf_rows) == 2
+    l0c = {n.text: n.covers for n in mreg.col_tree if n.level == 0}
+    assert l0c["Q1"] == (1, 2, 3) and l0c["Q2"] == (4, 5, 6)
+    row_texts = {n.text for n in mreg.row_tree}
+    assert {"North", "South"} <= row_texts
+    assert matrix_tiles(mreg) is True
+
+
+def test_classify_matrix_none_on_flat_header(tmp_path):
+    # simple_table has a single-level header (header_body_split 1) -> not a matrix
+    assert classify_matrix(_band(simple_table_pdf, tmp_path)) is None
+
+
+def test_classify_matrix_none_on_pivot(tmp_path):
+    # Loop 2 pivot: stub_data_split None -> not a matrix
+    assert classify_matrix(_band(pivoted_table_pdf, tmp_path)) is None
