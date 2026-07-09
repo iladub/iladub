@@ -1,0 +1,20 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+ex:ntbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:cVal ;
+    tab:hasLeafRow ex:r0, ex:r1 ;
+    tab:hasHeaderNode ex:hVal, ex:mA, ex:mDup, ex:mB ;
+    tab:hasCell ex:e0, ex:e1 .
+
+ex:cVal a tab:LeafColumn .
+ex:r0 a tab:LeafRow . ex:r1 a tab:LeafRow .
+ex:hVal a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cVal .
+
+# r0 is covered by TWO leaf row-headers (mA, mDup) -> ambiguous row path
+ex:mA   a tab:HeaderNode ; tab:headerLevel 1 ; tab:coversRow ex:r0 .
+ex:mDup a tab:HeaderNode ; tab:headerLevel 1 ; tab:coversRow ex:r0 .
+ex:mB   a tab:HeaderNode ; tab:headerLevel 1 ; tab:coversRow ex:r1 .
+
+ex:e0 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r0 .
+ex:e1 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r1 .

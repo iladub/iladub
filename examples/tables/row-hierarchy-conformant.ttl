@@ -1,0 +1,36 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# Region groups (North/South) over a fully-populated Metric leaf level; Value is the
+# sole data leaf column. Row headers use coversRow; the flat column header uses coversColumn.
+ex:rtbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:cVal ;
+    tab:hasLeafRow ex:r0, ex:r1, ex:r2, ex:r3, ex:r4 ;
+    tab:hasHeaderNode ex:hVal, ex:hNorth, ex:hSouth,
+                      ex:mRev0, ex:mCost1, ex:mMar2, ex:mRev3, ex:mCost4 ;
+    tab:hasCell ex:e0, ex:e1, ex:e2, ex:e3, ex:e4 .
+
+ex:cVal a tab:LeafColumn .
+ex:r0 a tab:LeafRow . ex:r1 a tab:LeafRow . ex:r2 a tab:LeafRow .
+ex:r3 a tab:LeafRow . ex:r4 a tab:LeafRow .
+
+# flat column header over the single data column
+ex:hVal a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cVal .
+
+# row-header tree, level 0 (groups) — tiles r0..r4, no overlap
+ex:hNorth a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversRow ex:r0, ex:r1, ex:r2 .
+ex:hSouth a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversRow ex:r3, ex:r4 .
+
+# row-header tree, level 1 (leaves) — each covers one row, refines its parent
+ex:mRev0  a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hNorth ; tab:coversRow ex:r0 .
+ex:mCost1 a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hNorth ; tab:coversRow ex:r1 .
+ex:mMar2  a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hNorth ; tab:coversRow ex:r2 .
+ex:mRev3  a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hSouth ; tab:coversRow ex:r3 .
+ex:mCost4 a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hSouth ; tab:coversRow ex:r4 .
+
+# entries: Value x r0..r4
+ex:e0 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r0 .
+ex:e1 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r1 .
+ex:e2 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r2 .
+ex:e3 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r3 .
+ex:e4 a tab:EntryCell ; tab:atColumn ex:cVal ; tab:atRow ex:r4 .
