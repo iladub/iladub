@@ -351,3 +351,60 @@ def crosstab_table_pdf(path: str) -> dict:
     return {"n_data_cols": 6, "n_leaf_rows": 2,
             "col_groups": {"Q1": [1, 2, 3], "Q2": [4, 5, 6]},
             "row_axis": ["North", "South"]}
+
+
+def side_by_side_pdf(path: str) -> dict:
+    """Two independent record tables abreast, separated by a wide full-height gutter.
+    detect_bands (1-D) fuses them into one wide table today; segment must split them."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    left = [(72.0, "Analyte"), (150.0, "Value")]
+    right = [(330.0, "Item"), (410.0, "Qty")]
+    lrows = [("Analyte", "Value"), ("Hb", "13.2"), ("WBC", "7.8")]
+    rrows = [("Item", "Qty"), ("Apple", "10"), ("Pear", "5")]
+    for i, (lr, rr) in enumerate(zip(lrows, rrows)):
+        y = PAGE_H - 120.0 - i * 18.0
+        for (x, _), v in zip(left, lr):
+            c.drawString(x, y, v)
+        for (x, _), v in zip(right, rr):
+            c.drawString(x, y, v)
+    c.save()
+    return {"left_header": ["Analyte", "Value"], "right_header": ["Item", "Qty"]}
+
+
+def stacked_repeated_header_pdf(path: str) -> dict:
+    """Two record tables stacked with NO vertical gap; the second table repeats the
+    header row. detect_bands keeps them one band; segment must split at the repeat."""
+    cols = [72.0, 240.0, 400.0]
+    rows = [("Analyte", "Value", "Unit"), ("Hb", "13.2", "g/dL"), ("WBC", "7.8", "x10^9"),
+            ("Analyte", "Value", "Unit"), ("Ca", "9.5", "mg/dL"), ("Na", "140", "mmol/L")]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = PAGE_H - 120.0 - i * 18.0
+        for x, v in zip(cols, row):
+            c.drawString(x, y, v)
+    c.save()
+    return {"header": ["Analyte", "Value", "Unit"], "repeat_at": 3}
+
+
+def record_plus_stub_hier_pdf(path: str) -> dict:
+    """A record table (left) beside a table with its OWN stub but a MULTI-WORD /
+    non-record header (right) — a genuine second table that is not two clean records.
+    Used for the MULTI_TABLE_AMBIGUOUS escalation (has_own_stub right = True, but the
+    pair is not both-RECORD)."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    for i, (a, v) in enumerate([("Analyte", "Value"), ("Hb", "13"), ("WBC", "8")]):
+        y = PAGE_H - 120.0 - i * 16.0
+        c.drawString(72.0, y, a); c.drawString(150.0, y, v)
+    # right: a merged/2-level header over its own 'Dept' stub -> classifies UNSUPPORTED
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((430.0 + 500.0) / 2.0, PAGE_H - 116.0, "Metrics")   # merged parent (row 0)
+    c.setFont("Courier", 9)
+    for i, row in enumerate([("Dept", "M1", "M2"), ("Sales", "10", "20"), ("Ops", "30", "40")]):
+        y = PAGE_H - 132.0 - i * 16.0
+        for x, v in zip([340.0, 430.0, 500.0], row):
+            c.drawString(x, y, v)
+    c.save()
+    return {"right_stub": "Dept"}
