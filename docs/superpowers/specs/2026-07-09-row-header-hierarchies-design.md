@@ -82,10 +82,19 @@ Reuses `tab:HeaderNode`, `tab:parentHeader`, `tab:headerLevel`, `tab:hasLabel` u
 axis-neutral; the only new predicate is `tab:coversRow`. (`tab:HierarchicalTable`'s comment already reads "a
 column **or row** axis".)
 
-## §4 — Detection & the anti-silent-wrong gate (the Loop-4 lesson)
+## §4 — Detection, the reading convention, and the structural backstop
 
-A *sparse* record (a genuinely-empty first field) must not be mistaken for grouping. So detection is a signal
-and **the row SHACL is the oracle**, exactly as Loop 4's coherence gate:
+**Honest framing (corrected after an empirical probe, 2026-07-09).** Blank-below in a stub column is read as
+*ditto-grouping* — this is a **table-authoring convention**, the exact vertical analog of Loop 2's
+"centered-merge means column-span" convention (`headers.py` documents that it *assumes* centered merges and
+puts other alignments out of scope). It is **not** a fact a structural oracle can prove: a stub column of
+genuinely *missing* labels is geometrically identical to ditto-grouping, so the two are not deterministically
+separable without external evidence — the same class of irreducible ambiguity as Loop 4's fully-numeric
+transposition. The compiler therefore *applies the convention* and certifies the **structure** it produces;
+it does not claim to divine authorial intent. This risk is bounded by three requirements below (finest-stub
+populated + tiling backstop + SHACL), and documented in §Honest limits.
+
+What the oracles actually do:
 
 1. **`stub_data_split(band, grid) -> int | None`** — the vertical mirror of `header_body_split`. On body
    rows only (below `header_body_split`), find the boundary `k` where columns transition from text (stub) to
@@ -99,11 +108,14 @@ and **the row SHACL is the oracle**, exactly as Loop 4's coherence gate:
    A flat record (every stub cell populated) → `False` → record path unchanged. All-text tables (no data
    column) → `stub_data_split` is `None` → `False`.
 
-3. **`row_tree_tiles(tree, n_leaf_rows) -> bool`** — the pre-assert **coherence gate**: the leaf-level
+3. **`row_tree_tiles(tree, n_leaf_rows) -> bool`** — the pre-assert **structural backstop**: the leaf-level
    row-headers must partition the leaf rows (each leaf row covered by exactly one leaf row-header; every
-   child's row-covers ⊆ its parent's; no same-level overlap; full coverage). A true grouping tiles; a sparse
-   record produces gaps/overlaps and **does not tile** → escalate. This is the discriminator, mirroring
-   `region_round_trips`/`transpose_is_coherent` — a structural oracle, not a heuristic.
+   child's row-covers ⊆ its parent's; no same-level overlap; full coverage). Its job is to catch *pathological
+   geometry* (an irregular blank pattern that would produce a gap/overlap and make the emitted holon fail the
+   row SHACL) and escalate `ROW_GROUP_AMBIGUOUS` rather than emit-then-crash `_validate`. **It is not the
+   grouping-vs-missing discriminator** — given the finest-populated precondition, a well-formed forward-fill
+   always tiles, so this is a safety assertion, not the primary gate. The **row SHACL is the final certifier**
+   of the emitted tree's structure.
 
 **Gate placement (`compile.py`, `RECORD_TABLE` branch):**
 
@@ -198,9 +210,12 @@ row-hierarchy **conformant** example and a **negative** example (a non-tiling ro
    the flat-record flattening is gone (`Cost` row now grouped under `North`).
 2. **`test_looks_row_grouped_oracle`** (unit) — grouped region → True; a flat record → False; an all-text
    table → False.
-3. **`test_sparse_record_not_row_grouped`** (the false-positive guard) — a record with one scattered empty
-   first field (blanks that don't forward-fill into a tiling tree) → `row_tree_tiles` False → escalates
-   `ROW_GROUP_AMBIGUOUS`, **no** HierarchicalTable asserted.
+3. **`test_row_tree_tiles_rejects_pathology`** (unit, the backstop) — a constructed non-partitioning tree
+   (a gap: a leaf row covered by no leaf header; and an overlap: two same-level nodes sharing a row) →
+   `row_tree_tiles` False. Plus **`test_single_stub_not_row_grouped`** — a table with one stub column whose
+   labels have blanks (no fully-populated finer stub) → `looks_row_grouped` False → stays on the record path
+   (leaf rows unidentifiable; not mis-compiled). These together show the preconditions + backstop, not a
+   claimed semantic discriminator.
 4. **`test_row_header_provenance`** — the `North` row-header `LabelCell` has `onPage` and a `hasBBox` equal to
    the physical `"North"` word's measured bbox; an entry cell traces to its physical value word.
 5. **`test_row_tree_tiles_unit`** — a partitioning tree → True; a gappy/overlapping tree → False.
@@ -210,6 +225,21 @@ row-hierarchy **conformant** example and a **negative** example (a non-tiling ro
    `hierarchical-conformant` checks) — `tab:coversRow` declared; the `examples/tables/row-hierarchy-conformant.ttl`
    example passes all four row shapes and `row-hierarchy-negative.ttl` fails `UnambiguousRowAccessShape`.
 8. **No regression** — full etkl + tab + shapes suite green.
+
+## §8b — Honest limits (documented, not swallowed)
+
+- **Blank-below is read as ditto-grouping — a convention, not a proof.** A stub column of genuinely *missing*
+  labels is geometrically identical and would be read as groups. This mirrors Loop 2's centered-merge
+  convention and Loop 4's fully-numeric ambiguity: irreducible without external evidence (a contract /
+  signal-tagging). Bounded by the finest-populated requirement (leaf rows must be individually identified),
+  the tiling backstop, and the row SHACL. A signal-tagging or contract-driven override is a future increment.
+- **Finest stub must be fully populated.** A lone grouped stub with no per-row finer column (sub-rows lack
+  identity) is left on the record path — not mis-compiled, but the grouping is not captured. Out of scope.
+- **Flat column header only.** A table hierarchical on *both* axes is matrix/cross-tab (a later loop); this
+  loop compiles a hierarchical *row* header over a *flat* column header. Vertically-centered (non-blank-fill)
+  row merges and subtotal/aggregation rows are out of scope.
+- **Cell-level honesty holds regardless:** an entry that fails the per-cell round-trip escalates
+  `ROUND_TRIP_FAIL` (reused from the record path), so a mis-placed value is never silently asserted.
 
 ## §9 — Showcase (part of the loop)
 
@@ -224,9 +254,11 @@ dimension — the vertical mirror of the pivot in Part C. Re-run the notebook to
 Row and column hierarchies are now the **same machinery reflected across the diagonal** — one `HeaderNode`
 tree abstraction, two `covers*` predicates, one set of tiling invariants applied to each axis. That symmetry
 is the groundwork for **matrix/cross-tab** (both axes hierarchical at once), which becomes "run both builders
-and let the access function `atColumn × atRow` compose" rather than a new mechanism. And the anti-silent-wrong
-gate is again a **structural tiling oracle** (`row_tree_tiles`), not a threshold — grouping is asserted only
-when it partitions the rows, and a sparse record escalates.
+and let the access function `atColumn × atRow` compose" rather than a new mechanism. The honesty here is the
+same shape as Loop 2 and Loop 4: the compiler **applies a documented reading convention** (blank-below =
+ditto-grouping, the mirror of centered-merge = column-span) and **certifies the resulting structure** with the
+row SHACL + per-cell round-trip, rather than pretending a structural oracle can recover authorial intent from
+geometrically-ambiguous input.
 
 ## Module map
 
