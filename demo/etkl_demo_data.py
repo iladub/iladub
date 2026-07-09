@@ -303,3 +303,34 @@ def crosstab_report_pdf(path: str) -> dict:
     return {"title": "QUARTERLY RESULTS BY REGION",
             "col_groups": {"Q1": 3, "Q2": 3}, "row_axis": ["North", "South"],
             "n_data_cols": 6, "n_leaf_rows": 2}
+
+
+# --- Multi-table page: two independent tables abreast (segmentation, not fusion) ---
+
+def multi_table_report_pdf(path: str) -> dict:
+    """ONE page holding TWO independent record tables side-by-side, separated by a wide
+    full-height gutter. detect_bands is 1-D (vertical only), so it would FUSE them into
+    one wide table; the segmentation pass splits the page at the certified gutter and
+    compiles each table on its own. (A single table — e.g. the cross-tab — is provably
+    never split.)"""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 12)
+    c.drawString(60.0, PAGE_H - 60.0, "LAB PANEL")
+    c.drawString(360.0, PAGE_H - 60.0, "INVENTORY")
+    c.setFont("Courier", 10)
+    left = [("Analyte", "Value", "Unit"), ("Hb", "13.2", "g/dL"),
+            ("WBC", "7.8", "x10^9"), ("Plt", "252", "x10^9")]
+    right = [("Item", "Qty", "Loc"), ("Apple", "10", "A1"),
+             ("Pear", "5", "B2"), ("Plum", "8", "C3")]
+    lx = [60.0, 150.0, 230.0]
+    rx = [360.0, 450.0, 520.0]
+    top = PAGE_H - 100.0
+    for i, (lr, rr) in enumerate(zip(left, right)):
+        y = top - i * 18.0
+        for x, v in zip(lx, lr):
+            c.drawString(x, y, v)
+        for x, v in zip(rx, rr):
+            c.drawString(x, y, v)
+    c.save()
+    return {"tables": 2, "left_header": ["Analyte", "Value", "Unit"],
+            "right_header": ["Item", "Qty", "Loc"]}

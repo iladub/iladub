@@ -41,14 +41,22 @@ a naive "both sides are tables" rule would wrongly split a single cross-tab in t
 right half is **data-only** (its leftmost column `Rev/Cost/Unit` is a header over *numbers* — no row
 identity), whereas a genuine side-by-side table's right half has **its own stub** (`Item` over
 `Apple/Pear` — text row identifiers). So certification requires each side to be a **self-contained table with
-its own row identity**, operationalized for v1 as **each side classifies `RECORD_TABLE`** (a flat table has a
-regular header and an inherent leftmost label column). Probe result across all fixtures:
+its own row identity**, operationalized as **both sides classify `RECORD_TABLE` AND both sides `has_own_stub`**
+(each has a leftmost text column of row identifiers). Probe result across all fixtures:
 
 | region | split proposed at widest gutter → both sides | verdict |
 |---|---|---|
-| side-by-side records | `RECORD_TABLE` + `RECORD_TABLE` | **SPLIT** ✓ |
-| cross-tab | `UNSUPPORTED` + `UNSUPPORTED` | keep 1 ✓ (not both-RECORD) |
-| pivot / simple / all-text / row-grouped | one side `NON_TABLE` | keep 1 ✓ |
+| side-by-side records | `RECORD`+`RECORD`, stub L+R | **SPLIT** ✓ |
+| cross-tab | `UNSUPPORTED`+`UNSUPPORTED` | keep 1 ✓ (not both-RECORD) |
+| **row-hierarchy, ≥2 data cols** | `RECORD` (stub cols) + `RECORD` (data cols), **stub R = False** | keep 1 ✓ |
+| pivot / simple / all-text | one side `NON_TABLE` | keep 1 ✓ |
+
+**Why both-RECORD alone is insufficient (found by the showcase re-run, not the unit suite).** A row-hierarchy
+table with **≥ 2 numeric data columns** (e.g. `Region/Team | Headcount/Budget`) splits at the stub↔data gutter
+into a left `RECORD` (the stub columns) and a right `RECORD` (the data columns) — a false positive the
+1-data-column test fixture masked. The **`has_own_stub` on *both* sides** requirement fixes it: the data-only
+right half has a numeric leftmost column → `has_own_stub` False → not split. (This is why the notebook re-run
+is a real integration gate: it exercised a 2-data-column row-hierarchy the unit fixtures did not.)
 
 ## §3 — Architecture: a recursive `segment` pass before `classify`
 
@@ -94,8 +102,11 @@ the loop safe; it is tested before any positive split test.
 - **Side-by-side of *non-record* tables** (two hierarchies / cross-tabs abreast) is **not** split in v1:
   its halves classify `UNSUPPORTED`, geometrically indistinguishable from a single cross-tab's internal
   gutter, so splitting would risk the cross-tab false-positive. Left as one region (a residual fusion,
-  documented) until a stub-based right-side-has-own-row-identity check is added (a follow-up). v1 handles the
-  common **record** side-by-side.
+  documented). v1 handles the common **record** side-by-side.
+- **Side-by-side tables whose row identifiers are numeric** (a first column of numbers, not text) are **not**
+  split: `has_own_stub` is text-majority, so a numeric-stub side reads as data-only. This is the deliberate
+  conservative cost of the both-sides-own-stub rule that (correctly) keeps a ≥2-data-column row-hierarchy
+  whole — credibility over completeness. Rare in practice; a typed-stub check is a follow-up.
 - **Stacked tables with *different* headers and no gap** need a column-schema-discontinuity detector (harder);
   v1 handles the repeated-**same**-header case. Different-header stacks in practice usually have a gap
   (already segmented by `detect_bands`).
