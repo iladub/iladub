@@ -205,3 +205,43 @@ def test_pivot_still_column_hierarchy(tmp_path):
     report = compile_tables(str(p))
     assert (None, None, TAB.HierarchicalTable) in report.graph
     assert (None, TAB.coversRow, None) not in report.graph                # column-only, no row axis
+
+
+def test_side_by_side_page_compiles_two_tables(tmp_path):
+    from tests.etkl.fixtures import side_by_side_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "sxs.pdf"; side_by_side_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.RecordTable))) == 2   # was 1 fused
+    assert report.score == 1.0
+
+
+def test_stacked_repeated_header_compiles_two(tmp_path):
+    from tests.etkl.fixtures import stacked_repeated_header_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "stk.pdf"; stacked_repeated_header_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.RecordTable))) == 2
+
+
+def test_multi_table_ambiguous_escalates(tmp_path):
+    from tests.etkl.fixtures import record_plus_stub_hier_pdf
+    from iladub.etkl.holon import ILADUB, DEC
+    from rdflib import RDF
+    p = tmp_path / "amb.pdf"; record_plus_stub_hier_pdf(str(p))
+    report = compile_tables(str(p))
+    rationales = {str(o) for s in report.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+                  for o in report.graph.objects(s, DEC.rationale)}
+    assert "MULTI_TABLE_AMBIGUOUS" in rationales
+
+
+def test_crosstab_still_single_table(tmp_path):
+    # regression: the cross-tab is neither split nor escalated
+    from tests.etkl.fixtures import crosstab_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))) == 1

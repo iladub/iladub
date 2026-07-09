@@ -66,14 +66,24 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True) -> CompilationReport:
-    bands = detect_bands(text_lines(extract_words(pdf_path, page_number)))
+    raw_bands = detect_bands(text_lines(extract_words(pdf_path, page_number)))
+    from .segment import segment, is_multi_table_ambiguous
+    bands = [sub for band in raw_bands for sub in segment(band)]
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
 
     for idx, band in enumerate(bands):
-        region = classify(band)
         ascii_view = render_ascii(band)
+        if is_multi_table_ambiguous(band):
+            cand_uri = URIRef(f"{_DOC}#region{idx}")
+            escalate_region(graph, cand_uri, _DOC, ascii_view, "MULTI_TABLE_AMBIGUOUS",
+                            TAB.HierarchicalTable, 0.4)
+            escalated_total += sum(len(ln.words) for ln in band.lines)
+            reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
+                                        "MULTI_TABLE_AMBIGUOUS", str(TAB.HierarchicalTable), ascii_view))
+            continue
+        region = classify(band)
 
         if region.kind is RegionKind.NON_TABLE:
             reports.append(RegionReport(region.kind, "ignored", 0,

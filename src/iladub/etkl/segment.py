@@ -88,10 +88,13 @@ def find_table_gutter(band: Band) -> float | None:
 def has_own_stub(band: Band) -> bool:
     """True iff the band's leftmost occupied column has majority-text body cells —
     its own row identity. Distinguishes a self-contained table from a cross-tab's
-    data-only right fragment (threshold-free)."""
+    data-only right fragment (threshold-free). A single-column fragment cannot be
+    an independent table, so ncols < 2 is treated as data-only (returns False)."""
     if len(band.lines) < 2:
         return False
     grid = infer_leaf_grid(band)
+    if grid.ncols < 2:
+        return False
     b = grid.boundaries
     split = header_body_split(band, grid) or 1
     colcells: dict[int, dict[int, list]] = {}
