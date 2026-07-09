@@ -117,9 +117,21 @@ it must certify.)*
       *reverse* silent-wrong — a false-positive detection escalates rather than asserting an inverted
       table. Certified cell-by-cell by the existing round-trip + `tab:` SHACL. Closes the
       detect→compile arc opened by increment 3. (Delivered by the compile-transposed-tables PR.)
-- [ ] Field of possibles (each a future increment, escalated today): **row-header hierarchies
-      (pivot / aggregation-by-index — needs `tab:coversRow`, the row analog of `coversColumn`)** ·
-      matrix/cross-tab · key-value · stacked · multi-word single-level headers ·
+- [x] **5 — compile row-header hierarchies** (2026-07-09): the vertical mirror of increment 2. Grouped
+      labels running DOWN the stub columns (encoded blank-below / forward-fill) previously flattened to a
+      `tab:RecordTable`, silently dropping the grouping and mis-profiling the kind. A row-header tree
+      (**new `tab:coversRow`**, mirror of `coversColumn`) is now inferred from the stub columns
+      (`looks_row_grouped` + `classify_row_hier`) and compiled into a `tab:HierarchicalTable`, certified by
+      **four guarded row SHACL shapes** mirroring the column tiling invariants. Design A: stub columns are
+      the row-header *axis*, only data columns are leaf columns; `North` encoded once as a row-header. A
+      structural tiling backstop (`row_tree_tiles`) escalates `ROW_GROUP_AMBIGUOUS` on pathological
+      geometry; blank-below = ditto-grouping is a documented *reading convention* (the mirror of Loop 2's
+      centered-merge). Column and row hierarchies are now one machinery reflected across the diagonal.
+      (Delivered by the row-header-hierarchies PR.)
+- [ ] Field of possibles (each a future increment, escalated today):
+      **matrix/cross-tab (both axes hierarchical at once — run the column + row builders and let the access
+      function `atColumn × atRow` compose)** ·
+      key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·
       **signal-tagging (font/colour/ruled-lines — an evidence fallback only when the geometry is
       insufficient)** · rich-format adapters (xlsx/xls/docx/html feeding the same `SourceCell`

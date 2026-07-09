@@ -235,3 +235,36 @@ def transposed_report_pdf(path: str) -> dict:
             c.drawString(x, y, cell)
     c.save()
     return {"title": "Transposed patient table (records along columns)"}
+
+
+# --- Row-header hierarchy: grouped labels run DOWN the stub (blank-below encoding) ---
+
+def row_grouped_report_pdf(path: str) -> dict:
+    """A ROW-header hierarchy: a merged 'Region' group (North/South) runs DOWN the
+    first stub column via the blank-below (forward-fill) encoding — the vertical
+    mirror of Part C's merged COLUMN header. 'Team' is a fully-populated finer stub;
+    'Headcount' and 'Budget' are the numeric data columns. North spans Alpha/Bravo,
+    South spans Charlie/Delta.
+
+    Today this flattens to a RecordTable (the Bravo/Delta rows lose their group);
+    ET(K)L compiles the row-header tree instead — stub columns become the row-header
+    axis (tab:coversRow), only the data columns are leaf columns."""
+    cols = [60.0, 175.0, 330.0, 440.0]     # Region, Team, Headcount, Budget
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 14)
+    c.drawString(60.0, PAGE_H - 60.0, "HEADCOUNT BY REGION")
+    top = PAGE_H - 110.0
+    rows = [("Region", "Team", "Headcount", "Budget"),
+            ("North", "Alpha", "12", "1.2"),
+            ("", "Bravo", "8", "0.9"),
+            ("South", "Charlie", "15", "1.6"),
+            ("", "Delta", "9", "1.1")]
+    c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = top - i * 18.0
+        for x, cell in zip(cols, row):
+            if cell:
+                c.drawString(x, y, cell)
+    c.save()
+    return {"title": "HEADCOUNT BY REGION", "groups": {"North": 2, "South": 2},
+            "n_leaf_rows": 4, "n_data_cols": 2}
