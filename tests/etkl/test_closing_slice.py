@@ -205,3 +205,82 @@ def test_pivot_still_column_hierarchy(tmp_path):
     report = compile_tables(str(p))
     assert (None, None, TAB.HierarchicalTable) in report.graph
     assert (None, TAB.coversRow, None) not in report.graph                # column-only, no row axis
+
+
+def test_side_by_side_page_compiles_two_tables(tmp_path):
+    from tests.etkl.fixtures import side_by_side_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "sxs.pdf"; side_by_side_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.RecordTable))) == 2   # was 1 fused
+    assert report.score == 1.0
+
+
+def test_stacked_repeated_header_compiles_two(tmp_path):
+    from tests.etkl.fixtures import stacked_repeated_header_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "stk.pdf"; stacked_repeated_header_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.RecordTable))) == 2
+
+
+def test_multi_table_ambiguous_escalates(tmp_path):
+    from tests.etkl.fixtures import record_plus_stub_hier_pdf
+    from iladub.etkl.holon import ILADUB, DEC
+    from rdflib import RDF
+    p = tmp_path / "amb.pdf"; record_plus_stub_hier_pdf(str(p))
+    report = compile_tables(str(p))
+    rationales = {str(o) for s in report.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+                  for o in report.graph.objects(s, DEC.rationale)}
+    assert "MULTI_TABLE_AMBIGUOUS" in rationales
+
+
+def test_crosstab_still_single_table(tmp_path):
+    # regression: the cross-tab is neither split nor escalated
+    from tests.etkl.fixtures import crosstab_table_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
+    report = compile_tables(str(p))
+    assert len(list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))) == 1
+
+
+def test_uniform_4col_compiles_one_table(tmp_path):
+    """A 4-column uniform-spacing record table (Name/Age/City/Country) must compile
+    to exactly ONE tab:RecordTable — not two (the pre-fix false-positive split).
+
+    Guards the gap-dominance fix end-to-end: before the fix, the widest inter-column
+    gutter was certified and the band was torn into two 2-column RecordTables; after
+    the fix, the widest-to-second-widest ratio (~1.1–1.3) is below _GUTTER_DOMINANCE
+    (2.0) so no cut is made and the whole band compiles as a single RecordTable."""
+    from tests.etkl.fixtures import uniform_wide_record_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "u4c.pdf"; uniform_wide_record_pdf(str(p))
+    report = compile_tables(str(p))
+    rec_tables = list(report.graph.subjects(RDF.type, TAB.RecordTable))
+    assert len(rec_tables) == 1, f"expected 1 RecordTable, got {len(rec_tables)}"
+    assert report.score == 1.0
+
+
+def test_row_hierarchy_wide_compiles_one_table(tmp_path):
+    """A row-hierarchy table with 2 numeric data columns (Headcount + Budget) must
+    compile to exactly ONE tab:HierarchicalTable (with coversRow) and ZERO
+    tab:RecordTable instances.
+
+    This is the end-to-end guard for the find_table_gutter false-positive fix: before
+    the fix, the stub↔data gutter was certified and the band was torn into two
+    RecordTables.  After the fix, has_own_stub(right) == False so the cut is rejected
+    and the whole band compiles as a single HierarchicalTable."""
+    from tests.etkl.fixtures import row_hierarchy_wide_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "rhw.pdf"; row_hierarchy_wide_pdf(str(p))
+    report = compile_tables(str(p))
+    hier_tables = list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    rec_tables = list(report.graph.subjects(RDF.type, TAB.RecordTable))
+    assert len(hier_tables) == 1, f"expected 1 HierarchicalTable, got {len(hier_tables)}"
+    assert len(rec_tables) == 0, f"expected 0 RecordTable, got {len(rec_tables)}"
+    assert (None, TAB.coversRow, None) in report.graph, "row-header tree must exist (coversRow)"

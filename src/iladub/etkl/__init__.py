@@ -18,6 +18,7 @@ from .rowheaders import looks_row_grouped, classify_row_hier, row_tree_tiles, Ro
 from .holon import assert_record_region, assert_transposed_region, assert_row_hier_region, assert_matrix_region
 from .matrix import (is_matrix_candidate, classify_matrix, matrix_tiles,
                      infer_column_tree_by_proximity, col_tree_tiles, MatrixRegion, ColHeaderNode)
+from .segment import segment, find_table_gutter, find_repeated_header, has_own_stub, is_multi_table_ambiguous
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -35,4 +36,5 @@ __all__ = [
     "is_matrix_candidate", "classify_matrix", "matrix_tiles",
     "infer_column_tree_by_proximity", "col_tree_tiles", "MatrixRegion", "ColHeaderNode",
     "assert_matrix_region",
+    "segment", "find_table_gutter", "find_repeated_header", "has_own_stub", "is_multi_table_ambiguous",
 ]

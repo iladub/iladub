@@ -141,6 +141,17 @@ it must certify.)*
       `header_body_split ≥ 2` + `stub_data_split not None`) cleanly separates it from the increment-2 pivot
       (covered stub) and increment-5 row-hierarchy (flat column header); a non-tiling matrix escalates
       `MATRIX_AMBIGUOUS`. (Delivered by the matrix-crosstab PR.)
+- [x] **7 — multi-table page segmentation** (2026-07-09): closes the compiler's worst residual failure —
+      `detect_bands` is 1-D (vertical gaps only), so it **fused** side-by-side and stacked-no-gap (repeated
+      header) tables into one confident (wrong) assertion. A recursive `segment(band)` pass now runs **before**
+      `classify`: it **proposes** cuts (widest full-height gutter; repeated-header row) and **certifies** each by
+      re-running the existing classifiers — a horizontal cut is taken only when both sides classify `RECORD_TABLE`
+      **and both have their own stub** (`has_own_stub`), which splits genuine side-by-side tables while keeping a
+      ≥2-data-column row-hierarchy whole; a genuine-but-unclean second table escalates `MULTI_TABLE_AMBIGUOUS`
+      (via the stub asymmetry, threshold-free). **The safety property is provable and tested: every single table
+      segments to exactly one region** (the cross-tab, whose `Q1|Q2` gutter looks like a boundary, stays whole
+      because its right half is data-only). No new vocabulary. Limits (documented): non-record side-by-side and
+      different-header no-gap stacks. (Delivered by the multi-table-segmentation PR.)
 - [ ] Field of possibles (each a future increment, escalated today):
       key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·
