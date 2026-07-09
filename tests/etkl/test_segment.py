@@ -56,7 +56,8 @@ def test_has_own_stub(tmp_path):
 
 from iladub.etkl.segment import segment, is_multi_table_ambiguous
 from tests.etkl.fixtures import (all_text_table_pdf, row_grouped_table_pdf,
-                                 transposed_table_pdf, record_plus_stub_hier_pdf)
+                                 transposed_table_pdf, record_plus_stub_hier_pdf,
+                                 row_hierarchy_wide_pdf)
 
 
 def test_side_by_side_segments_to_two(tmp_path):
@@ -73,10 +74,23 @@ def test_stacked_repeated_segments_to_two(tmp_path):
     assert all(tuple(w.text for w in s.lines[0].words) == ("Analyte", "Value", "Unit") for s in subs)
 
 
+def test_row_hierarchy_wide_not_split(tmp_path):
+    """A row-hierarchy table with 2 data columns must NOT be split by find_table_gutter.
+
+    The widest gutter falls between the last stub column (Team) and the first data
+    column (Headcount). The right half is all-numeric, so has_own_stub(right) is False
+    and the cut is rejected. Guards the fix for the row-hierarchy false-positive."""
+    band = _band(row_hierarchy_wide_pdf, tmp_path)
+    assert find_table_gutter(band) is None
+    assert len(segment(band)) == 1
+    assert is_multi_table_ambiguous(band) is False
+
+
 def test_single_tables_never_split(tmp_path):
     # THE invariant — every existing single table segments to exactly one region
     for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
-                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf):
+                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf,
+                  row_hierarchy_wide_pdf):
         assert len(segment(_band(maker, tmp_path))) == 1, maker.__name__
 
 
@@ -92,5 +106,6 @@ def test_single_tables_not_ambiguous(tmp_path):
     # no ordinary single table may be flagged MULTI_TABLE_AMBIGUOUS (would wrongly escalate).
     # This pins the has_own_stub ncols<2 guard's contract.
     for maker in (simple_table_pdf, pivoted_table_pdf, all_text_table_pdf,
-                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf):
+                  crosstab_table_pdf, row_grouped_table_pdf, transposed_table_pdf,
+                  row_hierarchy_wide_pdf):
         assert is_multi_table_ambiguous(_band(maker, tmp_path)) is False, maker.__name__

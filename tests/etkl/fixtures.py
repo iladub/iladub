@@ -408,3 +408,42 @@ def record_plus_stub_hier_pdf(path: str) -> dict:
             c.drawString(x, y, v)
     c.save()
     return {"right_stub": "Dept"}
+
+
+def row_hierarchy_wide_pdf(path: str) -> dict:
+    """A ROW-header hierarchy with TWO numeric data columns (Headcount + Budget).
+
+    Layout:
+      Region | Team  | Headcount | Budget
+      North  | Alpha |        10 |    100
+             | Beta  |        20 |    200
+      South  | Gamma |        30 |    300
+             | Delta |        40 |    400
+
+    'Region' uses blank-below (forward-fill) grouping; 'Team' is the fully-populated
+    finer stub; 'Headcount' and 'Budget' are the two numeric data columns.
+
+    This is the 2-data-column variant of row_grouped_table_pdf. The widest gutter falls
+    between Team (last stub column) and Headcount (first data column). The right half
+    is all-numeric, so has_own_stub(right) is False — find_table_gutter must NOT split
+    it. Guards the fix for the false-positive gutter cut on row-hierarchy tables.
+    """
+    cols = [72.0, 180.0, 300.0, 420.0]    # Region, Team, Headcount, Budget
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [
+        ("Region", "Team",  "Headcount", "Budget"),
+        ("North",  "Alpha", "10",        "100"),
+        ("",       "Beta",  "20",        "200"),
+        ("South",  "Gamma", "30",        "300"),
+        ("",       "Delta", "40",        "400"),
+    ]
+    y0 = PAGE_H - 130.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            if cell:
+                c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_leaf_rows": 4, "n_data_cols": 2,
+            "groups": {"North": 2, "South": 2}}

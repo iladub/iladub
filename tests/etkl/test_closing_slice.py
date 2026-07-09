@@ -245,3 +245,24 @@ def test_crosstab_still_single_table(tmp_path):
     p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
     report = compile_tables(str(p))
     assert len(list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))) == 1
+
+
+def test_row_hierarchy_wide_compiles_one_table(tmp_path):
+    """A row-hierarchy table with 2 numeric data columns (Headcount + Budget) must
+    compile to exactly ONE tab:HierarchicalTable (with coversRow) and ZERO
+    tab:RecordTable instances.
+
+    This is the end-to-end guard for the find_table_gutter false-positive fix: before
+    the fix, the stub↔data gutter was certified and the band was torn into two
+    RecordTables.  After the fix, has_own_stub(right) == False so the cut is rejected
+    and the whole band compiles as a single HierarchicalTable."""
+    from tests.etkl.fixtures import row_hierarchy_wide_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "rhw.pdf"; row_hierarchy_wide_pdf(str(p))
+    report = compile_tables(str(p))
+    hier_tables = list(report.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    rec_tables = list(report.graph.subjects(RDF.type, TAB.RecordTable))
+    assert len(hier_tables) == 1, f"expected 1 HierarchicalTable, got {len(hier_tables)}"
+    assert len(rec_tables) == 0, f"expected 0 RecordTable, got {len(rec_tables)}"
+    assert (None, TAB.coversRow, None) in report.graph, "row-header tree must exist (coversRow)"

@@ -72,15 +72,25 @@ def _widest_gutter_cut(band: Band):
 
 def find_table_gutter(band: Band) -> float | None:
     """The x of a CERTIFIED side-by-side cut: the widest full-height gutter where
-    BOTH sides independently classify RECORD_TABLE. Else None. The both-RECORD rule
-    excludes the cross-tab (its halves are UNSUPPORTED) and every single table."""
+    BOTH sides independently classify RECORD_TABLE AND each has its own row-identity
+    stub. Else None.
+
+    The both-RECORD rule excludes the cross-tab (its halves are UNSUPPORTED).
+    The both-own-stub rule excludes row-hierarchy tables: cutting at the stub↔data
+    gutter yields a RECORD left half (the stub columns) and a RECORD right half (the
+    numeric data columns), but the right half's leftmost column is numeric so
+    has_own_stub returns False — no split.  A genuine side-by-side has a text stub on
+    both sides, so both return True."""
     got = _widest_gutter_cut(band)
     if got is None:
         return None
     cut, left, right = got
-    lk = classify(_band_from_words(left)).kind
-    rk = classify(_band_from_words(right)).kind
-    if lk is RegionKind.RECORD_TABLE and rk is RegionKind.RECORD_TABLE:
+    lb = _band_from_words(left)
+    rb = _band_from_words(right)
+    lk = classify(lb).kind
+    rk = classify(rb).kind
+    if (lk is RegionKind.RECORD_TABLE and rk is RegionKind.RECORD_TABLE
+            and has_own_stub(lb) and has_own_stub(rb)):
         return cut
     return None
 
