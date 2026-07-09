@@ -268,3 +268,38 @@ def row_grouped_report_pdf(path: str) -> dict:
     c.save()
     return {"title": "HEADCOUNT BY REGION", "groups": {"North": 2, "South": 2},
             "n_leaf_rows": 4, "n_data_cols": 2}
+
+
+# --- Matrix / cross-tab: BOTH axes are header trees (the 2-D culmination) ---
+
+def crosstab_report_pdf(path: str) -> dict:
+    """A MATRIX / cross-tab: a hierarchical COLUMN header (Q1/Q2 each over
+    Rev/Cost/Unit) AND a stub ROW axis (North/South), with a numeric data matrix.
+    Each value is addressed by (column-path x row-path) — Part C's column pivot and
+    Part F's row hierarchy composed into a true 2-D table. Short column-group labels
+    (Q1/Q2) over wide numeric groups are recovered by the proximity span builder;
+    the stub (blank corner) becomes the row axis (Design A), so only the data columns
+    are leaf columns. No new vocabulary — the union of the column + row SHACL certifies it."""
+    stub_x = 55.0
+    data_x = [140.0, 210.0, 280.0, 380.0, 450.0, 520.0]   # Q1:Rev,Cost,Unit | Q2:Rev,Cost,Unit
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 13)
+    c.drawString(stub_x, PAGE_H - 55.0, "QUARTERLY RESULTS BY REGION")
+    top = PAGE_H - 100.0
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[2]) / 2.0, top, "Q1")
+    c.drawCentredString((data_x[3] + data_x[5]) / 2.0, top, "Q2")
+    for x, name in zip(data_x, ["Rev", "Cost", "Unit", "Rev", "Cost", "Unit"]):
+        c.drawCentredString(x, top - 13.0, name)
+    c.setFont("Courier", 9)
+    body = [("North", ["100", "60", "5", "110", "65", "6"]),
+            ("South", ["120", "70", "7", "130", "75", "8"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 30.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"title": "QUARTERLY RESULTS BY REGION",
+            "col_groups": {"Q1": 3, "Q2": 3}, "row_axis": ["North", "South"],
+            "n_data_cols": 6, "n_leaf_rows": 2}
