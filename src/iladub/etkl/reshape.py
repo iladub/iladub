@@ -11,8 +11,7 @@ from rdflib.namespace import XSD
 
 from . import denormalization as dn
 from .oracle import OracleVerdict, round_trip
-from .recipe import (UnpivotOp, StripAggregationOp, Recipe,
-                     col_leaf_label, row_label, grid_values)
+from .recipe import UnpivotOp, StripAggregationOp, Recipe, col_leaf_label
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
@@ -26,10 +25,14 @@ def _leaf_label_level0(g, leaf, covers_pred):
     return None
 
 
-def _stub_col_names(g, t):
-    """Level-0 label of each stub column (a column whose max covering level is 0)."""
+def _stub_col_names(g, t, exclude=()):
+    """Level-0 label of each stub column (a column whose max covering level is 0), skipping
+    any column in `exclude` (e.g. aggregation columns — a level-0 Total must never be picked
+    as the row-key stub, which would otherwise depend on column insertion order)."""
     names = []
     for c in g.objects(t, TAB.hasLeafColumn):
+        if c in exclude:
+            continue
         levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
         if levels and max(levels) == 0:
             lbl = _leaf_label_level0(g, c, TAB.coversColumn)
@@ -38,29 +41,73 @@ def _stub_col_names(g, t):
     return names
 
 
+def _agg_col_labels(recipe):
+    """Leaf labels of the recipe's column-aggregation targets (e.g. {'Total'}). A column
+    with one of these labels is an aggregate, never a row-key stub."""
+    return {op.target_label for op in recipe.operations
+            if isinstance(op, StripAggregationOp) and op.axis == "column"}
+
+
+def _row_key(g, t, r, exclude_labels=()):
+    """Order-independent row identity: the text of row r's entry in the FIRST level-0
+    single-leaf stub column whose leaf label is NOT an aggregation target — so a Total
+    column (also level-0) never becomes the row key regardless of column insertion order.
+    Falls back to the row URI tail. (reshape's agg-column-safe replacement for
+    recipe.row_label, which keys on the first level-0 column unconditionally.)"""
+    for c in g.objects(t, TAB.hasLeafColumn):
+        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
+        if not (levels and max(levels) == 0):
+            continue
+        if col_leaf_label(g, c) in exclude_labels:
+            continue
+        e = dn._entry(g, t, r, c)
+        if e is not None:
+            return str(g.value(e, TAB.cellText))
+    return str(r).rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+
+
+def _grid_target(g, t, exclude_labels=()):
+    """Reproduction target {(row_key, col_leaf_label): text} for the oracle — mirrors
+    recipe.grid_values but keys rows via the agg-column-safe _row_key so the target and the
+    recovered base agree on row identity even when a Total column precedes the stub."""
+    out = {}
+    for e in g.subjects(RDF.type, TAB.EntryCell):
+        if (t, TAB.hasCell, e) not in g:
+            continue
+        r = g.value(e, TAB.atRow); c = g.value(e, TAB.atColumn)
+        if r is None or c is None:
+            continue
+        col_lbl = col_leaf_label(g, c)
+        if col_lbl is None:
+            continue  # M2: bare/spanning-only column has no leaf label; skip
+        out[(_row_key(g, t, r, exclude_labels), col_lbl)] = str(g.value(e, TAB.cellText))
+    return out
+
+
 def recover_recipe(g, t):
     dims = dn.recover_dimensions(g, t)
     ev = dn.detect_aggregations(g, t)
     ops = []
-    stubs = _stub_col_names(g, t)
+    stubs = _stub_col_names(g, t, exclude=ev.agg_cols)
     stub = stubs[0] if stubs else None
     # non-measure columns (numeric stubs / totals) are never aggregation operands — the
     # same exclusion detect_aggregations applies, so the strip's member set matches the
     # operands the total was actually detected from (else replay folds a numeric stub echo
     # into the recomputed total, and the round-trip fails).
-    excl = dn._operand_exclusions(g, t)
+    excl = ev.excluded_operand_cols
     for d in dims:
         if d.axis == "column" and d.name and len(d.values) > 1:
             ops.append(UnpivotOp(dimension=d.name, stub=stub, axis="column"))
     # strip ops: aggregation columns, then rows
+    agg_col_labels = {col_leaf_label(g, c) for c in ev.agg_cols}   # e.g. {"Total"}
     for c in ev.agg_cols:
         members = [col_leaf_label(g, m) for m in ev.base_cols if m not in excl]
         ops.append(StripAggregationOp("column", ev.funcs[c],
                                       tuple(m for m in members if m), col_leaf_label(g, c)))
     for r in ev.agg_rows:
-        members = [row_label(g, t, m) for m in ev.base_rows]
-        ops.append(StripAggregationOp("row", ev.funcs[r],
-                                      tuple(m for m in members if m), row_label(g, t, r)))
+        members = [_row_key(g, t, m, agg_col_labels) for m in ev.base_rows]
+        ops.append(StripAggregationOp("row", ev.funcs[r], tuple(m for m in members if m),
+                                      _row_key(g, t, r, agg_col_labels)))
     return Recipe(tuple(ops))
 
 
@@ -71,15 +118,16 @@ def recover_base(g, t, recipe):
     ev = dn.detect_aggregations(g, t)
     col_pivots = [d for d in dims if d.axis == "column" and d.name and len(d.values) > 1]
     pivot_names = {d.name for d in col_pivots}
-    stubs = _stub_col_names(g, t)
+    stubs = _stub_col_names(g, t, exclude=ev.agg_cols)
     stub = stubs[0] if stubs else None
     measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn)
                     if _leaf_label_level0(g, c, TAB.coversColumn) in pivot_names
                     and c not in ev.agg_cols]
     base_rows = [r for r in g.objects(t, TAB.hasLeafRow) if r not in ev.agg_rows]
+    agg_col_labels = {col_leaf_label(g, c) for c in ev.agg_cols}
     out = []
     for r in base_rows:
-        rlab = row_label(g, t, r)
+        rlab = _row_key(g, t, r, agg_col_labels)
         for c in measure_cols:
             e = dn._entry(g, t, r, c)
             if e is None:
@@ -105,7 +153,7 @@ def certify(g, t):
     base = recover_base(g, t, recipe)
     if not base:
         return recipe, OracleVerdict(True, ()), base
-    verdict = round_trip(grid_values(g, t), base, recipe)
+    verdict = round_trip(_grid_target(g, t, _agg_col_labels(recipe)), base, recipe)
     return recipe, verdict, base
 
 

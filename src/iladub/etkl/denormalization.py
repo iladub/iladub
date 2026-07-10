@@ -141,6 +141,7 @@ class AggregationEvidence:
     base_cols: tuple
     funcs: dict          # axis_uri -> function name
     operands: dict       # axis_uri -> tuple of member axis_uris
+    excluded_operand_cols: frozenset = frozenset()   # non-measure cols barred as operands
 
 
 def _value_matrix(g, t):
@@ -225,7 +226,8 @@ def detect_aggregations(g, t):
                 agg_cols.append(C); funcs[C] = fn; operands[C] = tuple(others)
                 base_cols.remove(C); changed = True; break
     return AggregationEvidence(tuple(agg_rows), tuple(agg_cols), tuple(base_rows),
-                               tuple(base_cols), funcs, operands)
+                               tuple(base_cols), funcs, operands,
+                               excluded_operand_cols=frozenset(excl))
 
 
 def _find_entry(g, t, r, c):

@@ -66,13 +66,17 @@ def test_emit_returns_none_on_oracle_failure(tmp_path):
 
 # ── FIX B: end-to-end strip-in-composition proof (A1.1) ─────────────────────
 
-def _build_strip_composition_graph():
+def _build_strip_composition_graph(col_add_order=None):
     """Construct the pivot+total graph: Region(North/South) spanning c1,c2; Total agg
     col c3=N+S; Year stub c0; two data rows 2020/2021.  Mirrors the pattern in
-    test_denormalization::test_emit_base_facts_strips_aggregation_column."""
+    test_denormalization::test_emit_base_facts_strips_aggregation_column.
+
+    `col_add_order` controls the order the leaf columns are added to the graph (both
+    Year c0 and Total c3 are level-0 single-leaf columns, so their relative order can
+    influence stub selection — see the order-independence regression)."""
     g = Graph(); t = EX.tbl
     c0, c1, c2, c3 = EX.c0, EX.c1, EX.c2, EX.c3
-    for c in (c0, c1, c2, c3):
+    for c in (col_add_order or (c0, c1, c2, c3)):
         g.add((c, RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, c))
 
     def hdr(u, lvl, lbl, covers):
@@ -140,6 +144,32 @@ def test_certify_strip_in_composition_round_trips():
                if str(g.value(co, TAB.dimensionName)) == "Region"}
     assert "Total" not in regions
     assert regions == {"North", "South"}
+
+
+def test_certify_stub_selection_is_order_independent():
+    """FIX I2: stub selection must not depend on column insertion order. Both Year (c0)
+    and Total (c3) are level-0 single-leaf columns; if the Total column is added BEFORE
+    the Year stub, a stub-selector that treats every level-0 column as a candidate would
+    pick 'Total' as the row-key stub → replay misses the Year cells → oracle fails.
+    Excluding aggregation columns from stub candidacy makes 'Year' the stub regardless of
+    order. (Fails before I2, passes after.)"""
+    from iladub.etkl.reshape import certify, emit_normalized_base
+    from iladub.etkl.recipe import UnpivotOp
+
+    c0, c1, c2, c3 = EX.c0, EX.c1, EX.c2, EX.c3
+    # Total (c3) inserted BEFORE Year stub (c0):
+    g, t = _build_strip_composition_graph(col_add_order=(c3, c1, c2, c0))
+
+    recipe, verdict, base = certify(g, t)
+    assert verdict.ok is True, verdict.residue
+
+    unpivots = [op for op in recipe.operations if isinstance(op, UnpivotOp)]
+    assert len(unpivots) == 1
+    assert unpivots[0].stub == "Year"          # NOT "Total"
+
+    nb = emit_normalized_base(g, t)
+    assert nb is not None
+    assert len(list(g.objects(nb, TAB.hasBaseFact))) == 4
 
 
 # ── FIX A: pivotless table must not produce a false oracle failure ────────────
