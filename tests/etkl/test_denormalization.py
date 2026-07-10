@@ -211,6 +211,20 @@ def test_emit_base_facts_unpivots_region(tmp_path):
     assert ("Region", "North") in coords and ("Year", "2020") in coords
 
 
+def test_analyze_end_to_end(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import region_pivot_pdf
+    from iladub.etkl import compile_tables
+    from iladub.etkl.denormalization import analyze
+    p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
+    rep = compile_tables(str(p))
+    dr = analyze(rep)
+    assert any(d.name == "Region" for d in dr.dimensions)
+    assert len(dr.base_facts) == 8
+    assert (None, RDF.type, TAB.PivotedDimension) in rep.graph   # evidence annotated in place
+
+
 def test_emit_base_facts_strips_aggregation_column():
     """A pivoted table with a Total aggregation column: Total is not a measure column,
     so no base fact references it."""

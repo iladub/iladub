@@ -1,0 +1,8 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# A BaseFact missing atDimensionValue — violates tab:BaseFactShape (minCount 1).
+
+ex:fact-broken a tab:BaseFact ;
+    tab:measureValue "99.0"^^xsd:decimal .

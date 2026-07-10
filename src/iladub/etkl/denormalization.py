@@ -301,3 +301,27 @@ def emit_base_facts(g, t):
                     _add_coordinate(g, bf, _col_label_at_level(g, sc, 0), str(g.value(se, TAB.cellText)))
             facts.append(bf)
     return facts
+
+
+@dataclass(frozen=True)
+class DenormalizationReport:
+    dimensions: tuple
+    evidence: object
+    base_facts: tuple
+
+
+def analyze(report):
+    """Public entry point: recover dimensions + aggregations, annotate the graph in place,
+    and emit 3NF base facts. Returns the first table's DenormalizationReport (or a list
+    for a multi-table page)."""
+    g = report.graph
+    out = []
+    for t in (list(g.subjects(RDF.type, TAB.RecordTable))
+              + list(g.subjects(RDF.type, TAB.HierarchicalTable))):
+        dims = recover_dimensions(g, t)
+        ev = detect_aggregations(g, t)
+        annotate_dimensions(g, t, dims)
+        annotate_aggregations(g, t, ev)
+        facts = emit_base_facts(g, t)
+        out.append(DenormalizationReport(tuple(dims), ev, tuple(facts)))
+    return out[0] if len(out) == 1 else out

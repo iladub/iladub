@@ -133,3 +133,11 @@ tab:aggregates a owl:ObjectProperty ; rdfs:domain tab:AggregationCell ; rdfs:ran
     rdfs:comment "An operand cell this aggregation is computed from."@en .
 tab:overAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "over axis"@en ;
     rdfs:comment "row | column — the axis the aggregation runs along (a grand total carries both)."@en .
+
+# --- 3NF base facts (denormalisation slice ③) --------------------------------
+tab:BaseFact a owl:Class ; rdfs:label "Base fact"@en ;
+    rdfs:comment "A normalized (3NF) observation recovered by inverting a report: a dimension-value coordinate and a measure."@en .
+tab:measureValue a owl:DatatypeProperty ; rdfs:domain tab:BaseFact ; rdfs:range xsd:decimal ; rdfs:label "measure value"@en .
+tab:atDimensionValue a owl:ObjectProperty ; rdfs:domain tab:BaseFact ; rdfs:label "at dimension value"@en ;
+    rdfs:comment "A coordinate node: a tab:dimensionName + tab:value the base fact carries."@en .
+tab:value a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "value"@en .

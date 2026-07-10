@@ -1,0 +1,8 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix qb:  <http://purl.org/linked-data/cube#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Alignment only — tab: subjects, qb: objects.
+tab:BaseFact rdfs:subClassOf qb:Observation ; rdfs:seeAlso qb:Observation .
+tab:PivotedDimension rdfs:subClassOf qb:DimensionProperty ; rdfs:seeAlso qb:DimensionProperty .
+tab:measureValue rdfs:subPropertyOf qb:measureType ; rdfs:seeAlso qb:MeasureProperty .
