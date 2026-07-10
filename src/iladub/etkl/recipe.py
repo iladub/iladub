@@ -1,0 +1,82 @@
+"""recipe — the reshape recipe model + grid extraction (Loop A1 core).
+
+A Recipe is an ordered list of inverse report-authoring operations that, replayed
+FORWARD over a flat base, regenerate the original grid. grid_values() is the
+reproduction target the round-trip oracle compares against.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from rdflib import RDF, Namespace
+
+TAB = Namespace("https://w3id.org/iladub/tab#")
+
+
+@dataclass(frozen=True)
+class UnpivotOp:
+    dimension: str            # e.g. "Region" — the pivoted dimension's name
+    stub: str                 # e.g. "Year" — the stub key that indexes rows
+    axis: str = "column"
+
+
+@dataclass(frozen=True)
+class StripAggregationOp:
+    axis: str                 # "row" | "column"
+    function: str             # "sum" | "mean" | "min" | "max" | "count" | "product"
+    member_labels: tuple      # the base members the aggregate is computed from
+    target_label: str         # the aggregate row/col's own leaf label (e.g. "Total")
+
+
+@dataclass(frozen=True)
+class Recipe:
+    operations: tuple         # forward order: unpivot(s) then strip(s)
+
+
+def _text(g, cell):
+    return str(g.value(cell, TAB.cellText)) if cell is not None else None
+
+
+def col_leaf_label(g, c):
+    """Deepest header label covering exactly leaf column c (the single-covering node)."""
+    best = None
+    for h in g.subjects(TAB.coversColumn, c):
+        if len(list(g.objects(h, TAB.coversColumn))) == 1:
+            best = _text(g, g.value(h, TAB.hasLabel))
+    return best
+
+
+def _stub_cols(g, t):
+    """Columns whose leaf label is not a pivoted measure — used to key rows.
+    A stub column is one that covers a single leaf and sits at header level 0
+    (no deeper leaf under a spanning parent). Heuristic-free: any column whose
+    only covering header is level 0 is a stub."""
+    stubs = []
+    for c in g.objects(t, TAB.hasLeafColumn):
+        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
+        if levels and max(levels) == 0:
+            stubs.append(c)
+    return stubs
+
+
+def row_label(g, t, r):
+    """A row's identity: the text of its entry in the first stub column, else the URI tail."""
+    stubs = _stub_cols(g, t)
+    for sc in stubs:
+        for e in g.subjects(TAB.atRow, r):
+            if (t, TAB.hasCell, e) in g and g.value(e, TAB.atColumn) == sc:
+                return _text(g, e)
+    return str(r).rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+
+
+def grid_values(g, t):
+    """{(row_label, col_leaf_label): cell_text} for every entry cell of table t."""
+    out = {}
+    for e in g.subjects(RDF.type, TAB.EntryCell):
+        if (t, TAB.hasCell, e) not in g:
+            continue
+        r = g.value(e, TAB.atRow); c = g.value(e, TAB.atColumn)
+        if r is None or c is None:
+            continue
+        out[(row_label(g, t, r), col_leaf_label(g, c))] = _text(g, e)
+    return out
