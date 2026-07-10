@@ -19,7 +19,9 @@ from .holon import assert_record_region, assert_transposed_region, assert_row_hi
 from .matrix import (is_matrix_candidate, classify_matrix, matrix_tiles,
                      infer_column_tree_by_proximity, col_tree_tiles, MatrixRegion, ColHeaderNode)
 from .segment import segment, find_table_gutter, find_repeated_header, has_own_stub, is_multi_table_ambiguous
-from .denormalization import recover_dimensions, annotate_dimensions, PivotedDimension
+from .denormalization import (recover_dimensions, annotate_dimensions, PivotedDimension,
+                              detect_aggregations, annotate_aggregations, verify_group,
+                              AggregationEvidence)
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -39,4 +41,5 @@ __all__ = [
     "assert_matrix_region",
     "segment", "find_table_gutter", "find_repeated_header", "has_own_stub", "is_multi_table_ambiguous",
     "recover_dimensions", "annotate_dimensions", "PivotedDimension",
+    "detect_aggregations", "annotate_aggregations", "verify_group", "AggregationEvidence",
 ]

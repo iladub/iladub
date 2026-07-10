@@ -157,3 +157,20 @@ def test_totals_fixture_end_to_end(tmp_path):
     tbl = next(rep.graph.subjects(_RDF.type, TAB.RecordTable))
     ev = detect_aggregations(rep.graph, tbl)
     assert ev.agg_rows and ev.agg_cols
+
+
+def test_annotate_marks_aggregations():
+    from iladub.etkl.denormalization import detect_aggregations, annotate_aggregations
+    rows = ["North", "South", "Total"]; cols = ["Q1", "Q2", "Total"]
+    V = {"North": {"Q1": 100, "Q2": 110, "Total": 210},
+         "South": {"Q1": 120, "Q2": 130, "Total": 250},
+         "Total": {"Q1": 220, "Q2": 240, "Total": 460}}
+    g, t, ru, cu = _matrix_graph(rows, cols, V)
+    ev = detect_aggregations(g, t)
+    annotate_aggregations(g, t, ev)
+    assert (ru["Total"], RDF.type, TAB.AggregationRow) in g
+    assert (cu["Total"], RDF.type, TAB.AggregationColumn) in g
+    # the grand-total cell carries both axes
+    e = next(e for e in g.subjects(RDF.type, TAB.AggregationCell)
+             if g.value(e, TAB.atRow) == ru["Total"] and g.value(e, TAB.atColumn) == cu["Total"])
+    assert {str(o) for o in g.objects(e, TAB.overAxis)} == {"row", "column"}

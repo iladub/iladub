@@ -1,0 +1,67 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# A 3×3 table: rows = North, South, Total (agg row); cols = Q1, Q2, Total (agg col).
+# Total-row cells and Total-col cells are AggregationCells; the grand total carries both axes.
+
+ex:tbl a tab:Table ;
+    tab:hasLeafColumn ex:cQ1, ex:cQ2, ex:cTotal ;
+    tab:hasLeafRow    ex:rNorth, ex:rSouth, ex:rTotal ;
+    tab:hasHeaderNode ex:hQ1, ex:hQ2, ex:hTotal ;
+    tab:hasCell ex:eNQ1, ex:eNQ2, ex:eSQ1, ex:eSQ2,
+                ex:eNTotal, ex:eSTotal, ex:eTQ1, ex:eTQ2, ex:eTTotal .
+
+ex:cQ1    a tab:LeafColumn .
+ex:cQ2    a tab:LeafColumn .
+ex:cTotal a tab:LeafColumn .
+
+ex:rNorth a tab:LeafRow .
+ex:rSouth a tab:LeafRow .
+ex:rTotal a tab:LeafRow .
+
+# One leaf-header per column (satisfies CoverageShape + UnambiguousAccessShape)
+ex:hQ1    a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cQ1 .
+ex:hQ2    a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cQ2 .
+ex:hTotal a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:cTotal .
+
+# Aggregation row and column types
+ex:rTotal a tab:AggregationRow .
+ex:cTotal a tab:AggregationColumn .
+
+# Base entry cells
+ex:eNQ1 a tab:EntryCell ; tab:atColumn ex:cQ1    ; tab:atRow ex:rNorth ; tab:cellText "100" .
+ex:eNQ2 a tab:EntryCell ; tab:atColumn ex:cQ2    ; tab:atRow ex:rNorth ; tab:cellText "110" .
+ex:eSQ1 a tab:EntryCell ; tab:atColumn ex:cQ1    ; tab:atRow ex:rSouth ; tab:cellText "120" .
+ex:eSQ2 a tab:EntryCell ; tab:atColumn ex:cQ2    ; tab:atRow ex:rSouth ; tab:cellText "130" .
+
+# Aggregation cells — row axis (sum across North + South)
+ex:eTQ1 a tab:AggregationCell ; tab:atColumn ex:cQ1    ; tab:atRow ex:rTotal ;
+    tab:cellText "220" ;
+    tab:aggregationFunction "sum" ;
+    tab:aggregates ex:eNQ1 ; tab:aggregates ex:eSQ1 ;
+    tab:overAxis "row" .
+ex:eTQ2 a tab:AggregationCell ; tab:atColumn ex:cQ2    ; tab:atRow ex:rTotal ;
+    tab:cellText "240" ;
+    tab:aggregationFunction "sum" ;
+    tab:aggregates ex:eNQ2 ; tab:aggregates ex:eSQ2 ;
+    tab:overAxis "row" .
+
+# Aggregation cells — column axis (sum across Q1 + Q2)
+ex:eNTotal a tab:AggregationCell ; tab:atColumn ex:cTotal ; tab:atRow ex:rNorth ;
+    tab:cellText "210" ;
+    tab:aggregationFunction "sum" ;
+    tab:aggregates ex:eNQ1 ; tab:aggregates ex:eNQ2 ;
+    tab:overAxis "column" .
+ex:eSTotal a tab:AggregationCell ; tab:atColumn ex:cTotal ; tab:atRow ex:rSouth ;
+    tab:cellText "250" ;
+    tab:aggregationFunction "sum" ;
+    tab:aggregates ex:eSQ1 ; tab:aggregates ex:eSQ2 ;
+    tab:overAxis "column" .
+
+# Grand total cell — carries BOTH axes
+ex:eTTotal a tab:AggregationCell ; tab:atColumn ex:cTotal ; tab:atRow ex:rTotal ;
+    tab:cellText "460" ;
+    tab:aggregationFunction "sum" ;
+    tab:aggregates ex:eTQ1 ; tab:aggregates ex:eTQ2 ;
+    tab:overAxis "row" ;
+    tab:overAxis "column" .

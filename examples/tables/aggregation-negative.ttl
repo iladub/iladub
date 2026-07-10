@@ -1,0 +1,23 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# An AggregationCell missing aggregationFunction and aggregates
+# → violates AggregationCellShape (minCount 1 on both properties).
+
+ex:tbl a tab:Table ;
+    tab:hasLeafColumn ex:col1 ;
+    tab:hasLeafRow    ex:row1 ;
+    tab:hasHeaderNode ex:h1 ;
+    tab:hasCell ex:broken .
+
+ex:col1 a tab:LeafColumn .
+ex:row1 a tab:LeafRow .
+
+ex:h1 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:col1 .
+
+# Missing aggregationFunction and aggregates — violates AggregationCellShape
+ex:broken a tab:AggregationCell ;
+    tab:atColumn ex:col1 ;
+    tab:atRow    ex:row1 ;
+    tab:cellText "0" ;
+    tab:overAxis "row" .

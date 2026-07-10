@@ -200,3 +200,38 @@ def detect_aggregations(g, t):
                 base_cols.remove(C); changed = True; break
     return AggregationEvidence(tuple(agg_rows), tuple(agg_cols), tuple(base_rows),
                                tuple(base_cols), funcs, operands)
+
+
+def _find_entry(g, t, r, c):
+    for e in g.subjects(TAB.atRow, r):
+        if (t, TAB.hasCell, e) in g and g.value(e, TAB.atColumn) == c:
+            return e
+    return None
+
+
+def annotate_aggregations(g, t, ev):
+    """Write aggregation evidence: type the aggregation leaf rows/cols, and mark each of
+    their entry cells with overAxis + aggregationFunction + aggregates (operands)."""
+    for a in ev.agg_rows:
+        g.add((a, RDF.type, TAB.AggregationRow))
+    for a in ev.agg_cols:
+        g.add((a, RDF.type, TAB.AggregationColumn))
+    ax_of = {a: "row" for a in ev.agg_rows}
+    ax_of.update({a: "column" for a in ev.agg_cols})
+    for e in list(g.subjects(RDF.type, TAB.EntryCell)):
+        if (t, TAB.hasCell, e) not in g:
+            continue
+        r = g.value(e, TAB.atRow)
+        c = g.value(e, TAB.atColumn)
+        axes = [ax for key, ax in ax_of.items() if key in (r, c)]
+        if not axes:
+            continue
+        g.add((e, RDF.type, TAB.AggregationCell))
+        for ax in axes:
+            src = r if ax == "row" else c
+            g.add((e, TAB.overAxis, Literal(ax)))
+            g.add((e, TAB.aggregationFunction, Literal(ev.funcs[src])))
+            for m in ev.operands[src]:
+                op = _find_entry(g, t, (m if ax == "row" else r), (c if ax == "row" else m))
+                if op is not None:
+                    g.add((e, TAB.aggregates, op))
