@@ -6,6 +6,8 @@ round-trip oracle must certify before any NormalizedBase projection is emitted.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from rdflib import RDF, BNode, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
@@ -142,12 +144,9 @@ def _materialize_recipe(g, t, recipe):
     return ru
 
 
-def emit_normalized_base(g, t):
-    """If the recipe round-trips, emit the derived NormalizedBase projection + its base
-    facts and return its uri; else assert nothing and return None."""
-    recipe, verdict, base = certify(g, t)
-    if not verdict.ok or not base:
-        return None
+def emit_base_projection(g, t, recipe, base):
+    """Emit the derived NormalizedBase projection + its base facts from a validated
+    (recipe, base). Shared by A1 (emit_normalized_base) and A2 (certify_with_proposals)."""
     ru = _materialize_recipe(g, t, recipe)
     nb = URIRef("%s-normbase" % t)
     g.add((nb, RDF.type, TAB.NormalizedBase))
@@ -166,3 +165,94 @@ def emit_normalized_base(g, t):
             g.add((co, TAB.dimensionName, Literal(k)))
             g.add((co, TAB.value, Literal(v)))
     return nb
+
+
+def emit_normalized_base(g, t):
+    """A1: if the deterministic recipe round-trips, emit the derived projection; else None."""
+    recipe, verdict, base = certify(g, t)
+    if not verdict.ok or not base:
+        return None
+    return emit_base_projection(g, t, recipe, base)
+
+
+@dataclass(frozen=True)
+class ProposalOutcome:
+    normalized_base: object     # URIRef | None
+    promotions: tuple           # PromotionDecision uris (Task 3); () until then
+    oracle_ok: bool
+    residue: tuple
+
+
+def _nameless_col_pivots(g, t):
+    return [d for d in dn.recover_dimensions(g, t)
+            if d.axis == "column" and d.name is None and len(d.values) > 1]
+
+
+def _named_pivot_recipe_and_base(g, t, dim, name):
+    """Build (recipe, base) for a nameless column pivot given a proposed name. Measure
+    columns are identified by VALUE-SET membership (leaf label in dim.values) — the
+    nameless analogue of A1's level-0-label detection. The name enters ONLY the recipe
+    and the base coordinates (never the source graph).
+
+    Returns (recipe, []) when the pivot is ragged (any measure cell missing) — a ragged
+    pivot cannot be cleanly inverted, and the empty base signals non-invertibility to
+    certify_with_proposals so the oracle can flag it."""
+    valset = set(dim.values)
+    measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn) if col_leaf_label(g, c) in valset]
+    stubs = []
+    for c in g.objects(t, TAB.hasLeafColumn):
+        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
+        if levels and max(levels) == 0 and col_leaf_label(g, c) not in valset:
+            stubs.append(col_leaf_label(g, c))
+    stub = stubs[0] if stubs else None
+    recipe = Recipe((UnpivotOp(dimension=name, stub=stub, axis="column"),))
+    # Rectangularity check: every (row × measure_col) cell must be present
+    all_rows = list(g.objects(t, TAB.hasLeafRow))
+    for r in all_rows:
+        for c in measure_cols:
+            if dn._entry(g, t, r, c) is None:
+                return recipe, []   # ragged → can't invert
+    base = []
+    for r in all_rows:
+        rlab = row_label(g, t, r)
+        for c in measure_cols:
+            e = dn._entry(g, t, r, c)
+            if e is None:
+                continue
+            v = dn._num(str(g.value(e, TAB.cellText)))
+            if v is None:
+                continue
+            row = {"__measure__": v}
+            if stub is not None:
+                row[stub] = rlab
+            row[name] = col_leaf_label(g, c)
+            base.append(row)
+    return recipe, base
+
+
+def certify_with_proposals(g, t, proposer):
+    """A2 augmenting pass: for a nameless column pivot, ask the proposer for the dimension
+    name, build the named recipe+base (value-set detection), and run A1's round-trip oracle.
+    On success emit the derived projection (+ promotion in Task 3); else escalate."""
+    pivots = _nameless_col_pivots(g, t)
+    if not pivots:
+        return ProposalOutcome(None, (), True, ())     # nothing nameless → A1 owns it; proposer untouched
+    dim = pivots[0]
+    context = {"stub": _first_stub_name(g, t, set(dim.values)), "title": None}
+    proposal = proposer.propose_dimension_name(list(dim.values), context)
+    if proposal is None:
+        return ProposalOutcome(None, (), True, ())     # declined → escalate, nothing asserted
+    recipe, base = _named_pivot_recipe_and_base(g, t, dim, proposal.name)
+    verdict = round_trip(grid_values(g, t), base, recipe)
+    if not verdict.ok or not base:
+        return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible → escalate
+    nb = emit_base_projection(g, t, recipe, base)
+    return ProposalOutcome(nb, (), True, ())           # promotions wired in Task 3
+
+
+def _first_stub_name(g, t, valset):
+    for c in g.objects(t, TAB.hasLeafColumn):
+        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
+        if levels and max(levels) == 0 and col_leaf_label(g, c) not in valset:
+            return col_leaf_label(g, c)
+    return None
