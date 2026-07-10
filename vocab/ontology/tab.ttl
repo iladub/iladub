@@ -141,3 +141,29 @@ tab:measureValue a owl:DatatypeProperty ; rdfs:domain tab:BaseFact ; rdfs:range 
 tab:atDimensionValue a owl:ObjectProperty ; rdfs:domain tab:BaseFact ; rdfs:label "at dimension value"@en ;
     rdfs:comment "A coordinate node: a tab:dimensionName + tab:value the base fact carries."@en .
 tab:value a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "value"@en .
+
+# --- reshape recipe (inverse report-authoring grammar; Loop A1) ----------------
+tab:ReshapeRecipe a owl:Class ; rdfs:label "Reshape recipe"@en ;
+    rdfs:comment "An ordered sequence of inverse report-authoring operations that regenerate a report from its flat base. Certified by round-trip reproduction."@en .
+tab:ReshapeOperation a owl:Class ; rdfs:label "Reshape operation"@en ;
+    rdfs:comment "One operation in a reshape recipe (unpivot, strip-aggregation, ...)."@en .
+tab:UnpivotOp a owl:Class ; rdfs:subClassOf tab:ReshapeOperation ; rdfs:label "Unpivot operation"@en ;
+    rdfs:comment "Inverse of pivot: a named dimension whose values were rotated into a header axis is folded back into one column."@en .
+tab:StripAggregationOp a owl:Class ; rdfs:subClassOf tab:ReshapeOperation ; rdfs:label "Strip-aggregation operation"@en ;
+    rdfs:comment "Inverse of add-subtotal/total: a derived row/column proven by exact arithmetic is removed (re-derivable)."@en .
+tab:hasOperation a owl:ObjectProperty ; rdfs:domain tab:ReshapeRecipe ; rdfs:range tab:ReshapeOperation ; rdfs:label "has operation"@en .
+tab:recipeForTable a owl:ObjectProperty ; rdfs:domain tab:ReshapeRecipe ; rdfs:label "recipe for table"@en .
+tab:opIndex a owl:DatatypeProperty ; rdfs:domain tab:ReshapeOperation ; rdfs:range xsd:integer ; rdfs:label "operation index"@en ;
+    rdfs:comment "Position in the recipe; forward replay applies operations in ascending order."@en .
+tab:opDimension a owl:DatatypeProperty ; rdfs:domain tab:UnpivotOp ; rdfs:range xsd:string ; rdfs:label "operation dimension"@en .
+tab:opStub a owl:DatatypeProperty ; rdfs:domain tab:UnpivotOp ; rdfs:range xsd:string ; rdfs:label "operation stub"@en .
+tab:opAxis a owl:DatatypeProperty ; rdfs:domain tab:ReshapeOperation ; rdfs:range xsd:string ; rdfs:label "operation axis"@en ;
+    rdfs:comment "row | column."@en .
+tab:opFunction a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ; rdfs:label "operation function"@en ;
+    rdfs:comment "sum | mean | count | min | max | product — FnO/F&O-named in tab-fno-align.ttl."@en .
+
+# --- normalized base (derived projection; re-models the stored BaseFact set) ----
+tab:NormalizedBase a owl:Class ; rdfs:label "Normalized base"@en ;
+    rdfs:comment "The flat (3NF) facts a report was built from — a DERIVED projection produced by an oracle-certified recipe, never stored as ground truth."@en .
+tab:derivedByRecipe a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:range tab:ReshapeRecipe ; rdfs:label "derived by recipe"@en .
+tab:hasBaseFact a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:range tab:BaseFact ; rdfs:label "has base fact"@en .

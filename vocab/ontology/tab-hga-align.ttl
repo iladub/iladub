@@ -1,0 +1,11 @@
+@prefix tab:   <https://w3id.org/iladub/tab#> .
+@prefix hproj: <http://w3id.org/holon/projection/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#  Alignment ONLY — tab: subjects, HGA objects. Never import.
+#  Anchor: HGA hproj: (mirrors risk:RiskAssessment ⊑ hproj:Projection).
+#  The normalized base is a DERIVED projection of the table-holon,
+#  not a stored dataset.
+#################################################################
+tab:NormalizedBase rdfs:subClassOf hproj:Projection ; rdfs:seeAlso hproj:Projection .

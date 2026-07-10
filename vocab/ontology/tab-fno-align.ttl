@@ -1,0 +1,18 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#  Alignment ONLY — tab: subjects, F&O function IRIs as objects.
+#  The aggregation a StripAggregationOp inverts is named by its
+#  standard XPath/SPARQL function IRI (shared by SPARQL & FnO),
+#  so "column = SUM(...)" is a verifiable rule, not an opaque string.
+#  'product' has no fn: term — kept owned as tab:product.
+#  Full IRIs used (no @prefix fn:) so the IRI appears verbatim in
+#  serialization for test assertions and downstream IRI resolution.
+#################################################################
+tab:aggFnSum     rdfs:seeAlso <http://www.w3.org/2005/xpath-functions#sum> .
+tab:aggFnMean    rdfs:seeAlso <http://www.w3.org/2005/xpath-functions#avg> .
+tab:aggFnMin     rdfs:seeAlso <http://www.w3.org/2005/xpath-functions#min> .
+tab:aggFnMax     rdfs:seeAlso <http://www.w3.org/2005/xpath-functions#max> .
+tab:aggFnCount   rdfs:seeAlso <http://www.w3.org/2005/xpath-functions#count> .
+tab:aggFnProduct rdfs:seeAlso tab:product .
