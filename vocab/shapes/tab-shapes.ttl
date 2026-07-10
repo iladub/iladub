@@ -224,3 +224,17 @@ tab:UnambiguousRowAccessShape a sh:NodeShape ;
                 FILTER(?n != 1)
             }
         """ ] .
+
+#################################################################
+#  Aggregation cell: must declare the function it applies, at
+#  least one operand cell, and at least one axis it runs along.
+#################################################################
+
+tab:AggregationCellShape a sh:NodeShape ;
+    sh:targetClass tab:AggregationCell ;
+    sh:property [ sh:path tab:aggregationFunction ; sh:minCount 1 ;
+                  sh:message "An aggregation cell needs an aggregationFunction." ] ;
+    sh:property [ sh:path tab:aggregates ; sh:minCount 1 ;
+                  sh:message "An aggregation cell needs at least one operand." ] ;
+    sh:property [ sh:path tab:overAxis ; sh:minCount 1 ;
+                  sh:message "An aggregation cell needs at least one overAxis." ] .

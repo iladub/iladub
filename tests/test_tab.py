@@ -224,3 +224,20 @@ def test_tab_pivoted_dimension_terms():
 def test_pivoted_dimension_shapes():
     c, t = _v(PIVDIM_CONF); assert c, t
     c, t = _v(PIVDIM_NEG); assert not c
+
+
+AGG_CONF = os.path.join(EX, "aggregation-conformant.ttl")
+AGG_NEG = os.path.join(EX, "aggregation-negative.ttl")
+
+
+def test_tab_aggregation_terms():
+    g = _g(TAB_TTL)
+    for cls in ["AggregationCell", "AggregationRow", "AggregationColumn"]:
+        assert (TAB[cls], RDF.type, OWL.Class) in g, f"missing tab:{cls}"
+    for prop in ["aggregationFunction", "aggregates", "overAxis"]:
+        assert (TAB[prop], RDF.type, None) in g, f"missing tab:{prop}"
+
+
+def test_aggregation_shapes():
+    c, t = _v(AGG_CONF); assert c, t
+    c, t = _v(AGG_NEG); assert not c

@@ -121,3 +121,15 @@ tab:onAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "on axis"
     rdfs:comment "row | column."@en .
 tab:atLevel a owl:DatatypeProperty ; rdfs:domain tab:PivotedDimension ; rdfs:range xsd:integer ; rdfs:label "at level"@en .
 tab:hasDimensionValue a owl:DatatypeProperty ; rdfs:domain tab:PivotedDimension ; rdfs:range xsd:string ; rdfs:label "has dimension value"@en .
+
+# --- aggregation evidence (denormalisation slice ②) --------------------------
+tab:AggregationCell a owl:Class ; rdfs:subClassOf tab:EntryCell ; rdfs:label "Aggregation cell"@en ;
+    rdfs:comment "A derived (computed) entry cell — an aggregate of a group of base cells."@en .
+tab:AggregationRow a owl:Class ; rdfs:subClassOf tab:LeafRow ; rdfs:label "Aggregation row"@en .
+tab:AggregationColumn a owl:Class ; rdfs:subClassOf tab:LeafColumn ; rdfs:label "Aggregation column"@en .
+tab:aggregationFunction a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "aggregation function"@en ;
+    rdfs:comment "sum | mean | count | min | max | product."@en .
+tab:aggregates a owl:ObjectProperty ; rdfs:domain tab:AggregationCell ; rdfs:range tab:EntryCell ; rdfs:label "aggregates"@en ;
+    rdfs:comment "An operand cell this aggregation is computed from."@en .
+tab:overAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "over axis"@en ;
+    rdfs:comment "row | column — the axis the aggregation runs along (a grand total carries both)."@en .

@@ -483,6 +483,49 @@ def row_hierarchy_wide_pdf(path: str) -> dict:
             "groups": {"North": 2, "South": 2}}
 
 
+def totals_table_pdf(path: str) -> dict:
+    """Region x Quarter with a Total column (Q1+Q2) and a Total row (North+South)."""
+    cols = [72.0, 200.0, 300.0, 400.0]
+    rows = [("Region", "Q1", "Q2", "Total"), ("North", "100", "110", "210"),
+            ("South", "120", "130", "250"), ("Total", "220", "240", "460")]
+    c = canvas.Canvas(str(path), pagesize=letter); c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = PAGE_H - 120.0 - i * 18.0
+        for x, v in zip(cols, row):
+            c.drawString(x, y, v)
+    c.save()
+    return {"grand_total": 460}
+
+
+def subtotals_row_group_pdf(path: str) -> dict:
+    """Row-grouped (Region: North/South) with a per-group Total row = sum of members."""
+    cols = [60.0, 180.0, 320.0, 430.0]
+    rows = [("Region", "Dept", "H1", "H2"),
+            ("North", "Sales", "10", "5"), ("", "Ops", "20", "7"), ("", "Total", "30", "12"),
+            ("South", "Sales", "15", "8"), ("", "Ops", "25", "9"), ("", "Total", "40", "17")]
+    c = canvas.Canvas(str(path), pagesize=letter); c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = PAGE_H - 120.0 - i * 18.0
+        for x, v in zip(cols, row):
+            if v:
+                c.drawString(x, y, v)
+    c.save()
+    return {"groups": {"North": 30, "South": 40}}
+
+
+def no_aggregation_pdf(path: str) -> dict:
+    """A record table whose values have NO arithmetic relationship (guard fixture)."""
+    cols = [72.0, 200.0, 320.0]
+    rows = [("Item", "A", "B"), ("P", "3", "7"), ("Q", "9", "1"), ("R", "4", "8")]
+    c = canvas.Canvas(str(path), pagesize=letter); c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = PAGE_H - 120.0 - i * 18.0
+        for x, v in zip(cols, row):
+            c.drawString(x, y, v)
+    c.save()
+    return {}
+
+
 def region_pivot_pdf(path: str) -> dict:
     """A single spanning parent 'Region' over four WIDE numeric leaf columns
     (North/South/East/West) + a 'Year' stub. The short 'Region' label under-covers
