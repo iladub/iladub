@@ -11,7 +11,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import BNode, RDF, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -239,3 +239,65 @@ def annotate_aggregations(g, t, ev):
                 op = _find_entry(g, t, (m if ax == "row" else r), (c if ax == "row" else m))
                 if op is not None:
                     g.add((e, TAB.aggregates, op))
+
+
+def _col_label_at_level(g, c, level):
+    """The label of the header node at `level` that covers leaf column `c` (or None)."""
+    for h in g.subjects(TAB.coversColumn, c):
+        if int(g.value(h, TAB.headerLevel)) == level:
+            lc = g.value(h, TAB.hasLabel)
+            return str(g.value(lc, TAB.cellText)) if lc is not None else None
+    return None
+
+
+def _entry(g, t, row, col):
+    for e in g.subjects(TAB.atRow, row):
+        if (t, TAB.hasCell, e) in g and g.value(e, TAB.atColumn) == col:
+            return e
+    return None
+
+
+def _add_coordinate(g, bf, name, value):
+    if name is None or value is None:
+        return
+    co = BNode()
+    g.add((bf, TAB.atDimensionValue, co))
+    g.add((co, TAB.dimensionName, Literal(name)))
+    g.add((co, TAB.value, Literal(value)))
+
+
+def emit_base_facts(g, t):
+    """Invert the report to 3NF base facts: unpivot the pivoted column dimension(s) and
+    strip the aggregations. Returns the tab:BaseFact uris. Empty if there is no pivoted
+    column dimension to unwind."""
+    dims = recover_dimensions(g, t)
+    ev = detect_aggregations(g, t)
+    col_pivots = [d for d in dims if d.axis == "column" and d.name and len(d.values) > 1]
+    if not col_pivots:
+        return []
+    pivot_names = {d.name for d in col_pivots}
+    leaf_cols = list(g.objects(t, TAB.hasLeafColumn))
+    measure_cols = [c for c in leaf_cols
+                    if _col_label_at_level(g, c, 0) in pivot_names and c not in ev.agg_cols]
+    stub_cols = [c for c in leaf_cols if c not in measure_cols and c not in ev.agg_cols]
+    base_rows = [r for r in g.objects(t, TAB.hasLeafRow) if r not in ev.agg_rows]
+    facts = []
+    for row in base_rows:
+        for col in measure_cols:
+            e = _entry(g, t, row, col)
+            if e is None:
+                continue
+            v = _num(str(g.value(e, TAB.cellText)))
+            if v is None:
+                continue
+            bf = URIRef("%s-fact-%s-%s" % (t, str(row).rsplit('-', 1)[-1], str(col).rsplit('-', 1)[-1]))
+            g.add((bf, RDF.type, TAB.BaseFact))
+            g.add((bf, TAB.measureValue, Literal(round(v, 6), datatype=XSD.decimal)))
+            for d in col_pivots:                    # column coordinate: this column's value on each pivot dim
+                _add_coordinate(g, bf, d.name, _col_label_at_level(g, col, d.level))
+            for sc in stub_cols:                    # row coordinate: each stub's header name + this row's entry
+                se = _entry(g, t, row, sc)
+                if se is not None:
+                    _add_coordinate(g, bf, _col_label_at_level(g, sc, 0), str(g.value(se, TAB.cellText)))
+            facts.append(bf)
+    return facts
