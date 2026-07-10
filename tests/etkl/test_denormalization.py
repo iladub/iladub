@@ -95,3 +95,65 @@ def test_region_pivot_end_to_end(tmp_path):
     # the dimension of the level below; North/South/East/West are its values.
     region_dim = next(d for d in recover_dimensions(rep.graph, t) if d.name == "Region")
     assert set(region_dim.values) == {"North", "South", "East", "West"}
+
+
+def _matrix_graph(rows, cols, V):
+    g = Graph(); t = EX.tbl
+    ru = {r: EX["r_" + r] for r in rows}; cu = {c: EX["c_" + c] for c in cols}
+    for r in rows:
+        g.add((ru[r], RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, ru[r]))
+    for c in cols:
+        g.add((cu[c], RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, cu[c]))
+    for r in rows:
+        for c in cols:
+            e = EX["e_%s_%s" % (r, c)]
+            g.add((e, RDF.type, TAB.EntryCell)); g.add((t, TAB.hasCell, e))
+            g.add((e, TAB.atRow, ru[r])); g.add((e, TAB.atColumn, cu[c]))
+            g.add((e, TAB.cellText, Literal(str(V[r][c]))))
+    return g, t, ru, cu
+
+
+def test_verify_group_functions():
+    from iladub.etkl.denormalization import verify_group
+    assert verify_group([6.0], [[1.0, 2.0, 3.0]]) == "sum"
+    assert verify_group([2.0], [[1.0, 2.0, 3.0]]) == "mean"
+    assert verify_group([1.0], [[1.0, 2.0, 3.0]]) == "min"
+    assert verify_group([100.0], [[7.0, 3.0]]) is None      # no function matches
+
+
+def test_detect_grand_totals():
+    from iladub.etkl.denormalization import detect_aggregations
+    rows = ["North", "South", "Total"]; cols = ["Q1", "Q2", "Total"]
+    V = {"North": {"Q1": 100, "Q2": 110, "Total": 210},
+         "South": {"Q1": 120, "Q2": 130, "Total": 250},
+         "Total": {"Q1": 220, "Q2": 240, "Total": 460}}
+    g, t, ru, cu = _matrix_graph(rows, cols, V)
+    ev = detect_aggregations(g, t)
+    assert ru["Total"] in ev.agg_rows and ev.funcs[ru["Total"]] == "sum"
+    assert cu["Total"] in ev.agg_cols and ev.funcs[cu["Total"]] == "sum"
+    assert set(ev.base_rows) == {ru["North"], ru["South"]}
+    assert set(ev.base_cols) == {cu["Q1"], cu["Q2"]}
+
+
+def test_no_false_aggregation():
+    from iladub.etkl.denormalization import detect_aggregations
+    rows = ["A", "B", "C"]; cols = ["X", "Y", "Z"]
+    V = {"A": {"X": 3, "Y": 7, "Z": 2}, "B": {"X": 9, "Y": 1, "Z": 5},
+         "C": {"X": 4, "Y": 8, "Z": 6}}
+    g, t, ru, cu = _matrix_graph(rows, cols, V)
+    ev = detect_aggregations(g, t)
+    assert not ev.agg_rows and not ev.agg_cols
+
+
+def test_totals_fixture_end_to_end(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import totals_table_pdf
+    from iladub.etkl import compile_tables
+    from iladub.etkl.denormalization import detect_aggregations
+    from rdflib import RDF as _RDF
+    p = tmp_path / "t.pdf"; totals_table_pdf(str(p))
+    rep = compile_tables(str(p))
+    tbl = next(rep.graph.subjects(_RDF.type, TAB.RecordTable))
+    ev = detect_aggregations(rep.graph, tbl)
+    assert ev.agg_rows and ev.agg_cols

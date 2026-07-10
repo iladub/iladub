@@ -7,12 +7,22 @@ tree — it is read as-is. (Aggregation evidence and 3NF emission are later slic
 """
 from __future__ import annotations
 
+import math
+import re
 from dataclasses import dataclass
 
 from rdflib import RDF, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
+
+
+def _num(s):
+    try:
+        v = float(re.sub(r"[,%$]", "", s.strip()))
+        return v if math.isfinite(v) else None
+    except (ValueError, AttributeError):
+        return None
 
 
 def _label(g, node):
@@ -90,3 +100,103 @@ def annotate_dimensions(g, t, dims):
             g.add((du, TAB.hasDimensionValue, Literal(v)))
         out.append(du)
     return out
+
+
+_TOL = 1e-6
+
+
+def _close(a, b):
+    return abs(a - b) <= _TOL * max(1.0, abs(b))
+
+
+# verifier registry — slice ③/8b append ratio/sequence verifiers without touching the core.
+_EXACT_FUNCS = {
+    "sum": sum,
+    "mean": lambda xs: sum(xs) / len(xs),
+    "min": min,
+    "max": max,
+    "count": lambda xs: float(len(xs)),
+    "product": lambda xs: math.prod(xs),
+}
+
+
+def verify_group(target, group_per_col):
+    """Return the function name reproducing `target` (per column) from the per-column
+    operand lists `group_per_col`, or None. Every column with a non-empty operand list
+    must satisfy target == f(operands)."""
+    pairs = [(t, xs) for t, xs in zip(target, group_per_col) if xs]
+    if not pairs:
+        return None
+    for name, f in _EXACT_FUNCS.items():
+        if all(_close(f(xs), t) for t, xs in pairs):
+            return name
+    return None
+
+
+@dataclass(frozen=True)
+class AggregationEvidence:
+    agg_rows: tuple
+    agg_cols: tuple
+    base_rows: tuple
+    base_cols: tuple
+    funcs: dict          # axis_uri -> function name
+    operands: dict       # axis_uri -> tuple of member axis_uris
+
+
+def _value_matrix(g, t):
+    rows = _leaf_rows(g, t)
+    cols = _leaf_cols(g, t)
+    V = {}
+    for e in g.subjects(RDF.type, TAB.EntryCell):
+        if (t, TAB.hasCell, e) not in g:
+            continue
+        r = g.value(e, TAB.atRow)
+        c = g.value(e, TAB.atColumn)
+        v = _num(str(g.value(e, TAB.cellText)))
+        if r is not None and c is not None and v is not None:
+            V[(r, c)] = v
+    return rows, cols, V
+
+
+def detect_aggregations(g, t):
+    """Iterated strip: a leaf row/col is an aggregation iff a function reproduces it from
+    a group of >=2 OTHER base rows/cols across every column/row. Grand total = the row x
+    col intersection (both axes). Only exact-arithmetic, >=2-operand groups are flagged."""
+    rows, cols, V = _value_matrix(g, t)
+    base_rows = list(rows)
+    base_cols = list(cols)
+    funcs, operands, agg_rows, agg_cols = {}, {}, [], []
+    changed = True
+    while changed:
+        changed = False
+        for R in list(base_rows):
+            others = [r for r in base_rows if r != R]
+            if len(others) < 2:
+                continue
+            target_all = [V.get((R, c)) for c in cols]
+            grp_all = [[V[(o, c)] for o in others if (o, c) in V] for c in cols]
+            # restrict to columns where the target has a numeric value
+            # (text stub cells are simply absent from V — skip them, not the whole row)
+            target = [tv for tv in target_all if tv is not None]
+            grp = [xs for tv, xs in zip(target_all, grp_all) if tv is not None]
+            fn = verify_group(target, grp)
+            if fn:
+                agg_rows.append(R); funcs[R] = fn; operands[R] = tuple(others)
+                base_rows.remove(R); changed = True; break
+        if changed:
+            continue
+        for C in list(base_cols):
+            others = [c for c in base_cols if c != C]
+            if len(others) < 2:
+                continue
+            target_all = [V.get((r, C)) for r in rows]
+            grp_all = [[V[(r, o)] for o in others if (r, o) in V] for r in rows]
+            # restrict to rows where the target has a numeric value
+            target = [tv for tv in target_all if tv is not None]
+            grp = [xs for tv, xs in zip(target_all, grp_all) if tv is not None]
+            fn = verify_group(target, grp)
+            if fn:
+                agg_cols.append(C); funcs[C] = fn; operands[C] = tuple(others)
+                base_cols.remove(C); changed = True; break
+    return AggregationEvidence(tuple(agg_rows), tuple(agg_cols), tuple(base_rows),
+                               tuple(base_cols), funcs, operands)
