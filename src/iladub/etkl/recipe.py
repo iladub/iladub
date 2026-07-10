@@ -70,18 +70,23 @@ def _stub_cols(g, t):
     return stubs
 
 
-def row_label(g, t, r):
-    """A row's identity: the text of its entry in the first stub column, else the URI tail."""
-    stubs = _stub_cols(g, t)
-    for sc in stubs:
+def row_label(g, t, r, exclude_labels=()):
+    """A row's identity: the text of its entry in the first stub column whose leaf label is
+    NOT in `exclude_labels`, else the URI tail. Excluding aggregation-target labels (e.g.
+    "Total") keeps a level-0 Total column from being picked as the row key — which would
+    otherwise depend on column insertion order."""
+    for sc in _stub_cols(g, t):
+        if col_leaf_label(g, sc) in exclude_labels:
+            continue
         for e in g.subjects(TAB.atRow, r):
             if (t, TAB.hasCell, e) in g and g.value(e, TAB.atColumn) == sc:
                 return _text(g, e)
     return str(r).rsplit("/", 1)[-1].rsplit("#", 1)[-1]
 
 
-def grid_values(g, t):
-    """{(row_label, col_leaf_label): cell_text} for every entry cell of table t."""
+def grid_values(g, t, exclude_labels=()):
+    """{(row_label, col_leaf_label): cell_text} for every entry cell of table t. `exclude_labels`
+    is forwarded to row_label so aggregation columns are never used as the row key."""
     out = {}
     for e in g.subjects(RDF.type, TAB.EntryCell):
         if (t, TAB.hasCell, e) not in g:
@@ -92,5 +97,5 @@ def grid_values(g, t):
         col_lbl = col_leaf_label(g, c)
         if col_lbl is None:
             continue  # M2: bare/spanning-only column has no leaf label; skip to avoid None-key merges
-        out[(row_label(g, t, r), col_lbl)] = _text(g, e)
+        out[(row_label(g, t, r, exclude_labels), col_lbl)] = _text(g, e)
     return out
