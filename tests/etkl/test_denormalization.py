@@ -261,3 +261,38 @@ def test_emit_base_facts_strips_aggregation_column():
     regions = {str(g.value(co, TAB.value)) for f in facts for co in g.objects(f, TAB.atDimensionValue)
                if str(g.value(co, TAB.dimensionName)) == "Region"}
     assert regions == {"North", "South"}
+
+
+def test_detect_aggregations_ignores_numeric_stub_operand():
+    """A pivoted table with a NUMERIC Year stub (c0) must still detect the Total column
+    (c3 = North+South) as a sum aggregation: the year values must not be folded into the
+    column-total's operand sum (2020+10+20 != 30 would hide it). The stub column itself
+    must not be flagged as an aggregation. (Fails before FIX 0's operand exclusion.)"""
+    from iladub.etkl.denormalization import detect_aggregations
+    g = Graph(); t = EX.tbl
+    c0, c1, c2, c3 = EX.c0, EX.c1, EX.c2, EX.c3
+    for c in (c0, c1, c2, c3):
+        g.add((c, RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, c))
+
+    def hdr(u, lvl, lbl, covers):
+        g.add((u, RDF.type, TAB.HeaderNode)); g.add((t, TAB.hasHeaderNode, u))
+        g.add((u, TAB.headerLevel, Literal(lvl)))
+        lc = URIRef(str(u) + "l"); g.add((lc, RDF.type, TAB.LabelCell)); g.add((lc, TAB.cellText, Literal(lbl)))
+        g.add((u, TAB.hasLabel, lc))
+        for c in covers:
+            g.add((u, TAB.coversColumn, c))
+    hdr(EX.hReg, 0, "Region", [c1, c2]); hdr(EX.hN, 1, "North", [c1]); hdr(EX.hS, 1, "South", [c2])
+    hdr(EX.hYear, 0, "Year", [c0]); hdr(EX.hTot, 0, "Total", [c3])
+    rows = ["2020", "2021"]; ru = {r: EX["r" + r] for r in rows}
+    for r in rows:
+        g.add((ru[r], RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, ru[r]))
+    V = {"2020": {c0: "2020", c1: "10", c2: "20", c3: "30"},
+         "2021": {c0: "2021", c1: "11", c2: "21", c3: "32"}}
+    for r in rows:
+        for c in (c0, c1, c2, c3):
+            e = EX["e_%s_%s" % (r, str(c)[-2:])]
+            g.add((e, RDF.type, TAB.EntryCell)); g.add((t, TAB.hasCell, e))
+            g.add((e, TAB.atRow, ru[r])); g.add((e, TAB.atColumn, c)); g.add((e, TAB.cellText, Literal(V[r][c])))
+    ev = detect_aggregations(g, t)
+    assert c3 in ev.agg_cols and ev.funcs[c3] == "sum"
+    assert c0 not in ev.agg_cols

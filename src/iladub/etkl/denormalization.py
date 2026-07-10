@@ -158,6 +158,27 @@ def _value_matrix(g, t):
     return rows, cols, V
 
 
+def _operand_exclusions(g, t):
+    """Columns that must not be aggregation OPERANDS (they remain candidates).
+    In a PIVOTED table (some column sits under a spanning parent, i.e. max header
+    level >= 1), the single-leaf level-0 columns are stubs/totals, not measures, so a
+    numeric stub (e.g. a Year column) must not corrupt a column-total's operand sum.
+    In a FLAT table (all columns level-0) nothing is excluded — text stubs are already
+    absent from the numeric value matrix, so behaviour is unchanged (and header-less
+    matrix graphs, having no coversColumn headers, are also unchanged)."""
+    col_max = {}
+    has_deep = False
+    for c in g.objects(t, TAB.hasLeafColumn):
+        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
+        m = max(levels) if levels else None
+        col_max[c] = m
+        if m is not None and m >= 1:
+            has_deep = True
+    if not has_deep:
+        return set()
+    return {c for c, m in col_max.items() if m == 0}
+
+
 def detect_aggregations(g, t):
     """Iterated strip: a leaf row/col is an aggregation iff a function reproduces it from
     a group of >=2 OTHER base rows/cols across every column/row. Grand total = the row x
@@ -165,6 +186,7 @@ def detect_aggregations(g, t):
     rows, cols, V = _value_matrix(g, t)
     base_rows = list(rows)
     base_cols = list(cols)
+    excl = _operand_exclusions(g, t)
     funcs, operands, agg_rows, agg_cols = {}, {}, [], []
     changed = True
     while changed:
@@ -188,7 +210,7 @@ def detect_aggregations(g, t):
         if changed:
             continue
         for C in list(base_cols):
-            others = [c for c in base_cols if c != C]
+            others = [c for c in base_cols if c != C and c not in excl]
             if len(others) < 2:
                 continue
             target_all = [V.get((r, C)) for r in rows]

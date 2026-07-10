@@ -10,7 +10,7 @@ from rdflib import RDF, BNode, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
 from . import denormalization as dn
-from .oracle import round_trip
+from .oracle import OracleVerdict, round_trip
 from .recipe import (UnpivotOp, StripAggregationOp, Recipe,
                      col_leaf_label, row_label, grid_values)
 
@@ -44,12 +44,17 @@ def recover_recipe(g, t):
     ops = []
     stubs = _stub_col_names(g, t)
     stub = stubs[0] if stubs else None
+    # non-measure columns (numeric stubs / totals) are never aggregation operands — the
+    # same exclusion detect_aggregations applies, so the strip's member set matches the
+    # operands the total was actually detected from (else replay folds a numeric stub echo
+    # into the recomputed total, and the round-trip fails).
+    excl = dn._operand_exclusions(g, t)
     for d in dims:
         if d.axis == "column" and d.name and len(d.values) > 1:
             ops.append(UnpivotOp(dimension=d.name, stub=stub, axis="column"))
     # strip ops: aggregation columns, then rows
     for c in ev.agg_cols:
-        members = [col_leaf_label(g, m) for m in ev.base_cols]
+        members = [col_leaf_label(g, m) for m in ev.base_cols if m not in excl]
         ops.append(StripAggregationOp("column", ev.funcs[c],
                                       tuple(m for m in members if m), col_leaf_label(g, c)))
     for r in ev.agg_rows:
@@ -92,9 +97,14 @@ def recover_base(g, t, recipe):
 
 
 def certify(g, t):
-    """Recover recipe + base and run the round-trip oracle. Returns (recipe, verdict, base)."""
+    """Recover recipe + base and run the round-trip oracle. Returns (recipe, verdict, base).
+    A table with no pivoted base to invert (base == []) is NOT a reproduction failure: it is
+    simply out of A1's base-emitting scope, so it returns a clean ok verdict with empty residue
+    (nothing is emitted downstream, because emit_normalized_base also guards on empty base)."""
     recipe = recover_recipe(g, t)
     base = recover_base(g, t, recipe)
+    if not base:
+        return recipe, OracleVerdict(True, ()), base
     verdict = round_trip(grid_values(g, t), base, recipe)
     return recipe, verdict, base
 
