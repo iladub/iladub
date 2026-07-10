@@ -241,3 +241,27 @@ def test_tab_aggregation_terms():
 def test_aggregation_shapes():
     c, t = _v(AGG_CONF); assert c, t
     c, t = _v(AGG_NEG); assert not c
+
+
+BF_CONF = os.path.join(EX, "basefact-conformant.ttl")
+BF_NEG = os.path.join(EX, "basefact-negative.ttl")
+
+
+def test_tab_basefact_terms():
+    g = _g(TAB_TTL)
+    assert (TAB.BaseFact, RDF.type, OWL.Class) in g
+    for prop in ["measureValue", "atDimensionValue", "value"]:
+        assert (TAB[prop], RDF.type, None) in g, f"missing tab:{prop}"
+
+
+def test_qb_align_separate_and_core_standalone():
+    core = _g(TAB_TTL)
+    for _, _, o in core:
+        assert "linked-data/cube" not in str(o), "core tab.ttl references qb:"
+    align = _g(os.path.join(ONT, "tab-qb-align.ttl"))
+    assert any("linked-data/cube" in str(o) for o in align.objects()), "align module missing qb:"
+
+
+def test_basefact_shapes():
+    c, t = _v(BF_CONF); assert c, t
+    c, t = _v(BF_NEG); assert not c

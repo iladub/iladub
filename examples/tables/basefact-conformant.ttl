@@ -1,0 +1,13 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# A BaseFact with exactly one measureValue and at least one dimension coordinate.
+# Conforms to tab:BaseFactShape.
+
+ex:fact1 a tab:BaseFact ;
+    tab:measureValue "42.0"^^xsd:decimal ;
+    tab:atDimensionValue ex:coord1 .
+
+ex:coord1 tab:dimensionName "Region" ;
+    tab:value "North" .

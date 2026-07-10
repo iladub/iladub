@@ -238,3 +238,10 @@ tab:AggregationCellShape a sh:NodeShape ;
                   sh:message "An aggregation cell needs at least one operand." ] ;
     sh:property [ sh:path tab:overAxis ; sh:minCount 1 ;
                   sh:message "An aggregation cell needs at least one overAxis." ] .
+
+tab:BaseFactShape a sh:NodeShape ;
+    sh:targetClass tab:BaseFact ;
+    sh:property [ sh:path tab:measureValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A base fact has exactly one measureValue." ] ;
+    sh:property [ sh:path tab:atDimensionValue ; sh:minCount 1 ;
+                  sh:message "A base fact has at least one dimension coordinate." ] .

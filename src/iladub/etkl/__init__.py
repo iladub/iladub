@@ -21,7 +21,7 @@ from .matrix import (is_matrix_candidate, classify_matrix, matrix_tiles,
 from .segment import segment, find_table_gutter, find_repeated_header, has_own_stub, is_multi_table_ambiguous
 from .denormalization import (recover_dimensions, annotate_dimensions, PivotedDimension,
                               detect_aggregations, annotate_aggregations, verify_group,
-                              AggregationEvidence)
+                              AggregationEvidence, emit_base_facts, analyze, DenormalizationReport)
 
 __all__ = [
     "Word", "Line", "extract_words", "text_lines",
@@ -42,4 +42,5 @@ __all__ = [
     "segment", "find_table_gutter", "find_repeated_header", "has_own_stub", "is_multi_table_ambiguous",
     "recover_dimensions", "annotate_dimensions", "PivotedDimension",
     "detect_aggregations", "annotate_aggregations", "verify_group", "AggregationEvidence",
+    "emit_base_facts", "analyze", "DenormalizationReport",
 ]

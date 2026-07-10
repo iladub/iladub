@@ -188,3 +188,76 @@ def test_no_false_aggregation_single_value_col():
     g, t, ru, cu = _matrix_graph(rows, cols, V)
     ev = detect_aggregations(g, t)
     assert not ev.agg_rows and not ev.agg_cols
+
+
+def test_emit_base_facts_unpivots_region(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import region_pivot_pdf
+    from iladub.etkl import compile_tables
+    from iladub.etkl.denormalization import emit_base_facts
+    from rdflib import RDF as _RDF
+    p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
+    rep = compile_tables(str(p))
+    t = next(rep.graph.subjects(_RDF.type, TAB.HierarchicalTable))
+    facts = emit_base_facts(rep.graph, t)
+    assert len(facts) == 8                                   # 2 years x 4 regions (melted)
+    measures = sorted(float(rep.graph.value(f, TAB.measureValue)) for f in facts)
+    assert measures == [10, 11, 20, 21, 30, 31, 40, 41]
+    # each fact carries a Region coordinate and a Year coordinate
+    f0 = next(f for f in facts if float(rep.graph.value(f, TAB.measureValue)) == 10.0)
+    coords = {(str(rep.graph.value(co, TAB.dimensionName)), str(rep.graph.value(co, TAB.value)))
+              for co in rep.graph.objects(f0, TAB.atDimensionValue)}
+    assert ("Region", "North") in coords and ("Year", "2020") in coords
+
+
+def test_analyze_end_to_end(tmp_path):
+    import pytest
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import region_pivot_pdf
+    from iladub.etkl import compile_tables
+    from iladub.etkl.denormalization import analyze
+    p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
+    rep = compile_tables(str(p))
+    dr = analyze(rep)
+    assert any(d.name == "Region" for d in dr.dimensions)
+    assert len(dr.base_facts) == 8
+    assert (None, RDF.type, TAB.PivotedDimension) in rep.graph   # evidence annotated in place
+
+
+def test_emit_base_facts_strips_aggregation_column():
+    """A pivoted table with a Total aggregation column: Total is not a measure column,
+    so no base fact references it."""
+    from iladub.etkl.denormalization import emit_base_facts
+    # constructed: column dim 'Region' over N/S (cols c1,c2) named by a spanning parent;
+    # a 'Total' agg column (c3 = N+S); one stub col c0 'Year'; two rows.
+    g = Graph(); t = EX.tbl
+    c0, c1, c2, c3 = EX.c0, EX.c1, EX.c2, EX.c3
+    for c in (c0, c1, c2, c3):
+        g.add((c, RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, c))
+    # header tree: Region (level 0) spans c1,c2 ; N/S leaf labels (level 1); Year stub label on c0; Total on c3
+    def hdr(u, lvl, lbl, covers):
+        g.add((u, RDF.type, TAB.HeaderNode)); g.add((t, TAB.hasHeaderNode, u))
+        g.add((u, TAB.headerLevel, Literal(lvl)))
+        lc = URIRef(str(u) + "l"); g.add((lc, RDF.type, TAB.LabelCell)); g.add((lc, TAB.cellText, Literal(lbl)))
+        g.add((u, TAB.hasLabel, lc))
+        for c in covers:
+            g.add((u, TAB.coversColumn, c))
+    hdr(EX.hReg, 0, "Region", [c1, c2]); hdr(EX.hN, 1, "North", [c1]); hdr(EX.hS, 1, "South", [c2])
+    hdr(EX.hYear, 0, "Year", [c0]); hdr(EX.hTot, 0, "Total", [c3])
+    rows = ["2020", "2021"]; ru = {r: EX["r" + r] for r in rows}
+    for r in rows:
+        g.add((ru[r], RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, ru[r]))
+    V = {"2020": {c0: "2020", c1: "10", c2: "20", c3: "30"},
+         "2021": {c0: "2021", c1: "11", c2: "21", c3: "32"}}
+    for r in rows:
+        for c in (c0, c1, c2, c3):
+            e = EX["e_%s_%s" % (r, str(c)[-2:])]
+            g.add((e, RDF.type, TAB.EntryCell)); g.add((t, TAB.hasCell, e))
+            g.add((e, TAB.atRow, ru[r])); g.add((e, TAB.atColumn, c)); g.add((e, TAB.cellText, Literal(V[r][c])))
+    facts = emit_base_facts(g, t)
+    assert len(facts) == 4                                   # 2 years x 2 regions; Total NOT a measure
+    # no base fact has a Region coordinate of a value derived from the Total column
+    regions = {str(g.value(co, TAB.value)) for f in facts for co in g.objects(f, TAB.atDimensionValue)
+               if str(g.value(co, TAB.dimensionName)) == "Region"}
+    assert regions == {"North", "South"}
