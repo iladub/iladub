@@ -308,12 +308,18 @@ class DenormalizationReport:
     dimensions: tuple
     evidence: object
     base_facts: tuple
+    recipe: object            # reshape.Recipe
+    oracle_ok: bool
+    residue: tuple
+    normalized_base: object   # URIRef | None
 
 
 def analyze(report):
-    """Public entry point: recover dimensions + aggregations, annotate the graph in place,
-    and emit 3NF base facts. Returns the first table's DenormalizationReport (or a list
-    for a multi-table page)."""
+    """Public entry point: recover dimensions + aggregations, annotate the graph in place
+    (Loop 8a evidence), then certify the reshape recipe with the round-trip oracle and emit
+    the derived NormalizedBase projection. A recipe that does not round-trip escalates as
+    residue (oracle_ok=False, normalized_base=None) — nothing is asserted."""
+    from . import reshape
     g = report.graph
     out = []
     for t in (list(g.subjects(RDF.type, TAB.RecordTable))
@@ -322,6 +328,9 @@ def analyze(report):
         ev = detect_aggregations(g, t)
         annotate_dimensions(g, t, dims)
         annotate_aggregations(g, t, ev)
-        facts = emit_base_facts(g, t)
-        out.append(DenormalizationReport(tuple(dims), ev, tuple(facts)))
+        recipe, verdict, _base = reshape.certify(g, t)
+        nb = reshape.emit_normalized_base(g, t) if verdict.ok else None
+        facts = list(g.objects(nb, TAB.hasBaseFact)) if nb is not None else []
+        out.append(DenormalizationReport(tuple(dims), ev, tuple(facts), recipe,
+                                         verdict.ok, verdict.residue, nb))
     return out[0] if len(out) == 1 else out
