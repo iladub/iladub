@@ -174,3 +174,17 @@ def test_annotate_marks_aggregations():
     e = next(e for e in g.subjects(RDF.type, TAB.AggregationCell)
              if g.value(e, TAB.atRow) == ru["Total"] and g.value(e, TAB.atColumn) == cu["Total"])
     assert {str(o) for o in g.objects(e, TAB.overAxis)} == {"row", "column"}
+
+
+def test_no_false_aggregation_single_value_col():
+    """A 2-col table (1 text + 1 numeric) must never flag a coincidental count match:
+    the lone numeric value 2 == count([B,C]) would be a false positive without the
+    >=2-numeric-evidence guard."""
+    from iladub.etkl.denormalization import detect_aggregations
+    rows = ["A", "B", "C"]; cols = ["Label", "Score"]
+    V = {"A": {"Label": "x", "Score": 2},
+         "B": {"Label": "y", "Score": 100},
+         "C": {"Label": "z", "Score": 999}}
+    g, t, ru, cu = _matrix_graph(rows, cols, V)
+    ev = detect_aggregations(g, t)
+    assert not ev.agg_rows and not ev.agg_cols

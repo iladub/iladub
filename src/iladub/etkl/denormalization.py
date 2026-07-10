@@ -179,6 +179,8 @@ def detect_aggregations(g, t):
             # (text stub cells are simply absent from V — skip them, not the whole row)
             target = [tv for tv in target_all if tv is not None]
             grp = [xs for tv, xs in zip(target_all, grp_all) if tv is not None]
+            if len(target) < 2:          # need >=2 numeric evidence cells: a single
+                continue                 # cell can match count()=len(others) by chance
             fn = verify_group(target, grp)
             if fn:
                 agg_rows.append(R); funcs[R] = fn; operands[R] = tuple(others)
@@ -194,6 +196,8 @@ def detect_aggregations(g, t):
             # restrict to rows where the target has a numeric value
             target = [tv for tv in target_all if tv is not None]
             grp = [xs for tv, xs in zip(target_all, grp_all) if tv is not None]
+            if len(target) < 2:          # need >=2 numeric evidence cells (see row loop)
+                continue
             fn = verify_group(target, grp)
             if fn:
                 agg_cols.append(C); funcs[C] = fn; operands[C] = tuple(others)
