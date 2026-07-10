@@ -6,6 +6,8 @@ the NAME is not — dec:rationale records that split.
 """
 from __future__ import annotations
 
+import re
+
 from rdflib import RDF, RDFS, BNode, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
@@ -13,6 +15,13 @@ TAB = Namespace("https://w3id.org/iladub/tab#")
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
 MODEL_ID = "claude-opus-4-8"
+
+
+def _slug(s):
+    """IRI-safe slug — a proposed name may be a multi-word phrase (e.g. 'Fiscal Quarter'),
+    which would make an unencoded IRI invalid Turtle. The human-readable name is preserved
+    verbatim on the CandidateConcept's rdfs:label; this only sanitizes the promotion IRI."""
+    return re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-") or "dim"
 
 
 def _suggester(g):
@@ -32,7 +41,7 @@ def emit_promotion(g, t, normalized_base, dimension_name, values, proposal):
     g.add((cand, ILADUB.suggestedBy, agent))
     g.add((cand, ILADUB.confidence, Literal(round(proposal.confidence, 6), datatype=XSD.decimal)))
 
-    pd = URIRef("%s-promotion-%s" % (t, dimension_name))
+    pd = URIRef("%s-promotion-%s" % (t, _slug(dimension_name)))
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
     g.add((pd, ILADUB.reviews, cand))
     g.add((pd, DEC.decidedBy, agent))
