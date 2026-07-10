@@ -167,3 +167,7 @@ tab:NormalizedBase a owl:Class ; rdfs:label "Normalized base"@en ;
     rdfs:comment "The flat (3NF) facts a report was built from — a DERIVED projection produced by an oracle-certified recipe, never stored as ground truth."@en .
 tab:derivedByRecipe a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:range tab:ReshapeRecipe ; rdfs:label "derived by recipe"@en .
 tab:hasBaseFact a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:range tab:BaseFact ; rdfs:label "has base fact"@en .
+
+# --- A2 promotion link (rangeless: points at an iladub:PromotionDecision at runtime) -----
+tab:namePromotedBy a owl:ObjectProperty ; rdfs:label "name promoted by"@en ;
+    rdfs:comment "Links a reshape operation whose dimension name was GenAI-proposed to the iladub:PromotionDecision that admitted the name. Rangeless to keep tab.ttl standalone."@en .

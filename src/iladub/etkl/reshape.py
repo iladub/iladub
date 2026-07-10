@@ -242,7 +242,9 @@ def certify_with_proposals(g, t, proposer):
     if not verdict.ok or not base:
         return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible → escalate
     nb = emit_base_projection(g, t, recipe, base)
-    return ProposalOutcome(nb, (), True, ())           # promotions wired in Task 3
+    from .promote import emit_promotion
+    pd = emit_promotion(g, t, nb, proposal.name, list(dim.values), proposal)
+    return ProposalOutcome(nb, (pd,), True, ())
 
 
 def _first_stub_name(g, t, valset):
