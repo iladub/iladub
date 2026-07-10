@@ -199,12 +199,7 @@ def _named_pivot_recipe_and_base(g, t, dim, name):
     certify_with_proposals so the oracle can flag it."""
     valset = set(dim.values)
     measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn) if col_leaf_label(g, c) in valset]
-    stubs = []
-    for c in g.objects(t, TAB.hasLeafColumn):
-        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
-        if levels and max(levels) == 0 and col_leaf_label(g, c) not in valset:
-            stubs.append(col_leaf_label(g, c))
-    stub = stubs[0] if stubs else None
+    stub = _first_stub_name(g, t, valset)                 # first level-0 non-value column
     recipe = Recipe((UnpivotOp(dimension=name, stub=stub, axis="column"),))
     # Rectangularity check: every (row × measure_col) cell must be present
     all_rows = list(g.objects(t, TAB.hasLeafRow))
