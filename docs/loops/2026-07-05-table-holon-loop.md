@@ -160,6 +160,18 @@ it must certify.)*
       full suite green) and leaves multi-word / wrapped labels untouched. Enables a single-spanning-parent pivot
       to be read as a **named dimension** end-to-end (the structural prerequisite for Loop 8a's denormalization
       recovery). (Delivered by the header-span-hardening PR.)
+- [x] **8a — denormalization evidence + 3NF inversion** (2026-07-10, three slices): a report is *denormalized
+      normalized data*; ET(K)L recovers the transformation and inverts it. **① Pivoted dimensions** —
+      `recover_dimensions` reads the header hierarchy as a pivot schema (a spanning parent NAMES the dimension
+      whose values are its leaves; sibling labels are values). **② Aggregation evidence** — `detect_aggregations`
+      proves total/subtotal rows/cols by **exact arithmetic** (the strongest oracle: verified across the whole
+      row/column, coincidence ~0; a ≥2-numeric-evidence guard blocks `count()` false positives), recording
+      `tab:AggregationCell/Row/Column` + function + operands + axis (grand total on both axes). **③ 3NF inversion**
+      — `emit_base_facts` **unpivots** the pivoted dimension + **strips** the aggregations, emitting the base
+      cells as `qb:`-aligned `tab:BaseFact` observations. One `analyze()` call does it all. `qb:` alignment lives
+      in `tab-qb-align.ttl` (core standalone). Scope: unpivot needs a pivoted column dimension; flat-melt +
+      row-tree coordinates are follow-ups. Loop 8b (ratios `%` / sequences) extends the verifier framework.
+      (Delivered by the denorm-pivoted-dimensions, denorm-aggregation-evidence, denorm-3nf-inversion PRs.)
 - [ ] Field of possibles (each a future increment, escalated today):
       key-value · stacked · multi-word single-level headers ·
       **multi-band tables (header banded away from body — needs band-grouping)** ·

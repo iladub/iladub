@@ -334,3 +334,30 @@ def multi_table_report_pdf(path: str) -> dict:
     c.save()
     return {"tables": 2, "left_header": ["Analyte", "Value", "Unit"],
             "right_header": ["Item", "Qty", "Loc"]}
+
+
+# --- Denormalized report: a pivoted dimension + measures (invert to 3NF) ---
+
+def denormalized_report_pdf(path: str) -> dict:
+    """A denormalized report: 'Region' pivoted into the header over North/South/East/West
+    leaf columns, with a 'Year' stub down the side. ET(K)L recovers the pivoted Region
+    dimension and inverts to tidy (Year, Region, value) base facts."""
+    leaves = [150.0, 250.0, 350.0, 450.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 13)
+    c.drawString(60.0, PAGE_H - 60.0, "SALES BY REGION")
+    top = PAGE_H - 100.0
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString((leaves[0] + leaves[3]) / 2.0, top, "Region")
+    for x, n in zip(leaves, ["North", "South", "East", "West"]):
+        c.drawCentredString(x, top - 14.0, n)
+    c.drawString(60.0, top - 14.0, "Year")
+    c.setFont("Courier", 10)
+    for i, (yr, vals) in enumerate([("2023", ["10", "20", "30", "40"]),
+                                    ("2024", ["12", "22", "33", "44"])]):
+        y = top - 32.0 - i * 16.0
+        c.drawString(60.0, y, yr)
+        for x, v in zip(leaves, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"pivot": "Region", "stub": "Year", "n_base_facts": 8}
