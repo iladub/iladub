@@ -51,3 +51,28 @@ def test_grid_values():
 def test_recipe_is_ordered():
     r = Recipe((UnpivotOp("Region", "Year"), StripAggregationOp("column", "sum", ("North", "South"), "Total")))
     assert [type(o).__name__ for o in r.operations] == ["UnpivotOp", "StripAggregationOp"]
+
+
+def test_col_leaf_label_deepest_wins():
+    """I1 regression: when a column has both a level-0 single-covering spanning header
+    AND a level-1 leaf header, col_leaf_label must return the deepest one (level-1)."""
+    g = Graph()
+    c = EX.c_single
+
+    def hdr(u, lvl, lbl, covers):
+        g.add((u, RDF.type, TAB.HeaderNode))
+        g.add((u, TAB.headerLevel, Literal(lvl)))
+        lc = URIRef(str(u) + "l")
+        g.add((lc, TAB.cellText, Literal(lbl)))
+        g.add((u, TAB.hasLabel, lc))
+        for col in covers:
+            g.add((u, TAB.coversColumn, col))
+
+    # level-1 leaf header covering the single column → label "Leaf"  (inserted first)
+    hdr(EX.hLeaf, 1, "Leaf", [c])
+    # level-0 spanning header that happens to span exactly one column → label "Span" (inserted last)
+    # Without the max-level fix, last-wins returns "Span" — the wrong answer.
+    hdr(EX.hSpan, 0, "Span", [c])
+
+    # deepest (highest headerLevel) single-covering header must win
+    assert col_leaf_label(g, c) == "Leaf"

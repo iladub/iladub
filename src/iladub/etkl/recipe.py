@@ -38,12 +38,23 @@ def _text(g, cell):
 
 
 def col_leaf_label(g, c):
-    """Deepest header label covering exactly leaf column c (the single-covering node)."""
-    best = None
+    """Deepest header label covering exactly leaf column c (the single-covering node).
+
+    A column may legitimately have more than one single-covering header (e.g. a
+    level-0 spanning header that happens to span only one column *and* its level-1
+    leaf child).  Among all single-covering headers, we return the label of the one
+    with the highest ``tab:headerLevel`` value — the deepest node in the header tree.
+    Iteration order is therefore irrelevant; the result is deterministic.
+    """
+    best_label = None
+    best_level = -1
     for h in g.subjects(TAB.coversColumn, c):
         if len(list(g.objects(h, TAB.coversColumn))) == 1:
-            best = _text(g, g.value(h, TAB.hasLabel))
-    return best
+            level = int(g.value(h, TAB.headerLevel))
+            if level > best_level:
+                best_level = level
+                best_label = _text(g, g.value(h, TAB.hasLabel))
+    return best_label
 
 
 def _stub_cols(g, t):
@@ -78,5 +89,8 @@ def grid_values(g, t):
         r = g.value(e, TAB.atRow); c = g.value(e, TAB.atColumn)
         if r is None or c is None:
             continue
-        out[(row_label(g, t, r), col_leaf_label(g, c))] = _text(g, e)
+        col_lbl = col_leaf_label(g, c)
+        if col_lbl is None:
+            continue  # M2: bare/spanning-only column has no leaf label; skip to avoid None-key merges
+        out[(row_label(g, t, r), col_lbl)] = _text(g, e)
     return out
