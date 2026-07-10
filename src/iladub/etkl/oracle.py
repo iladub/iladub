@@ -54,6 +54,8 @@ def replay(base, recipe):
             grid[(key, op.stub)] = key
     # 2. strip-inverse: re-add each aggregate row/column from its members.
     #    numeric grid view keyed by (row_label, col_label).
+    stub_labels = {op.stub for op in unpivots if op.stub}
+
     def numeric():
         return {k: v for k, v in grid.items() if _isnum(v)}
     for op in strips:
@@ -65,8 +67,9 @@ def replay(base, recipe):
                 operands = [float(num[(r, m)]) for m in op.member_labels if (r, m) in num]
                 if operands:
                     grid[(r, op.target_label)] = _fmt(f(operands))
-        else:  # row aggregate
-            cols = sorted({c for (_r, c) in num})
+        else:  # row aggregate — exclude stub columns (their echo values are numeric but
+               # must not receive an aggregate; stub_labels collected from UnpivotOps above)
+            cols = sorted({c for (_r, c) in num if c not in stub_labels})
             for c in cols:
                 operands = [float(num[(m, c)]) for m in op.member_labels if (m, c) in num]
                 if operands:
