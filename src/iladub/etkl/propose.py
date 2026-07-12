@@ -16,6 +16,7 @@ class Proposal:
     name: str
     confidence: float
     rationale: str
+    suggester_iri: str = "urn:iladub:suggester/recorded-proposer"
 
 
 class Proposer(Protocol):
@@ -43,4 +44,9 @@ class BamlProposer:
     def propose_dimension_name(self, values, context):
         from baml_client import sync_client
         r = sync_client.b.ProposeDimensionName(values, context.get("stub"), context.get("title"))
-        return Proposal(name=r.name, confidence=r.confidence, rationale=r.rationale)
+        return Proposal(
+            name=r.name,
+            confidence=r.confidence,
+            rationale=r.rationale,
+            suggester_iri="urn:iladub:suggester/baml.ProposeDimensionName",
+        )

@@ -7,6 +7,7 @@ the NAME is not — dec:rationale records that split.
 from __future__ import annotations
 
 import re
+from decimal import Decimal
 
 from rdflib import RDF, RDFS, BNode, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
@@ -14,7 +15,7 @@ from rdflib.namespace import XSD
 TAB = Namespace("https://w3id.org/iladub/tab#")
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
-MODEL_ID = "claude-opus-4-8"
+GIST = Namespace("https://w3id.org/semanticarts/ns/ontology/gist/")
 
 
 def _slug(s):
@@ -24,8 +25,8 @@ def _slug(s):
     return re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-") or "dim"
 
 
-def _suggester(g):
-    agent = URIRef("urn:iladub:suggester/baml.ProposeDimensionName@%s" % MODEL_ID)
+def _suggester(g, proposal):
+    agent = URIRef(proposal.suggester_iri)
     g.add((agent, RDF.type, ILADUB.Suggester))
     return agent
 
@@ -33,13 +34,18 @@ def _suggester(g):
 def emit_promotion(g, t, normalized_base, dimension_name, values, proposal):
     """Write the CandidateConcept + PromotionDecision for a promoted name; link the recipe's
     UnpivotOp via tab:namePromotedBy. Returns the PromotionDecision uri."""
-    agent = _suggester(g)
+    agent = _suggester(g, proposal)
+    _confidence = Literal(Decimal(str(round(proposal.confidence, 6))))
+
     cand = BNode()
     g.add((cand, RDF.type, ILADUB.CandidateConcept))
     g.add((cand, RDFS.label, Literal(dimension_name)))
     g.add((cand, ILADUB.surfaceText, Literal(" | ".join(values))))
     g.add((cand, ILADUB.suggestedBy, agent))
-    g.add((cand, ILADUB.confidence, Literal(round(proposal.confidence, 6), datatype=XSD.decimal)))
+    g.add((cand, ILADUB.suggestedAnchor, GIST.Category))
+    g.add((cand, ILADUB.fromRegion, t))
+    g.add((cand, ILADUB.status, ILADUB.proposed))
+    g.add((cand, ILADUB.confidence, _confidence))
 
     pd = URIRef("%s-promotion-%s" % (t, _slug(dimension_name)))
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
@@ -47,7 +53,7 @@ def emit_promotion(g, t, normalized_base, dimension_name, values, proposal):
     g.add((pd, DEC.decidedBy, agent))
     g.add((pd, DEC.consideredEvidence, t))
     g.add((pd, DEC.consideredEvidence, cand))
-    g.add((pd, DEC.confidence, Literal(round(proposal.confidence, 6), datatype=XSD.decimal)))
+    g.add((pd, DEC.confidence, _confidence))
     g.add((pd, DEC.rationale, Literal(
         "Reshape round-trips exactly with dimension=%s; the name is a model proposition, "
         "not oracle-verified. Rationale: %s" % (dimension_name, proposal.rationale))))
