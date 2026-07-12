@@ -10,7 +10,6 @@ import re
 from decimal import Decimal
 
 from rdflib import RDF, RDFS, BNode, Literal, Namespace, URIRef
-from rdflib.namespace import XSD
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 ILADUB = Namespace("https://w3id.org/iladub#")

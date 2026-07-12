@@ -11,7 +11,6 @@ status, and float-backed confidence) and PASS after.
 """
 from pathlib import Path
 
-import pytest
 from pyshacl import validate
 from rdflib import Graph
 
