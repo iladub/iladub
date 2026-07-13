@@ -572,6 +572,29 @@ def partial_merge_report_pdf(path: str) -> dict:
             "leaves": ["Val", "Unit", "Flag", "Note"], "stub": "Key"}
 
 
+def unequal_width_merge_report_pdf(path: str) -> dict:
+    """A merged 'GROUP' centered over THREE UNEQUAL-WIDTH columns (col 1 narrow & close,
+    col 3 wide & far) — the geometry where a median-of-midpoints centering statistic
+    silently resolves GROUP to [2,3], dropping col 1. Correct: GROUP spans all three
+    ([1,2,3]) by endpoint-center, or the region escalates — never a column-dropping subset.
+    Mixed-type body so it routes the hierarchical path."""
+    xs = [120.0, 170.0, 330.0]                                   # unequal spacing -> unequal widths
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString((xs[0] + xs[2]) / 2.0, PAGE_H - 90.0, "GROUP")   # visual center of the 3-col span
+    for x, n in zip(xs, ["V", "U", "D"]):
+        c.drawCentredString(x, PAGE_H - 104.0, n)
+    c.drawString(55.0, PAGE_H - 104.0, "Key")
+    c.setFont("Courier", 10)
+    for i, (k, vals) in enumerate([("R1", ["1", "aa", "xx"]), ("R2", ["2", "bb", "yy"])]):
+        y = PAGE_H - 122.0 - i * 16.0
+        c.drawString(55.0, y, k)
+        for x, v in zip(xs, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"parent": "GROUP", "data_cols": [1, 2, 3]}
+
+
 def offcenter_merge_report_pdf(path: str) -> dict:
     """Ambiguous merge: two SHORT parent labels 'LEFT' (center x=200) and 'RIGHT'
     (center x=300) whose centering claims collide — the centering resolver gives them

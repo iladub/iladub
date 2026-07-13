@@ -67,6 +67,19 @@ def test_partial_merge_resolves_by_centering():
     assert tree.get("Note") == [4]
 
 
+def test_unequal_width_merge_no_silent_wrong():
+    """A GROUP centered over unequal-width columns must span the full [1,2,3] (or escalate) —
+    NEVER a proper subset that silently drops a flanking column."""
+    rep = _compile(fixtures.unequal_width_merge_report_pdf)
+    hts = list(rep.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    if not hts:
+        # escalated (also acceptable — honest) ; assert it did not assert a wrong span
+        return
+    tree = column_tree(rep.graph, hts[0])
+    grp = tree.get("GROUP")
+    assert grp is None or grp == [1, 2, 3], f"GROUP silently dropped a column: {grp}"
+
+
 def test_offcenter_merge_escalates():
     """An ambiguous two-parent merge must escalate MERGE_AMBIGUOUS — asserting nothing —
     rather than fabricate a tiling."""
