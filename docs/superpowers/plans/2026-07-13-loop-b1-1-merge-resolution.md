@@ -261,7 +261,7 @@ Expected: FAIL — `WIDE` is `[1, 2, 3, 4]` (greedy repair absorbed col 4).
 
 - [ ] **Step 3: Add the centering helpers to `headers.py`**
 
-Add `from statistics import median` to the imports at the top of `headers.py` (alongside `import math`), then insert above `repair_coverage`:
+Insert above `repair_coverage` (no new imports needed — `_span_center` uses only `b`):
 
 ```python
 def _median_pitch(b: Sequence[float]) -> float:
@@ -275,26 +275,34 @@ def _median_pitch(b: Sequence[float]) -> float:
 
 
 def _span_center(run: Sequence[int], b: Sequence[float]) -> float:
-    """The centering-oracle x-center of a contiguous column run: the MEDIAN of the
-    per-column midpoints ((b[c]+b[c+1])/2 for c in run). The median (not the span's
-    (b[lo]+b[hi+1])/2 endpoints) is the correct centering statistic: under uniform
-    columns the endpoint-midpoint makes a single centre column tie a 3-column span,
-    so a legitimately-centred short label would collapse to one column. The median
-    ties the single-column and full-span runs at distance 0, and the widest-run
-    tiebreak in _centered_run then recovers the full span."""
-    return median((b[c] + b[c + 1]) / 2.0 for c in run)
+    """The x-center of a contiguous column run = the ENDPOINT midpoint of its x-range,
+    (b[run[0]] + b[run[-1]+1]) / 2 — the true visual center of the span (spec §4).
+
+    (A median of per-column midpoints was tried and REJECTED: for unequal-width columns
+    the median collapses to the middle column's midpoint, which sits far from the visual
+    center, so the resolver picks a too-narrow run and silently drops a flanking column.
+    The endpoint midpoint is the geometric center for any column widths.)"""
+    return (b[run[0]] + b[run[-1] + 1]) / 2.0
 
 
 def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                   must_include: set[int]) -> tuple[int, ...]:
     """The contiguous column run [lo..hi] (lo >= 1) that (a) lies entirely within
     `avail`, (b) contains every column in `must_include` (the node's ink columns),
-    and (c) whose center (_span_center: median of per-column midpoints) is CLOSEST to
-    the label ink center. Ties break to the widest run, then the leftmost. Returns ()
-    if none qualifies (e.g. must_include is empty or not contiguous within avail)."""
+    and (c) is best-centered on the label ink center by ENDPOINT midpoint (`_span_center`).
+
+    Selection: among the qualifying runs, take those whose center is within a quarter of
+    the median column pitch of the closest run's center (a TIE-BAND: runs that close are
+    indistinguishable given gutter-recovery noise), and pick the WIDEST of them (then
+    closest, then leftmost). The tie-band + widest recovers the full span for a short
+    centered label (e.g. a single ink column tied with its 3-column span -> the span),
+    while the quarter-pitch bound stops one column short of over-absorbing an adjacent
+    standalone column (whose center is a half-pitch away). The band is gutter-relative
+    (a fraction of the measured pitch), NOT a constant tuned to any fixture.
+
+    Returns () if none qualifies (e.g. must_include is empty or not contiguous in avail)."""
     n = len(b) - 1
-    best_key = None
-    best_run: tuple[int, ...] = ()
+    cands: list[tuple[tuple[int, ...], float, int]] = []   # (run, |center-ink|, width)
     for lo in range(1, n):
         for hi in range(lo, n):
             run = tuple(range(lo, hi + 1))
@@ -303,11 +311,14 @@ def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                 continue
             if not must_include <= run_set:
                 continue
-            mid = _span_center(run, b)
-            key = (abs(mid - center_x), -(hi - lo), lo)  # closest, then widest, then leftmost
-            if best_key is None or key < best_key:
-                best_key = key
-                best_run = run
+            cands.append((run, abs(_span_center(run, b) - center_x), hi - lo))
+    if not cands:
+        return ()
+    best_d = min(d for _, d, _ in cands)
+    band = 0.25 * _median_pitch(b)
+    near = [c for c in cands if c[1] - best_d <= band]
+    near.sort(key=lambda z: (-z[2], z[1], z[0][0]))        # widest, then closest, then leftmost
+    best_run = near[0][0]
     return best_run
 ```
 
@@ -372,7 +383,59 @@ Replace with:
 - [ ] **Step 6: Run the positive test — verify it PASSES**
 
 Run: `.venv/bin/pytest tests/etkl/test_merge_resolution.py::test_partial_merge_resolves_by_centering -q`
-Expected: PASS — `WIDE == [1, 2, 3]`, `D == [4]`.
+Expected: PASS — `WIDE == [1, 2, 3]`, `Note == [4]`.
+
+- [ ] **Step 6b: Add the unequal-width no-silent-wrong regression fixture + test**
+
+This is the case a median-of-midpoints statistic silently mis-resolved (dropping a flanking
+column). It MUST resolve to the full span `[1,2,3]` (or escalate) — never a proper subset.
+
+In `tests/etkl/fixtures.py`:
+
+```python
+def unequal_width_merge_report_pdf(path: str) -> dict:
+    """A merged 'GROUP' centered over THREE UNEQUAL-WIDTH columns (col 1 narrow & close,
+    col 3 wide & far) — the geometry where a median-of-midpoints centering statistic
+    silently resolves GROUP to [2,3], dropping col 1. Correct: GROUP spans all three
+    ([1,2,3]) by endpoint-center, or the region escalates — never a column-dropping subset.
+    Mixed-type body so it routes the hierarchical path."""
+    xs = [120.0, 170.0, 330.0]                                   # unequal spacing -> unequal widths
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString((xs[0] + xs[2]) / 2.0, PAGE_H - 90.0, "GROUP")   # visual center of the 3-col span
+    for x, n in zip(xs, ["V", "U", "D"]):
+        c.drawCentredString(x, PAGE_H - 104.0, n)
+    c.drawString(55.0, PAGE_H - 104.0, "Key")
+    c.setFont("Courier", 10)
+    for i, (k, vals) in enumerate([("R1", ["1", "aa", "xx"]), ("R2", ["2", "bb", "yy"])]):
+        y = PAGE_H - 122.0 - i * 16.0
+        c.drawString(55.0, y, k)
+        for x, v in zip(xs, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"parent": "GROUP", "data_cols": [1, 2, 3]}
+```
+
+In `tests/etkl/test_merge_resolution.py`:
+
+```python
+def test_unequal_width_merge_no_silent_wrong():
+    """A GROUP centered over unequal-width columns must span the full [1,2,3] (or escalate) —
+    NEVER a proper subset that silently drops a flanking column."""
+    rep = _compile(fixtures.unequal_width_merge_report_pdf)
+    hts = list(rep.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    if not hts:
+        # escalated (also acceptable — honest) ; assert it did not assert a wrong span
+        return
+    tree = column_tree(rep.graph, hts[0])
+    grp = tree.get("GROUP")
+    assert grp is None or grp == [1, 2, 3], f"GROUP silently dropped a column: {grp}"
+```
+
+Run: `.venv/bin/pytest tests/etkl/test_merge_resolution.py::test_unequal_width_merge_no_silent_wrong -q`
+Expected: PASS — `GROUP == [1, 2, 3]` (with the endpoint statistic + tie-band-widest selection).
+With the rejected median statistic this test FAILS (`GROUP == [2, 3]`), which is exactly the
+silent-wrong it guards against.
 
 - [ ] **Step 7: Run the no-regression tests — verify still GREEN**
 
