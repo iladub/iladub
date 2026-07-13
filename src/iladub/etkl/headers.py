@@ -169,10 +169,18 @@ def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
     the median column pitch of the closest run's center (a TIE-BAND: runs that close are
     indistinguishable given gutter-recovery noise), and pick the WIDEST of them (then
     closest, then leftmost). The tie-band + widest recovers the full span for a short
-    centered label (e.g. a single ink column tied with its 3-column span -> the span),
-    while the quarter-pitch bound stops one column short of over-absorbing an adjacent
-    standalone column (whose center is a half-pitch away). The band is gutter-relative
-    (a fraction of the measured pitch), NOT a constant tuned to any fixture.
+    centered label (e.g. a single ink column tied with its 3-column span -> the span).
+    The band is gutter-relative (a fraction of the measured pitch), NOT a constant tuned
+    to any fixture.
+
+    KNOWN LIMITATION (deferred to B1.2 — see
+    docs/superpowers/specs/2026-07-13-b1-1-narrow-flank-overabsorption-deferred.md):
+    absorbing an adjacent column shifts the endpoint center by (that column's width)/2, so
+    a flanking standalone column NARROWER than half the median pitch still falls inside the
+    band and is over-absorbed. This is no worse than the prior greedy repair (which absorbed
+    an adjacent orphan of ANY width); a comparable-or-wider standalone column is correctly
+    left out. Tightening the per-column absorption test (or escalating the narrow-flank case)
+    is a B1.2 follow-up.
 
     Returns () if none qualifies (e.g. must_include is empty or not contiguous in avail)."""
     n = len(b) - 1
