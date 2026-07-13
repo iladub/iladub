@@ -93,6 +93,7 @@ class HeaderNode:
     covers: tuple[int, ...]
     text: str
     parent: int | None
+    center_x: float | None = None
 
 
 def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
@@ -198,7 +199,8 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
     for lvl, row in enumerate(header_rows):
         for cell in row:
             covers = _covers_for_cell(cell, b)
-            nodes.append(HeaderNode(lvl, covers, cell.text, None))
+            cx = (cell.x0 + cell.x1) / 2.0
+            nodes.append(HeaderNode(lvl, covers, cell.text, None, cx))
 
     nodes = repair_coverage(nodes, grid.ncols)   # fill short-parent-over-wide-span coverage gaps
 
@@ -213,5 +215,5 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
             if m.level == n.level - 1 and set(n.covers) <= set(m.covers):
                 parent_idx = j
                 break
-        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx))
+        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx, n.center_x))
     return tuple(linked)
