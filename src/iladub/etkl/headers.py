@@ -138,32 +138,86 @@ def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
     return tuple(range(lc, rc + 1))
 
 
-def repair_coverage(nodes: list[HeaderNode], ncols: int) -> list[HeaderNode]:
-    """Extend each coarse (non-leaf) header node to absorb contiguous adjacent leaf
-    columns that have no parent at that node's level, excluding column 0 (the stub).
+def _median_pitch(b: Sequence[float]) -> float:
+    """Median data-column width (pitch) in points — the gutter-relative unit for the
+    centering tolerance (NOT a fixture-tuned constant). Columns are b[i]..b[i+1];
+    column 0 is the stub and is excluded."""
+    widths = sorted(b[i + 1] - b[i] for i in range(1, len(b) - 1))
+    if not widths:
+        return (b[-1] - b[0]) if len(b) >= 2 else 1.0
+    return widths[len(widths) // 2]
 
-    A short parent label over a wide span is under-covered by text-extent recovery
-    (its ink does not reach the outer columns), orphaning a leaf column at that level.
-    This repair fills such coverage gaps by extending the spatially adjacent parent —
-    additive only (never removes or overlaps), so the result still tiles. It is a
-    no-op when the tree already tiles (no orphans), leaving existing pivots unchanged.
+
+def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
+                  must_include: set[int]) -> tuple[int, ...]:
+    """The contiguous column run [lo..hi] (lo >= 1) that (a) lies entirely within
+    `avail`, (b) contains every column in `must_include` (the node's ink columns),
+    and (c) whose x-midpoint (b[lo]+b[hi+1])/2 is CLOSEST to the label ink center.
+    Ties break to the widest run, then the leftmost. Returns () if none qualifies
+    (e.g. must_include is empty or not contiguous within avail)."""
+    n = len(b) - 1
+    best_key = None
+    best_run: tuple[int, ...] = ()
+    for lo in range(1, n):
+        for hi in range(lo, n):
+            run = tuple(range(lo, hi + 1))
+            run_set = set(run)
+            if not run_set <= avail:
+                continue
+            if not must_include <= run_set:
+                continue
+            mid = (b[lo] + b[hi + 1]) / 2.0
+            key = (abs(mid - center_x), -(hi - lo), lo)  # closest, then widest, then leftmost
+            if best_key is None or key < best_key:
+                best_key = key
+                best_run = run
+    return best_run
+
+
+def repair_coverage(nodes: list[HeaderNode], grid) -> list[HeaderNode]:
+    """Resolve each coarse (non-leaf) spanning node to the contiguous run of AVAILABLE
+    columns (its own + orphans, never another node's) whose x-midpoint is closest to
+    the node's label ink center. This applies the centering (Merge & Center) convention
+    consistently: a short label centered over its full span still recovers that span
+    (Region, Q-groups), while a label centered over only PART of the columns stops at
+    its centered run instead of greedily absorbing the neighbour (the B1.1 fix).
+
+    Falls back to the pre-B1.1 additive greedy extension for any node lacking geometry
+    (`center_x is None`) so non-geometric callers are unchanged.
+
+    Accepts `grid` as either a `LeafGrid` (full geometric path) or a plain `int`
+    (legacy ncols — backward-compatible for callers that have no boundary data;
+    the centering path is silently skipped since `center_x` is None in that case).
     """
     if not nodes:
         return nodes
+    if isinstance(grid, int):
+        b = None
+        ncols = grid
+    else:
+        b = grid.boundaries
+        ncols = grid.ncols
     out = list(nodes)
     max_level = max(n.level for n in out)
     for lvl in range(max_level):                      # non-leaf levels only
-        covered: set[int] = set()
-        for n in out:
-            if n.level == lvl:
-                covered.update(n.covers)
-        orphans = [c for c in range(ncols) if c not in covered and c != 0]
-        for c in orphans:
-            for i, n in enumerate(out):
-                if n.level == lvl and n.covers and (max(n.covers) == c - 1 or min(n.covers) == c + 1):
-                    out[i] = replace(n, covers=tuple(sorted(set(n.covers) | {c})))
-                    covered.add(c)
-                    break
+        for i, n in enumerate(out):
+            if n.level != lvl:
+                continue
+            level_cols: set[int] = set()
+            for m in out:
+                if m.level == lvl:
+                    level_cols |= set(m.covers)
+            orphans = {c for c in range(1, ncols) if c not in level_cols}
+            avail = set(n.covers) | orphans
+            if b is not None and n.center_x is not None and n.covers:
+                run = _centered_run(n.center_x, avail, b, must_include=set(n.covers))
+                if run and set(run) != set(n.covers):
+                    out[i] = replace(n, covers=tuple(run))
+            else:
+                # legacy additive greedy extension (no geometry available)
+                for c in sorted(orphans):
+                    if n.covers and (max(n.covers) == c - 1 or min(n.covers) == c + 1):
+                        out[i] = replace(out[i], covers=tuple(sorted(set(out[i].covers) | {c})))
     return out
 
 
@@ -202,7 +256,7 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
             cx = (cell.x0 + cell.x1) / 2.0
             nodes.append(HeaderNode(lvl, covers, cell.text, None, cx))
 
-    nodes = repair_coverage(nodes, grid.ncols)   # fill short-parent-over-wide-span coverage gaps
+    nodes = repair_coverage(nodes, grid)   # centering-bounded span resolution (B1.1)
 
     # Link each node to its nearest parent (level − 1 whose covers ⊇ this node's).
     # Break after the first match so the first qualifying parent wins deterministically

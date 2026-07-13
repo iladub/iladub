@@ -53,3 +53,13 @@ def test_no_regression_crosstab():
     tree = _tree_of(fixtures.crosstab_table_pdf)
     assert tree["Q1"] == [1, 2, 3]
     assert tree["Q2"] == [4, 5, 6]
+
+
+def test_partial_merge_resolves_by_centering():
+    """WIDE centered over cols 1-3 must resolve to [1,2,3]; col 4 is a parentless
+    leaf 'D' — NOT folded under WIDE (the pre-B1.1 silent-wrong [1,2,3,4])."""
+    tree = _tree_of(fixtures.partial_merge_report_pdf)
+    assert tree["WIDE"] == [1, 2, 3], f"WIDE must stop at its centered span, got {tree['WIDE']}"
+    # col 4 is covered only by its own leaf header 'D' (a parentless leaf), never by WIDE
+    assert 4 not in tree["WIDE"]
+    assert tree.get("D") == [4]
