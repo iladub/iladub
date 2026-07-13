@@ -442,21 +442,26 @@ In `tests/etkl/fixtures.py`, append:
 
 ```python
 def offcenter_merge_report_pdf(path: str) -> dict:
-    """Ambiguous merge: TWO parent labels 'LEFT' and 'RIGHT' drawn so their ink centers
-    both fall between the same pair of columns, so centering resolution cannot give each
-    a distinct center-consistent span without overlap. B1.1 must ESCALATE MERGE_AMBIGUOUS
-    rather than assert an arbitrary tiling. (Both labels centered near x=300, the shared
-    midpoint of a 4-col band.)"""
+    """Ambiguous merge: two SHORT parent labels 'LEFT' (center x=200) and 'RIGHT'
+    (center x=300) whose centering claims collide — the centering resolver gives them
+    OVERLAPPING spans (LEFT->[1,2,3], RIGHT->[2,3,4]), so no clean tiling exists.
+    B1.1 must ESCALATE MERGE_AMBIGUOUS rather than assert an overlapping/arbitrary tiling.
+
+    MIXED-TYPE body (Val numeric; Unit/Flag/Note text) so it routes the HIERARCHICAL
+    path (where merge_tiling_ok gates). Controller-verified: this geometry yields
+    merge_tiling_ok()==False via the per-level overlap check. (An all-numeric body would
+    route matrix.py Voronoi and never reach the oracle.)"""
     leaves = [150.0, 250.0, 350.0, 450.0]
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setFont("Courier-Bold", 10)
-    c.drawCentredString(280.0, PAGE_H - 90.0, "LEFT")   # both centers land in the same gutter zone
-    c.drawCentredString(320.0, PAGE_H - 90.0, "RIGHT")
-    for x, n in zip(leaves, ["A", "B", "C", "D"]):
+    c.drawCentredString(200.0, PAGE_H - 90.0, "LEFT")    # center 200 (midpoint of cols 1-2)
+    c.drawCentredString(300.0, PAGE_H - 90.0, "RIGHT")   # center 300 (midpoint of cols 1-4) -> claims collide
+    for x, n in zip(leaves, ["Val", "Unit", "Flag", "Note"]):
         c.drawCentredString(x, PAGE_H - 104.0, n)
     c.drawString(60.0, PAGE_H - 104.0, "Key")
     c.setFont("Courier", 10)
-    for i, (k, vals) in enumerate([("R1", ["1", "2", "3", "4"]), ("R2", ["5", "6", "7", "8"])]):
+    for i, (k, vals) in enumerate([("R1", ["10", "mg", "LOW", "ok"]),
+                                   ("R2", ["50", "kg", "HIGH", "no"])]):  # mixed -> hierarchical path
         y = PAGE_H - 122.0 - i * 16.0
         c.drawString(60.0, y, k)
         for x, v in zip(leaves, vals):
