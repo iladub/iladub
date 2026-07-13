@@ -233,6 +233,32 @@ def repair_coverage(nodes: list[HeaderNode], grid) -> list[HeaderNode]:
     return out
 
 
+def merge_tiling_ok(tree: Sequence[HeaderNode], grid: LeafGrid) -> bool:
+    """Centering oracle for the resolved header tree. A spanning (multi-column, non-leaf)
+    node is center-consistent iff its resolved span's x-midpoint is within half a column
+    pitch of its label ink center. Also rejects any coarse-level column claimed by two
+    nodes (overlap). A node without geometry (center_x is None) is not checked here.
+    Returns False → the caller escalates MERGE_AMBIGUOUS rather than assert a guess."""
+    b = grid.boundaries
+    tol = 0.5 * _median_pitch(b)
+    has_child = {n.parent for n in tree if n.parent is not None}
+    # overlap check per level
+    by_level: dict[int, list[int]] = {}
+    for n in tree:
+        for c in n.covers:
+            by_level.setdefault(n.level, []).append(c)
+    for cols in by_level.values():
+        if len(cols) != len(set(cols)):
+            return False                       # two nodes claim the same column at one level
+    # centering check for spanning (has-children) nodes with geometry
+    for i, n in enumerate(tree):
+        if i in has_child and len(n.covers) > 1 and n.center_x is not None:
+            mid = _span_center(tuple(sorted(n.covers)), b)   # same statistic the resolver uses
+            if abs(mid - n.center_x) > tol:
+                return False
+    return True
+
+
 def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[HeaderNode, ...] | None:
     """Header-tree from the header lines (0..body_line-1).
 

@@ -182,7 +182,15 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 from .hierarchical import classify_hierarchical
                 from .holon import assert_hier_region
                 hreg = classify_hierarchical(band)
-                if hreg is not None:
+                from .headers import merge_tiling_ok
+                if hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view, "MERGE_AMBIGUOUS",
+                                    TAB.HierarchicalTable, 0.4)
+                    escalated_total += sum(len(ln.words) for ln in band.lines)
+                    reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
+                                                str(TAB.HierarchicalTable), ascii_view))
+                elif hreg is not None:
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
                     n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
                     tokens = sum(len(ln.words) for ln in band.lines)

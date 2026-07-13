@@ -5,7 +5,9 @@ import tempfile
 from rdflib import RDF
 
 from iladub.etkl import compile_tables
-from iladub.etkl.holon import TAB, ILADUB
+from iladub.etkl.grid import LeafGrid
+from iladub.etkl.headers import HeaderNode, merge_tiling_ok
+from iladub.etkl.holon import TAB, ILADUB, DEC
 from tests.etkl import fixtures
 
 
@@ -63,3 +65,31 @@ def test_partial_merge_resolves_by_centering():
     # col 4 is covered only by its own leaf header 'Note' (a parentless leaf), never by WIDE
     assert 4 not in tree["WIDE"]
     assert tree.get("Note") == [4]
+
+
+def test_offcenter_merge_escalates():
+    """An ambiguous two-parent merge must escalate MERGE_AMBIGUOUS — asserting nothing —
+    rather than fabricate a tiling."""
+    rep = _compile(fixtures.offcenter_merge_report_pdf)
+    reasons = {str(o) for s in rep.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+               for o in rep.graph.objects(s, DEC.rationale)}
+    assert any("MERGE_AMBIGUOUS" in r for r in reasons), f"expected MERGE_AMBIGUOUS, got {reasons}"
+    # nothing asserted as a hierarchical table for this ambiguous region
+    # (a genuinely ambiguous merge is escalated, not compiled)
+
+
+def test_merge_tiling_ok_accepts_centered_full_span():
+    b = (55.0, 100.0, 200.0, 300.0, 400.0, 500.0)      # stub + 5 data cols (0..5)
+    grid = LeafGrid(b, 5, 100.0, 1.0)
+    parent = HeaderNode(0, (1, 2, 3, 4), "P", None, center_x=(b[1] + b[5]) / 2.0)  # centered on full span
+    leaf = HeaderNode(1, (1,), "a", 0, center_x=(b[1] + b[2]) / 2.0)
+    assert merge_tiling_ok((parent, leaf), grid) is True
+
+
+def test_merge_tiling_ok_rejects_offcenter_overextension():
+    b = (55.0, 100.0, 200.0, 300.0, 400.0, 500.0)
+    grid = LeafGrid(b, 5, 100.0, 1.0)
+    # parent's ink center is over cols 1-2 (x=200) but its span claims 1-4 (mid x=300): off-center
+    parent = HeaderNode(0, (1, 2, 3, 4), "P", None, center_x=200.0)
+    leaf = HeaderNode(1, (1,), "a", 0, center_x=150.0)
+    assert merge_tiling_ok((parent, leaf), grid) is False
