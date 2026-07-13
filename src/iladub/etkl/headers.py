@@ -24,6 +24,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass, replace
+from statistics import median
 from typing import Sequence
 
 from .bands import Band
@@ -148,13 +149,24 @@ def _median_pitch(b: Sequence[float]) -> float:
     return widths[len(widths) // 2]
 
 
+def _span_center(run: Sequence[int], b: Sequence[float]) -> float:
+    """The centering-oracle x-center of a contiguous column run: the MEDIAN of the
+    per-column midpoints ((b[c]+b[c+1])/2 for c in run). The median (not the span's
+    (b[lo]+b[hi+1])/2 endpoints) is the correct centering statistic: under uniform
+    columns the endpoint-midpoint makes a single centre column tie a 3-column span,
+    so a legitimately-centred short label would collapse to one column. The median
+    ties the single-column and full-span runs at distance 0, and the widest-run
+    tiebreak in _centered_run then recovers the full span."""
+    return median((b[c] + b[c + 1]) / 2.0 for c in run)
+
+
 def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                   must_include: set[int]) -> tuple[int, ...]:
     """The contiguous column run [lo..hi] (lo >= 1) that (a) lies entirely within
     `avail`, (b) contains every column in `must_include` (the node's ink columns),
-    and (c) whose x-midpoint (b[lo]+b[hi+1])/2 is CLOSEST to the label ink center.
-    Ties break to the widest run, then the leftmost. Returns () if none qualifies
-    (e.g. must_include is empty or not contiguous within avail)."""
+    and (c) whose center (_span_center: median of per-column midpoints) is CLOSEST to
+    the label ink center. Ties break to the widest run, then the leftmost. Returns ()
+    if none qualifies (e.g. must_include is empty or not contiguous within avail)."""
     n = len(b) - 1
     best_key = None
     best_run: tuple[int, ...] = ()
@@ -166,7 +178,7 @@ def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                 continue
             if not must_include <= run_set:
                 continue
-            mid = (b[lo] + b[hi + 1]) / 2.0
+            mid = _span_center(run, b)
             key = (abs(mid - center_x), -(hi - lo), lo)  # closest, then widest, then leftmost
             if best_key is None or key < best_key:
                 best_key = key

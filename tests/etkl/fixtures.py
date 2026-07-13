@@ -549,8 +549,8 @@ def region_pivot_pdf(path: str) -> dict:
 
 
 def partial_merge_report_pdf(path: str) -> dict:
-    """A partial merge: a 'WIDE' parent CENTERED over three leaf columns (A,B,C)
-    beside a standalone fourth column 'D' that has NO parent group. WIDE's ink
+    """A partial merge: a 'WIDE' parent CENTERED over three leaf columns (Val,Unit,Flag)
+    beside a standalone fourth column 'Note' that has NO parent group. WIDE's ink
     center (x=250) is the midpoint of cols 1-3, NOT of cols 1-4 (x=300). The
     centering convention therefore reads WIDE=[1,2,3] with col 4 a parentless leaf;
     the pre-B1.1 greedy repair wrongly folds col 4 under WIDE ([1,2,3,4])."""
@@ -558,15 +558,15 @@ def partial_merge_report_pdf(path: str) -> dict:
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setFont("Courier-Bold", 10)
     c.drawCentredString((leaves[0] + leaves[2]) / 2.0, PAGE_H - 90.0, "WIDE")  # center=250 over cols 1-3
-    for x, n in zip(leaves, ["A", "B", "C", "D"]):
+    for x, n in zip(leaves, ["Val", "Unit", "Flag", "Note"]):
         c.drawCentredString(x, PAGE_H - 104.0, n)
     c.drawString(60.0, PAGE_H - 104.0, "Key")
     c.setFont("Courier", 10)
-    for i, (k, vals) in enumerate([("R1", ["1", "2", "3", "4"]), ("R2", ["5", "6", "7", "8"])]):
+    for i, (k, vals) in enumerate([("R1", ["10", "mg", "LOW", "ok"]), ("R2", ["50", "kg", "HIGH", "no"])]):
         y = PAGE_H - 122.0 - i * 16.0
         c.drawString(60.0, y, k)
         for x, v in zip(leaves, vals):
             c.drawCentredString(x, y, v)
     c.save()
     return {"parent": "WIDE", "parent_cols": [1, 2, 3], "standalone_col": 4,
-            "leaves": ["A", "B", "C", "D"], "stub": "Key"}
+            "leaves": ["Val", "Unit", "Flag", "Note"], "stub": "Key"}
