@@ -74,8 +74,8 @@ def test_offcenter_merge_escalates():
     reasons = {str(o) for s in rep.graph.subjects(RDF.type, ILADUB.CandidateConcept)
                for o in rep.graph.objects(s, DEC.rationale)}
     assert any("MERGE_AMBIGUOUS" in r for r in reasons), f"expected MERGE_AMBIGUOUS, got {reasons}"
-    # nothing asserted as a hierarchical table for this ambiguous region
-    # (a genuinely ambiguous merge is escalated, not compiled)
+    assert not any(True for _ in rep.graph.subjects(RDF.type, TAB.HierarchicalTable)), \
+        "an ambiguous merge must escalate, not assert a HierarchicalTable"
 
 
 def test_merge_tiling_ok_accepts_centered_full_span():
