@@ -46,27 +46,34 @@ In `tests/etkl/fixtures.py`, append (match the file's existing reportlab style �
 
 ```python
 def partial_merge_report_pdf(path: str) -> dict:
-    """A partial merge: a 'WIDE' parent CENTERED over three leaf columns (A,B,C)
-    beside a standalone fourth column 'D' that has NO parent group. WIDE's ink
+    """A partial merge: a 'WIDE' parent CENTERED over three leaf columns (Val,Unit,Flag)
+    beside a standalone fourth column 'Note' that has NO parent group. WIDE's ink
     center (x=250) is the midpoint of cols 1-3, NOT of cols 1-4 (x=300). The
     centering convention therefore reads WIDE=[1,2,3] with col 4 a parentless leaf;
-    the pre-B1.1 greedy repair wrongly folds col 4 under WIDE ([1,2,3,4])."""
+    the pre-B1.1 greedy repair wrongly folds col 4 under WIDE ([1,2,3,4]).
+
+    CRITICAL — the data columns are MIXED-TYPE (Val numeric; Unit/Flag/Note text) so
+    stub_data_split() returns None and the region routes through the HIERARCHICAL path
+    (repair_coverage), the seam B1.1 fixes. An all-numeric body would instead trip
+    is_matrix_candidate=True and route through matrix.py's Voronoi (the deferred
+    nameless-pivot loop's territory — out of scope here). Verified: mixed body -> htable."""
     leaves = [150.0, 250.0, 350.0, 450.0]
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setFont("Courier-Bold", 10)
     c.drawCentredString((leaves[0] + leaves[2]) / 2.0, PAGE_H - 90.0, "WIDE")  # center=250 over cols 1-3
-    for x, n in zip(leaves, ["A", "B", "C", "D"]):
+    for x, n in zip(leaves, ["Val", "Unit", "Flag", "Note"]):
         c.drawCentredString(x, PAGE_H - 104.0, n)
     c.drawString(60.0, PAGE_H - 104.0, "Key")
     c.setFont("Courier", 10)
-    for i, (k, vals) in enumerate([("R1", ["1", "2", "3", "4"]), ("R2", ["5", "6", "7", "8"])]):
+    for i, (k, vals) in enumerate([("R1", ["10", "mg", "LOW", "ok"]),
+                                   ("R2", ["50", "kg", "HIGH", "no"])]):  # mixed types -> hierarchical path
         y = PAGE_H - 122.0 - i * 16.0
         c.drawString(60.0, y, k)
         for x, v in zip(leaves, vals):
             c.drawCentredString(x, y, v)
     c.save()
     return {"parent": "WIDE", "parent_cols": [1, 2, 3], "standalone_col": 4,
-            "leaves": ["A", "B", "C", "D"], "stub": "Key"}
+            "leaves": ["Val", "Unit", "Flag", "Note"], "stub": "Key"}
 ```
 
 - [ ] **Step 2: Write the no-regression snapshot test (green now)**
@@ -239,12 +246,12 @@ Append to `tests/etkl/test_merge_resolution.py`:
 ```python
 def test_partial_merge_resolves_by_centering():
     """WIDE centered over cols 1-3 must resolve to [1,2,3]; col 4 is a parentless
-    leaf 'D' — NOT folded under WIDE (the pre-B1.1 silent-wrong [1,2,3,4])."""
+    leaf 'Note' — NOT folded under WIDE (the pre-B1.1 silent-wrong [1,2,3,4])."""
     tree = _tree_of(fixtures.partial_merge_report_pdf)
     assert tree["WIDE"] == [1, 2, 3], f"WIDE must stop at its centered span, got {tree['WIDE']}"
-    # col 4 is covered only by its own leaf header 'D' (a parentless leaf), never by WIDE
+    # col 4 is covered only by its own leaf header 'Note' (a parentless leaf), never by WIDE
     assert 4 not in tree["WIDE"]
-    assert tree.get("D") == [4]
+    assert tree.get("Note") == [4]
 ```
 
 - [ ] **Step 2: Run it — verify it FAILS (proves the gap)**
@@ -254,7 +261,7 @@ Expected: FAIL — `WIDE` is `[1, 2, 3, 4]` (greedy repair absorbed col 4).
 
 - [ ] **Step 3: Add the centering helpers to `headers.py`**
 
-Insert above `repair_coverage`:
+Add `from statistics import median` to the imports at the top of `headers.py` (alongside `import math`), then insert above `repair_coverage`:
 
 ```python
 def _median_pitch(b: Sequence[float]) -> float:
@@ -267,13 +274,24 @@ def _median_pitch(b: Sequence[float]) -> float:
     return widths[len(widths) // 2]
 
 
+def _span_center(run: Sequence[int], b: Sequence[float]) -> float:
+    """The centering-oracle x-center of a contiguous column run: the MEDIAN of the
+    per-column midpoints ((b[c]+b[c+1])/2 for c in run). The median (not the span's
+    (b[lo]+b[hi+1])/2 endpoints) is the correct centering statistic: under uniform
+    columns the endpoint-midpoint makes a single centre column tie a 3-column span,
+    so a legitimately-centred short label would collapse to one column. The median
+    ties the single-column and full-span runs at distance 0, and the widest-run
+    tiebreak in _centered_run then recovers the full span."""
+    return median((b[c] + b[c + 1]) / 2.0 for c in run)
+
+
 def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                   must_include: set[int]) -> tuple[int, ...]:
     """The contiguous column run [lo..hi] (lo >= 1) that (a) lies entirely within
     `avail`, (b) contains every column in `must_include` (the node's ink columns),
-    and (c) whose x-midpoint (b[lo]+b[hi+1])/2 is CLOSEST to the label ink center.
-    Ties break to the widest run, then the leftmost. Returns () if none qualifies
-    (e.g. must_include is empty or not contiguous within avail)."""
+    and (c) whose center (_span_center: median of per-column midpoints) is CLOSEST to
+    the label ink center. Ties break to the widest run, then the leftmost. Returns ()
+    if none qualifies (e.g. must_include is empty or not contiguous within avail)."""
     n = len(b) - 1
     best_key = None
     best_run: tuple[int, ...] = ()
@@ -285,7 +303,7 @@ def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
                 continue
             if not must_include <= run_set:
                 continue
-            mid = (b[lo] + b[hi + 1]) / 2.0
+            mid = _span_center(run, b)
             key = (abs(mid - center_x), -(hi - lo), lo)  # closest, then widest, then leftmost
             if best_key is None or key < best_key:
                 best_key = key
@@ -412,8 +430,7 @@ def merge_tiling_ok(tree: Sequence[HeaderNode], grid: LeafGrid) -> bool:
     # centering check for spanning (has-children) nodes with geometry
     for i, n in enumerate(tree):
         if i in has_child and len(n.covers) > 1 and n.center_x is not None:
-            lo, hi = min(n.covers), max(n.covers)
-            mid = (b[lo] + b[hi + 1]) / 2.0
+            mid = _span_center(tuple(sorted(n.covers)), b)   # same statistic the resolver uses
             if abs(mid - n.center_x) > tol:
                 return False
     return True
