@@ -1,0 +1,32 @@
+# unpivot-inverse-valueset.rq  (grid -> base) for a NAMELESS column pivot (A2.1).
+# Measure columns are the level-1 leaves whose label is a declared tab:opValue on the op;
+# the coordinate dimension name is the op's tab:opDimension (the GenAI-proposed name, which
+# enters ONLY the recipe + base coordinates, never the source graph).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?bf a tab:BaseFact ;
+      tab:measureValue ?mv ;
+      tab:atDimensionValue ?coDim , ?coStub .
+  ?coDim  tab:dimensionName ?dimName ; tab:value ?colLabel .
+  ?coStub tab:dimensionName ?stubName ; tab:value ?stubVal .
+}
+WHERE {
+  ?op a tab:UnpivotOp ; tab:opDimension ?dimName ; tab:opStub ?stubName ; tab:opValue ?colLabel .
+
+  # measure column: a leaf whose deepest header label equals a declared pivot value ?colLabel
+  ?h1 tab:hasLabel ?h1l ; tab:coversColumn ?c .
+  ?h1l tab:cellText ?colLabel .
+
+  ?e a tab:EntryCell ; tab:atRow ?r ; tab:atColumn ?c ; tab:cellText ?v .
+  BIND(xsd:decimal(?v) AS ?mv)
+
+  # stub column: the level-0 column labelled ?stubName, and this row's stub value
+  ?hs tab:headerLevel 0 ; tab:hasLabel ?hsl ; tab:coversColumn ?sc .
+  ?hsl tab:cellText ?stubName .
+  ?se tab:atRow ?r ; tab:atColumn ?sc ; tab:cellText ?stubVal .
+
+  BIND(IRI(CONCAT(STR(?e), "-bf")) AS ?bf)
+  BIND(IRI(CONCAT(STR(?e), "-bf-dim")) AS ?coDim)
+  BIND(IRI(CONCAT(STR(?e), "-bf-stub")) AS ?coStub)
+}

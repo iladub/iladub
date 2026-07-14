@@ -188,3 +188,49 @@ def test_strip_forward_sum_row_axis_excludes_stub_column():
     assert float(d[("Total", "North")]) == 21.0             # 10 + 11
     assert float(d[("Total", "South")]) == 41.0             # 20 + 21
     assert ("Total", "Year") not in d                       # stub-echo column excluded
+
+
+def _nameless_quarter_pivot():
+    """Product stub + nameless Q1..Q4 pivot (spanning parent has no label); 2 rows A/B."""
+    g = Graph(); t = EX.tbl2
+    cols = [EX["q%d" % i] for i in range(5)]
+    for c in cols:
+        g.add((c, RDF.type, TAB.LeafColumn)); g.add((t, TAB.hasLeafColumn, c))
+
+    def hdr(u, lvl, lbl, covers):
+        g.add((u, RDF.type, TAB.HeaderNode)); g.add((t, TAB.hasHeaderNode, u))
+        g.add((u, TAB.headerLevel, Literal(lvl)))
+        if lbl is not None:
+            lc = URIRef(str(u) + "l"); g.add((lc, TAB.cellText, Literal(lbl))); g.add((u, TAB.hasLabel, lc))
+        for c in covers:
+            g.add((u, TAB.coversColumn, c))
+    hdr(EX.qstub, 0, "Product", [cols[0]])
+    hdr(EX.qspan, 0, None, cols[1:])
+    for c, nm in zip(cols[1:], ["Q1", "Q2", "Q3", "Q4"]):
+        hdr(URIRef(str(c) + "h"), 1, nm, [c])
+    vals = {"A": ["A", "1", "2", "3", "4"], "B": ["B", "5", "6", "7", "8"]}
+    for rname in ("A", "B"):
+        ru = EX["row" + rname]; g.add((ru, RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, ru))
+        for c, txt in zip(cols, vals[rname]):
+            e = EX["e2_%s_%s" % (rname, str(c)[-2:])]
+            g.add((e, RDF.type, TAB.EntryCell)); g.add((t, TAB.hasCell, e))
+            g.add((e, TAB.atRow, ru)); g.add((e, TAB.atColumn, c)); g.add((e, TAB.cellText, Literal(txt)))
+    return g, t
+
+
+def test_valueset_inverse_detects_measures_by_value_set():
+    import os
+    from iladub.etkl import interpret
+    g, t = _nameless_quarter_pivot()
+    rg = Graph(); op = EX.vop
+    rg.add((op, RDF.type, TAB.UnpivotOp)); rg.add((op, TAB.opIndex, Literal(0)))
+    rg.add((op, TAB.opAxis, Literal("column"))); rg.add((op, TAB.opDimension, Literal("Quarter")))
+    rg.add((op, TAB.opStub, Literal("Product")))
+    for v in ("Q1", "Q2", "Q3", "Q4"):
+        rg.add((op, TAB.opValue, Literal(v)))
+    out = interpret.run(os.path.join(QUERIES, "unpivot-inverse-valueset.rq"), g, rg)
+    facts = list(out.subjects(RDF.type, TAB.BaseFact))
+    assert len(facts) == 8                                  # 2 rows x 4 quarters
+    coords = {(str(out.value(co, TAB.dimensionName)), str(out.value(co, TAB.value)))
+              for f in facts for co in out.objects(f, TAB.atDimensionValue)}
+    assert ("Quarter", "Q1") in coords and ("Product", "A") in coords

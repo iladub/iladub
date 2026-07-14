@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
 from . import denormalization as dn
@@ -169,39 +169,30 @@ def _nameless_col_pivots(g, t):
 
 
 def _named_pivot_recipe_and_base(g, t, dim, name):
-    """Build (recipe, base) for a nameless column pivot given a proposed name. Measure
-    columns are identified by VALUE-SET membership (leaf label in dim.values) — the
-    nameless analogue of A1's level-0-label detection. The name enters ONLY the recipe
-    and the base coordinates (never the source graph).
+    """Build (recipe, base_graph) for a nameless column pivot given a proposed name. Measure
+    columns are identified by VALUE-SET membership (leaf label in dim.values), expressed in the
+    inverse CONSTRUCT via tab:opValue. The name enters ONLY the recipe and the base coordinates.
 
-    Returns (recipe, []) when the pivot is ragged (any measure cell missing) — a ragged
-    pivot cannot be cleanly inverted, and the empty base signals non-invertibility to
+    Returns (recipe, empty graph) when the pivot is ragged (any measure cell missing): a ragged
+    pivot cannot be cleanly inverted, and the empty projection signals non-invertibility to
     certify_with_proposals so the oracle can flag it."""
     valset = set(dim.values)
     measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn) if col_leaf_label(g, c) in valset]
-    stub = _first_stub_name(g, t, valset)                 # first level-0 non-value column
+    stub = _first_stub_name(g, t, valset)
     recipe = Recipe((UnpivotOp(dimension=name, stub=stub, axis="column"),))
-    # Rectangularity check: every (row × measure_col) cell must be present
+    # Rectangularity: every (row x measure_col) cell must be present, else non-invertible.
     all_rows = list(g.objects(t, TAB.hasLeafRow))
     for r in all_rows:
         for c in measure_cols:
             if dn._entry(g, t, r, c) is None:
-                return recipe, []   # ragged → can't invert
-    base = []
-    for r in all_rows:
-        rlab = row_label(g, t, r)
-        for c in measure_cols:
-            e = dn._entry(g, t, r, c)
-            if e is None:
-                continue
-            v = dn._num(str(g.value(e, TAB.cellText)))
-            if v is None:
-                continue
-            row = {"__measure__": v}
-            if stub is not None:
-                row[stub] = rlab
-            row[name] = col_leaf_label(g, c)
-            base.append(row)
+                return recipe, Graph()                       # ragged -> empty projection
+    # materialize the recipe + the value set, then run the value-set inverse CONSTRUCT
+    recipe_graph = Graph()
+    ru = _materialize_recipe(recipe_graph, t, recipe)
+    op = next(recipe_graph.objects(ru, TAB.hasOperation))
+    for v in dim.values:
+        recipe_graph.add((op, TAB.opValue, Literal(v)))
+    base = interpret.run(os.path.join(_QUERIES, "unpivot-inverse-valueset.rq"), g, recipe_graph)
     return recipe, base
 
 
@@ -218,9 +209,14 @@ def certify_with_proposals(g, t, proposer):
     if proposal is None:
         return ProposalOutcome(None, (), True, ())     # declined → escalate, nothing asserted
     recipe, base = _named_pivot_recipe_and_base(g, t, dim, proposal.name)
+    empty = len(list(base.subjects(RDF.type, TAB.BaseFact))) == 0
+    # Run the oracle even on an empty projection: a ragged pivot yields an empty base, so the
+    # round-trip reproduces nothing against a non-empty grid and reports it as non-invertible
+    # (ok=False). This is the docstring's "so the oracle can flag it"; the `empty` guard below
+    # is a belt-and-braces escalation for the degenerate empty-grid case.
     verdict = round_trip(grid_values(g, t), base, recipe)
-    if not verdict.ok or not base:
-        return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible → escalate
+    if not verdict.ok or empty:
+        return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible -> escalate
     nb = emit_base_projection(g, t, recipe, base)
     from .promote import emit_promotion
     pd = emit_promotion(g, t, nb, proposal.name, list(dim.values), proposal)
