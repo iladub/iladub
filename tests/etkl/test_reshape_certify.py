@@ -16,7 +16,8 @@ def test_certify_region_pivot_passes(tmp_path):
     t = next(rep.graph.subjects(RDF.type, TAB.HierarchicalTable))
     recipe, verdict, base = certify(rep.graph, t)
     assert verdict.ok, verdict.residue
-    assert len(base) == 8
+    from rdflib import RDF as _RDF
+    assert len(list(base.subjects(_RDF.type, TAB.BaseFact))) == 8
 
 
 def test_emit_normalized_base_is_derived_projection(tmp_path):
@@ -53,13 +54,22 @@ def test_emit_returns_none_on_oracle_failure(tmp_path):
     p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
     rep = compile_tables(str(p)); g = rep.graph
     t = next(g.subjects(RDF.type, TAB.HierarchicalTable))
-    # monkeypatch recover_base to drop a fact → replay can't reproduce that cell
-    orig = reshape.recover_base
-    reshape.recover_base = lambda gg, tt, rr: orig(gg, tt, rr)[:-1]
+    # monkeypatch derive_base to drop a fact → replay can't reproduce that cell
+    orig = reshape.derive_base
+    def _drop_one(gg, tt, rr):
+        p = orig(gg, tt, rr)
+        facts = list(p.subjects(RDF.type, TAB.BaseFact))
+        if facts:
+            victim = facts[0]
+            for pr, o in list(p.predicate_objects(victim)):
+                p.remove((victim, pr, o))
+            p.remove((victim, RDF.type, TAB.BaseFact))
+        return p
+    reshape.derive_base = _drop_one
     try:
         nb = reshape.emit_normalized_base(g, t)
     finally:
-        reshape.recover_base = orig
+        reshape.derive_base = orig
     assert nb is None
     assert (None, RDF.type, TAB.NormalizedBase) not in g
 
@@ -188,7 +198,7 @@ def test_certify_pivotless_table_no_false_residue(tmp_path):
     rep = compile_tables(str(p))
     t = next(rep.graph.subjects(RDF.type, TAB.RecordTable))
     recipe, verdict, base = certify(rep.graph, t)
-    assert base == []
+    assert not base
     assert verdict.ok is True
     assert verdict.residue == ()
     nb = emit_normalized_base(rep.graph, t)

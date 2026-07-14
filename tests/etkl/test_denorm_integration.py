@@ -31,12 +31,20 @@ def test_analyze_escalates_on_oracle_failure(tmp_path):
     from iladub.etkl.denormalization import analyze
     p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
     rep = compile_tables(str(p))
-    orig = reshape.recover_base
-    reshape.recover_base = lambda gg, tt, rr: orig(gg, tt, rr)[:-1]
+    orig = reshape.derive_base
+    def _drop_one(gg, tt, rr):
+        p = orig(gg, tt, rr)
+        facts = list(p.subjects(RDF.type, TAB.BaseFact))
+        if facts:
+            victim = facts[0]
+            for pr, o in list(p.predicate_objects(victim)):
+                p.remove((victim, pr, o))
+        return p
+    reshape.derive_base = _drop_one
     try:
         dr = analyze(rep)
     finally:
-        reshape.recover_base = orig
+        reshape.derive_base = orig
     assert dr.oracle_ok is False
     assert len(dr.residue) > 0
     assert dr.normalized_base is None

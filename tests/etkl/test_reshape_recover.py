@@ -9,19 +9,21 @@ def test_recover_recipe_and_base_region(tmp_path):
     from tests.etkl.fixtures import region_pivot_pdf
     from iladub.etkl import compile_tables
     from iladub.etkl.recipe import UnpivotOp
-    from iladub.etkl.reshape import recover_recipe, recover_base
+    from iladub.etkl.reshape import recover_recipe, derive_base
     p = tmp_path / "rp.pdf"; region_pivot_pdf(str(p))
     rep = compile_tables(str(p))
     t = next(rep.graph.subjects(RDF.type, TAB.HierarchicalTable))
     recipe = recover_recipe(rep.graph, t)
     unpivots = [o for o in recipe.operations if isinstance(o, UnpivotOp)]
     assert any(o.dimension == "Region" and o.stub == "Year" for o in unpivots)
-    base = recover_base(rep.graph, t, recipe)
-    assert len(base) == 8                                  # 2 years x 4 regions
-    measures = sorted(row["__measure__"] for row in base)
+    base = derive_base(rep.graph, t, recipe)
+    facts = list(base.subjects(RDF.type, TAB.BaseFact))
+    assert len(facts) == 8                                  # 2 years x 4 regions
+    measures = sorted(float(base.value(f, TAB.measureValue)) for f in facts)
     assert measures == [10, 11, 20, 21, 30, 31, 40, 41]
-    north_2020 = next(r for r in base if r["Region"] == "North" and r["Year"] == "2020")
-    assert north_2020["__measure__"] == 10
+    coords = {(str(base.value(co, TAB.dimensionName)), str(base.value(co, TAB.value)))
+              for f in facts for co in base.objects(f, TAB.atDimensionValue)}
+    assert ("Region", "North") in coords and ("Year", "2020") in coords
 
 
 def test_recover_strip_ops_from_totals(tmp_path):
