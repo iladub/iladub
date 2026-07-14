@@ -74,3 +74,39 @@ def test_unpivot_inverse_yields_correct_coordinates():
         got.add((m, coords))
     assert (10.0, frozenset({("Region", "North"), ("Year", "2020")})) in got
     assert (21.0, frozenset({("Region", "South"), ("Year", "2021")})) in got
+
+
+def _recipe_graph_unpivot_with_row_strip(dimension, stub, target_label, members):
+    rg = _recipe_graph_unpivot(dimension, stub)
+    op = EX.op1
+    rg.add((op, RDF.type, TAB.StripAggregationOp))
+    rg.add((op, TAB.opIndex, Literal(1)))
+    rg.add((op, TAB.opAxis, Literal("row")))
+    rg.add((op, TAB.opFunction, Literal("sum")))
+    rg.add((op, TAB.opTargetLabel, Literal(target_label)))
+    for m in members:
+        rg.add((op, TAB.opMember, Literal(m)))
+    return rg
+
+
+def test_unpivot_inverse_excludes_aggregate_row():
+    """A 'Total' row (stub value 'Total') declared as a row StripAggregationOp target must
+    NOT produce base facts — only the base rows 2020/2021 melt into facts."""
+    import os
+    from iladub.etkl import interpret
+    g, t = _named_region_pivot()
+    # add a Total row: stub 'Total', North=21, South=41
+    tr = EX.rTotal
+    g.add((tr, RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, tr))
+    for c, txt in ((EX.cYear, "Total"), (EX.cNorth, "21"), (EX.cSouth, "41")):
+        e = EX["e_total_%s" % str(c)[-5:]]
+        g.add((e, RDF.type, TAB.EntryCell)); g.add((t, TAB.hasCell, e))
+        g.add((e, TAB.atRow, tr)); g.add((e, TAB.atColumn, c)); g.add((e, TAB.cellText, Literal(txt)))
+    rg = _recipe_graph_unpivot_with_row_strip("Region", "Year", "Total", ["2020", "2021"])
+    out = interpret.run(os.path.join(QUERIES, "unpivot-inverse.rq"), g, rg)
+    facts = list(out.subjects(RDF.type, TAB.BaseFact))
+    assert len(facts) == 4                                  # Total row excluded; 2020/2021 x North/South
+    stubvals = {str(out.value(co, TAB.value))
+                for f in facts for co in out.objects(f, TAB.atDimensionValue)
+                if str(out.value(co, TAB.dimensionName)) == "Year"}
+    assert stubvals == {"2020", "2021"}                     # no "Total" stub coordinate

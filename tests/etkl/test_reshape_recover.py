@@ -36,3 +36,22 @@ def test_recover_strip_ops_from_totals(tmp_path):
     recipe = recover_recipe(rep.graph, t)
     strips = [o for o in recipe.operations if isinstance(o, StripAggregationOp)]
     assert strips and any(o.function == "sum" for o in strips)
+
+
+def test_materialize_recipe_serializes_strip_params():
+    from rdflib import Graph, URIRef, Literal
+    from iladub.etkl.reshape import _materialize_recipe
+    from iladub.etkl.recipe import Recipe, UnpivotOp, StripAggregationOp
+    g = Graph(); t = URIRef("https://example.org/d#tbl")
+    recipe = Recipe((UnpivotOp("Region", "Year"),
+                     StripAggregationOp("column", "sum", ("North", "South"), "Total")))
+    ru = _materialize_recipe(g, t, recipe)
+    # find the strip op node
+    strip = None
+    for op in g.objects(ru, TAB.hasOperation):
+        if (op, __import__("rdflib").RDF.type, TAB.StripAggregationOp) in g:
+            strip = op
+    assert strip is not None
+    assert str(g.value(strip, TAB.opTargetLabel)) == "Total"
+    assert {str(m) for m in g.objects(strip, TAB.opMember)} == {"North", "South"}
+    assert str(g.value(strip, TAB.opFunction)) == "sum"

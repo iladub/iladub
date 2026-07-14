@@ -161,6 +161,15 @@ tab:opAxis a owl:DatatypeProperty ; rdfs:domain tab:ReshapeOperation ; rdfs:rang
     rdfs:comment "row | column."@en .
 tab:opFunction a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ; rdfs:label "operation function"@en ;
     rdfs:comment "sum | mean | count | min | max | product — FnO/F&O-named in tab-fno-align.ttl."@en .
+tab:opTargetLabel a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ;
+    rdfs:label "operation target label"@en ;
+    rdfs:comment "The leaf label of the aggregate row/column this strip op removes and re-derives (e.g. \"Total\")."@en .
+tab:opMember a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ;
+    rdfs:label "operation member"@en ;
+    rdfs:comment "A base member label the aggregate is computed from (repeated once per member)."@en .
+tab:opValue a owl:DatatypeProperty ; rdfs:domain tab:UnpivotOp ; rdfs:range xsd:string ;
+    rdfs:label "operation value"@en ;
+    rdfs:comment "A pivot value naming a measure column for a NAMELESS column pivot, where measure columns are detected by value-set membership rather than a level-0 dimension-name header (A2.1). Repeated once per value."@en .
 
 # --- normalized base (derived projection; re-models the stored BaseFact set) ----
 tab:NormalizedBase a owl:Class ; rdfs:label "Normalized base"@en ;

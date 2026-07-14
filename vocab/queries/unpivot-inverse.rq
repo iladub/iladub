@@ -3,7 +3,8 @@
 # carried by the level-0 spanning header) and tab:opStub (the row-key column's name).
 # Measure columns are exactly the level-1 leaves under the level-0 header whose label
 # equals ?dimName; an aggregate column (a different level-0 label, e.g. "Total") is
-# therefore excluded automatically. Row-aggregate exclusion is added in Task 2.
+# therefore excluded automatically. Row-aggregate exclusion: a row whose stub value matches
+# a row-strip op's tab:opTargetLabel (e.g. "Total") is excluded via FILTER NOT EXISTS below.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 CONSTRUCT {
@@ -30,6 +31,11 @@ WHERE {
   ?hs tab:headerLevel 0 ; tab:hasLabel ?hsl ; tab:coversColumn ?sc .
   ?hsl tab:cellText ?stubName .
   ?se tab:atRow ?r ; tab:atColumn ?sc ; tab:cellText ?stubVal .
+
+  # exclude aggregate rows: a row whose stub value is a row-strip op's target label
+  FILTER NOT EXISTS {
+    ?rowStrip a tab:StripAggregationOp ; tab:opAxis "row" ; tab:opTargetLabel ?stubVal .
+  }
 
   BIND(IRI(CONCAT(STR(?e), "-bf")) AS ?bf)
   BIND(IRI(CONCAT(STR(?e), "-bf-dim")) AS ?coDim)

@@ -141,6 +141,9 @@ def _materialize_recipe(g, t, recipe):
             g.add((ou, RDF.type, TAB.StripAggregationOp))
             g.add((ou, TAB.opAxis, Literal(op.axis)))
             g.add((ou, TAB.opFunction, Literal(op.function)))
+            g.add((ou, TAB.opTargetLabel, Literal(op.target_label)))
+            for m in op.member_labels:
+                g.add((ou, TAB.opMember, Literal(m)))
     return ru
 
 
