@@ -1,0 +1,37 @@
+# unpivot-inverse.rq  (grid -> base) for a NAMED column pivot.
+# Params read from the recipe op node: tab:opDimension (the pivoted dimension's name,
+# carried by the level-0 spanning header) and tab:opStub (the row-key column's name).
+# Measure columns are exactly the level-1 leaves under the level-0 header whose label
+# equals ?dimName; an aggregate column (a different level-0 label, e.g. "Total") is
+# therefore excluded automatically. Row-aggregate exclusion is added in Task 2.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?bf a tab:BaseFact ;
+      tab:measureValue ?mv ;
+      tab:atDimensionValue ?coDim , ?coStub .
+  ?coDim  tab:dimensionName ?dimName ; tab:value ?colLabel .
+  ?coStub tab:dimensionName ?stubName ; tab:value ?stubVal .
+}
+WHERE {
+  ?op a tab:UnpivotOp ; tab:opDimension ?dimName ; tab:opStub ?stubName .
+
+  # measure columns: level-1 leaf under the level-0 header labelled ?dimName
+  ?h0 tab:headerLevel 0 ; tab:hasLabel ?h0l ; tab:coversColumn ?c .
+  ?h0l tab:cellText ?dimName .
+  ?h1 tab:headerLevel 1 ; tab:hasLabel ?h1l ; tab:coversColumn ?c .
+  ?h1l tab:cellText ?colLabel .
+
+  # the measure cell at (row ?r, measure col ?c)
+  ?e a tab:EntryCell ; tab:atRow ?r ; tab:atColumn ?c ; tab:cellText ?v .
+  BIND(xsd:decimal(?v) AS ?mv)
+
+  # the stub column: the level-0 column labelled ?stubName, and this row's stub value
+  ?hs tab:headerLevel 0 ; tab:hasLabel ?hsl ; tab:coversColumn ?sc .
+  ?hsl tab:cellText ?stubName .
+  ?se tab:atRow ?r ; tab:atColumn ?sc ; tab:cellText ?stubVal .
+
+  BIND(IRI(CONCAT(STR(?e), "-bf")) AS ?bf)
+  BIND(IRI(CONCAT(STR(?e), "-bf-dim")) AS ?coDim)
+  BIND(IRI(CONCAT(STR(?e), "-bf-stub")) AS ?coStub)
+}
