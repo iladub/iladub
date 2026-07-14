@@ -14,6 +14,10 @@ WHERE {
   {
     # column-axis: group members within each row
     ?op a tab:StripAggregationOp ; tab:opAxis "column" ; tab:opFunction "sum" ; tab:opTargetLabel ?target .
+    # NOTE: the sub-SELECT's ?op2 is intentionally UNCORRELATED with the outer ?op (it matches
+    # by opAxis alone). Correct ONLY for a single strip op per axis (loop-one scope). A
+    # multi-strip recipe MUST correlate ?op2 to the outer ?op (e.g. BIND(?op AS ?op2)) before
+    # this query is trusted for that case.
     {
       SELECT ?row (SUM(?vnum) AS ?total) WHERE {
         ?op2 a tab:StripAggregationOp ; tab:opAxis "column" ; tab:opMember ?member .
@@ -30,6 +34,10 @@ WHERE {
     # an unpivot stub-echo column (whose echoed values are numeric but are labels, not measures);
     # exclude any column that is an unpivot stub via FILTER NOT EXISTS.
     ?op a tab:StripAggregationOp ; tab:opAxis "row" ; tab:opFunction "sum" ; tab:opTargetLabel ?target .
+    # NOTE: the sub-SELECT's ?op2 is intentionally UNCORRELATED with the outer ?op (it matches
+    # by opAxis alone). Correct ONLY for a single strip op per axis (loop-one scope). A
+    # multi-strip recipe MUST correlate ?op2 to the outer ?op (e.g. BIND(?op AS ?op2)) before
+    # this query is trusted for that case.
     {
       SELECT ?col (SUM(?vnum) AS ?total) WHERE {
         ?op2 a tab:StripAggregationOp ; tab:opAxis "row" ; tab:opMember ?member .

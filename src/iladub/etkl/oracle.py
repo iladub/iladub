@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from rdflib import Namespace, RDF
 
 from . import interpret
-from .recipe import UnpivotOp, StripAggregationOp
+from .recipe import StripAggregationOp
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
