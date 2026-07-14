@@ -140,3 +140,30 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
 - **A2.1's transpose/group-flatten ops are not yet built** (they were A1's deferred inner loops); this substrate
   covers the op-types that exist. New op-types added later ship with their `.rq` pair from the start.
 - **rdflib is the SPARQL engine** (already a dependency). No new runtime dependency.
+
+## 9. Settled design decisions (for the implementation plan)
+
+- **Base representation: NATIVE RDF (decision B, 2026-07-14).** `base` is the derived `hproj:Projection`
+  RDF graph, not a Python `list[dict]`. The **inverse CONSTRUCT** produces it (retiring `recover_base`'s and
+  `emit_base_projection`'s Python bodies); the **forward CONSTRUCT** reconstructs the grid; `round_trip`
+  exact-compares. Consequence, stated honestly:
+  - **Behavioural suites stay green unchanged** — `certify`/`analyze`/`emit_normalized_base`/
+    `certify_with_proposals` keep their public behaviour and graph output (`NormalizedBase`, `tab:BaseFact`
+    coords, `oracle_ok`, promotion). These are the real behavioural spec.
+  - **A handful of *mechanism* unit tests coupled to the retired Python representation are re-expressed** —
+    `test_oracle.py`'s `replay(list[dict])` and `test_reshape_recover.py`'s `recover_base(list[dict])` test the
+    *old implementation*, not the behaviour; they become tests of the SPARQL mechanism (per-`.rq` + native-RDF
+    base). This is supersession, not loosening.
+  - **A2.1's base-building becomes CONSTRUCT-based:** `_named_pivot_recipe_and_base` (which builds a
+    `list[dict]` for the nameless-pivot case) is reworked so the nameless case emits its base via an inverse
+    CONSTRUCT (value-set measure detection expressed in the query) — keeping `certify_with_proposals`'s public
+    behaviour and A2.1's promotion tests green.
+- **The unpivot inverse CONSTRUCT is prototype-validated** (2026-07-14, over the real `tab:` grid model,
+  reading params from the RDF recipe → correct 8-fact base). Promote the probe to the first task's test.
+- **SPARQL-ceiling rule (§8):** standard SPARQL only; Python at the genuine expressiveness ceiling is justified
+  PYTHON-OK with a why-irreducible note.
+
+**Resume pointer:** design + gate (CLAUDE.md §8) + audit + this spec are committed on branch
+`etkl-neurosymbolic-substrate`. **Next action:** invoke `superpowers:writing-plans` on this spec (scope A,
+decision B) to produce the task-by-task implementation plan; then subagent-driven execution. B (role-axiom
+lifts) and C (backstop deletion) are the queued follow-on slices.
