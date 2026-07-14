@@ -131,8 +131,12 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
   directions, base as `hproj:Projection`, retiring `oracle.replay`. **Out of scope:** B (role/type/boundary
   axiom-lifts) and C (backstop deletion) — the queued next slices; the NEURAL span-perception family (loop two).
 - **Feasibility validated for unpivot** (prototype). The strip-aggregate and forward directions are standard
-  SPARQL 1.1 on the proven pattern — validated per-`.rq` in the plan's TDD; if any op resists a clean CONSTRUCT
-  over the positional model, that is a design finding (enrich the grid facts), not a fallback to Python.
+  SPARQL 1.1 on the proven pattern — validated per-`.rq` in the plan's TDD.
+- **The SPARQL-ceiling rule (settled):** we use **standard SPARQL `CONSTRUCT` only — we do NOT extend SPARQL**.
+  Where an op genuinely reaches the expressiveness limit of standard `CONSTRUCT`/aggregates, **substituting
+  Python for that specific piece is an acceptable, justified PYTHON-OK** (per §2 and CLAUDE.md §8 — "irreducible
+  to AXIOM"): we prefer SPARQL and accept Python *at the ceiling*, rather than contorting or extending SPARQL to
+  force it. Such a substitution ships with the standard why-irreducible note.
 - **A2.1's transpose/group-flatten ops are not yet built** (they were A1's deferred inner loops); this substrate
   covers the op-types that exist. New op-types added later ship with their `.rq` pair from the start.
 - **rdflib is the SPARQL engine** (already a dependency). No new runtime dependency.
