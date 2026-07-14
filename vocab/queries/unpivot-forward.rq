@@ -1,0 +1,17 @@
+# unpivot-forward.rq  (base -> grid). Re-pivots each base fact's measure into its
+# (stub value, dimension value) cell and echoes the stub column. Emits ReproCells.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+CONSTRUCT {
+  ?mcell a tab:ReproCell ; tab:reproRow ?stubVal ; tab:reproCol ?dimVal  ; tab:reproText ?mtext .
+  ?scell a tab:ReproCell ; tab:reproRow ?stubVal ; tab:reproCol ?stubName ; tab:reproText ?stubVal .
+}
+WHERE {
+  ?op a tab:UnpivotOp ; tab:opDimension ?dimName ; tab:opStub ?stubName .
+  ?bf a tab:BaseFact ; tab:measureValue ?mv ;
+      tab:atDimensionValue ?coDim , ?coStub .
+  ?coDim  tab:dimensionName ?dimName  ; tab:value ?dimVal .
+  ?coStub tab:dimensionName ?stubName ; tab:value ?stubVal .
+  BIND(STR(?mv) AS ?mtext)
+  BIND(IRI(CONCAT(STR(?bf), "-mc")) AS ?mcell)
+  BIND(IRI(CONCAT(STR(?bf), "-sc")) AS ?scell)
+}

@@ -110,3 +110,81 @@ def test_unpivot_inverse_excludes_aggregate_row():
                 for f in facts for co in out.objects(f, TAB.atDimensionValue)
                 if str(out.value(co, TAB.dimensionName)) == "Year"}
     assert stubvals == {"2020", "2021"}                     # no "Total" stub coordinate
+
+
+def _projection_graph_region():
+    """The 4-fact derived base for the Region×Year pivot, as native RDF (what unpivot-inverse
+    produces). Measures: (2020,North)=10 (2020,South)=20 (2021,North)=11 (2021,South)=21."""
+    p = Graph()
+    facts = [("10", "North", "2020"), ("20", "South", "2020"),
+             ("11", "North", "2021"), ("21", "South", "2021")]
+    for i, (mv, region, year) in enumerate(facts):
+        bf = EX["bf%d" % i]
+        p.add((bf, RDF.type, TAB.BaseFact))
+        p.add((bf, TAB.measureValue, Literal(mv, datatype=__import__("rdflib").namespace.XSD.decimal)))
+        cd = EX["bf%d-dim" % i]; cs = EX["bf%d-stub" % i]
+        p.add((bf, TAB.atDimensionValue, cd)); p.add((cd, TAB.dimensionName, Literal("Region"))); p.add((cd, TAB.value, Literal(region)))
+        p.add((bf, TAB.atDimensionValue, cs)); p.add((cs, TAB.dimensionName, Literal("Year"))); p.add((cs, TAB.value, Literal(year)))
+    return p
+
+
+def _repro_dict(out):
+    d = {}
+    for cell in out.subjects(RDF.type, TAB.ReproCell):
+        d[(str(out.value(cell, TAB.reproRow)), str(out.value(cell, TAB.reproCol)))] = str(out.value(cell, TAB.reproText))
+    return d
+
+
+def test_unpivot_forward_reconstructs_measure_and_stub_cells():
+    import os
+    from iladub.etkl import interpret
+    p = _projection_graph_region()
+    rg = _recipe_graph_unpivot("Region", "Year")
+    out = interpret.run(os.path.join(QUERIES, "unpivot-forward.rq"), p, rg)
+    d = _repro_dict(out)
+    assert float(d[("2020", "North")]) == 10.0
+    assert float(d[("2021", "South")]) == 21.0
+    assert d[("2020", "Year")] == "2020"                    # stub echo
+    assert d[("2021", "Year")] == "2021"
+
+
+def test_strip_forward_sum_readds_total_column():
+    import os
+    from iladub.etkl import interpret
+    p = _projection_graph_region()
+    rg = _recipe_graph_unpivot("Region", "Year")
+    strip = EX.op1
+    rg.add((strip, RDF.type, TAB.StripAggregationOp)); rg.add((strip, TAB.opIndex, Literal(1)))
+    rg.add((strip, TAB.opAxis, Literal("column"))); rg.add((strip, TAB.opFunction, Literal("sum")))
+    rg.add((strip, TAB.opTargetLabel, Literal("Total")))
+    for m in ("North", "South"):
+        rg.add((strip, TAB.opMember, Literal(m)))
+    # forward strip runs over the repro grid produced by unpivot-forward
+    grid = interpret.run(os.path.join(QUERIES, "unpivot-forward.rq"), p, rg)
+    out = interpret.run(os.path.join(QUERIES, "strip-aggregation-forward-sum.rq"), grid, rg)
+    d = _repro_dict(out)
+    assert float(d[("2020", "Total")]) == 30.0              # 10 + 20
+    assert float(d[("2021", "Total")]) == 32.0              # 11 + 21
+
+
+def test_strip_forward_sum_row_axis_excludes_stub_column():
+    """Regression (ported from the retired test_oracle row-axis guard): a row-axis sum strip
+    must NOT write a total into any unpivot stub-echo column (numeric "Year"). Summing member
+    rows ("2020","2021") across the "Year" stub-echo column would yield a spurious
+    ("Total","Year")=4041 cell; the forward query must exclude every unpivot stub column."""
+    import os
+    from iladub.etkl import interpret
+    p = _projection_graph_region()
+    rg = _recipe_graph_unpivot("Region", "Year")
+    strip = EX.op1
+    rg.add((strip, RDF.type, TAB.StripAggregationOp)); rg.add((strip, TAB.opIndex, Literal(1)))
+    rg.add((strip, TAB.opAxis, Literal("row"))); rg.add((strip, TAB.opFunction, Literal("sum")))
+    rg.add((strip, TAB.opTargetLabel, Literal("Total")))
+    for m in ("2020", "2021"):
+        rg.add((strip, TAB.opMember, Literal(m)))
+    grid = interpret.run(os.path.join(QUERIES, "unpivot-forward.rq"), p, rg)
+    out = interpret.run(os.path.join(QUERIES, "strip-aggregation-forward-sum.rq"), grid, rg)
+    d = _repro_dict(out)
+    assert float(d[("Total", "North")]) == 21.0             # 10 + 11
+    assert float(d[("Total", "South")]) == 41.0             # 20 + 21
+    assert ("Total", "Year") not in d                       # stub-echo column excluded
