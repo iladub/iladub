@@ -44,3 +44,11 @@ def test_replay_and_fmt_are_retired():
 def test_recover_base_is_retired():
     import iladub.etkl.reshape as reshape
     assert not hasattr(reshape, "recover_base"), "reshape.recover_base must be retired (use derive_base)"
+
+
+def test_role_axiom_queries_present_and_axis_dimensions_retired():
+    import glob, os
+    rqs = {os.path.basename(p) for p in glob.glob(os.path.join(QUERIES, "*.rq"))}
+    assert {"name-levels.rq", "recover-dimensions.rq", "operand-exclusions.rq"} <= rqs
+    import iladub.etkl.denormalization as dn
+    assert not hasattr(dn, "_axis_dimensions"), "_axis_dimensions (set-algebra role body) must be retired"

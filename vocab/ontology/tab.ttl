@@ -187,3 +187,12 @@ tab:hasBaseFact a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:ran
 # --- A2 promotion link (rangeless: points at a promotion decision at runtime) -----
 tab:namePromotedBy a owl:ObjectProperty ; rdfs:label "name promoted by"@en ;
     rdfs:comment "Links a reshape operation whose dimension name was GenAI-proposed to the promotion decision that admitted the name. Rangeless to keep this ontology standalone."@en .
+
+# --- transient inference marks (recovery pass; not stored in a holon) ---
+tab:namesLevel a owl:DatatypeProperty ; rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
+    rdfs:label "names level"@en ;
+    rdfs:comment "A recovery mark: this header node (a unique spanning parent) NAMES the pivoted dimension one header level below it. Produced by the name-levels derivation; transient, not asserted into a holon."@en .
+
+tab:barredAsOperand a owl:DatatypeProperty ; rdfs:domain tab:LeafColumn ; rdfs:range xsd:boolean ;
+    rdfs:label "barred as operand"@en ;
+    rdfs:comment "A recovery mark: in a pivoted table this level-0 single-leaf column is a stub/total, barred as an aggregation operand. Transient; produced by the operand-exclusions derivation."@en .

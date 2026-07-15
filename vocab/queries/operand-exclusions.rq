@@ -1,0 +1,16 @@
+# operand-exclusions.rq — in a PIVOTED table (some column has max header level >= 1), the
+# level-0 single-leaf columns are stubs/totals, barred as aggregation operands. The pivoted
+# FILTER EXISTS is per-table (bound to the ?t that owns the leaf column), but the emitted
+# tab:barredAsOperand marks are graph-wide; the reader (_operand_exclusions) scopes them to a
+# given table by intersecting with that table's own leaf columns.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT { ?c tab:barredAsOperand true . }
+WHERE {
+  ?t tab:hasLeafColumn ?c .
+  # ?c's max covering header level is 0 (only level-0 headers cover it)
+  FILTER EXISTS { ?h0 tab:headerLevel 0 ; tab:coversColumn ?c }
+  FILTER NOT EXISTS { ?hd tab:headerLevel ?dl ; tab:coversColumn ?c . FILTER(?dl >= 1) }
+  # the table is pivoted: some column is covered by a level->=1 header
+  FILTER EXISTS { ?any tab:headerLevel ?al ; tab:coversColumn ?cc . ?t tab:hasLeafColumn ?cc . FILTER(?al >= 1) }
+}

@@ -8,13 +8,17 @@ tree — it is read as-is. (Aggregation evidence and 3NF emission are later slic
 from __future__ import annotations
 
 import math
+import os
 import re
 from dataclasses import dataclass
 
 from rdflib import BNode, RDF, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
+from . import interpret
+
 TAB = Namespace("https://w3id.org/iladub/tab#")
+_QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
 
 
 def _num(s):
@@ -23,11 +27,6 @@ def _num(s):
         return v if math.isfinite(v) else None
     except (ValueError, AttributeError):
         return None
-
-
-def _label(g, node):
-    lc = g.value(node, TAB.hasLabel)
-    return str(g.value(lc, TAB.cellText)) if lc is not None else None
 
 
 def _leaf_cols(g, t):
@@ -46,44 +45,52 @@ class PivotedDimension:
     values: tuple[str, ...]   # distinct value labels at this level, in leaf order
 
 
-def _axis_dimensions(g, t, axis, covers_pred, leaves):
-    """Read one axis's header tree into PivotedDimensions (see module docstring rule)."""
-    n = len(leaves)
-    if n == 0:
-        return []
-    nodes = [h for h in g.objects(t, TAB.hasHeaderNode)
-             if any(True for _ in g.objects(h, covers_pred))]
-    if not nodes:
-        return []
-    by_level = {}
-    for h in nodes:
-        lvl = int(g.value(h, TAB.headerLevel))
-        cov = frozenset(g.objects(h, covers_pred))
-        by_level.setdefault(lvl, []).append((h, _label(g, h), cov))
-    dims, pending_name = [], None
-    for lvl in sorted(by_level):
-        level_nodes = by_level[lvl]
-        multi = [ln for ln in level_nodes if len(ln[2]) > 1]
-        singles_cov = set().union(*[ln[2] for ln in level_nodes if len(ln[2]) == 1]) if any(len(ln[2]) == 1 for ln in level_nodes) else set()
-        leafset = set(leaves)
-        if len(multi) == 1 and (multi[0][2] | singles_cov) >= leafset and not (multi[0][2] & singles_cov):
-            pending_name = multi[0][1]           # a spanning parent (modulo single-leaf stubs) names the level below
+def _read_dimensions(dimgraph, g, t):
+    """PROCEDURAL reconstruction glue: map the derived tab:PivotedDimension RDF into the
+    PivotedDimension dataclasses. Value ORDER (presentation, not a role decision) is
+    re-derived by the same key as the retired _axis_dimensions — the minimum covered leaf
+    (by IRI) per label — so the dataclass is reproduced exactly."""
+    dims = []
+    for dn in dimgraph.subjects(RDF.type, TAB.PivotedDimension):
+        # scope to t: recover-dimensions.rq keys each dim IRI as STR(?T)+"-dim-"+axis+"-"+L,
+        # so the full table IRI precedes the literal "-dim-" separator — two distinct table
+        # IRIs necessarily differ before "-dim-", making this prefix filter collision-safe.
+        if not str(dn).startswith(str(t) + "-dim-"):
             continue
-        ordered = sorted(level_nodes, key=lambda z: min(str(c) for c in z[2]))
-        seen, values = set(), []
-        for _, lbl, _cov in ordered:
-            if lbl is not None and lbl not in seen:
-                seen.add(lbl); values.append(lbl)
-        dims.append(PivotedDimension(axis, lvl, pending_name, tuple(values)))
-        pending_name = None
-    return dims
+        axis = str(dimgraph.value(dn, TAB.onAxis))
+        level = int(dimgraph.value(dn, TAB.atLevel))
+        name = dimgraph.value(dn, TAB.dimensionName)
+        name = str(name) if name is not None else None
+        labels = {str(v) for v in dimgraph.objects(dn, TAB.hasDimensionValue)}
+        cp = TAB.coversColumn if axis == "column" else TAB.coversRow
+
+        def _minleaf(lbl, cp=cp, level=level):
+            best = None
+            for h in g.subjects(TAB.headerLevel, Literal(level)):
+                if (t, TAB.hasHeaderNode, h) not in g:
+                    continue
+                lc = g.value(h, TAB.hasLabel)
+                if lc is None or str(g.value(lc, TAB.cellText)) != lbl:
+                    continue
+                m = min((str(c) for c in g.objects(h, cp)), default=None)
+                if m is not None and (best is None or m < best):
+                    best = m
+            return best or lbl
+
+        values = tuple(sorted(labels, key=_minleaf))
+        dims.append(PivotedDimension(axis, level, name, values))
+    # column dims first (level order), then row dims (level order) — matches recover_dimensions
+    return ([d for d in sorted(dims, key=lambda z: z.level) if d.axis == "column"]
+            + [d for d in sorted(dims, key=lambda z: z.level) if d.axis == "row"])
 
 
 def recover_dimensions(g, t):
-    """Recover pivoted dimensions from BOTH header axes (column via coversColumn, row via
-    coversRow). A flat single-level axis yields one value-level dimension."""
-    return (_axis_dimensions(g, t, "column", TAB.coversColumn, _leaf_cols(g, t))
-            + _axis_dimensions(g, t, "row", TAB.coversRow, _leaf_rows(g, t)))
+    """Recover pivoted dimensions from BOTH header axes via the declarative two-pass
+    derivation (name-levels -> recover-dimensions, AXIOM), read back into PivotedDimension
+    dataclasses. Replaces the set-algebra _axis_dimensions body; signature unchanged."""
+    marks = interpret.run(os.path.join(_QUERIES, "name-levels.rq"), g)
+    dimgraph = interpret.run(os.path.join(_QUERIES, "recover-dimensions.rq"), g, marks)
+    return _read_dimensions(dimgraph, g, t)
 
 
 def annotate_dimensions(g, t, dims):
@@ -160,24 +167,13 @@ def _value_matrix(g, t):
 
 
 def _operand_exclusions(g, t):
-    """Columns that must not be aggregation OPERANDS (they remain candidates).
-    In a PIVOTED table (some column sits under a spanning parent, i.e. max header
-    level >= 1), the single-leaf level-0 columns are stubs/totals, not measures, so a
-    numeric stub (e.g. a Year column) must not corrupt a column-total's operand sum.
-    In a FLAT table (all columns level-0) nothing is excluded — text stubs are already
-    absent from the numeric value matrix, so behaviour is unchanged (and header-less
-    matrix graphs, having no coversColumn headers, are also unchanged)."""
-    col_max = {}
-    has_deep = False
-    for c in g.objects(t, TAB.hasLeafColumn):
-        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
-        m = max(levels) if levels else None
-        col_max[c] = m
-        if m is not None and m >= 1:
-            has_deep = True
-    if not has_deep:
-        return set()
-    return {c for c, m in col_max.items() if m == 0}
+    """Columns barred as aggregation OPERANDS (level-0 single-leaf stubs/totals in a pivoted
+    table), derived by operand-exclusions.rq. Signature/return unchanged. The CONSTRUCT is
+    NOT table-scoped (it marks columns across the whole graph), so intersect with `t`'s own
+    leaf columns to preserve the original per-t contract when a graph holds multiple tables."""
+    marks = interpret.run(os.path.join(_QUERIES, "operand-exclusions.rq"), g)
+    barred = set(marks.subjects(TAB.barredAsOperand, Literal(True)))
+    return barred & set(g.objects(t, TAB.hasLeafColumn))
 
 
 def detect_aggregations(g, t):

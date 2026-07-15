@@ -1,0 +1,17 @@
+# recover-dimensions.rq — pass 2: emit a PivotedDimension per value-level (not a naming level),
+# named by the pass-1 tab:namesLevel mark when present. A value-level L is a naming level iff
+# some parent names level L+1 (then L is absorbed, not emitted). ?dim is keyed by (table,axis,L)
+# so all value nodes at that level aggregate into one dimension.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+CONSTRUCT {
+  ?dim a tab:PivotedDimension ; tab:onAxis ?axis ; tab:atLevel ?L ; tab:hasDimensionValue ?vlabel .
+  ?dim tab:dimensionName ?pname .
+}
+WHERE {
+  VALUES (?cp ?axis) { (tab:coversColumn "column") (tab:coversRow "row") }
+  ?T tab:hasHeaderNode ?vnode . ?vnode tab:headerLevel ?L ; ?cp ?vl ; tab:hasLabel [ tab:cellText ?vlabel ] .
+  BIND(IRI(CONCAT(STR(?T), "-dim-", ?axis, "-", STR(?L))) AS ?dim)
+  # L is not a naming level  <=>  no parent names level L+1
+  FILTER NOT EXISTS { ?anyp tab:namesLevel ?L1 . ?T tab:hasHeaderNode ?anyp . ?anyp ?cp ?anyleaf . FILTER(?L1 = ?L + 1) }
+  OPTIONAL { ?p tab:namesLevel ?L ; tab:hasLabel [ tab:cellText ?pname ] . ?T tab:hasHeaderNode ?p . ?p ?cp ?pleaf . }
+}
