@@ -1,6 +1,8 @@
 # operand-exclusions.rq — in a PIVOTED table (some column has max header level >= 1), the
-# level-0 single-leaf columns are stubs/totals, barred as aggregation operands. Holon-scoped
-# EXISTS guard for "the table is pivoted".
+# level-0 single-leaf columns are stubs/totals, barred as aggregation operands. The pivoted
+# FILTER EXISTS is per-table (bound to the ?t that owns the leaf column), but the emitted
+# tab:barredAsOperand marks are graph-wide; the reader (_operand_exclusions) scopes them to a
+# given table by intersecting with that table's own leaf columns.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 CONSTRUCT { ?c tab:barredAsOperand true . }

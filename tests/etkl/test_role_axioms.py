@@ -40,6 +40,15 @@ def _build(axis):
     _hdr(g, t, EX.hE, 1, "East", [e], cp); _hdr(g, t, EX.hW, 1, "West", [w], cp)
     out["region"] = (g, t)
 
+    g = Graph(); t = EX.t                                        # multistub: spanned + TWO stubs
+    y, qr, n, s, e, w = EX.y, EX.qr, EX.n, EX.s, EX.e, EX.w
+    _leaves(g, t, lp, y, qr, n, s, e, w)
+    _hdr(g, t, EX.hY, 0, "Year", [y], cp); _hdr(g, t, EX.hQ, 0, "Quarter", [qr], cp)
+    _hdr(g, t, EX.hR, 0, "Region", [n, s, e, w], cp)
+    _hdr(g, t, EX.hN, 1, "North", [n], cp); _hdr(g, t, EX.hS, 1, "South", [s], cp)
+    _hdr(g, t, EX.hE, 1, "East", [e], cp); _hdr(g, t, EX.hW, 1, "West", [w], cp)
+    out["multistub"] = (g, t)
+
     g = Graph(); t = EX.t; q = [EX["q%d" % i] for i in range(4)]  # hier: 3 levels
     _leaves(g, t, lp, *q)
     _hdr(g, t, EX.hM, 0, "Metrics", q, cp)
@@ -163,6 +172,47 @@ def test_pipeline_handles_combined_row_and_column_hierarchies():
                  key=lambda z: (z[0], z[1]))
     got = _pipeline_dims(g, t)
     assert got == ref, "combined: got=%s ref=%s" % (got, ref)
+
+
+def test_recover_dimensions_is_scoped_to_its_table():
+    """Regression (cross-table dim leak): ONE graph holding two independent tables with
+    DISTINCT table/header/leaf IRIs — t1 a region column-pivot ('Region' dim), t2 a flat
+    table. recover_dimensions(g, t1) must return only t1's dims (not t2's labels) and
+    recover_dimensions(g, t2) only t2's (not 'Region'). Fails before the reader is scoped."""
+    from iladub.etkl.denormalization import recover_dimensions
+    g = Graph()
+
+    # t1: region column-pivot -> one named dim ('Region', {North,South,East,West})
+    t1 = EX.t1
+    y1, n1, s1, e1, w1 = EX.t1y, EX.t1n, EX.t1s, EX.t1e, EX.t1w
+    _leaves(g, t1, TAB.hasLeafColumn, y1, n1, s1, e1, w1)
+    _hdr(g, t1, EX.t1hY, 0, "Year", [y1], TAB.coversColumn)
+    _hdr(g, t1, EX.t1hR, 0, "Region", [n1, s1, e1, w1], TAB.coversColumn)
+    _hdr(g, t1, EX.t1hN, 1, "North", [n1], TAB.coversColumn)
+    _hdr(g, t1, EX.t1hS, 1, "South", [s1], TAB.coversColumn)
+    _hdr(g, t1, EX.t1hE, 1, "East", [e1], TAB.coversColumn)
+    _hdr(g, t1, EX.t1hW, 1, "West", [w1], TAB.coversColumn)
+
+    # t2: flat table -> one nameless level-0 dim ({Alpha,Beta,Gamma})
+    t2 = EX.t2
+    a2, b2, c2 = EX.t2a, EX.t2b, EX.t2c
+    _leaves(g, t2, TAB.hasLeafColumn, a2, b2, c2)
+    _hdr(g, t2, EX.t2hA, 0, "Alpha", [a2], TAB.coversColumn)
+    _hdr(g, t2, EX.t2hB, 0, "Beta", [b2], TAB.coversColumn)
+    _hdr(g, t2, EX.t2hC, 0, "Gamma", [c2], TAB.coversColumn)
+
+    d1 = recover_dimensions(g, t1)
+    names1 = {d.name for d in d1}
+    vals1 = {v for d in d1 for v in d.values}
+    assert "Region" in names1, "t1 must carry its own Region dim: %s" % (d1,)
+    assert not ({"Alpha", "Beta", "Gamma"} & vals1), "t1 leaked t2's labels: %s" % (d1,)
+
+    d2 = recover_dimensions(g, t2)
+    names2 = {d.name for d in d2}
+    vals2 = {v for d in d2 for v in d.values}
+    assert vals2 == {"Alpha", "Beta", "Gamma"}, "t2 must carry only its flat dim: %s" % (d2,)
+    assert "Region" not in names2, "t2 leaked t1's Region dim: %s" % (d2,)
+    assert not ({"North", "South", "East", "West"} & vals2), "t2 leaked t1's labels: %s" % (d2,)
 
 
 def test_operand_exclusions_matches_reference():

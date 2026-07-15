@@ -52,6 +52,11 @@ def _read_dimensions(dimgraph, g, t):
     (by IRI) per label — so the dataclass is reproduced exactly."""
     dims = []
     for dn in dimgraph.subjects(RDF.type, TAB.PivotedDimension):
+        # scope to t: recover-dimensions.rq keys each dim IRI as STR(?T)+"-dim-"+axis+"-"+L,
+        # so the full table IRI precedes the literal "-dim-" separator — two distinct table
+        # IRIs necessarily differ before "-dim-", making this prefix filter collision-safe.
+        if not str(dn).startswith(str(t) + "-dim-"):
+            continue
         axis = str(dimgraph.value(dn, TAB.onAxis))
         level = int(dimgraph.value(dn, TAB.atLevel))
         name = dimgraph.value(dn, TAB.dimensionName)
