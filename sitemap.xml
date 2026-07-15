@@ -2,58 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://iladub.dev/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/architecture/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/assertion-proposition/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/dec/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/etkl/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/holonic-interaction/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/manifesto/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/modality-native-targets/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/naming/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
+    </url>
+    <url>
+         <loc>https://iladub.dev/neurosymbolic-first/</loc>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/story/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/use-case-fhir/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/use-case-multimodal/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/use-case-transplant-m4/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
     <url>
          <loc>https://iladub.dev/narrative/scope-evolution/</loc>
-         <lastmod>2026-07-03</lastmod>
+         <lastmod>2026-07-15</lastmod>
     </url>
 </urlset>
