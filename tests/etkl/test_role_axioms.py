@@ -126,3 +126,32 @@ def test_pipeline_matches_axis_dimensions_semantics():
                      key=lambda z: (z[0], z[1]))
         got = _pipeline_dims(g, t)
         assert got == ref, "%s: got=%s ref=%s" % (key, got, ref)
+
+
+def test_pipeline_handles_combined_row_and_column_hierarchies():
+    """A crosstab: column axis is flat (value-level L=0), row axis has a spanning
+    parent that NAMES row level 1. The row's namesLevel(1) mark must not bleed
+    across axes and suppress the column axis's level-0 dimension."""
+    g = Graph(); t = EX.t
+
+    # column axis: two single-column level-0 headers -> column dim(0, None, {X,Y})
+    cx, cy = EX.cx, EX.cy
+    _leaves(g, t, TAB.hasLeafColumn, cx, cy)
+    _hdr(g, t, EX.hX, 0, "X", [cx], TAB.coversColumn)
+    _hdr(g, t, EX.hYcol, 0, "Y", [cy], TAB.coversColumn)
+
+    # row axis: "region" pattern — a level-0 spanning parent "Region" names row level 1
+    ry, rn, rs, re, rw = EX.ry, EX.rn, EX.rs, EX.re, EX.rw
+    _leaves(g, t, TAB.hasLeafRow, ry, rn, rs, re, rw)
+    _hdr(g, t, EX.hYear, 0, "Year", [ry], TAB.coversRow)
+    _hdr(g, t, EX.hRegion, 0, "Region", [rn, rs, re, rw], TAB.coversRow)
+    _hdr(g, t, EX.hNorth, 1, "North", [rn], TAB.coversRow)
+    _hdr(g, t, EX.hSouth, 1, "South", [rs], TAB.coversRow)
+    _hdr(g, t, EX.hEast, 1, "East", [re], TAB.coversRow)
+    _hdr(g, t, EX.hWest, 1, "West", [rw], TAB.coversRow)
+
+    ref = sorted(((ax, lvl, nm, frozenset(vals)) for (ax, lvl, nm, vals) in
+                  (_ref_axis_dimensions(g, t, "column") + _ref_axis_dimensions(g, t, "row"))),
+                 key=lambda z: (z[0], z[1]))
+    got = _pipeline_dims(g, t)
+    assert got == ref, "combined: got=%s ref=%s" % (got, ref)
