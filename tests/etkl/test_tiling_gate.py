@@ -1,3 +1,4 @@
+import pytest
 from rdflib import Graph, Namespace, URIRef, Literal, RDF
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -40,3 +41,21 @@ def test_region_tiles_matches_backstop_semantics():
     for axis in ("column", "row"):
         for name, (g, expect) in _battery(axis).items():
             assert region_tiles(g) is expect, "%s-%s: got %s expect %s" % (axis, name, region_tiles(g), expect)
+
+
+def test_gate_reject_escalates_gracefully(tmp_path, monkeypatch):
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import row_grouped_table_pdf
+    from iladub.etkl import compile_tables
+    import iladub.etkl.tiling as tiling
+    p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
+
+    # Positive path: normally this row-grouped region tiles and is asserted.
+    rep_ok = compile_tables(str(p))
+    assert any(r.verdict == "asserted" for r in rep_ok.regions)
+
+    # Disposition: when the SHACL oracle REJECTS the region, compile must escalate THAT region
+    # gracefully (ROW_GROUP_AMBIGUOUS) — NOT raise, NOT crash the whole compile.
+    monkeypatch.setattr(tiling, "region_tiles", lambda g: False)
+    rep_esc = compile_tables(str(p))                                 # must NOT raise
+    assert any(r.verdict == "escalated" and r.reason == "ROW_GROUP_AMBIGUOUS" for r in rep_esc.regions)

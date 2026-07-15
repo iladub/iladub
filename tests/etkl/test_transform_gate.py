@@ -9,6 +9,7 @@ import glob
 HERE = os.path.dirname(__file__)
 QUERIES = os.path.join(HERE, "..", "..", "vocab", "queries")
 INTERPRET = os.path.join(HERE, "..", "..", "src", "iladub", "etkl", "interpret.py")
+TILING = os.path.join(HERE, "..", "..", "src", "iladub", "etkl", "tiling.py")
 
 # a bare decimal/float literal (a tuned tolerance/constant). RDF header-level integers
 # 0/1 have no decimal point and never match; xsd:decimal casts contain no digit.digit.
@@ -52,3 +53,15 @@ def test_role_axiom_queries_present_and_axis_dimensions_retired():
     assert {"name-levels.rq", "recover-dimensions.rq", "operand-exclusions.rq"} <= rqs
     import iladub.etkl.denormalization as dn
     assert not hasattr(dn, "_axis_dimensions"), "_axis_dimensions (set-algebra role body) must be retired"
+
+
+def test_tiling_backstops_retired_and_gate_present():
+    import iladub.etkl.matrix as m, iladub.etkl.rowheaders as rh, iladub.etkl.tiling as tl
+    assert not hasattr(m, "col_tree_tiles") and not hasattr(m, "matrix_tiles"), "matrix tiling backstops retired"
+    assert not hasattr(rh, "row_tree_tiles"), "row tiling backstop retired"
+    assert hasattr(tl, "region_tiles"), "the SHACL region-admission oracle must exist"
+
+
+def test_no_tuned_constant_in_tiling():
+    body = _strip_comments(open(TILING, encoding="utf-8").read())
+    assert not _FLOAT.search(body), "tiling.py (region-admission gate) must carry no numeric tolerance"
