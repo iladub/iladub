@@ -11,7 +11,7 @@
 
 The neolegacy trap has a second half. The manifesto names the *output* mistake — flattening
 the target into SQL rows. The reading half is subtler: recovering the author's structure with
-a pile of Python heuristics, each carrying a tuned constant — a whitespace-gutter threshold, a
+a pile of procedural heuristics (Python, in our case), each carrying a tuned constant — a whitespace-gutter threshold, a
 gap-ratio multiplier, a centering tolerance. Every such constant is a **hidden guess about
 what the author meant**, baked into one interpreter and brittle across the next document.
 
@@ -20,21 +20,22 @@ code; the moment the document shifts, the guess is wrong and nothing says so. il
 **filling the semantic gap** — naming it, and deriving across it with formal semantics — not
 hand-coding geometry around it.
 
-## The gate: earn your Python
+## The gate: earn your procedural code
 
 Every reading decision is classified **before** any procedural code is written. The default is
-semantic; Python must be *earned* and *justified in the code and the spec*.
+semantic; procedural code must be *earned* and *justified in the code and the spec*. The class is
+language-agnostic — **Python in iladub's reference implementation**, any host language elsewhere.
 
 | Class | When it applies | The form it takes |
 |---|---|---|
 | **AXIOM** *(default)* | recovery / transform / role / type / boundary decisions | a SHACL rule or a SPARQL `SELECT`/`CONSTRUCT` over an RDF evidence graph — consuming an existing ontology, or filling a **named** gap with thin owned vocabulary |
 | **NEURAL** | genuinely perceptual, symbolically underdetermined judgments (*"which columns does this header span?"*) | a model (GenAI, via [BAML](https://boundaryml.com/)) **proposes** under assert/propose/promote, and a **semantic oracle disposes** |
-| **PYTHON-OK** | raw extraction (source → typed facts) and decidable exact arithmetic | procedural code that must state **why it is irreducible** to AXIOM or NEURAL |
+| **PROCEDURAL** | raw extraction (source → typed facts) and decidable exact arithmetic | procedural code — language-agnostic (Python in the reference implementation) — that must state **why it is irreducible** to AXIOM or NEURAL |
 
 A **tuned constant or tolerance is prima facie evidence** the decision belongs in AXIOM or
-NEURAL, not Python. This is enforced as a hard constraint in every design and review: a tuned
-geometric constant, or a Python heuristic answering a span / read / group / role question, is a
-review failure unless it is an oracle-disposed proposal or a justified raw-extraction step.
+NEURAL, not procedural code. This is enforced as a hard constraint in every design and review: a
+tuned geometric constant, or a procedural heuristic answering a span / read / group / role
+question, is a review failure unless it is an oracle-disposed proposal or a justified raw-extraction step.
 
 ## Propose → oracle → dispose
 

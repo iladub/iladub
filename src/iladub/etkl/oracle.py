@@ -3,8 +3,8 @@
 A recipe is certified iff running the FORWARD reshape CONSTRUCTs over the derived base
 (a hproj:Projection RDF graph) regenerates the original grid cell values exactly. The
 transform is AXIOM (standard SPARQL CONSTRUCT + SPARQL 1.1 aggregates in vocab/queries/);
-the ONLY Python here is the exact-equality compare (_close / _TOL), which is decidable
-arithmetic and irreducible (PYTHON-OK).
+the ONLY procedural code here is the exact-equality compare (_close / _TOL), which is
+decidable arithmetic and irreducible (PROCEDURAL — Python in this reference implementation).
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from .recipe import StripAggregationOp
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
-_TOL = 1e-6                    # PYTHON-OK: decidable exact-equality tolerance for the compare,
+_TOL = 1e-6                    # PROCEDURAL: decidable exact-equality tolerance for the compare,
                               # NOT a transform tuning constant. It never enters the .rq files.
 
 

@@ -13,9 +13,9 @@
 Copied verbatim from CLAUDE.md §8 (the neurosymbolic-first gate — a hard Global Constraint) and the spec's §2/§8/§9. **Every task's requirements implicitly include this section. Reviewers enforce it.**
 
 - **AXIOM (the transform):** the transform is **standard SPARQL `CONSTRUCT` + SPARQL 1.1 aggregates** only, consuming standards (SPARQL, F&O/FnO function IRIs, `hproj:Projection`). **No transform logic in Python. No tuned constant or numeric tolerance anywhere in the `.rq` files or in `interpret.py`.** A tuned constant/tolerance in the transform is a review failure.
-- **PYTHON-OK (only these three, each with a why-irreducible note in code):** (1) invoking rdflib's SPARQL engine on the query files (`interpret.run` — engine glue); (2) the exact-equality compare in the round-trip (`_close`, `_TOL = 1e-6` — decidable arithmetic, irreducible); (3) `recover_recipe`'s procedural *search* that emits the declarative recipe (its **output** is an axiom).
+- **PROCEDURAL (procedural code — Python in this reference implementation; only these three, each with a why-irreducible note in code):** (1) invoking rdflib's SPARQL engine on the query files (`interpret.run` — engine glue); (2) the exact-equality compare in the round-trip (`_close`, `_TOL = 1e-6` — decidable arithmetic, irreducible); (3) `recover_recipe`'s procedural *search* that emits the declarative recipe (its **output** is an axiom).
 - **NEURAL:** none in loop one (the span-perception family is loop two).
-- **SPARQL-ceiling rule (settled):** use **standard SPARQL only — do NOT extend SPARQL**. Where an op genuinely reaches the expressiveness limit of standard `CONSTRUCT`/aggregates, substituting Python *for that specific piece* is an acceptable, justified PYTHON-OK, shipped with a why-irreducible note. Prefer SPARQL; accept Python *at the ceiling*; never contort or extend SPARQL.
+- **SPARQL-ceiling rule (settled):** use **standard SPARQL only — do NOT extend SPARQL**. Where an op genuinely reaches the expressiveness limit of standard `CONSTRUCT`/aggregates, substituting Python *for that specific piece* is an acceptable, justified PROCEDURAL, shipped with a why-irreducible note. Prefer SPARQL; accept Python *at the ceiling*; never contort or extend SPARQL.
 - **Scope: A only.** The CONSTRUCT interpreter for the *existing* op-types (`UnpivotOp`, `StripAggregationOp`), both directions, base as `hproj:Projection`, retiring the three Python twins. **Out of scope:** B (role/type/boundary axiom-lifts), C (redundant-tiling-backstop deletion), the NEURAL span-perception family (loop two).
 - **Source ownership (non-negotiable):** the `.rq` files reference `tab:` (owned) + standard function IRIs only. `hproj:` appears only as an object in `tab-hga-align.ttl`; `fn:`/F&O IRIs only as objects in `tab-fno-align.ttl`. New `tab:` properties are added to the owned `tab.ttl` only. Never write an HGA/FnO term as a subject.
 - **Behavioural spec = the shipped suites.** `tests/etkl/test_reshape_certify.py`, `test_certify_proposals.py`, `test_denormalization.py`, `test_denorm_integration.py`, `test_oracle.py`, `test_reshape_recover.py`, `test_promote*.py`, `test_recipe*.py`, `test_tab.py` must end green. Where the spec (§9) authorizes it, a **mechanism** test coupled to the retired `list[dict]` representation is *re-expressed* against the SPARQL mechanism — that is supersession, not loosening. A **behavioural** test (asserting `NormalizedBase`/`tab:BaseFact` coords/`oracle_ok`/promotion) that needs editing is a supersession *defect* to investigate, not a test to loosen.
@@ -31,12 +31,12 @@ Copied verbatim from CLAUDE.md §8 (the neurosymbolic-first gate — a hard Glob
   - `vocab/queries/unpivot-inverse-valueset.rq` — grid → base facts for a *nameless* column pivot, measure columns detected by value-set membership (A2.1). [AXIOM]
   - `vocab/queries/unpivot-forward.rq` — base facts → reconstructed grid cells (re-pivot + stub echo). [AXIOM]
   - `vocab/queries/strip-aggregation-forward-sum.rq` — re-add each `sum` aggregate row/col via a sub-`SELECT (SUM(?v) AS ?t) … GROUP BY …`. [AXIOM]
-- `src/iladub/etkl/interpret.py` — thin executor: load a `.rq`, run it via rdflib over the union of the given graphs, return the constructed graph. [PYTHON-OK: engine glue]
+- `src/iladub/etkl/interpret.py` — thin executor: load a `.rq`, run it via rdflib over the union of the given graphs, return the constructed graph. [PROCEDURAL: engine glue]
 
 **Modify:**
 - `vocab/ontology/tab.ttl` — add owned recipe-serialization properties `tab:opTargetLabel`, `tab:opMember`, `tab:opValue` (needed so the `.rq` files can read strip/value-set params from RDF).
 - `src/iladub/etkl/reshape.py` — `_materialize_recipe` serializes the new props; `recover_base` → **retired**, replaced by `derive_base(g, t, recipe) -> Graph` (inverse CONSTRUCT); `certify` returns the derived projection graph as `base`; `emit_base_projection` takes the projection graph and merges it; `_named_pivot_recipe_and_base` emits its base via the value-set inverse CONSTRUCT; `certify`/`certify_with_proposals`/`emit_normalized_base` public behaviour unchanged.
-- `src/iladub/etkl/oracle.py` — `round_trip` runs the forward CONSTRUCTs via `interpret` (base is now the projection graph); `replay`/`_fmt`/`_FUNCS` → **deleted**; `_close`/`_isnum`/`_TOL` kept (PYTHON-OK compare).
+- `src/iladub/etkl/oracle.py` — `round_trip` runs the forward CONSTRUCTs via `interpret` (base is now the projection graph); `replay`/`_fmt`/`_FUNCS` → **deleted**; `_close`/`_isnum`/`_TOL` kept (PROCEDURAL compare).
 - `src/iladub/etkl/denormalization.py` — `emit_base_facts` re-backed onto `derive_base` (single CONSTRUCT path; public export + its two tests stay green).
 - `vocab/ontology/tab-hga-align.ttl` — confirm `tab:NormalizedBase rdfs:subClassOf hproj:Projection` carries the derived base (already present; verified in Task 6).
 - `vocab/ontology/tab-fno-align.ttl` — confirm the strip functions map to their F&O IRIs (already present; the forward-sum query references `fn:sum` semantics; verified in Task 6).
@@ -159,7 +159,7 @@ Create `src/iladub/etkl/interpret.py`:
 
 Loads a version-controlled SPARQL CONSTRUCT (.rq) from vocab/queries/ and runs it
 via rdflib over the union of the given graphs. This is the ONLY procedural piece of
-the transform, and it is PYTHON-OK engine glue: it invokes a standard SPARQL engine
+the transform, and it is PROCEDURAL engine glue: it invokes a standard SPARQL engine
 on a standard query. It contains NO transform logic and NO tuned constant — the
 transform lives entirely in the .rq files (AXIOM). Irreducible because SPARQL must be
 invoked from somewhere; the invocation carries no domain decision.
@@ -240,7 +240,7 @@ Expected: PASS (both tests). If `xsd:decimal(?v)` rejects a value, the failure i
 git add src/iladub/etkl/interpret.py vocab/queries/unpivot-inverse.rq tests/etkl/test_interpret.py
 git commit -m "feat(etkl): CONSTRUCT executor + unpivot-inverse.rq (promote prototype) [A/loop-one task 1]
 
-interpret.run — PYTHON-OK engine glue; the named-pivot inverse CONSTRUCT is AXIOM,
+interpret.run — PROCEDURAL engine glue; the named-pivot inverse CONSTRUCT is AXIOM,
 reading tab:opDimension/tab:opStub from the RDF recipe. No transform logic in Python.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -583,7 +583,7 @@ Create `vocab/queries/strip-aggregation-forward-sum.rq`. It runs over the repro 
 # SPARQL 1.1 SUM; the function is 'sum' (F&O fn:sum, per tab-fno-align.ttl). Standard SPARQL
 # cannot parameterize the aggregate operator by a bound variable, so 'sum' has its own .rq;
 # other functions ship their own file (mean/min/max/count); 'product' is the SPARQL-ceiling
-# case (no aggregate operator) -> justified PYTHON-OK if ever needed. Loop one only exercises sum.
+# case (no aggregate operator) -> justified PROCEDURAL if ever needed. Loop one only exercises sum.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 CONSTRUCT {
   ?cell a tab:ReproCell ; tab:reproRow ?rrow ; tab:reproCol ?rcol ; tab:reproText ?ttext .
@@ -637,7 +637,7 @@ A recipe is certified iff running the FORWARD reshape CONSTRUCTs over the derive
 (a hproj:Projection RDF graph) regenerates the original grid cell values exactly. The
 transform is AXIOM (standard SPARQL CONSTRUCT + SPARQL 1.1 aggregates in vocab/queries/);
 the ONLY Python here is the exact-equality compare (_close / _TOL), which is decidable
-arithmetic and irreducible (PYTHON-OK).
+arithmetic and irreducible (PROCEDURAL).
 """
 from __future__ import annotations
 
@@ -651,7 +651,7 @@ from .recipe import UnpivotOp, StripAggregationOp
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "vocab", "queries")
-_TOL = 1e-6                    # PYTHON-OK: decidable exact-equality tolerance for the compare,
+_TOL = 1e-6                    # PROCEDURAL: decidable exact-equality tolerance for the compare,
                               # NOT a transform tuning constant. It never enters the .rq files.
 
 
@@ -727,7 +727,7 @@ git add vocab/queries/unpivot-forward.rq vocab/queries/strip-aggregation-forward
 git commit -m "feat(etkl): forward CONSTRUCT pair + SPARQL round_trip; retire replay/_fmt [A/loop-one task 3]
 
 round_trip now reconstructs the grid via unpivot-forward.rq + strip-aggregation-forward-sum.rq
-(AXIOM) and exact-compares in Python (_close, PYTHON-OK). The Python interpreter
+(AXIOM) and exact-compares in Python (_close, PROCEDURAL). The Python interpreter
 (oracle.replay/_fmt/_FUNCS) is deleted; test_oracle re-expressed over the native-RDF base.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -1132,7 +1132,7 @@ Create `tests/etkl/test_transform_gate.py`:
 """Neurosymbolic-first gate (CLAUDE.md §8): the transform is AXIOM (SPARQL); no tuned
 constant or numeric tolerance may live in the .rq files or in interpret.py. The only
 numeric tolerance in the substrate is _TOL in oracle.py — the decidable exact-equality
-compare (PYTHON-OK), never a transform tuning knob."""
+compare (PROCEDURAL), never a transform tuning knob."""
 import os
 import re
 import glob

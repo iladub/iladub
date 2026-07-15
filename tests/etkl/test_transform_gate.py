@@ -1,7 +1,7 @@
 """Neurosymbolic-first gate (CLAUDE.md §8): the transform is AXIOM (SPARQL); no tuned
 constant or numeric tolerance may live in the .rq files or in interpret.py. The only
 numeric tolerance in the substrate is _TOL in oracle.py — the decidable exact-equality
-compare (PYTHON-OK), never a transform tuning knob."""
+compare (PROCEDURAL), never a transform tuning knob."""
 import os
 import re
 import glob

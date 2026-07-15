@@ -4,7 +4,7 @@
 # SPARQL 1.1 SUM; the function is 'sum' (F&O fn:sum, per tab-fno-align.ttl). Standard SPARQL
 # cannot parameterize the aggregate operator by a bound variable, so 'sum' has its own .rq;
 # other functions ship their own file (mean/min/max/count); 'product' is the SPARQL-ceiling
-# case (no aggregate operator) -> justified PYTHON-OK if ever needed. Loop one only exercises sum.
+# case (no aggregate operator) -> justified PROCEDURAL if ever needed. Loop one only exercises sum.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 CONSTRUCT {

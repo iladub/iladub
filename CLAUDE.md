@@ -101,12 +101,13 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
 7. **Only emit what the source supports.** Never fabricate resources/data to achieve
    "full coverage." Credibility over completeness.
 
-8. **Neurosymbolic-first — formal semantic code prevails over Python (the gate).**
+8. **Neurosymbolic-first — formal semantic code prevails over procedural code (the gate).**
    Reading a human-addressed document is a *neurosymbolic* process, not a procedural one.
    iladub's edge is *filling semantic gaps* (as `dec` did for decidability), never
-   hand-coding geometry around them. **No decision is implemented in procedural Python
-   until it has been classified and justified** — the default is semantic; Python must be
-   *earned*:
+   hand-coding geometry around them. **No decision is implemented in procedural code
+   until it has been classified and justified** — the default is semantic; procedural code
+   must be *earned* (Python is iladub's reference-implementation language — the class is
+   language-agnostic):
    - **AXIOM (default)** — recovery / transform / role / type / boundary decisions are
      *declarative*: a SHACL rule / SPARQL `SELECT`-`CONSTRUCT` / FnO IRI over an RDF
      evidence graph, consuming an existing ontology or filling a *named* gap with thin
@@ -116,15 +117,17 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
      proposing** under the assert/propose/promote epistemics (§3), **disposed by a
      semantic oracle** (tiling SHACL / reshape round-trip). *Never* a Python geometry
      heuristic with a tuned tolerance.
-   - **PYTHON-OK** — reserved for **raw extraction** (source → typed RDF facts) and
-     **decidable exact arithmetic**; each instance must state *in the code and the spec
-     why it is irreducible* to AXIOM or NEURAL.
-   Any procedural decision that isn't PYTHON-OK is a **defect**. A **tuned constant or
-   tolerance is prima facie evidence** the decision belongs in NEURAL/AXIOM, not Python.
+   - **PROCEDURAL** — reserved for irreducibly procedural computation: **raw extraction**
+     (source → typed RDF facts) and **decidable exact arithmetic**. The class is *procedural
+     code*, not a language — **Python in iladub's reference implementation**, TypeScript/.NET/
+     Rust/… in any other; each instance must state *in the code and the spec why it is
+     irreducible* to AXIOM or NEURAL.
+   Any procedural code that isn't a justified PROCEDURAL step is a **defect**. A **tuned constant
+   or tolerance is prima facie evidence** the decision belongs in NEURAL/AXIOM, not procedural code.
    Every spec/plan carries this gate as a hard Global Constraint; **reviewers enforce it**
    — a tuned geometric constant, or a Python heuristic answering a span/read/group/role
    question, is a *review failure* unless it is an oracle-disposed NEURAL proposal or a
-   justified PYTHON-OK. Exemplars already shipped: the **declarative transform substrate** —
+   justified PROCEDURAL step. Exemplars already shipped: the **declarative transform substrate** —
    the reshape recipe executed as fixed SPARQL `CONSTRUCT`s (`vocab/queries/*.rq`, run by
    `iladub.etkl.interpret.run`) reading their params from the RDF recipe, with the flat base a
    derived `hproj:Projection` and a forward-`CONSTRUCT` round-trip oracle; the *flagship AXIOM*

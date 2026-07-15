@@ -2,7 +2,8 @@
 
 Loads a version-controlled SPARQL CONSTRUCT (.rq) from vocab/queries/ and runs it
 via rdflib over the union of the given graphs. This is the ONLY procedural piece of
-the transform, and it is PYTHON-OK engine glue: it invokes a standard SPARQL engine
+the transform, and it is PROCEDURAL engine glue (Python — iladub's reference language):
+it invokes a standard SPARQL engine
 on a standard query. It contains NO transform logic and NO tuned constant — the
 transform lives entirely in the .rq files (AXIOM). Irreducible because SPARQL must be
 invoked from somewhere; the invocation carries no domain decision.

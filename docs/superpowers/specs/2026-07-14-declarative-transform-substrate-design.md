@@ -28,7 +28,7 @@ and the redundant-tiling-backstop deletion (C) are the queued follow-on slices.
 
 - **AXIOM:** the transform is SPARQL `CONSTRUCT` + SPARQL 1.1 aggregates, consuming standards (SPARQL,
   FnO function IRIs, `hproj:Projection`). No transform logic in Python; no tuned constant anywhere in it.
-- **PYTHON-OK (justified):** (1) invoking rdflib's SPARQL engine on the query files; (2) the exact-equality
+- **PROCEDURAL (justified; procedural code — Python here):** (1) invoking rdflib's SPARQL engine on the query files; (2) the exact-equality
   compare in the round-trip (`_close`, `_TOL=1e-6` — decidable arithmetic, irreducible); (3) `recover_recipe`'s
   procedural *search* that emits the declarative recipe (legitimately-procedural recovery — its **output** is an
   axiom). Each is irreducible to AXIOM/NEURAL and is stated as such in code + this spec.
@@ -79,14 +79,14 @@ op-type-and-direction — first-class declarative artifacts, not strings buried 
 | Unit | Responsibility | Gate |
 | --- | --- | --- |
 | `vocab/queries/*.rq` (create) | the fixed per-op `CONSTRUCT`s (unpivot/strip × inverse/forward), reading recipe params from RDF | AXIOM |
-| `src/iladub/etkl/interpret.py` (create) | thin executor: load a `.rq`, run it via rdflib over (source graph + recipe graph), return the constructed graph; ordered by `tab:opIndex` | PYTHON-OK (engine glue) |
-| `src/iladub/etkl/oracle.py` (modify) | `replay` → runs the forward CONSTRUCTs (via `interpret`) instead of Python; `round_trip` keeps its signature + the `_close` exact compare | AXIOM exec + PYTHON-OK compare |
+| `src/iladub/etkl/interpret.py` (create) | thin executor: load a `.rq`, run it via rdflib over (source graph + recipe graph), return the constructed graph; ordered by `tab:opIndex` | PROCEDURAL (engine glue) |
+| `src/iladub/etkl/oracle.py` (modify) | `replay` → runs the forward CONSTRUCTs (via `interpret`) instead of Python; `round_trip` keeps its signature + the `_close` exact compare | AXIOM exec + PROCEDURAL compare |
 | `src/iladub/etkl/reshape.py` (modify) | `emit_base_projection` → runs the inverse CONSTRUCTs; the emitted base is typed `hproj:Projection`; `certify`/`certify_with_proposals` signatures unchanged | AXIOM |
 | `vocab/ontology/tab-hga-align.ttl` (modify) | `tab:NormalizedBase rdfs:subClassOf hproj:Projection` already present — confirm the derived base carries it | alignment (HGA object-only) |
 | `vocab/ontology/tab-fno-align.ttl` (modify) | ensure the strip functions map to their F&O IRIs (used by the aggregate CONSTRUCT) | alignment |
 
 **Retired:** `oracle.replay` (Python), `emit_base_facts` (Python loop), `emit_base_projection`'s Python emission
-loop. **Kept as PYTHON-OK:** `recover_recipe`/`recover_base` (recovery search → declarative recipe),
+loop. **Kept as PROCEDURAL:** `recover_recipe`/`recover_base` (recovery search → declarative recipe),
 `verify_group`/`_close` (exact arithmetic).
 
 ## 5. Data flow
@@ -98,7 +98,7 @@ compiled tab: grid graph  +  recovered tab:ReshapeRecipe (recover_recipe — unc
    derived base  →  typed hproj:Projection (tab:NormalizedBase, prov:wasDerivedFrom t)   [not stored — a CONSTRUCT result]
       │
       ▼  round_trip: interpret.run(forward CONSTRUCTs) → reconstructed grid
-   exact-compare(reconstructed, grid_values(g,t))   [PYTHON-OK _close]  →  ok / residue
+   exact-compare(reconstructed, grid_values(g,t))   [PROCEDURAL _close]  →  ok / residue
       │
    ok → emit the projection ;  residue → escalate (unchanged disposition)
 ```
@@ -118,7 +118,7 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
 - **Round-trip oracle test:** a correct recipe round-trips; a corrupted base is rejected with residue (the
   existing anti-overfit assertions, now over SPARQL execution).
 - **Gate test:** assert no tuned constant enters the transform (the `.rq` files + `interpret.py` contain no
-  numeric tolerance; the only `_TOL` is in the equality compare, PYTHON-OK).
+  numeric tolerance; the only `_TOL` is in the equality compare, PROCEDURAL).
 
 ## 7. Source ownership / conventions
 
@@ -137,7 +137,7 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
   SPARQL 1.1 on the proven pattern — validated per-`.rq` in the plan's TDD.
 - **The SPARQL-ceiling rule (settled):** we use **standard SPARQL `CONSTRUCT` only — we do NOT extend SPARQL**.
   Where an op genuinely reaches the expressiveness limit of standard `CONSTRUCT`/aggregates, **substituting
-  Python for that specific piece is an acceptable, justified PYTHON-OK** (per §2 and CLAUDE.md §8 — "irreducible
+  Python for that specific piece is an acceptable, justified PROCEDURAL** (per §2 and CLAUDE.md §8 — "irreducible
   to AXIOM"): we prefer SPARQL and accept Python *at the ceiling*, rather than contorting or extending SPARQL to
   force it. Such a substitution ships with the standard why-irreducible note.
 - **A2.1's transpose/group-flatten ops are not yet built** (they were A1's deferred inner loops); this substrate
@@ -164,7 +164,7 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
 - **The unpivot inverse CONSTRUCT is prototype-validated** (2026-07-14, over the real `tab:` grid model,
   reading params from the RDF recipe → correct 8-fact base). Promote the probe to the first task's test.
 - **SPARQL-ceiling rule (§8):** standard SPARQL only; Python at the genuine expressiveness ceiling is justified
-  PYTHON-OK with a why-irreducible note.
+  PROCEDURAL with a why-irreducible note.
 
 **Resume pointer (updated 2026-07-15):** ✅ Loop one is **shipped to main**. Live: the `CONSTRUCT` interpreter
 (`interpret.run` + `vocab/queries/{unpivot-inverse,unpivot-inverse-valueset,unpivot-forward,strip-aggregation-forward-sum}.rq`),
