@@ -504,6 +504,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-worlds-derive-open-validate-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two worlds: derive open, validate closed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#propose-oracle-dispose" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -871,6 +882,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-worlds-derive-open-validate-closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two worlds: derive open, validate closed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#propose-oracle-dispose" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -958,7 +980,7 @@ language-agnostic — <strong>Python in iladub's reference implementation</stron
 <tr>
 <td><strong>AXIOM</strong> <em>(default)</em></td>
 <td>recovery / transform / role / type / boundary decisions</td>
-<td>a SHACL rule or a SPARQL <code>SELECT</code>/<code>CONSTRUCT</code> over an RDF evidence graph — consuming an existing ontology, or filling a <strong>named</strong> gap with thin owned vocabulary</td>
+<td>a SPARQL <code>SELECT</code>/<code>CONSTRUCT</code> (open-world <em>derivation</em>) or a SHACL constraint (closed-world <em>membrane</em>) over an RDF evidence graph — consuming an existing ontology, or filling a <strong>named</strong> gap with thin owned vocabulary. See <em><a href="#two-worlds-derive-open-validate-closed">Two worlds</a></em> below</td>
 </tr>
 <tr>
 <td><strong>NEURAL</strong></td>
@@ -976,6 +998,27 @@ language-agnostic — <strong>Python in iladub's reference implementation</stron
 NEURAL, not procedural code. This is enforced as a hard constraint in every design and review: a
 tuned geometric constant, or a procedural heuristic answering a span / read / group / role
 question, is a review failure unless it is an oracle-disposed proposal or a justified raw-extraction step.</p>
+<h2 id="two-worlds-derive-open-validate-closed">Two worlds: derive open, validate closed<a class="headerlink" href="#two-worlds-derive-open-validate-closed" title="Permanent link">&para;</a></h2>
+<p>AXIOM is not one thing — it splits by <em>world</em>, and the split is load-bearing.</p>
+<p><strong>Recovery is open-world.</strong> Reading a document <em>grows</em> the graph: it recovers a pivot, derives a
+base fact, assigns a role. This is monotonic and <strong>evidence-positive</strong> — a fact is asserted only
+when its support is <em>present</em>, never inferred from its <em>absence</em>. That is exactly iladub's cardinal
+rule (<em><a href="../assertion-proposition/">assert only what the source supports</a></em>), and it is why derivation
+belongs to <strong>SPARQL</strong> (<code>SELECT</code>/<code>CONSTRUCT</code>): an open-world query language that only ever adds what
+the evidence licenses.</p>
+<p><strong>Conformance is closed-world.</strong> The contract <em>membrane</em> decides what may cross into the clean
+holon — cardinality, closure, "every grounded node comes from a promotion decision." That is a
+<strong>closed world</strong>, and it belongs to <strong>SHACL</strong>, whose whole design is closed-world validation.</p>
+<p>The two never swap jobs. Using a closed-world rule to <em>derive</em> would be a category error: closed-world
+negation can conclude things from what is <em>missing</em> — precisely the "fill the gap by assumption" that
+iladub forbids. So: <strong>derive open (SPARQL), validate closed (SHACL).</strong> As the two standards evolve on
+diverging tracks — SPARQL toward open-world/federated querying, SHACL toward closed-world conformance —
+each iladub layer rides the language whose trajectory it actually wants.</p>
+<p>The reconciling idea is holonic: a <strong>holon is the closure boundary.</strong> Inside one table-holon the header
+structure is complete — you may count its nodes and require "exactly one spanning parent." Across the
+holon graph the world stays open — more documents, more evidence, always welcome. SPARQL delivers exactly
+this: <code>NOT EXISTS</code>/<code>COUNT</code> close <em>within</em> the matched holon while leaving the graph open everywhere else.
+Closed at the membrane, open across the graph.</p>
 <h2 id="propose-oracle-dispose">Propose → oracle → dispose<a class="headerlink" href="#propose-oracle-dispose" title="Permanent link">&para;</a></h2>
 <p>The NEURAL path is where iladub differs most sharply from an LLM-in-a-loop pipeline. A model's
 confidence never asserts anything. The model <em>proposes</em> a candidate; a <strong>semantic oracle</strong> — a
