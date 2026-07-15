@@ -105,3 +105,24 @@ def test_name_levels_marks_the_naming_parent():
         # reference naming: a level whose emitted dim carries a name means the parent named it
         ref_named = {(nm, lvl) for (ax, lvl, nm, vals) in _ref_axis_dimensions(g, t, axis) if nm is not None}
         assert marked == ref_named, "%s: marks=%s ref=%s" % (key, marked, ref_named)
+
+
+def _pipeline_dims(g, t):
+    """Run pass1 + pass2 and read PivotedDimension RDF into (axis, level, name, frozenset(values))."""
+    marks = _run("name-levels.rq", g)
+    out = _run("recover-dimensions.rq", g, marks)
+    dims = []
+    for d in out.subjects(RDF.type, TAB.PivotedDimension):
+        axis = str(out.value(d, TAB.onAxis)); lvl = int(out.value(d, TAB.atLevel))
+        nm = out.value(d, TAB.dimensionName); nm = str(nm) if nm is not None else None
+        vals = frozenset(str(v) for v in out.objects(d, TAB.hasDimensionValue))
+        dims.append((axis, lvl, nm, vals))
+    return sorted(dims, key=lambda z: (z[0], z[1]))
+
+
+def test_pipeline_matches_axis_dimensions_semantics():
+    for key, (axis, g, t) in _battery().items():
+        ref = sorted(((ax, lvl, nm, frozenset(vals)) for (ax, lvl, nm, vals) in _ref_axis_dimensions(g, t, axis)),
+                     key=lambda z: (z[0], z[1]))
+        got = _pipeline_dims(g, t)
+        assert got == ref, "%s: got=%s ref=%s" % (key, got, ref)
