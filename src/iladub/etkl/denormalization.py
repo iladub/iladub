@@ -162,24 +162,13 @@ def _value_matrix(g, t):
 
 
 def _operand_exclusions(g, t):
-    """Columns that must not be aggregation OPERANDS (they remain candidates).
-    In a PIVOTED table (some column sits under a spanning parent, i.e. max header
-    level >= 1), the single-leaf level-0 columns are stubs/totals, not measures, so a
-    numeric stub (e.g. a Year column) must not corrupt a column-total's operand sum.
-    In a FLAT table (all columns level-0) nothing is excluded — text stubs are already
-    absent from the numeric value matrix, so behaviour is unchanged (and header-less
-    matrix graphs, having no coversColumn headers, are also unchanged)."""
-    col_max = {}
-    has_deep = False
-    for c in g.objects(t, TAB.hasLeafColumn):
-        levels = [int(g.value(h, TAB.headerLevel)) for h in g.subjects(TAB.coversColumn, c)]
-        m = max(levels) if levels else None
-        col_max[c] = m
-        if m is not None and m >= 1:
-            has_deep = True
-    if not has_deep:
-        return set()
-    return {c for c, m in col_max.items() if m == 0}
+    """Columns barred as aggregation OPERANDS (level-0 single-leaf stubs/totals in a pivoted
+    table), derived by operand-exclusions.rq. Signature/return unchanged. The CONSTRUCT is
+    NOT table-scoped (it marks columns across the whole graph), so intersect with `t`'s own
+    leaf columns to preserve the original per-t contract when a graph holds multiple tables."""
+    marks = interpret.run(os.path.join(_QUERIES, "operand-exclusions.rq"), g)
+    barred = set(marks.subjects(TAB.barredAsOperand, Literal(True)))
+    return barred & set(g.objects(t, TAB.hasLeafColumn))
 
 
 def detect_aggregations(g, t):

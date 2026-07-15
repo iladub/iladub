@@ -163,3 +163,16 @@ def test_pipeline_handles_combined_row_and_column_hierarchies():
                  key=lambda z: (z[0], z[1]))
     got = _pipeline_dims(g, t)
     assert got == ref, "combined: got=%s ref=%s" % (got, ref)
+
+
+def test_operand_exclusions_matches_reference():
+    from iladub.etkl.denormalization import _operand_exclusions
+    # pivoted (region, column): Year (level-0 single) is barred; N/S/E/W are measures (not barred)
+    axis, g, t = _battery()["column-region"]
+    excl = _operand_exclusions(g, t)
+    # the Year column EX.y is the level-0 single stub -> barred; measure leaves are not
+    assert EX.y in excl
+    assert EX.n not in excl and EX.s not in excl
+    # flat table: nothing barred
+    axis, gf, tf = _battery()["column-flat"]
+    assert _operand_exclusions(gf, tf) == set()
