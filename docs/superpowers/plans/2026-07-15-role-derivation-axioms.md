@@ -297,9 +297,11 @@ WHERE {
   VALUES (?cp ?axis) { (tab:coversColumn "column") (tab:coversRow "row") }
   ?T tab:hasHeaderNode ?vnode . ?vnode tab:headerLevel ?L ; ?cp ?vl ; tab:hasLabel [ tab:cellText ?vlabel ] .
   BIND(IRI(CONCAT(STR(?T), "-dim-", ?axis, "-", STR(?L))) AS ?dim)
-  # L is not a naming level  <=>  no parent names level L+1
-  FILTER NOT EXISTS { ?anyp tab:namesLevel ?L1 . FILTER(?L1 = ?L + 1) }
-  OPTIONAL { ?p tab:namesLevel ?L ; tab:hasLabel [ tab:cellText ?pname ] . }
+  # L is not a naming level  <=>  no SAME-TABLE, SAME-AXIS parent names level L+1.
+  # (The namesLevel marks carry no table/axis, so re-join ?anyp to the current ?T + ?cp — else a
+  #  row-axis mark would suppress a column-axis dimension in a crosstab. Task-2 review fix.)
+  FILTER NOT EXISTS { ?anyp tab:namesLevel ?L1 . ?T tab:hasHeaderNode ?anyp . ?anyp ?cp ?anyleaf . FILTER(?L1 = ?L + 1) }
+  OPTIONAL { ?p tab:namesLevel ?L ; tab:hasLabel [ tab:cellText ?pname ] . ?T tab:hasHeaderNode ?p . ?p ?cp ?pleaf . }
 }
 ```
 
