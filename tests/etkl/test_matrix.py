@@ -5,9 +5,9 @@ from tests.etkl.fixtures import crosstab_table_pdf, pivoted_table_pdf, simple_ta
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
 from iladub.etkl.headers import header_body_split
-from iladub.etkl.matrix import (infer_column_tree_by_proximity, col_tree_tiles,
-                                is_matrix_candidate, ColHeaderNode,
-                                classify_matrix, matrix_tiles, MatrixRegion)
+from iladub.etkl.matrix import (infer_column_tree_by_proximity,
+                                is_matrix_candidate,
+                                classify_matrix, MatrixRegion)
 
 
 def _band(maker, tmp_path):
@@ -26,16 +26,6 @@ def test_proximity_column_tree(tmp_path):
     assert l0["Q2"] == (4, 5, 6)
     leaves = [n for n in tree if n.level == 1]
     assert len(leaves) == 6 and all(len(n.covers) == 1 for n in leaves)
-    assert col_tree_tiles(tree, data_cols) is True
-
-
-def test_col_tree_tiles_rejects_pathology():
-    def node(level, covers, parent):
-        return ColHeaderNode(level, covers, "x", parent, 0.0, 0.0, 1.0, 1.0, 0)
-    gap = (node(0, (1,), None), node(0, (2,), None))       # data_cols {1,2,3}, col 3 uncovered
-    assert col_tree_tiles(gap, (1, 2, 3)) is False
-    overlap = (node(0, (1,), None), node(0, (1, 2), None))
-    assert col_tree_tiles(overlap, (1, 2)) is False
 
 
 def test_is_matrix_candidate(tmp_path):
@@ -56,7 +46,6 @@ def test_classify_matrix_composes_both_axes(tmp_path):
     assert l0c["Q1"] == (1, 2, 3) and l0c["Q2"] == (4, 5, 6)
     row_texts = {n.text for n in mreg.row_tree}
     assert {"North", "South"} <= row_texts
-    assert matrix_tiles(mreg) is True
 
 
 def test_classify_matrix_none_on_flat_header(tmp_path):

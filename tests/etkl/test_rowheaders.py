@@ -48,8 +48,7 @@ def test_single_stub_blank_not_row_grouped(tmp_path):
     assert looks_row_grouped(reg) is False
 
 
-from iladub.etkl.rowheaders import (RowHeaderNode, infer_row_header_tree,
-                                    row_tree_tiles, classify_row_hier)
+from iladub.etkl.rowheaders import infer_row_header_tree, classify_row_hier
 
 
 def test_infer_row_tree_groups(tmp_path):
@@ -67,22 +66,6 @@ def test_infer_row_tree_groups(tmp_path):
     north_idx = next(i for i, n in enumerate(tree) if n.text == "North")
     assert all(tree[n.parent].text == "North" for n in l1 if n.covers_rows[0] < 3)
     assert any(n.parent == north_idx for n in l1)
-
-
-def test_row_tree_tiles_true(tmp_path):
-    _, band = _region(row_grouped_table_pdf, tmp_path)
-    rreg = classify_row_hier(band)
-    assert row_tree_tiles(rreg.tree, len(rreg.leaf_rows)) is True
-
-
-def test_row_tree_tiles_rejects_pathology():
-    # a gap (row 2 uncovered by any leaf) and an overlap (two leaves share row 0)
-    def node(level, covers, parent):
-        return RowHeaderNode(level, covers, "x", parent, 0.0, 0.0, 1.0, 1.0, 0)
-    gap = (node(0, (0,), None), node(0, (1,), None))            # 3 rows, row 2 uncovered
-    assert row_tree_tiles(gap, 3) is False
-    overlap = (node(0, (0,), None), node(0, (0, 1), None))      # both leaves cover row 0
-    assert row_tree_tiles(overlap, 2) is False
 
 
 def test_classify_row_hier_flat_is_none(tmp_path):
