@@ -1,7 +1,10 @@
 # ET(K)L Declarative Transform Substrate (Neurosymbolic Loop One) — Design
 
 **Date:** 2026-07-14
-**Status:** Design approved (architecture + prototype-confirmed feasibility); ready for implementation plan.
+**Status:** ✅ **SHIPPED to main 2026-07-15** (merged `--no-ff`, pushed to `origin/main`). Implemented via
+subagent-driven development (6 tasks, all task-reviews + final whole-branch review clean); plan at
+`docs/superpowers/plans/2026-07-14-declarative-transform-substrate.md`; full suite 350 passed / 5 skipped.
+(Original status: design approved, prototype-confirmed feasibility — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (neurosymbolic-first gate) + `docs/superpowers/specs/2026-07-14-recovery-layer-neurosymbolic-audit.md` (reframe #1, the single biggest missed-semantic opportunity).
 **Supersedes (in execution, not behaviour):** `oracle.replay` and the Python bodies of `emit_base_facts`/`emit_base_projection`. A1/A2.1/B1.1 shipped on `main`; their tests are the behavioural spec this must keep green.
 
@@ -13,7 +16,7 @@ The reshape recipe (`tab:ReshapeRecipe` / `tab:UnpivotOp` / `tab:StripAggregatio
 but has **no declarative interpreter** — `oracle.replay` executes it in procedural Python, and the reverse
 recovery is a *second* Python codepath kept in lockstep by hand (the neo-legacy the manifesto forbids), with
 correctness riding on `_fmt`'s float-formatting matching the source. The A1 design **already specified** the
-reshape as SPARQL `CONSTRUCT` + SPARQL 1.1 aggregates at the holon boundary; it was never built.
+reshape as SPARQL `CONSTRUCT` + SPARQL 1.1 aggregates at the holon boundary; it was not built until loop one (this spec, shipped 2026-07-15).
 
 Loop one builds it: **each recipe op-type gets one fixed SPARQL `CONSTRUCT` that reads its parameters from the
 RDF recipe graph** and executes the transform. The recipe becomes an actually-executable declarative artifact
@@ -163,7 +166,12 @@ under them is that execution is SPARQL, not Python. B1.1 is untouched (headers, 
 - **SPARQL-ceiling rule (§8):** standard SPARQL only; Python at the genuine expressiveness ceiling is justified
   PYTHON-OK with a why-irreducible note.
 
-**Resume pointer:** design + gate (CLAUDE.md §8) + audit + this spec are committed on branch
-`etkl-neurosymbolic-substrate`. **Next action:** invoke `superpowers:writing-plans` on this spec (scope A,
-decision B) to produce the task-by-task implementation plan; then subagent-driven execution. B (role-axiom
-lifts) and C (backstop deletion) are the queued follow-on slices.
+**Resume pointer (updated 2026-07-15):** ✅ Loop one is **shipped to main**. Live: the `CONSTRUCT` interpreter
+(`interpret.run` + `vocab/queries/{unpivot-inverse,unpivot-inverse-valueset,unpivot-forward,strip-aggregation-forward-sum}.rq`),
+the native-RDF `hproj:Projection` base (decision B), the SPARQL round-trip oracle, and the gate test. Retired: the three
+Python twins (`oracle.replay`/`_fmt`/`_FUNCS`, `reshape.recover_base`, `denormalization.emit_base_facts`'s loop — the last
+re-backed onto `reshape.derive_base`). **Next slices (queued, both AXIOM, both extend this substrate):** **B** —
+role/type/boundary axiom-lifts (transpose, header/body split, dim-name-vs-values, stub-vs-measure → SHACL/SPARQL); **C** —
+delete the redundant Python tiling backstops. Then **loop two** — the NEURAL span-perception grammar. **Deferred within loop
+one (all fail-safe, documented):** multi-strip `?op2` correlation in `strip-aggregation-forward-sum.rq` (single-strip-only,
+doc-fenced), gate `_strip_comments` hardening, and value-set inverse aggregate-row exclusion (A2.1 nameless scope).

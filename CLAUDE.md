@@ -124,7 +124,12 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    Every spec/plan carries this gate as a hard Global Constraint; **reviewers enforce it**
    — a tuned geometric constant, or a Python heuristic answering a span/read/group/role
    question, is a *review failure* unless it is an oracle-disposed NEURAL proposal or a
-   justified PYTHON-OK. Exemplars already shipped: `reshape.certify_with_proposals` (A2.1)
+   justified PYTHON-OK. Exemplars already shipped: the **declarative transform substrate** —
+   the reshape recipe executed as fixed SPARQL `CONSTRUCT`s (`vocab/queries/*.rq`, run by
+   `iladub.etkl.interpret.run`) reading their params from the RDF recipe, with the flat base a
+   derived `hproj:Projection` and a forward-`CONSTRUCT` round-trip oracle; the *flagship AXIOM*
+   case, gate-enforced by `tests/etkl/test_transform_gate.py` (neurosymbolic loop one, shipped
+   2026-07-15) — plus `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote)
    and `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)

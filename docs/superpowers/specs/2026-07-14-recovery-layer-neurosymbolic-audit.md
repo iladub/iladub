@@ -7,6 +7,12 @@ semantic code prevails over Python (CLAUDE.md §8); fill semantic gaps rather th
 them.* This is the evidence base for the neurosymbolic redesign (loop one: the declarative
 transform substrate; loop two: the visual-encoding perception grammar).
 
+> **Status update (2026-07-15):** the highest-value reframe below — **#1, reshape *execution* → SPARQL
+> `CONSTRUCT` (AXIOM)** — is **SHIPPED to main** as the declarative transform substrate (loop one). This
+> document remains the point-in-time map of the *whole* layer; the other ranked reframes (#2 span-perception
+> NEURAL, #3 boundary/segmentation, #4 role axiom-lifts, #5 kind-routing + backstop deletion) are the queued
+> follow-on slices (B, C, then loop two). Read it as the audit-as-of-2026-07-14, not as current state.
+
 **Classification legend:**
 - **AXIOM** — should be declarative: a SHACL rule / SPARQL `SELECT`-`CONSTRUCT` over an RDF evidence graph.
 - **NEURAL** — genuinely perceptual, underdetermined symbolically → GenAI-via-BAML *proposes* under
