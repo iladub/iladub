@@ -371,6 +371,11 @@ def _read_dimensions(dimgraph, g, t):
     (by IRI) per label — so the dataclass is reproduced exactly."""
     dims = []
     for dn in dimgraph.subjects(RDF.type, TAB.PivotedDimension):
+        if not str(dn).startswith(str(t) + "-dim-"):
+            continue   # scope to THIS table — dim IRIs are keyed by table; the `-dim-` separator
+                       # sits right after the full table IRI, so the prefix is collision-safe.
+                       # (Final-review fix: the graph may hold many table-holons; recover_dimensions(g,t)
+                       #  must return only t's dims, like the retired _axis_dimensions did.)
         axis = str(dimgraph.value(dn, TAB.onAxis))
         level = int(dimgraph.value(dn, TAB.atLevel))
         name = dimgraph.value(dn, TAB.dimensionName)
