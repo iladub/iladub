@@ -1,5 +1,5 @@
 import pytest
-from rdflib import Graph, Namespace, URIRef, Literal, RDF
+from rdflib import Graph, Namespace, Literal, RDF
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 EX = Namespace("https://example.org/d#")
@@ -33,7 +33,14 @@ def _battery(axis):
                        EX.h3: (1, EX.h0, [EX.c3])}, axis)
     refine = _region({EX.h0: (0, None, [EX.c1, EX.c2]),                                       # parent misses c3
                       EX.h1: (1, EX.h0, [EX.c1]), EX.h2: (1, EX.h0, [EX.c2]), EX.h3: (1, EX.h0, [EX.c3])}, axis)
-    return {"well": (well, True), "gap": (gap, False), "overlap": (overlap, False), "refine": (refine, False)}
+    # ambiguous-access: c2 is covered ONLY by the non-leaf parent h0 (no leaf-header of its own).
+    # All six coverage/overlap/refinement invariants PASS (h0 covers c1,c2,c3; h1,h2 are leaves
+    # refining h0 without overlap), yet no leaf-header partitions c2 -> Unambiguous(Row)AccessShape
+    # must reject. The retired exact-partition backstop rejected this; the 6-shape gate wrongly accepts.
+    ambiguous = _region({EX.h0: (0, None, [EX.c1, EX.c2, EX.c3]),
+                         EX.h1: (1, EX.h0, [EX.c1]), EX.h2: (1, EX.h0, [EX.c3])}, axis)         # c2: parent-only
+    return {"well": (well, True), "gap": (gap, False), "overlap": (overlap, False),
+            "refine": (refine, False), "ambiguous": (ambiguous, False)}
 
 
 def test_region_tiles_matches_backstop_semantics():

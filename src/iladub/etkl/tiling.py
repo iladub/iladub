@@ -15,12 +15,15 @@ from rdflib import Graph, Namespace
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
 _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape,
-                      TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape]
+                      TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape,
+                      TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape]
 
 
 def _build_tiling_shapes():
-    """The six tiling shapes extracted from the single tab-shapes.ttl as CBDs (+ tab:prefixes,
-    which the sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file."""
+    """The eight tiling shapes extracted from the single tab-shapes.ttl as CBDs (+ tab:prefixes,
+    which the sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file.
+    Includes Unambiguous(Row)AccessShape: exactly one LEAF header per column/row — the
+    leaf-partition invariant the retired exact-partition Python backstops enforced."""
     full = Graph().parse(os.path.join(_VOCAB, "shapes", "tab-shapes.ttl"), format="turtle")
     sub = Graph()
     for s in _TILING_SHAPE_IRIS + [TAB.prefixes]:
@@ -33,8 +36,9 @@ _ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle
 
 
 def region_tiles(graph):
-    """True iff `graph` (one candidate region's RDF) conforms to the six tiling invariants
-    (coverage / no-overlap / refinement, both axes). PROCEDURAL glue over the AXIOM shapes."""
+    """True iff `graph` (one candidate region's RDF) conforms to the eight tiling invariants
+    (coverage / no-overlap / refinement / unambiguous-leaf-access, both axes). PROCEDURAL
+    glue over the AXIOM shapes."""
     from pyshacl import validate
     conforms, _, _ = validate(graph, shacl_graph=_TILING_SHAPES, ont_graph=_ONT,
                               inference="rdfs", advanced=True)
