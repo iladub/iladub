@@ -124,8 +124,14 @@ from rdflib import Graph, Namespace
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
+# Eight shapes: Coverage/NoOverlap/Refinement + row mirrors, PLUS the two Unambiguous shapes.
+# The retired backstops checked EXACT leaf-partition, which implies "exactly one LEAF header per
+# column/row" — i.e. UnambiguousAccessShape. Dropping it (final-review Critical) let a parent-only-
+# covered column pass the gate, merge, and crash the whole compile at final _validate. All eight
+# already exist in tab-shapes.ttl (pure reuse).
 _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape,
-                      TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape]
+                      TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape,
+                      TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape]
 
 
 def _build_tiling_shapes():
