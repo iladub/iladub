@@ -6,17 +6,21 @@ round-trip oracle must certify before any NormalizedBase projection is emitted.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
-from rdflib import RDF, BNode, Literal, Namespace, URIRef
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
 from . import denormalization as dn
+from . import interpret
 from .oracle import OracleVerdict, round_trip
 from .recipe import UnpivotOp, StripAggregationOp, Recipe, col_leaf_label, row_label, grid_values
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
+
+_QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
 
 
 def _leaf_label_level0(g, leaf, covers_pred):
@@ -77,47 +81,26 @@ def recover_recipe(g, t):
     return Recipe(tuple(ops))
 
 
-def recover_base(g, t, recipe):
-    """The flat base rows in oracle-ready dict form: one per (base data row x pivoted
-    measure column). Keys = each unpivot dimension + stub; plus '__measure__'."""
-    dims = dn.recover_dimensions(g, t)
-    ev = dn.detect_aggregations(g, t)
-    col_pivots = [d for d in dims if d.axis == "column" and d.name and len(d.values) > 1]
-    pivot_names = {d.name for d in col_pivots}
-    stubs = _stub_col_names(g, t, exclude=ev.agg_cols)
-    stub = stubs[0] if stubs else None
-    measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn)
-                    if _leaf_label_level0(g, c, TAB.coversColumn) in pivot_names
-                    and c not in ev.agg_cols]
-    base_rows = [r for r in g.objects(t, TAB.hasLeafRow) if r not in ev.agg_rows]
-    agg_col_labels = {col_leaf_label(g, c) for c in ev.agg_cols}
-    out = []
-    for r in base_rows:
-        rlab = row_label(g, t, r, agg_col_labels)
-        for c in measure_cols:
-            e = dn._entry(g, t, r, c)
-            if e is None:
-                continue
-            v = dn._num(str(g.value(e, TAB.cellText)))
-            if v is None:
-                continue
-            row = {"__measure__": v}
-            if stub is not None:
-                row[stub] = rlab
-            for d in col_pivots:
-                row[d.name] = col_leaf_label(g, c)
-            out.append(row)
-    return out
+def derive_base(g, t, recipe):
+    """The derived flat base as a native-RDF hproj:Projection graph: run the inverse
+    reshape CONSTRUCT (vocab/queries/unpivot-inverse.rq) over the source grid + the
+    materialized recipe. Returns a graph of tab:BaseFact nodes (measure + coordinates).
+    Replaces the retired Python recover_base/emit_base_facts twin. AXIOM (SPARQL);
+    the only Python is interpret engine-glue + recipe materialization."""
+    recipe_graph = Graph()
+    _materialize_recipe(recipe_graph, t, recipe)
+    return interpret.run(os.path.join(_QUERIES, "unpivot-inverse.rq"), g, recipe_graph)
 
 
 def certify(g, t):
-    """Recover recipe + base and run the round-trip oracle. Returns (recipe, verdict, base).
-    A table with no pivoted base to invert (base == []) is NOT a reproduction failure: it is
-    simply out of A1's base-emitting scope, so it returns a clean ok verdict with empty residue
-    (nothing is emitted downstream, because emit_normalized_base also guards on empty base)."""
+    """Recover recipe + derive the base (native-RDF projection) and run the round-trip
+    oracle. Returns (recipe, verdict, base_graph). A table with no pivoted base to invert
+    (empty base graph) is NOT a reproduction failure: it is out of A1's base-emitting
+    scope, so it returns a clean ok verdict — nothing is emitted downstream (emit guards on
+    an empty base)."""
     recipe = recover_recipe(g, t)
-    base = recover_base(g, t, recipe)
-    if not base:
+    base = derive_base(g, t, recipe)
+    if len(list(base.subjects(RDF.type, TAB.BaseFact))) == 0:
         return recipe, OracleVerdict(True, ()), base
     verdict = round_trip(grid_values(g, t, _agg_col_labels(recipe)), base, recipe)
     return recipe, verdict, base
@@ -141,36 +124,33 @@ def _materialize_recipe(g, t, recipe):
             g.add((ou, RDF.type, TAB.StripAggregationOp))
             g.add((ou, TAB.opAxis, Literal(op.axis)))
             g.add((ou, TAB.opFunction, Literal(op.function)))
+            g.add((ou, TAB.opTargetLabel, Literal(op.target_label)))
+            for m in op.member_labels:
+                g.add((ou, TAB.opMember, Literal(m)))
     return ru
 
 
 def emit_base_projection(g, t, recipe, base):
-    """Emit the derived NormalizedBase projection + its base facts from a validated
-    (recipe, base). Shared by A1 (emit_normalized_base) and A2 (certify_with_proposals)."""
+    """Emit the derived NormalizedBase projection from a validated (recipe, base graph):
+    merge the derived base facts into g and wrap them with the NormalizedBase node.
+    `base` is the projection graph from derive_base. Shared by A1 (emit_normalized_base)
+    and A2 (certify_with_proposals)."""
     ru = _materialize_recipe(g, t, recipe)
     nb = URIRef("%s-normbase" % t)
     g.add((nb, RDF.type, TAB.NormalizedBase))
     g.add((nb, TAB.derivedByRecipe, ru))
     g.add((nb, PROV.wasDerivedFrom, t))
-    for i, row in enumerate(base):
-        bf = URIRef("%s-fact-%d" % (t, i))
-        g.add((bf, RDF.type, TAB.BaseFact))
+    for triple in base:
+        g.add(triple)
+    for bf in base.subjects(RDF.type, TAB.BaseFact):
         g.add((nb, TAB.hasBaseFact, bf))
-        g.add((bf, TAB.measureValue, Literal(round(row["__measure__"], 6), datatype=XSD.decimal)))
-        for k, v in row.items():
-            if k == "__measure__":
-                continue
-            co = BNode()
-            g.add((bf, TAB.atDimensionValue, co))
-            g.add((co, TAB.dimensionName, Literal(k)))
-            g.add((co, TAB.value, Literal(v)))
     return nb
 
 
 def emit_normalized_base(g, t):
     """A1: if the deterministic recipe round-trips, emit the derived projection; else None."""
     recipe, verdict, base = certify(g, t)
-    if not verdict.ok or not base:
+    if not verdict.ok or len(list(base.subjects(RDF.type, TAB.BaseFact))) == 0:
         return None
     return emit_base_projection(g, t, recipe, base)
 
@@ -189,39 +169,30 @@ def _nameless_col_pivots(g, t):
 
 
 def _named_pivot_recipe_and_base(g, t, dim, name):
-    """Build (recipe, base) for a nameless column pivot given a proposed name. Measure
-    columns are identified by VALUE-SET membership (leaf label in dim.values) — the
-    nameless analogue of A1's level-0-label detection. The name enters ONLY the recipe
-    and the base coordinates (never the source graph).
+    """Build (recipe, base_graph) for a nameless column pivot given a proposed name. Measure
+    columns are identified by VALUE-SET membership (leaf label in dim.values), expressed in the
+    inverse CONSTRUCT via tab:opValue. The name enters ONLY the recipe and the base coordinates.
 
-    Returns (recipe, []) when the pivot is ragged (any measure cell missing) — a ragged
-    pivot cannot be cleanly inverted, and the empty base signals non-invertibility to
+    Returns (recipe, empty graph) when the pivot is ragged (any measure cell missing): a ragged
+    pivot cannot be cleanly inverted, and the empty projection signals non-invertibility to
     certify_with_proposals so the oracle can flag it."""
     valset = set(dim.values)
     measure_cols = [c for c in g.objects(t, TAB.hasLeafColumn) if col_leaf_label(g, c) in valset]
-    stub = _first_stub_name(g, t, valset)                 # first level-0 non-value column
+    stub = _first_stub_name(g, t, valset)
     recipe = Recipe((UnpivotOp(dimension=name, stub=stub, axis="column"),))
-    # Rectangularity check: every (row × measure_col) cell must be present
+    # Rectangularity: every (row x measure_col) cell must be present, else non-invertible.
     all_rows = list(g.objects(t, TAB.hasLeafRow))
     for r in all_rows:
         for c in measure_cols:
             if dn._entry(g, t, r, c) is None:
-                return recipe, []   # ragged → can't invert
-    base = []
-    for r in all_rows:
-        rlab = row_label(g, t, r)
-        for c in measure_cols:
-            e = dn._entry(g, t, r, c)
-            if e is None:
-                continue
-            v = dn._num(str(g.value(e, TAB.cellText)))
-            if v is None:
-                continue
-            row = {"__measure__": v}
-            if stub is not None:
-                row[stub] = rlab
-            row[name] = col_leaf_label(g, c)
-            base.append(row)
+                return recipe, Graph()                       # ragged -> empty projection
+    # materialize the recipe + the value set, then run the value-set inverse CONSTRUCT
+    recipe_graph = Graph()
+    ru = _materialize_recipe(recipe_graph, t, recipe)
+    op = next(recipe_graph.objects(ru, TAB.hasOperation))
+    for v in dim.values:
+        recipe_graph.add((op, TAB.opValue, Literal(v)))
+    base = interpret.run(os.path.join(_QUERIES, "unpivot-inverse-valueset.rq"), g, recipe_graph)
     return recipe, base
 
 
@@ -238,9 +209,14 @@ def certify_with_proposals(g, t, proposer):
     if proposal is None:
         return ProposalOutcome(None, (), True, ())     # declined → escalate, nothing asserted
     recipe, base = _named_pivot_recipe_and_base(g, t, dim, proposal.name)
+    empty = len(list(base.subjects(RDF.type, TAB.BaseFact))) == 0
+    # Run the oracle even on an empty projection: a ragged pivot yields an empty base, so the
+    # round-trip reproduces nothing against a non-empty grid and reports it as non-invertible
+    # (ok=False). This is the docstring's "so the oracle can flag it"; the `empty` guard below
+    # is a belt-and-braces escalation for the degenerate empty-grid case.
     verdict = round_trip(grid_values(g, t), base, recipe)
-    if not verdict.ok or not base:
-        return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible → escalate
+    if not verdict.ok or empty:
+        return ProposalOutcome(None, (), verdict.ok, verdict.residue)   # not invertible -> escalate
     nb = emit_base_projection(g, t, recipe, base)
     from .promote import emit_promotion
     pd = emit_promotion(g, t, nb, proposal.name, list(dim.values), proposal)

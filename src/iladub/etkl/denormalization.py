@@ -291,39 +291,16 @@ def _add_coordinate(g, bf, name, value):
 
 
 def emit_base_facts(g, t):
-    """Invert the report to 3NF base facts: unpivot the pivoted column dimension(s) and
-    strip the aggregations. Returns the tab:BaseFact uris. Empty if there is no pivoted
-    column dimension to unwind."""
-    dims = recover_dimensions(g, t)
-    ev = detect_aggregations(g, t)
-    col_pivots = [d for d in dims if d.axis == "column" and d.name and len(d.values) > 1]
-    if not col_pivots:
-        return []
-    pivot_names = {d.name for d in col_pivots}
-    leaf_cols = list(g.objects(t, TAB.hasLeafColumn))
-    measure_cols = [c for c in leaf_cols
-                    if _col_label_at_level(g, c, 0) in pivot_names and c not in ev.agg_cols]
-    stub_cols = [c for c in leaf_cols if c not in measure_cols and c not in ev.agg_cols]
-    base_rows = [r for r in g.objects(t, TAB.hasLeafRow) if r not in ev.agg_rows]
-    facts = []
-    for row in base_rows:
-        for col in measure_cols:
-            e = _entry(g, t, row, col)
-            if e is None:
-                continue
-            v = _num(str(g.value(e, TAB.cellText)))
-            if v is None:
-                continue
-            bf = URIRef("%s-fact-%s-%s" % (t, str(row).rsplit('-', 1)[-1], str(col).rsplit('-', 1)[-1]))
-            g.add((bf, RDF.type, TAB.BaseFact))
-            g.add((bf, TAB.measureValue, Literal(round(v, 6), datatype=XSD.decimal)))
-            for d in col_pivots:                    # column coordinate: this column's value on each pivot dim
-                _add_coordinate(g, bf, d.name, _col_label_at_level(g, col, d.level))
-            for sc in stub_cols:                    # row coordinate: each stub's header name + this row's entry
-                se = _entry(g, t, row, sc)
-                if se is not None:
-                    _add_coordinate(g, bf, _col_label_at_level(g, sc, 0), str(g.value(se, TAB.cellText)))
-            facts.append(bf)
+    """Invert the report to 3NF base facts via the declarative inverse CONSTRUCT: recover the
+    recipe, derive the base projection, merge it into g, and return the tab:BaseFact uris.
+    Empty if there is no pivoted column dimension to unwind. (Re-backed onto reshape.derive_base
+    — the single SPARQL path; the old nested-g.add loop is retired.)"""
+    from . import reshape
+    recipe = reshape.recover_recipe(g, t)
+    base = reshape.derive_base(g, t, recipe)
+    facts = list(base.subjects(RDF.type, TAB.BaseFact))
+    for triple in base:
+        g.add(triple)
     return facts
 
 

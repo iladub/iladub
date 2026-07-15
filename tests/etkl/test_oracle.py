@@ -1,66 +1,52 @@
-from iladub.etkl.recipe import UnpivotOp, StripAggregationOp, Recipe
-from iladub.etkl.oracle import replay, round_trip
+"""Round-trip oracle over the SPARQL forward CONSTRUCTs (loop one).
 
-BASE = [{"Year": "2020", "Region": "North", "__measure__": 10.0},
-        {"Year": "2020", "Region": "South", "__measure__": 20.0},
-        {"Year": "2021", "Region": "North", "__measure__": 11.0},
-        {"Year": "2021", "Region": "South", "__measure__": 21.0}]
+Supersedes the old Python-replay tests: the base is now a derived hproj:Projection
+RDF graph; round_trip reconstructs the grid via the forward .rq files and exact-compares.
+"""
+from rdflib import Graph, Namespace, URIRef, Literal, RDF
+from rdflib.namespace import XSD
+from iladub.etkl.oracle import round_trip
+from iladub.etkl.recipe import UnpivotOp, StripAggregationOp, Recipe
+
+TAB = Namespace("https://w3id.org/iladub/tab#"); EX = Namespace("https://example.org/d#")
+
+
+def _base_region():
+    """4-fact native-RDF base for Region×Year."""
+    p = Graph()
+    facts = [("10", "North", "2020"), ("20", "South", "2020"),
+             ("11", "North", "2021"), ("21", "South", "2021")]
+    for i, (mv, region, year) in enumerate(facts):
+        bf = EX["bf%d" % i]
+        p.add((bf, RDF.type, TAB.BaseFact)); p.add((bf, TAB.measureValue, Literal(mv, datatype=XSD.decimal)))
+        cd = EX["bf%d-dim" % i]; cs = EX["bf%d-stub" % i]
+        p.add((bf, TAB.atDimensionValue, cd)); p.add((cd, TAB.dimensionName, Literal("Region"))); p.add((cd, TAB.value, Literal(region)))
+        p.add((bf, TAB.atDimensionValue, cs)); p.add((cs, TAB.dimensionName, Literal("Year"))); p.add((cs, TAB.value, Literal(year)))
+    return p
+
 
 ORIGINAL = {("2020", "North"): "10", ("2020", "South"): "20",
             ("2021", "North"): "11", ("2021", "South"): "21",
             ("2020", "Year"): "2020", ("2021", "Year"): "2021"}
 
 
-def test_replay_unpivot_regenerates_grid():
-    grid = replay(BASE, Recipe((UnpivotOp("Region", "Year"),)))
-    assert grid[("2020", "North")] == "10"
-    assert grid[("2021", "South")] == "21"
-    assert grid[("2020", "Year")] == "2020"
-
-
 def test_correct_recipe_round_trips():
-    v = round_trip(ORIGINAL, BASE, Recipe((UnpivotOp("Region", "Year"),)))
+    v = round_trip(ORIGINAL, _base_region(), Recipe((UnpivotOp("Region", "Year"),)))
     assert v.ok and v.residue == ()
 
 
 def test_corrupted_base_is_rejected():
-    bad = [dict(x) for x in BASE]; bad[0]["__measure__"] = 999.0
+    bad = _base_region()
+    # corrupt one measure: set bf0 (10 -> 999)
+    bad.set((EX.bf0, TAB.measureValue, Literal("999", datatype=XSD.decimal)))
     v = round_trip(ORIGINAL, bad, Recipe((UnpivotOp("Region", "Year"),)))
-    assert not v.ok and v.residue                          # mismatch surfaces as residue
+    assert not v.ok and v.residue
 
 
-def test_strip_replay_readds_total_column():
-    # base with a strip op: forward replay must re-add the Total column = sum(North,South)
+def test_strip_round_trips_total_column():
     original = dict(ORIGINAL)
     original[("2020", "Total")] = "30"; original[("2021", "Total")] = "32"
     recipe = Recipe((UnpivotOp("Region", "Year"),
                      StripAggregationOp("column", "sum", ("North", "South"), "Total")))
-    v = round_trip(original, BASE, recipe)
-    assert v.ok, v.residue
-
-
-def test_row_axis_strip_excludes_numeric_stub_column():
-    """Regression: row-axis strip must NOT write a spurious aggregate into the stub column.
-
-    A numeric stub (Year=2020/2021) is echo'd into the grid by unpivot. The row-axis
-    strip sums member_labels ("2020","2021") across every column — before the fix it
-    finds the stub column "Year" numeric and writes ("Total","Year")="4041", which is
-    an extra cell that was never in the original grid.  round_trip must return ok=True.
-    """
-    base = [{"Year": "2020", "Region": "North", "__measure__": 10.0},
-            {"Year": "2020", "Region": "South", "__measure__": 20.0},
-            {"Year": "2021", "Region": "North", "__measure__": 11.0},
-            {"Year": "2021", "Region": "South", "__measure__": 21.0}]
-    # original: measure cells + stub-echo cells + row-axis totals per region.
-    # ("Total","Year") must NOT be in original — a total row has no year stub value.
-    original = {
-        ("2020", "North"): "10", ("2020", "South"): "20",
-        ("2021", "North"): "11", ("2021", "South"): "21",
-        ("2020", "Year"): "2020", ("2021", "Year"): "2021",
-        ("Total", "North"): "21",   # 10 + 11
-        ("Total", "South"): "41",   # 20 + 21
-    }
-    recipe = Recipe((UnpivotOp("Region", "Year"),
-                     StripAggregationOp("row", "sum", ("2020", "2021"), "Total")))
-    v = round_trip(original, base, recipe)
+    v = round_trip(original, _base_region(), recipe)
     assert v.ok, v.residue

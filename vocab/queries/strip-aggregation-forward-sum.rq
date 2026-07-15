@@ -1,0 +1,52 @@
+# strip-aggregation-forward-sum.rq  (repro grid -> repro grid + aggregate cells).
+# For a column-axis strip: for each row, SUM the member columns -> a Total cell in that row.
+# For a row-axis strip: for each column, SUM the member rows -> a Total cell in that column.
+# SPARQL 1.1 SUM; the function is 'sum' (F&O fn:sum, per tab-fno-align.ttl). Standard SPARQL
+# cannot parameterize the aggregate operator by a bound variable, so 'sum' has its own .rq;
+# other functions ship their own file (mean/min/max/count); 'product' is the SPARQL-ceiling
+# case (no aggregate operator) -> justified PYTHON-OK if ever needed. Loop one only exercises sum.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?cell a tab:ReproCell ; tab:reproRow ?rrow ; tab:reproCol ?rcol ; tab:reproText ?ttext .
+}
+WHERE {
+  {
+    # column-axis: group members within each row
+    ?op a tab:StripAggregationOp ; tab:opAxis "column" ; tab:opFunction "sum" ; tab:opTargetLabel ?target .
+    # NOTE: the sub-SELECT's ?op2 is intentionally UNCORRELATED with the outer ?op (it matches
+    # by opAxis alone). Correct ONLY for a single strip op per axis (loop-one scope). A
+    # multi-strip recipe MUST correlate ?op2 to the outer ?op (e.g. BIND(?op AS ?op2)) before
+    # this query is trusted for that case.
+    {
+      SELECT ?row (SUM(?vnum) AS ?total) WHERE {
+        ?op2 a tab:StripAggregationOp ; tab:opAxis "column" ; tab:opMember ?member .
+        ?mc a tab:ReproCell ; tab:reproRow ?row ; tab:reproCol ?member ; tab:reproText ?mtext .
+        BIND(xsd:decimal(?mtext) AS ?vnum)
+      } GROUP BY ?row
+    }
+    BIND(?row AS ?rrow) BIND(?target AS ?rcol) BIND(STR(?total) AS ?ttext)
+    BIND(IRI(CONCAT("urn:repro:col:", ?rrow, ":", ?target)) AS ?cell)
+  }
+  UNION
+  {
+    # row-axis: group members within each column. A row-axis total must NOT be written into
+    # an unpivot stub-echo column (whose echoed values are numeric but are labels, not measures);
+    # exclude any column that is an unpivot stub via FILTER NOT EXISTS.
+    ?op a tab:StripAggregationOp ; tab:opAxis "row" ; tab:opFunction "sum" ; tab:opTargetLabel ?target .
+    # NOTE: the sub-SELECT's ?op2 is intentionally UNCORRELATED with the outer ?op (it matches
+    # by opAxis alone). Correct ONLY for a single strip op per axis (loop-one scope). A
+    # multi-strip recipe MUST correlate ?op2 to the outer ?op (e.g. BIND(?op AS ?op2)) before
+    # this query is trusted for that case.
+    {
+      SELECT ?col (SUM(?vnum) AS ?total) WHERE {
+        ?op2 a tab:StripAggregationOp ; tab:opAxis "row" ; tab:opMember ?member .
+        ?mc a tab:ReproCell ; tab:reproRow ?member ; tab:reproCol ?col ; tab:reproText ?mtext .
+        FILTER NOT EXISTS { ?u a tab:UnpivotOp ; tab:opStub ?col }
+        BIND(xsd:decimal(?mtext) AS ?vnum)
+      } GROUP BY ?col
+    }
+    BIND(?col AS ?rcol) BIND(?target AS ?rrow) BIND(STR(?total) AS ?ttext)
+    BIND(IRI(CONCAT("urn:repro:row:", ?target, ":", ?col)) AS ?cell)
+  }
+}
