@@ -128,6 +128,14 @@ def test_pipeline_matches_axis_dimensions_semantics():
         assert got == ref, "%s: got=%s ref=%s" % (key, got, ref)
 
 
+def test_recover_dimensions_reproduces_ordered_dataclasses():
+    from iladub.etkl.denormalization import recover_dimensions, PivotedDimension
+    for key, (axis, g, t) in _battery().items():
+        got = [d for d in recover_dimensions(g, t) if d.axis == axis]
+        ref = [PivotedDimension(ax, lvl, nm, vals) for (ax, lvl, nm, vals) in _ref_axis_dimensions(g, t, axis)]
+        assert got == ref, "%s: got=%s ref=%s" % (key, got, ref)   # exact tuple incl. value ORDER
+
+
 def test_pipeline_handles_combined_row_and_column_hierarchies():
     """A crosstab: column axis is flat (value-level L=0), row axis has a spanning
     parent that NAMES row level 1. The row's namesLevel(1) mark must not bleed

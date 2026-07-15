@@ -8,13 +8,17 @@ tree — it is read as-is. (Aggregation evidence and 3NF emission are later slic
 from __future__ import annotations
 
 import math
+import os
 import re
 from dataclasses import dataclass
 
 from rdflib import BNode, RDF, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
+from . import interpret
+
 TAB = Namespace("https://w3id.org/iladub/tab#")
+_QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
 
 
 def _num(s):
@@ -23,11 +27,6 @@ def _num(s):
         return v if math.isfinite(v) else None
     except (ValueError, AttributeError):
         return None
-
-
-def _label(g, node):
-    lc = g.value(node, TAB.hasLabel)
-    return str(g.value(lc, TAB.cellText)) if lc is not None else None
 
 
 def _leaf_cols(g, t):
@@ -46,44 +45,47 @@ class PivotedDimension:
     values: tuple[str, ...]   # distinct value labels at this level, in leaf order
 
 
-def _axis_dimensions(g, t, axis, covers_pred, leaves):
-    """Read one axis's header tree into PivotedDimensions (see module docstring rule)."""
-    n = len(leaves)
-    if n == 0:
-        return []
-    nodes = [h for h in g.objects(t, TAB.hasHeaderNode)
-             if any(True for _ in g.objects(h, covers_pred))]
-    if not nodes:
-        return []
-    by_level = {}
-    for h in nodes:
-        lvl = int(g.value(h, TAB.headerLevel))
-        cov = frozenset(g.objects(h, covers_pred))
-        by_level.setdefault(lvl, []).append((h, _label(g, h), cov))
-    dims, pending_name = [], None
-    for lvl in sorted(by_level):
-        level_nodes = by_level[lvl]
-        multi = [ln for ln in level_nodes if len(ln[2]) > 1]
-        singles_cov = set().union(*[ln[2] for ln in level_nodes if len(ln[2]) == 1]) if any(len(ln[2]) == 1 for ln in level_nodes) else set()
-        leafset = set(leaves)
-        if len(multi) == 1 and (multi[0][2] | singles_cov) >= leafset and not (multi[0][2] & singles_cov):
-            pending_name = multi[0][1]           # a spanning parent (modulo single-leaf stubs) names the level below
-            continue
-        ordered = sorted(level_nodes, key=lambda z: min(str(c) for c in z[2]))
-        seen, values = set(), []
-        for _, lbl, _cov in ordered:
-            if lbl is not None and lbl not in seen:
-                seen.add(lbl); values.append(lbl)
-        dims.append(PivotedDimension(axis, lvl, pending_name, tuple(values)))
-        pending_name = None
-    return dims
+def _read_dimensions(dimgraph, g, t):
+    """PROCEDURAL reconstruction glue: map the derived tab:PivotedDimension RDF into the
+    PivotedDimension dataclasses. Value ORDER (presentation, not a role decision) is
+    re-derived by the same key as the retired _axis_dimensions — the minimum covered leaf
+    (by IRI) per label — so the dataclass is reproduced exactly."""
+    dims = []
+    for dn in dimgraph.subjects(RDF.type, TAB.PivotedDimension):
+        axis = str(dimgraph.value(dn, TAB.onAxis))
+        level = int(dimgraph.value(dn, TAB.atLevel))
+        name = dimgraph.value(dn, TAB.dimensionName)
+        name = str(name) if name is not None else None
+        labels = {str(v) for v in dimgraph.objects(dn, TAB.hasDimensionValue)}
+        cp = TAB.coversColumn if axis == "column" else TAB.coversRow
+
+        def _minleaf(lbl, cp=cp, level=level):
+            best = None
+            for h in g.subjects(TAB.headerLevel, Literal(level)):
+                if (t, TAB.hasHeaderNode, h) not in g:
+                    continue
+                lc = g.value(h, TAB.hasLabel)
+                if lc is None or str(g.value(lc, TAB.cellText)) != lbl:
+                    continue
+                m = min((str(c) for c in g.objects(h, cp)), default=None)
+                if m is not None and (best is None or m < best):
+                    best = m
+            return best or lbl
+
+        values = tuple(sorted(labels, key=_minleaf))
+        dims.append(PivotedDimension(axis, level, name, values))
+    # column dims first (level order), then row dims (level order) — matches recover_dimensions
+    return ([d for d in sorted(dims, key=lambda z: z.level) if d.axis == "column"]
+            + [d for d in sorted(dims, key=lambda z: z.level) if d.axis == "row"])
 
 
 def recover_dimensions(g, t):
-    """Recover pivoted dimensions from BOTH header axes (column via coversColumn, row via
-    coversRow). A flat single-level axis yields one value-level dimension."""
-    return (_axis_dimensions(g, t, "column", TAB.coversColumn, _leaf_cols(g, t))
-            + _axis_dimensions(g, t, "row", TAB.coversRow, _leaf_rows(g, t)))
+    """Recover pivoted dimensions from BOTH header axes via the declarative two-pass
+    derivation (name-levels -> recover-dimensions, AXIOM), read back into PivotedDimension
+    dataclasses. Replaces the set-algebra _axis_dimensions body; signature unchanged."""
+    marks = interpret.run(os.path.join(_QUERIES, "name-levels.rq"), g)
+    dimgraph = interpret.run(os.path.join(_QUERIES, "recover-dimensions.rq"), g, marks)
+    return _read_dimensions(dimgraph, g, t)
 
 
 def annotate_dimensions(g, t, dims):
