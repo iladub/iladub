@@ -40,6 +40,7 @@ theme:
 exclude_docs: |
   superpowers/
   w3id/
+  loops/
 
 nav:
   - Home: index.md
@@ -48,6 +49,7 @@ nav:
   - Scope & vision: narrative/scope-evolution.md
   - The ET(K)L method: etkl.md
   - Architecture: architecture.md
+  - Neurosymbolic-first: neurosymbolic-first.md
   - Modality-native targets: modality-native-targets.md
   - Holonic interaction: holonic-interaction.md
   - dec — decision context: dec.md
