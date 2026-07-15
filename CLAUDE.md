@@ -142,8 +142,11 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    `iladub.etkl.interpret.run`) reading their params from the RDF recipe, with the flat base a
    derived `hproj:Projection` and a forward-`CONSTRUCT` round-trip oracle; the *flagship AXIOM*
    case, gate-enforced by `tests/etkl/test_transform_gate.py` (neurosymbolic loop one, shipped
-   2026-07-15) — plus `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote)
-   and `segment.find_table_gutter` (propose → oracle → dispose).
+   2026-07-15) — plus **role recovery** (`recover_dimensions`: the UNPIVOT dim-name + operand-role
+   rules as a two-pass SPARQL `CONSTRUCT` derivation over the `tab:` header graph — the first
+   *derivation axiom* under the open/closed split, loop B, shipped 2026-07-15),
+   `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote), and
+   `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 

@@ -1,7 +1,7 @@
 # Role-Derivation Axioms over the `tab:` Graph (Neurosymbolic Loop B) — Design
 
 **Date:** 2026-07-15
-**Status:** Design approved (scope + mechanism settled); ready for implementation plan.
+**Status:** ✅ **SHIPPED to main 2026-07-15** (merged `--no-ff`, pushed to `origin/main`). Implemented via subagent-driven development (5 tasks + 2 review fixes; the final whole-branch review caught a cross-table dim-leak, fixed before merge); plan at `docs/superpowers/plans/2026-07-15-role-derivation-axioms.md`; full project suite 357 passed / 5 skipped. The UNPIVOT rule is realized as the two-pass `name-levels.rq` → `recover-dimensions.rq` (a probe-validated refinement of §3's single query). (Original status: design approved — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (the neurosymbolic-first gate — now with the **open/closed derivation-vs-constraint split**) + `docs/superpowers/specs/2026-07-14-recovery-layer-neurosymbolic-audit.md` (reframe #4: pivot/aggregation ROLE assignment → AXIOM).
 **Builds on (shipped):** loop one — the declarative transform substrate (`interpret.run` + `vocab/queries/*.rq`, native-RDF `hproj:Projection` base). This is the **first *derivation axiom*** under the refined gate; it retires the role-assignment part of `recover_recipe`'s procedural search that loop one deliberately left PROCEDURAL.
 
