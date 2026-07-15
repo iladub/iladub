@@ -1,0 +1,24 @@
+# name-levels.rq — pass 1: mark each spanning parent that NAMES the level below it.
+# A parent ?M at level ?PL names level ?L = ?PL+1 iff: ?M is the UNIQUE multi-cover node at ?PL;
+# ?M plus the level-?PL single-leaf nodes cover all leaves; ?M is disjoint from those singles;
+# and level ?L has value nodes under ?M. Counting/completeness/disjointness are holon-scoped
+# (query-local NOT EXISTS). Feasibility-proven against _axis_dimensions (flat/2-level/3-level).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+CONSTRUCT { ?M tab:namesLevel ?L . }
+WHERE {
+  VALUES (?cp ?lp) { (tab:coversColumn tab:hasLeafColumn) (tab:coversRow tab:hasLeafRow) }
+  ?T tab:hasHeaderNode ?M . ?M tab:headerLevel ?PL ; ?cp ?ma, ?mb . FILTER(?ma != ?mb)
+  BIND(?PL + 1 AS ?L)
+  FILTER EXISTS { ?T tab:hasHeaderNode ?vn . ?vn tab:headerLevel ?L ; ?cp ?vl . FILTER EXISTS { ?M ?cp ?vl } }
+  FILTER NOT EXISTS { ?M2 tab:headerLevel ?PL ; ?cp ?x, ?y . FILTER(?x != ?y && ?M2 != ?M) . ?T tab:hasHeaderNode ?M2 }
+  FILTER NOT EXISTS {
+    ?T ?lp ?lf .
+    FILTER NOT EXISTS { ?M ?cp ?lf }
+    FILTER NOT EXISTS { ?sg tab:headerLevel ?PL ; ?cp ?lf . ?T tab:hasHeaderNode ?sg .
+                        FILTER NOT EXISTS { ?sg ?cp ?o . FILTER(?o != ?lf) } }
+  }
+  FILTER NOT EXISTS {
+    ?M ?cp ?lf2 . ?sg2 tab:headerLevel ?PL ; ?cp ?lf2 . ?T tab:hasHeaderNode ?sg2 . FILTER(?sg2 != ?M)
+    FILTER NOT EXISTS { ?sg2 ?cp ?o2 . FILTER(?o2 != ?lf2) }
+  }
+}
