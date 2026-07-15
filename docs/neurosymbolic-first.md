@@ -28,7 +28,7 @@ language-agnostic — **Python in iladub's reference implementation**, any host 
 
 | Class | When it applies | The form it takes |
 |---|---|---|
-| **AXIOM** *(default)* | recovery / transform / role / type / boundary decisions | a SHACL rule or a SPARQL `SELECT`/`CONSTRUCT` over an RDF evidence graph — consuming an existing ontology, or filling a **named** gap with thin owned vocabulary |
+| **AXIOM** *(default)* | recovery / transform / role / type / boundary decisions | a SPARQL `SELECT`/`CONSTRUCT` (open-world *derivation*) or a SHACL constraint (closed-world *membrane*) over an RDF evidence graph — consuming an existing ontology, or filling a **named** gap with thin owned vocabulary. See *[Two worlds](#two-worlds-derive-open-validate-closed)* below |
 | **NEURAL** | genuinely perceptual, symbolically underdetermined judgments (*"which columns does this header span?"*) | a model (GenAI, via [BAML](https://boundaryml.com/)) **proposes** under assert/propose/promote, and a **semantic oracle disposes** |
 | **PROCEDURAL** | raw extraction (source → typed facts) and decidable exact arithmetic | procedural code — language-agnostic (Python in the reference implementation) — that must state **why it is irreducible** to AXIOM or NEURAL |
 
@@ -36,6 +36,33 @@ A **tuned constant or tolerance is prima facie evidence** the decision belongs i
 NEURAL, not procedural code. This is enforced as a hard constraint in every design and review: a
 tuned geometric constant, or a procedural heuristic answering a span / read / group / role
 question, is a review failure unless it is an oracle-disposed proposal or a justified raw-extraction step.
+
+## Two worlds: derive open, validate closed
+
+AXIOM is not one thing — it splits by *world*, and the split is load-bearing.
+
+**Recovery is open-world.** Reading a document *grows* the graph: it recovers a pivot, derives a
+base fact, assigns a role. This is monotonic and **evidence-positive** — a fact is asserted only
+when its support is *present*, never inferred from its *absence*. That is exactly iladub's cardinal
+rule (*[assert only what the source supports](assertion-proposition.md)*), and it is why derivation
+belongs to **SPARQL** (`SELECT`/`CONSTRUCT`): an open-world query language that only ever adds what
+the evidence licenses.
+
+**Conformance is closed-world.** The contract *membrane* decides what may cross into the clean
+holon — cardinality, closure, "every grounded node comes from a promotion decision." That is a
+**closed world**, and it belongs to **SHACL**, whose whole design is closed-world validation.
+
+The two never swap jobs. Using a closed-world rule to *derive* would be a category error: closed-world
+negation can conclude things from what is *missing* — precisely the "fill the gap by assumption" that
+iladub forbids. So: **derive open (SPARQL), validate closed (SHACL).** As the two standards evolve on
+diverging tracks — SPARQL toward open-world/federated querying, SHACL toward closed-world conformance —
+each iladub layer rides the language whose trajectory it actually wants.
+
+The reconciling idea is holonic: a **holon is the closure boundary.** Inside one table-holon the header
+structure is complete — you may count its nodes and require "exactly one spanning parent." Across the
+holon graph the world stays open — more documents, more evidence, always welcome. SPARQL delivers exactly
+this: `NOT EXISTS`/`COUNT` close *within* the matched holon while leaving the graph open everywhere else.
+Closed at the membrane, open across the graph.
 
 ## Propose → oracle → dispose
 

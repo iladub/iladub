@@ -108,10 +108,20 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    until it has been classified and justified** — the default is semantic; procedural code
    must be *earned* (Python is iladub's reference-implementation language — the class is
    language-agnostic):
-   - **AXIOM (default)** — recovery / transform / role / type / boundary decisions are
-     *declarative*: a SHACL rule / SPARQL `SELECT`-`CONSTRUCT` / FnO IRI over an RDF
-     evidence graph, consuming an existing ontology or filling a *named* gap with thin
-     owned vocabulary.
+   - **AXIOM (default)** — the decision is *declarative* over an RDF evidence graph
+     (consuming an existing ontology or filling a *named* gap with thin owned vocabulary),
+     in one of **two world-split forms** — the split is load-bearing:
+       - **Derivation → SPARQL `SELECT`/`CONSTRUCT`** (+ FnO IRIs), **open world**: recovery /
+         transform / role decisions that *grow* the graph from evidence — monotonic and
+         evidence-positive (a fact is derived only when its support is *present*, never
+         inferred from absence). Any closed-world guard (counting, completeness, disjointness)
+         is **holon-scoped**: query-local `NOT EXISTS`/`COUNT` closes *within* the one holon
+         while the graph stays open.
+       - **Constraint → SHACL**, **closed world**: the contract *membrane* validating what may
+         *cross* into the clean holon (cardinality, `sh:closed`, promotion-required).
+     **Never use closed-world/SHACL to *derive*** — inferring-by-absence violates §7 (assert
+     only what the source supports). Recovery is open-world; the membrane is closed-world; the
+     **holon is the closure boundary**.
    - **NEURAL** — genuinely perceptual / underdetermined decisions (any *"which
      columns/rows does X span / read / group"* reading judgment) are **GenAI-via-BAML
      proposing** under the assert/propose/promote epistemics (§3), **disposed by a
