@@ -1,0 +1,11 @@
+# header-body-split.rq — first body-start row: MIN row s>=1 such that some column is all-Numeric
+# from s to the band end. Empty result -> None (caller escalates). Proven vs the Python (2026-07-16).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT (MIN(?s) AS ?split) WHERE {
+  ?anycell tab:atGridRow ?s . FILTER(?s >= 1)
+  FILTER EXISTS {
+    ?cc tab:atGridColumn ?col ; tab:atGridRow ?r1 . FILTER(?r1 >= ?s)
+    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?r2 ; tab:cellDatatype ?d .
+                        FILTER(?r2 >= ?s && ?d != tab:Numeric) }
+  }
+}

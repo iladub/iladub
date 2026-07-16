@@ -196,3 +196,17 @@ tab:namesLevel a owl:DatatypeProperty ; rdfs:domain tab:HeaderNode ; rdfs:range 
 tab:barredAsOperand a owl:DatatypeProperty ; rdfs:domain tab:LeafColumn ; rdfs:range xsd:boolean ;
     rdfs:label "barred as operand"@en ;
     rdfs:comment "A recovery mark: in a pivoted table this level-0 single-leaf column is a stub/total, barred as an aggregation operand. Transient; produced by the operand-exclusions derivation."@en .
+
+# --- typed-cell evidence graph (transient, pre-holon; loop B2a) ---
+tab:GridCell a owl:Class ; rdfs:label "Grid cell"@en ;
+    rdfs:comment "A transient (line, column) cell of a candidate region, with its surface text and recovered datatype. Evidence for the type/orientation derivations; never asserted into a holon."@en .
+tab:atGridRow a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid row"@en .
+tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid column"@en .
+tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
+tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
+    rdfs:comment "An OPEN lattice of recovered cell datatypes. B2a: tab:Numeric | tab:Text. B2b extends it (Date/Currency/Percentage/Boolean)."@en .
+tab:Numeric a tab:CellDatatype ; rdfs:label "Numeric"@en .
+tab:Text    a tab:CellDatatype ; rdfs:label "Text"@en .
+tab:cellDatatype a owl:ObjectProperty ; rdfs:domain tab:GridCell ; rdfs:range tab:CellDatatype ; rdfs:label "cell datatype"@en .
+tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "column index"@en ;
+    rdfs:comment "A grid column marker (0..ncols-1) so empty columns are visible to the stub/data derivation."@en .

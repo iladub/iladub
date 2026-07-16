@@ -62,6 +62,20 @@ def _col_values(lines, grid: LeafGrid, start: int) -> dict[int, list[str]]:
     return cols
 
 
+def _grid_cells(band, grid):
+    """(line, col, joined-text) for every populated cell — the full-grid analogue of _col_values
+    (same column word-grouping), used to build the typed-cell evidence graph."""
+    b = grid.boundaries
+    out = []
+    for r, ln in enumerate(band.lines):
+        seen = {}
+        for w in ln.words:
+            seen.setdefault(column_of((w.x0 + w.x1) / 2.0, b), []).append(w.text)
+        for c, texts in seen.items():
+            out.append((r, c, " ".join(texts)))
+    return out
+
+
 def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     """First line index at/after which >=1 leaf column is all-numeric.
 
@@ -77,14 +91,14 @@ def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     lines. This correctly yields None-escalation for all-text tables (no column ever
     homogenizes to numeric), which is the desired behavior — the caller (or downstream
     SHACL) handles the ambiguity rather than guessing a boundary.
+
+    Declarative derivation (loop B2a): the typed-cell evidence graph + header-body-split.rq.
     """
-    lines = list(band.lines)
-    for start in range(1, len(lines)):
-        cols = _col_values(lines, grid, start)
-        numeric_cols = [i for i, vs in cols.items() if vs and all(is_numeric(v) for v in vs)]
-        if numeric_cols:
-            return start
-    return None
+    from . import celltype
+    import os
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "header-body-split.rq")
+    return celltype.run_scalar(q, g)
 
 
 @dataclass(frozen=True)
