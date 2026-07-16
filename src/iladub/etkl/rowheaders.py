@@ -116,22 +116,6 @@ def infer_row_header_tree(band, grid, stub_cols, leaf_rows):
     return tuple(linked)
 
 
-def row_tree_tiles(tree, n_leaf_rows: int) -> bool:
-    """Structural backstop: the leaf-level row-headers (no children) must partition
-    {0..n_leaf_rows-1} exactly, and every child's row-covers must be a subset of its
-    parent's. Catches pathological geometry before it reaches the row SHACL.
-    """
-    for nd in tree:
-        if nd.parent is not None and not set(nd.covers_rows) <= set(tree[nd.parent].covers_rows):
-            return False
-    has_child = {nd.parent for nd in tree if nd.parent is not None}
-    covered: list[int] = []
-    for i, nd in enumerate(tree):
-        if i not in has_child:                     # a leaf row-header
-            covered.extend(nd.covers_rows)
-    return sorted(covered) == list(range(n_leaf_rows))
-
-
 @dataclass(frozen=True)
 class RowHierRegion:
     grid: LeafGrid

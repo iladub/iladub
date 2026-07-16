@@ -76,20 +76,6 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
     return tuple(linked)
 
 
-def col_tree_tiles(tree, data_cols) -> bool:
-    """Structural backstop: leaf-level column-headers (no children) partition
-    data_cols exactly, and every child's covers ⊆ its parent's."""
-    for nd in tree:
-        if nd.parent is not None and not set(nd.covers) <= set(tree[nd.parent].covers):
-            return False
-    has_child = {nd.parent for nd in tree if nd.parent is not None}
-    covered: list[int] = []
-    for i, nd in enumerate(tree):
-        if i not in has_child:
-            covered.extend(nd.covers)
-    return sorted(covered) == sorted(data_cols)
-
-
 def is_matrix_candidate(band: Band) -> bool:
     """A matrix candidate: a multi-level column header (>=2 header lines) over a
     clean text-stub | numeric-data split. (The caller has already established the
@@ -139,11 +125,3 @@ def classify_matrix(band):
         return None
     return MatrixRegion(grid, col_tree, tuple(row_tree), tuple(leaf_rows),
                         stub_cols, data_cols, split)
-
-
-def matrix_tiles(mreg) -> bool:
-    """Both axes tile: the column tree partitions the data columns AND the row tree
-    partitions the leaf rows. Structural backstop before emission."""
-    from .rowheaders import row_tree_tiles
-    return (col_tree_tiles(mreg.col_tree, mreg.data_cols)
-            and row_tree_tiles(mreg.row_tree, len(mreg.leaf_rows)))

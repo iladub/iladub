@@ -52,14 +52,21 @@ def _repo_vocab():
     raise FileNotFoundError("vocab/ not found (needed for SHACL validation)")
 
 
+_FULL_SHAPES = None
+_FULL_ONT = None
+
+
 def _validate(graph: Graph) -> tuple[bool, str]:
     from pyshacl import validate
-    v = _repo_vocab()
-    shapes = Graph()
-    shapes.parse(os.path.join(v, "shapes", "tab-shapes.ttl"), format="turtle")
-    shapes.parse(os.path.join(v, "shapes", "tab-physical-shapes.ttl"), format="turtle")
-    ont = Graph().parse(os.path.join(v, "ontology", "tab.ttl"), format="turtle")
-    conforms, _, text = validate(graph, shacl_graph=shapes, ont_graph=ont,
+    global _FULL_SHAPES, _FULL_ONT
+    if _FULL_SHAPES is None:
+        v = _repo_vocab()
+        s = Graph()
+        s.parse(os.path.join(v, "shapes", "tab-shapes.ttl"), format="turtle")
+        s.parse(os.path.join(v, "shapes", "tab-physical-shapes.ttl"), format="turtle")
+        _FULL_SHAPES = s
+        _FULL_ONT = Graph().parse(os.path.join(v, "ontology", "tab.ttl"), format="turtle")
+    conforms, _, text = validate(graph, shacl_graph=_FULL_SHAPES, ont_graph=_FULL_ONT,
                                  inference="rdfs", advanced=True)
     return conforms, text
 
@@ -115,12 +122,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
                                                 str(TAB.TransposedTable), ascii_view))
             elif looks_row_grouped(region):
-                from .rowheaders import classify_row_hier, row_tree_tiles
+                from .rowheaders import classify_row_hier
                 from .holon import assert_row_hier_region
+                from .tiling import region_tiles
                 rreg = classify_row_hier(band)
-                if rreg is not None and row_tree_tiles(rreg.tree, len(rreg.leaf_rows)):
-                    table_uri = URIRef(f"{_DOC}#rhtable{idx}")
-                    n = assert_row_hier_region(graph, rreg, band, table_uri, _DOC, page_number)
+                table_uri = URIRef(f"{_DOC}#rhtable{idx}")
+                scratch = Graph()
+                if rreg is not None:
+                    n = assert_row_hier_region(scratch, rreg, band, table_uri, _DOC, page_number)
+                if rreg is not None and region_tiles(scratch):
+                    graph += scratch
                     b = rreg.grid.boundaries
                     for rb in rreg.leaf_rows:
                         for c in rb.cells:
@@ -152,12 +163,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         else:  # UNSUPPORTED_TABLE
             from .matrix import is_matrix_candidate
             if is_matrix_candidate(band):
-                from .matrix import classify_matrix, matrix_tiles
+                from .matrix import classify_matrix
                 from .holon import assert_matrix_region
+                from .tiling import region_tiles
                 mreg = classify_matrix(band)
-                if mreg is not None and matrix_tiles(mreg):
-                    table_uri = URIRef(f"{_DOC}#mtable{idx}")
-                    n = assert_matrix_region(graph, mreg, band, table_uri, _DOC, page_number)
+                table_uri = URIRef(f"{_DOC}#mtable{idx}")
+                scratch = Graph()
+                if mreg is not None:
+                    n = assert_matrix_region(scratch, mreg, band, table_uri, _DOC, page_number)
+                if mreg is not None and region_tiles(scratch):
+                    graph += scratch
                     b = mreg.grid.boundaries
                     for rb in mreg.leaf_rows:
                         for sc in rb.cells:

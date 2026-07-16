@@ -14,10 +14,10 @@ from .compile import compile_tables, CompilationReport, RegionReport
 from .hierarchical import classify_hierarchical, HierRegion
 from .cells import recover_leaf_grid
 from .orientation import looks_transposed, transpose_is_coherent
-from .rowheaders import looks_row_grouped, classify_row_hier, row_tree_tiles, RowHierRegion, RowHeaderNode
+from .rowheaders import looks_row_grouped, classify_row_hier, RowHierRegion, RowHeaderNode
 from .holon import assert_record_region, assert_transposed_region, assert_row_hier_region, assert_matrix_region
-from .matrix import (is_matrix_candidate, classify_matrix, matrix_tiles,
-                     infer_column_tree_by_proximity, col_tree_tiles, MatrixRegion, ColHeaderNode)
+from .matrix import (is_matrix_candidate, classify_matrix,
+                     infer_column_tree_by_proximity, MatrixRegion, ColHeaderNode)
 from .segment import segment, find_table_gutter, find_repeated_header, has_own_stub, is_multi_table_ambiguous
 from .denormalization import (recover_dimensions, annotate_dimensions, PivotedDimension,
                               detect_aggregations, annotate_aggregations, verify_group,
@@ -34,10 +34,10 @@ __all__ = [
     "recover_leaf_grid",
     "looks_transposed", "transpose_is_coherent", "assert_transposed_region",
     "assert_record_region",
-    "looks_row_grouped", "classify_row_hier", "row_tree_tiles", "RowHierRegion", "RowHeaderNode",
+    "looks_row_grouped", "classify_row_hier", "RowHierRegion", "RowHeaderNode",
     "assert_row_hier_region",
-    "is_matrix_candidate", "classify_matrix", "matrix_tiles",
-    "infer_column_tree_by_proximity", "col_tree_tiles", "MatrixRegion", "ColHeaderNode",
+    "is_matrix_candidate", "classify_matrix",
+    "infer_column_tree_by_proximity", "MatrixRegion", "ColHeaderNode",
     "assert_matrix_region",
     "segment", "find_table_gutter", "find_repeated_header", "has_own_stub", "is_multi_table_ambiguous",
     "recover_dimensions", "annotate_dimensions", "PivotedDimension",
