@@ -13,30 +13,26 @@ from dataclasses import dataclass, replace
 
 from .bands import Band
 from .grid import LeafGrid
-from .headers import header_body_split, is_numeric, _col_values
+from .headers import header_body_split
 from .regions import column_of
 
 
 def stub_data_split(band: Band, grid: LeafGrid) -> int | None:
-    """Number of leading stub (text) columns k; data columns are [k..ncols-1].
+    """Number of leading stub (text) columns k; data columns are [k..ncols-1]. (See docstring.)
 
-    On body rows (below header_body_split), a column is 'data' iff its non-blank
-    cells are all numeric. The split k = the first data column; requires k >= 1 (at
-    least one stub) and every column from k rightward is data. None if no such clean
-    text|numeric boundary (falls through to the record path).
-    """
+    Declarative derivation (loop B2a): typed-cell evidence + stub-data-split.rq, gated on the
+    header/body split."""
+    from .headers import header_body_split, _grid_cells
+    from . import celltype
+    from rdflib import Literal
+    from rdflib.namespace import XSD
+    import os
     split = header_body_split(band, grid)
     if split is None:
         return None
-    cols = _col_values(list(band.lines), grid, split)   # {col: [non-blank body texts]}
-    ncols = grid.ncols
-    numeric = [bool(cols[i]) and all(is_numeric(v) for v in cols[i]) for i in range(ncols)]
-    k = next((i for i in range(ncols) if numeric[i]), None)
-    if k is None or k == 0:
-        return None                       # no data column, or no stub column
-    if not all(numeric[i] for i in range(k, ncols)):
-        return None                       # a text column sits after the data — not a clean split
-    return k
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "stub-data-split.rq")
+    return celltype.run_scalar(q, g, bindings={"split": Literal(split, datatype=XSD.integer)})
 
 
 def _present_rows(leaf_rows, grid: LeafGrid, col: int) -> list[int]:
