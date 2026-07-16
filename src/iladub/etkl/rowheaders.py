@@ -22,7 +22,7 @@ def stub_data_split(band: Band, grid: LeafGrid) -> int | None:
 
     Declarative derivation (loop B2a): typed-cell evidence + stub-data-split.rq, gated on the
     header/body split."""
-    from .headers import header_body_split, _grid_cells
+    from .headers import _grid_cells
     from . import celltype
     from rdflib import Literal
     from rdflib.namespace import XSD

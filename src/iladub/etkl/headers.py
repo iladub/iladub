@@ -64,7 +64,11 @@ def _col_values(lines, grid: LeafGrid, start: int) -> dict[int, list[str]]:
 
 def _grid_cells(band, grid):
     """(line, col, joined-text) for every populated cell — the full-grid analogue of _col_values
-    (same column word-grouping), used to build the typed-cell evidence graph."""
+    (same column word-grouping), used to build the typed-cell evidence graph.
+
+    Note: only rows with >=1 cell appear in the evidence graph, so header-body-split.rq's
+    candidate rows (cell-bearing rows) equal the retired Python's range(1, len(lines)) ONLY
+    because every band Line currently has >=1 word (geometry.text_lines invariant)."""
     b = grid.boundaries
     out = []
     for r, ln in enumerate(band.lines):

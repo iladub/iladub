@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rdflib import Graph, Namespace, URIRef, Literal, RDF
+from rdflib import Graph, Namespace, Literal, RDF
 from rdflib.namespace import XSD
 
 from .headers import is_numeric

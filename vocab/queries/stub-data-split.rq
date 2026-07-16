@@ -4,10 +4,8 @@
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?k) AS ?stub) WHERE {
   ?km tab:columnIndex ?k . FILTER(?k >= 1)
-  # k is a data column
-  FILTER EXISTS { ?bc tab:atGridColumn ?k ; tab:atGridRow ?br . FILTER(?br >= ?split) }
-  FILTER NOT EXISTS { ?xc tab:atGridColumn ?k ; tab:atGridRow ?xr ; tab:cellDatatype ?xd . FILTER(?xr >= ?split && ?xd != tab:Numeric) }
-  # every column >= k is data (no non-data column at/after k)
+  # every column >= k is data (no non-data column at/after k) — this subsumes "k is a data
+  # column" (the case c3 = k), so no separate "k is data" clause is needed here.
   FILTER NOT EXISTS {
     ?cm3 tab:columnIndex ?c3 . FILTER(?c3 >= ?k)
     FILTER NOT EXISTS {
