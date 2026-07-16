@@ -20,7 +20,7 @@ B2a lifts all four from Python-over-geometry to declarative **SPARQL derivations
 ## 2. Gate compliance (CLAUDE.md §8 — open/closed split)
 
 - **AXIOM — derivation (open world) → SPARQL.** Each decision *recovers* a boundary / count / orientation from typed-cell evidence — a derivation (the loop-B side of the gate), monotonic and evidence-positive. Expressed as SPARQL `SELECT`/`ASK` over the evidence graph. No SHACL (this is derivation, not conformance). No tuned constant.
-- **PROCEDURAL (justified; Python in the reference implementation, language-agnostic class):** (1) `is_numeric` — raw datatype detection from text (irreducible raw extraction); (2) the typed-cell **evidence-graph emitter** — raw extraction of `(row, col, text, isNumeric)` facts; (3) the query **runner** — rdflib engine glue + parsing the scalar result back. No decision logic in Python; no tuned constant.
+- **PROCEDURAL (justified; Python in the reference implementation, language-agnostic class):** (1) `is_numeric` — raw datatype detection from text (irreducible raw extraction); (2) the typed-cell **evidence-graph emitter** — raw extraction of `(row, col, text, cellDatatype)` facts (`cellDatatype` = `tab:Numeric` if `is_numeric` else `tab:Text` in B2a); (3) the query **runner** — rdflib engine glue + parsing the scalar result back. No decision logic in Python; no tuned constant.
 - **NEURAL:** none. The known *margins* — the numeric-homogeneity proxy's narrowness (acknowledged in `header_body_split`'s docstring), ambiguous typing — are **loop-two**; B2a lifts the existing AXIOM core faithfully and does not touch the proxy.
 
 ## 3. Architecture — the typed-cell evidence graph (the novel foundation, feasibility-proven)
@@ -29,14 +29,22 @@ The four decisions currently operate on Python `Band`/`LeafGrid`/`Cell` objects.
 
 ```
 ?cell a tab:GridCell ;
-      tab:atGridRow    ?r ;      # 0-based line/row index
-      tab:atGridColumn ?c ;      # 0-based leaf-column index
-      tab:gridText     ?t ;      # the cell's surface text
-      tab:isNumeric    true|false .   # is_numeric(?t), PROCEDURAL raw typing
+      tab:atGridRow     ?r ;      # 0-based line/row index
+      tab:atGridColumn  ?c ;      # 0-based leaf-column index
+      tab:gridText      ?t ;      # the cell's surface text
+      tab:cellDatatype  ?dt .     # an OPEN datatype-lattice individual (NOT a boolean)
 ```
-Only **populated** cells are emitted (matching the Python, which skips empty cells). The graph is built, queried, and discarded per decision — never merged into a holon.
+`tab:cellDatatype` is the key design choice: **B2a populates only `tab:Numeric` (= `is_numeric`) or
+`tab:Text`, so behaviour is byte-identical to today** — but the schema is an *open lattice*, so
+**B2b** adds the format-decidable structured types (`tab:Date`/`Currency`/`Percentage`/`Boolean`)
+and generalizes the queries to structured-type homogeneity **with no re-architecting of the evidence
+graph or the emitter contract**. Only **populated** cells are emitted (matching the Python, which
+skips empty cells). The graph is built, queried, and discarded per decision — never merged into a holon.
 
-**Proven (2026-07-16):** `header_body_split` — the trickiest ("MIN row where some column is all-numeric to the end") — reproduces the Python exactly over a battery (split@1, a 2-line header split@2, all-text→None, 3-column), as a standard SPARQL aggregate `SELECT`:
+**Proven (2026-07-16, both the boolean and the open-lattice forms):** `header_body_split` — the
+trickiest ("MIN row where some column is all-`Numeric` to the end") — reproduces the Python exactly
+over a battery (split@1, a 2-line header split@2, all-text→None, 3-column), as a standard SPARQL
+aggregate `SELECT`:
 
 ```sparql
 # header-body-split.rq  (proven). Returns the min body-start row, or empty -> None.
@@ -45,11 +53,14 @@ SELECT (MIN(?s) AS ?split) WHERE {
   ?anycell tab:atGridRow ?s . FILTER(?s >= 1)
   FILTER EXISTS {
     ?cc tab:atGridColumn ?col ; tab:atGridRow ?r1 . FILTER(?r1 >= ?s)
-    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?r2 ; tab:isNumeric false . FILTER(?r2 >= ?s) }
+    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?r2 ; tab:cellDatatype ?d .
+                        FILTER(?r2 >= ?s && ?d != tab:Numeric) }   # a non-Numeric cell (= is_numeric False)
   }
 }
 ```
-(The other three are simpler variants over the same graph; each is TDD-validated per-`.rq` against the Python in the plan.)
+(The `?d != tab:Numeric` is exactly `is_numeric == False` in B2a's two-type lattice; in B2b it stays
+faithful while the *body-signal* set generalizes. The other three decisions are simpler variants over
+the same graph; each is TDD-validated per-`.rq` against the frozen Python reference in the plan.)
 
 ## 4. The four decisions as SPARQL
 
@@ -66,7 +77,7 @@ Each keeps its **Python signature** (callers unchanged); the body becomes: emit 
 | --- | --- | --- |
 | `src/iladub/etkl/celltype.py` (create) | the typed-cell evidence-graph emitter `grid_evidence(cells) -> Graph` + a scalar-query runner (`run_scalar(rq, graph, param?)`, `run_ask(rq, graph)`) | PROCEDURAL |
 | `vocab/queries/{header-body-split,stub-data-split,looks-transposed,transpose-coherent}.rq` (create) | the four decisions as SPARQL derivations | AXIOM |
-| `vocab/ontology/tab.ttl` (modify) | owned evidence terms `tab:GridCell`, `tab:atGridRow`, `tab:atGridColumn`, `tab:gridText`, `tab:isNumeric` (transient evidence, like `tab:namesLevel`) | owned vocab |
+| `vocab/ontology/tab.ttl` (modify) | owned evidence terms `tab:GridCell`, `tab:atGridRow`, `tab:atGridColumn`, `tab:gridText`, `tab:cellDatatype` + the open datatype-lattice class `tab:CellDatatype` with individuals `tab:Numeric`/`tab:Text` (B2a; B2b extends). Transient evidence, like `tab:namesLevel` | owned vocab |
 | `src/iladub/etkl/headers.py` (modify) | `header_body_split` body → build evidence + run `header-body-split.rq`; `is_numeric` unchanged | AXIOM exec + PROCEDURAL |
 | `src/iladub/etkl/rowheaders.py` (modify) | `stub_data_split` body → run `stub-data-split.rq` | AXIOM exec + PROCEDURAL |
 | `src/iladub/etkl/orientation.py` (modify) | `looks_transposed` / `transpose_is_coherent` bodies → run the two ASK `.rq` | AXIOM exec + PROCEDURAL |
@@ -78,8 +89,8 @@ Each keeps its **Python signature** (callers unchanged); the body becomes: emit 
 
 ```
 band/region (Python geometry)
-   │  is_numeric per cell  [PROCEDURAL raw typing]
-   ▼  grid_evidence(cells) → typed-cell RDF (GridCell: row/col/text/isNumeric)   [PROCEDURAL raw extraction]
+   │  is_numeric per cell → tab:Numeric | tab:Text  [PROCEDURAL raw typing]
+   ▼  grid_evidence(cells) → typed-cell RDF (GridCell: row/col/text/cellDatatype)   [PROCEDURAL raw extraction]
    │
    ▼  run the decision .rq over the evidence graph                                [AXIOM · derivation · open-world]
    scalar (split line | stub count | transposed? | coherent?)
@@ -106,11 +117,39 @@ band/region (Python geometry)
 - **Faithfulness caveat (probed):** the header/body-split query's candidate split rows are the rows that carry cells; a blank mid-table line as the true boundary is a documented edge the battery checks — if the SPARQL diverges from the Python there, that specific case is a justified PROCEDURAL residue with a why note (the SPARQL-ceiling rule), not a behaviour change.
 - **New evidence-graph architecture:** a per-band graph build is a real cost, justified by the gate (four AXIOM decisions currently hand-coded) and reused by B2c and future type-boundary lifts.
 
+### The disambiguation roadmap (why B2a stays faithful, and what the "no numeric value" cases get)
+
+`is_numeric` is a **conservative, high-precision** proxy: it errs toward escalation (all-text → `None`),
+never guesses. Its cost is no disambiguation power when there is no numeric column. The plan is a
+**layered cascade**, sequenced to separate architecture-risk from behaviour-risk:
+
+1. **B2a (this loop) — faithful lift + open lattice.** Establish the evidence-graph architecture with
+   byte-identical behaviour (differential oracle), but emit `tab:cellDatatype` as an *open lattice* so
+   the next layer needs no re-architecting.
+2. **B2b — richer typing (AXIOM).** Add the **format-decidable structured types** (`Date`, `Currency`,
+   `Percentage`, `Boolean`) as *body-signals* and generalize the split/orientation queries to
+   structured-type homogeneity — real new recall on date/currency/%/boolean tables. **Precision is
+   held by the boundary:** only format-decidable types signal the body; **free-`Text`, `Enum`/categorical,
+   and `Code`/`Id` are NOT body-signals** (not decidable with precision), so a genuinely all-free-text /
+   categorical table still escalates. The exact body-signal set is settled in B2b (with its own precision
+   battery), not here.
+3. **Knowledge-first disambiguation (AXIOM, iladub's core thesis).** When typing still cannot split, the
+   **semantic contract / knowledge module** declares the expected columns/types and grounds against them
+   — knowledge as an argument, not more geometry heuristics.
+4. **NEURAL propose → oracle → dispose (loop two).** When neither typing nor contract resolves it, a
+   GenAI proposer proposes the reading judgment, disposed by an oracle (assert/propose/promote).
+5. **Floor (always):** escalate as a proposition — never guess/fake. (Today's `None → escalate` is this
+   floor, correctly.)
+
+B2a is layer 1; the open lattice is the seam that makes layers 2–4 reachable without re-shaping the
+evidence graph.
+
 ## 10. Settled design decisions (for the implementation plan)
 
-- **Mechanism: SPARQL derivation over a transient typed-cell evidence graph**, via a `celltype.py` emitter + runner; the four decisions keep their Python signatures. *Not* SHACL (derivation, not conformance — open/closed split). *Faithful* lift (differential oracle; proxy unchanged).
+- **Mechanism: SPARQL derivation over a transient typed-cell evidence graph**, via a `celltype.py` emitter + runner; the four decisions keep their Python signatures. *Not* SHACL (derivation, not conformance — open/closed split). *Faithful* lift (differential oracle; behaviour byte-identical).
+- **The evidence graph carries `tab:cellDatatype` as an OPEN lattice** (`tab:Numeric`/`tab:Text` in B2a); B2b extends the lattice + generalizes the queries. Do **not** emit a boolean `isNumeric`.
 - **All four pure-typing decisions in this slice** (a+b); `regions.classify` deferred (B2c).
 - **Probe-validated** for `header_body_split` (2026-07-16); the other three TDD-validated per-`.rq` against the frozen Python reference.
 - **Behavioural suites stay green unchanged;** signatures/returns of the four functions preserved.
 
-**Resume pointer:** design committed on `main`. **Next action:** invoke `superpowers:writing-plans` on this spec → task-by-task plan (celltype.py emitter+runner + evidence vocab → promote the header/body-split probe → stub-data-split → the two transpose ASKs → rewire the four bodies + differential oracle → supersession/gate verification) → subagent-driven execution. **After B2a:** B2c (`regions.classify`) and loop two (NEURAL span-perception) remain queued.
+**Resume pointer:** design committed on `main`. **Next action:** invoke `superpowers:writing-plans` on this spec → task-by-task plan (celltype.py emitter+runner + evidence vocab → promote the header/body-split probe → stub-data-split → the two transpose ASKs → rewire the four bodies + differential oracle → supersession/gate verification) → subagent-driven execution. **After B2a:** **B2b** (richer typing — format-decidable structured types + structured-type-homogeneity queries, real new recall), **B2c** (`regions.classify`), then the knowledge-first and NEURAL disambiguation layers (§9 roadmap) and loop two remain queued.
