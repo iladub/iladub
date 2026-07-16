@@ -1,7 +1,7 @@
 # SHACL-Oracle Region-Admission Gate (Neurosymbolic Loop C) — Design
 
 **Date:** 2026-07-15
-**Status:** Design approved (scope + mechanism settled); ready for implementation plan.
+**Status:** ✅ **SHIPPED to main 2026-07-16** (PR #45 merged, merge commit c0f35e8). Implemented via subagent-driven development (4 tasks; the final whole-branch review caught a dropped `UnambiguousAccess` leaf-partition invariant → the gate is **eight** shapes, not six, for full parity with the retired exact-partition backstop); plan at `docs/superpowers/plans/2026-07-15-shacl-oracle-region-gate.md`; full suite 358 passed / 5 skipped. (Original status: design approved — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (the neurosymbolic-first gate — **open/closed derivation-vs-constraint split**) + `docs/superpowers/specs/2026-07-14-recovery-layer-neurosymbolic-audit.md` (reframe #5 / items D3, E4: redundant Python tiling backstops → the SHACL invariants that already exist).
 **Builds on (shipped):** loop one (declarative transform substrate) + loop B (role-derivation axioms). This is the **closed-world mirror** of loop B: loop B lifted *derivation* to open-world SPARQL; loop C lifts a *conformance* check to closed-world SHACL.
 

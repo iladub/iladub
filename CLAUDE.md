@@ -146,7 +146,9 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    rules as a two-pass SPARQL `CONSTRUCT` derivation over the `tab:` header graph — the first
    *derivation axiom* under the open/closed split, loop B, shipped 2026-07-15),
    `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote), and
-   `segment.find_table_gutter` (propose → oracle → dispose).
+   **region tiling** (`iladub.etkl.tiling.region_tiles`: the tiling backstops as a SHACL oracle
+   over each candidate region's RDF — the closed-world *constraint* mirror of loop B's open-world
+   derivation, loop C, shipped 2026-07-16), and `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
