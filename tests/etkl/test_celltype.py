@@ -91,3 +91,46 @@ def test_stub_data_split_matches_reference():
             got = celltype.run_scalar(os.path.join(QDIR, "stub-data-split.rq"), g,
                                       bindings={"split": _L(split, datatype=_X.integer)})
         assert got == ref, "%s: got %s ref %s" % (name, got, ref)
+
+
+def _ref_looks_transposed(cells):
+    rows, cols = {}, {}
+    for (r, c, t) in cells:
+        if r > 0:
+            rows.setdefault(r, {})[c] = t
+            cols.setdefault(c, []).append(t)
+    typed_row = any(any(cc >= 1 for cc in rm) and all(_is_numeric(rm[cc]) for cc in rm if cc >= 1) for rm in rows.values())
+    typed_col = any(vals and all(_is_numeric(v) for v in vals) for vals in cols.values())
+    return typed_row and not typed_col
+
+
+def _ref_transpose_coherent(cells):
+    rows = {}
+    for (r, c, t) in cells:
+        if c >= 1:
+            rows.setdefault(r, []).append(t)
+    for vals in rows.values():
+        if vals and not (all(_is_numeric(v) for v in vals) or all(not _is_numeric(v) for v in vals)):
+            return False
+    return True
+
+
+ORI_BATTERY = [
+    ("transposed", [(0, 0, "Metric"), (0, 1, "A"), (0, 2, "B"), (1, 0, "Rev"), (1, 1, "10"), (1, 2, "20"), (2, 0, "Cost"), (2, 1, "3"), (2, 2, "4")]),
+    ("upright-numeric", [(0, 0, "Name"), (0, 1, "Score"), (1, 0, "Alice"), (1, 1, "10"), (2, 0, "Bob"), (2, 1, "20")]),
+    ("all-text", [(0, 0, "A"), (0, 1, "B"), (1, 0, "x"), (1, 1, "y")]),
+    ("incoherent-row", [(0, 0, "K"), (0, 1, "V"), (0, 2, "U"), (1, 0, "wt"), (1, 1, "5"), (1, 2, "kg")]),
+]
+
+
+def test_orientation_matches_reference():
+    from iladub.etkl import celltype
+    import os
+    QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
+    for name, cells in ORI_BATTERY:
+        ncols = max(c for (_r, c, _t) in cells) + 1
+        g = celltype.grid_evidence(cells, ncols)
+        lt = celltype.run_ask(os.path.join(QDIR, "looks-transposed.rq"), g)
+        tc = celltype.run_ask(os.path.join(QDIR, "transpose-coherent.rq"), g)
+        assert lt == _ref_looks_transposed(cells), "%s looks_transposed: got %s" % (name, lt)
+        assert tc == _ref_transpose_coherent(cells), "%s coherent: got %s" % (name, tc)

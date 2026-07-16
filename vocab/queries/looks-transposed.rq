@@ -1,0 +1,13 @@
+# looks-transposed.rq — a typed-numeric body ROW (cols>=1 all Numeric) but NO typed-numeric COLUMN
+# (any column with all body cells Numeric). Body = row>=1. The transposition signature.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+  # a body row with >=1 cell in col>=1 and no non-Numeric cell in col>=1
+  ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol . FILTER(?r >= 1 && ?rcol >= 1)
+  FILTER NOT EXISTS { ?rx tab:atGridRow ?r ; tab:atGridColumn ?rxc ; tab:cellDatatype ?rd . FILTER(?rxc >= 1 && ?rd != tab:Numeric) }
+  # AND no typed-numeric column (any column all body cells Numeric)
+  FILTER NOT EXISTS {
+    ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr . FILTER(?cr >= 1)
+    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?cxr ; tab:cellDatatype ?cd . FILTER(?cxr >= 1 && ?cd != tab:Numeric) }
+  }
+}
