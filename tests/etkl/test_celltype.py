@@ -120,6 +120,20 @@ ORI_BATTERY = [
     ("upright-numeric", [(0, 0, "Name"), (0, 1, "Score"), (1, 0, "Alice"), (1, 1, "10"), (2, 0, "Bob"), (2, 1, "20")]),
     ("all-text", [(0, 0, "A"), (0, 1, "B"), (1, 0, "x"), (1, 1, "y")]),
     ("incoherent-row", [(0, 0, "K"), (0, 1, "V"), (0, 2, "U"), (1, 0, "wt"), (1, 1, "5"), (1, 2, "kg")]),
+    # Regression pin (Task-3 review Minor): col 0 (label column) is all-numeric in the
+    # body — one typed-numeric COLUMN — while a *different* body row (r=1) has all
+    # col>=1 cells numeric, making typed_row True too; the other body row (r=2) is
+    # text in col>=1 so no single column c>=1 is all-numeric on its own. This makes
+    # the typed-ROW check (col>=1 only) and the typed-COLUMN check (all columns,
+    # including col 0) diverge: correct behaviour reads col 0 across ALL columns and
+    # finds it typed (typed_col=True) -> looks_transposed=False. If looks-transposed.rq
+    # ever grew a wrong `?col >= 1` guard on the typed-COLUMN NOT EXISTS block (mirroring
+    # the typed-ROW block's col>=1 restriction), col 0 would be dropped from
+    # consideration, no c>=1 column is all-numeric, typed_col would wrongly flip to
+    # False, and the ASK would wrongly flip to True. Verified empirically: the shipped
+    # query returns False on this case; a hand-mutated `?col >= 1` variant of the
+    # typed-COLUMN check flips it to True.
+    ("numeric-col0-mixed-rows", [(0, 0, "Id"), (0, 1, "A"), (0, 2, "B"), (1, 0, "1"), (1, 1, "10"), (1, 2, "20"), (2, 0, "2"), (2, 1, "x"), (2, 2, "y")]),
 ]
 
 
