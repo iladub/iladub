@@ -1,13 +1,20 @@
-# looks-transposed.rq — a typed-numeric body ROW (cols>=1 all Numeric) but NO typed-numeric COLUMN
-# (any column with all body cells Numeric). Body = row>=1. The transposition signature.
+# looks-transposed.rq — a typed-STRUCTURED body ROW (cols>=1 homogeneous non-Text) but NO
+# typed-STRUCTURED COLUMN (any column with all body cells homogeneous non-Text). Body = row>=1.
+# The transposition signature, generalized to all structured datatypes (Numeric/Date/Currency).
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
-  # a body row with >=1 cell in col>=1 and no non-Numeric cell in col>=1
+  # a body row whose col>=1 cells are homogeneous non-Text (a typed STRUCTURED row)
   ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol . FILTER(?r >= 1 && ?rcol >= 1)
-  FILTER NOT EXISTS { ?rx tab:atGridRow ?r ; tab:atGridColumn ?rxc ; tab:cellDatatype ?rd . FILTER(?rxc >= 1 && ?rd != tab:Numeric) }
-  # AND no typed-numeric column (any column all body cells Numeric)
+  FILTER NOT EXISTS { ?rt tab:atGridRow ?r ; tab:atGridColumn ?rtc ; tab:cellDatatype tab:Text . FILTER(?rtc >= 1) }
+  FILTER NOT EXISTS { ?ra tab:atGridRow ?r ; tab:atGridColumn ?rac ; tab:cellDatatype ?rat .
+                      ?rb tab:atGridRow ?r ; tab:atGridColumn ?rbc ; tab:cellDatatype ?rbt .
+                      FILTER(?rac >= 1 && ?rbc >= 1 && ?rat != ?rbt) }
+  # AND no typed STRUCTURED column (any column with all body cells homogeneous non-Text)
   FILTER NOT EXISTS {
     ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr . FILTER(?cr >= 1)
-    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?cxr ; tab:cellDatatype ?cd . FILTER(?cxr >= 1 && ?cd != tab:Numeric) }
+    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= 1) }
+    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
+                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
+                        FILTER(?car >= 1 && ?cbr >= 1 && ?cat != ?cbt) }
   }
 }

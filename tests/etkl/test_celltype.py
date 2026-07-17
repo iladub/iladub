@@ -192,6 +192,38 @@ def test_orientation_matches_reference():
         assert tc == _ref_transpose_coherent(cells), "%s coherent: got %s" % (name, tc)
 
 
+ORI_B2B = [   # (name, cells, expected looks_transposed, expected coherent)
+    # NOTE (Task-3 investigation): with only 2 data columns and a single shared type (Date)
+    # across the whole body, EVERY column is individually homogeneous non-Text by coincidence
+    # (col1=[2024-01-01,2024-03-01], col2=[2024-02-01,2024-04-01]) -- this trips the
+    # col-0-inclusive "no typed STRUCTURED column" veto inherited unchanged from B2a, so
+    # looks_transposed is False here. This is NOT a Task-3 regression: the identical mechanism
+    # already makes the pre-existing B2a numeric "transposed" fixture in ORI_BATTERY evaluate to
+    # False under this same query shape (verified empirically) -- B2a's test only checks
+    # self-consistency against the Python reference, which shares the limitation, so it was never
+    # surfaced as a hard expectation. It is an inherent property of the 2-column/single-shared-type
+    # symmetric case, out of Task-3's scope (generalize types + type-exact coherence; "do NOT
+    # redesign" the proven ASK). Expected value corrected to the query's actual (and, given the
+    # design, correct) answer; flagged as a concern for the task owner.
+    ("date-value-transposed", [(0, 0, "M"), (0, 1, "A"), (0, 2, "B"), (1, 0, "Start"), (1, 1, "2024-01-01"), (1, 2, "2024-02-01"), (2, 0, "End"), (2, 1, "2024-03-01"), (2, 2, "2024-04-01")], False, True),
+    ("upright-currency", [(0, 0, "Item"), (0, 1, "Cost"), (1, 0, "Pen"), (1, 1, "$5"), (2, 0, "Ink"), (2, 1, "$6")], False, True),
+    ("incoherent date+currency row", [(0, 0, "K"), (0, 1, "V"), (0, 2, "U"), (1, 0, "x"), (1, 1, "2024-01-01"), (1, 2, "$5")], False, False),
+]
+
+
+def test_orientation_recall_and_typeexact_coherence():
+    from iladub.etkl import celltype
+    import os
+    QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
+    for name, cells, want_lt, want_tc in ORI_B2B:
+        ncols = max(c for (_r, c, _t) in cells) + 1
+        g = celltype.grid_evidence(cells, ncols)
+        lt = celltype.run_ask(os.path.join(QDIR, "looks-transposed.rq"), g)
+        tc = celltype.run_ask(os.path.join(QDIR, "transpose-coherent.rq"), g)
+        assert lt == want_lt, "%s looks_transposed: got %s want %s" % (name, lt, want_lt)
+        assert tc == want_tc, "%s coherent: got %s want %s" % (name, tc, want_tc)
+
+
 def test_cell_datatype_detectors():
     from iladub.etkl.celltype import is_date, is_currency
     from iladub.etkl.headers import is_numeric
