@@ -205,8 +205,10 @@ tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range 
 tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
     rdfs:comment "An OPEN lattice of recovered cell datatypes. B2a: tab:Numeric | tab:Text. B2b extends it (Date/Currency/Percentage/Boolean)."@en .
-tab:Numeric a tab:CellDatatype ; rdfs:label "Numeric"@en .
-tab:Text    a tab:CellDatatype ; rdfs:label "Text"@en .
+tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
+tab:Text     a tab:CellDatatype ; rdfs:label "Text"@en .
+tab:Date     a tab:CellDatatype ; rdfs:label "Date"@en .
+tab:Currency a tab:CellDatatype ; rdfs:label "Currency"@en .
 tab:cellDatatype a owl:ObjectProperty ; rdfs:domain tab:GridCell ; rdfs:range tab:CellDatatype ; rdfs:label "cell datatype"@en .
 tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "column index"@en ;
     rdfs:comment "A grid column marker (0..ncols-1) so empty columns are visible to the stub/data derivation."@en .

@@ -148,3 +148,32 @@ def test_orientation_matches_reference():
         tc = celltype.run_ask(os.path.join(QDIR, "transpose-coherent.rq"), g)
         assert lt == _ref_looks_transposed(cells), "%s looks_transposed: got %s" % (name, lt)
         assert tc == _ref_transpose_coherent(cells), "%s coherent: got %s" % (name, tc)
+
+
+def test_cell_datatype_detectors():
+    from iladub.etkl.celltype import is_date, is_currency
+    from iladub.etkl.headers import is_numeric
+    # dates: 4-digit year + valid ranges
+    for s in ["2024-01-15", "2024/1/5", "31/12/2024", "1-2-2024", "15 Jan 2024", "15 January 2024"]:
+        assert is_date(s), s
+    # NOT dates (precision): too few digits / no 4-digit year / out-of-range
+    for s in ["1-2", "3-4", "99-99-9999", "2024-13-01", "2024-01-32", "hello", "10", ""]:
+        assert not is_date(s), s
+    # currency: symbol adjacent to a numeric body
+    for s in ["$1,000", "€20.50", "£5", "10 £", "-$3.00"]:
+        assert is_currency(s), s
+    for s in ["$", "USD", "10", "hello"]:
+        assert not is_currency(s), s
+    # Numeric is UNCHANGED (% and commas still Numeric; $ and dates are NOT numeric)
+    assert is_numeric("10") and is_numeric("10%") and is_numeric("1,000")
+    assert not is_numeric("$10") and not is_numeric("2024-01-15")
+
+
+def test_grid_evidence_types_date_and_currency():
+    from iladub.etkl import celltype
+    from rdflib import RDF
+    TAB = __import__("rdflib").Namespace("https://w3id.org/iladub/tab#")
+    g = celltype.grid_evidence([(0, 0, "When"), (1, 0, "2024-01-15"), (2, 0, "$5")], 1)
+    types = {str(g.value(c, TAB.gridText)): str(g.value(c, TAB.cellDatatype)).split("#")[-1]
+             for c in g.subjects(RDF.type, TAB.GridCell)}
+    assert types["2024-01-15"] == "Date" and types["$5"] == "Currency" and types["When"] == "Text"
