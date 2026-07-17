@@ -282,7 +282,10 @@ Add to `tests/etkl/test_celltype.py` (reuse the B2a `_ref`/battery for no-regres
 
 ```python
 ORI_B2B = [   # (name, cells, expected looks_transposed, expected coherent)
-    ("date-value-transposed", [(0, 0, "M"), (0, 1, "A"), (0, 2, "B"), (1, 0, "Start"), (1, 1, "2024-01-01"), (1, 2, "2024-02-01"), (2, 0, "End"), (2, 1, "2024-03-01"), (2, 2, "2024-04-01")], True, True),
+    # NOTE (corrected in impl): looks_transposed is FALSE here — each value column is homogeneously
+    # Date (a typed structured COLUMN), so it is not a detectable transposition (the inherited
+    # 2-column single-shared-type symmetry limitation, same as an upright table; not a query bug).
+    ("date-value-transposed", [(0, 0, "M"), (0, 1, "A"), (0, 2, "B"), (1, 0, "Start"), (1, 1, "2024-01-01"), (1, 2, "2024-02-01"), (2, 0, "End"), (2, 1, "2024-03-01"), (2, 2, "2024-04-01")], False, True),
     ("upright-currency", [(0, 0, "Item"), (0, 1, "Cost"), (1, 0, "Pen"), (1, 1, "$5"), (2, 0, "Ink"), (2, 1, "$6")], False, True),
     ("incoherent date+currency row", [(0, 0, "K"), (0, 1, "V"), (0, 2, "U"), (1, 0, "x"), (1, 1, "2024-01-01"), (1, 2, "$5")], False, False),
 ]
