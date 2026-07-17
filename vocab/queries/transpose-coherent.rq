@@ -1,0 +1,9 @@
+# transpose-coherent.rq — TRUE iff every row is type-homogeneous across its value columns (col>=1):
+# NOT EXISTS a row with both a Numeric and a non-Numeric cell in col>=1.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+  FILTER NOT EXISTS {
+    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype tab:Numeric . FILTER(?ac >= 1)
+    ?b tab:atGridRow ?r ; tab:atGridColumn ?bc ; tab:cellDatatype ?bd . FILTER(?bc >= 1 && ?bd != tab:Numeric)
+  }
+}

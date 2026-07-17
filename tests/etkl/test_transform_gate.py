@@ -65,3 +65,11 @@ def test_tiling_backstops_retired_and_gate_present():
 def test_no_tuned_constant_in_tiling():
     body = _strip_comments(open(TILING, encoding="utf-8").read())
     assert not _FLOAT.search(body), "tiling.py (region-admission gate) must carry no numeric tolerance"
+
+
+def test_celltype_queries_present_no_tuned_constant():
+    import glob, os, iladub.etkl.celltype as ct
+    rqs = {os.path.basename(p) for p in glob.glob(os.path.join(QUERIES, "*.rq"))}
+    assert {"header-body-split.rq", "stub-data-split.rq", "looks-transposed.rq", "transpose-coherent.rq"} <= rqs
+    body = _strip_comments(open(ct.__file__, encoding="utf-8").read())
+    assert not _FLOAT.search(body), "celltype.py must carry no tuned numeric constant"

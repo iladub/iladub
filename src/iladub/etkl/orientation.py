@@ -9,7 +9,15 @@ column); in a transposed table a numeric attribute runs ACROSS a row.
 """
 from __future__ import annotations
 
-from .headers import is_numeric
+import os
+
+
+def _region_cells(region):
+    return [(c.row, c.col, c.text) for c in region.cells]
+
+
+def _ncols(region):
+    return max((c.col for c in region.cells), default=-1) + 1
 
 
 def looks_transposed(region) -> bool:
@@ -20,22 +28,10 @@ def looks_transposed(region) -> bool:
     carry labels) and ignored, so an all-text table is never flagged, and a normal
     numeric table (which has a typed column by definition) is never flagged.
     """
-    data = [c for c in region.cells if c.row > 0]        # body only; header is row 0
-    rows: dict[int, dict[int, str]] = {}
-    cols: dict[int, list[str]] = {}
-    for c in data:
-        rows.setdefault(c.row, {})[c.col] = c.text
-        cols.setdefault(c.col, []).append(c.text)
-
-    # a body row whose cells in columns >= 1 (excluding the first/label column) are all numeric
-    typed_row = any(
-        any(cc >= 1 for cc in rowmap) and all(is_numeric(rowmap[cc]) for cc in rowmap if cc >= 1)
-        for rowmap in rows.values()
-    )
-    # a leaf column whose body cells are all numeric
-    typed_col = any(vals and all(is_numeric(v) for v in vals) for vals in cols.values())
-
-    return typed_row and not typed_col
+    from . import celltype
+    g = celltype.grid_evidence(_region_cells(region), _ncols(region))
+    q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "looks-transposed.rq")
+    return celltype.run_ask(q, g)
 
 
 def transpose_is_coherent(region) -> bool:
@@ -50,12 +46,7 @@ def transpose_is_coherent(region) -> bool:
     never compiled into an inverted table. Rows with no value column (only col 0)
     are vacuously coherent.
     """
-    rows: dict[int, list[str]] = {}
-    for c in region.cells:
-        if c.col >= 1:
-            rows.setdefault(c.row, []).append(c.text)
-    for vals in rows.values():
-        if vals and not (all(is_numeric(v) for v in vals)
-                         or all(not is_numeric(v) for v in vals)):
-            return False
-    return True
+    from . import celltype
+    g = celltype.grid_evidence(_region_cells(region), _ncols(region))
+    q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "transpose-coherent.rq")
+    return celltype.run_ask(q, g)
