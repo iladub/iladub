@@ -1,5 +1,8 @@
-# header-body-split.rq — first body-start row: MIN row s>=1 such that some column is all-Numeric
-# from s to the band end. Empty result -> None (caller escalates). Proven vs the Python (2026-07-16).
+# header-body-split.rq — first body-start row: MIN row s>=1 such that some column is
+# homogeneous non-Text (no Text cell, and no two cells of different cellDatatype) from s to the
+# band end. Empty result -> None (caller escalates). Generalized from all-Numeric (proven vs the
+# Python, 2026-07-16) to homogeneous non-Text (proven, 2026-07-17) — subsumes numeric and adds
+# Date/Currency body-column recall [B2b task 2].
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s) AS ?split) WHERE {
   # ?s ranges over cell-bearing rows (rows with >=1 tab:GridCell), which equals the retired
@@ -9,7 +12,10 @@ SELECT (MIN(?s) AS ?split) WHERE {
   ?anycell tab:atGridRow ?s . FILTER(?s >= 1)
   FILTER EXISTS {
     ?cc tab:atGridColumn ?col ; tab:atGridRow ?r1 . FILTER(?r1 >= ?s)
-    FILTER NOT EXISTS { ?cx tab:atGridColumn ?col ; tab:atGridRow ?r2 ; tab:cellDatatype ?d .
-                        FILTER(?r2 >= ?s && ?d != tab:Numeric) }
+    # data column = homogeneous non-Text: no Text cell (row>=s) AND no two cells with different types
+    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= ?s) }
+    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
+                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
+                        FILTER(?car >= ?s && ?cbr >= ?s && ?cat != ?cbt) }
   }
 }

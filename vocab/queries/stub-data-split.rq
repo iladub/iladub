@@ -1,6 +1,9 @@
 # stub-data-split.rq — leading text-stub column count k: the data columns form a contiguous suffix
-# [k, ncols), k>=1. A column is DATA iff it has a body cell (row>=?split) and no non-Numeric body
-# cell. Column markers make empty columns visible. Empty result -> None. Proven vs the Python.
+# [k, ncols), k>=1. A column is DATA iff it has a body cell (row>=?split) and is homogeneous
+# non-Text (no Text body cell, and no two body cells of different cellDatatype). Column markers
+# make empty columns visible. Empty result -> None. Generalized from all-Numeric (proven vs the
+# Python) to homogeneous non-Text (proven, 2026-07-17) — subsumes numeric and adds Date/Currency
+# data-column recall [B2b task 2].
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?k) AS ?stub) WHERE {
   ?km tab:columnIndex ?k . FILTER(?k >= 1)
@@ -10,13 +13,19 @@ SELECT (MIN(?k) AS ?stub) WHERE {
     ?cm3 tab:columnIndex ?c3 . FILTER(?c3 >= ?k)
     FILTER NOT EXISTS {
       ?bc3 tab:atGridColumn ?c3 ; tab:atGridRow ?br3 . FILTER(?br3 >= ?split)
-      FILTER NOT EXISTS { ?xc3 tab:atGridColumn ?c3 ; tab:atGridRow ?xr3 ; tab:cellDatatype ?xd3 . FILTER(?xr3 >= ?split && ?xd3 != tab:Numeric) }
+      FILTER NOT EXISTS { ?tc3 tab:atGridColumn ?c3 ; tab:atGridRow ?tr3 ; tab:cellDatatype tab:Text . FILTER(?tr3 >= ?split) }
+      FILTER NOT EXISTS { ?ac3 tab:atGridColumn ?c3 ; tab:atGridRow ?ar3 ; tab:cellDatatype ?at3 .
+                          ?dc3 tab:atGridColumn ?c3 ; tab:atGridRow ?dr3 ; tab:cellDatatype ?dt3 .
+                          FILTER(?ar3 >= ?split && ?dr3 >= ?split && ?at3 != ?dt3) }
     }
   }
   # k is the MIN data column: no data column below k
   FILTER NOT EXISTS {
     ?cm4 tab:columnIndex ?c4 . FILTER(?c4 < ?k)
     FILTER EXISTS { ?bc4 tab:atGridColumn ?c4 ; tab:atGridRow ?br4 . FILTER(?br4 >= ?split) }
-    FILTER NOT EXISTS { ?xc4 tab:atGridColumn ?c4 ; tab:atGridRow ?xr4 ; tab:cellDatatype ?xd4 . FILTER(?xr4 >= ?split && ?xd4 != tab:Numeric) }
+    FILTER NOT EXISTS { ?tc4 tab:atGridColumn ?c4 ; tab:atGridRow ?tr4 ; tab:cellDatatype tab:Text . FILTER(?tr4 >= ?split) }
+    FILTER NOT EXISTS { ?ac4 tab:atGridColumn ?c4 ; tab:atGridRow ?ar4 ; tab:cellDatatype ?at4 .
+                        ?dc4 tab:atGridColumn ?c4 ; tab:atGridRow ?dr4 ; tab:cellDatatype ?dt4 .
+                        FILTER(?ar4 >= ?split && ?dr4 >= ?split && ?at4 != ?dt4) }
   }
 }

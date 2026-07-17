@@ -93,6 +93,48 @@ def test_stub_data_split_matches_reference():
         assert got == ref, "%s: got %s ref %s" % (name, got, ref)
 
 
+def _cells_split(grid):  # grid = list of rows, each = list of (col, text)
+    return [(r, c, t) for r, row in enumerate(grid) for (c, t) in row]
+
+
+HB_B2B = [   # (name, grid, ncols, expected split)
+    ("numeric no-regression", [[(0, "N"), (1, "S")], [(0, "A"), (1, "10")], [(0, "B"), (1, "20")]], 2, 1),
+    ("date column recall", [[(0, "Event"), (1, "When")], [(0, "L"), (1, "2024-01-15")], [(0, "C"), (1, "2024-02-20")]], 2, 1),
+    ("currency column recall", [[(0, "Item"), (1, "Cost")], [(0, "P"), (1, "$1,000")], [(0, "B"), (1, "$2,500")]], 2, 1),
+    ("dash-not-date -> None", [[(0, "A"), (1, "Range")], [(0, "x"), (1, "1-2")], [(0, "y"), (1, "3-4")]], 2, None),
+    ("all-text -> None", [[(0, "A"), (1, "B")], [(0, "x"), (1, "y")]], 2, None),
+]
+
+
+def test_header_body_split_recall_and_precision():
+    from iladub.etkl import celltype
+    import os
+    QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
+    for name, grid, ncols, want in HB_B2B:
+        g = celltype.grid_evidence(_cells_split(grid), ncols)
+        got = celltype.run_scalar(os.path.join(QDIR, "header-body-split.rq"), g)
+        assert got == want, "%s: got %s want %s" % (name, got, want)
+
+
+SD_B2B = [   # (name, cells, ncols, split, expected k)
+    ("currency data k=2", [(0, 0, "R"), (0, 1, "Y"), (0, 2, "Cost"), (1, 0, "N"), (1, 1, "z"), (1, 2, "$5"), (2, 0, "S"), (2, 1, "w"), (2, 2, "$6")], 3, 1, 2),
+    ("date data k=1", [(0, 0, "Item"), (0, 1, "When"), (1, 0, "a"), (1, 1, "2024-01-01"), (2, 0, "b"), (2, 1, "2024-02-01")], 2, 1, 1),
+]
+
+
+def test_stub_data_split_recall():
+    from iladub.etkl import celltype
+    from rdflib import Literal
+    from rdflib.namespace import XSD
+    import os
+    QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
+    for name, cells, ncols, split, want in SD_B2B:
+        g = celltype.grid_evidence(cells, ncols)
+        got = celltype.run_scalar(os.path.join(QDIR, "stub-data-split.rq"), g,
+                                  bindings={"split": Literal(split, datatype=XSD.integer)})
+        assert got == want, "%s: got %s want %s" % (name, got, want)
+
+
 def _ref_looks_transposed(cells):
     rows, cols = {}, {}
     for (r, c, t) in cells:
