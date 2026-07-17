@@ -204,7 +204,7 @@ tab:atGridRow a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd
 tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid column"@en .
 tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
-    rdfs:comment "An OPEN lattice of recovered cell datatypes. B2a: tab:Numeric | tab:Text. B2b extends it (Date/Currency/Percentage/Boolean)."@en .
+    rdfs:comment "An OPEN lattice of recovered cell datatypes. B2a: tab:Numeric | tab:Text. B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop."@en .
 tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
 tab:Text     a tab:CellDatatype ; rdfs:label "Text"@en .
 tab:Date     a tab:CellDatatype ; rdfs:label "Date"@en .
