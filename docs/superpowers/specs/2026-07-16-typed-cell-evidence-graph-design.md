@@ -1,7 +1,7 @@
 # Typed-Cell Evidence Graph — Type/Orientation Boundaries (Neurosymbolic Loop B2a) — Design
 
 **Date:** 2026-07-16
-**Status:** Design approved (scope + mechanism settled; header/body-split query feasibility-proven); ready for implementation plan.
+**Status:** ✅ **SHIPPED to main 2026-07-17** (merged `--no-ff` 228800e, pushed). Implemented via subagent-driven development (4 tasks; the final whole-branch review was the cleanest of the loop family — no Critical — the faithful-lift + differential-oracle strategy paid off; only a doc-only latent-invariant note); plan at `docs/superpowers/plans/2026-07-16-typed-cell-evidence-graph.md`; full suite 362 passed / 5 skipped. (Original status: design approved — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (the neurosymbolic-first gate — AXIOM / NEURAL / **PROCEDURAL**, with the open/closed derivation-vs-constraint split) + `docs/superpowers/specs/2026-07-14-recovery-layer-neurosymbolic-audit.md` (items C1 header/body split, E1 stub/data split, F1 transpose orientation).
 **Builds on (shipped):** loops one (transform substrate), B (role-derivation axioms), C (SHACL region gate). B2 introduces the **first pre-holon evidence graph** in the pipeline.
 

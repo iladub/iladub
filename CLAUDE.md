@@ -148,7 +148,11 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote), and
    **region tiling** (`iladub.etkl.tiling.region_tiles`: the tiling backstops as a SHACL oracle
    over each candidate region's RDF — the closed-world *constraint* mirror of loop B's open-world
-   derivation, loop C, shipped 2026-07-16), and `segment.find_table_gutter` (propose → oracle → dispose).
+   derivation, loop C, shipped 2026-07-16), the **typed-cell evidence graph** (`iladub.etkl.celltype`
+   + `vocab/queries/{header-body-split,stub-data-split,looks-transposed,transpose-coherent}.rq`:
+   header/body split, stub/data split, and transpose orientation as SPARQL derivations over a
+   transient pre-holon typed-cell graph — the first evidence graph in the pipeline, loop B2a, shipped
+   2026-07-17), and `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
