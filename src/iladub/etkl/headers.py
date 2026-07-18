@@ -112,6 +112,7 @@ class HeaderNode:
     text: str
     parent: int | None
     center_x: float | None = None
+    ambiguous: bool = False
 
 
 def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
@@ -275,6 +276,8 @@ def merge_tiling_ok(tree: Sequence[HeaderNode], grid: LeafGrid) -> bool:
     pitch of its label ink center. Also rejects any coarse-level column claimed by two
     nodes (overlap). A node without geometry (center_x is None) is not checked here.
     Returns False → the caller escalates MERGE_AMBIGUOUS rather than assert a guess."""
+    if any(getattr(n, "ambiguous", False) for n in tree):
+        return False                       # a resolver-flagged narrow-flank -> escalate MERGE_AMBIGUOUS
     b = grid.boundaries
     tol = 0.5 * _median_pitch(b)
     has_child = {n.parent for n in tree if n.parent is not None}

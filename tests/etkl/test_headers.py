@@ -68,3 +68,13 @@ def test_short_parent_covers_full_span_end_to_end(tmp_path):
     region = next(h for h in rep.graph.subjects(RDF.type, TAB.HeaderNode)
                   if str(rep.graph.value(rep.graph.value(h, TAB.hasLabel), TAB.cellText)) == "Region")
     assert len(list(rep.graph.objects(region, TAB.coversColumn))) == 4
+
+
+def test_merge_tiling_ok_rejects_ambiguous_node():
+    from iladub.etkl.headers import merge_tiling_ok, HeaderNode
+    from iladub.etkl.grid import LeafGrid
+    grid = LeafGrid(boundaries=(0.0, 100.0, 200.0, 300.0), ncols=3, pitch=100.0, confidence=1.0)
+    # a structurally-fine tree, but one node flagged ambiguous -> gate must reject.
+    tree = (HeaderNode(0, (1,), "X", None, 150.0, ambiguous=True),
+            HeaderNode(0, (2,), "Y", None, 250.0))
+    assert merge_tiling_ok(tree, grid) is False
