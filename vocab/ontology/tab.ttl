@@ -212,3 +212,21 @@ tab:Currency a tab:CellDatatype ; rdfs:label "Currency"@en .
 tab:cellDatatype a owl:ObjectProperty ; rdfs:domain tab:GridCell ; rdfs:range tab:CellDatatype ; rdfs:label "cell datatype"@en .
 tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "column index"@en ;
     rdfs:comment "A grid column marker (0..ncols-1) so empty columns are visible to the stub/data derivation."@en .
+
+# --- band-classification evidence graph (transient, pre-holon; loop B2c) ---
+tab:ClassifyBand a owl:Class ; rdfs:label "Classify band"@en ;
+    rdfs:comment "A transient candidate band being classified into a region kind. Evidence for the kind derivation (regions.classify); never asserted into a holon."@en .
+tab:lineCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "line count"@en .
+tab:gridColumnCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "grid column count"@en ;
+    rdfs:comment "grid.ncols from infer_leaf_grid; 0 when the band has fewer than 2 lines (grid undefined)."@en .
+tab:HeaderWord a owl:Class ; rdfs:label "Header word"@en ;
+    rdfs:comment "A word on the band's header line (line 0), for the 1:1 clean-tiling test."@en .
+tab:headerWordOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:range xsd:integer ; rdfs:label "header word order"@en ;
+    rdfs:comment "The word's 0-based left-to-right position among the header words (sorted by x0)."@en .
+tab:strictlyInColumn a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:range xsd:integer ; rdfs:label "strictly in column"@en ;
+    rdfs:comment "The unique column index the word is strictly inside (per _word_in_column); OMITTED when the word straddles a gutter."@en .
+tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
+    rdfs:comment "The kind a band is classified as."@en .
+tab:RecordTable a tab:RegionKind ; rdfs:label "Record table"@en .
+tab:UnsupportedTable a tab:RegionKind ; rdfs:label "Unsupported table"@en .
+tab:NonTable a tab:RegionKind ; rdfs:label "Non table"@en .
