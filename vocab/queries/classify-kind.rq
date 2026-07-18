@@ -1,0 +1,17 @@
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?kind ?nhw ?firstBad WHERE {
+  ?b a tab:ClassifyBand ; tab:lineCount ?nl ; tab:gridColumnCount ?nc .
+  { SELECT (COUNT(?hw) AS ?nhw) WHERE { ?hw a tab:HeaderWord } }
+  BIND(EXISTS {
+      ?w a tab:HeaderWord ; tab:headerWordOrder ?o .
+      FILTER NOT EXISTS { ?w tab:strictlyInColumn ?o }
+  } AS ?mis)
+  BIND(IF(?nl < 2 || ?nc < 2, tab:NonTableKind,
+       IF(?nhw = ?nc && !?mis, tab:RecordTableKind, tab:UnsupportedTableKind)) AS ?kind)
+  OPTIONAL {
+    SELECT (MIN(?o2) AS ?firstBad) WHERE {
+      ?w2 a tab:HeaderWord ; tab:headerWordOrder ?o2 .
+      FILTER NOT EXISTS { ?w2 tab:strictlyInColumn ?o2 }
+    }
+  }
+}

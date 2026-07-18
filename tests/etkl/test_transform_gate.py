@@ -85,3 +85,13 @@ def test_richer_typing_present_no_tuned_constant():
         assert not _FLOAT.search(body), "%s: no tuned constant" % q
     # celltype.py detectors carry no tuned float tolerance (regexes/ranges are structural)
     assert not _FLOAT.search(_strip_comments(open(ct.__file__, encoding="utf-8").read()))
+
+
+def test_classify_kind_axiom_present_no_tuned_constant():
+    """Loop B2c: regions.classify's kind decision is AXIOM (classify-kind.rq); its
+    PROCEDURAL emitter classifygraph.py carries no tuned constant (same pin as celltype.py)."""
+    import os, iladub.etkl.classifygraph as cg
+    rqs = {os.path.basename(p) for p in glob.glob(os.path.join(QUERIES, "*.rq"))}
+    assert "classify-kind.rq" in rqs, "the kind-derivation query must exist"
+    body = _strip_comments(open(cg.__file__, encoding="utf-8").read())
+    assert not _FLOAT.search(body), "classifygraph.py (evidence emitter) must carry no tuned numeric constant"
