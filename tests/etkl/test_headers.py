@@ -102,29 +102,13 @@ def test_narrow_flank_tie_none_when_ink_reaches_flank():
     assert _narrow_flank_tie((1, 2, 3, 4), (1, 2, 3, 4), b) is None
 
 
-def test_resolve_excludes_same_level_sibling_flank():
-    from iladub.etkl.headers import resolve_narrow_flanks, HeaderNode
-    from iladub.etkl.grid import LeafGrid
-    b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
-    grid = LeafGrid(boundaries=b, ncols=5, pitch=100.0, confidence=1.0)
-    # coarse node covers 1..4 (raw ink only 1..3); col 4 (400..440) HAS its own level-0 leaf header.
-    # header_cells: the coarse label (level0, straddles 1-3) + col4's own level-0 label.
-    header_cells = [(0, 105.0, 295.0, "Region"), (0, 405.0, 435.0, "Notes")]
-    nodes = [HeaderNode(0, (1, 2, 3, 4), "Region", None, center_x=200.0)]
-    # ink_cols supplied per node via the parallel list (see integration) — here 1..3.
-    out = resolve_narrow_flanks(nodes, grid, header_cells, ink_cols_by_node=[(1, 2, 3)])
-    assert out[0].covers == (1, 2, 3)     # col 4 excluded (same-level sibling)
-    assert out[0].ambiguous is False
-
-
 def test_resolve_escalates_header_empty_flank():
     from iladub.etkl.headers import resolve_narrow_flanks, HeaderNode
     from iladub.etkl.grid import LeafGrid
     b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
     grid = LeafGrid(boundaries=b, ncols=5, pitch=100.0, confidence=1.0)
     # col 4 has NO own header cell at level 0 -> header-empty -> escalate (mark ambiguous).
-    header_cells = [(0, 105.0, 295.0, "Region")]
     nodes = [HeaderNode(0, (1, 2, 3, 4), "Region", None, center_x=200.0)]
-    out = resolve_narrow_flanks(nodes, grid, header_cells, ink_cols_by_node=[(1, 2, 3)])
+    out = resolve_narrow_flanks(nodes, grid, ink_cols_by_node=[(1, 2, 3)])
     assert out[0].ambiguous is True
     assert out[0].covers == (1, 2, 3, 4)  # covers unchanged; escalation carries the residue

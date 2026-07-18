@@ -225,8 +225,6 @@ tab:headerWordOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:r
     rdfs:comment "The word's 0-based left-to-right position among the header words (sorted by x0)."@en .
 tab:strictlyInColumn a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:range xsd:integer ; rdfs:label "strictly in column"@en ;
     rdfs:comment "The unique column index the word is strictly inside (per _word_in_column); OMITTED when the word straddles a gutter."@en .
-tab:HeaderCell a owl:Class ; rdfs:label "Header cell"@en ;
-    rdfs:comment "A populated header cell across any header row, carrying its header level (row index, top-to-bottom) and, when its ink is strictly inside one leaf column, that column. Evidence for the narrow-flank sibling derivation (loop B1.2)."@en .
 tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
     rdfs:comment "The classification verdict for a band. Its individuals are verdicts, NOT the compiled-holon table classes (tab:RecordTable a owl:Class subClassOf tab:Table) — hence the distinct '…Kind' IRIs to avoid dual-typing an existing class."@en .
 tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .

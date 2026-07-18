@@ -1,5 +1,9 @@
-"""B1.2 gate — the narrow-flank silent-wrong is closed by the flank-sibling AXIOM, and NO
-geometric constant decides the flank (the .rq does). Anti-overfit: regression fixture first.
+"""B1.2 gate — the narrow-flank silent-wrong is closed by PROCEDURAL detect -> escalate:
+geometry (_narrow_flank_tie) detects a tied narrow orphan flank the raw ink does not reach and
+marks the node ambiguous, so the region escalates MERGE_AMBIGUOUS instead of silently
+over-absorbing. No AXIOM, no sibling derivation, no declarative decision — B1.1's
+repair_coverage already structurally protects genuine same-level siblings (they are never
+orphans, so this tie never fires for them). Anti-overfit: regression fixture first.
 
 Fixture calibration (measured empirically, not assumed — see task-6-report.md for the full
 probe trail):
@@ -20,9 +24,9 @@ probe trail):
    LeafGrid is a plain immutable value (boundaries/ncols/pitch/confidence) with no
    back-reference to its originating band, so this reuse is architecturally clean — every
    downstream call (header_body_split, infer_header_tree, repair_coverage,
-   resolve_narrow_flanks, flank-sibling.rq) is still real, unmodified production code; only
-   the row count fed to the row-count-sensitive SPARQL step is reduced, independent of the
-   column-count-sensitive whitespace-profile step.
+   resolve_narrow_flanks) is still real, unmodified production code; only the row count fed to
+   the row-count-sensitive SPARQL step is reduced, independent of the column-count-sensitive
+   whitespace-profile step.
 
 2. The idealized column-4 ink width `w4` does NOT equal the REAL grid-resolved column-4 width:
    infer_leaf_grid's rightmost boundary is the max ink extreme (not a symmetric gutter), so the
@@ -40,36 +44,28 @@ probe trail):
    w4=25 is used below — comfortably inside the reliable escalation zone.
 
 3. A structural finding worth recording plainly (verified by tracing `repair_coverage` +
-   `resolve_narrow_flanks` + `sibling_columns` together, not by intuition): when col 4 has a
-   well-formed header cell of its OWN at the SAME level as the coarse spanning node,
-   `repair_coverage`'s per-level "orphan" set (columns claimed by NO node at that level)
-   structurally EXCLUDES col 4 before `resolve_narrow_flanks` ever runs — a genuine
-   same-level sibling header can never be an "orphan," so it is never a candidate for
-   over-absorption. `sibling_columns`/`flank-sibling.rq` and `repair_coverage`'s per-level
-   claim-set are both ultimately grounded in the same column-membership fact (a header cell
-   strictly inside one column claims that column), so a column that IS a sibling at level L is
-   NEVER an orphan at level L either — the exact precondition `resolve_narrow_flanks` needs to
-   fire its "exclude" branch. Consequently, through the FULL `infer_header_tree` pipeline, that
-   exclude branch is unreachable when a genuine same-level sibling exists: the outcome
-   (never absorbed) is real and end-to-end-verified below (tests 1/2/4), but it is delivered by
-   `repair_coverage`'s (B1.1, pre-existing) per-level orphan protection, with
-   `resolve_narrow_flanks` confirmed as a correctness no-op rather than the active decider.
-   The "exclude" branch of `resolve_narrow_flanks` IS directly exercised — declaratively, via
-   the real `sibling_columns`/flank-sibling.rq call — by test 5 below (mirroring how the B1.2
-   Task 5 unit tests in test_headers.py already isolate it). Test 3 (the header-empty/orphan
-   case) is the one property that exercises the NEW B1.2 machinery as the active decider
-   end-to-end: verified against the OLD (pre-ambiguous-flag) behavior, this exact fixture's
-   covers=(1,2,3,4) node would have PASSED the old centering-only `merge_tiling_ok` check
-   (span-center 254 vs label center 250, diff 4pt, well under the 49pt tolerance) — i.e. it
-   would have shipped as a silently-accepted wrong merge. B1.2's `ambiguous` flag is what
-   newly closes that gap.
+   `resolve_narrow_flanks` together, not by intuition): when col 4 has a well-formed header
+   cell of its OWN at the SAME level as the coarse spanning node, `repair_coverage`'s per-level
+   "orphan" set (columns claimed by NO node at that level) structurally EXCLUDES col 4 BEFORE
+   `resolve_narrow_flanks` ever runs — a genuine same-level sibling header can never be an
+   "orphan," so it is never a candidate for over-absorption in the first place, and
+   `resolve_narrow_flanks` has nothing to detect (`_narrow_flank_tie` never fires because col 4
+   is already out of `covers`). This is why `resolve_narrow_flanks` needs no sibling logic of
+   its own (see the module design note in headers.py / spec §2.0): the "never absorbed" outcome
+   for a genuine sibling (test 4 below) is delivered entirely by `repair_coverage` (B1.1,
+   pre-existing). The header-empty/orphan case (test 3 below) is different: there is no sibling
+   header to make col 4 ineligible, so `repair_coverage`'s centered-run absorption over-includes
+   it, `_narrow_flank_tie` fires, and `resolve_narrow_flanks` marks the node ambiguous — the one
+   property that exercises B1.2 as the active decider end-to-end. Verified against the OLD
+   (pre-ambiguous-flag) behavior, this exact fixture's covers=(1,2,3,4) node would have PASSED
+   the old centering-only `merge_tiling_ok` check (span-center 254 vs label center 250, diff
+   4pt, well under the 49pt tolerance) — i.e. it would have shipped as a silently-accepted
+   wrong merge. B1.2's `ambiguous` flag is what newly closes that gap.
 """
 from iladub.etkl.geometry import Word, Line
 from iladub.etkl.bands import Band
 from iladub.etkl.grid import infer_leaf_grid
-from iladub.etkl.headers import (
-    infer_header_tree, header_body_split, resolve_narrow_flanks, HeaderNode, _narrow_flank_tie,
-)
+from iladub.etkl.headers import infer_header_tree, header_body_split
 
 
 def _line(words, top):
@@ -116,19 +112,9 @@ def _region_node(w4, col4_has_own_header):
     return grid, tree, coarse
 
 
-# 1 + 2. SILENT-WRONG CLOSED: col 4 has its own same-level header -> excluded, never absorbed.
-def test_silent_wrong_closed_narrow_flank_excluded():
-    for w4 in (40, 49, 50):
-        grid, tree, coarse = _region_node(w4, col4_has_own_header=True)
-        assert coarse, f"expected a coarse spanning node (w4={w4})"
-        assert all(4 not in n.covers for n in coarse), \
-            f"col 4 silently over-absorbed at w4={w4}: {[n.covers for n in coarse]}"
-        assert all(not n.ambiguous for n in coarse)
-
-
-# 3. RESIDUAL ESCALATES: header-empty (orphan) flank -> ambiguous (deferred to B1.3), never
-# absorbed. w4=25 is calibrated (see module docstring point 2) to fall inside the real
-# resolved-width tie-band the shipped _narrow_flank_tie detector actually flags as narrow.
+# 3. RESIDUAL ESCALATES (the real proof): header-empty (orphan) flank -> ambiguous (deferred to
+# B1.3), never absorbed. w4=25 is calibrated (see module docstring point 2) to fall inside the
+# real resolved-width tie-band the shipped _narrow_flank_tie detector actually flags as narrow.
 def test_header_empty_flank_escalates():
     grid, tree, coarse = _region_node(25, col4_has_own_header=False)
     # the coarse node either dropped col 4 already OR is flagged ambiguous; it must NEVER
@@ -139,29 +125,9 @@ def test_header_empty_flank_escalates():
     assert coarse and coarse[0].covers == (1, 2, 3, 4) and coarse[0].ambiguous is True
 
 
-# 4. NO-REGRESSION: a wide standalone flank (w=60 > 0.5*pitch) is still excluded (not a tie).
+# 4. NO-REGRESSION: a wide standalone flank (w=60 > 0.5*pitch) is still excluded (not a tie);
+# and a genuine same-level sibling (col4_has_own_header=True) is never absorbed in the first
+# place — both outcomes delivered by repair_coverage (B1.1), not by resolve_narrow_flanks.
 def test_wide_standalone_flank_still_excluded():
     grid, tree, coarse = _region_node(60, col4_has_own_header=True)
     assert all(4 not in n.covers for n in coarse)
-
-
-# 5. GATE-PIN: the flank decision is carried by the .rq, not a tuned constant. Perturbing the
-# tie-band / centering tolerance does not flip a same-level-sibling exclusion. This directly
-# exercises resolve_narrow_flanks' EXCLUDE branch (see module docstring point 3: through the
-# full infer_header_tree pipeline that branch is structurally unreachable when a genuine
-# same-level sibling exists — repair_coverage's per-level orphan protection gets there first —
-# so a direct call, exactly like the shipped Task-5 unit tests, is how this branch is proven
-# declarative).
-def test_flank_decision_is_declarative_not_constant():
-    from iladub.etkl.flankgraph import sibling_columns
-    b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
-    # col 4 has its own strict level-0 header -> sibling regardless of any geometric band width.
-    sibs = sibling_columns([(0, 105.0, 295.0, "Region"), (0, 402.0, 438.0, "Notes")], b)
-    assert (4, 0) in sibs
-    # and the resolver excludes it independent of the specific tie-band constant:
-    nodes = [HeaderNode(0, (1, 2, 3, 4), "Region", None, center_x=200.0)]
-    from iladub.etkl.grid import LeafGrid
-    out = resolve_narrow_flanks(nodes, LeafGrid(boundaries=b, ncols=5, pitch=100.0, confidence=1.0),
-                                [(0, 105.0, 295.0, "Region"), (0, 402.0, 438.0, "Notes")],
-                                ink_cols_by_node=[(1, 2, 3)])
-    assert out[0].covers == (1, 2, 3)

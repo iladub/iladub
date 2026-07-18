@@ -229,8 +229,9 @@ def _narrow_flank_tie(covers, ink_cols, b) -> int | None:
     column narrower than half the median pitch not physically touched by the label. None if no
     such flank (the resolution is then unambiguous or wide-enough to decide geometrically).
 
-    PROCEDURAL: this is tie *detection* (geometry), not the span *decision* (that is the AXIOM
-    flank-sibling.rq). Irreducible -- it reads raw ink extents and column widths.
+    PROCEDURAL: this is tie *detection* (geometry) -- it recognizes that the tie-band cannot
+    decide, it never decides the span itself (the caller escalates). Irreducible -- it reads raw
+    ink extents and column widths.
     """
     if len(covers) < 2 or not ink_cols:
         return None
@@ -249,23 +250,23 @@ def _narrow_flank_tie(covers, ink_cols, b) -> int | None:
     return None
 
 
-def resolve_narrow_flanks(nodes, grid, header_cells, ink_cols_by_node):
-    """B1.2 pass: resolve tie-band narrow-flank over-absorption declaratively.
+def resolve_narrow_flanks(nodes, grid, ink_cols_by_node):
+    """B1.2 pass: PROCEDURAL detect -> escalate.
 
     For each coarse node, if its resolved covers over-absorbs a single narrow flanking column
-    the raw ink does not reach (_narrow_flank_tie), consult the header-cell derivation
-    (flank-sibling.rq via sibling_columns): a flank that is a same-level sibling leaf is EXCLUDED
-    (parentless leaf); a header-empty flank is marked ambiguous -> the caller escalates
-    MERGE_AMBIGUOUS (the NEURAL B1.3 residual). No tuned constant decides -- the .rq does.
+    the raw ink does not reach (_narrow_flank_tie fires), the geometry cannot decide whether that
+    orphan flank belongs under the span -- mark the node ambiguous so the caller escalates
+    MERGE_AMBIGUOUS (the NEURAL B1.3 residual resolves it later). No sibling derivation: B1.1's
+    repair_coverage already structurally protects genuine same-level siblings (they are never
+    orphans, so they never reach this tie in the first place) -- see
+    docs/superpowers/specs/2026-07-18-neural-span-perception-design.md §2.0.
 
     ink_cols_by_node: parallel to `nodes`; the raw ink columns each node's own text touches
     (None for a node lacking geometry -> skipped).
     """
-    from .flankgraph import sibling_columns
     if isinstance(grid, int):
         return nodes                                   # no geometry -> nothing to resolve
     b = grid.boundaries
-    sibs = sibling_columns(header_cells, b)
     out = list(nodes)
     for i, n in enumerate(out):
         ink = ink_cols_by_node[i] if i < len(ink_cols_by_node) else None
@@ -274,10 +275,7 @@ def resolve_narrow_flanks(nodes, grid, header_cells, ink_cols_by_node):
         flank = _narrow_flank_tie(n.covers, tuple(ink), b)
         if flank is None:
             continue
-        if (flank, n.level) in sibs:
-            out[i] = replace(n, covers=tuple(c for c in n.covers if c != flank))
-        else:
-            out[i] = replace(n, ambiguous=True)
+        out[i] = replace(n, ambiguous=True)
     return out
 
 
@@ -393,16 +391,14 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
 
     nodes = repair_coverage(nodes, grid)   # centering-bounded span resolution (B1.1)
 
-    # B1.2 — declarative narrow-flank resolution (exclude same-level sibling / escalate residual).
-    header_cells = [(lvl, cell.x0, cell.x1, cell.text)
-                    for lvl, row in enumerate(header_rows) for cell in row]
+    # B1.2 — narrow-flank tie detect -> escalate (PROCEDURAL; see resolve_narrow_flanks).
     ink_cols_by_node = []
     for lvl, row in enumerate(header_rows):
         for cell in row:
             lo = column_of(cell.x0 + 0.1, b)
             hi = column_of(cell.x1 - 0.1, b)
             ink_cols_by_node.append(tuple(range(min(lo, hi), max(lo, hi) + 1)))
-    nodes = resolve_narrow_flanks(nodes, grid, header_cells, ink_cols_by_node)
+    nodes = resolve_narrow_flanks(nodes, grid, ink_cols_by_node)
 
     # Link each node to its nearest parent (level − 1 whose covers ⊇ this node's).
     # Break after the first match so the first qualifying parent wins deterministically
