@@ -153,8 +153,13 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    header/body split, stub/data split, and transpose orientation as SPARQL derivations over a
    transient pre-holon typed-cell graph — the first evidence graph in the pipeline, loop B2a, shipped
    2026-07-17; extended in B2b (2026-07-18) with an open `tab:cellDatatype` lattice — Date/Currency
-   body-signals + "homogeneous non-Text" queries — for date/currency recall), and
-   `segment.find_table_gutter` (propose → oracle → dispose).
+   body-signals + "homogeneous non-Text" queries — for date/currency recall), the **declarative kind
+   classification** (`iladub.etkl.regions.classify` + `iladub.etkl.classifygraph` +
+   `vocab/queries/classify-kind.rq`: the whole NON_TABLE/UNSUPPORTED/RECORD kind decision as ONE
+   holon-scoped SPARQL `SELECT` over a fresh per-band evidence graph — the band *is* the closure
+   boundary; a byte-identical *faithful lift* gated by a frozen `_ref_classify` differential oracle,
+   with `infer_leaf_grid`/`_word_in_column` staying justified PROCEDURAL geometry, loop B2c, shipped
+   2026-07-18), and `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 

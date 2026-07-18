@@ -1,7 +1,7 @@
 # Declarative Kind Classification — `regions.classify` as AXIOM (Neurosymbolic Loop B2c) — Design
 
 **Date:** 2026-07-18
-**Status:** Design approved — ready for `writing-plans`.
+**Status:** ✅ **SHIPPED to main 2026-07-18** (PR #46 merged `--no-ff`, merge commit 5eb0fb1). Implemented via subagent-driven development (3 tasks; faithful lift, final whole-branch review READY TO MERGE — no Critical, the two prior-loop Critical classes confirmed absent); plan at `docs/superpowers/plans/2026-07-18-classify-kind-axiom.md`; full suite 386 passed / 5 skipped, no downstream flip. `classify` is now a SPARQL derivation over the `classifygraph` per-band evidence graph, byte-identical to the old cascade. (Original status: design approved — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (the neurosymbolic-first gate + the open/closed derivation-vs-constraint split).
 **Audit basis:** `docs/superpowers/specs/2026-07-14-recovery-layer-neurosymbolic-audit.md` — item **B1** (`classify` routing = AXIOM; multi-word-header escape = NEURAL) and reframe **#5** ("`regions.classify` → declarative classification").
 **Builds on (shipped):** the B2a/B2b typed-cell evidence-graph pattern (a transient pre-holon RDF graph + a SPARQL derivation + a thin PROCEDURAL emitter/runner). B2c applies the *same* pattern one step **earlier** in the pipeline — to the band→kind decision that *produces* the cells B2a later types.
