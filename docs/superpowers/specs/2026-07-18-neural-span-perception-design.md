@@ -30,8 +30,8 @@ Coverage / NoOverlap / Refinement shapes as their structural guardrail.
 
 | Loop | Decision | Audit ref | Disposing oracle |
 |---|---|---|---|
-| **B1.2** | narrow-flank exclusion by **level-corroboration** — **SLICE 1 (this spec)**, an **AXIOM** (see §2 note) | C3 | header-cell SPARQL derivation + `merge_tiling_ok` guard (refinement-preserving); header-empty tied flank → escalate |
-| **B1.3** | header-empty tied flank — the **NEURAL residual** deferred from B1.2 | C3 | BAML `ProposeHeaderSpan` proposes absorb/exclude; `region_tiles` disposes; else escalate |
+| **B1.2** | narrow-flank orphan tie → **escalate** — **SLICE 1 (this spec)**, a **PROCEDURAL** honest-escalate (see §2.0 rework note; shipped as a tie-detect→escalate, **not** an AXIOM) | C3 | none — geometry *detects* the tie, escalates `MERGE_AMBIGUOUS`; B1.1 `repair_coverage` already handles sibling/orphan protection |
+| **B1.3** | resolve an escalated narrow-orphan flank (absorb-under-span vs standalone leaf) — the **NEURAL residual** deferred from B1.2 | C3 | BAML `ProposeHeaderSpan` proposes; `region_tiles` disposes; else escalate |
 | B2 | general merged-header span (`_covers_for_cell`) | C2 | tiling SHACL |
 | B3 | wrap-continuation: tight sub-line = wrapped continuation vs distinct level | C5 | tiling + line-model |
 | B4 | cross-tab column tree (Voronoi → propose) | D1 | `col_tree_tiles` SHACL |
@@ -59,159 +59,153 @@ threshold (per the standing "oracle not confidence" rule).
 
 ---
 
-## Part 2 — Slice 1: narrow-flank exclusion by level-corroboration (loop B1.2)
+## Part 2 — Slice 1: narrow-flank orphan tie → escalate (loop B1.2, PROCEDURAL)
 
-### 2.0 Design note — this slice is an AXIOM, not NEURAL (the gate-classification decision, 2026-07-18)
+### 2.0 Design note — what implementation taught us: this slice is PROCEDURAL, not an AXIOM (2026-07-18)
 
-Scoping the slice surfaced a gate-classification correction. The distinguishing signal between the
-two look-alike cases — *(a)* the pivot (`"Prior Visit"` spanning cols 4–6, where col 6 carries its
-own **sub**-header yet genuinely belongs under the parent → **absorb**) and *(b)* the documented
-silent-wrong (a narrow standalone col 4 that has its own leaf header and is **not** under the parent
-→ **exclude**) — is **not** a lexical "own header token" test (that can't tell them apart and would
-break the pivot). It is a **structural** signal: *the level (header row) at which the flank's own
-header sits.* A flank whose own header is at the **spanning node's level** is a **sibling leaf**
-(exclude `[1..k]`); a flank whose only header is at a **deeper level** (or is header-empty) is a
-**child/empty** and is out of this slice.
+This slice was **designed as an AXIOM** (a header-cell SPARQL derivation, `flank-sibling.rq`, deciding
+"is the tied flank a same-level sibling → exclude, or header-empty → escalate"). Building it and
+gate-testing it end-to-end **disproved that classification**, and the slice was deliberately
+simplified. The decision trail is kept here because the reasoning is the point.
 
-Because that signal is structural and declarative over the header-cell graph, the correct
-classification (CLAUDE.md §8: *do not reach for NEURAL where an AXIOM suffices*) is **AXIOM**, and it
-**closes the documented silent-wrong on its own** (the deferred repro's col 4 has its own leaf
-header → now excluded structurally). NEURAL is genuinely needed only for the **residual** — a flank
-that is **header-empty at the spanning node's level** where geometry ties, so nothing structural
-decides — which is deferred to loop **B1.3** (§2.8). This slice ships the AXIOM and **escalates** the
-residual; it introduces **no BAML**.
+**What the AXIOM was going to decide, and why it turned out redundant.** The intended discriminator
+was *the level at which a tied flank has its own header* — same level → sibling (exclude), deeper →
+child (absorb), none → orphan (escalate). But B1.1's shipped `repair_coverage` **already** answers
+sibling-vs-orphan: its per-level "orphan" set (`avail = own covers | {columns no node at this level
+covers}`) structurally **never absorbs a column that has its own same-level header** — a genuine
+same-level sibling is, by construction, *not an orphan*, so `_centered_run` can never pull it into the
+span. The gate test's RED-check confirmed it: disabling the resolver changes **only** the
+header-empty (orphan) case; the "exclude a same-level sibling" branch is **unreachable through the
+full `infer_header_tree` pipeline** and fires only if the resolver is called directly.
+
+Consequently the SPARQL sibling-derivation could only ever re-derive a fact `repair_coverage` had
+already used — it was **structurally redundant**, always returning "not a sibling" for any flank that
+actually reached it (those are all orphans). Making it the *active* decider would have required
+tearing out `repair_coverage`'s procedural protection and reimplementing it declaratively — but
+`level_cols` (which protects columns under a **spanning** parent that have no own leaf header) is
+**not** equivalent to `sibling_columns` (strict-in-column leaf headers only), so a clean swap
+**regresses the pivot**. Reworking that safely is real surgery on shipped, correct B1.1 code to close
+a **synthetic** silent-wrong (surfaced by review, reproduced only with hand-built geometry).
+
+**The gate-classification lesson (the mirror of §8's NEURAL rule).** Just as §8 says *don't reach for
+NEURAL where an AXIOM suffices*, the corollary holds: **don't reach for an AXIOM where existing
+structure already suffices.** Here the honest classification is **PROCEDURAL** — geometry *detects*
+an ambiguity the tie-band cannot resolve, and the slice **escalates** (honest failure > fake success)
+instead of silently over-absorbing. No evidence graph, no SPARQL, no BAML.
 
 ### 2.1 The decision (one sentence)
 
-When a spanning (multi-column, non-leaf) header's centered run is geometrically **tied** between
-covering leaf columns `[1..k]` and `[1..k+1]` — because a flanking column narrower than half the
-median pitch shifts the endpoint center by less than `_centered_run`'s `0.25·pitch` tie-band — decide
-whether that flanking column is a **parentless sibling leaf** (exclude → `[1..k]`) using the level of
-its own header, and otherwise **escalate** (defer to B1.3) rather than silently over-absorb.
+When a spanning (multi-column, non-leaf) header's centered run over-absorbs a **narrow flanking
+column that the label's raw ink does not reach** (an endpoint column narrower than half the median
+pitch, inside `_centered_run`'s `0.25·pitch` tie-band), **escalate `MERGE_AMBIGUOUS`** rather than
+silently assert the over-absorbed span — because geometry provably cannot decide whether that orphan
+flank belongs under the span, and B1.1 already protects genuine same-level siblings.
 
-### 2.2 Why the *resolution* is an AXIOM (the gate justification — stated in code and spec)
+### 2.2 Why it is PROCEDURAL escalate (the gate justification — stated in code and spec)
 
-Both rival runs sit inside `_centered_run`'s `0.25·pitch` tie-band **and** inside `merge_tiling_ok`'s
-`0.5·pitch` centering tolerance (`src/iladub/etkl/headers.py:218,279`) — geometry and the current
-centering check are **both blind** to the 3-vs-4 call; the tie-band exists *because geometry cannot
-decide*, so the `0.25`/`0.5` constants must not be the decider (CLAUDE.md §8). But the decision is
-**not** perceptual: the discriminator is a **declarable fact over the header-cell evidence graph** —
-*does column `k+1` bear a header cell at the spanning node's level?* That is an open-world SPARQL
-derivation (grow the "flank is an independent same-level leaf" verdict from evidence that is
-**present**), exactly the loop-B/B2a/B2c pattern. The tie **detection** (geometry) stays PROCEDURAL;
-the tie **resolution** is the AXIOM.
+The over-absorbed rival runs both sit inside `_centered_run`'s `0.25·pitch` tie-band **and** inside
+`merge_tiling_ok`'s `0.5·pitch` centering tolerance (`src/iladub/etkl/headers.py`) — geometry is
+**blind** to whether the orphan flank belongs under the span. There is no *symbolic* fact that decides
+it (a header-empty orphan has no evidence to derive from — deriving "it belongs / it doesn't" from the
+*absence* of a header would violate §7, assert only what the source supports), and it is not (yet) a
+perceptual NEURAL slice. The only honest action is to **stop and escalate**: mark the node ambiguous
+so the existing `MERGE_AMBIGUOUS` seam quarantines the region rather than asserting a guess. The
+tie **detection** (`_narrow_flank_tie`: median pitch, tie-band, raw ink extent) is irreducibly
+PROCEDURAL geometry, and it does not *decide* the span — it only recognizes that geometry can't.
 
 Reproduction (from the deferred doc), boundaries `[0,100,200,300,400,400+w]`, `median_pitch=100`,
 band `=25`:
 
 ```
-col4 width 40 / 49 / 50  -> today: GROUP resolves to [1,2,3,4]  (col 4 SILENTLY over-absorbed, asserted)
-col4 width 51            -> today: GROUP resolves to [1,2,3]    (correct; col 4 a parentless leaf)
+col4 width 40 / 49 / 50  -> BEFORE: GROUP silently resolves to [1,2,3,4]  (orphan col 4 over-absorbed, asserted)
+                            AFTER : node marked ambiguous -> region escalates MERGE_AMBIGUOUS (never silently asserted)
+col4 width 51            -> unchanged: [1,2,3] (comparable-width flank correctly left out by B1.1)
 ```
 
-### 2.3 The seam (an AXIOM derivation over a header-cell evidence graph — the loop-B2a/B2c pattern)
+### 2.3 The seam (procedural detect → escalate; reuses the shipped `MERGE_AMBIGUOUS` path)
 
-Mirrors the shipped evidence-graph axioms (`celltype` / `classifygraph` + a `vocab/queries/*.rq`
-SELECT read by a thin Python reader), **not** the A2.1 proposer pattern (no BAML in this slice).
+Two small pieces in `src/iladub/etkl/headers.py`, plus the shipped escalation seam:
 
-**Step 1 — Evidence graph (thin, per resolving band).** Build a transient RDF graph of the header
-cells: for each populated header cell, a `tab:HeaderWord`-style node carrying `tab:atColumn` (the
-strict-containment column, via the existing `column_of`) and `tab:headerLevel` (its header row index,
-top-to-bottom). Reuse `classifygraph`'s construction style; add only the level. This is a fresh graph
-per band (the **band is the closure boundary** — query-local `NOT EXISTS`/`COUNT` stay holon-scoped).
+**`_narrow_flank_tie(covers, ink_cols, b) -> int | None`** — PROCEDURAL geometry. Returns the single
+endpoint flank column that `covers` includes, the node's raw ink does **not** reach, and that is
+narrower than `0.5·_median_pitch` (so it sits inside the tie-band). `None` otherwise. This is tie
+*detection*; each constant is documented in-code as detection geometry, not a span decision.
 
-**Step 2 — The derivation (SPARQL SELECT, open world).** New `vocab/queries/flank-sibling.rq`:
-a `SELECT ?col` returning every leaf column that **bears its own header cell at a given
-`?spanLevel`** (bound by the reader to the spanning node's level). Open-world and evidence-positive:
-a flank is named a sibling only when its same-level header cell is *present* — never inferred from
-absence. (Absence → the residual → escalate, per §2.0/§2.8.)
+**`resolve_narrow_flanks(nodes, grid, ink_cols_by_node) -> list[HeaderNode]`** — for each coarse node
+with geometry, if `_narrow_flank_tie` fires, mark the node `ambiguous=True`. That's it: **detect →
+escalate**. No sibling derivation, no header-cell graph, no per-flank query.
 
-**Step 3 — Reader + resolution.** A thin reader (in `headers.py`, beside `repair_coverage`) that,
-for a tie-band narrow-flank node:
-- runs `flank-sibling.rq` for the flank column at the spanning node's level;
-- **flank is a same-level sibling** → resolve the node to `[1..k]` (exclude the flank; the flank
-  stays a parentless leaf) — **closes the silent-wrong**;
-- **flank is not a same-level sibling** (header-empty at that level) → **escalate `MERGE_AMBIGUOUS`**
-  (the B1.3 residual; never silently absorb).
-
-**Step 4 — Structural guard.** The exclude operation is **refinement-preserving** — removing the
-flank column from a parent's covers and leaving it a parentless leaf strictly *refines* the tiling
-and cannot introduce a coverage or overlap violation — so the resolved tree is guarded by the
-**existing** hierarchical-path gate `merge_tiling_ok` (`compile.py:201`; its no-overlap half is the
-geometric mirror of `NoOverlapShape`, audit C4). Full `region_tiles` (loop-C SHACL) wiring onto the
-hierarchical path is a separate change that would re-gate *every* hierarchical region against all
-eight shapes — **deferred** (noted follow-up), out of scope for closing this silent-wrong. The
-constraint half of the open/closed split is thus satisfied for slice 1 by the shipped gate; the
-derivation grows the tree, `merge_tiling_ok` certifies what crosses.
+**Escalation** rides the **existing** `MERGE_AMBIGUOUS` seam: `HeaderNode.ambiguous: bool = False`;
+`merge_tiling_ok` (the compile-level gate at `compile.py:201`) returns `False` if any node is
+`ambiguous`; the region escalates in-band exactly as the shipped centering/overlap failures already
+do. No new control flow. (The parent-linking reconstruction in `infer_header_tree` must carry the
+`ambiguous` field through — otherwise escalation is a silent no-op; this was fixed during Task 5.)
 
 ### 2.4 Where it plugs in
 
-`repair_coverage` (`headers.py:225`) calls `_centered_run` for every coarse node; `_centered_run`
-continues to resolve the unambiguous case unchanged (fast path). The change: when `_centered_run`'s
-winning run is inside the tie-band with a rival that differs by **exactly one flanking column narrower
-than `0.5·pitch`**, route that node through the Step-3 reader. A same-level-sibling flank resolves to
-the exclude run; otherwise the node is marked ambiguous.
+`infer_header_tree` (`headers.py`) builds nodes, runs `repair_coverage` (B1.1 centering, unchanged),
+then calls `resolve_narrow_flanks(nodes, grid, ink_cols_by_node)` before parent-linking.
+`ink_cols_by_node` is built positionally aligned with `nodes` (same `for lvl, row in
+enumerate(header_rows): for cell in row:` order; verified — `repair_coverage` only ever `replace()`s
+in place, never reorders). Unambiguous spans pass through untouched; only a detected narrow-flank
+orphan tie flips a node to `ambiguous`.
 
-Ambiguity surfaces through the **existing** `MERGE_AMBIGUOUS` seam: `HeaderNode` gains an
-`ambiguous: bool = False` field; `merge_tiling_ok` (already the compile-level `MERGE_AMBIGUOUS` gate
-at `compile.py:201`) returns `False` if any node is `ambiguous`. No new control flow — the slice
-reuses the shipped escalate path; it only makes the tie-band resolve *correctly* (exclude) or
-*escalate* instead of silently over-absorbing.
+### 2.5 The gate test (anti-overfit — `tests/etkl/test_span_gate.py`)
 
-### 2.5 The gate test (anti-overfit — mirrors `test_transform_gate.py` / celltype / classifygraph gate)
+Built **regression-fixture-first** (probe the real pipeline before asserting). Because `infer_leaf_grid`
+needs ≥~48 data rows to resolve the 5-column grid **and** the shipped `header-body-split.rq` is
+super-linear in row count (see §2.7 note), the fixture infers the grid on a wide (~60-row) band and
+runs split/tree on a small band sharing the identical column layout (a `LeafGrid` is an immutable
+value; this is sound reuse, not a weakened test).
 
-New `tests/etkl/test_span_gate.py`, built **regression-fixture-first** (probe → plan → adversarial
-review — the discipline that caught the median silent-wrong and the nameless-pivot routing):
+1. **Silent-wrong closed (the real proof):** a narrow **orphan** flank (`w=25` real-resolved,
+   header-empty at the span level) makes the coarse node `ambiguous=True` and the region escalate
+   `MERGE_AMBIGUOUS` — it is **never** silently asserted as `[1,2,3,4]`. Proven non-vacuous by a
+   RED-check: disabling `resolve_narrow_flanks` makes exactly this test fail.
+2. **No-regression:** a wide standalone flank (real width > `0.5·pitch`) is untouched; the multi-level
+   pivot (`"Prior Visit"`, deeper-level sub-headers) still resolves; all shipped `test_headers.py` /
+   `test_hierarchical.py` fixtures stay green.
+3. **Detection-is-geometry, not a decision:** `_narrow_flank_tie` is unit-tested for the narrow / wide
+   / ink-reaches cases directly, pinning that it fires only on the genuine tie.
 
-1. **Regression fixture FIRST:** the narrow-standalone-column layout —
-   `[0,100,200,300,400,400+w]`, `w ∈ {40,49,50,51}`, with col 4 given its **own same-level leaf
-   header** (the silent-wrong case) — built and probed *before* the plan.
-2. **Silent-wrong closed:** with a same-level header on col 4, `w=40/49/50` no longer silently
-   resolves to `[1,2,3,4]`; it resolves to `[1,2,3]` (the flank excluded as a sibling leaf).
-3. **Residual escalates:** the same layout with col 4 **header-empty at the span level** escalates
-   `MERGE_AMBIGUOUS` — never silently absorbs (the B1.3 residual is deferred, not guessed).
-4. **No-regression:** the pivot's `"Prior Visit"` header (cc=5, lc=4, rc=5 → extends to col 6, whose
-   own header is a **deeper** level) still resolves correctly; `w=51` (comparable-width standalone)
-   still excluded.
-5. **Gate-pin (the neurosymbolic-gate enforcement reviewers check):** assert that neither the
-   `0.25·pitch` tie-band nor the `0.5·pitch` centering tolerance is the *decider* in the flank case —
-   perturbing them does not change the flank resolution, which is driven by the `flank-sibling.rq`
-   verdict over the header-cell graph, not by a constant. (Parity with the `classifygraph` gate:
-   pin that the `.rq` + reader carry the decision, no tuned constant in the resolution path.)
+(The earlier draft's "same-level sibling excluded" and "declarative decision" tests are **removed** —
+the sibling case is handled by B1.1, not this slice, and there is no declarative decision to pin.)
 
-### 2.6 What stays PROCEDURAL (honestly bounded — do not over-semanticize)
+### 2.6 What stays PROCEDURAL / justified (honestly bounded)
 
-`_word_in_column` / `column_of` containment, `_median_pitch` measurement, `_span_center` endpoint
-geometry, the exact ink-extent read, and the **tie-band detection itself** — raw geometry/extraction
-feeding the evidence graph and *triggering* the resolver, not *deciding* the span. They remain
-procedural and each states in-code why it is irreducible to AXIOM. The evidence-graph builder and the
-SPARQL runner are PROCEDURAL engine-glue (the `classifygraph`/`celltype` precedent).
+`_narrow_flank_tie` (`_median_pitch`, the `0.5·pitch` width test, the raw ink-extent read) is tie
+*detection* geometry — it recognizes that the tie-band cannot decide and hands off to escalation; it
+never asserts a span. `_word_in_column` / `column_of` / `_span_center` are unchanged raw geometry.
+There is **no AXIOM and no NEURAL** in this slice by design — the honest decision is "escalate on
+detected ambiguity."
 
-### 2.7 Scope boundary (YAGNI)
+### 2.7 Scope boundary + carried notes (YAGNI)
 
-- Only the **tied narrow-flank case** (one flanking column, narrower than half the median pitch,
-  inside the tie-band) routes through the reader. General merged-header span (`_covers_for_cell`,
-  audit C2) is loop **B2**, not this slice.
-- **No BAML, no proposer, no confidence** in this slice — it is an AXIOM. The `ProposeHeaderSpan`
-  seam belongs to loop **B1.3** (§2.8).
+- Only the **tied narrow-flank orphan** case (one endpoint column, narrower than half the median
+  pitch, ink-unreached) flips a node to ambiguous. General merged-header span (`_covers_for_cell`,
+  audit C2) is loop **B2**.
+- **No BAML, no SPARQL, no evidence graph, no confidence** — this slice is procedural detect→escalate.
 - No new escalation control flow — reuse `MERGE_AMBIGUOUS` via the `ambiguous` flag.
-- Deferred minors carried from B1.1 (typing `repair_coverage`'s `grid: LeafGrid | int`, the
-  `_tree_of` `StopIteration` message) are **out of scope** here unless touched incidentally.
+- **Carried for a follow-up (out of scope here):** `header-body-split.rq` (shipped B2a) is
+  **super-linear in band row count** (empirically hangs past ~15 rows via rdflib's nested
+  `FILTER (NOT) EXISTS`) — a latent performance risk for any real spanning-header table with ~15+
+  rows in `compile_tables`. Discovered while building the B1.2 gate fixture; a separate B2a
+  performance loop.
 
 ### 2.8 The deferred NEURAL residual (loop B1.3 — its own spec later)
 
-When the tied flank is **header-empty at the spanning node's level**, nothing structural decides
-absorb-vs-exclude. That residual is the genuine NEURAL case: BAML `ProposeHeaderSpan` reads the
-spanning label + neighbouring leaf labels + ink extent and *proposes*; `region_tiles` disposes;
-confidence never promotes; no confident legal reading → escalate `MERGE_AMBIGUOUS`. B1.2 **escalates**
-this case (safe, honest), so B1.3 is a pure capability add with no silent-wrong to unwind.
+B1.2 **escalates** every detected narrow-orphan-flank tie (safe, honest). Loop **B1.3** is the genuine
+NEURAL slice that *resolves* those escalations: for a header-empty tied flank, BAML `ProposeHeaderSpan`
+reads the spanning label + neighbouring leaf labels + ink extent and *proposes* absorb-vs-standalone;
+`region_tiles` disposes; confidence never promotes; no confident legal reading → stay escalated. B1.2
+leaves a clean, quarantined input for it (no silent-wrong to unwind).
 
 ### 2.9 Definition of done (the loop CLOSES)
 
-- The narrow-standalone-column fixture proves the silent-wrong is closed end-to-end: a same-level
-  flank resolves to `[1,2,3]` (excluded), a header-empty flank escalates `MERGE_AMBIGUOUS` — never a
-  silent over-absorb — and no B1.1 fixture regresses.
-- The gate test pins that no geometric constant decides the flank case (the `.rq` + reader do).
-- The deferred B1.2 item is retired (link updated in the deferred doc / CLAUDE.md §8 exemplar list),
-  and the header-empty residual is recorded as loop B1.3.
-- Residue (header-empty tied flanks) is escalated in-band as `MERGE_AMBIGUOUS`, never dropped.
+- The narrow-orphan-flank fixture proves the silent-wrong is closed end-to-end: the node is marked
+  `ambiguous` and the region escalates `MERGE_AMBIGUOUS` — never a silent over-absorb — and no B1.1
+  fixture regresses. RED-check proves the escalation test is non-vacuous.
+- The slice is honestly classified PROCEDURAL (detect→escalate); no AXIOM/NEURAL machinery ships.
+- The deferred B1.2 item is retired (link updated in the deferred doc), and the header-empty
+  resolution is recorded as the NEURAL loop **B1.3**.
+- Residue (narrow-orphan tied flanks) is escalated in-band as `MERGE_AMBIGUOUS`, never dropped.
