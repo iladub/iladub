@@ -30,7 +30,7 @@ Coverage / NoOverlap / Refinement shapes as their structural guardrail.
 
 | Loop | Decision | Audit ref | Disposing oracle |
 |---|---|---|---|
-| **B1.2** | narrow-flank exclusion by **level-corroboration** — **SLICE 1 (this spec)**, an **AXIOM** (see §2 note) | C3 | header-cell SPARQL derivation + `region_tiles` SHACL guard; header-empty tied flank → escalate |
+| **B1.2** | narrow-flank exclusion by **level-corroboration** — **SLICE 1 (this spec)**, an **AXIOM** (see §2 note) | C3 | header-cell SPARQL derivation + `merge_tiling_ok` guard (refinement-preserving); header-empty tied flank → escalate |
 | **B1.3** | header-empty tied flank — the **NEURAL residual** deferred from B1.2 | C3 | BAML `ProposeHeaderSpan` proposes absorb/exclude; `region_tiles` disposes; else escalate |
 | B2 | general merged-header span (`_covers_for_cell`) | C2 | tiling SHACL |
 | B3 | wrap-continuation: tight sub-line = wrapped continuation vs distinct level | C5 | tiling + line-model |
@@ -134,11 +134,15 @@ for a tie-band narrow-flank node:
 - **flank is not a same-level sibling** (header-empty at that level) → **escalate `MERGE_AMBIGUOUS`**
   (the B1.3 residual; never silently absorb).
 
-**Step 4 — Structural guard (`region_tiles`, loop-C SHACL).** The resolved header tree is validated
-by the already-shipped `tiling.region_tiles` (Coverage/NoOverlap/Refinement/Unambiguous-leaf-access)
-before assertion — a closed-world membrane check that the exclusion produced a legal tiling. This is
-the **constraint** half of the open/closed split; the derivation grows the tree, the SHACL certifies
-what crosses.
+**Step 4 — Structural guard.** The exclude operation is **refinement-preserving** — removing the
+flank column from a parent's covers and leaving it a parentless leaf strictly *refines* the tiling
+and cannot introduce a coverage or overlap violation — so the resolved tree is guarded by the
+**existing** hierarchical-path gate `merge_tiling_ok` (`compile.py:201`; its no-overlap half is the
+geometric mirror of `NoOverlapShape`, audit C4). Full `region_tiles` (loop-C SHACL) wiring onto the
+hierarchical path is a separate change that would re-gate *every* hierarchical region against all
+eight shapes — **deferred** (noted follow-up), out of scope for closing this silent-wrong. The
+constraint half of the open/closed split is thus satisfied for slice 1 by the shipped gate; the
+derivation grows the tree, `merge_tiling_ok` certifies what crosses.
 
 ### 2.4 Where it plugs in
 
