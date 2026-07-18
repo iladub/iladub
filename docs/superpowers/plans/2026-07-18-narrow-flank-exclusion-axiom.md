@@ -16,7 +16,8 @@
 - **No silent-wrong:** a tied narrow flank is either excluded (same-level sibling) or escalated (`MERGE_AMBIGUOUS`) — never silently absorbed.
 - **Ownership/licensing:** only `iladub`-owned namespaces are authored; the `.rq` uses `tab:` (`https://w3id.org/iladub/tab#`). Code Apache-2.0, vocab CC-BY-4.0. Author François Rosselet © 2026.
 - **Namespaces:** `TAB = Namespace("https://w3id.org/iladub/tab#")`. Query file path resolved as `Path(__file__).resolve().parents[3] / "vocab" / "queries" / "flank-sibling.rq"` (three dirs up from `src/iladub/etkl/…`).
-- **Run the full suite** (`pytest -q`) at the final task; the baseline is **386 passed / 5 skipped** (post-B2c). No regression permitted.
+- **Test interpreter (MANDATORY):** run every test via the project venv — `./.venv/bin/python -m pytest …`, NOT bare `python`/`python3`/`pytest`. The bare interpreter resolves to a different environment (rdflib 7.1.4) that produces ~60 spurious SPARQL/pyShACL failures; the `.venv` (rdflib 7.6.0, pyshacl 0.31.0) is the canonical env. Wherever a step below says `pytest …`, execute `./.venv/bin/python -m pytest …`.
+- **Run the full suite** via the venv at the final task; the baseline is **386 passed / 5 skipped** (post-B2c, under `.venv`). No regression permitted.
 
 ---
 
