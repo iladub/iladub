@@ -57,5 +57,9 @@ def flank_evidence(header_cells, boundaries) -> Graph:
     return g
 
 
-# sibling_columns (runs FLANK_SIBLING_RQ over flank_evidence) is Task 3 -- the query file at
-# FLANK_SIBLING_RQ does not exist yet.
+def sibling_columns(header_cells, boundaries) -> set[tuple[int, int]]:
+    """(col, level) pairs that have an own strict-in-column header cell -- same-level sibling
+    leaves. PROCEDURAL glue over the AXIOM query flank-sibling.rq; carries no decision itself."""
+    g = flank_evidence(header_cells, boundaries)
+    q = FLANK_SIBLING_RQ.read_text(encoding="utf-8")
+    return {(int(row.col), int(row.level)) for row in g.query(q)}
