@@ -27,7 +27,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: the terms `tab:ClassifyBand`, `tab:lineCount`, `tab:gridColumnCount`, `tab:HeaderWord`, `tab:headerWordOrder`, `tab:strictlyInColumn`, `tab:RegionKind`, `tab:RecordTable`, `tab:UnsupportedTable`, `tab:NonTable` — consumed by Tasks 2 and 3.
+- Produces: the terms `tab:ClassifyBand`, `tab:lineCount`, `tab:gridColumnCount`, `tab:HeaderWord`, `tab:headerWordOrder`, `tab:strictlyInColumn`, `tab:RegionKind`, `tab:RecordTableKind`, `tab:UnsupportedTableKind`, `tab:NonTableKind` — consumed by Tasks 2 and 3.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -35,7 +35,7 @@ Check whether a tab.ttl parse test already exists: `ls tests/etkl/test_tab_vocab
 
 ```python
 from pathlib import Path
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, RDF
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _TTL = Path(__file__).resolve().parents[2] / "vocab" / "ontology" / "tab.ttl"
@@ -52,15 +52,15 @@ def test_classify_evidence_terms_present():
     subjects = set(g.subjects())
     for local in ("ClassifyBand", "lineCount", "gridColumnCount", "HeaderWord",
                   "headerWordOrder", "strictlyInColumn", "RegionKind",
-                  "RecordTable", "UnsupportedTable", "NonTable"):
+                  "RecordTableKind", "UnsupportedTableKind", "NonTableKind"):
         assert TAB[local] in subjects, f"missing tab:{local}"
 
 
 def test_region_kinds_are_regionkind_individuals():
     g = _graph()
-    for local in ("RecordTable", "UnsupportedTable", "NonTable"):
-        assert (TAB[local], None, TAB.RegionKind) in ((s, None, o) for s, p, o in g.triples((TAB[local], None, None))), \
-            f"tab:{local} is not a tab:RegionKind"
+    # assert rdf:type specifically (not any predicate to the object)
+    for local in ("RecordTableKind", "UnsupportedTableKind", "NonTableKind"):
+        assert (TAB[local], RDF.type, TAB.RegionKind) in g, f"tab:{local} is not typed a tab:RegionKind"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -86,11 +86,13 @@ tab:headerWordOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:r
 tab:strictlyInColumn a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:range xsd:integer ; rdfs:label "strictly in column"@en ;
     rdfs:comment "The unique column index the word is strictly inside (per _word_in_column); OMITTED when the word straddles a gutter."@en .
 tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
-    rdfs:comment "The kind a band is classified as."@en .
-tab:RecordTable a tab:RegionKind ; rdfs:label "Record table"@en .
-tab:UnsupportedTable a tab:RegionKind ; rdfs:label "Unsupported table"@en .
-tab:NonTable a tab:RegionKind ; rdfs:label "Non table"@en .
+    rdfs:comment "The classification verdict for a band. Its individuals are verdicts, NOT the compiled-holon table classes (tab:RecordTable a owl:Class subClassOf tab:Table) — hence the distinct '…Kind' IRIs to avoid dual-typing an existing class."@en .
+tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .
+tab:UnsupportedTableKind a tab:RegionKind ; rdfs:label "Unsupported table (kind)"@en .
+tab:NonTableKind a tab:RegionKind ; rdfs:label "Non table (kind)"@en .
 ```
+
+**Note (design correction, 2026-07-18):** `tab:RecordTable` already exists as `owl:Class ⊑ tab:Table` (a compiled-holon type). The three RegionKind individuals are classification **verdicts** and must NOT collide with it — hence the `…Kind` suffix. The SPARQL query (Task 2) and the `_KIND` map (Task 3) use these `…Kind` IRIs.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -212,14 +214,14 @@ def test_query_record_table():
     band = _band([_hdr(("A", 10, 60), ("B", 110, 160), ("C", 210, 260)),
                   _hdr(("1", 10, 60), ("2", 110, 160), ("3", 210, 260))])
     kind, nhw, fb = _kind(band)
-    assert kind == str(TAB.RecordTable)
+    assert kind == str(TAB.RecordTableKind)
     assert nhw == 3 and fb is None
 
 
 def test_query_non_table_short():
     band = _band([_hdr(("A", 10, 60), ("B", 110, 160))])
     kind, nhw, fb = _kind(band)
-    assert kind == str(TAB.NonTable)
+    assert kind == str(TAB.NonTableKind)
 
 
 def test_query_unsupported_straddle_first_bad():
@@ -227,7 +229,7 @@ def test_query_unsupported_straddle_first_bad():
                   _hdr(("1", 10, 60), ("2", 110, 160), ("3", 300, 350)),
                   _hdr(("4", 10, 60), ("5", 110, 160), ("6", 300, 350))])
     kind, nhw, fb = _kind(band)
-    assert kind == str(TAB.UnsupportedTable)
+    assert kind == str(TAB.UnsupportedTableKind)
     assert fb == 1  # the straddler is the second (order 1) header word
 ```
 
@@ -247,8 +249,8 @@ SELECT ?kind ?nhw ?firstBad WHERE {
       ?w a tab:HeaderWord ; tab:headerWordOrder ?o .
       FILTER NOT EXISTS { ?w tab:strictlyInColumn ?o }
   } AS ?mis)
-  BIND(IF(?nl < 2 || ?nc < 2, tab:NonTable,
-       IF(?nhw = ?nc && !?mis, tab:RecordTable, tab:UnsupportedTable)) AS ?kind)
+  BIND(IF(?nl < 2 || ?nc < 2, tab:NonTableKind,
+       IF(?nhw = ?nc && !?mis, tab:RecordTableKind, tab:UnsupportedTableKind)) AS ?kind)
   OPTIONAL {
     SELECT (MIN(?o2) AS ?firstBad) WHERE {
       ?w2 a tab:HeaderWord ; tab:headerWordOrder ?o2 .
@@ -326,7 +328,7 @@ def run_kind(rq_path, graph):
     for row in graph.query(q):
         fb = row.firstBad
         return (str(row.kind), int(row.nhw), None if fb is None else int(fb))
-    return (str(TAB.NonTable), 0, None)  # defensive: empty graph (no band)
+    return (str(TAB.NonTableKind), 0, None)  # defensive: empty graph (no band)
 ```
 
 - [ ] **Step 5: Run tests to verify they pass**
@@ -443,9 +445,9 @@ New `classify`:
 
 ```python
 _KIND = {
-    str(TAB.RecordTable): RegionKind.RECORD_TABLE,
-    str(TAB.UnsupportedTable): RegionKind.UNSUPPORTED_TABLE,
-    str(TAB.NonTable): RegionKind.NON_TABLE,
+    str(TAB.RecordTableKind): RegionKind.RECORD_TABLE,
+    str(TAB.UnsupportedTableKind): RegionKind.UNSUPPORTED_TABLE,
+    str(TAB.NonTableKind): RegionKind.NON_TABLE,
 }
 
 
