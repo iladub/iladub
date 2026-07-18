@@ -73,3 +73,15 @@ def test_celltype_queries_present_no_tuned_constant():
     assert {"header-body-split.rq", "stub-data-split.rq", "looks-transposed.rq", "transpose-coherent.rq"} <= rqs
     body = _strip_comments(open(ct.__file__, encoding="utf-8").read())
     assert not _FLOAT.search(body), "celltype.py must carry no tuned numeric constant"
+
+
+def test_richer_typing_present_no_tuned_constant():
+    from iladub.etkl.celltype import is_date, is_currency  # detectors present
+    import iladub.etkl.celltype as ct
+    # the four generalized queries key on tab:Text as the non-signal marker (not just Numeric)
+    import os
+    for q in ("header-body-split.rq", "stub-data-split.rq", "looks-transposed.rq", "transpose-coherent.rq"):
+        body = _strip_comments(open(os.path.join(QUERIES, q), encoding="utf-8").read())
+        assert not _FLOAT.search(body), "%s: no tuned constant" % q
+    # celltype.py detectors carry no tuned float tolerance (regexes/ranges are structural)
+    assert not _FLOAT.search(_strip_comments(open(ct.__file__, encoding="utf-8").read()))
