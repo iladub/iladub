@@ -16,7 +16,6 @@ from rdflib.namespace import XSD
 
 from .bands import Band
 from .grid import LeafGrid
-from .regions import _word_in_column  # unchanged geometric containment (PROCEDURAL)
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
@@ -27,6 +26,11 @@ CLASSIFY_KIND_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "
 
 def _strictly_in_column(w, boundaries):
     """The unique column index the word is strictly inside (via _word_in_column), or None."""
+    # Deferred import: regions imports this module back (regions.classify calls
+    # run_kind/classify_evidence), so importing _word_in_column at module load
+    # time would be a circular import. Both modules are fully loaded by the
+    # time any band is actually classified, so a call-time import is safe.
+    from .regions import _word_in_column
     for c in range(len(boundaries) - 1):
         if _word_in_column(w, c, boundaries):
             return c

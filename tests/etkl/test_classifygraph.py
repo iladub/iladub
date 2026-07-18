@@ -112,3 +112,78 @@ def test_query_unsupported_straddle_first_bad():
     kind, nhw, fb = _kind(band)
     assert kind == str(TAB.UnsupportedTableKind)
     assert fb == 1  # the straddler is the second (order 1) header word
+
+
+# --- differential oracle: frozen reference vs the rewired classify ---
+from iladub.etkl.regions import classify, RegionKind, ClassifiedRegion, assign_cells, _word_in_column as _wic
+
+
+def _ref_classify(band):
+    """FROZEN copy of regions.classify's pre-B2c logic. Do not edit -- the anti-overfit oracle."""
+    if len(band.lines) < 2:
+        return ClassifiedRegion(RegionKind.NON_TABLE, band, None, (), "fewer than 2 lines")
+    grid = infer_leaf_grid(band)
+    if grid.ncols < 2:
+        return ClassifiedRegion(RegionKind.NON_TABLE, band, grid, (), "fewer than 2 columns")
+    header = band.lines[0]
+    b = grid.boundaries
+    if len(header.words) != grid.ncols:
+        return ClassifiedRegion(RegionKind.UNSUPPORTED_TABLE, band, grid, (),
+                                f"header has {len(header.words)} words but {grid.ncols} columns")
+    for i, w in enumerate(sorted(header.words, key=lambda w: w.x0)):
+        if not _wic(w, i, b):
+            return ClassifiedRegion(RegionKind.UNSUPPORTED_TABLE, band, grid, (),
+                                    f"header word {w.text!r} is not aligned 1:1 with column {i}")
+    return ClassifiedRegion(RegionKind.RECORD_TABLE, band, grid, assign_cells(band, grid),
+                            "flat single-level header")
+
+
+def _assert_equivalent(band):
+    got, ref = classify(band), _ref_classify(band)
+    assert got.kind == ref.kind, (got.reason, ref.reason)
+    assert got.reason == ref.reason
+    assert (got.grid is None) == (ref.grid is None)
+    if got.grid is not None:
+        assert got.grid.ncols == ref.grid.ncols
+        assert got.grid.boundaries == ref.grid.boundaries
+    assert [(c.row, c.col, c.text) for c in got.cells] == [(c.row, c.col, c.text) for c in ref.cells]
+
+
+# shape battery -- one band per classify branch
+_DATA3 = [_hdr(("1", 10, 60), ("2", 110, 160), ("3", 210, 260)),
+          _hdr(("4", 10, 60), ("5", 110, 160), ("6", 210, 260))]
+
+# straddle-mid needs a genuine straddle: infer_leaf_grid profiles whitespace over
+# ALL band lines (header included, gutter_pct=0.98). With only ~2 data rows the
+# header word's own ink dominates the local blank fraction in the STRAD-spanned
+# gutter region enough that the algorithm never opens that gutter -- it just
+# merges columns 1+2 into one (nhw=3 != ncols=2, a *count*-mismatch branch, not
+# the misalignment branch this fixture is meant to exercise). Verified
+# empirically (see scratch probe): blank_frac there = n_data / (n_data + 1) must
+# reach >= 0.98, i.e. n_data >= 49; 60 gives comfortable margin, matching the
+# precedent already set by _straddle_band() above in this file.
+_DATA_MANY = [_hdr((str(3 * i + 1), 10, 60), (str(3 * i + 2), 110, 160), (str(3 * i + 3), 210, 260))
+              for i in range(60)]
+
+
+def _battery():
+    return {
+        "empty": _band([]),
+        "one-line": _band([_hdr(("A", 10, 60), ("B", 110, 160))]),
+        "one-col": _band([_hdr(("A", 10, 60)), _hdr(("x", 10, 60)), _hdr(("y", 10, 60))]),
+        "clean-3col": _band([_hdr(("A", 10, 60), ("B", 110, 160), ("C", 210, 260))] + _DATA3),
+        "clean-2col": _band([_hdr(("A", 10, 60), ("B", 110, 160)),
+                             _hdr(("x", 10, 60), ("y", 110, 160))]),
+        "too-few-words": _band([_hdr(("A", 10, 60), ("B", 110, 160))] + _DATA3),
+        "too-many-words": _band([_hdr(("A", 10, 40), ("X", 45, 60), ("B", 110, 160), ("C", 210, 260))] + _DATA3),
+        "straddle-mid": _band([_hdr(("A", 10, 60), ("STRAD", 150, 230), ("C", 210, 260))] + _DATA_MANY),
+        "wrong-col": _band([_hdr(("A", 10, 60), ("B", 210, 260), ("C", 210, 260))] + _DATA3),
+    }
+
+
+import pytest
+
+
+@pytest.mark.parametrize("name", list(_battery().keys()))
+def test_differential_oracle(name):
+    _assert_equivalent(_battery()[name])
