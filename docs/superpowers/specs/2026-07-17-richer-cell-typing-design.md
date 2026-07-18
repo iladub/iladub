@@ -1,7 +1,7 @@
 # Richer Cell Typing — Date/Currency Body-Signals (Neurosymbolic Loop B2b) — Design
 
 **Date:** 2026-07-17
-**Status:** Design approved (scope + mechanism settled; generalized query + detectors feasibility-proven); ready for implementation plan.
+**Status:** ✅ **SHIPPED to main 2026-07-18** (merged `--no-ff` 312c5c4, pushed). Implemented via subagent-driven development (4 tasks; the second clean capability loop — no Critical at the final whole-branch review, only a doc-only Important; zero numeric regression via the retained B2a differential oracle); plan at `docs/superpowers/plans/2026-07-17-richer-cell-typing.md`; full suite 368 passed / 5 skipped. Date/Currency tables now type and split; free-text/categorical still escalate. (Original status: design approved — retained below as the as-designed record.)
 **Governed by:** CLAUDE.md §8 (gate, open/closed split) + the B2a disambiguation roadmap (`docs/superpowers/specs/2026-07-16-typed-cell-evidence-graph-design.md` §9).
 **Builds on (shipped):** loop B2a — the typed-cell evidence graph with the **open `tab:cellDatatype` lattice** (the seam this loop extends).
 

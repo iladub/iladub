@@ -152,7 +152,9 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    + `vocab/queries/{header-body-split,stub-data-split,looks-transposed,transpose-coherent}.rq`:
    header/body split, stub/data split, and transpose orientation as SPARQL derivations over a
    transient pre-holon typed-cell graph — the first evidence graph in the pipeline, loop B2a, shipped
-   2026-07-17), and `segment.find_table_gutter` (propose → oracle → dispose).
+   2026-07-17; extended in B2b (2026-07-18) with an open `tab:cellDatatype` lattice — Date/Currency
+   body-signals + "homogeneous non-Text" queries — for date/currency recall), and
+   `segment.find_table_gutter` (propose → oracle → dispose).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
