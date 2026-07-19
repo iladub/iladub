@@ -68,3 +68,47 @@ def test_short_parent_covers_full_span_end_to_end(tmp_path):
     region = next(h for h in rep.graph.subjects(RDF.type, TAB.HeaderNode)
                   if str(rep.graph.value(rep.graph.value(h, TAB.hasLabel), TAB.cellText)) == "Region")
     assert len(list(rep.graph.objects(region, TAB.coversColumn))) == 4
+
+
+def test_merge_tiling_ok_rejects_ambiguous_node():
+    from iladub.etkl.headers import merge_tiling_ok, HeaderNode
+    from iladub.etkl.grid import LeafGrid
+    grid = LeafGrid(boundaries=(0.0, 100.0, 200.0, 300.0), ncols=3, pitch=100.0, confidence=1.0)
+    # a structurally-fine tree, but one node flagged ambiguous -> gate must reject.
+    tree = (HeaderNode(0, (1,), "X", None, 150.0, ambiguous=True),
+            HeaderNode(0, (2,), "Y", None, 250.0))
+    assert merge_tiling_ok(tree, grid) is False
+
+
+def test_narrow_flank_tie_detects_narrow_endpoint_not_reached_by_ink():
+    from iladub.etkl.headers import _narrow_flank_tie
+    # boundaries [0,100,200,300,400,440]: cols 1-3 width 100, col 4 width 40 (< 0.5*pitch=50).
+    b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
+    # covers 1..4, but raw ink only reaches cols 1..3 -> col 4 is the narrow tied flank.
+    assert _narrow_flank_tie((1, 2, 3, 4), (1, 2, 3), b) == 4
+
+
+def test_narrow_flank_tie_none_when_flank_wide():
+    from iladub.etkl.headers import _narrow_flank_tie
+    # col 4 width 60 (> 0.5*pitch=50) -> NOT a tie (excluding it would leave the band).
+    b = (0.0, 100.0, 200.0, 300.0, 400.0, 460.0)
+    assert _narrow_flank_tie((1, 2, 3, 4), (1, 2, 3), b) is None
+
+
+def test_narrow_flank_tie_none_when_ink_reaches_flank():
+    from iladub.etkl.headers import _narrow_flank_tie
+    # raw ink already reaches col 4 -> deterministic coverage, not a tie.
+    b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
+    assert _narrow_flank_tie((1, 2, 3, 4), (1, 2, 3, 4), b) is None
+
+
+def test_resolve_escalates_header_empty_flank():
+    from iladub.etkl.headers import resolve_narrow_flanks, HeaderNode
+    from iladub.etkl.grid import LeafGrid
+    b = (0.0, 100.0, 200.0, 300.0, 400.0, 440.0)
+    grid = LeafGrid(boundaries=b, ncols=5, pitch=100.0, confidence=1.0)
+    # col 4 has NO own header cell at level 0 -> header-empty -> escalate (mark ambiguous).
+    nodes = [HeaderNode(0, (1, 2, 3, 4), "Region", None, center_x=200.0)]
+    out = resolve_narrow_flanks(nodes, grid, ink_cols_by_node=[(1, 2, 3)])
+    assert out[0].ambiguous is True
+    assert out[0].covers == (1, 2, 3, 4)  # covers unchanged; escalation carries the residue

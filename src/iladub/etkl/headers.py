@@ -112,6 +112,7 @@ class HeaderNode:
     text: str
     parent: int | None
     center_x: float | None = None
+    ambiguous: bool = False
 
 
 def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
@@ -222,6 +223,62 @@ def _centered_run(center_x: float, avail: set[int], b: Sequence[float],
     return best_run
 
 
+def _narrow_flank_tie(covers, ink_cols, b) -> int | None:
+    """The single narrow flanking leaf column that `covers` includes but the node's raw ink does
+    NOT reach and whose exclusion keeps the run inside the centering tie-band -- i.e. an endpoint
+    column narrower than half the median pitch not physically touched by the label. None if no
+    such flank (the resolution is then unambiguous or wide-enough to decide geometrically).
+
+    PROCEDURAL: this is tie *detection* (geometry) -- it recognizes that the tie-band cannot
+    decide, it never decides the span itself (the caller escalates). Irreducible -- it reads raw
+    ink extents and column widths.
+    """
+    if len(covers) < 2 or not ink_cols:
+        return None
+    half_pitch = 0.5 * _median_pitch(b)
+    lo, hi = min(covers), max(covers)
+    ink_lo, ink_hi = min(ink_cols), max(ink_cols)
+    for flank in (hi, lo):                       # endpoints only
+        if flank in ink_cols:
+            continue                             # ink reaches it -> deterministic, not a tie
+        # the flank is an endpoint not reached by ink; is it narrow enough that excluding it
+        # keeps the run centered (i.e. it sits inside the tie-band)?
+        width = b[flank + 1] - b[flank]
+        beyond_ink = (flank > ink_hi) if flank == hi else (flank < ink_lo)
+        if width < half_pitch and beyond_ink:
+            return flank
+    return None
+
+
+def resolve_narrow_flanks(nodes, grid, ink_cols_by_node):
+    """B1.2 pass: PROCEDURAL detect -> escalate.
+
+    For each coarse node, if its resolved covers over-absorbs a single narrow flanking column
+    the raw ink does not reach (_narrow_flank_tie fires), the geometry cannot decide whether that
+    orphan flank belongs under the span -- mark the node ambiguous so the caller escalates
+    MERGE_AMBIGUOUS (the NEURAL B1.3 residual resolves it later). No sibling derivation: B1.1's
+    repair_coverage already structurally protects genuine same-level siblings (they are never
+    orphans, so they never reach this tie in the first place) -- see
+    docs/superpowers/specs/2026-07-18-neural-span-perception-design.md §2.0.
+
+    ink_cols_by_node: parallel to `nodes`; the raw ink columns each node's own text touches
+    (None for a node lacking geometry -> skipped).
+    """
+    if isinstance(grid, int):
+        return nodes                                   # no geometry -> nothing to resolve
+    b = grid.boundaries
+    out = list(nodes)
+    for i, n in enumerate(out):
+        ink = ink_cols_by_node[i] if i < len(ink_cols_by_node) else None
+        if ink is None or n.center_x is None or len(n.covers) < 2:
+            continue
+        flank = _narrow_flank_tie(n.covers, tuple(ink), b)
+        if flank is None:
+            continue
+        out[i] = replace(n, ambiguous=True)
+    return out
+
+
 def repair_coverage(nodes: list[HeaderNode], grid) -> list[HeaderNode]:
     """Resolve each coarse (non-leaf) spanning node to the contiguous run of AVAILABLE
     columns (its own + orphans, never another node's) whose x-midpoint is closest to
@@ -275,6 +332,8 @@ def merge_tiling_ok(tree: Sequence[HeaderNode], grid: LeafGrid) -> bool:
     pitch of its label ink center. Also rejects any coarse-level column claimed by two
     nodes (overlap). A node without geometry (center_x is None) is not checked here.
     Returns False → the caller escalates MERGE_AMBIGUOUS rather than assert a guess."""
+    if any(getattr(n, "ambiguous", False) for n in tree):
+        return False                       # a resolver-flagged narrow-flank -> escalate MERGE_AMBIGUOUS
     b = grid.boundaries
     tol = 0.5 * _median_pitch(b)
     has_child = {n.parent for n in tree if n.parent is not None}
@@ -332,6 +391,15 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
 
     nodes = repair_coverage(nodes, grid)   # centering-bounded span resolution (B1.1)
 
+    # B1.2 — narrow-flank tie detect -> escalate (PROCEDURAL; see resolve_narrow_flanks).
+    ink_cols_by_node = []
+    for lvl, row in enumerate(header_rows):
+        for cell in row:
+            lo = column_of(cell.x0 + 0.1, b)
+            hi = column_of(cell.x1 - 0.1, b)
+            ink_cols_by_node.append(tuple(range(min(lo, hi), max(lo, hi) + 1)))
+    nodes = resolve_narrow_flanks(nodes, grid, ink_cols_by_node)
+
     # Link each node to its nearest parent (level − 1 whose covers ⊇ this node's).
     # Break after the first match so the first qualifying parent wins deterministically
     # (nodes are ordered top-to-bottom, left-to-right, so "first" = leftmost ancestor
@@ -343,5 +411,5 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
             if m.level == n.level - 1 and set(n.covers) <= set(m.covers):
                 parent_idx = j
                 break
-        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx, n.center_x))
+        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx, n.center_x, n.ambiguous))
     return tuple(linked)

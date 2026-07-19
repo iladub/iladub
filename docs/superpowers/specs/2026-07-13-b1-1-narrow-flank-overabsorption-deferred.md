@@ -1,8 +1,21 @@
 # Deferred (B1.2): narrow-flank over-absorption in centering-bounded merge resolution
 
 **Date:** 2026-07-13
-**Status:** DEFERRED to a follow-up loop (B1.2). Surfaced by the Loop B1.1 final whole-branch
-review; not a blocker for B1.1 (no regression vs `main`), recorded here so it is not lost.
+**Status:** ~~DEFERRED to a follow-up loop (B1.2).~~ **CLOSED 2026-07-18 (loop B1.2).** Surfaced by the
+Loop B1.1 final whole-branch review; not a blocker for B1.1 (no regression vs `main`), recorded here
+so it is not lost.
+
+> **CLOSED 2026-07-18 (loop B1.2, PROCEDURAL detect→escalate).** The narrow-flank over-absorption is
+> now closed by *escalation*: `_narrow_flank_tie` (PROCEDURAL geometry) detects a narrow endpoint
+> column the label's ink does not reach, and `resolve_narrow_flanks` marks the node `ambiguous`, so the
+> region escalates `MERGE_AMBIGUOUS` instead of silently asserting the over-absorbed span. It ships as
+> **PROCEDURAL, not the AXIOM originally designed** — building the AXIOM (`flank-sibling.rq`) and
+> gate-testing it end-to-end proved it *structurally redundant* with B1.1's own `repair_coverage`
+> orphan-protection (a genuine same-level sibling is never an orphan, so it never reaches the tie; the
+> derivation could only ever re-confirm "orphan → escalate"). See
+> `docs/superpowers/specs/2026-07-18-neural-span-perception-design.md` §2.0 for the full gate-classification
+> lesson (the mirror of §8: *don't reach for an AXIOM where existing structure suffices*). The genuine
+> resolution of the escalated flank (absorb-under-span vs standalone) is the NEURAL loop **B1.3**.
 
 ## The residual
 
