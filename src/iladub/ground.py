@@ -91,17 +91,17 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _grounds_to(concept, field, terms):
-    """The contract oracle → the grounding TARGET for iladub:groundsTo, or None if REJECTED.
+def _grounds_to(concept, field, terms, is_exact):
+    """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
 
-    Schemed field: the SKOS concept whose prefLabel == value (membership is the sharp
-    discriminator — a value not in the scheme is rejected). Un-schemed field: the field's
-    fills_property (admitted per-field; the whole-offer OrganOfferShape validates
-    datatype/cardinality at close, Task 4)."""
+    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle), else
+    None. Non-scheme field: admitted ONLY for an EXACT label match (the exact match is the oracle);
+    a NEURAL proposal to an unconstrained field has no oracle → None (quarantine). Grounding an
+    unverifiable NEURAL guess would be confidence-as-validity (§7)."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         return URIRef(term) if term else None
-    return URIRef(field.fills_property)
+    return URIRef(field.fills_property) if is_exact else None
 
 
 def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale):
@@ -128,15 +128,17 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     field = exact_field(concept, contract)
     if field is not None:
         suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
+        is_exact = True
     else:
         prop = proposer.propose_grounding(concept, contract.fields)
         anchor, confidence, rationale, suggester = prop.anchor_iri, prop.confidence, prop.rationale, prop.suggester_iri
         field = next((f for f in contract.fields if f.iri == prop.field_iri), None) if prop.field_iri else None
+        is_exact = False
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
-    if field is None:                                  # novel → quarantined proposition
+    if field is None:                                       # novel → quarantined proposition
         return "proposed"
-    grounds_to = _grounds_to(concept, field, terms)    # the contract oracle
-    if grounds_to is None:                             # rejected (e.g. value not in scheme) → stay proposed
+    grounds_to = _grounds_to(concept, field, terms, is_exact)   # the contract oracle
+    if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
     _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to, cand, agent, confidence, rationale)
     return "grounded"
