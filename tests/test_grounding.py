@@ -32,8 +32,7 @@ def test_exact_scheme_grounds_with_promotion():
     gn = list(g.subjects(RDF.type, ILA.GroundedNode))
     assert gn and g.value(gn[0], ILA.wasPromotedBy) is not None
     assert g.value(gn[0], ILA.status) == ILA.asserted
-    assert (OFFER, TX.aboGroup, None) not in [(OFFER, TX.aboGroup, None)] or True  # offer carries aboGroup
-    assert any(True for _ in g.objects(OFFER, TX.aboGroup))
+    assert any(True for _ in g.objects(OFFER, TX.aboGroup))   # the offer carries the aboGroup literal
 
 
 def test_wrong_scheme_mapping_quarantined():
