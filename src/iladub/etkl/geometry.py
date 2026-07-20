@@ -48,6 +48,35 @@ def extract_words(pdf_path: str, page_number: int = 0) -> list[Word]:
     ]
 
 
+@dataclass(frozen=True)
+class Rule:
+    x: float       # x-position of a vertical ruled line (points from page left)
+    top: float     # y-extent, page-top convention
+    bottom: float
+
+
+def extract_rules(pdf_path: str, page_number: int = 0) -> list["Rule"]:
+    """Vertical ruled line segments on a page (the author's explicit column separators).
+
+    PROCEDURAL raw extraction (like extract_words): reads pdfplumber's vector lines/edges;
+    a segment is 'vertical' when its horizontal span is < 1pt and its vertical span > 2pt.
+    Horizontal rules are ignored (a future header/row-split signal)."""
+    out: list[Rule] = []
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number]
+        for seg in list(page.lines) + list(page.edges):
+            x0, x1 = float(seg["x0"]), float(seg["x1"])
+            top, bottom = float(seg["top"]), float(seg["bottom"])
+            if abs(x1 - x0) < 1.0 and (bottom - top) > 2.0:
+                out.append(Rule((x0 + x1) / 2.0, top, bottom))
+    # de-duplicate near-identical rules (lines + edges can double-report)
+    uniq: list[Rule] = []
+    for r in sorted(out, key=lambda r: (round(r.x, 1), r.top)):
+        if not any(abs(r.x - u.x) < 0.5 and abs(r.top - u.top) < 1.0 and abs(r.bottom - u.bottom) < 1.0 for u in uniq):
+            uniq.append(r)
+    return uniq
+
+
 def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:
     """Group words into lines by vertical proximity of their `top`.
 
