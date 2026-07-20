@@ -8,7 +8,6 @@ future edit cannot silently reintroduce an O(n^2) cliff.
 """
 import os
 import time
-import pytest
 from rdflib import Literal
 from rdflib.namespace import XSD
 from iladub.etkl import celltype
@@ -46,13 +45,11 @@ def test_transpose_coherent_scales_to_50_rows():
     assert dt < _BOUND_S, f"transpose-coherent.rq took {dt:.2f}s at 50 rows"
 
 
-@pytest.mark.xfail(reason="stub-data-split.rq still O(n^2) — fixed in derivation-scaling Task 3", strict=True)
 def test_stub_data_split_scales_to_50_rows():
     dt = _time_scalar("stub-data-split.rq", _grid(50), 4, {"split": Literal(1, datatype=XSD.integer)})
     assert dt < _BOUND_S, f"stub-data-split.rq took {dt:.2f}s at 50 rows"
 
 
-@pytest.mark.xfail(reason="looks-transposed.rq still O(n^2) — fixed in derivation-scaling Task 3", strict=True)
 def test_looks_transposed_scales_to_50_rows():
     dt = _time_ask("looks-transposed.rq", _grid(50), 4)
     assert dt < _BOUND_S, f"looks-transposed.rq took {dt:.2f}s at 50 rows"

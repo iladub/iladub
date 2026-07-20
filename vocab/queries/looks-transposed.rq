@@ -1,20 +1,24 @@
 # looks-transposed.rq — a typed-STRUCTURED body ROW (cols>=1 homogeneous non-Text) but NO
 # typed-STRUCTURED COLUMN (any column with all body cells homogeneous non-Text). Body = row>=1.
 # The transposition signature, generalized to all structured datatypes (Numeric/Date/Currency).
+# AGGREGATION FORM (linear in cells): the typed-row EXISTENCE and the typed-column NON-existence are
+# two INDEPENDENT existence checks, each a single GROUP BY + HAVING over the body cells (homogeneity
+# = one distinct cellDatatype and no Text), replacing the O(cells^2) pair self-joins AND avoiding
+# re-evaluating the column check per row. Equivalent to the prior pairwise form — proven by the
+# celltype differential oracle (test_orientation_matches_reference) + the randomized new-vs-reference
+# test (tests/etkl/test_derivation_equiv.py). No pair self-join, no cross-correlation.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
-  # a body row whose col>=1 cells are homogeneous non-Text (a typed STRUCTURED row)
-  ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol . FILTER(?r >= 1 && ?rcol >= 1)
-  FILTER NOT EXISTS { ?rt tab:atGridRow ?r ; tab:atGridColumn ?rtc ; tab:cellDatatype tab:Text . FILTER(?rtc >= 1) }
-  FILTER NOT EXISTS { ?ra tab:atGridRow ?r ; tab:atGridColumn ?rac ; tab:cellDatatype ?rat .
-                      ?rb tab:atGridRow ?r ; tab:atGridColumn ?rbc ; tab:cellDatatype ?rbt .
-                      FILTER(?rac >= 1 && ?rbc >= 1 && ?rat != ?rbt) }
-  # AND no typed STRUCTURED column (any column with all body cells homogeneous non-Text)
+  # EXISTS a typed-structured body row (its col>=1 cells homogeneous non-Text)
+  FILTER EXISTS {
+    SELECT ?r WHERE {
+      ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol ; tab:cellDatatype ?rt . FILTER(?r >= 1 && ?rcol >= 1)
+    } GROUP BY ?r HAVING(COUNT(DISTINCT ?rt) = 1 && SUM(IF(?rt = tab:Text, 1, 0)) = 0)
+  }
+  # AND NO typed-structured column (all body cells row>=1 homogeneous non-Text)
   FILTER NOT EXISTS {
-    ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr . FILTER(?cr >= 1)
-    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= 1) }
-    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
-                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
-                        FILTER(?car >= 1 && ?cbr >= 1 && ?cat != ?cbt) }
+    SELECT ?col WHERE {
+      ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?ct . FILTER(?cr >= 1)
+    } GROUP BY ?col HAVING(COUNT(DISTINCT ?ct) = 1 && SUM(IF(?ct = tab:Text, 1, 0)) = 0)
   }
 }

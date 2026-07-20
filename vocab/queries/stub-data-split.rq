@@ -1,31 +1,40 @@
 # stub-data-split.rq — leading text-stub column count k: the data columns form a contiguous suffix
-# [k, ncols), k>=1. A column is DATA iff it has a body cell (row>=?split) and is homogeneous
-# non-Text (no Text body cell, and no two body cells of different cellDatatype). Column markers
-# make empty columns visible. Empty result -> None. Generalized from all-Numeric (proven vs the
-# Python) to homogeneous non-Text (proven, 2026-07-17) — subsumes numeric and adds Date/Currency
-# data-column recall [B2b task 2].
+# [k, ncols), k>=1. A column is DATA iff it has a body cell (row>=?split) and is homogeneous non-Text
+# (no Text body cell, one distinct cellDatatype). Empty result -> None. AGGREGATION FORM (linear in
+# rows): column data-ness is a GROUP BY + HAVING (one distinct type, no Text) over body cells,
+# replacing the O(cells^2) pair self-joins; the two membrane clauses (every col>=k is data; no data
+# col below k) are preserved. Equivalent to the prior pairwise form — proven by the celltype
+# differential oracle (test_stub_data_split_matches_reference) + the randomized new-vs-reference test
+# (tests/etkl/test_derivation_equiv.py). k=MIN over data columns whose suffix is all-data and which
+# have no data column below them.
 PREFIX tab: <https://w3id.org/iladub/tab#>
-SELECT (MIN(?k) AS ?stub) WHERE {
-  ?km tab:columnIndex ?k . FILTER(?k >= 1)
-  # every column >= k is data (no non-data column at/after k) — this subsumes "k is a data
-  # column" (the case c3 = k), so no separate "k is data" clause is needed here.
+SELECT (MIN(?dcol) AS ?stub) WHERE {
+  # ?dcol ranges over DATA columns (>=1)
+  {
+    SELECT ?dcol WHERE {
+      ?bc tab:atGridColumn ?dcol ; tab:atGridRow ?br ; tab:cellDatatype ?ct . FILTER(?br >= ?split)
+    } GROUP BY ?dcol HAVING(COUNT(DISTINCT ?ct) = 1 && SUM(IF(?ct = tab:Text, 1, 0)) = 0)
+  }
+  FILTER(?dcol >= 1)
+  # every column >= ?dcol is a data column (no non-data columnIndex at/after ?dcol)
   FILTER NOT EXISTS {
-    ?cm3 tab:columnIndex ?c3 . FILTER(?c3 >= ?k)
+    ?ncm tab:columnIndex ?nc . FILTER(?nc >= ?dcol)
     FILTER NOT EXISTS {
-      ?bc3 tab:atGridColumn ?c3 ; tab:atGridRow ?br3 . FILTER(?br3 >= ?split)
-      FILTER NOT EXISTS { ?tc3 tab:atGridColumn ?c3 ; tab:atGridRow ?tr3 ; tab:cellDatatype tab:Text . FILTER(?tr3 >= ?split) }
-      FILTER NOT EXISTS { ?ac3 tab:atGridColumn ?c3 ; tab:atGridRow ?ar3 ; tab:cellDatatype ?at3 .
-                          ?dc3 tab:atGridColumn ?c3 ; tab:atGridRow ?dr3 ; tab:cellDatatype ?dt3 .
-                          FILTER(?ar3 >= ?split && ?dr3 >= ?split && ?at3 != ?dt3) }
+      {
+        SELECT ?d2 WHERE {
+          ?b2 tab:atGridColumn ?d2 ; tab:atGridRow ?r2 ; tab:cellDatatype ?t2 . FILTER(?r2 >= ?split)
+        } GROUP BY ?d2 HAVING(COUNT(DISTINCT ?t2) = 1 && SUM(IF(?t2 = tab:Text, 1, 0)) = 0)
+      }
+      FILTER(?d2 = ?nc)
     }
   }
-  # k is the MIN data column: no data column below k
+  # no DATA column below ?dcol (k is the MIN data column of a clean stub|data split)
   FILTER NOT EXISTS {
-    ?cm4 tab:columnIndex ?c4 . FILTER(?c4 < ?k)
-    FILTER EXISTS { ?bc4 tab:atGridColumn ?c4 ; tab:atGridRow ?br4 . FILTER(?br4 >= ?split) }
-    FILTER NOT EXISTS { ?tc4 tab:atGridColumn ?c4 ; tab:atGridRow ?tr4 ; tab:cellDatatype tab:Text . FILTER(?tr4 >= ?split) }
-    FILTER NOT EXISTS { ?ac4 tab:atGridColumn ?c4 ; tab:atGridRow ?ar4 ; tab:cellDatatype ?at4 .
-                        ?dc4 tab:atGridColumn ?c4 ; tab:atGridRow ?dr4 ; tab:cellDatatype ?dt4 .
-                        FILTER(?ar4 >= ?split && ?dr4 >= ?split && ?at4 != ?dt4) }
+    {
+      SELECT ?d3 WHERE {
+        ?b3 tab:atGridColumn ?d3 ; tab:atGridRow ?r3 ; tab:cellDatatype ?t3 . FILTER(?r3 >= ?split)
+      } GROUP BY ?d3 HAVING(COUNT(DISTINCT ?t3) = 1 && SUM(IF(?t3 = tab:Text, 1, 0)) = 0)
+    }
+    FILTER(?d3 < ?dcol)   # ANY data column below dcol (incl. col 0) breaks the clean stub|data split
   }
 }

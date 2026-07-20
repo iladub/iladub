@@ -100,3 +100,72 @@ def test_header_body_split_new_matches_ref():
         ref = _ref_hbs(cells, ncols)
         new = _run_text(new_text, cells, ncols)
         assert ref == new, f"divergence ncols={ncols} cells={cells}: ref={ref} new={new}"
+
+
+# ---------- stub-data-split + looks-transposed equivalence (new query vs old query text) ----------
+
+def _run_ask_text(query_text, cells, ncols):
+    g = celltype.grid_evidence(cells, ncols)
+    return bool(g.query(query_text).askAnswer)
+
+
+OLD_LT = r"""# looks-transposed.rq
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+  ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol . FILTER(?r >= 1 && ?rcol >= 1)
+  FILTER NOT EXISTS { ?rt tab:atGridRow ?r ; tab:atGridColumn ?rtc ; tab:cellDatatype tab:Text . FILTER(?rtc >= 1) }
+  FILTER NOT EXISTS { ?ra tab:atGridRow ?r ; tab:atGridColumn ?rac ; tab:cellDatatype ?rat .
+                      ?rb tab:atGridRow ?r ; tab:atGridColumn ?rbc ; tab:cellDatatype ?rbt .
+                      FILTER(?rac >= 1 && ?rbc >= 1 && ?rat != ?rbt) }
+  FILTER NOT EXISTS {
+    ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr . FILTER(?cr >= 1)
+    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= 1) }
+    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
+                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
+                        FILTER(?car >= 1 && ?cbr >= 1 && ?cat != ?cbt) }
+  }
+}
+"""
+
+OLD_STUB = r"""# stub-data-split.rq
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT (MIN(?k) AS ?stub) WHERE {
+  ?km tab:columnIndex ?k . FILTER(?k >= 1)
+  FILTER NOT EXISTS {
+    ?cm3 tab:columnIndex ?c3 . FILTER(?c3 >= ?k)
+    FILTER NOT EXISTS {
+      ?bc3 tab:atGridColumn ?c3 ; tab:atGridRow ?br3 . FILTER(?br3 >= ?split)
+      FILTER NOT EXISTS { ?tc3 tab:atGridColumn ?c3 ; tab:atGridRow ?tr3 ; tab:cellDatatype tab:Text . FILTER(?tr3 >= ?split) }
+      FILTER NOT EXISTS { ?ac3 tab:atGridColumn ?c3 ; tab:atGridRow ?ar3 ; tab:cellDatatype ?at3 .
+                          ?dc3 tab:atGridColumn ?c3 ; tab:atGridRow ?dr3 ; tab:cellDatatype ?dt3 .
+                          FILTER(?ar3 >= ?split && ?dr3 >= ?split && ?at3 != ?dt3) }
+    }
+  }
+  FILTER NOT EXISTS {
+    ?cm4 tab:columnIndex ?c4 . FILTER(?c4 < ?k)
+    FILTER EXISTS { ?bc4 tab:atGridColumn ?c4 ; tab:atGridRow ?br4 . FILTER(?br4 >= ?split) }
+    FILTER NOT EXISTS { ?tc4 tab:atGridColumn ?c4 ; tab:atGridRow ?tr4 ; tab:cellDatatype tab:Text . FILTER(?tr4 >= ?split) }
+    FILTER NOT EXISTS { ?ac4 tab:atGridColumn ?c4 ; tab:atGridRow ?ar4 ; tab:cellDatatype ?at4 .
+                        ?dc4 tab:atGridColumn ?c4 ; tab:atGridRow ?dr4 ; tab:cellDatatype ?dt4 .
+                        FILTER(?ar4 >= ?split && ?dr4 >= ?split && ?at4 != ?dt4) }
+  }
+}
+"""
+
+
+def test_looks_transposed_new_matches_old():
+    new_text = open(os.path.join(QDIR, "looks-transposed.rq"), encoding="utf-8").read()
+    for cells, ncols in _rand_grids(seed=3, n=60, maxrows=5):
+        old = _run_ask_text(OLD_LT, cells, ncols)
+        new = _run_ask_text(new_text, cells, ncols)
+        assert old == new, f"looks-transposed divergence ncols={ncols} cells={cells}: old={old} new={new}"
+
+
+def test_stub_data_split_new_matches_old():
+    new_text = open(os.path.join(QDIR, "stub-data-split.rq"), encoding="utf-8").read()
+    for cells, ncols in _rand_grids(seed=4, n=40, maxrows=5):
+        for split in range(0, 4):
+            b = {"split": Literal(split, datatype=XSD.integer)}
+            old = _run_text(OLD_STUB, cells, ncols, b)
+            new = _run_text(new_text, cells, ncols, b)
+            assert old == new, f"stub divergence ncols={ncols} split={split} cells={cells}: old={old} new={new}"
