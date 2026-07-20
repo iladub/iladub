@@ -39,8 +39,16 @@ def test_rule_grid_recovers_five_columns():
     band, rules = _table_band_with_rules(p)
     ruled = replace(band, rules=rules)
     g = infer_leaf_grid(ruled)
-    assert g.ncols == 5, f"rule grid ncols={g.ncols} (whitespace gave 4)"
+    assert g.ncols == 5, f"rule grid ncols={g.ncols}"
     assert g.confidence == 1.0
+    # DISCRIMINATOR: the rule boundaries are the AUTHOR's exact separators; the whitespace path
+    # (rules=()) gives DIFFERENT, wrong boundaries (e.g. a compressed rightmost column that cuts
+    # off Q4). This asserts the rule path actually changed the outcome — not a trivial ncols match.
+    got = [round(x, 0) for x in g.boundaries]
+    want = sorted({round(x, 0) for x in meta["rule_xs"]})
+    assert got == want, f"rule boundaries {got} != author separators {want}"
+    ws = infer_leaf_grid(replace(band, rules=()))
+    assert [round(x, 0) for x in ws.boundaries] != want, "whitespace path must differ from the rules"
 
 
 def test_no_rules_is_byte_identical_to_whitespace():
