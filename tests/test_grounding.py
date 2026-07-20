@@ -2,6 +2,7 @@ from rdflib import Graph
 from iladub.ground import (
     SurfaceConcept, load_contract, exact_field, scheme_member,
 )
+from iladub.propose_ground import GroundingProposal, FakeGroundingProposer
 
 CONTRACT = "examples/transplant/offer-contract.ttl"
 TERMS = "examples/transplant/transplant-terms.ttl"
@@ -34,3 +35,12 @@ def test_scheme_member_prefLabel():
     assert scheme_member("A", "https://example.org/transplant#scheme-abo", t) \
         == "https://example.org/transplant#abo-A"
     assert scheme_member("55%", "https://example.org/transplant#scheme-abo", t) is None
+
+
+def test_fake_grounding_proposer_returns_fixed():
+    p = GroundingProposal(field_iri="https://example.org/transplant#f-ef",
+                          anchor_iri="https://w3id.org/semanticarts/ns/ontology/gist/Magnitude",
+                          confidence=0.9, rationale="EF is a cardiac magnitude",
+                          suggester_iri="urn:iladub:suggester/fake")
+    got = FakeGroundingProposer(p).propose_grounding(SurfaceConcept("EF", "55%", "r2"), ())
+    assert got is p and got.field_iri.endswith("f-ef") and got.confidence == 0.9
