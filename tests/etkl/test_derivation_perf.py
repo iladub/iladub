@@ -53,3 +53,27 @@ def test_stub_data_split_scales_to_50_rows():
 def test_looks_transposed_scales_to_50_rows():
     dt = _time_ask("looks-transposed.rq", _grid(50), 4)
     assert dt < _BOUND_S, f"looks-transposed.rq took {dt:.2f}s at 50 rows"
+
+
+def test_realistic_multirow_report_compiles_fast():
+    """A ~50-row grouped-header table that HANGS on the pre-rewrite queries now compiles quickly
+    (drives the real hierarchical pipeline: header_body_split + stub/orientation derivations)."""
+    from iladub.etkl.geometry import Word, Line
+    from iladub.etkl.bands import Band
+    from iladub.etkl.hierarchical import classify_hierarchical
+    def w(t, x0, x1, top): return Word(t, x0, x1, top, top + 10.0)
+    header = [w("Region", 150, 350, 0.0)]                       # spanning coarse header
+    leaf = [w("Site", 10, 60, 12), w("Q1", 110, 160, 12), w("Q2", 210, 260, 12), w("Q3", 310, 360, 12)]
+    rows = []
+    for i in range(50):
+        top = 24.0 + i * 12.0
+        rows.append([w("s%d" % i, 10, 60, top), w(str(i), 110, 160, top),
+                     w(str(i + 1), 210, 260, top), w(str(i + 2), 310, 360, top)])
+    lines = [Line(tuple(header), 0.0, 10.0), Line(tuple(leaf), 12, 22)] + \
+            [Line(tuple(r), 24.0 + i * 12.0, 34.0 + i * 12.0) for i, r in enumerate(rows)]
+    band = Band(tuple(lines), 0.0, lines[-1].bottom)
+    t = time.time()
+    hreg = classify_hierarchical(band)
+    dt = time.time() - t
+    assert dt < 5.0, f"50-row hierarchical compile took {dt:.2f}s (regression)"
+    assert hreg is not None, "the realistic 50-row report should classify, not escalate/hang"
