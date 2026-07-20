@@ -488,20 +488,87 @@ git commit -m "feat(iladub): dispose + emit (CandidateConcept->PromotionDecision
 
 ---
 
-### Task 4: End-to-end worked example + conformance + the three negative tests (vertical close)
+### Task 4: Soundness fix (quarantine unverifiable NEURAL) + end-to-end example + negatives (vertical close)
 
 **Files:**
-- Modify: `tests/test_grounding.py` (add the end-to-end + negative tests)
+- Modify: `src/iladub/ground.py` (sharpen the dispose: NEURAL→non-scheme field quarantines)
+- Modify: `tests/test_grounding.py` (the corrected end-to-end example + boundary + 3 negatives)
 
 **Interfaces:**
 - Consumes: `ground_concept` (Task 3), `validate` (`src/iladub/validate.py`), the shipped example TTLs.
 
-- [ ] **Step 1: Write the end-to-end conformance + negative tests**
+**Why the fix (Task-3 review, Important):** `tx:ejectionFraction` carries no distinguishing constraint, so a NEURAL wrong-mapping to it would ground *and* survive the whole-offer SHACL close (a datatype cannot tell a valid EF number from a pack-years number). Sound rule: **ground only what the contract can verify** — an *exact* match (the label match is the oracle) or a *scheme-member* proposal (membership is the oracle); **every other NEURAL proposal quarantines**. This gives the previously-unused verification path its real gatekeeping job.
+
+- [ ] **Step 1: Amend the dispose in `ground.py` (add `is_exact`; NEURAL→non-scheme → quarantine)**
+
+Change `_grounds_to` to take `is_exact` and gate non-scheme fields on it:
+
+```python
+def _grounds_to(concept, field, terms, is_exact):
+    """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
+
+    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle), else
+    None. Non-scheme field: admitted ONLY for an EXACT label match (the exact match is the oracle);
+    a NEURAL proposal to an unconstrained field has no oracle → None (quarantine). Grounding an
+    unverifiable NEURAL guess would be confidence-as-validity (§7)."""
+    if field.scheme is not None:
+        term = scheme_member(concept.value, field.scheme, terms)
+        return URIRef(term) if term else None
+    return URIRef(field.fills_property) if is_exact else None
+```
+
+And thread `is_exact` through `ground_concept` (set `True` in the exact branch, `False` in the proposer branch), passing it to `_grounds_to`:
+
+```python
+def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shapes, g) -> str:
+    field = exact_field(concept, contract)
+    if field is not None:
+        suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
+        is_exact = True
+    else:
+        prop = proposer.propose_grounding(concept, contract.fields)
+        anchor, confidence, rationale, suggester = prop.anchor_iri, prop.confidence, prop.rationale, prop.suggester_iri
+        field = next((f for f in contract.fields if f.iri == prop.field_iri), None) if prop.field_iri else None
+        is_exact = False
+    cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
+    if field is None:                                       # novel → quarantined proposition
+        return "proposed"
+    grounds_to = _grounds_to(concept, field, terms, is_exact)   # the contract oracle
+    if grounds_to is None:                                  # unverifiable / rejected → quarantine
+        return "proposed"
+    _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to, cand, agent, confidence, rationale)
+    return "grounded"
+```
+
+- [ ] **Step 2: Write a failing boundary unit test (NEURAL→un-schemed field quarantines)**
 
 Add to `tests/test_grounding.py`:
 
 ```python
+def test_neural_to_unconstrained_field_quarantined():
+    """A NEURAL proposal to ejectionFraction (no scheme, no distinguishing constraint) has no
+    oracle → must quarantine, never ground (the soundness boundary)."""
+    c = load_contract(CONTRACT); g = Graph()
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    p = FakeGroundingProposer(GroundingProposal(ef.iri, str(TX)+"Magnitude", 0.99, "looks like EF",
+                                                "urn:iladub:suggester/fake"))
+    out = ground_concept(SurfaceConcept("EF", "55", "r2"), c, OFFER, p, _terms(), _shapes(), g)
+    assert out == "proposed"
+    assert not list(g.subjects(RDF.type, ILA.GroundedNode))
+```
+
+- [ ] **Step 3: Run it — RED then GREEN**
+
+Run: `./.venv/bin/python -m pytest tests/test_grounding.py -k unconstrained -q`
+Expected: FAILS before Step 1's amendment is in place (would ground); PASSES after. (If Step 1 is already applied, it passes directly — confirm by temporarily reverting `is_exact` gating that it would otherwise ground.)
+
+- [ ] **Step 4: Write the end-to-end example + conformance + negatives**
+
+Add to `tests/test_grounding.py`. The conformant offer is `{organ, aboGroup}` (both scheme-bound); EF and novel quarantine:
+
+```python
 from iladub.validate import validate
+from rdflib import BNode, Literal
 
 def _epistemics_knowledge():
     g = Graph()
@@ -513,80 +580,77 @@ def _iladub_shapes():
     return Graph().parse("vocab/shapes/iladub-shapes.ttl", format="turtle")
 
 def _build_offer():
-    """Ground organ+ABO (exact) + EF (semantic) -> a complete conformant offer; plus a wrong
-    mapping and a novel concept (both quarantined)."""
+    """organ (exact, scheme) + Blood type->aboGroup (NEURAL, scheme-verified) → a conformant offer;
+    wrong "55%"->aboGroup (scheme-rejected), EF (NEURAL, unconstrained), novel → all quarantined."""
     c = load_contract(CONTRACT); terms = _terms(); shapes = _shapes(); g = Graph()
-    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
     abo = next(f for f in c.fields if f.fills_property.endswith("aboGroup"))
-    outcomes = {}
-    outcomes["organ"] = ground_concept(SurfaceConcept("organ", "Heart", "r0"), c, OFFER, _noop_proposer(), terms, shapes, g)
-    outcomes["abo"]   = ground_concept(SurfaceConcept("ABO group", "A", "r1"), c, OFFER, _noop_proposer(), terms, shapes, g)
-    ef_prop = FakeGroundingProposer(GroundingProposal(ef.iri, str(TX)+"Magnitude", 0.9, "cardiac EF", "urn:iladub:suggester/fake"))
-    outcomes["ef"]    = ground_concept(SurfaceConcept("EF", "55", "r2"), c, OFFER, ef_prop, terms, shapes, g)
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    out = {}
+    out["organ"] = ground_concept(SurfaceConcept("organ", "Heart", "r0"), c, OFFER, _noop_proposer(), terms, shapes, g)
+    blood = FakeGroundingProposer(GroundingProposal(abo.iri, str(TX)+"Category", 0.8, "blood type is ABO", "urn:iladub:suggester/fake"))
+    out["abo"]   = ground_concept(SurfaceConcept("Blood type", "A", "r1"), c, OFFER, blood, terms, shapes, g)
     wrong = FakeGroundingProposer(GroundingProposal(abo.iri, str(TX)+"x", 0.95, "guess", "urn:iladub:suggester/fake"))
-    outcomes["wrong"] = ground_concept(SurfaceConcept("mystery", "55%", "r3"), c, OFFER, wrong, terms, shapes, g)
-    outcomes["novel"] = ground_concept(SurfaceConcept("smoking pack-years", "20", "r4"), c, OFFER, _noop_proposer(), terms, shapes, g)
-    return g, outcomes
+    out["wrong"] = ground_concept(SurfaceConcept("mystery", "55%", "r3"), c, OFFER, wrong, terms, shapes, g)
+    efp = FakeGroundingProposer(GroundingProposal(ef.iri, str(TX)+"Magnitude", 0.9, "cardiac EF", "urn:iladub:suggester/fake"))
+    out["ef"]    = ground_concept(SurfaceConcept("EF", "55", "r2"), c, OFFER, efp, terms, shapes, g)
+    out["novel"] = ground_concept(SurfaceConcept("smoking pack-years", "20", "r4"), c, OFFER, _noop_proposer(), terms, shapes, g)
+    return g, out
 
 def test_end_to_end_grounds_and_quarantines():
     g, out = _build_offer()
-    assert out == {"organ": "grounded", "abo": "grounded", "ef": "grounded",
-                   "wrong": "proposed", "novel": "proposed"}
+    assert out == {"organ": "grounded", "abo": "grounded",
+                   "wrong": "proposed", "ef": "proposed", "novel": "proposed"}
 
 def test_grounded_offer_conforms_to_contract_and_epistemics():
     g, _ = _build_offer()
-    # contract shape (needs organ + aboGroup + EF cardinalities/datatypes)
     contract_know = Graph().parse(CONTRACT, format="turtle"); contract_know += _terms()
-    r1 = validate(g, _shapes(), contract_know)
+    r1 = validate(g, _shapes(), contract_know)          # organ + aboGroup satisfy OrganOfferShape
     assert r1.conforms, r1.report_text
-    # epistemics: every GroundedNode wasPromotedBy a decision; no proposition asserted
-    r2 = validate(g, _iladub_shapes(), _epistemics_knowledge())
+    r2 = validate(g, _iladub_shapes(), _epistemics_knowledge())   # promotion invariant + no leak
     assert r2.conforms, r2.report_text
 
-# --- negative tests: the epistemics/contract are real, these MUST fail validation ---
+# --- negative tests: the epistemics/contract are real; these MUST fail validation ---
 
 def test_neg_grounded_without_promotion_fails():
-    from rdflib import BNode
     g = Graph(); gn = BNode()
     g.add((gn, RDF.type, ILA.GroundedNode))
     g.add((gn, ILA.groundsTo, TX.aboGroup))
-    g.add((gn, ILA.status, ILA.asserted))   # missing wasPromotedBy
+    g.add((gn, ILA.status, ILA.asserted))               # missing wasPromotedBy
     r = validate(g, _iladub_shapes(), _epistemics_knowledge())
     assert not r.conforms and "promotion" in r.report_text.lower()
 
 def test_neg_proposition_asserted_fails():
-    from rdflib import BNode
     g = Graph(); cc = BNode()
-    for p, o in [(RDF.type, ILA.CandidateConcept), (ILA.surfaceText, "x"),
-                 (ILA.status, ILA.asserted)]:  # a proposition must not be asserted
-        g.add((cc, p, o if isinstance(o, URIRef) else __import__("rdflib").Literal(o)))
+    g.add((cc, RDF.type, ILA.CandidateConcept))
+    g.add((cc, ILA.surfaceText, Literal("x")))
+    g.add((cc, ILA.status, ILA.asserted))               # a proposition must not be asserted
     r = validate(g, _iladub_shapes(), _epistemics_knowledge())
     assert not r.conforms
 
 def test_neg_wrong_mapping_asserted_fails_contract():
-    # force "55%" as aboGroup INTO the grounded offer (bypassing dispose) -> contract scheme/datatype rejects
+    # force a 2nd aboGroup INTO the grounded offer -> maxCount 1 violation (what dispose prevents)
     g, _ = _build_offer()
-    g.add((OFFER, TX.aboGroup, __import__("rdflib").Literal("55%")))  # a 2nd, non-scheme aboGroup
+    g.add((OFFER, TX.aboGroup, Literal("55%")))
     contract_know = Graph().parse(CONTRACT, format="turtle"); contract_know += _terms()
     r = validate(g, _shapes(), contract_know)
-    assert not r.conforms  # aboGroup now 2 values (maxCount 1) -> violation
+    assert not r.conforms
 ```
 
-- [ ] **Step 2: Run the end-to-end + negatives**
+- [ ] **Step 5: Run the grounding suite**
 
 Run: `./.venv/bin/python -m pytest tests/test_grounding.py -q`
-Expected: all pass. If `test_grounded_offer_conforms…` fails on `organ`/`aboGroup` cardinality, check the offer carries exactly one of each (scheme concept IRI vs literal — `organ` grounds to `tx:organ-heart`, `aboGroup` to `tx:abo-A`); if the un-schemed EF literal trips a datatype, confirm `OrganOfferShape` puts no datatype on `ejectionFraction` (it doesn't). Adjust the fixture values, not the shapes.
+Expected: all pass (Task-1/2/3 tests + boundary + end-to-end + 3 negatives). If `test_grounded_offer_conforms…` fails, check the offer carries exactly one `tx:organ` and one `tx:aboGroup` (both string literals `"Heart"`/`"A"`); the concept IRIs live only on `groundsTo`. Adjust fixture values, not the shapes.
 
-- [ ] **Step 3: Full suite (no regression)**
+- [ ] **Step 6: Full suite (no regression)**
 
 Run: `./.venv/bin/python -m pytest -q`
-Expected: baseline `393 passed, 5 skipped` + the new grounding tests, zero failures.
+Expected: prior baseline (`400 passed, 5 skipped` after task 3) + the new grounding tests, zero failures.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add tests/test_grounding.py
-git commit -m "test(iladub): end-to-end grounding conformance + 3 negative epistemics tests (grounding task 4)"
+git add src/iladub/ground.py tests/test_grounding.py
+git commit -m "feat(iladub): quarantine unverifiable NEURAL groundings + end-to-end example + negatives (grounding task 4)"
 ```
 
 ---
