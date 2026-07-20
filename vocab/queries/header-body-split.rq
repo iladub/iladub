@@ -8,6 +8,12 @@
 # column is homogeneous non-Text on [s..end] for every s >= s_col with a cell in range) — proven by
 # the celltype differential oracle + the randomized new-vs-reference test
 # (tests/etkl/test_derivation_equiv.py). No pair self-join, no per-split re-evaluation.
+#
+# INVARIANT (load-bearing): this form assumes every row 1..s_col is cell-bearing — true because every
+# band Line has >=1 word (geometry.text_lines; see headers.py:_grid_cells). The no-differing-cell
+# branch hardcodes s_col=1, which equals the old query's cell-bearing-?s domain ONLY under that
+# invariant. An empty-line-preserving band (a future feature) would need the candidate domain
+# widened (as the pre-rewrite pairwise form's ?s = cell-bearing-rows made explicit).
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s_col) AS ?split) WHERE {
   {
