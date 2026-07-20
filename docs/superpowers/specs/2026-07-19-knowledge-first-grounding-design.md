@@ -67,43 +67,65 @@ it grounds to, or that it is novel** — and never let an ungrounded concept pas
    `BamlGroundingProposer` (lazy, `BAML_LIVE`-gated). Returns
    `GroundingProposal{field_iri: str | None, anchor_iri: str, confidence: float, rationale: str}`
    (`field_iri=None` ⇒ proposed novel).
-2. **Dispose against the contract (the sound oracle):** for a proposed `map-to-F`, tentatively build
-   the grounded node — `tx:OrganOffer` with `F.fillsProperty = value` (+ a `groundsTo` to the SKOS
-   term for scheme-bound fields) — and validate it against the **contract SHACL**
-   (`offer-shapes.ttl`, `inference="rdfs"`, `advanced=True`) *and* the `admissibleScheme` membership.
-   - **Conforms** → eligible: emit a `PromotionDecision` (accountable, `dec:decidedBy` the suggester)
-     that admits the `GroundedNode` (status=asserted, `wasPromotedBy` the decision, `groundsTo` F's
-     property/term). The concept crosses the membrane **only** via this decision.
-   - **Fails the contract shape / scheme, or proposed novel** → **quarantine** as an
-     `iladub:CandidateConcept` (status=proposed, carrying surfaceText, suggestedAnchor, suggestedBy,
-     confidence, fromRegion). A proposition — **never asserted**.
+2. **Dispose against the contract (the sound oracle) — *a NEURAL grounding is promotable ONLY when
+   the contract can verify it*** (the soundness boundary, sharpened after Task-3 review found the
+   un-schemed backstop toothless — see below):
+   - **Exact match** (decidable label match) → the exact match *is* the oracle → eligible.
+   - **NEURAL proposal to a scheme-bound field** → dispose by `admissibleScheme` **membership**: the
+     value must match a SKOS `prefLabel` in the scheme (`scheme_member`); member → eligible, non-member
+     → quarantine. (Membership is the sharp discriminator.)
+   - **NEURAL proposal to a non-scheme (unconstrained) field** → **no distinguishing oracle exists**
+     (a type-valid-but-semantically-wrong value has nothing to reject it — a datatype/range cannot
+     tell a valid EF number from a pack-years number) → **quarantine**. Grounding an unverifiable
+     NEURAL guess would be exactly the `confidence ≠ validity` violation; honest floor per §7.
+   - **Eligible** → emit a `PromotionDecision` (accountable, `dec:decidedBy` the suggester) that admits
+     the `GroundedNode` (status=asserted, `wasPromotedBy` the decision, `groundsTo` the scheme term /
+     property; the offer property carries the **string literal** value). The concept crosses the
+     membrane **only** via this decision.
+   - **Not eligible / novel** → **quarantine** as an `iladub:CandidateConcept` (status=proposed,
+     carrying surfaceText, suggestedAnchor, suggestedBy, confidence, fromRegion). A proposition —
+     **never asserted**.
+   - The whole assembled offer is *additionally* validated against the contract SHACL
+     (`offer-shapes.ttl`, `inference="rdfs"`, `advanced=True`) at close — a belt-and-braces
+     cardinality/datatype membrane, not the primary discriminator.
 3. **Confidence is recorded on the proposition, never promotes** (§3/§4; the standing
-   `confidence ≠ validity` rule). Promotion is the *contract-shape pass* + the accountable
-   `PromotionDecision`, not the confidence number.
+   `confidence ≠ validity` rule). Promotion is *exact-match OR scheme-membership* + the accountable
+   `PromotionDecision`, never the confidence number.
 
-### Why the oracle is sound (the crux the perception layer lacked)
+### Why the oracle is sound (the crux the perception layer lacked) — and its honest boundary
 
-The contract SHACL shape of the target field genuinely **distinguishes** a plausible grounding from a
-wrong one: `"55%"` proposed as `tx:aboGroup` fails (`aboGroup` is `xsd:string` from `scheme-abo`, and
-`"55%"` is not an ABO term); `"A"` proposed as `tx:ejectionFraction` fails a numeric/percent
-expectation; a genuinely novel concept has no field to conform to → quarantined. So a **legal-but-wrong**
-grounding is *rejected by construction*, not admitted on confidence. This is what makes the slice
+For a **scheme-bound** field the `admissibleScheme` genuinely **distinguishes** a plausible grounding
+from a wrong one: `"55%"` proposed as `tx:aboGroup` is rejected because `"55%"` is not an ABO term
+(`scheme_member` returns None). So a scheme-verifiable NEURAL mapping is admitted by *membership*, and a
+legal-but-wrong one is *rejected by construction*, never on confidence. This is what makes the slice
 sound where merged-header span resolution was not.
+
+**The honest boundary (Task-3 review):** for a **non-scheme, unconstrained** field (`tx:ejectionFraction`
+carries only `maxCount 1`), **no** structural oracle can distinguish a semantically-wrong mapping — a
+datatype/range cannot tell a valid EF number from a pack-years number. Grounding such a NEURAL guess
+would be the `confidence ≠ validity` violation. So the slice **only grounds what the contract can
+verify** — exact matches and scheme-member proposals — and **quarantines every other NEURAL proposal**.
+Extending disposal to fields with richer value-constraining shapes (datatype+pattern/enumeration) is a
+clean follow-up; the floor here is honest (quarantine > assert-unverified, §7).
 
 ## Worked example (domain-neutral, synthetic — reuses the shipped contract)
 
-Input: a small hand-built set of offer surface-concepts (as if from a `SourceRegion`), spanning the
-four outcomes:
-1. **Exact match** — `("ABO group", "A", r1)` → `tx:aboGroup`, value `"A"` ∈ `scheme-abo` → grounded.
-2. **Semantic match (accepted by shape)** — `("EF", "55%", r2)` → BAML proposes `tx:ejectionFraction`
-   (no scheme; conforms `OrganOfferShape` 0..1) → grounded via a PromotionDecision.
-3. **Wrong mapping (rejected by shape)** — a distractor `("EF", "55%", r3)` where the proposer is
-   fed a wrong `field_iri=tx:aboGroup` → contract shape + `scheme-abo` membership reject it →
-   quarantined as a `CandidateConcept`, **not** asserted.
-4. **Novel** — `("donor smoking pack-years", "20", r4)` → no field → `CandidateConcept` (proposition)
-   with a gist anchor.
+Input: a small hand-built set of offer surface-concepts (as if from a `SourceRegion`). The offer needs
+`tx:organ` (1..1) and `tx:aboGroup` (1..1) to conform; both are scheme-bound (verifiable):
+1. **Exact match** — `("organ", "Heart", r0)` → `tx:organ`, `"Heart"` ∈ `scheme-organ` → grounded.
+2. **Semantic match, scheme-verified (the sound positive)** — `("Blood type", "A", r1)` (a *non-exact*
+   label) → BAML proposes `tx:aboGroup`; `"A"` ∈ `scheme-abo` (`scheme_member` → `tx:abo-A`) → grounded
+   via a `PromotionDecision`. (The only `aboGroup`, so `maxCount 1` holds.)
+3. **Wrong mapping (rejected by scheme membership)** — `("mystery", "55%", r3)` where the proposer is
+   fed a wrong `field_iri=tx:aboGroup` → `"55%"` ∉ `scheme-abo` → quarantined `CandidateConcept`, **not**
+   asserted.
+4. **NEURAL to an unconstrained field (quarantined — the honest boundary)** — `("EF", "55", r2)` → BAML
+   proposes `tx:ejectionFraction` (no scheme, no distinguishing constraint) → **no oracle** →
+   quarantined `CandidateConcept`, **not** grounded.
+5. **Novel** — `("donor smoking pack-years", "20", r4)` → no field → `CandidateConcept` (proposition).
 
-Output graph validated by **both** `iladub-shapes.ttl` (epistemics) and `offer-shapes.ttl` (contract).
+Output graph validated by **both** `iladub-shapes.ttl` (epistemics) and `offer-shapes.ttl` (contract);
+the conformant offer is `{organ, aboGroup}`.
 
 ## Definition of done (the loop CLOSES)
 
