@@ -1,21 +1,32 @@
-# header-body-split.rq — first body-start row: MIN row s>=1 such that some column is
-# homogeneous non-Text (no Text cell, and no two cells of different cellDatatype) from s to the
-# band end. Empty result -> None (caller escalates). Generalized from all-Numeric (proven vs the
-# Python, 2026-07-16) to homogeneous non-Text (proven, 2026-07-17) — subsumes numeric and adds
-# Date/Currency body-column recall [B2b task 2].
+# header-body-split.rq — MIN body-start row s>=1 such that some column is homogeneous non-Text
+# on [s..end]. AGGREGATION FORM (linear in cells): per column, T = the bottom (max-row) cell's
+# cellDatatype (a self-join-free groupwise-max); a column with bottom type != Text contributes
+#   s_col = MAX(row of a cell whose type != T) + 1   if any cell differs from T
+#         = 1                                          if all its cells share type T (homogeneous)
+# and qualifies only if it has a cell at row >= 1 (a header-only column, all cells at row 0, is
+# excluded). The answer is MIN over qualifying columns. Equivalent to the prior pairwise form (a
+# column is homogeneous non-Text on [s..end] for every s >= s_col with a cell in range) — proven by
+# the celltype differential oracle + the randomized new-vs-reference test
+# (tests/etkl/test_derivation_equiv.py). No pair self-join, no per-split re-evaluation.
 PREFIX tab: <https://w3id.org/iladub/tab#>
-SELECT (MIN(?s) AS ?split) WHERE {
-  # ?s ranges over cell-bearing rows (rows with >=1 tab:GridCell), which equals the retired
-  # Python's range(1, len(lines)) ONLY because every band Line has >=1 word (the current
-  # geometry.text_lines invariant). An empty-line-preserving band (a future feature) would need
-  # this candidate domain widened to all row indices, not just cell-bearing ones.
-  ?anycell tab:atGridRow ?s . FILTER(?s >= 1)
-  FILTER EXISTS {
-    ?cc tab:atGridColumn ?col ; tab:atGridRow ?r1 . FILTER(?r1 >= ?s)
-    # data column = homogeneous non-Text: no Text cell (row>=s) AND no two cells with different types
-    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= ?s) }
-    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
-                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
-                        FILTER(?car >= ?s && ?cbr >= ?s && ?cat != ?cbt) }
+SELECT (MIN(?s_col) AS ?split) WHERE {
+  {
+    SELECT ?col (MAX(?diffrow) AS ?maxdiff) (MAX(?crow) AS ?maxrow) WHERE {
+      {
+        SELECT ?col ?T WHERE {
+          ?bc tab:atGridColumn ?col ; tab:atGridRow ?br ; tab:cellDatatype ?T .
+          { SELECT ?col (MAX(?r2) AS ?maxr) WHERE {
+              ?c2 tab:atGridColumn ?col ; tab:atGridRow ?r2 .
+          } GROUP BY ?col }
+          FILTER(?br = ?maxr)
+        }
+      }
+      FILTER(?T != tab:Text)
+      ?cell tab:atGridColumn ?col ; tab:atGridRow ?crow ; tab:cellDatatype ?ct .
+      BIND(IF(?ct != ?T, ?crow, -1) AS ?diffrow)
+    } GROUP BY ?col
   }
+  BIND(IF(?maxdiff >= 0, ?maxdiff + 1, 1) AS ?s_cand)
+  BIND(IF(?maxrow >= 1, ?s_cand, -1) AS ?s_col)   # -1 => header-only column (no body cell), excluded
+  FILTER(?s_col >= 1)
 }
