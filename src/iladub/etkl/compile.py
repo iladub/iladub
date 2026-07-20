@@ -73,9 +73,17 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True) -> CompilationReport:
-    raw_bands = detect_bands(text_lines(extract_words(pdf_path, page_number)))
+    from .geometry import extract_rules
+    from dataclasses import replace as _replace
+    words = extract_words(pdf_path, page_number)
+    page_rules = extract_rules(pdf_path, page_number)
+    raw_bands = detect_bands(text_lines(words))
     from .segment import segment, is_multi_table_ambiguous
-    bands = [sub for band in raw_bands for sub in segment(band)]
+    bands = []
+    for band in raw_bands:
+        for sub in segment(band):
+            sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
+            bands.append(_replace(sub, rules=sub_rules) if sub_rules else sub)
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0

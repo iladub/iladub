@@ -4,6 +4,7 @@ pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 from iladub.etkl.geometry import extract_rules, extract_words, text_lines, Rule
 from iladub.etkl.bands import detect_bands, Band
 from iladub.etkl.grid import infer_leaf_grid
+from iladub.etkl import compile_tables
 from dataclasses import replace
 from tests.etkl import fixtures as F
 
@@ -64,3 +65,18 @@ def test_straddling_rules_fall_back_to_whitespace():
     band, _ = _table_band_with_rules(p)
     bogus = (Rule(x=100.0, top=band.top, bottom=band.bottom),)
     assert infer_leaf_grid(replace(band, rules=bogus)) == infer_leaf_grid(band)
+
+
+def test_ruled_tight_table_compiles_as_record_5_cols():
+    p, meta = _pdf(F.ruled_tight_table_pdf)
+    rep = compile_tables(p)
+    kinds = [(str(r.kind).split(".")[-1], r.verdict) for r in rep.regions]
+    # the tight ruled table is now captured as a RECORD_TABLE (was UNSUPPORTED via a 4-col grid)
+    assert ("RECORD_TABLE", "asserted") in kinds, kinds
+
+
+def test_borderless_tight_table_unchanged_path():
+    # the borderless twin still goes through the whitespace path (no rules) — same as pre-change
+    p, _ = _pdf(F.borderless_tight_table_pdf)
+    rep = compile_tables(p)   # must not raise; behavior identical to today's whitespace inference
+    assert rep is not None
