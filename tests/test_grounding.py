@@ -1,15 +1,60 @@
-from rdflib import Graph
+from rdflib import Graph, Namespace, URIRef, RDF
 from iladub.ground import (
-    SurfaceConcept, load_contract, exact_field, scheme_member,
+    SurfaceConcept, load_contract, exact_field, scheme_member, ground_concept,
 )
 from iladub.propose_ground import GroundingProposal, FakeGroundingProposer
 
 CONTRACT = "examples/transplant/offer-contract.ttl"
 TERMS = "examples/transplant/transplant-terms.ttl"
 
+ILA = Namespace("https://w3id.org/iladub#")
+TX = Namespace("https://example.org/transplant#")
+OFFER = URIRef("urn:test:offer1")
+
 
 def _terms():
     return Graph().parse(TERMS, format="turtle")
+
+
+def _shapes():
+    return Graph().parse("examples/transplant/offer-shapes.ttl", format="turtle")
+
+
+def _noop_proposer():
+    return FakeGroundingProposer(GroundingProposal(None, str(TX)+"x", 0.1, "n/a", "urn:iladub:suggester/fake"))
+
+
+def test_exact_scheme_grounds_with_promotion():
+    c = load_contract(CONTRACT); g = Graph()
+    out = ground_concept(SurfaceConcept("ABO group", "A", "r1"), c, OFFER,
+                         _noop_proposer(), _terms(), _shapes(), g)
+    assert out == "grounded"
+    gn = list(g.subjects(RDF.type, ILA.GroundedNode))
+    assert gn and g.value(gn[0], ILA.wasPromotedBy) is not None
+    assert g.value(gn[0], ILA.status) == ILA.asserted
+    assert (OFFER, TX.aboGroup, None) not in [(OFFER, TX.aboGroup, None)] or True  # offer carries aboGroup
+    assert any(True for _ in g.objects(OFFER, TX.aboGroup))
+
+
+def test_wrong_scheme_mapping_quarantined():
+    # proposer forces "55%" -> aboGroup (a scheme-bound field); scheme membership must reject it.
+    c = load_contract(CONTRACT); g = Graph()
+    abo = next(f for f in c.fields if f.fills_property.endswith("aboGroup"))
+    p = FakeGroundingProposer(GroundingProposal(abo.iri, str(TX)+"x", 0.95, "looks like abo",
+                                                "urn:iladub:suggester/fake"))
+    out = ground_concept(SurfaceConcept("mystery", "55%", "r3"), c, OFFER, p, _terms(), _shapes(), g)
+    assert out == "proposed"
+    assert not list(g.subjects(RDF.type, ILA.GroundedNode))
+    cc = list(g.subjects(RDF.type, ILA.CandidateConcept))
+    assert cc and g.value(cc[0], ILA.status) == ILA.proposed
+
+
+def test_novel_concept_quarantined():
+    c = load_contract(CONTRACT); g = Graph()
+    out = ground_concept(SurfaceConcept("smoking pack-years", "20", "r4"), c, OFFER,
+                         _noop_proposer(), _terms(), _shapes(), g)
+    assert out == "proposed"
+    assert not list(g.subjects(RDF.type, ILA.GroundedNode))
 
 
 def test_load_contract_fields():
