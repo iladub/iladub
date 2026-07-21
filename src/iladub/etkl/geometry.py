@@ -105,6 +105,15 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
     if not chars or len(rule_xs) < 2:
         return []
     xs = sorted(rule_xs)
+    # §7 no-data-loss: extend the column RANGE to the char ink extent so a char beyond the
+    # outermost rules (an interior-only-ruled table with no bounding rectangle) folds into an edge
+    # column instead of being dropped. Fully-bounded tables (chars within the rules) are unchanged.
+    lo = min(c.x0 for c in chars)
+    hi = max(c.x1 for c in chars)
+    if lo < xs[0] - COORD_EPS:
+        xs = [lo] + xs
+    if hi > xs[-1] + COORD_EPS:
+        xs = xs + [hi]
     cs = sorted(chars, key=lambda c: (round(c.top, 1), c.x0))
     med_h = median(c.bottom - c.top for c in cs)
     tol = y_tol if y_tol is not None else 0.6 * med_h

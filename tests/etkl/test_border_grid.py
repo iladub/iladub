@@ -122,9 +122,21 @@ def test_borderless_merged_twin_has_no_rules():
 def test_shipped_fixtures_have_no_rules():
     """Every shipped synthetic fixture is borderless -> extract_rules == [] -> no re-extraction,
     whitespace path untouched. The branch-wide additive guarantee."""
-    import tempfile
     for name in ["simple_table_pdf", "pivoted_table_pdf", "crosstab_table_pdf",
                  "row_grouped_table_pdf", "region_pivot_pdf", "partial_merge_report_pdf"]:
         p = os.path.join(tempfile.mkdtemp(), name + ".pdf")
         getattr(F, name)(p)
         assert extract_rules(p) == [], f"{name} unexpectedly has rules"
+
+
+def test_interior_only_rules_do_not_drop_edge_columns():
+    """§7 no-data-loss regression (final review): a table with only INTERIOR rules (no bounding
+    rectangle) must keep its first/last columns — chars beyond the outermost rule fold into an
+    edge column, never dropped."""
+    from iladub.etkl.geometry import Char, rule_aware_lines
+    chars = [Char("A", 10, 20, 0, 8), Char("A", 20, 30, 0, 8),      # col 0 ("AA") left of first rule
+             Char("B", 40, 50, 0, 8), Char("B", 50, 60, 0, 8),      # col 1 ("BB") between rules
+             Char("C", 70, 80, 0, 8), Char("C", 80, 90, 0, 8)]      # col 2 ("CC") right of last rule
+    lines = rule_aware_lines(chars, [35.0, 65.0])                    # interior separators only
+    cells = [w.text for w in lines[0].words]
+    assert cells == ["AA", "BB", "CC"], f"edge columns dropped: {cells}"
