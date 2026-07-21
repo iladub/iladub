@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from statistics import median
 
-from .geometry import Line, Rule
+from .geometry import Line, Rule, HRule
 
 
 @dataclass(frozen=True)
@@ -18,6 +18,7 @@ class Band:
     top: float
     bottom: float
     rules: tuple[Rule, ...] = ()
+    hrules: tuple[HRule, ...] = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

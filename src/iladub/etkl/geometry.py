@@ -78,6 +78,33 @@ def extract_rules(pdf_path: str, page_number: int = 0) -> list["Rule"]:
 
 
 @dataclass(frozen=True)
+class HRule:
+    y: float       # y-position (page-top convention) of a horizontal ruled line
+    x0: float      # x-extent
+    x1: float
+
+
+def extract_hrules(pdf_path: str, page_number: int = 0) -> list["HRule"]:
+    """Horizontal ruled line segments on a page (author-drawn header/body & row separators).
+
+    PROCEDURAL raw extraction, mirror of extract_rules: a segment is 'horizontal' when its vertical
+    span is < 1pt and its horizontal span > 2pt. Vertical rules are handled by extract_rules."""
+    out: list[HRule] = []
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number]
+        for seg in list(page.lines) + list(page.edges):
+            x0, x1 = float(seg["x0"]), float(seg["x1"])
+            top, bottom = float(seg["top"]), float(seg["bottom"])
+            if abs(bottom - top) < 1.0 and (x1 - x0) > 2.0:
+                out.append(HRule((top + bottom) / 2.0, x0, x1))
+    uniq: list[HRule] = []
+    for h in sorted(out, key=lambda h: (round(h.y, 1), h.x0)):
+        if not any(abs(h.y - u.y) < 0.5 and abs(h.x0 - u.x0) < 1.0 and abs(h.x1 - u.x1) < 1.0 for u in uniq):
+            uniq.append(h)
+    return uniq
+
+
+@dataclass(frozen=True)
 class Char:
     text: str
     x0: float

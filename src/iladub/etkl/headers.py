@@ -102,7 +102,27 @@ def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     import os
     g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
     q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "header-body-split.rq")
-    return celltype.run_scalar(q, g)
+    split = celltype.run_scalar(q, g)
+    if split is not None:
+        return split                       # typed table -> the B2a AXIOM decides (unchanged)
+    return _hrule_split(band)              # all-text -> fall back to the author's horizontal rule
+
+
+def _hrule_split(band) -> int | None:
+    """The header/body split from the topmost INTERIOR horizontal rule: the first line index whose
+    top is below that rule, provided >=1 header line and >=1 body line result. None if no interior
+    rule qualifies. PROCEDURAL geometry (raw rule + line ordering); no tuned constant. Consulted only
+    when the type-homogeneity split returns None (all-text tables)."""
+    hrules = getattr(band, "hrules", ())
+    if not hrules or len(band.lines) < 2:
+        return None
+    first_top = band.lines[0].top
+    last_top = band.lines[-1].top
+    for ry in sorted(h.y for h in hrules if first_top < h.y < last_top):   # topmost interior first
+        split = next((i for i, ln in enumerate(band.lines) if ln.top > ry), None)
+        if split is not None and 1 <= split < len(band.lines):
+            return split
+    return None
 
 
 @dataclass(frozen=True)

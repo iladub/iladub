@@ -669,6 +669,41 @@ def borderless_merged_table_pdf(path: str) -> dict:
     return _merged_table(path, ruled=False)
 
 
+def _all_text_hier(path, ruled):
+    """All-TEXT hierarchical table: 'Contact' spans Email+Phone; text body. `ruled` draws a
+    horizontal rule under the header (the only header/body signal, since no column is non-Text)."""
+    leaves = [(60.0, 150.0), (170.0, 320.0), (340.0, 470.0)]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+    rh = 18.0
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(60, top, "Name")
+    c.drawCentredString((170 + 470) / 2.0, top, "Contact")          # spanning parent (text)
+    c.drawString(170, top - 14, "Email")
+    c.drawString(340, top - 14, "Phone")
+    if ruled:
+        c.setLineWidth(0.7)
+        c.line(55, top - 18, 480, top - 18)                         # horizontal rule under header
+    rows = [("Alice", "alice@x.com", "555-0101"), ("Bob", "bob@y.org", "555-0102"),
+            ("Carol", "carol@z.net", "555-0103"), ("Dave", "dave@w.io", "555-0104"),
+            ("Eve", "eve@v.co", "555-0105"), ("Frank", "frank@u.dev", "555-0106")]
+    c.setFont("Helvetica", 10)
+    for i, row in enumerate(rows):
+        y = top - 28 - i * rh
+        for (l, r), cell in zip(leaves, row):
+            c.drawString(l, y, cell)
+    c.save()
+    return {"n_leaf_cols": 3}
+
+
+def all_text_hier_ruled_pdf(path: str) -> dict:
+    return _all_text_hier(path, ruled=True)
+
+
+def all_text_hier_borderless_pdf(path: str) -> dict:
+    return _all_text_hier(path, ruled=False)
+
+
 def offcenter_merge_report_pdf(path: str) -> dict:
     """Ambiguous merge: two SHORT parent labels 'LEFT' (center x=200) and 'RIGHT'
     (center x=300) whose centering claims collide — the centering resolver gives them

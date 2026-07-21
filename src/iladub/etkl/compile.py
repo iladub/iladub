@@ -73,11 +73,12 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True) -> CompilationReport:
-    from .geometry import extract_rules, extract_chars, rule_aware_lines
+    from .geometry import extract_rules, extract_chars, rule_aware_lines, extract_hrules
     from .bands import Band as _Band
     from dataclasses import replace as _replace
     words = extract_words(pdf_path, page_number)
     page_rules = extract_rules(pdf_path, page_number)
+    page_hrules = extract_hrules(pdf_path, page_number)
     page_chars = extract_chars(pdf_path, page_number) if page_rules else []
     raw_bands = detect_bands(text_lines(words))
     from .segment import segment, is_multi_table_ambiguous
@@ -85,8 +86,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     for band in raw_bands:
         for sub in segment(band):
             sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
+            sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
             if not sub_rules:
-                bands.append(sub)
+                bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
                 continue
             # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
             # the author's exact boundaries) — else keep pdfplumber's words.
@@ -94,9 +96,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
             relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
             if relines:
-                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules))
+                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules))
             else:
-                bands.append(_replace(sub, rules=sub_rules))
+                bands.append(_replace(sub, rules=sub_rules, hrules=sub_hrules))
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
