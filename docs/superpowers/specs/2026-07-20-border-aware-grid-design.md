@@ -54,6 +54,39 @@ never corrupt a good grid.
 4. **Everything unruled is untouched** — no rules attached → the current `infer_leaf_grid` runs
    verbatim. This is the regression guarantee.
 
+## Extension (2026-07-21): rule-aware CELL extraction — the actual fix
+
+**Empirical finding that redirected the slice.** Rule-derived *boundaries* (steps 1–3 above) turned
+out **insufficient** for tight/ruled tables, and the failure mode is instructive: when a gutter is
+`< ~3pt` (exactly the tight case ruling exists to disambiguate), **pdfplumber merges the adjacent cell
+texts into one word** during `extract_words` — *before* any grid logic runs (`"ProductRevenueExpense…"`,
+or a wide value fusing with the next column: `"adj5.5"`). That merged blob then straddles the rule
+boundaries → the step-3 word-tiling oracle **rejects** → whitespace fallback. So the very merging that
+breaks whitespace also defeats the boundary oracle: **boundaries alone cannot recover data the word
+extractor already fused.**
+
+**The actual fix — re-extract cells by the rules.** For a ruled band, do not trust pdfplumber's
+proximity word-grouping; instead **assign the page *characters* to rule columns** and reconstruct each
+cell's text. Verified working: grouping `page.chars` by row and by rule-column (char center within
+`[rule_i, rule_{i+1}]`) correctly splits the tight table into its true cells
+(`['Product','Revenue','Expense','Margin','Growth']`, `['Alpha','123456','98765','24691','12.3%']`)
+where `extract_words` produced one merged blob. This is still **PROCEDURAL raw extraction** — chars and
+their positions are author-encoded; assignment-by-containment is decidable geometry, no tuned constant.
+
+**Pipeline addition:**
+5. **`geometry.extract_chars(pdf_path, page) -> list[Char]`** — raw per-character bboxes (PROCEDURAL,
+   like `extract_words`).
+6. **`geometry.rule_aware_lines(chars_in_band, rules) -> tuple[Line, ...]`** — group the band's chars
+   into rows (top proximity, as `text_lines` does) and, within each row, into cells by rule-column;
+   each cell becomes one `Word` at its char-span bbox. Deterministic containment assignment.
+7. **`compile_tables`:** for a band with rules, **rebuild its lines** via `rule_aware_lines` (from the
+   page chars in the band's y-extent) before classify. The rule-split words now tile the rules, so the
+   step-3 rule grid is accepted and `classify` sees the true columns.
+
+Steps 1–3 remain the foundation (rules extracted, attached, and the exact boundaries); step 7 is what
+makes the words *match* those boundaries. Borderless bands (no rules) skip re-extraction entirely →
+`extract_words` output unchanged → the additive guarantee holds.
+
 ## Why sound / anti-overfit
 
 - **Purely additive.** Every shipped fixture is a borderless synthetic reportlab PDF → no rules → the
@@ -70,18 +103,22 @@ never corrupt a good grid.
 
 ## Definition of done (closes on the real blocker)
 
-- A **ruled tight-column fixture** (the `r_tight` layout, drawn with reportlab `canvas.line`
-  separators) compiles as a `RECORD_TABLE` with the **5 rule-derived columns**, its data captured
-  (the table scores ~1.0) — where the whitespace path gave 4 columns and mis-captured it.
-- A **direct check** that the rule-derived boundaries equal the true column x-positions, and that a
-  borderless version of the same table still uses the whitespace path (rules absent).
-- **Every existing test green** via `./.venv/bin/python -m pytest` (baseline 415 passed / 5 skipped);
-  a targeted assertion that a representative borderless fixture's `infer_leaf_grid` is byte-identical
-  before/after (the additive guarantee).
-- **Gate (§8):** `extract_rules` and the rule→boundary mapping are PROCEDURAL (raw extraction + exact
-  geometry, no tuned constant); the accept/reject is the threshold-free word-tiling oracle. The
-  whitespace `infer_leaf_grid` (with its `0.98`, still the Family-C perception fallback for unruled
-  tables) is unchanged and out of scope.
+- A **ruled tight-column fixture where pdfplumber merges the cell texts** (columns tight enough that
+  `extract_words` fuses adjacent cells into one blob) compiles as a `RECORD_TABLE` with the **5 true
+  columns and correctly-split cell text** — via rule-aware char re-extraction (step 7). Without it,
+  the merged blob mis-captures the table. This is the genuine data-capture win.
+- A **direct check** on that fixture: `extract_words` yields a merged blob spanning multiple columns
+  (the failure), while `rule_aware_lines` yields the correct per-cell words (the fix); and the
+  rule-derived boundaries equal the true column x-positions.
+- A **borderless twin** (same words, no rules) is unchanged — `extract_rules == []`, no re-extraction,
+  `extract_words`/`infer_leaf_grid` byte-identical to today.
+- **Every existing test green** via `./.venv/bin/python -m pytest` (baseline 422 passed / 5 skipped
+  after Tasks 1–3); the borderless-fixtures-no-rules guard (Task 4) proves the additive guarantee at
+  scale.
+- **Gate (§8):** `extract_rules`, `extract_chars`, `rule_aware_lines`, and the rule→boundary mapping
+  are PROCEDURAL (raw extraction + decidable containment geometry, no tuned constant); the boundary
+  accept/reject is the threshold-free word-tiling oracle. The whitespace `infer_leaf_grid` (with its
+  `0.98`, still the Family-C perception fallback for unruled tables) is unchanged and out of scope.
 
 ## File structure (for the plan)
 
