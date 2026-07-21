@@ -595,6 +595,80 @@ def unequal_width_merge_report_pdf(path: str) -> dict:
     return {"parent": "GROUP", "data_cols": [1, 2, 3]}
 
 
+def _tight_table(path, ruled):
+    """5 tight columns (~2pt gutters). `ruled` draws vertical separators (canvas.line)."""
+    cols = [(60, 120), (122, 175), (177, 230), (232, 285), (287, 340)]
+    headers = ["Product", "Q1", "Q2", "Q3", "Q4"]
+    rows = [("Alpha", "120", "135", "150", "160"), ("Beta", "90", "95", "100", "110"),
+            ("Gamma", "45", "50", "55", "60"), ("Delta", "200", "210", "220", "240"),
+            ("Epsilon", "30", "35", "40", "45"), ("Zeta", "75", "80", "85", "90")]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+    rh = 20.0
+    tbl_bottom = top - (len(rows) + 1) * rh
+    if ruled:
+        c.setLineWidth(0.7)
+        for (l, r) in cols:
+            c.line(l - 2, top + 12, l - 2, tbl_bottom)        # vertical separators
+        c.line(cols[-1][1] + 2, top + 12, cols[-1][1] + 2, tbl_bottom)
+    c.setFont("Helvetica-Bold", 9)
+    for (l, r), h in zip(cols, headers):
+        c.drawString(l, top, h)
+    c.setFont("Helvetica", 9)
+    for i, row in enumerate(rows):
+        y = top - (i + 1) * rh
+        for (l, r), cell in zip(cols, row):
+            c.drawString(l, y, cell)
+    c.save()
+    # true separator x's (canvas.line x = col_left-2 ; last = col_right+2)
+    return {"n_leaf_cols": 5, "rule_xs": [cols[0][0] - 2] + [l - 2 for (l, r) in cols[1:]] + [cols[-1][1] + 2]}
+
+
+def ruled_tight_table_pdf(path: str) -> dict:
+    return _tight_table(path, ruled=True)
+
+
+def borderless_tight_table_pdf(path: str) -> dict:
+    return _tight_table(path, ruled=False)
+
+
+def _merged_table(path, ruled):
+    """5 columns packed so tightly (Courier, ~40pt cells, values nearly filling) that pdfplumber
+    MERGES adjacent cell texts into one word. `ruled` draws separators at the cell edges — the only
+    way to recover the true 5-cell structure (rule-aware char re-extraction)."""
+    edges = [60.0, 100.0, 140.0, 180.0, 220.0, 260.0]     # 5 cells, 40pt each; rules at edges
+    heads = ["Product", "Revenue", "Expense", "Margin", "Growth"]
+    rows = [("Alpha", "123456", "98765", "24691", "12.30%"), ("Beta", "234567", "187654", "46913", "19.80%"),
+            ("Gamma", "345678", "298543", "47135", "15.70%"), ("Delta", "456789", "387654", "69135", "17.90%"),
+            ("Epsln", "567890", "487123", "80767", "16.60%"), ("Zeta", "678901", "587432", "91469", "15.50%")]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+    rh = 16.0
+    tbl_bottom = top - (len(rows) + 1) * rh
+    if ruled:
+        c.setLineWidth(0.7)
+        for e in edges:
+            c.line(e, top + 11, e, tbl_bottom)
+    c.setFont("Courier-Bold", 9)
+    for j, h in enumerate(heads):
+        c.drawString(edges[j] + 1, top, h)
+    c.setFont("Courier", 9)
+    for i, row in enumerate(rows):
+        y = top - (i + 1) * rh
+        for j, cell in enumerate(row):
+            c.drawString(edges[j] + 1, y, cell)
+    c.save()
+    return {"n_leaf_cols": 5, "rule_xs": edges, "headers": heads}
+
+
+def ruled_merged_table_pdf(path: str) -> dict:
+    return _merged_table(path, ruled=True)
+
+
+def borderless_merged_table_pdf(path: str) -> dict:
+    return _merged_table(path, ruled=False)
+
+
 def offcenter_merge_report_pdf(path: str) -> dict:
     """Ambiguous merge: two SHORT parent labels 'LEFT' (center x=200) and 'RIGHT'
     (center x=300) whose centering claims collide — the centering resolver gives them

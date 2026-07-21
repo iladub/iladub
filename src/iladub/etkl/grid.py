@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .bands import Band
+from .geometry import COORD_EPS
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,25 @@ def _column_blank_profile(band: Band, x0: float, x1: float) -> np.ndarray:
     return 1.0 - ink.mean(axis=0)  # blank fraction per bin
 
 
+def _rule_boundaries(band: Band) -> list[float] | None:
+    """Candidate leaf boundaries from the band's vertical rules — returned ONLY if every band
+    word strictly tiles them (each word within some [x_i, x_i+1]); else None (whitespace fallback).
+    Threshold-free: the words confirm the rules are column separators."""
+    if not band.rules:
+        return None
+    xs = sorted({round(r.x, 2) for r in band.rules})
+    if len(xs) < 2:
+        return None
+    words = [w for ln in band.lines for w in ln.words]
+    if not words:
+        return None
+    for w in words:
+        if not any(xs[c] - COORD_EPS <= w.x0 and w.x1 <= xs[c + 1] + COORD_EPS
+                   for c in range(len(xs) - 1)):
+            return None            # a word straddles / lies outside the rules -> reject
+    return xs
+
+
 def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
                     min_gutter_bins: int = 3, sample_target: int = 4) -> LeafGrid:
     """Column grid from the vertical whitespace profile of the band.
@@ -57,6 +77,12 @@ def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
         yield a stable occupancy profile; lower it (e.g. 3) if a
         clearly-structured table reads as low-confidence.
     """
+    rb = _rule_boundaries(band)
+    if rb is not None:
+        widths = [rb[i + 1] - rb[i] for i in range(len(rb) - 1)]
+        pitch = float(np.median(widths)) if widths else 0.0
+        return LeafGrid(tuple(rb), len(rb) - 1, pitch, 1.0)   # explicit boundaries -> full confidence
+
     all_words = [w for ln in band.lines for w in ln.words]
     if not all_words:
         raise ValueError("infer_leaf_grid: band has no words")

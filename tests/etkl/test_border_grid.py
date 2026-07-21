@@ -1,0 +1,142 @@
+import os, tempfile
+import pytest
+pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+from iladub.etkl.geometry import extract_rules, extract_words, text_lines, Rule
+from iladub.etkl.bands import detect_bands, Band
+from iladub.etkl.grid import infer_leaf_grid
+from iladub.etkl import compile_tables
+from dataclasses import replace
+from tests.etkl import fixtures as F
+
+
+def _pdf(fn):
+    p = os.path.join(tempfile.mkdtemp(), fn.__name__ + ".pdf")
+    meta = fn(p)
+    return p, meta
+
+
+def test_extract_rules_recovers_vertical_separators():
+    p, meta = _pdf(F.ruled_tight_table_pdf)
+    rules = extract_rules(p)
+    xs = sorted({round(r.x, 0) for r in rules})
+    # the 6 vertical separators (5 columns) — allow rounding to the nearest point
+    assert xs == sorted({round(x, 0) for x in meta["rule_xs"]}), f"got {xs}"
+
+
+def test_extract_rules_empty_on_borderless():
+    p, _ = _pdf(F.borderless_tight_table_pdf)
+    assert extract_rules(p) == []
+
+
+def _table_band_with_rules(pdf_path):
+    ws = extract_words(pdf_path); bands = detect_bands(text_lines(ws))
+    band = max(bands, key=lambda b: len(b.lines))           # the table band
+    rules = [r for r in extract_rules(pdf_path) if r.top <= band.bottom and r.bottom >= band.top]
+    return band, tuple(rules)
+
+
+def test_rule_grid_recovers_five_columns():
+    p, meta = _pdf(F.ruled_tight_table_pdf)
+    band, rules = _table_band_with_rules(p)
+    ruled = replace(band, rules=rules)
+    g = infer_leaf_grid(ruled)
+    assert g.ncols == 5, f"rule grid ncols={g.ncols}"
+    assert g.confidence == 1.0
+    # DISCRIMINATOR: the rule boundaries are the AUTHOR's exact separators; the whitespace path
+    # (rules=()) gives DIFFERENT, wrong boundaries (e.g. a compressed rightmost column that cuts
+    # off Q4). This asserts the rule path actually changed the outcome — not a trivial ncols match.
+    got = [round(x, 0) for x in g.boundaries]
+    want = sorted({round(x, 0) for x in meta["rule_xs"]})
+    assert got == want, f"rule boundaries {got} != author separators {want}"
+    ws = infer_leaf_grid(replace(band, rules=()))
+    assert [round(x, 0) for x in ws.boundaries] != want, "whitespace path must differ from the rules"
+
+
+def test_no_rules_is_byte_identical_to_whitespace():
+    p, _ = _pdf(F.borderless_tight_table_pdf)
+    band, _ = _table_band_with_rules(p)             # borderless -> rules empty
+    assert band.rules == ()
+    assert infer_leaf_grid(band) == infer_leaf_grid(replace(band, rules=()))   # additive guarantee
+
+
+def test_straddling_rules_fall_back_to_whitespace():
+    # a lone bogus rule through the middle of a word -> words don't tile -> whitespace path
+    p, _ = _pdf(F.borderless_tight_table_pdf)
+    band, _ = _table_band_with_rules(p)
+    bogus = (Rule(x=100.0, top=band.top, bottom=band.bottom),)
+    assert infer_leaf_grid(replace(band, rules=bogus)) == infer_leaf_grid(band)
+
+
+def test_ruled_tight_table_compiles_as_record_5_cols():
+    p, meta = _pdf(F.ruled_tight_table_pdf)
+    rep = compile_tables(p)
+    kinds = [(str(r.kind).split(".")[-1], r.verdict) for r in rep.regions]
+    # the tight ruled table is now captured as a RECORD_TABLE (was UNSUPPORTED via a 4-col grid)
+    assert ("RECORD_TABLE", "asserted") in kinds, kinds
+
+
+def test_borderless_tight_table_unchanged_path():
+    # the borderless twin still goes through the whitespace path (no rules) — same as pre-change
+    p, _ = _pdf(F.borderless_tight_table_pdf)
+    rep = compile_tables(p)   # must not raise; behavior identical to today's whitespace inference
+    assert rep is not None
+
+
+# ---- rule-aware CELL extraction: the real fix for word-merged tight/ruled tables ----
+
+from iladub.etkl.geometry import extract_chars, rule_aware_lines
+
+
+def test_pdfplumber_merges_tight_cells_but_rule_aware_splits():
+    """The tight ruled table fuses adjacent cells under extract_words (the failure); rule-aware
+    char re-extraction recovers the true 5 cells (the fix)."""
+    p, meta = _pdf(F.ruled_merged_table_pdf)
+    # failure: pdfplumber produces a blob spanning multiple headers
+    ws = extract_words(p)
+    assert any(w.text.startswith("Product") and len(w.text) > len("Product") for w in ws), \
+        "expected pdfplumber to merge the tight header cells into a blob"
+    # fix: rule-aware re-extraction splits by the author's rule columns
+    xs = sorted({round(r.x, 2) for r in extract_rules(p)})
+    lines = rule_aware_lines(extract_chars(p), xs)
+    header = [w.text for w in lines[0].words]
+    assert header == meta["headers"], f"rule-aware header {header} != {meta['headers']}"
+
+
+def test_ruled_merged_table_compiles_record_5_cols():
+    """End-to-end: the word-merged tight ruled table now compiles as a RECORD_TABLE (5 cells),
+    data captured — where without rule-aware extraction it is one merged blob."""
+    p, _ = _pdf(F.ruled_merged_table_pdf)
+    rep = compile_tables(p)
+    kinds = [(str(r.kind).split(".")[-1], r.verdict) for r in rep.regions]
+    assert ("RECORD_TABLE", "asserted") in kinds, kinds
+    assert rep.score == 1.0, f"score {rep.score} (merged table should now fully capture)"
+
+
+def test_borderless_merged_twin_has_no_rules():
+    """The borderless twin has no rules -> no re-extraction -> the merge stands (the honest
+    demonstration that rules are what fixes it)."""
+    p, _ = _pdf(F.borderless_merged_table_pdf)
+    assert extract_rules(p) == []
+
+
+def test_shipped_fixtures_have_no_rules():
+    """Every shipped synthetic fixture is borderless -> extract_rules == [] -> no re-extraction,
+    whitespace path untouched. The branch-wide additive guarantee."""
+    for name in ["simple_table_pdf", "pivoted_table_pdf", "crosstab_table_pdf",
+                 "row_grouped_table_pdf", "region_pivot_pdf", "partial_merge_report_pdf"]:
+        p = os.path.join(tempfile.mkdtemp(), name + ".pdf")
+        getattr(F, name)(p)
+        assert extract_rules(p) == [], f"{name} unexpectedly has rules"
+
+
+def test_interior_only_rules_do_not_drop_edge_columns():
+    """§7 no-data-loss regression (final review): a table with only INTERIOR rules (no bounding
+    rectangle) must keep its first/last columns — chars beyond the outermost rule fold into an
+    edge column, never dropped."""
+    from iladub.etkl.geometry import Char, rule_aware_lines
+    chars = [Char("A", 10, 20, 0, 8), Char("A", 20, 30, 0, 8),      # col 0 ("AA") left of first rule
+             Char("B", 40, 50, 0, 8), Char("B", 50, 60, 0, 8),      # col 1 ("BB") between rules
+             Char("C", 70, 80, 0, 8), Char("C", 80, 90, 0, 8)]      # col 2 ("CC") right of last rule
+    lines = rule_aware_lines(chars, [35.0, 65.0])                    # interior separators only
+    cells = [w.text for w in lines[0].words]
+    assert cells == ["AA", "BB", "CC"], f"edge columns dropped: {cells}"
