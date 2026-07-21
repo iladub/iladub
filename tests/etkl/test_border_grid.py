@@ -117,3 +117,14 @@ def test_borderless_merged_twin_has_no_rules():
     demonstration that rules are what fixes it)."""
     p, _ = _pdf(F.borderless_merged_table_pdf)
     assert extract_rules(p) == []
+
+
+def test_shipped_fixtures_have_no_rules():
+    """Every shipped synthetic fixture is borderless -> extract_rules == [] -> no re-extraction,
+    whitespace path untouched. The branch-wide additive guarantee."""
+    import tempfile
+    for name in ["simple_table_pdf", "pivoted_table_pdf", "crosstab_table_pdf",
+                 "row_grouped_table_pdf", "region_pivot_pdf", "partial_merge_report_pdf"]:
+        p = os.path.join(tempfile.mkdtemp(), name + ".pdf")
+        getattr(F, name)(p)
+        assert extract_rules(p) == [], f"{name} unexpectedly has rules"
