@@ -100,3 +100,11 @@ strict superset of today's captures.
 - Picking among many interior horizontal rules: this slice uses the **topmost** interior rule
   (under-header); a table whose header/body rule is not the topmost interior rule falls to the
   downstream oracle (region fails to form → escalate), not a mis-split.
+- **Known limitation (final review):** the downstream oracle validates cell *geometry* round-trip,
+  not header *semantics*. A pathological layout — a fully row-separated grid whose topmost interior
+  rule sits *below* the first data row — could yield a split that folds a data row into the header;
+  the mis-folded row's tokens are re-counted as escalated (no silent loss), but the remaining body
+  can be asserted under wrong header labels. Reachability is low (well-formed tables place a rule
+  directly under the header, which `topmost-interior` selects), and this is a pre-existing property
+  of *any* `header_body_split` value (a wrong type-split does the same) — the horizontal-rule fallback
+  merely adds a second source. A header-semantics oracle is a future refinement, out of scope here.
