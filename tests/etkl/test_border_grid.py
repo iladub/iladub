@@ -80,3 +80,40 @@ def test_borderless_tight_table_unchanged_path():
     p, _ = _pdf(F.borderless_tight_table_pdf)
     rep = compile_tables(p)   # must not raise; behavior identical to today's whitespace inference
     assert rep is not None
+
+
+# ---- rule-aware CELL extraction: the real fix for word-merged tight/ruled tables ----
+
+from iladub.etkl.geometry import extract_chars, rule_aware_lines
+
+
+def test_pdfplumber_merges_tight_cells_but_rule_aware_splits():
+    """The tight ruled table fuses adjacent cells under extract_words (the failure); rule-aware
+    char re-extraction recovers the true 5 cells (the fix)."""
+    p, meta = _pdf(F.ruled_merged_table_pdf)
+    # failure: pdfplumber produces a blob spanning multiple headers
+    ws = extract_words(p)
+    assert any(w.text.startswith("Product") and len(w.text) > len("Product") for w in ws), \
+        "expected pdfplumber to merge the tight header cells into a blob"
+    # fix: rule-aware re-extraction splits by the author's rule columns
+    xs = sorted({round(r.x, 2) for r in extract_rules(p)})
+    lines = rule_aware_lines(extract_chars(p), xs)
+    header = [w.text for w in lines[0].words]
+    assert header == meta["headers"], f"rule-aware header {header} != {meta['headers']}"
+
+
+def test_ruled_merged_table_compiles_record_5_cols():
+    """End-to-end: the word-merged tight ruled table now compiles as a RECORD_TABLE (5 cells),
+    data captured — where without rule-aware extraction it is one merged blob."""
+    p, _ = _pdf(F.ruled_merged_table_pdf)
+    rep = compile_tables(p)
+    kinds = [(str(r.kind).split(".")[-1], r.verdict) for r in rep.regions]
+    assert ("RECORD_TABLE", "asserted") in kinds, kinds
+    assert rep.score == 1.0, f"score {rep.score} (merged table should now fully capture)"
+
+
+def test_borderless_merged_twin_has_no_rules():
+    """The borderless twin has no rules -> no re-extraction -> the merge stands (the honest
+    demonstration that rules are what fixes it)."""
+    p, _ = _pdf(F.borderless_merged_table_pdf)
+    assert extract_rules(p) == []

@@ -632,6 +632,43 @@ def borderless_tight_table_pdf(path: str) -> dict:
     return _tight_table(path, ruled=False)
 
 
+def _merged_table(path, ruled):
+    """5 columns packed so tightly (Courier, ~40pt cells, values nearly filling) that pdfplumber
+    MERGES adjacent cell texts into one word. `ruled` draws separators at the cell edges — the only
+    way to recover the true 5-cell structure (rule-aware char re-extraction)."""
+    edges = [60.0, 100.0, 140.0, 180.0, 220.0, 260.0]     # 5 cells, 40pt each; rules at edges
+    heads = ["Product", "Revenue", "Expense", "Margin", "Growth"]
+    rows = [("Alpha", "123456", "98765", "24691", "12.30%"), ("Beta", "234567", "187654", "46913", "19.80%"),
+            ("Gamma", "345678", "298543", "47135", "15.70%"), ("Delta", "456789", "387654", "69135", "17.90%"),
+            ("Epsln", "567890", "487123", "80767", "16.60%"), ("Zeta", "678901", "587432", "91469", "15.50%")]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+    rh = 16.0
+    tbl_bottom = top - (len(rows) + 1) * rh
+    if ruled:
+        c.setLineWidth(0.7)
+        for e in edges:
+            c.line(e, top + 11, e, tbl_bottom)
+    c.setFont("Courier-Bold", 9)
+    for j, h in enumerate(heads):
+        c.drawString(edges[j] + 1, top, h)
+    c.setFont("Courier", 9)
+    for i, row in enumerate(rows):
+        y = top - (i + 1) * rh
+        for j, cell in enumerate(row):
+            c.drawString(edges[j] + 1, y, cell)
+    c.save()
+    return {"n_leaf_cols": 5, "rule_xs": edges, "headers": heads}
+
+
+def ruled_merged_table_pdf(path: str) -> dict:
+    return _merged_table(path, ruled=True)
+
+
+def borderless_merged_table_pdf(path: str) -> dict:
+    return _merged_table(path, ruled=False)
+
+
 def offcenter_merge_report_pdf(path: str) -> dict:
     """Ambiguous merge: two SHORT parent labels 'LEFT' (center x=200) and 'RIGHT'
     (center x=300) whose centering claims collide — the centering resolver gives them

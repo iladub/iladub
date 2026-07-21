@@ -77,6 +77,63 @@ def extract_rules(pdf_path: str, page_number: int = 0) -> list["Rule"]:
     return uniq
 
 
+@dataclass(frozen=True)
+class Char:
+    text: str
+    x0: float
+    x1: float
+    top: float
+    bottom: float
+
+
+def extract_chars(pdf_path: str, page_number: int = 0) -> list[Char]:
+    """All characters on a page with per-glyph bboxes (PROCEDURAL raw extraction, like
+    extract_words). Used to re-group text into cells by ruled columns when pdfplumber's
+    proximity word-grouping fuses tight adjacent cells into one blob."""
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number]
+        return [Char(c["text"], float(c["x0"]), float(c["x1"]), float(c["top"]), float(c["bottom"]))
+                for c in page.chars]
+
+
+def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | None = None) -> list[Line]:
+    """Re-group characters into cells by ruled columns: rows by vertical proximity (as text_lines),
+    then within each row a cell per rule-column (char CENTER within [rule_xs[i], rule_xs[i+1]]);
+    each non-empty cell becomes one Word at its char-span bbox. Chars outside all rule columns are
+    dropped (they lie beyond the table's outer rules). Deterministic containment assignment — no
+    tuned constant. This splits a pdfplumber-merged blob at the author's exact boundaries."""
+    if not chars or len(rule_xs) < 2:
+        return []
+    xs = sorted(rule_xs)
+    cs = sorted(chars, key=lambda c: (round(c.top, 1), c.x0))
+    med_h = median(c.bottom - c.top for c in cs)
+    tol = y_tol if y_tol is not None else 0.6 * med_h
+    rows: list[list[Char]] = [[cs[0]]]
+    for c in cs[1:]:
+        if abs(c.top - rows[-1][0].top) > tol:
+            rows.append([])
+        rows[-1].append(c)
+    lines: list[Line] = []
+    for row in rows:
+        buckets: dict[int, list[Char]] = {}
+        for c in row:
+            cx = (c.x0 + c.x1) / 2.0
+            col = next((i for i in range(len(xs) - 1) if xs[i] <= cx < xs[i + 1]), None)
+            if col is not None:
+                buckets.setdefault(col, []).append(c)
+        words: list[Word] = []
+        for col in sorted(buckets):
+            gl = sorted(buckets[col], key=lambda c: c.x0)
+            text = "".join(c.text for c in gl).strip()
+            if not text:
+                continue
+            words.append(Word(text, min(c.x0 for c in gl), max(c.x1 for c in gl),
+                              min(c.top for c in gl), max(c.bottom for c in gl)))
+        if words:
+            lines.append(Line(tuple(words), min(w.top for w in words), max(w.bottom for w in words)))
+    return sorted(lines, key=lambda ln: ln.top)
+
+
 def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:
     """Group words into lines by vertical proximity of their `top`.
 
