@@ -59,3 +59,48 @@ def flank_context(tree, node_idx, flank):
     side = "right" if flank == max(n.covers) else "left"
     return {"span_label": n.text, "leaf_labels": leaf_labels,
             "flank_label": flank_label, "flank_side": side}
+
+
+def resolve_ambiguous_merge(graph, hreg, band, table_uri, doc_uri, page, proposer):
+    """NEURAL propose -> SHACL-oracle dispose -> promote for a narrow-flank merge tie (B1.3).
+
+    For each header node B1.2 flagged with an `ambiguous_flank`, ask the proposer for a reading,
+    build that reading, and tile-check it on a scratch graph (region_tiles). ALL flagged nodes
+    must resolve legally, or the whole region stays escalated (return None, graph untouched).
+    On success, commit the (last) legal reading's region + one promotion per resolved flank into
+    `graph` and return (asserted_token_count, (promotion_uri, ...)).
+
+    Legality gates admission — never confidence: a proposal whose scratch region fails region_tiles
+    is refused regardless of proposal.confidence."""
+    from dataclasses import replace
+    from rdflib import Graph
+    from .holon import assert_hier_region
+    from .tiling import region_tiles
+    from .promote import emit_span_promotion
+
+    flagged = [i for i, n in enumerate(hreg.tree) if n.ambiguous_flank is not None]
+    if not flagged:
+        return None                                  # not a narrow-flank tie -> caller escalates
+
+    tree = hreg.tree
+    promos = []
+    for idx in flagged:
+        flank = tree[idx].ambiguous_flank
+        proposal = proposer.propose_header_span(flank_context(tree, idx, flank))
+        if proposal is None or proposal.choice not in ("absorb", "standalone"):
+            return None                              # abstain / malformed -> escalate
+        tree = build_reading(tree, idx, flank, proposal.choice)
+        promos.append((idx, flank, proposal))
+
+    reading = replace(hreg, tree=tree)
+    scratch = Graph()
+    n = assert_hier_region(scratch, reading, band, table_uri, doc_uri, page)
+    if n <= 0 or not region_tiles(scratch):
+        return None                                  # illegal reading -> oracle refuses -> escalate
+
+    graph += scratch
+    promo_uris = tuple(
+        emit_span_promotion(graph, table_uri, hreg.tree[idx].text, flank, prop.choice, prop)
+        for idx, flank, prop in promos
+    )
+    return n, promo_uris

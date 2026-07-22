@@ -72,7 +72,7 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 
 def compile_tables(pdf_path: str, page_number: int = 0,
-                   validate_shapes: bool = True) -> CompilationReport:
+                   validate_shapes: bool = True, span_proposer=None) -> CompilationReport:
     from .geometry import extract_rules, extract_chars, rule_aware_lines, extract_hrules
     from .bands import Band as _Band
     from dataclasses import replace as _replace
@@ -222,12 +222,26 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 hreg = classify_hierarchical(band)
                 from .headers import merge_tiling_ok
                 if hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view, "MERGE_AMBIGUOUS",
-                                    TAB.HierarchicalTable, 0.4)
-                    escalated_total += sum(len(ln.words) for ln in band.lines)
-                    reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
-                                                str(TAB.HierarchicalTable), ascii_view))
+                    resolved = None
+                    if span_proposer is not None:
+                        from .span import resolve_ambiguous_merge
+                        table_uri = URIRef(f"{_DOC}#htable{idx}")
+                        resolved = resolve_ambiguous_merge(
+                            graph, hreg, band, table_uri, _DOC, page_number, span_proposer)
+                    if resolved is not None:
+                        n, _promos = resolved
+                        tokens = sum(len(ln.words) for ln in band.lines)
+                        asserted_total += n
+                        escalated_total += max(0, tokens - n)
+                        reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                    str(TAB.HierarchicalTable), ascii_view))
+                    else:
+                        cand_uri = URIRef(f"{_DOC}#region{idx}")
+                        escalate_region(graph, cand_uri, _DOC, ascii_view, "MERGE_AMBIGUOUS",
+                                        TAB.HierarchicalTable, 0.4)
+                        escalated_total += sum(len(ln.words) for ln in band.lines)
+                        reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
+                                                    str(TAB.HierarchicalTable), ascii_view))
                 elif hreg is not None:
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
                     n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
