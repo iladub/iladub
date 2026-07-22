@@ -137,10 +137,22 @@ compile_tables (span_proposer present?)
 
 ## 5. Testing (offline; injected `FakeSpanProposer`; run via `./.venv/bin/python -m pytest`)
 
-Three behavioral pins on the **real** `compile_tables` engine, plus units. The resolution fixture is
-the narrow-orphan geometry from B1.2's gate (`tests/etkl/test_span_gate.py` — a legal tiling exists,
-geometry ties); the negative fixture is `offcenter_merge_report_pdf` (overlap collision, no legal
-tiling).
+Behavioral pins on the **real** engine, plus units. The resolution fixture is the narrow-orphan
+geometry from B1.2's gate (`tests/etkl/test_span_gate.py` — a legal tiling exists, geometry ties);
+the negative fixture is `offcenter_merge_report_pdf` (overlap collision, no legal tiling).
+
+**Test level (honest limitation, verified empirically):** a narrow-flank tie cannot be driven through
+`compile_tables` from a PDF — it needs grid dilution (`infer_leaf_grid` wants ≥~48 data rows to
+separate the leaf columns whose gutter the spanning ink straddles) **and** the super-linear
+`header-body-split.rq` step (hangs past ~15 rows); these conflict, so no single band satisfies both
+(the same orthogonal limitation B1.2's gate documented, and why it too tested below `compile_tables`).
+So the **resolution** pin exercises the real `resolve_ambiguous_merge` orchestrator on a `HierRegion`
+assembled the proven way (grid from a 60-row band; tree/split/rows from a 6-row band) — hitting every
+production path (grid inference, header tree, `build_reading`, `assert_hier_region`, `region_tiles`,
+`emit_span_promotion`). `compile_tables` is separately pinned for the default, kw-smoke, and
+offcenter-escalation paths. Empirically confirmed before spec sign-off: the assembled region asserts
+30 tokens and **both** readings tile; an illegal DUP-leaf reading tiles `False`; offcenter escalates
+`MERGE_AMBIGUOUS`.
 
 1. **Resolves (the close):** `FakeSpanProposer` returning the tiling choice → the region that
    escalated `MERGE_AMBIGUOUS` in B1.2 now **asserts** a `HierarchicalTable`, and the graph carries a
@@ -194,9 +206,12 @@ and the model is never on the test path.
 
 ## 8. Definition of done (the loop CLOSES)
 
-- A previously-`MERGE_AMBIGUOUS` narrow-orphan region compiles to an **asserted** `HierarchicalTable`
-  carrying `PromotionDecision` proposition-provenance, end-to-end through `compile_tables` with a
-  `FakeSpanProposer` — RED-checked non-vacuous.
+- A previously-`MERGE_AMBIGUOUS` narrow-orphan region resolves through the real
+  `resolve_ambiguous_merge` orchestrator (grid inference → tree → `build_reading` → `assert_hier_region`
+  → `region_tiles` → `emit_span_promotion`) to an **asserted** `HierarchicalTable` carrying
+  `PromotionDecision` proposition-provenance, with a `FakeSpanProposer` — RED-checked non-vacuous.
+  (Not driven from a PDF through `compile_tables` — see §5's test-level note on the grid-dilution vs
+  `header-body-split.rq` conflict; `compile_tables` is separately pinned for default/kw/offcenter.)
 - With no proposer (or an abstaining one, or an illegal proposal / overlap collision), the region
   **still escalates** `MERGE_AMBIGUOUS`; every shipped `test_headers` / `test_hierarchical` /
   `test_merge_resolution` / `test_span_gate` fixture stays green.
