@@ -133,6 +133,7 @@ class HeaderNode:
     parent: int | None
     center_x: float | None = None
     ambiguous: bool = False
+    ambiguous_flank: int | None = None
 
 
 def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
@@ -295,7 +296,7 @@ def resolve_narrow_flanks(nodes, grid, ink_cols_by_node):
         flank = _narrow_flank_tie(n.covers, tuple(ink), b)
         if flank is None:
             continue
-        out[i] = replace(n, ambiguous=True)
+        out[i] = replace(n, ambiguous=True, ambiguous_flank=flank)
     return out
 
 
@@ -431,5 +432,6 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
             if m.level == n.level - 1 and set(n.covers) <= set(m.covers):
                 parent_idx = j
                 break
-        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx, n.center_x, n.ambiguous))
+        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx,
+                                 n.center_x, n.ambiguous, n.ambiguous_flank))
     return tuple(linked)
