@@ -37,15 +37,31 @@ class Line:
 
 
 def extract_words(pdf_path: str, page_number: int = 0) -> list[Word]:
-    """All text runs on a page, with bounding boxes in PDF points."""
+    """All text runs on a page, with bounding boxes in PDF points.
+
+    Text-layer first: when pdfplumber finds words (a born-digital page), they are returned
+    exactly. When the page has NO text layer (a scan/image), fall back to OCR — but ONLY if
+    the optional `ocr` extra is importable; absent it, return [] and let the pipeline escalate
+    (unchanged behaviour). OCR never competes with a present text layer."""
     with pdfplumber.open(pdf_path) as pdf:
         page = pdf.pages[page_number]
         raw = page.extract_words(use_text_flow=False, keep_blank_chars=False)
-    return [
+    words = [
         Word(w["text"], float(w["x0"]), float(w["x1"]),
              float(w["top"]), float(w["bottom"]), page_number)
         for w in raw
     ]
+    if words:
+        return words
+    # No text layer -> OCR. The `.ocr` module ships with the package, but its engine
+    # (pypdfium2 / rapidocr) is lazy-imported *inside* the call, so a missing `ocr` extra
+    # surfaces as an ImportError at call time, not at module import. Catch both so an
+    # absent extra escalates (returns []) instead of crashing.
+    try:
+        from .ocr import render_page_to_words
+        return render_page_to_words(pdf_path, page_number)
+    except ImportError:
+        return []
 
 
 @dataclass(frozen=True)
