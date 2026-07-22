@@ -161,3 +161,31 @@ def _property_shape(shapes, property_iri):
 def _has_value_constraint(shapes, ps):
     """True iff the property shape declares any value constraint (not just cardinality/path)."""
     return any((ps, p, None) in shapes for p in _VALUE_CONSTRAINTS)
+
+
+def _value_conforms(offer_uri, target_class, property_iri, value, shapes):
+    """SHACL-membrane oracle (§8, closed-world): does `value` satisfy the field's declared value
+    constraints? Validates against a FOCUSED node shape targeting the offer that carries ONLY this
+    field's sh:property (never the full node shape, whose other required properties would fail a
+    scratch offer). The value is cast to the shape's sh:datatype: an ill-typed lexical form (e.g.
+    'high' as xsd:decimal) fails sh:datatype -> correctly non-conformant."""
+    from .validate import validate
+
+    ps = _property_shape(shapes, property_iri)
+    if ps is None:
+        return False
+    dt = shapes.value(ps, SH.datatype)
+
+    focused = Graph()
+    shape = BNode()
+    focused.add((shape, RDF.type, SH.NodeShape))
+    focused.add((shape, SH.targetNode, offer_uri))
+    focused.add((shape, SH.property, ps))
+    focused += shapes.cbd(ps)                       # bring the property shape's own constraints
+
+    data = Graph()
+    data.add((offer_uri, RDF.type, URIRef(target_class)))
+    val = Literal(value, datatype=dt) if dt is not None else Literal(value)
+    data.add((offer_uri, URIRef(property_iri), val))
+
+    return validate(data, focused, Graph()).conforms

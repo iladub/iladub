@@ -1,7 +1,9 @@
-from rdflib import Graph, Namespace
-from iladub.ground import _property_shape, _has_value_constraint
+from rdflib import Graph, Namespace, URIRef
+from iladub.ground import _property_shape, _has_value_constraint, _value_conforms
 
 TX = Namespace("https://example.org/transplant#")
+OFFER = URIRef("urn:test:offer1")
+TXO = "https://example.org/transplant#OrganOffer"
 
 
 def _shapes():
@@ -27,3 +29,15 @@ def test_cardinality_only_is_not_a_value_constraint():
     ps = _property_shape(s, str(TX) + "organ")
     assert ps is not None
     assert _has_value_constraint(s, ps) is False
+
+
+def test_in_range_decimal_conforms():
+    assert _value_conforms(OFFER, TXO, str(TX) + "ejectionFraction", "55", _shapes()) is True
+
+
+def test_out_of_range_does_not_conform():
+    assert _value_conforms(OFFER, TXO, str(TX) + "ejectionFraction", "150", _shapes()) is False
+
+
+def test_wrong_datatype_does_not_conform():
+    assert _value_conforms(OFFER, TXO, str(TX) + "ejectionFraction", "high", _shapes()) is False
