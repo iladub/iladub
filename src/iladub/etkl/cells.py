@@ -83,20 +83,31 @@ def _cell_from(words: list[Word], page: int, span_cols: int = 1) -> "SourceCell"
 def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...], ...]:
     """Group words into per-line SourceCells, merging wrap-continuations.
 
-    A word on line i+1 is a wrap-continuation of the cell above iff:
-      - it lands in the same leaf column as a cell already open on the anchor line,
-      - the vertical gap to the preceding line is strictly less than the median
-        inter-line gap (i.e. the continuation is tighter than the typical row pitch),
-      - and line i+1 does not itself tile a fresh full row (it has fewer occupied
-        columns than the anchor).
+    A word on line i+1 is a wrap-continuation of the cell above iff ALL hold:
+      - (cond 2) it lands in a leaf column already open on the anchor line
+        (``cols_j ⊆ open``) — a SOUND structural test,
+      - (cond 3) line i+1 occupies FEWER columns than the anchor
+        (``len(cols_j) < len(anchor)``), i.e. it does not tile a fresh full row —
+        a SOUND structural test,
+      - (gap) the vertical gap to the preceding line is strictly less than ``lead``,
+        the median of the document's own inter-line gaps.
 
-    Using ``gap < lead * 0.9`` is the structural oracle: wrap-continuation lines
-    are typeset *clearly* tighter than the row pitch, so a 10 % margin keeps the
-    wrap gap (≈ 13 pts in the reference fixture) well inside the threshold and the
-    body-row pitch (≈ 18 pts = lead) well outside it.  The margin is structural,
-    not tuned to the fixture — ``lead`` is the median of the document's own gaps,
-    adaptive by construction.  The ultimate guard against a mis-grouping is the
-    downstream round-trip and SHACL validation, not this threshold alone.
+    §8 gate — PROCEDURAL, not NEURAL (B3, 2026-07-22).  The wrap-vs-row-pitch boundary
+    is ``lead`` — a DERIVED statistic (the median gap, adaptive by construction, like
+    ``_median_pitch``), carrying NO tuned constant.  The previous ``lead * 0.9`` margin
+    WAS fixture-tuned (its docstring reasoned in specific point magnitudes) and is
+    retired: an empirical probe showed the bare ``gap < lead`` passes every fixture,
+    whereas dropping the gap entirely collapses the pivot's body rows — so the adaptive
+    gap is load-bearing but the magic 0.9 was not.  Conditions 2/3 are the sound
+    structural filter that keeps only partial subset lines as candidates (a full row can
+    never be a continuation regardless of gap), which is why relaxing 0.9→1.0 is safe:
+    it only lets a partial sub-line whose gap is just under the pitch (0.9·lead–lead) be
+    recognised as the continuation it structurally already is.  See
+    ``docs/superpowers/specs/2026-07-22-b3-wrap-continuation-procedural-design.md`` for
+    the classification + the accepted jitter tradeoff (a distribution-aware bimodal split
+    is deferred until a real jittery document demonstrates the need — no synthetic fixture).
+    The ultimate guard against a mis-grouping remains the downstream round-trip and SHACL
+    validation, not this threshold alone.
     """
     b = grid.boundaries
     lines = list(band.lines)
@@ -124,10 +135,10 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         for col, words in by_col.items():
             merged_into[i].setdefault(col, []).extend(words)
         # Pull wrap-continuations from subsequent contiguous lines.
-        # Oracle: gap < lead * 0.9 — a continuation gap is clearly smaller than
-        # the row pitch; the 10 % margin gives headroom against real-PDF float noise.
+        # Gate: gap < lead (the adaptive median inter-line gap). PROCEDURAL, no tuned
+        # constant — see the docstring for why the retired 0.9 margin was fixture-tuned.
         j = i + 1
-        while j < len(lines) and (tops[j] - tops[j - 1]) < lead * 0.9:
+        while j < len(lines) and (tops[j] - tops[j - 1]) < lead:
             cols_j = per_line[j]
             # Continuation only if every word on line j sits in a column already open
             # on the anchor, AND line j does not tile a fresh full row (fewer cols).
