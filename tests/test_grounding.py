@@ -91,13 +91,13 @@ def test_fake_grounding_proposer_returns_fixed():
 
 
 def test_neural_to_unconstrained_field_quarantined():
-    """A NEURAL proposal to ejectionFraction (no scheme, no distinguishing constraint) has no
-    oracle → must quarantine, never ground (the soundness boundary)."""
+    """A NEURAL proposal to causeOfDeath (no scheme, no value constraint in the shape) has no
+    oracle → must quarantine, never ground (the preserved soundness boundary)."""
     c = load_contract(CONTRACT); g = Graph()
-    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
-    p = FakeGroundingProposer(GroundingProposal(ef.iri, str(TX)+"Magnitude", 0.99, "looks like EF",
+    cod = next(f for f in c.fields if f.fills_property.endswith("causeOfDeath"))
+    p = FakeGroundingProposer(GroundingProposal(cod.iri, str(TX)+"Category", 0.99, "cause of death",
                                                 "urn:iladub:suggester/fake"))
-    out = ground_concept(SurfaceConcept("EF", "55", "r2"), c, OFFER, p, _terms(), _shapes(), g)
+    out = ground_concept(SurfaceConcept("COD", "MVA", "r5"), c, OFFER, p, _terms(), _shapes(), g)
     assert out == "proposed"
     assert not list(g.subjects(RDF.type, ILA.GroundedNode))
 
@@ -118,8 +118,9 @@ def _iladub_shapes():
 
 
 def _build_offer():
-    """organ (exact, scheme) + Blood type->aboGroup (NEURAL, scheme-verified) → a conformant offer;
-    wrong "55%"->aboGroup (scheme-rejected), EF (NEURAL, unconstrained), novel → all quarantined."""
+    """organ (exact, scheme) + Blood type->aboGroup (NEURAL, scheme-verified) + EF (NEURAL,
+    SHACL value-constraint-verified) → a conformant offer; wrong "55%"->aboGroup
+    (scheme-rejected) and novel → quarantined."""
     c = load_contract(CONTRACT); terms = _terms(); shapes = _shapes(); g = Graph()
     abo = next(f for f in c.fields if f.fills_property.endswith("aboGroup"))
     ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
@@ -138,7 +139,7 @@ def _build_offer():
 def test_end_to_end_grounds_and_quarantines():
     g, out = _build_offer()
     assert out == {"organ": "grounded", "abo": "grounded",
-                   "wrong": "proposed", "ef": "proposed", "novel": "proposed"}
+                   "wrong": "proposed", "ef": "grounded", "novel": "proposed"}
 
 
 def test_grounded_offer_conforms_to_contract_and_epistemics():

@@ -1,5 +1,6 @@
 import os
 from rdflib import Graph, Namespace, Literal
+from rdflib.namespace import XSD
 from iladub.timeline import Timeline, Cursor
 from iladub.loop import advance_with_capture
 
@@ -71,7 +72,7 @@ def test_capture_context_grounds_organ_and_abo(monkeypatch):
     _patch_agents(monkeypatch)
     g = capture_context(OFFER)
     assert (TX["offer"], TX.organ, Literal("Heart")) in g
-    assert (TX["offer"], TX.aboGroup, Literal("O")) in g
+    assert (TX["offer"], TX.aboGroup, Literal("O", datatype=XSD.string)) in g
 
 
 import pytest

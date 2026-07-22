@@ -16,6 +16,7 @@ TX = Namespace("https://example.org/transplant#")
 ILADUB = Namespace("https://w3id.org/iladub#")
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
+SH = Namespace("http://www.w3.org/ns/shacl#")
 
 OFFER = TX["offer"]
 
@@ -82,7 +83,17 @@ def ground_typed(typed_obj, contract_graph: Graph, contract_node: URIRef,
     return eg
 
 
-def to_rdf(extraction, terms: Graph) -> ExtractionGraph:
+def _datatype_of(shapes, prop):
+    """The sh:datatype declared for `prop` in the contract shapes, or None. Single source of
+    truth for a field's datatype is the SHACL shape (not a hardcoded map)."""
+    if shapes is None:
+        return None
+    for ps in shapes.subjects(SH.path, prop):
+        return shapes.value(ps, SH.datatype)
+    return None
+
+
+def to_rdf(extraction, terms: Graph, shapes: Graph | None = None) -> ExtractionGraph:
     eg = ExtractionGraph()
     eg.graph.add((OFFER, RDF.type, TX.OrganOffer))
     n = 0
@@ -91,7 +102,8 @@ def to_rdf(extraction, terms: Graph) -> ExtractionGraph:
         if cc is None:
             continue
         if (not must_ground) or _resolves(terms, cc.value):
-            eg.graph.add((OFFER, prop, Literal(cc.value)))
+            dt = _datatype_of(shapes, prop)
+            eg.graph.add((OFFER, prop, Literal(cc.value, datatype=dt) if dt is not None else Literal(cc.value)))
         else:
             n += 1
             cand = ILADUB[f"candidate-{n}"]

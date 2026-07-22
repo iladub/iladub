@@ -17,9 +17,16 @@ ETKL = Namespace("https://w3id.org/iladub/etkl#")
 SKOSNS = SKOS
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
+SH = Namespace("http://www.w3.org/ns/shacl#")
 
 _EXACT_RULE = "urn:iladub:suggester/exact-match-rule"
 _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
+
+# Value constraints (as opposed to cardinality/path) — presence of any means the contract
+# declares something the SHACL membrane can verify a proposed value against.
+_VALUE_CONSTRAINTS = (SH.datatype, SH["in"], SH.pattern,
+                      SH.minInclusive, SH.maxInclusive, SH.minExclusive, SH.maxExclusive,
+                      SH.minLength, SH.maxLength)
 
 
 @dataclass(frozen=True)
@@ -91,20 +98,27 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _grounds_to(concept, field, terms, is_exact):
+def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class):
     """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
 
-    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle), else
-    None. Non-scheme field: admitted ONLY for an EXACT label match (the exact match is the oracle);
-    a NEURAL proposal to an unconstrained field has no oracle → None (quarantine). Grounding an
-    unverifiable NEURAL guess would be confidence-as-validity (§7)."""
+    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle).
+    Non-scheme + exact label match: the property (exact match is the oracle). Non-scheme,
+    non-exact: the field's contract SHACL value constraint is the oracle (§8 membrane) —
+    grounds iff the shape declares a value constraint AND the value conforms; else None.
+    An unconstrained field has nothing to verify → None (quarantine): confidence≠validity (§7)."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         return URIRef(term) if term else None
-    return URIRef(field.fills_property) if is_exact else None
+    if is_exact:
+        return URIRef(field.fills_property)
+    ps = _property_shape(contract_shapes, field.fills_property)
+    if (ps is not None and _has_value_constraint(contract_shapes, ps)
+            and _value_conforms(offer_uri, target_class, field.fills_property, concept.value, contract_shapes)):
+        return URIRef(field.fills_property)
+    return None
 
 
-def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale):
+def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None):
     pd = BNode()
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
     g.add((pd, ILADUB.reviews, cand))
@@ -118,9 +132,10 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
     g.add((gn, ILADUB.groundsTo, grounds_to))
     g.add((gn, ILADUB.status, ILADUB.asserted))
     g.add((pd, DEC.produced, gn))
-    # the contract instance: type once + the property value as a STRING literal (satisfies the shape)
+    # the contract instance: type once + the property value, typed when the shape declares a datatype
     g.add((offer_uri, RDF.type, URIRef(target_class)))
-    g.add((offer_uri, URIRef(field.fills_property), Literal(concept.value)))
+    val = Literal(concept.value, datatype=datatype) if datatype is not None else Literal(concept.value)
+    g.add((offer_uri, URIRef(field.fills_property), val))
     return gn
 
 
@@ -137,8 +152,54 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
     if field is None:                                       # novel → quarantined proposition
         return "proposed"
-    grounds_to = _grounds_to(concept, field, terms, is_exact)   # the contract oracle
+    grounds_to = _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class)
     if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
-    _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to, cand, agent, confidence, rationale)
+    ps = _property_shape(contract_shapes, field.fills_property)
+    datatype = contract_shapes.value(ps, SH.datatype) if ps is not None else None
+    if field.scheme is None and not is_exact:               # grounded via the value-constraint membrane
+        rationale = ("%s [grounded via SHACL value-constraint admissibility, weaker than "
+                     "scheme-identity]" % rationale)
+    _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to,
+                   cand, agent, confidence, rationale, datatype)
     return "grounded"
+
+
+def _property_shape(shapes, property_iri):
+    """The sh:property node whose sh:path == property_iri, or None."""
+    for ps in shapes.subjects(SH.path, URIRef(property_iri)):
+        return ps
+    return None
+
+
+def _has_value_constraint(shapes, ps):
+    """True iff the property shape declares any value constraint (not just cardinality/path)."""
+    return any((ps, p, None) in shapes for p in _VALUE_CONSTRAINTS)
+
+
+def _value_conforms(offer_uri, target_class, property_iri, value, shapes):
+    """SHACL-membrane oracle (§8, closed-world): does `value` satisfy the field's declared value
+    constraints? Validates against a FOCUSED node shape targeting the offer that carries ONLY this
+    field's sh:property (never the full node shape, whose other required properties would fail a
+    scratch offer). The value is cast to the shape's sh:datatype: an ill-typed lexical form (e.g.
+    'high' as xsd:decimal) fails sh:datatype -> correctly non-conformant."""
+    from .validate import validate
+
+    ps = _property_shape(shapes, property_iri)
+    if ps is None:
+        return False
+    dt = shapes.value(ps, SH.datatype)
+
+    focused = Graph()
+    shape = BNode()
+    focused.add((shape, RDF.type, SH.NodeShape))
+    focused.add((shape, SH.targetNode, offer_uri))
+    focused.add((shape, SH.property, ps))
+    focused += shapes.cbd(ps)                       # bring the property shape's own constraints
+
+    data = Graph()
+    data.add((offer_uri, RDF.type, URIRef(target_class)))
+    val = Literal(value, datatype=dt) if dt is not None else Literal(value)
+    data.add((offer_uri, URIRef(property_iri), val))
+
+    return validate(data, focused, Graph()).conforms

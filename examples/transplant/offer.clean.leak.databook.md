@@ -22,7 +22,8 @@ process:
 <!-- databook:id: asserted -->
 ```turtle
 @prefix tx: <https://example.org/transplant#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 tx:offer a tx:OrganOffer ;
     tx:aboGroup "O" ;
-    tx:ejectionFraction "60" .
+    tx:ejectionFraction "60"^^xsd:decimal .
 ```
