@@ -11,15 +11,22 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from rdflib import RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import SKOS
+from rdflib.namespace import SKOS, XSD
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 SKOSNS = SKOS
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
+SH = Namespace("http://www.w3.org/ns/shacl#")
 
 _EXACT_RULE = "urn:iladub:suggester/exact-match-rule"
 _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
+
+# Value constraints (as opposed to cardinality/path) — presence of any means the contract
+# declares something the SHACL membrane can verify a proposed value against.
+_VALUE_CONSTRAINTS = (SH.datatype, SH["in"], SH.pattern,
+                      SH.minInclusive, SH.maxInclusive, SH.minExclusive, SH.maxExclusive,
+                      SH.minLength, SH.maxLength)
 
 
 @dataclass(frozen=True)
@@ -142,3 +149,15 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
         return "proposed"
     _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to, cand, agent, confidence, rationale)
     return "grounded"
+
+
+def _property_shape(shapes, property_iri):
+    """The sh:property node whose sh:path == property_iri, or None."""
+    for ps in shapes.subjects(SH.path, URIRef(property_iri)):
+        return ps
+    return None
+
+
+def _has_value_constraint(shapes, ps):
+    """True iff the property shape declares any value constraint (not just cardinality/path)."""
+    return any((ps, p, None) in shapes for p in _VALUE_CONSTRAINTS)
