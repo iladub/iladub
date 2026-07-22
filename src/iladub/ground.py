@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from rdflib import RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import SKOS, XSD
+from rdflib.namespace import SKOS
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 SKOSNS = SKOS

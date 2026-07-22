@@ -48,12 +48,14 @@ def capture_for_milestone(milestone, timeline_graph: Graph, document_text: str,
 
 
 def capture_context(offer_path: str,
-                    terms_path: str = os.path.join(_TXD, "transplant-terms.ttl")) -> Graph:
+                    terms_path: str = os.path.join(_TXD, "transplant-terms.ttl"),
+                    shapes_path: str = os.path.join(_TXD, "offer-shapes.ttl")) -> Graph:
     """Run the SP1 funnel over a document and return the grounded (asserted) graph,
     suitable as a capture_fn body for the timeline loop (loop.advance_with_capture)."""
     text = read_document(offer_path)
     terms = Graph().parse(terms_path, format="turtle")
-    return to_rdf(extract_offer(text), terms).graph
+    shapes = Graph().parse(shapes_path, format="turtle")
+    return to_rdf(extract_offer(text), terms, shapes).graph
 
 
 def _compile_text(text: str,
