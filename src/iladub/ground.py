@@ -98,20 +98,27 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _grounds_to(concept, field, terms, is_exact):
+def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class):
     """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
 
-    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle), else
-    None. Non-scheme field: admitted ONLY for an EXACT label match (the exact match is the oracle);
-    a NEURAL proposal to an unconstrained field has no oracle → None (quarantine). Grounding an
-    unverifiable NEURAL guess would be confidence-as-validity (§7)."""
+    Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle).
+    Non-scheme + exact label match: the property (exact match is the oracle). Non-scheme,
+    non-exact: the field's contract SHACL value constraint is the oracle (§8 membrane) —
+    grounds iff the shape declares a value constraint AND the value conforms; else None.
+    An unconstrained field has nothing to verify → None (quarantine): confidence≠validity (§7)."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         return URIRef(term) if term else None
-    return URIRef(field.fills_property) if is_exact else None
+    if is_exact:
+        return URIRef(field.fills_property)
+    ps = _property_shape(contract_shapes, field.fills_property)
+    if (ps is not None and _has_value_constraint(contract_shapes, ps)
+            and _value_conforms(offer_uri, target_class, field.fills_property, concept.value, contract_shapes)):
+        return URIRef(field.fills_property)
+    return None
 
 
-def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale):
+def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None):
     pd = BNode()
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
     g.add((pd, ILADUB.reviews, cand))
@@ -125,9 +132,10 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
     g.add((gn, ILADUB.groundsTo, grounds_to))
     g.add((gn, ILADUB.status, ILADUB.asserted))
     g.add((pd, DEC.produced, gn))
-    # the contract instance: type once + the property value as a STRING literal (satisfies the shape)
+    # the contract instance: type once + the property value, typed when the shape declares a datatype
     g.add((offer_uri, RDF.type, URIRef(target_class)))
-    g.add((offer_uri, URIRef(field.fills_property), Literal(concept.value)))
+    val = Literal(concept.value, datatype=datatype) if datatype is not None else Literal(concept.value)
+    g.add((offer_uri, URIRef(field.fills_property), val))
     return gn
 
 
@@ -144,10 +152,16 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
     if field is None:                                       # novel → quarantined proposition
         return "proposed"
-    grounds_to = _grounds_to(concept, field, terms, is_exact)   # the contract oracle
+    grounds_to = _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class)
     if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
-    _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to, cand, agent, confidence, rationale)
+    ps = _property_shape(contract_shapes, field.fills_property)
+    datatype = contract_shapes.value(ps, SH.datatype) if ps is not None else None
+    if field.scheme is None and not is_exact:               # grounded via the value-constraint membrane
+        rationale = ("%s [grounded via SHACL value-constraint admissibility, weaker than "
+                     "scheme-identity]" % rationale)
+    _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to,
+                   cand, agent, confidence, rationale, datatype)
     return "grounded"
 
 
