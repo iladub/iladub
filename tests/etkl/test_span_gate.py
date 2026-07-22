@@ -66,6 +66,8 @@ from iladub.etkl.geometry import Word, Line
 from iladub.etkl.bands import Band
 from iladub.etkl.grid import infer_leaf_grid
 from iladub.etkl.headers import infer_header_tree, header_body_split
+from iladub.etkl.rows import logical_rows
+from iladub.etkl.hierarchical import HierRegion
 
 
 def _line(words, top):
@@ -110,6 +112,22 @@ def _region_node(w4, col4_has_own_header):
     # the coarse (level-0) spanning node
     coarse = [n for n in (tree or ()) if n.level == 0 and len(n.covers) > 1]
     return grid, tree, coarse
+
+
+def _ambiguous_hier_region():
+    """Assemble the narrow-orphan HierRegion the way _region_node does: grid from a 60-row band
+    (dilution infer_leaf_grid needs) + tree/split/rows from a 6-row band (header-body-split.rq is
+    super-linear -> must run on the small band). Returns (hreg, small_band). classify_hierarchical
+    CANNOT be used here: it runs recover_leaf_grid on ONE band, which won't resolve 5 columns
+    without the 48+-row dilution. Empirically: assert_hier_region asserts 30 tokens; both readings
+    tile."""
+    grid = infer_leaf_grid(_band(25, False, 60))
+    assert grid.ncols == 5
+    small = _band(25, False, 6)
+    split = header_body_split(small, grid)
+    tree = infer_header_tree(small, grid, split)
+    rows = logical_rows(small, grid, small.lines[split].top)
+    return HierRegion(grid, tree, rows, split), small
 
 
 # 3. RESIDUAL ESCALATES (the real proof): header-empty (orphan) flank -> ambiguous (deferred to
