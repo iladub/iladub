@@ -63,3 +63,37 @@ def emit_promotion(g, t, normalized_base, dimension_name, values, proposal):
         if str(g.value(op, TAB.opDimension)) == dimension_name:
             g.add((op, TAB.namePromotedBy, pd))
     return pd
+
+
+def emit_span_promotion(g, region_uri, node_text, flank, choice, proposal):
+    """Write the CandidateConcept + PromotionDecision for a NEURAL narrow-flank merge reading
+    (loop B1.3). The reading is a PROPOSITION: region_tiles has confirmed it is structurally
+    LEGAL, but geometry could not decide it uniquely — so it is admitted accountably, never
+    asserted as grounded truth (§3). Returns the PromotionDecision uri."""
+    agent = URIRef(proposal.suggester_iri)
+    g.add((agent, RDF.type, ILADUB.Suggester))
+    confidence = Literal(Decimal(str(round(proposal.confidence, 6))))
+
+    cand = BNode()
+    g.add((cand, RDF.type, ILADUB.CandidateConcept))
+    g.add((cand, RDFS.label, Literal("%s span reading: %s (flank col %d)" % (node_text, choice, flank))))
+    g.add((cand, ILADUB.surfaceText, Literal(node_text)))
+    g.add((cand, ILADUB.suggestedBy, agent))
+    g.add((cand, ILADUB.suggestedAnchor, GIST.Category))
+    g.add((cand, ILADUB.fromRegion, region_uri))
+    g.add((cand, ILADUB.status, ILADUB.proposed))
+    g.add((cand, ILADUB.confidence, confidence))
+
+    pd = URIRef("%s-span-promotion-%s-c%d" % (region_uri, _slug(choice), flank))
+    g.add((pd, RDF.type, ILADUB.PromotionDecision))
+    g.add((pd, ILADUB.reviews, cand))
+    g.add((pd, DEC.decidedBy, agent))
+    g.add((pd, DEC.consideredEvidence, region_uri))
+    g.add((pd, DEC.consideredEvidence, cand))
+    g.add((pd, DEC.confidence, confidence))
+    g.add((pd, DEC.rationale, Literal(
+        "Geometry tied at narrow flank col %d; model proposed '%s'; region_tiles confirms the "
+        "reading is structurally legal but NOT oracle-verified as unique — admitted as a "
+        "proposition. Rationale: %s" % (flank, choice, proposal.rationale))))
+    g.add((pd, DEC.produced, region_uri))
+    return pd
