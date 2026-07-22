@@ -43,3 +43,32 @@ def pixels_to_word(region: OcrRegion, scale: float, page_number: int = 0) -> Wor
     conversion, not a decision — gates no classification."""
     return Word(region.text, region.x0 / scale, region.x1 / scale,
                 region.top / scale, region.bottom / scale, page_number)
+
+
+def _bounds(poly) -> tuple[float, float, float, float]:
+    """Axis-aligned (x0, x1, top, bottom) of a 4-point OCR polygon. PROCEDURAL exact
+    arithmetic (min/max over corners) — no tuned constant."""
+    xs = [float(p[0]) for p in poly]
+    ys = [float(p[1]) for p in poly]
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+class RapidOcrBackend:
+    """Default backend: RapidOCR (PP-OCR on ONNX Runtime) — a DISCRIMINATIVE TRANSCRIBER
+    (detection + CTC recognition), faithful by construction. Satisfies OcrBackend. Emits one
+    region per detected text line/segment; per-word boxes are NOT available (region-as-Word
+    downstream). Lazy-imports rapidocr so the dep stays optional."""
+
+    def __init__(self):
+        from rapidocr import RapidOCR  # lazy: optional [ocr] extra
+        self._engine = RapidOCR()
+
+    def transcribe(self, image) -> list["OcrRegion"]:
+        res = self._engine(image)
+        if res is None or getattr(res, "boxes", None) is None:
+            return []
+        out: list[OcrRegion] = []
+        for poly, txt, score in zip(res.boxes, res.txts, res.scores):
+            x0, x1, top, bottom = _bounds(poly)
+            out.append(OcrRegion(str(txt), x0, x1, top, bottom, float(score)))
+        return out
