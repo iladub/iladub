@@ -731,3 +731,26 @@ def offcenter_merge_report_pdf(path: str) -> dict:
             c.drawCentredString(x, y, v)
     c.save()
     return {"labels": ["LEFT", "RIGHT"], "expect": "MERGE_AMBIGUOUS"}
+
+
+def image_only_table_pdf(path):
+    """A text-layer-LESS PDF: render simple_table_pdf to a raster and place it full-page.
+    Pure-pip (PNG, no JPEG encoder). Simulates a scan for the OCR first-mile tests."""
+    import os, tempfile
+    import pypdfium2 as pdfium
+    from reportlab.lib.utils import ImageReader
+    src = os.path.join(tempfile.mkdtemp(), "src.pdf")
+    simple_table_pdf(src)
+    pdf = pdfium.PdfDocument(src)
+    try:
+        page = pdf[0]
+        w_pt, h_pt = page.get_size()
+        pil = page.render(scale=3.0).to_pil().convert("RGB")
+    finally:
+        pdf.close()
+    png = os.path.join(tempfile.mkdtemp(), "page.png")
+    pil.save(png)  # PNG: no JPEG encoder needed
+    c = canvas.Canvas(path, pagesize=(w_pt, h_pt))
+    c.drawImage(ImageReader(png), 0, 0, width=w_pt, height=h_pt)
+    c.save()
+    return path

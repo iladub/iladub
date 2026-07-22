@@ -55,6 +55,11 @@ demo = [
     "ipykernel>=6",
     "jupyterlab>=4",
 ]
+ocr = [
+    "rapidocr>=1.4",
+    "onnxruntime>=1.17",
+    "pypdfium2>=4",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
