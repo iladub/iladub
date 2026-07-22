@@ -66,9 +66,9 @@ def _compile_text(text: str,
                   absolute_contraindication: bool = False) -> M4Result:
     terms = Graph().parse(terms_path, format="turtle")
     extraction = extract_offer(text)
-    eg = to_rdf(extraction, terms)
-
     shapes = Graph().parse(shapes_path, format="turtle")
+    eg = to_rdf(extraction, terms, shapes)
+
     knowledge = Graph().parse(ontology_path, format="turtle")
     result = validate(eg.graph, shapes, knowledge)
 

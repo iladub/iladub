@@ -31,10 +31,11 @@ Recommendation: **accept**. ABO compatible and within cold-ischemia window.
 <!-- databook:graph: https://example.org/transplant/databooks/offer-2026-0091.clean#asserted -->
 ```turtle
 @prefix tx: <https://example.org/transplant#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 tx:offer a tx:OrganOffer ;
     tx:organ tx:organ-heart ;
     tx:aboGroup "O" ;
-    tx:ejectionFraction "60" .
+    tx:ejectionFraction "60"^^xsd:decimal .
 ```
 
 <!-- databook:id: propositions -->

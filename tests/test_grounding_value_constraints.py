@@ -85,3 +85,19 @@ def test_wrong_type_ef_quarantines():
     c, p = _ef_proposer(); g = Graph()
     out = ground_concept(SurfaceConcept("EF", "high", "r2"), c, OFFER, p, _terms(), _shapes(), g)
     assert out == "proposed" and not list(g.subjects(RDF.type, ILA.GroundedNode))
+
+
+def test_to_rdf_types_ef_as_decimal_from_shape():
+    # the emitter types a free-literal value per the contract shape's sh:datatype (EF -> xsd:decimal)
+    # NOTE: to_rdf's real callers (src/iladub/m4.py) pass an OfferExtraction (snake_case
+    # fields), not the raw BAML DonorClinical (camelCase) — use the actual production
+    # extraction type so this pins real emitter behavior.
+    from iladub.to_rdf import to_rdf
+    from iladub.extract_baml import OfferExtraction, CodedConcept
+    from rdflib.namespace import XSD
+    cc = lambda v, q: CodedConcept(value=v, source_quote=q, confidence=0.9)
+    extraction = OfferExtraction(organ=cc("Heart", "HEART"), ejection_fraction=cc("60", "LVEF 60%"))
+    eg = to_rdf(extraction, Graph(), _shapes())
+    from rdflib import URIRef
+    vals = list(eg.graph.objects(URIRef(str(TX) + "offer"), URIRef(str(TX) + "ejectionFraction")))
+    assert vals == [Literal("60", datatype=XSD.decimal)]
