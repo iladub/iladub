@@ -72,3 +72,24 @@ class RapidOcrBackend:
             x0, x1, top, bottom = _bounds(poly)
             out.append(OcrRegion(str(txt), x0, x1, top, bottom, float(score)))
         return out
+
+
+def render_page_to_words(pdf_path: str, page_number: int = 0,
+                         backend: "OcrBackend | None" = None, scale: float = 3.0) -> list[Word]:
+    """Scanned page -> Words. PROCEDURAL raw extraction: (1) pypdfium2 rasterizes the page at
+    `scale` (a rendering-FIDELITY constant — more pixels = better recognition; it gates NO
+    classification, so it is not a tuned decision threshold); (2) the backend transcribes it
+    (discriminative, faithful); (3) each line-region becomes ONE Word (region-as-Word — no
+    invented per-word coordinates, §7). Lazy-imports pypdfium2 so the dep stays optional."""
+    import numpy as np
+    import pypdfium2 as pdfium
+
+    if backend is None:
+        backend = RapidOcrBackend()
+    pdf = pdfium.PdfDocument(pdf_path)
+    try:
+        image = np.array(pdf[page_number].render(scale=scale).to_pil().convert("RGB"))
+    finally:
+        pdf.close()
+    regions = backend.transcribe(image)
+    return [pixels_to_word(r, scale, page_number) for r in regions]
