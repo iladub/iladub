@@ -159,3 +159,65 @@ def test_feed_is_load_bearing_red_check(monkeypatch):
     res = ground_document(graph, c, proposer, terms, shapes, g)
     assert res == FeedResult(0, 0, 0)
     assert list(g.subjects(RDF.type, ILA.GroundedNode)) == []
+
+
+# --- Hierarchical feed ---
+
+
+def _compiled_hier_graph():
+    p = os.path.join(tempfile.mkdtemp(), "hier.pdf")
+    F.pivoted_table_pdf(p)
+    return compile_tables(p).graph
+
+
+def test_hierarchical_records_carry_header_paths():
+    recs = table_records(_compiled_hier_graph())
+    assert len(recs) == 5                                   # five analyte rows
+    # every record has the stub + the 6 merged-header data cells
+    by_path = {c.text: c.value for r in recs for c in r.concepts}
+    assert by_path["Current Visit > Result (SI)"] in {"13.2", "39.5", "7.8", "252", "88.4"}
+    assert by_path["Prior Visit > Unit"] in {"g/dL", "%", "x10^9/L", "fL"}
+    assert "Analyte" in by_path                              # the stub column path is its single label
+    # at least one full root>leaf path is present verbatim
+    assert any(c.text == "Current Visit > Result (SI)" for r in recs for c in r.concepts)
+
+
+def test_column_header_path_flat_is_single_label_hier_is_path():
+    from iladub.feed import _column_header_path
+    from rdflib import RDF as _RDF
+    TAB_NS = Namespace("https://w3id.org/iladub/tab#")
+    # flat: offer RecordTable -> each column path is a single label
+    fg = _compiled_offer_graph()
+    ftab = next(fg.subjects(_RDF.type, TAB_NS.RecordTable))
+    assert "Organ" in set(_column_header_path(fg, ftab).values())
+    assert all(" > " not in p for p in _column_header_path(fg, ftab).values())
+    # hierarchical: at least one column path is a root>leaf path
+    hg = _compiled_hier_graph()
+    htab = next(hg.subjects(_RDF.type, TAB_NS.HierarchicalTable))
+    assert any(" > " in p for p in _column_header_path(hg, htab).values())
+
+
+def test_recordtable_feed_unchanged_single_label_header():
+    # backward compat: an offer record's concept header is a plain label, never a path
+    recs = table_records(_compiled_offer_graph())
+    headers = {c.text for r in recs for c in r.concepts}
+    assert "Organ" in headers and all(" > " not in h for h in headers)
+
+
+def test_hierarchical_grounds_end_to_end():
+    # illustrative wiring: map the numeric "Result" path to the value-constrained EF field. In-range
+    # Current-Visit results ground via the value-constraint oracle THROUGH the hierarchical feed;
+    # out-of-range ("252") and unmapped paths quarantine. Proves path-concepts flow + the oracle gates.
+    c = load_contract(CONTRACT)
+    terms = Graph().parse("examples/transplant/transplant-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/transplant/offer-shapes.ttl", format="turtle")
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    proposer = MappingGroundingProposer({
+        "Current Visit > Result (SI)": GroundingProposal(ef.iri, str(TX) + "Magnitude", 0.9,
+                                                         "result", "urn:iladub:suggester/fake"),
+    })
+    g = Graph()
+    res = ground_document(_compiled_hier_graph(), c, proposer, terms, shapes, g)
+    assert res.records == 5
+    assert res.grounded > 0 and res.proposed > 0            # some in-range results ground; rest quarantine
+    assert len(list(g.subjects(RDF.type, ILA.GroundedNode))) == res.grounded

@@ -25,16 +25,15 @@ class Record:
 
 
 def table_records(graph: Graph) -> list[Record]:
-    """Each asserted tab:RecordTable -> one Record per data row; each data cell -> a SurfaceConcept
-    (text=its column header, value=cell text, region=cell provenance). RDF reads only."""
+    """Each asserted tab:RecordTable OR tab:HierarchicalTable -> one Record per data row; each data
+    cell -> a SurfaceConcept (text=its column's HEADER PATH, value=cell text, region=cell provenance).
+    For a flat RecordTable the path reduces to the single column label (backward compatible). RDF
+    reads only; no tuned constant, no IRI-name parsing."""
     out: list[Record] = []
-    for t in graph.subjects(RDF.type, TAB.RecordTable):
-        header: dict = {}
-        for h in graph.objects(t, TAB.hasHeaderNode):
-            lc = graph.value(h, TAB.hasLabel)
-            label = str(graph.value(lc, TAB.cellText)) if lc is not None else ""
-            for col in graph.objects(h, TAB.coversColumn):
-                header[col] = label
+    tables = (set(graph.subjects(RDF.type, TAB.RecordTable))
+              | set(graph.subjects(RDF.type, TAB.HierarchicalTable)))
+    for t in sorted(tables, key=str):
+        header = _column_header_path(graph, t)
         rows: dict = {}
         for e in graph.subjects(RDF.type, TAB.EntryCell):
             if (t, TAB.hasCell, e) not in graph:
@@ -60,6 +59,33 @@ def _bbox_xy(graph: Graph, entry_cell) -> tuple[float, float]:
     x0 = graph.value(bbox, TAB.x0)
     y0 = graph.value(bbox, TAB.y0)
     return (float(x0) if x0 is not None else 0.0, float(y0) if y0 is not None else 0.0)
+
+
+def _column_header_path(graph: Graph, table) -> dict:
+    """Map each covered column of `table` to its HEADER PATH: the deepest HeaderNode covering the
+    column, walked up parentHeader to the root, labels joined ' > '. For a flat RecordTable (headers
+    all level-0, single-column, no parent) this is the single column label. RDF reads only."""
+    label: dict = {}
+    parent: dict = {}
+    best: dict = {}                                 # column -> (level, header_node)
+    for h in graph.objects(table, TAB.hasHeaderNode):
+        lc = graph.value(h, TAB.hasLabel)
+        label[h] = str(graph.value(lc, TAB.cellText)) if lc is not None else ""
+        parent[h] = graph.value(h, TAB.parentHeader)
+        lvl_lit = graph.value(h, TAB.headerLevel)
+        lvl = int(lvl_lit) if lvl_lit is not None else 0
+        for col in graph.objects(h, TAB.coversColumn):
+            if col not in best or lvl > best[col][0]:
+                best[col] = (lvl, h)
+    paths: dict = {}
+    for col, (_, h) in best.items():
+        parts: list = []
+        cur = h
+        while cur is not None:
+            parts.append(label.get(cur, ""))
+            cur = parent.get(cur)
+        paths[col] = " > ".join(reversed(parts))
+    return paths
 
 
 @dataclass(frozen=True)
