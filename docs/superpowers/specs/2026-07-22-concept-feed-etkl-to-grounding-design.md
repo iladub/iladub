@@ -121,8 +121,12 @@ proves the oracle still gates through the table path — feeding concepts does n
 
 ## 7. Scope boundary (YAGNI)
 
-- Only **asserted `tab:RecordTable`** regions are fed. Hierarchical / matrix / transposed / escalated /
-  ignored regions are out of scope (different cell models) — a documented deferral, not a silent gap.
+- Only **asserted `tab:RecordTable`** regions are fed. Hierarchical / matrix / escalated / ignored
+  regions are out of scope (different cell models) — a documented deferral, not a silent gap. **Note:
+  transposed regions ARE fed** — `assert_transposed_region` axis-flip-normalizes into a `tab:RecordTable`
+  with the same `hasHeaderNode`/`coversColumn`/`hasLabel` + `EntryCell atColumn/atRow` cell model, so the
+  bridge reads them correctly and each cell grounds against its (post-flip) header. This path is not
+  separately fixtured here (grounding is cell-independent), so it is untested-but-correct, not designed-out.
 - Row = record, header = field, value = cell; single-token cells (multi-word / merged cells out of
   scope).
 - No grounding-logic changes — `ground_concept` is reused as-is.
