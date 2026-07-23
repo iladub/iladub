@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace
 from rdflib.namespace import RDF
 
 from .ground import SurfaceConcept
@@ -44,8 +44,19 @@ def table_records(graph: Graph) -> list[Record]:
             prov = graph.value(e, PROV.wasDerivedFrom)
             region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
             concept = SurfaceConcept(header.get(col, ""), str(graph.value(e, TAB.cellText)), region)
-            rows.setdefault(row, []).append((col, concept))
-        for row in sorted(rows, key=lambda r: str(r)):
-            cells = [c for _, c in sorted(rows[row], key=lambda kc: str(kc[0]))]
+            x0, y0 = _bbox_xy(graph, e)
+            rows.setdefault(row, []).append((x0, y0, concept))
+        for row in sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r])):
+            cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
             out.append(Record(str(row).split("#")[-1], tuple(cells)))
     return out
+
+
+def _bbox_xy(graph: Graph, entry_cell) -> tuple[float, float]:
+    """Read (x0, y0) off an EntryCell's tab:hasBBox node; missing bbox sorts as (0.0, 0.0)."""
+    bbox = graph.value(entry_cell, TAB.hasBBox)
+    if bbox is None:
+        return (0.0, 0.0)
+    x0 = graph.value(bbox, TAB.x0)
+    y0 = graph.value(bbox, TAB.y0)
+    return (float(x0) if x0 is not None else 0.0, float(y0) if y0 is not None else 0.0)
