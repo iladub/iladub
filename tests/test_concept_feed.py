@@ -111,3 +111,51 @@ def test_table_records_orders_by_bbox_not_lexicographic_uri():
     for i, r in enumerate(recs, start=1):
         assert [c.value for c in r.concepts] == [f"row{i}-col1", f"row{i}-col2"]
         assert [c.text for c in r.concepts] == ["A", "B"]
+
+
+# End-to-end DoD: ground_document (Task 3)
+from rdflib import Graph, Namespace, URIRef
+from rdflib.namespace import RDF
+
+from iladub.feed import ground_document, FeedResult, table_records
+from iladub.ground import load_contract
+
+TX = Namespace("https://example.org/transplant#")
+ILA = Namespace("https://w3id.org/iladub#")
+CONTRACT = "examples/transplant/offer-contract.ttl"
+
+
+def _offer_deps():
+    c = load_contract(CONTRACT)
+    terms = Graph().parse("examples/transplant/transplant-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/transplant/offer-shapes.ttl", format="turtle")
+    abo = next(f for f in c.fields if f.fills_property.endswith("aboGroup"))
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    cod = next(f for f in c.fields if f.fills_property.endswith("causeOfDeath"))
+    mapping = {
+        "ABO": GroundingProposal(abo.iri, str(TX) + "Category", 0.8, "abo", "urn:iladub:suggester/fake"),
+        "LVEF": GroundingProposal(ef.iri, str(TX) + "Magnitude", 0.9, "ef", "urn:iladub:suggester/fake"),
+        "COD": GroundingProposal(cod.iri, str(TX) + "Category", 0.7, "cod", "urn:iladub:suggester/fake"),
+    }
+    return c, terms, shapes, MappingGroundingProposer(mapping)
+
+
+def test_offer_table_grounds_end_to_end():
+    graph = _compiled_offer_graph()
+    c, terms, shapes, proposer = _offer_deps()
+    g = Graph()
+    res = ground_document(graph, c, proposer, terms, shapes, g)
+    assert res == FeedResult(records=2, grounded=6, proposed=2)
+    assert len(set(g.subjects(RDF.type, TX.OrganOffer))) == 2        # two record subjects
+    assert len(list(g.subjects(RDF.type, ILA.GroundedNode))) == 6    # organ/abo/ef x 2 rows
+    assert list(g.objects(None, TX.causeOfDeath)) == []              # COD quarantined, no property
+
+
+def test_feed_is_load_bearing_red_check(monkeypatch):
+    graph = _compiled_offer_graph()
+    c, terms, shapes, proposer = _offer_deps()
+    monkeypatch.setattr("iladub.feed.table_records", lambda _g: [])
+    g = Graph()
+    res = ground_document(graph, c, proposer, terms, shapes, g)
+    assert res == FeedResult(0, 0, 0)
+    assert list(g.subjects(RDF.type, ILA.GroundedNode)) == []

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
 from .ground import SurfaceConcept
@@ -60,3 +60,29 @@ def _bbox_xy(graph: Graph, entry_cell) -> tuple[float, float]:
     x0 = graph.value(bbox, TAB.x0)
     y0 = graph.value(bbox, TAB.y0)
     return (float(x0) if x0 is not None else 0.0, float(y0) if y0 is not None else 0.0)
+
+
+@dataclass(frozen=True)
+class FeedResult:
+    records: int
+    grounded: int
+    proposed: int
+
+
+def ground_document(graph, contract, proposer, terms, shapes, g) -> FeedResult:
+    """Ground a compiled document's record tables against a contract: one subject per row, each
+    cell grounded via the shipped ground_concept oracle (unchanged). Populates `g` with grounded
+    nodes + promotion decisions + propositions; returns the grounded/proposed tally."""
+    from .ground import ground_concept
+
+    records = table_records(graph)
+    grounded = proposed = 0
+    for rec in records:
+        subject = URIRef("urn:iladub:record:" + rec.row_id)
+        for concept in rec.concepts:
+            status = ground_concept(concept, contract, subject, proposer, terms, shapes, g)
+            if status == "grounded":
+                grounded += 1
+            else:
+                proposed += 1
+    return FeedResult(len(records), grounded, proposed)
