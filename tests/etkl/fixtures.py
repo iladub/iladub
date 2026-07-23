@@ -40,6 +40,25 @@ def simple_table_pdf(path: str) -> dict:
     }
 
 
+def offer_table_pdf(path):
+    """A 4-column organ-offer record table (Organ/LVEF/ABO/COD) with two donor rows. Row 2 uses
+    'Liver' (in scheme-organ); single-token cells, wide gaps -> compiles RECORD_TABLE. For the
+    concept-feed end-to-end (raw-doc→grounded-graph)."""
+    cols = [72.0, 200.0, 320.0, 440.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Organ", "LVEF", "ABO", "COD"),
+            ("Heart", "60", "O", "MVA"),
+            ("Liver", "55", "A", "CVA")]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return path
+
+
 # NOTE: this geometry is a faithful copy of demo/etkl_demo_data.py::pivoted_report_pdf,
 # empirically verified (2026-07-05) to keep the merged parent header + sub-header +
 # (SI) line + 5 body rows in ONE band, so the classifier sees the merged header and

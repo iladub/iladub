@@ -59,3 +59,19 @@ class BamlGroundingProposer:
         return GroundingProposal(field_iri=field_iri, anchor_iri=r.anchor_iri,
                                  confidence=r.confidence, rationale=r.rationale,
                                  suggester_iri="urn:iladub:suggester/baml.ProposeGrounding")
+
+
+@dataclass(frozen=True)
+class MappingGroundingProposer:
+    """Deterministic offline proposer for the concept feed: maps a concept's header TEXT to a
+    fixed GroundingProposal (the honest stand-in for the BAML proposer's per-concept field
+    proposal). An unmapped header returns a field_iri=None proposal -> the concept quarantines."""
+    mapping: dict
+
+    def propose_grounding(self, concept, fields):
+        return self.mapping.get(
+            concept.text,
+            GroundingProposal(None, "https://w3id.org/semanticarts/ns/ontology/gist/Category",
+                              0.0, "no mapping for %r" % concept.text,
+                              "urn:iladub:suggester/mapping-proposer"),
+        )
