@@ -102,20 +102,20 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
     """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
 
     Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle).
-    Non-scheme + exact label match: the property (exact match is the oracle). Non-scheme,
-    non-exact: the field's contract SHACL value constraint is the oracle (§8 membrane) —
-    grounds iff the shape declares a value constraint AND the value conforms; else None.
-    An unconstrained field has nothing to verify → None (quarantine): confidence≠validity (§7)."""
+    Non-scheme field that declares a value constraint: the SHACL value membrane is the oracle — the
+    value MUST conform, whether the field was identified by exact label match OR by a model proposal
+    (legality gates admission uniformly). Non-scheme field WITHOUT a value constraint: an exact label
+    match grounds (field-identity is the oracle); a bare proposal has no oracle → None (quarantine)."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         return URIRef(term) if term else None
-    if is_exact:
-        return URIRef(field.fills_property)
     ps = _property_shape(contract_shapes, field.fills_property)
-    if (ps is not None and _has_value_constraint(contract_shapes, ps)
-            and _value_conforms(offer_uri, target_class, field.fills_property, concept.value, contract_shapes)):
-        return URIRef(field.fills_property)
-    return None
+    if ps is not None and _has_value_constraint(contract_shapes, ps):
+        return (URIRef(field.fills_property)
+                if _value_conforms(offer_uri, target_class, field.fills_property, concept.value,
+                                   contract_shapes)
+                else None)
+    return URIRef(field.fills_property) if is_exact else None
 
 
 def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None):
