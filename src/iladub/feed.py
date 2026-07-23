@@ -7,6 +7,7 @@ tuned constant, no IRI-name parsing. This is the RawDocument→grounding-portal 
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from rdflib import Graph, Namespace, URIRef
@@ -34,6 +35,7 @@ def table_records(graph: Graph) -> list[Record]:
               | set(graph.subjects(RDF.type, TAB.HierarchicalTable)))
     for t in sorted(tables, key=str):
         header = _column_header_path(graph, t)
+        row_path = _row_header_path(graph, t)
         rows: dict = {}
         for e in graph.subjects(RDF.type, TAB.EntryCell):
             if (t, TAB.hasCell, e) not in graph:
@@ -47,7 +49,8 @@ def table_records(graph: Graph) -> list[Record]:
             rows.setdefault(row, []).append((x0, y0, concept))
         for row in sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r])):
             cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
-            out.append(Record(str(row).split("#")[-1], tuple(cells)))
+            rid = row_path.get(row, str(row).split("#")[-1])
+            out.append(Record(rid, tuple(cells)))
     return out
 
 
@@ -61,31 +64,52 @@ def _bbox_xy(graph: Graph, entry_cell) -> tuple[float, float]:
     return (float(x0) if x0 is not None else 0.0, float(y0) if y0 is not None else 0.0)
 
 
-def _column_header_path(graph: Graph, table) -> dict:
-    """Map each covered column of `table` to its HEADER PATH: the deepest HeaderNode covering the
-    column, walked up parentHeader to the root, labels joined ' > '. For a flat RecordTable (headers
-    all level-0, single-column, no parent) this is the single column label. RDF reads only."""
+def _header_path(graph: Graph, table, cover_pred) -> dict:
+    """Map each target (column or row) covered by `table`'s header tree to its HEADER PATH: the
+    deepest HeaderNode covering the target (via `cover_pred` = TAB.coversColumn or TAB.coversRow),
+    walked up parentHeader to the root, labels joined ' > '. For a flat axis (level-0, single target,
+    no parent) this is the single label. Returns {} when no header node covers via `cover_pred`.
+    RDF reads only; no tuned constant, no IRI-name parsing."""
     label: dict = {}
     parent: dict = {}
-    best: dict = {}                                 # column -> (level, header_node)
+    best: dict = {}                                 # target -> (level, header_node)
     for h in graph.objects(table, TAB.hasHeaderNode):
         lc = graph.value(h, TAB.hasLabel)
         label[h] = str(graph.value(lc, TAB.cellText)) if lc is not None else ""
         parent[h] = graph.value(h, TAB.parentHeader)
         lvl_lit = graph.value(h, TAB.headerLevel)
         lvl = int(lvl_lit) if lvl_lit is not None else 0
-        for col in graph.objects(h, TAB.coversColumn):
-            if col not in best or lvl > best[col][0]:
-                best[col] = (lvl, h)
+        for u in graph.objects(h, cover_pred):
+            if u not in best or lvl > best[u][0]:
+                best[u] = (lvl, h)
     paths: dict = {}
-    for col, (_, h) in best.items():
+    for u, (_, h) in best.items():
         parts: list = []
         cur = h
         while cur is not None:
             parts.append(label.get(cur, ""))
             cur = parent.get(cur)
-        paths[col] = " > ".join(reversed(parts))
+        paths[u] = " > ".join(reversed(parts))
     return paths
+
+
+def _column_header_path(graph: Graph, table) -> dict:
+    """Column paths (deepest coversColumn header walked to root). Single label per column for a flat
+    RecordTable (backward compatible)."""
+    return _header_path(graph, table, TAB.coversColumn)
+
+
+def _row_header_path(graph: Graph, table) -> dict:
+    """Row paths (deepest coversRow header walked to root) — a cross-tab's row identity. {} when the
+    table has no row-header tree (RecordTable / plain hierarchical)."""
+    return _header_path(graph, table, TAB.coversRow)
+
+
+def _record_uri(row_id: str) -> URIRef:
+    """Mint a URI-safe record subject from a row id. Preserves an already-safe opaque fragment
+    (e.g. 'table0-r1'); slugs a header path ('Region > North' -> 'Region_North')."""
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", row_id).strip("_") or "record"
+    return URIRef("urn:iladub:record:" + slug)
 
 
 @dataclass(frozen=True)
@@ -104,7 +128,7 @@ def ground_document(graph, contract, proposer, terms, shapes, g) -> FeedResult:
     records = table_records(graph)
     grounded = proposed = 0
     for rec in records:
-        subject = URIRef("urn:iladub:record:" + rec.row_id)
+        subject = _record_uri(rec.row_id)
         for concept in rec.concepts:
             status = ground_concept(concept, contract, subject, proposer, terms, shapes, g)
             if status == "grounded":
