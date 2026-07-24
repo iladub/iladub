@@ -221,3 +221,59 @@ def test_hierarchical_grounds_end_to_end():
     assert res.records == 5
     assert res.grounded > 0 and res.proposed > 0            # some in-range results ground; rest quarantine
     assert len(list(g.subjects(RDF.type, ILA.GroundedNode))) == res.grounded
+
+
+# --- Matrix / cross-tab feed ---
+from iladub.feed import _row_header_path
+
+
+def _compiled_crosstab_graph():
+    p = os.path.join(tempfile.mkdtemp(), "ct.pdf"); F.crosstab_table_pdf(p)
+    return compile_tables(p).graph
+
+
+def test_crosstab_records_identified_by_row_header_path():
+    recs = table_records(_compiled_crosstab_graph())
+    assert len(recs) == 2
+    assert {r.row_id for r in recs} == {"North", "South"}          # row identity, not opaque ids
+    # each record carries column-path concepts (Q1/Q2 > Rev/Cost/Unit)
+    paths = {c.text for r in recs for c in r.concepts}
+    assert any(" > " in p and p.startswith("Q1") for p in paths)
+
+
+def test_row_header_path_present_for_crosstab_empty_otherwise():
+    from rdflib import RDF as _RDF
+    TABNS = Namespace("https://w3id.org/iladub/tab#")
+    hg = _compiled_crosstab_graph()
+    ht = next(hg.subjects(_RDF.type, TABNS.HierarchicalTable))
+    assert set(_row_header_path(hg, ht).values()) == {"North", "South"}
+    # a RecordTable and a plain hierarchical (pivoted) table have NO row tree -> {}
+    og = _compiled_offer_graph()
+    ot = next(og.subjects(_RDF.type, TABNS.RecordTable))
+    assert _row_header_path(og, ot) == {}
+    pg = _compiled_hier_graph()
+    pt = next(pg.subjects(_RDF.type, TABNS.HierarchicalTable))
+    assert _row_header_path(pg, pt) == {}
+
+
+def test_recordtable_row_ids_unchanged_opaque():
+    # backward compat: an offer RecordTable's row_id stays the opaque URI fragment, not a header label
+    recs = table_records(_compiled_offer_graph())
+    assert all("-r" in r.row_id for r in recs)                     # e.g. "table0-r1"
+
+
+def test_crosstab_grounds_to_named_subjects_end_to_end():
+    c = load_contract(CONTRACT)
+    terms = Graph().parse("examples/transplant/transplant-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/transplant/offer-shapes.ttl", format="turtle")
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    proposer = MappingGroundingProposer({
+        "Q1 > Unit": GroundingProposal(ef.iri, str(TX) + "Magnitude", 0.9, "unit", "urn:iladub:suggester/fake"),
+    })
+    g = Graph()
+    res = ground_document(_compiled_crosstab_graph(), c, proposer, terms, shapes, g)
+    assert res.records == 2
+    assert res.grounded > 0 and res.proposed > 0
+    subjects = set(g.subjects(RDF.type, TX.OrganOffer))
+    assert URIRef("urn:iladub:record:North") in subjects
+    assert URIRef("urn:iladub:record:South") in subjects
