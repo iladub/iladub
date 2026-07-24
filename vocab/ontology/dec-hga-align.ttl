@@ -38,6 +38,16 @@ dec:partOf rdfs:subPropertyOf holon:partOf .
 #  An dec:Event is an HGA event envelope — defer the event substrate to the CG.
 dec:Event rdfs:subClassOf hev:HolonEvent .
 
+#  dec:ExpansionRequest inherits the hev:HolonEvent envelope (via dec:Event) and is
+#  an iladub GAP-FILLER — seeAlso, NOT subclass (HGA has no equivalent term yet).
+#  HGA's hmk: boundary has sensory/active surfaces and hmk:PropagationSignal (Distress/
+#  Resolution), but no "off-the-map" outcome distinct from a boundary violation. This is
+#  the worked example Cagle & Shannon's "Off the Edge of the Map" (2026-07-01) calls for:
+#  a boundary emits THREE outcomes — valid / violation / off-the-map(expansion-request) —
+#  not two. Candidate contribution to the CG (WG-IV Validation/Verification/Security).
+dec:ExpansionRequest rdfs:seeAlso hmk:PropagationSignal ;
+    rdfs:comment "The off-the-map boundary outcome. HGA propagates a hmk:PropagationSignal on a boundary but has no event distinguishing 'I don't have enough map here' (evidence-positive, extend the map) from a boundary violation ('this contradicts my map'). dec:ExpansionRequest is that missing third outcome; being a dec:Event it is already an hev:HolonEvent."@en .
+
 #  iladub GAP-FILLERS over HGA — seeAlso, NOT subclass (HGA has no equivalent):
 dec:escalatedTo rdfs:seeAlso hmk:PropagationSignal ;
     rdfs:comment "HGA propagates a hmk:PropagationSignal (Distress->Resolution) and routes it by hpol: policy, but does not require the resolution to be an accountable decision. dec:escalatedTo records that the propagation was resolved by an accountable apex dec:DecisionHolon — enforced by dec:EscalationShape."@en .

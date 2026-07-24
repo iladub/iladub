@@ -61,3 +61,14 @@ dec:EventShape a sh:NodeShape ;
     sh:targetClass dec:Event ;
     sh:property [ sh:path dec:condition ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An event must declare exactly one condition." ] .
+
+#################################################################
+#  An expansion request (the off-the-map outcome) must name what it
+#  is about — "I don't know" has to be provenanced, not a content-free
+#  silence. (It inherits dec:EventShape's condition requirement.)
+#################################################################
+
+dec:ExpansionRequestShape a sh:NodeShape ;
+    sh:targetClass dec:ExpansionRequest ;
+    sh:property [ sh:path dec:regarding ; sh:minCount 1 ;
+        sh:message "An expansion request must name the off-the-map content it was raised about (dec:regarding)." ] .
