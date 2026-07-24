@@ -773,3 +773,20 @@ def image_only_table_pdf(path):
     c.drawImage(ImageReader(png), 0, 0, width=w_pt, height=h_pt)
     c.save()
     return path
+
+
+def pattern_enum_table_pdf(path):
+    """A 2-column record table: a PATTERN column 'Size' (78kg/big) + an ENUM column 'Sero'
+    (negative/unknown), two rows. Single-token cells, wide gap -> compiles RECORD_TABLE. For the
+    enum/pattern end-to-end grounding demonstration (raw-doc -> grounded-graph via sh:pattern/sh:in)."""
+    cols = [72.0, 260.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Size", "Sero"), ("78kg", "negative"), ("big", "unknown")]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 18.0
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return path
