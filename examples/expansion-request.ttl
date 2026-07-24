@@ -1,0 +1,45 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  The OFF-THE-MAP boundary outcome (Cagle & Shannon, "Off the Edge of the
+#  Map", 2026-07-01). A grounding portal compiling a document meets a term
+#  its provided ontology has no map for. The honest response is neither
+#  "admit it" (valid) nor "it's false" (a boundary violation) — it is
+#  "I don't have enough map here": emit a dec:ExpansionRequest.
+#
+#  The three boundary outcomes, side by side:
+#    - VALID      -> content grounds -> an iladub:GroundedNode (see below).
+#    - VIOLATION  -> content contradicts the contract -> a SHACL failure
+#                    (not modelled here; it is a sh:ValidationResult).
+#    - OFF-THE-MAP -> content is ungroundable -> this dec:ExpansionRequest,
+#                    with the ungroundable content quarantined as a
+#                    proposition (iladub:CandidateConcept) it is *regarding*.
+
+#  --- off-the-map: the expansion request and the proposition it names ---
+
+ex:xr-wirkstoffspiegel a dec:ExpansionRequest ;
+    rdfs:label "off-the-map: 'Wirkstoffspiegel' has no map in the provided ontology"@en ;
+    dec:condition "ungroundable-concept" ;
+    dec:regarding ex:cand-wirkstoffspiegel .
+
+ex:cand-wirkstoffspiegel a iladub:CandidateConcept ;
+    iladub:surfaceText "Wirkstoffspiegel"@de ;
+    iladub:suggestedAnchor gist:Magnitude ;
+    iladub:suggestedBy ex:extractor-v0 ;
+    iladub:confidence 0.62 ;
+    iladub:fromRegion ex:region-p2-par3 ;
+    iladub:status iladub:proposed .
+
+ex:extractor-v0 a iladub:Suggester ;
+    rdfs:label "iladub extractor v0 (model)"@en .
+
+ex:region-p2-par3 a iladub:SourceRegion ;
+    rdfs:label "page 2, paragraph 3"@en .
+
+#  (For contrast: a term that DID ground would become an iladub:GroundedNode
+#  — but only as the product of an iladub:PromotionDecision, never on its own;
+#  see examples/promotion.ttl. No expansion request is raised in that case.)

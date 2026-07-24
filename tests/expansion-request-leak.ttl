@@ -1,0 +1,12 @@
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  MUST FAIL dec:ExpansionRequestShape. It carries a dec:condition (so it
+#  passes dec:EventShape) but names nothing it is regarding — a content-free
+#  "I don't know" with no provenance. "I don't have enough map here" is only
+#  honest if it says WHAT it has no map for.
+
+ex:xr-empty a dec:ExpansionRequest ;
+    rdfs:label "off-the-map, but says nothing about what"@en ;
+    dec:condition "ungroundable-concept" .

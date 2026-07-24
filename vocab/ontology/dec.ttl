@@ -179,6 +179,31 @@ dec:triggeredBy a owl:ObjectProperty ;
     rdfs:comment "The event that caused this decision to be reopened."@en .
 
 #################################################################
+#  Expansion request — the "off-the-map" boundary outcome
+#
+#  A boundary has THREE outcomes, not two (Cagle & Shannon,
+#  "Off the Edge of the Map", 2026-07-01): a crossing is VALID
+#  (admitted), a VIOLATION (contradicts the declared map — a SHACL
+#  failure), or OFF-THE-MAP: the boundary has no map for this content,
+#  so the honest response is "I don't have enough map here", NOT an
+#  assertion of falsity. An dec:ExpansionRequest is that third outcome
+#  as a first-class, evidence-positive event — "say I don't know in a
+#  voice that can't be mistaken for no." In iladub it is emitted when a
+#  grounding portal meets content it cannot ground; the ungroundable
+#  content becomes a proposition (an iladub:CandidateConcept), and its
+#  accountable disposition is an iladub:PromotionDecision.
+#################################################################
+
+dec:ExpansionRequest a owl:Class ;
+    rdfs:subClassOf dec:Event ;
+    rdfs:label "Expansion request"@en ;
+    rdfs:comment "The off-the-map boundary outcome: the declared boundary has no map for some content, so the holon emits an evidence-positive request to extend the map rather than asserting the content false (a violation) or admitting it (valid). Distinct from a boundary violation — 'I don't know', not 'no'. Being a dec:Event, it must carry a dec:condition; it must also name what it is about via dec:regarding."@en .
+
+dec:regarding a owl:ObjectProperty ;
+    rdfs:label "regarding"@en ; rdfs:domain dec:ExpansionRequest ; rdfs:range prov:Entity ;
+    rdfs:comment "The off-the-map content this expansion request was raised about (in iladub, the quarantined proposition). Naming it is what keeps 'I don't know' provenanced rather than a content-free silence."@en .
+
+#################################################################
 #  Apex escalation — vertical authority-holarchy lineage
 #################################################################
 
