@@ -277,3 +277,47 @@ def test_crosstab_grounds_to_named_subjects_end_to_end():
     subjects = set(g.subjects(RDF.type, TX.OrganOffer))
     assert URIRef("urn:iladub:record:North") in subjects
     assert URIRef("urn:iladub:record:South") in subjects
+
+
+# --- Enum/pattern value-constrained columns, end-to-end from a PDF ---
+from rdflib import BNode, Literal
+from rdflib.collection import Collection
+from iladub.ground import SH
+
+
+def _augment(shapes, prop_iri, add):
+    node = next(shapes.subjects(SH.targetClass, TX.OrganOffer))
+    ps = BNode(); shapes.add((node, SH.property, ps)); shapes.add((ps, SH.path, URIRef(prop_iri)))
+    add(shapes, ps)
+    return shapes
+
+
+def test_pattern_enum_columns_ground_end_to_end():
+    # a pattern column (Size) + an enum column (Sero) ground through the raw-doc->grounded-graph feed,
+    # via in-memory augmented shapes (M4-safe: offer-shapes.ttl is never modified).
+    p = os.path.join(tempfile.mkdtemp(), "pe.pdf"); F.pattern_enum_table_pdf(p)
+    graph = compile_tables(p).graph
+    c = load_contract(CONTRACT)
+    terms = Graph().parse("examples/transplant/transplant-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/transplant/offer-shapes.ttl", format="turtle")
+    _augment(shapes, str(TX) + "sizeMetric",
+             lambda s, ps: s.add((ps, SH.pattern, Literal("^[0-9]+(kg|cm)$"))))
+    def _enum(s, ps):
+        lst = BNode(); Collection(s, lst, [Literal("positive"), Literal("negative")])
+        s.add((ps, SH["in"], lst))
+    _augment(shapes, str(TX) + "serology", _enum)
+    size = next(f for f in c.fields if f.fills_property.endswith("sizeMetric"))
+    sero = next(f for f in c.fields if f.fills_property.endswith("serology"))
+    proposer = MappingGroundingProposer({
+        "Size": GroundingProposal(size.iri, str(TX) + "Magnitude", 0.9, "size", "urn:iladub:suggester/fake"),
+        "Sero": GroundingProposal(sero.iri, str(TX) + "Category", 0.8, "sero", "urn:iladub:suggester/fake"),
+    })
+    g = Graph()
+    res = ground_document(graph, c, proposer, terms, shapes, g)
+    assert res == FeedResult(records=2, grounded=2, proposed=2)
+    # row 1 grounded: matching pattern + enum member
+    assert Literal("78kg") in set(g.objects(None, TX.sizeMetric))
+    assert Literal("negative") in set(g.objects(None, TX.serology))
+    # row 2 quarantined: non-matching value / non-member -> no property emitted
+    assert Literal("big") not in set(g.objects(None, TX.sizeMetric))
+    assert Literal("unknown") not in set(g.objects(None, TX.serology))
