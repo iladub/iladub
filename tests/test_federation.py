@@ -6,6 +6,7 @@ from iladub.etkl import interpret, federate
 from iladub.ground import load_contract, SurfaceConcept
 from iladub.propose_ground import GroundingProposal, FakeGroundingProposer
 from iladub.validate import validate
+from iladub.readers import read_csv_surface_concepts
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONT = os.path.join(ROOT, "vocab", "ontology")
@@ -118,3 +119,31 @@ def test_oracle_fails_when_b_uncontained():
     b.add((URIRef("urn:doc:b#gn"), ILADUB.groundsTo, TX.OUTSIDE))  # not in the projection
     v = federate.certify_federation(interior, proj, b)
     assert not v.ok and v.uncontained
+
+
+def test_e2e_compile_federate_loop():
+    # --- A compiles from a real CSV (deterministic exact+scheme grounding, no model) ---
+    a_contract = load_contract(os.path.join(ROOT, "examples", "federation", "doc-a-contract.ttl"))
+    a_shapes = Graph().parse(os.path.join(ROOT, "examples", "federation", "doc-a-shapes.ttl"), format="turtle")
+    terms = Graph().parse(os.path.join(ROOT, "examples", "federation", "terms.ttl"), format="turtle")
+    a_concepts = read_csv_surface_concepts(os.path.join(ROOT, "examples", "federation", "doc-a.csv"))
+    a_interior = federate.compile_document(a_concepts, a_contract, URIRef("urn:doc:a"),
+                                           _noop_proposer(), terms, a_shapes)
+    assert any(a_interior.subjects(RDF.type, ILADUB.GroundedNode))
+
+    # --- derive A's projection ---
+    projection = federate.derive_projection(a_interior, terms)
+    assert (TX.ABO_O, SKOS.inScheme, PROJ["projection"]) in projection
+
+    # --- B grounds against A's PROJECTION as its provided terminology (portal unchanged) ---
+    b_contract = load_contract(os.path.join(ROOT, "examples", "federation", "doc-b-contract.ttl"))
+    b_shapes = Graph().parse(os.path.join(ROOT, "examples", "federation", "doc-b-shapes.ttl"), format="turtle")
+    b_concepts = read_csv_surface_concepts(os.path.join(ROOT, "examples", "federation", "doc-b.csv"))
+    b_interior = federate.compile_document(b_concepts, b_contract, URIRef("urn:doc:b"),
+                                           _noop_proposer(), projection, b_shapes)
+    # B resolved its value against A's projected concept
+    assert (None, ILADUB.groundsTo, TX.ABO_O) in b_interior
+
+    # --- the oracle certifies the federation ---
+    verdict = federate.certify_federation(a_interior, projection, b_interior)
+    assert verdict.ok, verdict

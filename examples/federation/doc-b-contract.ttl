@@ -1,0 +1,7 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix tx:   <https://example.org/transplant#> .
+
+tx:contract-b a etkl:Contract ;
+    etkl:targetClass tx:Referral ;
+    etkl:hasField tx:field-donorAbo .
+tx:field-donorAbo etkl:fillsProperty tx:donorAbo ; etkl:admissibleScheme <urn:iladub:projection> .
