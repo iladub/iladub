@@ -1,0 +1,7 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix tx:   <https://example.org/transplant#> .
+
+#  A's provided terminology (synthetic, domain-neutral health example).
+tx:scheme-abo a skos:ConceptScheme .
+tx:ABO_O a skos:Concept ; skos:inScheme tx:scheme-abo ; skos:prefLabel "O" .
+tx:ABO_A a skos:Concept ; skos:inScheme tx:scheme-abo ; skos:prefLabel "A" .

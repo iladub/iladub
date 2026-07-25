@@ -1,8 +1,10 @@
 """Compile→federate loop: a CleanDocumentHolon's projection becomes the next
 document's provided terminology. See docs/superpowers/specs/2026-07-24-compile-federate-design.md."""
 import os
-from rdflib import Graph, Namespace, RDF, RDFS, OWL
-from iladub.etkl import interpret
+from rdflib import Graph, Namespace, RDF, RDFS, OWL, URIRef
+from iladub.etkl import interpret, federate
+from iladub.ground import load_contract, SurfaceConcept
+from iladub.propose_ground import GroundingProposal, FakeGroundingProposer
 from iladub.validate import validate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,3 +68,20 @@ def test_csv_adapter_yields_surface_concepts():
     assert SurfaceConcept(text="aboGroup", value="O", region="row1:col-aboGroup") in concepts
     assert SurfaceConcept(text="organ", value="heart", region="row1:col-organ") in concepts
     assert len(concepts) == 2
+
+
+def _noop_proposer():
+    return FakeGroundingProposer(GroundingProposal(None, "urn:x", 0.1, "n/a", "urn:iladub:suggester/fake"))
+
+
+def test_compile_then_derive_projection():
+    # minimal A: contract + terms + one concept "aboGroup"="O" grounding to tx:ABO_O
+    contract = load_contract(os.path.join(ROOT, "examples", "federation", "doc-a-contract.ttl"))
+    shapes = Graph().parse(os.path.join(ROOT, "examples", "federation", "doc-a-shapes.ttl"), format="turtle")
+    terms = Graph().parse(os.path.join(ROOT, "examples", "federation", "terms.ttl"), format="turtle")
+    concepts = [SurfaceConcept(text="aboGroup", value="O", region="row1:col-aboGroup")]
+    interior = federate.compile_document(concepts, contract, URIRef("urn:doc:a"),
+                                         _noop_proposer(), terms, shapes)
+    assert any(interior.subjects(RDF.type, ILADUB.GroundedNode))
+    proj = federate.derive_projection(interior, terms)
+    assert (TX.ABO_O, SKOS.inScheme, PROJ["projection"]) in proj
