@@ -3,9 +3,11 @@ document's provided terminology. See docs/superpowers/specs/2026-07-24-compile-f
 import os
 from rdflib import Graph, Namespace, RDF, RDFS, OWL
 from iladub.etkl import interpret
+from iladub.validate import validate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONT = os.path.join(ROOT, "vocab", "ontology")
+SH_DIR = os.path.join(ROOT, "vocab", "shapes")
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 HPROJ = Namespace("http://w3id.org/holon/projection/")
@@ -36,3 +38,21 @@ def test_projection_construct_emits_only_promoted_concepts():
     # interior terms are OPAQUE — none leak into the projection
     for interior_type in (ILADUB.CandidateConcept, ILADUB.PromotionDecision, ILADUB.SourceRegion, ILADUB.GroundedNode):
         assert not any(proj.subjects(RDF.type, interior_type)), interior_type
+
+
+def _proj_shapes_knowledge():
+    shapes = Graph().parse(os.path.join(SH_DIR, "etkl-shapes.ttl"), format="turtle")
+    knowledge = Graph().parse(os.path.join(ONT, "etkl.ttl"), format="turtle")
+    return shapes, knowledge
+
+
+def test_conformant_projection_passes_shape():
+    shapes, knowledge = _proj_shapes_knowledge()
+    data = Graph().parse(os.path.join(ROOT, "examples", "federation", "projection-conformant.ttl"), format="turtle")
+    assert validate(data, shapes, knowledge).conforms
+
+
+def test_leaky_projection_fails_shape():
+    shapes, knowledge = _proj_shapes_knowledge()
+    data = Graph().parse(os.path.join(ROOT, "tests", "federation-projection-leak.ttl"), format="turtle")
+    assert not validate(data, shapes, knowledge).conforms

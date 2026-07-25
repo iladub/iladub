@@ -1,0 +1,10 @@
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix tx:     <https://example.org/transplant#> .
+
+#  MUST FAIL: the projection leaks an interior term (a PromotionDecision) —
+#  the membrane did not hold.
+<urn:iladub:projection> a etkl:DocumentProjection , skos:ConceptScheme .
+tx:ABO_O a skos:Concept ; skos:inScheme <urn:iladub:projection> ; skos:prefLabel "O" .
+tx:leaked-decision a iladub:PromotionDecision .

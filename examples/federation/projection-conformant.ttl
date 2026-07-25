@@ -1,0 +1,7 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix tx:   <https://example.org/transplant#> .
+
+#  A well-formed projection: a scheme + concepts only. No interior terms.
+<urn:iladub:projection> a etkl:DocumentProjection , skos:ConceptScheme .
+tx:ABO_O a skos:Concept ; skos:inScheme <urn:iladub:projection> ; skos:prefLabel "O" .
