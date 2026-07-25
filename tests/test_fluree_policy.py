@@ -101,3 +101,20 @@ def test_certify_flags_broken_ai_inherits_user():
         '{"@id":"?$this","https://w3id.org/iladub/etkl#sensitivity":{"@id":"?tag"}}]}')))
     v = federate.certify_f_faithful(policy, grants + bad)
     assert not v.identity_ok and not v.ok
+
+
+def test_transplant_policy_compiles_faithfully():
+    """The real transplant tag-policy (clinical/phi over OPO/recipient/donor-region/board)
+    compiles to an f: policy that certifies faithful — the governed-bot claim at the data layer."""
+    from iladub.etkl import federate
+    gov = Graph().parse(os.path.join(ROOT, "examples", "transplant", "transplant-governance.ttl"),
+                        format="turtle")
+    f_policy = federate.compile_f_policy(gov)
+    v = federate.certify_f_faithful(gov, f_policy)
+    assert v.ok, v
+    # spot-check: recipient centre is granted clinical, NOT phi, at the data layer
+    pairs = {(str(r), str(t)) for r, t in f_policy.subject_objects(ETKL.grantsTag)}
+    assert (str(TX["role-recipient-ctr"]), str(TX.clinical)) in pairs
+    assert (str(TX["role-recipient-ctr"]), str(TX.phi)) not in pairs
+    # and the apex board sees phi
+    assert (str(TX["role-board"]), str(TX.phi)) in pairs
