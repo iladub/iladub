@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "f": "https://ns.flur.ee/db#",
+    "etkl": "https://w3id.org/iladub/etkl#"
+  },
+  "@graph": [
+    {
+      "@id": "etkl:sensitivityViewPolicy",
+      "@type": ["f:AccessPolicy"],
+      "f:required": true,
+      "f:action": [{ "@id": "f:view" }],
+      "f:query": "{\"where\":[{\"@id\":\"?$identity\",\"http://www.w3.org/ns/prov#actedOnBehalfOf\":{\"@id\":\"?principal\"}},{\"@id\":\"?principal\",\"https://w3id.org/iladub/etkl#hasRole\":{\"@id\":\"?role\"}},{\"@id\":\"?role\",\"https://w3id.org/iladub/etkl#grantsTag\":{\"@id\":\"?tag\"}},{\"@id\":\"?$this\",\"https://w3id.org/iladub/etkl#sensitivity\":{\"@id\":\"?tag\"}}]}"
+    }
+  ]
+}

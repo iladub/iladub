@@ -11,6 +11,8 @@ ODRL_FIXTURE = os.path.join(ROOT, "tests", "fluree-odrl-policy.ttl")
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 TX = Namespace("https://example.org/transplant#")
+FLUREE_DIR = os.path.join(ROOT, "src", "iladub", "fluree")
+F = Namespace("https://ns.flur.ee/db#")
 
 
 def test_grantstag_declared():
@@ -29,3 +31,25 @@ def test_compile_f_grants_reshapes_odrl():
         (str(TX["role-opo"]), str(TX.phi)),
         (str(TX["role-recipient-ctr"]), str(TX.clinical)),
     }
+
+
+def _template_graph():
+    return Graph().parse(os.path.join(FLUREE_DIR, "f-policy-template.jsonld"), format="json-ld")
+
+
+def test_template_is_a_view_access_policy():
+    g = _template_graph()
+    pol = next(g.subjects(RDF.type, F.AccessPolicy))
+    assert (pol, F.action, F.view) in g
+    assert (pol, F.required, None) in g
+
+
+def test_template_query_binds_identity_and_joins():
+    g = _template_graph()
+    q = " ".join(str(o) for o in g.objects(None, F.query))
+    for ref in ("?$identity",
+                "http://www.w3.org/ns/prov#actedOnBehalfOf",
+                "https://w3id.org/iladub/etkl#hasRole",
+                "https://w3id.org/iladub/etkl#grantsTag",
+                "https://w3id.org/iladub/etkl#sensitivity"):
+        assert ref in q, ref
