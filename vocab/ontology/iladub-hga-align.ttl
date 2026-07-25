@@ -3,6 +3,7 @@
 @prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix holon:  <http://w3id.org/holon/> .
 @prefix hproj:  <http://w3id.org/holon/projection/> .
+@prefix hview:  <http://w3id.org/holon/viewer/> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -87,3 +88,7 @@ iladub:GroundedNode rdfs:seeAlso holon:GroundingRecord ;
 #################################################################
 
 etkl:DocumentProjection rdfs:subClassOf hproj:Projection .
+
+#  etkl:hasRole is the ViewerPass role handle — informatively related to HGA's
+#  viewer profile (align, don't subclass; access rides odrl:/prov:).
+etkl:hasRole rdfs:seeAlso hview:ViewerProfile .
