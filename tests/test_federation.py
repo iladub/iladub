@@ -135,6 +135,10 @@ def test_e2e_compile_federate_loop():
     projection = federate.derive_projection(a_interior, terms)
     assert (TX.ABO_O, SKOS.inScheme, PROJ["projection"]) in projection
 
+    # success criterion #2: the DERIVED projection passes the membrane shape (not just hand-authored fixtures)
+    _shapes, _knowledge = _proj_shapes_knowledge()
+    assert validate(projection, _shapes, _knowledge).conforms
+
     # --- B grounds against A's PROJECTION as its provided terminology (portal unchanged) ---
     b_contract = load_contract(os.path.join(ROOT, "examples", "federation", "doc-b-contract.ttl"))
     b_shapes = Graph().parse(os.path.join(ROOT, "examples", "federation", "doc-b-shapes.ttl"), format="turtle")
