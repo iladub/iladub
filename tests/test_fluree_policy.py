@@ -6,10 +6,26 @@ from rdflib import Graph, Namespace, RDF, OWL
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONT = os.path.join(ROOT, "vocab", "ontology")
+QUERIES = os.path.join(ROOT, "vocab", "queries")
+ODRL_FIXTURE = os.path.join(ROOT, "tests", "fluree-odrl-policy.ttl")
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
+TX = Namespace("https://example.org/transplant#")
 
 
 def test_grantstag_declared():
     g = Graph().parse(os.path.join(ONT, "etkl.ttl"), format="turtle")
     assert (ETKL.grantsTag, RDF.type, OWL.ObjectProperty) in g
+
+
+def test_compile_f_grants_reshapes_odrl():
+    from iladub.etkl import interpret
+
+    policy = Graph().parse(ODRL_FIXTURE, format="turtle")
+    grants = interpret.run(os.path.join(QUERIES, "compile-f-grants.rq"), policy)
+    pairs = {(str(r), str(t)) for r, t in grants.subject_objects(ETKL.grantsTag)}
+    assert pairs == {
+        (str(TX["role-opo"]), str(TX.clinical)),
+        (str(TX["role-opo"]), str(TX.phi)),
+        (str(TX["role-recipient-ctr"]), str(TX.clinical)),
+    }

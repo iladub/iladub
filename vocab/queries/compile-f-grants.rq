@@ -1,0 +1,15 @@
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+
+#  AXIOM (open-world, evidence-positive): flatten each ODRL read-grant into the role→tag
+#  relation a Fluree f:query reads. Mirrors federate-projection-governed.rq's grant pattern
+#  exactly (odrl:action odrl:read ; odrl:assignee ?role ; odrl:target ?tag), so the f: policy
+#  gates on the SAME grants the governed projection does.
+CONSTRUCT {
+  ?role etkl:grantsTag ?tag .
+}
+WHERE {
+  ?perm odrl:action odrl:read ;
+        odrl:assignee ?role ;
+        odrl:target ?tag .
+}
