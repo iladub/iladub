@@ -142,3 +142,17 @@ def test_ai_agent_without_user_fails_inherits_shape():
     data.add((perm, ODRL.assignee, TX["rogue-agent"]))
     data.add((TX["rogue-agent"], RDF.type, PROV.SoftwareAgent))
     assert not validate(data, shapes, Graph()).conforms
+
+
+def test_certify_governed_ok_for_ai_agent_within_entitlement():
+    """Governed-bot headline at the ORACLE level: the AI assistant (acting for a recipient
+    clinician) grounds to a clinical concept within its inherited entitlement, and
+    certify_governed_federation returns ok — the oracle resolves agent→user→role via the
+    same (prov:actedOnBehalfOf)?/etkl:hasRole path the query uses."""
+    data = Graph().parse(GOV_OFFER, format="turtle")
+    proj = federate.derive_governed_projection(data, data, data, data, TX["ai-assistant"])
+    consumer = Graph()
+    consumer.add((URIRef("urn:ai#gn"), RDF.type, ILADUB.GroundedNode))
+    consumer.add((URIRef("urn:ai#gn"), ILADUB.groundsTo, TX.ABO_O))   # clinical: within the AI's inherited entitlement
+    v = federate.certify_governed_federation(data, data, data, TX["ai-assistant"], proj, consumer)
+    assert v.ok, v
