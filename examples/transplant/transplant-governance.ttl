@@ -34,16 +34,23 @@ tx:role-recipient-ctr a prov:Agent ; rdfs:label "Recipient transplant centre"@en
 tx:role-board         a prov:Agent ; rdfs:label "Transplant board (apex)"@en .
 
 #################################################################
-#  ODRL access policy (policy-as-data on the membrane). OPO and board
-#  see donor-identifying detail; the recipient centre sees only the
-#  de-identified clinical offer (donor PHI withheld pre-allocation).
-#  (odrl:target points at the data fields it governs — illustrative.)
+#  ODRL access policy (policy-as-data on the membrane). Grants ROLES
+#  read on sensitivity TAGS (tx:clinical / tx:phi), not on data fields
+#  directly. OPO, the donor-region team, and the board apex are each
+#  granted both tags (they see donor PHI); the recipient centre is
+#  granted clinical only (donor PHI withheld pre-allocation). The
+#  role-scoped projections are DERIVED per role by
+#  federate-projection-governed.rq under this policy.
 #################################################################
 tx:policy a odrl:Policy ;
     odrl:permission
       [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:clinical ] ,
       [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:phi ] ,
-      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ; odrl:target tx:clinical ] .
+      [ odrl:action odrl:read ; odrl:assignee tx:role-donor-region ;  odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-donor-region ;  odrl:target tx:phi ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ; odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-board ;         odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-board ;         odrl:target tx:phi ] .
 
 #################################################################
 #  Concepts the offer grounds to, tagged by sensitivity (governance graph). The
@@ -56,6 +63,8 @@ tx:DONOR_ID etkl:sensitivity tx:phi .
 
 tx:role-opo           etkl:hasRole tx:role-opo .
 tx:role-recipient-ctr etkl:hasRole tx:role-recipient-ctr .
+tx:role-donor-region  etkl:hasRole tx:role-donor-region .
+tx:role-board         etkl:hasRole tx:role-board .
 
 #  Promoted-concept interior + terms the governed derivation reads.
 tx:gn-abo a iladub:GroundedNode ; iladub:wasPromotedBy tx:pd-abo ; iladub:groundsTo tx:ABO_O .

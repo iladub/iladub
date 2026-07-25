@@ -42,7 +42,6 @@ def test_direct_ai_grant_rejected():
 def test_recipient_projection_withholds_donor_phi():
     """Concentric openness: the recipient view is DERIVED and excludes donor PHI; the OPO view includes it."""
     from iladub.etkl import federate
-    from rdflib import RDF
     SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
     PROJ = Namespace("urn:iladub:")
     data = _g(GOV_EX)
@@ -60,3 +59,13 @@ def test_ai_assistant_inherits_a_user():
     g = _g(GOV_EX)
     PROV = Namespace("http://www.w3.org/ns/prov#")
     assert (TX["ai-assistant"], PROV.actedOnBehalfOf, TX["clinician-aliki"]) in g
+
+def test_board_apex_projection_includes_donor_phi():
+    """The constitutional apex (board) sees everything beneath it — its DERIVED projection includes donor PHI."""
+    from iladub.etkl import federate
+    SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+    PROJ = Namespace("urn:iladub:")
+    data = _g(GOV_EX)
+    board = federate.derive_governed_projection(data, data, data, data, TX["role-board"])
+    assert (TX["DONOR_ID"], SKOS.inScheme, PROJ["projection"]) in board   # apex sees PHI
+    assert (TX["ABO_O"], SKOS.inScheme, PROJ["projection"]) in board      # and clinical
