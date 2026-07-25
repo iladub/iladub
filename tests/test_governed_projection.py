@@ -16,6 +16,7 @@ PROJ = Namespace("urn:iladub:")
 RECIPE = URIRef("urn:federate:recipe")
 QUERIES = os.path.join(ROOT, "vocab", "queries")
 GOV_INTERIOR = os.path.join(ROOT, "tests", "federation-governed-interior.ttl")
+GOV_OFFER = os.path.join(ROOT, "examples", "federation", "governed-offer.ttl")
 
 
 def test_governance_properties_declared():
@@ -105,3 +106,39 @@ def test_oracle_agrees_with_query_for_unnested_permission():
     assert (TX.X, SKOS.inScheme, PROJ["projection"]) in proj          # query emits it
     v = federate.certify_governed_federation(g, g, g, TX["role-r"], proj, Graph())
     assert not v.ungranted, v                                          # oracle must agree (not flag it)
+
+
+# --- AI-agent path: inherits user's role and access ---
+
+def test_ai_agent_inherits_user_role_and_cannot_reach_phi():
+    data = Graph().parse(GOV_OFFER, format="turtle")
+    # the AI assistant acts for a recipient-centre clinician -> resolves to the recipient projection
+    proj = federate.derive_governed_projection(data, data, data, data, TX["ai-assistant"])
+    assert (TX.ABO_O, SKOS.inScheme, PROJ["projection"]) in proj           # clinical: allowed
+    assert (TX.DONOR_ID, SKOS.inScheme, PROJ["projection"]) not in proj    # phi: withheld from the AI too
+
+
+def test_ai_agent_grounding_to_phi_is_uncontained():
+    data = Graph().parse(GOV_OFFER, format="turtle")
+    proj = federate.derive_governed_projection(data, data, data, data, TX["ai-assistant"])
+    consumer = Graph()  # the agent tries to ground to donor PHI
+    consumer.add((URIRef("urn:ai#gn"), RDF.type, ILADUB.GroundedNode))
+    consumer.add((URIRef("urn:ai#gn"), ILADUB.groundsTo, TX.DONOR_ID))
+    v = federate.certify_governed_federation(data, data, data, TX["ai-assistant"], proj, consumer)
+    assert not v.ok and v.uncontained    # PHI is not in the agent's projection -> containment breach
+
+
+def test_ai_agent_without_user_fails_inherits_shape():
+    from iladub.validate import validate
+    SH = os.path.join(ROOT, "vocab", "shapes")
+    shapes = Graph().parse(os.path.join(SH, "governance-shapes.ttl"), format="turtle")
+    data = Graph()
+    PROV = Namespace("http://www.w3.org/ns/prov#")
+    ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
+    # a software agent granted directly, with no prov:actedOnBehalfOf
+    perm = URIRef("urn:perm")
+    data.add((URIRef("urn:policy"), ODRL.permission, perm))
+    data.add((perm, ODRL.action, ODRL.read))
+    data.add((perm, ODRL.assignee, TX["rogue-agent"]))
+    data.add((TX["rogue-agent"], RDF.type, PROV.SoftwareAgent))
+    assert not validate(data, shapes, Graph()).conforms

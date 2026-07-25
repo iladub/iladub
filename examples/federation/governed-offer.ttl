@@ -1,0 +1,32 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix odrl:   <http://www.w3.org/ns/odrl/2/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+@prefix tx:     <https://example.org/transplant#> .
+
+#  A compiled donor-offer interior (two promoted concepts), reusing the transplant world.
+ex:gn1 a iladub:GroundedNode ; iladub:wasPromotedBy ex:pd1 ; iladub:groundsTo tx:ABO_O .
+ex:pd1 a iladub:PromotionDecision .
+ex:gn2 a iladub:GroundedNode ; iladub:wasPromotedBy ex:pd2 ; iladub:groundsTo tx:DONOR_ID .
+ex:pd2 a iladub:PromotionDecision .
+
+tx:ABO_O    a skos:Concept ; skos:prefLabel "O" .
+tx:DONOR_ID a skos:Concept ; skos:prefLabel "ET-DONOR-2026-0091" .
+
+tx:ABO_O    etkl:sensitivity tx:clinical .
+tx:DONOR_ID etkl:sensitivity tx:phi .
+
+#  Roles (self-referential role handle) + a recipient clinician + an AI assistant for her.
+tx:role-opo           etkl:hasRole tx:role-opo ; rdfs:label "OPO / procurement"@en .
+tx:role-recipient-ctr etkl:hasRole tx:role-recipient-ctr ; rdfs:label "Recipient centre"@en .
+tx:clinician-aliki a prov:Person ; etkl:hasRole tx:role-recipient-ctr .
+tx:ai-assistant a prov:SoftwareAgent ; prov:actedOnBehalfOf tx:clinician-aliki .   # inherits her role
+
+tx:policy a odrl:Policy ;
+    odrl:permission
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:phi ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ; odrl:target tx:clinical ] .
