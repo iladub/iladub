@@ -19,9 +19,20 @@ from . import interpret
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 ILADUB = Namespace("https://w3id.org/iladub#")
 ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
+F = Namespace("https://ns.flur.ee/db#")
 RECIPE = URIRef("urn:federate:recipe")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 _QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
+_FLUREE_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "fluree", "f-policy-template.jsonld")
+
+# The full IRIs a faithful f:query must reference to preserve AI-inherits-user + the tag join.
+_F_QUERY_REFS = (
+    "?$identity",
+    "http://www.w3.org/ns/prov#actedOnBehalfOf",
+    "https://w3id.org/iladub/etkl#hasRole",
+    "https://w3id.org/iladub/etkl#grantsTag",
+    "https://w3id.org/iladub/etkl#sensitivity",
+)
 
 
 @dataclass(frozen=True)
@@ -140,3 +151,50 @@ def certify_governed_federation(interior: Graph, governance: Graph, policy: Grap
     ok = base.ok and not ungranted
     return GovernedVerdict(ok=ok, unsound=base.unsound, leaked=base.leaked,
                            uncontained=base.uncontained, ungranted=ungranted)
+
+
+def compile_f_policy(odrl_policy: Graph) -> Graph:
+    """Compile the ODRL tag-policy to a Fluree f: policy graph: derive the flat
+    etkl:grantsTag grants (AXIOM CONSTRUCT) and union them with the static, data-driven
+    f:AccessPolicy template. PROCEDURAL glue — no domain decision, no tuned constant."""
+    grants = interpret.run(os.path.join(_QUERIES, "compile-f-grants.rq"), odrl_policy)
+    template = Graph().parse(_FLUREE_TEMPLATE, format="json-ld")
+    return grants + template
+
+
+@dataclass(frozen=True)
+class FlureeVerdict:
+    ok: bool
+    missing: tuple       # (role, tag) grants the ODRL policy has but the f: policy dropped
+    extra: tuple         # (role, tag) grants the f: policy has but the ODRL policy lacks
+    identity_ok: bool    # the template f:query preserves AI-inherits-user + the tag join
+
+
+def _odrl_grants(policy: Graph) -> set:
+    """{ (role, tag) } read-granted by the ODRL policy — mirrors the governed grant pattern
+    (policy.subjects(odrl:action odrl:read) -> assignee x target)."""
+    out = set()
+    for perm in policy.subjects(ODRL.action, ODRL.read):
+        roles = {str(r) for r in policy.objects(perm, ODRL.assignee)}
+        tags = {str(t) for t in policy.objects(perm, ODRL.target)}
+        for r in roles:
+            for t in tags:
+                out.add((r, t))
+    return out
+
+
+def certify_f_faithful(odrl_policy: Graph, f_policy: Graph, roles=None) -> FlureeVerdict:
+    """Faithful iff the f: policy grants exactly what the ODRL policy grants (grant-set
+    equivalence) AND its f:query preserves AI-inherits-user + the tag join."""
+    odrl = _odrl_grants(odrl_policy)
+    fgr = {(str(r), str(t)) for r, t in f_policy.subject_objects(ETKL.grantsTag)}
+    if roles is not None:
+        rs = {str(r) for r in roles}
+        odrl = {(r, t) for (r, t) in odrl if r in rs}
+        fgr = {(r, t) for (r, t) in fgr if r in rs}
+    missing = tuple(sorted(odrl - fgr))
+    extra = tuple(sorted(fgr - odrl))
+    query_texts = [str(q) for q in f_policy.objects(None, F.query)]
+    identity_ok = any(all(ref in q for ref in _F_QUERY_REFS) for q in query_texts)
+    ok = (not missing) and (not extra) and identity_ok
+    return FlureeVerdict(ok=ok, missing=missing, extra=extra, identity_ok=identity_ok)

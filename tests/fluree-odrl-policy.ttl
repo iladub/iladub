@@ -1,0 +1,9 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix tx:   <https://example.org/transplant#> .
+
+#  A minimal ODRL tag-policy: OPO reads both tags, recipient reads clinical only.
+tx:policy a odrl:Policy ;
+    odrl:permission
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:phi ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ; odrl:target tx:clinical ] .
