@@ -1,0 +1,32 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix odrl:   <http://www.w3.org/ns/odrl/2/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix ex:     <https://example.org/demo#> .
+@prefix tx:     <https://example.org/transplant#> .
+
+#  --- interior: two PROMOTED concepts ---
+ex:gn1 a iladub:GroundedNode ; iladub:wasPromotedBy ex:pd1 ; iladub:groundsTo tx:ABO_O .
+ex:pd1 a iladub:PromotionDecision .
+ex:gn2 a iladub:GroundedNode ; iladub:wasPromotedBy ex:pd2 ; iladub:groundsTo tx:DONOR_ID .
+ex:pd2 a iladub:PromotionDecision .
+
+#  --- terms: public labels ---
+tx:ABO_O   a skos:Concept ; skos:prefLabel "O" .
+tx:DONOR_ID a skos:Concept ; skos:prefLabel "ET-DONOR-2026-0091" .
+
+#  --- governance: concept sensitivity tags (separate from the domain subject) ---
+tx:ABO_O   etkl:sensitivity tx:clinical .
+tx:DONOR_ID etkl:sensitivity tx:phi .
+
+#  --- roles ---
+tx:role-opo           etkl:hasRole tx:role-opo .            # a role is its own role handle
+tx:role-recipient-ctr etkl:hasRole tx:role-recipient-ctr .
+
+#  --- ODRL policy over TAGS ---
+tx:policy a odrl:Policy ;
+    odrl:permission
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:clinical ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-opo ;           odrl:target tx:phi ] ,
+      [ odrl:action odrl:read ; odrl:assignee tx:role-recipient-ctr ; odrl:target tx:clinical ] .
