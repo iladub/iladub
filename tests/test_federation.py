@@ -85,3 +85,36 @@ def test_compile_then_derive_projection():
     assert any(interior.subjects(RDF.type, ILADUB.GroundedNode))
     proj = federate.derive_projection(interior, terms)
     assert (TX.ABO_O, SKOS.inScheme, PROJ["projection"]) in proj
+
+
+def test_oracle_passes_on_faithful_federation():
+    interior = Graph().parse(os.path.join(ROOT, "tests", "federation-interior-a.ttl"), format="turtle")
+    proj = interpret.run(os.path.join(QUERIES, "federate-projection.rq"), interior)
+    # B grounded to tx:ABO_O, which IS in the projection
+    b = Graph()
+    b.add((URIRef("urn:doc:b#gn"), RDF.type, ILADUB.GroundedNode))
+    b.add((URIRef("urn:doc:b#gn"), ILADUB.groundsTo, TX.ABO_O))
+    v = federate.certify_federation(interior, proj, b)
+    assert v.ok, v
+
+
+def test_oracle_fails_when_projection_unsound():
+    # a projection concept with no promoted grounded node behind it
+    interior = Graph().parse(os.path.join(ROOT, "tests", "federation-interior-a.ttl"), format="turtle")
+    proj = interpret.run(os.path.join(QUERIES, "federate-projection.rq"), interior)
+    proj.add((TX.FABRICATED, RDF.type, SKOS.Concept))
+    proj.add((TX.FABRICATED, SKOS.inScheme, PROJ["projection"]))
+    v = federate.certify_federation(interior, proj, Graph())
+    assert not v.ok and v.unsound
+
+
+def test_oracle_fails_when_b_uncontained():
+    # B's only terminology in this loop is A's projection, so B must ground ONLY to
+    # projected concepts. A target outside the projection is a containment breach.
+    interior = Graph().parse(os.path.join(ROOT, "tests", "federation-interior-a.ttl"), format="turtle")
+    proj = interpret.run(os.path.join(QUERIES, "federate-projection.rq"), interior)
+    b = Graph()
+    b.add((URIRef("urn:doc:b#gn"), RDF.type, ILADUB.GroundedNode))
+    b.add((URIRef("urn:doc:b#gn"), ILADUB.groundsTo, TX.OUTSIDE))  # not in the projection
+    v = federate.certify_federation(interior, proj, b)
+    assert not v.ok and v.uncontained
