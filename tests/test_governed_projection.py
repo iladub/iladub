@@ -82,3 +82,26 @@ def test_certify_governed_flags_ungranted_leak_in_projection():
     proj.add((TX.DONOR_ID, SKOS.inScheme, PROJ["projection"]))
     v = federate.certify_governed_federation(data, data, data, TX["role-recipient-ctr"], proj, Graph())
     assert not v.ok and v.ungranted
+
+
+def test_oracle_agrees_with_query_for_unnested_permission():
+    """Oracle must not flag as ungranted a concept the CONSTRUCT legitimately emits, even
+    when the read-permission is a top-level resource (not linked via odrl:permission)."""
+    from rdflib import Literal
+    ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
+    g = Graph()
+    # promoted concept, tagged, with a public label
+    g.add((TX.X, RDF.type, SKOS.Concept)); g.add((TX.X, SKOS.prefLabel, Literal("x")))
+    g.add((TX.X, ETKL.sensitivity, TX.clinical))
+    gn = URIRef("urn:g#n"); pd = URIRef("urn:g#pd")
+    g.add((gn, RDF.type, ILADUB.GroundedNode)); g.add((gn, ILADUB.wasPromotedBy, pd))
+    g.add((gn, ILADUB.groundsTo, TX.X)); g.add((pd, RDF.type, ILADUB.PromotionDecision))
+    g.add((TX["role-r"], ETKL.hasRole, TX["role-r"]))
+    # a top-level read-permission (NOT hung off any odrl:Policy via odrl:permission)
+    perm = URIRef("urn:g#perm")
+    g.add((perm, ODRL.action, ODRL.read)); g.add((perm, ODRL.assignee, TX["role-r"]))
+    g.add((perm, ODRL.target, TX.clinical))
+    proj = federate.derive_governed_projection(g, g, g, g, TX["role-r"])
+    assert (TX.X, SKOS.inScheme, PROJ["projection"]) in proj          # query emits it
+    v = federate.certify_governed_federation(g, g, g, TX["role-r"], proj, Graph())
+    assert not v.ungranted, v                                          # oracle must agree (not flag it)

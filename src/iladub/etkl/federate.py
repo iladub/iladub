@@ -19,7 +19,6 @@ from . import interpret
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 ILADUB = Namespace("https://w3id.org/iladub#")
 ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
-PROV = Namespace("http://www.w3.org/ns/prov#")
 RECIPE = URIRef("urn:federate:recipe")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 _QUERIES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries")
@@ -113,13 +112,15 @@ def _roles_of(viewer, *graphs) -> set:
 
 
 def _permitted_for_role(governance: Graph, policy: Graph, roles: set) -> set:
-    """Concepts whose sensitivity tag some role in `roles` is granted read on."""
+    """Concepts whose sensitivity tag some role in `roles` is granted read on.
+    Mirrors federate-projection-governed.rq's grant pattern EXACTLY: any resource with
+    odrl:action odrl:read ; odrl:assignee <role> ; odrl:target <tag> (no odrl:permission
+    linkage required), so the oracle and the query always agree."""
     granted_tags = set()
-    for perm in policy.objects(None, ODRL.permission):
-        if (perm, ODRL.action, ODRL.read) in policy:
-            assignees = {str(a) for a in policy.objects(perm, ODRL.assignee)}
-            if assignees & roles:
-                granted_tags |= {str(t) for t in policy.objects(perm, ODRL.target)}
+    for perm in policy.subjects(ODRL.action, ODRL.read):
+        assignees = {str(a) for a in policy.objects(perm, ODRL.assignee)}
+        if assignees & roles:
+            granted_tags |= {str(t) for t in policy.objects(perm, ODRL.target)}
     permitted = set()
     for concept, tag in governance.subject_objects(ETKL.sensitivity):
         if str(tag) in granted_tags:
