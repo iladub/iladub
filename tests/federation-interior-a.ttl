@@ -1,0 +1,14 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:     <https://example.org/demo#> .
+@prefix tx:     <https://example.org/transplant#> .
+
+#  A's interior: one PROMOTED grounded node (grounds to tx:ABO_O), plus interior-only
+#  terms that MUST NOT appear in the projection. tx:ABO_O's public label lives in terms.
+ex:gn1 a iladub:GroundedNode ; iladub:wasPromotedBy ex:pd1 ; iladub:groundsTo tx:ABO_O .
+ex:pd1 a iladub:PromotionDecision .
+ex:cand1 a iladub:CandidateConcept ; iladub:surfaceText "O" .
+ex:region1 a iladub:SourceRegion .
+
+#  Terms (the terminology A grounded into) supply the public prefLabel.
+tx:ABO_O a skos:Concept ; skos:prefLabel "O" .
