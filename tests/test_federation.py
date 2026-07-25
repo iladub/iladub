@@ -56,3 +56,13 @@ def test_leaky_projection_fails_shape():
     shapes, knowledge = _proj_shapes_knowledge()
     data = Graph().parse(os.path.join(ROOT, "tests", "federation-projection-leak.ttl"), format="turtle")
     assert not validate(data, shapes, knowledge).conforms
+
+
+def test_csv_adapter_yields_surface_concepts():
+    from iladub.readers import read_csv_surface_concepts
+    from iladub.ground import SurfaceConcept
+
+    concepts = read_csv_surface_concepts(os.path.join(ROOT, "examples", "federation", "doc-a.csv"))
+    assert SurfaceConcept(text="aboGroup", value="O", region="row1:col-aboGroup") in concepts
+    assert SurfaceConcept(text="organ", value="heart", region="row1:col-organ") in concepts
+    assert len(concepts) == 2
