@@ -117,6 +117,22 @@ etkl:admissibleScheme a owl:ObjectProperty ;
     rdfs:comment "A SKOS concept scheme the field's value must ground to. A field WITH an admissible scheme must resolve (else the value becomes an iladub:CandidateConcept); a field WITHOUT one is asserted as a free literal."@en .
 
 #################################################################
+#  Governance / Projection properties
+#################################################################
+
+etkl:sensitivity a owl:ObjectProperty ;
+    rdfs:label "sensitivity"@en ;
+    rdfs:comment "A declared sensitivity / compartment tag on a concept, used to govern which viewers a projection exposes it to. Supplied in a governance graph separate from the domain subject (sensitivity is not stamped on the subject). One categorical dimension; ABAC adds more."@en .
+
+etkl:hasRole a owl:ObjectProperty ;
+    rdfs:label "has role"@en ;
+    rdfs:comment "The role a person or agent holds — the ViewerPass role handle a governed projection is scoped to. An AI agent inherits its user's role via prov:actedOnBehalfOf then etkl:hasRole."@en .
+
+etkl:forViewer a owl:ObjectProperty ;
+    rdfs:label "for viewer"@en ;
+    rdfs:comment "A projection-derivation recipe's viewer (a role, person, or agent). The governed CONSTRUCT reads it to scope the projection to that viewer's entitlements."@en .
+
+#################################################################
 #  Contract-driven assembly rules (concept -> output resource)
 #################################################################
 

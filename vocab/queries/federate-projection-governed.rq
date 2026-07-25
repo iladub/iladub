@@ -1,0 +1,32 @@
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX etkl:   <https://w3id.org/iladub/etkl#>
+PREFIX skos:   <http://www.w3.org/2004/02/skos/core#>
+PREFIX odrl:   <http://www.w3.org/ns/odrl/2/>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+
+#  AXIOM (open-world, evidence-positive): project a concept for the recipe's viewer ONLY
+#  when (a) it is promoted, and (b) an ODRL permission grants the viewer's resolved role
+#  read on the concept's sensitivity tag. The viewer→role resolution — including
+#  AI-inherits-user — is the property path (prov:actedOnBehalfOf)?/etkl:hasRole.
+#  A concept with no matching grant is withheld by omission, never filtered out.
+CONSTRUCT {
+  <urn:iladub:projection> a etkl:DocumentProjection , skos:ConceptScheme .
+  ?concept a skos:Concept ;
+           skos:inScheme <urn:iladub:projection> ;
+           skos:prefLabel ?label .
+}
+WHERE {
+  <urn:federate:recipe> etkl:forViewer ?viewer .
+  ?viewer (prov:actedOnBehalfOf)?/etkl:hasRole ?role .
+
+  ?gn a iladub:GroundedNode ;
+      iladub:wasPromotedBy ?pd ;
+      iladub:groundsTo ?concept .
+  ?pd a iladub:PromotionDecision .
+  ?concept skos:prefLabel ?label .
+  ?concept etkl:sensitivity ?tag .
+
+  ?perm odrl:action odrl:read ;
+        odrl:assignee ?role ;
+        odrl:target ?tag .
+}

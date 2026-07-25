@@ -40,17 +40,32 @@ def test_direct_ai_grant_rejected():
     assert not c
 
 def test_recipient_projection_withholds_donor_phi():
-    """Concentric openness: the recipient-centre view excludes donor PHI; the OPO view includes it."""
-    g = _g(GOV_EX)
-    assert (TX["view-opo"], TX["donorIdentity"], None) in g, "OPO view should include donor identity"
-    assert (TX["view-recipient"], TX["donorIdentity"], None) not in g, "recipient view must withhold donor PHI"
-    assert (TX["view-recipient"], TX["socialHistory"], None) not in g, "recipient view must withhold social history"
-    # both views still share the de-identified clinical offer
-    assert (TX["view-recipient"], TX["organ"], None) in g
-    assert (TX["view-opo"], TX["organ"], None) in g
+    """Concentric openness: the recipient view is DERIVED and excludes donor PHI; the OPO view includes it."""
+    from iladub.etkl import federate
+    SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+    PROJ = Namespace("urn:iladub:")
+    data = _g(GOV_EX)
+    opo = federate.derive_governed_projection(data, data, data, data, TX["role-opo"])
+    recip = federate.derive_governed_projection(data, data, data, data, TX["role-recipient-ctr"])
+    # OPO sees donor PHI; recipient does not
+    assert (TX["DONOR_ID"], SKOS.inScheme, PROJ["projection"]) in opo
+    assert (TX["DONOR_ID"], SKOS.inScheme, PROJ["projection"]) not in recip
+    # both keep the de-identified clinical concepts
+    assert (TX["ABO_O"], SKOS.inScheme, PROJ["projection"]) in opo
+    assert (TX["ABO_O"], SKOS.inScheme, PROJ["projection"]) in recip
 
 def test_ai_assistant_inherits_a_user():
     """The conformant AI assistant carries a user to inherit access from."""
     g = _g(GOV_EX)
     PROV = Namespace("http://www.w3.org/ns/prov#")
     assert (TX["ai-assistant"], PROV.actedOnBehalfOf, TX["clinician-aliki"]) in g
+
+def test_board_apex_projection_includes_donor_phi():
+    """The constitutional apex (board) sees everything beneath it — its DERIVED projection includes donor PHI."""
+    from iladub.etkl import federate
+    SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+    PROJ = Namespace("urn:iladub:")
+    data = _g(GOV_EX)
+    board = federate.derive_governed_projection(data, data, data, data, TX["role-board"])
+    assert (TX["DONOR_ID"], SKOS.inScheme, PROJ["projection"]) in board   # apex sees PHI
+    assert (TX["ABO_O"], SKOS.inScheme, PROJ["projection"]) in board      # and clinical
