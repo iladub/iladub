@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from rdflib import Graph, Literal, Namespace, RDF, URIRef
+from rdflib import Graph, Namespace, RDF, URIRef
 
 from .. import ground
 from . import interpret
