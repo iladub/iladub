@@ -132,6 +132,10 @@ etkl:forViewer a owl:ObjectProperty ;
     rdfs:label "for viewer"@en ;
     rdfs:comment "A projection-derivation recipe's viewer (a role, person, or agent). The governed CONSTRUCT reads it to scope the projection to that viewer's entitlements."@en .
 
+etkl:grantsTag a owl:ObjectProperty ;
+    rdfs:label "grants tag"@en ;
+    rdfs:comment "The sensitivity tag a role is granted read access on — the flat grant relation compiled from the ODRL tag-policy, read by a Fluree f:AccessPolicy's f:query to enforce the same governance at the data layer."@en .
+
 #################################################################
 #  Contract-driven assembly rules (concept -> output resource)
 #################################################################
