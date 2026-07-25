@@ -1,0 +1,20 @@
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX etkl:   <https://w3id.org/iladub/etkl#>
+PREFIX skos:   <http://www.w3.org/2004/02/skos/core#>
+
+#  AXIOM (open-world, evidence-positive): project a concept ONLY when a promotion
+#  for it is PRESENT. Emit a SKOS scheme (what the grounding portal consumes) carrying
+#  the concept's PUBLIC prefLabel — never the interior (regions, candidates, decisions).
+CONSTRUCT {
+  <urn:iladub:projection> a etkl:DocumentProjection , skos:ConceptScheme .
+  ?concept a skos:Concept ;
+           skos:inScheme <urn:iladub:projection> ;
+           skos:prefLabel ?label .
+}
+WHERE {
+  ?gn a iladub:GroundedNode ;
+      iladub:wasPromotedBy ?pd ;
+      iladub:groundsTo ?concept .
+  ?pd a iladub:PromotionDecision .
+  ?concept skos:prefLabel ?label .
+}

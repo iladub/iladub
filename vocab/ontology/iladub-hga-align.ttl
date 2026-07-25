@@ -2,6 +2,7 @@
 @prefix etkl:   <https://w3id.org/iladub/etkl#> .
 @prefix dec:    <https://w3id.org/iladub/dec#> .
 @prefix holon:  <http://w3id.org/holon/> .
+@prefix hproj:  <http://w3id.org/holon/projection/> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -78,3 +79,11 @@ iladub:CandidateConcept rdfs:seeAlso holon:GroundingRecord ;
 
 iladub:GroundedNode rdfs:seeAlso holon:GroundingRecord ;
     rdfs:comment "Aligns with a holon:GroundingRecord at holon:RegisteredStatus — but, per iladub, registration is admissible only as the product of an iladub:PromotionDecision."@en .
+
+#################################################################
+#  Projection alignment
+#  A clean document holon's outward concept surface IS an HGA projection
+#  (mirrors risk:RiskAssessment / tab:NormalizedBase ⊑ hproj:Projection).
+#################################################################
+
+etkl:DocumentProjection rdfs:subClassOf hproj:Projection .

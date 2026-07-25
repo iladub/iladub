@@ -1,0 +1,5 @@
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix tx:  <https://example.org/transplant#> .
+
+tx:ReferralShape a sh:NodeShape ; sh:targetClass tx:Referral ;
+    sh:property [ sh:path tx:donorAbo ; sh:maxCount 1 ] .

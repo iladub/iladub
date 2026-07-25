@@ -7,6 +7,7 @@ raised rather than silently degrading.
 """
 from __future__ import annotations
 
+import csv as _csv
 import os
 
 TEXT_SUFFIXES = {".txt", ".md", ".text", ""}
@@ -67,3 +68,19 @@ def _read_xlsx(path: str) -> str:  # pragma: no cover - optional dependency
         for row in ws.iter_rows(values_only=True):
             rows.append("\t".join("" if c is None else str(c) for c in row))
     return "\n".join(rows)
+
+
+def read_csv_surface_concepts(path: str) -> list:
+    """Format adapter: a CSV's header row names the concepts; each data cell is a value.
+    Returns region-anchored SurfaceConcepts. Deterministic — no model calls. This is the
+    format-coupled boundary; the grounding portal downstream is format-agnostic."""
+    from .ground import SurfaceConcept
+
+    out: list[SurfaceConcept] = []
+    with open(path, newline="", encoding="utf-8") as fh:
+        reader = _csv.DictReader(fh)
+        for r, row in enumerate(reader, start=1):
+            for header, cell in row.items():
+                out.append(SurfaceConcept(text=header, value=cell,
+                                          region="row%d:col-%s" % (r, header)))
+    return out

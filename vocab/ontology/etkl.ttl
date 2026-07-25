@@ -64,6 +64,10 @@ etkl:Field a owl:Class ;
     rdfs:label "Field"@en ;
     rdfs:comment "A contract field: binds a target property to an extractable value, optionally constrained to an admissible terminology scheme. Read by the knowledge-guided (BAML) extractor."@en .
 
+etkl:DocumentProjection a owl:Class ;
+    rdfs:label "Document projection"@en ;
+    rdfs:comment "A clean document holon's outward-facing concept surface: the promoted grounded concepts it exposes for others to ground against (a SKOS scheme). The Projection aspect made concrete. A compiled holon that becomes a provided terminology for the next compile. Carries ONLY concepts — never the interior (regions, candidate concepts, promotion decisions)."@en .
+
 #################################################################
 #  Core properties
 #################################################################
