@@ -42,7 +42,7 @@ SELECT (MIN(?s) AS ?split) WHERE {
 }
 """
 
-_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", ""]   # Numeric/Currency/Date/Text/blank
+_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A"]   # (Blank tokens re-added in Task 3 with the v2 reference)
 
 
 def _ref_hbs(cells, ncols):
