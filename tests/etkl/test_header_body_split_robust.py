@@ -32,16 +32,18 @@ def test_split_is_true_data_start_despite_placeholders_and_total_row():
     assert _split(CELLS) == 1
 
 
-# Multi-line (wrapped) header: a single column whose 2-row Text header ("Qty" / "(units)")
-# outnumbers its 1-row Numeric body ("100"). If the modal datatype D were computed over ALL rows
-# (the pre-fix bug), Text (2 votes) would out-vote Numeric (1 vote), so D=Text -> the column is
-# excluded -> split wrongly returns None. With D computed over BODY ROWS ONLY (row>=1), the mode
-# is Numeric (the sole body cell) regardless of how many header rows precede it, and the split
-# correctly lands at row 2 (the data start).
+# Header label row out-voting the body: a single column whose row-0 Text label ("Qty") plus one
+# continuation row ("(units)") sit above a 1-row Numeric body ("100"). If the modal datatype D were
+# computed over ALL rows (the pre-fix bug), Text (2 votes) would out-vote Numeric (1) -> D=Text ->
+# the column is excluded -> split wrongly returns None. Computing D over rows>=1 drops the row-0
+# label; here the remaining body rows tie 1-1 (Text "(units)" vs Numeric "100") and the D!=Text
+# gate leaves Numeric, so the split correctly lands at row 2. SCOPE: this fixes the single-label-row
+# case; a header wrapping across 2+ continuation rows would still out-vote a short body (Text wins
+# outright, not a tie) -> that general multi-row-wrapped-header case is deferred to Loop B.
 WRAPPED_HEADER_CELLS = [(0, 0, "Qty"), (1, 0, "(units)"), (2, 0, "100")]
 
 
-def test_split_survives_multiline_header_outvoting_body():
+def test_split_survives_single_label_row_outvoting_body():
     assert _split(WRAPPED_HEADER_CELLS, ncols=1) == 2
 
 

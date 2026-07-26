@@ -34,8 +34,9 @@ _TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", "(blank)", ""
 
 def _ref_hbs(cells, ncols):
     """Fast python reference for header-body-split.rq v2: per column D = modal non-Blank datatype
-    computed over BODY ROWS ONLY (row>=1) (argmax of counts; ALL count-tied datatypes considered)
-    — a wrapped/multi-line Text header in row 0 must not out-vote the body. A data column has
+    computed over rows below the first (row>=1) (argmax of counts; ALL count-tied datatypes
+    considered) — the single label row (row 0) must not out-vote the body (a header wrapping into
+    rows 1,2,... still votes; that general case is deferred Loop B). A data column has
     D != Text and >=1 non-Blank body cell (row>=1); s_col = 1 + max row, OVER ALL ROWS (incl. row
     0), of a non-Blank cell whose type != D (or 1 if homogeneous) — the diff scan locates the
     header boundary and is deliberately NOT restricted to body rows. Blank cells are wildcards.

@@ -1,9 +1,12 @@
 # header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to anomalous
-# bottom rows, missing-value cells, AND multi-line (wrapped) headers. Per column: D = the MODAL
-# (dominant) non-Blank cellDatatype computed OVER BODY ROWS ONLY (row>=1) — a group-count argmax
-# that answers "what type is the body?" and must not let header rows (row=0), including a wrapped
-# multi-row Text header, out-vote the body. A DATA column has D != tab:Text and >=1 non-Blank body
-# cell (row>=1). tab:Blank cells are WILDCARDS — excluded from the mode and never a mismatch. The
+# bottom rows and missing-value cells. Per column: D = the MODAL (dominant) non-Blank cellDatatype
+# computed OVER ROWS BELOW THE FIRST (row>=1) — a group-count argmax that answers "what type is the
+# body?" so the single label row (row 0) cannot out-vote the body. SCOPE/HONESTY: row>=1 excludes
+# only row 0 from the mode; a header that WRAPS across rows 1,2,... still votes, so a multi-row
+# wrapped Text header over few data rows can still be mis-typed Text -> the column is excluded ->
+# split escalates. Robust multi-row-wrapped-header recovery is a deferred later loop (Loop B), not
+# claimed here. A DATA column has D != tab:Text and >=1 non-Blank body cell (row>=1). tab:Blank
+# cells are WILDCARDS — excluded from the mode and never a mismatch. The
 # mismatch/diff scan below, by contrast, spans ALL rows (incl. row 0) — that is how the header
 # boundary is located: for a data column,
 #   s_col = MAX(row of a non-Blank cell whose type != D, over ALL rows) + 1   (the label->data
@@ -17,8 +20,9 @@ PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s_col) AS ?split) WHERE {
   {
     SELECT ?col ?D (MAX(?diffrow) AS ?maxdiff) (MAX(?bodyrow) AS ?maxbody) WHERE {
-      # D = modal non-Blank datatype for ?col, over BODY ROWS ONLY (row>=1) — argmax of per-type
-      # counts, so a wrapped/multi-line Text header (row 0) cannot out-vote the body.
+      # D = modal non-Blank datatype for ?col, over rows below the first (row>=1) — argmax of
+      # per-type counts, so the single label row (row 0) cannot out-vote the body. (A header that
+      # wraps into rows 1,2,... is NOT excluded here — that is deferred Loop B, see the header note.)
       {
         SELECT ?col ?D WHERE {
           { SELECT ?col ?D (COUNT(*) AS ?n) WHERE {
