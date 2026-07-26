@@ -90,3 +90,20 @@ def test_certify_rejects_unaccountable_query():
         '{"where":[{"@id":"?$this","https://w3id.org/iladub#wasPromotedBy":{"@id":"?pd"}}]}')))
     v = writegate.certify_modify_authorization(g)
     assert not v.wires_accountable and not v.ok
+
+
+def test_certify_rejects_split_modify_and_accountable_across_policies():
+    """ok must require ONE policy that is both f:modify AND accountable — not a modify policy
+    with an unaccountable query plus a SEPARATE view policy that happens to be accountable."""
+    from iladub.etkl import writegate
+    g = Graph()
+    modpol = URIRef("urn:split:modpol")   # f:modify, but its query is NOT accountable
+    g.add((modpol, RDF.type, F.AccessPolicy))
+    g.add((modpol, F.action, F.modify))
+    g.add((modpol, F.query, Literal('{"where":[{"@id":"?$this","https://w3id.org/iladub#wasPromotedBy":{"@id":"?pd"}}]}')))
+    viewpol = URIRef("urn:split:viewpol")  # accountable query, but only f:view
+    g.add((viewpol, RDF.type, F.AccessPolicy))
+    g.add((viewpol, F.action, F.view))
+    g.add((viewpol, F.query, Literal('{"where":[{"@id":"?$this","https://w3id.org/iladub#wasPromotedBy":{"@id":"?pd"}},{"@id":"?pd","https://w3id.org/iladub/dec#decidedBy":{"@id":"?$identity"}}]}')))
+    v = writegate.certify_modify_authorization(g)
+    assert not v.ok    # no single policy is both f:modify AND accountable

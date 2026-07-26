@@ -51,13 +51,20 @@ class ModifyVerdict:
 
 def certify_modify_authorization(f_modify_policy: Graph) -> ModifyVerdict:
     """Certify the f:modify policy authorizes a grounded-node write ONLY to the promotion's
-    accountable dec:decidedBy agent: an f:AccessPolicy with f:action f:modify whose f:query
-    wires ?$identity through wasPromotedBy -> decidedBy."""
-    is_modify = any(
-        (pol, F.action, F.modify) in f_modify_policy
-        for pol in f_modify_policy.subjects(RDF.type, F.AccessPolicy)
-    )
-    query_texts = [str(q) for q in f_modify_policy.objects(None, F.query)]
-    wires_accountable = any(all(ref in q for ref in _MODIFY_REFS) for q in query_texts)
-    return ModifyVerdict(ok=is_modify and wires_accountable,
-                         is_modify=is_modify, wires_accountable=wires_accountable)
+    accountable dec:decidedBy agent: a SINGLE f:AccessPolicy with f:action f:modify whose
+    OWN f:query wires ?$identity through wasPromotedBy -> decidedBy. The is_modify /
+    wires_accountable flags are graph-wide (for diagnostics); ok requires one policy with both."""
+    is_modify = False
+    wires_accountable = False
+    ok = False
+    for pol in f_modify_policy.subjects(RDF.type, F.AccessPolicy):
+        pol_is_modify = (pol, F.action, F.modify) in f_modify_policy
+        pol_wires = any(
+            all(ref in str(q) for ref in _MODIFY_REFS)
+            for q in f_modify_policy.objects(pol, F.query)
+        )
+        is_modify = is_modify or pol_is_modify
+        wires_accountable = wires_accountable or pol_wires
+        if pol_is_modify and pol_wires:
+            ok = True
+    return ModifyVerdict(ok=ok, is_modify=is_modify, wires_accountable=wires_accountable)
