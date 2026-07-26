@@ -255,4 +255,4 @@ tab:colX0 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:d
 tab:colX1 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:double ; rdfs:label "col x1"@en ;
     rdfs:comment "The column's right boundary (boundaries[i+1])."@en .
 tab:covers a owl:ObjectProperty ; rdfs:domain tab:HeaderCell ; rdfs:range tab:GridColumn ; rdfs:label "covers"@en ;
-    rdfs:comment "Derived: a LEAF header cell covers a grid column iff the column's center-x falls within the cell's ink x-extent (header-covers.rq). Evidence-positive, no symmetrization."@en .
+    rdfs:comment "Derived: a LEAF header cell covers the one grid column whose half-open [colX0, colX1) contains the cell's ink center (tab:inkCenterX) — header-covers.rq. Evidence-positive, no symmetrization."@en .

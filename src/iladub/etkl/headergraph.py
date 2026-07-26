@@ -25,9 +25,9 @@ HEADER_COVERS_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "
 
 def header_evidence(header_rows: Sequence[Sequence[object]], grid: LeafGrid) -> Graph:
     """Fresh Graph() for one band's header region. `header_rows` is top-to-bottom; each cell exposes
-    .text/.x0/.x1. Emits one tab:GridColumn per leaf column (colIndex + colCenterX) and one
-    tab:HeaderCell per cell (atHeaderRow = row index, cellIndex = position in row, headerText,
-    inkX0/inkX1). The leaf row is MAX(atHeaderRow)."""
+    .text/.x0/.x1. Emits one tab:GridColumn per leaf column (colIndex, colCenterX, colX0, colX1) and
+    one tab:HeaderCell per cell (atHeaderRow = row index, cellIndex = position in row, headerText,
+    inkX0/inkX1, and inkCenterX = the label's ink midpoint). The leaf row is MAX(atHeaderRow)."""
     g = Graph()
     b = grid.boundaries
     for i in range(grid.ncols):
