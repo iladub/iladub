@@ -232,3 +232,21 @@ tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
 tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .
 tab:UnsupportedTableKind a tab:RegionKind ; rdfs:label "Unsupported table (kind)"@en .
 tab:NonTableKind a tab:RegionKind ; rdfs:label "Non table (kind)"@en .
+
+# --- header-covering evidence graph (transient, pre-holon; loop B) ---
+tab:HeaderCell a owl:Class ; rdfs:label "Header cell"@en ;
+    rdfs:comment "A transient header-region cell (row, text, ink x-extent), evidence for the leaf-row column-covering derivation (header-covers.rq); never asserted into a holon."@en .
+tab:GridColumn a owl:Class ; rdfs:label "Grid column"@en ;
+    rdfs:comment "A transient leaf column (index + center-x), evidence for the covering derivation; never asserted into a holon."@en .
+tab:atHeaderRow a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:integer ; rdfs:label "at header row"@en ;
+    rdfs:comment "0-based header-region row index (0 = topmost). The leaf row is MAX(atHeaderRow)."@en .
+tab:headerText a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range rdfs:Literal ; rdfs:label "header text"@en .
+tab:cellIndex a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:integer ; rdfs:label "cell index"@en ;
+    rdfs:comment "0-based left-to-right position of the cell within its header row."@en .
+tab:inkX0 a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:double ; rdfs:label "ink x0"@en .
+tab:inkX1 a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:double ; rdfs:label "ink x1"@en .
+tab:colIndex a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:integer ; rdfs:label "col index"@en .
+tab:colCenterX a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:double ; rdfs:label "col center x"@en ;
+    rdfs:comment "The x-midpoint of the column: (boundaries[i] + boundaries[i+1]) / 2."@en .
+tab:covers a owl:ObjectProperty ; rdfs:domain tab:HeaderCell ; rdfs:range tab:GridColumn ; rdfs:label "covers"@en ;
+    rdfs:comment "Derived: a LEAF header cell covers a grid column iff the column's center-x falls within the cell's ink x-extent (header-covers.rq). Evidence-positive, no symmetrization."@en .

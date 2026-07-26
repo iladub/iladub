@@ -1,0 +1,17 @@
+# header-covers.rq (loop B, AXIOM) — LEAF-row header→column covering by exact center-in-ink.
+# The leaf header row is the row nearest the body: MAX(?atHeaderRow). A leaf header cell covers a
+# grid column iff that column's center-x falls within the cell's ink x-extent [inkX0, inkX1] —
+# evidence-positive (coverage only where a column center is present under the label ink), open-world,
+# NO symmetrization and NO tuned constant. This is the body-grounded fix for wide single-column
+# labels (e.g. "Reference Number") that the old ink-extent "Merge & Center" symmetrization over-spans.
+# Parent (upper) rows are NOT handled here — they keep the centering-bounded run extension in headers.py.
+# Returns (?hrow ?cellIdx ?cidx): for each leaf header cell (row, cell-index), each covered column index.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?hrow ?cellIdx ?cidx WHERE {
+  { SELECT (MAX(?r) AS ?leaf) WHERE { ?hc a tab:HeaderCell ; tab:atHeaderRow ?r } }
+  ?cell a tab:HeaderCell ; tab:atHeaderRow ?hrow ; tab:cellIndex ?cellIdx ;
+        tab:inkX0 ?x0 ; tab:inkX1 ?x1 .
+  FILTER(?hrow = ?leaf)
+  ?gc a tab:GridColumn ; tab:colIndex ?cidx ; tab:colCenterX ?cx .
+  FILTER(?cx >= ?x0 && ?cx <= ?x1)
+}
