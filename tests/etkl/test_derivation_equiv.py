@@ -7,10 +7,13 @@ cell reference type, no Blank notion) and its old-vs-ref tie test are retired; s
 `_ref_hbs` below.
 """
 import os, random
+from types import SimpleNamespace
 from rdflib import Literal
 from rdflib.namespace import XSD
 from iladub.etkl import celltype
 from iladub.etkl.celltype import _cell_datatype
+from iladub.etkl.grid import LeafGrid
+from iladub.etkl.headergraph import HEADER_COVERS_RQ, header_evidence, run_covers
 
 QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
 
@@ -162,3 +165,45 @@ def test_stub_data_split_new_matches_old():
             old = _run_text(OLD_STUB, cells, ncols, b)
             new = _run_text(new_text, cells, ncols, b)
             assert old == new, f"stub divergence ncols={ncols} split={split} cells={cells}: old={old} new={new}"
+
+
+# ---------- header-covers.rq equivalence (new query vs Python reference) ----------
+
+def _ref_header_covers(header_rows, grid):
+    """Python reference for header-covers.rq: for the LEAF row (max index), a cell covers the one
+    column that CONTAINS its ink center — colX0 <= (x0+x1)/2 < colX1 (half-open, mirrors
+    regions.column_of). Returns {(leaf_row, cell_idx): (col,)} for cells whose center lands in a
+    column (the SPARQL query returns matches only; a center outside all columns yields no entry)."""
+    b = grid.boundaries
+    if not header_rows:
+        return {}
+    leaf = len(header_rows) - 1
+    out = {}
+    for j, cell in enumerate(header_rows[leaf]):
+        center = (cell.x0 + cell.x1) / 2.0
+        cols = tuple(i for i in range(grid.ncols) if b[i] <= center < b[i + 1])
+        if cols:
+            out[(leaf, j)] = cols
+    return out
+
+
+def test_header_covers_new_matches_ref():
+    import random
+    rnd = random.Random(20260726)
+    for _ in range(200):
+        ncols = rnd.randint(2, 6)
+        # strictly-increasing boundaries, each column >= 5 pt wide
+        b = [0.0]
+        for _i in range(ncols):
+            b.append(b[-1] + rnd.uniform(5.0, 90.0))
+        grid = LeafGrid(tuple(b), ncols, (b[-1] - b[0]) / ncols, 1.0)
+        rows = []
+        for _r in range(rnd.randint(1, 3)):
+            cells = []
+            for _c in range(rnd.randint(1, ncols)):
+                x0 = rnd.uniform(b[0], b[-1])
+                x1 = x0 + rnd.uniform(1.0, 140.0)
+                cells.append(SimpleNamespace(text="t", x0=x0, x1=x1))
+            rows.append(cells)
+        got = run_covers(HEADER_COVERS_RQ, header_evidence(rows, grid))
+        assert got == _ref_header_covers(rows, grid)
