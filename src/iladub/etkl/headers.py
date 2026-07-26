@@ -29,6 +29,7 @@ from typing import Sequence
 from .bands import Band
 from .cells import group_wrapped
 from .grid import LeafGrid
+from .headergraph import HEADER_COVERS_RQ, header_evidence, run_covers
 from .regions import column_of
 
 
@@ -403,14 +404,27 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
     if not header_rows:
         return None
 
+    # LEAF row (row nearest the body) covering is a body-grounded AXIOM: a leaf label covers the one
+    # column that CONTAINS its ink center (header-covers.rq). This replaces the "Merge & Center"
+    # ink-extent symmetrization for leaves only, which over-spanned wide single-column labels (e.g.
+    # "Reference Number"). Parent rows keep _covers_for_cell + repair_coverage (the centering-bounded
+    # run extension, B1.1). A leaf column with no leaf label whose center lands in it stays uncovered
+    # here — it may be a terminal "short parent" covered by a shallower node (which repair_coverage /
+    # the parent path resolves), or a genuine gap that correctly fails to tile → honest escalation.
+    leaf_lvl = len(header_rows) - 1
+    covers_map = run_covers(HEADER_COVERS_RQ, header_evidence(header_rows, grid))
+
     nodes: list[HeaderNode] = []
     for lvl, row in enumerate(header_rows):
-        for cell in row:
-            covers = _covers_for_cell(cell, b)
+        for j, cell in enumerate(row):
             cx = (cell.x0 + cell.x1) / 2.0
+            if lvl == leaf_lvl:
+                covers = covers_map.get((lvl, j), ())    # SPARQL leaf covering
+            else:
+                covers = _covers_for_cell(cell, b)        # parent path, unchanged
             nodes.append(HeaderNode(lvl, covers, cell.text, None, cx))
 
-    nodes = repair_coverage(nodes, grid)   # centering-bounded span resolution (B1.1)
+    nodes = repair_coverage(nodes, grid)   # non-leaf levels only (B1.1); leaf covers preserved
 
     # B1.2 — narrow-flank tie detect -> escalate (PROCEDURAL; see resolve_narrow_flanks).
     ink_cols_by_node = []

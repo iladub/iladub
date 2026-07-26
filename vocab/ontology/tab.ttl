@@ -245,8 +245,14 @@ tab:cellIndex a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range x
     rdfs:comment "0-based left-to-right position of the cell within its header row."@en .
 tab:inkX0 a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:double ; rdfs:label "ink x0"@en .
 tab:inkX1 a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:double ; rdfs:label "ink x1"@en .
+tab:inkCenterX a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:double ; rdfs:label "ink center x"@en ;
+    rdfs:comment "The label's ink x-midpoint (inkX0+inkX1)/2, raw geometry. The column whose [colX0,colX1) contains it is the leaf label's column (header-covers.rq)."@en .
 tab:colIndex a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:integer ; rdfs:label "col index"@en .
 tab:colCenterX a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:double ; rdfs:label "col center x"@en ;
     rdfs:comment "The x-midpoint of the column: (boundaries[i] + boundaries[i+1]) / 2."@en .
+tab:colX0 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:double ; rdfs:label "col x0"@en ;
+    rdfs:comment "The column's left boundary (boundaries[i]). With colX1, the half-open [colX0, colX1) that contains a leaf label's ink center determines its column (header-covers.rq; mirrors regions.column_of)."@en .
+tab:colX1 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:double ; rdfs:label "col x1"@en ;
+    rdfs:comment "The column's right boundary (boundaries[i+1])."@en .
 tab:covers a owl:ObjectProperty ; rdfs:domain tab:HeaderCell ; rdfs:range tab:GridColumn ; rdfs:label "covers"@en ;
     rdfs:comment "Derived: a LEAF header cell covers a grid column iff the column's center-x falls within the cell's ink x-extent (header-covers.rq). Evidence-positive, no symmetrization."@en .

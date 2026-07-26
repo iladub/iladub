@@ -170,17 +170,18 @@ def test_stub_data_split_new_matches_old():
 # ---------- header-covers.rq equivalence (new query vs Python reference) ----------
 
 def _ref_header_covers(header_rows, grid):
-    """Python reference for header-covers.rq: for the LEAF row (max index), a cell covers the columns
-    whose center-x is within [inkX0, inkX1]. Returns {(leaf_row, cell_idx): tuple(cols)} for cells that
-    cover >=1 column (the SPARQL query returns matches only)."""
+    """Python reference for header-covers.rq: for the LEAF row (max index), a cell covers the one
+    column that CONTAINS its ink center — colX0 <= (x0+x1)/2 < colX1 (half-open, mirrors
+    regions.column_of). Returns {(leaf_row, cell_idx): (col,)} for cells whose center lands in a
+    column (the SPARQL query returns matches only; a center outside all columns yields no entry)."""
     b = grid.boundaries
-    centers = [(b[i] + b[i + 1]) / 2.0 for i in range(grid.ncols)]
     if not header_rows:
         return {}
     leaf = len(header_rows) - 1
     out = {}
     for j, cell in enumerate(header_rows[leaf]):
-        cols = tuple(i for i, cx in enumerate(centers) if cell.x0 <= cx <= cell.x1)
+        center = (cell.x0 + cell.x1) / 2.0
+        cols = tuple(i for i in range(grid.ncols) if b[i] <= center < b[i + 1])
         if cols:
             out[(leaf, j)] = cols
     return out

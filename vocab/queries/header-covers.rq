@@ -1,17 +1,23 @@
-# header-covers.rq (loop B, AXIOM) — LEAF-row header→column covering by exact center-in-ink.
-# The leaf header row is the row nearest the body: MAX(?atHeaderRow). A leaf header cell covers a
-# grid column iff that column's center-x falls within the cell's ink x-extent [inkX0, inkX1] —
-# evidence-positive (coverage only where a column center is present under the label ink), open-world,
-# NO symmetrization and NO tuned constant. This is the body-grounded fix for wide single-column
-# labels (e.g. "Reference Number") that the old ink-extent "Merge & Center" symmetrization over-spans.
-# Parent (upper) rows are NOT handled here — they keep the centering-bounded run extension in headers.py.
-# Returns (?hrow ?cellIdx ?cidx): for each leaf header cell (row, cell-index), each covered column index.
+# header-covers.rq (loop B, AXIOM) — LEAF-row header→column covering by label-center-in-column.
+# The leaf header row is the row nearest the body: MAX(?atHeaderRow). By the design principle
+# (genuine merged headers are PARENTS; the leaf row is 1:1 with body columns), a leaf label belongs
+# to exactly the one column that CONTAINS its ink center (tab:inkCenterX, raw geometry from
+# headergraph.py — the query stays free of numeric literals): colX0 <= inkCenterX < colX1. This is
+# evidence-positive (the label's own center position determines its column), open-world, NO
+# symmetrization and NO tuned constant. It is the body-grounded fix for wide single-column labels
+# (e.g. "Reference Number"): the label's center sits in one column, so it covers that column only,
+# never the neighbours the old ink-extent "Merge & Center" symmetrization over-spanned. Unlike a
+# center-in-ink test, it also covers ordinary LEFT-ALIGNED leaf labels whose ink does not reach their
+# own column center. A column with no leaf label whose center lands in it stays uncovered here (it may
+# be a terminal "short parent" covered by a shallower node); parent (upper) rows keep the
+# centering-bounded run extension in headers.py.
+# Boundary convention mirrors regions.column_of: colX0 <= center < colX1 (half-open).
+# Returns (?hrow ?cellIdx ?cidx): for each leaf header cell (row, cell-index), the covered column index.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT ?hrow ?cellIdx ?cidx WHERE {
   { SELECT (MAX(?r) AS ?leaf) WHERE { ?hc a tab:HeaderCell ; tab:atHeaderRow ?r } }
-  ?cell a tab:HeaderCell ; tab:atHeaderRow ?hrow ; tab:cellIndex ?cellIdx ;
-        tab:inkX0 ?x0 ; tab:inkX1 ?x1 .
+  ?cell a tab:HeaderCell ; tab:atHeaderRow ?hrow ; tab:cellIndex ?cellIdx ; tab:inkCenterX ?center .
   FILTER(?hrow = ?leaf)
-  ?gc a tab:GridColumn ; tab:colIndex ?cidx ; tab:colCenterX ?cx .
-  FILTER(?cx >= ?x0 && ?cx <= ?x1)
+  ?gc a tab:GridColumn ; tab:colIndex ?cidx ; tab:colX0 ?cx0 ; tab:colX1 ?cx1 .
+  FILTER(?cx0 <= ?center && ?center < ?cx1)
 }

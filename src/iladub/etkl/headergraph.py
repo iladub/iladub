@@ -35,6 +35,8 @@ def header_evidence(header_rows: Sequence[Sequence[object]], grid: LeafGrid) -> 
         g.add((col, RDF.type, TAB.GridColumn))
         g.add((col, TAB.colIndex, Literal(i, datatype=XSD.integer)))
         g.add((col, TAB.colCenterX, Literal((b[i] + b[i + 1]) / 2.0, datatype=XSD.double)))
+        g.add((col, TAB.colX0, Literal(float(b[i]), datatype=XSD.double)))
+        g.add((col, TAB.colX1, Literal(float(b[i + 1]), datatype=XSD.double)))
     for r, row in enumerate(header_rows):
         for j, cell in enumerate(row):
             hc = URIRef(f"{_EV}r{r}c{j}")
@@ -44,6 +46,9 @@ def header_evidence(header_rows: Sequence[Sequence[object]], grid: LeafGrid) -> 
             g.add((hc, TAB.headerText, Literal(cell.text)))
             g.add((hc, TAB.inkX0, Literal(float(cell.x0), datatype=XSD.double)))
             g.add((hc, TAB.inkX1, Literal(float(cell.x1), datatype=XSD.double)))
+            # The label's ink center is raw geometry (PROCEDURAL); the DECISION of which column
+            # contains it stays in header-covers.rq (keeping the query free of numeric literals).
+            g.add((hc, TAB.inkCenterX, Literal((float(cell.x0) + float(cell.x1)) / 2.0, datatype=XSD.double)))
     return g
 
 
