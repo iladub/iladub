@@ -50,8 +50,19 @@ def is_currency(s):
     return bool(_CURRENCY.match(s.strip()))
 
 
+def is_blank(s):
+    """A genuinely-missing cell: empty/whitespace, the self-declaring '(blank)', or a lone '-'.
+    Minimal, self-documenting missing-value recognition (a format signal, like is_date/is_currency)
+    — NOT a broad keyword list; ambiguous markers ('N/A', '0', '-5') are left to their real type."""
+    t = s.strip()
+    return t == "" or t.lower() == "(blank)" or t == "-"
+
+
 def _cell_datatype(t):
-    """Numeric (= is_numeric, UNCHANGED) first, then the format-decidable structured types, else Text."""
+    """Blank (missing) first, then Numeric (= is_numeric), then the format-decidable structured
+    types, else Text."""
+    if is_blank(t):
+        return TAB.Blank
     if is_numeric(t):
         return TAB.Numeric
     if is_date(t):

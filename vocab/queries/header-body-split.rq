@@ -1,38 +1,55 @@
-# header-body-split.rq — MIN body-start row s>=1 such that some column is homogeneous non-Text
-# on [s..end]. AGGREGATION FORM (linear in cells): per column, T = the bottom (max-row) cell's
-# cellDatatype (a self-join-free groupwise-max); a column with bottom type != Text contributes
-#   s_col = MAX(row of a cell whose type != T) + 1   if any cell differs from T
-#         = 1                                          if all its cells share type T (homogeneous)
-# and qualifies only if it has a cell at row >= 1 (a header-only column, all cells at row 0, is
-# excluded). The answer is MIN over qualifying columns. Equivalent to the prior pairwise form (a
-# column is homogeneous non-Text on [s..end] for every s >= s_col with a cell in range) — proven by
-# the celltype differential oracle + the randomized new-vs-reference test
-# (tests/etkl/test_derivation_equiv.py). No pair self-join, no per-split re-evaluation.
-#
-# INVARIANT (load-bearing): this form assumes every row 1..s_col is cell-bearing — true because every
-# band Line has >=1 word (geometry.text_lines; see headers.py:_grid_cells). The no-differing-cell
-# branch hardcodes s_col=1, which equals the old query's cell-bearing-?s domain ONLY under that
-# invariant. An empty-line-preserving band (a future feature) would need the candidate domain
-# widened (as the pre-rewrite pairwise form's ?s = cell-bearing-rows made explicit).
+# header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to a single
+# anomalous bottom row corrupting the reference type, and to missing-value cells. (The reference
+# TYPE is a mode, so one off-type bottom row can't flip it; but the all-rows mismatch scan below
+# is NOT in general robust to a trailing off-type NON-Blank footer inside a data column — a lone
+# such column can yield a split past the body instead of escalating; see Loop B/C.) Per column:
+# D = the MODAL (dominant) non-Blank cellDatatype
+# computed OVER ROWS BELOW THE FIRST (row>=1) — a group-count argmax that answers "what type is the
+# body?" so the single label row (row 0) cannot out-vote the body. SCOPE/HONESTY: row>=1 excludes
+# only row 0 from the mode; a header that WRAPS across rows 1,2,... still votes, so a multi-row
+# wrapped Text header over few data rows can still be mis-typed Text -> the column is excluded ->
+# split escalates. Robust multi-row-wrapped-header recovery is a deferred later loop (Loop B), not
+# claimed here. A DATA column has D != tab:Text and >=1 non-Blank body cell (row>=1). tab:Blank
+# cells are WILDCARDS — excluded from the mode and never a mismatch. The
+# mismatch/diff scan below, by contrast, spans ALL rows (incl. row 0) — that is how the header
+# boundary is located: for a data column,
+#   s_col = MAX(row of a non-Blank cell whose type != D, over ALL rows) + 1   (the label->data
+#           transition),
+#         = 1                                                                  if homogeneous in D.
+# split = MIN(s_col). Empty result -> None (all-text -> caller escalates; unchanged).
+# Replaces the v1 BOTTOM-cell reference (corrupted by total/footer rows) + no missing-value notion.
+# Ties: a count-tie yields multiple D per column; each contributes an s_col and the outer MIN
+# absorbs them (mirrored by the python reference in test_derivation_equiv). No tuned constant.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s_col) AS ?split) WHERE {
   {
-    SELECT ?col (MAX(?diffrow) AS ?maxdiff) (MAX(?crow) AS ?maxrow) WHERE {
+    SELECT ?col ?D (MAX(?diffrow) AS ?maxdiff) (MAX(?bodyrow) AS ?maxbody) WHERE {
+      # D = modal non-Blank datatype for ?col, over rows below the first (row>=1) — argmax of
+      # per-type counts, so the single label row (row 0) cannot out-vote the body. (A header that
+      # wraps into rows 1,2,... is NOT excluded here — that is deferred Loop B, see the header note.)
       {
-        SELECT ?col ?T WHERE {
-          ?bc tab:atGridColumn ?col ; tab:atGridRow ?br ; tab:cellDatatype ?T .
-          { SELECT ?col (MAX(?r2) AS ?maxr) WHERE {
-              ?c2 tab:atGridColumn ?col ; tab:atGridRow ?r2 .
+        SELECT ?col ?D WHERE {
+          { SELECT ?col ?D (COUNT(*) AS ?n) WHERE {
+              ?c tab:atGridColumn ?col ; tab:cellDatatype ?D ; tab:atGridRow ?cr .
+              FILTER(?D != tab:Blank && ?cr >= 1)
+          } GROUP BY ?col ?D }
+          { SELECT ?col (MAX(?n2) AS ?maxn) WHERE {
+              { SELECT ?col ?d2 (COUNT(*) AS ?n2) WHERE {
+                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2 ; tab:atGridRow ?cr2 .
+                  FILTER(?d2 != tab:Blank && ?cr2 >= 1)
+              } GROUP BY ?col ?d2 }
           } GROUP BY ?col }
-          FILTER(?br = ?maxr)
+          FILTER(?n = ?maxn)
         }
       }
-      FILTER(?T != tab:Text)
+      FILTER(?D != tab:Text)
       ?cell tab:atGridColumn ?col ; tab:atGridRow ?crow ; tab:cellDatatype ?ct .
-      BIND(IF(?ct != ?T, ?crow, -1) AS ?diffrow)
-    } GROUP BY ?col
+      FILTER(?ct != tab:Blank)                       # Blank cells are wildcards
+      BIND(IF(?ct != ?D, ?crow, -1) AS ?diffrow)
+      BIND(IF(?crow >= 1, ?crow, -1) AS ?bodyrow)
+    } GROUP BY ?col ?D
   }
   BIND(IF(?maxdiff >= 0, ?maxdiff + 1, 1) AS ?s_cand)
-  BIND(IF(?maxrow >= 1, ?s_cand, -1) AS ?s_col)   # -1 => header-only column (no body cell), excluded
+  BIND(IF(?maxbody >= 1, ?s_cand, -1) AS ?s_col)     # -1 => no non-Blank body cell, excluded
   FILTER(?s_col >= 1)
 }
