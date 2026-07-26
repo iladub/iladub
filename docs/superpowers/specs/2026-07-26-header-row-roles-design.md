@@ -68,8 +68,9 @@ furniture, a wrap-continuation of the labels below it, or a genuine hierarchical
    structural rewrite with no geometry and no constant; continuation placement reuses Loop B's shipped
    `header-covers.rq` AXIOM; disposal is closed-world SHACL, band-scoped; legality gates admission,
    never confidence. No tuned tolerance is introduced anywhere.
-7. Source-ownership clean: `tab:RegionCaption`, `tab:HeaderSourceCell`, `tab:captionText`,
-   `tab:hasCaption`, `tab:hasHeaderSourceCell` are owned `tab:` vocab. No third-party PDF committed.
+7. Source-ownership clean: `tab:RegionCaption`, `tab:HeaderSourceCell`, `tab:hasCaption`,
+   `tab:hasHeaderSourceCell`, `tab:captionText`, `tab:captionRow`, `tab:sourceText`, `tab:sourceRow`
+   are owned `tab:` vocab. No third-party PDF committed.
 
 ---
 
@@ -246,12 +247,20 @@ B1.3's live path cannot run. This loop authors its own function properly and rec
 
 ### 3.4 `vocab/ontology/tab.ttl` + `vocab/shapes/tab-shapes.ttl` — the conservation oracle
 
-New **owned** `tab:` terms (grep the file first — the B2c lesson):
-`tab:RegionCaption a owl:Class`, `tab:HeaderSourceCell a owl:Class`, and properties
-`tab:captionText`, `tab:hasCaption` (Table→RegionCaption), `tab:hasHeaderSourceCell`
-(Table→HeaderSourceCell). `tab:atHeaderRow` and `tab:headerText` already exist from Loop B and are
-**reused**. `tab:HeaderSourceCell` is deliberately *distinct* from Loop B's `tab:HeaderCell`: the
-latter lives only in the transient pre-holon evidence graph, the former is committed and region-bound.
+New **owned** `tab:` terms (grep the file first — the B2c lesson): classes `tab:RegionCaption`,
+`tab:HeaderSourceCell`; object properties `tab:hasCaption` (Table→RegionCaption),
+`tab:hasHeaderSourceCell` (Table→HeaderSourceCell); datatype properties `tab:captionText`,
+`tab:captionRow`, `tab:sourceText`, `tab:sourceRow`.
+
+`tab:HeaderSourceCell` is deliberately *distinct* from Loop B's `tab:HeaderCell`: the latter lives
+only in the transient pre-holon evidence graph, the former is committed and region-bound.
+
+**Loop B's `tab:atHeaderRow` / `tab:headerText` are deliberately NOT reused**, despite the obvious
+temptation. Both carry `rdfs:domain tab:HeaderCell`, and `region_tiles` validates with
+`inference="rdfs"` — so a committed caption bearing them would be *inferred* to be a
+`tab:HeaderCell`, contradicting that class's "transient … never asserted into a holon" definition and
+silently leaking pre-holon evidence vocabulary into the compiled holon. Four dedicated properties are
+the correct cost.
 
 New shape, in the same `sh:sparql` style as the eight tiling shapes:
 
@@ -263,7 +272,7 @@ tab:HeaderContentConservedShape a sh:NodeShape ;
         sh:prefixes tab:prefixes ;
         sh:select """
             SELECT $this WHERE {
-                $this tab:headerText ?txt .
+                $this tab:sourceText ?txt .
                 FILTER NOT EXISTS { ?lc a tab:LabelCell ; tab:cellText ?lt . FILTER(CONTAINS(?lt, ?txt)) }
                 FILTER NOT EXISTS { ?cap a tab:RegionCaption ; tab:captionText ?ct . FILTER(CONTAINS(?ct, ?txt)) }
             }
@@ -357,9 +366,10 @@ All fixtures **synthetic and domain-neutral**; the GrainCorp PDF stays uncommitt
 - **Never overfit.** Validated on synthetic fixtures authored from the *shape* of the problem
   (caption + wrap-at-body-pitch), not on GrainCorp bytes. GrainCorp is a confirmation, not a target;
   its residual 0.947 (not 1.0) is reported as a named gap, not tuned away.
-- **Source ownership.** `tab:RegionCaption`, `tab:HeaderSourceCell`, `tab:captionText`,
-  `tab:hasCaption`, `tab:hasHeaderSourceCell` are owned `tab:` vocab; `tab:atHeaderRow` /
-  `tab:headerText` reused from Loop B. No HGA term appears as a subject. No third-party PDF committed.
+- **Source ownership.** `tab:RegionCaption`, `tab:HeaderSourceCell`, `tab:hasCaption`,
+  `tab:hasHeaderSourceCell`, `tab:captionText`, `tab:captionRow`, `tab:sourceText`, `tab:sourceRow`
+  are owned `tab:` vocab; Loop B's evidence properties are deliberately not reused (§3.4). No HGA
+  term appears as a subject. No third-party PDF committed.
 - **Debt retired:** `group_wrapped`'s `0.9 × lead` ratio stops being the *arbiter* of header wrapping
   (§2 Finding 3). It remains the cheap first-pass grouping; when its grouping yields a tree that
   cannot tile, the NEURAL slice decides. A gate defect is thereby fenced, not left standing.
