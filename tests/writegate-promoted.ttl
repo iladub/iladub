@@ -1,0 +1,29 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix gist:   <https://w3id.org/semanticarts/ns/ontology/gist/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  A FULLY membrane-conformant commit: a complete proposition, promoted by an
+#  accountable decision, producing a grounded node. gate_admits MUST admit this.
+ex:cand a iladub:CandidateConcept ;
+    iladub:surfaceText "Wirkstoffspiegel"@de ;
+    iladub:suggestedAnchor gist:Magnitude ;
+    iladub:suggestedBy ex:extractor-v0 ;
+    iladub:confidence 0.62 ;
+    iladub:fromRegion ex:region-p2 ;
+    iladub:status iladub:proposed .
+
+ex:extractor-v0 a iladub:Suggester ; rdfs:label "iladub extractor v0"@en .
+ex:region-p2 a iladub:SourceRegion ; rdfs:label "page 2"@en .
+
+ex:promo a iladub:PromotionDecision ;
+    iladub:reviews ex:cand ;
+    dec:decidedBy ex:curator-aliki .
+ex:curator-aliki a prov:Agent ; rdfs:label "Dr. A. Curator"@en .
+
+ex:gn a iladub:GroundedNode ;
+    iladub:wasPromotedBy ex:promo ;
+    iladub:groundsTo ex:DrugConcentration ;
+    iladub:status iladub:asserted .

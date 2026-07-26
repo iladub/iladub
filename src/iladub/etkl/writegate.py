@@ -1,0 +1,30 @@
+"""writegate — enforce iladub's promotion invariant at the Fluree WRITE/commit gate.
+
+STRUCTURAL: the commit gate reuses the full iladub epistemic membrane (iladub-shapes.ttl) —
+a grounded node without an accountable promotion is REJECTED at commit. AUTHORIZATION (below):
+a static f:modify AccessPolicy authorizes the write only to the promotion's dec:decidedBy agent.
+This module is PROCEDURAL glue (graph parse, validate delegation, substring presence check) —
+no domain decision, no tuned constant, no CONSTRUCT. f: is Fluree's vocabulary, consumed only
+via the src/iladub/fluree/ template.
+See docs/superpowers/specs/2026-07-25-fmodify-write-gate-design.md.
+"""
+from __future__ import annotations
+
+import os
+
+from rdflib import Graph
+
+from ..validate import validate, ValidationResult
+
+_SHAPES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "shapes", "iladub-shapes.ttl")
+
+
+def commit_gate_shapes() -> Graph:
+    """The commit-gate shape-set: the full iladub epistemic membrane (reused, not re-authored)."""
+    return Graph().parse(_SHAPES, format="turtle")
+
+
+def gate_admits(transaction: Graph, knowledge: Graph) -> ValidationResult:
+    """Would this transaction be admitted at the commit? Validate it against the iladub
+    membrane; .conforms False => REJECTED (e.g. a grounded node with no accountable promotion)."""
+    return validate(transaction, commit_gate_shapes(), knowledge)

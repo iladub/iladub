@@ -1,0 +1,8 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  AN UNACCOUNTABLE WRITE: a grounded node asserted with NO promotion decision.
+#  gate_admits MUST reject this (iladub:GroundedNodeShape wasPromotedBy minCount 1).
+ex:gn a iladub:GroundedNode ;
+    iladub:groundsTo ex:DrugConcentration ;
+    iladub:status iladub:asserted .
