@@ -1,9 +1,10 @@
 """Randomized differential tests for the derivation-scaling rewrite.
 
-Equivalence chain: new query == fast Python reference (`_ref_hbs`) on many random grids,
-AND the Python reference == the OLD (pre-rewrite) query on a few small grids. Together:
-new == ref == old. The Python reference is used for the bulk comparison because the OLD
-O(n^2) query is far too slow to run hundreds of times.
+header-body-split: the shipped query (v2, modal non-Blank column type, Blank wildcard) must equal
+the fast Python reference (`_ref_hbs`, also v2) on many random grids incl. Blank tokens — the
+oracle is the correctness gate for the query (Task 3, loop A robustness). The v1 semantics (bottom-
+cell reference type, no Blank notion) and its old-vs-ref tie test are retired; see the note above
+`_ref_hbs` below.
 """
 import os, random
 from rdflib import Literal
@@ -22,48 +23,46 @@ def _run_text(query_text, cells, ncols, bindings=None):
     return None
 
 
-# The CURRENT (pre-rewrite) header-body-split.rq, verbatim — the ground-truth oracle the fast
-# Python reference is validated against on small grids.
-OLD_HBS = r"""# header-body-split.rq — first body-start row: MIN row s>=1 such that some column is
-# homogeneous non-Text (no Text cell, and no two cells of different cellDatatype) from s to the
-# band end. Empty result -> None (caller escalates). Generalized from all-Numeric (proven vs the
-# Python, 2026-07-16) to homogeneous non-Text (proven, 2026-07-17) — subsumes numeric and adds
-# Date/Currency body-column recall [B2b task 2].
-PREFIX tab: <https://w3id.org/iladub/tab#>
-SELECT (MIN(?s) AS ?split) WHERE {
-  ?anycell tab:atGridRow ?s . FILTER(?s >= 1)
-  FILTER EXISTS {
-    ?cc tab:atGridColumn ?col ; tab:atGridRow ?r1 . FILTER(?r1 >= ?s)
-    FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= ?s) }
-    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
-                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
-                        FILTER(?car >= ?s && ?cbr >= ?s && ?cat != ?cbt) }
-  }
-}
-"""
+# v1 semantics RETIRED in Task 3 (loop A robustness): the bottom-cell reference type was
+# corrupted by real-world total/footer rows and had no missing-value (Blank) notion. The OLD
+# query text and its old-vs-ref tie test are removed; the shipped query and _ref_hbs below are
+# both v2 (modal non-Blank column type, Blank wildcard) — see header-body-split.rq for the design
+# note and docs/superpowers/specs/2026-07-26-header-body-split-robust-design.md.
 
-_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A"]   # (Blank tokens re-added in Task 3 with the v2 reference)
+_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", "(blank)", ""]  # incl. Blank markers
 
 
 def _ref_hbs(cells, ncols):
-    """Fast Python port of the OLD query's 'homogeneous non-Text' semantics. Candidate split
-    rows are CELL-BEARING rows only (the OLD query's ?s ranges over rows with >=1 GridCell) —
-    MIN such s>=1 for which some column has >=1 cell at row>=s, no Text cell at row>=s, and one
-    distinct cellDatatype at row>=s. Types via the SAME celltype._cell_datatype the graph uses."""
-    if not cells:
-        return None
+    """Fast python reference for header-body-split.rq v2: per column D = modal non-Blank datatype
+    (argmax of counts; ALL count-tied datatypes considered); a data column has D != Text and >=1
+    non-Blank body cell (row>=1); s_col = 1 + max row of a non-Blank cell whose type != D (or 1 if
+    homogeneous); Blank cells are wildcards. split = MIN(s_col) over data columns and tied D; None
+    if none qualify. Types via the SAME celltype._cell_datatype the graph uses."""
+    from collections import Counter
+    BLANK = _cell_datatype("")      # tab:Blank
+    TEXT = _cell_datatype("Alice")  # tab:Text
     by_col = {}
-    cell_rows = set()
     for (r, c, t) in cells:
         by_col.setdefault(c, []).append((r, _cell_datatype(t)))
-        cell_rows.add(r)
-    TEXT = _cell_datatype("Alice")   # tab:Text
-    for s in sorted(x for x in cell_rows if x >= 1):
-        for c, cs in by_col.items():
-            suffix = [dt for (r, dt) in cs if r >= s]
-            if suffix and TEXT not in suffix and len(set(suffix)) == 1:
-                return s
-    return None
+    best = None
+    for c, rt in by_col.items():
+        nonblank = [(r, dt) for (r, dt) in rt if dt != BLANK]
+        if not nonblank:
+            continue
+        counts = Counter(dt for _, dt in nonblank)
+        maxn = max(counts.values())
+        modal = [dt for dt, n in counts.items() if n == maxn]   # all count-tied
+        for D in modal:
+            if D == TEXT:
+                continue
+            body = [r for (r, dt) in nonblank if r >= 1]
+            if not body:
+                continue
+            diffs = [r for (r, dt) in nonblank if dt != D]
+            s_col = (max(diffs) + 1) if diffs else 1
+            if s_col >= 1:
+                best = s_col if best is None else min(best, s_col)
+    return best
 
 
 def _rand_grids(seed, n=200, maxrows=9):
@@ -82,14 +81,6 @@ def _rand_grids(seed, n=200, maxrows=9):
             for c in present:
                 cells.append((r, c, rnd.choice(_TYPES)))
         yield cells, ncols
-
-
-def test_ref_hbs_matches_old_query_on_small_grids():
-    """Tie the fast Python reference to the ACTUAL old query on small grids (old query is slow,
-    so few + tiny). Proves _ref_hbs faithfully encodes the shipped query's semantics."""
-    for cells, ncols in _rand_grids(seed=7, n=25, maxrows=5):
-        old = _run_text(OLD_HBS, cells, ncols)
-        assert old == _ref_hbs(cells, ncols), f"ref!=old ncols={ncols} cells={cells}: old={old} ref={_ref_hbs(cells,ncols)}"
 
 
 def test_header_body_split_new_matches_ref():
