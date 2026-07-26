@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "f": "https://ns.flur.ee/db#",
+    "iladub": "https://w3id.org/iladub#"
+  },
+  "@graph": [
+    {
+      "@id": "iladub:accountableWritePolicy",
+      "@type": ["f:AccessPolicy"],
+      "f:required": true,
+      "f:action": [{ "@id": "f:modify" }],
+      "f:onClass": [{ "@id": "https://w3id.org/iladub#GroundedNode" }],
+      "f:query": "{\"where\":[{\"@id\":\"?$this\",\"https://w3id.org/iladub#wasPromotedBy\":{\"@id\":\"?pd\"}},{\"@id\":\"?pd\",\"https://w3id.org/iladub/dec#decidedBy\":{\"@id\":\"?$identity\"}}]}"
+    }
+  ]
+}

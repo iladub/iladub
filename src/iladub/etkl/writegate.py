@@ -11,8 +11,9 @@ See docs/superpowers/specs/2026-07-25-fmodify-write-gate-design.md.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
-from rdflib import Graph
+from rdflib import Graph, Namespace, RDF
 
 from ..validate import validate, ValidationResult
 
@@ -28,3 +29,35 @@ def gate_admits(transaction: Graph, knowledge: Graph) -> ValidationResult:
     """Would this transaction be admitted at the commit? Validate it against the iladub
     membrane; .conforms False => REJECTED (e.g. a grounded node with no accountable promotion)."""
     return validate(transaction, commit_gate_shapes(), knowledge)
+
+
+F = Namespace("https://ns.flur.ee/db#")
+
+# The full IRIs the f:modify f:query must reference to authorize a write ONLY to the
+# promotion's accountable decider.
+_MODIFY_REFS = (
+    "?$identity",
+    "https://w3id.org/iladub#wasPromotedBy",
+    "https://w3id.org/iladub/dec#decidedBy",
+)
+
+
+@dataclass(frozen=True)
+class ModifyVerdict:
+    ok: bool
+    is_modify: bool          # the policy is an f:AccessPolicy with f:action f:modify
+    wires_accountable: bool  # its f:query resolves ?$identity through wasPromotedBy -> decidedBy
+
+
+def certify_modify_authorization(f_modify_policy: Graph) -> ModifyVerdict:
+    """Certify the f:modify policy authorizes a grounded-node write ONLY to the promotion's
+    accountable dec:decidedBy agent: an f:AccessPolicy with f:action f:modify whose f:query
+    wires ?$identity through wasPromotedBy -> decidedBy."""
+    is_modify = any(
+        (pol, F.action, F.modify) in f_modify_policy
+        for pol in f_modify_policy.subjects(RDF.type, F.AccessPolicy)
+    )
+    query_texts = [str(q) for q in f_modify_policy.objects(None, F.query)]
+    wires_accountable = any(all(ref in q for ref in _MODIFY_REFS) for q in query_texts)
+    return ModifyVerdict(ok=is_modify and wires_accountable,
+                         is_modify=is_modify, wires_accountable=wires_accountable)
