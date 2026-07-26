@@ -1,5 +1,9 @@
-# header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to anomalous
-# bottom rows and missing-value cells. Per column: D = the MODAL (dominant) non-Blank cellDatatype
+# header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to a single
+# anomalous bottom row corrupting the reference type, and to missing-value cells. (The reference
+# TYPE is a mode, so one off-type bottom row can't flip it; but the all-rows mismatch scan below
+# is NOT in general robust to a trailing off-type NON-Blank footer inside a data column — a lone
+# such column can yield a split past the body instead of escalating; see Loop B/C.) Per column:
+# D = the MODAL (dominant) non-Blank cellDatatype
 # computed OVER ROWS BELOW THE FIRST (row>=1) — a group-count argmax that answers "what type is the
 # body?" so the single label row (row 0) cannot out-vote the body. SCOPE/HONESTY: row>=1 excludes
 # only row 0 from the mode; a header that WRAPS across rows 1,2,... still votes, so a multi-row
