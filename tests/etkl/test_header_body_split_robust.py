@@ -30,3 +30,22 @@ def test_split_is_true_data_start_despite_placeholders_and_total_row():
     # is Numeric once its '(blank)' placeholder is treated as missing, and the Date column's
     # 'TOTAL' bottom cell must not corrupt the boundary.
     assert _split(CELLS) == 1
+
+
+# Multi-line (wrapped) header: a single column whose 2-row Text header ("Qty" / "(units)")
+# outnumbers its 1-row Numeric body ("100"). If the modal datatype D were computed over ALL rows
+# (the pre-fix bug), Text (2 votes) would out-vote Numeric (1 vote), so D=Text -> the column is
+# excluded -> split wrongly returns None. With D computed over BODY ROWS ONLY (row>=1), the mode
+# is Numeric (the sole body cell) regardless of how many header rows precede it, and the split
+# correctly lands at row 2 (the data start).
+WRAPPED_HEADER_CELLS = [(0, 0, "Qty"), (1, 0, "(units)"), (2, 0, "100")]
+
+
+def test_split_survives_multiline_header_outvoting_body():
+    assert _split(WRAPPED_HEADER_CELLS, ncols=1) == 2
+
+
+def test_all_text_grid_still_returns_none():
+    # Guard: an all-Text column (no non-Text body datatype ever) must still escalate to None —
+    # the body-only mode fix must not manufacture a split where the source supports none.
+    assert _split([(0, 0, "Ship"), (1, 0, "Alpha"), (2, 0, "Beta")], ncols=1) is None

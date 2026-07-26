@@ -34,10 +34,13 @@ _TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", "(blank)", ""
 
 def _ref_hbs(cells, ncols):
     """Fast python reference for header-body-split.rq v2: per column D = modal non-Blank datatype
-    (argmax of counts; ALL count-tied datatypes considered); a data column has D != Text and >=1
-    non-Blank body cell (row>=1); s_col = 1 + max row of a non-Blank cell whose type != D (or 1 if
-    homogeneous); Blank cells are wildcards. split = MIN(s_col) over data columns and tied D; None
-    if none qualify. Types via the SAME celltype._cell_datatype the graph uses."""
+    computed over BODY ROWS ONLY (row>=1) (argmax of counts; ALL count-tied datatypes considered)
+    — a wrapped/multi-line Text header in row 0 must not out-vote the body. A data column has
+    D != Text and >=1 non-Blank body cell (row>=1); s_col = 1 + max row, OVER ALL ROWS (incl. row
+    0), of a non-Blank cell whose type != D (or 1 if homogeneous) — the diff scan locates the
+    header boundary and is deliberately NOT restricted to body rows. Blank cells are wildcards.
+    split = MIN(s_col) over data columns and tied D; None if none qualify. Types via the SAME
+    celltype._cell_datatype the graph uses."""
     from collections import Counter
     BLANK = _cell_datatype("")      # tab:Blank
     TEXT = _cell_datatype("Alice")  # tab:Text
@@ -47,18 +50,16 @@ def _ref_hbs(cells, ncols):
     best = None
     for c, rt in by_col.items():
         nonblank = [(r, dt) for (r, dt) in rt if dt != BLANK]
-        if not nonblank:
+        body = [(r, dt) for (r, dt) in nonblank if r >= 1]
+        if not body:
             continue
-        counts = Counter(dt for _, dt in nonblank)
+        counts = Counter(dt for _, dt in body)          # mode over BODY rows only
         maxn = max(counts.values())
         modal = [dt for dt, n in counts.items() if n == maxn]   # all count-tied
         for D in modal:
             if D == TEXT:
                 continue
-            body = [r for (r, dt) in nonblank if r >= 1]
-            if not body:
-                continue
-            diffs = [r for (r, dt) in nonblank if dt != D]
+            diffs = [r for (r, dt) in nonblank if dt != D]       # diff scan over ALL rows
             s_col = (max(diffs) + 1) if diffs else 1
             if s_col >= 1:
                 best = s_col if best is None else min(best, s_col)

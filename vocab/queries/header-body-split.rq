@@ -1,9 +1,14 @@
 # header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to anomalous
-# bottom rows and missing-value cells. Per column: D = the MODAL (dominant) non-Blank cellDatatype
-# (a group-count argmax); a DATA column has D != tab:Text and >=1 non-Blank body cell (row>=1).
-# tab:Blank cells are WILDCARDS — excluded from the mode and never a mismatch. For a data column,
-#   s_col = MAX(row of a non-Blank cell whose type != D) + 1   (the label->data transition),
-#         = 1                                                    if homogeneous in D.
+# bottom rows, missing-value cells, AND multi-line (wrapped) headers. Per column: D = the MODAL
+# (dominant) non-Blank cellDatatype computed OVER BODY ROWS ONLY (row>=1) — a group-count argmax
+# that answers "what type is the body?" and must not let header rows (row=0), including a wrapped
+# multi-row Text header, out-vote the body. A DATA column has D != tab:Text and >=1 non-Blank body
+# cell (row>=1). tab:Blank cells are WILDCARDS — excluded from the mode and never a mismatch. The
+# mismatch/diff scan below, by contrast, spans ALL rows (incl. row 0) — that is how the header
+# boundary is located: for a data column,
+#   s_col = MAX(row of a non-Blank cell whose type != D, over ALL rows) + 1   (the label->data
+#           transition),
+#         = 1                                                                  if homogeneous in D.
 # split = MIN(s_col). Empty result -> None (all-text -> caller escalates; unchanged).
 # Replaces the v1 BOTTOM-cell reference (corrupted by total/footer rows) + no missing-value notion.
 # Ties: a count-tie yields multiple D per column; each contributes an s_col and the outer MIN
@@ -12,17 +17,18 @@ PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s_col) AS ?split) WHERE {
   {
     SELECT ?col ?D (MAX(?diffrow) AS ?maxdiff) (MAX(?bodyrow) AS ?maxbody) WHERE {
-      # D = modal non-Blank datatype for ?col (argmax of per-type counts)
+      # D = modal non-Blank datatype for ?col, over BODY ROWS ONLY (row>=1) — argmax of per-type
+      # counts, so a wrapped/multi-line Text header (row 0) cannot out-vote the body.
       {
         SELECT ?col ?D WHERE {
           { SELECT ?col ?D (COUNT(*) AS ?n) WHERE {
-              ?c tab:atGridColumn ?col ; tab:cellDatatype ?D .
-              FILTER(?D != tab:Blank)
+              ?c tab:atGridColumn ?col ; tab:cellDatatype ?D ; tab:atGridRow ?cr .
+              FILTER(?D != tab:Blank && ?cr >= 1)
           } GROUP BY ?col ?D }
           { SELECT ?col (MAX(?n2) AS ?maxn) WHERE {
               { SELECT ?col ?d2 (COUNT(*) AS ?n2) WHERE {
-                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2 .
-                  FILTER(?d2 != tab:Blank)
+                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2 ; tab:atGridRow ?cr2 .
+                  FILTER(?d2 != tab:Blank && ?cr2 >= 1)
               } GROUP BY ?col ?d2 }
           } GROUP BY ?col }
           FILTER(?n = ?maxn)
