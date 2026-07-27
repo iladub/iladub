@@ -14,13 +14,18 @@ from rdflib import Graph, Namespace
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
+# The eight tiling invariants (loop C, 2026-07-16) + the header-content conservation oracle
+# (loop C of the GrainCorp push, 2026-07-26). One pySHACL call carries both families; the
+# conservation shape targets tab:HeaderSourceCell, which no pre-existing region emits, so
+# every shipped region is unaffected.
 _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape,
                       TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape,
-                      TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape]
+                      TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape,
+                      TAB.HeaderContentConservedShape]
 
 
 def _build_tiling_shapes():
-    """The eight tiling shapes extracted from the single tab-shapes.ttl as CBDs (+ tab:prefixes,
+    """The eight tiling shapes + the header-content conservation shape, extracted from the single tab-shapes.ttl as CBDs (+ tab:prefixes,
     which the sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file.
     Includes Unambiguous(Row)AccessShape: exactly one LEAF header per column/row — the
     leaf-partition invariant the retired exact-partition Python backstops enforced."""

@@ -245,3 +245,32 @@ tab:BaseFactShape a sh:NodeShape ;
                   sh:message "A base fact has exactly one measureValue." ] ;
     sh:property [ sh:path tab:atDimensionValue ; sh:minCount 1 ;
                   sh:message "A base fact has at least one dimension coordinate." ] .
+
+#################################################################
+#  Content conservation (loop C oracle 2): every header-region
+#  source cell must be accounted for — either merged into an
+#  asserted header label, or carried as a region caption. This is
+#  what refuses the degenerate "everything is furniture" reading
+#  silently deleting real header text.
+#
+#  Graph-scoped, not ?tbl-scoped, on purpose: region_tiles is
+#  invoked on a fresh scratch graph holding ONE candidate region,
+#  so the graph IS the holon — the region is the closure boundary.
+#
+#  Known weakness (stated, not hidden): CONTAINS can let a lost
+#  word pass if it coincidentally occurs inside another label. It
+#  cannot pass a word absent from every label and every caption.
+#################################################################
+
+tab:HeaderContentConservedShape a sh:NodeShape ;
+    sh:targetClass tab:HeaderSourceCell ;
+    sh:sparql [
+        sh:message "Header-region source cell is not accounted for: neither merged into an asserted header label nor carried as a region caption." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:sourceText ?txt .
+                FILTER NOT EXISTS { ?lc a tab:LabelCell ; tab:cellText ?lt . FILTER(CONTAINS(?lt, ?txt)) }
+                FILTER NOT EXISTS { ?cap a tab:RegionCaption ; tab:captionText ?ct . FILTER(CONTAINS(?ct, ?txt)) }
+            }
+        """ ] .

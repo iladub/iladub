@@ -256,3 +256,23 @@ tab:colX1 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:d
     rdfs:comment "The column's right boundary (boundaries[i+1])."@en .
 tab:covers a owl:ObjectProperty ; rdfs:domain tab:HeaderCell ; rdfs:range tab:GridColumn ; rdfs:label "covers"@en ;
     rdfs:comment "Derived: a LEAF header cell covers the one grid column whose half-open [colX0, colX1) contains the cell's ink center (tab:inkCenterX) — header-covers.rq. Evidence-positive, no symmetrization."@en .
+
+# --- committed row-role reading evidence (loop C, GrainCorp push) ---
+# NOTE: loop B's tab:atHeaderRow / tab:headerText are deliberately NOT reused. Both carry
+# rdfs:domain tab:HeaderCell, and region_tiles validates with inference="rdfs", so a committed
+# caption bearing them would be INFERRED to be a tab:HeaderCell — contradicting that class's
+# "transient … never asserted into a holon" definition and leaking pre-holon evidence vocabulary
+# into the compiled holon. Hence dedicated properties.
+tab:RegionCaption a owl:Class ; rdfs:label "Region caption"@en ;
+    rdfs:comment "Document furniture (a title/date/page line) found inside a table's header region and CARRIED rather than dropped: the NEURAL row-role reading classified its row as furniture. Committed to the holon with its source row, so no source text is ever lost (spec §3.1, CLAUDE.md §5/§7)."@en .
+tab:captionText a owl:DatatypeProperty ; rdfs:domain tab:RegionCaption ; rdfs:range rdfs:Literal ; rdfs:label "caption text"@en .
+tab:captionRow a owl:DatatypeProperty ; rdfs:domain tab:RegionCaption ; rdfs:range xsd:integer ; rdfs:label "caption row"@en ;
+    rdfs:comment "0-based header-region row index the furniture line came from (0 = topmost)."@en .
+tab:hasCaption a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:RegionCaption ; rdfs:label "has caption"@en .
+
+tab:HeaderSourceCell a owl:Class ; rdfs:label "Header source cell"@en ;
+    rdfs:comment "A committed record of one header-region source cell, region-bound, and the target of tab:HeaderContentConservedShape: every one must be accounted for either inside an asserted header label or as a tab:RegionCaption. Distinct from tab:HeaderCell, which is transient pre-holon covering evidence."@en .
+tab:sourceText a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:range rdfs:Literal ; rdfs:label "source text"@en .
+tab:sourceRow a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:range xsd:integer ; rdfs:label "source row"@en ;
+    rdfs:comment "0-based header-region row index the cell came from (0 = topmost)."@en .
+tab:hasHeaderSourceCell a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:HeaderSourceCell ; rdfs:label "has header source cell"@en .
