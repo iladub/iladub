@@ -1123,28 +1123,34 @@ def test_compile_tables_accepts_row_role_proposer_kw(tmp_path):
 
 def test_offcenter_merge_still_escalates_with_a_proposer(tmp_path):
     # THE CONTRACT GUARD. Loop B's geometric caption peel broke exactly this: a genuinely
-    # ambiguous off-center merge must NOT be silently asserted. With the proposer answering
-    # honestly ('level' for every non-leaf row), the oracle refuses and the region escalates.
+    # ambiguous off-center merge must NOT be silently asserted. The offcenter fixture's band
+    # has exactly ONE non-leaf header row and does NOT tile, so it genuinely reaches the NEURAL
+    # slice; with the proposer answering honestly ('level'), the reading reproduces the illegal
+    # tree, the ORACLE refuses it, and the region escalates. High confidence must not rescue it.
     p = os.path.join(str(tmp_path), "offcenter.pdf")
     F.offcenter_merge_report_pdf(p)
-    prop = RowRoleProposal(("level",) * 8, 0.99, "genuine group labels")
+    prop = RowRoleProposal(("level",), 0.99, "genuine group label")
     rep = compile_tables(p, row_role_proposer=FakeRowRoleProposer(prop))
     assert "MERGE_AMBIGUOUS" in _reasons(rep), _reasons(rep)
 
 
 def test_shipped_pivot_unaffected_by_a_proposer(tmp_path):
-    # a region that already tiles never reaches the NEURAL slice, so an aggressive proposer
-    # cannot change it.
+    # a region that already tiles never reaches the NEURAL slice, so even an aggressive
+    # well-formed proposal cannot change it.
     p = os.path.join(str(tmp_path), "pivot.pdf")
     F.pivoted_table_pdf(p)
-    prop = RowRoleProposal(("furniture",) * 8, 0.99, "aggressive")
+    prop = RowRoleProposal(("furniture",), 0.99, "aggressive")
     base = compile_tables(p)
     withp = compile_tables(p, row_role_proposer=FakeRowRoleProposer(prop))
     assert _verdicts(base) == _verdicts(withp)
     assert _reasons(base) == _reasons(withp)
 ```
 
-Note on `("level",) * 8` and `("furniture",) * 8`: the role vector length must equal the number of non-leaf header rows, which these fixtures do not expose. A wrong length is **refused** by `build_row_reading` — which is exactly the safe outcome these two tests assert (escalation / no change). Both tests therefore pass whether the length happens to match or not, and neither can pass by accident in the wrong direction.
+**Role-vector lengths are measured, not guessed** (verified during pre-flight): the `offcenter_merge_report_pdf` band has `split=2`, 2 header rows → **1 non-leaf row**, and its tree does **not** tile (so it genuinely reaches the resolver). The `pivoted_table_pdf` band has `split=3`, 2 header rows → **1 non-leaf row**, and its tree **does** tile (so the resolver is never reached).
+
+This matters: a wrong-length vector is refused by `build_row_reading` as *malformed*, which would make the contract guard pass without ever exercising the oracle — the test would be green for the wrong reason. Length 1 makes the refusal come from `region_tiles`, which is what the test claims to prove.
+
+If Task 4's `test_all_level_reading_is_refused_by_the_oracle` and this test ever disagree, trust neither and re-measure the fixture.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
