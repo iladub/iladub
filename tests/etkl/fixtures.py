@@ -752,6 +752,56 @@ def offcenter_merge_report_pdf(path: str) -> dict:
     return {"labels": ["LEFT", "RIGHT"], "expect": "MERGE_AMBIGUOUS"}
 
 
+def caption_wrap_report_pdf(path: str) -> dict:
+    """Loop C fixture: a leaked date CAPTION row + a wrap-CONTINUATION row, over a clean
+    4-column leaf table (Item/Ref/Qty/Cost) — the real-PDF analogue of
+    test_rowrole_reading.caption_and_wrap_band. UNIFORM 18pt line spacing throughout
+    (header leading == body leading) so group_wrapped's adaptive wrap-continuation gap
+    cannot absorb 'Unit' into the leaf row — the exact condition loop C exists for
+    (headers.header_rows_of's KNOWN LIMIT).
+
+    Row 0 (caption):      'Monday' + '05May2026', two centered words whose symmetrized
+                           column-spans OVERLAP at column 1 (Ref) — the same level-0
+                           overlap mechanism as offcenter_merge_report_pdf, so
+                           merge_tiling_ok is False and the region reaches the NEURAL
+                           slice. Geometry is empirically verified (see
+                           tests/etkl/test_rowrole_integration.py) to route
+                           UNSUPPORTED_TABLE -> classify_hierarchical (a HierRegion) with
+                           a non-tiling tree.
+    Row 1 (wrap):          'Unit', centered over the Ref column only — a wrap fragment
+                           that, read as a 'continuation', merges onto 'Ref' -> 'Unit Ref'.
+    Row 2 (leaf labels):   Item | Ref | Qty | Cost.
+    Rows 3-4 (body):       text/text/numeric/text, so header_body_split resolves (Qty
+                           is the sole homogeneous-numeric data column) while Cost stays
+                           Text — breaking the clean stub|data suffix so the region does
+                           NOT reach is_matrix_candidate (mirrors offcenter's mixed-type
+                           body routing the hierarchical, not matrix, path).
+
+    Coordinates are load-bearing — do not change them without re-verifying (via
+    tests/etkl/test_rowrole_integration.py) that the no-proposer case still escalates
+    MERGE_AMBIGUOUS and the with-proposer(furniture, continuation) case still asserts.
+    """
+    cols = [72.0, 200.0, 330.0, 460.0]           # Item, Ref, Qty, Cost
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+    rh = 18.0                                     # uniform leading, header == body
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString(240.0, top, "Monday")
+    c.drawCentredString(300.0, top, "05May2026")
+    c.drawCentredString(cols[1] + 15.0, top - rh, "Unit")
+    c.setFont("Courier", 10)
+    for x, lbl in zip(cols, ["Item", "Ref", "Qty", "Cost"]):
+        c.drawString(x, top - 2 * rh, lbl)
+    body = [("aa", "R1", "10", "ok"), ("bb", "R2", "20", "no")]
+    for i, row in enumerate(body):
+        y = top - (3 + i) * rh
+        for x, v in zip(cols, row):
+            c.drawString(x, y, v)
+    c.save()
+    return {"cols": cols, "caption": ["Monday", "05May2026"], "wrap": "Unit",
+            "merged_label": "Unit Ref", "leaf_labels": ["Item", "Ref", "Qty", "Cost"]}
+
+
 def image_only_table_pdf(path):
     """A text-layer-LESS PDF: render simple_table_pdf to a raster and place it full-page.
     Pure-pip (PNG, no JPEG encoder). Simulates a scan for the OCR first-mile tests."""

@@ -223,10 +223,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 hreg = classify_hierarchical(band)
                 from .headers import merge_tiling_ok
                 if hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
+                    table_uri = URIRef(f"{_DOC}#htable{idx}")
                     resolved = None
                     if span_proposer is not None:
                         from .span import resolve_ambiguous_merge
-                        table_uri = URIRef(f"{_DOC}#htable{idx}")
                         resolved = resolve_ambiguous_merge(
                             graph, hreg, band, table_uri, _DOC, page_number, span_proposer)
                     if resolved is None and row_role_proposer is not None:
@@ -234,7 +234,6 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         # on an explicit ambiguous_flank flag, a strictly narrower trigger. This
                         # handles the general tiling failure (caption / wrap-continuation rows).
                         from .rowrole import resolve_header_row_roles
-                        table_uri = URIRef(f"{_DOC}#htable{idx}")
                         resolved = resolve_header_row_roles(
                             graph, hreg, band, table_uri, _DOC, page_number, row_role_proposer)
                     if resolved is not None:
