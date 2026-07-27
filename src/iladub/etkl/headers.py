@@ -376,41 +376,42 @@ def merge_tiling_ok(tree: Sequence[HeaderNode], grid: LeafGrid) -> bool:
     return True
 
 
-def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[HeaderNode, ...] | None:
-    """Header-tree from the header lines (0..body_line-1).
+def header_rows_of(band: Band, grid: LeafGrid, body_line: int) -> list:
+    """The header rows (wrapped cell rows whose first cell precedes the body line), top to bottom.
 
-    Calls group_wrapped on the FULL band so the body-row pitch (not the narrow
-    header-only pitch) governs the wrap-continuation threshold — correctly absorbing
-    tight (SI) lines into their parent sub-header cells rather than producing a
-    spurious extra level.
+    Calls group_wrapped on the FULL band so the body-row pitch (not the narrow header-only pitch)
+    governs the wrap-continuation threshold — correctly absorbing tight (SI) lines into their
+    parent sub-header cells rather than producing a spurious extra level.
 
-    For each header row (ordered by level from top to bottom), each cell's column
-    span is determined by center-of-mass symmetrization (see _covers_for_cell).
-    Parent links are set to the nearest same-or-coarser node one level up whose
-    covers contain this node's covers.
+    KNOWN LIMIT (the reason loop C exists): when the header's leading EQUALS the body's leading
+    (measured on the GrainCorp report: 6.6pt vs 6.5pt), the 0.9x-lead threshold cannot fire and
+    genuine wrap-continuation rows survive as separate rows. That ratio must NOT be tuned — which
+    row is a wrap fragment is a reading judgment, decided by the NEURAL row-role proposer
+    (rowrole.py) once the resulting tree fails to tile.
 
-    Returns None if no header rows are identified (ambiguous → escalate).
+    Using row[0].top (not max) is safe because header rows are compact; if the first
+    (leftmost-column) cell precedes body_top, the row is a header row.
     """
-    b = grid.boundaries
-    # Use the FULL band so lead = body-row pitch ≈ 18 pt → threshold ≈ 16.2 pt,
-    # which absorbs the (SI) gap (≈ 13 pt) correctly.
     all_rows = group_wrapped(band, grid)
     body_top = band.lines[body_line].top
+    return [row for row in all_rows if row and row[0].top < body_top]
 
-    # Header rows: wrapped rows whose first cell's top precedes the body line.
-    # Using row[0].top (not max) is safe because header rows are compact; if the
-    # first (leftmost-column) cell precedes body_top, the row is a header row.
-    header_rows = [row for row in all_rows if row and row[0].top < body_top]
-    if not header_rows:
-        return None
 
-    # LEAF row (row nearest the body) covering is a body-grounded AXIOM: a leaf label covers the one
-    # column that CONTAINS its ink center (header-covers.rq). This replaces the "Merge & Center"
-    # ink-extent symmetrization for leaves only, which over-spanned wide single-column labels (e.g.
-    # "Reference Number"). Parent rows keep _covers_for_cell + repair_coverage (the centering-bounded
-    # run extension, B1.1). A leaf column with no leaf label whose center lands in it stays uncovered
-    # here — it may be a terminal "short parent" covered by a shallower node (which repair_coverage /
-    # the parent path resolves), or a genuine gap that correctly fails to tile → honest escalation.
+def _tree_from_rows(header_rows, grid: LeafGrid) -> tuple[HeaderNode, ...]:
+    """The header tree over a GIVEN list of header rows (top to bottom; the last is the leaf row).
+
+    LEAF row covering is a body-grounded AXIOM: a leaf label covers the one column that CONTAINS
+    its ink center (header-covers.rq). This replaces the "Merge & Center" ink-extent symmetrization
+    for leaves only, which over-spanned wide single-column labels (e.g. "Reference Number").
+    Parent rows keep _covers_for_cell + repair_coverage (the centering-bounded run extension,
+    B1.1). A leaf column with no leaf label whose center lands in it stays uncovered here — it may
+    be a terminal "short parent" covered by a shallower node (which repair_coverage / the parent
+    path resolves), or a genuine gap that correctly fails to tile -> honest escalation.
+
+    Factored out of infer_header_tree so the loop-C NEURAL slice (rowrole.build_row_reading) can
+    build the same tree over a FILTERED row list without duplicating this pipeline.
+    """
+    b = grid.boundaries
     leaf_lvl = len(header_rows) - 1
     covers_map = run_covers(HEADER_COVERS_RQ, header_evidence(header_rows, grid))
 
@@ -449,3 +450,12 @@ def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[Heade
         linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx,
                                  n.center_x, n.ambiguous, n.ambiguous_flank))
     return tuple(linked)
+
+
+def infer_header_tree(band: Band, grid: LeafGrid, body_line: int) -> tuple[HeaderNode, ...] | None:
+    """Header-tree from the header lines (0..body_line-1). Returns None if no header rows are
+    identified (ambiguous → escalate). See header_rows_of + _tree_from_rows."""
+    header_rows = header_rows_of(band, grid, body_line)
+    if not header_rows:
+        return None
+    return _tree_from_rows(header_rows, grid)
