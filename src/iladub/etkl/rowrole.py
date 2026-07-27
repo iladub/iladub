@@ -81,8 +81,8 @@ def row_role_context(header_rows, grid) -> dict:
 def build_row_reading(header_rows, grid, roles):
     """Rewrite the header tree under a proposed role vector. Pure structural rewrite — no
     geometry decision, no tuned constant. Returns (nodes, captions, source_cells), or None to
-    REFUSE (an empty header_rows, a malformed vector, or a continuation fragment whose ink
-    center does not lie in any column and so cannot be placed).
+    REFUSE (an empty header_rows, a malformed vector, or a continuation fragment that cannot be
+    placed — its ink center lies in no column at all, or in a column no leaf label covers).
 
     level        -> the row stays a header level and flows through the UNCHANGED
                     _covers_for_cell + repair_coverage + resolve_narrow_flanks pipeline, so
