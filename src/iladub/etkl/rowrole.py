@@ -157,3 +157,50 @@ def emit_reading_evidence(g, table_uri, captions, source_cells):
         g.add((sc, TAB.sourceText, Literal(text)))
         g.add((sc, TAB.sourceRow, Literal(row, datatype=XSD.integer)))
         g.add((table_uri, TAB.hasHeaderSourceCell, sc))
+
+
+def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, proposer):
+    """NEURAL propose -> SHACL-oracle dispose -> promote for a header region whose geometric tree
+    does not tile (loop C). The direct analogue of span.resolve_ambiguous_merge.
+
+    ONE proposal, ONE disposal, NO search (see the module docstring: 'all furniture' is always
+    legal, so search would converge on it and strip real header labels). Returns
+    (asserted_token_count, (promotion_uri, ...)) on success, or None -> the caller escalates
+    MERGE_AMBIGUOUS with `graph` untouched.
+
+    Legality gates admission, never confidence: a reading whose scratch region fails region_tiles
+    (the eight tiling shapes OR HeaderContentConservedShape) is refused regardless of
+    proposal.confidence.
+    """
+    from dataclasses import replace as _replace
+    from rdflib import Graph
+    from .headers import header_rows_of
+    from .holon import assert_hier_region
+    from .promote import emit_row_role_promotion
+    from .tiling import region_tiles
+
+    header_rows = header_rows_of(band, hreg.grid, hreg.body_line)
+    if len(header_rows) < 2:
+        return None                            # no non-leaf row to classify -> caller escalates
+
+    proposal = proposer.propose_header_row_roles(row_role_context(header_rows, hreg.grid))
+    if proposal is None:
+        return None                            # abstain -> escalate
+
+    built = build_row_reading(header_rows, hreg.grid, tuple(proposal.roles))
+    if built is None:
+        return None                            # malformed / unplaceable -> escalate
+    nodes, captions, source_cells = built
+
+    scratch = Graph()
+    n = assert_hier_region(scratch, _replace(hreg, tree=nodes), band, table_uri, doc_uri, page)
+    emit_reading_evidence(scratch, table_uri, captions, source_cells)
+    if n <= 0 or not region_tiles(scratch):
+        return None                            # illegal or lossy -> oracle refuses -> escalate
+
+    graph += scratch
+    promo_uris = tuple(
+        emit_row_role_promotion(graph, table_uri, r, role, [c.text for c in header_rows[r]], proposal)
+        for r, role in enumerate(proposal.roles)
+    )
+    return n, promo_uris

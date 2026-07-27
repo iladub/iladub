@@ -97,3 +97,40 @@ def emit_span_promotion(g, region_uri, node_text, flank, choice, proposal):
         "proposition. Rationale: %s" % (flank, choice, proposal.rationale))))
     g.add((pd, DEC.produced, region_uri))
     return pd
+
+
+def emit_row_role_promotion(g, region_uri, row_index, role, texts, proposal):
+    """Write the CandidateConcept + PromotionDecision for a NEURAL header-region row-role reading
+    (loop C). The reading is a PROPOSITION: region_tiles (tiling + content conservation) has
+    confirmed it is structurally LEGAL and LOSSLESS, but no oracle can rank two legal readings —
+    'furniture' and 'continuation' both tile and both conserve — so it is admitted accountably,
+    never asserted as grounded truth (§3). Returns the PromotionDecision uri."""
+    agent = _suggester(g, proposal)
+    confidence = Literal(Decimal(str(round(proposal.confidence, 6))))
+    surface = " ".join(texts)
+
+    cand = BNode()
+    g.add((cand, RDF.type, ILADUB.CandidateConcept))
+    g.add((cand, RDFS.label, Literal("header row %d read as %s" % (row_index, role))))
+    g.add((cand, ILADUB.surfaceText, Literal(surface)))
+    g.add((cand, ILADUB.suggestedBy, agent))
+    g.add((cand, ILADUB.suggestedAnchor, GIST.Category))
+    g.add((cand, ILADUB.fromRegion, region_uri))
+    g.add((cand, ILADUB.status, ILADUB.proposed))
+    g.add((cand, ILADUB.confidence, confidence))
+
+    pd = URIRef("%s-rowrole-promotion-r%d-%s" % (region_uri, row_index, _slug(role)))
+    g.add((pd, RDF.type, ILADUB.PromotionDecision))
+    g.add((pd, ILADUB.reviews, cand))
+    g.add((pd, DEC.decidedBy, agent))
+    g.add((pd, DEC.consideredEvidence, region_uri))
+    g.add((pd, DEC.consideredEvidence, cand))
+    g.add((pd, DEC.confidence, confidence))
+    g.add((pd, DEC.rationale, Literal(
+        "Header-region row %d ('%s') read as '%s'. Geometry cannot decide this (a caption and an "
+        "off-center merge are structurally identical, and the wrap-pitch threshold cannot fire "
+        "when header leading equals body leading); region_tiles confirms the reading is "
+        "structurally legal and loses no source text, but NOT that it is unique — admitted as a "
+        "proposition. Rationale: %s" % (row_index, surface, role, proposal.rationale))))
+    g.add((pd, DEC.produced, region_uri))
+    return pd
