@@ -3,6 +3,9 @@
 - **Date:** 2026-07-26
 - **Author:** François Rosselet
 - **Status:** Design (brainstormed, approved). Third loop of the GrainCorp real-document capability push.
+  **SHIPPED 2026-07-27:** GrainCorp 0.0 → 0.947 (447 cells), matching planning-time predictions exactly
+  (full suite 583 passed / 5 skipped, no regressions); residues = leaf-grid under-segmentation of
+  columns 1 (`Month Port`) and 13 (`Date Loading CompletedCommodityTotal`), confirmed present verbatim.
 - **Predecessor:** `2026-07-26-header-column-reconciliation-design.md` (Loop B) shipped **Cause A** — the
   leaf-row covering as a body-grounded SPARQL AXIOM — and *deferred* **Cause B** (the caption line) to a
   NEURAL loop, because a geometric peel cannot distinguish a leaked caption from a genuinely-ambiguous
