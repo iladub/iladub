@@ -97,3 +97,55 @@ class BamlSpanProposer:
             rationale=r.rationale,
             suggester_iri="urn:iladub:suggester/baml.ProposeHeaderSpan",
         )
+
+
+@dataclass(frozen=True)
+class RowRoleProposal:
+    """A proposed reading of a table's header region (loop C). `roles` is parallel to the
+    NON-LEAF header rows, top to bottom; each entry is 'furniture' (document furniture — a
+    title/date line, carried as a tab:RegionCaption), 'continuation' (a wrap fragment whose
+    text merges into the leaf label of its column) or 'level' (a genuine hierarchical parent).
+
+    The reading is a PROPOSITION (§3): admitted only via a PromotionDecision after region_tiles
+    confirms it is structurally legal AND lossless — never asserted as grounded truth. Geometry
+    cannot decide it (a caption and an off-center merge are structurally identical, and the
+    wrap-pitch ratio fails when header leading equals body leading), and no oracle can rank two
+    legal readings — hence NEURAL."""
+    roles: tuple[str, ...]
+    confidence: float
+    rationale: str
+    suggester_iri: str = "urn:iladub:suggester/recorded-rowrole-proposer"
+
+
+class RowRoleProposer(Protocol):
+    def propose_header_row_roles(self, context: dict) -> "RowRoleProposal | None": ...
+
+
+@dataclass(frozen=True)
+class FakeRowRoleProposer:
+    """Deterministic offline row-role proposer for tests/showcase. Returns its fixed proposal
+    (or None to model abstention)."""
+    proposal: "RowRoleProposal | None"
+
+    def propose_header_row_roles(self, context):
+        return self.proposal
+
+
+class BamlRowRoleProposer:
+    """Live row-role proposer — calls the BAML ProposeHeaderRowRoles function. Lazy: baml_client
+    is imported only inside the method, so constructing this never triggers the version guard.
+    NEURAL propose seam; env-gated by baml_proposer_available()."""
+
+    def propose_header_row_roles(self, context):
+        from baml_client import sync_client
+        r = sync_client.b.ProposeHeaderRowRoles(
+            context.get("rows"),
+            context.get("leaf_labels"),
+            context.get("row_columns"),
+        )
+        return RowRoleProposal(
+            roles=tuple(r.roles),
+            confidence=r.confidence,
+            rationale=r.rationale,
+            suggester_iri="urn:iladub:suggester/baml.ProposeHeaderRowRoles",
+        )
