@@ -73,9 +73,11 @@ def test_furniture_plus_continuation_tiles_with_the_merged_label():
 def test_all_level_reproduces_the_failing_tree():
     # the contract guard at the unit level: reading every row as a genuine level must NOT
     # invent a tiling — it reproduces today's tree and stays illegal.
-    rows = header_rows_of(caption_and_wrap_band(), GRID, 3)
+    band = caption_and_wrap_band()
+    rows = header_rows_of(band, GRID, 3)
     nodes, _caps, _src = build_row_reading(rows, GRID, ("level", "level"))
     assert merge_tiling_ok(nodes, GRID) is False
+    assert nodes == infer_header_tree(band, GRID, 3)
 
 
 def test_wrong_length_role_vector_is_refused():
@@ -86,6 +88,39 @@ def test_wrong_length_role_vector_is_refused():
 def test_unknown_role_is_refused():
     rows = header_rows_of(caption_and_wrap_band(), GRID, 3)
     assert build_row_reading(rows, GRID, ("furniture", "wrap")) is None
+
+
+def out_of_grid_caption_band():
+    """Row 0's cell sits entirely LEFT of the grid boundaries (100..300): ink center 40, a
+    page-margin-flush leaked line — reproduces the Critical finding's repro case (a text
+    fragment with no covering column at all). Coordinates are load-bearing."""
+    cap = [_w("Report", 20, 60, 0.0)]
+    leaf = [_w("Item", 110, 140, 12.0), _w("Ref", 155, 172, 12.0),
+            _w("Qty", 205, 230, 12.0), _w("Cost", 255, 285, 12.0)]
+    d1 = [_w("aa", 110, 140, 24.0), _w("R1", 155, 172, 24.0),
+          _w("10", 205, 230, 24.0), _w("1.5", 255, 285, 24.0)]
+    d2 = [_w("bb", 110, 140, 36.0), _w("R2", 155, 172, 36.0),
+          _w("20", 205, 230, 36.0), _w("2.5", 255, 285, 36.0)]
+    return Band((_line(cap, 0.0), _line(leaf, 12.0), _line(d1, 24.0), _line(d2, 36.0)), 0.0, 46.0)
+
+
+def test_out_of_grid_continuation_is_refused():
+    # regression test for the Critical finding: column_of CLAMPED an out-of-grid ink center
+    # onto the rightmost column, silently welding "Report" onto "Cost" -> "Report Cost". The
+    # fix refuses instead of guessing a placement.
+    rows = header_rows_of(out_of_grid_caption_band(), GRID, 2)
+    assert build_row_reading(rows, GRID, ("continuation",)) is None
+
+
+def test_context_reports_negative_one_for_out_of_grid_cell():
+    ctx = row_role_context(header_rows_of(out_of_grid_caption_band(), GRID, 2), GRID)
+    assert ctx["rows"] == [["Report"]]
+    assert ctx["row_columns"] == [[-1]]
+
+
+def test_empty_header_rows_refuses_and_returns_empty_context():
+    assert build_row_reading([], GRID, ()) is None
+    assert row_role_context([], GRID) == {"rows": [], "leaf_labels": [], "row_columns": []}
 
 
 def test_unplaceable_continuation_is_refused():

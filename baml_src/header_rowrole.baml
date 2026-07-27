@@ -24,9 +24,11 @@ function ProposeHeaderRowRoles(
 
     Use the column indices to see WHICH label a fragment would complete: a fragment sitting over
     the same column as a label below it, that reads as the start of a longer name, is a
-    "continuation". Prefer "continuation" over "furniture" whenever a fragment plausibly reads as
-    part of a label — "furniture" discards text from the table, so it is the lossy answer and must
-    be reserved for lines that genuinely are not header content.
+    "continuation". A column index of -1 means the cell's ink sits outside every column of the
+    table — a strong signal that the row is "furniture", not a "continuation". Prefer
+    "continuation" over "furniture" whenever a fragment plausibly reads as part of a label —
+    "furniture" discards text from the table, so it is the lossy answer and must be reserved for
+    lines that genuinely are not header content.
 
     Return one role per row above the bottom row, in order.
     {{ ctx.output_format }}
