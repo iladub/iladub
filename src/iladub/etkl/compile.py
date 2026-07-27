@@ -72,7 +72,8 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 
 def compile_tables(pdf_path: str, page_number: int = 0,
-                   validate_shapes: bool = True, span_proposer=None) -> CompilationReport:
+                   validate_shapes: bool = True, span_proposer=None,
+                   row_role_proposer=None) -> CompilationReport:
     from .geometry import extract_rules, extract_chars, rule_aware_lines, extract_hrules
     from .bands import Band as _Band
     from dataclasses import replace as _replace
@@ -228,6 +229,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         table_uri = URIRef(f"{_DOC}#htable{idx}")
                         resolved = resolve_ambiguous_merge(
                             graph, hreg, band, table_uri, _DOC, page_number, span_proposer)
+                    if resolved is None and row_role_proposer is not None:
+                        # Loop C NEURAL slice. The narrow-flank resolver keeps priority: it fires
+                        # on an explicit ambiguous_flank flag, a strictly narrower trigger. This
+                        # handles the general tiling failure (caption / wrap-continuation rows).
+                        from .rowrole import resolve_header_row_roles
+                        table_uri = URIRef(f"{_DOC}#htable{idx}")
+                        resolved = resolve_header_row_roles(
+                            graph, hreg, band, table_uri, _DOC, page_number, row_role_proposer)
                     if resolved is not None:
                         n, _promos = resolved
                         tokens = sum(len(ln.words) for ln in band.lines)
