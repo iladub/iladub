@@ -3,13 +3,14 @@
 Legality gates admission, never confidence. On any refusal the graph MUST be untouched and the
 caller escalates MERGE_AMBIGUOUS. See spec §3.1.
 """
+import pytest
 from rdflib import Graph, Namespace, RDF, URIRef
 
 from iladub.etkl.hierarchical import classify_hierarchical
 from iladub.etkl.headers import merge_tiling_ok
 from iladub.etkl.propose import FakeRowRoleProposer, RowRoleProposal
 from iladub.etkl.rowrole import resolve_header_row_roles
-from tests.etkl.test_rowrole_reading import GRID, caption_and_wrap_band
+from tests.etkl.test_rowrole_reading import caption_and_wrap_band
 
 ILADUB = Namespace("https://w3id.org/iladub#")
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -92,7 +93,6 @@ def test_single_header_row_never_calls_the_proposer():
 
     from iladub.etkl.bands import Band
     from iladub.etkl.geometry import Line, Word
-    from iladub.etkl.hierarchical import HierRegion
 
     def _w(t, x0, x1, top):
         return Word(t, x0, x1, top, top + 10.0)
@@ -107,8 +107,46 @@ def test_single_header_row_never_calls_the_proposer():
     band = Band((_line(leaf, 0.0), _line(d1, 12.0)), 0.0, 22.0)
     hreg = classify_hierarchical(band)
     if hreg is None:                            # a 2-line band may not classify; skip if so
-        return
+        pytest.skip("band did not classify as hierarchical")
     g = Graph()
     out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, _Exploding())
     assert out is None
     assert len(g) == 0
+
+
+def test_generator_valued_roles_still_promotes():
+    # Regression: proposal.roles must be materialised ONCE and reused, not re-iterated. A
+    # generator is a single-consumption iterable — if the driver consumes it once to build
+    # the reading and again to emit promotions, the second pass silently yields zero
+    # promotions while the reading still commits (a proposition passing as an assertion).
+    hreg, band = _hreg_and_band()
+    g = Graph()
+    roles_gen = (r for r in ("furniture", "continuation"))
+    prop = RowRoleProposal(roles_gen, 0.8, "test rationale")
+    out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, FakeRowRoleProposer(prop))
+    assert out is not None, "a legal, lossless reading must resolve even with a generator"
+    n_asserted, promos = out
+    assert n_asserted > 0
+    assert len(promos) == 2, "one promotion per classified non-leaf row"
+    assert len(list(g.subjects(RDF.type, ILADUB.PromotionDecision))) == 2
+
+
+def test_proposer_is_called_exactly_once():
+    # THE LOAD-BEARING INVARIANT: no search over the role space. 'all furniture' is always
+    # legal and always conserves, so a retry loop or per-row calling would converge on it
+    # and strip real header labels. A counting proposer makes any hidden retry visible.
+    class _Counting:
+        def __init__(self, proposal):
+            self.proposal = proposal
+            self.calls = 0
+
+        def propose_header_row_roles(self, context):
+            self.calls += 1
+            return self.proposal
+
+    hreg, band = _hreg_and_band()
+    g = Graph()
+    counting = _Counting(RowRoleProposal(("furniture", "continuation"), 0.8, "test rationale"))
+    out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, counting)
+    assert out is not None
+    assert counting.calls == 1, "the proposer must be consulted exactly once per invocation"

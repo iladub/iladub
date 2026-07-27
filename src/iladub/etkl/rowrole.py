@@ -187,7 +187,8 @@ def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, propos
     if proposal is None:
         return None                            # abstain -> escalate
 
-    built = build_row_reading(header_rows, hreg.grid, tuple(proposal.roles))
+    roles = tuple(proposal.roles)
+    built = build_row_reading(header_rows, hreg.grid, roles)
     if built is None:
         return None                            # malformed / unplaceable -> escalate
     nodes, captions, source_cells = built
@@ -201,6 +202,6 @@ def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, propos
     graph += scratch
     promo_uris = tuple(
         emit_row_role_promotion(graph, table_uri, r, role, [c.text for c in header_rows[r]], proposal)
-        for r, role in enumerate(proposal.roles)
+        for r, role in enumerate(roles)
     )
     return n, promo_uris
