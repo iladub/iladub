@@ -122,7 +122,13 @@ def test_context_reports_negative_one_for_out_of_grid_cell():
 
 def test_empty_header_rows_refuses_and_returns_empty_context():
     assert build_row_reading([], GRID, ()) is None
-    assert row_role_context([], GRID) == {"rows": [], "leaf_labels": [], "row_columns": []}
+    # loop C.1 (2026-07-28) extended row_role_context with merge_candidates/row_cell_counts/
+    # leaf_column_count (see test_rowrole_grounding.py); the empty-input contract now reports
+    # those as empty/zero too, alongside the unchanged rows/leaf_labels/row_columns.
+    assert row_role_context([], GRID) == {
+        "rows": [], "leaf_labels": [], "row_columns": [],
+        "merge_candidates": [], "row_cell_counts": [], "leaf_column_count": 0,
+    }
 
 
 def test_unplaceable_continuation_is_refused():

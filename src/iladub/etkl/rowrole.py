@@ -54,30 +54,75 @@ def _column_containing(x: float, boundaries) -> int | None:
 def row_role_context(header_rows, grid) -> dict:
     """The proposer's inputs, read off the header rows. Reports geometry; decides nothing.
 
-    rows         — the NON-LEAF rows' cell texts, top to bottom.
-    leaf_labels  — the leaf (bottom) row's cell texts, left to right.
-    row_columns  — per non-leaf cell, the column index containing its ink center, using the same
-                   half-open containment header-covers.rq uses for leaf labels (no clamp), so the
-                   model can see WHICH label a fragment would complete. -1 means the cell's ink
-                   center lies outside every column (e.g. a page-margin-flush leaked line).
+    rows              — the NON-LEAF rows' cell texts, top to bottom.
+    leaf_labels       — the leaf (bottom) row's cell texts, left to right.
+    row_columns       — per non-leaf cell, the column index containing its ink center, using the
+                        same half-open containment header-covers.rq uses for leaf labels (no
+                        clamp), so the model can see WHICH label a fragment would complete. -1
+                        means the cell's ink center lies outside every column (e.g. a
+                        page-margin-flush leaked line).
+    merge_candidates  — parallel to `rows`: per non-leaf cell, what a 'continuation' reading would
+                        produce ({column, leaf_label, merged}), or None when the cell's ink center
+                        lies in no column or that column carries no leaf label. This is the
+                        evidence that separates the otherwise indistinguishable pair: a genuine
+                        short merged parent ('WIDE' over 'Val') and a wrap fragment ('Date of
+                        Grain' over 'Commencement') have IDENTICAL geometry — both have
+                        single-column ink above a leaf label in that column — and differ only in
+                        whether the joined text reads as one column name (spec §2 Finding 3).
+    row_cell_counts   — cells per non-leaf row.
+    leaf_column_count — number of leaf cells. With row_cell_counts this carries the
+                        solitary-parent reasoning in RAW form: one cell over many columns is more
+                        often a title than a group label.
+
+    Deliberately NOT reported: _covers_for_cell's symmetrized cover set. That is the function that
+    fabricated 'Date of Grain -> covers 1..12' from ink touching one column, so reporting it would
+    hand the proposer the very artefact that misleads. Counts are exact and underived.
+
+    `merged` is computed per cell IN ISOLATION. When several continuation rows land in the same
+    column, build_row_reading composes them top-to-bottom ('Date of Grain' + 'Loading' +
+    'Commencement'), so a single cell's `merged` is a FRAGMENT of the final label, not the final
+    label — hence 'candidates'.
 
     Returns empty lists for an empty header_rows (nothing to read, nothing to decide).
     """
     if not header_rows:
-        return {"rows": [], "leaf_labels": [], "row_columns": []}
+        return {"rows": [], "leaf_labels": [], "row_columns": [],
+                "merge_candidates": [], "row_cell_counts": [], "leaf_column_count": 0}
     b = grid.boundaries
     non_leaf = list(header_rows[:-1])
+    leaf_row = header_rows[-1]
+
+    # column -> leaf label, placed by the same containment rule build_row_reading uses.
+    leaf_by_col: dict[int, str] = {}
+    for c in leaf_row:
+        col = _column_containing((c.x0 + c.x1) / 2.0, b)
+        if col is not None:
+            leaf_by_col[col] = c.text
+
     row_columns = []
+    merge_candidates = []
     for row in non_leaf:
         cols = []
+        cands = []
         for c in row:
             col = _column_containing((c.x0 + c.x1) / 2.0, b)
             cols.append(-1 if col is None else col)
+            if col is None or col not in leaf_by_col:
+                cands.append(None)          # unplaceable -> no candidate, never a guess
+            else:
+                label = leaf_by_col[col]
+                cands.append({"column": col, "leaf_label": label,
+                              "merged": (c.text + " " + label).strip()})
         row_columns.append(cols)
+        merge_candidates.append(cands)
+
     return {
         "rows": [[c.text for c in row] for row in non_leaf],
-        "leaf_labels": [c.text for c in header_rows[-1]],
+        "leaf_labels": [c.text for c in leaf_row],
         "row_columns": row_columns,
+        "merge_candidates": merge_candidates,
+        "row_cell_counts": [len(row) for row in non_leaf],
+        "leaf_column_count": len(leaf_row),
     }
 
 
