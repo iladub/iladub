@@ -120,12 +120,13 @@ escalating. The loop would not **close** — violating the loop-definition-of-do
 `Commencement` all start at x 378.5, inside column 6 `[365.8, 420.8)` → *"Date of Grain Loading
 Commencement"*. These are the genuine GrainCorp column names.
 
-`group_wrapped` could not absorb them: the header wrap pitch is **6.6 pt** and the body row pitch is
-**6.5 pt** (lines at 61.2 / 67.8 / 74.4 / 81.0, then 88.4 / 94.8 / 101.3 / 107.8). The gate is
+`group_wrapped` could not absorb them: the header wrap gaps are **6.6 pt** (lines at 61.2 / 67.8 /
+74.4 / 81.0), indistinguishable from the body's (88.4 / 94.8 / 101.3 / 107.8). The gate is
 `gap < lead` — the adaptive median inter-line gap, **not** a tuned ratio: the fixture-tuned
 `0.9 × lead` margin was already retired in B3 (2026-07-22, commit `947f6fa`; see
-`cells.group_wrapped`'s docstring). Even that adaptive gate cannot fire here, because `lead` (the
-median gap, ≈6.6 pt for this band) is itself ≈ the body pitch: `6.6 < 6.5` is false. **This is not
+`cells.group_wrapped`'s docstring). Even that adaptive gate cannot fire here, because `lead` — the
+median gap over the whole 55-line band, **measured at 6.48 pt** — is at or below every header wrap
+gap: `6.6 < 6.48` is false for all three of them. **This is not
 a threshold to retune** — it is a genuine, still-live limitation: an adaptive median-gap rule
 cannot decide wrap-vs-row when the two leadings coincide, because that is a *reading* judgment
 (which row is a wrap fragment), not a geometric threshold problem. This loop does not fence a §8

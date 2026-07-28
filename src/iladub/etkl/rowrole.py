@@ -9,7 +9,8 @@ Why NEURAL and not geometry: loop B proved a leaked caption and a genuinely-ambi
 merge are structurally identical (both are overlapping top rows), so no geometric peel is sound;
 and even headers.header_rows_of's adaptive `gap < lead` wrap gate (the tuned `0.9 x lead` margin
 was already retired in B3, 2026-07-22, commit 947f6fa) cannot fire when a document's header
-leading equals its body leading (measured on GrainCorp: 6.6pt vs 6.5pt). Both are reading
+leading equals its body leading (measured on GrainCorp: 6.6pt wrap gaps vs a 6.48pt band `lead`,
+so `6.6 < 6.48` is false). Both are reading
 judgments — a threshold, adaptive or not, cannot decide them.
 
 The honest limit (spec §2 Finding 5): tiling CANNOT discriminate 'furniture' from 'continuation' —

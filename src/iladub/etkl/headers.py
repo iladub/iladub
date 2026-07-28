@@ -387,8 +387,8 @@ def header_rows_of(band: Band, grid: LeafGrid, body_line: int) -> list:
     median inter-line gap `gap < lead` (the fixture-tuned `0.9 x lead` margin was retired in B3,
     2026-07-22, commit 947f6fa — see cells.group_wrapped's docstring). Even that adaptive gate
     cannot fire when the header's leading EQUALS the body's leading (measured on the GrainCorp
-    report: 6.6pt header vs 6.5pt body — `6.6 < 6.5` is false; the synthetic fixture below uses
-    uniform 12pt spacing — `12 < 12` is false), so genuine wrap-continuation rows survive as
+    report: header wrap gaps 6.6pt against a band `lead` of 6.48pt — `6.6 < 6.48` is false; the
+    synthetic fixture uses uniform 12pt spacing — `12 < 12` is false), so wrap-continuation rows survive as
     separate rows. This is a reading judgment, not a threshold to tune further — which row is a
     wrap fragment is decided by the NEURAL row-role proposer (rowrole.py) once the resulting tree
     fails to tile.

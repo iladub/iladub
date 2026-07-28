@@ -147,6 +147,14 @@ def test_round_trip_failure_refuses_via_the_n_le_0_guard():
     hreg = classify_hierarchical(band)
     assert hreg is not None
     assert merge_tiling_ok(hreg.tree, hreg.grid) is False, "fixture must start escalating"
+    # Pin WHICH guard fires, not just the outcome: if a future change made build_row_reading
+    # refuse this band, the two asserts below would stay green while silently no longer
+    # covering n <= 0 (region_tiles is also False here, but n <= 0 short-circuits first).
+    from iladub.etkl.rowrole import build_row_reading
+    from iladub.etkl.headers import header_rows_of
+    rows = header_rows_of(band, hreg.grid, hreg.body_line)
+    assert build_row_reading(rows, hreg.grid, ("furniture",)) is not None, \
+        "the reading must be well-formed, so the refusal is n <= 0 and not an earlier guard"
     g = Graph()
     prop = RowRoleProposal(("furniture",), 0.8, "test rationale")
     out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, FakeRowRoleProposer(prop))
