@@ -12,6 +12,10 @@
 # be a terminal "short parent" covered by a shallower node); parent (upper) rows keep the
 # centering-bounded run extension in headers.py.
 # Boundary convention mirrors regions.column_of: colX0 <= center < colX1 (half-open).
+# Cross-reference: rowrole._column_containing (src/iladub/etkl/rowrole.py) mirrors this SAME
+# half-open containment rule in Python, for placing NON-leaf continuation-row fragments (this
+# query itself cannot be reused there — it filters to MAX(?atHeaderRow), the leaf row only). A
+# future change to the boundary convention here must be mirrored there too.
 # Returns (?hrow ?cellIdx ?cidx): for each leaf header cell (row, cell-index), the covered column index.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT ?hrow ?cellIdx ?cidx WHERE {

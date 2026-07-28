@@ -245,3 +245,47 @@ tab:BaseFactShape a sh:NodeShape ;
                   sh:message "A base fact has exactly one measureValue." ] ;
     sh:property [ sh:path tab:atDimensionValue ; sh:minCount 1 ;
                   sh:message "A base fact has at least one dimension coordinate." ] .
+
+#################################################################
+#  Content conservation (loop C oracle 2): every header-region
+#  source cell must be accounted for — either merged into an
+#  asserted header label, or carried as a region caption. What this
+#  refuses is a header-region source cell whose text appears in NO
+#  asserted header label and NO region caption — a reading that
+#  genuinely LOSES a word.
+#
+#  An all-furniture reading is LEGAL BY DESIGN: every source cell is
+#  carried as a tab:RegionCaption, so nothing is lost and this shape
+#  conforms. Ranking two legal readings (e.g. furniture vs.
+#  continuation for the same row) is NOT this shape's job — that
+#  choice is irreducibly NEURAL (see rowrole.py's module docstring
+#  and spec §2 Finding 5); this shape only refuses genuine loss.
+#
+#  Graph-scoped, not ?tbl-scoped, on purpose: region_tiles is
+#  invoked on a fresh scratch graph holding ONE candidate region,
+#  so the graph IS the holon — the region is the closure boundary.
+#
+#  Known weaknesses (stated, not hidden):
+#  - False-pass: CONTAINS can let a lost word pass if it
+#    coincidentally occurs inside another label. It cannot pass a
+#    word absent from every label and every caption.
+#  - False-refuse: CONTAINS is case-sensitive, so text conserved
+#    with different casing than its source (e.g. "unit" carried as
+#    "Unit") would be reported as lost even though nothing was
+#    dropped. Nothing in the pipeline case-normalises header text
+#    today. This errs toward honest escalation rather than silent
+#    loss (CLAUDE.md §7), but it is not exact.
+#################################################################
+
+tab:HeaderContentConservedShape a sh:NodeShape ;
+    sh:targetClass tab:HeaderSourceCell ;
+    sh:sparql [
+        sh:message "Header-region source cell is not accounted for: neither merged into an asserted header label nor carried as a region caption." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:sourceText ?txt .
+                FILTER NOT EXISTS { ?lc a tab:LabelCell ; tab:cellText ?lt . FILTER(CONTAINS(?lt, ?txt)) }
+                FILTER NOT EXISTS { ?cap a tab:RegionCaption ; tab:captionText ?ct . FILTER(CONTAINS(?ct, ?txt)) }
+            }
+        """ ] .
