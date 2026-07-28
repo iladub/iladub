@@ -138,10 +138,18 @@ class BamlRowRoleProposer:
 
     def propose_header_row_roles(self, context):
         from baml_client import sync_client
+        # merge_candidates goes over the wire as the merged TEXT per cell ("" when the cell has no
+        # candidate). column/leaf_label are already visible via row_columns/leaf_labels, so sending
+        # the object would duplicate them for no gain.
+        merged = [[(c["merged"] if c else "") for c in row]
+                  for row in context.get("merge_candidates", [])]
         r = sync_client.b.ProposeHeaderRowRoles(
             context.get("rows"),
             context.get("leaf_labels"),
             context.get("row_columns"),
+            merged,
+            context.get("row_cell_counts"),
+            context.get("leaf_column_count"),
         )
         return RowRoleProposal(
             roles=tuple(r.roles),
