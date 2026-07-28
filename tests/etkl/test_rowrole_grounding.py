@@ -6,6 +6,7 @@ judgment is correctly NEURAL — but the model was never shown WHAT a fragment w
 These keys close that gap. They are REPORTED evidence: nothing branches on them.
 See docs/superpowers/specs/2026-07-28-rowrole-grounding-design.md.
 """
+from iladub.etkl.geometry import Word
 from iladub.etkl.headers import header_rows_of
 from iladub.etkl.rowrole import build_row_reading, row_role_context
 from tests.etkl.test_rowrole_reading import (GRID, caption_and_wrap_band,
@@ -14,6 +15,10 @@ from tests.etkl.test_rowrole_reading import (GRID, caption_and_wrap_band,
 
 def _ctx(band, split):
     return row_role_context(header_rows_of(band, GRID, split), GRID)
+
+
+def _w(t, x0, x1, top):
+    return Word(t, x0, x1, top, top + 10.0)
 
 
 def test_merge_candidates_show_what_each_fragment_would_become():
@@ -62,6 +67,33 @@ def test_existing_keys_are_unchanged():
     assert ctx["rows"] == [["Monday", "5 May"], ["Unit"]]
     assert ctx["leaf_labels"] == ["Item", "Ref", "Qty", "Cost"]
     assert ctx["row_columns"] == [[2, 3], [1]]
+
+
+def test_merge_candidate_agrees_with_build_row_reading_when_two_leaf_cells_share_a_column():
+    # I-2 regression: leaf_by_col must pick the SAME cell build_row_reading's node search picks
+    # (first match, in row order) when two leaf cells' ink centers land in the same column. A
+    # wide leaf cell ('STRAY Cost', ink [20,285]) centers at 152.5 -> column 1 -- the same column
+    # 'Ref' [155,172] occupies. Plain assignment in row_role_context's leaf_by_col would let
+    # 'STRAY Cost' (the LAST cell touching column 1 in iteration order) overwrite 'Ref', while
+    # build_row_reading's `next(...)` over the node list always resolves to the FIRST node
+    # (in row order) whose covers contain the column -- 'Ref'. The two must never disagree.
+    wrap_row = [_w("Unit", 155, 175, 0.0)]
+    leaf_row = [_w("Item", 110, 140, 12.0), _w("Ref", 155, 172, 12.0),
+                _w("Qty", 205, 230, 12.0), _w("STRAY Cost", 20, 285, 12.0)]
+    header_rows = [wrap_row, leaf_row]
+
+    ctx = row_role_context(header_rows, GRID)
+    cand = ctx["merge_candidates"][0][0]            # the "Unit" -> column-1 continuation
+    assert cand["column"] == 1
+
+    nodes, _caps, _src = build_row_reading(header_rows, GRID, ("continuation",))
+    # same first-match-in-row-order rule build_row_reading itself uses (see its docstring)
+    label = next(n.text for n in nodes if 1 in n.covers)
+    assert cand["merged"] in label, (cand, label)
+    # the reviewer's exact demonstration: both sides must agree on "Unit Ref", never
+    # "Unit STRAY Cost" (what the pre-fix last-wins assignment fabricated).
+    assert cand["merged"] == "Unit Ref"
+    assert label == "Unit Ref"
 
 
 def test_empty_header_rows_reports_empty_evidence():

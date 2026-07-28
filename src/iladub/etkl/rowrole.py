@@ -97,7 +97,7 @@ def row_role_context(header_rows, grid) -> dict:
     for c in leaf_row:
         col = _column_containing((c.x0 + c.x1) / 2.0, b)
         if col is not None:
-            leaf_by_col[col] = c.text
+            leaf_by_col.setdefault(col, c.text)
 
     row_columns = []
     merge_candidates = []
