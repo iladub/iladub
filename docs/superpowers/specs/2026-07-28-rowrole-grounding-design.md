@@ -146,11 +146,13 @@ Three keys added. Nothing else in the module changes.
   Together these carry the solitary-parent reasoning in raw form: *one cell over fourteen leaf
   columns* is a title far more often than a group label.
 
-**Deliberately NOT reported: `_covers_for_cell`'s covers.** `_covers_for_cell` alone reports only
-the ink column — for `Date of Grain` that is a single column. It is the DOWNSTREAM
-`repair_coverage`/`_centered_run` symmetrized-run extension (`headers.py`), one stage later, that
-turned that single ink column into `covers 1–12`. Reporting either would hand the proposer an
-artefact that misleads. Cell counts and the leaf-column denominator are exact and underived; the
+**Deliberately NOT reported: either cover set on the parent path.** `_covers_for_cell` symmetrizes
+around a cell's centre column, so it **can** over-span — measured on the GrainCorp band, 5 of its 10
+non-leaf cells widen beyond their ink columns (e.g. `'Friday, 24 J'`, ink in columns 6–7, becomes
+`(5, 6, 7)`). For `Date of Grain` it happens to return just the ink column `(6,)`; it is the
+**downstream** `repair_coverage`/`_centered_run` run extension (`headers.py`), one stage later, that
+widened that single column to `covers 1–12`. Reporting either would hand the proposer a *derived
+span* in place of evidence. Cell counts and the leaf-column denominator are exact and underived; the
 model can weigh them without being told a fabricated span.
 
 **Multi-row composition note.** `merged` is computed per cell in isolation: for a single

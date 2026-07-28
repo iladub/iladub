@@ -20,7 +20,7 @@ Copied from the spec's §5 gate. **Every task's requirements implicitly include 
 
 - **Evidence is reported, never acted on.** No Python may branch on the new keys to select or override a role. `row_role_context` stays a pure structural read; `build_row_reading` still only executes or refuses a given vector.
 - **No behaviour change.** `build_row_reading`, `resolve_header_row_roles`, `emit_reading_evidence`, both oracles, and every refusal path must be byte-identical in behaviour. Only what the proposer *sees* changes.
-- **No fabricated evidence.** Do **not** report `_covers_for_cell`'s symmetrized cover set. `_covers_for_cell` alone reports only the ink column (`Date of Grain` -> a single column); it is the DOWNSTREAM `repair_coverage`/`_centered_run` symmetrized-run extension (`headers.py`), one stage later, that turned that single ink column into `covers 1..12`. Reporting either would hand the model an artefact that misleads. Only exact, underived values.
+- **No fabricated evidence.** Do **not** report either cover set on the parent path. `_covers_for_cell` symmetrizes around a cell's centre column and so can over-span (measured: 5 of 10 GrainCorp non-leaf cells widen beyond their ink columns); for `Date of Grain` it returns just the ink column, and it is the DOWNSTREAM `repair_coverage`/`_centered_run` run extension (`headers.py`), one stage later, that widened it to `covers 1..12`. Reporting either would hand the model a derived span in place of evidence. Only exact, underived values.
 - **No tuned constant, no new numeric literal** encoding a decision. Counts and string concatenation only.
 - **Band-local only.** No reading of neighbouring bands; the band remains the closure boundary.
 - **Legality gates admission, never confidence.** Unchanged — introduce no comparison on confidence.
@@ -116,8 +116,8 @@ def test_merge_candidates_show_what_each_fragment_would_become():
 
 def test_row_cell_counts_and_leaf_column_count():
     # The solitary-parent signal in raw form: one cell over four leaf columns. Reported as
-    # exact counts, NOT as _covers_for_cell's symmetrized covers (which fabricated
-    # "Date of Grain -> covers 1..12" from single-column ink).
+    # counts, NOT as a derived cover set from the parent path — repair_coverage/_centered_run
+    # widened "Date of Grain"'s single ink column to covers 1..12 on the real document.
     ctx = _ctx(caption_and_wrap_band(), 3)
     assert ctx["row_cell_counts"] == [2, 1]
     assert ctx["leaf_column_count"] == 4
@@ -193,7 +193,7 @@ def row_role_context(header_rows, grid) -> dict:
                         solitary-parent reasoning in RAW form: one cell over many columns is more
                         often a title than a group label.
 
-    Deliberately NOT reported: _covers_for_cell's symmetrized cover set. _covers_for_cell alone
+    Deliberately NOT reported: either cover set on the parent path. _covers_for_cell alone
     reports only the ink column ('Date of Grain' -> a single column); it is the DOWNSTREAM
     repair_coverage/_centered_run symmetrized-run extension (headers.py) that turned that single
     ink column into 'covers 1..12' one stage later. Reporting either would hand the proposer an

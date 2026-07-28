@@ -74,11 +74,12 @@ def row_role_context(header_rows, grid) -> dict:
                         solitary-parent reasoning in RAW form: one cell over many columns is more
                         often a title than a group label.
 
-    Deliberately NOT reported: _covers_for_cell's symmetrized cover set. _covers_for_cell alone
-    reports only the ink column ('Date of Grain' -> a single column); it is the DOWNSTREAM
-    repair_coverage/_centered_run symmetrized-run extension (headers.py) that turned that single
-    ink column into 'covers 1..12' one stage later. Reporting either would hand the proposer an
-    artefact that misleads. Counts are exact and underived.
+    Deliberately NOT reported: either cover set on the parent path. _covers_for_cell symmetrizes
+    around a cell's centre column, so it CAN over-span (measured on GrainCorp: 5 of 10 non-leaf
+    cells widen beyond their ink columns); for 'Date of Grain' it happens to return just the ink
+    column, and it is the DOWNSTREAM repair_coverage/_centered_run run extension (headers.py), one
+    stage later, that widened that single column to 'covers 1..12'. Reporting either would hand the
+    proposer a derived span rather than evidence. Counts are exact and underived.
 
     `merged` is computed per cell IN ISOLATION. When several continuation rows land in the same
     column, build_row_reading composes them top-to-bottom ('Date of Grain' + 'Loading' +

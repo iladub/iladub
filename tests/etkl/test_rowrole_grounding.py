@@ -32,9 +32,9 @@ def test_merge_candidates_show_what_each_fragment_would_become():
 
 
 def test_row_cell_counts_and_leaf_column_count():
-    # The solitary-parent signal in raw form: one cell over four leaf columns. Reported as
-    # exact counts, NOT as _covers_for_cell's symmetrized covers (which fabricated
-    # "Date of Grain -> covers 1..12" from single-column ink).
+    # The solitary-parent signal in raw form: one cell over four leaf columns. Reported as exact
+    # counts, NOT as a derived cover set from the parent path — repair_coverage/_centered_run
+    # widened "Date of Grain"'s single ink column to covers 1..12 on the real document.
     ctx = _ctx(caption_and_wrap_band(), 3)
     assert ctx["row_cell_counts"] == [2, 1]
     assert ctx["leaf_column_count"] == 4
