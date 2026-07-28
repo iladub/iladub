@@ -10,7 +10,7 @@ from iladub.etkl.hierarchical import classify_hierarchical
 from iladub.etkl.headers import merge_tiling_ok
 from iladub.etkl.propose import FakeRowRoleProposer, RowRoleProposal
 from iladub.etkl.rowrole import resolve_header_row_roles
-from tests.etkl.test_rowrole_reading import caption_and_wrap_band
+from tests.etkl.test_rowrole_reading import caption_and_wrap_band, out_of_grid_caption_band
 
 ILADUB = Namespace("https://w3id.org/iladub#")
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -129,6 +129,29 @@ def test_generator_valued_roles_still_promotes():
     assert n_asserted > 0
     assert len(promos) == 2, "one promotion per classified non-leaf row"
     assert len(list(g.subjects(RDF.type, ILADUB.PromotionDecision))) == 2
+
+
+def test_round_trip_failure_refuses_via_the_n_le_0_guard():
+    # THE n <= 0 GUARD, distinct from the malformed-vector and unplaceable-continuation guards
+    # above: build_row_reading can produce a WELL-FORMED reading (a single non-leaf row, read as
+    # its only legal single-role vector, 'furniture') that assert_hier_region itself then refuses
+    # because the reading's region fails ITS OWN round-trip check (region_round_trips -> False ->
+    # assert_hier_region emits ROUND_TRIP_FAIL into its (scratch) graph and returns n == 0). The
+    # out-of-grid caption band's single non-leaf row sits entirely left of the grid boundaries;
+    # reading it as furniture carries its text as a RegionCaption (so it is not the malformed- or
+    # unplaceable-continuation guard that fires -- verified separately: build_row_reading returns
+    # a non-None (nodes, captions, source_cells) here), but the resulting single-level leaf-only
+    # tree fails the round trip against the source band. The driver must refuse via n <= 0 with
+    # the CALLER's `graph` left untouched -- never fabricate the round trip.
+    band = out_of_grid_caption_band()
+    hreg = classify_hierarchical(band)
+    assert hreg is not None
+    assert merge_tiling_ok(hreg.tree, hreg.grid) is False, "fixture must start escalating"
+    g = Graph()
+    prop = RowRoleProposal(("furniture",), 0.8, "test rationale")
+    out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, FakeRowRoleProposer(prop))
+    assert out is None, "a round-trip-failing reading must be refused"
+    assert len(g) == 0, "graph must be untouched on refusal"
 
 
 def test_proposer_is_called_exactly_once():
