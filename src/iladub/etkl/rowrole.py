@@ -1,14 +1,16 @@
 """rowrole — loop C NEURAL header-region row roles: propose -> tile+conserve oracle -> promote.
 
 §8 gate: this module hosts the NEURAL slice. WHICH role a header-region row has is NOT decided
-here — a RowRoleProposer (BAML, injected) proposes it and region_tiles (SHACL: the eight tiling
-shapes + HeaderContentConservedShape) disposes it; a legal, lossless reading is admitted only as a
-PromotionDecision proposition (§3).
+here — a RowRoleProposer (BAML, injected) proposes it and region_tiles (SHACL: the nine tiling
+shapes, including HeaderContentConservedShape) disposes it; a legal, lossless reading is admitted
+only as a PromotionDecision proposition (§3).
 
 Why NEURAL and not geometry: loop B proved a leaked caption and a genuinely-ambiguous off-center
 merge are structurally identical (both are overlapping top rows), so no geometric peel is sound;
-and headers.header_rows_of's 0.9x-lead wrap threshold cannot fire when a document's header leading
-equals its body leading (measured on GrainCorp: 6.6pt vs 6.5pt). Both are reading judgments.
+and even headers.header_rows_of's adaptive `gap < lead` wrap gate (the tuned `0.9 x lead` margin
+was already retired in B3, 2026-07-22, commit 947f6fa) cannot fire when a document's header
+leading equals its body leading (measured on GrainCorp: 6.6pt vs 6.5pt). Both are reading
+judgments — a threshold, adaptive or not, cannot decide them.
 
 The honest limit (spec §2 Finding 5): tiling CANNOT discriminate 'furniture' from 'continuation' —
 both readings tile, and both conserve (furniture text is carried as a caption). That residue is
@@ -169,8 +171,8 @@ def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, propos
     MERGE_AMBIGUOUS with `graph` untouched.
 
     Legality gates admission, never confidence: a reading whose scratch region fails region_tiles
-    (the eight tiling shapes OR HeaderContentConservedShape) is refused regardless of
-    proposal.confidence.
+    (any of the nine tiling shapes, including HeaderContentConservedShape) is refused regardless
+    of proposal.confidence.
     """
     from dataclasses import replace as _replace
     from rdflib import Graph

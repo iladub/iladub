@@ -383,11 +383,15 @@ def header_rows_of(band: Band, grid: LeafGrid, body_line: int) -> list:
     governs the wrap-continuation threshold — correctly absorbing tight (SI) lines into their
     parent sub-header cells rather than producing a spurious extra level.
 
-    KNOWN LIMIT (the reason loop C exists): when the header's leading EQUALS the body's leading
-    (measured on the GrainCorp report: 6.6pt vs 6.5pt), the 0.9x-lead threshold cannot fire and
-    genuine wrap-continuation rows survive as separate rows. That ratio must NOT be tuned — which
-    row is a wrap fragment is a reading judgment, decided by the NEURAL row-role proposer
-    (rowrole.py) once the resulting tree fails to tile.
+    KNOWN LIMIT (the reason loop C exists): group_wrapped's wrap-continuation gate is the adaptive
+    median inter-line gap `gap < lead` (the fixture-tuned `0.9 x lead` margin was retired in B3,
+    2026-07-22, commit 947f6fa — see cells.group_wrapped's docstring). Even that adaptive gate
+    cannot fire when the header's leading EQUALS the body's leading (measured on the GrainCorp
+    report: 6.6pt header vs 6.5pt body — `6.6 < 6.5` is false; the synthetic fixture below uses
+    uniform 12pt spacing — `12 < 12` is false), so genuine wrap-continuation rows survive as
+    separate rows. This is a reading judgment, not a threshold to tune further — which row is a
+    wrap fragment is decided by the NEURAL row-role proposer (rowrole.py) once the resulting tree
+    fails to tile.
 
     Using row[0].top (not max) is safe because header rows are compact; if the first
     (leftmost-column) cell precedes body_top, the row is a header row.

@@ -54,11 +54,15 @@ def test_compile_tables_accepts_row_role_proposer_kw(tmp_path):
 
 
 def test_offcenter_merge_still_escalates_with_a_proposer(tmp_path):
-    # THE CONTRACT GUARD. Loop B's geometric caption peel broke exactly this: a genuinely
-    # ambiguous off-center merge must NOT be silently asserted. The offcenter fixture's band
-    # has exactly ONE non-leaf header row and does NOT tile, so it genuinely reaches the NEURAL
-    # slice; with the proposer answering honestly ('level'), the reading reproduces the illegal
-    # tree, the ORACLE refuses it, and the region escalates. High confidence must not rescue it.
+    # THE CONTRACT GUARD: the oracle does not rescue the honest 'level' reading. Loop B's
+    # geometric caption peel broke exactly this case. The offcenter fixture's band has exactly
+    # ONE non-leaf header row (role-vector length 1, measured and deliberate) and does NOT tile,
+    # so it genuinely reaches the NEURAL slice; read as a genuine hierarchy level ('level'), the
+    # reading reproduces the illegal tree, still fails region_tiles, and the region still
+    # escalates MERGE_AMBIGUOUS, regardless of confidence. This does NOT claim the oracle can
+    # rank two legal readings (it can't -- §2 Finding 5) or that every off-center merge is
+    # unassertable with some other role vector; it pins only that the oracle never rescues this
+    # specific honest, illegal reading.
     p = os.path.join(str(tmp_path), "offcenter.pdf")
     F.offcenter_merge_report_pdf(p)
     prop = RowRoleProposal(("level",), 0.99, "genuine group label")
@@ -87,8 +91,11 @@ def test_caption_wrap_report_escalates_without_a_proposer(tmp_path):
     # THE RED CONDITION for the whole NEURAL slice: a leaked date caption (row 0) whose two
     # words' symmetrized spans overlap (the level-0 overlap mechanism), plus a wrap-continuation
     # fragment ('Unit') above the Ref column, over UNIFORM line spacing (header leading == body
-    # leading, defeating header_rows_of's 0.9x-lead wrap-absorption). Without a proposer this
-    # must genuinely escalate MERGE_AMBIGUOUS -- proving the fixture actually needs the slice.
+    # leading, defeating header_rows_of's adaptive `gap < lead` wrap-absorption -- the
+    # fixture-tuned `0.9 x lead` margin was already retired in B3, 2026-07-22, commit 947f6fa;
+    # here `lead` itself equals the gap, so even the adaptive gate cannot fire). Without a
+    # proposer this must genuinely escalate MERGE_AMBIGUOUS -- proving the fixture actually
+    # needs the slice.
     p = os.path.join(str(tmp_path), "caption_wrap.pdf")
     F.caption_wrap_report_pdf(p)
     rep = compile_tables(p)

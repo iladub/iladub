@@ -54,8 +54,10 @@ furniture, a wrap-continuation of the labels below it, or a genuine hierarchical
 **Success criteria:**
 
 1. A synthetic flat table with a **leading date caption** plus a **wrapped 2-line label**, authored so
-   the header wrap pitch ≈ the body row pitch (defeating `group_wrapped`'s `0.9×lead` threshold),
-   escalates today and **asserts** with the correctly merged label after, given an injected proposer.
+   the header wrap pitch ≈ the body row pitch (defeating `group_wrapped`'s adaptive `gap < lead`
+   wrap-continuation gate — the fixture-tuned `0.9×lead` margin was already retired in B3,
+   2026-07-22, `947f6fa` — because `lead` itself equals the gap here), escalates today and
+   **asserts** with the correctly merged label after, given an injected proposer.
 2. A proposer reading that **loses a header word** is **refused** by the conservation oracle → the
    region escalates and `graph` is left untouched.
 3. **The contract guard:** the shipped off-center-merge fixture, *with a proposer active* answering
@@ -68,9 +70,11 @@ furniture, a wrap-continuation of the labels below it, or a genuine hierarchical
    `escalated / MERGE_AMBIGUOUS / 0 cells / score 0.0` to **`asserted / 447 cells / score 0.947`**, with
    the two grid residues recorded verbatim. **The loop closes** end-to-end on real input.
 6. **Gate (§8):** the role is decided *only* by the NEURAL proposer; `build_row_reading` is a pure
-   structural rewrite with no geometry and no constant; continuation placement reuses Loop B's shipped
-   `header-covers.rq` AXIOM; disposal is closed-world SHACL, band-scoped; legality gates admission,
-   never confidence. No tuned tolerance is introduced anywhere.
+   structural rewrite with no geometry and no constant; continuation placement mirrors Loop B's
+   shipped `header-covers.rq` containment rule in Python (`rowrole._column_containing`), while the
+   leaf-row covering itself genuinely reuses that AXIOM directly (§6); disposal is closed-world
+   SHACL, band-scoped; legality gates admission, never confidence. No tuned tolerance is introduced
+   anywhere.
 7. Source-ownership clean: `tab:RegionCaption`, `tab:HeaderSourceCell`, `tab:hasCaption`,
    `tab:hasHeaderSourceCell`, `tab:captionText`, `tab:captionRow`, `tab:sourceText`, `tab:sourceRow`
    are owned `tab:` vocab. No third-party PDF committed.
@@ -117,11 +121,17 @@ escalating. The loop would not **close** — violating the loop-definition-of-do
 Commencement"*. These are the genuine GrainCorp column names.
 
 `group_wrapped` could not absorb them: the header wrap pitch is **6.6 pt** and the body row pitch is
-**6.5 pt** (lines at 61.2 / 67.8 / 74.4 / 81.0, then 88.4 / 94.8 / 101.3 / 107.8), so the
-`0.9 × lead ≈ 5.85 pt` wrap-continuation threshold cannot fire. **That threshold is a tuned ratio
-deciding a reading question** — the same class of unsoundness as the caption peel, and prima facie a
-gate defect under §8. This loop removes it *as the arbiter* for header rows (it stays as the
-first-pass grouping heuristic; the NEURAL slice overrides it only when the resulting tree fails to tile).
+**6.5 pt** (lines at 61.2 / 67.8 / 74.4 / 81.0, then 88.4 / 94.8 / 101.3 / 107.8). The gate is
+`gap < lead` — the adaptive median inter-line gap, **not** a tuned ratio: the fixture-tuned
+`0.9 × lead` margin was already retired in B3 (2026-07-22, commit `947f6fa`; see
+`cells.group_wrapped`'s docstring). Even that adaptive gate cannot fire here, because `lead` (the
+median gap, ≈6.6 pt for this band) is itself ≈ the body pitch: `6.6 < 6.5` is false. **This is not
+a threshold to retune** — it is a genuine, still-live limitation: an adaptive median-gap rule
+cannot decide wrap-vs-row when the two leadings coincide, because that is a *reading* judgment
+(which row is a wrap fragment), not a geometric threshold problem. This loop does not fence a §8
+gate defect (there is none left to fence — B3 already retired the tuned constant); it recognizes
+that no threshold, tuned or adaptive, can settle this class of question, and hands it to the
+NEURAL slice when the resulting tree fails to tile.
 
 **Finding 4 — the merged reading closes the loop.** Spiking the reading
 `row 0 = furniture, rows 1–2 = continuation, row 3 = leaf` and re-running `compile_tables`:
@@ -149,13 +159,23 @@ Columns 1 and 13 carry merged labels because the **leaf grid under-segmented** t
 grid-recovery gap, not a row-role gap. That is why the score is 0.947 and not 1.0, and it is the
 named residue that defines the next loop (§7.1).
 
-**Finding 5 — the honest limit of the oracles.** Tiling **cannot** discriminate `furniture` from
-`continuation`: dropping rows 0–2 as furniture tiles (measured: `(3,)` → True) and merging them as
-continuations tiles (same covers, only the label text differs — tiling does not read text). Both
-readings are structurally legal. **This residue is irreducibly NEURAL.** The oracles refuse illegal
-and lossy readings; the *choice between two legal readings* is governed by §3/§4 epistemics — a
-proposition, an accountable promotion, a recorded rationale and provenance — not by an oracle. This
-is stated plainly rather than papered over.
+**Finding 5 — the honest limit of the oracles, measured precisely.** Tiling **cannot** discriminate
+`furniture` from `continuation` — and the residue is wider than a single two-way tie. On this
+loop's own fixture (2 non-leaf rows → 3² = 9 candidate role vectors), the oracles (tiling +
+conservation) admit **6 of 9**: every vector except the three `level`-first vectors
+(`('level','level')`, `('level','continuation')`, `('level','furniture')`) is legal. That includes
+readings that are legal but **wrong** — e.g. `('continuation', 'furniture')` yields
+`['Item', 'Ref', 'Monday Qty', '5 May Cost']`, which tiles and conserves, yet merges the leaked
+date caption into the wrong labels. Both the intended reading and several unintended ones are structurally legal and
+lossless. **This strengthens, not weakens, the case that the residue is irreducibly NEURAL**: it is
+not merely that two candidate readings are indistinguishable by oracle, but that a *majority* of
+the role-vector space is oracle-legal, so no oracle-guided search could land on the correct reading
+by construction — only a proposal that actually reads the content can. This is exactly why the
+driver performs **no search** over the role space (§3.1): searching this space would as likely
+converge on a wrong-but-legal reading as the right one. The oracles refuse illegal and lossy
+readings; the *choice among the legal ones* is governed by §3/§4 epistemics — a proposition, an
+accountable promotion, a recorded rationale and provenance — not by an oracle. This is stated
+plainly rather than papered over.
 
 ---
 
@@ -173,7 +193,9 @@ Mirrors `span.py` structurally, so the shipped B1.3 pattern is reused rather tha
   structural rewrite under a proposed role vector. No geometry constant, no tolerance:
   - `continuation` → the row contributes **no level**. Each of its cells' text is appended, in
     top-to-bottom source order, to the label of the leaf node covering the column that contains the
-    cell's ink center (Loop B's `header-covers.rq` placement, reused).
+    cell's ink center (a small Python mirror, `_column_containing`, of Loop B's shipped
+    `header-covers.rq` containment rule — not a call into the query itself, since that query
+    filters to `MAX(?atHeaderRow)`, the leaf row only; see §6).
   - `furniture` → the row contributes **no level**. Each cell becomes a `tab:RegionCaption` carrying
     `tab:captionText` and `tab:atHeaderRow`.
   - `level` → the row stays a parent level and flows through the **unchanged** `_covers_for_cell` +
@@ -265,7 +287,7 @@ temptation. Both carry `rdfs:domain tab:HeaderCell`, and `region_tiles` validate
 silently leaking pre-holon evidence vocabulary into the compiled holon. Four dedicated properties are
 the correct cost.
 
-New shape, in the same `sh:sparql` style as the eight tiling shapes:
+New shape, in the same `sh:sparql` style as the eight other tiling shapes:
 
 ```
 tab:HeaderContentConservedShape a sh:NodeShape ;
@@ -353,11 +375,15 @@ All fixtures **synthetic and domain-neutral**; the GrainCorp PDF stays uncommitt
   GenAI-via-BAML **proposing** under §3 epistemics, **disposed by semantic oracles** — never a Python
   geometry heuristic with a tuned tolerance.
 - **The only decider is the proposer.** `row_role_context` reports geometry; `build_row_reading` is a
-  pure structural rewrite; continuation placement reuses Loop B's shipped `header-covers.rq` AXIOM.
-  No new numeric literal, no new tolerance, in Python or in RDF.
-- **Open/closed split intact.** Growth is open-world (the reused `header-covers.rq` derivation);
-  disposal is closed-world SHACL (`region_tiles`: eight tiling shapes + the conservation shape). The
-  **band/region is the closure boundary** — a fresh scratch `Graph()` per candidate reading.
+  pure structural rewrite; continuation placement is a small Python mirror (`_column_containing`) of
+  Loop B's shipped `header-covers.rq` containment rule, not a call into the query (see §6) — the
+  leaf-row covering inside `_tree_from_rows` is what genuinely reuses that AXIOM. No new numeric
+  literal, no new tolerance, in Python or in RDF.
+- **Open/closed split intact.** Growth is open-world (the leaf-row covering's genuinely-reused
+  `header-covers.rq` derivation; continuation placement mirrors the same containment rule in
+  Python); disposal is closed-world SHACL (`region_tiles`: the nine tiling shapes, including the
+  conservation shape). The **band/region is the closure boundary** — a fresh scratch `Graph()` per
+  candidate reading.
 - **Legality gates admission, never confidence.** A proposal whose scratch region fails either oracle
   is refused regardless of `proposal.confidence`. Confidence is *recorded* on the promotion, never
   consulted as a threshold.
@@ -373,9 +399,14 @@ All fixtures **synthetic and domain-neutral**; the GrainCorp PDF stays uncommitt
   `tab:hasHeaderSourceCell`, `tab:captionText`, `tab:captionRow`, `tab:sourceText`, `tab:sourceRow`
   are owned `tab:` vocab; Loop B's evidence properties are deliberately not reused (§3.4). No HGA
   term appears as a subject. No third-party PDF committed.
-- **Debt retired:** `group_wrapped`'s `0.9 × lead` ratio stops being the *arbiter* of header wrapping
-  (§2 Finding 3). It remains the cheap first-pass grouping; when its grouping yields a tree that
-  cannot tile, the NEURAL slice decides. A gate defect is thereby fenced, not left standing.
+- **What this loop does and does not do about `group_wrapped`'s gate.** The tuned `0.9 × lead`
+  margin was **already retired** in B3 (2026-07-22, commit `947f6fa`), replaced by the adaptive
+  `gap < lead` median-gap rule — that debt was retired *before* this loop, not by it. What remains,
+  and what this loop actually fences, is a *residual reading limit*: even the adaptive rule cannot
+  decide wrap-vs-row when a document's header leading coincidentally equals its body leading (§2
+  Finding 3) — that is not a threshold miscalibration, it is a reading judgment no geometric gate,
+  tuned or adaptive, can make. `group_wrapped` remains the cheap first-pass grouping; when its
+  grouping yields a tree that cannot tile, the NEURAL slice decides instead.
 
 ---
 
@@ -385,8 +416,12 @@ All fixtures **synthetic and domain-neutral**; the GrainCorp PDF stays uncommitt
   three-way (furniture / continuation / level), because §2 Finding 2 shows two-way does not close.
 - Reuses the shipped NEURAL family: `span.py` (B1.3) is the structural template; `reshape.certify_with_proposals`
   (A2.1) and `segment.find_table_gutter` are the other propose→oracle→dispose exemplars.
-- Reuses the shipped AXIOM family: Loop B's `header-covers.rq` places continuation fragments; the
-  closed-world membrane is the shipped `region_tiles` SHACL, extended by one shape in the same file.
+- Reuses the shipped AXIOM family: Loop B's `header-covers.rq` is reused directly for leaf-row
+  covering (inside `_tree_from_rows`); continuation-fragment placement is a small Python mirror of
+  the same containment rule (`rowrole._column_containing`), not a call into the query itself, since
+  the query filters to `MAX(?atHeaderRow)` (the leaf row only) and so cannot be reused as-is for
+  non-leaf rows. The closed-world membrane is the shipped `region_tiles` SHACL, extended by one
+  shape in the same file.
 - **Closes the loop** (loop-definition-of-done): an end-to-end score on real input — GrainCorp
   0.0 → 0.947, 447 cells — with the residue escalated/named in-band, not silently dropped.
 - Unblocks GrainCorp as a *win* example for the parked `iladub-zero-etl-showcase` branch, once the

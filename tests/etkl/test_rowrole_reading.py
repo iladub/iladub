@@ -1,8 +1,10 @@
 """Loop C — build_row_reading: the pure structural rewrite under a proposed role vector.
 
 The fixture reproduces GrainCorp's shape: a leaked caption row, a wrap-continuation row, and a
-leaf label row, with UNIFORM 12pt line spacing so group_wrapped's 0.9x-lead threshold (10.8pt)
-cannot absorb the header rows — the exact condition where header leading equals body leading.
+leaf label row, with UNIFORM 12pt line spacing so group_wrapped's wrap-continuation gate — the
+adaptive `gap < lead` median-gap test (the fixture-tuned `0.9 x lead` margin was retired in B3,
+2026-07-22, commit 947f6fa) — cannot absorb the header rows: lead is also 12pt here, so
+`12 < 12` is false. This is the exact condition where header leading equals body leading.
 Verified during planning: merge_tiling_ok is False before, True under the intended reading.
 See docs/superpowers/specs/2026-07-26-header-row-roles-design.md.
 """

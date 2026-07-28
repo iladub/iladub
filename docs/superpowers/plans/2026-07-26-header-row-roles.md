@@ -58,7 +58,7 @@ Copied verbatim from the spec's §5 gate. **Every task's requirements implicitly
 This exact fixture was **probed against the current code during planning** and confirmed to reproduce the bug. Do not alter its coordinates.
 
 - Grid `LeafGrid((100.0, 150.0, 200.0, 250.0, 300.0), 4, 50.0, 1.0)` → 4 columns, boundaries at 100/150/200/250/300.
-- Uniform 12 pt line spacing, so `group_wrapped`'s `0.9 × lead = 10.8 pt` threshold is **below** the 12 pt gap and the header rows are **not** absorbed — reproducing GrainCorp's header-leading ≈ body-leading condition.
+- Uniform 12 pt line spacing, so `group_wrapped`'s wrap-continuation gate — the adaptive `gap < lead` median-gap rule (the fixture-tuned `0.9 × lead` margin was retired in B3, 2026-07-22, commit `947f6fa`) — cannot fire: `lead` is itself 12 pt here, so `12 < 12` is false and the header rows are **not** absorbed — reproducing GrainCorp's header-leading ≈ body-leading condition.
 - Row 0 (caption, top 0): `Monday`(205–240), `5 May`(242–262).
 - Row 1 (wrap fragment, top 12): `Unit`(155–175).
 - Row 2 (leaf labels, top 24): `Item`(110–140), `Ref`(155–172), `Qty`(205–230), `Cost`(255–285).
@@ -486,8 +486,10 @@ Create `tests/etkl/test_rowrole_reading.py`:
 """Loop C — build_row_reading: the pure structural rewrite under a proposed role vector.
 
 The fixture reproduces GrainCorp's shape: a leaked caption row, a wrap-continuation row, and a
-leaf label row, with UNIFORM 12pt line spacing so group_wrapped's 0.9x-lead threshold (10.8pt)
-cannot absorb the header rows — the exact condition where header leading equals body leading.
+leaf label row, with UNIFORM 12pt line spacing so group_wrapped's wrap-continuation gate — the
+adaptive `gap < lead` median-gap rule (the fixture-tuned `0.9 x lead` margin was retired in B3,
+2026-07-22, commit 947f6fa) — cannot absorb the header rows: lead is also 12pt here, so
+`12 < 12` is false. This is the exact condition where header leading equals body leading.
 Verified during planning: merge_tiling_ok is False before, True under the intended reading.
 See docs/superpowers/specs/2026-07-26-header-row-roles-design.md.
 """
@@ -602,11 +604,15 @@ def header_rows_of(band: Band, grid: LeafGrid, body_line: int) -> list:
     governs the wrap-continuation threshold — correctly absorbing tight (SI) lines into their
     parent sub-header cells rather than producing a spurious extra level.
 
-    KNOWN LIMIT (the reason loop C exists): when the header's leading EQUALS the body's leading
-    (measured on the GrainCorp report: 6.6pt vs 6.5pt), the 0.9x-lead threshold cannot fire and
-    genuine wrap-continuation rows survive as separate rows. That ratio must NOT be tuned — which
-    row is a wrap fragment is a reading judgment, decided by the NEURAL row-role proposer
-    (rowrole.py) once the resulting tree fails to tile.
+    KNOWN LIMIT (the reason loop C exists): group_wrapped's wrap-continuation gate is the adaptive
+    median inter-line gap `gap < lead` (the fixture-tuned `0.9 x lead` margin was retired in B3,
+    2026-07-22, commit 947f6fa — see cells.group_wrapped's docstring). Even that adaptive gate
+    cannot fire when the header's leading EQUALS the body's leading (measured on the GrainCorp
+    report: 6.6pt header vs 6.5pt body — `6.6 < 6.5` is false; the synthetic fixture below uses
+    uniform 12pt spacing — `12 < 12` is false), so genuine wrap-continuation rows survive as
+    separate rows. This is a reading judgment, not a threshold to tune further — which row is a
+    wrap fragment is decided by the NEURAL row-role proposer (rowrole.py) once the resulting tree
+    fails to tile.
 
     Using row[0].top (not max) is safe because header rows are compact; if the first
     (leftmost-column) cell precedes body_top, the row is a header row.
@@ -691,14 +697,16 @@ Expected: **all pass** except the not-yet-implemented `tests/etkl/test_rowrole_r
 """rowrole — loop C NEURAL header-region row roles: propose -> tile+conserve oracle -> promote.
 
 §8 gate: this module hosts the NEURAL slice. WHICH role a header-region row has is NOT decided
-here — a RowRoleProposer (BAML, injected) proposes it and region_tiles (SHACL: the eight tiling
-shapes + HeaderContentConservedShape) disposes it; a legal, lossless reading is admitted only as a
-PromotionDecision proposition (§3).
+here — a RowRoleProposer (BAML, injected) proposes it and region_tiles (SHACL: the nine tiling
+shapes, including HeaderContentConservedShape) disposes it; a legal, lossless reading is admitted
+only as a PromotionDecision proposition (§3).
 
 Why NEURAL and not geometry: loop B proved a leaked caption and a genuinely-ambiguous off-center
 merge are structurally identical (both are overlapping top rows), so no geometric peel is sound;
-and headers.header_rows_of's 0.9x-lead wrap threshold cannot fire when a document's header leading
-equals its body leading (measured on GrainCorp: 6.6pt vs 6.5pt). Both are reading judgments.
+and even headers.header_rows_of's adaptive `gap < lead` wrap gate (the tuned `0.9 x lead` margin
+was already retired in B3, 2026-07-22, commit 947f6fa) cannot fire when a document's header
+leading equals its body leading (measured on GrainCorp: 6.6pt vs 6.5pt). Both are reading
+judgments — a threshold, adaptive or not, cannot decide them.
 
 The honest limit (spec §2 Finding 5): tiling CANNOT discriminate 'furniture' from 'continuation' —
 both readings tile, and both conserve (furniture text is carried as a caption). That residue is
@@ -814,12 +822,27 @@ def emit_reading_evidence(g, table_uri, captions, source_cells):
         g.add((table_uri, TAB.hasHeaderSourceCell, sc))
 ```
 
+> **SUPERSEDED by 75061f3:** the code sample above places continuation fragments and reports
+> `row_columns` via `regions.column_of` (imported at `from .regions import column_of`), which
+> **clamps** an out-of-range ink center onto the grid's last column. A review found this silently
+> welds a page-margin-flush caption fragment onto the rightmost leaf label instead of refusing an
+> unplaceable reading. Commit `75061f3` replaced every continuation-placement and `row_columns`
+> use of `regions.column_of` with a dedicated, non-clamping `rowrole._column_containing` (returns
+> `None` for an out-of-grid x, surfaced as `-1` in `row_columns` and as an outright refusal in
+> `build_row_reading`) — see `src/iladub/etkl/rowrole.py`'s current `_column_containing` docstring
+> and `tests/etkl/test_rowrole_reading.py::test_out_of_grid_continuation_is_refused`. The
+> instruction below ("do NOT change `column_of`") is superseded: `regions.column_of` itself was
+> correctly left untouched (it is still the right function for its other, clamping-tolerant
+> callers), but `rowrole.py` no longer calls it.
+
 - [ ] **Step 6: Run the test to verify it passes**
 
 Run: `. .venv/bin/activate && python3 -m pytest tests/etkl/test_rowrole_reading.py -q`
-Expected: **9 passed.**
+Expected: **8 passed.** (The plan's original "9 passed" over-counted the test file as originally
+written, which has 8 tests; three more regression tests for the out-of-grid refusal and the empty
+header-rows edge were added later alongside the 75061f3 fix, for 11 in the shipped file.)
 
-If `test_context_reports_geometry_without_deciding` fails on `row_columns`, print the actual value and reconcile the expectation with the measured ink centers — do NOT change `column_of`.
+If `test_context_reports_geometry_without_deciding` fails on `row_columns`, print the actual value and reconcile the expectation with the measured ink centers — do NOT change `column_of`'s own clamping behavior for its other callers (see the SUPERSEDED note above for why `rowrole.py` itself moved off `column_of`).
 
 - [ ] **Step 7: Commit**
 
