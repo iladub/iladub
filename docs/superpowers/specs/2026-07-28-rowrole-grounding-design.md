@@ -132,9 +132,10 @@ Three keys added. Nothing else in the module changes.
   `build_row_reading` would produce for a `continuation` reading of that cell alone:
   `fragment + " " + leaf_label`.
 
-  This is the signal that separates the indistinguishable pair: `"Date of Grain" + "Commencement"`
-  → *"Date of Grain Loading Commencement"* reads as one column name; `"WIDE" + "Val"` →
-  *"WIDE Val"* does not.
+  This is the signal that separates the indistinguishable pair: `"Date of Grain"` merged with its
+  own column's leaf label reads as the start of a plausible column name (a *fragment* — see the
+  composition note below for how it becomes the full `"Date of Grain Loading Commencement"`);
+  `"WIDE" + "Unit"` → *"WIDE Unit"* is already a complete, plausible column name on its own.
 
   It reuses the shipped `_column_containing` for placement, so it can never disagree with what
   `build_row_reading` would actually do.
@@ -145,17 +146,22 @@ Three keys added. Nothing else in the module changes.
   Together these carry the solitary-parent reasoning in raw form: *one cell over fourteen leaf
   columns* is a title far more often than a group label.
 
-**Deliberately NOT reported: `_covers_for_cell`'s covers.** The natural way to express "how much
-would this cover" is the symmetrized cover set — and that is exactly the function that turned
-`Date of Grain`'s single-column ink into `covers 1–12`. Reporting it would hand the proposer the
+**Deliberately NOT reported: `_covers_for_cell`'s covers.** `_covers_for_cell` alone reports only
+the ink column — for `Date of Grain` that is a single column. It is the DOWNSTREAM
+`repair_coverage`/`_centered_run` symmetrized-run extension (`headers.py`), one stage later, that
+turned that single ink column into `covers 1–12`. Reporting either would hand the proposer an
 artefact that misleads. Cell counts and the leaf-column denominator are exact and underived; the
 model can weigh them without being told a fabricated span.
 
-**Multi-row composition note.** `merged` is computed per cell in isolation. When several
-continuation rows land in the same column, `build_row_reading` composes them top-to-bottom
-(`"Date of Grain" + "Loading" + "Commencement"`), so a single cell's `merged` is a *fragment* of the
-final label, not the final label. The prompt says so; the key is named `merge_candidates`
-(candidates, not results) for the same reason.
+**Multi-row composition note.** `merged` is computed per cell in isolation: for a single
+non-leaf cell, it is `fragment + " " + leaf_label` — so GrainCorp's `"Date of Grain"` row, taken
+alone, candidates as `"Date of Grain Commencement"`, not the full name. When SEVERAL continuation
+rows land in the same column, `build_row_reading` composes them top-to-bottom
+(`"Date of Grain" + "Loading" + "Commencement"`), so a single cell's `merged` is only a *fragment*
+of that final label. The prompt now says this explicitly (a plain per-cell join could not by
+itself explain the worked "Date of Grain" → "...Loading Commencement" example, so the composition
+sentence is what makes that example true); the key is named `merge_candidates` (candidates, not
+results) for the same reason.
 
 ### 3.2 `baml_src/header_rowrole.baml`
 
@@ -239,6 +245,13 @@ the Protocol, and `FakeRowRoleProposer` are unchanged — the seam's shape is un
    repeated block, so building it now would be speculation. Revisit when a document demands it.
 3. **Leaf-grid under-segmentation** — the next loop; the reason GrainCorp scores 0.947 and not 1.0.
 4. **Row-grouping with suppressed keys + interleaved subtotals** (`Mackay Total`, `Jul 26 Total`).
-5. **Live-path exercise.** The BAML path has still never executed (`BAML_LIVE` gated off). This loop
-   adds parameters to a function no test invokes live; the arity check in §4 is what stands in for
-   that until a live run happens.
+5. **Live-path exercise.** The BAML path has still never executed. It is not merely `BAML_LIVE`
+   gated off — `BamlRowRoleProposer` is never constructed anywhere in `src/`
+   (`compile.py` only accepts an injected `row_role_proposer`), and nothing on the row-role path
+   calls `baml_proposer_available()`, so the live path is currently **unreachable from the
+   library**, not just env-gated off. This loop adds parameters to a function no test invokes
+   live. The arity check in §4 pins agreement between `baml_src/`'s declared signature,
+   `propose.py`'s call-site text, and (when `baml_client/` is importable) the GENERATED client's
+   actual signature — it catches a source/generated-client mismatch of the kind this branch
+   shipped with, but it is still a static check: it cannot substitute for exercising the live
+   call, which no test does.

@@ -19,7 +19,11 @@ function ProposeHeaderRowRoles(
 
     If a cell were read as a "continuation", joining it to the label below would produce:
     {{ merge_candidates }} (an empty string means the cell sits over no column that has a label,
-    so it CANNOT be a continuation).
+    so it CANNOT be a continuation). Each candidate is computed per cell IN ISOLATION, one row at
+    a time — so when SEVERAL rows above the same column are all read as "continuation", their
+    fragments compose top to bottom into the final label ("Date of Grain" + "Loading" +
+    "Commencement" -> "Date of Grain Loading Commencement"); a single candidate shown here may be
+    only a fragment of that final name, not the whole of it.
 
     Classify EACH row above the bottom row, top to bottom, as exactly one of:
       - "furniture"    — not part of the table: a report date, a title, a page number.

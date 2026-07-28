@@ -20,7 +20,7 @@ Copied from the spec's §5 gate. **Every task's requirements implicitly include 
 
 - **Evidence is reported, never acted on.** No Python may branch on the new keys to select or override a role. `row_role_context` stays a pure structural read; `build_row_reading` still only executes or refuses a given vector.
 - **No behaviour change.** `build_row_reading`, `resolve_header_row_roles`, `emit_reading_evidence`, both oracles, and every refusal path must be byte-identical in behaviour. Only what the proposer *sees* changes.
-- **No fabricated evidence.** Do **not** report `_covers_for_cell`'s symmetrized cover set. That is the function that turned `Date of Grain`'s single-column ink into `covers 1..12`; reporting it would hand the model the artefact that misleads. Only exact, underived values.
+- **No fabricated evidence.** Do **not** report `_covers_for_cell`'s symmetrized cover set. `_covers_for_cell` alone reports only the ink column (`Date of Grain` -> a single column); it is the DOWNSTREAM `repair_coverage`/`_centered_run` symmetrized-run extension (`headers.py`), one stage later, that turned that single ink column into `covers 1..12`. Reporting either would hand the model an artefact that misleads. Only exact, underived values.
 - **No tuned constant, no new numeric literal** encoding a decision. Counts and string concatenation only.
 - **Band-local only.** No reading of neighbouring bands; the band remains the closure boundary.
 - **Legality gates admission, never confidence.** Unchanged — introduce no comparison on confidence.
@@ -184,7 +184,7 @@ def row_role_context(header_rows, grid) -> dict:
                         produce ({column, leaf_label, merged}), or None when the cell's ink center
                         lies in no column or that column carries no leaf label. This is the
                         evidence that separates the otherwise indistinguishable pair: a genuine
-                        short merged parent ('WIDE' over 'Val') and a wrap fragment ('Date of
+                        short merged parent ('WIDE' over 'Unit') and a wrap fragment ('Date of
                         Grain' over 'Commencement') have IDENTICAL geometry — both have
                         single-column ink above a leaf label in that column — and differ only in
                         whether the joined text reads as one column name (spec §2 Finding 3).
@@ -193,9 +193,11 @@ def row_role_context(header_rows, grid) -> dict:
                         solitary-parent reasoning in RAW form: one cell over many columns is more
                         often a title than a group label.
 
-    Deliberately NOT reported: _covers_for_cell's symmetrized cover set. That is the function that
-    fabricated 'Date of Grain -> covers 1..12' from ink touching one column, so reporting it would
-    hand the proposer the very artefact that misleads. Counts are exact and underived.
+    Deliberately NOT reported: _covers_for_cell's symmetrized cover set. _covers_for_cell alone
+    reports only the ink column ('Date of Grain' -> a single column); it is the DOWNSTREAM
+    repair_coverage/_centered_run symmetrized-run extension (headers.py) that turned that single
+    ink column into 'covers 1..12' one stage later. Reporting either would hand the proposer an
+    artefact that misleads. Counts are exact and underived.
 
     `merged` is computed per cell IN ISOLATION. When several continuation rows land in the same
     column, build_row_reading composes them top-to-bottom ('Date of Grain' + 'Loading' +
