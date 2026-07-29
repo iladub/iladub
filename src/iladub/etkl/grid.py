@@ -40,7 +40,19 @@ def _column_blank_profile(band: Band, x0: float, x1: float) -> np.ndarray:
 def _rule_boundaries(band: Band) -> list[float] | None:
     """Candidate leaf boundaries from the band's vertical rules — returned ONLY if every band
     word strictly tiles them (each word within some [x_i, x_i+1]); else None (whitespace fallback).
-    Threshold-free: the words confirm the rules are column separators."""
+    Threshold-free: the words confirm the rules are column separators.
+
+    Boundaries bounding an interval NO word occupies are dropped. A rule drawn twice (a table
+    border rendered as two segments a fraction of a point apart) would otherwise contribute a
+    hairline column that no label can ever cover, which fails CoverageShape downstream. Measured
+    on a real report: exactly the 4 double-drawn hairlines were empty while every real column held
+    4-53 words.
+
+    This is a PRESENCE test ("does any ink occupy this interval"), NOT a dedup tolerance. Do not
+    "simplify" it to abs(a - b) < eps: the duplicates there were 0.12-1.0pt apart, so any distance
+    threshold would be a tuned constant, which the CLAUDE.md §8 gate forbids. COORD_EPS (0.01) is a
+    float-comparison epsilon and must not be repurposed as a width either.
+    """
     if not band.rules:
         return None
     xs = sorted({round(r.x, 2) for r in band.rules})
@@ -53,7 +65,11 @@ def _rule_boundaries(band: Band) -> list[float] | None:
         if not any(xs[c] - COORD_EPS <= w.x0 and w.x1 <= xs[c + 1] + COORD_EPS
                    for c in range(len(xs) - 1)):
             return None            # a word straddles / lies outside the rules -> reject
-    return xs
+    kept = [xs[0]]
+    for c in range(len(xs) - 1):
+        if any(w.x0 < xs[c + 1] and w.x1 > xs[c] for w in words):
+            kept.append(xs[c + 1])
+    return kept if len(kept) >= 2 else None
 
 
 def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
