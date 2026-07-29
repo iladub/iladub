@@ -1,0 +1,199 @@
+"""Loop D — the author's vertical rules as leaf-grid authority.
+
+Two shipped defects made GrainCorp's grid 14 columns where the source has 15:
+recover_leaf_grid rebuilt every sub-band WITHOUT band.rules (so the border-aware
+path never ran), and double-drawn rules would otherwise yield hairline columns.
+See docs/superpowers/specs/2026-07-29-rule-grid-authority-design.md.
+
+The fixture is deliberately TIGHT — 2pt gaps, below the 3-bin gutter minimum — so the
+whitespace path merges all three columns into one. That is what makes these tests
+discriminating: rule-derived 3 vs gutter-derived 1.
+"""
+from iladub.etkl.bands import Band
+from iladub.etkl.cells import recover_leaf_grid
+from iladub.etkl.geometry import Line, Rule, Word
+from iladub.etkl.grid import _rule_boundaries, infer_leaf_grid
+
+# A deliberately NARROW (~1pt) but OCCUPIED interval, to guard against a collapse
+# that drops real structure. See test_narrow_occupied_interval_survives_collapse
+# below for why test_occupied_intervals_all_survive alone cannot catch this.
+NARROW_RULES = (Rule(10.0, 0, 70), Rule(50.0, 0, 70), Rule(51.0, 0, 70), Rule(90.0, 0, 70))
+NARROW_EXPECTED = (10.0, 50.0, 51.0, 90.0)
+
+# 10.0 and 10.3 are the SAME physical rule drawn twice — the artefact that would
+# otherwise produce a 0.3pt hairline column.
+RULES = (Rule(10.0, 0, 70), Rule(10.3, 0, 70), Rule(50.0, 0, 70),
+         Rule(90.0, 0, 70), Rule(130.0, 0, 70))
+EXPECTED = (10.0, 50.0, 90.0, 130.0)
+
+
+def _w(t, x0, x1, top):
+    return Word(t, x0, x1, top, top + 10.0)
+
+
+def _line(words, top):
+    return Line(tuple(words), top, top + 10.0)
+
+
+def _body_rows():
+    """Four data rows whose 2pt inter-column gaps are too narrow to be gutters."""
+    return [_line([_w("a%d" % i, 12, 49, t), _w("b%d" % i, 51, 89, t),
+                   _w("c%d" % i, 91, 128, t)], t)
+            for i, t in enumerate((12.0, 24.0, 36.0, 48.0))]
+
+
+def tight_ruled_band():
+    rows = _body_rows()
+    return Band(tuple(rows), 12.0, 58.0, RULES)
+
+
+def straddling_caption_band():
+    """Same table, but line 0 is a caption straddling the 50.0 rule — the GrainCorp
+    shape ('Friday, 24 J' was the single word of 472 that vetoed the whole band)."""
+    rows = [_line([_w("CAPTION", 40, 60, 0.0)], 0.0)] + _body_rows()
+    return Band(tuple(rows), 0.0, 58.0, RULES)
+
+
+def test_unoccupied_interval_is_not_a_column():
+    # The 10.0-10.3 interval holds no word, so it is not a column. Threshold-free:
+    # a presence test, never a distance comparison.
+    assert _rule_boundaries(tight_ruled_band()) == list(EXPECTED)
+
+
+def test_occupied_intervals_all_survive():
+    # Guard against over-collapsing: every interval that DOES hold ink is kept.
+    kept = _rule_boundaries(tight_ruled_band())
+    assert len(kept) - 1 == 3
+
+
+def test_rules_still_refused_when_a_word_straddles():
+    # Honest failure preserved: the full band still falls through to whitespace.
+    assert _rule_boundaries(straddling_caption_band()) is None
+
+
+def test_no_rules_means_no_rule_boundaries():
+    assert _rule_boundaries(Band(tuple(_body_rows()), 12.0, 58.0)) is None
+
+
+def narrow_occupied_band():
+    """Rules create a deliberately narrow (~1pt) interval [50.0, 51.0] that holds a
+    real word (a genuine, if slender, column) — as distinct from the RULES fixture's
+    [10.0, 10.3] interval, which is a double-drawn rule holding NO word.
+    """
+    row = _line([_w("a", 12, 49, 12.0), _w("b", 50.2, 50.8, 12.0), _w("c", 52, 89, 12.0)], 12.0)
+    return Band((row,), 12.0, 22.0, NARROW_RULES)
+
+
+def test_narrow_occupied_interval_survives_collapse():
+    # Regression guard for a Critical-class risk: test_occupied_intervals_all_survive
+    # (above) asserts only a COUNT against the RULES fixture, so a mutant that drops
+    # the wrong interval and adds back a duplicate boundary elsewhere (e.g. returning
+    # [10.0, 50.0, 130.0, 130.0]) still passes it — the count matches, the content is
+    # wrong. This fixture makes a narrow OCCUPIED interval the discriminator: any
+    # collapse that drops it changes the actual boundary list, which this test checks
+    # directly rather than just its length.
+    assert _rule_boundaries(narrow_occupied_band()) == list(NARROW_EXPECTED)
+
+
+def test_rules_outrank_inferred_gutters():
+    # THE LOOP'S POINT. The 2pt gaps are below the gutter minimum, so whitespace
+    # inference merges all three columns into ONE. The author drew rules; they win.
+    band = tight_ruled_band()
+    gutter_only = infer_leaf_grid(Band(band.lines, band.top, band.bottom))
+    assert gutter_only.ncols == 1, "fixture must be tight enough to defeat the gutter path"
+
+    grid = recover_leaf_grid(band)
+    assert grid.ncols == 3
+    assert grid.boundaries == EXPECTED
+    assert grid.confidence == 1.0
+
+
+def test_straddling_caption_self_heals_via_the_suffix():
+    # _rule_boundaries refuses the FULL band (the caption straddles a rule), but
+    # recover_leaf_grid already walks row-suffixes to skip unstable top rows, so a
+    # later suffix accepts. This is the GrainCorp shape: one word of 472 vetoed
+    # the rules for the whole band.
+    grid = recover_leaf_grid(straddling_caption_band())
+    assert grid.ncols == 3
+    assert grid.boundaries == EXPECTED
+
+
+def test_ruleless_band_is_unchanged():
+    # The modal-vote path is NOT being changed in this loop. A band with no rules
+    # must return exactly what it returns today.
+    band = Band(tuple(_body_rows()), 12.0, 58.0)
+    assert recover_leaf_grid(band).ncols == 1
+
+
+def sparse_middle_column_band():
+    """Three ruled columns where ONLY the top row populates the middle one.
+
+    Every shorter suffix therefore sees an unoccupied middle interval, collapses it, and
+    rule-confirms a 2-column reading; only the full band sees all three. This is residue R3
+    (the nested-subset vote) applied to a ruled band. Coordinates are load-bearing."""
+    rows = [_line([_w("a0", 12, 48, 0.0), _w("MID", 52, 88, 0.0), _w("c0", 92, 128, 0.0)], 0.0)]
+    for i, t in enumerate((12.0, 24.0, 36.0, 48.0)):
+        rows.append(_line([_w("a%d" % (i + 1), 12, 48, t), _w("c%d" % (i + 1), 92, 128, t)], t))
+    return Band(tuple(rows), 0.0, 58.0,
+                (Rule(10.0, 0, 70), Rule(50.0, 0, 70), Rule(90.0, 0, 70), Rule(130.0, 0, 70)))
+
+
+def test_short_circuit_beats_the_modal_vote_not_just_agrees_with_it():
+    """The short-circuit's DEFINING property, which nothing else here pins.
+
+    A review deleted `if _rule_boundaries(sub_band) is not None: return g` from
+    recover_leaf_grid and every other test in this file still passed — the other fixtures are
+    uniform, so the modal vote happens to converge on the same answer. This fixture is not:
+    measured, the full band rule-confirms 3 columns while suffixes 1-3 each rule-confirm 2, so
+    the vote would return 2 and silently drop the sparse middle column. Returning 3 proves the
+    rules are AUTHORITY (first confirming suffix wins outright), not merely one more vote.
+    """
+    assert recover_leaf_grid(sparse_middle_column_band()).ncols == 3
+
+
+def outer_box_band():
+    """Five whitespace-visible columns inside rules that are only an outer BOX."""
+    rows = [_line([_w("c%d_%d" % (j, i), 10 + j * 60, 40 + j * 60, t) for j in range(5)], t)
+            for i, t in enumerate((0.0, 12.0, 24.0, 36.0))]
+    return Band(tuple(rows), 0.0, 46.0, (Rule(5.0, 0, 50), Rule(305.0, 0, 50)))
+
+
+def test_outer_box_rules_are_not_a_grid():
+    """An outer box is a FRAME, not a set of separators — and every word tiles a single
+    interval trivially, so the tiling test alone cannot tell the two apart.
+
+    Measured before this guard existed: the band below read as 1 column instead of 5, at full
+    confidence. Requiring an interior boundary is the definition of "separator", not a
+    threshold. The band must fall back to whitespace inference and match its ruleless result.
+    """
+    band = outer_box_band()
+    assert _rule_boundaries(band) is None
+    ruleless = Band(band.lines, band.top, band.bottom)
+    assert recover_leaf_grid(band).ncols == recover_leaf_grid(ruleless).ncols == 5
+
+
+def caption_hides_the_only_middle_ink_band():
+    """Line 0 carries BOTH a straddling caption AND the middle column's only ink."""
+    rows = [_line([_w("CAP", 40, 60, 0.0), _w("MID", 52, 88, 0.0)], 0.0)]
+    for i, t in enumerate((12.0, 24.0, 36.0, 48.0)):
+        rows.append(_line([_w("a%d" % i, 12, 48, t), _w("c%d" % i, 92, 128, t)], t))
+    return Band(tuple(rows), 0.0, 58.0,
+                (Rule(10.0, 0, 70), Rule(50.0, 0, 70), Rule(90.0, 0, 70), Rule(130.0, 0, 70)))
+
+
+def test_skipped_line_ink_loses_an_author_drawn_boundary_KNOWN_LOSS():
+    """PINS A KNOWN STRUCTURAL LOSS — residue R14. This asserts what the code DOES, not what
+    it should do, so that changing it is a deliberate act rather than an accident.
+
+    The short-circuit returns the FIRST accepting suffix, so lines above it are invisible to
+    the occupancy collapse. Here the caption on line 0 vetoes the full band, the accepted
+    suffix starts at line 1, and the middle column's only ink was on line 0 — so the author's
+    rule at x=90.0 is discarded and two real columns merge, reported at confidence 1.0 with no
+    escalation and no proposition. That is one displaced line away from the GrainCorp shape,
+    and it is reachable precisely because of residue R10 (detect_bands leaves a caption in the
+    band). If a later loop fixes R10 or R14, this test should change with it.
+    """
+    grid = recover_leaf_grid(caption_hides_the_only_middle_ink_band())
+    assert grid.ncols == 2
+    assert grid.boundaries == (10.0, 50.0, 130.0)
+    assert grid.confidence == 1.0

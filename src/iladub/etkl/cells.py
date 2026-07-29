@@ -11,7 +11,7 @@ from statistics import median
 
 from .bands import Band
 from .geometry import Word
-from .grid import LeafGrid, infer_leaf_grid
+from .grid import LeafGrid, _rule_boundaries, infer_leaf_grid
 from .regions import column_of
 
 
@@ -36,15 +36,29 @@ class SourceCell:
 
 
 def recover_leaf_grid(band: Band) -> LeafGrid:
-    """Leaf grid = the most-stable column count across row-suffixes.
+    """Leaf grid = the author's vertical rules when the words confirm them, else the
+    most-stable column count across row-suffixes.
 
-    Spanning or verbose header rows cause instability at the top of the suffix
-    range — either collapsing the column count (few wide clusters) or inflating
-    it (many short tokens whose inter-word gaps look like gutters). The stable
-    leaf count is the MODE (most frequent column count) across all qualifying
-    suffixes of ≥2 rows. Among suffixes achieving the modal count, the longest
-    (most rows = strongest gutter evidence) is returned. Falls back to
-    infer_leaf_grid(band) if nothing qualifies (e.g. a single-line band).
+    RULES ARE AUTHORITY. If any row-suffix's words strictly tile the band's rules, that
+    rule-derived grid is returned immediately — the author drew those separators, so there is
+    nothing to vote on (CLAUDE.md §0: recover the author's structure, do not re-derive it).
+    Walking suffixes matters: a single leaked caption word straddling a rule vetoes the rules
+    for the WHOLE band, but a suffix that skips it accepts them (measured on a real report:
+    one word of 472).
+
+    WHITESPACE FALLBACK (unchanged): spanning or verbose header rows cause instability at the
+    top of the suffix range — either collapsing the column count (few wide clusters) or
+    inflating it (many short tokens whose inter-word gaps look like gutters). The stable leaf
+    count is the MODE (most frequent column count) across all qualifying suffixes of >=2 rows.
+    Among suffixes achieving the modal count, the longest (most rows = strongest gutter
+    evidence) is returned. Falls back to infer_leaf_grid(band) if nothing qualifies (e.g. a
+    single-line band).
+
+    KNOWN DEFECT in that mode, deliberately NOT fixed here (residue R3): the suffixes are
+    NESTED SUBSETS of one another, not independent witnesses, so the vote systematically
+    over-weights the degraded tail. Measured on a real report: the correct grid was found by
+    the longest suffix, then outvoted 35-to-16 by shorter ones. Ruled documents now route
+    around this; ruleless ones still hit it.
     """
     lines = list(band.lines)
     results: list[tuple[int, int, LeafGrid]] = []  # (ncols, n_rows, grid)
@@ -52,10 +66,14 @@ def recover_leaf_grid(band: Band) -> LeafGrid:
         sub = lines[start:]
         if len(sub) < 2:
             break
+        sub_band = Band(tuple(sub), min(l.top for l in sub), max(l.bottom for l in sub),
+                        band.rules, band.hrules)
         try:
-            g = infer_leaf_grid(Band(tuple(sub), min(l.top for l in sub), max(l.bottom for l in sub)))
+            g = infer_leaf_grid(sub_band)
         except ValueError:
             continue
+        if _rule_boundaries(sub_band) is not None:
+            return g               # author's rules confirmed by the words -> authority, no vote
         results.append((g.ncols, len(sub), g))
     if not results:
         return infer_leaf_grid(band)
