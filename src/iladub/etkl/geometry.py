@@ -154,12 +154,25 @@ def _cell_text(glyphs: list["Char"]) -> str:
       - "split where the gap >= the font's median space width (1.46pt)" — yields 'CARPEDIEM',
         'ReferenceNumber', '10:00:00AM', because adjacent glyphs kern INTO the space, so the
         measured gap is far smaller than the space's own width.
-    It works because the three regimes are disjoint (measured): intra-token kerning -0.08..+0.11,
-    real word space 1.38-1.39, inter-column 5-27. A contiguous '20,000' has ZERO positive gaps,
-    while padding glyphs overlap the digits they pad.
+    It works because the three regimes are disjoint. Measured over ALL 4114 consecutive non-space
+    glyph pairs on a real page: intra-token kerning -0.19..+0.30, real word space 1.15..2.04,
+    inter-column 4.95..189. The margin is 0.30 vs 1.15. (An earlier note here claimed -0.08..+0.11
+    and 1.38-1.39 — those came from sampling a few cells and are WRONG by ~3x on one bound; the
+    conclusion survives, the numbers did not.) A contiguous '20,000' has ZERO positive gaps, while
+    padding glyphs overlap the digits they pad. Note the rule uses none of these magnitudes — they
+    only explain WHY two presence tests suffice.
 
-    A large gap with NO space glyph does not split: that is a COLUMN gap (residue R13), and
-    rule_aware_lines emits one Word per rule column.
+    `between` is provably SUBSUMED by `inside` for any glyph wider than COORD_EPS, and on the real
+    page it fires on zero pairs that `inside` does not (deleting it leaves output byte-identical).
+    It is retained only to state the strictly-between case explicitly; `inside` is what actually
+    does the work — real word spaces OVERLAP both neighbours (by ~0.04), so `between` fails for
+    them. Do not delete `inside` thinking `between` covers it: that mutant destroys every word
+    space in the document while passing every test but one.
+
+    A large gap with NO space glyph ANYWHERE in the cell does not split: that is a COLUMN gap
+    (residue R13), and rule_aware_lines emits one Word per rule column. Narrower than it sounds —
+    a padding space inside `a` licenses a split at a later large gap, since `inside` tests the
+    whole span [a.x0, b.x1]. Zero occurrences on the measured document.
     """
     gl = sorted(glyphs, key=lambda c: c.x0)
     ns = [c for c in gl if c.text.strip()]

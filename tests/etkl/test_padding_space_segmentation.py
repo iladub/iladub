@@ -69,3 +69,19 @@ def test_word_bbox_excludes_leading_padding():
     w = lines[0].words[0]
     assert w.x0 == 811.6
     assert w.x1 == 827.5
+
+
+def test_an_OVERLAPPING_real_word_space_survives():
+    """THE LOAD-BEARING CASE, and the one the original fixtures missed.
+
+    A review deleted the `inside` clause from _cell_text and all five tests above still passed —
+    while every genuine word space in the real document was destroyed ('CARPE DIEM' -> 'CARPEDIEM',
+    'Jul 26' -> 'Jul26'). The cause: the fixture above uses an ABUTTING space, which fires the
+    `between` clause. Real word spaces OVERLAP both neighbours (measured on the document: 'E'
+    271.81-275.33, ' ' 275.29-276.76, 'D' 276.72-280.53 — an overlap of 0.04 on each side), where
+    `between` fails and only `inside` saves it. On the real page `inside`-only fires on 133 pairs
+    and `between`-only on ZERO, so this shape — not the abutting one — is what the rule must handle.
+    Coordinates are the measured ones; do not tidy them.
+    """
+    chars = [_c("E", 271.81, 275.33), _c(" ", 275.29, 276.76), _c("D", 276.72, 280.53)]
+    assert _texts(chars, [270.0, 285.0]) == [["E D"]]

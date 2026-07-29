@@ -4,7 +4,7 @@
 - **Author:** François Rosselet
 - **Status:** Design (brainstormed, approved). **SHIPPED 2026-07-29:** 49 of GrainCorp's 488 cells
   repaired (`2 0,000` → `20,000`, `1 18,000` → `118,000`); no cell damaged. **Score unchanged at
-  0.947 with 447 cells, as required.** Full suite 608 passed / 5 skipped. R2 closed for the ruled
+  0.947 with 447 cells, as required.** Full suite 609 passed / 5 skipped. R2 closed for the ruled
   path; R16 opened for the unruled path. **New evidence for R4 recorded:** `logical_rows` also
   fuses each subtotal line into the preceding data row's cell (verified pre-existing, not caused
   by this loop), so R4 must separate rows before it can sum them. Fifth loop of the GrainCorp real-document push
@@ -70,11 +70,17 @@ sits inside `'2'` at 811.6–814.5. `rule_aware_lines` (`geometry.py:179`) joins
 **Finding 2 — three disjoint gap regimes, so no threshold is needed.** Measured between
 consecutive **non-space** glyphs:
 
-| regime | gap | example |
+| regime | gap (measured over ALL 4114 pairs on the page) | example |
 | --- | --- | --- |
-| intra-token (kerning) | −0.08 … +0.11 | `2`→`0` inside `20,000` |
-| real word space | **1.38 – 1.39** | `E`→`D` in `CARPE DIEM` |
-| inter-column | 5.39, 22.81, 27.07 | `s`→`2` in the measure blob |
+| intra-token (kerning) | −0.19 … **+0.30** | `2`→`0` inside `20,000`; the +0.30 cases are all `W`→letter |
+| real word space | **1.15 … 2.04** | `E`→`D` in `CARPE DIEM` (1.39); `s`→`L` (1.15); `G`→`S` (2.04) |
+| inter-column | 4.95 … 189.02 | `s`→`2` in the measure blob (22.81) |
+
+**Correction (final review):** an earlier version of this table gave −0.08…+0.11 and 1.38–1.39.
+Those came from sampling a handful of cells and are wrong by roughly 3× on one bound. The
+*conclusion* survives — the regimes are still disjoint, with a margin of 0.30 vs 1.15 — and it was
+never load-bearing, since the shipped rule uses no magnitude at all. But the numbers were stated as
+measurements and were not.
 
 `20,000` has **zero** positive gaps. Every real word space has a space glyph **and** a positive gap.
 Padding spaces have a glyph but a **negative** gap. So the rule needs no magnitude comparison.
@@ -103,7 +109,10 @@ than the columns), not R2.
 '(blank)Barley   5 5,000'    -> '(blank)Barley 55,000'
 ```
 
-No cell is damaged. Compiled end-to-end with the fix: region 2 `asserted`, **cells = 447**,
+No cell is damaged. Compiled end-to-end with the fix **under the row-role harness**
+(`compile_tables(p, row_role_proposer=FakeRowRoleProposer(RowRoleProposal(('furniture',
+'continuation','continuation'), 0.85, …)))` — with defaults the region escalates
+`MERGE_AMBIGUOUS` at score 0.0, both before and after this change): region 2 `asserted`, **cells = 447**,
 **score = 0.947** — both unchanged. Note this is not neutral by construction: repaired cells become
 `Numeric` where they were `Text` (`is_numeric('2 0,000')` is False, `is_numeric('20,000')` is True),
 which feeds the header/body split and region classification. It was measured precisely because it
