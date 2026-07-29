@@ -139,12 +139,51 @@ def extract_chars(pdf_path: str, page_number: int = 0) -> list[Char]:
                 for c in page.chars]
 
 
+def _cell_text(glyphs: list["Char"]) -> str:
+    """One cell's text, built from its NON-SPACE glyphs.
+
+    A space is inserted between consecutive non-space glyphs only when BOTH hold:
+      1. a space glyph lies between them — either within [a.x1, b.x0], or contained in the span
+         of a or b (the overlapping-padding case); and
+      2. they are actually apart (b.x0 - a.x1 > 0).
+
+    Both are PRESENCE tests. There is no magnitude comparison and no unit, so no tuned constant
+    (CLAUDE.md §8). That matters because the obvious magnitude rules were measured and REFUTED:
+      - "a space overlapping a non-space glyph is padding" — the legitimate space in 'CARPE DIEM'
+        also overlaps its neighbours E and D;
+      - "split where the gap >= the font's median space width (1.46pt)" — yields 'CARPEDIEM',
+        'ReferenceNumber', '10:00:00AM', because adjacent glyphs kern INTO the space, so the
+        measured gap is far smaller than the space's own width.
+    It works because the three regimes are disjoint (measured): intra-token kerning -0.08..+0.11,
+    real word space 1.38-1.39, inter-column 5-27. A contiguous '20,000' has ZERO positive gaps,
+    while padding glyphs overlap the digits they pad.
+
+    A large gap with NO space glyph does not split: that is a COLUMN gap (residue R13), and
+    rule_aware_lines emits one Word per rule column.
+    """
+    gl = sorted(glyphs, key=lambda c: c.x0)
+    ns = [c for c in gl if c.text.strip()]
+    if not ns:
+        return ""
+    sp = [c for c in gl if not c.text.strip()]
+    parts = [ns[0].text]
+    for a, b in zip(ns, ns[1:]):
+        between = any(a.x1 - COORD_EPS <= s.x0 and s.x1 <= b.x0 + COORD_EPS for s in sp)
+        inside = any(s.x0 >= a.x0 and s.x1 <= b.x1 for s in sp)
+        if (b.x0 - a.x1) > 0 and (between or inside):
+            parts.append(" ")
+        parts.append(b.text)
+    return "".join(parts).strip()
+
+
 def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | None = None) -> list[Line]:
     """Re-group characters into cells by ruled columns: rows by vertical proximity (as text_lines),
     then within each row a cell per rule-column (char CENTER within [rule_xs[i], rule_xs[i+1]]);
-    each non-empty cell becomes one Word at its char-span bbox. Chars outside all rule columns are
-    dropped (they lie beyond the table's outer rules). Deterministic containment assignment — no
-    tuned constant. This splits a pdfplumber-merged blob at the author's exact boundaries."""
+    each non-empty cell becomes one Word at its char-span bbox. The cell's text drops padding space
+    glyphs (see `_cell_text`) and the bbox is taken from non-space glyphs. Chars outside all rule
+    columns are dropped (they lie beyond the table's outer rules). Deterministic containment
+    assignment — no tuned constant. This splits a pdfplumber-merged blob at the author's exact
+    boundaries."""
     if not chars or len(rule_xs) < 2:
         return []
     xs = sorted(rule_xs)
@@ -176,11 +215,14 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
         words: list[Word] = []
         for col in sorted(buckets):
             gl = sorted(buckets[col], key=lambda c: c.x0)
-            text = "".join(c.text for c in gl).strip()
+            text = _cell_text(gl)
             if not text:
                 continue
-            words.append(Word(text, min(c.x0 for c in gl), max(c.x1 for c in gl),
-                              min(c.top for c in gl), max(c.bottom for c in gl)))
+            # bbox from the NON-space glyphs: a cell padded with leading spaces must not report
+            # ink it does not have.
+            ink = [c for c in gl if c.text.strip()]
+            words.append(Word(text, min(c.x0 for c in ink), max(c.x1 for c in ink),
+                              min(c.top for c in ink), max(c.bottom for c in ink)))
         if words:
             lines.append(Line(tuple(words), min(w.top for w in words), max(w.bottom for w in words)))
     return sorted(lines, key=lambda ln: ln.top)
