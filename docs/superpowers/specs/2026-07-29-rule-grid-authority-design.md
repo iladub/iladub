@@ -6,7 +6,7 @@
   columns; `Month` and `Port` are now **separate** labels (was the single label `Month Port`);
   15 header labels recovered. **Score unchanged at 0.947 with 447 cells, as required** — this was a
   structural-correctness loop, not a score loop. Residue R1 confirmed still present verbatim
-  (`Date Loading CompletedCommodityTotal`). Full suite 600 passed / 5 skipped; all 7 shipped
+  (`Date Loading CompletedCommodityTotal`). Full suite 603 passed / 5 skipped; all 7 shipped
   fixtures unchanged in column count. Fourth loop of the GrainCorp real-document push
   (A = header/body split PR #67; B = header→column reconciliation PR #68; C = header-region row
   roles PR #69; C.1 = grounding the row-role proposal PR #70).
@@ -121,7 +121,7 @@ interval on the suffix that skips the caption,
 [  58.20,   92.64]  width 34.44  words  7
 [  92.64,   92.76]  width  0.12  words  0   <-- empty
 [  92.76,  159.00]  width 66.24  words 47
-        … 11 further intervals, 32–53 words each …
+        … 11 further intervals, 32–34 words each …
 [ 715.20,  829.92]  width 114.72 words 53
 [ 829.92,  830.16]  width  0.24  words  0   <-- empty
 [ 830.16,  830.88]  width  0.72  words  0   <-- empty
@@ -167,7 +167,11 @@ After the existing word-tiling acceptance, collapse boundaries bounding an unocc
 a boundary `xs[i+1]` is kept only if some word's ink overlaps `[xs[i], xs[i+1])`. `xs[0]` is always
 kept. Return `None` if fewer than two boundaries survive (fall through to the whitespace path).
 
-Threshold-free and evidence-positive: a column exists only where ink occupies it. The docstring
+Threshold-free. Note the epistemics precisely: this is **not** evidence-positive — the author's rule
+is itself positive evidence, and the collapse discards it *from absence of ink*. That is a
+closed-world guard, legal under §8 only because it is **holon-scoped**: the band is the closure
+boundary, and the question asked is solely "does this band's own ink occupy this interval". Widening
+that scope (asking across bands, or across a page) would break the rule. The docstring
 must record *why* this is not a dedup tolerance — a future maintainer will be tempted to "simplify"
 it into `abs(a - b) < eps`, which would reintroduce the gate violation this design avoids.
 

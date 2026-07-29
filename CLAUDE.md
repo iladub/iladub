@@ -282,6 +282,14 @@ muddied authorship provenance.)
 - Keep the work domain-neutral in public examples (healthcare, insurance, etc.) — never
   tied to an employer's domain. Personal time, personal resources, no internal data.
 
+## Deferred residues — the register
+
+Every loop that defers something records it in **`docs/superpowers/residues.md`**, which is the
+**canonical** list of open residues. Each row carries what the residue is, where it was *measured*
+(never assumed), why it was deferred, and what would close it. Loops append rows; a loop that closes
+a residue deletes its row in the same change. Specs may describe a residue in prose, but do not rely
+on a spec §7 to remember it — check the register.
+
 ## Open items (verify; do not assert as done)
 
 - [x] Register w3id.org redirects for the old `…/etkl/*` namespace tree (done 2026-06-02,

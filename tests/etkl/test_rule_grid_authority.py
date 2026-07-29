@@ -149,3 +149,51 @@ def test_short_circuit_beats_the_modal_vote_not_just_agrees_with_it():
     rules are AUTHORITY (first confirming suffix wins outright), not merely one more vote.
     """
     assert recover_leaf_grid(sparse_middle_column_band()).ncols == 3
+
+
+def outer_box_band():
+    """Five whitespace-visible columns inside rules that are only an outer BOX."""
+    rows = [_line([_w("c%d_%d" % (j, i), 10 + j * 60, 40 + j * 60, t) for j in range(5)], t)
+            for i, t in enumerate((0.0, 12.0, 24.0, 36.0))]
+    return Band(tuple(rows), 0.0, 46.0, (Rule(5.0, 0, 50), Rule(305.0, 0, 50)))
+
+
+def test_outer_box_rules_are_not_a_grid():
+    """An outer box is a FRAME, not a set of separators — and every word tiles a single
+    interval trivially, so the tiling test alone cannot tell the two apart.
+
+    Measured before this guard existed: the band below read as 1 column instead of 5, at full
+    confidence. Requiring an interior boundary is the definition of "separator", not a
+    threshold. The band must fall back to whitespace inference and match its ruleless result.
+    """
+    band = outer_box_band()
+    assert _rule_boundaries(band) is None
+    ruleless = Band(band.lines, band.top, band.bottom)
+    assert recover_leaf_grid(band).ncols == recover_leaf_grid(ruleless).ncols == 5
+
+
+def caption_hides_the_only_middle_ink_band():
+    """Line 0 carries BOTH a straddling caption AND the middle column's only ink."""
+    rows = [_line([_w("CAP", 40, 60, 0.0), _w("MID", 52, 88, 0.0)], 0.0)]
+    for i, t in enumerate((12.0, 24.0, 36.0, 48.0)):
+        rows.append(_line([_w("a%d" % i, 12, 48, t), _w("c%d" % i, 92, 128, t)], t))
+    return Band(tuple(rows), 0.0, 58.0,
+                (Rule(10.0, 0, 70), Rule(50.0, 0, 70), Rule(90.0, 0, 70), Rule(130.0, 0, 70)))
+
+
+def test_skipped_line_ink_loses_an_author_drawn_boundary_KNOWN_LOSS():
+    """PINS A KNOWN STRUCTURAL LOSS — residue R14. This asserts what the code DOES, not what
+    it should do, so that changing it is a deliberate act rather than an accident.
+
+    The short-circuit returns the FIRST accepting suffix, so lines above it are invisible to
+    the occupancy collapse. Here the caption on line 0 vetoes the full band, the accepted
+    suffix starts at line 1, and the middle column's only ink was on line 0 — so the author's
+    rule at x=90.0 is discarded and two real columns merge, reported at confidence 1.0 with no
+    escalation and no proposition. That is one displaced line away from the GrainCorp shape,
+    and it is reachable precisely because of residue R10 (detect_bands leaves a caption in the
+    band). If a later loop fixes R10 or R14, this test should change with it.
+    """
+    grid = recover_leaf_grid(caption_hides_the_only_middle_ink_band())
+    assert grid.ncols == 2
+    assert grid.boundaries == (10.0, 50.0, 130.0)
+    assert grid.confidence == 1.0

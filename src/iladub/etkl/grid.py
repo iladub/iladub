@@ -52,6 +52,19 @@ def _rule_boundaries(band: Band) -> list[float] | None:
     "simplify" it to abs(a - b) < eps: the duplicates there were 0.12-1.0pt apart, so any distance
     threshold would be a tuned constant, which the CLAUDE.md §8 gate forbids. COORD_EPS (0.01) is a
     float-comparison epsilon and must not be repurposed as a width either.
+
+    CLOSURE NOTE (§8): the collapse discards an author-drawn boundary on ABSENCE of ink, which is a
+    closed-world guard. It is legal because it is holon-scoped — the band is the closure boundary,
+    and the question asked is only "does this band's own ink occupy this interval". A caller that
+    ever widened that scope (asking across bands, or across a page) would break the rule.
+
+    At least one INTERIOR boundary must survive. A rule set of only {left, right} is an outer BOX,
+    not a set of separators: every word tiles a single interval trivially, so the tiling test cannot
+    distinguish a frame from a grid, and accepting it would collapse a whitespace-visible table to
+    one column (measured: a 5-column band read as 1). Requiring an interior boundary is the
+    definition of "separator", not a tuned threshold. NOTE this does NOT cover rules that are merely
+    COARSER than the columns (e.g. 3 rules over 5 columns) — that case is still accepted and merges
+    real columns; see residue R13.
     """
     if not band.rules:
         return None
@@ -69,7 +82,8 @@ def _rule_boundaries(band: Band) -> list[float] | None:
     for c in range(len(xs) - 1):
         if any(w.x0 < xs[c + 1] and w.x1 > xs[c] for w in words):
             kept.append(xs[c + 1])
-    return kept if len(kept) >= 2 else None
+    # >= 3 boundaries == >= 1 interior boundary == at least one actual separator.
+    return kept if len(kept) >= 3 else None
 
 
 def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
