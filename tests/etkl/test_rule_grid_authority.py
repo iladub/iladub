@@ -123,3 +123,29 @@ def test_ruleless_band_is_unchanged():
     # must return exactly what it returns today.
     band = Band(tuple(_body_rows()), 12.0, 58.0)
     assert recover_leaf_grid(band).ncols == 1
+
+
+def sparse_middle_column_band():
+    """Three ruled columns where ONLY the top row populates the middle one.
+
+    Every shorter suffix therefore sees an unoccupied middle interval, collapses it, and
+    rule-confirms a 2-column reading; only the full band sees all three. This is residue R3
+    (the nested-subset vote) applied to a ruled band. Coordinates are load-bearing."""
+    rows = [_line([_w("a0", 12, 48, 0.0), _w("MID", 52, 88, 0.0), _w("c0", 92, 128, 0.0)], 0.0)]
+    for i, t in enumerate((12.0, 24.0, 36.0, 48.0)):
+        rows.append(_line([_w("a%d" % (i + 1), 12, 48, t), _w("c%d" % (i + 1), 92, 128, t)], t))
+    return Band(tuple(rows), 0.0, 58.0,
+                (Rule(10.0, 0, 70), Rule(50.0, 0, 70), Rule(90.0, 0, 70), Rule(130.0, 0, 70)))
+
+
+def test_short_circuit_beats_the_modal_vote_not_just_agrees_with_it():
+    """The short-circuit's DEFINING property, which nothing else here pins.
+
+    A review deleted `if _rule_boundaries(sub_band) is not None: return g` from
+    recover_leaf_grid and every other test in this file still passed — the other fixtures are
+    uniform, so the modal vote happens to converge on the same answer. This fixture is not:
+    measured, the full band rule-confirms 3 columns while suffixes 1-3 each rule-confirm 2, so
+    the vote would return 2 and silently drop the sparse middle column. Returning 3 proves the
+    rules are AUTHORITY (first confirming suffix wins outright), not merely one more vote.
+    """
+    assert recover_leaf_grid(sparse_middle_column_band()).ncols == 3
