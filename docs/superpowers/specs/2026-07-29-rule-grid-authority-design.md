@@ -55,8 +55,9 @@ capability that has been dead on arrival since it shipped.
    (`ruled_tight_table_pdf` 5, `ruled_merged_table_pdf` 5 — measured), every borderless fixture is
    untouched (`rules == 0` → the rule path is never entered), and the full suite (592 at Loop C.1
    close) stays green.
-5. **Gate:** no tuned constant and no new numeric literal. The empty-interval collapse is a
-   *presence* test, not a tolerance.
+5. **Gate:** no tuned constant and no tolerance. The empty-interval collapse is a *presence* test.
+   One new structural literal ships (`len(kept) >= 3` — "at least one interior boundary"), stated
+   and justified in §5 rather than claimed away.
 6. The residue register exists, and every deferred item named in Loops A–D appears in it.
 
 ---
@@ -218,14 +219,29 @@ All fixtures synthetic and domain-neutral. **No third-party PDF committed.**
 - **PROCEDURAL, and justified as such.** Reading vertical rules out of a PDF and testing which
   intervals contain ink is raw extraction plus decidable containment — irreducibly procedural, and
   carrying no reading judgment. It decides *where the author drew lines*, not *what anything means*.
-- **No tuned constant, no tolerance, no new numeric literal.** The collapse is a presence test
-  (§2 Finding 4). The existing `COORD_EPS = 0.01` is a float-comparison epsilon and is deliberately
-  **not** repurposed as a dedup width — the duplicates are 0.12–1.0 pt apart, so using it as a
-  distance threshold would be exactly the tuned constant the gate forbids.
+- **No tuned constant and no tolerance — but ONE new structural literal, stated plainly.** The
+  collapse is a presence test (§2 Finding 4), and the existing `COORD_EPS = 0.01` is a
+  float-comparison epsilon deliberately **not** repurposed as a dedup width (the duplicates are
+  0.12–1.0 pt apart, so using it as a distance threshold would be exactly the tuned constant the
+  gate forbids). The final-review fix added `len(kept) >= 3` in `_rule_boundaries`. That **is** a new
+  numeric literal and this section must not pretend otherwise: it encodes *"at least one interior
+  boundary == at least one separator"* — the same class as the pre-existing `len(xs) < 2` guard — so
+  it is **structural, not a threshold**. Nothing about it is tunable: 2 boundaries is a frame, 3 is a
+  frame plus one separator, and there is no continuum between them.
+- **The collapse is a closed-world guard, legal because it is holon-scoped.** It is *not*
+  evidence-positive: the author's rule is itself positive evidence, and the collapse discards it
+  from **absence** of ink. That is permitted under §8 only because the band is the closure boundary
+  and the question asked is solely "does this band's own ink occupy this interval". A caller that
+  widened that scope — across bands, or across a page — would break the rule.
 - **Recover the author's structure; do not re-derive it (§0).** Rules outrank inferred gutters
   because the author drew them. This loop restores that ordering rather than inventing a new one.
-- **Honest failure preserved.** If the words do not tile the rules, `_rule_boundaries` still
-  returns `None` and the whitespace path runs — the rules are never forced.
+- **Honest failure is preserved for the TILING refusal, and NOT elsewhere — say both.** If the words
+  do not tile the rules, `_rule_boundaries` returns `None` and the whitespace path runs; the rules
+  are never forced. But two structural losses ship **silently, at confidence 1.0, with no
+  escalation and no proposition**: rules coarser than the columns are accepted and merge real
+  columns (**R13**), and the collapse can delete an author-drawn boundary when only a skipped line
+  carried that column's ink (**R14**, pinned by a test that asserts the loss). Both are registered;
+  neither is dressed up as honest failure, because it isn't.
 - **No overfitting.** Every fixture is synthetic and authored from the *shape* of the problem
   (double-drawn rule; straddling first-line word). GrainCorp is confirmation, not a target, and its
   unchanged 0.947 is reported as such rather than dressed up as an improvement.
@@ -234,8 +250,7 @@ All fixtures synthetic and domain-neutral. **No third-party PDF committed.**
 
 ## 6. Residues — the register this loop starts
 
-`docs/superpowers/residues.md` is created with the following as its initial content. **The register
-is canonical from then on** — this table is a snapshot for review, and later loops append to and
+`docs/superpowers/residues.md` is created with the following as its initial content. **R13–R15 were added to the register at final review and are NOT in the snapshot below — read the register, not this table.** **The register is canonical from then on** — this table is a snapshot for review, and later loops append to and
 delete from the register, not from this spec.
 
 | # | Residue | Measured | Why deferred | What would close it |
