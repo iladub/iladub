@@ -2,7 +2,12 @@
 
 - **Date:** 2026-07-29
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Fifth loop of the GrainCorp real-document push
+- **Status:** Design (brainstormed, approved). **SHIPPED 2026-07-29:** 49 of GrainCorp's 488 cells
+  repaired (`2 0,000` → `20,000`, `1 18,000` → `118,000`); no cell damaged. **Score unchanged at
+  0.947 with 447 cells, as required.** Full suite 608 passed / 5 skipped. R2 closed for the ruled
+  path; R16 opened for the unruled path. **New evidence for R4 recorded:** `logical_rows` also
+  fuses each subtotal line into the preceding data row's cell (verified pre-existing, not caused
+  by this loop), so R4 must separate rows before it can sum them. Fifth loop of the GrainCorp real-document push
   (A = header/body split PR #67; B = header→column reconciliation PR #68; C = header-region row
   roles PR #69; C.1 = grounding the row-role proposal PR #70; D = rules as leaf-grid authority PR #71).
 - **Origin:** Residue **R2** — `2 0,000` should be `20,000`. Reached by re-sequencing: residue R4
