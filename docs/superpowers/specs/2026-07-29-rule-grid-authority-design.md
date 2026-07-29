@@ -2,7 +2,12 @@
 
 - **Date:** 2026-07-29
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Fourth loop of the GrainCorp real-document push
+- **Status:** Design (brainstormed, approved). **SHIPPED 2026-07-29:** GrainCorp's grid 14 → **15**
+  columns; `Month` and `Port` are now **separate** labels (was the single label `Month Port`);
+  15 header labels recovered. **Score unchanged at 0.947 with 447 cells, as required** — this was a
+  structural-correctness loop, not a score loop. Residue R1 confirmed still present verbatim
+  (`Date Loading CompletedCommodityTotal`). Full suite 600 passed / 5 skipped; all 7 shipped
+  fixtures unchanged in column count. Fourth loop of the GrainCorp real-document push
   (A = header/body split PR #67; B = header→column reconciliation PR #68; C = header-region row
   roles PR #69; C.1 = grounding the row-role proposal PR #70).
 - **Origin:** The named residue from Loop C — GrainCorp's recovered grid has 14 columns where the
