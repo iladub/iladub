@@ -17,30 +17,33 @@ PROV = Namespace("http://www.w3.org/ns/prov#")
 T = URIRef("urn:doc#h0")
 
 
-def _emit(g, rows, aggs):
+def _emit(g, rows, aggs, table=T):
     """Mirror the holon emission shape. rows: {row_index: {col_index: text}};
-    aggs: {agg_row_index: member_row_indices}. y0 = 10*row (top-to-bottom order)."""
+    aggs: {agg_row_index: member_row_indices}. y0 = 10*row (top-to-bottom order).
+    `table` defaults to the module T so every existing call site is unaffected; pass a
+    distinct table URI to emit a second, independent table in the same graph (I-1,
+    cross-table collision pinning)."""
     for r, cols in rows.items():
-        ru = URIRef(f"{T}-r{r}")
+        ru = URIRef(f"{table}-r{r}")
         g.add((ru, RDF.type, TAB.LeafRow))
-        g.add((T, TAB.hasLeafRow, ru))
+        g.add((table, TAB.hasLeafRow, ru))
         for c, text in cols.items():
-            e = URIRef(f"{T}-e{r}_{c}")
+            e = URIRef(f"{table}-e{r}_{c}")
             g.add((e, RDF.type, TAB.EntryCell))
-            g.add((T, TAB.hasCell, e))
+            g.add((table, TAB.hasCell, e))
             g.add((e, TAB.atRow, ru))
-            g.add((e, TAB.atColumn, URIRef(f"{T}-c{c}")))
+            g.add((e, TAB.atColumn, URIRef(f"{table}-c{c}")))
             g.add((e, TAB.cellText, Literal(text)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
             g.add((bb, TAB.y0, Literal(10.0 * r, datatype=XSD.decimal)))
             g.add((e, TAB.hasBBox, bb))
     for a, members in aggs.items():
-        au = URIRef(f"{T}-r{a}")
+        au = URIRef(f"{table}-r{a}")
         g.add((au, RDF.type, TAB.DetectedAggregationRow))
         g.add((au, TAB.aggregationFunction, Literal("sum")))
         for m in members:
-            g.add((au, TAB.aggregates, URIRef(f"{T}-r{m}")))
+            g.add((au, TAB.aggregates, URIRef(f"{table}-r{m}")))
 
 
 def _grp(i):
@@ -191,6 +194,22 @@ def test_membrane_accepts_a_wellformed_group():
     assert _tiles(g) is True
 
 
+def test_membrane_refuses_a_double_parent_group():
+    """M-1 (final review, loop I): row-group-nesting.rq can legitimately emit two parents
+    for one child when the member family is non-laminar. tab:DerivedRowGroupShape's new
+    sh:maxCount 1 on tab:parentHeader must membrane-refuse that instead of letting the
+    Python engine glue pick an arbitrary one (graph-iteration-order dependent)."""
+    g = Graph()
+    grp = URIRef("urn:doc#h0-rg2")
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((grp, TAB.hasLabel, URIRef("urn:doc#h0-e0_2")))
+    g.add((grp, TAB.coversRow, URIRef("urn:doc#h0-r0")))
+    g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r2")))
+    g.add((grp, TAB.parentHeader, URIRef("urn:doc#h0-rg4")))
+    g.add((grp, TAB.parentHeader, URIRef("urn:doc#h0-rg5")))
+    assert _tiles(g) is False
+
+
 def test_partial_derived_coverage_passes_the_row_tiling_shapes():
     """THE LANDMINE THIS TASK EXISTS FOR. RowCoverageShape / UnambiguousRowAccessShape fire
     as soon as ANY coversRow header exists, demanding every leaf row be covered. Derived
@@ -204,6 +223,28 @@ def test_partial_derived_coverage_passes_the_row_tiling_shapes():
               3: {2: "Kembla", 3: "999"}}, {2: (0, 1)})
     assert derive_row_groups(g, T, {2: (2, 3, (0, 1))}) == 1
     # rows r2 (the aggregation) and r3 (no confirmed group) are UNCOVERED — must still pass
+    assert _tiles(g) is True
+
+
+def test_two_confirmed_groups_over_the_same_member_rows_still_tile():
+    """C-1 (final review, loop I): a month with a SINGLE port child confirms two
+    aggregations over the SAME member row (the port total, then the month total) — the
+    nesting query rightly refuses to link groups with identical member sets (§7: refusal
+    over a guess), so both stay headerLevel 0 and both coversRow the same row. Without the
+    derived-group exemption on tab:RowNoOverlapShape this trips 'row overlap' and
+    region_tiles returns False, escalating the WHOLE region REGION_TILING_FAILED (measured:
+    14 cells -> 0) — this is not exotic, any single-child group family produces it."""
+    g = Graph()
+    _emit(g, {0: {1: "Jul", 2: "A", 3: "100"},
+              1: {2: "A Total", 3: "100"},
+              2: {1: "Jul Total", 3: "100"}}, {1: (0,), 2: (0,)})
+    n = derive_row_groups(g, T, {1: (2, 3, (0,)), 2: (1, 3, (0,))})
+    assert n == 2
+    assert set(g.objects(_grp(1), TAB.coversRow)) == set(g.objects(_grp(2), TAB.coversRow))
+    assert g.value(_grp(1), TAB.parentHeader) is None
+    assert g.value(_grp(2), TAB.parentHeader) is None
+    assert int(g.value(_grp(1), TAB.headerLevel)) == 0
+    assert int(g.value(_grp(2), TAB.headerLevel)) == 0
     assert _tiles(g) is True
 
 
@@ -222,6 +263,24 @@ def test_authored_row_trees_keep_the_strict_invariant():
     assert _tiles(g) is False
 
 
+def test_authored_row_overlap_still_fails():
+    """C-1's exemption must stay scoped to derived groups: two AUTHORED (plain HeaderNode,
+    not DerivedRowGroup) nodes at the same headerLevel covering the same row is a genuine
+    overlap defect and must still fail region_tiles."""
+    g = Graph()
+    t = URIRef("urn:doc#rh1")
+    r0 = URIRef("urn:doc#rh1-r0")
+    g.add((r0, RDF.type, TAB.LeafRow))
+    g.add((t, TAB.hasLeafRow, r0))
+    for i in (0, 1):
+        h = URIRef(f"urn:doc#rh1-rh{i}")
+        g.add((h, RDF.type, TAB.HeaderNode))          # authored, NOT DerivedRowGroup
+        g.add((t, TAB.hasHeaderNode, h))
+        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+        g.add((h, TAB.coversRow, r0))
+    assert _tiles(g) is False
+
+
 def test_derived_overlay_does_not_corrupt_an_authored_partition():
     """THE MEASURE for UnambiguousRowAccessShape's count-exclusion (task 2 review Minor):
     an authored row tree that fully tiles its rows, PLUS a derived group overlaying one of
@@ -229,8 +288,18 @@ def test_derived_overlay_does_not_corrupt_an_authored_partition():
     per row -> passes; without it the derived node counts as a second leaf header ->
     false ambiguity. (RowCoverageShape's own exemption stays shadowed by this shape on
     every fixture — pre-existing redundancy from the loop C 8-shape gate, noted in the
-    ledger, not re-measured here.)"""
-    from rdflib import Graph, Namespace, RDF, URIRef
+    ledger, not re-measured here.)
+
+    Production-realistic (final review C-1 closing note): real emission always stamps
+    tab:headerLevel on every HeaderNode (derive_row_groups does so for every
+    DerivedRowGroup; authored row-hier trees carry it too) — a fixture omitting it does not
+    measure RowNoOverlapShape at all (it only fires between nodes sharing a headerLevel).
+    Both authored nodes and the derived overlay are stamped level 0 here, as production
+    would be. This only passes WITH the RowNoOverlapShape derived-group exemption (C-1) —
+    without it, the derived overlay and authored rh0 (both level 0, both cover r0) trip
+    'row overlap' and region_tiles flips to False (verified by reverting the exemption)."""
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from rdflib.namespace import XSD
     from iladub.etkl.tiling import region_tiles
     TAB = Namespace("https://w3id.org/iladub/tab#")
     g = Graph()
@@ -242,6 +311,7 @@ def test_derived_overlay_does_not_corrupt_an_authored_partition():
         g.add((h, RDF.type, TAB.HeaderNode))            # authored: tiles 1:1
         g.add((t, TAB.hasHeaderNode, h))
         g.add((h, TAB.coversRow, URIRef(f"urn:doc#mix0-r{r}")))
+        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
     grp = URIRef("urn:doc#mix0-rg9")                    # derived overlay on r0
     g.add((grp, RDF.type, TAB.HeaderNode))
     g.add((grp, RDF.type, TAB.DerivedRowGroup))
@@ -249,6 +319,7 @@ def test_derived_overlay_does_not_corrupt_an_authored_partition():
     g.add((grp, TAB.coversRow, URIRef("urn:doc#mix0-r0")))
     g.add((grp, TAB.hasLabel, URIRef("urn:doc#mix0-e0_0")))
     g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#mix0-r1")))
+    g.add((grp, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
     assert region_tiles(g) is True
 
 
@@ -268,6 +339,29 @@ def test_feed_collision_guard_two_rows_one_group(tmp_path=None):
     ids = [r.row_id for r in recs]
     assert len(set(_record_uri(i) for i in ids)) == 2, ids     # DISTINCT subjects
     assert all(i.startswith("Mackay") for i in ids), ids       # both carry the group path
+
+
+def test_feed_collision_guard_is_cross_table():
+    """I-1 (final review, loop I): the collision-guard multiplicity must be computed ACROSS
+    all tables in the graph, not per table — two DIFFERENT HierarchicalTables each with a
+    confirmed 'Mackay' group would otherwise mint the SAME urn:iladub:record:Mackay subject,
+    a cross-table collision loop I itself created by giving hier tables path identities."""
+    from iladub.feed import table_records, _record_uri
+    g = Graph()
+    t1 = URIRef("urn:doc#h1")
+    _emit(g, {0: {2: "Mackay", 3: "100"},
+              1: {2: "Mackay Total", 3: "100"}}, {1: (0,)}, table=T)
+    _emit(g, {0: {2: "Mackay", 3: "200"},
+              1: {2: "Mackay Total", 3: "200"}}, {1: (0,)}, table=t1)
+    g.add((T, RDF.type, TAB.HierarchicalTable))
+    g.add((t1, RDF.type, TAB.HierarchicalTable))
+    derive_row_groups(g, T, {1: (2, 3, (0,))})
+    derive_row_groups(g, t1, {1: (2, 3, (0,))})
+    recs = table_records(g)
+    mackay_recs = [r for r in recs if r.row_id == "Mackay" or r.row_id.startswith("Mackay > ")]
+    assert len(mackay_recs) == 2, [r.row_id for r in recs]
+    subjects = {_record_uri(r.row_id) for r in mackay_recs}
+    assert len(subjects) == 2, subjects                        # DISTINCT subjects across tables
 
 
 def test_feed_uncovered_rows_keep_opaque_identity():

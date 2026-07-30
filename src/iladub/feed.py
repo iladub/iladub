@@ -33,6 +33,13 @@ def table_records(graph: Graph) -> list[Record]:
     out: list[Record] = []
     tables = (set(graph.subjects(RDF.type, TAB.RecordTable))
               | set(graph.subjects(RDF.type, TAB.HierarchicalTable)))
+    # Pass 1: build each table's row cells + rid, WITHOUT minting anything yet. The
+    # multiplicity count is hoisted ACROSS all tables (loop I final review, I-1): two
+    # tables each with a same-named group (e.g. two 'Mackay' groups in different
+    # HierarchicalTables) must not mint the SAME record subject — a per-table count missed
+    # that cross-table collision entirely.
+    per_table: list[tuple] = []
+    multiplicity: dict = {}
     for t in sorted(tables, key=str):
         header = _column_header_path(graph, t)
         row_path = _row_header_path(graph, t)
@@ -50,13 +57,15 @@ def table_records(graph: Graph) -> list[Record]:
             x0, y0 = _bbox_xy(graph, e)
             rows.setdefault(row, []).append((x0, y0, concept))
         ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
-        # Collision guard (loop I; closes the PR #59 recorded minor): two rows sharing a
-        # header path (e.g. two bookings in one derived group) must never mint the same
-        # record subject — each colliding row keeps its opaque fragment appended.
         rid_of = {row: row_path.get(row, str(row).split("#")[-1]) for row in ordered}
-        multiplicity: dict = {}
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
+        per_table.append((ordered, rows, rid_of))
+    # Pass 2: mint records using the GLOBAL (cross-table) multiplicity — collision guard
+    # (loop I; closes the PR #59 recorded minor): two rows sharing a header path, whether
+    # in the same table or across tables, must never mint the same record subject — each
+    # colliding row keeps its opaque fragment appended.
+    for ordered, rows, rid_of in per_table:
         for row in ordered:
             cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
             rid = rid_of[row]

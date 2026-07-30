@@ -170,7 +170,7 @@ tab:RowCoverageShape a sh:NodeShape ;
 tab:RowNoOverlapShape a sh:NodeShape ;
     sh:targetSubjectsOf tab:hasHeaderNode ;
     sh:sparql [
-        sh:message "Two header nodes at the same level cover the same row (row overlap)." ;
+        sh:message "Two header nodes at the same level cover the same row (row overlap; any pair involving a derived row group is exempt — a derived group is a carried annotation, not a claimed partition, and row-group-nesting.rq rightly refuses to link groups with identical member sets, leaving them co-resident at level 0)." ;
         sh:prefixes tab:prefixes ;
         sh:select """
             SELECT $this WHERE {
@@ -181,6 +181,8 @@ tab:RowNoOverlapShape a sh:NodeShape ;
                 ?h2 tab:headerLevel ?l .
                 ?h1 tab:coversRow ?r .
                 ?h2 tab:coversRow ?r .
+                FILTER NOT EXISTS { ?h1 a tab:DerivedRowGroup }
+                FILTER NOT EXISTS { ?h2 a tab:DerivedRowGroup }
             }
         """ ] .
 
@@ -325,4 +327,6 @@ tab:DerivedRowGroupShape a sh:NodeShape ;
         sh:message "A derived row group needs at least one member row." ] ;
     sh:property [ sh:name "DerivedRowGroupShape" ; sh:path prov:wasDerivedFrom ;
         sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A derived row group needs exactly one witnessing aggregation row." ] .
+        sh:message "A derived row group needs exactly one witnessing aggregation row." ] ;
+    sh:property [ sh:name "DerivedRowGroupShape" ; sh:path tab:parentHeader ; sh:maxCount 1 ;
+        sh:message "A derived row group has at most one parent." ] .
