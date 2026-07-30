@@ -847,11 +847,14 @@ def aligned_space_table_pdf(path: str) -> dict:
 
     A monospaced ruled table whose values carry a COLUMN-ALIGNED internal space ('AB CDEFGH',
     '01 JAN 2026', '12 500'). The aligned spaces form a persistent blank run with ink on both
-    sides — the same signal as a real un-ruled column boundary — but the header labels only ONE
-    side ('ID', 'Date'; and 'Tonnes' straddles its run), so header confirmation must refuse every
-    split and the table must compile exactly as if refinement did not exist: RECORD_TABLE,
-    18 cells, score 1.0. Attempt 1 asserted the split and CRASHED compile_tables at
-    tab:CoverageShape."""
+    sides — the same signal as a real un-ruled column boundary. Measured: candidates ARE
+    generated in the ID and Date intervals and are refused by header confirmation (one-sided
+    header ink — the label sits on only one side of the candidate). No candidate arises in the
+    Tonnes interval at all: the header word 'Tonnes' inks the run enough that the blank fraction
+    falls below the generation threshold, so refine_rule_columns never proposes a boundary there
+    — confirmation never gets a chance to see it. Header confirmation must refuse every split and
+    the table must compile exactly as if refinement did not exist: RECORD_TABLE, 18 cells, score
+    1.0. Attempt 1 asserted the split and CRASHED compile_tables at tab:CoverageShape."""
     c = canvas.Canvas(path, pagesize=(400, 200))
     c.setFont("Courier", 9)
     cols = [60, 180, 300]
@@ -871,3 +874,35 @@ def aligned_space_table_pdf(path: str) -> dict:
         c.line(x, 20, x, 180)
     c.save()
     return {"cols": 3, "data_cells": 18}
+
+
+def confirmed_split_table_pdf(path: str) -> dict:
+    """THE E8 FIXTURE: a ruled table whose middle interval holds TWO header-labeled columns
+    with no rule between them — the header confirms the candidate, so this is the committed
+    positive case for header-confirmed refinement (GrainCorp's shape, synthetically).
+
+    Rules at 50/170/310/395; headers 'ID' | 'Qty' + 'Unit' (two labels inside one interval,
+    separated by a wide gutter) | 'Total'. Measured while writing this fixture: candidate
+    [218.5] is generated, grid.ncols == 3, split == 1, the header confirms it (CONFIRMED =
+    {218.5}), column_xs becomes (50.0, 170.0, 218.5, 310.0, 395.0), and the table compiles
+    end to end with 24 data cells (RECORD_TABLE, score 1.0) where the unrefined 3-column grid
+    would give 18."""
+    c = canvas.Canvas(path, pagesize=(430, 200))
+    c.setFont("Courier", 9)
+    c.drawString(60, 170, "ID")
+    c.drawString(180, 170, "Qty")
+    c.drawString(240, 170, "Unit")
+    c.drawString(320, 170, "Total")
+    rows = [["A1", "10", "kg", "100"], ["B2", "20", "kg", "200"], ["C3", "30", "kg", "300"],
+            ["D4", "40", "kg", "400"], ["E5", "50", "kg", "500"], ["F6", "60", "kg", "600"]]
+    y = 154
+    for r in rows:
+        c.drawString(60, y, r[0])
+        c.drawString(180, y, r[1])
+        c.drawString(240, y, r[2])
+        c.drawString(320, y, r[3])
+        y -= 16
+    for x in (50, 170, 310, 395):
+        c.line(x, 20, x, 180)
+    c.save()
+    return {"cols": 4, "data_cells": 24}

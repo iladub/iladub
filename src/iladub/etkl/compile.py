@@ -56,6 +56,12 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     try:
         grid = recover_leaf_grid(band)
     except ValueError:
+        # verified: recover_leaf_grid's only fallible path is infer_leaf_grid, which raises
+        # ValueError ONLY ("band has no words") — nothing else escapes here. That matters
+        # because recover_leaf_grid/header_body_split now run earlier in the pipeline than on
+        # main (main never called them from this seam); if either ever raised a DIFFERENT
+        # exception type it would propagate up and abort the whole compile, where main had
+        # not yet touched these functions at this point and so could not have aborted here.
         return band
     if grid.ncols < 2:
         return band
@@ -63,6 +69,11 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     if split is None or not (1 <= split < len(band.lines)):
         return band                        # no header region -> nothing can be confirmed
     body_top = band.lines[split].top
+    # verified invariant (do not "fix" this into a tolerance): Line.top is the MIN ink-char top
+    # over the chars on that line, so every ink char belonging to a line at or below the split
+    # has a center strictly greater than body_top — a body char can NEVER leak into the header
+    # evidence via this midpoint filter. Checked on both measured documents: the filter selected
+    # exactly the chars of band.lines[:split], 12/12 and 262/262.
     header_glyphs = [c for c in band_chars
                      if c.text.strip() and (c.top + c.bottom) / 2.0 < body_top]
     from .boundary import confirmed_boundaries

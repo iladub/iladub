@@ -39,8 +39,9 @@ def test_one_sided_header_ink_is_rejected():
 
 
 def test_straddling_glyph_rejects():
-    # the fixture's Tonnes column: the 'n' glyph 310.8-316.2 contains the candidate 313.5 —
-    # a label cannot be split through a glyph.
+    # a synthetic run of four glyphs where the third, 310.8-316.2, CONTAINS the candidate
+    # 313.5 — the shape any header label crossing a candidate produces. A label cannot be
+    # split through a glyph, so confirmation must refuse it.
     glyphs = [_G(300, 305.4), _G(305.4, 310.8), _G(310.8, 316.2), _G(316.2, 321.6)]
     assert confirmed_boundaries(glyphs, [(313.5, 290.0, 395.0)]) == set()
 
