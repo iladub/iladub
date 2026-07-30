@@ -78,7 +78,7 @@ def test_all_blank_keys_refuse():
     g = Graph()
     _emit(g, {0: {2: "", 3: "100"},
               1: {3: "150"},
-              2: {0: "TOT", 3: "250"}}, {2: (0, 3, (0, 1))})
+              2: {0: "TOT", 3: "250"}}, {2: (0, 1)})
     assert derive_row_groups(g, T, {2: (0, 3, (0, 1))}) == 0
 
 
