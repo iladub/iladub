@@ -2,8 +2,18 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Eleventh loop of the GrainCorp real-document
-  push (A = PR #67 … J = PR #76).
+- **Status:** **Shipped** (2026-07-30, branch `iladub-graincorp-grounding`). Eleventh loop
+  of the GrainCorp real-document push (A = PR #67 … J = PR #76). **Measured at close
+  (capstone, local):** 33 records → **460 concepts, 137 grounded** (each behind exactly one
+  `PromotionDecision` — 137 == 137), **323 honestly quarantined**. By field:
+  **Month 32/32** — every injected suppressed key grounds through the pattern (the loop's
+  point, end-to-end); Port 29/32; Status 29/30 (the boxed `'Accepted Accepted'`
+  quarantines); Total 27/28; **Commodity 20/30 — the stem ships non-grain cargo
+  (`Woodchip` ×6, `Cement` ×3) and the grain scheme correctly refuses it**, plus the boxed
+  `'Sorghum Sorghum'`. The season keys inject as `GC Fin Year` (the column's real header)
+  ×33 and quarantine — the contract declares no such field. Unconstrained fields (vessels,
+  exporters, dates, times, references) quarantine by design. Score/cells unchanged
+  0.9496/509. Full suite 698 passed / 5 skipped.
 - **Origin:** Loop I's named non-goal ("grounding the group key as a SurfaceConcept per
   record") + the fact that the real document has never been run through `ground_document`.
   This is the first loop that connects the table-recovery push back to iladub's
