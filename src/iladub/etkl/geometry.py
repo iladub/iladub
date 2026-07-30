@@ -199,11 +199,19 @@ def refine_rule_columns(chars: list["Char"], rule_xs: list[float],
     interval's inked rows, at least min_gutter_bins wide, AND with ink on BOTH sides of it within
     that interval, is an additional column boundary (its centre).
 
-    THE INTERIOR CONDITION IS LOAD-BEARING — do not drop it. Without it, a blank run at a cell's
-    trailing edge (short left-aligned text) reads as a separator: measured, that adds a boundary to
-    EVERY interval of ruled_tight_table_pdf, turning 5 columns into 10. With it, both shipped ruled
-    fixtures gain ZERO and the real document gains exactly the two it should. It is a presence test
-    ("is there ink beyond this run, inside this interval"), not a threshold.
+    TWO independent mechanisms reject trailing padding, and the attribution matters (attempt 1's
+    docstring credited the wrong one; the final review measured it):
+      - NO-FLUSH: a run still open at the interval's end is never emitted (the run-reset below has
+        no end-of-loop flush). Removing the interior condition ALONE leaves both shipped ruled
+        fixtures at +0 — the no-flush is what protects them.
+      - THE INTERIOR CONDITION (ink on both sides, within the interval) rejects one-sided runs
+        that close before the interval ends. The naive +5/+2 over-split reported for the fixtures
+        requires removing BOTH mechanisms.
+    Both are presence tests, not thresholds. AND the caller must still not trust the output:
+    values with COLUMN-ALIGNED internal spaces produce candidates indistinguishable from real
+    boundaries here (the attempt-1 counter-example that crashed compile_tables) — which is why
+    these are CANDIDATES, confirmed against header ink (boundary.py / confirm-boundary.rq) before
+    ever becoming columns.
 
     ADDITIVE ONLY: every input boundary is preserved; nothing is moved or removed. The author's
     marks are never contradicted, only supplemented. Callers keep the raw marks in Band.rules and
@@ -211,6 +219,12 @@ def refine_rule_columns(chars: list["Char"], rule_xs: list[float],
 
     gutter_pct and min_gutter_bins mirror infer_leaf_grid's existing defaults — pre-existing tuned
     constants this path INHERITS rather than invents. Space glyphs are not ink.
+
+    CAVEAT (measured, attempt 1's I3): with per-interval row counts N, gutter_pct = 0.98 is
+    discontinuous at N = 50 — a bin is "blank" iff inked in <= floor(0.02*N) rows: ZERO rows below
+    50, ONE row at 50 and above. N here is PER INTERVAL (GrainCorp's one table ran at N = 4..54),
+    unlike infer_leaf_grid's per-band N. Tolerable for CANDIDATES only because header confirmation
+    disposes misfires; never promote this function's output without confirmation.
     """
     xs = sorted(rule_xs)
     if len(xs) < 2:
