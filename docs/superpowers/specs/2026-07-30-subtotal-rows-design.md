@@ -2,8 +2,18 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Eighth loop of the GrainCorp real-document push
-  (A = PR #67; B = PR #68; C = PR #69; C.1 = PR #70; D = PR #71; F = PR #72; G = PR #73).
+- **Status:** **Shipped** (2026-07-30, branch `iladub-subtotal-rows`). Eighth loop of the GrainCorp
+  real-document push (A = PR #67; B = PR #68; C = PR #69; C.1 = PR #70; D = PR #71; F = PR #72;
+  G = PR #73). **Measured at close:** GrainCorp fused cells **NONE** (was three source lines in one
+  record); **17 `tab:DetectedAggregationRow`** with correct members, including the two-level
+  nesting (`Jul 26 Total` = 4 port groups, `Aug 26 Total` = 21 members, `2025/26 Total` = 32
+  members); `Port Kembla Total` honestly refused (blank measure); score/cells unchanged
+  0.9496/509. **Correction found at verification:** candidate classification must be STRICT —
+  every token of the measure cell numeric. `'Jul 26 Total'` contains the numeric token `26`, and
+  the lenient any-numeric-token classification read the label as a second measure, collapsing
+  detection 17→4 (month totals stopped being candidates and their unconfirmed values polluted
+  every later member sum). Member contributions stay lenient (token-sum — the author-boxed
+  multi-line rule). Pinned by `test_a_label_containing_digits_is_still_a_label`.
 - **Origin:** Residue **R4** — row-grouping with suppressed keys + interleaved subtotals
   (`Mackay Total`, `Jul 26 Total`). Today every subtotal compiles as an ordinary data record: the
   graph asserts a vessel named `Mackay Total` exists (a §7 violation), and any consumer summing the
@@ -156,9 +166,16 @@ shipped `tab:` shapes pattern (§3.3).
 `assert_hier_region` (and the row-hier path if reachable) types confirmed rows
 `tab:AggregationRow` (already `⊑ tab:LeafRow` in shipped vocab, currently emitted only by
 `denormalization.py`) and adds `tab:aggregates` → each member `tab:LeafRow`, plus
-`tab:aggregationFunction "sum"`. A new closed-world shape mirrors `AggregationCellShape`:
-a `tab:AggregationRow` requires ≥ 1 `tab:aggregates` and an `aggregationFunction` — the membrane
-refuses a typed-but-unexplained aggregation.
+`tab:aggregationFunction "sum"`. A new closed-world shape mirrors `AggregationCellShape` — but
+**as shipped it targets the subclass `tab:DetectedAggregationRow` only** (corrected during
+implementation): `denormalization.py` emits bare-supertype `tab:AggregationRow` rows with no
+row-level operands, so targeting the supertype would refuse every shipped denormalization graph.
+A detected row requires ≥ 1 `tab:aggregates` and exactly one `aggregationFunction` — the membrane
+refuses a typed-but-unexplained aggregation. Rows are typed BOTH `tab:AggregationRow` and
+`tab:DetectedAggregationRow` explicitly (and `tab:aggregates` dropped its cell-only
+`rdfs:domain`/`rdfs:range` — under RDFS inference those entailed a FALSE `EntryCell` typing on
+rows, the §7 failure mode, and the entailment was never load-bearing anywhere; `tab.ttl`
+`owl:versionInfo` bumped 0.1.0 → 0.2.0 for the non-monotonic vocabulary change).
 
 Downstream honesty: whatever consumes `tab:LeafRow` as *records* must be checked; if the concept
 feed reads hierarchical rows, aggregation rows must be excluded from record minting (measured
