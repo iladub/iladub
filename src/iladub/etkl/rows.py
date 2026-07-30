@@ -100,6 +100,7 @@ def detect_aggregation_rows(rows, grid):
 
     Returns {row_index: (label_col, measure_col, member_indices)}.
     """
+    from .headers import is_numeric
     b = grid.boundaries
     row_cols = []
     for rb in rows:
@@ -118,9 +119,20 @@ def detect_aggregation_rows(rows, grid):
     for i, rc in enumerate(row_cols):
         if len(rc) != 2 or len(rc) >= modal:
             continue
-        numeric = [(c, _numeric_token_sum(t)) for c, t in sorted(rc.items())]
-        measures = [(c, v) for c, v in numeric if v is not None]
-        labels = [c for c, v in numeric if v is None]
+        # CANDIDATE classification is STRICT (every token numeric), while MEMBER contributions
+        # below stay lenient (_numeric_token_sum). The distinction is load-bearing and was
+        # caught on the real document: a month-total label like 'Jul 26 Total' contains the
+        # numeric token '26', so lenient classification read it as a second measure — month
+        # totals stopped being candidates, and every unconfirmed month total then polluted the
+        # member sums of everything after it (detection collapsed from 17 rows to 4).
+        measures = []
+        labels = []
+        for c, t in sorted(rc.items()):
+            toks = t.split()
+            if toks and all(is_numeric(tok) for tok in toks):
+                measures.append((c, _numeric_token_sum(t)))
+            else:
+                labels.append(c)
         if len(measures) != 1 or len(labels) != 1:
             continue
         mcol, v = measures[0]

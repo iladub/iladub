@@ -190,3 +190,21 @@ def test_feed_skips_aggregation_rows(tmp_path):
     recs = table_records(rep.graph)
     joined = [" ".join(sc.value for sc in r.concepts) for r in recs]
     assert not any("250" in j and "SUB" in j for j in joined), joined  # the subtotal is no record
+
+
+def test_a_label_containing_digits_is_still_a_label():
+    """THE COLLAPSE CAUGHT AT TASK-4 VERIFICATION, pinned. 'Jul 26 Total' contains the numeric
+    token '26'; lenient (any-numeric-token) classification read it as a SECOND measure, so month
+    totals stopped being candidates — and every unconfirmed month total then polluted the member
+    sums of everything after it. Measured on the real document: detection collapsed from 17 rows
+    to 4 (only the pre-month port totals). Candidate classification must be STRICT (a measure
+    cell = every token numeric); member contributions stay lenient (token-sum)."""
+    rows = _rows({0: "Jul", 1: "A", 2: "V1", 3: "100"},
+                 {1: "A", 2: "V2", 3: "150"},
+                 {1: "SUB", 3: "250"},
+                 {0: "Jul 26 Total", 3: "250"},
+                 {0: "Aug", 1: "B", 2: "V3", 3: "300"},
+                 {1: "SUB", 3: "300"})
+    agg = detect_aggregation_rows(rows, GRID)
+    assert agg[3] == (0, 3, (0, 1)), agg      # the digit-bearing month total confirms
+    assert agg[5] == (1, 3, (4,)), agg        # and the NEXT group is not polluted by it
