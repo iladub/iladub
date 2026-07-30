@@ -2,7 +2,15 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Sixth loop of the GrainCorp real-document push
+- **Status:** Design (brainstormed, approved). **SHIPPED 2026-07-30:** GrainCorp **15 → 17 header
+  labels** (the discriminating criterion), `Date Loading Completed` | `Commodity` | `Total`
+  separate; cells 509 / score 0.9496 (secondary). The counter-example compiles graph-isomorphic
+  to `main` (reviewer-verified, including matching isomorphic graph digests). Full suite **629
+  passed / 5 skipped** — one above the plan's 628, accounted for by the E8 end-to-end test the
+  review fix wave added. The membrane backstop closes the plain-hierarchical crash class
+  (`REGION_TILING_FAILED` escalates in-band). Faithful-to-precedent deviation: confirmation
+  returns SELECT bindings (the `header-covers.rq` style) rather than writing a
+  `tab:confirmedBoundary` marker triple. Sixth loop of the GrainCorp real-document push
   (A = PR #67; B = PR #68; C = PR #69; C.1 = PR #70; D = PR #71; F = PR #72). **Second attempt** at
   R13; attempt 1 (branch `iladub-rule-column-refinement`, unmerged) is post-mortemed in
   `docs/superpowers/residues.md` §"R13 attempt 1", and this design starts from its red test.
