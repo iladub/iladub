@@ -111,3 +111,82 @@ def test_unconfirmed_sparse_row_is_a_member_of_later_sums():
     agg = detect_aggregation_rows(rows, GRID)
     assert 1 not in agg
     assert agg[3] == (0, 3, (0, 1, 2))
+
+
+def _hier_region_with_subtotal():
+    """A minimal HierRegion whose rows contain one confirmable subtotal (the Task 2 shape)."""
+    from iladub.etkl.headers import HeaderNode
+    from iladub.etkl.hierarchical import HierRegion
+    from iladub.etkl.bands import Band
+    from iladub.etkl.geometry import Line
+
+    rows = _rows({0: "Jul", 1: "A", 2: "V1", 3: "100"},
+                 {1: "A", 2: "V2", 3: "150"},
+                 {1: "SUB", 3: "250"})
+    hdr_words = [Word("K", 5, 45, -10.0, -2.0), Word("Port", 55, 95, -10.0, -2.0),
+                 Word("Ship", 105, 145, -10.0, -2.0), Word("Qty", 155, 195, -10.0, -2.0)]
+    lines = [Line(tuple(hdr_words), -10.0, -2.0)]
+    for rb in rows:
+        ws = tuple(w for c in rb.cells for w in c.words)
+        lines.append(Line(ws, rb.top, rb.bottom))
+    band = Band(tuple(lines), -10.0, 40.0)
+    tree = tuple(HeaderNode(0, (i,), t, None, (COLS[i][0] + COLS[i][1]) / 2.0)
+                 for i, t in enumerate(["K", "Port", "Ship", "Qty"]))
+    return HierRegion(GRID, tree, rows, 1), band
+
+
+def test_confirmed_rows_are_typed_with_operands():
+    from rdflib import Graph, Namespace, RDF, URIRef
+    from iladub.etkl.holon import assert_hier_region
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    hreg, band = _hier_region_with_subtotal()
+    g = Graph()
+    t = URIRef("urn:doc#h0")
+    n = assert_hier_region(g, hreg, band, t, URIRef("urn:doc"), 0)
+    assert n > 0
+    agg_rows = list(g.subjects(RDF.type, TAB.DetectedAggregationRow))
+    assert len(agg_rows) == 1
+    row = agg_rows[0]
+    assert (row, RDF.type, TAB.AggregationRow) in g          # supertype written explicitly
+    ops = list(g.objects(row, TAB.aggregates))
+    assert len(ops) == 2                                      # both member rows
+    funcs = [str(o) for o in g.objects(row, TAB.aggregationFunction)]
+    assert funcs == ["sum"]
+
+
+def test_membrane_refuses_an_unexplained_detected_aggregation():
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from iladub.etkl.tiling import region_tiles
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    r = URIRef("urn:doc#h0-r2")
+    g.add((r, RDF.type, TAB.DetectedAggregationRow))          # typed, no operands, no function
+    assert region_tiles(g) is False
+
+
+def test_denormalization_bare_aggregation_rows_still_pass():
+    # THE PROBED LANDMINE: denormalization.py types rows bare tab:AggregationRow with no
+    # row-level operands. The new shape must NOT fire on the supertype.
+    from rdflib import Graph, Namespace, RDF, URIRef
+    from iladub.etkl.tiling import region_tiles
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    g.add((URIRef("urn:doc#agg-r1"), RDF.type, TAB.AggregationRow))
+    assert region_tiles(g) is True
+
+
+def test_feed_skips_aggregation_rows(tmp_path):
+    import os
+    import pytest
+    pytest.importorskip("pdfplumber")
+    pytest.importorskip("reportlab")
+    from iladub.etkl.compile import compile_tables
+    from iladub.feed import table_records
+    from tests.etkl import fixtures as F
+    p = os.path.join(str(tmp_path), "sub.pdf")
+    F.subtotal_hier_table_pdf(p)
+    rep = compile_tables(p)
+    assert any(r.verdict == "asserted" for r in rep.regions), [r.reason for r in rep.regions]
+    recs = table_records(rep.graph)
+    joined = [" ".join(sc.value for sc in r.concepts) for r in recs]
+    assert not any("250" in j and "SUB" in j for j in joined), joined  # the subtotal is no record

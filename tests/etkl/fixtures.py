@@ -906,3 +906,46 @@ def confirmed_split_table_pdf(path: str) -> dict:
         c.line(x, 20, x, 180)
     c.save()
     return {"cols": 4, "data_cells": 24}
+
+
+def subtotal_hier_table_pdf(path: str) -> dict:
+    """Loop H E2E: a merged 2-level header (Voyage spans Ship+Qty+Berth, forcing the
+    hierarchical path), suppressed keys, ONE subtotal row, and hrules between all body rows
+    (the author's row delimiters — without them the suppressed-key rows fuse into the record
+    above).
+
+    NO vertical rules on purpose: whitespace-gutter column recovery (as pivoted_table_pdf
+    uses) gives the correct narrow merged span; author vertical rules at these exact widths
+    were probed and recover a DIFFERENT (word-extent-based) grid that widens the Voyage span
+    unpredictably. The trailing text column Berth (never numeric) is required for the same
+    reason a whitespace/rule geometry alone does not give: without it, Mon/Port/Ship read as
+    stub and Qty alone as a homogeneous-numeric data suffix, which is_matrix_candidate reads
+    as a PIVOT matrix (loop 2's matrix.py path) rather than the loop H hierarchical path this
+    test targets — Berth (text, never numeric) breaks that homogeneous-numeric suffix."""
+    leaves = [(40.0, 90.0), (110.0, 170.0), (190.0, 230.0), (250.0, 300.0), (320.0, 360.0)]
+    names = ["Mon", "Port", "Ship", "Qty", "Berth"]
+    c = canvas.Canvas(path, pagesize=(400, 220))
+    c.setFont("Helvetica", 9)
+    c.drawCentredString((leaves[2][0] + leaves[3][1]) / 2.0, 196, "Voyage")
+    for (l, r), n in zip(leaves, names):
+        c.drawString(l, 182, n)
+    body = [("Jul", "Mackay", "V1", "100", "B1"), ("", "Mackay", "V2", "150", "B2"),
+            ("", "SUB", "", "250", ""), ("Aug", "Gladstone", "V3", "300", "B4")]
+    y = 166
+    ys = []
+    for mon, port, ship, qty, berth in body:
+        if mon:
+            c.drawString(leaves[0][0], y, mon)
+        c.drawString(leaves[1][0], y, port)
+        if ship:
+            c.drawString(leaves[2][0], y, ship)
+        c.drawString(leaves[3][0], y, qty)
+        if berth:
+            c.drawString(leaves[4][0], y, berth)
+        ys.append(y)
+        y -= 16
+    for yy in ys:                                        # hrule under EVERY body row
+        c.line(35, yy - 4, 355, yy - 4)
+    c.line(35, 178, 355, 178)                            # header/body rule
+    c.save()
+    return {"cols": 5, "subtotal_value": "250"}

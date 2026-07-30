@@ -438,11 +438,23 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
         if n.parent is not None:
             g.add((node_uris[idx], TAB.parentHeader, node_uris[n.parent]))
 
-    # Leaf rows
+    # Leaf rows — with arithmetic aggregation detection (loop H, residue R4). A confirmed
+    # subtotal is typed BOTH tab:AggregationRow (so raw-graph consumers like the concept feed
+    # can exclude it without rdfs inference) and tab:DetectedAggregationRow (the operand-
+    # requiring shape targets only this subclass, sparing denormalization's bare rows).
+    from .rows import detect_aggregation_rows
+    agg = detect_aggregation_rows(region.rows, region.grid)
     for r, rb in enumerate(region.rows):
         row_uri = URIRef(f"{table_uri}-r{r}")
         g.add((row_uri, RDF.type, TAB.LeafRow))
         g.add((table_uri, TAB.hasLeafRow, row_uri))
+        if r in agg:
+            _lcol, _mcol, members = agg[r]
+            g.add((row_uri, RDF.type, TAB.AggregationRow))
+            g.add((row_uri, RDF.type, TAB.DetectedAggregationRow))
+            g.add((row_uri, TAB.aggregationFunction, Literal("sum")))
+            for m in members:
+                g.add((row_uri, TAB.aggregates, URIRef(f"{table_uri}-r{m}")))
 
     # Body entry cells
     b = region.grid.boundaries
