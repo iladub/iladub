@@ -86,10 +86,11 @@ def detect_aggregation_rows(rows, grid):
     (tab:DetectedAggregationRowShape); language is NEVER read — a ' Total' suffix test is the
     tuned constant of natural language and is forbidden (spec §5).
 
-    A row is a CANDIDATE iff it has exactly two cells, strictly fewer than the modal
-    populated-cell count of the region's rows, one cell with a numeric token-sum (the measure)
-    and one without (the label). The label's COLUMN encodes the nesting level (measured: port
-    totals carry their label in the Port column, month totals in the Month column).
+    A row is a CANDIDATE iff it has exactly two cells, strictly fewer than the WIDEST
+    populated-cell count of the region's rows (a frequency mode dies on small groups — the
+    Task 2 catch), one cell whose tokens are ALL numeric (the measure) and one that is not
+    (the label). The label's COLUMN encodes the nesting level (measured: port totals carry
+    their label in the Port column, month totals in the Month column).
 
     A candidate at row i with label column L and measure value v is CONFIRMED iff
     v == the token-sum, in the measure column, of the non-aggregation rows above i back to
@@ -110,14 +111,14 @@ def detect_aggregation_rows(rows, grid):
         row_cols.append(cols)
     if not row_cols:
         return {}
-    # The "modal" (normal, full) row shape is the widest one: real data rows are always
+    # The "normal" (full) row shape is the WIDEST one: real data rows are always
     # maximally populated; only aggregation candidates are ever sparser. A frequency mode
     # would tie against the max whenever aggregation-shaped rows outnumber full rows in a
     # sample — exact widest-row count, not a tuned constant.
-    modal = max(len(rc) for rc in row_cols)
+    widest = max(len(rc) for rc in row_cols)
     agg = {}
     for i, rc in enumerate(row_cols):
-        if len(rc) != 2 or len(rc) >= modal:
+        if len(rc) != 2 or len(rc) >= widest:
             continue
         # CANDIDATE classification is STRICT (every token numeric), while MEMBER contributions
         # below stay lenient (_numeric_token_sum). The distinction is load-bearing and was
@@ -144,9 +145,13 @@ def detect_aggregation_rows(rows, grid):
                 if agg[j][0] <= lcol:
                     break                      # previous same-or-outer aggregation: stop
                 continue                       # inner aggregation: not a member
+            if mcol not in row_cols[j]:
+                continue                       # no cell in the measure column (a section-title
+                                               # line): contributes nothing, so it is not an
+                                               # operand either — §7, only emit what the source
+                                               # supports (final-review M-2)
             members.append(j)
-            t = row_cols[j].get(mcol, "")
-            s = _numeric_token_sum(t)
+            s = _numeric_token_sum(row_cols[j][mcol])
             if s is not None:
                 total = s if total is None else total + s
         if members and total is not None and total == v:

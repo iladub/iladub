@@ -156,7 +156,7 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
     # wrap — so absorption across an hrule is always wrong, and absorption within an hrule-free
     # gap is exactly the wrap case this function exists for. Presence test, no constant.
     # HONEST LIMIT: unruled bands (no hrules) keep the fusion defect; the veto is inert there.
-    hrule_ys = sorted({round(h.y, 2) for h in getattr(band, "hrules", ())})
+    hrule_ys = sorted({round(h.y, 2) for h in band.hrules})
 
     # Build per-line column maps: {col_index: [words]}
     per_line: list[dict[int, list[Word]]] = []
@@ -180,7 +180,7 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         # constant — see the docstring for why the retired 0.9 margin was fixture-tuned.
         j = i + 1
         while (j < len(lines) and (tops[j] - tops[j - 1]) < lead
-               and not any(tops[j - 1] < y <= tops[j] + 0.5 for y in hrule_ys)):
+               and not any(tops[j - 1] < y <= tops[j] for y in hrule_ys)):
             cols_j = per_line[j]
             # Continuation only if every word on line j sits in a column already open
             # on the anchor, AND line j does not tile a fresh full row (fewer cols).

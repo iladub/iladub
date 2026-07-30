@@ -139,10 +139,10 @@ the fusion defect.
 
 Operating on `logical_rows`' output (RowBands with column-tagged cells), per region:
 
-- **Measure column:** the numeric column shared by sparse and dense rows (the existing celltype
-  machinery already types cells; the detector considers each numeric column independently and a
-  candidate confirms if its value reconciles in that column — GrainCorp has exactly one, the
-  `Total` column).
+- **Measure column:** the numeric column shared by sparse and dense rows. **As shipped** the
+  2-cell candidate bar admits exactly ONE measure + ONE label — a subtotal row carrying two
+  measure columns has 3 cells and is rejected (GrainCorp has exactly one measure column, the
+  `Total` column; multi-measure subtotals are future work, noted in the register).
 - **Candidate:** a row with exactly two populated cells — one with a numeric token-sum (the
   measure), one without (the label) — and strictly fewer cells than the region's **widest** row.
   **Corrected during implementation:** the design originally said *modal* row shape, but the mode
@@ -220,8 +220,14 @@ during planning; included if it is small, else named residue).
 
 ## 6. Residues
 
-- **R4** — closed for ruled documents by this loop (de-fusion + first-class subtotals). Open
-  narrower forms: **blank-total subtotals** (unverifiable, stay rows — Port Kembla); **unruled
-  suppressed-key documents** (fusion persists without hrules).
+- **R4** — closed for the ruled hierarchical path by this loop (de-fusion + first-class
+  subtotals). Open narrower forms — **the register row is canonical and more complete**:
+  blank-total subtotals (unverifiable, stay rows — Port Kembla); unruled suppressed-key
+  documents (fusion persists without hrules); the **row-hier AND record paths** are unwired
+  (`totals_table_pdf` still mints `['Total','220','240','460']` as a record — and its dense
+  Total row is structurally unreachable by the 2-cell candidate bar on any path); the
+  **false-positive direction** (a sparse reference row coincidentally equal to the running
+  sum confirms) is inherent to arithmetic-only detection; **single-member confirmation** is
+  degenerate but legitimate (the measured `Mackay Total`-over-one-row case).
 - The row-group *hierarchy* (Month > Port `coversRow` tree) — future loop, now unblocked.
 - The register at `docs/superpowers/residues.md` is canonical and is updated by this loop.

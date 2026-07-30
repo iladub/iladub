@@ -263,3 +263,16 @@ def test_feed_skips_denormalization_typed_aggregation_rows():
         g.add((e, TAB.cellText, Literal(txt)))
     recs = table_records(g)
     assert len(recs) == 1 and "r0" in recs[0].row_id, recs
+
+
+def test_a_row_with_no_measure_cell_is_not_an_operand():
+    """Final-review M-2: a row with NO cell in the measure column (a section-title line)
+    contributes nothing to the sum, so it must not be emitted as a tab:aggregates operand
+    either — §7, only emit what the source supports. (Distinct from a blank '-' measure
+    CELL, which exists in the source and correctly stays a member.)"""
+    rows = _rows({0: "SECTION"},
+                 {0: "Jul", 1: "A", 2: "V1", 3: "100"},
+                 {1: "A", 2: "V2", 3: "150"},
+                 {1: "SUB", 3: "250"})
+    agg = detect_aggregation_rows(rows, GRID)
+    assert agg == {3: (1, 3, (1, 2))}, agg   # row 0 is not among the operands
