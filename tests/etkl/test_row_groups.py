@@ -198,15 +198,26 @@ def test_membrane_refuses_a_double_parent_group():
     """M-1 (final review, loop I): row-group-nesting.rq can legitimately emit two parents
     for one child when the member family is non-laminar. tab:DerivedRowGroupShape's new
     sh:maxCount 1 on tab:parentHeader must membrane-refuse that instead of letting the
-    Python engine glue pick an arbitrary one (graph-iteration-order dependent)."""
+    Python engine glue pick an arbitrary one (graph-iteration-order dependent).
+
+    REFINEMENT-CLEAN fixture (re-review m-1): each parent covers a superset of the child's
+    rows, so RowRefinementShape stays silent and the maxCount constraint alone must
+    discriminate — the re-review measured that a bare two-parent fixture was rejected by
+    RowRefinementShape even with the maxCount removed (an unmeasured guard)."""
     g = Graph()
-    grp = URIRef("urn:doc#h0-rg2")
+    grp = URIRef("urn:doc#h0-rg3")
     g.add((grp, RDF.type, TAB.DerivedRowGroup))
     g.add((grp, TAB.hasLabel, URIRef("urn:doc#h0-e0_2")))
     g.add((grp, TAB.coversRow, URIRef("urn:doc#h0-r0")))
     g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r2")))
-    g.add((grp, TAB.parentHeader, URIRef("urn:doc#h0-rg4")))
-    g.add((grp, TAB.parentHeader, URIRef("urn:doc#h0-rg5")))
+    for p, rows in (("rg4", ("r0", "r1")), ("rg5", ("r0", "r2"))):
+        pu = URIRef(f"urn:doc#h0-{p}")
+        g.add((pu, RDF.type, TAB.DerivedRowGroup))
+        g.add((pu, TAB.hasLabel, URIRef("urn:doc#h0-e0_1")))
+        g.add((pu, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r9")))
+        for r in rows:
+            g.add((pu, TAB.coversRow, URIRef(f"urn:doc#h0-{r}")))
+        g.add((grp, TAB.parentHeader, pu))
     assert _tiles(g) is False
 
 
@@ -402,3 +413,41 @@ def test_e2e_compiled_fixture_carries_the_group(tmp_path):
     assert len(recs) == 3
     pathed = [r.row_id for r in recs if r.row_id.startswith("Mackay > ") or r.row_id == "Mackay"]
     assert len(pathed) == 2 and len(set(pathed)) == 2, [r.row_id for r in recs]
+
+
+def test_derived_group_does_not_block_an_authored_naming_parent():
+    """Re-review m-2: a derived multi-cover group at the same level as an authored spanning
+    parent must not BLOCK that parent's namesLevel derivation (the ?M2 uniqueness clause in
+    name-levels.rq). Mixed trees are unreachable by shipped paths today; this pins the
+    query-level behavior directly."""
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from rdflib.namespace import XSD
+    from pathlib import Path
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    t = URIRef("urn:doc#nm0")
+    for r in (0, 1):
+        g.add((t, TAB.hasLeafRow, URIRef(f"urn:doc#nm0-r{r}")))
+    m = URIRef("urn:doc#nm0-rh0")                 # authored spanning parent, level 0
+    g.add((m, RDF.type, TAB.HeaderNode))
+    g.add((t, TAB.hasHeaderNode, m))
+    g.add((m, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+    for r in (0, 1):
+        g.add((m, TAB.coversRow, URIRef(f"urn:doc#nm0-r{r}")))
+        v = URIRef(f"urn:doc#nm0-rh{r + 1}")      # level-1 value nodes under it
+        g.add((v, RDF.type, TAB.HeaderNode))
+        g.add((t, TAB.hasHeaderNode, v))
+        g.add((v, TAB.headerLevel, Literal(1, datatype=XSD.integer)))
+        g.add((v, TAB.coversRow, URIRef(f"urn:doc#nm0-r{r}")))
+    q = Path("vocab/queries/name-levels.rq").read_text(encoding="utf-8")
+    baseline = set(Graph().parse(data=g.query(q).serialize(format="turtle")))
+    assert baseline, "authored parent must name its level in the clean tree"
+    grp = URIRef("urn:doc#nm0-rg9")               # derived multi-cover group, SAME level
+    g.add((grp, RDF.type, TAB.HeaderNode))
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((t, TAB.hasHeaderNode, grp))
+    g.add((grp, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+    for r in (0, 1):
+        g.add((grp, TAB.coversRow, URIRef(f"urn:doc#nm0-r{r}")))
+    with_derived = set(Graph().parse(data=g.query(q).serialize(format="turtle")))
+    assert with_derived == baseline, "a derived group must not block the authored naming parent"

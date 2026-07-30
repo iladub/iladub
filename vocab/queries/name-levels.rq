@@ -15,7 +15,10 @@ WHERE {
   FILTER NOT EXISTS { ?M a tab:DerivedRowGroup }
   BIND(?PL + 1 AS ?L)
   FILTER EXISTS { ?T tab:hasHeaderNode ?vn . ?vn tab:headerLevel ?L ; ?cp ?vl . FILTER EXISTS { ?M ?cp ?vl } }
-  FILTER NOT EXISTS { ?M2 tab:headerLevel ?PL ; ?cp ?x, ?y . FILTER(?x != ?y && ?M2 != ?M) . ?T tab:hasHeaderNode ?M2 }
+  # ?M2 (the uniqueness blocker) also excludes derived groups (re-review m-2): a derived
+  # multi-cover node must neither ACT as the naming parent nor BLOCK an authored one.
+  FILTER NOT EXISTS { ?M2 tab:headerLevel ?PL ; ?cp ?x, ?y . FILTER(?x != ?y && ?M2 != ?M) . ?T tab:hasHeaderNode ?M2 .
+                      FILTER NOT EXISTS { ?M2 a tab:DerivedRowGroup } }
   FILTER NOT EXISTS {
     ?T ?lp ?lf .
     FILTER NOT EXISTS { ?M ?cp ?lf }
