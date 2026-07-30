@@ -2,8 +2,17 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Tenth loop of the GrainCorp real-document push
-  (A = PR #67 … H = PR #74; I = PR #75).
+- **Status:** **Shipped** (2026-07-30, branch `iladub-r17-gate`). Tenth loop of the GrainCorp
+  real-document push (A = PR #67 … H = PR #74; I = PR #75). **Measured at close:** both red
+  tests reproduce the R17 crash on the ungated code (AssertionError from inside
+  `compile_tables` at final validation, independently re-verified by the task reviewer) and
+  escalate `REGION_TILING_FAILED` in-band after the gate; healthy-path graphs
+  cross-version **isomorphic** with the parent commit for both `simple_table_pdf` and
+  `transposed_table_pdf` (scores 1.0 unchanged); GrainCorp unchanged
+  (0.9496 / 509 / 15 groups / 17 detected / 33 records, 33 distinct). Full suite 677
+  passed / 5 skipped. R17 row deleted from the register. Observation carried in the ledger
+  (not a defect): on every gated path, `n == 0` takes the commit branch without consulting
+  `region_tiles` — the shared loop G gate shape, pre-existing.
 - **Origin:** Residue **R17** (loop G attempt 2 final review): `assert_record_region` /
   `assert_transposed_region` write directly into the output graph with no
   scratch + `region_tiles` gate, so a defective region there still RAISES at
