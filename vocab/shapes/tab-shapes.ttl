@@ -1,6 +1,7 @@
-@prefix tab: <https://w3id.org/iladub/tab#> .
-@prefix sh:  <http://www.w3.org/ns/shacl#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 
 tab:prefixes
     sh:declare [ sh:prefix "tab" ; sh:namespace "https://w3id.org/iladub/tab#"^^xsd:anyURI ] .
@@ -155,12 +156,13 @@ tab:UnambiguousAccessShape a sh:NodeShape ;
 tab:RowCoverageShape a sh:NodeShape ;
     sh:targetClass tab:LeafRow ;
     sh:sparql [
-        sh:message "Leaf row is not covered by any row-header of its table (row coverage gap)." ;
+        sh:message "Leaf row is not covered by any row-header of its table (row coverage gap; derived-only trees are exempt — they are partial annotations)." ;
         sh:prefixes tab:prefixes ;
         sh:select """
             SELECT $this WHERE {
                 ?tbl tab:hasLeafRow $this .
-                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow }
+                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow .
+                                FILTER NOT EXISTS { ?any a tab:DerivedRowGroup } }
                 FILTER NOT EXISTS { ?tbl tab:hasHeaderNode ?h . ?h tab:coversRow $this }
             }
         """ ] .
@@ -168,7 +170,7 @@ tab:RowCoverageShape a sh:NodeShape ;
 tab:RowNoOverlapShape a sh:NodeShape ;
     sh:targetSubjectsOf tab:hasHeaderNode ;
     sh:sparql [
-        sh:message "Two header nodes at the same level cover the same row (row overlap)." ;
+        sh:message "Two header nodes at the same level cover the same row (row overlap; any pair involving a derived row group is exempt — a derived group is a carried annotation, not a claimed partition, and row-group-nesting.rq rightly refuses to link groups with identical member sets, leaving them co-resident at level 0)." ;
         sh:prefixes tab:prefixes ;
         sh:select """
             SELECT $this WHERE {
@@ -179,6 +181,8 @@ tab:RowNoOverlapShape a sh:NodeShape ;
                 ?h2 tab:headerLevel ?l .
                 ?h1 tab:coversRow ?r .
                 ?h2 tab:coversRow ?r .
+                FILTER NOT EXISTS { ?h1 a tab:DerivedRowGroup }
+                FILTER NOT EXISTS { ?h2 a tab:DerivedRowGroup }
             }
         """ ] .
 
@@ -210,7 +214,8 @@ tab:UnambiguousRowAccessShape a sh:NodeShape ;
         sh:select """
             SELECT $this WHERE {
                 ?tbl tab:hasLeafRow $this .
-                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow }
+                FILTER EXISTS { ?tbl tab:hasHeaderNode ?any . ?any tab:coversRow ?anyrow .
+                                FILTER NOT EXISTS { ?any a tab:DerivedRowGroup } }
                 {
                     SELECT ?tbl $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
                         ?tbl tab:hasLeafRow $this .
@@ -218,6 +223,7 @@ tab:UnambiguousRowAccessShape a sh:NodeShape ;
                             ?tbl tab:hasHeaderNode ?h .
                             ?h tab:coversRow $this .
                             FILTER NOT EXISTS { ?child tab:parentHeader ?h }
+                            FILTER NOT EXISTS { ?h a tab:DerivedRowGroup }
                         }
                     } GROUP BY ?tbl $this
                 }
@@ -304,3 +310,23 @@ tab:DetectedAggregationRowShape a sh:NodeShape ;
                   sh:message "A detected aggregation row needs at least one operand row." ] ;
     sh:property [ sh:path tab:aggregationFunction ; sh:minCount 1 ; sh:maxCount 1 ;
                   sh:message "A detected aggregation row needs exactly one aggregationFunction." ] .
+
+#################################################################
+#  Derived row groups (loop I): a derived group must be
+#  explained — one label (the source key cell), at least one
+#  member, and its witnessing aggregation row. Targets the
+#  SUBCLASS only: authored HeaderNodes are untouched.
+#################################################################
+
+tab:DerivedRowGroupShape a sh:NodeShape ;
+    sh:targetClass tab:DerivedRowGroup ;
+    sh:property [ sh:name "DerivedRowGroupShape" ; sh:path tab:hasLabel ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A derived row group needs exactly one label (its source key cell)." ] ;
+    sh:property [ sh:name "DerivedRowGroupShape" ; sh:path tab:coversRow ; sh:minCount 1 ;
+        sh:message "A derived row group needs at least one member row." ] ;
+    sh:property [ sh:name "DerivedRowGroupShape" ; sh:path prov:wasDerivedFrom ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A derived row group needs exactly one witnessing aggregation row." ] ;
+    sh:property [ sh:name "DerivedRowGroupShape" ; sh:path tab:parentHeader ; sh:maxCount 1 ;
+        sh:message "A derived row group has at most one parent." ] .

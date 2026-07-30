@@ -14,27 +14,30 @@ from rdflib import Graph, Namespace
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
-# The ten tiling invariants: the original eight (loop C, 2026-07-16) + the ninth,
+# The eleven tiling invariants: the original eight (loop C, 2026-07-16) + the ninth,
 # tab:HeaderContentConservedShape, the header-content conservation oracle (loop C of the
 # GrainCorp push, 2026-07-26) + the tenth, tab:DetectedAggregationRowShape, the detected-
-# aggregation evidence oracle (loop H, 2026-07-30) — our OWN emission (assert_hier_region) must
-# be gated here at the region, not crash at compile.py's final full-graph validation (the loop G
-# lesson). One pySHACL call carries all three families; the conservation shape targets
-# tab:HeaderSourceCell and the aggregation shape targets tab:DetectedAggregationRow, neither of
-# which any pre-existing region emits, so every previously-shipped region is unaffected.
+# aggregation evidence oracle (loop H, 2026-07-30) + the eleventh, tab:DerivedRowGroupShape,
+# the derived-row-group well-formedness oracle (loop I, 2026-07-30) — our OWN emission
+# (assert_hier_region / derive_row_groups) must be gated here at the region, not crash at
+# compile.py's final full-graph validation (the loop G lesson). One pySHACL call carries all
+# four families; the conservation shape targets tab:HeaderSourceCell, the aggregation shape
+# targets tab:DetectedAggregationRow, and the row-group shape targets tab:DerivedRowGroup, none
+# of which any pre-existing region emits, so every previously-shipped region is unaffected.
 _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape,
                       TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape,
                       TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape,
-                      TAB.HeaderContentConservedShape, TAB.DetectedAggregationRowShape]
+                      TAB.HeaderContentConservedShape, TAB.DetectedAggregationRowShape,
+                      TAB.DerivedRowGroupShape]
 
 
 def _build_tiling_shapes():
-    """The ten tiling shapes (the original eight + tab:HeaderContentConservedShape +
-    tab:DetectedAggregationRowShape), extracted from the single tab-shapes.ttl as CBDs (+
-    tab:prefixes, which the sh:sparql shapes reference). Keeps ONE source of the shapes — no
-    duplicate file. Includes Unambiguous(Row)AccessShape: exactly one LEAF header per
-    column/row — the leaf-partition invariant the retired exact-partition Python backstops
-    enforced."""
+    """The eleven tiling shapes (the original eight + tab:HeaderContentConservedShape +
+    tab:DetectedAggregationRowShape + tab:DerivedRowGroupShape), extracted from the single
+    tab-shapes.ttl as CBDs (+ tab:prefixes, which the sh:sparql shapes reference). Keeps ONE
+    source of the shapes — no duplicate file. Includes Unambiguous(Row)AccessShape: exactly one
+    LEAF header per column/row — the leaf-partition invariant the retired exact-partition Python
+    backstops enforced."""
     full = Graph().parse(os.path.join(_VOCAB, "shapes", "tab-shapes.ttl"), format="turtle")
     sub = Graph()
     for s in _TILING_SHAPE_IRIS + [TAB.prefixes]:
@@ -47,9 +50,10 @@ _ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle
 
 
 def region_tiles(graph):
-    """True iff `graph` (one candidate region's RDF) conforms to the ten tiling invariants
+    """True iff `graph` (one candidate region's RDF) conforms to the eleven tiling invariants
     (coverage / no-overlap / refinement / unambiguous-leaf-access, both axes, + header-content
-    conservation + detected-aggregation evidence). PROCEDURAL glue over the AXIOM shapes."""
+    conservation + detected-aggregation evidence + derived-row-group well-formedness).
+    PROCEDURAL glue over the AXIOM shapes."""
     from pyshacl import validate
     conforms, _, _ = validate(graph, shacl_graph=_TILING_SHAPES, ont_graph=_ONT,
                               inference="rdfs", advanced=True)

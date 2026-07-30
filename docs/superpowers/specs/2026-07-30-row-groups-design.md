@@ -2,9 +2,22 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Ninth loop of the GrainCorp real-document push
-  (A = PR #67; B = PR #68; C = PR #69; C.1 = PR #70; D = PR #71; F = PR #72; G = PR #73;
-  H = PR #74).
+- **Status:** **Shipped** (2026-07-30, branch `iladub-row-groups`). Ninth loop of the GrainCorp
+  real-document push (A = PR #67; B = PR #68; C = PR #69; C.1 = PR #70; D = PR #71; F = PR #72;
+  G = PR #73; H = PR #74). **Measured at close:** **15** derived row groups (not the predicted
+  16): 11 ports + 3 months + **1 season** — the grand total `2025/26 Total` did NOT refuse as
+  §1 predicted, because its label column is a real repeated Season column whose members all
+  carry `2025/26` (stronger evidence than the prediction assumed); and TWO port groups
+  (`Geelong Total` Aug, `Portland Total` Sep) **honestly refused** via the measured cascade —
+  an unconfirmed total (Port Kembla's blank; a non-confirming Fisherman Islands total) stays an
+  ordinary row, its rows flow into the next confirmed total's member walk, the conflicting port
+  values break key uniqueness, and the derivation refuses rather than guesses (§7 exactly).
+  Record identities: 33 records, 33 distinct subjects; the Aug 26 Mackay pair mints
+  `2025/26 > Aug 26 > Mackay > htable2-r9` / `…-r10` (collision guard exercised on the real
+  document); the sole uncovered row is the second, unconfirmed `Grand Total` row (opaque —
+  honest). Score/cells UNCHANGED 0.9496/509 (the §1 failure condition held). One boxed source
+  cell yields the faithful key `Mackay Mackay` (the cell's own text — source-faithful, noted).
+  Full suite 667 passed / 5 skipped.
 - **Origin:** Loop H's closure note — "the row-group *hierarchy* (Month > Port `coversRow`
   tree) is its own future loop, now unblocked." Plus the PR #59 recorded minor
   (`_record_uri` has no collision guard), which this loop makes real and closes.
@@ -75,9 +88,12 @@ node, which an EntryCell has).
 
 ### 2.1 `vocab/queries/row-groups.rq` — the derivation (AXIOM, open world)
 
-One SPARQL `CONSTRUCT` over the already-emitted table graph (post `assert_hier_region`
-emission, pre-membrane), reading only: `tab:DetectedAggregationRow`, `tab:aggregates`,
-`tab:EntryCell` / `atRow` / `atColumn` / `cellText`, and the table's row/column URIs.
+Shipped as two SPARQL `SELECT` queries (`row-group-key.rq`, `row-group-nesting.rq`) plus
+`rowgroups.py` engine glue (bindings, triple merge, a `parentHeader` depth walk) — the same
+`interpret.run` pattern as §8, not a single `CONSTRUCT` — over the already-emitted table
+graph (post `assert_hier_region` emission, pre-membrane), reading only:
+`tab:DetectedAggregationRow`, `tab:aggregates`, `tab:EntryCell` / `atRow` / `atColumn` /
+`cellText`, and the table's row/column URIs.
 
 For each confirmed aggregation row A with label column L. L and the measure column are
 already known to the emitter (detect_aggregation_rows returns them), so the emission (2.2)

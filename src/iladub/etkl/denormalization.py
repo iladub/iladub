@@ -87,7 +87,12 @@ def _read_dimensions(dimgraph, g, t):
 def recover_dimensions(g, t):
     """Recover pivoted dimensions from BOTH header axes via the declarative two-pass
     derivation (name-levels -> recover-dimensions, AXIOM), read back into PivotedDimension
-    dataclasses. Replaces the set-algebra _axis_dimensions body; signature unchanged."""
+    dataclasses. Replaces the set-algebra _axis_dimensions body; signature unchanged.
+
+    Both queries exclude tab:DerivedRowGroup nodes from acting as a naming parent or a value
+    node (loop I final review, I-2): a derived row group is a carried annotation over a
+    confirmed aggregation, not an author-pivoted axis, so it must never surface as a
+    PivotedDimension indistinguishable from one."""
     marks = interpret.run(os.path.join(_QUERIES, "name-levels.rq"), g)
     dimgraph = interpret.run(os.path.join(_QUERIES, "recover-dimensions.rq"), g, marks)
     return _read_dimensions(dimgraph, g, t)
