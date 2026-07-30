@@ -220,3 +220,33 @@ def test_authored_row_trees_keep_the_strict_invariant():
     g.add((t, TAB.hasHeaderNode, h))
     g.add((h, TAB.coversRow, URIRef("urn:doc#rh0-r0")))   # r1 uncovered -> gap
     assert _tiles(g) is False
+
+
+def test_derived_overlay_does_not_corrupt_an_authored_partition():
+    """THE MEASURE for UnambiguousRowAccessShape's count-exclusion (task 2 review Minor):
+    an authored row tree that fully tiles its rows, PLUS a derived group overlaying one of
+    them. With the exclusion the authored partition still counts exactly one leaf header
+    per row -> passes; without it the derived node counts as a second leaf header ->
+    false ambiguity. (RowCoverageShape's own exemption stays shadowed by this shape on
+    every fixture — pre-existing redundancy from the loop C 8-shape gate, noted in the
+    ledger, not re-measured here.)"""
+    from rdflib import Graph, Namespace, RDF, URIRef
+    from iladub.etkl.tiling import region_tiles
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    t = URIRef("urn:doc#mix0")
+    for r in (0, 1):
+        g.add((URIRef(f"urn:doc#mix0-r{r}"), RDF.type, TAB.LeafRow))
+        g.add((t, TAB.hasLeafRow, URIRef(f"urn:doc#mix0-r{r}")))
+        h = URIRef(f"urn:doc#mix0-rh{r}")
+        g.add((h, RDF.type, TAB.HeaderNode))            # authored: tiles 1:1
+        g.add((t, TAB.hasHeaderNode, h))
+        g.add((h, TAB.coversRow, URIRef(f"urn:doc#mix0-r{r}")))
+    grp = URIRef("urn:doc#mix0-rg9")                    # derived overlay on r0
+    g.add((grp, RDF.type, TAB.HeaderNode))
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((t, TAB.hasHeaderNode, grp))
+    g.add((grp, TAB.coversRow, URIRef("urn:doc#mix0-r0")))
+    g.add((grp, TAB.hasLabel, URIRef("urn:doc#mix0-e0_0")))
+    g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#mix0-r1")))
+    assert region_tiles(g) is True
