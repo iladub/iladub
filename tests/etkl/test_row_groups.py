@@ -250,3 +250,61 @@ def test_derived_overlay_does_not_corrupt_an_authored_partition():
     g.add((grp, TAB.hasLabel, URIRef("urn:doc#mix0-e0_0")))
     g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#mix0-r1")))
     assert region_tiles(g) is True
+
+
+def test_feed_collision_guard_two_rows_one_group(tmp_path=None):
+    """PR #59's recorded minor made real: two rows in the SAME group share a path — without
+    the guard they mint the SAME record URI and silently merge. RED against today's feed."""
+    from iladub.feed import table_records, _record_uri
+    g = Graph()
+    _emit(g, {0: {2: "Mackay", 3: "100"},
+              1: {2: "Mackay", 3: "150"},
+              2: {2: "SUB", 3: "250"}}, {2: (0, 1)})
+    g.add((T, RDF.type, TAB.HierarchicalTable))
+    g.add((URIRef(f"{T}-r2"), RDF.type, TAB.AggregationRow))   # feed skips it
+    derive_row_groups(g, T, {2: (2, 3, (0, 1))})
+    recs = table_records(g)
+    assert len(recs) == 2
+    ids = [r.row_id for r in recs]
+    assert len(set(_record_uri(i) for i in ids)) == 2, ids     # DISTINCT subjects
+    assert all(i.startswith("Mackay") for i in ids), ids       # both carry the group path
+
+
+def test_feed_uncovered_rows_keep_opaque_identity():
+    from iladub.feed import table_records
+    g = Graph()
+    _emit(g, {0: {2: "Mackay", 3: "100"},
+              1: {2: "SUB", 3: "100"},
+              3: {2: "Kembla", 3: "999"}}, {1: (0,)})
+    g.add((T, RDF.type, TAB.HierarchicalTable))
+    g.add((URIRef(f"{T}-r1"), RDF.type, TAB.AggregationRow))
+    derive_row_groups(g, T, {1: (2, 3, (0,))})
+    recs = table_records(g)
+    by_id = {r.row_id: r for r in recs}
+    assert "Mackay" in by_id            # single-member group: clean path, no suffix
+    assert any(i.endswith("-r3") or i == "h0-r3" for i in by_id), by_id.keys()
+
+
+def test_e2e_compiled_fixture_carries_the_group(tmp_path):
+    import os
+    import pytest
+    pytest.importorskip("pdfplumber")
+    pytest.importorskip("reportlab")
+    from iladub.etkl.compile import compile_tables
+    from iladub.feed import table_records
+    from tests.etkl import fixtures as F
+    p = os.path.join(str(tmp_path), "sub.pdf")
+    F.subtotal_hier_table_pdf(p)
+    rep = compile_tables(p)
+    assert any(r.verdict == "asserted" for r in rep.regions), [r.reason for r in rep.regions]
+    groups = list(rep.graph.subjects(RDF.type, TAB.DerivedRowGroup))
+    assert len(groups) == 1, groups
+    grp = groups[0]
+    label = rep.graph.value(grp, TAB.hasLabel)
+    assert str(rep.graph.value(label, TAB.cellText)) == "Mackay"    # key from members r0/r1 col 1 (measured)
+    covers = {str(u).rsplit("-", 1)[-1] for u in rep.graph.objects(grp, TAB.coversRow)}
+    assert covers == {"r0", "r1"}
+    recs = table_records(rep.graph)
+    assert len(recs) == 3
+    pathed = [r.row_id for r in recs if r.row_id.startswith("Mackay > ") or r.row_id == "Mackay"]
+    assert len(pathed) == 2 and len(set(pathed)) == 2, [r.row_id for r in recs]

@@ -481,4 +481,11 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
                    URIRef(f"{doc_uri}#p{page}-{int(cell.x0)}-{int(cell.top)}")))
             asserted += len(cell.words)
 
+    # Row groups from the confirmed aggregations (loop I, AXIOM): runs AFTER the entry
+    # cells exist (the key query reads member cells), still inside the caller's scratch
+    # graph when the loop G backstop gates this path — a malformed group escalates in-band.
+    if agg:
+        from .rowgroups import derive_row_groups
+        derive_row_groups(g, table_uri, agg)
+
     return asserted

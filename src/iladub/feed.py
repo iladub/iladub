@@ -49,9 +49,19 @@ def table_records(graph: Graph) -> list[Record]:
             concept = SurfaceConcept(header.get(col, ""), str(graph.value(e, TAB.cellText)), region)
             x0, y0 = _bbox_xy(graph, e)
             rows.setdefault(row, []).append((x0, y0, concept))
-        for row in sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r])):
+        ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
+        # Collision guard (loop I; closes the PR #59 recorded minor): two rows sharing a
+        # header path (e.g. two bookings in one derived group) must never mint the same
+        # record subject — each colliding row keeps its opaque fragment appended.
+        rid_of = {row: row_path.get(row, str(row).split("#")[-1]) for row in ordered}
+        multiplicity: dict = {}
+        for rid in rid_of.values():
+            multiplicity[rid] = multiplicity.get(rid, 0) + 1
+        for row in ordered:
             cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
-            rid = row_path.get(row, str(row).split("#")[-1])
+            rid = rid_of[row]
+            if multiplicity[rid] > 1:
+                rid = f"{rid} > {str(row).split('#')[-1]}"
             out.append(Record(rid, tuple(cells)))
     return out
 
