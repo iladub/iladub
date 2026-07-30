@@ -289,3 +289,18 @@ tab:HeaderContentConservedShape a sh:NodeShape ;
                 FILTER NOT EXISTS { ?cap a tab:RegionCaption ; tab:captionText ?ct . FILTER(CONTAINS(?ct, ?txt)) }
             }
         """ ] .
+
+#################################################################
+#  Detected aggregation rows (loop H): a row CLAIMED as a
+#  detected aggregation must carry its evidence — operands and
+#  the function. Targets the SUBCLASS only: denormalization's
+#  reshape path types rows bare tab:AggregationRow with cell-level
+#  operands, and must not be judged by this shape.
+#################################################################
+
+tab:DetectedAggregationRowShape a sh:NodeShape ;
+    sh:targetClass tab:DetectedAggregationRow ;
+    sh:property [ sh:path tab:aggregates ; sh:minCount 1 ;
+                  sh:message "A detected aggregation row needs at least one operand row." ] ;
+    sh:property [ sh:path tab:aggregationFunction ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A detected aggregation row needs exactly one aggregationFunction." ] .

@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -129,8 +129,8 @@ tab:AggregationRow a owl:Class ; rdfs:subClassOf tab:LeafRow ; rdfs:label "Aggre
 tab:AggregationColumn a owl:Class ; rdfs:subClassOf tab:LeafColumn ; rdfs:label "Aggregation column"@en .
 tab:aggregationFunction a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "aggregation function"@en ;
     rdfs:comment "sum | mean | count | min | max | product."@en .
-tab:aggregates a owl:ObjectProperty ; rdfs:domain tab:AggregationCell ; rdfs:range tab:EntryCell ; rdfs:label "aggregates"@en ;
-    rdfs:comment "An operand cell this aggregation is computed from."@en .
+tab:aggregates a owl:ObjectProperty ; rdfs:label "aggregates"@en ;
+    rdfs:comment "An operand this aggregation is computed from: an EntryCell when the subject is an AggregationCell (denormalization's cell-level operands), or a LeafRow when the subject is a DetectedAggregationRow (loop H's row-level operands). Domain/range deliberately left undeclared: either would rdfs-entail the OTHER usage's subject/object into a foreign class (e.g. a LeafRow inferred AggregationCell), tripping that class's shape at full validation — see tests/etkl/test_aggregation_rows.py's landmine test."@en .
 tab:overAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "over axis"@en ;
     rdfs:comment "row | column — the axis the aggregation runs along (a grand total carries both)."@en .
 
@@ -289,3 +289,8 @@ tab:intervalLo a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
     rdfs:comment "Left edge of the consecutive author-rule interval containing the candidate."@en .
 tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval hi"@en ;
     rdfs:comment "Right edge of that interval."@en .
+
+# --- detected aggregation rows (loop H, residue R4) ---
+tab:DetectedAggregationRow a owl:Class ; rdfs:subClassOf tab:AggregationRow ;
+    rdfs:label "Detected aggregation row"@en ;
+    rdfs:comment "An aggregation row DETECTED by exact arithmetic in the extraction path (loop H): a sparse body row whose measure equals the token-sum of its member rows. Distinct subclass on purpose: denormalization's reshape path types rows bare tab:AggregationRow without row-level operands, and the operand-requiring shape must not fire on those. Detection never reads label text — sparsity, label column and arithmetic only."@en .

@@ -40,8 +40,10 @@ def table_records(graph: Graph) -> list[Record]:
         for e in graph.subjects(RDF.type, TAB.EntryCell):
             if (t, TAB.hasCell, e) not in graph:
                 continue
-            col = graph.value(e, TAB.atColumn)
             row = graph.value(e, TAB.atRow)
+            if row is not None and (row, RDF.type, TAB.AggregationRow) in graph:
+                continue          # a subtotal is not a record (§7): its cells mint no subject
+            col = graph.value(e, TAB.atColumn)
             prov = graph.value(e, PROV.wasDerivedFrom)
             region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
             concept = SurfaceConcept(header.get(col, ""), str(graph.value(e, TAB.cellText)), region)

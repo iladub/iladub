@@ -57,3 +57,98 @@ def logical_rows(band: Band, grid: LeafGrid, body_start_top: float):
         cells = tuple(c for (_, c) in sorted(row, key=lambda cc: cc[0]))
         out.append(RowBand(top, bottom, cells))
     return tuple(out)
+
+
+def _numeric_token_sum(text):
+    """The exact sum of a cell's numeric tokens, or None if it has none.
+
+    Identity for a single value. A multi-line box (the author drew no hrule inside it, so per
+    the author it is ONE row) carries one value per boxed line — measured on a real report:
+    two TBA bookings share a box whose measure cell reads '20,000 30,000', and the group's own
+    printed subtotal (50,000) reconciles exactly with the token-sum. Non-numeric tokens
+    (dates, dashes, words) contribute nothing; an all-non-numeric cell returns None.
+    Exact decimal arithmetic — never float."""
+    from decimal import Decimal
+    from .headers import is_numeric
+    total = None
+    for tok in text.split():
+        if is_numeric(tok):
+            v = Decimal(tok.replace(",", "").replace("%", ""))
+            total = v if total is None else total + v
+    return total
+
+
+def detect_aggregation_rows(rows, grid):
+    """Arithmetic subtotal detection (loop H, residue R4). PROCEDURAL — and justified: this is
+    the §8 gate's second procedural class, DECIDABLE EXACT ARITHMETIC (exact Decimal sums over
+    a finite ordered row sequence; a SPARQL formulation of nested running-sum windows would be
+    obfuscation, not a lift). The closed-world check is SHACL
+    (tab:DetectedAggregationRowShape); language is NEVER read — a ' Total' suffix test is the
+    tuned constant of natural language and is forbidden (spec §5).
+
+    A row is a CANDIDATE iff it has exactly two cells, strictly fewer than the modal
+    populated-cell count of the region's rows, one cell with a numeric token-sum (the measure)
+    and one without (the label). The label's COLUMN encodes the nesting level (measured: port
+    totals carry their label in the Port column, month totals in the Month column).
+
+    A candidate at row i with label column L and measure value v is CONFIRMED iff
+    v == the token-sum, in the measure column, of the non-aggregation rows above i back to
+    (exclusive) the previous CONFIRMED aggregation row whose label column <= L — and at least
+    one member exists. Unconfirmed sparse rows remain ordinary rows AND contribute their
+    token-sum to enclosing groups (the measured cascade). Zero-member candidates (a grand
+    total directly after a same-level total) are never confirmed — honest refusal.
+
+    Returns {row_index: (label_col, measure_col, member_indices)}.
+    """
+    from .headers import is_numeric
+    b = grid.boundaries
+    row_cols = []
+    for rb in rows:
+        cols = {}
+        for c in rb.cells:
+            cols[column_of((c.x0 + c.x1) / 2.0, b)] = c.text
+        row_cols.append(cols)
+    if not row_cols:
+        return {}
+    # The "modal" (normal, full) row shape is the widest one: real data rows are always
+    # maximally populated; only aggregation candidates are ever sparser. A frequency mode
+    # would tie against the max whenever aggregation-shaped rows outnumber full rows in a
+    # sample — exact widest-row count, not a tuned constant.
+    modal = max(len(rc) for rc in row_cols)
+    agg = {}
+    for i, rc in enumerate(row_cols):
+        if len(rc) != 2 or len(rc) >= modal:
+            continue
+        # CANDIDATE classification is STRICT (every token numeric), while MEMBER contributions
+        # below stay lenient (_numeric_token_sum). The distinction is load-bearing and was
+        # caught on the real document: a month-total label like 'Jul 26 Total' contains the
+        # numeric token '26', so lenient classification read it as a second measure — month
+        # totals stopped being candidates, and every unconfirmed month total then polluted the
+        # member sums of everything after it (detection collapsed from 17 rows to 4).
+        measures = []
+        labels = []
+        for c, t in sorted(rc.items()):
+            toks = t.split()
+            if toks and all(is_numeric(tok) for tok in toks):
+                measures.append((c, _numeric_token_sum(t)))
+            else:
+                labels.append(c)
+        if len(measures) != 1 or len(labels) != 1:
+            continue
+        mcol, v = measures[0]
+        lcol = labels[0]
+        members = []
+        total = None
+        for j in range(i - 1, -1, -1):
+            if j in agg:
+                if agg[j][0] <= lcol:
+                    break                      # previous same-or-outer aggregation: stop
+                continue                       # inner aggregation: not a member
+            members.append(j)
+            t = row_cols[j].get(mcol, "")
+            s = _numeric_token_sum(t)
+            if s is not None:
+                total = s if total is None else total + s
+        if members and total is not None and total == v:
+            agg[i] = (lcol, mcol, tuple(sorted(members)))
+    return agg
