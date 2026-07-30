@@ -48,7 +48,10 @@ commit path.
    well-formed regions.
 3. GrainCorp unchanged: 0.9496 / 509 (failure condition, the structural-loop pattern).
 4. Full suite green (baseline 673 passed / 5 skipped). Accepted measured cost: one
-   `region_tiles` call (~75 ms, loop H review's measurement) per record/transposed region.
+   `region_tiles` call per record/transposed region — **measured at close (final review):
+   ~0.26 s/call** (0.257 s record / 0.199 s transposed; suite average 0.259 s across 112
+   calls, ≈ the observed ~11-13 s suite delta). The design-time "~75 ms" estimate from the
+   loop H review was ~3× low for these larger region graphs.
 5. R17's register row is **deleted** (closed fully — these were the last direct-assert
    region paths), and loop G's compile.py NOTE comment no longer claims the record/
    transposed paths are ungated.
