@@ -83,3 +83,36 @@ def test_build_ruled_band_never_synthesises_a_rule(tmp_path):
                         "derived list must preserve every author boundary"
                 checked += 1
     assert checked, "no ruled band was exercised"
+
+
+def test_defective_hierarchical_region_escalates_in_band_not_crash(tmp_path, monkeypatch):
+    """THE CRASH CLASS, closed at the membrane. The plain hierarchical branch was the last
+    region path writing directly into the graph — which is why attempt 1's phantom column
+    CRASHED compile_tables at final SHACL validation instead of escalating.
+
+    Sabotage (probe-verified deterministic): blanking the last leaf node's covers passes
+    merge_tiling_ok (True — it checks overlap/centering, not coverage), asserts n=10, and fails
+    region_tiles (False, tab:CoverageShape). Before the backstop this test dies with an
+    AssertionError from compile_tables; after, it escalates in-band."""
+    from dataclasses import replace
+
+    from iladub.etkl import hierarchical as H
+
+    p = os.path.join(str(tmp_path), "pm.pdf")
+    F.partial_merge_report_pdf(p)
+    real = H.classify_hierarchical
+
+    def sabotaged(band):
+        hreg = real(band)
+        if hreg is None:
+            return None
+        max_lvl = max(n.level for n in hreg.tree)
+        leafs = [i for i, n in enumerate(hreg.tree) if n.covers and n.level == max_lvl]
+        tree = list(hreg.tree)
+        tree[leafs[-1]] = replace(tree[leafs[-1]], covers=())
+        return replace(hreg, tree=tuple(tree))
+
+    monkeypatch.setattr(H, "classify_hierarchical", sabotaged)
+    rep = compile_tables(p)                                    # must NOT raise
+    reasons = [r.reason for r in rep.regions]
+    assert "REGION_TILING_FAILED" in reasons, reasons

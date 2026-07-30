@@ -317,18 +317,38 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.HierarchicalTable), ascii_view))
                 elif hreg is not None:
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
-                    n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
-                    tokens = sum(len(ln.words) for ln in band.lines)
-                    asserted_total += n
-                    escalated_total += max(0, tokens - n)
-                    reports.append(RegionReport(
-                        region.kind,
-                        "asserted" if n else "escalated",
-                        n,
-                        None if n else "ROUND_TRIP_FAIL",
-                        str(TAB.HierarchicalTable),
-                        ascii_view,
-                    ))
+                    # THE MEMBRANE BACKSTOP (loop G attempt 2): assert into a SCRATCH graph and
+                    # let region_tiles dispose it, exactly as the matrix and row-hier paths
+                    # already do. This was the last region path that wrote directly into the
+                    # graph — which is why a defective region here CRASHED compile_tables at
+                    # final validation (attempt 1's counter-example) instead of escalating.
+                    from .tiling import region_tiles
+                    scratch = Graph()
+                    n = assert_hier_region(scratch, hreg, band, table_uri, _DOC, page_number)
+                    if n and not region_tiles(scratch):
+                        cand_uri = URIRef(f"{_DOC}#region{idx}")
+                        escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                        "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4)
+                        escalated_total += sum(len(ln.words) for ln in band.lines)
+                        reports.append(RegionReport(region.kind, "escalated", 0,
+                                                    "REGION_TILING_FAILED",
+                                                    str(TAB.HierarchicalTable), ascii_view))
+                    else:
+                        # n == 0 keeps main's behavior byte-identical: assert_hier_region already
+                        # wrote its ROUND_TRIP_FAIL escalation into scratch; merge and report as
+                        # before. A tiling region merges exactly as it always did.
+                        graph += scratch
+                        tokens = sum(len(ln.words) for ln in band.lines)
+                        asserted_total += n
+                        escalated_total += max(0, tokens - n)
+                        reports.append(RegionReport(
+                            region.kind,
+                            "asserted" if n else "escalated",
+                            n,
+                            None if n else "ROUND_TRIP_FAIL",
+                            str(TAB.HierarchicalTable),
+                            ascii_view,
+                        ))
                 else:
                     # Not hierarchical — escalate whole region in-band
                     cand_uri = URIRef(f"{_DOC}#region{idx}")
