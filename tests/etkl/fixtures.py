@@ -908,20 +908,23 @@ def confirmed_split_table_pdf(path: str) -> dict:
     return {"cols": 4, "data_cells": 24}
 
 
-def subtotal_hier_table_pdf(path: str) -> dict:
+def subtotal_hier_table_pdf(path: str, hrules: bool = True) -> dict:
     """Loop H E2E: a merged 2-level header (Voyage spans Ship+Qty+Berth, forcing the
     hierarchical path), suppressed keys, ONE subtotal row, and hrules between all body rows
-    (the author's row delimiters — without them the suppressed-key rows fuse into the record
-    above).
+    (the author's row delimiters). The subtotal row sits at the ABSORBABLE 12pt pitch below
+    its group (the ordinary pitch is 16pt, so lead stays 16 and 12 < lead), so the hrule
+    between them is LOAD-BEARING:
+    with hrules=False the SUB row is a proper-subset partial row inside the wrap window and
+    group_wrapped fuses it into the record above (measured — pinned by
+    test_without_hrules_the_subtotal_row_fuses). This is the integrated Task 1 + Task 3
+    slice: de-fusion is what makes the subtotal a detectable row at all.
 
     NO vertical rules on purpose: whitespace-gutter column recovery (as pivoted_table_pdf
-    uses) gives the correct narrow merged span; author vertical rules at these exact widths
-    were probed and recover a DIFFERENT (word-extent-based) grid that widens the Voyage span
-    unpredictably. The trailing text column Berth (never numeric) is required for the same
-    reason a whitespace/rule geometry alone does not give: without it, Mon/Port/Ship read as
-    stub and Qty alone as a homogeneous-numeric data suffix, which is_matrix_candidate reads
-    as a PIVOT matrix (loop 2's matrix.py path) rather than the loop H hierarchical path this
-    test targets — Berth (text, never numeric) breaks that homogeneous-numeric suffix."""
+    uses) gives the correct narrow merged span. The trailing text column Berth (never
+    numeric) is required: without it, Mon/Port/Ship read as stub and Qty alone as a
+    homogeneous-numeric data suffix, which is_matrix_candidate reads as a PIVOT matrix
+    (loop 2's matrix.py path) rather than the loop H hierarchical path this test targets —
+    Berth (text, never numeric) breaks that homogeneous-numeric suffix."""
     leaves = [(40.0, 90.0), (110.0, 170.0), (190.0, 230.0), (250.0, 300.0), (320.0, 360.0)]
     names = ["Mon", "Port", "Ship", "Qty", "Berth"]
     c = canvas.Canvas(path, pagesize=(400, 220))
@@ -933,7 +936,7 @@ def subtotal_hier_table_pdf(path: str) -> dict:
             ("", "SUB", "", "250", ""), ("Aug", "Gladstone", "V3", "300", "B4")]
     y = 166
     ys = []
-    for mon, port, ship, qty, berth in body:
+    for i, (mon, port, ship, qty, berth) in enumerate(body):
         if mon:
             c.drawString(leaves[0][0], y, mon)
         c.drawString(leaves[1][0], y, port)
@@ -943,9 +946,13 @@ def subtotal_hier_table_pdf(path: str) -> dict:
         if berth:
             c.drawString(leaves[4][0], y, berth)
         ys.append(y)
-        y -= 16
-    for yy in ys:                                        # hrule under EVERY body row
-        c.line(35, yy - 4, 355, yy - 4)
-    c.line(35, 178, 355, 178)                            # header/body rule
+        # the SUB row (next row after index 1) sits at the absorbable 12pt pitch (< lead,
+        # with room for the separating hrule to clear the glyphs); every other gap is the
+        # ordinary 16pt, so lead (the median gap) stays 16
+        y -= 12 if i == 1 else 16
+    if hrules:
+        for yy in ys:                                    # hrule under EVERY body row
+            c.line(35, yy - 4, 355, yy - 4)
+        c.line(35, 178, 355, 178)                        # header/body rule
     c.save()
     return {"cols": 5, "subtotal_value": "250"}

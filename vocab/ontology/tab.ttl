@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 

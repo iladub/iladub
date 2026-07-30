@@ -180,16 +180,47 @@ def test_feed_skips_aggregation_rows(tmp_path):
     import pytest
     pytest.importorskip("pdfplumber")
     pytest.importorskip("reportlab")
+    from rdflib import Namespace, RDF
     from iladub.etkl.compile import compile_tables
     from iladub.feed import table_records
     from tests.etkl import fixtures as F
+    TAB = Namespace("https://w3id.org/iladub/tab#")
     p = os.path.join(str(tmp_path), "sub.pdf")
     F.subtotal_hier_table_pdf(p)
     rep = compile_tables(p)
     assert any(r.verdict == "asserted" for r in rep.regions), [r.reason for r in rep.regions]
+    # E2E typing pinned (Task 3 review, Minor 2): exactly ONE detected aggregation row,
+    # aggregating exactly the two group members r0/r1.
+    det = list(rep.graph.subjects(RDF.type, TAB.DetectedAggregationRow))
+    assert len(det) == 1, det
+    mems = sorted(str(m).rsplit("-", 1)[-1] for m in rep.graph.objects(det[0], TAB.aggregates))
+    assert mems == ["r0", "r1"], mems
     recs = table_records(rep.graph)
     joined = [" ".join(sc.value for sc in r.concepts) for r in recs]
-    assert not any("250" in j and "SUB" in j for j in joined), joined  # the subtotal is no record
+    # the subtotal is no record — and the three DATA rows all still are (not vacuous)
+    assert len(recs) == 3, joined
+    assert not any("250" in j and "SUB" in j for j in joined), joined
+
+
+def test_without_hrules_the_subtotal_row_fuses(tmp_path):
+    """The hrules in subtotal_hier_table_pdf are LOAD-BEARING (Task 3 review, Important 1):
+    the SUB row sits at the absorbable 12pt pitch (< lead 16), so stripping the author's
+    hrules re-opens the Task 1 fusion defect — SUB fuses into the record above and nothing
+    is detectable. This pins that the E2E genuinely integrates de-fusion with detection."""
+    import os
+    import pytest
+    pytest.importorskip("pdfplumber")
+    pytest.importorskip("reportlab")
+    from rdflib import Namespace, RDF
+    from iladub.etkl.compile import compile_tables
+    from tests.etkl import fixtures as F
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    p = os.path.join(str(tmp_path), "nosub.pdf")
+    F.subtotal_hier_table_pdf(p, hrules=False)
+    rep = compile_tables(p)
+    texts = {str(o) for o in rep.graph.objects(None, TAB.cellText)}
+    assert "Mackay SUB" in texts and "150 250" in texts, sorted(texts)   # the fusion
+    assert not list(rep.graph.subjects(RDF.type, TAB.DetectedAggregationRow))
 
 
 def test_a_label_containing_digits_is_still_a_label():
@@ -208,3 +239,27 @@ def test_a_label_containing_digits_is_still_a_label():
     agg = detect_aggregation_rows(rows, GRID)
     assert agg[3] == (0, 3, (0, 1)), agg      # the digit-bearing month total confirms
     assert agg[5] == (1, 3, (4,)), agg        # and the NEXT group is not polluted by it
+
+
+def test_feed_skips_denormalization_typed_aggregation_rows():
+    """The feed exclusion keys on the SUPERTYPE, so it also covers rows that
+    denormalization.annotate_aggregations types bare tab:AggregationRow (no operands,
+    no Detected subtype). Intended widening, pinned (Task 3 review, Minor 5): a subtotal
+    is not a record on ANY path."""
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from iladub.feed import table_records
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    t = URIRef("urn:doc#t0")
+    g.add((t, RDF.type, TAB.RecordTable))
+    for i, (txt, agg) in enumerate((("10", False), ("10", True))):
+        row = URIRef(f"urn:doc#t0-r{i}")
+        if agg:
+            g.add((row, RDF.type, TAB.AggregationRow))       # bare supertype, as denorm emits
+        e = URIRef(f"urn:doc#t0-r{i}-c0")
+        g.add((e, RDF.type, TAB.EntryCell))
+        g.add((t, TAB.hasCell, e))
+        g.add((e, TAB.atRow, row))
+        g.add((e, TAB.cellText, Literal(txt)))
+    recs = table_records(g)
+    assert len(recs) == 1 and "r0" in recs[0].row_id, recs
