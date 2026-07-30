@@ -142,3 +142,19 @@ def test_injected_concept_sorts_by_its_column_position():
     _group(g, 9, "e0_0", (0, 1))
     r1 = [r for r in table_records(g) if "r1" in r.row_id][0]
     assert [c.text for c in r1.concepts] == ["Month", "Port", "Qty"]
+
+
+def test_injection_does_not_reorder_records():
+    """Task 1 review ⚠️: the injected concept's y-sort key must be the ROW's own extent,
+    not the label cell's y0 — mutation-verified: keying on the label's y0 silently sorts a
+    later covered row ahead of an intervening uncovered row (r2 before r1). Pins the
+    record order."""
+    g = Graph()
+    _table(g, ["Month", "Port", "Qty"],
+           {0: {0: "Jul", 1: "A", 2: "100"},
+            1: {1: "B", 2: "150"},
+            2: {1: "C", 2: "200"}})
+    _group(g, 9, "e0_0", (2,))           # key cell at y=0 covers ONLY r2 (y=20)
+    recs = table_records(g)
+    order = [{c.text: c.value for c in r.concepts}["Qty"] for r in recs]
+    assert order == ["100", "150", "200"], order
