@@ -88,9 +88,12 @@ node, which an EntryCell has).
 
 ### 2.1 `vocab/queries/row-groups.rq` — the derivation (AXIOM, open world)
 
-One SPARQL `CONSTRUCT` over the already-emitted table graph (post `assert_hier_region`
-emission, pre-membrane), reading only: `tab:DetectedAggregationRow`, `tab:aggregates`,
-`tab:EntryCell` / `atRow` / `atColumn` / `cellText`, and the table's row/column URIs.
+Shipped as two SPARQL `SELECT` queries (`row-group-key.rq`, `row-group-nesting.rq`) plus
+`rowgroups.py` engine glue (bindings, triple merge, a `parentHeader` depth walk) — the same
+`interpret.run` pattern as §8, not a single `CONSTRUCT` — over the already-emitted table
+graph (post `assert_hier_region` emission, pre-membrane), reading only:
+`tab:DetectedAggregationRow`, `tab:aggregates`, `tab:EntryCell` / `atRow` / `atColumn` /
+`cellText`, and the table's row/column URIs.
 
 For each confirmed aggregation row A with label column L. L and the measure column are
 already known to the emitter (detect_aggregation_rows returns them), so the emission (2.2)
