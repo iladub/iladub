@@ -19,6 +19,10 @@ class Band:
     bottom: float
     rules: tuple[Rule, ...] = ()
     hrules: tuple[HRule, ...] = ()
+    # Derived column boundaries (author rules PLUS interior gutters the rules left out — see
+    # geometry.refine_rule_columns). `rules` stays exactly what the author drew; keeping them
+    # separate is deliberate, so a derived boundary is never mistaken for a mark in the document.
+    column_xs: tuple[float, ...] = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

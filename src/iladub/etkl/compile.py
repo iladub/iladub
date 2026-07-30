@@ -74,7 +74,8 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None) -> CompilationReport:
-    from .geometry import extract_rules, extract_chars, rule_aware_lines, extract_hrules
+    from .geometry import (extract_rules, extract_chars, rule_aware_lines, extract_hrules,
+                           refine_rule_columns)
     from .bands import Band as _Band
     from dataclasses import replace as _replace
     words = extract_words(pdf_path, page_number)
@@ -95,9 +96,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # the author's exact boundaries) — else keep pdfplumber's words.
             xs = sorted({round(r.x, 2) for r in sub_rules})
             band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-            relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+            # The author's rules are authoritative but not COMPLETE: refine them with any interior
+            # gutter they left out, then use the refined list for BOTH cell bucketing and the grid.
+            # sub_rules is passed through unchanged — no Rule is ever synthesised.
+            col_xs = refine_rule_columns(band_chars, xs) if len(xs) >= 2 else xs
+            relines = rule_aware_lines(band_chars, col_xs) if len(col_xs) >= 2 else []
             if relines:
-                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules))
+                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules,
+                                   tuple(col_xs)))
             else:
                 bands.append(_replace(sub, rules=sub_rules, hrules=sub_hrules))
     graph = Graph()
