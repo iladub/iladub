@@ -296,3 +296,39 @@ def test_detect_aggregations_ignores_numeric_stub_operand():
     ev = detect_aggregations(g, t)
     assert c3 in ev.agg_cols and ev.funcs[c3] == "sum"
     assert c0 not in ev.agg_cols
+
+
+def test_derived_row_group_is_not_read_as_a_pivoted_dimension():
+    """I-2 (final review, loop I): a tab:DerivedRowGroup (a carried annotation over a
+    confirmed aggregation, per rowgroups.py) must NEVER surface as a row-axis
+    PivotedDimension — recover_dimensions is public and consumed by reshape/denormalization
+    as an author-pivot signal. Measured on the shipped subtotal_hier_table_pdf shape before
+    the I-2 fix: recover_dimensions returned the phantom
+    PivotedDimension(axis='row', level=0, name=None, values=('Mackay',)) in addition to the
+    genuine column dimension. After the fix, no row-axis dimension is returned at all."""
+    g = Graph()
+    t = EX.tbl
+    # A genuine authored COLUMN dimension (unaffected control) ...
+    cols = _cols(g, t, 2)
+    _hdr(g, t, EX.hVoyage, 0, "Voyage", TAB.coversColumn, cols)
+    for c, nm in zip(cols, ["V1", "V2"]):
+        _hdr(g, t, URIRef(str(c) + "-h"), 1, nm, TAB.coversColumn, [c])
+    # ... plus a DERIVED row group over one member row, mirroring rowgroups.py's emission
+    # shape exactly (tab:HeaderNode + tab:DerivedRowGroup, hasLabel -> source cell,
+    # coversRow -> member, headerLevel 0, no parentHeader).
+    r0 = EX.r0
+    g.add((r0, RDF.type, TAB.LeafRow)); g.add((t, TAB.hasLeafRow, r0))
+    label_cell = EX.e0_lc
+    g.add((label_cell, RDF.type, TAB.EntryCell)); g.add((label_cell, TAB.cellText, Literal("Mackay")))
+    grp = EX.rg1
+    g.add((grp, RDF.type, TAB.HeaderNode))
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((t, TAB.hasHeaderNode, grp))
+    g.add((grp, TAB.headerLevel, Literal(0)))
+    g.add((grp, TAB.hasLabel, label_cell))
+    g.add((grp, TAB.coversRow, r0))
+    dims = recover_dimensions(g, t)
+    row_dims = [d for d in dims if d.axis == "row"]
+    assert row_dims == [], row_dims                # the phantom must be gone
+    col_dims = [d for d in dims if d.axis == "column"]
+    assert len(col_dims) == 1 and col_dims[0].name == "Voyage"   # control unaffected
