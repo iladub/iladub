@@ -68,7 +68,10 @@ def _rule_boundaries(band: Band) -> list[float] | None:
     """
     if not band.rules:
         return None
-    xs = sorted({round(r.x, 2) for r in band.rules})
+    # Prefer the DERIVED boundaries (author rules + interior gutters the rules left out) when the
+    # caller supplied them; fall back to the raw author marks. Band.rules is never synthesised.
+    xs = (sorted(band.column_xs) if band.column_xs
+          else sorted({round(r.x, 2) for r in band.rules}))
     if len(xs) < 2:
         return None
     words = [w for ln in band.lines for w in ln.words]

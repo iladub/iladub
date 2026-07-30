@@ -66,8 +66,13 @@ def recover_leaf_grid(band: Band) -> LeafGrid:
         sub = lines[start:]
         if len(sub) < 2:
             break
+        # Carry EVERY boundary-bearing field onto the sub-band. Dropping `rules` here is the
+        # exact defect loop D fixed (it silently disabled the whole border-aware path), and
+        # dropping `column_xs` recreated it for loop G's derived boundaries — the refinement
+        # reached rule_aware_lines but never the grid, so 17 columns compiled as 15. If a new
+        # boundary field is ever added to Band, add it here too.
         sub_band = Band(tuple(sub), min(l.top for l in sub), max(l.bottom for l in sub),
-                        band.rules, band.hrules)
+                        band.rules, band.hrules, band.column_xs)
         try:
             g = infer_leaf_grid(sub_band)
         except ValueError:

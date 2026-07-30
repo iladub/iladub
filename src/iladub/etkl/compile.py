@@ -21,6 +21,77 @@ from .holon import assert_record_region, escalate_region, TAB
 _DOC = URIRef("https://example.org/etkl/doc")
 
 
+def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
+    """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
+    tests call this directly, so the guard exercises production code, not a copy (attempt 1's
+    guard replicated this logic in its test body and was proven tautological).
+
+    Flow — every refusal exits to the author-bucketed band, i.e. main's behavior:
+      author-bucketed lines -> candidate boundaries (geometry.refine_rule_columns) ->
+      provisional grid + header/body split (locates the header region; computed on the
+      AUTHOR-bucketed band so confirmation never depends on the candidates it judges) ->
+      header-CONFIRMED boundaries (boundary.confirmed_boundaries, the confirm-boundary.rq AXIOM)
+      -> re-bucket with author+confirmed and set Band.column_xs.
+
+    sub_rules passes through UNTOUCHED — no Rule is ever synthesised; derived boundaries live
+    only in Band.column_xs (the author's marks and the derived list are kept distinct on
+    purpose). A single-row band has no header/body split, so nothing is ever confirmable there
+    (closes attempt 1's single-row over-split structurally)."""
+    from dataclasses import replace as _replace
+    from .bands import Band
+    from .geometry import refine_rule_columns, rule_aware_lines
+
+    xs = sorted({round(r.x, 2) for r in sub_rules})
+    band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
+    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    if not relines:
+        return _replace(sub, rules=sub_rules, hrules=sub_hrules)
+    band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules)
+
+    candidates = [x for x in refine_rule_columns(band_chars, xs) if x not in xs]
+    if not candidates:
+        return band
+    from .cells import recover_leaf_grid
+    from .headers import header_body_split
+    try:
+        grid = recover_leaf_grid(band)
+    except ValueError:
+        # verified: recover_leaf_grid's only fallible path is infer_leaf_grid, which raises
+        # ValueError ONLY ("band has no words") — nothing else escapes here. That matters
+        # because recover_leaf_grid/header_body_split now run earlier in the pipeline than on
+        # main (main never called them from this seam); if either ever raised a DIFFERENT
+        # exception type it would propagate up and abort the whole compile, where main had
+        # not yet touched these functions at this point and so could not have aborted here.
+        return band
+    if grid.ncols < 2:
+        return band
+    split = header_body_split(band, grid)
+    if split is None or not (1 <= split < len(band.lines)):
+        return band                        # no header region -> nothing can be confirmed
+    body_top = band.lines[split].top
+    # verified invariant (do not "fix" this into a tolerance): Line.top is the MIN ink-char top
+    # over the chars on that line, so every ink char belonging to a line at or below the split
+    # has a center strictly greater than body_top — a body char can NEVER leak into the header
+    # evidence via this midpoint filter. Checked on both measured documents: the filter selected
+    # exactly the chars of band.lines[:split], 12/12 and 262/262.
+    header_glyphs = [c for c in band_chars
+                     if c.text.strip() and (c.top + c.bottom) / 2.0 < body_top]
+    from .boundary import confirmed_boundaries
+    triples = []
+    for bx in candidates:
+        lo = max(x for x in xs if x < bx)
+        hi = min(x for x in xs if x > bx)
+        triples.append((bx, lo, hi))
+    confirmed = confirmed_boundaries(header_glyphs, triples)
+    if not confirmed:
+        return band
+    col_xs = sorted(set(xs) | confirmed)
+    relines2 = rule_aware_lines(band_chars, col_xs)
+    if not relines2:
+        return band
+    return Band(tuple(relines2), sub.top, sub.bottom, sub_rules, sub_hrules, tuple(col_xs))
+
+
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind
@@ -74,8 +145,7 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None) -> CompilationReport:
-    from .geometry import extract_rules, extract_chars, rule_aware_lines, extract_hrules
-    from .bands import Band as _Band
+    from .geometry import extract_rules, extract_chars, extract_hrules
     from dataclasses import replace as _replace
     words = extract_words(pdf_path, page_number)
     page_rules = extract_rules(pdf_path, page_number)
@@ -92,14 +162,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
                 continue
             # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
-            # the author's exact boundaries) — else keep pdfplumber's words.
-            xs = sorted({round(r.x, 2) for r in sub_rules})
-            band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-            relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
-            if relines:
-                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules))
-            else:
-                bands.append(_replace(sub, rules=sub_rules, hrules=sub_hrules))
+            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
+            # become columns only when the header confirms them (_build_ruled_band, the seam).
+            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars))
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
@@ -252,18 +317,41 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.HierarchicalTable), ascii_view))
                 elif hreg is not None:
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
-                    n = assert_hier_region(graph, hreg, band, table_uri, _DOC, page_number)
-                    tokens = sum(len(ln.words) for ln in band.lines)
-                    asserted_total += n
-                    escalated_total += max(0, tokens - n)
-                    reports.append(RegionReport(
-                        region.kind,
-                        "asserted" if n else "escalated",
-                        n,
-                        None if n else "ROUND_TRIP_FAIL",
-                        str(TAB.HierarchicalTable),
-                        ascii_view,
-                    ))
+                    # THE MEMBRANE BACKSTOP (loop G attempt 2): assert into a SCRATCH graph and
+                    # let region_tiles dispose it, exactly as the matrix and row-hier paths
+                    # already do. The PLAIN HIERARCHICAL path wrote directly into the graph —
+                    # which is why a defective region here CRASHED compile_tables at final
+                    # validation (attempt 1's counter-example) instead of escalating. NOTE the
+                    # record and transposed paths (assert_record_region / assert_transposed_region
+                    # above) are STILL direct-assert and can still raise at final validation for
+                    # the same defect shape — residue R17; this gate covers this path only.
+                    from .tiling import region_tiles
+                    scratch = Graph()
+                    n = assert_hier_region(scratch, hreg, band, table_uri, _DOC, page_number)
+                    if n and not region_tiles(scratch):
+                        cand_uri = URIRef(f"{_DOC}#region{idx}")
+                        escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                        "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4)
+                        escalated_total += sum(len(ln.words) for ln in band.lines)
+                        reports.append(RegionReport(region.kind, "escalated", 0,
+                                                    "REGION_TILING_FAILED",
+                                                    str(TAB.HierarchicalTable), ascii_view))
+                    else:
+                        # n == 0 keeps main's behavior byte-identical: assert_hier_region already
+                        # wrote its ROUND_TRIP_FAIL escalation into scratch; merge and report as
+                        # before. A tiling region merges exactly as it always did.
+                        graph += scratch
+                        tokens = sum(len(ln.words) for ln in band.lines)
+                        asserted_total += n
+                        escalated_total += max(0, tokens - n)
+                        reports.append(RegionReport(
+                            region.kind,
+                            "asserted" if n else "escalated",
+                            n,
+                            None if n else "ROUND_TRIP_FAIL",
+                            str(TAB.HierarchicalTable),
+                            ascii_view,
+                        ))
                 else:
                     # Not hierarchical — escalate whole region in-band
                     cand_uri = URIRef(f"{_DOC}#region{idx}")

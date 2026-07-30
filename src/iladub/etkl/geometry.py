@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from statistics import median
 
+import numpy as np
 import pdfplumber
 
 # Sub-point float tolerance for boundary containment checks.
@@ -187,6 +188,75 @@ def _cell_text(glyphs: list["Char"]) -> str:
             parts.append(" ")
         parts.append(b.text)
     return "".join(parts).strip()
+
+
+def refine_rule_columns(chars: list["Char"], rule_xs: list[float],
+                        gutter_pct: float = 0.98, min_gutter_bins: int = 3) -> list[float]:
+    """The author's rule boundaries, plus any column boundary the rules LEFT OUT.
+
+    Rules are authoritative but not COMPLETE: an author may rule some boundaries and leave others
+    to whitespace. Inside each rule interval, a run of x-bins that is blank on >= gutter_pct of the
+    interval's inked rows, at least min_gutter_bins wide, AND with ink on BOTH sides of it within
+    that interval, is an additional column boundary (its centre).
+
+    TWO independent mechanisms reject trailing padding, and the attribution matters (attempt 1's
+    docstring credited the wrong one; the final review measured it):
+      - NO-FLUSH: a run still open at the interval's end is never emitted (the run-reset below has
+        no end-of-loop flush). Removing the interior condition ALONE leaves both shipped ruled
+        fixtures at +0 — the no-flush is what protects them.
+      - THE INTERIOR CONDITION (ink on both sides, within the interval) rejects one-sided runs
+        that close before the interval ends. The naive +5/+2 over-split reported for the fixtures
+        requires removing BOTH mechanisms.
+    Both are presence tests, not thresholds. AND the caller must still not trust the output:
+    values with COLUMN-ALIGNED internal spaces produce candidates indistinguishable from real
+    boundaries here (the attempt-1 counter-example that crashed compile_tables) — which is why
+    these are CANDIDATES, confirmed against header ink (boundary.py / confirm-boundary.rq) before
+    ever becoming columns.
+
+    ADDITIVE ONLY: every input boundary is preserved; nothing is moved or removed. The author's
+    marks are never contradicted, only supplemented. Callers keep the raw marks in Band.rules and
+    put this function's output in Band.column_xs, so provenance stays honest.
+
+    gutter_pct and min_gutter_bins mirror infer_leaf_grid's existing defaults — pre-existing tuned
+    constants this path INHERITS rather than invents. Space glyphs are not ink.
+
+    CAVEAT (measured, attempt 1's I3): with per-interval row counts N, gutter_pct = 0.98 is
+    discontinuous at N = 50 — a bin is "blank" iff inked in <= floor(0.02*N) rows: ZERO rows below
+    50, ONE row at 50 and above. N here is PER INTERVAL (GrainCorp's one table ran at N = 4..54),
+    unlike infer_leaf_grid's per-band N. Tolerable for CANDIDATES only because header confirmation
+    disposes misfires; never promote this function's output without confirmation.
+    """
+    xs = sorted(rule_xs)
+    if len(xs) < 2:
+        return xs
+    ink = [c for c in chars if c.text.strip()]
+    out = [xs[0]]
+    for i in range(len(xs) - 1):
+        lo, hi = xs[i], xs[i + 1]
+        nbins = int(np.ceil(hi - lo))
+        seg = [c for c in ink if lo <= (c.x0 + c.x1) / 2.0 < hi]
+        if seg and nbins >= min_gutter_bins:
+            rows = sorted({round(c.top, 1) for c in seg})
+            row_of = {t: k for k, t in enumerate(rows)}
+            grid = np.zeros((len(rows), nbins), dtype=bool)
+            for c in seg:
+                a = int(c.x0 - lo)
+                b = int(np.ceil(c.x1 - lo))
+                grid[row_of[round(c.top, 1)], max(0, a):min(nbins, b)] = True
+            blank = 1.0 - grid.mean(axis=0)
+            any_ink = grid.any(axis=0)
+            run = None
+            for k, frac in enumerate(blank):
+                if frac >= gutter_pct:
+                    run = k if run is None else run
+                    continue
+                if (run is not None and k - run >= min_gutter_bins
+                        and any_ink[:run].any() and any_ink[k:].any()):
+                    out.append(round(lo + (run + k) / 2.0, 2))
+                run = None
+            # a run still open at the interval's end has no ink to its right -> never interior
+        out.append(hi)
+    return sorted(set(out))
 
 
 def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | None = None) -> list[Line]:

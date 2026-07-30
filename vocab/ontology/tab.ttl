@@ -276,3 +276,16 @@ tab:sourceText a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:
 tab:sourceRow a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:range xsd:integer ; rdfs:label "source row"@en ;
     rdfs:comment "0-based header-region row index the cell came from (0 = topmost)."@en .
 tab:hasHeaderSourceCell a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:HeaderSourceCell ; rdfs:label "has header source cell"@en .
+
+# --- header-confirmed boundary evidence (transient, pre-holon; loop G attempt 2) ---
+tab:HeaderGlyph a owl:Class ; rdfs:label "Header glyph"@en ;
+    rdfs:comment "A transient header-region character's ink x-extent, evidence for the boundary-confirmation derivation (confirm-boundary.rq); never asserted into a holon. CHAR-level on purpose: the real target's leaf header extracts as one word blob that straddles the true boundary at word level and would self-reject."@en .
+tab:glyphX0 a owl:DatatypeProperty ; rdfs:domain tab:HeaderGlyph ; rdfs:range xsd:double ; rdfs:label "glyph x0"@en .
+tab:glyphX1 a owl:DatatypeProperty ; rdfs:domain tab:HeaderGlyph ; rdfs:range xsd:double ; rdfs:label "glyph x1"@en .
+tab:CandidateBoundary a owl:Class ; rdfs:label "Candidate boundary"@en ;
+    rdfs:comment "A transient candidate column boundary — an interior gutter the author's rules left out (geometry.refine_rule_columns). CONFIRMED only when header ink lies strictly on both sides within its author interval with no straddling glyph (confirm-boundary.rq); never asserted into a holon."@en .
+tab:boundaryX a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "boundary x"@en .
+tab:intervalLo a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval lo"@en ;
+    rdfs:comment "Left edge of the consecutive author-rule interval containing the candidate."@en .
+tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval hi"@en ;
+    rdfs:comment "Right edge of that interval."@en .
