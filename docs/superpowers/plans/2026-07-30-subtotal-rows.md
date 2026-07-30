@@ -206,6 +206,13 @@ git commit -m "fix(etkl): never absorb a wrap-continuation across an author hrul
 
 ### Task 2: `rows.detect_aggregation_rows`
 
+> **SUPERSEDED IN TWO PLACES by commit `34bf64b` (implementer findings):** (1) the `_row(top, **cells)`
+> helper cannot unpack integer keys as kwargs — the committed tests pass the dict positionally;
+> (2) the `modal` sparsity bar via `Counter.most_common` is broken on small groups (two sparse rows
+> vs one full row → the mode IS the sparse count → detector dead); the committed code uses
+> `max(len(rc) …)` — the widest row defines the normal shape. The spec §3.2 carries the same
+> correction. The confirmation rule, cascade, token-sum and honest refusals are unchanged.
+
 **Files:**
 - Modify: `src/iladub/etkl/rows.py` (append two functions)
 - Test: `tests/etkl/test_aggregation_rows.py` (create)

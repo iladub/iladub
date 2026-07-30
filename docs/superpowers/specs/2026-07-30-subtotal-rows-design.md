@@ -133,10 +133,13 @@ Operating on `logical_rows`' output (RowBands with column-tagged cells), per reg
   machinery already types cells; the detector considers each numeric column independently and a
   candidate confirms if its value reconciles in that column — GrainCorp has exactly one, the
   `Total` column).
-- **Candidate:** a row whose populated columns are a proper subset of the *modal* populated-column
-  set of the region's rows AND that carries exactly one non-measure cell (the label). No count
-  constant: "sparse" = fewer populated columns than the modal row shape, "label" = the one
-  non-measure cell.
+- **Candidate:** a row with exactly two populated cells — one with a numeric token-sum (the
+  measure), one without (the label) — and strictly fewer cells than the region's **widest** row.
+  **Corrected during implementation:** the design originally said *modal* row shape, but the mode
+  is broken on small groups — with two sparse rows against one full row, the mode IS the sparse
+  count and the detector goes dead (caught by the Task 2 implementer's tests). The widest row
+  defines the normal shape; no count constant either way, and the real gate is the arithmetic,
+  not the sparsity prefilter.
 - **Confirmation:** Finding 5's rule, applied top-to-bottom so inner groups confirm before outer
   ones consume them. Exact integer arithmetic on normalized numerics (Loop F's repairs feed this).
   Blank cells contribute nothing. A candidate with a non-numeric measure is **never** confirmed
