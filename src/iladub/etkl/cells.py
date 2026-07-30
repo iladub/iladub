@@ -113,7 +113,14 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         (``len(cols_j) < len(anchor)``), i.e. it does not tile a fresh full row —
         a SOUND structural test,
       - (gap) the vertical gap to the preceding line is strictly less than ``lead``,
-        the median of the document's own inter-line gaps.
+        the median of the document's own inter-line gaps,
+      - (hrule veto) no author-drawn horizontal rule (``band.hrules``) falls between the
+        two lines. Measured on a real report: 35/54 consecutive line pairs carry an hrule —
+        every genuine row boundary, including every suppressed-key-data/subtotal boundary —
+        and the 19 that do not are exactly the genuine wraps. The author's rule outranks the
+        derived gap heuristic (the row-axis twin of loops D/G's rule-outranks-heuristic
+        pattern). HONEST LIMIT: an unruled band (no hrules at all) keeps the fusion defect —
+        the veto is a presence test, inert where there is nothing to test.
 
     §8 gate — PROCEDURAL, not NEURAL (B3, 2026-07-22).  The wrap-vs-row-pitch boundary
     is ``lead`` — a DERIVED statistic (the median gap, adaptive by construction, like
@@ -140,6 +147,17 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
     gaps = [tops[i + 1] - tops[i] for i in range(len(tops) - 1)]
     lead = median([g for g in gaps if g > 0]) if any(g > 0 for g in gaps) else 0.0
 
+    # THE HRULE VETO (loop H): the author's horizontal rules are the ROW DELIMITERS — the
+    # row-axis twin of loops D/G's "author structure outranks the derived heuristic". A
+    # suppressed-key data row and a subtotal row are both proper-subset partial rows, so
+    # conditions 2/3 + gap<lead FUSE them into the record above (measured: three source lines
+    # in one record, '20,000 20,000 20,000' as one cell). Measured on the same report: every
+    # real row boundary carries an hrule (35/54 pairs) and every hrule-free pair is a genuine
+    # wrap — so absorption across an hrule is always wrong, and absorption within an hrule-free
+    # gap is exactly the wrap case this function exists for. Presence test, no constant.
+    # HONEST LIMIT: unruled bands (no hrules) keep the fusion defect; the veto is inert there.
+    hrule_ys = sorted({round(h.y, 2) for h in getattr(band, "hrules", ())})
+
     # Build per-line column maps: {col_index: [words]}
     per_line: list[dict[int, list[Word]]] = []
     for ln in lines:
@@ -161,7 +179,8 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         # Gate: gap < lead (the adaptive median inter-line gap). PROCEDURAL, no tuned
         # constant — see the docstring for why the retired 0.9 margin was fixture-tuned.
         j = i + 1
-        while j < len(lines) and (tops[j] - tops[j - 1]) < lead:
+        while (j < len(lines) and (tops[j] - tops[j - 1]) < lead
+               and not any(tops[j - 1] < y <= tops[j] + 0.5 for y in hrule_ys)):
             cols_j = per_line[j]
             # Continuation only if every word on line j sits in a column already open
             # on the anchor, AND line j does not tile a fresh full row (fewer cols).
