@@ -64,52 +64,6 @@ def test_space_glyphs_are_not_ink():
     assert refine_rule_columns(chars, RULES) == [100.0, 150.0, 200.0]
 
 
-def test_no_rule_is_ever_synthesised_for_a_derived_boundary(tmp_path):
-    """Provenance stays honest: Band.rules is what the AUTHOR drew, Band.column_xs is derived.
-
-    Loop D's review rejected synthesising fake Rule objects for derived boundaries. There is no
-    band-level seam on compile_tables, so this replicates its ruled-band construction (the same
-    dozen lines) and asserts directly that every Rule x was drawn in the document.
-    """
-    import os
-    import pytest
-    pytest.importorskip("pdfplumber")
-    pytest.importorskip("reportlab")
-    from iladub.etkl.bands import Band, detect_bands
-    from iladub.etkl.geometry import (extract_chars, extract_rules, extract_words,
-                                      rule_aware_lines, text_lines)
-    from iladub.etkl.segment import segment
-    from tests.etkl import fixtures as F
-
-    p = os.path.join(str(tmp_path), "ruled.pdf")
-    F.ruled_tight_table_pdf(p)
-    page_rules = extract_rules(p, 0)
-    page_chars = extract_chars(p, 0)
-    authored = {round(r.x, 2) for r in page_rules}
-    assert authored, "fixture must be ruled"
-
-    checked = 0
-    for band in detect_bands(text_lines(extract_words(p, 0))):
-        for sub in segment(band):
-            sub_rules = tuple(r for r in page_rules
-                              if r.top <= sub.bottom and r.bottom >= sub.top)
-            if not sub_rules:
-                continue
-            xs = sorted({round(r.x, 2) for r in sub_rules})
-            band_chars = [c for c in page_chars
-                          if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-            col_xs = refine_rule_columns(band_chars, xs)
-            relines = rule_aware_lines(band_chars, col_xs)
-            if not relines:
-                continue
-            b = Band(tuple(relines), sub.top, sub.bottom, sub_rules, (), tuple(col_xs))
-            for r in b.rules:
-                assert round(r.x, 2) in authored, "a Rule was synthesised for a derived boundary"
-            assert set(xs) <= set(b.column_xs), "derived list must preserve every author boundary"
-            checked += 1
-    assert checked, "no ruled band was exercised"
-
-
 def test_rule_boundaries_prefers_the_derived_list():
     """_rule_boundaries must use Band.column_xs when present, so the refinement reaches the grid."""
     from iladub.etkl.bands import Band

@@ -21,6 +21,66 @@ from .holon import assert_record_region, escalate_region, TAB
 _DOC = URIRef("https://example.org/etkl/doc")
 
 
+def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
+    """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
+    tests call this directly, so the guard exercises production code, not a copy (attempt 1's
+    guard replicated this logic in its test body and was proven tautological).
+
+    Flow — every refusal exits to the author-bucketed band, i.e. main's behavior:
+      author-bucketed lines -> candidate boundaries (geometry.refine_rule_columns) ->
+      provisional grid + header/body split (locates the header region; computed on the
+      AUTHOR-bucketed band so confirmation never depends on the candidates it judges) ->
+      header-CONFIRMED boundaries (boundary.confirmed_boundaries, the confirm-boundary.rq AXIOM)
+      -> re-bucket with author+confirmed and set Band.column_xs.
+
+    sub_rules passes through UNTOUCHED — no Rule is ever synthesised; derived boundaries live
+    only in Band.column_xs (the author's marks and the derived list are kept distinct on
+    purpose). A single-row band has no header/body split, so nothing is ever confirmable there
+    (closes attempt 1's single-row over-split structurally)."""
+    from dataclasses import replace as _replace
+    from .bands import Band
+    from .geometry import refine_rule_columns, rule_aware_lines
+
+    xs = sorted({round(r.x, 2) for r in sub_rules})
+    band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
+    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    if not relines:
+        return _replace(sub, rules=sub_rules, hrules=sub_hrules)
+    band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules)
+
+    candidates = [x for x in refine_rule_columns(band_chars, xs) if x not in xs]
+    if not candidates:
+        return band
+    from .cells import recover_leaf_grid
+    from .headers import header_body_split
+    try:
+        grid = recover_leaf_grid(band)
+    except ValueError:
+        return band
+    if grid.ncols < 2:
+        return band
+    split = header_body_split(band, grid)
+    if split is None or not (1 <= split < len(band.lines)):
+        return band                        # no header region -> nothing can be confirmed
+    body_top = band.lines[split].top
+    header_glyphs = [c for c in band_chars
+                     if c.text.strip() and (c.top + c.bottom) / 2.0 < body_top]
+    from .boundary import confirmed_boundaries
+    triples = []
+    for bx in candidates:
+        lo = max(x for x in xs if x < bx)
+        hi = min(x for x in xs if x > bx)
+        triples.append((bx, lo, hi))
+    confirmed = confirmed_boundaries(header_glyphs, triples)
+    if not confirmed:
+        return band
+    col_xs = sorted(set(xs) | confirmed)
+    relines2 = rule_aware_lines(band_chars, col_xs)
+    if not relines2:
+        return band
+    return Band(tuple(relines2), sub.top, sub.bottom, sub_rules, sub_hrules, tuple(col_xs))
+
+
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind
@@ -74,9 +134,7 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None) -> CompilationReport:
-    from .geometry import (extract_rules, extract_chars, rule_aware_lines, extract_hrules,
-                           refine_rule_columns)
-    from .bands import Band as _Band
+    from .geometry import extract_rules, extract_chars, extract_hrules
     from dataclasses import replace as _replace
     words = extract_words(pdf_path, page_number)
     page_rules = extract_rules(pdf_path, page_number)
@@ -93,19 +151,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
                 continue
             # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
-            # the author's exact boundaries) — else keep pdfplumber's words.
-            xs = sorted({round(r.x, 2) for r in sub_rules})
-            band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-            # The author's rules are authoritative but not COMPLETE: refine them with any interior
-            # gutter they left out, then use the refined list for BOTH cell bucketing and the grid.
-            # sub_rules is passed through unchanged — no Rule is ever synthesised.
-            col_xs = refine_rule_columns(band_chars, xs) if len(xs) >= 2 else xs
-            relines = rule_aware_lines(band_chars, col_xs) if len(col_xs) >= 2 else []
-            if relines:
-                bands.append(_Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules,
-                                   tuple(col_xs)))
-            else:
-                bands.append(_replace(sub, rules=sub_rules, hrules=sub_hrules))
+            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
+            # become columns only when the header confirms them (_build_ruled_band, the seam).
+            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars))
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0

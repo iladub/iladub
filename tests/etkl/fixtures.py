@@ -840,3 +840,34 @@ def pattern_enum_table_pdf(path):
             c.drawString(x, y, cell)
     c.save()
     return path
+
+
+def aligned_space_table_pdf(path: str) -> dict:
+    """THE R13 COUNTER-EXAMPLE (attempt 1's killer), committed as the permanent red test.
+
+    A monospaced ruled table whose values carry a COLUMN-ALIGNED internal space ('AB CDEFGH',
+    '01 JAN 2026', '12 500'). The aligned spaces form a persistent blank run with ink on both
+    sides — the same signal as a real un-ruled column boundary — but the header labels only ONE
+    side ('ID', 'Date'; and 'Tonnes' straddles its run), so header confirmation must refuse every
+    split and the table must compile exactly as if refinement did not exist: RECORD_TABLE,
+    18 cells, score 1.0. Attempt 1 asserted the split and CRASHED compile_tables at
+    tab:CoverageShape."""
+    c = canvas.Canvas(path, pagesize=(400, 200))
+    c.setFont("Courier", 9)
+    cols = [60, 180, 300]
+    header = ["ID", "Date", "Tonnes"]
+    rows = [["AB CDEFGH", "01 JAN 2026", "12 500"], ["CD EFGHIJ", "02 FEB 2026", "13 750"],
+            ["EF GHIJKL", "03 MAR 2026", "14 250"], ["GH IJKLMN", "04 APR 2026", "15 100"],
+            ["IJ KLMNOP", "05 MAY 2026", "16 300"], ["KL MNOPQR", "06 JUN 2026", "17 800"]]
+    y = 170
+    for i, h in enumerate(header):
+        c.drawString(cols[i], y, h)
+    y -= 16
+    for r in rows:
+        for i, v in enumerate(r):
+            c.drawString(cols[i], y, v)
+        y -= 16
+    for x in (50, 170, 290, 395):
+        c.line(x, 20, x, 180)
+    c.save()
+    return {"cols": 3, "data_cells": 18}
