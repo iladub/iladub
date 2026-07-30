@@ -1,3 +1,7 @@
+# Illustrative SKOS terminology for the shipping-stem example (loop K).
+# Port and commodity names are public third-party nomenclature drawn from a publicly
+# published shipping stem; the source document itself is NOT redistributed here, and no
+# commercially identifying data (vessels, exporters, volumes) appears in this vocabulary.
 @prefix ship: <https://example.org/shipping#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 

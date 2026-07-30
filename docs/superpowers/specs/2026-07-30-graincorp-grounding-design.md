@@ -37,7 +37,7 @@ Two halves, one vertical slice ending at the grounding portal:
 **Measured baseline (2026-07-30).** A GrainCorp record (row 10) carries 15 concepts with
 real messy values: `Port: 'Mackay'`, `Name Of Ship: 'TBA'`, `Date ETA of Ship: 'Blank'`
 (the author literally prints the word), `Date of Grain Loading Commencement: '(blank)'`
-(our loop A placeholder), `Total: '25,000'`, `Status: 'Accepted'`, `Commodity: 'Sorghum'` —
+(the author's literal placeholder, recognized since loop A), `Total: '25,000'`, `Status: 'Accepted'`, `Commodity: 'Sorghum'` —
 and **no Month or Season concept at all** (suppressed by the author on 30 of 33 data rows;
 recovered as structure by loops H/I but never reaching the portal as content).
 

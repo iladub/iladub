@@ -92,10 +92,45 @@ def test_e2e_fixture_records_ground_offline(tmp_path):
     # covering rows r0+r1) is keyed on the Port STUB column, which is already non-blank in
     # both rows, so no group-key injection fires for it. The blank Mon cell in the second
     # Mackay row (author wrote 'Jul' once per group, on Mon — not the row-group's own
-    # label column) is simply dropped (feed.table_records: is_blank) with nothing to
-    # recover it, so that record has 4 concepts (Port/Ship/Qty/Berth), not 5. Every
+    # label column) never reaches the feed at all — the compiled graph carries NO EntryCell
+    # for it (suppressed = absent cell, not a blank-text one; measured by the final review:
+    # zero blank-text EntryCells in this fixture, so the is_blank drop is NOT exercised
+    # here — it is pinned by tests/test_feed_group_keys.py instead). That record has 4
+    # concepts (Port/Ship/Qty/Berth), not 5. Every
     # non-Port column (13 concepts total: 5 + 4 + 5, minus the 3 Port cells) falls to the
     # always-abstaining ABSTAIN proposer -> field_iri=None -> quarantined.
     assert res.grounded == 3
     assert res.proposed == 11
     assert (None, RDF.type, ILADUB.PromotionDecision) in g
+
+
+def test_injected_key_grounds_end_to_end():
+    """M2 (final review): the loop's headline claim — an INJECTED suppressed key reaches
+    the portal and grounds — chained in one committed test (graph-level: emission shape ->
+    table_records injection -> ground_concept through the stem contract's month pattern),
+    with the grounded node's prov trail resolving to the SOURCE cell's fragment (§6)."""
+    from rdflib import BNode, Literal
+    from tests.test_feed_group_keys import _table, _group, T
+    from iladub.feed import table_records
+    from iladub.ground import ground_concept
+    ILADUB_NS = Namespace("https://w3id.org/iladub#")
+    g = Graph()
+    _table(g, ["Month", "Port", "Total"],
+           {0: {0: "Aug 26", 1: "Mackay", 2: "25,000"},
+            1: {1: "Mackay", 2: "30,000"}})                    # Month suppressed on r1
+    _group(g, 9, "e0_0", (0, 1))
+    recs = table_records(g)
+    r1 = [r for r in recs if any(c.value == "30,000" for c in r.concepts)][0]
+    month = [c for c in r1.concepts if c.text == "Month"][0]
+    assert month.value == "Aug 26" and month.region == "p0-0-0"    # the SOURCE cell
+    contract = load_contract(C)
+    terms = Graph().parse(TERMS, format="turtle")
+    shapes = Graph().parse(SHAPES, format="turtle")
+    out = Graph()
+    verdict = ground_concept(month, contract, URIRef("urn:slot#s1"), ABSTAIN,
+                             terms, shapes, out)
+    assert verdict == "grounded"
+    gn = next(out.subjects(RDF.type, ILADUB_NS.GroundedNode))
+    pd = out.value(gn, ILADUB_NS.wasPromotedBy)
+    cc = out.value(pd, ILADUB_NS.reviews)
+    assert str(out.value(cc, ILADUB_NS.fromRegion)) == "urn:iladub:region:p0-0-0"  # to the page
