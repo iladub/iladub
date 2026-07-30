@@ -53,7 +53,7 @@ Task order: 1 → 2 → 3 → 4 → 5.
 
 - Plain `git cherry-pick 9230075 9ff6089 70768fd` applies **cleanly** on this branch (probed).
 - **Real GrainCorp leaf-header char runs** in the interval `[715.2, 829.92]` (measured at char level, top 80.5–82): `Completed` 716.3–743.6, `Commodity` 764.2–**793.5**, `Total` 805.8–818.4. Neither candidate (753.7, 798.7) is straddled; both confirm. (An early probe wrongly gave `Commodity` a 800.4 tail and self-rejected 798.7 — the *measured* extent is 793.5. Use the measured numbers.)
-- Aligned fixture: header `ID` glyphs 60–65.4, 65.4–70.8; candidate 73.5 in [50, 170] → **one-sided, rejected**. `Tonnes` glyph `n` 310.8–316.2 straddles its interval's candidate → **straddle-rejected** (the fixture exercises both refusal clauses).
+- Aligned fixture: header `ID` glyphs 60–65.4, 65.4–70.8; candidate 73.5 in [50, 170] → **one-sided, rejected**. **CORRECTED at final review:** the `Tonnes` interval generates **no candidate at all** — the header word inks the run to 6/7 blank < `gutter_pct` 0.98, so *generation* (not the AXIOM) suppresses it. The fixture exercises the one-sided refusal clause end-to-end; the straddle clause is exercised at unit level only (`test_straddling_glyph_rejects`).
 - On attempt 1's code, the aligned fixture **raises `AssertionError`** inside `compile_tables` (final SHACL validate, `tab:CoverageShape`); on `main` it compiles `RECORD_TABLE`, 18 cells, score 1.0. That is the red/green pair for Task 3.
 - Membrane sabotage (probed on `partial_merge_report_pdf`): setting the last leaf node's `covers=()` passes `merge_tiling_ok` (True — it checks overlap/centering, not coverage), asserts `n=10`, and **fails `region_tiles`** (False). Deterministic red test for Task 4; before the backstop it crashes at final validate.
 
@@ -393,7 +393,7 @@ def aligned_space_table_pdf(path: str) -> dict:
     A monospaced ruled table whose values carry a COLUMN-ALIGNED internal space ('AB CDEFGH',
     '01 JAN 2026', '12 500'). The aligned spaces form a persistent blank run with ink on both
     sides — the same signal as a real un-ruled column boundary — but the header labels only ONE
-    side ('ID', 'Date'; and 'Tonnes' straddles its run), so header confirmation must refuse every
+    side ('ID', 'Date'; and no candidate arises in the Tonnes interval (generation suppresses it)), so header confirmation must refuse every
     split and the table must compile exactly as if refinement did not exist: RECORD_TABLE,
     18 cells, score 1.0. Attempt 1 asserted the split and CRASHED compile_tables at
     tab:CoverageShape."""

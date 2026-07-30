@@ -4,11 +4,15 @@ An author may rule some column boundaries and leave others to whitespace. GrainC
 column holds 'Date Loading Completed | Commodity | Total' with no interior rule, so three real
 columns compiled as one at confidence 1.0.
 
-A persistent blank run inside a rule interval is an extra boundary — but ONLY if there is ink on
-BOTH sides of it within that interval. Measured: without that condition the naive rule adds a
-boundary to EVERY interval of ruled_tight_table_pdf (5 columns become 10), because short
-left-aligned text leaves a blank run at each cell's trailing edge.
-See docs/superpowers/specs/2026-07-30-rule-column-refinement-design.md §2 Finding 3.
+A persistent blank run inside a rule interval is an extra boundary CANDIDATE — but only if there
+is ink on BOTH sides of it within that interval. TWO independent mechanisms reject trailing
+padding, and the attribution matters (attempt 1 credited the wrong one; the final review measured
+it): the NO-FLUSH behavior (a run still open at the interval's end is never emitted) is what keeps
+both shipped ruled fixtures at +0 when the interior condition is removed ALONE; the naive +5/+2
+over-split requires removing BOTH mechanisms. And the output is never trusted directly: candidates
+become columns only when the header confirms them (boundary.py / confirm-boundary.rq).
+See docs/superpowers/specs/2026-07-30-header-confirmed-refinement-design.md §2 and the
+refine_rule_columns docstring (which carries the same corrected attribution).
 """
 from iladub.etkl.geometry import Char, refine_rule_columns
 

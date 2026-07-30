@@ -319,9 +319,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
                     # THE MEMBRANE BACKSTOP (loop G attempt 2): assert into a SCRATCH graph and
                     # let region_tiles dispose it, exactly as the matrix and row-hier paths
-                    # already do. This was the last region path that wrote directly into the
-                    # graph — which is why a defective region here CRASHED compile_tables at
-                    # final validation (attempt 1's counter-example) instead of escalating.
+                    # already do. The PLAIN HIERARCHICAL path wrote directly into the graph —
+                    # which is why a defective region here CRASHED compile_tables at final
+                    # validation (attempt 1's counter-example) instead of escalating. NOTE the
+                    # record and transposed paths (assert_record_region / assert_transposed_region
+                    # above) are STILL direct-assert and can still raise at final validation for
+                    # the same defect shape — residue R17; this gate covers this path only.
                     from .tiling import region_tiles
                     scratch = Graph()
                     n = assert_hier_region(scratch, hreg, band, table_uri, _DOC, page_number)

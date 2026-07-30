@@ -45,11 +45,13 @@ asserting, and additionally closes the crash class at the membrane.
 3. **Attempt 1's plumbing, cherry-picked** — `Band.column_xs` (derived, distinct from author-drawn
    `Band.rules`), `_rule_boundaries` preferring it, and the `recover_leaf_grid` sub-band carry with
    its mutation-verified regression test.
-4. **The membrane backstop** — the plain hierarchical assert in `compile.py` is the only region
-   path that writes into the graph without a scratch gate, which is why attempt 1 *crashed* at final
-   validation instead of escalating. It gets the same `scratch → region_tiles → commit-or-escalate`
-   treatment the matrix and row-hier paths already have. Any future bad region, from any loop,
-   escalates in-band instead of killing the compile.
+4. **The membrane backstop** — the plain hierarchical assert in `compile.py` writes into the graph
+   without a scratch gate, which is why attempt 1 *crashed* at final validation instead of
+   escalating. It gets the same `scratch → region_tiles → commit-or-escalate` treatment the matrix
+   and row-hier paths already have. **Corrected at final review:** this gates the plain
+   hierarchical path only — the record and transposed paths
+   (`assert_record_region`/`assert_transposed_region`) remain direct-assert and can still raise
+   for the same defect shape (demonstrated); opened as residue **R17**.
 5. **Post-mortem debts:** the no-synthesised-`Rule` guard gets a **real seam** (band construction
    extracted to a callable helper so the test exercises production code, not a copy — attempt 1's C2);
    `refine_rule_columns`' docstring states the **true** trailing-run mechanism (attempt 1's I1); the
@@ -142,9 +144,10 @@ one row at 50+) — acceptable for *candidates*, whose misfires confirmation now
 
 - **Owned vocabulary** (`vocab/ontology/tab.ttl`; grep before adding — the B2c lesson):
   `tab:HeaderGlyph` (transient char-ink evidence: `tab:glyphX0`, `tab:glyphX1`) and
-  `tab:CandidateBoundary` (`tab:boundaryX`, `tab:intervalLo`, `tab:intervalHi`), plus the derived
-  marker `tab:confirmedBoundary`. All transient pre-holon evidence, never asserted into a holon —
-  same posture as Loop B's `tab:HeaderCell`.
+  `tab:CandidateBoundary` (`tab:boundaryX`, `tab:intervalLo`, `tab:intervalHi`). All transient
+  pre-holon evidence, never asserted into a holon — same posture as Loop B's `tab:HeaderCell`.
+  (No `tab:confirmedBoundary` marker is written: confirmation is returned as SELECT bindings, the
+  `header-covers.rq` style — the deviation declared in the status line.)
 - **`vocab/queries/confirm-boundary.rq`** — one `SELECT`: a candidate is confirmed iff
   `EXISTS` a header glyph with `glyphX1 <= boundaryX` inside `[intervalLo, intervalHi]`, `EXISTS`
   one with `glyphX0 >= boundaryX` inside it, and `NOT EXISTS` one with
@@ -169,9 +172,13 @@ testable against production code.
 The plain hierarchical branch currently does `n = assert_hier_region(graph, …)` directly. It
 becomes: assert into a **scratch** graph; `region_tiles(scratch)` → merge and count, else
 `escalate_region(…, "REGION_TILING_FAILED", …)` in-band with the ASCII view. This mirrors the
-row-hier and matrix branches exactly and removes the last direct-assert region path. (Attempt 1's
-crash — `AssertionError` at final `_validate` — becomes an honest escalation even if every other
-layer fails.)
+row-hier and matrix branches exactly. (Attempt 1's crash — `AssertionError` at final `_validate` —
+becomes an honest escalation on this path even if every other layer fails.) **It does NOT remove
+the last direct-assert region path** — the record and transposed asserts remain ungated (R17). The
+zero-regression argument is also sharper than "subset of final validation": eight of the nine gate
+shapes are `?tbl`-scoped, and the ninth (`tab:HeaderContentConservedShape`) has zero targets on
+this path because `assert_hier_region` emits no `tab:HeaderSourceCell` — table-scoping plus
+no-targets, not bare subsetting, is what guarantees nothing currently asserting can flip.
 
 ---
 
