@@ -128,3 +128,35 @@ def test_rule_boundaries_prefers_the_derived_list():
 
     refined = Band(rows, 0.0, 40.0, author, (), (100.0, 150.0, 200.0))
     assert _rule_boundaries(refined) == [100.0, 150.0, 200.0]
+
+
+def test_recover_leaf_grid_carries_derived_boundaries_onto_sub_bands():
+    """THE DEFECT THIS LOOP ALMOST SHIPPED, and the second occurrence of its class.
+
+    recover_leaf_grid tests row-suffixes by rebuilding a sub-Band. Loop D fixed it dropping
+    `rules` there (which silently disabled the entire border-aware path); this loop initially
+    repeated it for the new `column_xs`, so the refinement reached rule_aware_lines but never the
+    grid — the real document compiled 17 columns as 15, with 'Date Loading Completed Commodity
+    Total' as ONE label. Measured before the fix: ncols 15; after: 17.
+
+    Pins that a derived boundary survives the sub-band round trip.
+    """
+    from iladub.etkl.bands import Band
+    from iladub.etkl.cells import recover_leaf_grid
+    from iladub.etkl.geometry import Line, Rule, Word
+
+    def _w(t, x0, x1, top):
+        return Word(t, x0, x1, top, top + 8.0)
+
+    # Two ink runs per row with a wide gap between them, inside ONE author interval.
+    rows = tuple(Line((_w("a", 105, 140, 10.0 * r), _w("b", 160, 195, 10.0 * r)),
+                      10.0 * r, 10.0 * r + 8.0) for r in range(5))
+    author = (Rule(100.0, 0, 60), Rule(200.0, 0, 60))
+
+    coarse = Band(rows, 0.0, 50.0, author)
+    refined = Band(rows, 0.0, 50.0, author, (), (100.0, 150.0, 200.0))
+
+    assert recover_leaf_grid(refined).ncols == 2, "derived boundary must reach the grid"
+    assert recover_leaf_grid(refined).boundaries == (100.0, 150.0, 200.0)
+    # and the coarse band still falls back (2 boundaries = no interior separator, loop D's guard)
+    assert recover_leaf_grid(coarse).boundaries != (100.0, 150.0, 200.0)
