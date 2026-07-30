@@ -194,14 +194,29 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # compile by axis-flip: records run along columns -> a correct,
                     # un-inverted RecordTable (tab:sourceOrientation "transposed").
                     from .holon import assert_transposed_region
+                    from .tiling import region_tiles
                     table_uri = URIRef(f"{_DOC}#ttable{idx}")
-                    n = assert_transposed_region(graph, region, table_uri, _DOC, page_number)
-                    b = region.grid.boundaries
-                    value_cells = [c for c in region.cells if c.col >= 1]
-                    asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
-                    escalated_total += sum(len(c.words) for c in value_cells if not cell_round_trips(c, b))
-                    reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                str(TAB.RecordTable), ascii_view))
+                    # R17 gate (loop J): scratch -> region_tiles -> commit-or-escalate, the
+                    # same backstop as the hierarchical/matrix/row-hier paths. A defective
+                    # region escalates in-band instead of crashing final validation.
+                    scratch = Graph()
+                    n = assert_transposed_region(scratch, region, table_uri, _DOC, page_number)
+                    if n and not region_tiles(scratch):
+                        cand_uri = URIRef(f"{_DOC}#region{idx}")
+                        escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                        "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                        escalated_total += sum(len(ln.words) for ln in band.lines)
+                        reports.append(RegionReport(region.kind, "escalated", 0,
+                                                    "REGION_TILING_FAILED",
+                                                    str(TAB.RecordTable), ascii_view))
+                    else:
+                        graph += scratch
+                        b = region.grid.boundaries
+                        value_cells = [c for c in region.cells if c.col >= 1]
+                        asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
+                        escalated_total += sum(len(c.words) for c in value_cells if not cell_round_trips(c, b))
+                        reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                    str(TAB.RecordTable), ascii_view))
                 else:
                     # detected but not confidently compilable — escalate (Loop 3 behaviour)
                     cand_uri = URIRef(f"{_DOC}#region{idx}")
@@ -240,15 +255,28 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     reports.append(RegionReport(region.kind, "escalated", 0, "ROW_GROUP_AMBIGUOUS",
                                                 str(TAB.HierarchicalTable), ascii_view))
             else:
-                # ---- existing RECORD_TABLE assert logic, unchanged ----
+                # ---- existing RECORD_TABLE assert logic ----
+                from .tiling import region_tiles
                 table_uri = URIRef(f"{_DOC}#table{idx}")
-                n = assert_record_region(graph, region, table_uri, _DOC, page_number)
-                b = region.grid.boundaries
-                data_cells = [c for c in region.cells if c.row > 0]
-                asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
-                escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
-                reports.append(RegionReport(region.kind, "asserted", n, None,
-                                            str(TAB.RecordTable), ascii_view))
+                # R17 gate (loop J): see the transposed branch above.
+                scratch = Graph()
+                n = assert_record_region(scratch, region, table_uri, _DOC, page_number)
+                if n and not region_tiles(scratch):
+                    cand_uri = URIRef(f"{_DOC}#region{idx}")
+                    escalate_region(graph, cand_uri, _DOC, ascii_view,
+                                    "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                    escalated_total += sum(len(ln.words) for ln in band.lines)
+                    reports.append(RegionReport(region.kind, "escalated", 0,
+                                                "REGION_TILING_FAILED",
+                                                str(TAB.RecordTable), ascii_view))
+                else:
+                    graph += scratch
+                    b = region.grid.boundaries
+                    data_cells = [c for c in region.cells if c.row > 0]
+                    asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
+                    escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
+                    reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                str(TAB.RecordTable), ascii_view))
         else:  # UNSUPPORTED_TABLE
             from .matrix import is_matrix_candidate
             if is_matrix_candidate(band):
@@ -321,10 +349,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # let region_tiles dispose it, exactly as the matrix and row-hier paths
                     # already do. The PLAIN HIERARCHICAL path wrote directly into the graph —
                     # which is why a defective region here CRASHED compile_tables at final
-                    # validation (attempt 1's counter-example) instead of escalating. NOTE the
-                    # record and transposed paths (assert_record_region / assert_transposed_region
-                    # above) are STILL direct-assert and can still raise at final validation for
-                    # the same defect shape — residue R17; this gate covers this path only.
+                    # validation (attempt 1's counter-example) instead of escalating.
+                    # Loop J closed R17: the record and transposed paths now carry the same gate.
                     from .tiling import region_tiles
                     scratch = Graph()
                     n = assert_hier_region(scratch, hreg, band, table_uri, _DOC, page_number)

@@ -2,8 +2,17 @@
 
 - **Date:** 2026-07-30
 - **Author:** François Rosselet
-- **Status:** Design (brainstormed, approved). Tenth loop of the GrainCorp real-document push
-  (A = PR #67 … H = PR #74; I = PR #75).
+- **Status:** **Shipped** (2026-07-30, branch `iladub-r17-gate`). Tenth loop of the GrainCorp
+  real-document push (A = PR #67 … H = PR #74; I = PR #75). **Measured at close:** both red
+  tests reproduce the R17 crash on the ungated code (AssertionError from inside
+  `compile_tables` at final validation, independently re-verified by the task reviewer) and
+  escalate `REGION_TILING_FAILED` in-band after the gate; healthy-path graphs
+  cross-version **isomorphic** with the parent commit for both `simple_table_pdf` and
+  `transposed_table_pdf` (scores 1.0 unchanged); GrainCorp unchanged
+  (0.9496 / 509 / 15 groups / 17 detected / 33 records, 33 distinct). Full suite 677
+  passed / 5 skipped. R17 row deleted from the register. Observation carried in the ledger
+  (not a defect): on every gated path, `n == 0` takes the commit branch without consulting
+  `region_tiles` — the shared loop G gate shape, pre-existing.
 - **Origin:** Residue **R17** (loop G attempt 2 final review): `assert_record_region` /
   `assert_transposed_region` write directly into the output graph with no
   scratch + `region_tiles` gate, so a defective region there still RAISES at
@@ -39,7 +48,10 @@ commit path.
    well-formed regions.
 3. GrainCorp unchanged: 0.9496 / 509 (failure condition, the structural-loop pattern).
 4. Full suite green (baseline 673 passed / 5 skipped). Accepted measured cost: one
-   `region_tiles` call (~75 ms, loop H review's measurement) per record/transposed region.
+   `region_tiles` call per record/transposed region — **measured at close (final review):
+   ~0.26 s/call** (0.257 s record / 0.199 s transposed; suite average 0.259 s across 112
+   calls, ≈ the observed ~11-13 s suite delta). The design-time "~75 ms" estimate from the
+   loop H review was ~3× low for these larger region graphs.
 5. R17's register row is **deleted** (closed fully — these were the last direct-assert
    region paths), and loop G's compile.py NOTE comment no longer claims the record/
    transposed paths are ungated.
