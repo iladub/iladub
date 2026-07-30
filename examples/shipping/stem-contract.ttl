@@ -1,0 +1,19 @@
+@prefix ship: <https://example.org/shipping#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Illustrative semantic data contract for a public shipping-stem slot table (loop K).
+# Declares ONLY what it can verify: two SKOS schemes, one sh:in, two sh:pattern fields.
+# Vessels, exporters, dates and times carry no verifiable constraint by design — they
+# quarantine as CandidateConcepts (§7: credibility over completeness).
+ship:stem-contract a etkl:SemanticDataContract ;
+    rdfs:label "Shipping stem slot"@en ;
+    etkl:targetClass ship:ShippingSlot ;
+    etkl:requiresKnowledge ship:scheme-commodity , ship:scheme-port ;
+    etkl:hasField ship:f-commodity , ship:f-port , ship:f-status , ship:f-total , ship:f-month .
+
+ship:f-commodity a etkl:Field ; etkl:fillsProperty ship:commodity ; etkl:admissibleScheme ship:scheme-commodity .
+ship:f-port      a etkl:Field ; etkl:fillsProperty ship:port ;      etkl:admissibleScheme ship:scheme-port .
+ship:f-status    a etkl:Field ; etkl:fillsProperty ship:status .
+ship:f-total     a etkl:Field ; etkl:fillsProperty ship:total .
+ship:f-month     a etkl:Field ; etkl:fillsProperty ship:month .

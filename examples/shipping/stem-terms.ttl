@@ -1,0 +1,18 @@
+@prefix ship: <https://example.org/shipping#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ship:scheme-commodity a skos:ConceptScheme ; skos:prefLabel "Grain commodities"@en .
+ship:c-wheat    a skos:Concept ; skos:inScheme ship:scheme-commodity ; skos:prefLabel "Wheat"@en .
+ship:c-sorghum  a skos:Concept ; skos:inScheme ship:scheme-commodity ; skos:prefLabel "Sorghum"@en .
+ship:c-chickpeas a skos:Concept ; skos:inScheme ship:scheme-commodity ; skos:prefLabel "Chickpeas"@en .
+ship:c-barley   a skos:Concept ; skos:inScheme ship:scheme-commodity ; skos:prefLabel "Barley"@en .
+ship:c-canola   a skos:Concept ; skos:inScheme ship:scheme-commodity ; skos:prefLabel "Canola"@en .
+
+ship:scheme-port a skos:ConceptScheme ; skos:prefLabel "Export ports"@en .
+ship:p-mackay     a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Mackay"@en .
+ship:p-gladstone  a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Gladstone"@en .
+ship:p-carrington a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Carrington"@en .
+ship:p-geelong    a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Geelong"@en .
+ship:p-fisherman  a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Fisherman Islands"@en .
+ship:p-kembla     a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Port Kembla"@en .
+ship:p-portland   a skos:Concept ; skos:inScheme ship:scheme-port ; skos:prefLabel "Portland"@en .
