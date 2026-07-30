@@ -38,6 +38,7 @@ def _emit(g, rows, aggs):
     for a, members in aggs.items():
         au = URIRef(f"{T}-r{a}")
         g.add((au, RDF.type, TAB.DetectedAggregationRow))
+        g.add((au, TAB.aggregationFunction, Literal("sum")))
         for m in members:
             g.add((au, TAB.aggregates, URIRef(f"{T}-r{m}")))
 
@@ -155,3 +156,67 @@ def test_no_confirmed_aggregations_derives_nothing():
     _emit(g, {0: {2: "A", 3: "100"}}, {})
     assert derive_row_groups(g, T, {}) == 0
     assert (None, RDF.type, TAB.DerivedRowGroup) not in g
+
+
+def _tiles(g):
+    from iladub.etkl.tiling import region_tiles
+    return region_tiles(g)
+
+
+def test_membrane_refuses_a_labelless_group():
+    g = Graph()
+    grp = URIRef("urn:doc#h0-rg2")
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((grp, TAB.coversRow, URIRef("urn:doc#h0-r0")))
+    g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r2")))
+    assert _tiles(g) is False
+
+
+def test_membrane_refuses_a_memberless_group():
+    g = Graph()
+    grp = URIRef("urn:doc#h0-rg2")
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((grp, TAB.hasLabel, URIRef("urn:doc#h0-e0_2")))
+    g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r2")))
+    assert _tiles(g) is False
+
+
+def test_membrane_accepts_a_wellformed_group():
+    g = Graph()
+    grp = URIRef("urn:doc#h0-rg2")
+    g.add((grp, RDF.type, TAB.DerivedRowGroup))
+    g.add((grp, TAB.hasLabel, URIRef("urn:doc#h0-e0_2")))
+    g.add((grp, TAB.coversRow, URIRef("urn:doc#h0-r0")))
+    g.add((grp, PROV.wasDerivedFrom, URIRef("urn:doc#h0-r2")))
+    assert _tiles(g) is True
+
+
+def test_partial_derived_coverage_passes_the_row_tiling_shapes():
+    """THE LANDMINE THIS TASK EXISTS FOR. RowCoverageShape / UnambiguousRowAccessShape fire
+    as soon as ANY coversRow header exists, demanding every leaf row be covered. Derived
+    groups are honestly PARTIAL (aggregation rows and unconfirmed groups' rows stay
+    uncovered) — they are carried annotations, not a claimed partition. Without the trigger
+    scoping, every real document with subtotals would escalate REGION_TILING_FAILED."""
+    g = Graph()
+    _emit(g, {0: {2: "Mackay", 3: "100"},
+              1: {2: "Mackay", 3: "150"},
+              2: {2: "SUB", 3: "250"},
+              3: {2: "Kembla", 3: "999"}}, {2: (0, 1)})
+    assert derive_row_groups(g, T, {2: (2, 3, (0, 1))}) == 1
+    # rows r2 (the aggregation) and r3 (no confirmed group) are UNCOVERED — must still pass
+    assert _tiles(g) is True
+
+
+def test_authored_row_trees_keep_the_strict_invariant():
+    """The scoping must NOT weaken the row-hier/matrix membrane: a plain HeaderNode row tree
+    with a coverage gap still fails."""
+    g = Graph()
+    t = URIRef("urn:doc#rh0")
+    for r in (0, 1):
+        g.add((URIRef(f"urn:doc#rh0-r{r}"), RDF.type, TAB.LeafRow))
+        g.add((t, TAB.hasLeafRow, URIRef(f"urn:doc#rh0-r{r}")))
+    h = URIRef("urn:doc#rh0-rh0")
+    g.add((h, RDF.type, TAB.HeaderNode))          # authored, NOT DerivedRowGroup
+    g.add((t, TAB.hasHeaderNode, h))
+    g.add((h, TAB.coversRow, URIRef("urn:doc#rh0-r0")))   # r1 uncovered -> gap
+    assert _tiles(g) is False

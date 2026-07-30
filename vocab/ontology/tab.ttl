@@ -294,3 +294,9 @@ tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
 tab:DetectedAggregationRow a owl:Class ; rdfs:subClassOf tab:AggregationRow ;
     rdfs:label "Detected aggregation row"@en ;
     rdfs:comment "An aggregation row DETECTED by exact arithmetic in the extraction path (loop H): a sparse body row whose measure equals the token-sum of its member rows. Distinct subclass on purpose: denormalization's reshape path types rows bare tab:AggregationRow without row-level operands, and the operand-requiring shape must not fire on those. Detection never reads label text — sparsity, label column and arithmetic only."@en .
+
+# --- derived row groups (loop I) ---
+tab:DerivedRowGroup a owl:Class ;
+    rdfs:subClassOf tab:HeaderNode ;
+    rdfs:label "derived row group"@en ;
+    rdfs:comment "A row-group header node DERIVED from a confirmed aggregation row (loop I): its coversRow members come from the aggregation's operands, its label from the unique non-blank member value in the label column, its provenance from the witnessing aggregation row. Derived groups are carried annotations over the row axis — coverage may be PARTIAL (rows of unconfirmed groups stay uncovered), so the row-tiling shapes exclude derived-only trees; tab:DerivedRowGroupShape guards well-formedness instead."@en .
