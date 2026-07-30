@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
+from .etkl.celltype import is_blank
 from .ground import SurfaceConcept
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -44,6 +45,7 @@ def table_records(graph: Graph) -> list[Record]:
         header = _column_header_path(graph, t)
         row_path = _row_header_path(graph, t)
         rows: dict = {}
+        row_cols: dict = {}
         for e in graph.subjects(RDF.type, TAB.EntryCell):
             if (t, TAB.hasCell, e) not in graph:
                 continue
@@ -51,11 +53,40 @@ def table_records(graph: Graph) -> list[Record]:
             if row is not None and (row, RDF.type, TAB.AggregationRow) in graph:
                 continue          # a subtotal is not a record (§7): its cells mint no subject
             col = graph.value(e, TAB.atColumn)
+            txt = str(graph.value(e, TAB.cellText))
+            if is_blank(txt):
+                continue          # loop K: a placeholder has no content to ground — dropping
+                                  # it also leaves the column OPEN for group-key injection
             prov = graph.value(e, PROV.wasDerivedFrom)
             region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
-            concept = SurfaceConcept(header.get(col, ""), str(graph.value(e, TAB.cellText)), region)
+            concept = SurfaceConcept(header.get(col, ""), txt, region)
             x0, y0 = _bbox_xy(graph, e)
             rows.setdefault(row, []).append((x0, y0, concept))
+            row_cols.setdefault(row, set()).add(col)
+        # Loop K: recovered group keys become groundable concepts. A suppressed key (the
+        # author writes Month once per group) never appears among the row's own cells; the
+        # derived row group carries it with provenance to the SOURCE cell (§5/§6 — context
+        # is carried, to the page). Column-identity-driven, injected only where the record
+        # has no non-blank concept at that column, once per column (nested groups can share
+        # one label cell). The y-sort key is the ROW's own extent, not the source cell's,
+        # so record ordering is untouched.
+        for h in graph.objects(t, TAB.hasHeaderNode):
+            if (h, RDF.type, TAB.DerivedRowGroup) not in graph:
+                continue
+            label = graph.value(h, TAB.hasLabel)
+            col = graph.value(label, TAB.atColumn) if label is not None else None
+            if col is None:
+                continue
+            key = str(graph.value(label, TAB.cellText))
+            prov = graph.value(label, PROV.wasDerivedFrom)
+            region = str(prov).split("#")[-1] if prov is not None else str(label).split("#")[-1]
+            x0, _ = _bbox_xy(graph, label)
+            for row in graph.objects(h, TAB.coversRow):
+                if row not in rows or col in row_cols.get(row, set()):
+                    continue
+                own_y = min(y for _, y, _ in rows[row])
+                rows[row].append((x0, own_y, SurfaceConcept(header.get(col, ""), key, region)))
+                row_cols.setdefault(row, set()).add(col)
         ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
         rid_of = {row: row_path.get(row, str(row).split("#")[-1]) for row in ordered}
         for rid in rid_of.values():
