@@ -1,0 +1,29 @@
+# row-group-nesting.rq (loop I, AXIOM) — parent links between derived row groups by STRICT
+# member-set containment, with a no-intermediate guard. Binding: ?tbl = the table URI (the
+# holon — all guards are scoped inside it). child < parent iff every member of child is a
+# member of parent (NOT EXISTS a child member the parent lacks), parent has a member child
+# lacks (strictness), and no third group sits strictly between them. Identical member sets
+# are NOT containment (no link) — refusal over a guess. No numeric literal.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?child ?parent WHERE {
+  ?child a tab:DerivedRowGroup . ?parent a tab:DerivedRowGroup .
+  FILTER(?child != ?parent)
+  ?tbl tab:hasHeaderNode ?child . ?tbl tab:hasHeaderNode ?parent .
+  FILTER NOT EXISTS { ?child tab:coversRow ?m .
+                      FILTER NOT EXISTS { ?parent tab:coversRow ?m } }
+  FILTER EXISTS { ?parent tab:coversRow ?x .
+                  FILTER NOT EXISTS { ?child tab:coversRow ?x } }
+  FILTER NOT EXISTS {
+    ?mid a tab:DerivedRowGroup .
+    FILTER(?mid != ?child && ?mid != ?parent)
+    ?tbl tab:hasHeaderNode ?mid .
+    FILTER NOT EXISTS { ?child tab:coversRow ?a .
+                        FILTER NOT EXISTS { ?mid tab:coversRow ?a } }
+    FILTER EXISTS { ?mid tab:coversRow ?b .
+                    FILTER NOT EXISTS { ?child tab:coversRow ?b } }
+    FILTER NOT EXISTS { ?mid tab:coversRow ?c .
+                        FILTER NOT EXISTS { ?parent tab:coversRow ?c } }
+    FILTER EXISTS { ?parent tab:coversRow ?d .
+                    FILTER NOT EXISTS { ?mid tab:coversRow ?d } }
+  }
+}

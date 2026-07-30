@@ -1,0 +1,26 @@
+# row-group-key.rq (loop I, AXIOM) — the group KEY for one confirmed aggregation row.
+# Bindings: ?agg = the tab:DetectedAggregationRow URI; ?lcol = the label-column URI.
+# The key is the unique distinct non-blank cellText in the label column among the MEMBER
+# rows (?agg tab:aggregates ?m). Uniqueness is a query-local NOT EXISTS — a holon-scoped
+# closed-world guard inside an open derivation (§8): no different non-blank value may
+# appear at that column among the members. No unique value -> zero rows -> NO group
+# (honest refusal, §7). Blank markers ('-') are NOT special-cased: a '-' value conflicts
+# or stands like any text, and refusal is the safe direction.
+# ORDER BY ?y (the cell's tab:y0) LIMIT 1 picks the TOPMOST occurrence as the label cell —
+# the author's first writing of the key; pure geometry, no numeric literal, deterministic.
+# The aggregation row's own label text is never read (no language matching).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?v ?cell WHERE {
+  ?agg tab:aggregates ?m .
+  ?cell a tab:EntryCell ; tab:atRow ?m ; tab:atColumn ?lcol ; tab:cellText ?v ;
+        tab:hasBBox ?bb .
+  ?bb tab:y0 ?y .
+  FILTER(STR(?v) != "")
+  FILTER NOT EXISTS {
+    ?agg tab:aggregates ?m2 .
+    ?c2 a tab:EntryCell ; tab:atRow ?m2 ; tab:atColumn ?lcol ; tab:cellText ?v2 .
+    FILTER(STR(?v2) != "" && STR(?v2) != STR(?v))
+  }
+}
+ORDER BY ?y
+LIMIT 1
