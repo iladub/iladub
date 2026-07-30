@@ -1,0 +1,31 @@
+# confirm-boundary.rq — loop G attempt 2 (AXIOM: derivation, open world, evidence-positive).
+#
+# A candidate column boundary (an interior gutter the author's rules left out) is CONFIRMED iff
+# the header region places glyph ink strictly on BOTH sides of it within its author interval, and
+# no header glyph straddles it. "The author labeled both sub-columns" is what distinguishes a real
+# un-ruled column boundary from a column-aligned word space: the counter-example that killed
+# attempt 1 ('AB CDEFGH' under the header 'ID') has header ink on one side only, and is refused
+# here by the same fact tab:CoverageShape would have refused — after crashing the compile.
+#
+# Threshold-free: every bound is data from the evidence graph; NO numeric literal
+# (test_no_tuned_constant_in_rq_files). The NOT EXISTS closure is holon-scoped — the band's own
+# fresh evidence graph is the closure boundary.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?bx WHERE {
+    ?cb a tab:CandidateBoundary ;
+        tab:boundaryX ?bx ;
+        tab:intervalLo ?lo ;
+        tab:intervalHi ?hi .
+    FILTER EXISTS {
+        ?gl a tab:HeaderGlyph ; tab:glyphX0 ?lx0 ; tab:glyphX1 ?lx1 .
+        FILTER(?lx0 >= ?lo && ?lx1 <= ?bx)
+    }
+    FILTER EXISTS {
+        ?gr a tab:HeaderGlyph ; tab:glyphX0 ?rx0 ; tab:glyphX1 ?rx1 .
+        FILTER(?rx0 >= ?bx && ?rx1 <= ?hi)
+    }
+    FILTER NOT EXISTS {
+        ?gs a tab:HeaderGlyph ; tab:glyphX0 ?sx0 ; tab:glyphX1 ?sx1 .
+        FILTER(?sx0 < ?bx && ?sx1 > ?bx)
+    }
+}
