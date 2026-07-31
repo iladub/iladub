@@ -1,7 +1,9 @@
 """Unit tests for the docgov PROCEDURAL extractor (pure functions, no git)."""
+import subprocess
 from datetime import date
 from pathlib import Path
 
+import pytest
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
 
@@ -68,6 +70,20 @@ def test_parse_frontmatter():
     assert fm["updated"] == date(2026, 7, 30)
     assert fm["sources"][1] == "vault:wiki/concepts/h.md"
     assert parse_frontmatter("no frontmatter\n") is None
+
+
+def test_extract_raises_on_shallow_clone(tmp_path):
+    """A shallow clone silently makes `git log -1 -- <path>` return HEAD's
+    date for every path — wrong lastCommitDate, false staleness verdicts.
+    extract() must fail loudly instead of guessing (F2, final review)."""
+    repo = Path(__file__).resolve().parent.parent
+    shallow = tmp_path / "shallow"
+    subprocess.run(
+        ["git", "clone", "--depth", "1", f"file://{repo}", str(shallow)],
+        capture_output=True, text=True, check=True,
+    )
+    with pytest.raises(RuntimeError, match="shallow clone"):
+        extract(shallow)
 
 
 def test_extract_live_repo_smoke():

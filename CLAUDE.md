@@ -286,11 +286,13 @@ request), **Confidential** (`internal/` — never tracked).
   substitutes for reading the exact `.ttl`/`.py`.
 - **Epistemics as in §3:** a wiki page is a *proposition* (confidence-tagged,
   cites its sources, freely rewritten); a site page is an *assertion*, entered
-  only via a release (`promoted_to` records the promotion). iladub.dev builds
-  from release tags, never from `main`.
+  only via a release (`promoted_to` records the promotion). iladub.dev *will*
+  build from release tags once the release-train phase lands (spec 2026-07-31
+  §7); today the site is deployed by hand from `main`.
 - **Every spec/plan dated ≥ 2026-07-31 carries a `Doc impact:` block**
   (`none | increment | contradiction`). Increments queue for the next release;
-  contradictions block the next tag (not the loop). Earlier docs grandfathered.
+  contradictions are registered now and will block the release tag once the
+  release train lands (not the loop). Earlier docs grandfathered.
 - **Vault is cited (`vault:…` in wiki `sources:`), never merged, never
   written** — the prose analogue of § Source ownership.
 

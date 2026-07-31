@@ -119,11 +119,28 @@ def last_commit_date(repo: Path, path: str) -> str | None:
     return out[:10] or None
 
 
+def _require_full_history(repo: Path) -> None:
+    """On a shallow clone, `git log -1 -- <path>` silently returns HEAD's date
+    for every path (no history to walk) — wrong lastCommitDate for every doc,
+    a false staleness pass/fail. Fail loudly instead of guessing (honest-
+    failure principle, CLAUDE.md § Core design principles)."""
+    out = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"], cwd=repo,
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    if out == "true":
+        raise RuntimeError(
+            "docgov extract requires full git history (shallow clone "
+            "detected): fetch with --unshallow / fetch-depth: 0"
+        )
+
+
 def doc_iri(path: str) -> URIRef:
     return URIRef(_DOC + path)
 
 
 def extract(repo: Path) -> Graph:
+    _require_full_history(repo)
     g = Graph()
     g.bind("dg", DG)
     cfg = load_mkdocs(repo / "mkdocs.yml")
