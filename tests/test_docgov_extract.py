@@ -1,8 +1,13 @@
 """Unit tests for the docgov PROCEDURAL extractor (pure functions, no git)."""
+from datetime import date
 from pathlib import Path
+
+from rdflib import Graph, Literal, RDF
+from rdflib.namespace import XSD
 
 from tests.docgov_extract import (
     classify, is_exempt, load_mkdocs, nav_paths, exclude_prefixes, is_excluded,
+    DG, parse_frontmatter, doc_iri, extract, tracked_markdown,
 )
 
 NAV = {"docs/index.md", "docs/manifesto.md", "docs/narrative/scope-evolution.md"}
@@ -52,3 +57,31 @@ def test_load_mkdocs_tolerates_python_name_tags(tmp_path):
     assert prefixes == ("docs/superpowers/", "docs/wiki/")
     assert is_excluded("docs/wiki/concepts/foo.md", prefixes)
     assert not is_excluded("docs/index.md", prefixes)
+
+
+def test_parse_frontmatter():
+    fm = parse_frontmatter(
+        "---\ntitle: X\ntype: concept\nconfidence: high\nupdated: 2026-07-30\n"
+        "sources:\n  - docs/superpowers/specs/a.md\n  - vault:wiki/concepts/h.md\n---\nbody\n"
+    )
+    assert fm["title"] == "X"
+    assert fm["updated"] == date(2026, 7, 30)
+    assert fm["sources"][1] == "vault:wiki/concepts/h.md"
+    assert parse_frontmatter("no frontmatter\n") is None
+
+
+def test_extract_live_repo_smoke():
+    """extract() runs on the real repo: every non-exempt tracked md becomes a
+    dg:Document with a path; nav entries all resolve. (Full conformance is
+    tests/test_doc_governance.py — this is the plumbing smoke test.)"""
+    REPO = Path(__file__).resolve().parent.parent
+    g = extract(REPO)
+    docs = set(g.subjects(RDF.type, DG.Document))
+    tracked = [p for p in tracked_markdown(REPO)]
+    assert doc_iri("CLAUDE.md") in docs
+    assert doc_iri("docs/manifesto.md") in docs
+    assert doc_iri(".claude/skills/baml-core/SKILL.md") not in docs  # exempt
+    assert len(docs) <= len(tracked)
+    assert (doc_iri("CLAUDE.md"), DG.docClass, Literal("contract")) in g
+    for entry in g.subjects(RDF.type, DG.NavEntry):
+        assert (entry, DG.resolves, Literal(True)) in g

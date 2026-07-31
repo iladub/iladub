@@ -88,3 +88,105 @@ def exclude_prefixes(cfg: dict) -> tuple[str, ...]:
 
 def is_excluded(path: str, prefixes: tuple[str, ...]) -> bool:
     return path.startswith(prefixes) if prefixes else False
+
+
+_DATED = re.compile(r"^docs/superpowers/(?:specs|plans)/(\d{4})-(\d{2})-(\d{2})-")
+
+
+def parse_frontmatter(text: str) -> dict | None:
+    if not text.startswith("---\n"):
+        return None
+    end = text.find("\n---", 4)
+    if end == -1:
+        return None
+    loaded = yaml.safe_load(text[4:end])
+    return loaded if isinstance(loaded, dict) else None
+
+
+def tracked_markdown(repo: Path) -> list[str]:
+    out = subprocess.run(
+        ["git", "ls-files", "*.md"], cwd=repo,
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return [line for line in out.splitlines() if line]
+
+
+def last_commit_date(repo: Path, path: str) -> str | None:
+    out = subprocess.run(
+        ["git", "log", "-1", "--format=%cI", "--", path], cwd=repo,
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    return out[:10] or None
+
+
+def doc_iri(path: str) -> URIRef:
+    return URIRef(_DOC + path)
+
+
+def extract(repo: Path) -> Graph:
+    g = Graph()
+    g.bind("dg", DG)
+    cfg = load_mkdocs(repo / "mkdocs.yml")
+    nav = nav_paths(cfg)
+    prefixes = exclude_prefixes(cfg)
+
+    for np in sorted(nav):
+        entry = URIRef(_DOC + "nav/" + np)
+        g.add((entry, RDF.type, DG.NavEntry))
+        g.add((entry, DG.navPath, Literal(np)))
+        g.add((entry, DG.resolves, Literal((repo / np).is_file())))
+
+    for path in tracked_markdown(repo):
+        if is_exempt(path):
+            continue
+        d = doc_iri(path)
+        g.add((d, RDF.type, DG.Document))
+        g.add((d, DG.path, Literal(path)))
+        cls = classify(path, nav)
+        if cls is not None:  # honest failure: classless docs carry no class triple
+            g.add((d, DG.docClass, Literal(cls)))
+        g.add((d, DG.inNav, Literal(path in nav)))
+        g.add((d, DG.excludedFromSite, Literal(is_excluded(path, prefixes))))
+        if cls == "evidence":
+            _evidence_facts(g, repo, d, path)
+        elif cls == "wiki":
+            _wiki_facts(g, repo, d, path)
+    return g
+
+
+def _evidence_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
+    m = _DATED.match(path)
+    if not m:
+        return
+    if date(int(m[1]), int(m[2]), int(m[3])) >= DOC_IMPACT_CUTOFF:
+        g.add((d, DG.requiresDocImpact, Literal(True)))
+        text = (repo / path).read_text()
+        g.add((d, DG.hasDocImpact, Literal("Doc impact:" in text)))
+
+
+def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
+    fm = parse_frontmatter((repo / path).read_text())
+    if not fm:
+        return  # missing frontmatter → WikiShape minCounts fail it loudly
+    for key, prop in (("title", DG.title), ("type", DG.docType),
+                      ("confidence", DG.confidence)):
+        if key in fm:
+            g.add((d, prop, Literal(fm[key])))
+    if "updated" in fm:
+        g.add((d, DG.updated, Literal(fm["updated"], datatype=XSD.date)))
+    for src in fm.get("sources") or []:
+        if src.startswith("vault:"):
+            g.add((d, DG.citesExternal, Literal(src)))
+            continue
+        s = doc_iri(src)
+        g.add((d, DG.cites, s))
+        g.add((s, RDF.type, DG.Source))
+        g.add((s, DG.path, Literal(src)))
+        g.add((s, DG.exists, Literal((repo / src).is_file())))
+        g.add((s, DG.isEvidence,
+               Literal(src.startswith(EVIDENCE_DIRS) and src.endswith(".md"))))
+        lcd = last_commit_date(repo, src)
+        if lcd:
+            g.add((s, DG.lastCommitDate, Literal(lcd, datatype=XSD.date)))
+    if fm.get("promoted_to"):
+        g.add((d, DG.promotedTo, doc_iri(fm["promoted_to"])))
