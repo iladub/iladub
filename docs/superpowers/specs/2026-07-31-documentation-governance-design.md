@@ -4,6 +4,8 @@
 **Status:** validated in brainstorming; awaiting implementation plan
 **Scope:** every markdown document in the repo, the iladub.dev publication pipeline, and the
 relationship to the external vault LLMWiki.
+**Doc impact:** increment — establishes `docs/wiki/` (this spec seeds it); `CLAUDE.md`
+governance section updated in-band; no published page contradicted.
 
 ## 1. Problem (measured, not assumed)
 
