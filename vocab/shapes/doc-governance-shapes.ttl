@@ -1,0 +1,133 @@
+# vocab/shapes/doc-governance-shapes.ttl
+#
+# Documentation-governance membrane (spec: docs/superpowers/specs/
+# 2026-07-31-documentation-governance-design.md §6). CLOSED WORLD: this file
+# only VALIDATES what the PROCEDURAL extractor asserted — it never derives
+# (derivations live in vocab/queries/docgov-*.rq, open world).
+#
+# The dg: namespace is repo-internal governance vocabulary. It is NOT part of
+# the published iladub/etkl/dec/risk ontologies and is NOT registered at w3id.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix dg:  <https://w3id.org/iladub/docgov#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+dg:DocumentShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:property [
+        sh:path dg:docClass ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( "evidence" "wiki" "assertion" "manual" "contract" "confidential" ) ;
+        sh:message "every tracked markdown file must belong to exactly one class (spec §3)" ;
+    ] ;
+    sh:property [ sh:path dg:path ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dg:inNav ; sh:minCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path dg:excludedFromSite ; sh:minCount 1 ; sh:datatype xsd:boolean ] .
+
+# No confidential material may be tracked at all (spec §3 class 6).
+dg:NoTrackedConfidentialShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "confidential material under internal/ must never be tracked (spec §3)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#path> ?p .
+                FILTER STRSTARTS(?p, "internal/")
+            }""" ;
+    ] .
+
+# Assertions are exactly the nav (spec §3 class 3).
+dg:AssertionInNavShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "an Assertion must be in the mkdocs nav (spec §3)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#docClass> "assertion" ;
+                      <https://w3id.org/iladub/docgov#inNav> false .
+            }""" ;
+    ] .
+
+# Wiki and Evidence must be covered by exclude_docs (spec §2.2, §6).
+dg:UnpublishableShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "wiki/evidence docs must be excluded from the published site (spec §6)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#docClass> ?c ;
+                      <https://w3id.org/iladub/docgov#excludedFromSite> false .
+                FILTER (?c IN ("wiki", "evidence"))
+            }""" ;
+    ] .
+
+# Every nav entry resolves to a real file.
+dg:NavEntryShape a sh:NodeShape ;
+    sh:targetClass dg:NavEntry ;
+    sh:property [
+        sh:path dg:resolves ; sh:hasValue true ;
+        sh:message "mkdocs nav entry does not resolve to a file" ;
+    ] .
+
+# Wiki frontmatter completeness (spec §4). Target: wiki-classed documents.
+dg:WikiShape a sh:NodeShape ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:select """
+            SELECT ?this WHERE {
+                ?this <https://w3id.org/iladub/docgov#docClass> "wiki" .
+            }""" ;
+    ] ;
+    sh:property [ sh:path dg:title ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "wiki page: title missing" ] ;
+    sh:property [ sh:path dg:docType ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( "concept" "source" "index" ) ;
+        sh:message "wiki page: type must be concept | source | index" ] ;
+    sh:property [ sh:path dg:confidence ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( "high" "medium" "low" ) ;
+        sh:message "wiki page: confidence must be high | medium | low" ] ;
+    sh:property [ sh:path dg:updated ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:date ; sh:message "wiki page: updated date missing" ] ;
+    sh:property [
+        sh:path [ sh:alternativePath ( dg:cites dg:citesExternal ) ] ;
+        sh:minCount 1 ;
+        sh:message "wiki page: every page cites at least one source (spec §4)" ;
+    ] .
+
+# Every internally-cited source must exist on disk.
+dg:SourceExistsShape a sh:NodeShape ;
+    sh:targetClass dg:Source ;
+    sh:property [
+        sh:path dg:exists ; sh:hasValue true ;
+        sh:message "wiki page cites a source path that does not exist" ;
+    ] .
+
+# promoted_to must land on an Assertion (spec §4). Holon-scoped NOT EXISTS.
+dg:PromotedToAssertionShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "promoted_to must reference an Assertion (spec §4)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#promotedTo> ?t .
+                FILTER NOT EXISTS {
+                    ?t <https://w3id.org/iladub/docgov#docClass> "assertion" .
+                }
+            }""" ;
+    ] .
+
+# Doc-impact registration is required for specs/plans dated >= 2026-07-31
+# (spec §5.1; requiresDocImpact is a mechanical fact from the filename date).
+dg:DocImpactShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "spec/plan dated >= 2026-07-31 must contain a 'Doc impact:' block (spec §5.1)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#requiresDocImpact> true .
+                FILTER NOT EXISTS {
+                    $this <https://w3id.org/iladub/docgov#hasDocImpact> true .
+                }
+            }""" ;
+    ] .
