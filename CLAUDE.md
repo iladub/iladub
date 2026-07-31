@@ -203,7 +203,7 @@ alignment bullets above.
 We **develop** only the namespaces we own. HGA (Cagle's W3C Holon CG ontology) is an
 **external source of truth we consume** — never one we author, edit, or redefine. Mixing the
 two corrupts authorship provenance and the alignment story. This is settled (2026-06-29) and
-**CI-enforced** by `tests/test_source_ownership.py`.
+**pytest-enforced** by `tests/test_source_ownership.py`.
 
 | We OWN — develop freely (root `https://w3id.org/iladub…`) | HGA — Cagle's; CONSUME only, never touch (`http://w3id.org/holon/…`) |
 | --- | --- |
@@ -239,7 +239,7 @@ epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`sub
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.
 - Every vocabulary/shape ships with a worked example that conforms **and** a negative
-  test that must fail. Tests run under `pytest`; CI runs them on push/PR.
+  test that must fail. Tests run under `pytest` (CI lands with the release-train phase of the 2026-07-31 governance spec; until then, run locally before push).
 - Multilingual by construction: rationale/label literals may be language-tagged
   (de/fr/it) — do **not** constrain such properties to `xsd:string` (that rejects
   `rdf:langString`).
@@ -268,6 +268,31 @@ Every loop that defers something records it in **`docs/superpowers/residues.md`*
 (never assumed), why it was deferred, and what would close it. Loops append rows; a loop that closes
 a residue deletes its row in the same change. Specs may describe a residue in prose, but do not rely
 on a spec §7 to remember it — check the register.
+
+## Documentation governance (spec 2026-07-31; lint-enforced)
+
+Every tracked markdown file belongs to **exactly one class**, by location —
+enforced by `tests/test_doc_governance.py` (SHACL membrane + SPARQL staleness,
+under `pytest`): **Evidence** (`docs/superpowers/**`, `docs/loops/**`,
+`docs/w3id/**` — immutable after loop close; `residues.md` is the mutable
+register), **Wiki** (`docs/wiki/**` — LLM-maintained synthesis, committed,
+never published), **Assertion** (the `mkdocs.yml` nav — authored, CC-BY,
+describes the *released* artifact only), **Manual** (the three READMEs —
+their commands must run), **Contract** (this file — edited only on explicit
+request), **Confidential** (`internal/` — never tracked).
+
+- **Agents: for concepts, read `docs/wiki/index.md` first.** Specs are
+  evidence, wiki is synthesis, the site is assertion. The wiki never
+  substitutes for reading the exact `.ttl`/`.py`.
+- **Epistemics as in §3:** a wiki page is a *proposition* (confidence-tagged,
+  cites its sources, freely rewritten); a site page is an *assertion*, entered
+  only via a release (`promoted_to` records the promotion). iladub.dev builds
+  from release tags, never from `main`.
+- **Every spec/plan dated ≥ 2026-07-31 carries a `Doc impact:` block**
+  (`none | increment | contradiction`). Increments queue for the next release;
+  contradictions block the next tag (not the loop). Earlier docs grandfathered.
+- **Vault is cited (`vault:…` in wiki `sources:`), never merged, never
+  written** — the prose analogue of § Source ownership.
 
 ## Open items (verify; do not assert as done)
 
