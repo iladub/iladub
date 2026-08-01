@@ -11,7 +11,7 @@ REPO = Path(__file__).resolve().parent.parent
 Q = REPO / "vocab" / "queries"
 
 
-def _wiki_citing(updated, src_path, src_date, is_evidence):
+def _wiki_citing(updated, src_path, src_date, evidence):
     g = Graph()
     d = doc_iri("docs/wiki/concepts/p.md")
     g.add((d, RDF.type, DG.Document))
@@ -22,7 +22,8 @@ def _wiki_citing(updated, src_path, src_date, is_evidence):
     g.add((d, DG.cites, s))
     g.add((s, RDF.type, DG.Source))
     g.add((s, DG.path, Literal(src_path)))
-    g.add((s, DG.isEvidence, Literal(is_evidence)))
+    if evidence:
+        g.add((s, DG.docClass, Literal("evidence")))
     g.add((s, DG.lastCommitDate, Literal(src_date, datatype=XSD.date)))
     return g, d, s
 

@@ -7,7 +7,9 @@ WHERE {
     ?page dg:docClass "wiki" ;
           dg:updated  ?updated ;
           dg:cites    ?src .
-    ?src  dg:isEvidence     false ;
-          dg:lastCommitDate ?lastCommit .
+    ?src  dg:lastCommitDate ?lastCommit .
+    # Holon-scoped closure over ONE source node (CLAUDE.md §8): a cited source
+    # that is not an evidence-classed document is code/other → warning path.
+    FILTER NOT EXISTS { ?src dg:docClass "evidence" }
     FILTER (?lastCommit > ?updated)
 }
