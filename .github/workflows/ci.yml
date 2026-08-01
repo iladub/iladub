@@ -1,0 +1,32 @@
+# .github/workflows/ci.yml
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # docgov extractor raises on shallow clones (R2 guard)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[baml,dev,docs]"
+      - name: Generate baml_client (gitignored; 6 test modules import it)
+        run: baml-cli generate --from baml_src
+      - name: Tests (incl. doc-governance lint)
+        run: pytest -q
+      - name: Site builds strict, internal trees excluded
+        run: |
+          mkdocs build --strict
+          for d in wiki superpowers loops w3id; do
+            test ! -d "site/$d" || { echo "LEAK: site/$d published"; exit 1; }
+          done
