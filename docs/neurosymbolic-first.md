@@ -121,7 +121,8 @@ The gate is not aspirational. The **declarative transform substrate** compiles a
 table's inverse recipe (`tab:ReshapeRecipe`) into fixed SPARQL `CONSTRUCT`s that read
 their parameters from that recipe RDF, certified only when replaying the recipe
 forward reproduces the original grid exactly — a round-trip oracle enforced by
-`tests/etkl/test_transform_gate.py`. **Role recovery** derives each header level's
+`tests/etkl/test_oracle.py` and exercised end-to-end by `certify()` in
+`tests/etkl/test_reshape_certify.py`. **Role recovery** derives each header level's
 dimension name and value role as a two-pass SPARQL `CONSTRUCT` derivation
 (`vocab/queries/name-levels.rq` then `vocab/queries/recover-dimensions.rq`, run by
 `src/iladub/etkl/denormalization.py`) — pure open-world derivation, no procedural
