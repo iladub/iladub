@@ -1,0 +1,60 @@
+# .github/workflows/release.yml
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write  # mkdocs gh-deploy pushes the gh-pages branch
+  id-token: write  # PyPI trusted publishing (OIDC)
+concurrency:
+  group: release
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # docgov extractor raises on shallow clones (R2 guard)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Tag must match pyproject version
+        run: |
+          V=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          test "v$V" = "$GITHUB_REF_NAME" || { echo "pyproject $V != tag $GITHUB_REF_NAME"; exit 1; }
+      - name: Install
+        run: pip install -e ".[baml,dev,docs,etkl]" build
+      - name: Generate baml_client
+        run: baml-cli generate --from baml_src
+      - name: Tests (incl. doc-governance lint)
+        run: pytest -q
+      - name: Release gate — no undrained contradiction (spec §7)
+        run: python scripts/release_gate.py
+      - name: Build site (flat, from this tag)
+        run: mkdocs build --strict
+      - name: w3id smoke test — live redirect targets exist in the build
+        run: |
+          for p in index.html 404.html holonic-interaction/index.html \
+                   etkl/index.html dec/index.html assertion-proposition/index.html; do
+            test -f "site/$p" || { echo "w3id target missing: site/$p"; exit 1; }
+          done
+      - name: Deploy iladub.dev (gh-pages; docs/CNAME keeps the domain)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdocs gh-deploy --force
+      - name: Build sdist + wheel
+        run: python -m build
+      - name: Publish to PyPI (trusted publishing; no-op if version exists)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+      - name: Live w3id probe (non-blocking; Pages legacy build lags)
+        continue-on-error: true
+        run: |
+          sleep 90
+          for u in "" holonic-interaction/ etkl/ dec/ assertion-proposition/; do
+            curl -sfI "https://iladub.dev/$u" > /dev/null \
+              && echo "OK  /$u" || echo "WARN /$u not live yet"
+          done
