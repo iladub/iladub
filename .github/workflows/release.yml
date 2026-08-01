@@ -39,6 +39,11 @@ jobs:
                    etkl/index.html dec/index.html assertion-proposition/index.html; do
             test -f "site/$p" || { echo "w3id target missing: site/$p"; exit 1; }
           done
+      - name: Internal trees must not be in the built site
+        run: |
+          for d in wiki superpowers loops w3id; do
+            test ! -d "site/$d" || { echo "LEAK: site/$d published"; exit 1; }
+          done
       - name: Deploy iladub.dev (gh-pages; docs/CNAME keeps the domain)
         run: |
           git config user.name "github-actions[bot]"

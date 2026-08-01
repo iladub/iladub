@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 QUERY = REPO / "vocab" / "queries" / "docgov-release-gate.rq"
-GOVERNANCE_ADOPTED = date(2026, 7, 31)  # spec §5.1 grandfather line
+GOVERNANCE_ADOPTED = date(2026, 7, 31)  # spec §5.1 grandfather line — same date as the DocImpactShape cutoff (vocab/shapes/doc-governance-shapes.ttl); change both together
 
 
 def _git(repo: Path, *args: str) -> str:

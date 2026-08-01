@@ -28,6 +28,10 @@ Without this, the publish step fails with an OIDC error; everything before it
 
    If it lists blockers, fix the affected published page(s) in this release.
 
+   Also eyeball any spec/plan declaring `Doc impact: contradiction` dated the
+   SAME day as the previous release tag — the gate's day-granularity comparison
+   misses those (R26).
+
 3. **Bump the version** in `pyproject.toml` (`project.version`).
 
 4. **Full suite + strict site build:**

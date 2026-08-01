@@ -239,7 +239,7 @@ epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`sub
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.
 - Every vocabulary/shape ships with a worked example that conforms **and** a negative
-  test that must fail. Tests run under `pytest`; CI runs them on every push/PR (`.github/workflows/ci.yml`).
+  test that must fail. Tests run under `pytest`; CI runs them on every push to `main` and every PR (`.github/workflows/ci.yml`).
 - Multilingual by construction: rationale/label literals may be language-tagged
   (de/fr/it) — do **not** constrain such properties to `xsd:string` (that rejects
   `rdf:langString`).
