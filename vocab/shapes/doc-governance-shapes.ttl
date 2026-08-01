@@ -134,3 +134,15 @@ dg:DocImpactShape a sh:NodeShape ;
                 }
             }""" ;
     ] .
+
+# Every wiki page must be listed in docs/wiki/index.md — the index is the
+# agents' first read; an unlisted page is invisible synthesis (R25, lintable half).
+dg:WikiIndexMembershipShape a sh:NodeShape ;
+    sh:targetClass dg:Document ;
+    sh:sparql [
+        sh:message "wiki page is not listed in docs/wiki/index.md (add its row)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#inWikiIndex> false .
+            }""" ;
+    ] .
