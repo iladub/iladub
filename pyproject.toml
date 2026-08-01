@@ -62,11 +62,9 @@ ocr = [
 ]
 dev = [
     "pytest>=8",
-    "ruff>=0.6",
-    "reportlab>=4.0",
 ]
 docs = [
-    "mkdocs-material>=9",
+    "mkdocs-material>=9.7",
 ]
 readers = [
     "pdfminer.six>=20221105",
