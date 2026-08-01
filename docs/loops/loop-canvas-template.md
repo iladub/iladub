@@ -63,5 +63,15 @@ run and see *why* each fact is where it is.
 The small model, **residue only**, swappable — picked after the harness (verifier, actions, control, limits)
 is solid. The loop must be correct with a mediocre model and merely *faster* with a better one.
 
+## ⑩ Doc impact — *required at loop close (governance spec 2026-07-31)*
+One of — recorded here AND as a `Doc impact:` line in the loop's spec/plan:
+- **none** — touches no documented concept.
+- **increment** — adds to a state page's story → update the wiki page in-band
+  (`sources:` + `updated:`); it queues for the next release.
+- **contradiction** — falsifies a published claim → register it; the next
+  release tag is blocked until drained (the loop itself is not).
+The lint (`tests/test_doc_governance.py`) fails any spec/plan dated
+≥ 2026-07-31 without the block.
+
 ---
 **Rollout tier:** L1 report · L2 assisted · L3 unattended — advance only when the verifier is trusted.

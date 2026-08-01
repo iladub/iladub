@@ -1,0 +1,13 @@
+# Derivation, OPEN WORLD (spec §6): a wiki page is stale against evidence when
+# a cited evidence doc's last commit POSTDATES the page's `updated`. Derived
+# only from facts present. HARD FAIL in tests/test_doc_governance.py.
+PREFIX dg: <https://w3id.org/iladub/docgov#>
+CONSTRUCT { ?page dg:staleAgainstEvidence ?src }
+WHERE {
+    ?page dg:docClass "wiki" ;
+          dg:updated  ?updated ;
+          dg:cites    ?src .
+    ?src  dg:isEvidence     true ;
+          dg:lastCommitDate ?lastCommit .
+    FILTER (?lastCommit > ?updated)
+}

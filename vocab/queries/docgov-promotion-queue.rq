@@ -1,0 +1,9 @@
+# Derivation (spec §5/§6): the promotion queue = wiki pages not yet lifted to a
+# published Assertion. The NOT EXISTS is holon-scoped (query-local closure per
+# CLAUDE.md §8) — it closes only this page's promotion state.
+PREFIX dg: <https://w3id.org/iladub/docgov#>
+CONSTRUCT { ?page dg:inPromotionQueue true }
+WHERE {
+    ?page dg:docClass "wiki" ; dg:docType "concept" .
+    FILTER NOT EXISTS { ?page dg:promotedTo ?target }
+}

@@ -137,29 +137,8 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    Every spec/plan carries this gate as a hard Global Constraint; **reviewers enforce it**
    — a tuned geometric constant, or a Python heuristic answering a span/read/group/role
    question, is a *review failure* unless it is an oracle-disposed NEURAL proposal or a
-   justified PROCEDURAL step. Exemplars already shipped: the **declarative transform substrate** —
-   the reshape recipe executed as fixed SPARQL `CONSTRUCT`s (`vocab/queries/*.rq`, run by
-   `iladub.etkl.interpret.run`) reading their params from the RDF recipe, with the flat base a
-   derived `hproj:Projection` and a forward-`CONSTRUCT` round-trip oracle; the *flagship AXIOM*
-   case, gate-enforced by `tests/etkl/test_transform_gate.py` (neurosymbolic loop one, shipped
-   2026-07-15) — plus **role recovery** (`recover_dimensions`: the UNPIVOT dim-name + operand-role
-   rules as a two-pass SPARQL `CONSTRUCT` derivation over the `tab:` header graph — the first
-   *derivation axiom* under the open/closed split, loop B, shipped 2026-07-15),
-   `reshape.certify_with_proposals` (A2.1, NEURAL propose → oracle → promote), and
-   **region tiling** (`iladub.etkl.tiling.region_tiles`: the tiling backstops as a SHACL oracle
-   over each candidate region's RDF — the closed-world *constraint* mirror of loop B's open-world
-   derivation, loop C, shipped 2026-07-16), the **typed-cell evidence graph** (`iladub.etkl.celltype`
-   + `vocab/queries/{header-body-split,stub-data-split,looks-transposed,transpose-coherent}.rq`:
-   header/body split, stub/data split, and transpose orientation as SPARQL derivations over a
-   transient pre-holon typed-cell graph — the first evidence graph in the pipeline, loop B2a, shipped
-   2026-07-17; extended in B2b (2026-07-18) with an open `tab:cellDatatype` lattice — Date/Currency
-   body-signals + "homogeneous non-Text" queries — for date/currency recall), the **declarative kind
-   classification** (`iladub.etkl.regions.classify` + `iladub.etkl.classifygraph` +
-   `vocab/queries/classify-kind.rq`: the whole NON_TABLE/UNSUPPORTED/RECORD kind decision as ONE
-   holon-scoped SPARQL `SELECT` over a fresh per-band evidence graph — the band *is* the closure
-   boundary; a byte-identical *faithful lift* gated by a frozen `_ref_classify` differential oracle,
-   with `infer_leaf_grid`/`_word_in_column` staying justified PROCEDURAL geometry, loop B2c, shipped
-   2026-07-18), and `segment.find_table_gutter` (propose → oracle → dispose).
+   justified PROCEDURAL step. Exemplars already shipped: see `docs/wiki/concepts/neurosymbolic-exemplars.md`
+   (the loop-by-loop catalog of compliant AXIOM/NEURAL/PROCEDURAL code, with file paths).
 
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
@@ -224,7 +203,7 @@ alignment bullets above.
 We **develop** only the namespaces we own. HGA (Cagle's W3C Holon CG ontology) is an
 **external source of truth we consume** — never one we author, edit, or redefine. Mixing the
 two corrupts authorship provenance and the alignment story. This is settled (2026-06-29) and
-**CI-enforced** by `tests/test_source_ownership.py`.
+**pytest-enforced** by `tests/test_source_ownership.py`.
 
 | We OWN — develop freely (root `https://w3id.org/iladub…`) | HGA — Cagle's; CONSUME only, never touch (`http://w3id.org/holon/…`) |
 | --- | --- |
@@ -260,7 +239,7 @@ epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`sub
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.
 - Every vocabulary/shape ships with a worked example that conforms **and** a negative
-  test that must fail. Tests run under `pytest`; CI runs them on push/PR.
+  test that must fail. Tests run under `pytest` (CI lands with the release-train phase of the 2026-07-31 governance spec; until then, run locally before push).
 - Multilingual by construction: rationale/label literals may be language-tagged
   (de/fr/it) — do **not** constrain such properties to `xsd:string` (that rejects
   `rdf:langString`).
@@ -290,21 +269,41 @@ Every loop that defers something records it in **`docs/superpowers/residues.md`*
 a residue deletes its row in the same change. Specs may describe a residue in prose, but do not rely
 on a spec §7 to remember it — check the register.
 
+## Documentation governance (spec 2026-07-31; lint-enforced)
+
+Every tracked markdown file belongs to **exactly one class**, by location —
+enforced by `tests/test_doc_governance.py` (SHACL membrane + SPARQL staleness,
+under `pytest`): **Evidence** (`docs/superpowers/**`, `docs/loops/**`,
+`docs/w3id/**` — immutable after loop close; `residues.md` is the mutable
+register), **Wiki** (`docs/wiki/**` — LLM-maintained synthesis, committed,
+never published), **Assertion** (the `mkdocs.yml` nav — authored, CC-BY,
+describes the *released* artifact only), **Manual** (the three READMEs —
+their commands must run), **Contract** (this file — edited only on explicit
+request), **Confidential** (`internal/` — never tracked).
+
+- **Agents: for concepts, read `docs/wiki/index.md` first.** Specs are
+  evidence, wiki is synthesis, the site is assertion. The wiki never
+  substitutes for reading the exact `.ttl`/`.py`.
+- **Epistemics as in §3:** a wiki page is a *proposition* (confidence-tagged,
+  cites its sources, freely rewritten); a site page is an *assertion*, entered
+  only via a release (`promoted_to` records the promotion). iladub.dev *will*
+  build from release tags once the release-train phase lands (spec 2026-07-31
+  §7); today the site is deployed by hand from `main`.
+- **Every spec/plan dated ≥ 2026-07-31 carries a `Doc impact:` block**
+  (`none | increment | contradiction`). Increments queue for the next release;
+  contradictions are registered now and will block the release tag once the
+  release train lands (not the loop). Earlier docs grandfathered.
+- **Vault is cited (`vault:…` in wiki `sources:`), never merged, never
+  written** — the prose analogue of § Source ownership.
+
 ## Open items (verify; do not assert as done)
 
-- [x] Register w3id.org redirects for the old `…/etkl/*` namespace tree (done 2026-06-02,
-      w3id PR #6144, merged by dgarijo; content negotiation verified).
-- [x] Open a new w3id PR to add `iladub` redirect rules (core, etkl, dec, risk) for the
-      2026-07-01 re-rooting. **Done: w3id PR #6281 merged; verified 2026-07-02** —
-      `w3id.org/iladub{,/etkl,/dec,/risk}` content-negotiate to the canonical
-      `vocab/ontology/*.ttl` on `main`, HTML → `iladub.dev`, old `…/etkl` 301s into the new roots.
-- [x] Confirm the masthead cuneiform glyph for *íl* against a sign list, or fall back
-      to the "íl + dub" transliteration.
-      (Verified 2026-06-03: `𒅍` = U+1214D "CUNEIFORM SIGN IL2" = *íl/il₂*, "to carry,"
-      noun "carrier, porter"; `𒁾` = U+12077 DUB = "tablet/document". `𒅍𒁾` = "the
-      document-carrier". Sources: Oracc Sign List IL₂, ePSD, Wiktionary U+1214D.)
-- [x] Confirm `vocab/LICENSE` (CC-BY-4.0) exists and `CITATION.cff` is at repo root.
-      (Verified 2026-05-31: `vocab/LICENSE` is CC-BY-4.0, `CITATION.cff` at root.)
+- [x] w3id redirects for the old `…/etkl/*` namespace tree (done 2026-06-02, PR #6144, merged).
+- [x] w3id `iladub` redirect rules for the re-rooting (done PR #6281, verified 2026-07-02 —
+      see § Migration status).
+- [x] Masthead glyph verified 2026-06-03: `𒅍` U+1214D (íl, "carrier") + `𒁾` U+12077 (dub,
+      "tablet") = "the document-carrier".
+- [x] `vocab/LICENSE` (CC-BY-4.0) + root `CITATION.cff` verified 2026-05-31.
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
 - [ ] Express the holonic interaction model in `vocab/` — but **scope it to iladub's
@@ -312,6 +311,5 @@ on a spec §7 to remember it — check the register.
       RawDocument→CleanDocument traversal), *not* a parallel general holon ontology;
       defer the substrate to the W3C Holon CG and align by `rdfs:subClassOf`. Design
       fixed in `docs/holonic-interaction.md`; ontology work not yet started.
-- [x] Decide the alignment anchor. (Settled 2026-06-23: anchor to **Cagle's W3C HGA**,
-      `holon:` = `http://w3id.org/holon/`; Welz CGA is no longer the target. See the
-      "Holonic interaction model" alignment bullets above.)
+- [x] Alignment anchor settled 2026-06-23: **Cagle's W3C HGA** (`holon:`), not Welz CGA —
+      see § Holonic interaction model.

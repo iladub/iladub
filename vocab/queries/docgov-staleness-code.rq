@@ -1,0 +1,13 @@
+# Derivation, OPEN WORLD (spec §6): staleness against a cited CODE source
+# (.py/.ttl/…). WARNING ONLY — code churns every commit; a hard gate here
+# would make every loop a doc loop.
+PREFIX dg: <https://w3id.org/iladub/docgov#>
+CONSTRUCT { ?page dg:staleAgainstCode ?src }
+WHERE {
+    ?page dg:docClass "wiki" ;
+          dg:updated  ?updated ;
+          dg:cites    ?src .
+    ?src  dg:isEvidence     false ;
+          dg:lastCommitDate ?lastCommit .
+    FILTER (?lastCommit > ?updated)
+}

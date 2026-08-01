@@ -41,6 +41,7 @@ exclude_docs: |
   superpowers/
   w3id/
   loops/
+  wiki/
 
 nav:
   - Home: index.md
