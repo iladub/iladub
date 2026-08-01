@@ -10,7 +10,8 @@ sources:
   - vocab/queries/transpose-coherent.rq
 related: []
 confidence: high
-updated: 2026-07-31
+updated: 2026-08-01
+promoted_to: docs/neurosymbolic-first.md
 ---
 
 # Neurosymbolic gate — exemplars already shipped

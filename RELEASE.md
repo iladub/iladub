@@ -18,8 +18,10 @@ Without this, the publish step fails with an OIDC error; everything before it
 
        .venv/bin/python -m pytest tests/test_doc_governance.py -q -W default::UserWarning
 
-   For each queued wiki page: author/refresh the state-page prose it feeds,
-   set `promoted_to:` in the wiki page's frontmatter, update its `updated:`.
+   For each queued page you choose to promote THIS release: author/refresh the
+   state-page prose it feeds, set `promoted_to:` in the wiki page's frontmatter,
+   update its `updated:`. Unpromoted pages stay queued — the queue is the
+   visible, enumerable lag (spec §5), not a blocker.
    Doctrine pages change only if a decision changed.
 
 2. **Check the contradiction gate** (also enforced by the tag build):
