@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: pip install -e ".[baml,dev,docs]"
+        run: pip install -e ".[baml,dev,docs,etkl]"
       - name: Generate baml_client (gitignored; 6 test modules import it)
         run: baml-cli generate --from baml_src
       - name: Tests (incl. doc-governance lint)

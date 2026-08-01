@@ -39,7 +39,7 @@ Issues = "https://github.com/iladub/iladub/issues"
 
 [project.optional-dependencies]
 baml = [
-    "baml-py>=0.60",
+    "baml-py==0.222.0",
     "pydantic>=2.6",
     "typing_extensions>=4.10",
 ]
