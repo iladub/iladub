@@ -34,7 +34,7 @@ def _wiki(g, path="docs/wiki/concepts/ok.md"):
     g.add((s, RDF.type, DG.Source))
     g.add((s, DG.path, Literal("docs/superpowers/specs/2026-07-01-x-design.md")))
     g.add((s, DG.exists, Literal(True)))
-    g.add((s, DG.isEvidence, Literal(True)))
+    g.add((s, DG.docClass, Literal("evidence")))
     return d
 
 
@@ -52,7 +52,6 @@ def test_conforming_minimal_graph():
     g.add((w, DG.promotedTo, a))
     n = doc_iri("nav/docs/manifesto.md")  # same IRI scheme as extract()
     g.add((n, RDF.type, DG.NavEntry))
-    g.add((n, DG.navPath, Literal("docs/manifesto.md")))
     g.add((n, DG.resolves, Literal(True)))
     ok, report = _conforms(g)
     assert ok, report
@@ -89,7 +88,6 @@ def test_unresolved_nav_entry_fails():
     g = Graph()
     n = doc_iri("nav/docs/gone.md")
     g.add((n, RDF.type, DG.NavEntry))
-    g.add((n, DG.navPath, Literal("docs/gone.md")))
     g.add((n, DG.resolves, Literal(False)))
     assert not _conforms(g)[0]
 
@@ -120,6 +118,29 @@ def test_promoted_to_non_assertion_fails():
 def test_missing_doc_impact_after_cutoff_fails():
     g = Graph()
     d = _doc(g, "docs/superpowers/specs/2026-08-01-new-design.md", "evidence")
-    g.add((d, DG.requiresDocImpact, Literal(True)))
-    g.add((d, DG.hasDocImpact, Literal(False)))
+    g.add((d, DG.docDate, Literal("2026-08-01", datatype=XSD.date)))
+    ok, report = _conforms(g)
+    assert not ok and "Doc impact" in str(report)
+
+
+def test_invalid_doc_impact_value_fails():
+    g = Graph()
+    d = _doc(g, "docs/superpowers/specs/2026-08-01-new-design.md", "evidence")
+    g.add((d, DG.docDate, Literal("2026-08-01", datatype=XSD.date)))
+    g.add((d, DG.docImpact, Literal("TBD")))
     assert not _conforms(g)[0]
+
+
+def test_grandfathered_pre_cutoff_spec_passes():
+    g = Graph()
+    d = _doc(g, "docs/superpowers/specs/2026-07-01-old-design.md", "evidence")
+    g.add((d, DG.docDate, Literal("2026-07-01", datatype=XSD.date)))
+    assert _conforms(g)[0]
+
+
+def test_declared_impact_after_cutoff_passes():
+    g = Graph()
+    d = _doc(g, "docs/superpowers/specs/2026-08-01-new-design.md", "evidence")
+    g.add((d, DG.docDate, Literal("2026-08-01", datatype=XSD.date)))
+    g.add((d, DG.docImpact, Literal("increment")))
+    assert _conforms(g)[0]

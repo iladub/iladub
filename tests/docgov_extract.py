@@ -21,10 +21,8 @@ from rdflib.namespace import XSD
 DG = Namespace("https://w3id.org/iladub/docgov#")
 _DOC = "https://w3id.org/iladub/docgov/doc/"
 
-DOC_IMPACT_CUTOFF = date(2026, 7, 31)  # spec §5.1 — earlier specs/plans grandfathered
-
 MANUAL_ALLOWLIST = frozenset({
-    "README.md", "vocab/README.md", "demo/README-etkl-showcase.md",
+    "README.md", "vocab/README.md", "demo/README-etkl-showcase.md", "RELEASE.md",
 })
 EVIDENCE_DIRS = ("docs/superpowers/", "docs/loops/", "docs/w3id/")
 EXEMPT_PREFIXES = (".claude/", ".agents/")
@@ -92,6 +90,10 @@ def is_excluded(path: str, prefixes: tuple[str, ...]) -> bool:
 
 _DATED = re.compile(r"^docs/superpowers/(?:specs|plans)/(\d{4})-(\d{2})-(\d{2})-")
 
+# First valid declared value wins; an invalid/missing declaration emits no fact,
+# and the membrane fails it loudly (honest failure — R22).
+_IMPACT = re.compile(r"\*{0,2}Doc impact:\*{0,2}\s*(none|increment|contradiction)\b")
+
 
 def parse_frontmatter(text: str) -> dict | None:
     if not text.startswith("---\n"):
@@ -150,7 +152,6 @@ def extract(repo: Path) -> Graph:
     for np in sorted(nav):
         entry = URIRef(_DOC + "nav/" + np)
         g.add((entry, RDF.type, DG.NavEntry))
-        g.add((entry, DG.navPath, Literal(np)))
         g.add((entry, DG.resolves, Literal((repo / np).is_file())))
 
     for path in tracked_markdown(repo):
@@ -175,10 +176,11 @@ def _evidence_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
     m = _DATED.match(path)
     if not m:
         return
-    if date(int(m[1]), int(m[2]), int(m[3])) >= DOC_IMPACT_CUTOFF:
-        g.add((d, DG.requiresDocImpact, Literal(True)))
-        text = (repo / path).read_text()
-        g.add((d, DG.hasDocImpact, Literal("Doc impact:" in text)))
+    g.add((d, DG.docDate,
+           Literal(date(int(m[1]), int(m[2]), int(m[3])), datatype=XSD.date)))
+    mi = _IMPACT.search((repo / path).read_text())
+    if mi:
+        g.add((d, DG.docImpact, Literal(mi.group(1))))
 
 
 def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
@@ -200,8 +202,6 @@ def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
         g.add((s, RDF.type, DG.Source))
         g.add((s, DG.path, Literal(src)))
         g.add((s, DG.exists, Literal((repo / src).is_file())))
-        g.add((s, DG.isEvidence,
-               Literal(src.startswith(EVIDENCE_DIRS) and src.endswith(".md"))))
         lcd = last_commit_date(repo, src)
         if lcd:
             g.add((s, DG.lastCommitDate, Literal(lcd, datatype=XSD.date)))

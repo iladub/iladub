@@ -1,0 +1,11 @@
+# Derivation, OPEN WORLD (spec §7): the docs that block a release tag — specs/
+# plans declaring 'Doc impact: contradiction' dated after the previous release
+# (?since bound by the runner). Draining = the release that fixes the affected
+# published page(s); the human confirms the fix via RELEASE.md before tagging.
+PREFIX dg: <https://w3id.org/iladub/docgov#>
+CONSTRUCT { ?doc dg:blocksRelease true }
+WHERE {
+    ?doc dg:docImpact "contradiction" ;
+         dg:docDate   ?d .
+    FILTER (?d > ?since)
+}

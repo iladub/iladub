@@ -117,17 +117,20 @@ dg:PromotedToAssertionShape a sh:NodeShape ;
             }""" ;
     ] .
 
-# Doc-impact registration is required for specs/plans dated >= 2026-07-31
-# (spec §5.1; requiresDocImpact is a mechanical fact from the filename date).
+# Doc-impact declaration is required for specs/plans dated >= 2026-07-31.
+# The cutoff and the value vocabulary are MEMBRANE policy and live HERE, not in
+# Python (R21/R22): the extractor only emits dg:docDate and the captured token.
 dg:DocImpactShape a sh:NodeShape ;
     sh:targetClass dg:Document ;
     sh:sparql [
-        sh:message "spec/plan dated >= 2026-07-31 must contain a 'Doc impact:' block (spec §5.1)" ;
+        sh:message "spec/plan dated >= 2026-07-31 must declare 'Doc impact: none | increment | contradiction' (spec §5.1)" ;
         sh:select """
             SELECT $this WHERE {
-                $this <https://w3id.org/iladub/docgov#requiresDocImpact> true .
+                $this <https://w3id.org/iladub/docgov#docDate> ?d .
+                FILTER (?d >= "2026-07-31"^^<http://www.w3.org/2001/XMLSchema#date>)
                 FILTER NOT EXISTS {
-                    $this <https://w3id.org/iladub/docgov#hasDocImpact> true .
+                    $this <https://w3id.org/iladub/docgov#docImpact> ?v .
+                    FILTER (?v IN ("none", "increment", "contradiction"))
                 }
             }""" ;
     ] .

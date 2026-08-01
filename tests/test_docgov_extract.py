@@ -13,6 +13,7 @@ from tests.docgov_extract import (
 )
 
 NAV = {"docs/index.md", "docs/manifesto.md", "docs/narrative/scope-evolution.md"}
+REPO = Path(__file__).resolve().parent.parent
 
 
 def test_exemptions():
@@ -27,6 +28,7 @@ def test_classify_precedence_most_specific_wins():
     assert classify("README.md", NAV) == "manual"
     assert classify("vocab/README.md", NAV) == "manual"
     assert classify("demo/README-etkl-showcase.md", NAV) == "manual"
+    assert classify("RELEASE.md", NAV) == "manual"
     assert classify("internal/decisions/x.md", NAV) == "confidential"
     assert classify("docs/wiki/concepts/foo.md", NAV) == "wiki"
     # docs/loops/README.md: Evidence dir beats any README intuition (spec §3 precedence)
@@ -101,3 +103,22 @@ def test_extract_live_repo_smoke():
     assert (doc_iri("CLAUDE.md"), DG.docClass, Literal("contract")) in g
     for entry in g.subjects(RDF.type, DG.NavEntry):
         assert (entry, DG.resolves, Literal(True)) in g
+
+
+def test_dated_spec_emits_docdate_and_impact():
+    g = extract(REPO)
+    spec = doc_iri("docs/superpowers/specs/2026-07-31-documentation-governance-design.md")
+    assert (spec, DG.docDate,
+            Literal(date(2026, 7, 31), datatype=XSD.date)) in g
+    assert (spec, DG.docImpact, Literal("increment")) in g
+    # undated evidence (e.g. residues.md) carries neither fact
+    residues = doc_iri("docs/superpowers/residues.md")
+    assert list(g.objects(residues, DG.docDate)) == []
+
+
+def test_impact_value_is_first_valid_token_only():
+    from tests.docgov_extract import _IMPACT
+    assert _IMPACT.search("**Doc impact:** increment — adds X").group(1) == "increment"
+    assert _IMPACT.search("Doc impact: contradiction\n").group(1) == "contradiction"
+    assert _IMPACT.search("Doc impact: TBD") is None
+    assert _IMPACT.search("no block at all") is None
