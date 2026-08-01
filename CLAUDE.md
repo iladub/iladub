@@ -203,7 +203,7 @@ alignment bullets above.
 We **develop** only the namespaces we own. HGA (Cagle's W3C Holon CG ontology) is an
 **external source of truth we consume** — never one we author, edit, or redefine. Mixing the
 two corrupts authorship provenance and the alignment story. This is settled (2026-06-29) and
-**pytest-enforced** by `tests/test_source_ownership.py`.
+**CI-enforced** by `tests/test_source_ownership.py`.
 
 | We OWN — develop freely (root `https://w3id.org/iladub…`) | HGA — Cagle's; CONSUME only, never touch (`http://w3id.org/holon/…`) |
 | --- | --- |
@@ -239,7 +239,7 @@ epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`sub
   evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
   `prov:generated`. Don't reinvent provenance.
 - Every vocabulary/shape ships with a worked example that conforms **and** a negative
-  test that must fail. Tests run under `pytest` (CI lands with the release-train phase of the 2026-07-31 governance spec; until then, run locally before push).
+  test that must fail. Tests run under `pytest`; CI runs them on every push/PR (`.github/workflows/ci.yml`).
 - Multilingual by construction: rationale/label literals may be language-tagged
   (de/fr/it) — do **not** constrain such properties to `xsd:string` (that rejects
   `rdf:langString`).
@@ -277,7 +277,7 @@ under `pytest`): **Evidence** (`docs/superpowers/**`, `docs/loops/**`,
 `docs/w3id/**` — immutable after loop close; `residues.md` is the mutable
 register), **Wiki** (`docs/wiki/**` — LLM-maintained synthesis, committed,
 never published), **Assertion** (the `mkdocs.yml` nav — authored, CC-BY,
-describes the *released* artifact only), **Manual** (the three READMEs —
+describes the *released* artifact only), **Manual** (the READMEs + `RELEASE.md` —
 their commands must run), **Contract** (this file — edited only on explicit
 request), **Confidential** (`internal/` — never tracked).
 
@@ -286,13 +286,13 @@ request), **Confidential** (`internal/` — never tracked).
   substitutes for reading the exact `.ttl`/`.py`.
 - **Epistemics as in §3:** a wiki page is a *proposition* (confidence-tagged,
   cites its sources, freely rewritten); a site page is an *assertion*, entered
-  only via a release (`promoted_to` records the promotion). iladub.dev *will*
-  build from release tags once the release-train phase lands (spec 2026-07-31
-  §7); today the site is deployed by hand from `main`.
+  only via a release (`promoted_to` records the promotion). iladub.dev builds
+  from release tags (`.github/workflows/release.yml`); the first tagged
+  release supersedes the hand-deployed site.
 - **Every spec/plan dated ≥ 2026-07-31 carries a `Doc impact:` block**
   (`none | increment | contradiction`). Increments queue for the next release;
-  contradictions are registered now and will block the release tag once the
-  release train lands (not the loop). Earlier docs grandfathered.
+  contradictions block the release tag (`scripts/release_gate.py`), not the loop.
+  Earlier docs grandfathered.
 - **Vault is cited (`vault:…` in wiki `sources:`), never merged, never
   written** — the prose analogue of § Source ownership.
 

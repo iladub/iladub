@@ -28,6 +28,7 @@ def test_classify_precedence_most_specific_wins():
     assert classify("README.md", NAV) == "manual"
     assert classify("vocab/README.md", NAV) == "manual"
     assert classify("demo/README-etkl-showcase.md", NAV) == "manual"
+    assert classify("RELEASE.md", NAV) == "manual"
     assert classify("internal/decisions/x.md", NAV) == "confidential"
     assert classify("docs/wiki/concepts/foo.md", NAV) == "wiki"
     # docs/loops/README.md: Evidence dir beats any README intuition (spec §3 precedence)
