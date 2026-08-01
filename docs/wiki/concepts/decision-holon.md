@@ -5,6 +5,7 @@ sources:
   - vocab/ontology/dec.ttl
   - vocab/shapes/dec-shapes.ttl
   - vocab/shapes/escalation-shapes.ttl
+  - docs/superpowers/specs/2026-06-29-apex-escalation-design.md
 related: ["[[promotion-decision]]"]
 confidence: high
 updated: 2026-08-01

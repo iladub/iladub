@@ -27,7 +27,7 @@ env/
 htmlcov/
 
 # BAML generated client is regenerated from baml_src; do not hand-edit.
-/baml_client/
+/baml_client
 
 # Tooling / editors
 .mypy_cache/

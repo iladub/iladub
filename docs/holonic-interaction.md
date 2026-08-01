@@ -1,7 +1,7 @@
 # Holonic interaction model
 
-> Status: **design note** (conceptual). The vocabulary alignment described here is
-> a planned follow-up; this page fixes the model before any `.ttl` is written.
+> Status: **living design note** — the model below is now partially shipped
+> (see "What is built"); remaining items are listed under "Planned work".
 
 Defining holons is the easy half. The architecture lives in **how they interact**.
 This page models iladub as a small set of holons connected by a governed interaction —

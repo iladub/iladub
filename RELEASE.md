@@ -34,7 +34,10 @@ Without this, the publish step fails with an OIDC error; everything before it
    SAME day as the previous release tag — the gate's day-granularity comparison
    misses those (R26).
 
-3. **Bump the version** in `pyproject.toml` (`project.version`).
+3. **Bump the version** — it must be single-sourced across three files, all in
+   lockstep (guarded by `tests/test_smoke.py::test_version_single_source`):
+   `pyproject.toml` (`project.version`), `src/iladub/__init__.py`
+   (`__version__`), and `CITATION.cff` (`version:` and `date-released:`).
 
 4. **Full suite + strict site build:**
 

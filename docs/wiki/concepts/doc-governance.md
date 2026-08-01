@@ -5,6 +5,8 @@ sources:
   - docs/superpowers/specs/2026-07-31-documentation-governance-design.md
   - vocab/shapes/doc-governance-shapes.ttl
   - scripts/release_gate.py
+  - .github/workflows/ci.yml
+  - .github/workflows/release.yml
 related: ["[[promotion-decision]]"]
 confidence: high
 updated: 2026-08-01
@@ -57,14 +59,22 @@ it.
 **What an agent should read, when.** Per CLAUDE.md's own pointer (itself
 part of this governance): read `docs/wiki/index.md` first for what a
 concept *is* — wiki pages are propositions, freely rewritten, never a
-substitute for the exact source. Read the cited `.ttl`/`.py`/spec when the
-exact mechanism, a number, or a claim's truth matters. Read the site
+substitute for the source. Read the cited `.ttl`/`.py`/spec when the exact
+mechanism, a number, or a claim's truth matters. Read the site
 (`mkdocs.yml` nav) only for what the *released* artifact asserts.
 
 **Settled vs open.** The six-class membrane, the wiki frontmatter shape, and
-the promotion-queue/staleness derivations are shipped and lint-enforced
-today under `pytest` (not yet CI-blocking — no `.github/` workflow exists
-per the spec's own problem statement). The release-train pipeline itself
-(§7's GitHub Actions, the w3id smoke test, PyPI trusted publishing) is
-designed in the spec but this page's three sources evidence only the local
-gate script and its known R26 gap, not a running CI pipeline.
+the promotion-queue/staleness derivations are lint-enforced under `pytest`
+— and, since Phase 2, CI-blocking, not just a local habit.
+`.github/workflows/ci.yml` runs the full suite (including this lint) on
+every push to `main` and every PR, then builds the site `--strict` and
+checks the internal trees (`wiki`, `superpowers`, `loops`, `w3id`) never
+leak into it. `.github/workflows/release.yml` gates the tag build: a
+version-guard fails the run if the tag doesn't match `pyproject.toml`'s
+version, `scripts/release_gate.py` blocks on any undrained
+`Doc impact: contradiction` (R26's gap still open), then a strict site
+build, a w3id smoke test, the no-leak check again, `mkdocs gh-deploy` to
+publish iladub.dev, and a PyPI publish over OIDC trusted publishing — plus
+a non-blocking live probe tolerating Pages' deploy lag. The release train
+in the spec's §7 is a running pipeline, not a design; sources now include
+both workflow files, not just the gate script.

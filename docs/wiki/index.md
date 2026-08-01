@@ -5,7 +5,7 @@ sources:
   - docs/superpowers/specs/2026-07-31-documentation-governance-design.md
 related: []
 confidence: high
-updated: 2026-07-31
+updated: 2026-08-01
 ---
 
 # iladub wiki — read this first

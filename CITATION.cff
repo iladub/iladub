@@ -9,8 +9,8 @@ authors:
 abstract: >-
   iladub is a toolkit for compiling documents into semantic, structured
   representations. It is the reference implementation of the ET(K)L method.
-version: "0.0.2"
-date-released: "2026-05-31"
+version: "0.0.3"
+date-released: "2026-08-01"
 license: Apache-2.0
 repository-code: "https://github.com/iladub/iladub"
 url: "https://github.com/iladub/iladub"

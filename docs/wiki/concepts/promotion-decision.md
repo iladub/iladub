@@ -5,6 +5,7 @@ sources:
   - vocab/ontology/iladub.ttl
   - vocab/ontology/dec.ttl
   - vocab/shapes/iladub-shapes.ttl
+  - docs/superpowers/specs/2026-07-19-knowledge-first-grounding-design.md
 related: ["[[assert-propose-promote]]", "[[decision-holon]]"]
 confidence: high
 updated: 2026-08-01
