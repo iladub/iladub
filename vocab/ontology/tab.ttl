@@ -297,22 +297,28 @@ tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
 # never asserted into a holon (the committed record of the resulting reading is tab:RegionCaption
 # + tab:HeaderSourceCell, as for the loop-C NEURAL reading).
 tab:RuledColumn a owl:Class ; rdfs:label "Ruled column"@en ;
-    rdfs:comment "A transient column of the AUTHOR'S ruled grid (the band's vertical rules, plus any header-confirmed interior boundary). Distinct from tab:GridColumn, which is the loop-B covering evidence over any leaf grid however recovered: the role law is only defined where the columns are the author's marks."@en .
+    rdfs:comment "A transient column of the band's RULED grid: the author's vertical rules, plus any interior boundary loop G's header confirmation added. NOT purely author-drawn — see ruledroles.grid_is_the_ruled_grid, which states exactly what that set does and does not guarantee. Distinct from tab:GridColumn, the loop-B covering evidence over any leaf grid however recovered."@en .
 tab:HeaderRegionRow a owl:Class ; rdfs:label "Header region row"@en ;
-    rdfs:comment "A transient NON-LEAF header-region row awaiting its role. The leaf header row is never emitted: it is the leaf by construction, and the derivation refuses to run unless it aligns 1:1 with the ruled columns."@en .
+    rdfs:comment "A transient NON-LEAF header-region row awaiting its role. The leaf header row is never emitted: it is the leaf by construction, and clause 1 of header-row-role.rq refuses the whole derivation unless it aligns 1:1 with the ruled columns."@en .
 tab:headerRowOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range xsd:integer ; rdfs:label "header row order"@en ;
     rdfs:comment "0-based header-region row index (0 = topmost), matching rowrole.build_row_reading's role-vector position."@en .
 tab:HeaderRegionCell a owl:Class ; rdfs:label "Header region cell"@en ;
-    rdfs:comment "A transient cell of a non-leaf header-region row, carrying only its relation to the ruled columns."@en .
+    rdfs:comment "A transient cell of a non-leaf header-region row, carrying only its relation to the ruled columns and to the leaf labels."@en .
 tab:LeafHeaderCell a owl:Class ; rdfs:label "Leaf header cell"@en ;
-    rdfs:comment "A transient cell of the LEAF header row (the deepest header row above the body). Carries only tab:withinRuledColumn: clause 1 of header-row-role.rq reads these to check that every ruled column holds exactly one leaf label, the precondition of the whole law. The leaf row is never given a role."@en .
+    rdfs:comment "A transient cell of the LEAF header row (the deepest header row above the body). Clause 1 of header-row-role.rq reads these to check that every ruled column holds exactly one leaf label; the continuation role reads them as the alignment-origin reference. The leaf row is never given a role."@en .
+tab:HeaderBlockRule a owl:Class ; rdfs:label "Header block rule"@en ;
+    rdfs:comment "A transient record of an author-drawn HORIZONTAL rule that crosses every interior ruled boundary and lies inside the header region: the author's own statement that the header block starts below it. Positive evidence for the furniture role — ink above such a rule is document furniture, not a header level."@en .
 tab:hasHeaderRegionCell a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderRegionCell ; rdfs:label "has header region cell"@en .
-tab:withinRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionCell ; rdfs:range tab:RuledColumn ; rdfs:label "within ruled column"@en ;
-    rdfs:comment "The cell's ink lies strictly INSIDE this ruled column (regions._word_in_column). A cell within a column claims that one column: a wrap fragment of its leaf label."@en .
-tab:enclosesRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionCell ; rdfs:range tab:RuledColumn ; rdfs:label "encloses ruled column"@en ;
-    rdfs:comment "The cell's ink covers this whole ruled column (the exact dual of tab:withinRuledColumn). A cell enclosing a column claims a GROUP of columns: a genuine merged parent label."@en .
-tab:rowEnclosesRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:RuledColumn ; rdfs:label "row encloses ruled column"@en ;
-    rdfs:comment "The row's COMBINED ink extent covers this whole ruled column. A row enclosing every ruled column is a full-width banner — furniture, not a header level — however rule_aware_lines happened to chop it into cells."@en .
+tab:rowAboveHeaderBlockRule a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderBlockRule ; rdfs:label "row above header block rule"@en ;
+    rdfs:comment "The row's ink lies wholly above this header-block rule, so the author placed it outside the header block."@en .
+# NOTE (review finding F6): tab:withinRuledColumn is asserted on BOTH tab:HeaderRegionCell and
+# tab:LeafHeaderCell subjects, so it carries NO rdfs:domain — an rdfs:domain here would let
+# inference (region_tiles validates with inference="rdfs") type every leaf cell as a
+# HeaderRegionCell, contradicting both class definitions.
+tab:withinRuledColumn a owl:ObjectProperty ; rdfs:range tab:RuledColumn ; rdfs:label "within ruled column"@en ;
+    rdfs:comment "The cell's ink lies STRICTLY inside this ruled column, reaching neither boundary (ruledroles._within — deliberately stricter than regions._word_in_column, which asks whether a word FITS; see that docstring). Asserted on both tab:HeaderRegionCell and tab:LeafHeaderCell, hence no rdfs:domain."@en .
+tab:sharesAlignmentOriginWith a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionCell ; rdfs:range tab:LeafHeaderCell ; rdfs:label "shares alignment origin with"@en ;
+    rdfs:comment "The cell's ink shares a left or right edge exactly with this leaf header cell (ruledroles._shares_origin). Wrapped lines of ONE table cell are laid out from that cell's own origin, so a shared origin is positive evidence that the two are lines of one cell — the renderer's accommodation read back. An equality with COORD_EPS as the float epsilon, never a proximity window."@en .
 
 # --- detected aggregation rows (loop H, residue R4) ---
 tab:DetectedAggregationRow a owl:Class ; rdfs:subClassOf tab:AggregationRow ;

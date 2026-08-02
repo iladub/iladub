@@ -6,19 +6,26 @@ Given a band whose columns are the author's own ruled grid:
   * the LEAF header row is the deepest header row whose cells align 1:1 with the ruled
     columns (exactly one cell strictly inside each column) — the derivation refuses to
     run at all unless that holds;
-  * every header row ABOVE it is read by its ink's relation to those columns, never by
-    its text (R4's lesson):
-      - the row's ink covers EVERY ruled column, or one of its cells claims no column at
-        all (inside none, covering none)  -> FURNITURE, a banner drawn over the grid;
-      - some cell covers a whole ruled column                -> LEVEL, a group label
-        (today's unchanged parent pipeline);
-      - otherwise every cell is strictly inside one column   -> CONTINUATION, a wrap
-        fragment of that column's leaf label;
+  * every header row ABOVE it is read by MARKS THE AUTHOR MADE, never by its text (R4):
+      - the row lies above a HEADER-BLOCK RULE — a horizontal rule crossing every interior
+        ruled boundary inside the header region  -> FURNITURE;
+      - every cell sits strictly inside a ruled column AND shares that column's leaf-label
+        alignment origin                          -> CONTINUATION;
+      - anything else                             -> LEVEL, today's unchanged reading.
   * the body starts at the first line after the leaf header (unchanged: header_body_split).
 
-The reading is DISPOSED by the same SHACL tiling + conservation oracle loop C uses, so a
-derivation that does not tile changes nothing.
+REVIEW ROUND 1 rewrote the first two clauses. The original reached FURNITURE by elimination
+("a cell addressed to no ruled column"), which cannot separate a leaked date line from a
+short merged parent — so a genuine group label got demoted or welded and an honest
+escalation became a confident wrong assertion. Both non-default roles now demand positive
+evidence, and LEVEL is the default. The tests below pin that: every adversarial spanner is
+A/B-compared against a BASE run with the hook disabled and must come out identical.
+
+The SHACL oracle disposes readings that do not tile or that lose text — it does NOT judge
+whether a reading is right (a caption conserves text just as a label does), so it is not
+relied on for correctness anywhere here.
 """
+import pytest
 from rdflib import RDF
 
 from iladub.etkl.holon import TAB
@@ -105,6 +112,74 @@ def test_derived_roles_are_the_law(tmp_path):
     band, hreg = _ruled_band(pdf)
     rows = header_rows_of(band, hreg.grid, hreg.body_line)
     assert derive_row_roles(band, rows, hreg.grid) == ("furniture", "continuation", "continuation")
+
+
+def test_header_block_rule_is_the_furniture_evidence(tmp_path):
+    """The ONLY thing that makes a row furniture is the author's header-block rule. Same page,
+    rule removed: the row falls back to `level` (review round 1 — furniture must never be
+    reached by elimination)."""
+    from tests.etkl.fixtures import stacked_banner_ruled_pdf
+    from iladub.etkl.headers import header_rows_of
+    from iladub.etkl.ruledroles import derive_row_roles
+    out = {}
+    for flag in (True, False):
+        pdf = str(tmp_path / f"stack-{flag}.pdf")
+        stacked_banner_ruled_pdf(pdf, block_rule=flag)
+        band, hreg = _ruled_band(pdf)
+        out[flag] = derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line),
+                                     hreg.grid)
+    assert out[True] == ("furniture", "continuation", "continuation"), out
+    assert out[False] == ("level", "continuation", "continuation"), out
+
+
+def test_banner_without_block_rule_is_not_demoted(tmp_path):
+    """With no authorial mark, the spanning top line keeps its pre-loop-L reading as a header
+    node — it is NEVER silently turned into a caption."""
+    from iladub.etkl import compile_tables
+    from tests.etkl.fixtures import stacked_banner_ruled_pdf
+    pdf = str(tmp_path / "nobar.pdf")
+    stacked_banner_ruled_pdf(pdf, block_rule=False)
+    rep = compile_tables(pdf)
+    assert _captions(rep.graph) == [], _captions(rep.graph)
+    labels = _labels(rep.graph)
+    assert any("Monday" in lb for lb in labels), labels          # carried as a LABEL, not furniture
+    assert "Total Grain Tonnes" in labels, labels                # the evidenced part still applies
+
+
+@pytest.mark.parametrize("chop_mid_word", [True, False])
+def test_genuine_spanner_is_never_demoted_or_welded(tmp_path, chop_mid_word):
+    """REVIEW FINDING F1/F8, both cut variants. A real merged parent with no header-block rule
+    and no shared alignment origin must be left exactly as the pre-loop-L path left it: never
+    welded onto a leaf label, never demoted to a caption. Asserted against a BASE run of the
+    same page with the loop-L hook disabled, so this is an A/B, not a snapshot."""
+    from iladub.etkl import compile_tables
+    from iladub.etkl.headers import header_rows_of
+    from iladub.etkl.ruledroles import derive_row_roles
+    from tests.etkl.fixtures import spanner_with_space_ruled_pdf
+    import iladub.etkl.ruledroles as ruledroles
+
+    pdf = str(tmp_path / f"spanner-{chop_mid_word}.pdf")
+    truth = spanner_with_space_ruled_pdf(pdf, chop_mid_word=chop_mid_word)
+
+    band, hreg = _ruled_band(pdf)
+    roles = derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line), hreg.grid)
+    assert roles is None or all(r == "level" for r in roles), roles   # no reading is claimed
+
+    fix = compile_tables(pdf)
+    real = ruledroles.resolve_ruled_header_rows
+    ruledroles.resolve_ruled_header_rows = lambda *a, **k: None       # BASE
+    try:
+        base = compile_tables(pdf)
+    finally:
+        ruledroles.resolve_ruled_header_rows = real
+
+    assert [(r.verdict, r.reason, r.cells) for r in fix.regions] == \
+           [(r.verdict, r.reason, r.cells) for r in base.regions]
+    assert fix.score == base.score
+    assert _captions(fix.graph) == [], _captions(fix.graph)           # never demoted
+    joined = " ".join(_labels(fix.graph))
+    for leaf in ("Tonnes", "Port", "Ship", "Berth"):                  # never welded onto a leaf
+        assert f"{truth['parent'].split()[0]} {leaf}" not in joined, joined
 
 
 def test_leaf_row_not_one_to_one_refuses(tmp_path):
