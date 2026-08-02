@@ -166,3 +166,25 @@ def test_stem_continuation_case_classification():
 
     # No assertion beyond non-crash — this is Loop M's intake evidence, not a gate.
     assert band0.lines and band1.lines and band2.lines
+
+
+@needs_stem
+def test_stem_document_stitches_three_pages():
+    """Loop M's verifier (spec §3b): the whole stem is ONE logical table.
+    RED until the driver + recognition land."""
+    from iladub.etkl.document import compile_document
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    rep = compile_document(str(STEM))
+    assert len(rep.pages) == 3
+    assert len(rep.chains) == 1 and len(rep.chains[0]) == 3, rep.chains
+    total_cells = sum(sum(r.cells for r in p.regions) for p in rep.pages)
+    print(f"\nstem document: score={rep.score:.4f} total_cells={total_cells}")
+    assert total_cells > 586          # more than page 0 alone
+    assert rep.score >= 0.9           # floor; if compiled-but-lower, STOP and report
+    # repeated headers carried, never data: RepeatedHeader facts exist on pages 1-2
+    reps = list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader))
+    assert reps, "repeated header blocks must be carried as facts"
+    # page provenance: cells exist on all three pages
+    pages = {int(o) for o in rep.graph.objects(None, TAB.onPage)}
+    assert pages == {0, 1, 2}, pages
