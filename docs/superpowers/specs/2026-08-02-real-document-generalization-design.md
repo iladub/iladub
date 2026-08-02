@@ -1,9 +1,10 @@
-# Real-document generalization — Loop L + the corpus campaign — design
+# Real-document generalization — the accommodation layer, Loop L, and the corpus campaign — design
 
 **Date:** 2026-08-02
 **Status:** validated in brainstorming; awaiting implementation plan
-**Doc impact:** increment — adds the corpus harness + campaign discipline; the notebook design
-(§7) is parked, not shipped; no published page contradicted.
+**Doc impact:** increment — adds the accommodation-layer architecture, the corpus harness +
+campaign discipline; the notebook design (§7) is parked, not shipped; no published page
+contradicted.
 
 ## 1. Problem (measured, not assumed)
 
@@ -49,7 +50,59 @@
   synthetic suite remains the regression net (it pins fixed behavior cheaply); it is no
   longer evidence of generality.
 
-## 3. Loop L — diagnose the stem divergence (first specimen)
+## 2b. The accommodation layer — invert the renderer before reading the report
+
+**Thesis (François, 2026-08-02; forensically confirmed on the specimen):** tables are
+reports — the logical layout is fixed and only the data varies. The variance that breaks
+machines is **page-constraint accommodation**: text wrapping, column/row resizing,
+scale-to-fit — a *readability optimization with zero semantic content*, applied
+deterministically by the generating software. A human's eye discounts it without noticing;
+a machine that reads structure straight off the accommodated glyphs mistakes every
+re-accommodation for a new document.
+
+**Forensic evidence (the 2026-07-31 stem):** PDF metadata `Producer: Microsoft: Print To
+PDF`, `Title: Shipping Stem 2026 07 31.xlsx` — an Excel report printed by a named human;
+dominant font 5.28 pt across 3,937 chars on p0 (scale-to-fit compressed a ~11 pt sheet to
+~48 %); 202 border rects (Excel cell edges surviving as exact geometry). The escalation
+measured in §1 is scale-induced glyph collision degrading whitespace-based grid
+inference — accommodation, unmodeled.
+
+**The architecture:**
+- **Forward model:** logical report template (fixed) + edition data → layout engine
+  (auto-fit, word-boundary wrap, row-height growth, clip-at-edge, scale-to-fit, page
+  breaks, repeated headers) → glyphs. The engine is deterministic; therefore invertible
+  as a *modeling* problem, not a perception problem.
+- **De-accommodation stage:** new pipeline stage between measurement and banding —
+  glyphs + rects (+ Producer metadata) → estimated accommodation parameters (scale,
+  column edges, wrap map) → the **logical grid in template coordinates**. All existing
+  structural/semantic reading (classify, compile, roles, grounding) then consumes the
+  logical grid, where the report is stable across editions.
+- **Software-aware ontology, two layers (decided 2026-08-02):** a thin owned namespace —
+  `render:` = `https://w3id.org/iladub/etkl/render#`, repo-internal posture at first
+  (like `dg:`), a candidate for the published etkl family once the laws stabilize —
+  holding (i) **universal accommodation laws** — uniform scale, wrap only at word
+  boundaries within a column, clip at the column edge, borders at cell edges, wrapped
+  continuations carry blanks elsewhere (R18's blank-below convention, now a law rather
+  than an observed habit) — and (ii) **per-generator refinement modules**
+  (`excel-print-to-pdf` first), gated by *detected* Producer metadata, never guessed.
+  Unknown generators still get the universal layer.
+- **Gate classification:** the laws are AXIOM (declarative over the glyph/rect evidence
+  graph); parameter estimation is exact arithmetic (a scale factor is a ratio; column
+  edges are rect coordinates) — PROCEDURAL only at the raw-extraction rim; genuinely
+  underdetermined readings (e.g. wrap-vs-new-row with no borders) are NEURAL
+  propose→oracle→dispose. **The oracle is the loop-one signature lifted to layout:**
+  propose (template, scale, wrap map) → forward-accommodate → diff against the measured
+  glyphs. A tuned tolerance anywhere in this layer is a review failure.
+- **Provenance through the renderer:** the accommodation record (scale, widths, wraps)
+  joins the doc-holon — every logical cell traces to its glyphs *and* to the
+  accommodation that displaced them. Provenance-to-the-page becomes
+  provenance-through-the-renderer.
+- **Cross-edition identifiability:** corpus documents group into a **series** (§4);
+  the template is the series invariant, so each additional edition of the same report
+  over-determines it. The corpus is thereby also template-learning evidence, not only
+  a test battery.
+
+## 3. Loop L — diagnose the stem divergence = the accommodation layer's first slice
 
 **Goal/verifier (designed first):** one of two exits, both evidence-backed:
 1. `Shipping-Stem-2026-07-31.pdf` page 0 **compiles** via the public API with a score in
@@ -61,14 +114,23 @@
    registered as a residue with its closure named, and the manifest records the
    adjudication.
 
-**Method:** systematic debugging, geometry-first: where does the pipeline lose the
-columns (`extract_words` → `text_lines` → `detect_bands` → `infer_leaf_grid` →
-header-confirmed refinement)? The crushed ASCII render (`GC FMonPort ReferExpoName…`)
-suggests column pitch/overlap at extraction level — measure, don't guess. Compare
-against loop K's edition **if locatable** (it was never committed; check local
-non-repo storage); if unavailable, diagnose the 07-31 edition on its own terms — the
-invariant does not care which edition loop K used, only that THIS one reads fluently
-to human eyes and must therefore compile or escalate semantically.
+**Hypothesis H (from §2b, falsifiable):** the escalation is scale-induced glyph
+collision breaking whitespace-based grid inference; a grid built from the 202 border
+rects (exact column edges, immune to collision) de-accommodates the page and the
+existing compile machinery succeeds on the logical grid.
+
+**Method:** systematic debugging, H first — build the border-rect grid, re-run compile,
+measure. If H holds, ship it as the accommodation layer's first thin slice (universal
+law: *borders sit at cell edges*; Excel refinement gated by the Producer metadata that
+this specimen carries). If H fails, fall back to geometry-first tracing
+(`extract_words` → `text_lines` → `detect_bands` → `infer_leaf_grid`) — measure where
+the columns are lost, don't guess. Compare against loop K's edition **if locatable**
+(never committed; check local non-repo storage); if unavailable, diagnose the 07-31
+edition on its own terms — the invariant cares only that THIS edition reads fluently
+to human eyes and must therefore compile or escalate semantically. Vertical-slice
+discipline: Loop L ships the smallest de-accommodation that makes the real stem
+compile end-to-end (through grounding against the stem contract); wrap-map inversion
+and the full forward-render oracle are later loops of the campaign.
 
 **Constraints:** the §8 gate binds every fix (a span/read/group question resolved by a
 Python heuristic with a tolerance is a review failure); fixes must not regress the
@@ -82,6 +144,9 @@ synthetic suite; the real PDF stays out of the repo (scratchpad/corpus only).
   thin repo-internal namespace (`cor:` = `https://w3id.org/iladub/corpus#`, same
   posture as `dg:`: not published, not w3id-registered). Per document:
   `cor:url`, `cor:family` (ag-trade | gov-stats | financial | health),
+  `cor:series` (editions of the same fixed report share a series — the template
+  invariant of §2b; e.g. all GrainCorp stem editions), `cor:producer` (the PDF's
+  Producer metadata, recorded at fetch),
   `cor:fetched` (xsd:date), `cor:sha256` (pins the edition actually measured — the
   manifest outlives the URL), `cor:pages`, `cor:expectedVerdict` — one of
   `cor:CompilesAbove` (with `cor:scoreFloor`), `cor:SemanticEscalation` (with
