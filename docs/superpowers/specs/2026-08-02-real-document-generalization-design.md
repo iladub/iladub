@@ -102,6 +102,26 @@ inference — accommodation, unmodeled.
   over-determines it. The corpus is thereby also template-learning evidence, not only
   a test battery.
 
+**Pagination taxonomy (François, 2026-08-02).** Multi-page documents are unhandled today
+(`compile_tables` is strictly single-page; no document driver exists). Three cases, each
+with a DIFFERENT resolution — conflating them would be the defect:
+1. **Unrelated tables on consecutive pages** — not accommodation; needs only a document
+   driver compiling pages independently, never stitching.
+2. **One logical table split across pages, with or without repeated headers** — the page
+   break IS an accommodation operator (Excel print-titles = its repeated-header law).
+   De-accommodation: recognize continuation (identical ruled column x-positions under
+   the same scale; leaf header equal to page 1's, or a headerless first line that is
+   body-shaped and column-aligned), drop the repetition, concatenate the logical rows
+   into ONE table holon. Provenance keeps each row's true page.
+3. **The same template split along one dimension** (a page per port / year / …) —
+   pagination as *denormalization along a dimension*: each page compiles to the same
+   template; the page-scoped dimension value (typically a banner/title cell — the rows
+   §3's header-stack law learns to read) is recovered as a column of the base facts,
+   via the loop-I inversion machinery meeting series/template identity within one
+   document. The corpus's gov-stats family will supply natural specimens.
+Cases 1–2 are **Loop M** (outlined below); case 3 is designed here and deferred until a
+corpus specimen demands it — never built speculatively (§7 of the core principles).
+
 ## 3. Loop L — diagnose the stem divergence = the accommodation layer's first slice
 
 **Goal/verifier (designed first):** one of two exits, both evidence-backed:
@@ -135,6 +155,17 @@ and the full forward-render oracle are later loops of the campaign.
 **Constraints:** the §8 gate binds every fix (a span/read/group question resolved by a
 Python heuristic with a tolerance is a review failure); fixes must not regress the
 synthetic suite; the real PDF stays out of the repo (scratchpad/corpus only).
+
+## 3b. Loop M (outlined; planned after Loop L closes) — pagination de-accommodation
+
+**Goal/verifier:** the whole 3-page stem compiles as ONE logical table via a new
+document-level driver (`compile_document`, name indicative), with the continuation
+pages stitched per taxonomy case 2 and every row's provenance keeping its true page;
+unrelated-tables documents (case 1, synthetic fixture) stay unstitched. Loop L's
+Task-4 measurement (do the stem's continuation pages repeat the leaf header?)
+determines which continuation law the slice implements first. Grounding then runs on
+the full stitched document — the tally comparable to loop K's full-document numbers.
+Case 3 stays out of Loop M's scope.
 
 ## 4. The corpus harness (infrastructure; makes "extensive tests on real examples" permanent)
 
