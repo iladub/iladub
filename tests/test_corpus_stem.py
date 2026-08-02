@@ -196,3 +196,43 @@ def test_stem_document_stitches_three_pages():
     # page provenance: cells exist on all three pages
     pages = {int(o) for o in rep.graph.objects(None, TAB.onPage)}
     assert pages == {0, 1, 2}, pages
+
+
+@needs_stem
+def test_stem_document_grounds_full():
+    """Loop-K's capstone over the WHOLE document (loop M task 4). Invariants asserted,
+    edition-dependent tallies printed.
+
+    The chain-walk's own invariant is the LAST assertion: one record per data row of the
+    logical table, each on its OWN subject. The three pages compile under page-scoped
+    document URIs, so page 1 and page 2 share 65 row fragments (measured); reading the
+    chain as one table without page-qualifying the discriminator grounds two different
+    voyages onto one subject. The unit battery is tests/test_feed_chain_walk.py."""
+    from rdflib import Graph, Namespace, RDF
+    from iladub.etkl.document import compile_document
+    from iladub.feed import ground_document, table_records, _record_uri
+    from iladub.ground import load_contract
+    from iladub.propose_ground import FakeGroundingProposer, GroundingProposal
+
+    ILADUB = Namespace("https://w3id.org/iladub#")
+    SHIP = Namespace("https://example.org/shipping#")
+    rep = compile_document(str(STEM))
+    contract = load_contract("examples/shipping/stem-contract.ttl")
+    terms = Graph().parse("examples/shipping/stem-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/shipping/stem-shapes.ttl", format="turtle")
+    abstain = FakeGroundingProposer(GroundingProposal(
+        None, str(SHIP) + "x", 0.1, "n/a", "urn:iladub:suggester/fake"))
+    g = Graph()
+    result = ground_document(rep.graph, contract, abstain, terms, shapes, g)
+    grounded = set(g.subjects(RDF.type, ILADUB.GroundedNode))
+    print(f"\nstem FULL document: records={result.records} grounded={len(grounded)} "
+          f"still-quarantined={result.proposed}")
+    assert result.records > 33         # page 0 alone had 33-record-scale; full doc more
+    assert len(grounded) > 167         # more than page 0 alone
+    # every grounded node behind exactly one accountable promotion (the §3 invariant)
+    for n in grounded:
+        assert len(list(g.objects(n, ILADUB.wasPromotedBy))) == 1
+    # the chain-walk invariant: no two rows of the logical table share a record subject
+    records = table_records(rep.graph)
+    assert len(records) == result.records
+    assert len({str(_record_uri(r.row_id)) for r in records}) == len(records)
