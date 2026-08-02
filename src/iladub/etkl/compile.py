@@ -449,7 +449,6 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     denom = asserted_total + escalated_total
     score = 1.0 if denom == 0 else asserted_total / denom
 
-
     if validate_shapes and (
         any(graph.subjects(RDF.type, TAB.RecordTable))
         or any(graph.subjects(RDF.type, TAB.HierarchicalTable))

@@ -21,8 +21,23 @@
 #       AGREEING ink origin, and
 #   (c) the mirror: no column of page N's leaf row is left without such a counterpart — so an
 #       extra or missing column on either page refuses, and
-#   (d) the two pages' AUTHOR-DRAWN leaf-grid boundaries agree one-for-one.
+#   (d) the two pages' AUTHOR-DRAWN leaf-grid boundaries agree AS SETS, under COORD_EPS: every
+#       boundary on each side has an agreeing counterpart on the other. Set-wise, not one-for-one
+#       — a boundary drawn twice at the same x is tolerated, which is correct (it is one mark).
 # Any partial match refuses. There is no "mostly the same header".
+#
+# WHAT THIS LAW CANNOT SEPARATE — THE CASE-2 / CASE-3 BOUNDARY (honest, §7; residue R33)
+# The evidence is the REPEATED HEADER BLOCK, and two logically INDEPENDENT tables built from one
+# template share that evidence exactly. Measured (loop M task 2 review, synthetic 2-page PDF):
+# same `Store | Item | Qty` header at the same grid, DIFFERENT data, even different per-page
+# banners — the law stitches them, and tab:continuesTable is asserted between two tables that are
+# not one table. That is taxonomy case 3 (spec §2b defers it), and this law does not decide it:
+# case 2 and case 3 are indistinguishable from the header block ALONE.
+# A discriminator IS available and is NOT text reading: the BODY side. A paginated table is cut
+# BY the page edge, so page N-1's table runs to that page's LAST text line; an independent table
+# ends before it, with a banner or whitespace after. That is a presence/ordering fact over lines
+# already extracted — no threshold, no distance. See R33 for the full statement; until it lands,
+# every caller must treat recognition as "the header repeats", not "these are one table".
 #
 # CLAUSE (d)'s COMPARISON BASIS — MEASURED, not assumed (specimen: the 3-page GrainCorp stem,
 # corpus/ag-trade/graincorp-stem-2026-07-31.pdf, measured 2026-08-02):
@@ -36,9 +51,17 @@
 #     refuse every pair. (Per-leaf-cell column-left-x fails for the same reason: the last
 #     column's left edge IS that inferred gutter.)
 #   * the AUTHOR-DRAWN leaf-grid boundaries DO agree, exactly, on both pairs (16 of 18
-#     boundaries; the two dropped are precisely loop G's inferred pair). That is the basis this
-#     clause uses: a mark the author drew is a property of the table, a boundary the pipeline
-#     inferred is a property of one page's ink. Only the former can be compared across a break.
+#     boundaries; the two dropped are precisely loop G's inferred pair — 751.54, which happens to
+#     agree on all three pages, and the gutter, which does not). That is the basis this clause
+#     uses: a mark the author drew is a property of the TABLE, a boundary the pipeline inferred is
+#     a property of ONE PAGE'S INK. Only the former can be compared across a break — and an
+#     inferred boundary that happens to agree (751.54) is a coincidence of this document's ink,
+#     not evidence about the author's grid, so it is excluded for the same reason as the one that
+#     moves.
+#   * a second reason to restrict to author marks, which matters independently: R32 (loop G can
+#     FABRICATE a boundary inside spanning ink that contains a space). A fabricated boundary
+#     carries no rule, so it can never enter this clause — clause (d) is immune to R32 by
+#     construction.
 # Clause (d) is VACUOUS when neither page presents an author-drawn boundary (a wholly inferred
 # grid): open world, no author mark to contradict. That is deliberate — the clause can only speak
 # where the author left marks — and clauses (b)/(c) still bind column for column.
@@ -93,7 +116,9 @@ SELECT ?prior ?continuation WHERE {
       ?pc2 tab:originAgreesWith ?cc2 .
     }
   }
-  # CLAUSE (d) — the author's drawn grid is the same grid, both directions.
+  # CLAUSE (d) — the author's drawn grid is the same grid: set-wise agreement, both directions
+  # (every boundary on each side has SOME agreeing counterpart on the other — a mark drawn twice
+  # at one x is one mark, and is tolerated).
   FILTER NOT EXISTS {
     ?prior tab:hasAuthorBoundary ?pb1 .
     FILTER NOT EXISTS {

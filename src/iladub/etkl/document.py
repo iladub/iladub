@@ -23,8 +23,17 @@ WHY THIS EXISTS (spec 2026-08-02 §3b; residue R29)
 THE LAW (stated in full in continuation-of.rq, with the measurement behind clause (d))
   Page N continues page N-1 iff both pages present a leaf header row, every column matches
   column-for-column by EXACT text at an agreeing ink origin in BOTH directions, and the two
-  pages' AUTHOR-DRAWN leaf-grid boundaries agree. Nothing is read for meaning: two renderings of
-  one string are compared for identity, which is evidence comparison, not text reading.
+  pages' AUTHOR-DRAWN leaf-grid boundaries agree as SETS under COORD_EPS. Nothing is read for
+  meaning: two renderings of one string are compared for identity, which is evidence comparison,
+  not text reading.
+
+  ITS KNOWN FALSE-POSITIVE CLASS (residue R33; measured, not theorised): two INDEPENDENT tables
+  built from one TEMPLATE — same header, same grid, different data — satisfy every clause, and
+  the law stitches them. That is the taxonomy case-2 / case-3 boundary, and this law does not
+  decide it. Recognition therefore means "the header block repeats and the grid matches", which
+  is necessary but NOT sufficient for "these are one table"; anything that acts on recognition
+  (task 3's carriage, task 4's chain-walk) inherits the exposure. The closing discriminator is
+  the BODY side, not text reading — see continuation-of.rq's header.
 
 WHAT THIS TASK DOES AND DOES NOT DO (loop M task 2 — state the mid-loop state honestly)
   Recognition only. A recognized continuation page is compiled exactly as before, so on the
@@ -98,9 +107,14 @@ def _author_boundaries(band, grid) -> tuple[float, ...]:
     """Those leaf-grid boundaries the AUTHOR actually DREW (a vertical rule sits on them).
 
     The exclusions are MEASURED, not assumed — see continuation-of.rq's header for the numbers.
-    Loop G's header-CONFIRMED boundaries are inferred from one page's ink and move page to page
-    (798.54 / 802.04 / 792.04 for the same gutter on the specimen's three pages), so they say
-    nothing about whether two pages share the author's grid. Author marks do.
+    Loop G's header-CONFIRMED boundaries are inferred from ONE page's ink, so they say nothing
+    about whether two pages share the AUTHOR's grid. Measured on the specimen, TWO boundaries drop
+    from the full leaf grid, and they behave differently: the gutter before the last column MOVES
+    (798.54 / 802.04 / 792.04 across the three pages), while 751.54 happens to be identical on all
+    three. Both are excluded, and for the same reason — an inferred boundary that agrees agrees by
+    coincidence of this document's ink, which is not evidence about the author's grid. (The
+    restriction also makes the clause immune to R32: a boundary loop G FABRICATED inside spanning
+    ink carries no rule, so it can never enter the comparison.)
 
     COORD_EPS is the float-comparison epsilon on an EQUALITY (both sides derive from the same
     rule list, via `round(r.x, 2)` in the grid recovery), never a proximity window.
@@ -157,6 +171,11 @@ def continuation_evidence_from_facts(prior_cells, continuation_cells,
     Every float comparison happens HERE, with COORD_EPS, and surfaces as a presence link
     (`tab:originAgreesWith` / `tab:boundaryAgreesWith`) — which is why the query carries no
     numeric literal at all (the ruledroles idiom, loop L).
+
+    NOTE the two uses of the coordinates are deliberately different: the `tab:leafOriginX` /
+    `tab:ruledBoundaryX` literals are ROUNDED (2 dp) because they exist only to make the evidence
+    graph readable as an audit trail, while every AGREEMENT link is computed on the UNROUNDED
+    floats — so no comparison ever inherits a rounding artefact.
     """
     g = Graph()
     prior, cur = URIRef(f"{_EV}prior"), URIRef(f"{_EV}continuation")
@@ -259,6 +278,17 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     only candidates are the table that CLOSES page N-1 (its last band evidencing a leaf block)
     and the one that OPENS page N (its first). The law then decides; a page that evidences
     nothing, or whose evidence does not match, stays independent.
+
+    COVERAGE LIMIT of that pairing, stated plainly: EXACTLY ONE candidate pair is tested per page
+    break. A page carrying several tables, of which a middle one is the continued one, is not
+    reached; two tables continuing across the same break are not reached either. The bias is
+    toward REFUSAL (an unexamined pair stays independent), never toward a wrong stitch.
+
+    FALSE-POSITIVE CLASS (residue R33 — read before consuming `chains`): recognition means "the
+    header block repeats and the author's grid matches", which two INDEPENDENT tables built from
+    one template satisfy exactly (measured). It is necessary, not sufficient, for "one table" —
+    the case-2 / case-3 boundary. See continuation-of.rq's header for the measurement and for the
+    body-side discriminator that would close it.
     """
     n_pages = page_count(pdf_path)
     pages: list[CompilationReport] = []

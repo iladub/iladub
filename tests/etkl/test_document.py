@@ -11,6 +11,10 @@ def test_case1_unrelated_pages_never_stitch(tmp_path):
     rep = compile_document(pdf)
     assert len(rep.pages) == 2
     assert all(len(chain) == 1 for chain in rep.chains), rep.chains
+    # The RECOGNITION itself must refuse, not merely fail to produce a chain: the chain is empty
+    # whenever a page asserts no table, so `chains` alone would still pass if the law over-reached.
+    # (This also guards the R33 activation path — carriage in task 3 keys off `recognized`.)
+    assert rep.recognized == (), rep.recognized
     # both pages' tables asserted independently
     assert all(any(r.verdict == "asserted" for r in p.regions) for p in rep.pages)
 
@@ -56,6 +60,55 @@ def test_continuation_law_needs_both_leaf_rows():
     assert not is_continuation(continuation_evidence_from_facts([], []))
 
 
+def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
+    """PINS A KNOWN LIMIT, not a desired behaviour (residue R33).
+
+    Two logically INDEPENDENT tables built from one template — same `Store|Item|Qty` header on the
+    same grid, different data, different per-page banners — satisfy every clause of the
+    continuation law, because its evidence is the repeated header block and they share it exactly.
+    Measured: `recognized == ((0, 1),)` and `tab:continuesTable` asserted between them.
+
+    This is the taxonomy case-2 / case-3 boundary (spec §2b defers case 3). The test exists so the
+    exposure is executable rather than merely written down, and so that whoever closes R33 (a
+    body-side presence discriminator — does page N-1's table run to that page's last text line?)
+    is forced to come here and invert it.
+    """
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from iladub.etkl.document import compile_document
+    from iladub.etkl.holon import TAB
+
+    cols = [(60.0, 160.0), (170.0, 260.0), (270.0, 360.0)]
+
+    def _page(c, banner, rows, top):
+        c.setFont("Courier-Bold", 10)
+        c.drawString(60.0, top + 30, banner)
+        for (l, _r), h in zip(cols, ["Store", "Item", "Qty"]):
+            c.drawString(l, top, h)
+        c.setFont("Courier", 10)
+        for i, row in enumerate(rows):
+            y = top - (i + 1) * 18.0
+            for (l, _r), cell in zip(cols, row):
+                c.drawString(l, y, cell)
+        c.setLineWidth(0.7)
+        bottom = top - (len(rows) + 1) * 18.0
+        for (l, _r) in cols:
+            c.line(l - 4, top + 12, l - 4, bottom)
+        c.line(cols[-1][1] + 4, top + 12, cols[-1][1] + 4, bottom)
+
+    pdf = str(tmp_path / "template.pdf")
+    top = letter[1] - 90.0
+    c = canvas.Canvas(pdf, pagesize=letter)
+    _page(c, "NORTH REGION WEEKLY", [("Alpha", "Bolt", "10"), ("Beta", "Nut", "20")], top)
+    c.showPage()
+    _page(c, "SOUTH REGION MONTHLY", [("Gamma", "Screw", "30"), ("Delta", "Nail", "40")], top)
+    c.save()
+
+    rep = compile_document(pdf)
+    assert rep.recognized == ((0, 1),), rep.recognized          # the false positive, measured
+    assert list(rep.graph.subject_objects(TAB.continuesTable)), "R33: the stitch is asserted"
+
+
 def test_leaf_block_reads_the_production_bands(tmp_path):
     """The PRODUCTION evidence path, not hand-built facts: the driver's leaf_block must read a
     real compiled band's leaf header row (one cell per ruled column, exact text, ink origin) and
@@ -85,4 +138,5 @@ def test_single_page_document_matches_compile_tables(tmp_path):
     doc = compile_document(pdf)
     assert len(doc.pages) == 1
     assert doc.score == single.score
-    assert len(doc.graph) >= len(single.graph)   # same assertions (URIs may be page-scoped)
+    # EXACT, not >=: page-scoping renames URIs, it must not add or lose a triple (measured 175==175)
+    assert len(doc.graph) == len(single.graph)
