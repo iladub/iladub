@@ -41,18 +41,24 @@ WHAT THE SHACL ORACLE DOES AND DOES NOT DO (review finding F3 — state this acc
   evidence each role requires. Do not describe the oracle as a correctness backstop.
 
 KNOWN RESIDUES (honest, not silently absorbed; to be registered at loop close)
-  * CENTRE-ALIGNED wrapped headers are not recovered: their lines share neither edge, so
-    `_shares_origin` refuses and the row falls to `level` — today's behaviour, i.e. escalation.
-    An honest miss, never a wrong assertion.
-  * A label that is NOT a wrap fragment but happens to sit strictly inside one ruled column AND to
-    share that column's leaf label's exact left or right edge would be welded onto it. This is the
-    residual of loop C's Finding 3, now reduced from "any short label" to "a label laid out from
-    the identical coordinate as the leaf label" — the signature of same-cell text.
+  * THE UNDERDETERMINED RESIDUAL, and the reason this slice is scoped the way it is: WITHOUT an
+    author header-block rule, a short merged parent and a wrap fragment are not separable by ruled
+    geometry. Measured (re-review round 2): a parent 'Arr' left-aligned at its column's leaf-label
+    x0 shares that origin BY CONSTRUCTION — every cell in a left-aligned column starts at the same
+    coordinate — so no alignment predicate can tell them apart, and reading the label TEXT is
+    forbidden here (R4). Loop L therefore does not attempt it: such pages fall outside clause 0's
+    engagement context and keep their pre-loop-L reading. NAMED FUTURE DISPOSITION: §8 sends this
+    to NEURAL — a proposer reading the joined text ("does 'Arr Tonnes' read as one column name?"),
+    disposed by the tiling oracle, exactly as loop C's rowrole slice already does for the
+    borderless case. It is a reading judgment, not a geometry gap.
+  * CENTRE-ALIGNED wrapped headers inside an engaged header block are not recovered: their lines
+    share neither edge, so `_shares_origin` refuses, the row derives `level`, and the derivation
+    abstains. An honest miss, never a wrong assertion.
   * Loop G's header-confirmed refinement can fabricate a column boundary inside a spanning label
-    that contains a space (a pre-existing defect). Loop L does NOT worsen it in the reading — a
-    spanning label's fragments do not share the leaf labels' origins, so they stay `level` — but
-    the fabricated column does change the grid this law is evaluated against, so loop L AMPLIFIES
-    its consequences: clause 1 may pass on a grid the author never drew. Registered as such.
+    that contains a space (a pre-existing defect). Loop L does not worsen the reading, but the
+    fabricated column changes the grid this law is evaluated against, so loop L AMPLIFIES its
+    consequences: clause 1 may pass on a grid the author never drew. Closing it means making
+    banner/spanner ink ineligible to confirm a boundary.
 """
 from __future__ import annotations
 
@@ -95,17 +101,24 @@ def _within(x0: float, x1: float, b, c: int) -> bool:
 def _shares_origin(a, b_) -> bool:
     """The two cells share an ALIGNMENT ORIGIN — the same left edge or the same right edge.
 
-    Wrapped lines of one table cell are laid out from that cell's own origin: left-aligned text
-    shares x0, right-aligned text shares x1. So a header fragment sharing its leaf label's origin
-    is the renderer's own accommodation, read back (spec §2b) — positive evidence that the two are
-    lines of ONE cell rather than two independent labels. Measured on the specimen: all eight wrap
-    fragments match their leaf label's x0 to the bit, while the leaked date line's ink in the same
-    column does not (398.28 vs 376.32).
+    WHAT THIS DOES AND DOES NOT ESTABLISH (re-review finding N1 — the round-1 docstring overstated
+    it, and the overstatement was the defect). A shared origin EXCLUDES centre-aligned spanners:
+    a merged label centred over a column group shares no edge with any leaf label, so it cannot be
+    read as a continuation. It does NOT, on its own, distinguish a wrap fragment from a merged
+    parent in the common LEFT-ALIGNED regime — there, every cell in a column starts at the same x
+    BY CONSTRUCTION, so a short parent left-aligned in its cell shares the leaf label's x0 exactly.
+    Measured: a parent 'Arr' drawn at the leaf's own x0 derives `continuation` on this predicate
+    alone and welds a correct two-level header into a flat one. The specimen measurement quoted in
+    round 1 (fragments matching their leaf label's x0 to the bit) is real but proves only that
+    wrap fragments DO share the origin — not that parents do not.
+
+    What carries the discrimination is therefore the STRUCTURAL engagement clause (clause 0 of
+    header-row-role.rq): the derivation runs only inside an author-delimited header block, with
+    furniture above the block rule and continuations below it. This predicate is the secondary
+    filter that removes centre-aligned spanners from the rows the structure admits.
 
     COORD_EPS is the float-comparison epsilon on an EQUALITY, not a proximity window: nothing
-    "close enough" passes, only ink laid out from the same coordinate. Centre-aligned cells are
-    deliberately NOT matched — their wrapped lines share no edge, so this law abstains on them
-    (they fall to `level`, i.e. today's behaviour). Registered as a residue, not silently absorbed.
+    "close enough" passes, only ink laid out from the same coordinate.
     """
     return abs(a.x0 - b_.x0) <= COORD_EPS or abs(a.x1 - b_.x1) <= COORD_EPS
 
@@ -216,9 +229,12 @@ def role_evidence(band, header_rows, grid) -> Graph:
         g.add((ru, RDF.type, TAB.HeaderRegionRow))
         g.add((ru, TAB.headerRowOrder, Literal(r, datatype=XSD.integer)))
         row_bottom = max(c.bottom for c in row)
+        row_top = min(c.top for c in row)
         for hu, h in block_rules:
             if row_bottom <= h.y + COORD_EPS:          # the row's ink lies wholly above the rule
                 g.add((ru, TAB.rowAboveHeaderBlockRule, hu))
+            elif row_top >= h.y - COORD_EPS:           # ...wholly below it (and above the leaf)
+                g.add((ru, TAB.rowBelowHeaderBlockRule, hu))
         for j, cell in enumerate(row):
             cu = URIRef(f"{_EV}row{r}c{j}")
             g.add((cu, RDF.type, TAB.HeaderRegionCell))
@@ -274,9 +290,11 @@ def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page):
     to its unchanged pre-loop-L path.
 
     Abstains (None) without touching `graph` when:
-      * the roles cannot be derived (preconditions P1-P3 above);
-      * the derived vector says every row is a `level` — that IS the pre-loop-L reading, so there
-        is nothing to re-read and the caller's own path handles it verbatim;
+      * the roles cannot be derived (preconditions P1-P3, or the clause-0 engagement context);
+      * ANY row derives `level`. Round 2 tightened this from "every row" to "any row": a partly
+        evidenced reading was asserting the UNEVIDENCED rows too, which is how a rule-chopped
+        banner ended up asserted as a level-0 parent under strings the author never wrote (N3).
+        The law now speaks only when it can account for the whole header stack;
       * build_row_reading refuses the rewrite (an unplaceable continuation fragment);
       * the resulting region does not tile or loses header content (the SHACL oracle refuses).
 
@@ -292,7 +310,7 @@ def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page):
 
     header_rows = header_rows_of(band, hreg.grid, hreg.body_line)
     roles = derive_row_roles(band, header_rows, hreg.grid)
-    if roles is None or all(r == "level" for r in roles):
+    if roles is None or any(r == "level" for r in roles):
         return None
 
     built = build_row_reading(header_rows, hreg.grid, roles)

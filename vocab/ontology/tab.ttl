@@ -311,6 +311,8 @@ tab:HeaderBlockRule a owl:Class ; rdfs:label "Header block rule"@en ;
 tab:hasHeaderRegionCell a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderRegionCell ; rdfs:label "has header region cell"@en .
 tab:rowAboveHeaderBlockRule a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderBlockRule ; rdfs:label "row above header block rule"@en ;
     rdfs:comment "The row's ink lies wholly above this header-block rule, so the author placed it outside the header block."@en .
+tab:rowBelowHeaderBlockRule a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderBlockRule ; rdfs:label "row below header block rule"@en ;
+    rdfs:comment "The row's ink lies wholly below this header-block rule and above the leaf row, i.e. INSIDE the author's header block. With tab:rowAboveHeaderBlockRule this pair is the engagement context of header-row-role.rq clause 0: the law runs only where one block rule separates a furniture band from a wrapped-label band."@en .
 # NOTE (review finding F6): tab:withinRuledColumn is asserted on BOTH tab:HeaderRegionCell and
 # tab:LeafHeaderCell subjects, so it carries NO rdfs:domain — an rdfs:domain here would let
 # inference (region_tiles validates with inference="rdfs") type every leaf cell as a

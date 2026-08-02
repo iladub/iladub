@@ -129,21 +129,86 @@ def test_header_block_rule_is_the_furniture_evidence(tmp_path):
         out[flag] = derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line),
                                      hreg.grid)
     assert out[True] == ("furniture", "continuation", "continuation"), out
-    assert out[False] == ("level", "continuation", "continuation"), out
+    assert out[False] is None, out          # no block rule -> outside the engagement context
 
 
-def test_banner_without_block_rule_is_not_demoted(tmp_path):
-    """With no authorial mark, the spanning top line keeps its pre-loop-L reading as a header
-    node — it is NEVER silently turned into a caption."""
+def test_banner_without_block_rule_escalates(tmp_path):
+    """RE-REVIEW FINDING N3 (this test previously PINNED the defect it now forbids).
+
+    With no header-block rule the top line is unevidenced. Round 1 still asserted the region,
+    reading the rule-CHOPPED banner fragments — 'Monday-03-' and 'August-Rpt', strings the author
+    never wrote — as a level-0 parent over real columns. That is an ungrounded header edge, not a
+    source-faithful reading (§7). The page must escalate exactly as BASE does."""
     from iladub.etkl import compile_tables
     from tests.etkl.fixtures import stacked_banner_ruled_pdf
     pdf = str(tmp_path / "nobar.pdf")
     stacked_banner_ruled_pdf(pdf, block_rule=False)
     rep = compile_tables(pdf)
-    assert _captions(rep.graph) == [], _captions(rep.graph)
+    assert any(r.verdict == "escalated" for r in rep.regions), \
+        [(r.kind, r.verdict, r.reason, r.cells) for r in rep.regions]
     labels = _labels(rep.graph)
-    assert any("Monday" in lb for lb in labels), labels          # carried as a LABEL, not furniture
-    assert "Total Grain Tonnes" in labels, labels                # the evidenced part still applies
+    assert not any("Monday" in lb or "August" in lb for lb in labels), labels
+    assert _captions(rep.graph) == [], _captions(rep.graph)
+
+
+def _ab(pdf):
+    """(FIX report, BASE report) for the same page — BASE = the loop-L hook disabled."""
+    from iladub.etkl import compile_tables
+    import iladub.etkl.ruledroles as ruledroles
+    fix = compile_tables(pdf)
+    real = ruledroles.resolve_ruled_header_rows
+    ruledroles.resolve_ruled_header_rows = lambda *a, **k: None
+    try:
+        base = compile_tables(pdf)
+    finally:
+        ruledroles.resolve_ruled_header_rows = real
+    return fix, base
+
+
+def test_left_aligned_parent_is_not_welded(tmp_path):
+    """RE-REVIEW FINDING N1. A short parent left-aligned on its column's leaf-label origin shares
+    that origin BY CONSTRUCTION, so the alignment predicate alone reads it as a wrap fragment and
+    welds BASE's correct two-level header flat — at an identical score, silently. With no
+    header-block rule the page is outside the engagement context, so nothing is derived."""
+    from iladub.etkl.headers import header_rows_of
+    from iladub.etkl.ruledroles import derive_row_roles
+    from tests.etkl.fixtures import left_aligned_parent_ruled_pdf
+    pdf = str(tmp_path / "leftparent.pdf")
+    truth = left_aligned_parent_ruled_pdf(pdf)
+
+    band, hreg = _ruled_band(pdf)
+    assert derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line),
+                            hreg.grid) is None
+
+    fix, base = _ab(pdf)
+    assert [(r.verdict, r.reason, r.cells) for r in fix.regions] == \
+           [(r.verdict, r.reason, r.cells) for r in base.regions]
+    assert fix.score == base.score
+    labels = _labels(fix.graph)
+    assert truth["welded_if_broken"] not in labels, labels       # 'Arr Tonnes' must NOT appear
+    assert truth["parent"] in labels, labels                     # 'Arr' stays its own header node
+
+
+def test_bordered_two_level_header_is_not_demoted(tmp_path):
+    """RE-REVIEW FINDING N2. Excel's "all borders" draws a rule between the last parent row and
+    the leaf row; every parent row then lies above it. Treating "above a block rule" as furniture
+    on its own demotes a whole genuine header tree to captions. The engagement context also
+    demands a row BELOW the rule, which this shape has not, so the law abstains."""
+    from iladub.etkl.headers import header_rows_of
+    from iladub.etkl.ruledroles import derive_row_roles
+    from tests.etkl.fixtures import bordered_two_level_header_ruled_pdf
+    pdf = str(tmp_path / "bordered.pdf")
+    bordered_two_level_header_ruled_pdf(pdf)
+
+    band, hreg = _ruled_band(pdf)
+    assert derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line),
+                            hreg.grid) is None
+
+    fix, base = _ab(pdf)
+    assert [(r.verdict, r.reason, r.cells) for r in fix.regions] == \
+           [(r.verdict, r.reason, r.cells) for r in base.regions]
+    assert fix.score == base.score
+    assert _captions(fix.graph) == [], _captions(fix.graph)       # no level demoted to furniture
 
 
 @pytest.mark.parametrize("chop_mid_word", [True, False])

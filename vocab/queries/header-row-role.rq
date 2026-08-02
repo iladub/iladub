@@ -36,6 +36,24 @@
 # the oracle.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT ?row ?role WHERE {
+  # CLAUSE 0 — THE ENGAGEMENT CONTEXT (re-review round 2). The law runs only inside a header block
+  # the AUTHOR delimited, in the exact configuration the specimen evidences:
+  #   * EXACTLY ONE header-block rule inside the header region (two or more and the block structure
+  #     is itself ambiguous — abstain rather than pick one);
+  #   * at least one non-leaf row wholly ABOVE it (the furniture band), AND
+  #   * at least one non-leaf row wholly BELOW it (the wrapped-label band).
+  # Without this clause the two role predicates over-reach, measured three ways: a left-aligned
+  # short parent shares the leaf's origin BY CONSTRUCTION and was welded onto it (N1); a bordered
+  # multi-row header, whose rule sits between the parent row and the leaf row, had every genuine
+  # level demoted to a caption (N2); and a rule-chopped banner with no block rule at all was
+  # asserted as a level-0 parent under strings the author never wrote (N3). All three now fall
+  # outside the engagement context and keep their pre-loop-L reading.
+  ?anyrule a tab:HeaderBlockRule .
+  FILTER NOT EXISTS {
+    ?h1 a tab:HeaderBlockRule . ?h2 a tab:HeaderBlockRule . FILTER(?h1 != ?h2)
+  }
+  FILTER EXISTS { ?rowA a tab:HeaderRegionRow ; tab:rowAboveHeaderBlockRule ?anyrule }
+  FILTER EXISTS { ?rowB a tab:HeaderRegionRow ; tab:rowBelowHeaderBlockRule ?anyrule }
   # CLAUSE 1 — the leaf header row must align 1:1 with the ruled columns, or the stack is not the
   # shape this law governs and NO row gets a role (an empty result; the caller then keeps its
   # pre-loop-L behaviour). Stated as three presence patterns, so there is no count to compare:
@@ -55,9 +73,15 @@ SELECT ?row ?role WHERE {
     ?lb a tab:LeafHeaderCell ; tab:withinRuledColumn ?dcol .
     FILTER(?la != ?lb)
   }
-  # CLAUSE 2 — the role of each row ABOVE the leaf. Both non-default roles are evidence-POSITIVE.
+  # CLAUSE 2 — the role of each row ABOVE the leaf. Both non-default roles are evidence-POSITIVE
+  # and BOTH are now anchored to the block rule, not merely to cell geometry.
   ?r a tab:HeaderRegionRow ; tab:headerRowOrder ?row .
   BIND(EXISTS { ?r tab:rowAboveHeaderBlockRule ?hbr } AS ?aboveBlock)
+  BIND(EXISTS { ?r tab:rowBelowHeaderBlockRule ?hbr2 } AS ?belowBlock)
+  # every cell sits strictly inside a ruled column AND shares that column's leaf-label origin.
+  # This is the SECONDARY filter (it removes centre-aligned spanners); the structure above is what
+  # establishes that rows in this band are wrapped label lines at all — see _shares_origin's
+  # docstring for why this predicate alone is not discriminating.
   BIND(NOT EXISTS {
       ?r tab:hasHeaderRegionCell ?c .
       FILTER NOT EXISTS {
@@ -65,5 +89,6 @@ SELECT ?row ?role WHERE {
         ?leaf a tab:LeafHeaderCell ; tab:withinRuledColumn ?col .
       }
   } AS ?allContinue)
-  BIND(IF(?aboveBlock, "furniture", IF(?allContinue, "continuation", "level")) AS ?role)
+  BIND(IF(?aboveBlock, "furniture",
+       IF(?belowBlock && ?allContinue, "continuation", "level")) AS ?role)
 }
