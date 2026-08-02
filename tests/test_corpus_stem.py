@@ -29,3 +29,49 @@ def test_stem_page0_compiles():
     # lands below this floor: STOP, report the measured score to the controller —
     # do not lower the bar (Global Constraints: honest failure).
     assert rep.score >= 0.9, f"score {rep.score:.4f}"
+
+
+@needs_stem
+def test_stem_page0_grounds_against_contract():
+    """Loop K's capstone on the LIVE document: assert/propose split with accountable
+    promotions; non-grain cargo refused. Tallies are printed (edition-dependent),
+    invariants are asserted (edition-independent)."""
+    from rdflib import Graph, Namespace, RDF
+    from iladub.etkl import compile_tables
+    from iladub.feed import ground_document
+    from iladub.ground import load_contract
+    from iladub.propose_ground import FakeGroundingProposer, GroundingProposal
+
+    ILADUB = Namespace("https://w3id.org/iladub#")
+    SHIP = Namespace("https://example.org/shipping#")
+    rep = compile_tables(str(STEM), page_number=0)
+    contract = load_contract("examples/shipping/stem-contract.ttl")
+    terms = Graph().parse("examples/shipping/stem-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/shipping/stem-shapes.ttl", format="turtle")
+    abstain = FakeGroundingProposer(GroundingProposal(
+        None, str(SHIP) + "x", 0.1, "n/a", "urn:iladub:suggester/fake"))
+    g = Graph()
+    ground_document(rep.graph, contract, abstain, terms, shapes, g)
+    grounded = set(g.subjects(RDF.type, ILADUB.GroundedNode))
+    proposed = set(g.subjects(RDF.type, ILADUB.CandidateConcept))
+    print(f"\nstem 2026-07-31 p0: grounded={len(grounded)} quarantined={len(proposed)}")
+    assert len(grounded) >= 50 and len(proposed) > 0
+    # every grounded node behind exactly one accountable promotion (the §3 invariant)
+    for n in grounded:
+        assert len(list(g.objects(n, ILADUB.wasPromotedBy))) == 1
+    # honest refusal: non-grain cargo visible on this edition (Woodchip, Cement rows
+    # measured in the ascii render) must NOT ground through the grain scheme.
+    # iladub:surfaceText's rdfs:domain is CandidateConcept, not GroundedNode (see
+    # vocab/ontology/iladub.ttl:83-84) — a GroundedNode carries its surface text one hop
+    # back, via wasPromotedBy -> PromotionDecision -> reviews -> CandidateConcept (the
+    # same traversal tests/test_stem_contract.py::test_injected_key_grounds_end_to_end
+    # uses to resolve provenance), so walk that chain rather than reading the predicate
+    # off the grounded node directly.
+    grounded_texts = set()
+    for n in grounded:
+        pd = g.value(n, ILADUB.wasPromotedBy)
+        cand = g.value(pd, ILADUB.reviews)
+        for t in g.objects(cand, ILADUB.surfaceText):
+            grounded_texts.add(str(t))
+    assert not any("Woodchip" in t or "Cement" in t for t in grounded_texts), \
+        sorted(t for t in grounded_texts if "Wood" in t or "Cem" in t)
