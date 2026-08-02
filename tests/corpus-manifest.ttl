@@ -1,0 +1,17 @@
+# tests/corpus-manifest.ttl — the real-document corpus manifest (spec 2026-08-02 §4).
+# cor: is repo-internal (like dg:) — not published, not w3id-registered.
+# Documents are FETCHED, never committed; the sha256 pins the edition measured.
+@prefix cor: <https://w3id.org/iladub/corpus#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:corpus:graincorp-stem-2026-07-31> a cor:Document ;
+    cor:file "ag-trade/graincorp-stem-2026-07-31.pdf" ;
+    cor:url "https://grains.graincorp.com.au/wp-content/uploads/2021/02/Shipping-Stem-2026-07-31.pdf" ;
+    cor:family "ag-trade" ;
+    cor:series "graincorp-shipping-stem" ;
+    cor:producer "Microsoft: Print To PDF" ;
+    cor:fetched "2026-08-02"^^xsd:date ;
+    cor:sha256 "3bda68331024dbc802ad7d965dd114aeaff138c65c0571cc4d0a90d2a8b64eee" ;
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-02"^^xsd:date ;
+        cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] .

@@ -85,3 +85,6 @@ target-version = "py311"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "corpus: real third-party documents (gitignored corpus/; run with -m corpus)",
+]

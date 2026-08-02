@@ -802,6 +802,195 @@ def caption_wrap_report_pdf(path: str) -> dict:
             "merged_label": "Unit Ref", "leaf_labels": ["Item", "Ref", "Qty", "Cost"]}
 
 
+def stacked_banner_ruled_pdf(path: str, block_rule: bool = True) -> dict:
+    """LOOP L FIXTURE — a RULED table whose header is a STACK: a banner line drawn over
+    the ruled grid, two wrap-continuation lines, then the 1:1 leaf header line.
+
+    Five ruled columns (rules at 40/110/180/250/320/390). Line by line:
+      line 0  'Monday-03-August-Rpt' centred at x=180, ABOVE a full-width horizontal rule
+              that crosses every interior ruled boundary. That rule is the author's own
+              header-block boundary, and it is the ONLY reason this line reads as furniture
+              (review round 1: reaching 'furniture' by elimination — "ink addressed to no
+              column" — cannot tell a leaked date line from a short merged parent, so the
+              law now demands this mark). Remove the rule and the line correctly falls back
+              to `level`, i.e. the region escalates: see
+              test_banner_without_block_rule_is_not_demoted.
+      lines 1-2  'Total' / 'Grain' drawn at EXACTLY the x of the leaf label below them
+              (112 and 252) — strictly inside one ruled column AND sharing that column's
+              leaf-label alignment origin, which is what makes them wrap-continuation
+              fragments ('Total Grain Tonnes'). The shared origin is load-bearing: it is
+              the renderer's own cell layout, and it is the whole evidence for the role.
+      line 3  'Port' 'Tonnes' 'Ship' 'Tonnes' 'Ship' — one label strictly inside each of
+              the five ruled columns: the LEAF header, aligned 1:1.
+      lines 4+  twenty body rows; columns 1 and 3 numeric, 0/2/4 text (so the region routes
+              the HIERARCHICAL path, not matrix.py's all-numeric-suffix pivot path).
+
+    Measured while writing this fixture (2026-08-02): under the pre-loop-L reading every
+    header line is a header LEVEL, the resulting tree does not tile, and the region
+    escalates REGION_TILING_FAILED with score 0.0.
+
+    The body has TWENTY rows on purpose: compile.py scores a hierarchical region as
+    asserted_body_tokens / all_band_tokens, so the header region's own tokens count
+    against the ratio; a four-row body scores 20/31 = 0.65 for a PERFECTLY compiled
+    table. Twenty rows (100/111 = 0.90) puts a correct reading above the 0.9 floor,
+    matching the row-count regime of the real reports this law is for.
+
+    `block_rule=False` omits the header-block rule, leaving the banner unevidenced — the
+    honest-refusal variant.
+    """
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0, 390.0]
+    xs = [42.0, 112.0, 182.0, 252.0, 322.0]
+    n_body = 20
+    rh = 14.0
+    top = 40.0 + (3 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(430.0, top + 30.0))
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString(180.0, top, "Monday-03-August-Rpt")          # the banner
+    c.setFont("Courier-Bold", 8)
+    for x in (112.0, 252.0):
+        c.drawString(x, top - rh, "Total")                            # wrap fragment 1
+    for x in (112.0, 252.0):
+        c.drawString(x, top - 2 * rh, "Grain")                        # wrap fragment 2
+    for x, t in zip(xs, ["Port", "Tonnes", "Ship", "Tonnes", "Ship"]):
+        c.drawString(x, top - 3 * rh, t)                              # the leaf header
+    c.setFont("Courier", 8)
+    ports = ["Mackay", "Gladstone", "Newcastle", "Portland"]
+    for i in range(n_body):
+        row = (ports[i % len(ports)], str(1000 + 50 * i), "V%02d" % i,
+               str(2000 + 40 * i), "W%02d" % i)
+        for x, t in zip(xs, row):
+            c.drawString(x, top - (4 + i) * rh, t)
+    c.setLineWidth(0.5)
+    for e in edges:
+        c.line(e, top - (4 + n_body) * rh - 4, e, top + 10)
+    if block_rule:
+        # THE HEADER-BLOCK RULE: spans every interior ruled boundary, between the banner
+        # and the first wrap row — the author's "the header block starts below here".
+        c.line(edges[0] - 2.0, top - 0.4 * rh, edges[-1] + 2.0, top - 0.4 * rh)
+    c.save()
+    return {"rule_xs": edges, "n_leaf_cols": 5, "banner": "Monday-03-August-Rpt",
+            "leaf_labels": ["Port", "Tonnes", "Ship", "Tonnes", "Ship"],
+            "merged_labels": ["Total Grain Tonnes"], "n_body_rows": n_body,
+            "has_block_rule": block_rule}
+
+
+def spanner_with_space_ruled_pdf(path: str, chop_mid_word: bool = False) -> dict:
+    """LOOP L ADVERSARIAL FIXTURE (review finding F1/F8) — a ruled table with a GENUINE
+    merged parent label above the leaf header, and NO header-block rule.
+
+    'Arrivals Total' is centred over ruled columns 0-1. There is nothing in the document
+    that says it is furniture, and nothing that says it continues either column's label
+    (it shares neither leaf label's alignment origin), so the law MUST leave it at `level`
+    — its pre-loop-L reading — and the region must escalate rather than assert a reading
+    in which a real group label is demoted to a caption or welded onto a leaf.
+
+    Two variants, because the two ways `rule_aware_lines` can cut the label were both shown
+    to defeat the first version of the law:
+      chop_mid_word=True   the rule falls INSIDE a word, so the two chopped cells sit flush
+                           against the boundary from both sides.
+      chop_mid_word=False  the rule falls in the label's internal SPACE, so the two cells
+                           are separated exactly as a leaked two-word date line would be —
+                           geometrically indistinguishable from furniture.
+    Expected outcome for BOTH: NO derivation (all roles `level`) and an escalated region.
+    """
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0]
+    xs = [42.0, 112.0, 182.0, 252.0]
+    n_body = 20
+    rh = 14.0
+    top = 40.0 + (2 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(360.0, top + 30.0))
+    c.setFont("Courier-Bold", 10)
+    # Courier is monospaced at 0.6 em: 'Arrivals Total' is 14 chars = 84 pt wide. Centring
+    # it at 110 (the rule) puts the rule mid-word; centring at 128 puts the SPACE there.
+    c.drawCentredString(110.0 if chop_mid_word else 128.0, top, "Arrivals Total")
+    c.setFont("Courier-Bold", 8)
+    for x, t in zip(xs, ["Port", "Tonnes", "Ship", "Berth"]):
+        c.drawString(x, top - rh, t)
+    c.setFont("Courier", 8)
+    for i in range(n_body):
+        for x, t in zip(xs, ("Mackay", str(1000 + 50 * i), "V%02d" % i, "B%02d" % i)):
+            c.drawString(x, top - (2 + i) * rh, t)
+    c.setLineWidth(0.5)
+    for e in edges:
+        c.line(e, top - (2 + n_body) * rh - 4, e, top + 10)
+    c.save()
+    return {"rule_xs": edges, "n_leaf_cols": 4, "parent": "Arrivals Total",
+            "expect": "escalated", "n_body_rows": n_body}
+
+
+def left_aligned_parent_ruled_pdf(path: str) -> dict:
+    """LOOP L ADVERSARIAL FIXTURE (re-review finding N1) — a SHORT merged parent drawn
+    LEFT-ALIGNED at exactly its column's leaf-label x, and no header-block rule.
+
+    'Arr' sits at x=112, the same x as the leaf label 'Tonnes' below it, because in a
+    left-aligned table every cell in a column starts at the same coordinate. It therefore
+    shares the leaf label's alignment origin BY CONSTRUCTION — which is precisely why that
+    predicate cannot, on its own, tell a parent from a wrap fragment. Measured before the
+    round-2 narrowing: the law derived ('continuation',) and welded BASE's CORRECT
+    two-level header ('Arr' over 'Tonnes') into a flat 'Arr Tonnes', silently, at the same
+    score, on a region that already tiled.
+
+    Expected: no header-block rule -> outside the engagement context -> NO derivation, and
+    the region compiles exactly as BASE does, with 'Arr' still a header node of its own.
+    """
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0]
+    xs = [42.0, 112.0, 182.0, 252.0]
+    n_body, rh = 20, 14.0
+    top = 40.0 + (2 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(360.0, top + 30.0))
+    c.setFont("Courier-Bold", 8)
+    c.drawString(112.0, top, "Arr")                       # left-aligned ON the leaf origin
+    for x, t in zip(xs, ["Port", "Tonnes", "Ship", "Berth"]):
+        c.drawString(x, top - rh, t)
+    c.setFont("Courier", 8)
+    for i in range(n_body):
+        for x, t in zip(xs, ("Mackay", str(1000 + 50 * i), "V%02d" % i, "B%02d" % i)):
+            c.drawString(x, top - (2 + i) * rh, t)
+    c.setLineWidth(0.5)
+    for e in edges:
+        c.line(e, top - (2 + n_body) * rh - 4, e, top + 10)
+    c.save()
+    return {"rule_xs": edges, "n_leaf_cols": 4, "parent": "Arr", "leaf_under_parent": "Tonnes",
+            "welded_if_broken": "Arr Tonnes", "n_body_rows": n_body}
+
+
+def bordered_two_level_header_ruled_pdf(path: str) -> dict:
+    """LOOP L ADVERSARIAL FIXTURE (re-review finding N2) — TWO genuine group-label rows above
+    ONE header-block rule, with NO row between that rule and the leaf header.
+
+    This is what Excel's "all borders" produces for a bordered multi-row header: a rule is
+    drawn between the last parent row and the leaf row. Measured before the round-2
+    narrowing, at law level: both parent rows lie above the rule, so both derived
+    'furniture' and every genuine header level would have been demoted to a caption.
+
+    Expected: the engagement context requires a row BELOW the block rule as well as above
+    it; here there is none, so the law abstains and the region keeps its BASE reading.
+    """
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0]
+    xs = [42.0, 112.0, 182.0, 252.0]
+    n_body, rh = 20, 14.0
+    top = 40.0 + (3 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(360.0, top + 30.0))
+    c.setFont("Courier-Bold", 8)
+    c.drawString(112.0, top, "Grp")                       # parent row 0
+    c.drawString(252.0, top, "Grp")
+    c.drawString(112.0, top - rh, "Sub")                  # parent row 1
+    c.drawString(252.0, top - rh, "Sub")
+    for x, t in zip(xs, ["Port", "Tonnes", "Ship", "Berth"]):
+        c.drawString(x, top - 2 * rh, t)                  # the leaf header
+    c.setFont("Courier", 8)
+    for i in range(n_body):
+        for x, t in zip(xs, ("Mackay", str(1000 + 50 * i), "V%02d" % i, "B%02d" % i)):
+            c.drawString(x, top - (3 + i) * rh, t)
+    c.setLineWidth(0.5)
+    for e in edges:
+        c.line(e, top - (3 + n_body) * rh - 4, e, top + 10)
+    # the block rule sits between the last PARENT row and the leaf row — no row below it
+    c.line(edges[0] - 2.0, top - 1.4 * rh, edges[-1] + 2.0, top - 1.4 * rh)
+    c.save()
+    return {"rule_xs": edges, "n_leaf_cols": 4, "parents": ["Grp", "Sub"], "n_body_rows": n_body}
+
+
 def image_only_table_pdf(path):
     """A text-layer-LESS PDF: render simple_table_pdf to a raster and place it full-page.
     Pure-pip (PNG, no JPEG encoder). Simulates a scan for the OCR first-mile tests."""

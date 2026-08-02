@@ -39,3 +39,6 @@ htmlcov/
 # Confidential / internal — never commit (client/domain specifics)
 internal/
 .venv/
+
+# Real third-party document corpus — fetched by scripts/fetch_corpus.py, never committed
+corpus/

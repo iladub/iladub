@@ -315,7 +315,29 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 from .holon import assert_hier_region
                 hreg = classify_hierarchical(band)
                 from .headers import merge_tiling_ok
-                if hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
+                # LOOP L (AXIOM) — the header-stack law. Under RULED evidence the author drew the
+                # columns, so which header row is the leaf and what each row above it is are FACTS
+                # (vocab/queries/header-row-role.rq), not reading judgments. Tried FIRST because a
+                # derivable answer outranks a proposal (§8: the default is semantic). It abstains
+                # unless the band is ruled, the leaf row aligns 1:1 with the ruled columns, and the
+                # derived reading passes the SHACL tiling+conservation oracle — so every borderless
+                # region, and every ruled region whose rows are all genuine levels, reaches the
+                # unchanged branches below exactly as before.
+                ruled_reading = None
+                if hreg is not None:
+                    from .ruledroles import resolve_ruled_header_rows
+                    table_uri = URIRef(f"{_DOC}#htable{idx}")
+                    ruled_scratch = Graph()
+                    ruled_reading = resolve_ruled_header_rows(
+                        ruled_scratch, hreg, band, table_uri, _DOC, page_number)
+                if ruled_reading is not None:
+                    graph += ruled_scratch
+                    tokens = sum(len(ln.words) for ln in band.lines)
+                    asserted_total += ruled_reading
+                    escalated_total += max(0, tokens - ruled_reading)
+                    reports.append(RegionReport(region.kind, "asserted", ruled_reading, None,
+                                                str(TAB.HierarchicalTable), ascii_view))
+                elif hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
                     table_uri = URIRef(f"{_DOC}#htable{idx}")
                     resolved = None
                     if span_proposer is not None:

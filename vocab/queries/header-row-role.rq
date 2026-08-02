@@ -1,0 +1,94 @@
+# header-row-role.rq (loop L, 2026-08-02; revised after review round 1) — THE HEADER-STACK LAW.
+#
+# Open-world derivation (CLAUDE.md §8): the role of each NON-LEAF header row is GROWN from marks the
+# AUTHOR made — the vertical rules that define the columns, and the horizontal rule that closes the
+# header block. Every input is a PRESENCE fact emitted by ruledroles.role_evidence (tested there
+# with the established COORD_EPS float epsilon), so this query carries no numeric literal and no
+# tolerance. Nothing here reads label TEXT — geometry and rules only (residue R4's lesson).
+#
+# BOTH non-default roles require POSITIVE evidence; `level` — today's unchanged parent pipeline —
+# is the default, so a row this law cannot evidence keeps its pre-loop-L reading and the region
+# takes its pre-loop-L outcome.
+#
+# THIS IS THE REVIEW-ROUND-1 CORRECTION. The first version reached `furniture` by ELIMINATION ("a
+# cell addressed to no ruled column"), which cannot distinguish a leaked date line from a short
+# merged parent — demonstrated three ways (a parent chopped mid-word by a rule; a parent whose
+# internal space becomes a confirmed boundary; a complete edge-filling parent row). Each turned an
+# honest MERGE_AMBIGUOUS escalation into a confident WRONG assertion, the exact inversion of §7.
+# Elimination is gone: every role below names a mark in the document.
+#
+#   furniture    — the row lies entirely ABOVE a header-block rule: a horizontal rule the author
+#                  drew across every interior ruled boundary, inside the header region. That mark
+#                  IS the author saying "the header block starts below here", so ink above it is
+#                  document furniture. Carried as tab:RegionCaption — never dropped.
+#   continuation — every cell of the row lies strictly inside a ruled column AND shares an
+#                  alignment origin with THAT column's leaf label. Wrapped lines of one cell are
+#                  laid out from the cell's own origin, so a shared origin is the renderer's
+#                  accommodation inverted (spec §2b). Measured on the specimen: all eight fragments
+#                  match their leaf label's x0 to the bit, while the leaked date line does not.
+#   level        — everything else. A merged parent, a banner with no header-block rule, a spanner
+#                  chopped by a rule — all land here, i.e. NOTHING changes for them.
+#
+# The derived reading is then DISPOSED by the same SHACL tiling + conservation oracle loop C uses.
+# NOTE its scope, honestly (review finding F3): the oracle refuses readings that do not TILE or that
+# LOSE header text — it CANNOT judge whether a reading is the RIGHT one, because a tab:RegionCaption
+# conserves text exactly as a label does. Correctness rests on the positive evidence above, never on
+# the oracle.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?row ?role WHERE {
+  # CLAUSE 0 — THE ENGAGEMENT CONTEXT (re-review round 2). The law runs only inside a header block
+  # the AUTHOR delimited, in the exact configuration the specimen evidences:
+  #   * EXACTLY ONE header-block rule inside the header region (two or more and the block structure
+  #     is itself ambiguous — abstain rather than pick one);
+  #   * at least one non-leaf row wholly ABOVE it (the furniture band), AND
+  #   * at least one non-leaf row wholly BELOW it (the wrapped-label band).
+  # Without this clause the two role predicates over-reach, measured three ways: a left-aligned
+  # short parent shares the leaf's origin BY CONSTRUCTION and was welded onto it (N1); a bordered
+  # multi-row header, whose rule sits between the parent row and the leaf row, had every genuine
+  # level demoted to a caption (N2); and a rule-chopped banner with no block rule at all was
+  # asserted as a level-0 parent under strings the author never wrote (N3). All three now fall
+  # outside the engagement context and keep their pre-loop-L reading.
+  ?anyrule a tab:HeaderBlockRule .
+  FILTER NOT EXISTS {
+    ?h1 a tab:HeaderBlockRule . ?h2 a tab:HeaderBlockRule . FILTER(?h1 != ?h2)
+  }
+  FILTER EXISTS { ?rowA a tab:HeaderRegionRow ; tab:rowAboveHeaderBlockRule ?anyrule }
+  FILTER EXISTS { ?rowB a tab:HeaderRegionRow ; tab:rowBelowHeaderBlockRule ?anyrule }
+  # CLAUSE 1 — the leaf header row must align 1:1 with the ruled columns, or the stack is not the
+  # shape this law governs and NO row gets a role (an empty result; the caller then keeps its
+  # pre-loop-L behaviour). Stated as three presence patterns, so there is no count to compare:
+  #   no leaf cell outside every column / no column without a leaf cell / no column with two.
+  # (The deepest candidate is the leaf row by construction: header_rows_of ends the header region
+  # at the body split, so its last row is the deepest line above the body.)
+  FILTER NOT EXISTS {
+    ?lc a tab:LeafHeaderCell .
+    FILTER NOT EXISTS { ?lc tab:withinRuledColumn ?anycol }
+  }
+  FILTER NOT EXISTS {
+    ?ecol a tab:RuledColumn .
+    FILTER NOT EXISTS { ?lc2 a tab:LeafHeaderCell ; tab:withinRuledColumn ?ecol }
+  }
+  FILTER NOT EXISTS {
+    ?la a tab:LeafHeaderCell ; tab:withinRuledColumn ?dcol .
+    ?lb a tab:LeafHeaderCell ; tab:withinRuledColumn ?dcol .
+    FILTER(?la != ?lb)
+  }
+  # CLAUSE 2 — the role of each row ABOVE the leaf. Both non-default roles are evidence-POSITIVE
+  # and BOTH are now anchored to the block rule, not merely to cell geometry.
+  ?r a tab:HeaderRegionRow ; tab:headerRowOrder ?row .
+  BIND(EXISTS { ?r tab:rowAboveHeaderBlockRule ?hbr } AS ?aboveBlock)
+  BIND(EXISTS { ?r tab:rowBelowHeaderBlockRule ?hbr2 } AS ?belowBlock)
+  # every cell sits strictly inside a ruled column AND shares that column's leaf-label origin.
+  # This is the SECONDARY filter (it removes centre-aligned spanners); the structure above is what
+  # establishes that rows in this band are wrapped label lines at all — see _shares_origin's
+  # docstring for why this predicate alone is not discriminating.
+  BIND(NOT EXISTS {
+      ?r tab:hasHeaderRegionCell ?c .
+      FILTER NOT EXISTS {
+        ?c tab:withinRuledColumn ?col ; tab:sharesAlignmentOriginWith ?leaf .
+        ?leaf a tab:LeafHeaderCell ; tab:withinRuledColumn ?col .
+      }
+  } AS ?allContinue)
+  BIND(IF(?aboveBlock, "furniture",
+       IF(?belowBlock && ?allContinue, "continuation", "level")) AS ?role)
+}

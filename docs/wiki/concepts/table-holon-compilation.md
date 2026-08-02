@@ -5,9 +5,10 @@ sources:
   - docs/loops/2026-07-05-table-holon-loop.md
   - vocab/ontology/tab.ttl
   - vocab/shapes/tab-shapes.ttl
+  - tests/test_corpus_stem.py
 related: ["[[assert-propose-promote]]", "[[grounding-membrane]]"]
 confidence: high
-updated: 2026-08-01
+updated: 2026-08-02
 ---
 
 # Table-holon compilation — the loop family
@@ -45,6 +46,29 @@ loop-K GrainCorp grounding capstone that measures the compiled table-holons'
 concepts against a contract (137 grounded / 323 quarantined) — a later loop
 this page's own three sources do not independently cover, so it is cited
 there rather than asserted here.
+
+**Loop L (2026-08-02) — the accommodation thesis, applied to a live document.**
+Where prior loops fixed the compiler against synthetic and single-page fixtures,
+loop L's premise is that a *fluent human reader* never hesitates on a well-formed
+page, so a page a human reads without hesitation must compile, not escalate —
+divergence is the compiler's problem, not the document's. Applied to the real
+GrainCorp shipping stem, that surfaced a new law: under ruled evidence, the
+header stack is read off the author's own rule marks (leaf = the deepest 1:1
+rule-aligned line; furniture above the rule; continuation between rule and leaf),
+engaging only on a narrow clause-0 precondition — exactly one header-block rule
+with rows above *and* below it — that two adversarial review rounds tightened
+from an initial looser trigger. On the live stem's page 0 this compiles 586
+cells at score 0.9560 (`tests/test_corpus_stem.py::test_stem_page0_compiles`),
+and grounds against the stem contract at 167 grounded / 385 still-quarantined
+of a 552 candidate pool, with non-grain cargo (Woodchip, Cement) correctly
+refused (`test_stem_page0_grounds_against_contract`). Pages 1-2 still escalate
+`REGION_TILING_FAILED` — a repeated-header (Excel print-titles) continuation
+whose block-rule evidence is page-0-only — routed to Loop M as a pagination
+problem, not a header-role one (residues R29-R32).
+
+Pages 1-2 still escalate `REGION_TILING_FAILED` — a repeated-header (Excel print-titles) continuation
+whose block-rule evidence is page-0-only — routed to Loop M as a pagination
+problem, not a header-role one (residues R29-R32). The `render:` namespace and Producer-gated generator modules the campaign spec sketches (§2b) remain deliberately unbuilt — the universal rule-evidence law sufficed on this specimen, the transient reading evidence lives in `tab:` as pre-holon table facts, and a generator module is only earned by a corpus document the universal law cannot read.
 
 Every SHACL shape in `tab-shapes.ttl` enforces the round-trip/tiling
 contract literally: `CoverageShape` and `UnambiguousAccessShape` require
