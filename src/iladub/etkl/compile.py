@@ -135,6 +135,11 @@ class RegionReport:
     # (escalated/ignored bands have no table). Loop M's document driver reads it to link
     # continuation chains without having to guess the URI a branch happened to mint.
     table_uri: URIRef | None = None
+    # The band's CONFIRMED header-block reading (ruledroles.CarriedHeaderReading), or None when
+    # this band's reading did not come from the loop-L law (every other branch, unchanged). Loop
+    # M's driver carries it onto the next page when the continuation AXIOM licenses the pair —
+    # it is never read for any other purpose, so a None here only means "nothing to carry".
+    header_reading: object | None = None
 
 
 @dataclass(frozen=True)
@@ -184,11 +189,20 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
-                   row_role_proposer=None, doc_uri: URIRef | None = None) -> CompilationReport:
+                   row_role_proposer=None, doc_uri: URIRef | None = None,
+                   carried_header_roles: dict | None = None) -> CompilationReport:
     """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
     it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
     passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
-    same `doc#table0` and their graphs collide when merged."""
+    same `doc#table0` and their graphs collide when merged.
+
+    `carried_header_roles` (loop M task 3) is `{band index on THIS page: CarriedHeaderReading}` —
+    the previous page's CONFIRMED header-block reading, to be carried onto that band. The driver
+    passes an entry ONLY for a band the continuation AXIOM recognized as continuing the previous
+    page's table, so carriage cannot reach an unrecognized page at all: a caller that passes
+    nothing (every single-page call, and every unrecognized page) gets exactly the pre-loop-M
+    behaviour. What the carriage may then do at the band is stated in
+    ruledroles.resolve_ruled_header_rows; it still has to pass the same SHACL tiling oracle."""
     from .segment import is_multi_table_ambiguous
     doc = _DOC if doc_uri is None else doc_uri
     bands = page_bands(pdf_path, page_number)
@@ -359,16 +373,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     from .ruledroles import resolve_ruled_header_rows
                     table_uri = URIRef(f"{doc}#htable{idx}")
                     ruled_scratch = Graph()
+                    # LOOP M: the carried reading, present only for a band the continuation AXIOM
+                    # recognized (see the parameter's docstring). `.get` is the whole guard —
+                    # every other band, and every page the driver did not recognize, passes None.
                     ruled_reading = resolve_ruled_header_rows(
-                        ruled_scratch, hreg, band, table_uri, doc, page_number)
+                        ruled_scratch, hreg, band, table_uri, doc, page_number,
+                        carried=(carried_header_roles or {}).get(idx))
                 if ruled_reading is not None:
+                    n_ruled, reading = ruled_reading
                     graph += ruled_scratch
                     tokens = sum(len(ln.words) for ln in band.lines)
-                    asserted_total += ruled_reading
-                    escalated_total += max(0, tokens - ruled_reading)
-                    reports.append(RegionReport(region.kind, "asserted", ruled_reading, None,
+                    asserted_total += n_ruled
+                    escalated_total += max(0, tokens - n_ruled)
+                    reports.append(RegionReport(region.kind, "asserted", n_ruled, None,
                                                 str(TAB.HierarchicalTable), ascii_view,
-                                                table_uri))
+                                                table_uri, reading))
                 elif hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
                     table_uri = URIRef(f"{doc}#htable{idx}")
                     resolved = None

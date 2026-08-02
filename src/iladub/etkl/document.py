@@ -35,16 +35,30 @@ THE LAW (stated in full in continuation-of.rq, with the measurement behind claus
   (task 3's carriage, task 4's chain-walk) inherits the exposure. The closing discriminator is
   the BODY side, not text reading — see continuation-of.rq's header.
 
-WHAT THIS TASK DOES AND DOES NOT DO (loop M task 2 — state the mid-loop state honestly)
-  Recognition only. A recognized continuation page is compiled exactly as before, so on the
-  specimen it still ESCALATES: the header-block rule clause-0 needs exists only on page 0 (R29),
-  and CARRYING page 0's confirmed reading into page N is task 3's work. Consequently:
+WHAT RECOGNITION THEN LICENSES (loop M task 3 — the carried header reading)
+  Recognizing the cut is only the first move; task 3 un-does it. When the AXIOM licenses the pair
+  (N-1, N), the driver hands page N-1's CONFIRMED header-block reading to page N's compile as a
+  `carried_header_roles` entry for the recognized band, and ruledroles matches it onto page N's
+  own header rows by EXACT per-column text identity. Measured on the specimen: page 0's block is
+  four rows (a print-timestamp furniture row + two continuation rows + the leaf); pages 1-2 redraw
+  the same block minus the timestamp, so three rows match, the furniture row simply has no
+  counterpart, and the two continuation rows plus the leaf carry. Pages 1-2 went from escalating
+  REGION_TILING_FAILED (R29) to asserting. Nothing is re-derived and nothing is guessed: the
+  carriage is PROCEDURAL, licensed by the recognition AXIOM above and by the derivation that
+  confirmed page N-1's reading — see ruledroles' module docstring for the licence in full. Each
+  continuation page's redrawn header block is recorded as tab:RepeatedHeader rows traced back to
+  the HEAD page's own header row, never read as data.
+
+THE TWO RECORDS, AND WHY THEY STAY DISTINCT (they were equal on the specimen after task 3; that
+  is a measurement, not an invariant)
     * `DocumentReport.recognized` records every page pair the AXIOM licensed — the honest record
-      of what the law saw, independent of what the compile then managed;
+      of what the LAW saw, independent of what the compile then managed. Recognition does not
+      depend on either page compiling.
     * `DocumentReport.chains` links tables that were RECOGNIZED **and** ASSERTED. A chain is a
-      tuple of table URIs, so a page that asserted no table cannot appear in one; mid-loop the
-      specimen therefore yields three singleton chains while `recognized` already holds
-      ((0,1), (1,2)). `tab:continuesTable` is asserted on exactly the same condition.
+      tuple of table URIs, so a page that asserted no table cannot appear in one — which is
+      exactly the state task 2 measured (three singleton chains against `recognized` already
+      holding ((0,1), (1,2))), and which any page whose carriage the SHACL oracle refuses will
+      reproduce. `tab:continuesTable` is asserted on exactly the same condition as `chains`.
 """
 from __future__ import annotations
 
@@ -294,33 +308,44 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     pages: list[CompilationReport] = []
     blocks: list[dict] = []
     graph = Graph()
+    recognized: list[tuple[int, int]] = []
+    links: dict[URIRef, URIRef] = {}          # continuation table -> the table it continues
 
+    # ONE pass, pages in order: recognize the break BEFORE compiling page p, because the carried
+    # reading is an INPUT to that compile (task 3). Recognition itself reads only the bands
+    # (compile.page_bands, the shared seam — band index i in `blocks[p]` is region report i in
+    # `pages[p]`), so it needs nothing from page p's compile and the ordering is sound. Carriage
+    # chains: page 2 is carried from page 1's confirmed reading, which page 1 in turn carried.
     for p in range(n_pages):
-        # The driver reads the SAME bands the compile reads (compile.page_bands is the shared
-        # seam), so band index i in `blocks[p]` is region report i in `pages[p]`.
         blocks.append(_recognition_blocks(page_bands(pdf_path, p)))
+        carried, pair = None, None
+        if p > 0 and blocks[p - 1] and blocks[p]:
+            prev_idx = max(blocks[p - 1])     # the table that CLOSES the previous page
+            cur_idx = min(blocks[p])          # the table that OPENS this one
+            prev_cells, prev_bounds = blocks[p - 1][prev_idx]
+            cur_cells, cur_bounds = blocks[p][cur_idx]
+            if is_continuation(continuation_evidence_from_facts(
+                    prev_cells, cur_cells, prev_bounds, cur_bounds)):
+                recognized.append((p - 1, p))
+                pair = (prev_idx, cur_idx)
+                reading = pages[p - 1].regions[prev_idx].header_reading
+                if reading is not None:
+                    # THE ONLY place a carried reading is ever created. It is keyed by the band
+                    # the law recognized, so no other band on this page — and no page the law
+                    # refused — can receive one. `None` here means the previous page's band
+                    # confirmed no reading to carry (every non-loop-L branch), and page p then
+                    # compiles exactly as it would standalone.
+                    carried = {cur_idx: reading}
         pages.append(compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                                     span_proposer=span_proposer,
                                     row_role_proposer=row_role_proposer,
-                                    doc_uri=page_doc_uri(p)))
+                                    doc_uri=page_doc_uri(p),
+                                    carried_header_roles=carried))
         graph += pages[-1].graph
-
-    recognized: list[tuple[int, int]] = []
-    links: dict[URIRef, URIRef] = {}          # continuation table -> the table it continues
-    for p in range(1, n_pages):
-        prev_blocks, cur_blocks = blocks[p - 1], blocks[p]
-        if not prev_blocks or not cur_blocks:
+        if pair is None:
             continue
-        prev_idx = max(prev_blocks)           # the table that CLOSES the previous page
-        cur_idx = min(cur_blocks)             # the table that OPENS this one
-        prev_cells, prev_bounds = prev_blocks[prev_idx]
-        cur_cells, cur_bounds = cur_blocks[cur_idx]
-        if not is_continuation(continuation_evidence_from_facts(
-                prev_cells, cur_cells, prev_bounds, cur_bounds)):
-            continue
-        recognized.append((p - 1, p))
-        prev_uri = pages[p - 1].regions[prev_idx].table_uri
-        cur_uri = pages[p].regions[cur_idx].table_uri
+        prev_uri = pages[p - 1].regions[pair[0]].table_uri
+        cur_uri = pages[p].regions[pair[1]].table_uri
         if prev_uri is None or cur_uri is None:
             continue                          # recognized, but one side asserted no table (R29)
         graph.add((cur_uri, TAB.continuesTable, prev_uri))

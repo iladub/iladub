@@ -115,7 +115,15 @@ def test_stem_continuation_pages_status(page):
     This test records the post-fix state honestly: they must either compile or
     escalate — never crash. If they still escalate after Task 2, that is a
     MEASURED RESULT: report it to the controller; it becomes a registered
-    residue + follow-up loop, not a silent pass and not a forced fix."""
+    residue + follow-up loop, not a silent pass and not a forced fix.
+
+    POST-TASK-3 READING (measured 2026-08-02): they still escalate HERE, and that
+    is the correct standalone answer, not a failure of the carriage. This test
+    calls compile_tables on ONE page: standalone, a continuation page really is a
+    header block with no table under it, and no recognition has licensed anything.
+    The carriage is a DOCUMENT-level act — compile_document recognizes the break
+    first and only then compiles page N with page N-1's confirmed reading. The
+    stitched measurement lives in test_stem_document_stitches_three_pages."""
     from iladub.etkl import compile_tables
     rep = compile_tables(str(STEM), page_number=page)
     assert rep.regions, "no regions at all"

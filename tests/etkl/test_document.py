@@ -107,6 +107,23 @@ def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
     rep = compile_document(pdf)
     assert rep.recognized == ((0, 1),), rep.recognized          # the false positive, measured
     assert list(rep.graph.subject_objects(TAB.continuesTable)), "R33: the stitch is asserted"
+    # Loop M task 3 re-measured this fixture after the carried header reading landed, and records
+    # what carriage did to it — honestly, WITHOUT weakening the pin above (R33 is still open and
+    # still exposed by the two assertions above; nothing here excuses it).
+    #   * the false stitch is a real CHAIN, not merely a link: both template pages assert, so the
+    #     two independent tables are walked as one logical table. This was already true before
+    #     carriage — both pages compiled standalone.
+    from rdflib import RDF
+    assert len(rep.chains) == 1 and len(rep.chains[0]) == 2, rep.chains
+    #   * carriage did NOT engage here, measured: these bands compile down the RECORD_TABLE path
+    #     (a single-level header), which never reaches loop L's header-stack law, so page 0
+    #     confirms no header reading and page 1 receives none. Hence no tab:RepeatedHeader. The
+    #     R33 exposure on this fixture is therefore the LINK, not a carried reading — a template
+    #     document with a MULTI-LEVEL header would additionally have page 0's roles carried onto
+    #     page 1's identical header block. If a future change makes that happen here, this
+    #     assertion flips and whoever flips it must say so rather than quietly delete it.
+    assert not list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader)), \
+        "carriage reached the R33 fixture — re-measure the exposure before changing this"
 
 
 def test_leaf_block_reads_the_production_bands(tmp_path):
@@ -127,6 +144,120 @@ def test_leaf_block_reads_the_production_bands(tmp_path):
         assert len(bounds) >= 2
     # a band with no vertical rule evidences nothing — refusal, not a verdict
     assert all(leaf_block(b) is None for b in page_bands(pdf, 0) if not b.rules)
+
+
+class _Cell:
+    """The minimum a header cell is, for the carriage matcher: text + ink box."""
+    def __init__(self, text, x0, x1, top=10.0, bottom=20.0):
+        self.text, self.x0, self.x1, self.top, self.bottom = text, x0, x1, top, bottom
+
+
+class _Grid:
+    def __init__(self, boundaries):
+        self.boundaries = boundaries
+
+
+_B = _Grid((0.0, 100.0, 200.0, 300.0))
+
+
+def _reading(rows, table_uri="urn:t", page=0):
+    """A confirmed reading over `rows` = [([(text, x0, x1)], role_or_None), ...]."""
+    from iladub.etkl.ruledroles import header_reading_of
+    from rdflib import URIRef
+    header_rows = [[_Cell(*c) for c in cells] for cells, _ in rows]
+    roles = [role for _, role in rows[:-1]]
+    return header_reading_of(header_rows, _B, roles, URIRef(table_uri), page)
+
+
+def test_carriage_matches_a_redrawn_block_missing_its_furniture_row():
+    """The specimen's shape, in miniature: the head page carries a furniture row the continuation
+    page does not redraw. The two rows that ARE redrawn carry their confirmed roles, the leaf
+    matches the leaf, and the absent furniture row simply has no counterpart."""
+    from iladub.etkl.ruledroles import carried_roles_for
+    reading = _reading([
+        ([("printed today", 10.0, 60.0)], "furniture"),
+        ([("Date of", 110.0, 150.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Loading", 110.0, 160.0), ("Qty", 210.0, 240.0)], None),
+    ])
+    page_n = [[_Cell("Date of", 110.0, 150.0)],
+              [_Cell("Port", 10.0, 40.0), _Cell("Loading", 110.0, 160.0), _Cell("Qty", 210.0, 240.0)]]
+    roles, matched = carried_roles_for(reading, page_n, _B)
+    assert roles == ("continuation",)
+    assert len(matched) == 2 and matched[-1][1].role is None       # the leaf carried as the leaf
+    assert matched[-1][1].source, "the leaf row traces to the head page's source cells"
+
+
+def test_carriage_refuses_a_row_that_does_not_match_exactly():
+    """One character of difference is a refusal, not a near-match: the page keeps its own path."""
+    from iladub.etkl.ruledroles import carried_roles_for
+    reading = _reading([
+        ([("Date of", 110.0, 150.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Qty", 210.0, 240.0)], None),
+    ])
+    assert carried_roles_for(reading, [[_Cell("Date  of", 110.0, 150.0)],
+                                       [_Cell("Port", 10.0, 40.0), _Cell("Qty", 210.0, 240.0)]],
+                             _B) is None
+    # same texts, different COLUMN -> also a refusal (identity is per column, not per row)
+    assert carried_roles_for(reading, [[_Cell("Date of", 210.0, 250.0)],
+                                       [_Cell("Port", 10.0, 40.0), _Cell("Qty", 210.0, 240.0)]],
+                             _B) is None
+
+
+def test_carriage_refuses_an_ambiguous_carried_block():
+    """Two carried rows with the SAME signature and DIFFERENT roles: which one a page-N row
+    repeats is undecidable by text identity, so the whole carriage is refused rather than taking
+    the first."""
+    from iladub.etkl.ruledroles import carried_roles_for
+    reading = _reading([
+        ([("Date of", 110.0, 150.0)], "furniture"),
+        ([("Date of", 110.0, 150.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Qty", 210.0, 240.0)], None),
+    ])
+    assert carried_roles_for(reading, [[_Cell("Date of", 110.0, 150.0)],
+                                       [_Cell("Port", 10.0, 40.0), _Cell("Qty", 210.0, 240.0)]],
+                             _B) is None
+
+
+def test_carriage_refuses_when_the_leaf_is_not_the_leaf():
+    """A page whose LAST header row matches a NON-leaf carried row must not take that row's
+    reading for its leaf — nor may a non-leaf row take the carried leaf's."""
+    from iladub.etkl.ruledroles import carried_roles_for
+    reading = _reading([
+        ([("Date of", 110.0, 150.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Qty", 210.0, 240.0)], None),
+    ])
+    assert carried_roles_for(reading, [[_Cell("Date of", 110.0, 150.0)]], _B) is None
+    assert carried_roles_for(reading,
+                             [[_Cell("Port", 10.0, 40.0), _Cell("Qty", 210.0, 240.0)],
+                              [_Cell("Date of", 110.0, 150.0)]], _B) is None
+
+
+def test_repeated_header_facts_carry_page_bbox_and_head_page_provenance():
+    """One tab:RepeatedHeader per repeated row, with its page, its measured box, its surface text
+    (the drop-continuation guard) and prov:wasDerivedFrom the HEAD page's header-source cells."""
+    from rdflib import Graph, RDF, URIRef
+    from iladub.etkl.ruledroles import PROV, TAB, carried_roles_for, emit_repeated_headers
+    reading = _reading([
+        ([("Date of", 110.0, 150.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Qty", 210.0, 240.0)], None),
+    ], table_uri="urn:head", page=0)
+    page_n = [[_Cell("Date of", 110.0, 150.0, top=5.0, bottom=12.0)],
+              [_Cell("Port", 10.0, 40.0, top=15.0, bottom=22.0),
+               _Cell("Qty", 210.0, 240.0, top=15.0, bottom=22.0)]]
+    _roles, matched = carried_roles_for(reading, page_n, _B)
+    g = Graph()
+    emit_repeated_headers(g, URIRef("urn:cont"), page_n, matched, 1)
+    reps = sorted(g.subjects(RDF.type, TAB.RepeatedHeader))
+    assert len(reps) == 2                              # the leaf row is a repeated row too
+    for r in reps:
+        assert g.value(r, TAB.onPage).toPython() == 1
+        assert str(g.value(r, TAB.cellText))
+        assert g.value(r, TAB.hasBBox) is not None
+        assert all(str(o).startswith("urn:head-hsc") for o in g.objects(r, PROV.wasDerivedFrom))
+    leaf = URIRef("urn:cont-rephdr1")
+    assert g.value(g.value(leaf, TAB.hasBBox), TAB.x1).toPython() == 240.0
+    assert (URIRef("urn:cont"), TAB.hasRepeatedHeader, leaf) in g
+    assert not list(g.subjects(RDF.type, TAB.EntryCell)), "a repeated header is never a data cell"
 
 
 def test_single_page_document_matches_compile_tables(tmp_path):
