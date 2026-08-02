@@ -51,10 +51,16 @@ def test_stem_page0_grounds_against_contract():
     abstain = FakeGroundingProposer(GroundingProposal(
         None, str(SHIP) + "x", 0.1, "n/a", "urn:iladub:suggester/fake"))
     g = Graph()
-    ground_document(rep.graph, contract, abstain, terms, shapes, g)
+    result = ground_document(rep.graph, contract, abstain, terms, shapes, g)
     grounded = set(g.subjects(RDF.type, ILADUB.GroundedNode))
     proposed = set(g.subjects(RDF.type, ILADUB.CandidateConcept))
-    print(f"\nstem 2026-07-31 p0: grounded={len(grounded)} quarantined={len(proposed)}")
+    # NB: `proposed` (CandidateConcept nodes) is the TOTAL candidate pool, not the
+    # still-quarantined count — _emit_candidate fires for every concept before the
+    # grounded/proposed branch, and a promoted concept's CandidateConcept node stays in
+    # the graph. The honest still-quarantined count is FeedResult.proposed (the concepts
+    # that never crossed the membrane); pool = grounded + still-quarantined.
+    print(f"\nstem 2026-07-31 p0: grounded={len(grounded)} "
+          f"still-quarantined={result.proposed} candidate-pool={len(proposed)}")
     assert len(grounded) >= 50 and len(proposed) > 0
     # every grounded node behind exactly one accountable promotion (the §3 invariant)
     for n in grounded:
