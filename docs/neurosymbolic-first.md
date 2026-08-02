@@ -115,6 +115,28 @@ to a holon substrate's `CONSTRUCT`-at-boundary pattern.
     check in the oracle, which is decidable arithmetic and declared irreducible. "Formal semantic
     code prevails over Python" is thus a property the build enforces, not a slogan.
 
+## Shipped exemplars — the gate in practice
+
+The gate is not aspirational. The **declarative transform substrate** compiles a
+table's inverse recipe (`tab:ReshapeRecipe`) into fixed SPARQL `CONSTRUCT`s that read
+their parameters from that recipe RDF, certified only when replaying the recipe
+forward reproduces the original grid exactly — a round-trip oracle enforced by
+`tests/etkl/test_oracle.py` and exercised end-to-end by `certify()` in
+`tests/etkl/test_reshape_certify.py`. **Role recovery** derives each header level's
+dimension name and value role as a two-pass SPARQL `CONSTRUCT` derivation
+(`vocab/queries/name-levels.rq` then `vocab/queries/recover-dimensions.rq`, run by
+`src/iladub/etkl/denormalization.py`) — pure open-world derivation, no procedural
+inference. **Region tiling** (`src/iladub/etkl/tiling.py`) is the closed-world
+mirror: coverage, no-overlap, and refinement across a candidate region are checked
+as SHACL constraints, never as Python geometry with a tolerance. **Kind
+classification** (`src/iladub/etkl/regions.py`, driven by
+`vocab/queries/classify-kind.rq`) decides NON_TABLE / UNSUPPORTED / RECORD as one
+holon-scoped SPARQL `SELECT` over a fresh per-band evidence graph, guarded by a
+frozen differential oracle (`tests/etkl/test_classifygraph.py`) that must keep
+agreeing with the retired procedural logic it replaced. Together these four cases
+cover both AXIOM forms — open-world derivation and closed-world constraint — with
+no tuned constant in any of them.
+
 ## Why it matters
 
 - **Portability** — declarative transforms are standard SPARQL/SHACL; they run anywhere, with no

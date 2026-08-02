@@ -122,3 +122,12 @@ def test_impact_value_is_first_valid_token_only():
     assert _IMPACT.search("Doc impact: contradiction\n").group(1) == "contradiction"
     assert _IMPACT.search("Doc impact: TBD") is None
     assert _IMPACT.search("no block at all") is None
+
+
+def test_wiki_pages_carry_index_membership():
+    g = extract(REPO)
+    exemplars = doc_iri("docs/wiki/concepts/neurosymbolic-exemplars.md")
+    assert (exemplars, DG.inWikiIndex, Literal(True)) in g
+    # the index itself carries no membership fact
+    index = doc_iri("docs/wiki/index.md")
+    assert list(g.objects(index, DG.inWikiIndex)) == []

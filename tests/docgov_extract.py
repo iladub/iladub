@@ -148,6 +148,7 @@ def extract(repo: Path) -> Graph:
     cfg = load_mkdocs(repo / "mkdocs.yml")
     nav = nav_paths(cfg)
     prefixes = exclude_prefixes(cfg)
+    index_links = _index_links(repo)
 
     for np in sorted(nav):
         entry = URIRef(_DOC + "nav/" + np)
@@ -169,6 +170,8 @@ def extract(repo: Path) -> Graph:
             _evidence_facts(g, repo, d, path)
         elif cls == "wiki":
             _wiki_facts(g, repo, d, path)
+            if path != "docs/wiki/index.md":
+                g.add((d, DG.inWikiIndex, Literal(path in index_links)))
     return g
 
 
@@ -181,6 +184,18 @@ def _evidence_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
     mi = _IMPACT.search((repo / path).read_text())
     if mi:
         g.add((d, DG.docImpact, Literal(mi.group(1))))
+
+
+def _index_links(repo: Path) -> set[str]:
+    """Paths (repo-relative) that docs/wiki/index.md links to — PROCEDURAL
+    extraction of markdown link targets, resolved against docs/wiki/."""
+    idx = repo / "docs" / "wiki" / "index.md"
+    if not idx.is_file():
+        return set()
+    return {
+        str((Path("docs/wiki") / m).as_posix())
+        for m in re.findall(r"\]\(([^)#]+\.md)\)", idx.read_text())
+    }
 
 
 def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:

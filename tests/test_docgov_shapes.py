@@ -98,6 +98,21 @@ def test_wiki_missing_frontmatter_fields_fails():
     assert not _conforms(g)[0]
 
 
+def test_wiki_page_missing_from_index_fails():
+    g = Graph()
+    d = _wiki(g)  # docs/wiki/concepts/ok.md with full frontmatter facts
+    g.add((d, DG.inWikiIndex, Literal(False)))
+    ok, report = _conforms(g)
+    assert not ok and "index.md" in str(report)
+
+
+def test_wiki_page_listed_in_index_passes():
+    g = Graph()
+    d = _wiki(g)
+    g.add((d, DG.inWikiIndex, Literal(True)))
+    assert _conforms(g)[0]
+
+
 def test_wiki_citing_missing_source_fails():
     g = Graph()
     d = _wiki(g)
