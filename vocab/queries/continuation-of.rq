@@ -1,0 +1,111 @@
+# continuation-of.rq (loop M, 2026-08-02) — THE PAGINATION LAW.
+#
+# Open-world derivation (CLAUDE.md §8): "page N's table CONTINUES page N-1's table" is GROWN from
+# evidence both pages carry — the header block the renderer repeated when it split one logical
+# table across a page break. Every input is a presence/equality fact emitted by
+# document.continuation_evidence (float equalities pre-applied there with the established
+# geometry.COORD_EPS epsilon, exactly as ruledroles does), so this query carries NO numeric
+# literal and no tolerance. A page that evidences nothing stays independent: recognition is
+# licensed, never assumed from page adjacency.
+#
+# READING vs COMPARING (state this plainly). The law compares two renderings of the SAME string
+# for literal identity. It draws no meaning from any string — no keyword, no month name, no
+# "looks like a header" judgment. Asking "did the renderer draw this again?" is evidence
+# comparison; asking "what does this say?" would be reading, and would belong to NEURAL (§8).
+#
+# THE LAW — page N continues page N-1 iff ALL of:
+#   (a) both pages present a leaf header row (at least one leaf cell each, each column at most
+#       once), and
+#   (b) every column of page N-1's leaf row has a counterpart at the SAME column index on page N
+#       carrying the SAME text (literal identity — no normalisation, no fuzzy match) at an
+#       AGREEING ink origin, and
+#   (c) the mirror: no column of page N's leaf row is left without such a counterpart — so an
+#       extra or missing column on either page refuses, and
+#   (d) the two pages' AUTHOR-DRAWN leaf-grid boundaries agree one-for-one.
+# Any partial match refuses. There is no "mostly the same header".
+#
+# CLAUSE (d)'s COMPARISON BASIS — MEASURED, not assumed (specimen: the 3-page GrainCorp stem,
+# corpus/ag-trade/graincorp-stem-2026-07-31.pdf, measured 2026-08-02):
+#   * the RAW page rule x-set is NOT comparable: page 0 carries an extra mark at x=832.32 that
+#     pages 1-2 do not (the table's right border is drawn twice, at 832.08/832.32/833.04). It
+#     bounds no column any ink occupies, and grid recovery already drops it — comparing raw rule
+#     sets would refuse a genuine continuation over a duplicated border stroke.
+#   * the FULL leaf-grid boundary set is NOT comparable either: loop G's header-confirmed
+#     boundaries are inferred from THIS page's ink, and they MOVE — the confirmed gutter before
+#     the last column measured 798.54 (p0) / 802.04 (p1) / 792.04 (p2). Comparing them would
+#     refuse every pair. (Per-leaf-cell column-left-x fails for the same reason: the last
+#     column's left edge IS that inferred gutter.)
+#   * the AUTHOR-DRAWN leaf-grid boundaries DO agree, exactly, on both pairs (16 of 18
+#     boundaries; the two dropped are precisely loop G's inferred pair). That is the basis this
+#     clause uses: a mark the author drew is a property of the table, a boundary the pipeline
+#     inferred is a property of one page's ink. Only the former can be compared across a break.
+# Clause (d) is VACUOUS when neither page presents an author-drawn boundary (a wholly inferred
+# grid): open world, no author mark to contradict. That is deliberate — the clause can only speak
+# where the author left marks — and clauses (b)/(c) still bind column for column.
+# Column POSITION is therefore carried a second way, per column, by tab:originAgreesWith on the
+# leaf cells themselves (clause b/c): where the author's own ink starts is an author fact too,
+# and it is what discriminates a shifted grid carrying the same labels.
+#
+# ROLE OF THE PAGE INDEX: none. Adjacency is chosen by the caller (the table that ENDS page N-1
+# against the table that OPENS page N); the law reads only the two header blocks it is given.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?prior ?continuation WHERE {
+  ?prior a tab:PriorPageBlock .
+  ?continuation a tab:ContinuationPageBlock .
+  # CLAUSE (a) — both leaf rows exist. Positive evidence: a page with no recoverable leaf header
+  # row evidences nothing, so it never continues and is never continued.
+  FILTER EXISTS { ?prior tab:hasLeafCell ?anyPrior }
+  FILTER EXISTS { ?continuation tab:hasLeafCell ?anyCur }
+  # ...and each column index is claimed at most once per page, or "column for column" is not
+  # well-defined and the derivation refuses (the loop-L clause-1 idiom, stated as presence).
+  FILTER NOT EXISTS {
+    ?prior tab:hasLeafCell ?pa . ?pa tab:leafColumnIndex ?dupP .
+    ?prior tab:hasLeafCell ?pb . ?pb tab:leafColumnIndex ?dupP .
+    FILTER(?pa != ?pb)
+  }
+  FILTER NOT EXISTS {
+    ?continuation tab:hasLeafCell ?ca . ?ca tab:leafColumnIndex ?dupC .
+    ?continuation tab:hasLeafCell ?cb . ?cb tab:leafColumnIndex ?dupC .
+    FILTER(?ca != ?cb)
+  }
+  # CLAUSE (b) — every prior column is matched: same index, identical text (the ?t join IS the
+  # identity test), agreeing origin.
+  FILTER NOT EXISTS {
+    ?prior tab:hasLeafCell ?pc .
+    ?pc tab:leafColumnIndex ?i .
+    FILTER NOT EXISTS {
+      ?continuation tab:hasLeafCell ?cc .
+      ?cc tab:leafColumnIndex ?i .
+      ?pc tab:leafCellText ?t .
+      ?cc tab:leafCellText ?t .
+      ?pc tab:originAgreesWith ?cc .
+    }
+  }
+  # CLAUSE (c) — the mirror, so neither page may carry a column the other lacks.
+  FILTER NOT EXISTS {
+    ?continuation tab:hasLeafCell ?cc2 .
+    ?cc2 tab:leafColumnIndex ?j .
+    FILTER NOT EXISTS {
+      ?prior tab:hasLeafCell ?pc2 .
+      ?pc2 tab:leafColumnIndex ?j .
+      ?pc2 tab:leafCellText ?t2 .
+      ?cc2 tab:leafCellText ?t2 .
+      ?pc2 tab:originAgreesWith ?cc2 .
+    }
+  }
+  # CLAUSE (d) — the author's drawn grid is the same grid, both directions.
+  FILTER NOT EXISTS {
+    ?prior tab:hasAuthorBoundary ?pb1 .
+    FILTER NOT EXISTS {
+      ?continuation tab:hasAuthorBoundary ?cb1 .
+      ?pb1 tab:boundaryAgreesWith ?cb1 .
+    }
+  }
+  FILTER NOT EXISTS {
+    ?continuation tab:hasAuthorBoundary ?cb2 .
+    FILTER NOT EXISTS {
+      ?prior tab:hasAuthorBoundary ?pb2 .
+      ?pb2 tab:boundaryAgreesWith ?cb2 .
+    }
+  }
+}

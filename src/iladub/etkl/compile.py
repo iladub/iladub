@@ -92,6 +92,37 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     return Band(tuple(relines2), sub.top, sub.bottom, sub_rules, sub_hrules, tuple(col_xs))
 
 
+def page_bands(pdf_path: str, page_number: int = 0):
+    """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
+
+    THE SEAM for loop M's document driver: continuation recognition must read the SAME bands the
+    compile reads, or the recognized band and the compiled table are two different things and the
+    chain links the wrong URIs. Extracted verbatim from compile_tables (which now calls it), so
+    there is one band-construction path, not a copy that can drift.
+    """
+    from .geometry import extract_rules, extract_chars, extract_hrules
+    from dataclasses import replace as _replace
+    from .segment import segment
+    words = extract_words(pdf_path, page_number)
+    page_rules = extract_rules(pdf_path, page_number)
+    page_hrules = extract_hrules(pdf_path, page_number)
+    page_chars = extract_chars(pdf_path, page_number) if page_rules else []
+    raw_bands = detect_bands(text_lines(words))
+    bands = []
+    for band in raw_bands:
+        for sub in segment(band):
+            sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
+            sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
+            if not sub_rules:
+                bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
+                continue
+            # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
+            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
+            # become columns only when the header confirms them (_build_ruled_band, the seam).
+            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars))
+    return bands
+
+
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind
@@ -100,6 +131,10 @@ class RegionReport:
     reason: str | None
     anchor: str | None
     ascii: str
+    # The URI of the table holon this band was compiled into, or None when nothing was asserted
+    # (escalated/ignored bands have no table). Loop M's document driver reads it to link
+    # continuation chains without having to guess the URI a branch happened to mint.
+    table_uri: URIRef | None = None
 
 
 @dataclass(frozen=True)
@@ -107,6 +142,11 @@ class CompilationReport:
     score: float
     regions: tuple[RegionReport, ...]
     graph: Graph
+    # The score's own operands, kept so a caller can re-aggregate over several pages: a document
+    # score is asserted/(asserted+escalated) over the WHOLE document, which cannot be recovered
+    # from per-page ratios (loop M).
+    asserted: int = 0
+    escalated: int = 0
 
     def to_turtle(self) -> str:
         return self.graph.serialize(format="turtle")
@@ -144,27 +184,14 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
-                   row_role_proposer=None) -> CompilationReport:
-    from .geometry import extract_rules, extract_chars, extract_hrules
-    from dataclasses import replace as _replace
-    words = extract_words(pdf_path, page_number)
-    page_rules = extract_rules(pdf_path, page_number)
-    page_hrules = extract_hrules(pdf_path, page_number)
-    page_chars = extract_chars(pdf_path, page_number) if page_rules else []
-    raw_bands = detect_bands(text_lines(words))
-    from .segment import segment, is_multi_table_ambiguous
-    bands = []
-    for band in raw_bands:
-        for sub in segment(band):
-            sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
-            sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
-            if not sub_rules:
-                bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
-                continue
-            # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
-            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
-            # become columns only when the header confirms them (_build_ruled_band, the seam).
-            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars))
+                   row_role_proposer=None, doc_uri: URIRef | None = None) -> CompilationReport:
+    """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
+    it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
+    passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
+    same `doc#table0` and their graphs collide when merged."""
+    from .segment import is_multi_table_ambiguous
+    doc = _DOC if doc_uri is None else doc_uri
+    bands = page_bands(pdf_path, page_number)
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
@@ -172,8 +199,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     for idx, band in enumerate(bands):
         ascii_view = render_ascii(band)
         if is_multi_table_ambiguous(band):
-            cand_uri = URIRef(f"{_DOC}#region{idx}")
-            escalate_region(graph, cand_uri, _DOC, ascii_view, "MULTI_TABLE_AMBIGUOUS",
+            cand_uri = URIRef(f"{doc}#region{idx}")
+            escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
                             TAB.HierarchicalTable, 0.4)
             escalated_total += sum(len(ln.words) for ln in band.lines)
             reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
@@ -195,15 +222,15 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # un-inverted RecordTable (tab:sourceOrientation "transposed").
                     from .holon import assert_transposed_region
                     from .tiling import region_tiles
-                    table_uri = URIRef(f"{_DOC}#ttable{idx}")
+                    table_uri = URIRef(f"{doc}#ttable{idx}")
                     # R17 gate (loop J): scratch -> region_tiles -> commit-or-escalate, the
                     # same backstop as the hierarchical/matrix/row-hier paths. A defective
                     # region escalates in-band instead of crashing final validation.
                     scratch = Graph()
-                    n = assert_transposed_region(scratch, region, table_uri, _DOC, page_number)
+                    n = assert_transposed_region(scratch, region, table_uri, doc, page_number)
                     if n and not region_tiles(scratch):
-                        cand_uri = URIRef(f"{_DOC}#region{idx}")
-                        escalate_region(graph, cand_uri, _DOC, ascii_view,
+                        cand_uri = URIRef(f"{doc}#region{idx}")
+                        escalate_region(graph, cand_uri, doc, ascii_view,
                                         "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0,
@@ -216,11 +243,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
                         escalated_total += sum(len(c.words) for c in value_cells if not cell_round_trips(c, b))
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.RecordTable), ascii_view))
+                                                    str(TAB.RecordTable), ascii_view,
+                                                    table_uri))
                 else:
                     # detected but not confidently compilable — escalate (Loop 3 behaviour)
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view, "TRANSPOSED",
+                    cand_uri = URIRef(f"{doc}#region{idx}")
+                    escalate_region(graph, cand_uri, doc, ascii_view, "TRANSPOSED",
                                     TAB.TransposedTable, 0.4)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
@@ -230,10 +258,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 from .holon import assert_row_hier_region
                 from .tiling import region_tiles
                 rreg = classify_row_hier(band)
-                table_uri = URIRef(f"{_DOC}#rhtable{idx}")
+                table_uri = URIRef(f"{doc}#rhtable{idx}")
                 scratch = Graph()
                 if rreg is not None:
-                    n = assert_row_hier_region(scratch, rreg, band, table_uri, _DOC, page_number)
+                    n = assert_row_hier_region(scratch, rreg, band, table_uri, doc, page_number)
                 if rreg is not None and region_tiles(scratch):
                     graph += scratch
                     b = rreg.grid.boundaries
@@ -246,10 +274,11 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     (asserted_total + len(c.words), escalated_total) if fits
                                     else (asserted_total, escalated_total + len(c.words)))
                     reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                str(TAB.HierarchicalTable), ascii_view))
+                                                str(TAB.HierarchicalTable), ascii_view,
+                                                table_uri))
                 else:
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view, "ROW_GROUP_AMBIGUOUS",
+                    cand_uri = URIRef(f"{doc}#region{idx}")
+                    escalate_region(graph, cand_uri, doc, ascii_view, "ROW_GROUP_AMBIGUOUS",
                                     TAB.HierarchicalTable, 0.4)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "ROW_GROUP_AMBIGUOUS",
@@ -257,13 +286,13 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             else:
                 # ---- existing RECORD_TABLE assert logic ----
                 from .tiling import region_tiles
-                table_uri = URIRef(f"{_DOC}#table{idx}")
+                table_uri = URIRef(f"{doc}#table{idx}")
                 # R17 gate (loop J): see the transposed branch above.
                 scratch = Graph()
-                n = assert_record_region(scratch, region, table_uri, _DOC, page_number)
+                n = assert_record_region(scratch, region, table_uri, doc, page_number)
                 if n and not region_tiles(scratch):
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view,
+                    cand_uri = URIRef(f"{doc}#region{idx}")
+                    escalate_region(graph, cand_uri, doc, ascii_view,
                                     "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0,
@@ -276,7 +305,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
                     escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
                     reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                str(TAB.RecordTable), ascii_view))
+                                                str(TAB.RecordTable), ascii_view,
+                                                table_uri))
         else:  # UNSUPPORTED_TABLE
             from .matrix import is_matrix_candidate
             if is_matrix_candidate(band):
@@ -284,10 +314,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 from .holon import assert_matrix_region
                 from .tiling import region_tiles
                 mreg = classify_matrix(band)
-                table_uri = URIRef(f"{_DOC}#mtable{idx}")
+                table_uri = URIRef(f"{doc}#mtable{idx}")
                 scratch = Graph()
                 if mreg is not None:
-                    n = assert_matrix_region(scratch, mreg, band, table_uri, _DOC, page_number)
+                    n = assert_matrix_region(scratch, mreg, band, table_uri, doc, page_number)
                 if mreg is not None and region_tiles(scratch):
                     graph += scratch
                     b = mreg.grid.boundaries
@@ -301,10 +331,11 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                 else:
                                     escalated_total += len(sc.words)
                     reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                str(TAB.HierarchicalTable), ascii_view))
+                                                str(TAB.HierarchicalTable), ascii_view,
+                                                table_uri))
                 else:
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view, "MATRIX_AMBIGUOUS",
+                    cand_uri = URIRef(f"{doc}#region{idx}")
+                    escalate_region(graph, cand_uri, doc, ascii_view, "MATRIX_AMBIGUOUS",
                                     TAB.HierarchicalTable, 0.4)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "MATRIX_AMBIGUOUS",
@@ -326,47 +357,49 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 ruled_reading = None
                 if hreg is not None:
                     from .ruledroles import resolve_ruled_header_rows
-                    table_uri = URIRef(f"{_DOC}#htable{idx}")
+                    table_uri = URIRef(f"{doc}#htable{idx}")
                     ruled_scratch = Graph()
                     ruled_reading = resolve_ruled_header_rows(
-                        ruled_scratch, hreg, band, table_uri, _DOC, page_number)
+                        ruled_scratch, hreg, band, table_uri, doc, page_number)
                 if ruled_reading is not None:
                     graph += ruled_scratch
                     tokens = sum(len(ln.words) for ln in band.lines)
                     asserted_total += ruled_reading
                     escalated_total += max(0, tokens - ruled_reading)
                     reports.append(RegionReport(region.kind, "asserted", ruled_reading, None,
-                                                str(TAB.HierarchicalTable), ascii_view))
+                                                str(TAB.HierarchicalTable), ascii_view,
+                                                table_uri))
                 elif hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
-                    table_uri = URIRef(f"{_DOC}#htable{idx}")
+                    table_uri = URIRef(f"{doc}#htable{idx}")
                     resolved = None
                     if span_proposer is not None:
                         from .span import resolve_ambiguous_merge
                         resolved = resolve_ambiguous_merge(
-                            graph, hreg, band, table_uri, _DOC, page_number, span_proposer)
+                            graph, hreg, band, table_uri, doc, page_number, span_proposer)
                     if resolved is None and row_role_proposer is not None:
                         # Loop C NEURAL slice. The narrow-flank resolver keeps priority: it fires
                         # on an explicit ambiguous_flank flag, a strictly narrower trigger. This
                         # handles the general tiling failure (caption / wrap-continuation rows).
                         from .rowrole import resolve_header_row_roles
                         resolved = resolve_header_row_roles(
-                            graph, hreg, band, table_uri, _DOC, page_number, row_role_proposer)
+                            graph, hreg, band, table_uri, doc, page_number, row_role_proposer)
                     if resolved is not None:
                         n, _promos = resolved
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.HierarchicalTable), ascii_view))
+                                                    str(TAB.HierarchicalTable), ascii_view,
+                                                    table_uri))
                     else:
-                        cand_uri = URIRef(f"{_DOC}#region{idx}")
-                        escalate_region(graph, cand_uri, _DOC, ascii_view, "MERGE_AMBIGUOUS",
+                        cand_uri = URIRef(f"{doc}#region{idx}")
+                        escalate_region(graph, cand_uri, doc, ascii_view, "MERGE_AMBIGUOUS",
                                         TAB.HierarchicalTable, 0.4)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
                                                     str(TAB.HierarchicalTable), ascii_view))
                 elif hreg is not None:
-                    table_uri = URIRef(f"{_DOC}#htable{idx}")
+                    table_uri = URIRef(f"{doc}#htable{idx}")
                     # THE MEMBRANE BACKSTOP (loop G attempt 2): assert into a SCRATCH graph and
                     # let region_tiles dispose it, exactly as the matrix and row-hier paths
                     # already do. The PLAIN HIERARCHICAL path wrote directly into the graph —
@@ -375,10 +408,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # Loop J closed R17: the record and transposed paths now carry the same gate.
                     from .tiling import region_tiles
                     scratch = Graph()
-                    n = assert_hier_region(scratch, hreg, band, table_uri, _DOC, page_number)
+                    n = assert_hier_region(scratch, hreg, band, table_uri, doc, page_number)
                     if n and not region_tiles(scratch):
-                        cand_uri = URIRef(f"{_DOC}#region{idx}")
-                        escalate_region(graph, cand_uri, _DOC, ascii_view,
+                        cand_uri = URIRef(f"{doc}#region{idx}")
+                        escalate_region(graph, cand_uri, doc, ascii_view,
                                         "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0,
@@ -399,11 +432,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                             None if n else "ROUND_TRIP_FAIL",
                             str(TAB.HierarchicalTable),
                             ascii_view,
+                            table_uri if n else None,
                         ))
                 else:
                     # Not hierarchical — escalate whole region in-band
-                    cand_uri = URIRef(f"{_DOC}#region{idx}")
-                    escalate_region(graph, cand_uri, _DOC, ascii_view,
+                    cand_uri = URIRef(f"{doc}#region{idx}")
+                    escalate_region(graph, cand_uri, doc, ascii_view,
                                     reason="KIND_NOT_SUPPORTED",
                                     anchor=TAB.HierarchicalTable, confidence=0.4)
                     tokens = sum(len(ln.words) for ln in band.lines)
@@ -415,6 +449,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     denom = asserted_total + escalated_total
     score = 1.0 if denom == 0 else asserted_total / denom
 
+
     if validate_shapes and (
         any(graph.subjects(RDF.type, TAB.RecordTable))
         or any(graph.subjects(RDF.type, TAB.HierarchicalTable))
@@ -423,4 +458,4 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         if not conforms:
             raise AssertionError(f"asserted holon failed tab: SHACL:\n{text}")
 
-    return CompilationReport(score, tuple(reports), graph)
+    return CompilationReport(score, tuple(reports), graph, asserted_total, escalated_total)
