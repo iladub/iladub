@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -537,6 +537,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#shipped-exemplars-the-gate-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipped exemplars — the gate in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-it-matters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -597,6 +608,33 @@
     
   
     Holonic interaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../four-groundings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The four groundings
   
 
     
@@ -683,10 +721,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
         
           
-          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
             
   
   
@@ -704,8 +742,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_12">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -915,6 +953,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#shipped-exemplars-the-gate-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipped exemplars — the gate in practice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-it-matters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1063,6 +1112,26 @@ queries or their executor — the only numeric tolerance in the substrate is the
 check in the oracle, which is decidable arithmetic and declared irreducible. "Formal semantic
 code prevails over Python" is thus a property the build enforces, not a slogan.</p>
 </div>
+<h2 id="shipped-exemplars-the-gate-in-practice">Shipped exemplars — the gate in practice<a class="headerlink" href="#shipped-exemplars-the-gate-in-practice" title="Permanent link">&para;</a></h2>
+<p>The gate is not aspirational. The <strong>declarative transform substrate</strong> compiles a
+table's inverse recipe (<code>tab:ReshapeRecipe</code>) into fixed SPARQL <code>CONSTRUCT</code>s that read
+their parameters from that recipe RDF, certified only when replaying the recipe
+forward reproduces the original grid exactly — a round-trip oracle enforced by
+<code>tests/etkl/test_oracle.py</code> and exercised end-to-end by <code>certify()</code> in
+<code>tests/etkl/test_reshape_certify.py</code>. <strong>Role recovery</strong> derives each header level's
+dimension name and value role as a two-pass SPARQL <code>CONSTRUCT</code> derivation
+(<code>vocab/queries/name-levels.rq</code> then <code>vocab/queries/recover-dimensions.rq</code>, run by
+<code>src/iladub/etkl/denormalization.py</code>) — pure open-world derivation, no procedural
+inference. <strong>Region tiling</strong> (<code>src/iladub/etkl/tiling.py</code>) is the closed-world
+mirror: coverage, no-overlap, and refinement across a candidate region are checked
+as SHACL constraints, never as Python geometry with a tolerance. <strong>Kind
+classification</strong> (<code>src/iladub/etkl/regions.py</code>, driven by
+<code>vocab/queries/classify-kind.rq</code>) decides NON_TABLE / UNSUPPORTED / RECORD as one
+holon-scoped SPARQL <code>SELECT</code> over a fresh per-band evidence graph, guarded by a
+frozen differential oracle (<code>tests/etkl/test_classifygraph.py</code>) that must keep
+agreeing with the retired procedural logic it replaced. Together these four cases
+cover both AXIOM forms — open-world derivation and closed-world constraint — with
+no tuned constant in any of them.</p>
 <h2 id="why-it-matters">Why it matters<a class="headerlink" href="#why-it-matters" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Portability</strong> — declarative transforms are standard SPARQL/SHACL; they run anywhere, with no
@@ -1164,7 +1233,7 @@ down: to the <em>code that reads the document</em>, not just the <em>facts it em
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.sections", "navigation.top", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
