@@ -124,6 +124,29 @@ def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
     #     assertion flips and whoever flips it must say so rather than quietly delete it.
     assert not list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader)), \
         "carriage reached the R33 fixture — re-measure the exposure before changing this"
+    #   * loop M task 4 (review F5): what the false stitch does at the FEED, measured. The chain
+    #     is walked as one logical table, so page 1's `table1-r1` joins page 0's `table1-r1` in
+    #     ONE identity space — and BEFORE the record id was page-qualified that pair collapsed
+    #     onto a single subject (measured: 4 records, 2 distinct subjects, `Alpha/Bolt/10` welded
+    #     to `Gamma/Screw/30`). The R33 exposure is therefore two independent defects stacked:
+    #     the wrong LINK (still open, pinned above) and the identity weld (closed by task 4's
+    #     unconditional page-qualification).
+    from iladub.feed import table_records, _record_uri
+    recs = table_records(rep.graph)
+    assert len(recs) == 4, [r.row_id for r in recs]
+    assert len({str(_record_uri(r.row_id)) for r in recs}) == 4, [r.row_id for r in recs]
+    #     THE DEPENDENCY, executable so that closing R33 cannot silently re-open the weld: with
+    #     the false stitch REMOVED (what closing R33 does), the two pages are read independently
+    #     — and must STILL mint four distinct subjects. Before the fix this dropped back to 2,
+    #     because nothing but the chain was qualifying the pages apart.
+    from rdflib import Graph as _Graph
+    unstitched = _Graph()
+    for triple in rep.graph:
+        if triple[1] != TAB.continuesTable:
+            unstitched.add(triple)
+    unrecs = table_records(unstitched)
+    assert len(unrecs) == 4 and len({str(_record_uri(r.row_id)) for r in unrecs}) == 4, \
+        [r.row_id for r in unrecs]
 
 
 def test_leaf_block_reads_the_production_bands(tmp_path):

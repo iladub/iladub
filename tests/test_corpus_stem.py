@@ -176,14 +176,27 @@ def test_stem_continuation_case_classification():
     assert band0.lines and band1.lines and band2.lines
 
 
+@pytest.fixture(scope="module")
+def stem_document():
+    """The whole-document compile, ONCE per module (loop M task 4 review, F7).
+
+    Two tests need it and each full 3-page compile costs ~3.5 minutes, so compiling per test
+    spent ~7 minutes of every suite run on the identical graph. `DocumentReport` is frozen and
+    the tests below only READ it (`table_records` and `ground_document` never mutate the source
+    graph — they write into a caller-supplied graph), so sharing it changes no measurement."""
+    if not STEM.is_file():
+        pytest.skip("corpus not populated (scripts/fetch_corpus.py)")
+    from iladub.etkl.document import compile_document
+    return compile_document(str(STEM))
+
+
 @needs_stem
-def test_stem_document_stitches_three_pages():
+def test_stem_document_stitches_three_pages(stem_document):
     """Loop M's verifier (spec §3b): the whole stem is ONE logical table.
     RED until the driver + recognition land."""
-    from iladub.etkl.document import compile_document
     from iladub.etkl.holon import TAB
     from rdflib import RDF
-    rep = compile_document(str(STEM))
+    rep = stem_document
     assert len(rep.pages) == 3
     assert len(rep.chains) == 1 and len(rep.chains[0]) == 3, rep.chains
     total_cells = sum(sum(r.cells for r in p.regions) for p in rep.pages)
@@ -199,7 +212,7 @@ def test_stem_document_stitches_three_pages():
 
 
 @needs_stem
-def test_stem_document_grounds_full():
+def test_stem_document_grounds_full(stem_document):
     """Loop-K's capstone over the WHOLE document (loop M task 4). Invariants asserted,
     edition-dependent tallies printed.
 
@@ -209,14 +222,13 @@ def test_stem_document_grounds_full():
     chain as one table without page-qualifying the discriminator grounds two different
     voyages onto one subject. The unit battery is tests/test_feed_chain_walk.py."""
     from rdflib import Graph, Namespace, RDF
-    from iladub.etkl.document import compile_document
     from iladub.feed import ground_document, table_records, _record_uri
     from iladub.ground import load_contract
     from iladub.propose_ground import FakeGroundingProposer, GroundingProposal
 
     ILADUB = Namespace("https://w3id.org/iladub#")
     SHIP = Namespace("https://example.org/shipping#")
-    rep = compile_document(str(STEM))
+    rep = stem_document
     contract = load_contract("examples/shipping/stem-contract.ttl")
     terms = Graph().parse("examples/shipping/stem-terms.ttl", format="turtle")
     shapes = Graph().parse("examples/shipping/stem-shapes.ttl", format="turtle")

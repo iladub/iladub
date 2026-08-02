@@ -45,21 +45,26 @@ def _logical_tables(graph: Graph, tables: set) -> list[tuple]:
     time by the AXIOM `vocab/queries/continuation-of.rq` and is already an asserted fact in the
     graph. This walk only CONSUMES that fact — RDF reads, no tuned constant.
 
-    Two structural guards, because a record must never be lost or read twice:
+    Three structural guards, because a record must never be lost or read twice:
+      * the predecessor is the LOWEST `tab:continuesTable` object, not an arbitrary one — a
+        malformed table naming two predecessors must still read the same way on every run;
       * `seen` — a table reached twice (a malformed graph in which two tables continue the same
         one) is read once, under the first head that reaches it;
       * the sweep-up at the end — every table of a CYCLE has a predecessor, so the cycle has no
         head and its records would vanish. The lowest member is read as the head instead, and
-        the rest of the cycle joins it as one logical table (so their fragments still get
-        page-qualified, which is what keeps their records distinct).
-    A document with no chains yields one single-member logical table per table, in exactly the
-    `sorted(tables, key=str)` order the pre-chain feed used: byte-identical behaviour.
+        the rest of the cycle joins it as one logical table.
+
+    ORDER of the logical tables is by the head's PAGE first, string second. Sorting by URI alone
+    is only accidentally page order: `p10#t0` sorts before `p2#t0`, so a ten-page document read
+    its tables out of order (F7). Pages are read (`tab:onPage`), never parsed out of the IRI, and
+    a graph that records none falls back to the `sorted(key=str)` order the pre-chain feed used.
     """
     successors: dict = {}
     heads: list = []
     for t in sorted(tables, key=str):
-        prev = graph.value(t, TAB.continuesTable)
-        if prev is not None and prev != t and prev in tables:
+        prev = min((o for o in graph.objects(t, TAB.continuesTable)
+                    if o != t and o in tables), key=str, default=None)
+        if prev is not None:
             successors.setdefault(prev, []).append(t)
         else:
             heads.append(t)
@@ -77,7 +82,7 @@ def _logical_tables(graph: Graph, tables: set) -> list[tuple]:
             queue.extend(successors.get(t, ()))
         return tuple(chain)
 
-    for head in heads:
+    for head in sorted(heads, key=lambda t: (_table_page(graph, t), str(t))):
         out.append(_walk(head))
     for t in sorted(tables, key=str):                 # cycle sweep-up: no table goes unread
         if t not in seen:
@@ -85,31 +90,51 @@ def _logical_tables(graph: Graph, tables: set) -> list[tuple]:
     return out
 
 
+def _table_page(graph: Graph, table) -> float:
+    """The page a table was read from — its lowest cell `tab:onPage`; `inf` when none records one
+    (an unpaged graph then keeps its pre-chain `sorted(key=str)` reading order)."""
+    pages = [int(p) for e in graph.objects(table, TAB.hasCell)
+             for p in graph.objects(e, TAB.onPage)]
+    return float(min(pages)) if pages else float("inf")
+
+
 def _row_page(graph: Graph, row) -> int | None:
-    """The page a row was read from (`tab:onPage`, off its own cells), or None if unrecorded."""
+    """The page a row was read from (`tab:onPage`, off its own cells), or None if unrecorded.
+
+    `min` is a deterministic choice, not a judgment: a row whose cells claim two pages is
+    malformed (the compile emits one page per region), and the discriminator only has to be
+    STABLE for such a row — `table_records`' final uniqueness pass, not this number, is what
+    guarantees two rows never share a subject.
+    """
     pages = {int(p) for e in graph.subjects(TAB.atRow, row)
              for p in graph.objects(e, TAB.onPage)}
     return min(pages) if pages else None
 
 
-def _row_fragment(graph: Graph, row, qualified: bool) -> str:
-    """The row's opaque discriminator — its URI fragment, PAGE-QUALIFIED across a chain.
+def _row_discriminator(graph: Graph, row) -> str:
+    """The row's opaque discriminator: its URI fragment, PAGE-QUALIFIED — always.
 
-    A fragment is unique inside ONE table, which is all the pre-chain feed ever needed. Inside a
-    logical table it is NOT: the pages of one document are compiled under page-scoped document
-    URIs (`document.page_doc_uri`), so `p1#htable1-r7` and `p2#htable1-r7` are DIFFERENT rows
-    that share a fragment — measured on the stem, 65 of page 2's row fragments also name a row
-    of page 1. Merging the chain without qualifying would let two voyages collapse onto one
-    record subject. The page is READ (`tab:onPage`), never parsed out of the IRI.
+    A fragment is unique inside ONE table and nowhere else. The pages of a document compile
+    under page-scoped document URIs (`document.page_doc_uri`), so `p1#htable1-r7` and
+    `p2#htable1-r7` are DIFFERENT rows sharing a fragment — measured on the stem, 65 of page 2's
+    row fragments also name a page-1 row; measured on the case-1 two-page fixture, a shipping row
+    and a lab row both landed on `urn:iladub:record:table0-r1_table0-r1`.
+
+    Qualification is UNCONDITIONAL (F1). Making it conditional on chain membership was the
+    defect: an UNCHAINED multi-page document is exactly where nothing else disambiguates the two
+    pages, and "byte-identical when unchained" preserved the weld rather than fixing it. The page
+    is READ (`tab:onPage`), never parsed out of the IRI.
+
+    A graph recording no page keeps the bare fragment — readable, and NOT the uniqueness
+    guarantee: that is `table_records`' final pass, which appends the row's own IRI to any id
+    two rows would otherwise share. Nothing here is allowed to be silently wrong (F6/§7).
     """
     frag = str(row).split("#")[-1]
-    if not qualified:
-        return frag
     page = _row_page(graph, row)
     return frag if page is None else f"p{page} {frag}"
 
 
-def _read_table(graph: Graph, t, qualified: bool) -> tuple[list, dict, dict]:
+def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
     """One table's reading: `(ordered_rows, {row: [(x0, y0, concept)]}, {row: rid})`.
 
     Deliberately PER-TABLE, even when the table is one member of a continuation chain (R34's
@@ -169,7 +194,7 @@ def _read_table(graph: Graph, t, qualified: bool) -> tuple[list, dict, dict]:
             row_cols.setdefault(row, set()).add(col)
     ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
     rid_of = {row: (row_path[row] if row in row_path
-                    else _row_fragment(graph, row, qualified)) for row in ordered}
+                    else _row_discriminator(graph, row)) for row in ordered}
     return ordered, rows, rid_of
 
 
@@ -185,6 +210,10 @@ def table_records(graph: Graph) -> list[Record]:
     label identity — see `_read_table`. Undoing pagination is a READING act, not a rewrite: the
     graph keeps three page-scoped tables linked by the fact the AXIOM licensed; the feed reads
     them as the one table the author cut.
+
+    THE IDENTITY INVARIANT, enforced in three passes rather than argued: no two rows of the
+    document ever mint the same record id. Pass 3 is what makes that a guarantee instead of a
+    property of the emitter's naming — see there.
     """
     out: list[Record] = []
     tables = (set(graph.subjects(RDF.type, TAB.RecordTable))
@@ -197,29 +226,41 @@ def table_records(graph: Graph) -> list[Record]:
     per_logical: list[tuple] = []
     multiplicity: dict = {}
     for members in _logical_tables(graph, tables):
-        spans_pages = len(members) > 1
         ordered: list = []
         rows: dict = {}
         rid_of: dict = {}
         for t in members:                      # chain order == page order
-            m_ordered, m_rows, m_rid = _read_table(graph, t, spans_pages)
+            m_ordered, m_rows, m_rid = _read_table(graph, t)
             ordered.extend(m_ordered)          # head's rows first, then each continuation's
             rows.update(m_rows)                # row URIs are page-scoped: no key ever clashes
             rid_of.update(m_rid)
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
-        per_logical.append((ordered, rows, rid_of, spans_pages))
-    # Pass 2: mint records using the GLOBAL (cross-table) multiplicity — collision guard
+        per_logical.append((ordered, rows, rid_of))
+    # Pass 2: mint ids using the GLOBAL (cross-table) multiplicity — collision guard
     # (loop I; closes the PR #59 recorded minor): two rows sharing a header path, whether
     # in the same table or across tables, must never mint the same record subject — each
-    # colliding row keeps its opaque fragment appended.
-    for ordered, rows, rid_of, spans_pages in per_logical:
+    # colliding row keeps its opaque discriminator appended.
+    minted: list[tuple] = []
+    for ordered, rows, rid_of in per_logical:
         for row in ordered:
             cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
             rid = rid_of[row]
             if multiplicity[rid] > 1:
-                rid = f"{rid} > {_row_fragment(graph, row, spans_pages)}"
-            out.append(Record(rid, tuple(cells)))
+                rid = f"{rid} > {_row_discriminator(graph, row)}"
+            minted.append((row, rid, tuple(cells)))
+    # Pass 3: the guarantee (F1). Everything above is READABILITY — a header path, a page, a
+    # fragment — and every one of them is the emitter's naming, which the feed does not control
+    # and must not trust: appending a discriminator that EQUALS the id it disambiguates is a
+    # no-op, and that is exactly how two pages' `table0-r1` welded a shipping row and a lab row
+    # onto one subject (measured on the case-1 fixture). So any id two rows still share is
+    # settled by the row's own IRI, which RDF guarantees unique. A collision here means the
+    # readable forms ran out, never that a record is lost.
+    residual: dict = {}
+    for _row, rid, _cells in minted:
+        residual[rid] = residual.get(rid, 0) + 1
+    for row, rid, cells in minted:
+        out.append(Record(f"{rid} > {row}" if residual[rid] > 1 else rid, cells))
     return out
 
 
