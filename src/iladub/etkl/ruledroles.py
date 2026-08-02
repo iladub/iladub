@@ -16,9 +16,18 @@
         author's agreeing drawn grid;
       - and carriage is then applied only to rows that are TEXT-IDENTICAL per column to the prior
         page's rows (`carried_roles_for`). A row with no exact counterpart is REFUSED, not guessed.
-    What is left here is copying, matching by string equality, and emitting — no decision. The
-    result still passes the same SHACL oracle before it is admitted, so a carried reading that
-    does not tile is refused exactly like a derived one.
+    What is left here is copying, matching by string equality, and emitting. The result still
+    passes the same SHACL oracle before it is admitted, so a carried reading that does not tile is
+    refused exactly like a derived one.
+    HONEST QUALIFICATION (review finding F2 — the first cut of this bullet claimed "no decision
+    lives here", and that claim was too strong): *which* carried row a page-N row repeats IS a
+    decision, and `carried_roles_for` answers it with a greedy in-order scan written in Python
+    control flow — a declarative law (in-order counterpart, exact per-column identity, leaf-is-the-
+    leaf, inert-skip-only) implemented procedurally, when its AXIOM twin already exists in this
+    loop in `continuation-of.rq`'s clause shape. Registered as **residue R34** with its named
+    disposition: a `repeats-row.rq` derivation over the same presence/equality evidence. What IS
+    true unconditionally is the rest: no ROLE is ever invented here, and no tuned constant exists
+    on this path.
   * This module is the **PROCEDURAL** layer only, in the shape classifygraph.py (B2c) and
     headergraph.py (B) already established: two geometric presence tests (`_within` / `_encloses`,
     a strict-interior / whole-cover pair), emitting a transient evidence graph, invoking rdflib,
@@ -380,9 +389,19 @@ def carried_roles_for(reading: CarriedHeaderReading, header_rows, grid):
         block was redrawn, not rearranged;
       * this page's LAST header row must be the carried block's LAST row: the leaf is the leaf.
         Without this a continuation page could take a non-leaf row's reading for its leaf;
-      * a carried row with NO counterpart here is simply skipped — that is the print-timestamp
-        furniture the head page carries and the continuation pages do not (measured on the
-        specimen: page 0 has 4 header rows, pages 1-2 have the same 3 minus the timestamp);
+      * a carried row with NO counterpart here may be skipped ONLY if its confirmed role is
+        `furniture` — that is the print-timestamp the head page carries and the continuation pages
+        do not (measured on the specimen: page 0 has 4 header rows, pages 1-2 have the same 3
+        minus the timestamp, whose source cells are hsc0/hsc1). The role condition is load-bearing
+        and was NOT in the first cut of this function (review finding F1): skipping a `furniture`
+        row is INERT — the row contributed no level and no text to any label, so its absence
+        changes nothing about the reading. Skipping a `continuation` row is not: that row's text
+        was PREFIXED onto a leaf label, so dropping it silently changes what the column is called
+        ('Total Grain Tonnes' on page N-1 against 'Grain Tonnes' on page N — reproduced offline by
+        the reviewer), and the two chained tables then carry different labels for the same column.
+        No oracle catches that: each page tiles and conserves its own text perfectly. So a page
+        that redraws the leaf but omits a WRAP row is refused, and compiles on its own path
+        (which, standalone, escalates) rather than being stitched under a mutated label;
       * a carried block containing two rows with the SAME signature is refused outright: which of
         them a page-N row repeats is then genuinely undecidable by text identity, and the two may
         carry different roles. Refusing costs nothing real (no measured block has one) and is the
@@ -408,6 +427,8 @@ def carried_roles_for(reading: CarriedHeaderReading, header_rows, grid):
     roles, matched, i = [], [], 0
     for k, sig in enumerate(sigs):
         while i < len(reading.rows) and reading.rows[i].signature != sig:
+            if reading.rows[i].role != "furniture":
+                return None                   # F1: only an INERT skip is admissible (see above)
             i += 1
         if i >= len(reading.rows):
             return None                       # a row with no counterpart -> refuse, never guess

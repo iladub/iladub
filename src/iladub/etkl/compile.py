@@ -202,7 +202,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     page's table, so carriage cannot reach an unrecognized page at all: a caller that passes
     nothing (every single-page call, and every unrecognized page) gets exactly the pre-loop-M
     behaviour. What the carriage may then do at the band is stated in
-    ruledroles.resolve_ruled_header_rows; it still has to pass the same SHACL tiling oracle."""
+    ruledroles.resolve_ruled_header_rows; it still has to pass the same SHACL tiling oracle.
+
+    CARRIAGE IS ONLY SOUND WHERE CONTINUATION RECOGNITION LICENSED IT (review finding F3, stated
+    here because this is a PUBLIC parameter and nothing in this signature enforces it): handing in
+    a reading for a band that `document.compile_document`'s continuation AXIOM did not license
+    means asserting one table's header reading over another table's rows. The in-repo call graph
+    upholds the invariant — `compile_document` is the only producer, and it keys the map by the
+    recognized band — but an external caller can bypass it. Registered as part of residue R34."""
     from .segment import is_multi_table_ambiguous
     doc = _DOC if doc_uri is None else doc_uri
     bands = page_bands(pdf_path, page_number)

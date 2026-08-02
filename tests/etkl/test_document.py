@@ -203,6 +203,134 @@ def test_carriage_refuses_a_row_that_does_not_match_exactly():
                              _B) is None
 
 
+def test_carriage_refuses_a_skipped_continuation_row():
+    """REVIEW FINDING F1, pinned. A skip is admissible only when the skipped row is FURNITURE.
+
+    A furniture skip is inert — the row contributed no level and no text to any label, so its
+    absence changes nothing. A CONTINUATION skip is not: that row's text was prefixed onto a leaf
+    label, so a page that redraws the leaf but omits the wrap row would carry the SAME roles onto
+    a SHORTER block and end up calling the column 'Grain Tonnes' where the page it is stitched to
+    calls it 'Total Grain Tonnes'. Nothing downstream catches that — each page tiles and conserves
+    its own text perfectly — so it has to be refused here.
+    """
+    from iladub.etkl.ruledroles import carried_roles_for
+    reading = _reading([
+        ([("printed today", 10.0, 60.0)], "furniture"),
+        ([("Total", 210.0, 235.0)], "continuation"),          # the wrap row page N omits
+        ([("Grain", 210.0, 238.0)], "continuation"),
+        ([("Port", 10.0, 40.0), ("Tonnes", 210.0, 245.0)], None),
+    ])
+    leaf = [_Cell("Port", 10.0, 40.0), _Cell("Tonnes", 210.0, 245.0)]
+    # the whole block minus the FURNITURE row -> carried (the specimen's own shape)
+    roles, _matched = carried_roles_for(
+        reading, [[_Cell("Total", 210.0, 235.0)], [_Cell("Grain", 210.0, 238.0)], leaf], _B)
+    assert roles == ("continuation", "continuation")
+    # the same block minus a CONTINUATION row -> refused, however identical everything else is
+    assert carried_roles_for(reading, [[_Cell("Grain", 210.0, 238.0)], leaf], _B) is None
+    # ...including when it is the LAST wrap row that is missing (skip before the leaf)
+    assert carried_roles_for(reading, [[_Cell("Total", 210.0, 235.0)], leaf], _B) is None
+
+
+def _stacked_wrap_two_page_pdf(path, omit_wrap_row):
+    """Two pages in the `stacked_banner_ruled_pdf` shape (loop L's own fixture, whose merged label
+    is 'Total Grain Tonnes'). Page 0 is the full block: banner + header-block rule + the two wrap
+    rows + the 1:1 leaf. Page 1 redraws the SAME leaf on the SAME author-drawn grid — so the
+    continuation law recognizes the pair — but omits the banner (with its block rule, so page 1
+    cannot derive a reading of its own) and, when `omit_wrap_row`, one of the two WRAP rows."""
+    from reportlab.pdfgen import canvas
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0, 390.0]
+    xs = [42.0, 112.0, 182.0, 252.0, 322.0]
+    leaf_labels = ["Port", "Tonnes", "Ship", "Tonnes", "Ship"]
+    n_body, rh = 20, 14.0
+    top = 40.0 + (3 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(430.0, top + 30.0))
+
+    def _page(wraps, banner, first_offset):
+        if banner:
+            c.setFont("Courier-Bold", 10)
+            c.drawCentredString(180.0, top, "Monday-03-August-Rpt")
+        c.setFont("Courier-Bold", 8)
+        for k, w in enumerate(wraps):
+            for x in (112.0, 252.0):
+                c.drawString(x, top - (first_offset + k) * rh, w)
+        leaf_y = top - (first_offset + len(wraps)) * rh
+        for x, t in zip(xs, leaf_labels):
+            c.drawString(x, leaf_y, t)
+        c.setFont("Courier", 8)
+        ports = ["Mackay", "Gladstone", "Newcastle", "Portland"]
+        for i in range(n_body):
+            row = (ports[i % len(ports)], str(1000 + 50 * i), "V%02d" % i,
+                   str(2000 + 40 * i), "W%02d" % i)
+            for x, t in zip(xs, row):
+                c.drawString(x, leaf_y - (i + 1) * rh, t)
+        c.setLineWidth(0.5)
+        for e in edges:
+            c.line(e, leaf_y - (n_body + 1) * rh - 4, e, top + 10)
+        if banner:
+            c.line(edges[0] - 2.0, top - 0.4 * rh, edges[-1] + 2.0, top - 0.4 * rh)
+
+    _page(["Total", "Grain"], True, 1)
+    c.showPage()
+    _page(["Grain"] if omit_wrap_row else ["Total", "Grain"], False, 1)
+    c.save()
+
+
+def test_carriage_refuses_a_page_that_omits_a_wrap_row_end_to_end(tmp_path):
+    """REVIEW FINDING F1, end to end on the fixture shape that produced the bug.
+
+    Page 1 redraws the leaf on the same author-drawn grid — recognition fires — but omits the
+    'Total' wrap row. Carriage MUST refuse: carrying page 0's roles onto the shorter block would
+    label that column 'Grain Tonnes' where page 0 calls it 'Total Grain Tonnes', silently and with
+    every oracle satisfied.
+
+    MEASURED, and asserted as measured rather than as hoped: refused, page 1 falls back to its own
+    path and — on THIS geometry — still asserts, reading 'Grain' as an ordinary header level of its
+    own. That is page 1's own honest reading of page 1's own ink, not page 0's reading misapplied,
+    and it is pre-loop-M behaviour untouched by the carriage. What F1 guarantees, and what is
+    asserted here, is the narrower and load-bearing thing: page 0's merged label does not appear on
+    page 1. (The pair is still CHAINED, because recognition licensed it — that is the R33
+    header-evidence exposure, which F1 neither creates nor closes.)
+    """
+    from rdflib import RDF
+    from iladub.etkl.holon import TAB
+    pdf = str(tmp_path / "omitted-wrap.pdf")
+    _stacked_wrap_two_page_pdf(pdf, omit_wrap_row=True)
+    rep = compile_document(pdf)
+    assert rep.recognized == ((0, 1),), rep.recognized       # the law DID license the pair
+    assert not list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader)), \
+        "F1: a page omitting a CONTINUATION row must not receive the carried reading"
+    assert all(r.header_reading is None for r in rep.pages[1].regions), \
+        "page 1 confirmed no carried reading"
+    p1_labels = {str(rep.graph.value(lc, TAB.cellText))
+                 for lc in rep.graph.subjects(RDF.type, TAB.LabelCell) if "/p1#" in str(lc)}
+    assert "Total Grain Tonnes" not in p1_labels, sorted(p1_labels)
+    p0_labels = {str(rep.graph.value(lc, TAB.cellText))
+                 for lc in rep.graph.subjects(RDF.type, TAB.LabelCell) if "/p0#" in str(lc)}
+    assert "Total Grain Tonnes" in p0_labels, sorted(p0_labels)
+
+
+def test_carriage_carries_when_the_whole_block_is_redrawn_end_to_end(tmp_path):
+    """The control for the test above, on the SAME fixture: page 1 redraws BOTH wrap rows and
+    omits only the banner furniture. That skip is inert, so the reading carries, page 1 asserts,
+    and its repeated header block is recorded as facts. Without this the refusal above would pass
+    for the wrong reason (a fixture that never carries at all)."""
+    from rdflib import RDF
+    from iladub.etkl.holon import TAB
+    pdf = str(tmp_path / "full-block.pdf")
+    _stacked_wrap_two_page_pdf(pdf, omit_wrap_row=False)
+    rep = compile_document(pdf)
+    assert rep.recognized == ((0, 1),), rep.recognized
+    reps = list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader))
+    assert reps, "the whole redrawn block must carry"
+    assert any(r.verdict == "asserted" for r in rep.pages[1].regions)
+    assert len(rep.chains) == 1 and len(rep.chains[0]) == 2, rep.chains
+    # and the carried label is the SAME on both pages — the property F1 exists to protect
+    labels = {str(rep.graph.value(lc, TAB.cellText))
+              for lc in rep.graph.subjects(RDF.type, TAB.LabelCell)}
+    assert "Total Grain Tonnes" in labels, sorted(labels)
+    assert "Grain Tonnes" not in labels, sorted(labels)
+
+
 def test_carriage_refuses_an_ambiguous_carried_block():
     """Two carried rows with the SAME signature and DIFFERENT roles: which one a page-N row
     repeats is undecidable by text identity, so the whole carriage is refused rather than taking
