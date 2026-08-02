@@ -496,7 +496,7 @@ def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page, carri
     the derivation for this band — the roles are matched over by exact per-column text identity
     (`carried_roles_for`), not re-derived — and the repeated header block is recorded as
     `tab:RepeatedHeader` facts. A page that is not a recognized continuation never receives one,
-    so the un-carried behaviour is unreachable-by-construction for case 1. If the match refuses,
+    so the CARRIED behaviour is unreachable-by-construction for case 1. If the match refuses,
     this falls back to the derivation, exactly as if nothing had been carried.
 
     Abstains (None) without touching `graph` when:
