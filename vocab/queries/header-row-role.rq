@@ -1,0 +1,62 @@
+# header-row-role.rq (loop L, 2026-08-02) — THE HEADER-STACK LAW, as an AXIOM.
+#
+# Open-world derivation (CLAUDE.md §8): the role of each NON-LEAF header row is GROWN from the
+# author's own ruled-column marks. Every input is a PRESENCE fact emitted by ruledroles.role_evidence
+# (containment / enclosure tested there with the established COORD_EPS float epsilon), so this query
+# carries no numeric literal and no tolerance. Nothing here reads label TEXT — geometry and rule
+# alignment only (residue R4's lesson).
+#
+# Only rows ABOVE the leaf header row are emitted as tab:HeaderRegionRow: the leaf row is never
+# classified (it IS the leaf). The leaf row's own 1:1 alignment with the ruled columns is clause 1
+# below — a whole-query guard, so a stack this law does not govern yields NO rows rather than a
+# partial reading.
+#
+# The law, in the priority the BINDs encode:
+#   furniture    — the row's ink encloses EVERY ruled column (a full-width banner), OR one of its
+#                  cells claims no column at all (inside none, enclosing none: ink that crosses a
+#                  ruled boundary without claiming a whole column is drawn OVER the grid, not
+#                  addressed to it). Its text is carried as a tab:RegionCaption, never dropped.
+#   level        — some cell encloses a whole ruled column: a group label spanning a contiguous run
+#                  of columns. This is the UNCHANGED pre-loop-L parent pipeline
+#                  (_covers_for_cell + repair_coverage).
+#   continuation — otherwise every cell lies strictly inside one ruled column: a wrap fragment of
+#                  that column's leaf label.
+#
+# The derived reading is DISPOSED by the same SHACL tiling + conservation oracle loop C uses; a
+# reading that does not tile is refused and the caller falls through to today's behaviour.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?row ?role WHERE {
+  # CLAUSE 1 — the leaf header row must align 1:1 with the ruled columns, or the stack is not the
+  # shape this law governs and NO row gets a role (an empty result; the caller then keeps its
+  # pre-loop-L behaviour). Stated as three presence patterns, so there is no count to compare:
+  #   no leaf cell outside every column / no column without a leaf cell / no column with two.
+  # (The deepest candidate is the leaf row by construction: header_rows_of ends the header region
+  # at the body split, so its last row is the deepest line above the body.)
+  FILTER NOT EXISTS {
+    ?lc a tab:LeafHeaderCell .
+    FILTER NOT EXISTS { ?lc tab:withinRuledColumn ?anycol }
+  }
+  FILTER NOT EXISTS {
+    ?ecol a tab:RuledColumn .
+    FILTER NOT EXISTS { ?lc2 a tab:LeafHeaderCell ; tab:withinRuledColumn ?ecol }
+  }
+  FILTER NOT EXISTS {
+    ?la a tab:LeafHeaderCell ; tab:withinRuledColumn ?dcol .
+    ?lb a tab:LeafHeaderCell ; tab:withinRuledColumn ?dcol .
+    FILTER(?la != ?lb)
+  }
+  # CLAUSE 2 — the role of each row ABOVE the leaf.
+  ?r a tab:HeaderRegionRow ; tab:headerRowOrder ?row .
+  BIND(NOT EXISTS {
+      ?col a tab:RuledColumn .
+      FILTER NOT EXISTS { ?r tab:rowEnclosesRuledColumn ?col }
+  } AS ?fullWidth)
+  BIND(EXISTS {
+      ?r tab:hasHeaderRegionCell ?c .
+      FILTER NOT EXISTS { ?c tab:withinRuledColumn ?w }
+      FILTER NOT EXISTS { ?c tab:enclosesRuledColumn ?e }
+  } AS ?unaddressed)
+  BIND(EXISTS { ?r tab:hasHeaderRegionCell ?c2 . ?c2 tab:enclosesRuledColumn ?e2 } AS ?group)
+  BIND(IF(?fullWidth || ?unaddressed, "furniture",
+       IF(?group, "level", "continuation")) AS ?role)
+}

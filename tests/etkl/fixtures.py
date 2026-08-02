@@ -802,6 +802,69 @@ def caption_wrap_report_pdf(path: str) -> dict:
             "merged_label": "Unit Ref", "leaf_labels": ["Item", "Ref", "Qty", "Cost"]}
 
 
+def stacked_banner_ruled_pdf(path: str) -> dict:
+    """LOOP L FIXTURE — a RULED table whose header is a STACK: a banner line drawn over
+    the ruled grid, two wrap-continuation lines, then the 1:1 leaf header line.
+
+    Five ruled columns (rules at 40/110/180/250/320/390). Line by line:
+      line 0  'Monday-03-August-Rpt' centred at x=180 — ink [120,240] CROSSES the ruled
+              boundary at 180 while claiming NO whole column (it covers neither [110,180]
+              nor [180,250]). It is ink drawn OVER the grid, not addressed to it: a banner.
+              (rule_aware_lines chops it at the boundary into two cells; the law reads the
+              cells, so the chop is immaterial.)
+      lines 1-2  'Total' / 'Grain' at x=112 and x=252 — each strictly INSIDE one ruled
+              column, above that column's leaf label: wrap-continuation fragments
+              ('Total Grain Tonnes').
+      line 3  'Port' 'Tonnes' 'Ship' 'Tonnes' 'Ship' — one label strictly inside each of
+              the five ruled columns: the LEAF header, aligned 1:1.
+      lines 4+  twenty body rows; columns 1 and 3 numeric, 0/2/4 text (so the region routes
+              the HIERARCHICAL path, not matrix.py's all-numeric-suffix pivot path).
+
+    Measured while writing this fixture (2026-08-02): under the pre-loop-L reading every
+    header line is a header LEVEL, the resulting tree does not tile, and the region
+    escalates REGION_TILING_FAILED with score 0.0.
+
+    Two properties are load-bearing — do not "tidy" them:
+      * the banner text carries NO SPACES. An internal space at that x opens a whitespace
+        gutter which loop G's header-confirmed refinement then confirms as a sixth column,
+        changing what is under test.
+      * the body has TWENTY rows. compile.py scores a hierarchical region as
+        asserted_body_tokens / all_band_tokens, so the header region's own tokens count
+        against the ratio; a four-row body scores 20/31 = 0.65 for a perfectly compiled
+        table. Twenty rows (100/111 = 0.90) puts a correct reading above the 0.9 floor,
+        matching the row-count regime of the real reports this law is for.
+    """
+    edges = [40.0, 110.0, 180.0, 250.0, 320.0, 390.0]
+    xs = [42.0, 112.0, 182.0, 252.0, 322.0]
+    n_body = 20
+    rh = 14.0
+    top = 40.0 + (3 + n_body) * rh
+    c = canvas.Canvas(str(path), pagesize=(430.0, top + 30.0))
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString(180.0, top, "Monday-03-August-Rpt")          # the banner
+    c.setFont("Courier-Bold", 8)
+    for x in (112.0, 252.0):
+        c.drawString(x, top - rh, "Total")                            # wrap fragment 1
+    for x in (112.0, 252.0):
+        c.drawString(x, top - 2 * rh, "Grain")                        # wrap fragment 2
+    for x, t in zip(xs, ["Port", "Tonnes", "Ship", "Tonnes", "Ship"]):
+        c.drawString(x, top - 3 * rh, t)                              # the leaf header
+    c.setFont("Courier", 8)
+    ports = ["Mackay", "Gladstone", "Newcastle", "Portland"]
+    for i in range(n_body):
+        row = (ports[i % len(ports)], str(1000 + 50 * i), "V%02d" % i,
+               str(2000 + 40 * i), "W%02d" % i)
+        for x, t in zip(xs, row):
+            c.drawString(x, top - (4 + i) * rh, t)
+    c.setLineWidth(0.5)
+    for e in edges:
+        c.line(e, top - (4 + n_body) * rh - 4, e, top + 10)
+    c.save()
+    return {"rule_xs": edges, "n_leaf_cols": 5, "banner": "Monday-03-August-Rpt",
+            "leaf_labels": ["Port", "Tonnes", "Ship", "Tonnes", "Ship"],
+            "merged_labels": ["Total Grain Tonnes"], "n_body_rows": n_body}
+
+
 def image_only_table_pdf(path):
     """A text-layer-LESS PDF: render simple_table_pdf to a raster and place it full-page.
     Pure-pip (PNG, no JPEG encoder). Simulates a scan for the OCR first-mile tests."""

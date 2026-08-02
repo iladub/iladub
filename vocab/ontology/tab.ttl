@@ -290,6 +290,30 @@ tab:intervalLo a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
 tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval hi"@en ;
     rdfs:comment "Right edge of that interval."@en .
 
+# --- ruled header-row role evidence (transient, pre-holon; loop L) ---
+# The inputs to header-row-role.rq, the header-stack law. Every term is a PRESENCE fact over the
+# author's own ruled column grid — emitted by ruledroles.role_evidence, tested there with the
+# established COORD_EPS float epsilon so the query itself carries no numeric literal. Transient:
+# never asserted into a holon (the committed record of the resulting reading is tab:RegionCaption
+# + tab:HeaderSourceCell, as for the loop-C NEURAL reading).
+tab:RuledColumn a owl:Class ; rdfs:label "Ruled column"@en ;
+    rdfs:comment "A transient column of the AUTHOR'S ruled grid (the band's vertical rules, plus any header-confirmed interior boundary). Distinct from tab:GridColumn, which is the loop-B covering evidence over any leaf grid however recovered: the role law is only defined where the columns are the author's marks."@en .
+tab:HeaderRegionRow a owl:Class ; rdfs:label "Header region row"@en ;
+    rdfs:comment "A transient NON-LEAF header-region row awaiting its role. The leaf header row is never emitted: it is the leaf by construction, and the derivation refuses to run unless it aligns 1:1 with the ruled columns."@en .
+tab:headerRowOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range xsd:integer ; rdfs:label "header row order"@en ;
+    rdfs:comment "0-based header-region row index (0 = topmost), matching rowrole.build_row_reading's role-vector position."@en .
+tab:HeaderRegionCell a owl:Class ; rdfs:label "Header region cell"@en ;
+    rdfs:comment "A transient cell of a non-leaf header-region row, carrying only its relation to the ruled columns."@en .
+tab:LeafHeaderCell a owl:Class ; rdfs:label "Leaf header cell"@en ;
+    rdfs:comment "A transient cell of the LEAF header row (the deepest header row above the body). Carries only tab:withinRuledColumn: clause 1 of header-row-role.rq reads these to check that every ruled column holds exactly one leaf label, the precondition of the whole law. The leaf row is never given a role."@en .
+tab:hasHeaderRegionCell a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:HeaderRegionCell ; rdfs:label "has header region cell"@en .
+tab:withinRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionCell ; rdfs:range tab:RuledColumn ; rdfs:label "within ruled column"@en ;
+    rdfs:comment "The cell's ink lies strictly INSIDE this ruled column (regions._word_in_column). A cell within a column claims that one column: a wrap fragment of its leaf label."@en .
+tab:enclosesRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionCell ; rdfs:range tab:RuledColumn ; rdfs:label "encloses ruled column"@en ;
+    rdfs:comment "The cell's ink covers this whole ruled column (the exact dual of tab:withinRuledColumn). A cell enclosing a column claims a GROUP of columns: a genuine merged parent label."@en .
+tab:rowEnclosesRuledColumn a owl:ObjectProperty ; rdfs:domain tab:HeaderRegionRow ; rdfs:range tab:RuledColumn ; rdfs:label "row encloses ruled column"@en ;
+    rdfs:comment "The row's COMBINED ink extent covers this whole ruled column. A row enclosing every ruled column is a full-width banner — furniture, not a header level — however rule_aware_lines happened to chop it into cells."@en .
+
 # --- detected aggregation rows (loop H, residue R4) ---
 tab:DetectedAggregationRow a owl:Class ; rdfs:subClassOf tab:AggregationRow ;
     rdfs:label "Detected aggregation row"@en ;
