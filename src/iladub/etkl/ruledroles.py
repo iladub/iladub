@@ -46,8 +46,12 @@ KNOWN RESIDUES (honest, not silently absorbed; to be registered at loop close)
     geometry. Measured (re-review round 2): a parent 'Arr' left-aligned at its column's leaf-label
     x0 shares that origin BY CONSTRUCTION — every cell in a left-aligned column starts at the same
     coordinate — so no alignment predicate can tell them apart, and reading the label TEXT is
-    forbidden here (R4). Loop L therefore does not attempt it: such pages fall outside clause 0's
-    engagement context and keep their pre-loop-L reading. NAMED FUTURE DISPOSITION: §8 sends this
+    forbidden here (R4). Loop L therefore does not attempt it. Correction (round-2 re-review): the
+    residual does NOT sit outside clause 0's engagement context — it FIRES INSIDE an engaged header
+    block, for rows below the block rule, and is measured there ('Arr Tonnes' asserted at 0.9195
+    where BASE escalated). Engagement narrows WHERE the law fires at all; once engaged, it does
+    not by itself separate a merged parent from a wrap fragment, and the pre-loop-L reading is
+    kept for that row. NAMED FUTURE DISPOSITION: §8 sends this
     to NEURAL — a proposer reading the joined text ("does 'Arr Tonnes' read as one column name?"),
     disposed by the tiling oracle, exactly as loop C's rowrole slice already does for the
     borderless case. It is a reading judgment, not a geometry gap.
