@@ -6,7 +6,6 @@ serves a different edition; updating the manifest is a deliberate, reviewed act.
 from __future__ import annotations
 
 import hashlib
-import sys
 import urllib.request
 from pathlib import Path
 

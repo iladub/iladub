@@ -66,6 +66,10 @@ refused (`test_stem_page0_grounds_against_contract`). Pages 1-2 still escalate
 whose block-rule evidence is page-0-only — routed to Loop M as a pagination
 problem, not a header-role one (residues R29-R32).
 
+Pages 1-2 still escalate `REGION_TILING_FAILED` — a repeated-header (Excel print-titles) continuation
+whose block-rule evidence is page-0-only — routed to Loop M as a pagination
+problem, not a header-role one (residues R29-R32). The `render:` namespace and Producer-gated generator modules the campaign spec sketches (§2b) remain deliberately unbuilt — the universal rule-evidence law sufficed on this specimen, the transient reading evidence lives in `tab:` as pre-holon table facts, and a generator module is only earned by a corpus document the universal law cannot read.
+
 Every SHACL shape in `tab-shapes.ttl` enforces the round-trip/tiling
 contract literally: `CoverageShape` and `UnambiguousAccessShape` require
 every leaf column to resolve to exactly one leaf header path;
