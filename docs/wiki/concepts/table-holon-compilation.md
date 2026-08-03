@@ -112,10 +112,7 @@ runs the same decidable-exact-Decimal confirmation over a bigger holon — the l
 row sequence across every page a continuation chain licensed — then re-derives loop I's row
 groups and injects group keys from the document-level result. On the live stem this closes R35
 measurably: page 2's confirmed subtotals go from 0 to 21 (57 cross-page `tab:aggregates`
-edges), missing-`GC Fin Year` keys go from 92 to 0, records drop from 154 to 133 (the 21
-subtotal rows stop minting records), grounded concepts rise from 546 to 585, and record
-identity collapses from three page-determined kinds to one uniform kind (a group path, at most
-one disambiguation suffix) — with a single, correctly-refused exception, the document's own
+edges); missing-`GC Fin Year` keys go from 112 (pre-loop: 50 p1 + 62 p2) to 0; records drop from 154 to 133 (21 p2 subtotal rows stopped minting records); grounded concepts go from 567 (pre-loop) to 546 (once those records left the denominator) to 585 (chain-wide keys); quarantined concepts go from 1194 to 1265; and record identity collapses from three page-determined kinds to one uniform kind (a group path, at most one disambiguation suffix) — with a single, correctly-refused exception, the document's own
 `Grand Total` row (R4-family's zero-member walk-back honest refusal, R40). Two same-level
 groups can now cover one row (R18's co-resident case, more frequent once the holon is
 document-wide), so `feed._header_path`'s tie-break was made a deterministic total order

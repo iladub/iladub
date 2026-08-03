@@ -287,14 +287,14 @@ def test_stem_record_identity_is_one_kind(stem_document):
     one, the document's 'Grand Total' row.
 
     WHY THAT ROW IS NOT CONFIRMED, measured rather than assumed (loop N review corrected an
-    earlier claim here that the arithmetic disagreed with it — it does not): the chain's 133
-    non-aggregation rows sum to EXACTLY the printed 2,402,500 (927,500 + 804,000 + 671,000 over
-    pages 0/1/2, by `rows._numeric_token_sum`). The refusal is loop H's documented ZERO-MEMBER
-    rule (rows.py: "a grand total directly after a same-level total is never confirmed"): the
-    row immediately above it is `2026/27 Total`, an already-confirmed aggregation whose label
-    column (0) is not deeper than the Grand Total's own (0), so the member walk-back stops
-    before collecting a single operand. No members, no confirmation — the same honest refusal
-    R18's family describes, not an arithmetic disagreement. Tallies printed, not pinned.
+    earlier claim here that the arithmetic disagreed with it — it does not): the 132
+    non-aggregation rows other than the Grand Total itself sum to EXACTLY the printed 2,402,500
+    (927,500 + 804,000 + 671,000 over pages 0/1/2, by `rows._numeric_token_sum`). The refusal
+    is loop H's documented ZERO-MEMBER rule (rows.py: "a grand total directly after a same-level
+    total is never confirmed"): the row immediately above it is `2026/27 Total`, an already-confirmed
+    aggregation whose label column (0) is not deeper than the Grand Total's own (0), so the member
+    walk-back stops before collecting a single operand. No members, no confirmation — the same
+    honest refusal R18's family describes, not an arithmetic disagreement. Tallies printed, not pinned.
     """
     import re
     from collections import Counter
