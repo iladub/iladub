@@ -1,5 +1,4 @@
-"""Loop O — R33: stitching is licensed by page-invariance, not recognition alone.
-Red until the licence lands (Tasks 2-3)."""
+"""Loop O — R33: stitching is licensed by page-invariance, not recognition alone."""
 from rdflib import RDF
 from iladub.etkl.document import compile_document
 from iladub.etkl.holon import TAB
@@ -15,8 +14,7 @@ def test_marked_case3_does_not_stitch(tmp_path):
         case3_with_subtotals_pdf(pdf, conflicting_labels=conflicting)
         rep = compile_document(pdf)
         assert all(len(c) == 1 for c in rep.chains), rep.chains
-        assert not list(rep.graph.subjects(None, TAB.continuesTable)) \
-            or not any(True for _ in rep.graph.subject_objects(TAB.continuesTable))
+        assert not list(rep.graph.subject_objects(TAB.continuesTable))
         # page-local subtotals keep their page-local confirmations (no window widening)
         aggs = list(rep.graph.subjects(RDF.type, TAB.DetectedAggregationRow))
         assert aggs, "page-local subtotals must remain confirmed"

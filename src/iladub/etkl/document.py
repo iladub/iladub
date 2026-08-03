@@ -377,7 +377,7 @@ def is_continuation(evidence: Graph) -> bool:
 # table.bottom`, "this band is below the table"), which is a comparison of two measured
 # quantities with no tolerance: bands do not overlap, so a non-table band is either wholly above
 # the table band or wholly below it. The one arithmetic it performs — page index + 1, the
-# PRINTED page ordinal — is an index-base conversion applied at emission on exactly the licence
+# PRINTED page ordinal — is an index-base conversion applied at emission, for exactly the reason
 # COORD_EPS is applied at emission; see `licence_evidence` for the assumption it makes and how
 # that assumption fails safe. The ordinal NORMALIZATION clause (b) compares over is applied at
 # emission for the same reason and one more (round-2 review, F1): tokenizing is a string

@@ -13,7 +13,8 @@ def test_case1_unrelated_pages_never_stitch(tmp_path):
     assert all(len(chain) == 1 for chain in rep.chains), rep.chains
     # The RECOGNITION itself must refuse, not merely fail to produce a chain: the chain is empty
     # whenever a page asserts no table, so `chains` alone would still pass if the law over-reached.
-    # (This also guards the R33 activation path — carriage in task 3 keys off `recognized`.)
+    # (This also guards the R33 activation path — carriage keys off `recognized` AND
+    # licensed since loop O.)
     assert rep.recognized == (), rep.recognized
     # both pages' tables asserted independently
     assert all(any(r.verdict == "asserted" for r in p.regions) for p in rep.pages)

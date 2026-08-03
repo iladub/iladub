@@ -6,10 +6,10 @@
 # document.licence_evidence (one node per non-table block: its exact text, that same text with
 # whole tokens equal to its page's printed ordinal cancelled, which page it sits on, and whether
 # it sits ABOVE or BELOW that page's table), so this query carries NO numeric LITERAL, no
-# threshold, no tolerance: no digit is ever READ AS DATA here (the only digits in the text are
-# variable suffixes like ?n2 and the clause labels in these comments). A pair whose evidence does not
-# meet the law stays UNLICENSED, and an unlicensed pair is two independent documents: recognition
-# alone never stitches.
+# threshold, no tolerance: no digit is ever READ AS DATA here (digits in the text are
+# variable suffixes like ?n2 and the clause labels in these comments — the PREFIX IRI w3id also
+# carries a digit). A pair whose evidence does not meet the law stays UNLICENSED, and an
+# unlicensed pair is two independent documents: recognition alone never stitches.
 #
 # WHY IT EXISTS. continuation-of.rq recognizes that page N redraws page N-1's header block on the
 # same author grid. That is necessary but NOT sufficient for "one table" — two INDEPENDENT
