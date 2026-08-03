@@ -105,6 +105,11 @@ def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
     c.save()
 
     rep = compile_document(pdf)
+    # LOOP O TASK 3: these are the two R33 pins whoever closes the residue must INVERT (the
+    # licence must refuse this marked case-3 fixture once it lands — see
+    # tests/etkl/test_continuation_licence.py's test_marked_case3_does_not_stitch, loop O's own
+    # red test against this same false-positive shape). Loop O task 1 only MEASURES and marks;
+    # it does not invert these — that is task 3's job.
     assert rep.recognized == ((0, 1),), rep.recognized          # the false positive, measured
     assert list(rep.graph.subject_objects(TAB.continuesTable)), "R33: the stitch is asserted"
     # Loop M task 3 re-measured this fixture after the carried header reading landed, and records
