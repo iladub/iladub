@@ -395,3 +395,28 @@ tab:ruledBoundaryX a owl:DatatypeProperty ; rdfs:domain tab:AuthorRuledBoundary 
 tab:boundaryAgreesWith a owl:ObjectProperty ; rdfs:domain tab:AuthorRuledBoundary ; rdfs:range tab:AuthorRuledBoundary ;
     rdfs:label "boundary agrees with"@en ;
     rdfs:comment "The two author-drawn boundaries are EQUAL under COORD_EPS — the two pages are ruled on the same grid. Clause (d) of continuation-of.rq reads these SET-WISE (every boundary on each side needs some agreeing counterpart on the other), not one-for-one: a border the author drew twice at the same x is one mark, and must not refuse a genuine continuation."@en .
+
+# --- continuation LICENCE evidence (transient, pre-holon; loop O, residue R33) ---
+# The inputs to continuation-licence.rq — the SECOND question about a page pair, asked only of a
+# pair continuation-of.rq already recognized: the header block repeating says the two pages share
+# a TEMPLATE; these terms say whether what the renderer drew AROUND the table is page furniture
+# (one document, cut) or new content (two documents). Every term is a PRESENCE fact about a
+# non-table text block — no coordinate is ever compared in the query, and no meaning is ever drawn
+# from a block's text: comparing two renderings of one string for identity is evidence comparison,
+# not text READING (continuation-of.rq's header states the distinction in full). Transient: never
+# asserted into a holon.
+tab:ContinuationPairUnderTest a owl:Class ; rdfs:label "Continuation pair under test"@en ;
+    rdfs:comment "A transient node standing for the ONE recognized page pair (N-1, N) whose licence is being decided — the closure boundary of the derivation, and the subject continuation-licence.rq returns when the law holds. Its block inventory is the whole evidence: a pair with no blocks at all meets the law vacuously and IS licensed (two bare tables on consecutive pages are read as one table by a fluent reader; the law refuses on marks and never invents one)."@en .
+tab:PriorPageTextBlock a owl:Class ; rdfs:label "Prior page text block"@en ;
+    rdfs:comment "A transient node standing for one NON-TABLE text block of page N-1 — a band the page carries outside the recognized table (running head, title, timestamp, footer). Only those additionally typed tab:BelowTableBodyBlock are constrained by the law; the rest are the head-side furniture a first page legitimately draws once."@en .
+tab:ContinuationPageTextBlock a owl:Class ; rdfs:label "Continuation page text block"@en ;
+    rdfs:comment "A transient node standing for one NON-TABLE text block of page N, the page under test."@en .
+tab:BelowTableBodyBlock a owl:Class ; rdfs:label "Below-table-body block"@en ;
+    rdfs:comment "The block sits BELOW its page's table — after that table's last body row. Emitted as a positional fact about a prior-page block, not as a requirement: clause (b) of continuation-licence.rq is what turns it into one (whatever page N-1 drew after its table must reappear on page N, or its table was not cut by the page edge). Absence of this type on a prior block is the head side's freedom, expressed as a pattern the clause cannot reach."@en .
+tab:OutsideRepeatedHeaderBlock a owl:Class ; rdfs:label "Outside-repeated-header block"@en ;
+    rdfs:comment "The block lies OUTSIDE the repeated header block the continuation page redrew — i.e. outside the recognized table band entirely, which is where every non-table band of that page sits by construction (bands do not overlap). Emitted on continuation-page blocks; clause (a) constrains exactly these."@en .
+tab:hasPageBlock a owl:ObjectProperty ; rdfs:domain tab:ContinuationPairUnderTest ;
+    rdfs:label "has page block"@en ;
+    rdfs:comment "Links the pair under test to one non-table text block of either of its two pages. Which page the block belongs to is carried by the block's own type (tab:PriorPageTextBlock / tab:ContinuationPageTextBlock), never by this property, so the two sides can never collapse."@en .
+tab:blockText a owl:DatatypeProperty ; rdfs:range rdfs:Literal ; rdfs:label "block text"@en ;
+    rdfs:comment "The block's exact surface text, its lines in reading order. Compared by literal identity across the page break and by nothing else — no normalisation, no fuzzy match, no meaning. Asserted on both block classes, hence no rdfs:domain (the loop-L F6 finding: an rdfs:domain here would let inference type every continuation block as a prior block)."@en .

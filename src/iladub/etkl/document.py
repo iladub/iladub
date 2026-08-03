@@ -5,6 +5,12 @@
     is an **AXIOM**: a declarative, open-world derivation over presence/equality facts about the
     two pages' leaf header blocks — `vocab/queries/continuation-of.rq`. The page PAIR is the
     closure boundary.
+  * THE SECOND DECISION ("may a RECOGNIZED pair actually be stitched?") is a second **AXIOM**,
+    `vocab/queries/continuation-licence.rq` (loop O, residue R33) — the CONTINUATION LICENCE,
+    over presence facts about the two pages' NON-TABLE text blocks. Recognition says the pages
+    share a template; the licence says the document was CUT. `is_licensed` runs it and
+    `licence_evidence` emits its inputs; the gate is NOT yet wired into `compile_document` (loop
+    O task 3), and the law as stated is MEASURED to refuse the specimen — see the query header.
   * This module is the **PROCEDURAL** layer only, in the shape ruledroles.py (loop L) established:
     raw extraction (page count, and the bands, via compile.page_bands — the shared seam, not a
     copy), an evidence emitter that applies the float equalities with `geometry.COORD_EPS` AT
@@ -87,9 +93,12 @@ from .geometry import COORD_EPS
 from .holon import TAB
 
 _EV = Namespace("urn:iladub:continuation:")   # transient per-pair instance namespace
+_LIC = Namespace("urn:iladub:licence:")       # transient per-pair licence-evidence namespace
 
 # three dirs up from src/iladub/etkl/document.py -> repo root, then vocab/queries/
-CONTINUATION_OF_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "continuation-of.rq"
+_QUERIES = Path(__file__).resolve().parents[3] / "vocab" / "queries"
+CONTINUATION_OF_RQ = _QUERIES / "continuation-of.rq"
+CONTINUATION_LICENCE_RQ = _QUERIES / "continuation-licence.rq"
 
 
 @dataclass(frozen=True)
@@ -325,6 +334,116 @@ def is_continuation(evidence: Graph) -> bool:
     unmet), and refusal keeps the two pages independent — the case-1 behaviour.
     """
     q = Path(CONTINUATION_OF_RQ).read_text(encoding="utf-8")
+    return any(True for _ in evidence.query(q))
+
+
+# ------------------------------------------- the continuation LICENCE (loop O, residue R33)
+#
+# §8 CLASSIFICATION — the DECISION ("may this recognized pair actually be STITCHED?") is an
+# AXIOM: `vocab/queries/continuation-licence.rq`, a declarative open-world derivation over
+# presence facts about the two pages' NON-TABLE text blocks. The pair is the closure boundary.
+# Everything below is the PROCEDURAL evidence layer, in the shape the recognition machinery
+# above established: raw extraction of each page's block inventory from bands the compile
+# already built, and one node per block. It decides nothing, reads no block for meaning, and
+# carries NO constant of any kind — not even an epsilon, because the licence compares strings
+# and page-side, never coordinates. The only geometry it touches is an ORDERING (`band.top >
+# table.bottom`, "this band is below the table"), which is a comparison of two measured
+# quantities with no tolerance and no tuned threshold: bands do not overlap, so a non-table band
+# is either wholly above the table band or wholly below it.
+
+def licence_evidence_from_facts(blocks) -> Graph:
+    """Fresh Graph() for ONE page pair — the inputs to continuation-licence.rq.
+
+    The single evidence shape, reached two ways (the `continuation_evidence` idiom):
+    `licence_evidence` derives the facts from two pages' bands, tests hand them in directly.
+
+    `blocks` is an iterable of `(text, page_side, at_constrained_position)` where `page_side` is
+    0 for the PRIOR page N-1 and 1 for the CONTINUATION page N, and the flag says whether the
+    block sits at the position the law constrains on ITS side: BELOW page N-1's last body row on
+    the prior side (`tab:BelowTableBodyBlock`), OUTSIDE page N's repeated-header block on the
+    continuation side (`tab:OutsideRepeatedHeaderBlock`). The flag records WHERE the block sits;
+    what that position REQUIRES is the query's business, not this function's — which is why an
+    unconstrained prior block still enters the graph (it can answer a continuation block's
+    counterpart test) rather than being dropped here.
+
+    The `tab:ContinuationPairUnderTest` node is emitted unconditionally, so a pair with NO blocks
+    at all still presents a subject for the law to license — vacuity is licence, deliberately
+    (see the query header).
+    """
+    g = Graph()
+    pair = URIRef(f"{_LIC}pair")
+    g.add((pair, RDF.type, TAB.ContinuationPairUnderTest))
+    for i, (text, page_side, constrained) in enumerate(blocks):
+        side = "prior" if not page_side else "continuation"
+        u = URIRef(f"{_LIC}{side}-t{i}")
+        g.add((pair, TAB.hasPageBlock, u))
+        g.add((u, RDF.type, TAB.PriorPageTextBlock if not page_side
+               else TAB.ContinuationPageTextBlock))
+        g.add((u, TAB.blockText, Literal(text)))
+        if constrained:
+            g.add((u, RDF.type, TAB.BelowTableBodyBlock if not page_side
+                   else TAB.OutsideRepeatedHeaderBlock))
+    return g
+
+
+def _band_text(band) -> str:
+    """A band's exact surface text: words left-to-right, lines top-to-bottom, newline-joined.
+
+    Raw extraction, and the whole of it — no normalisation, no case folding, no stripping. Two
+    renderings of one furniture block on two pages produce the same string exactly when the
+    renderer drew the same words; anything softer would be the pipeline deciding that two
+    different blocks are "the same enough", which is a judgment the law does not make.
+    """
+    return "\n".join(" ".join(w.text for w in ln.words) for ln in band.lines)
+
+
+def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index) -> Graph:
+    """The licence evidence for two pages' BAND inventories (the production entry point).
+
+    `prev_table_index` / `cur_table_index` are the indices, in each page's own `page_bands` list,
+    of the band the recognition AXIOM paired — the table that CLOSES page N-1 and the one that
+    OPENS page N. (The plan named the arguments `prev_table_span` / `cur_repeated_header_span`;
+    the band index carries both, and reading the span off the band keeps this one seam with
+    `compile.page_bands` rather than adding a second geometry path that could drift.)
+
+    A NON-TABLE BLOCK is, here, any OTHER band of the page. Two consequences, both stated because
+    neither is free:
+      * the repeated header block needs no exclusion of its own — it is drawn INSIDE the
+        recognized table band, and bands do not overlap, so every band this function emits is
+        outside it by construction. That is why every continuation-page block is emitted
+        `tab:OutsideRepeatedHeaderBlock`;
+      * a page carrying a SECOND table is treated as carrying a text block, since this function
+        has no compile verdict to tell one band from another. The bias is toward REFUSAL — an
+        unlicensed pair stays two independent documents — which is the same direction the
+        driver's one-candidate-pair-per-break limit already leans (see `compile_document`), and
+        never toward a wrong stitch.
+
+    The prior side's position class is an ORDERING over the page's own y axis: a band whose top
+    lies below the table band's bottom is below the table's last body row. No tolerance, no
+    epsilon — the bands were cut apart by `detect_bands`, so they are disjoint intervals.
+    """
+    facts = []
+    prev_table, cur_table = prev_bands[prev_table_index], cur_bands[cur_table_index]
+    for i, band in enumerate(prev_bands):
+        if i == prev_table_index:
+            continue
+        facts.append((_band_text(band), 0, band.top > prev_table.bottom))
+    for i, band in enumerate(cur_bands):
+        if i == cur_table_index:
+            continue
+        facts.append((_band_text(band), 1, True))
+    return licence_evidence_from_facts(facts)
+
+
+def is_licensed(evidence: Graph) -> bool:
+    """Run continuation-licence.rq over one pair's evidence: may the pair be STITCHED?
+
+    A row means the law licensed the pair; no row is its refusal, and a refused pair stays two
+    independent documents however well their header blocks matched. Recognition and licence are
+    two different questions and are kept as two derivations: the first says the pages share a
+    template, the second says the document was CUT.
+    """
+    q = Path(CONTINUATION_LICENCE_RQ).read_text(encoding="utf-8")
     return any(True for _ in evidence.query(q))
 
 
