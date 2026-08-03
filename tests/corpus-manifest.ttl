@@ -1,6 +1,19 @@
 # tests/corpus-manifest.ttl — the real-document corpus manifest (spec 2026-08-02 §4).
 # cor: is repo-internal (like dg:) — not published, not w3id-registered.
 # Documents are FETCHED, never committed; the sha256 pins the edition measured.
+#
+# cor:expectedVerdict semantics (no SHACL shape yet — recorded here for the future
+# test_corpus.py that will read this manifest as an oracle):
+#   cor:CompilesAbove — the document is expected to compile via compile_document (the
+#     document-level driver — one chain across its pages, not a per-page reading) at a
+#     score >= cor:scoreFloor (a decimal literal: the regression FLOOR the corpus battery
+#     asserts against, deliberately at-or-below the measured score, never the measured
+#     value itself).
+#   cor:Unadjudicated — no verdict recorded yet. There is no separate cor:Hold term: a HOLD
+#     is encoded AS cor:Unadjudicated plus a cor:adjudication node carrying the reviewer's
+#     rationale — the hold state is "unadjudicated, with a recorded reason," not a fourth
+#     verdict value. (Noted at loop-M close so a future reader does not go looking for
+#     cor:Hold and conclude it was dropped by accident.)
 @prefix cor: <https://w3id.org/iladub/corpus#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -12,6 +25,9 @@
     cor:producer "Microsoft: Print To PDF" ;
     cor:fetched "2026-08-02"^^xsd:date ;
     cor:sha256 "3bda68331024dbc802ad7d965dd114aeaff138c65c0571cc4d0a90d2a8b64eee" ;
-    cor:expectedVerdict cor:Unadjudicated ;
+    cor:expectedVerdict cor:CompilesAbove ;
+    cor:scoreFloor "0.95"^^xsd:decimal ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-02"^^xsd:date ;
-        cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] .
+        cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
+        cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] .
