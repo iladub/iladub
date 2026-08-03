@@ -4,102 +4,142 @@
 # actually be STITCHED" is GROWN from evidence both pages carry — the NON-TABLE text blocks the
 # renderer drew around the table. Every input is a presence fact emitted by
 # document.licence_evidence (one node per non-table block: its exact text, which page it sits on,
-# and whether it sits at the CONSTRAINED position), so this query carries NO numeric literal, no
-# threshold and no tolerance. A pair whose evidence does not meet the law stays UNLICENSED, and an
-# unlicensed pair is two independent documents: recognition alone never stitches.
+# whether it sits ABOVE or BELOW that page's table, and that page's printed ordinal), so this
+# query carries NO numeric literal, no threshold and no tolerance. A pair whose evidence does not
+# meet the law stays UNLICENSED, and an unlicensed pair is two independent documents: recognition
+# alone never stitches.
 #
 # WHY IT EXISTS. continuation-of.rq recognizes that page N redraws page N-1's header block on the
 # same author grid. That is necessary but NOT sufficient for "one table" — two INDEPENDENT
 # documents built from one TEMPLATE share exactly that evidence (measured, loop M task 2 review;
 # residue R33, taxonomy case 2 vs case 3). The discriminator R33 names is the BODY side, and it is
 # not text reading: a paginated table is CUT by the page edge, so what surrounds it either repeats
-# on both pages (page furniture: running head, footer) or is new content — and new content around
-# the table on the continuation page means a new document, not a continuation.
+# on both pages (page furniture: running head, footer) or is new content — and new content at the
+# CUT means a new document, not a continuation.
 #
 # READING vs COMPARING (the same distinction continuation-of.rq draws, and for the same reason —
 # see its header's READING-vs-COMPARING block, which this query inherits verbatim in spirit). The
 # law compares two renderings of the SAME string for literal identity. It draws no meaning from any
-# string — no keyword, no "looks like a banner" judgment, no page-number recognition. Asking "did
-# the renderer draw this block again on the other page?" is evidence comparison; asking "what does
-# this block say?" would be reading, and would belong to NEURAL (§8).
+# string — no keyword, no "looks like a banner" judgment, and (see clause (b)) no notion of what a
+# page number IS: the ordinal it cancels is an emitted FACT about the page, matched as a token,
+# never a numeral the query recognized. Asking "did the renderer draw this block again on the other
+# page?" is evidence comparison; asking "what does this block say?" would be reading, and would
+# belong to NEURAL (§8).
 #
-# THE LAW (asymmetric — the asymmetry is load-bearing; stated verbatim from the loop-O plan):
+# THE LAW — V4 (François's call, 2026-08-03, after V1-V3 were measured; see the task-2 report):
 #   a recognized pair is licensed iff
-#     (a) every non-table block on page N outside the repeated header block has a text-identical
-#         counterpart block on page N-1 (page-invariance), AND
-#     (b) every block on page N-1 below the table's last body row has a text-identical counterpart
-#         on page N.
-#   Head-side blocks above/before page N-1's table are UNCONSTRAINED.
-# WHY THE HEAD SIDE IS FREE: a document's opening furniture (its title, its print timestamp) is
-# drawn ONCE, on the first page, and legitimately so — the stem's title band and print timestamp
-# are p0-only. A symmetric invariance law would read that opening furniture as "page N-1 carries
-# something page N does not" and refuse the GENUINE stitch. The cut runs between page N-1's tail
-# and page N's head, so those are the two sides the law constrains; what page N-1 carried before
-# its table says nothing about whether its table was cut.
-# Both counterpart tests are unrestricted on the answering side: a block at the constrained
-# position may be answered by ANY block on the other page, wherever it sits. Position matters only
-# for whether a block must be ANSWERED, never for what may answer it.
+#     (a) HEAD SIDE, STRICT — every non-table block ABOVE page N's table, other than the repeated
+#         header block, has a TEXT-IDENTICAL counterpart block on page N-1; AND
+#     (b) TAILS, INVARIANT MODULO THE PRINTED PAGE ORDINAL — every block BELOW EITHER page's table
+#         has a counterpart on the other page whose text matches it EXCEPT for tokens equal to
+#         that block's OWN printed page ordinal (each side normalized by its own ordinal, then
+#         compared for identity). Both directions: neither page's tail may carry a block the other
+#         does not answer.
+#   Blocks ABOVE page N-1's table are UNCONSTRAINED.
+# THE ASYMMETRY IS LOAD-BEARING, and it is exactly the asymmetry of the CUT. The cut runs between
+# page N-1's tail and page N's head, so those are the sides that must be furniture. What page N-1
+# drew BEFORE its table says nothing about whether that table was cut: a document's opening
+# furniture (its title, its print timestamp) is drawn ONCE, on the first page, and legitimately so
+# — measured on the specimen, whose 'SHIPPING STEM' band and print timestamp are p0-only. A
+# symmetric law would read that opening furniture as "page N-1 carries something page N does not"
+# and refuse the GENUINE stitch.
+# The answering side is unrestricted in both clauses: a constrained block may be answered by ANY
+# block on the other page, wherever that one sits. Position decides whether a block must be
+# ANSWERED, never what may answer it.
+#
+# WHY CLAUSE (b) IS MODULO THE ORDINAL — MEASURED, not assumed (specimen: the 3-page GrainCorp
+# stem, corpus/ag-trade/graincorp-stem-2026-07-31.pdf, measured 2026-08-03).
+# The stem is a GENUINE case-2 pagination, and a strictly-identical tail clause REFUSES both of its
+# pairs. Its footer band (top=573.87 on all three pages, below the table on all three) reads
+#   "GrainCorp advise that the load dates shown are indicative only and are subject to change 1"
+#   "... 2"   "... 3"
+# — the sentence is invariant and the PAGE NUMBER is not. That defeats a strict tail clause at
+# EVERY block granularity (band, line, or word run: the numeral is its own word at x0=419.04, the
+# sentence ending at x1=261.73), and it cannot be told apart, positionally, from the marked case-3
+# banner this law exists to refuse — both are "same laid-out position, different text". So the
+# difference the law reads is not position but WHAT the difference is: a token equal to the page's
+# own printed ordinal, which the emitter states as a fact (tab:pageOrdinal) rather than the query
+# recognizing a numeral. Head-side blocks stay STRICT precisely because that is where the marked
+# case-3 evidence lives, and weakening them would give the false stitch back.
+#
+# HOW THE NORMALIZATION CAN GO WRONG, BOTH WAYS (honest, §7 — neither direction is hidden):
+#   * OVER-normalization (CONSERVATIVE, refuses): the ordinal's digits may occur elsewhere in a
+#     block's text, and REPLACE cancels every occurrence. Each side is normalized by its OWN
+#     ordinal, so two genuinely-invariant tails carrying an incidental digit normalize
+#     DIFFERENTLY ("Depot 1 line" under ordinal 1 vs the same string under ordinal 2) and the pair
+#     REFUSES. Refusal is the safe direction — an unlicensed pair stays two independent documents
+#     — and it is pinned by a probe.
+#   * UNDER-discrimination (PERMISSIVE, licenses): two tails differing ONLY by their respective
+#     ordinals are indistinguishable from a page number even when they are something else (a
+#     section marker "A1"/"A2" cancels to "A<ORDINAL>" on both sides). That is inherent to the
+#     rule and is its actual cost: the law cannot tell a page number from any other per-page
+#     ordinal mark without reading, and it does not pretend to.
+#   * The ordinal is a DECIMAL DIGIT STRING by construction (document.licence_evidence emits it),
+#     so it contains no regex metacharacter and needs no escaping in REPLACE.
+#   * A document whose PRINTED ordinal differs from its page index (roman front matter, an offset
+#     first page) simply fails to cancel, and the pair refuses — conservative again. The emitter
+#     states that assumption where it makes it.
 #
 # VACUITY IS LICENCE, deliberately: a pair whose pages carry no non-table block at all (two bare
-# tables, nothing around them) meets both clauses trivially and is licensed. That is the
+# tables, nothing around them) meets every clause trivially and is licensed. That is the
 # fluent-reader invariant cutting the other way — two indistinguishable bare tables on consecutive
 # pages ARE read as one continued table by a human reader, so stitching them is the correct
 # reading, not a false positive. The law refuses on MARKS; absent marks it does not invent one.
 #
-# WHAT THIS LAW REFUSES THAT IT SHOULD NOT — MEASURED ON THE STEM, 2026-08-03 (honest, §7)
-# The 3-page GrainCorp stem (corpus/ag-trade/graincorp-stem-2026-07-31.pdf) is a GENUINE case-2
-# pagination, and this law as stated REFUSES both of its pairs. Its non-table blocks, measured:
-#   * a running head, p0/p1/p2, identical text on all three ("GRAINCORP SHIPPING STEM /
-#     GrainCorp Operations Ltd ABN 52003875401") — invariant, licenses;
-#   * a p0-only 'SHIPPING STEM' band above the table — head side, unconstrained, correctly free;
-#   * a footer band at top=573.87 on all three pages whose LINE ends with the PAGE NUMBER:
-#     "GrainCorp advise that the load dates shown are indicative only and are subject to change 1"
-#     / "... 2" / "... 3". It sits BELOW the table on every page, so it is constrained by clause
-#     (b) on the prior side AND by clause (a) on the continuation side, and its text is NOT
-#     identical across the pair. Both clauses refuse.
-# The page number defeats the law at EVERY block granularity (band, line, or word run: the numeral
-# is its own word at x0=419.04 with no counterpart on the other page), and it is structurally
-# INDISTINGUISHABLE, without reading, from the marked case-3 banner the law is built to refuse —
-# both are "same laid-out position, different text". Recorded here rather than worked around: the
-# refinement is the loop controller's call, and no tuned constant or string-meaning test may be
-# used to make this one document pass (CLAUDE.md §8; MEMORY "no overfitting").
-#
-# ROLE OF THE PAGE INDEX: none. The pair is chosen by the caller; the law reads only the two
-# pages' block inventories it is given, and the prior/continuation SIDE those blocks were emitted
-# on. Nothing here counts pages, blocks or anything else.
+# ROLE OF THE PAGE INDEX: none. The pair is chosen by the caller; the law reads only the two pages'
+# block inventories and the ordinals emitted with them. Nothing here counts pages or blocks, and
+# the ordinal is never compared for order, only for token equality inside a text.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT ?pair WHERE {
   ?pair a tab:ContinuationPairUnderTest .
-  # CLAUSE (a) — PAGE N CARRIES NOTHING NEW. Every block of the continuation page that lies
-  # outside the repeated header block must be one the prior page also drew. The ?t join IS the
-  # identity test (literal identity — no normalisation, no fuzzy match), exactly as
-  # continuation-of.rq's clause (b) joins on ?t.
+  # CLAUSE (a) — PAGE N'S HEAD CARRIES NOTHING NEW, STRICTLY. Every block the continuation page
+  # drew ABOVE its table must be one the prior page also drew, character for character. The ?t
+  # join IS the identity test (no normalisation, no fuzzy match), exactly as continuation-of.rq's
+  # clause (b) joins on ?t. The repeated header block needs no exclusion of its own: it is drawn
+  # INSIDE the recognized table band, and bands do not overlap, so no emitted block is it.
   FILTER NOT EXISTS {
-    ?pair tab:hasPageBlock ?cur .
-    ?cur a tab:ContinuationPageTextBlock .
-    ?cur a tab:OutsideRepeatedHeaderBlock .
-    ?cur tab:blockText ?t .
+    ?pair tab:hasPageBlock ?curHead .
+    ?curHead a tab:ContinuationPageTextBlock .
+    ?curHead a tab:AboveTableBlock .
+    ?curHead tab:blockText ?t .
     FILTER NOT EXISTS {
       ?pair tab:hasPageBlock ?prior .
       ?prior a tab:PriorPageTextBlock .
       ?prior tab:blockText ?t .
     }
   }
-  # CLAUSE (b) — PAGE N-1's TAIL SIDE IS FURNITURE, NOT CONTENT. Whatever the prior page drew
-  # BELOW its table's last body row must reappear on page N; if it does not, that page's table
-  # was not cut by the page edge — something else followed it, and the pages are two documents.
-  # A prior block that carries no tab:BelowTableBodyBlock type simply never matches this pattern:
-  # that is where the head side's freedom lives, as a pattern that cannot reach it rather than as
-  # an exception carved out of it.
+  # CLAUSE (b1) — PAGE N-1's TAIL IS FURNITURE, NOT CONTENT. Whatever the prior page drew BELOW
+  # its table must reappear on page N, up to that block's own printed ordinal; if it does not,
+  # that page's table was not cut by the page edge — something else followed it, and the pages are
+  # two documents. Each side is normalized by ITS OWN emitted ordinal; the sentinel is a
+  # non-numeric marker, so no numeral enters this query.
   FILTER NOT EXISTS {
-    ?pair tab:hasPageBlock ?prior2 .
-    ?prior2 a tab:PriorPageTextBlock .
-    ?prior2 a tab:BelowTableBodyBlock .
-    ?prior2 tab:blockText ?t2 .
+    ?pair tab:hasPageBlock ?priorTail .
+    ?priorTail a tab:PriorPageTextBlock .
+    ?priorTail a tab:BelowTableBlock .
+    ?priorTail tab:blockText ?pt .
+    ?priorTail tab:pageOrdinal ?po .
     FILTER NOT EXISTS {
-      ?pair tab:hasPageBlock ?cur2 .
-      ?cur2 a tab:ContinuationPageTextBlock .
-      ?cur2 tab:blockText ?t2 .
+      ?pair tab:hasPageBlock ?answer .
+      ?answer a tab:ContinuationPageTextBlock .
+      ?answer tab:blockText ?at .
+      ?answer tab:pageOrdinal ?ao .
+      FILTER(REPLACE(?pt, STR(?po), "<ORDINAL>") = REPLACE(?at, STR(?ao), "<ORDINAL>"))
+    }
+  }
+  # CLAUSE (b2) — THE MIRROR, so neither page's tail may carry a block the other does not answer.
+  FILTER NOT EXISTS {
+    ?pair tab:hasPageBlock ?curTail .
+    ?curTail a tab:ContinuationPageTextBlock .
+    ?curTail a tab:BelowTableBlock .
+    ?curTail tab:blockText ?ct .
+    ?curTail tab:pageOrdinal ?co .
+    FILTER NOT EXISTS {
+      ?pair tab:hasPageBlock ?answer2 .
+      ?answer2 a tab:PriorPageTextBlock .
+      ?answer2 tab:blockText ?at2 .
+      ?answer2 tab:pageOrdinal ?ao2 .
+      FILTER(REPLACE(?ct, STR(?co), "<ORDINAL>") = REPLACE(?at2, STR(?ao2), "<ORDINAL>"))
     }
   }
 }

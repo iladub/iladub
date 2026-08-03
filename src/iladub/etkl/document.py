@@ -344,12 +344,16 @@ def is_continuation(evidence: Graph) -> bool:
 # presence facts about the two pages' NON-TABLE text blocks. The pair is the closure boundary.
 # Everything below is the PROCEDURAL evidence layer, in the shape the recognition machinery
 # above established: raw extraction of each page's block inventory from bands the compile
-# already built, and one node per block. It decides nothing, reads no block for meaning, and
-# carries NO constant of any kind — not even an epsilon, because the licence compares strings
-# and page-side, never coordinates. The only geometry it touches is an ORDERING (`band.top >
+# already built, and one node per block. It decides nothing and reads no block for meaning. It
+# carries no epsilon (the licence compares strings and page-side, never coordinates), no
+# threshold and no tuned constant. The only geometry it touches is an ORDERING (`band.top >
 # table.bottom`, "this band is below the table"), which is a comparison of two measured
-# quantities with no tolerance and no tuned threshold: bands do not overlap, so a non-table band
-# is either wholly above the table band or wholly below it.
+# quantities with no tolerance: bands do not overlap, so a non-table band is either wholly above
+# the table band or wholly below it. The one arithmetic it performs — page index + 1, the
+# PRINTED page ordinal — is an index-base conversion applied at emission on exactly the licence
+# COORD_EPS is applied at emission, so the query can match the ordinal as a fact and never
+# compute one; see `licence_evidence` for the assumption it makes and how that assumption fails
+# safe.
 
 def licence_evidence_from_facts(blocks) -> Graph:
     """Fresh Graph() for ONE page pair — the inputs to continuation-licence.rq.
@@ -357,14 +361,18 @@ def licence_evidence_from_facts(blocks) -> Graph:
     The single evidence shape, reached two ways (the `continuation_evidence` idiom):
     `licence_evidence` derives the facts from two pages' bands, tests hand them in directly.
 
-    `blocks` is an iterable of `(text, page_side, at_constrained_position)` where `page_side` is
-    0 for the PRIOR page N-1 and 1 for the CONTINUATION page N, and the flag says whether the
-    block sits at the position the law constrains on ITS side: BELOW page N-1's last body row on
-    the prior side (`tab:BelowTableBodyBlock`), OUTSIDE page N's repeated-header block on the
-    continuation side (`tab:OutsideRepeatedHeaderBlock`). The flag records WHERE the block sits;
-    what that position REQUIRES is the query's business, not this function's — which is why an
-    unconstrained prior block still enters the graph (it can answer a continuation block's
-    counterpart test) rather than being dropped here.
+    `blocks` is an iterable of `(text, page_side, below_its_table, page_ordinal)`:
+      * `page_side` — 0 for the PRIOR page N-1, 1 for the CONTINUATION page N;
+      * `below_its_table` — True when the block sits BELOW its OWN page's table (a tail block,
+        `tab:BelowTableBlock`), False when it sits above it (`tab:AboveTableBlock`). ONE
+        positional fact, read the same way on both pages;
+      * `page_ordinal` — that page's PRINTED ordinal, 1-based (see `licence_evidence` for where
+        the +1 is applied and on what licence).
+    The facts record WHERE a block sits and WHAT ordinal its page carries; what a position
+    REQUIRES is the query's business, not this function's — which is why an unconstrained
+    prior-page head block still enters the graph (it can answer a continuation block's
+    counterpart test) rather than being dropped here, and why the ordinal is emitted on EVERY
+    block, including the ones no clause constrains.
 
     The `tab:ContinuationPairUnderTest` node is emitted unconditionally, so a pair with NO blocks
     at all still presents a subject for the law to license — vacuity is licence, deliberately
@@ -373,16 +381,15 @@ def licence_evidence_from_facts(blocks) -> Graph:
     g = Graph()
     pair = URIRef(f"{_LIC}pair")
     g.add((pair, RDF.type, TAB.ContinuationPairUnderTest))
-    for i, (text, page_side, constrained) in enumerate(blocks):
+    for i, (text, page_side, below, ordinal) in enumerate(blocks):
         side = "prior" if not page_side else "continuation"
         u = URIRef(f"{_LIC}{side}-t{i}")
         g.add((pair, TAB.hasPageBlock, u))
         g.add((u, RDF.type, TAB.PriorPageTextBlock if not page_side
                else TAB.ContinuationPageTextBlock))
         g.add((u, TAB.blockText, Literal(text)))
-        if constrained:
-            g.add((u, RDF.type, TAB.BelowTableBodyBlock if not page_side
-                   else TAB.OutsideRepeatedHeaderBlock))
+        g.add((u, RDF.type, TAB.BelowTableBlock if below else TAB.AboveTableBlock))
+        g.add((u, TAB.pageOrdinal, Literal(int(ordinal), datatype=XSD.integer)))
     return g
 
 
@@ -397,7 +404,8 @@ def _band_text(band) -> str:
     return "\n".join(" ".join(w.text for w in ln.words) for ln in band.lines)
 
 
-def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index) -> Graph:
+def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index,
+                     prev_page_number, cur_page_number) -> Graph:
     """The licence evidence for two pages' BAND inventories (the production entry point).
 
     `prev_table_index` / `cur_table_index` are the indices, in each page's own `page_bands` list,
@@ -405,33 +413,46 @@ def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index) -
     OPENS page N. (The plan named the arguments `prev_table_span` / `cur_repeated_header_span`;
     the band index carries both, and reading the span off the band keeps this one seam with
     `compile.page_bands` rather than adding a second geometry path that could drift.)
+    `prev_page_number` / `cur_page_number` are the 0-BASED page indices the driver iterates.
 
     A NON-TABLE BLOCK is, here, any OTHER band of the page. Two consequences, both stated because
     neither is free:
       * the repeated header block needs no exclusion of its own — it is drawn INSIDE the
         recognized table band, and bands do not overlap, so every band this function emits is
-        outside it by construction. That is why every continuation-page block is emitted
-        `tab:OutsideRepeatedHeaderBlock`;
+        outside it by construction;
       * a page carrying a SECOND table is treated as carrying a text block, since this function
         has no compile verdict to tell one band from another. The bias is toward REFUSAL — an
         unlicensed pair stays two independent documents — which is the same direction the
         driver's one-candidate-pair-per-break limit already leans (see `compile_document`), and
         never toward a wrong stitch.
 
-    The prior side's position class is an ORDERING over the page's own y axis: a band whose top
-    lies below the table band's bottom is below the table's last body row. No tolerance, no
-    epsilon — the bands were cut apart by `detect_bands`, so they are disjoint intervals.
+    THE POSITION CLASS is an ORDERING over the page's own y axis, read the same way on both
+    pages: a band whose top lies below its page's table band's bottom is BELOW that table's last
+    body row. No tolerance, no epsilon, no tuned threshold — the bands were cut apart by
+    `detect_bands`, so they are disjoint intervals and there is no third case to arbitrate.
+
+    THE PRINTED PAGE ORDINAL, and the licence for computing it here (clause (b) of the law).
+    `tab:pageOrdinal` is emitted as `page index + 1`. The `+ 1` is the 0-based-index-to-1-based-
+    ordinal conversion of the PDF page tree, applied AT EMISSION for exactly the reason
+    `continuation_evidence` applies COORD_EPS at emission: the query must carry no numeral, so
+    every arithmetic and every float comparison is spent HERE and surfaces as a fact the law can
+    only match, never compute with. It is not a tuned constant and nothing is compared against
+    it — a page's ordinal is the same fact as its index, stated in the numbering a reader sees.
+    THE ASSUMPTION IT MAKES, stated where it is made: that the document's PRINTED ordinal equals
+    its page index plus one. That holds on the specimen (page 0 prints '1') and fails for roman
+    front matter or an offset first page — and when it fails the normalization simply does not
+    cancel, so the pair REFUSES. Conservative, never a wrong stitch (§7).
     """
     facts = []
     prev_table, cur_table = prev_bands[prev_table_index], cur_bands[cur_table_index]
     for i, band in enumerate(prev_bands):
-        if i == prev_table_index:
-            continue
-        facts.append((_band_text(band), 0, band.top > prev_table.bottom))
+        if i != prev_table_index:
+            facts.append((_band_text(band), 0, band.top > prev_table.bottom,
+                          prev_page_number + 1))
     for i, band in enumerate(cur_bands):
-        if i == cur_table_index:
-            continue
-        facts.append((_band_text(band), 1, True))
+        if i != cur_table_index:
+            facts.append((_band_text(band), 1, band.top > cur_table.bottom,
+                          cur_page_number + 1))
     return licence_evidence_from_facts(facts)
 
 
