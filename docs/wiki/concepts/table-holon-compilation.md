@@ -8,6 +8,7 @@ sources:
   - tests/test_corpus_stem.py
   - vocab/queries/continuation-of.rq
   - src/iladub/etkl/document.py
+  - src/iladub/etkl/rows.py
 related: ["[[assert-propose-promote]]", "[[grounding-membrane]]"]
 confidence: high
 updated: 2026-08-03
@@ -102,6 +103,31 @@ independent tables sharing a template (case 3), so the AXIOM can license a stitc
 tables that are not truly one; and R35 — subtotal confirmation is closed within one page, so
 a row group cut by the page break never confirms on the continuation page, leaving that
 page's records without their injected keys and its subtotal rows unmarked in the feed.
+
+**Loop N (2026-08-03) — the closure-holon principle: the arithmetic is unchanged, its holon
+was lifted.** R35 measured that loop H's subtotal arithmetic (`rows.detect_aggregation_rows`,
+untouched — not one line edited) is only ever run over one page's rows, so a group cut by a
+page break confirms nothing on the continuation page. Loop N does not touch the arithmetic; it
+runs the same decidable-exact-Decimal confirmation over a bigger holon — the logical table's
+row sequence across every page a continuation chain licensed — then re-derives loop I's row
+groups and injects group keys from the document-level result. On the live stem this closes R35
+measurably: page 2's confirmed subtotals go from 0 to 21 (57 cross-page `tab:aggregates`
+edges), missing-`GC Fin Year` keys go from 92 to 0, records drop from 154 to 133 (the 21
+subtotal rows stop minting records), grounded concepts rise from 546 to 585, and record
+identity collapses from three page-determined kinds to one uniform kind (a group path, at most
+one disambiguation suffix) — with a single, correctly-refused exception, the document's own
+`Grand Total` row (R4-family's zero-member walk-back honest refusal, R40). Two same-level
+groups can now cover one row (R18's co-resident case, more frequent once the holon is
+document-wide), so `feed._header_path`'s tie-break was made a deterministic total order
+(lexicographic `(label, node)`) — not a semantic claim, just reproducibility across runs,
+stores, and library versions. What remains open, named by ID rather than left implicit: R33's
+false-stitch exposure now reaches this same machinery (a wrong continuation can destroy
+page-confirmed facts, not just fail to gain them, and can fabricate or silently drop record
+keys — measured only as a mechanism, not on a real false stitch); R37 (the wider-window
+retraction reading is a modelling choice no oracle disposes); R38 (a headerLevel staleness
+mode, closed for chains today but not proven unreachable in general); and R39
+(`row-group-nesting.rq`, loop I's unchanged AXIOM, now the dominant compile cost at ~93–97 s
+over the logical table's larger group count, queued for the derivation-scaling playbook).
 
 **Settled vs open.** The verifier-first paradigm, the round-trip oracle, and
 the tiling/coverage SHACL are shipped and enforced across the sources here.

@@ -30,4 +30,6 @@
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-02"^^xsd:date ;
         cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
-        cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] .
+        cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
+        cor:rationale "Loop N (R35 closed): document-level arithmetic — p2 confirms 21 subtotals with cross-page operands; every record carries its group keys (missing-year-key 0); records 133 / grounded 585 / quarantined 1265; score 0.9655; floor 0.95 re-verified and unchanged." ] .
