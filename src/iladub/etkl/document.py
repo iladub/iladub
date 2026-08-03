@@ -9,8 +9,8 @@
     `vocab/queries/continuation-licence.rq` (loop O, residue R33) — the CONTINUATION LICENCE,
     over presence facts about the two pages' NON-TABLE text blocks. Recognition says the pages
     share a template; the licence says the document was CUT. `is_licensed` runs it and
-    `licence_evidence` emits its inputs; the gate is NOT yet wired into `compile_document` (loop
-    O task 3), and the law as stated is MEASURED to refuse the specimen — see the query header.
+    `licence_evidence` emits its inputs; `compile_document` GATES on it (loop O task 3) —
+    see THE GATE below.
   * This module is the **PROCEDURAL** layer only, in the shape ruledroles.py (loop L) established:
     raw extraction (page count, and the bands, via compile.page_bands — the shared seam, not a
     copy), an evidence emitter that applies the float equalities with `geometry.COORD_EPS` AT
@@ -37,9 +37,24 @@ THE LAW (stated in full in continuation-of.rq, with the measurement behind claus
   built from one TEMPLATE — same header, same grid, different data — satisfy every clause, and
   the law stitches them. That is the taxonomy case-2 / case-3 boundary, and this law does not
   decide it. Recognition therefore means "the header block repeats and the grid matches", which
-  is necessary but NOT sufficient for "these are one table"; anything that acts on recognition
-  (task 3's carriage, task 4's chain-walk) inherits the exposure. The closing discriminator is
-  the BODY side, not text reading — see continuation-of.rq's header.
+  is necessary but NOT sufficient for "these are one table". What CLOSES it is neither text
+  reading nor the body-side test continuation-of.rq's header proposed (measured falsification,
+  R33: a page-invariant footer sits BELOW the table band on every specimen page, so "the earlier
+  table runs to its page's last text line" refuses the genuine stitch) — it is what the renderer
+  drew AROUND the two tables. See THE GATE below.
+
+THE GATE (loop O, R33): RECOGNITION LICENSES NOTHING BY ITSELF
+  `compile_document` asks the two questions in order, and the SECOND one gates EVERYTHING
+  downstream. A recognized pair the licence REFUSES gets: no `tab:continuesTable`, no
+  `tab:continuesColumn`/`tab:inLogicalColumn`, no carried header reading, no chain — and so, by
+  construction rather than by a second guard, no document-level arithmetic window and no
+  document-level row groups (both run per CHAIN, and a refused pair forms none). Each page then
+  compiles exactly as it would standalone, which is the pre-loop-M behaviour. The refusal is
+  RECORDED, never dropped, two ways: `DocumentReport.refused_licences` holds the page pair, and
+  the merged graph carries `cur tab:licenceRefused prev` between the two tables (residue R34's
+  in-kind closure, applied here — a refusal signal that exists must be auditable; the absence of
+  a link cannot be told from a pair the law never considered). `tab:LicenceRefusalShape` refuses
+  the contradiction of asserting both verdicts over one pair.
 
 WHAT RECOGNITION THEN LICENSES (loop M task 3 — the carried header reading)
   Recognizing the cut is only the first move; task 3 un-does it. When the AXIOM licenses the pair
@@ -57,9 +72,12 @@ WHAT RECOGNITION THEN LICENSES (loop M task 3 — the carried header reading)
 
 THE TWO RECORDS, AND WHY THEY STAY DISTINCT (they were equal on the specimen after task 3; that
   is a measurement, not an invariant)
-    * `DocumentReport.recognized` records every page pair the AXIOM licensed — the honest record
-      of what the LAW saw, independent of what the compile then managed. Recognition does not
-      depend on either page compiling.
+    * `DocumentReport.recognized` records every page pair the RECOGNITION AXIOM licensed — the
+      honest record of what that law saw, independent of what the licence then said and of what
+      the compile then managed. Recognition does not depend on either page compiling.
+    * `DocumentReport.refused_licences` records the subset of those pairs the CONTINUATION
+      LICENCE then refused (loop O). It is a subset of `recognized` by construction, and a pair
+      in it can never appear in `chains`.
 WHAT A CHAIN IS THEN FOR (loop N — the logical table is the closure holon; residue R35)
   A chain is the LOGICAL table the pagination cut. `reconcile_chain_arithmetic` re-runs the
   UNCHANGED loop-H subtotal arithmetic (`rows.detect_aggregation_rows`) over the chain's whole
@@ -147,10 +165,18 @@ class DocumentReport:
 
     `score` is asserted/(asserted+escalated) over the WHOLE document (never a mean of per-page
     scores — pages differ in size). `recognized` holds the (prev_page, page) pairs the
-    continuation AXIOM licensed; `chains` holds the table URIs actually linked (see the module
-    docstring for why the two can differ mid-loop). `arithmetic` holds one `ChainArithmetic` per
-    MULTI-MEMBER chain the document-level subtotal pass ran on — empty for a single-page or
-    unchained document, where the pass never runs at all.
+    continuation RECOGNITION AXIOM licensed; `chains` holds the table URIs actually linked (see
+    the module docstring for why the two can differ mid-loop). `arithmetic` holds one
+    `ChainArithmetic` per MULTI-MEMBER chain the document-level subtotal pass ran on — empty for
+    a single-page or unchained document, where the pass never runs at all.
+
+    `refused_licences` holds the (prev_page, page) pairs that were RECOGNIZED but which the
+    CONTINUATION LICENCE refused (loop O, R33) — the negative record of the gate, kept because a
+    refusal is evidence in its own right (two pages that look like one table and are not) and a
+    pipeline that discards its refusals cannot be audited for them. It is recorded here for EVERY
+    refused pair; the matching `tab:licenceRefused` graph fact needs two table URIs to name, so a
+    pair one of whose pages asserted no table appears here and not in the graph — the same
+    asymmetry `recognized` already has with `chains`.
     """
     score: float
     pages: tuple[CompilationReport, ...]
@@ -158,6 +184,7 @@ class DocumentReport:
     graph: Graph
     recognized: tuple[tuple[int, int], ...] = ()
     arithmetic: tuple[ChainArithmetic, ...] = ()
+    refused_licences: tuple[tuple[int, int], ...] = ()
 
     def to_turtle(self) -> str:
         return self.graph.serialize(format="turtle")
@@ -907,30 +934,44 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     reached; two tables continuing across the same break are not reached either. The bias is
     toward REFUSAL (an unexamined pair stays independent), never toward a wrong stitch.
 
-    FALSE-POSITIVE CLASS (residue R33 — read before consuming `chains`): recognition means "the
-    header block repeats and the author's grid matches", which two INDEPENDENT tables built from
-    one template satisfy exactly (measured). It is necessary, not sufficient, for "one table" —
-    the case-2 / case-3 boundary. See continuation-of.rq's header for the measurement and for the
-    body-side discriminator that would close it.
+    THE LICENCE GATE (loop O, residue R33 — read before consuming `chains`). Recognition means
+    "the header block repeats and the author's grid matches", which two INDEPENDENT tables built
+    from one template satisfy exactly (measured) — necessary, not sufficient, for "one table".
+    So a recognized pair is asked a SECOND question before anything acts on it: is the pair
+    LICENSED (`continuation-licence.rq` over the two pages' non-table blocks — was the document
+    CUT here, or do these pages merely share a template)? The gate sits between recognition and
+    every consumer: an unlicensed pair gets no carried reading, no `tab:continuesTable`, no
+    `tab:continuesColumn`/`tab:inLogicalColumn` and no chain — hence, with no second guard
+    needed, no document-level arithmetic window and no document-level row groups (both iterate
+    CHAINS, and a refused pair forms none). Both its pages compile as they would standalone.
+    The refusal is recorded, never dropped: `refused_licences` on the report, and
+    `cur tab:licenceRefused prev` in the graph (R34's in-kind closure).
 
-    WHOLE-GRAPH VALIDATION (loop N task 4). `compile_tables` already validates each PAGE's own
-    subgraph (inside the per-page loop below, before merge) — but the document-level facts
-    (`tab:continuesTable`/`tab:continuesColumn`/`tab:inLogicalColumn`, and the arithmetic pass's
-    cross-table `tab:aggregates`/`tab:coversRow` edges) are all asserted AFTER that, onto the
-    MERGED graph, and never met a SHACL membrane until this pass. Measured on the stem (29,377
-    triples): validation costs 41.3 s on top of the ~179 s compile — real, not absorbed silently.
-    Run only when the continuation AXIOM licensed at least one pair (`recognized`): with none, the
-    merged graph is byte-for-byte the disjoint union of already-validated page graphs and no new
-    triple exists for a document-level shape to see, so re-validating would spend the same 41 s
-    proving nothing (a single-page or unchained document is exactly this case, always). The
-    logical table is the closure holon (spec §2b/§8), and this is where its closure gets checked.
+    WHOLE-GRAPH VALIDATION (loop N task 4; gate re-decided loop O task 3). `compile_tables`
+    already validates each PAGE's own subgraph (inside the per-page loop below, before merge) —
+    but the document-level facts (`tab:continuesTable`/`tab:continuesColumn`/
+    `tab:inLogicalColumn`, `tab:licenceRefused`, and the arithmetic pass's cross-table
+    `tab:aggregates`/`tab:coversRow` edges) are all asserted AFTER that, onto the MERGED graph,
+    and never met a SHACL membrane until this pass. Measured on the stem (29,377 triples):
+    validation costs 41.3 s on top of the ~179 s compile — real, not absorbed silently.
+    THE GATE IS `recognized`, i.e. it runs whenever the RECOGNITION law fired, licensed or not —
+    deliberately unchanged by loop O, and the reason is now stronger than it was: a document with
+    a refused pair carries `tab:licenceRefused` in its merged graph, so it is no longer the plain
+    disjoint union of already-validated page graphs and `tab:LicenceRefusalShape` has something
+    to check. Gating on the LICENCE instead would leave exactly the new fact unvalidated. With no
+    recognition at all the merged graph IS that disjoint union and no document-level triple
+    exists for any shape to see, so re-validating would spend the same 41 s proving nothing (a
+    single-page or unchained document is exactly this case, always). The logical table is the
+    closure holon (spec §2b/§8), and this is where its closure gets checked.
     """
     n_pages = page_count(pdf_path)
     pages: list[CompilationReport] = []
     blocks: list[dict] = []
     graph = Graph()
     recognized: list[tuple[int, int]] = []
+    refused: list[tuple[int, int]] = []       # recognized, then REFUSED by the licence (loop O)
     links: dict[URIRef, URIRef] = {}          # continuation table -> the table it continues
+    prev_bands = None                         # page p-1's band inventory, the licence's evidence
 
     # ONE pass, pages in order: recognize the break BEFORE compiling page p, because the carried
     # reading is an INPUT to that compile (task 3). Recognition itself reads only the bands
@@ -938,8 +979,9 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # `pages[p]`), so it needs nothing from page p's compile and the ordering is sound. Carriage
     # chains: page 2 is carried from page 1's confirmed reading, which page 1 in turn carried.
     for p in range(n_pages):
-        blocks.append(_recognition_blocks(page_bands(pdf_path, p)))
-        carried, pair = None, None
+        bands = page_bands(pdf_path, p)
+        blocks.append(_recognition_blocks(bands))
+        carried, pair, refused_pair = None, None, None
         if p > 0 and blocks[p - 1] and blocks[p]:
             prev_idx = max(blocks[p - 1])     # the table that CLOSES the previous page
             cur_idx = min(blocks[p])          # the table that OPENS this one
@@ -948,21 +990,41 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             if is_continuation(continuation_evidence_from_facts(
                     prev_cells, cur_cells, prev_bounds, cur_bounds)):
                 recognized.append((p - 1, p))
-                pair = (prev_idx, cur_idx)
-                reading = pages[p - 1].regions[prev_idx].header_reading
-                if reading is not None:
-                    # THE ONLY place a carried reading is ever created. It is keyed by the band
-                    # the law recognized, so no other band on this page — and no page the law
-                    # refused — can receive one. `None` here means the previous page's band
-                    # confirmed no reading to carry (every non-loop-L branch), and page p then
-                    # compiles exactly as it would standalone.
-                    carried = {cur_idx: reading}
+                # THE LICENCE GATE (loop O, R33) — the second question, asked BEFORE anything
+                # downstream exists. It reads the two pages' NON-TABLE bands, which is why the
+                # band lists are kept: `page_bands` is the one seam, and `prev_bands` still holds
+                # page p-1's inventory at this point (it is re-bound below, after the gate).
+                if is_licensed(licence_evidence(prev_bands, prev_idx, bands, cur_idx, p - 1, p)):
+                    pair = (prev_idx, cur_idx)
+                    reading = pages[p - 1].regions[prev_idx].header_reading
+                    if reading is not None:
+                        # THE ONLY place a carried reading is ever created. It is keyed by the
+                        # band the law recognized, so no other band on this page — and no page
+                        # either law refused — can receive one. `None` here means the previous
+                        # page's band confirmed no reading to carry (every non-loop-L branch),
+                        # and page p then compiles exactly as it would standalone.
+                        carried = {cur_idx: reading}
+                else:
+                    # A REFUSED pair leaves `pair` and `carried` None, so page p compiles
+                    # standalone and no link, chain, arithmetic window or row group can form
+                    # from it. The refusal itself is recorded, below and on the report.
+                    refused.append((p - 1, p))
+                    refused_pair = (prev_idx, cur_idx)
+        prev_bands = bands
         pages.append(compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                                     span_proposer=span_proposer,
                                     row_role_proposer=row_role_proposer,
                                     doc_uri=page_doc_uri(p),
                                     carried_header_roles=carried))
         graph += pages[-1].graph
+        if refused_pair is not None:
+            # The refusal as a FACT (R34's in-kind closure): asserted only when both pages did
+            # assert a table, since the fact names the two tables. The pair is on the report
+            # either way — the same asymmetry `recognized`/`chains` already has.
+            prev_uri = pages[p - 1].regions[refused_pair[0]].table_uri
+            cur_uri = pages[p].regions[refused_pair[1]].table_uri
+            if prev_uri is not None and cur_uri is not None:
+                graph.add((cur_uri, TAB.licenceRefused, prev_uri))
         if pair is None:
             continue
         prev_uri = pages[p - 1].regions[pair[0]].table_uri
@@ -1006,4 +1068,4 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     denom = asserted + escalated
     score = 1.0 if denom == 0 else asserted / denom
     return DocumentReport(score, tuple(pages), tuple(chains), graph, tuple(recognized),
-                          arithmetic)
+                          arithmetic, tuple(refused))

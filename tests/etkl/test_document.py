@@ -60,18 +60,33 @@ def test_continuation_law_needs_both_leaf_rows():
     assert not is_continuation(continuation_evidence_from_facts([], []))
 
 
-def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
-    """PINS A KNOWN LIMIT, not a desired behaviour (residue R33).
+def test_template_pages_are_refused_by_the_continuation_licence(tmp_path):
+    """INVERTED BY LOOP O (residue R33) — this WAS the pin on the known false positive.
 
     Two logically INDEPENDENT tables built from one template — same `Store|Item|Qty` header on the
     same grid, different data, different per-page banners — satisfy every clause of the
-    continuation law, because its evidence is the repeated header block and they share it exactly.
-    Measured: `recognized == ((0, 1),)` and `tab:continuesTable` asserted between them.
+    RECOGNITION law, because its evidence is the repeated header block and they share it exactly.
+    That has not changed and is still asserted below: `recognized == ((0, 1),)`.
 
-    This is the taxonomy case-2 / case-3 boundary (spec §2b defers case 3). The test exists so the
-    exposure is executable rather than merely written down, and so that whoever closes R33 (a
-    body-side presence discriminator — does page N-1's table run to that page's last text line?)
-    is forced to come here and invert it.
+    What loop O added is the SECOND question, asked of every recognized pair before anything acts
+    on it: the CONTINUATION LICENCE (`vocab/queries/continuation-licence.rq`), over the non-table
+    blocks the renderer drew AROUND the two tables. Here page 0's banner reads 'NORTH REGION
+    WEEKLY' and page 1's 'SOUTH REGION MONTHLY' — an above-table block on the continuation page
+    with no text-identical counterpart on the prior page, which clause (a) refuses. So the pair is
+    RECOGNIZED and NOT LICENSED: no `tab:continuesTable`, no chain, no carriage, and (by having no
+    chain at all) no document-level arithmetic window and no document-level row groups. Each page
+    compiles exactly as it would standalone — the loop-L-era behaviour.
+
+    The refusal is RECORDED, not merely acted on: `DocumentReport.refused_licences` carries the
+    page pair and the merged graph carries `tab:licenceRefused` between the two tables (R34's
+    in-kind closure — a refusal signal that exists must be auditable). The same shape, with
+    page-local subtotals on top, is exercised end to end by
+    tests/etkl/test_continuation_licence.py::test_marked_case3_does_not_stitch.
+
+    WHAT REMAINS OPEN, so this test is not read as more than it is: a pair carrying NO
+    distinguishing mark at all (two bare identical tables) still licenses and still stitches —
+    the fluent-reader invariant cuts that way, and it is pinned as such by
+    test_bare_identical_still_stitches, not hidden here.
     """
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
@@ -105,53 +120,46 @@ def test_template_pages_stitch_the_known_case3_false_positive(tmp_path):
     c.save()
 
     rep = compile_document(pdf)
-    # LOOP O TASK 3: these are the two R33 pins whoever closes the residue must INVERT (the
-    # licence must refuse this marked case-3 fixture once it lands — see
-    # tests/etkl/test_continuation_licence.py's test_marked_case3_does_not_stitch, loop O's own
-    # red test against this same false-positive shape). Loop O task 1 only MEASURES and marks;
-    # it does not invert these — that is task 3's job.
-    assert rep.recognized == ((0, 1),), rep.recognized          # the false positive, measured
-    assert list(rep.graph.subject_objects(TAB.continuesTable)), "R33: the stitch is asserted"
-    # Loop M task 3 re-measured this fixture after the carried header reading landed, and records
-    # what carriage did to it — honestly, WITHOUT weakening the pin above (R33 is still open and
-    # still exposed by the two assertions above; nothing here excuses it).
-    #   * the false stitch is a real CHAIN, not merely a link: both template pages assert, so the
-    #     two independent tables are walked as one logical table. This was already true before
-    #     carriage — both pages compiled standalone.
+    # THE TWO INVERTED R33 PINS (loop O task 3). Recognition still fires — that is the honest
+    # record of what the RECOGNITION law saw, and it is unchanged — but the LICENCE refuses, so
+    # the stitch that used to be asserted here is now absent and recorded as a refusal instead.
+    assert rep.recognized == ((0, 1),), rep.recognized          # recognition: unchanged
+    assert not list(rep.graph.subject_objects(TAB.continuesTable)), \
+        "the licence refused this pair: no stitch may be asserted"
+    #   * the refusal is recorded BOTH ways — on the report and in the graph.
+    assert rep.refused_licences == ((0, 1),), rep.refused_licences
+    refusals = list(rep.graph.subject_objects(TAB.licenceRefused))
+    assert len(refusals) == 1, refusals
+    cur_uri, prev_uri = refusals[0]      # the direction tab:continuesTable would have had
+    assert "/p1#" in str(cur_uri) and "/p0#" in str(prev_uri), refusals
+    #   * and nothing downstream forms: two SINGLETON chains, so no document-level arithmetic
+    #     window and no document-level row groups can be built over the two independent tables
+    #     (both passes iterate chains of more than one member).
     from rdflib import RDF
-    assert len(rep.chains) == 1 and len(rep.chains[0]) == 2, rep.chains
-    #   * carriage did NOT engage here, measured: these bands compile down the RECORD_TABLE path
-    #     (a single-level header), which never reaches loop L's header-stack law, so page 0
-    #     confirms no header reading and page 1 receives none. Hence no tab:RepeatedHeader. The
-    #     R33 exposure on this fixture is therefore the LINK, not a carried reading — a template
-    #     document with a MULTI-LEVEL header would additionally have page 0's roles carried onto
-    #     page 1's identical header block. If a future change makes that happen here, this
-    #     assertion flips and whoever flips it must say so rather than quietly delete it.
+    assert len(rep.chains) == 2 and all(len(c) == 1 for c in rep.chains), rep.chains
+    assert rep.arithmetic == (), rep.arithmetic
+    #   * carriage did NOT engage here, and now for two independent reasons. Measured before the
+    #     licence: these bands compile down the RECORD_TABLE path (a single-level header), which
+    #     never reaches loop L's header-stack law, so page 0 confirms no header reading and page 1
+    #     receives none. Since the licence, the pair could not receive one in any case — a refused
+    #     pair never reaches the carriage branch at all. If a future change makes a
+    #     tab:RepeatedHeader appear here, this assertion flips and whoever flips it must say so
+    #     rather than quietly delete it.
     assert not list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader)), \
-        "carriage reached the R33 fixture — re-measure the exposure before changing this"
-    #   * loop M task 4 (review F5): what the false stitch does at the FEED, measured. The chain
-    #     is walked as one logical table, so page 1's `table1-r1` joins page 0's `table1-r1` in
-    #     ONE identity space — and BEFORE the record id was page-qualified that pair collapsed
-    #     onto a single subject (measured: 4 records, 2 distinct subjects, `Alpha/Bolt/10` welded
-    #     to `Gamma/Screw/30`). The R33 exposure is therefore two independent defects stacked:
-    #     the wrong LINK (still open, pinned above) and the identity weld (closed by task 4's
-    #     unconditional page-qualification).
+        "carriage reached the refused fixture — re-measure before changing this"
+    #   * loop M task 4 (review F5), still asserted and now measured on the REAL unstitched graph:
+    #     the four rows must mint four DISTINCT record subjects. When the false stitch was
+    #     asserted the chain was walked as one logical table, so page 1's `table1-r1` joined page
+    #     0's `table1-r1` in ONE identity space — and before the record id was page-qualified that
+    #     pair collapsed onto a single subject (measured: 4 records, 2 distinct subjects,
+    #     `Alpha/Bolt/10` welded to `Gamma/Screw/30`). Loop M task 4 closed the weld with
+    #     unconditional page-qualification, and pinned the dependency by SIMULATING the removal of
+    #     the stitch. Loop O removes it for real, so the simulation is gone: the assertion below
+    #     now measures the very state it used to construct.
     from iladub.feed import table_records, _record_uri
     recs = table_records(rep.graph)
     assert len(recs) == 4, [r.row_id for r in recs]
     assert len({str(_record_uri(r.row_id)) for r in recs}) == 4, [r.row_id for r in recs]
-    #     THE DEPENDENCY, executable so that closing R33 cannot silently re-open the weld: with
-    #     the false stitch REMOVED (what closing R33 does), the two pages are read independently
-    #     — and must STILL mint four distinct subjects. Before the fix this dropped back to 2,
-    #     because nothing but the chain was qualifying the pages apart.
-    from rdflib import Graph as _Graph
-    unstitched = _Graph()
-    for triple in rep.graph:
-        if triple[1] != TAB.continuesTable:
-            unstitched.add(triple)
-    unrecs = table_records(unstitched)
-    assert len(unrecs) == 4 and len({str(_record_uri(r.row_id)) for r in unrecs}) == 4, \
-        [r.row_id for r in unrecs]
 
 
 def test_leaf_block_reads_the_production_bands(tmp_path):

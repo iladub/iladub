@@ -265,3 +265,21 @@ def test_qb_align_separate_and_core_standalone():
 def test_basefact_shapes():
     c, t = _v(BF_CONF); assert c, t
     c, t = _v(BF_NEG); assert not c
+
+
+def test_tab_licence_refused_term():
+    """LOOP O (R33) — the continuation licence's negative record is a COMMITTED term."""
+    g = _g(TAB_TTL)
+    assert (TAB.licenceRefused, RDF.type, OWL.ObjectProperty) in g
+    assert (TAB.licenceRefused, RDFS.domain, TAB.Table) in g
+    assert (TAB.licenceRefused, RDFS.range, TAB.Table) in g
+
+
+def test_licence_refusal_and_stitch_are_exclusive():
+    """A recognized pair is STITCHED or REFUSED, never both — the membrane refuses the
+    contradiction. The positive side is the end-to-end one: a refused document's merged graph
+    passes the whole-graph pass in
+    tests/etkl/test_document.py::test_template_pages_are_refused_by_the_continuation_licence."""
+    c, t = _v(os.path.join(TST, "tab-licence-refused-leak.ttl"))
+    assert not c
+    assert "LicenceRefusalShape" in t

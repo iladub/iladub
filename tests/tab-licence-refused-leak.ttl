@@ -1,0 +1,10 @@
+# LOOP O (R33) — the continuation licence's two verdicts asserted over ONE pair.
+# tab:continuesTable says "one logical table, cut by the page edge"; tab:licenceRefused says
+# "two independent tables that merely share a template". Both is not a richer record, it is a
+# contradiction: every consumer of a chain would be free to pick the reading it liked.
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+ex:p0table a tab:Table .
+ex:p1table a tab:Table ;
+    tab:continuesTable ex:p0table ;
+    tab:licenceRefused ex:p0table .

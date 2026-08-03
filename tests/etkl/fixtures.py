@@ -1340,8 +1340,9 @@ def bare_identical_two_page_pdf(path: str) -> dict:
     licence closes R33). Contrast with `case3_with_subtotals_pdf`, whose per-page banners
     are the (non-table-band) evidence that the two tables are logically independent.
 
-    Geometry is `test_template_pages_stitch_the_known_case3_false_positive`'s own fixture
-    (test_document.py) with the banner line removed — everything else (columns, rules,
+    Geometry is `test_template_pages_are_refused_by_the_continuation_licence`'s own fixture
+    (test_document.py; named `..._stitch_the_known_case3_false_positive` until loop O inverted
+    the pin) with the banner line removed — everything else (columns, rules,
     header text) is unchanged, since only the leaf header block and the author-drawn grid
     are what the continuation law (continuation-of.rq) ever reads."""
     from reportlab.pdfgen import canvas
@@ -1378,7 +1379,7 @@ def bare_identical_two_page_pdf(path: str) -> dict:
 def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
     """LOOP O FIXTURE (R33, task 1) — the pinned case-3 shape (independent template tables
     sharing one header+grid, DIFFERENT per-page banners in a non-table band — see
-    test_document.py's test_template_pages_stitch_the_known_case3_false_positive and
+    test_document.py's test_template_pages_are_refused_by_the_continuation_licence and
     continuation-of.rq's header, whose measurement this reproduces) EXTENDED with a
     per-store subtotal row that CONFIRMS PAGE-LOCALLY on its own page (loop-H arithmetic,
     `rows.detect_aggregation_rows`, reached via the HIERARCHICAL path: a 'Voyage' parent
