@@ -5,8 +5,9 @@
 # renderer drew around the table. Every input is a presence fact emitted by
 # document.licence_evidence (one node per non-table block: its exact text, that same text with
 # whole tokens equal to its page's printed ordinal cancelled, which page it sits on, and whether
-# it sits ABOVE or BELOW that page's table), so this query carries NO numeric literal, no
-# threshold, no tolerance — and never so much as a digit. A pair whose evidence does not
+# it sits ABOVE or BELOW that page's table), so this query carries NO numeric LITERAL, no
+# threshold, no tolerance: no digit is ever READ AS DATA here (the only digits in the text are
+# variable suffixes like ?n2 and the clause labels in these comments). A pair whose evidence does not
 # meet the law stays UNLICENSED, and an unlicensed pair is two independent documents: recognition
 # alone never stitches.
 #
@@ -24,7 +25,7 @@
 # string — no keyword, no "looks like a banner" judgment, and (see clause (b)) no notion of what a
 # page number IS. The ordinal cancellation happens ENTIRELY AT EMISSION: this query compares two
 # emitted strings for identity and never learns what an ordinal, a numeral or a token is; it does
-# not contain a digit, a REPLACE, or any string surgery at all. Asking "did the renderer draw this
+# not contain a NUMERAL, a REPLACE, or any string surgery at all. Asking "did the renderer draw this
 # block again on the other page?" is evidence comparison; asking "what does this block say?" would
 # be reading, and would belong to NEURAL (§8).
 #
@@ -82,9 +83,16 @@
 #     the token `1`, so only the true ordinal cancels (the substring form refused this, F2).
 #   * THE REMAINING PERMISSIVE CLASS, stated precisely because it is irreducible: two tails
 #     differing ONLY by a STANDALONE token equal to each page's own ordinal, where that token is
-#     not actually a page number — `Rev 1` / `Rev 2`, `Note 1` / `Note 2`. Nothing short of
-#     reading the text can tell such a mark from a page number, and this law does not pretend to.
-#     Registered under R33 rather than fixed.
+#     not actually a page number — the honest WORST example is `TOTAL 1` / `TOTAL 2`, the
+#     below-table subtotal shape of the bullet above in its SIMPLEST form: `TOTAL 1000` /
+#     `TOTAL 2000` refuses, but `TOTAL 1` / `TOTAL 2` LICENSES. Also `Rev 1` / `Rev 2`,
+#     `Note 1` / `Note 2`. Nothing short of reading the text can tell such a mark from a page
+#     number, and this law does not pretend to. Registered under R33 rather than fixed.
+#     ADV-A NARROWS IT (measured, loop O close): the residual bites ONLY where the mark
+#     COINCIDES with that page's own printed ordinal. The SAME tails at ordinals 5 / 6 REFUSE
+#     (`TOTAL 1` / `TOTAL 2` -> False, `Rev 1` / `Rev 2` -> False), because neither token is its
+#     page's ordinal and nothing cancels. Pinned by
+#     test_licence_law_licenses_a_standalone_ordinal_token_only_at_that_ordinal.
 #   * OVER-normalization (CONSERVATIVE, refuses): a STANDALONE ordinal token occurring elsewhere
 #     in a tail is cancelled too, and each side cancels its OWN ordinal, so two genuinely
 #     invariant tails carrying such a token normalize DIFFERENTLY (`Depot 1 line` under ordinal 1
@@ -130,7 +138,7 @@ SELECT ?pair WHERE {
   # that page's table was not cut by the page edge — something else followed it, and the pages are
   # two documents. Each side arrives ALREADY normalized by its own ordinal (at emission, whole
   # tokens only), so the ?n join IS the comparison — the same identity-by-join idiom clause (a)
-  # uses on ?t, and no numeral, digit or string function enters this query.
+  # uses on ?t, and no numeral or string function enters this query.
   FILTER NOT EXISTS {
     ?pair tab:hasPageBlock ?priorTail .
     ?priorTail a tab:PriorPageTextBlock .

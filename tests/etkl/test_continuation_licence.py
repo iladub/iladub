@@ -116,6 +116,22 @@ def test_licence_law_does_not_cancel_an_ordinal_attached_to_a_word():
     assert is_licensed(licence_evidence_from_facts(standalone))
 
 
+def test_licence_law_licenses_a_standalone_ordinal_token_only_at_that_ordinal():
+    """R33's remaining permissive class, at its HONEST WORST — and the ADV-A narrowing.
+
+    `TOTAL 1` / `TOTAL 2` is the below-table subtotal shape of
+    `test_licence_law_cancels_whole_tokens_only` in its SIMPLEST form: `TOTAL 1000` /
+    `TOTAL 2000` refuses, this LICENSES. The narrowing is that it bites only where the mark
+    COINCIDES with that page's own printed ordinal — the same two tails on pages printed 5 and
+    6 refuse, because neither token is its page's ordinal and nothing cancels."""
+    from iladub.etkl.document import licence_evidence_from_facts, is_licensed
+    for prior, cur in (("TOTAL 1", "TOTAL 2"), ("Rev 1", "Rev 2")):
+        assert is_licensed(licence_evidence_from_facts(
+            [(prior, 0, True, 1), (cur, 1, True, 2)])), (prior, cur)      # the residual
+        assert not is_licensed(licence_evidence_from_facts(
+            [(prior, 0, True, 5), (cur, 1, True, 6)])), (prior, cur)      # ADV-A: not at 5/6
+
+
 def test_licence_law_over_normalization_refuses_conservatively():
     """DOCUMENTED COST of clause (b) (query header, §7): a STANDALONE ordinal token
     occurring elsewhere in a tail block is cancelled too — each side cancels its own

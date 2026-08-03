@@ -135,8 +135,9 @@ built the whole document-level machinery on ONE question ("does page N redraw pa
 block on the same grid?"), and R33 measured that this question cannot separate a paginated table
 (taxonomy case 2) from two independent tables printed from one template (case 3). Loop O splits
 the question in two: recognition still answers *did the renderer repeat the header*, and a
-**second AXIOM** — `vocab/queries/continuation-licence.rq`, open-world, with no numeric literal
-and not a digit in its body — answers *may that pair actually be stitched*, by asking whether the
+**second AXIOM** — `vocab/queries/continuation-licence.rq`, open-world, with **no numeric
+literal**: no digit is ever read as data, the ordinal cancellation happening entirely at
+emission — answers *may that pair actually be stitched*, by asking whether the
 non-table blocks the renderer drew AROUND the table are page-invariant furniture or new content.
 The law (V4): page N's ABOVE-table blocks must be text-identical to blocks page N−1 also drew
 (strict); blocks BELOW either page's table must answer each other modulo whole tokens equal to
