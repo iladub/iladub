@@ -180,8 +180,13 @@ def test_stem_continuation_case_classification():
 def stem_document():
     """The whole-document compile, ONCE per module (loop M task 4 review, F7).
 
-    Two tests need it and each full 3-page compile costs ~3.5 minutes, so compiling per test
-    spent ~7 minutes of every suite run on the identical graph. `DocumentReport` is frozen and
+    Five tests need it and a full 3-page compile costs 180 s (measured 2026-08-03, loop N review;
+    it was ~3.5 min before loop N's document-level pass, and 325 s at the first cut of that pass
+    — the row-group KEY derivation was rewritten to the aggregation form and now costs 5 s where
+    it cost 104 s). The dominant remaining cost is loop I's `row-group-nesting.rq`, 97 s over the
+    logical table's 57 groups: registered, not silently absorbed — see the task-3 report.
+    Compiling per test would spend ~15 minutes of every suite run on the identical graph.
+    `DocumentReport` is frozen and
     the tests below only READ it (`table_records` and `ground_document` never mutate the source
     graph — they write into a caller-supplied graph), so sharing it changes no measurement."""
     if not STEM.is_file():
@@ -277,14 +282,23 @@ def test_stem_record_identity_is_one_kind(stem_document):
 
     The invariant asserted here is structural, not a tally: a record is identified by its group
     path IF AND ONLY IF a derived group covers its row. Anything else would mean the feed and
-    the derivation disagree. The remaining opaque ids are therefore not a second kind of
-    identity but the honest §7 answer for a row no confirmed aggregation covers — on this
-    edition exactly one, the document's 'Grand Total' row, whose printed value (2,402,500) the
-    arithmetic refuses because it does not equal the sum of the rows above it (measured:
-    4,606,000 over the chain's 111 non-aggregation rows). Tallies printed, not pinned.
+    the derivation disagree. The remaining opaque id is therefore not a second kind of identity
+    but the honest §7 answer for a row no confirmed aggregation covers — on this edition exactly
+    one, the document's 'Grand Total' row.
+
+    WHY THAT ROW IS NOT CONFIRMED, measured rather than assumed (loop N review corrected an
+    earlier claim here that the arithmetic disagreed with it — it does not): the chain's 133
+    non-aggregation rows sum to EXACTLY the printed 2,402,500 (927,500 + 804,000 + 671,000 over
+    pages 0/1/2, by `rows._numeric_token_sum`). The refusal is loop H's documented ZERO-MEMBER
+    rule (rows.py: "a grand total directly after a same-level total is never confirmed"): the
+    row immediately above it is `2026/27 Total`, an already-confirmed aggregation whose label
+    column (0) is not deeper than the Grand Total's own (0), so the member walk-back stops
+    before collecting a single operand. No members, no confirmation — the same honest refusal
+    R18's family describes, not an arithmetic disagreement. Tallies printed, not pinned.
     """
+    import re
     from collections import Counter
-    from rdflib import RDF
+    from rdflib import Graph, RDF
     from iladub.etkl.holon import TAB
     from iladub.feed import table_records, _row_discriminator
 
@@ -293,16 +307,35 @@ def test_stem_record_identity_is_one_kind(stem_document):
     covered = {_row_discriminator(g, m)
                for grp in g.subjects(RDF.type, TAB.DerivedRowGroup)
                for m in g.objects(grp, TAB.coversRow)}
-    shapes = Counter(f"{r.row_id.count(' > ') + 1}-level path" if " > " in r.row_id
-                     else "opaque discriminator" for r in recs)
+    frag = re.compile(r"^p\d+ \S+$")            # the page-qualified row discriminator
+
+    def anatomy(rid):
+        parts = rid.split(" > ")
+        return sum(1 for p in parts if not frag.match(p)), sum(1 for p in parts if frag.match(p))
+
+    shapes = Counter(anatomy(r.row_id) for r in recs)
     opaque = [r.row_id for r in recs if " > " not in r.row_id]
-    print(f"\nstem record-id shapes: {dict(shapes)}  opaque={opaque}")
-    # no opaque id names a row a group covers: the two readings agree
+    print(f"\nstem record-id anatomy (group labels, row discriminators) -> count: "
+          f"{ {k: v for k, v in sorted(shapes.items())} }  bare-discriminator={opaque}")
+    # no opaque id names a row a group covers: the feed and the derivation agree
     assert not [rid for rid in opaque if rid in covered], opaque
-    # and every path id is a group path (3 levels: year > month > port) with at most one
-    # collision discriminator appended — never a truncated or deeper shape
-    depths = {rid.count(" > ") + 1 for rid in (r.row_id for r in recs) if " > " in rid}
-    assert depths <= {3, 4}, depths
+    # Every id is a group path of at least one label, followed by AT MOST ONE row
+    # discriminator (the collision guard's suffix) — never two, never a fragment in the
+    # middle. NB the label depth is NOT uniform and the report says so: a row whose month
+    # group confirmed but whose port group did not carries the shorter path, completed by
+    # the discriminator. That is R18's cascade, not a second identity kind.
+    for r in recs:
+        labels, frags = anatomy(r.row_id)
+        assert frags <= 1, r.row_id
+        assert labels >= 1 or frags == 1, r.row_id
+        assert not frag.match(r.row_id.split(" > ")[0]) or " > " not in r.row_id, r.row_id
+    # DETERMINISM (loop N review): the same graph must mint the same subjects however its
+    # triples are ordered. 7 of 132 covered rows are covered by two groups at one level, and
+    # before the tie-break the winner was rdflib's iteration order.
+    reordered = Graph()
+    for t in reversed(list(g)):
+        reordered.add(t)
+    assert [r.row_id for r in table_records(reordered)] == [r.row_id for r in recs]
 
 
 @needs_stem

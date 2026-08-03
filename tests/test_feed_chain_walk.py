@@ -197,6 +197,44 @@ def test_a_covered_row_takes_its_identity_from_the_logical_group():
     assert keyed.row_id == "Jul", keyed.row_id
 
 
+def _two_coresident_groups(order):
+    """Two derived groups covering ONE row at the SAME level, inserted in `order`.
+
+    R18's co-resident case: the nesting query REFUSES to link groups with identical member sets
+    (§7 — refusal over a guess), so both stay level 0 and both cover the row. Which one names the
+    record is a first-wins pick; this fixture exists to prove the pick does not depend on the
+    order the triples happen to sit in.
+    """
+    g = _chained()
+    g.remove((P1, TAB.continuesTable, P0))
+    for i in order:
+        label, gid = (("e0_0", 8) if i == 0 else ("e0_1", 9))
+        grp = _group(g, P0, gid, label, ())
+        g.add((grp, TAB.coversRow, URIRef(f"{P0}-r0")))
+        g.add((grp, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+    return g
+
+
+def test_same_level_cover_is_broken_deterministically():
+    """The SAME document must mint the SAME record subjects — every run, every environment.
+
+    Two groups covering one row at one level reach `_header_path`'s deepest-cover selection with
+    nothing to separate them. Before the tie-break the winner was whichever `graph.objects()`
+    yielded first — i.e. rdflib's iteration order, which follows insertion order for the default
+    store — so a graph built in a different order (a different rdflib version, a different store,
+    a re-serialized round trip) could mint a DIFFERENT subject for the same row. Measured on the
+    stem: 7 of 132 covered rows are in this state after the document-level derivation.
+
+    The tie-break carries no meaning (neither group is more the row's header than the other — the
+    §5 context loss R18 records is unchanged); it only has to be the same one every time.
+    """
+    ids = [ {r.row_id for r in table_records(_two_coresident_groups(o))}
+            for o in ((0, 1), (1, 0)) ]
+    assert ids[0] == ids[1], ids
+    # and the winner is the lexicographically first (label, node), not an accident of order
+    assert any(i.startswith("Jul") for i in ids[0]), ids[0]
+
+
 def test_unchained_pages_are_qualified_too():
     """The review's F1, pinned. An UNCHAINED two-page document is where the weld BITES: nothing
     else distinguishes page 0's `h0-r1` from page 1's, and the old collision suffix was a no-op

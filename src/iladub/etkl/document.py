@@ -432,11 +432,23 @@ def _link_columns(graph: Graph, cur_uri: URIRef, prev_uri: URIRef) -> int:
     that column?). Without the edge each would have to parse `-c{i}` out of the column IRIs, and
     the feed in particular is explicitly IRI-parsing-free. The edge is read, not named.
 
+    TWO RELATIONS, AND WHY (loop N review). `tab:continuesColumn` is the PAIRWISE fact, which is
+    all this one licensed pair evidences. `tab:inLogicalColumn` is its reflexive-transitive
+    CLOSURE, pointing every member's column at the chain HEAD's — materialized here, incrementally
+    (the head's column is read off the PREVIOUS page's own closure edge, so a third page reaches
+    page 0 without anyone knowing the chain yet; the driver stitches pairs in strictly increasing
+    page order, which is what makes the induction sound). It is asserted rather than entailed
+    because iladub is reasoner-free, and because a `tab:continuesColumn*` property path inside the
+    key derivation was MEASURED at 21 s for one 94-member witness where the one-hop closure form
+    costs 0.26 s on the same graph. The reflexive edge on the head's own column is not a trick: a
+    column IS part of its own logical column, and it is what lets ONE triple pattern reach a head
+    cell and a continuation cell alike.
+
     Indices are read back out of OUR OWN minting (`_index_suffix`), and a column URI that does
     not follow the convention is simply not linked — no guess, and the pair's other columns are
     unaffected. An index present on only one side gets no edge either: the law licensed a
     bijection, and asserting an edge the evidence does not carry would be fabrication (§7).
-    Returns the number of edges asserted."""
+    Returns the number of `tab:continuesColumn` edges asserted (one per shared index)."""
     def _by_index(t):
         out = {}
         for c in graph.objects(t, TAB.hasLeafColumn):
@@ -449,6 +461,9 @@ def _link_columns(graph: Graph, cur_uri: URIRef, prev_uri: URIRef) -> int:
     n = 0
     for i in sorted(set(prev_cols) & set(cur_cols)):
         graph.add((cur_cols[i], TAB.continuesColumn, prev_cols[i]))
+        canonical = graph.value(prev_cols[i], TAB.inLogicalColumn) or prev_cols[i]
+        graph.add((prev_cols[i], TAB.inLogicalColumn, canonical))    # reflexive at the head
+        graph.add((cur_cols[i], TAB.inLogicalColumn, canonical))
         n += 1
     return n
 

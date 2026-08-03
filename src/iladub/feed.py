@@ -151,10 +151,19 @@ def _logical_column(graph: Graph, col):
     same licence, as `tab:continuesTable` (see `document._link_columns`). Nothing is parsed out
     of an IRI here — the feed's standing rule.
 
-    A column with no link is its own logical column, so every unchained graph (and every test
-    fixture that records no link) behaves exactly as before. A malformed cycle terminates on
-    `seen` rather than spinning: the first repeat wins, deterministically.
+    The compile MATERIALIZES that closure as `tab:inLogicalColumn` (one hop, straight to the
+    chain's head — see `document._link_columns`), so the normal path is a single lookup. The
+    pairwise walk stays as the fallback for a graph that records only `tab:continuesColumn`: the
+    two agree by construction, and the fallback is what lets a hand-built fixture (or a graph
+    compiled before the closure was materialized) read identically.
+
+    A column with no link at all is its own logical column, so every unchained graph behaves
+    exactly as before. A malformed cycle terminates on `seen` rather than spinning: the first
+    repeat wins, deterministically.
     """
+    canonical = min(graph.objects(col, TAB.inLogicalColumn), key=str, default=None)
+    if canonical is not None:
+        return canonical
     seen = set()
     while col is not None and col not in seen:
         seen.add(col)
@@ -369,7 +378,21 @@ def _header_path(graph: Graph, tables, cover_pred) -> dict:
     whole logical table at once: the document-level groups hang off the head but cover member
     rows, and the deepest-header selection must then compare candidates ACROSS members rather
     than per table — merging per-table results would pick a shallower header whenever two members
-    covered one row. Column paths stay single-table (R34's third face)."""
+    covered one row. Column paths stay single-table (R34's third face).
+
+    THE TIE-BREAK IS DETERMINISTIC, AND IT IS NOT A SEMANTIC CLAIM (loop N review). Two derived
+    groups can cover ONE row at the SAME level — R18's co-resident case, which the nesting query
+    creates by REFUSING to link groups with identical member sets (§7: refusal over a guess).
+    Measured on the stem after the document-level derivation: 7 of 132 covered rows, up from 2,
+    e.g. `p1#htable1-r66` covered by both `Mar 27` and `Portland` at level 1. R18 already records
+    what happens then — the deepest-cover selection keeps ONE and silently drops the other, a §5
+    context loss. What it did NOT record is that the survivor was whichever the graph handed over
+    first, i.e. rdflib's iteration order: the SAME document could mint DIFFERENT record subjects
+    on a different run, store or rdflib version. That is a reproducibility defect independent of
+    the context loss, and it is what this ordering fixes: among equal levels the lexicographically
+    first (label, node) wins. Which one wins carries NO meaning — neither group is more the row's
+    header than the other — but it is now the same one every time, everywhere. The §5 loss itself
+    stands as R18 describes it."""
     label: dict = {}
     parent: dict = {}
     best: dict = {}                                 # target -> (level, header_node)
@@ -380,7 +403,10 @@ def _header_path(graph: Graph, tables, cover_pred) -> dict:
         lvl_lit = graph.value(h, TAB.headerLevel)
         lvl = int(lvl_lit) if lvl_lit is not None else 0
         for u in graph.objects(h, cover_pred):
-            if u not in best or lvl > best[u][0]:
+            held = best.get(u)
+            if held is None or lvl > held[0] or (
+                    lvl == held[0]
+                    and (label[h], str(h)) < (label[held[1]], str(held[1]))):
                 best[u] = (lvl, h)
     paths: dict = {}
     for u, (_, h) in best.items():

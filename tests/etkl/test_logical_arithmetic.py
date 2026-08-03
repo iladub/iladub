@@ -265,6 +265,33 @@ def test_continues_column_is_asserted_at_equal_index_only(tmp_path):
     assert _link_columns(g, p1, p0) == 2
     assert set(g.subject_objects(TAB.continuesColumn)) == {
         (URIRef(f"{p1}-c0"), URIRef(f"{p0}-c0")), (URIRef(f"{p1}-c1"), URIRef(f"{p0}-c1"))}
+    # the third column of p0 has no counterpart, so it enters NEITHER relation
+    assert (URIRef(f"{p0}-c2"), TAB.inLogicalColumn, None) not in g
+
+
+def test_in_logical_column_is_the_reflexive_transitive_closure(tmp_path):
+    """`tab:inLogicalColumn` points every member's column at the CHAIN HEAD's, at any depth.
+
+    Materialized pair by pair as the driver stitches (the head's column is read off the previous
+    page's own closure edge), so page 2 reaches page 0 without anyone knowing the chain yet —
+    the induction the driver's strictly-increasing page order licenses. Reflexive at the head,
+    which is what lets ONE triple pattern in row-group-key-logical.rq reach a head cell and a
+    continuation cell alike; the pairwise `tab:continuesColumn` record stays exactly as narrow as
+    the licence that produced it."""
+    from iladub.etkl.document import _link_columns
+    g = Graph()
+    p0, p1, p2 = (URIRef("urn:doc/p0#h0"), URIRef("urn:doc/p1#h0"), URIRef("urn:doc/p2#h0"))
+    for i, t in enumerate((p0, p1, p2)):
+        _member(g, t, i, {0: {0: "x"}}, ncols=2)
+    _link_columns(g, p1, p0)                      # the driver stitches pairs in page order
+    _link_columns(g, p2, p1)
+    for c in range(2):
+        head = URIRef(f"{p0}-c{c}")
+        assert g.value(URIRef(f"{p0}-c{c}"), TAB.inLogicalColumn) == head      # reflexive
+        assert g.value(URIRef(f"{p1}-c{c}"), TAB.inLogicalColumn) == head
+        assert g.value(URIRef(f"{p2}-c{c}"), TAB.inLogicalColumn) == head      # two breaks down
+    # the PAIRWISE record is not widened: p2's column continues p1's, never p0's directly
+    assert set(g.objects(URIRef(f"{p2}-c0"), TAB.continuesColumn)) == {URIRef(f"{p1}-c0")}
 
 
 def test_single_page_and_case1_untouched(tmp_path):
