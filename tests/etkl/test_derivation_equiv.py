@@ -8,12 +8,13 @@ cell reference type, no Blank notion) and its old-vs-ref tie test are retired; s
 """
 import os, random
 from types import SimpleNamespace
-from rdflib import Literal
-from rdflib.namespace import XSD
+from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.namespace import RDF, XSD
 from iladub.etkl import celltype
 from iladub.etkl.celltype import _cell_datatype
 from iladub.etkl.grid import LeafGrid
 from iladub.etkl.headergraph import HEADER_COVERS_RQ, header_evidence, run_covers
+from iladub.etkl.holon import TAB
 
 QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
 
@@ -207,3 +208,210 @@ def test_header_covers_new_matches_ref():
             rows.append(cells)
         got = run_covers(HEADER_COVERS_RQ, header_evidence(rows, grid))
         assert got == _ref_header_covers(rows, grid)
+
+
+# ---------- row-group-key-logical.rq equivalence (new query vs OLD query text @ cfedaf3) ----------
+# Loop N task-4 carry-in (b): the perf rewrite (task 3 review, MINOR-perf) proved its equivalence
+# by hand against production calls + a bounded battery, but committed no durable oracle. This is
+# that oracle. OLD is embedded VERBATIM from `git show cfedaf3:vocab/queries/row-group-key-logical.rq`
+# — the property-path form the rewrite replaced (NOT the v0 page-local `row-group-key.rq`, a
+# different query this loop never touched).
+
+OLD_ROW_GROUP_KEY_LOGICAL = r"""PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?v ?cell WHERE {
+  ?agg tab:aggregates ?m .
+  ?cell a tab:EntryCell ; tab:atRow ?m ; tab:atColumn ?mc ; tab:cellText ?v ;
+        tab:onPage ?pg ; tab:hasBBox ?bb .
+  ?mc tab:continuesColumn* ?lcol .
+  ?bb tab:y0 ?y .
+  FILTER(STR(?v) != "")
+  FILTER NOT EXISTS {
+    ?agg tab:aggregates ?m2 .
+    ?c2 a tab:EntryCell ; tab:atRow ?m2 ; tab:atColumn ?mc2 ; tab:cellText ?v2 .
+    ?mc2 tab:continuesColumn* ?lcol .
+    FILTER(STR(?v2) != "" && STR(?v2) != STR(?v))
+  }
+}
+ORDER BY ?pg ?y
+LIMIT 1
+"""
+
+_ROW_GROUP_KEY_LOGICAL_RQ = os.path.join(QDIR, "row-group-key-logical.rq")
+
+
+def _rg_table(g, table, ncols):
+    """A bare chain member: `ncols` leaf columns, nothing else — the row-group key law never
+    reads a table's rows/headers, only its EntryCells and the column correspondence."""
+    g.add((table, RDF.type, TAB.HierarchicalTable))
+    for c in range(ncols):
+        cu = URIRef(f"{table}-c{c}")
+        g.add((cu, RDF.type, TAB.LeafColumn))
+        g.add((table, TAB.hasLeafColumn, cu))
+
+
+_rg_counter = [0]     # monotonic, so every random case mints fresh row/cell URIs
+
+
+def _rg_add_cell(g, table, col, text, page):
+    """One EntryCell of `table`'s column `col`, with a fresh row — identity is irrelevant to
+    this differential (only the key law's OLD-vs-NEW parity is), so URIs are minted, not read
+    back from any minting convention."""
+    _rg_counter[0] += 1
+    n = _rg_counter[0]
+    row = URIRef(f"{table}-r{n}")
+    cell = URIRef(f"{table}-e{n}")
+    g.add((row, RDF.type, TAB.LeafRow))
+    g.add((table, TAB.hasLeafRow, row))
+    g.add((cell, RDF.type, TAB.EntryCell))
+    g.add((table, TAB.hasCell, cell))
+    g.add((cell, TAB.atRow, row))
+    g.add((cell, TAB.atColumn, URIRef(f"{table}-c{col}")))
+    g.add((cell, TAB.cellText, Literal(text)))
+    g.add((cell, TAB.onPage, Literal(page, datatype=XSD.integer)))
+    bb = BNode()
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((bb, TAB.y0, Literal(float(n), datatype=XSD.decimal)))
+    g.add((cell, TAB.hasBBox, bb))
+    return row
+
+
+_RG_VALUES = ["Mackay", "Geelong", "Portland", ""]   # "" is the blank case; conflict/unique/
+                                                     # suppressed follow from HOW these combine
+
+
+def _rand_rowgroup_cases(seed, n_graphs=50):
+    """`(graph, [(agg, lcol), ...])` — synthetic continuation chains (2-3 members, 2-4 columns),
+    columns linked by the REAL `document._link_columns` (so tab:continuesColumn and its
+    tab:inLogicalColumn closure are asserted exactly as a genuine compile would, never
+    hand-faked), with member cells covering unique / conflicting / blank / suppressed label
+    values — the four scenarios row-group-key-logical.rq's uniqueness guard must disambiguate."""
+    from iladub.etkl.document import _link_columns
+    rnd = random.Random(seed)
+    for gi in range(n_graphs):
+        g = Graph()
+        nmembers = rnd.randint(2, 3)
+        ncols = rnd.randint(2, 4)
+        tables = [URIRef(f"urn:rgtest/{seed}/{gi}/p{i}#h0") for i in range(nmembers)]
+        for t in tables:
+            _rg_table(g, t, ncols)
+        for i in range(1, nmembers):
+            _link_columns(g, tables[i], tables[i - 1])
+        cases = []
+        for _case in range(rnd.randint(2, 4)):
+            lcol_idx = rnd.randrange(ncols)
+            _rg_counter[0] += 1
+            agg = URIRef(f"urn:rgtest/{seed}/{gi}/agg{_rg_counter[0]}")
+            for _m in range(rnd.randint(1, 4)):
+                t = rnd.choice(tables)
+                page = tables.index(t)
+                if rnd.random() < 0.2:                       # suppressed: no cell at all
+                    _rg_counter[0] += 1
+                    row = URIRef(f"{t}-r{_rg_counter[0]}")
+                    g.add((row, RDF.type, TAB.LeafRow))
+                    g.add((t, TAB.hasLeafRow, row))
+                else:
+                    text = rnd.choice(_RG_VALUES)
+                    row = _rg_add_cell(g, t, lcol_idx, text, page)
+                g.add((agg, TAB.aggregates, row))
+            cases.append((agg, URIRef(f"{tables[0]}-c{lcol_idx}")))
+        yield g, cases
+
+
+def test_row_group_key_logical_new_matches_old(tmp_path, monkeypatch):
+    """Loop N task-4 carry-in (b): commit the equivalence differential the perf rewrite argued
+    by hand (task-3 report's `Query cost` section) but never gave a durable oracle. OLD is the
+    property-path form shipped at `cfedaf3` (embedded above); NEW is today's aggregation +
+    one-hop-closure rewrite (`vocab/queries/row-group-key-logical.rq`). Both run over the SAME
+    graph with the SAME `initBindings`, and their full `(v, cell)` result lists must match
+    exactly — not just the winning row, since a divergence upstream of `ORDER BY`/`LIMIT 1`
+    would still corrupt which row wins.
+
+    Two legs, per the shipped pattern of this file (a random battery) plus the fixture calls the
+    carry-in explicitly asks for:
+      (a) the fixture calls — `cut_group_two_page_pdf`'s real document-level witness, captured by
+          spying on `rowgroups.derive_row_groups_over` (the one seam `document.py` calls the key
+          query through), so the comparison runs on a REAL compiled graph. `page_local_group_
+          two_page_pdf` is included too and contributes ZERO calls: its subtotal is REFUSED at
+          document level (loop-N review M-1), so `_derive_document_row_groups` never reaches the
+          key query for it — the task-3 report's own "retraction: 0" line, reproduced structurally
+          rather than asserted by fiat.
+      (b) a seeded randomized battery of synthetic chains linked by the REAL
+          `document._link_columns` (`_rand_rowgroup_cases`), covering unique / conflicting /
+          blank / suppressed label values.
+    """
+    import iladub.etkl.rowgroups as rowgroups_mod
+    from iladub.etkl.document import compile_document
+    from tests.etkl.fixtures import cut_group_two_page_pdf, page_local_group_two_page_pdf
+
+    new_text = open(_ROW_GROUP_KEY_LOGICAL_RQ, encoding="utf-8").read()
+    captured = []
+    orig = rowgroups_mod.derive_row_groups_over
+
+    def _spy(g, attach_to, witnesses, key_query="row-group-key.rq"):
+        witnesses = list(witnesses)
+        if key_query == "row-group-key-logical.rq":
+            captured.append((g, witnesses))
+        return orig(g, attach_to, witnesses, key_query)
+
+    monkeypatch.setattr(rowgroups_mod, "derive_row_groups_over", _spy)
+
+    for fixture in (cut_group_two_page_pdf, page_local_group_two_page_pdf):
+        pdf = str(tmp_path / f"{fixture.__name__}.pdf")
+        fixture(pdf)
+        compile_document(pdf)
+
+    def _run(g, text, agg, lcol):
+        return [tuple(r) for r in g.query(text, initBindings={"agg": agg, "lcol": lcol})]
+
+    fixture_cases = 0
+    for g, witnesses in captured:
+        for arow, lcol_uri, _grp in witnesses:
+            old = _run(g, OLD_ROW_GROUP_KEY_LOGICAL, arow, lcol_uri)
+            new = _run(g, new_text, arow, lcol_uri)
+            assert old == new, f"fixture divergence agg={arow} lcol={lcol_uri}: old={old} new={new}"
+            fixture_cases += 1
+    assert fixture_cases >= 1, \
+        "the cut-group fixture must issue at least one document-level key call"
+
+    rand_cases = 0
+    for g, cases in _rand_rowgroup_cases(seed=20260803, n_graphs=50):
+        for agg, lcol in cases:
+            old = _run(g, OLD_ROW_GROUP_KEY_LOGICAL, agg, lcol)
+            new = _run(g, new_text, agg, lcol)
+            assert old == new, f"random divergence agg={agg} lcol={lcol}: old={old} new={new}"
+            rand_cases += 1
+    assert rand_cases >= 100, rand_cases
+
+
+def test_row_group_key_logical_refuses_without_in_logical_column():
+    """Loop N task-4 carry-in (a): the query's unstated PRECONDITION, pinned negatively.
+
+    `row-group-key-logical.rq` reaches the label column through `tab:inLogicalColumn`, a
+    materialized TRIPLE — not the property-path fixpoint the query it replaced used — so a
+    member column with NO such edge makes it REFUSE (0 rows). The OLD form (`cfedaf3`) still
+    matched in that state, via the zero-length case of `tab:continuesColumn*` (`?mc = ?lcol`
+    needs no edge at all to hold). Built here as a single UNCHAINED table: `?lcol` is bound
+    directly to the label column of the table that owns the candidate cell, so the OLD query's
+    zero-length path trivially succeeds while the NEW form finds no `tab:inLogicalColumn` triple
+    to walk and returns nothing.
+
+    This is the honest, §7-safe direction (never fabricate a correspondence nothing asserted),
+    not a regression — no compile-produced graph reaches this query without the edges
+    (`document._derive_document_row_groups` runs only inside a chain, where `_link_columns`
+    always asserted them). See the query's own header comment and `feed._logical_column`'s
+    docstring for the one place the two readings DELIBERATELY diverge: that function still
+    falls back to treating an unlinked column as its own logical column; this query does not."""
+    g = Graph()
+    t = URIRef("urn:rgtest/refusal#h0")
+    _rg_table(g, t, 2)
+    agg = URIRef("urn:rgtest/refusal#agg")
+    row = _rg_add_cell(g, t, 0, "Mackay", 0)
+    g.add((agg, TAB.aggregates, row))
+    lcol = URIRef(f"{t}-c0")
+
+    new_text = open(_ROW_GROUP_KEY_LOGICAL_RQ, encoding="utf-8").read()
+    old = [tuple(r) for r in g.query(OLD_ROW_GROUP_KEY_LOGICAL,
+                                     initBindings={"agg": agg, "lcol": lcol})]
+    new = [tuple(r) for r in g.query(new_text, initBindings={"agg": agg, "lcol": lcol})]
+    assert old, "fixture precondition: the OLD form must still match via its zero-length path"
+    assert new == [], f"the NEW form must refuse without an inLogicalColumn edge, got {new}"

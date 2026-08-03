@@ -11,6 +11,14 @@ the portal the record sequence its author wrote, not one fragment per page. Undo
 is a READING act — the graph keeps the page-scoped tables and the link the continuation AXIOM
 licensed; nothing is rewritten, merged, or re-derived, and the decision that licensed the link
 was taken at compile time (vocab/queries/continuation-of.rq), never here.
+
+Loop N carries that to the ROW AXIS: a chain's row groups and row identities are read off the
+whole logical table (`_inject_group_keys`, `_logical_row_paths`), because the compile now
+derives them there — over the document-confirmed arithmetic, attached to the chain's head, with
+`tab:coversRow` edges that cross member tables. Still no decision here: the groups, their keys
+and their nesting are AXIOM derivations already asserted in the graph, and the correspondence
+between a member's column and the head's is the asserted `tab:continuesColumn` — read, never
+parsed out of an IRI.
 """
 from __future__ import annotations
 
@@ -134,21 +142,72 @@ def _row_discriminator(graph: Graph, row) -> str:
     return frag if page is None else f"p{page} {frag}"
 
 
+def _logical_column(graph: Graph, col):
+    """The HEAD table's column this one continues — `tab:continuesColumn` walked to its end.
+
+    The logical column identity across a chain, READ from the graph (loop N). A member table
+    mints its own column nodes, so "the Month column" is a different URI on every page; the
+    compile commits the correspondence as `tab:continuesColumn` at the same moment, and on the
+    same licence, as `tab:continuesTable` (see `document._link_columns`). Nothing is parsed out
+    of an IRI here — the feed's standing rule.
+
+    The compile MATERIALIZES that closure as `tab:inLogicalColumn` (one hop, straight to the
+    chain's head — see `document._link_columns`), so the normal path is a single lookup. The
+    pairwise walk stays as the fallback for a graph that records only `tab:continuesColumn`: the
+    two agree by construction, and the fallback is what lets a hand-built fixture (or a graph
+    compiled before the closure was materialized) read identically.
+
+    A column with no link at all is its own logical column, so every unchained graph behaves
+    exactly as before. A malformed cycle terminates on `seen` rather than spinning: the first
+    repeat wins, deterministically.
+
+    DEGRADES DIFFERENTLY FROM THE QUERY (task 4 carry-in (a), stated so the two are never
+    confused): on a graph carrying NEITHER `tab:inLogicalColumn` NOR `tab:continuesColumn` for a
+    column, THIS function falls back all the way to returning the column itself — a column with
+    no link is its own logical column, by the same reading convention loop M already used for an
+    unlinked table. `row-group-key-logical.rq` has no such fallback: it requires the
+    `tab:inLogicalColumn` edge to exist as a triple, and REFUSES (zero rows) in its absence. The
+    two are not required to agree here — this function is a per-record READ that must always
+    return *some* column identity so the feed can group cells table by table, while the query is
+    an AXIOM deciding whether the KEY is grounded at all, and honest refusal is the right answer
+    when the correspondence was never asserted. Both readings agree on every graph the compiler
+    actually produces, because `document._link_columns` always asserts both predicates together.
+    """
+    canonical = min(graph.objects(col, TAB.inLogicalColumn), key=str, default=None)
+    if canonical is not None:
+        return canonical
+    seen = set()
+    while col is not None and col not in seen:
+        seen.add(col)
+        nxt = min((o for o in graph.objects(col, TAB.continuesColumn) if o not in seen),
+                  key=str, default=None)
+        if nxt is None:
+            return col
+        col = nxt
+    return col
+
+
 def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
-    """One table's reading: `(ordered_rows, {row: [(x0, y0, concept)]}, {row: rid})`.
+    """One table's CELL reading: `(ordered_rows, {row: [(x0, y0, concept)]},
+    {row: {logical_column}})`.
 
     Deliberately PER-TABLE, even when the table is one member of a continuation chain (R34's
-    third face): every field name here comes from THIS table's own header path, and every group
-    key from THIS table's own derived groups over THIS table's own rows. Recognition's evidence
-    stops at the LEAF header row, so a licensed chain can span tables whose header blocks differ
-    ABOVE it — on the stem the three tables' column paths are label-identical by MEASUREMENT,
-    not by law, and where they could differ the per-table reading is the honest one. Scoping the
-    read this way also makes cross-member group-key injection structurally impossible: a group
-    can only ever reach rows of its own table (measured on the stem: 0 cross-table
-    `tab:coversRow`).
+    third face): every field name here comes from THIS table's own header path. Recognition's
+    evidence stops at the LEAF header row, so a licensed chain can span tables whose header
+    blocks differ ABOVE it — on the stem the three tables' column paths are label-identical by
+    MEASUREMENT, not by law, and where they could differ the per-table reading is the honest
+    one.
+
+    GROUP KEYS ARE NO LONGER READ HERE (loop N). They were, per table, and the note that used to
+    stand at this spot said cross-member injection was structurally impossible — true then,
+    because loop I could only derive a group inside one page's window. The document-level pass
+    now derives a chain's groups over the LOGICAL table and attaches them to its HEAD, so the
+    keys must reach every member's rows; `_inject_group_keys` does that at the logical level and
+    states the reading in full. R34's third face is unchanged in substance: a chain's keys still
+    come from THIS logical table's own derivation, and each row's FIELD NAME still comes from
+    its own member table's header path.
     """
     header = _column_header_path(graph, t)
-    row_path = _row_header_path(graph, t)
     rows: dict = {}
     row_cols: dict = {}
     for e in graph.subjects(RDF.type, TAB.EntryCell):
@@ -167,35 +226,72 @@ def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
         concept = SurfaceConcept(header.get(col, ""), txt, region)
         x0, y0 = _bbox_xy(graph, e)
         rows.setdefault(row, []).append((x0, y0, concept))
-        row_cols.setdefault(row, set()).add(col)
-    # Loop K: recovered group keys become groundable concepts. A suppressed key (the
-    # author writes Month once per group) never appears among the row's own cells; the
-    # derived row group carries it with provenance to the SOURCE cell (§5/§6 — context
-    # is carried, to the page). Column-identity-driven, injected only where the record
-    # has no non-blank concept at that column, once per column (nested groups can share
-    # one label cell). The y-sort key is the ROW's own extent, not the source cell's,
-    # so record ordering is untouched.
-    for h in graph.objects(t, TAB.hasHeaderNode):
-        if (h, RDF.type, TAB.DerivedRowGroup) not in graph:
-            continue
-        label = graph.value(h, TAB.hasLabel)
-        col = graph.value(label, TAB.atColumn) if label is not None else None
-        if col is None:
-            continue
-        key = str(graph.value(label, TAB.cellText))
-        prov = graph.value(label, PROV.wasDerivedFrom)
-        region = str(prov).split("#")[-1] if prov is not None else str(label).split("#")[-1]
-        x0, _ = _bbox_xy(graph, label)
-        for row in graph.objects(h, TAB.coversRow):
-            if row not in rows or col in row_cols.get(row, set()):
-                continue
-            own_y = min(y for _, y, _ in rows[row])
-            rows[row].append((x0, own_y, SurfaceConcept(header.get(col, ""), key, region)))
-            row_cols.setdefault(row, set()).add(col)
+        row_cols.setdefault(row, set()).add(_logical_column(graph, col))
     ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
-    rid_of = {row: (row_path[row] if row in row_path
-                    else _row_discriminator(graph, row)) for row in ordered}
-    return ordered, rows, rid_of
+    return ordered, rows, row_cols
+
+
+def _inject_group_keys(graph: Graph, members, rows: dict, row_cols: dict, owner: dict) -> None:
+    """Inject every derived row group's KEY into the records it covers — logical-table scoped.
+
+    Loop K: recovered group keys become groundable concepts. A suppressed key (the author writes
+    Month once per group) never appears among the row's own cells; the derived row group carries
+    it with provenance to the SOURCE cell (§5/§6 — context is carried, to the page).
+    Column-identity-driven, injected only where the record has no non-blank concept at that
+    column, once per column (nested groups can share one label cell). The y-sort key is the
+    ROW's own extent, not the source cell's, so record ordering is untouched — and this pass now
+    runs AFTER each member's rows were ordered, so it cannot perturb the order even in principle.
+
+    LOOP N — WHY THE SCOPE IS THE LOGICAL TABLE. A chain's groups are derived over the logical
+    table and attached to its HEAD (`document._derive_document_row_groups`), with `coversRow`
+    edges that deliberately cross member tables: the whole point is that a subtotal on page 2
+    keys rows on pages 0-2. Reading groups per member would leave every non-head member's rows
+    keyless. So the sources are ALL members' group nodes — which is not a widening of what may
+    reach a row, because a group still reaches exactly the rows it COVERS, and covering is an
+    asserted fact, never inferred from membership of the chain. Every member is read (not just
+    the head) so that a chain the arithmetic pass ABSTAINED on — whose members therefore keep
+    their page-local groups — loses no key it had.
+
+    THE COLUMN IDENTITY is logical (`_logical_column`): the group's label cell may sit on a
+    different page from the row being keyed, where "the same column" is a different node. The
+    occupancy test and the once-per-column guard both run on the logical column, so a row can
+    never receive a key at a column where it already wrote a value.
+
+    THE FIELD NAME stays the row's OWN table's header path (R34's third face): the label may
+    come from page 0, but a page-2 record's field is named by page 2's reading of that column.
+    `locals_by_table` inverts each member's leaf columns onto their logical column, so the row's
+    own node is what the header path is looked up by; where the graph records no correspondence
+    (an unchained table, a fixture with no leaf columns) that falls back to the label's own
+    column — exactly what the per-table reading used.
+    """
+    headers = {t: _column_header_path(graph, t) for t in members}
+    locals_by_table = {}
+    for t in members:
+        locals_by_table[t] = {_logical_column(graph, c): c
+                              for c in graph.objects(t, TAB.hasLeafColumn)}
+    for t in members:
+        for h in sorted(graph.objects(t, TAB.hasHeaderNode), key=str):
+            if (h, RDF.type, TAB.DerivedRowGroup) not in graph:
+                continue
+            label = graph.value(h, TAB.hasLabel)
+            col = graph.value(label, TAB.atColumn) if label is not None else None
+            if col is None:
+                continue
+            lcol = _logical_column(graph, col)
+            key = str(graph.value(label, TAB.cellText))
+            prov = graph.value(label, PROV.wasDerivedFrom)
+            region = str(prov).split("#")[-1] if prov is not None else str(label).split("#")[-1]
+            x0, _ = _bbox_xy(graph, label)
+            for row in graph.objects(h, TAB.coversRow):
+                if row not in rows or lcol in row_cols.get(row, set()):
+                    continue
+                own = owner.get(row)
+                local = locals_by_table.get(own, {}).get(lcol, col)
+                own_y = min(y for _, y, _ in rows[row])
+                rows[row].append((x0, own_y,
+                                  SurfaceConcept(headers.get(own, {}).get(local, ""),
+                                                 key, region)))
+                row_cols.setdefault(row, set()).add(lcol)
 
 
 def table_records(graph: Graph) -> list[Record]:
@@ -228,12 +324,21 @@ def table_records(graph: Graph) -> list[Record]:
     for members in _logical_tables(graph, tables):
         ordered: list = []
         rows: dict = {}
-        rid_of: dict = {}
+        row_cols: dict = {}
+        owner: dict = {}
         for t in members:                      # chain order == page order
-            m_ordered, m_rows, m_rid = _read_table(graph, t)
+            m_ordered, m_rows, m_cols = _read_table(graph, t)
             ordered.extend(m_ordered)          # head's rows first, then each continuation's
             rows.update(m_rows)                # row URIs are page-scoped: no key ever clashes
-            rid_of.update(m_rid)
+            row_cols.update(m_cols)
+            owner.update({r: t for r in m_ordered})
+        # Group keys and row identities are read at the LOGICAL level, after every member's
+        # rows exist and are ordered: a chain's groups hang off its HEAD and cover rows on
+        # every page (loop N). Injection cannot perturb the order — `ordered` is already fixed.
+        _inject_group_keys(graph, members, rows, row_cols, owner)
+        row_path = _logical_row_paths(graph, members)
+        rid_of = {row: (row_path[row] if row in row_path
+                        else _row_discriminator(graph, row)) for row in ordered}
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
         per_logical.append((ordered, rows, rid_of))
@@ -274,23 +379,46 @@ def _bbox_xy(graph: Graph, entry_cell) -> tuple[float, float]:
     return (float(x0) if x0 is not None else 0.0, float(y0) if y0 is not None else 0.0)
 
 
-def _header_path(graph: Graph, table, cover_pred) -> dict:
-    """Map each target (column or row) covered by `table`'s header tree to its HEADER PATH: the
+def _header_path(graph: Graph, tables, cover_pred) -> dict:
+    """Map each target (column or row) covered by `tables`' header trees to its HEADER PATH: the
     deepest HeaderNode covering the target (via `cover_pred` = TAB.coversColumn or TAB.coversRow),
     walked up parentHeader to the root, labels joined ' > '. For a flat axis (level-0, single target,
     no parent) this is the single label. Returns {} when no header node covers via `cover_pred`.
-    RDF reads only; no tuned constant, no IRI-name parsing."""
+    RDF reads only; no tuned constant, no IRI-name parsing.
+
+    `tables` is a SEQUENCE (loop N) so a continuation chain's row identities can be read off the
+    whole logical table at once: the document-level groups hang off the head but cover member
+    rows, and the deepest-header selection must then compare candidates ACROSS members rather
+    than per table — merging per-table results would pick a shallower header whenever two members
+    covered one row. Column paths stay single-table (R34's third face).
+
+    THE TIE-BREAK IS DETERMINISTIC, AND IT IS NOT A SEMANTIC CLAIM (loop N review). Two derived
+    groups can cover ONE row at the SAME level — R18's co-resident case, which the nesting query
+    creates by REFUSING to link groups with identical member sets (§7: refusal over a guess).
+    Measured on the stem after the document-level derivation: 7 of 132 covered rows, up from 2,
+    e.g. `p1#htable1-r66` covered by both `Mar 27` and `Portland` at level 1. R18 already records
+    what happens then — the deepest-cover selection keeps ONE and silently drops the other, a §5
+    context loss. What it did NOT record is that the survivor was whichever the graph handed over
+    first, i.e. rdflib's iteration order: the SAME document could mint DIFFERENT record subjects
+    on a different run, store or rdflib version. That is a reproducibility defect independent of
+    the context loss, and it is what this ordering fixes: among equal levels the lexicographically
+    first (label, node) wins. Which one wins carries NO meaning — neither group is more the row's
+    header than the other — but it is now the same one every time, everywhere. The §5 loss itself
+    stands as R18 describes it."""
     label: dict = {}
     parent: dict = {}
     best: dict = {}                                 # target -> (level, header_node)
-    for h in graph.objects(table, TAB.hasHeaderNode):
+    for h in (h for t in tables for h in graph.objects(t, TAB.hasHeaderNode)):
         lc = graph.value(h, TAB.hasLabel)
         label[h] = str(graph.value(lc, TAB.cellText)) if lc is not None else ""
         parent[h] = graph.value(h, TAB.parentHeader)
         lvl_lit = graph.value(h, TAB.headerLevel)
         lvl = int(lvl_lit) if lvl_lit is not None else 0
         for u in graph.objects(h, cover_pred):
-            if u not in best or lvl > best[u][0]:
+            held = best.get(u)
+            if held is None or lvl > held[0] or (
+                    lvl == held[0]
+                    and (label[h], str(h)) < (label[held[1]], str(held[1]))):
                 best[u] = (lvl, h)
     paths: dict = {}
     for u, (_, h) in best.items():
@@ -305,14 +433,25 @@ def _header_path(graph: Graph, table, cover_pred) -> dict:
 
 def _column_header_path(graph: Graph, table) -> dict:
     """Column paths (deepest coversColumn header walked to root). Single label per column for a flat
-    RecordTable (backward compatible)."""
-    return _header_path(graph, table, TAB.coversColumn)
+    RecordTable (backward compatible). ONE table, always — a member's fields are named by its own
+    reading (R34's third face)."""
+    return _header_path(graph, (table,), TAB.coversColumn)
 
 
 def _row_header_path(graph: Graph, table) -> dict:
     """Row paths (deepest coversRow header walked to root) — a cross-tab's row identity. {} when the
     table has no row-header tree (RecordTable / plain hierarchical)."""
-    return _header_path(graph, table, TAB.coversRow)
+    return _header_path(graph, (table,), TAB.coversRow)
+
+
+def _logical_row_paths(graph: Graph, members) -> dict:
+    """Row paths over a whole LOGICAL table (loop N): the chain's members read as one row axis.
+
+    A chain's row groups are derived over the logical table and attached to its HEAD, so a
+    member's rows are covered by a header node belonging to another table — read per member,
+    those rows would fall back to an opaque discriminator and the document would carry two kinds
+    of record identity. Identical to `_row_header_path` for a single-member logical table."""
+    return _header_path(graph, tuple(members), TAB.coversRow)
 
 
 def _record_uri(row_id: str) -> URIRef:

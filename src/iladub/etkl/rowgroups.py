@@ -8,6 +8,14 @@ uniqueness/containment guards are query-local NOT EXISTS — the table holon is 
 boundary). This module is ENGINE GLUE only (bindings, triple merge, a parentHeader depth
 walk) — the interpret.run pattern; it decides nothing.
 
+LOOP N adds no law and changes no triple the page-local path writes: it splits the entry
+point in two so the SAME derivation can run over a LOGICAL table (a continuation chain).
+`derive_row_groups` mints its URIs from one table + indices as it always did;
+`derive_row_groups_over` takes them as arguments, because on a chain the witness row, its
+label column and its members can live in three different member tables. The KEY law then
+runs in its logical formulation (row-group-key-logical.rq — the label column reached over
+`tab:continuesColumn*` instead of bound directly), and the groups attach to the head.
+
 Group nodes reuse the shipped row-header vocabulary (tab:HeaderNode + hasHeaderNode +
 coversRow + parentHeader + headerLevel) so feed._row_header_path reads them unchanged, and
 are ALSO typed tab:DerivedRowGroup: the membrane shape targets the subclass, and the
@@ -37,21 +45,51 @@ def derive_row_groups(g: Graph, table_uri: URIRef, agg: dict) -> int:
 
     `agg` is detect_aggregation_rows' return: {row_index: (label_col, measure_col,
     member_indices)}. Reads/writes `g` (the scratch graph inside the loop G backstop when
-    the hierarchical path is gated). Returns the number of groups constructed."""
-    key_q = _query_text("row-group-key.rq")
+    the hierarchical path is gated). Returns the number of groups constructed.
+
+    THE PAGE-LOCAL ENTRY POINT (loop I, unchanged behaviour): every URI it needs is a
+    function of `table_uri` and a row/column INDEX, because a page-local aggregation's
+    witness, label column and members all live in the one table. `derive_row_groups_over`
+    is the same derivation with those URIs handed IN — see there for why the logical table
+    (loop N) cannot mint them from indices."""
+    witnesses = tuple((URIRef(f"{table_uri}-r{i}"),
+                       URIRef(f"{table_uri}-c{agg[i][0]}"),
+                       URIRef(f"{table_uri}-rg{i}")) for i in sorted(agg))
+    return derive_row_groups_over(g, table_uri, witnesses)
+
+
+def derive_row_groups_over(g: Graph, attach_to: URIRef, witnesses, key_query: str =
+                           "row-group-key.rq") -> int:
+    """The same loop-I derivation, URI-keyed: `witnesses` = ((agg_row, label_col, group), …).
+
+    WHY THIS SHAPE (loop N). Over a continuation chain the confirmed aggregation row, its
+    label column and its member rows can each live in a DIFFERENT member table, so nothing
+    is a function of one table URI and an index any more: the caller resolves the three
+    URIs (document.reconcile_chain_arithmetic does, from the merged graph) and the
+    derivation is unchanged. `attach_to` is the table the group nodes hang off — the CHAIN'S
+    HEAD at document level, the table itself page-locally — and it is also the holon the
+    nesting query closes over (`row-group-nesting.rq` scopes every guard by `?tbl`), which
+    is exactly right: one group set per LOGICAL table, whatever pages its members sit on.
+
+    `key_query` selects which formulation of the KEY law runs — `row-group-key.rq` when the
+    label column is one node, `row-group-key-logical.rq` when it is a `tab:continuesColumn`
+    chain of them. Same law, different holon; both are AXIOMs and neither is a heuristic.
+    `tab:coversRow` is always taken from the witness's CURRENT `tab:aggregates` edges, so a
+    re-derivation after the document window rewrote an operand set can never carry a stale
+    member (loop-N task 2 report, appendix (d)).
+
+    `witnesses` is an ORDERED sequence: derivation is per-group independent, but iterating a
+    fixed order keeps the run reproducible triple-for-triple."""
+    key_q = _query_text(key_query)
     made = 0
-    for i in sorted(agg):
-        label_col, _mcol, _members = agg[i]
-        arow = URIRef(f"{table_uri}-r{i}")
-        lcol_uri = URIRef(f"{table_uri}-c{label_col}")
+    for arow, lcol_uri, grp in witnesses:
         hit = list(g.query(key_q, initBindings={"agg": arow, "lcol": lcol_uri}))
         if not hit:
             continue                    # no unique non-blank key -> no group (§7)
         _v, cell = hit[0]
-        grp = URIRef(f"{table_uri}-rg{i}")
         g.add((grp, RDF.type, TAB.HeaderNode))
         g.add((grp, RDF.type, TAB.DerivedRowGroup))
-        g.add((table_uri, TAB.hasHeaderNode, grp))
+        g.add((attach_to, TAB.hasHeaderNode, grp))
         g.add((grp, TAB.hasLabel, cell))
         g.add((grp, PROV.wasDerivedFrom, arow))
         for m in g.objects(arow, TAB.aggregates):
@@ -60,11 +98,11 @@ def derive_row_groups(g: Graph, table_uri: URIRef, agg: dict) -> int:
     if made:
         parents = {}
         for child, parent in g.query(_query_text("row-group-nesting.rq"),
-                                     initBindings={"tbl": table_uri}):
+                                     initBindings={"tbl": attach_to}):
             g.add((child, TAB.parentHeader, parent))
             parents[child] = parent
         for grp in set(g.subjects(RDF.type, TAB.DerivedRowGroup)):
-            if (table_uri, TAB.hasHeaderNode, grp) not in g:
+            if (attach_to, TAB.hasHeaderNode, grp) not in g:
                 continue
             level, cur = 0, parents.get(grp)
             while cur is not None:
