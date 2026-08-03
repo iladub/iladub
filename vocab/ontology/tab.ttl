@@ -332,3 +332,59 @@ tab:DerivedRowGroup a owl:Class ;
     rdfs:subClassOf tab:HeaderNode ;
     rdfs:label "derived row group"@en ;
     rdfs:comment "A row-group header node DERIVED from a confirmed aggregation row (loop I): its coversRow members come from the aggregation's operands, its label from the unique non-blank member value in the label column, its provenance from the witnessing aggregation row. Derived groups are carried annotations over the row axis — coverage may be PARTIAL (rows of unconfirmed groups stay uncovered), so the row-tiling shapes exclude derived-only trees; tab:DerivedRowGroupShape guards well-formedness instead."@en .
+
+# --- pagination: continuation chains + repeated headers (loop M) ---
+# A paginated table is ONE logical table the renderer split across page breaks — an
+# accommodation to the page, not a structure the author intended. These two terms are the
+# COMMITTED record of un-doing it: the link between the page-tables, and the repeated header
+# block carried as a fact rather than read as data (CLAUDE.md §5/§7 — never dropped, never
+# mistaken for a body row).
+tab:continuesTable a owl:ObjectProperty ; rdfs:label "continues table"@en ;
+    rdfs:domain tab:Table ; rdfs:range tab:Table ;
+    rdfs:comment "This table is the CONTINUATION of that one across a page break: the same logical table, resumed. Asserted only when the continuation-of.rq derivation licensed it from the two pages' repeated header blocks (identical leaf labels, column for column, at agreeing origins, over author-drawn column boundaries agreeing AS SETS under COORD_EPS) — never assumed from page adjacency. KNOWN LIMIT, stated where the term is defined (residue R33): the evidence is the repeated HEADER BLOCK, which two logically INDEPENDENT tables built from one template share exactly — measured, a 2-page template document with different data on each page is stitched. This is the taxonomy case-2 / case-3 boundary (spec §2b defers case 3): the property means 'the header block repeats and the grid matches', which is necessary but not sufficient for 'one table'. The available discriminator is the BODY side (does the earlier table run to its page's last text line?), not text reading."@en .
+tab:RepeatedHeader a owl:Class ; rdfs:label "Repeated header"@en ;
+    rdfs:comment "A header block REPEATED on a continuation page: the renderer redrew the head table's header so the split page could be read standalone. Carried as a fact with its own page and bbox provenance — it is neither a second header tree nor a body row. ONE node per repeated ROW (the leaf row included — it is the most repeated row of all), carrying: tab:cellText, the row's surface text in reading order; tab:onPage and tab:hasBBox, measured on the continuation page; and prov:wasDerivedFrom, pointing at the tab:HeaderSourceCell nodes of the ORIGINATING (head) page's row it repeats — pinned to the head page even three pages down the chain, so the trail never degenerates into page-to-page hearsay. A repeated header row is never a tab:EntryCell: the carried reading reads it as a header row, so it can never reach the body."@en .
+tab:hasRepeatedHeader a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:RepeatedHeader ;
+    rdfs:label "has repeated header"@en ;
+    rdfs:comment "Links a continuation-page table to one row of the header block redrawn on its page. Present only on tables whose reading was CARRIED from the page before under a licensed continuation (see tab:continuesTable); a head table has none."@en .
+
+# --- continuation recognition evidence (transient, pre-holon; loop M) ---
+# The inputs to continuation-of.rq. Every term is a PRESENCE or EQUALITY fact about the two
+# pages' leaf header rows and the author's drawn column boundaries — emitted by
+# document.continuation_evidence with the established COORD_EPS float epsilon applied AT
+# EMISSION, so the query itself carries no numeric literal. Transient: never asserted into a
+# holon (the committed record is tab:continuesTable + tab:RepeatedHeader above).
+tab:PriorPageBlock a owl:Class ; rdfs:label "Prior page block"@en ;
+    rdfs:comment "A transient node standing for the leaf header block of page N-1's table — the side of the comparison a continuation would continue."@en .
+tab:ContinuationPageBlock a owl:Class ; rdfs:label "Continuation page block"@en ;
+    rdfs:comment "A transient node standing for the leaf header block of page N's candidate table — the side under test."@en .
+tab:PageLeafCell a owl:Class ; rdfs:label "Page leaf cell"@en ;
+    rdfs:comment "A transient cell of one page's LEAF header row, carrying its ruled-column index, its exact surface text and its ink origin. Comparing these across a page break is evidence comparison (are these two renderings the same header?), not text READING — no meaning is drawn from the strings."@en .
+# NOTE (loop L review finding F6, applied again): tab:hasLeafCell / tab:hasAuthorBoundary are
+# asserted on BOTH block classes, so neither carries an rdfs:domain — an rdfs:domain would let
+# inference type every continuation block as a prior block and collapse the two sides.
+tab:hasLeafCell a owl:ObjectProperty ; rdfs:range tab:PageLeafCell ; rdfs:label "has leaf cell"@en ;
+    rdfs:comment "Links a page block to one cell of its leaf header row. Asserted on both tab:PriorPageBlock and tab:ContinuationPageBlock, hence no rdfs:domain."@en .
+tab:leafColumnIndex a owl:DatatypeProperty ; rdfs:domain tab:PageLeafCell ; rdfs:range xsd:integer ;
+    rdfs:label "leaf column index"@en ;
+    rdfs:comment "0-based index of the ruled column the cell's ink center falls in (regions.column_of over the page's own leaf grid). The join key of the column-for-column comparison."@en .
+tab:leafCellText a owl:DatatypeProperty ; rdfs:domain tab:PageLeafCell ; rdfs:range rdfs:Literal ;
+    rdfs:label "leaf cell text"@en ;
+    rdfs:comment "The cell's exact surface text. Compared by literal identity in continuation-of.rq — no normalisation, no fuzzy match: a partial match is NOT a continuation."@en .
+tab:leafOriginX a owl:DatatypeProperty ; rdfs:domain tab:PageLeafCell ; rdfs:range xsd:double ;
+    rdfs:label "leaf origin x"@en ;
+    rdfs:comment "The cell's ink origin (x0), carried so the evidence graph is auditable. The query never compares it: the COORD_EPS equality is applied at emission and surfaces as tab:originAgreesWith."@en .
+tab:originAgreesWith a owl:ObjectProperty ; rdfs:domain tab:PageLeafCell ; rdfs:range tab:PageLeafCell ;
+    rdfs:label "origin agrees with"@en ;
+    rdfs:comment "The two cells' ink origins are EQUAL under COORD_EPS, the repo's float-comparison epsilon (never a proximity window). The same laid-out position on two pages is the renderer repeating one header block."@en .
+tab:AuthorRuledBoundary a owl:Class ; rdfs:label "Author ruled boundary"@en ;
+    rdfs:comment "A transient record of one leaf-grid column boundary the AUTHOR actually DREW (a vertical rule of the band). Deliberately EXCLUDES loop-G header-confirmed boundaries: those are inferred from THIS page's ink — one of the specimen's two is measured to move across the break, and the other agrees only by coincidence of this document's ink — so neither is evidence about the author's grid. The restriction also makes the clause immune to R32: a fabricated boundary carries no rule, so it can never enter it. See continuation-of.rq's header for the measurement."@en .
+tab:hasAuthorBoundary a owl:ObjectProperty ; rdfs:range tab:AuthorRuledBoundary ;
+    rdfs:label "has author boundary"@en ;
+    rdfs:comment "Links a page block to one author-drawn boundary of its leaf grid. Asserted on both block classes, hence no rdfs:domain."@en .
+tab:ruledBoundaryX a owl:DatatypeProperty ; rdfs:domain tab:AuthorRuledBoundary ; rdfs:range xsd:double ;
+    rdfs:label "ruled boundary x"@en ;
+    rdfs:comment "The boundary's x, carried for auditability only; the query compares it solely through tab:boundaryAgreesWith."@en .
+tab:boundaryAgreesWith a owl:ObjectProperty ; rdfs:domain tab:AuthorRuledBoundary ; rdfs:range tab:AuthorRuledBoundary ;
+    rdfs:label "boundary agrees with"@en ;
+    rdfs:comment "The two author-drawn boundaries are EQUAL under COORD_EPS — the two pages are ruled on the same grid. Clause (d) of continuation-of.rq reads these SET-WISE (every boundary on each side needs some agreeing counterpart on the other), not one-for-one: a border the author drew twice at the same x is one mark, and must not refuse a genuine continuation."@en .

@@ -1097,6 +1097,56 @@ def confirmed_split_table_pdf(path: str) -> dict:
     return {"cols": 4, "data_cells": 24}
 
 
+def two_page_unrelated_pdf(path: str) -> dict:
+    """Taxonomy case 1: two CONSECUTIVE pages, each a self-contained ruled record
+    table with DIFFERENT leaf headers AND different column x-positions
+    (page 1: Port|Ship|Tonnes at one grid; page 2: Patient|Analyte|Result|Unit at
+    a 4-column grid shifted right). compile_document must NOT stitch them.
+
+    Ruled (vertical rules at each column edge, `_tight_table`'s idiom) so each page
+    compiles as a clean RECORD_TABLE standalone — the point of this fixture is that
+    the driver must NOT chain them into one table across the page break, not that
+    either page is individually hard to read."""
+    rh = 18.0
+
+    def _ruled_page(c, cols, headers, rows, top):
+        c.setFont("Courier-Bold", 10)
+        for (l, r), h in zip(cols, headers):
+            c.drawString(l, top, h)
+        c.setFont("Courier", 10)
+        for i, row in enumerate(rows):
+            y = top - (i + 1) * rh
+            for (l, r), cell in zip(cols, row):
+                c.drawString(l, y, cell)
+        c.setLineWidth(0.7)
+        bottom = top - (len(rows) + 1) * rh
+        for (l, r) in cols:
+            c.line(l - 4, top + 12, l - 4, bottom)
+        c.line(cols[-1][1] + 4, top + 12, cols[-1][1] + 4, bottom)
+
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 90.0
+
+    # Page 1: Port | Ship | Tonnes — a shipping stem record table.
+    cols1 = [(60.0, 160.0), (170.0, 260.0), (270.0, 360.0)]
+    headers1 = ["Port", "Ship", "Tonnes"]
+    rows1 = [("Mackay", "V1", "1000"), ("Gladstone", "V2", "1500"),
+             ("Newcastle", "V3", "2000")]
+    _ruled_page(c, cols1, headers1, rows1, top)
+    c.showPage()
+
+    # Page 2: Patient | Analyte | Result | Unit, shifted right, 4-column grid —
+    # an unrelated lab-report record table. Different domain, different x's.
+    cols2 = [(220.0, 300.0), (310.0, 390.0), (400.0, 460.0), (470.0, 530.0)]
+    headers2 = ["Patient", "Analyte", "Result", "Unit"]
+    rows2 = [("P001", "Hb", "13.2", "g/dL"), ("P002", "WBC", "7.8", "x10^9/L"),
+             ("P003", "Na", "140", "mmol/L")]
+    _ruled_page(c, cols2, headers2, rows2, top)
+    c.save()
+    return {"page1_headers": headers1, "page2_headers": headers2,
+            "page1_cols": [l for l, r in cols1], "page2_cols": [l for l, r in cols2]}
+
+
 def subtotal_hier_table_pdf(path: str, hrules: bool = True) -> dict:
     """Loop H E2E: a merged 2-level header (Voyage spans Ship+Qty+Berth, forcing the
     hierarchical path), suppressed keys, ONE subtotal row, and hrules between all body rows

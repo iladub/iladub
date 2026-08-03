@@ -115,7 +115,15 @@ def test_stem_continuation_pages_status(page):
     This test records the post-fix state honestly: they must either compile or
     escalate — never crash. If they still escalate after Task 2, that is a
     MEASURED RESULT: report it to the controller; it becomes a registered
-    residue + follow-up loop, not a silent pass and not a forced fix."""
+    residue + follow-up loop, not a silent pass and not a forced fix.
+
+    POST-TASK-3 READING (measured 2026-08-02): they still escalate HERE, and that
+    is the correct standalone answer, not a failure of the carriage. This test
+    calls compile_tables on ONE page: standalone, a continuation page really is a
+    header block with no table under it, and no recognition has licensed anything.
+    The carriage is a DOCUMENT-level act — compile_document recognizes the break
+    first and only then compiles page N with page N-1's confirmed reading. The
+    stitched measurement lives in test_stem_document_stitches_three_pages."""
     from iladub.etkl import compile_tables
     rep = compile_tables(str(STEM), page_number=page)
     assert rep.regions, "no regions at all"
@@ -166,3 +174,77 @@ def test_stem_continuation_case_classification():
 
     # No assertion beyond non-crash — this is Loop M's intake evidence, not a gate.
     assert band0.lines and band1.lines and band2.lines
+
+
+@pytest.fixture(scope="module")
+def stem_document():
+    """The whole-document compile, ONCE per module (loop M task 4 review, F7).
+
+    Two tests need it and each full 3-page compile costs ~3.5 minutes, so compiling per test
+    spent ~7 minutes of every suite run on the identical graph. `DocumentReport` is frozen and
+    the tests below only READ it (`table_records` and `ground_document` never mutate the source
+    graph — they write into a caller-supplied graph), so sharing it changes no measurement."""
+    if not STEM.is_file():
+        pytest.skip("corpus not populated (scripts/fetch_corpus.py)")
+    from iladub.etkl.document import compile_document
+    return compile_document(str(STEM))
+
+
+@needs_stem
+def test_stem_document_stitches_three_pages(stem_document):
+    """Loop M's verifier (spec §3b): the whole stem is ONE logical table.
+    RED until the driver + recognition land."""
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    rep = stem_document
+    assert len(rep.pages) == 3
+    assert len(rep.chains) == 1 and len(rep.chains[0]) == 3, rep.chains
+    total_cells = sum(sum(r.cells for r in p.regions) for p in rep.pages)
+    print(f"\nstem document: score={rep.score:.4f} total_cells={total_cells}")
+    assert total_cells > 586          # more than page 0 alone
+    assert rep.score >= 0.9           # floor; if compiled-but-lower, STOP and report
+    # repeated headers carried, never data: RepeatedHeader facts exist on pages 1-2
+    reps = list(rep.graph.subjects(RDF.type, TAB.RepeatedHeader))
+    assert reps, "repeated header blocks must be carried as facts"
+    # page provenance: cells exist on all three pages
+    pages = {int(o) for o in rep.graph.objects(None, TAB.onPage)}
+    assert pages == {0, 1, 2}, pages
+
+
+@needs_stem
+def test_stem_document_grounds_full(stem_document):
+    """Loop-K's capstone over the WHOLE document (loop M task 4). Invariants asserted,
+    edition-dependent tallies printed.
+
+    The chain-walk's own invariant is the LAST assertion: one record per data row of the
+    logical table, each on its OWN subject. The three pages compile under page-scoped
+    document URIs, so page 1 and page 2 share 65 row fragments (measured); reading the
+    chain as one table without page-qualifying the discriminator grounds two different
+    voyages onto one subject. The unit battery is tests/test_feed_chain_walk.py."""
+    from rdflib import Graph, Namespace, RDF
+    from iladub.feed import ground_document, table_records, _record_uri
+    from iladub.ground import load_contract
+    from iladub.propose_ground import FakeGroundingProposer, GroundingProposal
+
+    ILADUB = Namespace("https://w3id.org/iladub#")
+    SHIP = Namespace("https://example.org/shipping#")
+    rep = stem_document
+    contract = load_contract("examples/shipping/stem-contract.ttl")
+    terms = Graph().parse("examples/shipping/stem-terms.ttl", format="turtle")
+    shapes = Graph().parse("examples/shipping/stem-shapes.ttl", format="turtle")
+    abstain = FakeGroundingProposer(GroundingProposal(
+        None, str(SHIP) + "x", 0.1, "n/a", "urn:iladub:suggester/fake"))
+    g = Graph()
+    result = ground_document(rep.graph, contract, abstain, terms, shapes, g)
+    grounded = set(g.subjects(RDF.type, ILADUB.GroundedNode))
+    print(f"\nstem FULL document: records={result.records} grounded={len(grounded)} "
+          f"still-quarantined={result.proposed}")
+    assert result.records > 33         # page 0 alone had 33-record-scale; full doc more
+    assert len(grounded) > 167         # more than page 0 alone
+    # every grounded node behind exactly one accountable promotion (the §3 invariant)
+    for n in grounded:
+        assert len(list(g.objects(n, ILADUB.wasPromotedBy))) == 1
+    # the chain-walk invariant: no two rows of the logical table share a record subject
+    records = table_records(rep.graph)
+    assert len(records) == result.records
+    assert len({str(_record_uri(r.row_id)) for r in records}) == len(records)

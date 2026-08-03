@@ -6,9 +6,11 @@ sources:
   - vocab/ontology/tab.ttl
   - vocab/shapes/tab-shapes.ttl
   - tests/test_corpus_stem.py
+  - vocab/queries/continuation-of.rq
+  - src/iladub/etkl/document.py
 related: ["[[assert-propose-promote]]", "[[grounding-membrane]]"]
 confidence: high
-updated: 2026-08-02
+updated: 2026-08-03
 ---
 
 # Table-holon compilation — the loop family
@@ -80,6 +82,26 @@ only on tables that declare a row axis, so flat tables still pass.
 header-region source cell must appear in an asserted label or a carried
 `tab:RegionCaption` — an all-furniture reading is legal by design (nothing
 lost), but a word in neither is refused.
+
+**Loop M (2026-08-03) — pagination as a second accommodation operator, whole-document.**
+Where loop L closed the fluent-reader invariant within one page, loop M applies the same
+accommodation thesis across the page break itself: a human reader does not re-derive a
+table's meaning at every page cut, so the compiler must not either. `continuation-of.rq`
+(`vocab/queries/continuation-of.rq`) recognizes a continuation purely by REPEATED
+author-drawn evidence — an identical header block and column grid across a page boundary —
+never by reading label text, keeping the recognition inside the AXIOM/open-world discipline.
+Once recognized, the confirmed header reading and its row roles are CARRIED onto the
+continuation page (`tab:RepeatedHeader` facts, never data), and `document.compile_document`
+(`src/iladub/etkl/document.py`) walks a chain of pages as one logical table for both
+compilation and grounding. On the live 3-page GrainCorp stem this compiles ONE chain at
+0.9655 over 2152 cells and grounds the full document at 154 records — 567 concepts promoted
+(each behind exactly one `iladub:PromotionDecision`) / 1194 still quarantined. The thesis
+has two measured open edges, both registered rather than hidden: R33 — the same
+repeated-header evidence cannot distinguish a genuine page-cut (taxonomy case 2) from two
+independent tables sharing a template (case 3), so the AXIOM can license a stitch between
+tables that are not truly one; and R35 — subtotal confirmation is closed within one page, so
+a row group cut by the page break never confirms on the continuation page, leaving that
+page's records without their injected keys and its subtotal rows unmarked in the feed.
 
 **Settled vs open.** The verifier-first paradigm, the round-trip oracle, and
 the tiling/coverage SHACL are shipped and enforced across the sources here.
