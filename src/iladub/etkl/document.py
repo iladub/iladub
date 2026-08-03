@@ -351,9 +351,42 @@ def is_continuation(evidence: Graph) -> bool:
 # quantities with no tolerance: bands do not overlap, so a non-table band is either wholly above
 # the table band or wholly below it. The one arithmetic it performs — page index + 1, the
 # PRINTED page ordinal — is an index-base conversion applied at emission on exactly the licence
-# COORD_EPS is applied at emission, so the query can match the ordinal as a fact and never
-# compute one; see `licence_evidence` for the assumption it makes and how that assumption fails
-# safe.
+# COORD_EPS is applied at emission; see `licence_evidence` for the assumption it makes and how
+# that assumption fails safe. The ordinal NORMALIZATION clause (b) compares over is applied at
+# emission for the same reason and one more (round-2 review, F1): tokenizing is a string
+# operation with a boundary convention, and a convention belongs where the facts are made, not
+# inside a law that must stay digit-blind. See `_ordinal_normalized`.
+
+_ORDINAL_SENTINEL = "<ORDINAL>"     # a non-numeric marker; nothing is ever compared against it
+
+
+def _ordinal_normalized(text: str, ordinal) -> str:
+    """`text` with every WHOLE TOKEN equal to the page's printed ordinal replaced by the sentinel.
+
+    THE TOKEN BOUNDARY IS THE WHOLE POINT (loop O round-2 review, finding F1). The law says
+    "tokens equal to the block's own printed page ordinal", and this function is where that word
+    is honoured: an earlier form did an unanchored substring replacement inside the query, which
+    silently cancelled the LEADING DIGIT of unrelated numbers — measured, `TOTAL 1000` / `TOTAL
+    2000` both normalized to `<ORDINAL>000` and LICENSED, which is exactly the below-table
+    subtotal/total shape the licence exists to refuse. Whole-token replacement refuses all three
+    measured cases (`TOTAL 1000`/`TOTAL 2000`, `Lot 11`/`Lot 22`, `Subtotal 141`/`Subtotal 242`)
+    and, as a bonus, LICENSES the commonest real footer idiom `Page 1 of 12` / `Page 2 of 12`,
+    which the substring form refused (F2: `12` contains `1`).
+
+    TOKENIZATION is `str.split()` per line — whitespace, the repo's established convention, the
+    same one `rows._numeric_token_sum` and `rows.detect_aggregation_rows` tokenize cells with.
+    Line structure is preserved (each line normalized, then rejoined with the newline
+    `_band_text` used) so two blocks are never made equal by a difference in line breaking.
+
+    Doing this HERE rather than in the query keeps the AXIOM digit-blind: the query compares two
+    emitted strings for identity and never learns what an ordinal, a numeral or a token is. The
+    sentinel is a non-numeric marker, so no numeral enters the query either.
+    """
+    mark = str(int(ordinal))
+    return "\n".join(
+        " ".join(_ORDINAL_SENTINEL if tok == mark else tok for tok in line.split())
+        for line in text.split("\n"))
+
 
 def licence_evidence_from_facts(blocks) -> Graph:
     """Fresh Graph() for ONE page pair — the inputs to continuation-licence.rq.
@@ -374,6 +407,13 @@ def licence_evidence_from_facts(blocks) -> Graph:
     counterpart test) rather than being dropped here, and why the ordinal is emitted on EVERY
     block, including the ones no clause constrains.
 
+    TWO TEXT FACTS PER BLOCK, and the law uses each for one clause: `tab:blockText` is the exact
+    surface text (clause (a) compares it strictly), `tab:ordinalNormalizedText` is the same text
+    with whole tokens equal to THIS page's ordinal replaced by a sentinel (clause (b) compares
+    that). Both are computed HERE — see `_ordinal_normalized` — so the AXIOM stays digit-blind.
+    `tab:pageOrdinal` itself is carried for AUDITABILITY only: the query never reads it (the
+    `tab:leafOriginX` idiom, one derivation over).
+
     The `tab:ContinuationPairUnderTest` node is emitted unconditionally, so a pair with NO blocks
     at all still presents a subject for the law to license — vacuity is licence, deliberately
     (see the query header).
@@ -388,6 +428,7 @@ def licence_evidence_from_facts(blocks) -> Graph:
         g.add((u, RDF.type, TAB.PriorPageTextBlock if not page_side
                else TAB.ContinuationPageTextBlock))
         g.add((u, TAB.blockText, Literal(text)))
+        g.add((u, TAB.ordinalNormalizedText, Literal(_ordinal_normalized(text, ordinal))))
         g.add((u, RDF.type, TAB.BelowTableBlock if below else TAB.AboveTableBlock))
         g.add((u, TAB.pageOrdinal, Literal(int(ordinal), datatype=XSD.integer)))
     return g

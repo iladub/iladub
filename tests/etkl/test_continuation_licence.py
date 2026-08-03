@@ -44,8 +44,9 @@ def test_unrelated_pages_still_never_stitch(tmp_path):
 # Facts are `(text, page_side, below_its_own_table, page_ordinal)` with page_side 0 = the
 # PRIOR page N-1 and 1 = the CONTINUATION page N. The law is V4 (François's call): page N's
 # ABOVE-table blocks are constrained STRICTLY, EITHER page's BELOW-table blocks are
-# constrained modulo that page's own printed ordinal, and page N-1's above-table blocks are
-# unconstrained. See vocab/queries/continuation-licence.rq for the law in full.
+# constrained modulo WHOLE TOKENS equal to that page's own printed ordinal, and page N-1's
+# above-table blocks are unconstrained. See vocab/queries/continuation-licence.rq for the
+# law in full, and document._ordinal_normalized for the token boundary (round-2 review, F1).
 
 def test_licence_law_probes():
     from iladub.etkl.document import licence_evidence_from_facts, is_licensed
@@ -80,18 +81,68 @@ def test_licence_law_tails_are_invariant_modulo_the_printed_page_ordinal():
     assert not is_licensed(licence_evidence_from_facts(wrong_number))
 
 
-def test_licence_law_over_normalization_refuses_conservatively():
-    """DOCUMENTED COST of clause (b) (query header, §7): an ordinal's digits occurring
-    ELSEWHERE in a tail block over-normalize — each side cancels its own ordinal, so two
-    genuinely invariant tails normalize differently and the pair REFUSES. Refusal is the
-    safe direction (the pair stays two independent documents), and it is pinned here so the
-    behaviour is a stated property rather than a surprise."""
+def test_licence_law_cancels_whole_tokens_only(): # noqa: D205
+    """ROUND-2 REVIEW, F1 — the cancellation is at TOKEN boundaries, not substrings.
+    Every case here LICENSED under the earlier unanchored-substring form: they are
+    different NUMBERS whose leading digit merely coincides with the page ordinal, which is
+    precisely the below-table subtotal/total shape the licence exists to refuse."""
     from iladub.etkl.document import licence_evidence_from_facts, is_licensed
-    same_text_incidental_digit = [("Depot 1 line", 0, True, 1), ("Depot 1 line", 1, True, 2)]
-    assert not is_licensed(licence_evidence_from_facts(same_text_incidental_digit))
-    # the same two blocks, with no digit to cancel, license — isolating the cause
+    for prior, cur in (("TOTAL 1000", "TOTAL 2000"),
+                       ("Lot 11", "Lot 22"),
+                       ("Subtotal 141", "Subtotal 242"),
+                       ("Page 11", "Page 22")):        # ...and the ordinal-offset fail-safe
+        assert not is_licensed(licence_evidence_from_facts(
+            [(prior, 0, True, 1), (cur, 1, True, 2)])), (prior, cur)
+
+
+def test_licence_law_licenses_the_page_n_of_m_footer_idiom():
+    """ROUND-2 REVIEW, F2 — the commonest real footer idiom. The substring form REFUSED it
+    (M's digits contain N's); at token boundaries only the true ordinal token cancels."""
+    from iladub.etkl.document import licence_evidence_from_facts, is_licensed
+    n_of_m = [("Page 1 of 12", 0, True, 1), ("Page 2 of 12", 1, True, 2)]
+    assert is_licensed(licence_evidence_from_facts(n_of_m))
+
+
+def test_licence_law_does_not_cancel_an_ordinal_attached_to_a_word():
+    """The re-measured edge (i): a per-page mark ATTACHED to other characters is one token
+    and is not the ordinal, so it is content, not furniture. The substring form cancelled it
+    ('A1'/'A2' -> 'A<ORDINAL>') and LICENSED; token boundaries close that class."""
+    from iladub.etkl.document import licence_evidence_from_facts, is_licensed
+    attached = [("Store A1 summary", 0, True, 1), ("Store A2 summary", 1, True, 2)]
+    assert not is_licensed(licence_evidence_from_facts(attached))
+    # what remains permissive, stated exactly: a STANDALONE ordinal token that is not really
+    # a page number. Irreducible without reading the text — registered under R33, not fixed.
+    standalone = [("Rev 1", 0, True, 1), ("Rev 2", 1, True, 2)]
+    assert is_licensed(licence_evidence_from_facts(standalone))
+
+
+def test_licence_law_over_normalization_refuses_conservatively():
+    """DOCUMENTED COST of clause (b) (query header, §7): a STANDALONE ordinal token
+    occurring elsewhere in a tail block is cancelled too — each side cancels its own
+    ordinal, so two genuinely invariant tails normalize differently and the pair REFUSES.
+    Refusal is the safe direction (the pair stays two independent documents), and it is
+    pinned here so the behaviour is a stated property rather than a surprise."""
+    from iladub.etkl.document import licence_evidence_from_facts, is_licensed
+    same_text_incidental_token = [("Depot 1 line", 0, True, 1), ("Depot 1 line", 1, True, 2)]
+    assert not is_licensed(licence_evidence_from_facts(same_text_incidental_token))
+    # the same two blocks, with no ordinal token to cancel, license — isolating the cause
     same_text_no_digit = [("Depot line", 0, True, 1), ("Depot line", 1, True, 2)]
     assert is_licensed(licence_evidence_from_facts(same_text_no_digit))
+    # ...and a digit that is not a standalone ordinal token is never touched at all
+    same_text_inner_digit = [("Depot 12 line", 0, True, 1), ("Depot 12 line", 1, True, 2)]
+    assert is_licensed(licence_evidence_from_facts(same_text_inner_digit))
+
+
+def test_licence_law_answering_side_is_unrestricted_by_position():
+    """ROUND-2 REVIEW, F3 — pinning a deliberate property of both clauses: a constrained
+    block may be answered by ANY block on the other page, wherever that one sits. Here a
+    continuation TAIL is answered by a prior HEAD block (the prior page has no tail at all),
+    which licenses on identical text and refuses on differing text."""
+    from iladub.etkl.document import licence_evidence_from_facts, is_licensed
+    cross = [("Confidential", 0, False, 1), ("Confidential", 1, True, 2)]
+    assert is_licensed(licence_evidence_from_facts(cross))
+    cross_differing = [("Confidential", 0, False, 1), ("Draft only", 1, True, 2)]
+    assert not is_licensed(licence_evidence_from_facts(cross_differing))
 
 
 def test_licence_law_ignores_the_prior_head_side_but_not_its_tail():
