@@ -1,6 +1,20 @@
 # row-group-key-logical.rq (loop N, AXIOM) — the group KEY for one aggregation row confirmed
 # over the LOGICAL table (a continuation chain), whose member rows may sit on several pages.
 #
+# PRECONDITION (task 4 carry-in (a), stated because it changed under the perf rewrite): every
+# member column this query is meant to reach must carry a tab:inLogicalColumn edge (materialized
+# by document._link_columns for every column that actually took part in a licensed continuation
+# — see tab.ttl's tab:inLogicalColumn comment). A column with NO such edge — a graph that never
+# went through _link_columns, e.g. a hand-built fixture — makes this query REFUSE (zero rows),
+# where the query it replaced (the `tab:continuesColumn*` property-path form, git history
+# cfedaf3) still matched via the path's own zero-length case (?mc = ?lcol needs no edge at all).
+# That is an honest behaviour change, not a regression: refusing over a graph that never
+# recorded the correspondence is §7-safe, and no compile-produced graph reaches this query
+# without the edges (document._derive_document_row_groups only calls it inside a chain, where
+# _link_columns always ran at least once and asserts the reflexive edge at the head). See
+# tests/etkl/test_derivation_equiv.py's negative pin, and feed._logical_column's docstring for
+# the one place the two readings DELIBERATELY diverge (this query refuses; the feed falls back).
+#
 # THE SAME LAW as row-group-key.rq, over a BIGGER HOLON. The key is still the unique distinct
 # non-blank cellText in the LABEL COLUMN among the member rows (?agg tab:aggregates ?m), and
 # uniqueness is still a query-local closed-world guard — a holon-scoped guard inside an open

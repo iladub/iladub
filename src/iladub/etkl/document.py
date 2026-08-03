@@ -82,7 +82,7 @@ from pathlib import Path
 from rdflib import Graph, Literal, Namespace, RDF, URIRef
 from rdflib.namespace import XSD
 
-from .compile import CompilationReport, compile_tables, page_bands, _DOC
+from .compile import CompilationReport, compile_tables, page_bands, _DOC, _validate
 from .geometry import COORD_EPS
 from .holon import TAB
 
@@ -624,8 +624,8 @@ def _derive_document_row_groups(graph: Graph, chain, agg, row_uris) -> int:
     MAY cross member tables, which is the point), and the label column from the HEAD table at
     the index the arithmetic read the level off. The head's column stands for the logical column
     because `tab:continuesColumn` links each member's column to it — the committed record of
-    clauses (b)+(c), which the key query walks with `tab:continuesColumn*` rather than parsing
-    any IRI.
+    clauses (b)+(c), which the key query reaches via `tab:inLogicalColumn` (the materialized
+    one-hop closure, loop N review's perf rewrite) rather than parsing any IRI.
 
     Group nodes are minted `{head}-rg{k}` on the LOGICAL sequence position k. For the head's own
     rows that is exactly the URI loop I minted (the sequence opens with the head's rows, in row
@@ -731,6 +731,18 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     one template satisfy exactly (measured). It is necessary, not sufficient, for "one table" —
     the case-2 / case-3 boundary. See continuation-of.rq's header for the measurement and for the
     body-side discriminator that would close it.
+
+    WHOLE-GRAPH VALIDATION (loop N task 4). `compile_tables` already validates each PAGE's own
+    subgraph (inside the per-page loop below, before merge) — but the document-level facts
+    (`tab:continuesTable`/`tab:continuesColumn`/`tab:inLogicalColumn`, and the arithmetic pass's
+    cross-table `tab:aggregates`/`tab:coversRow` edges) are all asserted AFTER that, onto the
+    MERGED graph, and never met a SHACL membrane until this pass. Measured on the stem (29,377
+    triples): validation costs 41.3 s on top of the ~179 s compile — real, not absorbed silently.
+    Run only when the continuation AXIOM licensed at least one pair (`recognized`): with none, the
+    merged graph is byte-for-byte the disjoint union of already-validated page graphs and no new
+    triple exists for a document-level shape to see, so re-validating would spend the same 41 s
+    proving nothing (a single-page or unchained document is exactly this case, always). The
+    logical table is the closure holon (spec §2b/§8), and this is where its closure gets checked.
     """
     n_pages = page_count(pdf_path)
     pages: list[CompilationReport] = []
@@ -798,6 +810,15 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # divergence for nothing).
     arithmetic = tuple(reconcile_chain_arithmetic(graph, chain)
                        for chain in chains if len(chain) > 1)
+
+    # WHOLE-GRAPH VALIDATION (task 4; see the docstring above for why the gate is `recognized`
+    # rather than always-on). Every document-level fact is asserted by this point: the pairing
+    # loop above added continuesTable/continuesColumn/inLogicalColumn, and the arithmetic pass
+    # just above retyped aggregations and rebuilt row groups over the logical table.
+    if validate_shapes and recognized:
+        conforms, text = _validate(graph)
+        if not conforms:
+            raise AssertionError(f"document-level facts failed tab: SHACL:\n{text}")
 
     asserted = sum(rep.asserted for rep in pages)
     escalated = sum(rep.escalated for rep in pages)

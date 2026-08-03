@@ -160,6 +160,18 @@ def _logical_column(graph: Graph, col):
     A column with no link at all is its own logical column, so every unchained graph behaves
     exactly as before. A malformed cycle terminates on `seen` rather than spinning: the first
     repeat wins, deterministically.
+
+    DEGRADES DIFFERENTLY FROM THE QUERY (task 4 carry-in (a), stated so the two are never
+    confused): on a graph carrying NEITHER `tab:inLogicalColumn` NOR `tab:continuesColumn` for a
+    column, THIS function falls back all the way to returning the column itself — a column with
+    no link is its own logical column, by the same reading convention loop M already used for an
+    unlinked table. `row-group-key-logical.rq` has no such fallback: it requires the
+    `tab:inLogicalColumn` edge to exist as a triple, and REFUSES (zero rows) in its absence. The
+    two are not required to agree here — this function is a per-record READ that must always
+    return *some* column identity so the feed can group cells table by table, while the query is
+    an AXIOM deciding whether the KEY is grounded at all, and honest refusal is the right answer
+    when the correspondence was never asserted. Both readings agree on every graph the compiler
+    actually produces, because `document._link_columns` always asserts both predicates together.
     """
     canonical = min(graph.objects(col, TAB.inLogicalColumn), key=str, default=None)
     if canonical is not None:

@@ -330,3 +330,48 @@ tab:DerivedRowGroupShape a sh:NodeShape ;
         sh:message "A derived row group needs exactly one witnessing aggregation row." ] ;
     sh:property [ sh:name "DerivedRowGroupShape" ; sh:path tab:parentHeader ; sh:maxCount 1 ;
         sh:message "A derived row group has at most one parent." ] .
+
+#################################################################
+#  Cross-table membrane discipline (loop N task 4): the two
+#  document-level correspondence terms, membrane-checked at the
+#  whole-graph pass (compile.py's per-page validation cannot see
+#  them — they are asserted AFTER pages merge). Both shapes check
+#  a WITNESSED licence, never a totality: an ordinary unchained
+#  column carries NEITHER edge at all, and that absence is the
+#  correct, honest state (see tab.ttl's tab:inLogicalColumn
+#  comment, corrected the same loop for the identical reason).
+#  THE PRINCIPLE, stated once for both: the logical table is the
+#  closure holon (spec §2b/§8) — these edges are what lets a
+#  derivation (the row-group key, the arithmetic re-run) treat a
+#  continuation chain as one table, so a FABRICATED edge would
+#  silently let one derivation read a cell that was never licensed
+#  to stand for another. The shapes below refuse exactly that,
+#  and nothing more.
+#################################################################
+
+tab:ContinuesColumnDisciplineShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:continuesColumn ;
+    sh:sparql [
+        sh:message "tab:continuesColumn is asserted between two columns whose owning tables are not linked by tab:continuesTable (the SAME licence the column edge rides on)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:continuesColumn ?prev .
+                ?curTbl tab:hasLeafColumn $this .
+                ?prevTbl tab:hasLeafColumn ?prev .
+                FILTER NOT EXISTS { ?curTbl tab:continuesTable ?prevTbl }
+            }
+        """ ] .
+
+tab:InLogicalColumnDisciplineShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:inLogicalColumn ;
+    sh:sparql [
+        sh:message "tab:inLogicalColumn is asserted without either a tab:continuesColumn+ path to its object or a genuine reflexive licence (some column actually continues THIS one) — a fabricated logical-column claim, not the materialized closure." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:inLogicalColumn ?y .
+                FILTER NOT EXISTS { $this tab:continuesColumn+ ?y }
+                FILTER( !(sameTerm($this, ?y)) || NOT EXISTS { ?z tab:continuesColumn $this } )
+            }
+        """ ] .
