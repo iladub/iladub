@@ -248,3 +248,36 @@ def test_stem_document_grounds_full(stem_document):
     records = table_records(rep.graph)
     assert len(records) == result.records
     assert len({str(_record_uri(r.row_id)) for r in records}) == len(records)
+
+
+@needs_stem
+def test_stem_r35_closed(stem_document):
+    """R35's closure, measured: p2 subtotals confirm, keys reach every page,
+    identity is one kind. Red until loop N lands."""
+    from rdflib import RDF
+    from iladub.etkl.holon import TAB
+    g = stem_document.graph
+    p2_aggs = [a for a in g.subjects(RDF.type, TAB.DetectedAggregationRow)
+               if "/p2" in str(a)]
+    assert len(p2_aggs) >= 20, f"p2 confirmed aggregations: {len(p2_aggs)} (was 0)"
+    # cross-page operands exist (the cut Portland group)
+    assert any(any("/p1" in str(m) for m in g.objects(a, TAB.aggregates))
+               for a in p2_aggs)
+
+
+@needs_stem
+def test_stem_keys_reach_every_page(stem_document):
+    """Every record carries the outer fiscal-year key (was: p1 1/51, p2 3/65).
+
+    `table_records` returns `list[Record]` (a dataclass: `.row_id` + `.concepts`, each a
+    `SurfaceConcept` carrying `.text`) — not `(row_id, concepts)` tuples, so this reads the
+    dataclass's own attributes rather than unpacking it (loop-L precedent: adapt plumbing to
+    reality, the assertions' meaning is unchanged)."""
+    from iladub.feed import table_records
+    recs = table_records(stem_document.graph)
+    missing = [rec.row_id for rec in recs
+               if not any(c.text == "GC Fin Year" for c in rec.concepts)]
+    print(f"\nrecords={len(recs)} missing-year-key={len(missing)}")
+    assert not missing, f"{len(missing)} records lack the outer key"
+    # subtotal rows no longer mint records: count drops below 154
+    assert len(recs) < 154

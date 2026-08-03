@@ -1195,3 +1195,73 @@ def subtotal_hier_table_pdf(path: str, hrules: bool = True) -> dict:
         c.line(35, 178, 355, 178)                        # header/body rule
     c.save()
     return {"cols": 5, "subtotal_value": "250"}
+
+
+def cut_group_two_page_pdf(path: str) -> dict:
+    """LOOP N FIXTURE (R35) — subtotal_hier_table_pdf's own proven hierarchical shape (Mon /
+    Port / Ship / Qty / Berth, 'Voyage' merged over Ship+Qty+Berth, forcing loop H's
+    arithmetic path — the ONLY path detect_aggregation_rows runs, per holon.py's
+    assert_hier_region), made RULED (vertical rules at the leaf column edges, the loop-M
+    continuation law's author-drawn grid — see document.py's `_author_boundaries`) and split
+    across a page break so ONE group's members straddle it:
+
+      page 0: the group's first two voyages (Mackay V1=100, V2=150) under the full
+              Voyage/leaf header block.
+      page 1: the SAME header block redrawn on the SAME ruled grid (same leaf texts at the
+              same origin x's, same rule x's -> the continuation law's clauses all hold, so
+              compile_document must recognize and chain the pair) + the group's THIRD voyage
+              (Mackay V3=200) + a 'SUB' subtotal row (2 populated cells: Port='SUB', the
+              label; Qty='450', the measure) whose value is the FULL group's sum
+              (100+150+200=450) — NOT page 1's own local sum (200). detect_aggregation_rows
+              run on page 1's rows alone therefore finds the candidate but refuses it (200 !=
+              450); only a window spanning BOTH pages' body rows confirms it. That is the
+              whole point of this fixture: it is confirmable ONLY at document level (R35).
+
+    Every row (both pages) carries the author's own hrule beneath it — subtotal_hier_table_pdf's
+    own load-bearing convention (Task 3 review, Important 1): without it, group_wrapped's
+    row-clock can fuse an oddly-pitched row into its neighbour. Here every pitch is the ordinary
+    16pt (no absorbable-pitch trick is needed — the SUB row is simply page 1's last row), so
+    the hrules are a belt-and-braces match to the proven shape, not load-bearing by construction.
+    """
+    from reportlab.pdfgen import canvas as _canvas
+    leaves = [(40.0, 90.0), (110.0, 170.0), (190.0, 230.0), (250.0, 300.0), (320.0, 360.0)]
+    names = ["Mon", "Port", "Ship", "Qty", "Berth"]
+    rh = 16.0
+    top = 196.0
+    W, H = 400.0, 220.0
+    edges = [leaves[0][0] - 4.0] + [l - 4.0 for (l, r) in leaves[1:]] + [leaves[-1][1] + 4.0]
+
+    c = _canvas.Canvas(str(path), pagesize=(W, H))
+
+    def _page(body_rows):
+        c.setFont("Helvetica", 9)
+        c.drawCentredString((leaves[2][0] + leaves[3][1]) / 2.0, top, "Voyage")
+        for (l, r), n in zip(leaves, names):
+            c.drawString(l, top - rh, n)
+        c.setFont("Helvetica", 8)
+        ys = []
+        y = top - 2 * rh
+        for row in body_rows:
+            for (l, r), v in zip(leaves, row):
+                if v:
+                    c.drawString(l, y, v)
+            ys.append(y)
+            y -= rh
+        c.setLineWidth(0.7)
+        bottom = y + rh - 6.0
+        for e in edges:
+            c.line(e, top - rh + 10.0, e, bottom)
+        c.line(edges[0], top - rh - 4.0, edges[-1], top - rh - 4.0)   # header/body rule
+        for yy in ys:
+            c.line(edges[0], yy - 4.0, edges[-1], yy - 4.0)          # per-row hrule
+
+    body0 = [("Jul", "Mackay", "V1", "100", "B1"), ("Jul", "Mackay", "V2", "150", "B2")]
+    _page(body0)
+    c.showPage()
+    body1 = [("Jul", "Mackay", "V3", "200", "B3"), ("", "SUB", "", "450", "")]
+    _page(body1)
+    c.save()
+    return {"leaves": leaves, "names": names, "rule_xs": edges,
+            "page0_rows": body0, "page1_rows": body1,
+            "group_members": ["V1", "V2", "V3"], "full_sum": 450,
+            "page1_local_sum": 200}
