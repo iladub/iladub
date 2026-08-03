@@ -488,9 +488,13 @@ def _retract_orphaned_groups(graph: Graph, retracted_rows) -> int:
 
     Stated because it is not recomputed here: a SURVIVING sibling's `tab:headerLevel` was derived
     as a depth walk that may have run through a node just removed, so it can be one level too
-    deep until task 3 rebuilds the set. Nothing reads it in the interim — `RowNoOverlapShape`
-    exempts every pair involving a derived group, and `feed._read_table` reads a group's label and
-    members, never its level.
+    deep until task 3 rebuilds the set. Nothing before task 3 depends on the value being exact:
+    RowNoOverlapShape exempts every pair involving a derived group. feed._header_path DOES read a
+    group's tab:headerLevel (the max-selector picking the deepest header covering a row), but an
+    inflated level can only mis-select where two groups cover the same row — which needs a
+    surviving group whose parent was retracted, a state no constructed specimen has reached
+    (retraction extends a walk-back across the break, and any barrier protecting a child protects
+    its parent equally). Not proven unreachable — registered as a residue.
     """
     from .holon import PROV
     n = 0
