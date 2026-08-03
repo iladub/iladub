@@ -405,6 +405,12 @@ def _ordinal_normalized(text: str, ordinal) -> str:
     Line structure is preserved (each line normalized, then rejoined with the newline
     `_band_text` used) so two blocks are never made equal by a difference in line breaking.
 
+    ONE ASYMMETRY, STATED (loop O close, re-review N2): the rejoin collapses WHITESPACE RUNS
+    within a line, so clause (b) compares whitespace-collapsed text while clause (a) compares
+    `tab:blockText` verbatim. The two entry points agree on every real band — `_band_text`
+    already single-space-joins its words — so the divergence is reachable only through
+    hand-built facts handed to `licence_evidence_from_facts`, never from a compiled page.
+
     Doing this HERE rather than in the query keeps the AXIOM digit-blind: the query compares two
     emitted strings for identity and never learns what an ordinal, a numeral or a token is. The
     sentinel is a non-numeric marker, so no numeral enters the query either.
