@@ -36,8 +36,11 @@
 # A discriminator IS available and is NOT text reading: the BODY side. A paginated table is cut
 # BY the page edge, so page N-1's table runs to that page's LAST text line; an independent table
 # ends before it, with a banner or whitespace after. That is a presence/ordering fact over lines
-# already extracted — no threshold, no distance. See R33 for the full statement; until it lands,
-# every caller must treat recognition as "the header repeats", not "these are one table".
+# already extracted — no threshold, no distance. The discriminator must FIRST exclude blocks that
+# repeat on EVERY page (page-invariant furniture — the same repeated-block evidence the law already
+# emits), THEN ask whether the earlier table's last body row ends the page. See R33 for the full
+# statement; until it lands, every caller must treat recognition as "the header repeats", not "these
+# are one table".
 #
 # CLAUSE (d)'s COMPARISON BASIS — MEASURED, not assumed (specimen: the 3-page GrainCorp stem,
 # corpus/ag-trade/graincorp-stem-2026-07-31.pdf, measured 2026-08-02):
