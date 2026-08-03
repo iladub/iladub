@@ -39,6 +39,42 @@ def test_chain_arithmetic_is_reported_honestly(tmp_path):
     assert a.abstained is None
 
 
+def test_retracted_witness_takes_its_derived_group(tmp_path):
+    """A derivation cannot outlive its ground (loop-N review M-1).
+
+    Loop I derives a `tab:DerivedRowGroup` FROM a confirmed aggregation row. When the document
+    window refuses that row, the group's witness is gone — and a stale group is a SILENT defect:
+    no shape catches it (`tab:DerivedRowGroupShape` only requires the `prov:wasDerivedFrom` to
+    exist) and the feed goes on keying records off it. So the retraction takes the group with it,
+    and the ledger says how many.
+    """
+    import re
+    from iladub.etkl import compile_tables
+    from tests.etkl.fixtures import page_local_group_two_page_pdf
+    pdf = str(tmp_path / "pagelocal.pdf")
+    page_local_group_two_page_pdf(pdf)
+
+    # page 1 STANDALONE: the subtotal confirms page-locally and loop I derives its group
+    p1 = compile_tables(pdf, page_number=1)
+    assert list(p1.graph.subjects(RDF.type, TAB.DetectedAggregationRow)), \
+        "fixture precondition: the SUB row must confirm page-locally"
+    assert list(p1.graph.subjects(RDF.type, TAB.DerivedRowGroup)), \
+        "fixture precondition: loop I must derive a group off it"
+
+    # document level: the wider window refuses the row (500 != 250) and withdraws the derivation
+    rep = compile_document(pdf)
+    (a,) = rep.arithmetic
+    assert (a.page_confirmed, a.document_confirmed, a.retracted, a.newly_confirmed) == \
+           (1, 0, 1, 0), a
+    assert a.groups_retracted == 1, a
+    assert not list(rep.graph.subjects(RDF.type, TAB.DetectedAggregationRow))
+    assert not list(rep.graph.subjects(RDF.type, TAB.AggregationRow))
+    assert not list(rep.graph.subjects(RDF.type, TAB.DerivedRowGroup))
+    # and nothing DANGLES: no triple anywhere still mentions the withdrawn group node
+    stale = [t for t in rep.graph if any(re.search(r"-rg\d+$", str(x)) for x in t)]
+    assert not stale, stale
+
+
 def test_single_page_and_case1_untouched(tmp_path):
     from iladub.etkl import compile_tables
     from tests.etkl.fixtures import simple_table_pdf, two_page_unrelated_pdf

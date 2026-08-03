@@ -1265,3 +1265,65 @@ def cut_group_two_page_pdf(path: str) -> dict:
             "page0_rows": body0, "page1_rows": body1,
             "group_members": ["V1", "V2", "V3"], "full_sum": 450,
             "page1_local_sum": 200}
+
+
+def page_local_group_two_page_pdf(path: str) -> dict:
+    """LOOP N FIXTURE — the RETRACTION case (loop-N review M-1), cut_group_two_page_pdf's mirror.
+
+    Same ruled two-page continuation shape (Mon / Port / Ship / Qty / Berth, 'Voyage' merged over
+    Ship+Qty+Berth, per-row hrules, the header block redrawn identically so the continuation law
+    stitches the pair), but the page-1 subtotal is page 1's OWN local sum:
+
+      page 0: Mackay V1=100, V2=150
+      page 1: Mackay V3=100, V4=150 + 'SUB' = 250
+
+    Page-locally the SUB row CONFIRMS (100 + 150 = 250), so the per-page pass types it
+    tab:DetectedAggregationRow AND loop I derives a tab:DerivedRowGroup off it (its two members
+    carry the unique non-blank Port value 'Mackay', which is the group key). At DOCUMENT level the
+    walk-back reaches page 0's rows too — no enclosing aggregation stops it — and 100+150+100+150
+    = 500 != 250, so the document window REFUSES the row: the one measured-on-nothing case the
+    stem never produces (every stem retraction count is 0), constructed so the retraction path can
+    be pinned. The group's witness is then gone, and the group must go with it.
+    """
+    from reportlab.pdfgen import canvas as _canvas
+    leaves = [(40.0, 90.0), (110.0, 170.0), (190.0, 230.0), (250.0, 300.0), (320.0, 360.0)]
+    names = ["Mon", "Port", "Ship", "Qty", "Berth"]
+    rh = 16.0
+    top = 196.0
+    W, H = 400.0, 220.0
+    edges = [leaves[0][0] - 4.0] + [l - 4.0 for (l, r) in leaves[1:]] + [leaves[-1][1] + 4.0]
+
+    c = _canvas.Canvas(str(path), pagesize=(W, H))
+
+    def _page(body_rows):
+        c.setFont("Helvetica", 9)
+        c.drawCentredString((leaves[2][0] + leaves[3][1]) / 2.0, top, "Voyage")
+        for (l, r), n in zip(leaves, names):
+            c.drawString(l, top - rh, n)
+        c.setFont("Helvetica", 8)
+        ys = []
+        y = top - 2 * rh
+        for row in body_rows:
+            for (l, r), v in zip(leaves, row):
+                if v:
+                    c.drawString(l, y, v)
+            ys.append(y)
+            y -= rh
+        c.setLineWidth(0.7)
+        bottom = y + rh - 6.0
+        for e in edges:
+            c.line(e, top - rh + 10.0, e, bottom)
+        c.line(edges[0], top - rh - 4.0, edges[-1], top - rh - 4.0)   # header/body rule
+        for yy in ys:
+            c.line(edges[0], yy - 4.0, edges[-1], yy - 4.0)          # per-row hrule
+
+    body0 = [("Jul", "Mackay", "V1", "100", "B1"), ("Jul", "Mackay", "V2", "150", "B2")]
+    _page(body0)
+    c.showPage()
+    body1 = [("Jul", "Mackay", "V3", "100", "B3"), ("Jul", "Mackay", "V4", "150", "B4"),
+             ("", "SUB", "", "250", "")]
+    _page(body1)
+    c.save()
+    return {"leaves": leaves, "names": names, "rule_xs": edges,
+            "page0_rows": body0, "page1_rows": body1,
+            "page1_local_sum": 250, "document_sum": 500}
