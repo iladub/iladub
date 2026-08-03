@@ -54,6 +54,14 @@ THE TWO RECORDS, AND WHY THEY STAY DISTINCT (they were equal on the specimen aft
     * `DocumentReport.recognized` records every page pair the AXIOM licensed — the honest record
       of what the LAW saw, independent of what the compile then managed. Recognition does not
       depend on either page compiling.
+WHAT A CHAIN IS THEN FOR (loop N — the logical table is the closure holon; residue R35)
+  A chain is the LOGICAL table the pagination cut. `reconcile_chain_arithmetic` re-runs the
+  UNCHANGED loop-H subtotal arithmetic (`rows.detect_aggregation_rows`) over the chain's whole
+  row sequence and reconciles the merged graph's aggregation typing to that result — the
+  arithmetic is untouched, only the holon it closes over grows from the page to the logical
+  table. See that function and `_UnitGrid` for the §8 classification, the cross-member column
+  licence, and why refining a page-local intermediate here is honest rather than a rewrite.
+
     * `DocumentReport.chains` links tables that were RECOGNIZED **and** ASSERTED. A chain is a
       tuple of table URIs, so a page that asserted no table cannot appear in one — which is
       exactly the state task 2 measured (three singleton chains against `recognized` already
@@ -79,19 +87,46 @@ CONTINUATION_OF_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" /
 
 
 @dataclass(frozen=True)
+class ChainArithmetic:
+    """What the document-level arithmetic pass did to ONE chain — the honest ledger (loop N).
+
+    `page_confirmed` counts the rows of this chain's member tables that the PER-PAGE arithmetic
+    had typed `tab:DetectedAggregationRow` before the pass ran; `document_confirmed` counts what
+    the LOGICAL table's window confirms; `retracted` and `newly_confirmed` are the two
+    differences. A row counted in both `page_confirmed` and `document_confirmed` may still have
+    had its `tab:aggregates` operand set REWRITTEN (the wider window can find more members) —
+    the pass always retracts before it asserts, so the edges in the graph are the document-level
+    ones, never a mix.
+
+    `abstained` is not None when the pass refused this chain outright and changed nothing: the
+    graph did not admit an unambiguous logical row sequence (see `_logical_row_sequence`).
+    Refusal is not a verdict — the page-local typing simply stands.
+    """
+    chain: tuple[URIRef, ...]
+    page_confirmed: int = 0
+    document_confirmed: int = 0
+    retracted: int = 0
+    newly_confirmed: int = 0
+    abstained: str | None = None
+
+
+@dataclass(frozen=True)
 class DocumentReport:
     """One document: the merged graph, the per-page reports, the continuation chains.
 
     `score` is asserted/(asserted+escalated) over the WHOLE document (never a mean of per-page
     scores — pages differ in size). `recognized` holds the (prev_page, page) pairs the
     continuation AXIOM licensed; `chains` holds the table URIs actually linked (see the module
-    docstring for why the two can differ mid-loop).
+    docstring for why the two can differ mid-loop). `arithmetic` holds one `ChainArithmetic` per
+    MULTI-MEMBER chain the document-level subtotal pass ran on — empty for a single-page or
+    unchained document, where the pass never runs at all.
     """
     score: float
     pages: tuple[CompilationReport, ...]
     chains: tuple[tuple[URIRef, ...], ...]
     graph: Graph
     recognized: tuple[tuple[int, int], ...] = ()
+    arithmetic: tuple[ChainArithmetic, ...] = ()
 
     def to_turtle(self) -> str:
         return self.graph.serialize(format="turtle")
@@ -283,6 +318,194 @@ def _recognition_blocks(bands):
     return out
 
 
+# ------------------------------------- the document-level arithmetic pass (loop N, residue R35)
+#
+# §8 CLASSIFICATION — PROCEDURAL, and the justification is loop H's, VERBATIM and unchanged:
+# `rows.detect_aggregation_rows` is DECIDABLE EXACT ARITHMETIC (exact Decimal sums over a finite
+# ordered row sequence; a SPARQL formulation of nested running-sum windows would be obfuscation,
+# not a lift). Not one line of that function changes here, and no new decision is taken: what
+# changes is the HOLON it closes over. Loop H closed it over the page-local region because that
+# was the only row sequence the compile had; a chain gives the LOGICAL table, and the logical
+# table is the closure holon. Everything below is glue (sequence assembly, an index re-encoding,
+# triple retraction/assertion) plus counting — it decides nothing, reads no label for meaning,
+# and carries no numeric constant.
+
+
+@dataclass(frozen=True)
+class _SeqCell:
+    """One populated cell of the logical sequence, re-encoded onto the unit grid (see below)."""
+    x0: float
+    x1: float
+    text: str
+
+
+@dataclass(frozen=True)
+class _SeqRow:
+    """One row of the logical sequence, in the shape `detect_aggregation_rows` reads (`.cells`)."""
+    cells: tuple[_SeqCell, ...]
+
+
+@dataclass(frozen=True)
+class _UnitGrid:
+    """A grid whose column i is the half-open interval [i, i+1) — the re-encoding target.
+
+    THE CROSS-MEMBER COLUMN LICENCE, stated in full because it is the one thing this pass adds
+    to loop H's arithmetic. `detect_aggregation_rows` takes ONE grid, and reads a candidate's
+    NESTING LEVEL off its label's COLUMN INDEX. A chain's members are separate tables with
+    separate geometry, so no single page's boundary list is the right instrument for all of
+    them — a boundary that MOVES between pages (measured: the gutter before the last column at
+    798.54 / 802.04 / 792.04 on the specimen) would re-map a cell that sits near it.
+
+    So each row's columns are mapped by its OWN table's grid — which is exactly what the compile
+    already did when it minted `{table}-e{r}_{col}` / `{table}-c{col}`, so the per-table mapping
+    is READ back out of the graph rather than recomputed — and the resulting INDICES are then
+    re-encoded onto this unit grid, on which `regions.column_of` returns the index it was given.
+    The re-encoding is an identity by construction; the arithmetic sees the same `{column: text}`
+    dicts it would have seen from the real cells.
+
+    That indices from DIFFERENT member tables may be compared at all (level = label column index,
+    so "column 17 here" must mean "column 17 there") is licensed by the continuation law that
+    built the chain, not assumed: clause (b) matched the two pages' leaf header cells
+    COLUMN-FOR-COLUMN by exact text at an agreeing ink origin in both directions, and clause (c)
+    required the two AUTHOR-DRAWN leaf-grid boundary sets to agree under COORD_EPS. A pair that
+    satisfies both presents the same columns in the same order under the same author's rules —
+    17 = 17. It is the same licence loop M's carriage already rests on (the carried header
+    signature is `(column index, exact text)` per cell, matched across the break).
+    """
+    boundaries: tuple[float, ...]
+
+
+def _index_suffix(uri, table_uri, mark: str):
+    """`{table_uri}-{mark}{n}` -> n, or None when the URI does not follow the minting convention.
+
+    The convention is the compile's own, one call away (`holon.assert_hier_region` mints
+    `-r{row}` / `-c{col}`, and `rowgroups.derive_row_groups` already constructs the same strings
+    in the other direction). Reading it back is a parse of OUR OWN minting, never of a document.
+    A URI that does not match makes the pass abstain rather than guess.
+    """
+    s, prefix = str(uri), f"{table_uri}-{mark}"
+    if not s.startswith(prefix):
+        return None
+    tail = s[len(prefix):]
+    return int(tail) if tail.isdigit() else None
+
+
+def _logical_row_sequence(graph: Graph, chain):
+    """`(rows, row_uris, note)` — the chain's LOGICAL row sequence, or `(None, None, reason)`.
+
+    THE SEQUENCE: the member tables in CHAIN order, each member's body rows in ROW order, each
+    row's cells mapped to columns by its OWN table's grid (as recorded in the graph) and
+    re-encoded onto the unit grid (see `_UnitGrid` for the licence).
+
+    Repeated-header rows cannot enter it, structurally: a continuation page's redrawn header
+    block is recorded as `tab:RepeatedHeader` nodes (`{table}-rephdr{k}`, from
+    `ruledroles.emit_repeated_headers`) which are NEVER `tab:LeafRow`s and never `tab:EntryCell`s
+    — the header rows are consumed by the header reading and never reach the body. This function
+    reads `tab:hasLeafRow` only, so the exclusion needs no filter, and the property was MEASURED
+    on the specimen before this pass was written, not assumed: 6 `tab:RepeatedHeader` nodes over
+    the two continuation pages, 195 `tab:LeafRow`s, zero nodes in both classes and zero repeated
+    headers typed `tab:EntryCell`.
+
+    ABSTAINS (returns a reason, changes nothing) when the graph does not admit ONE unambiguous
+    reading: a row or column URI outside the minting convention, a row with no populated cell, or
+    an entry cell carrying more than one `tab:cellText`. The last is the honest one — the compile
+    welds two same-column cells of one row onto a single `-e{r}_{col}` node, and which of the two
+    texts the arithmetic should read is then undecidable here. Refusing a chain leaves its
+    page-local typing exactly as it was (§7: never guess to achieve coverage).
+    """
+    from rdflib import Literal as _Literal
+    seq: list[tuple[URIRef, dict[int, str]]] = []
+    for t in chain:
+        rows: dict[int, URIRef] = {}
+        for r in graph.objects(t, TAB.hasLeafRow):
+            i = _index_suffix(r, t, "r")
+            if i is None:
+                return None, None, f"row URI outside the minting convention: {r}"
+            rows[i] = r
+        for i in sorted(rows):
+            row = rows[i]
+            cols: dict[int, str] = {}
+            for e in graph.subjects(TAB.atRow, row):
+                if (t, TAB.hasCell, e) not in graph:
+                    continue
+                c = graph.value(e, TAB.atColumn)
+                col = None if c is None else _index_suffix(c, t, "c")
+                if col is None:
+                    return None, None, f"column URI outside the minting convention: {c}"
+                texts = [o for o in graph.objects(e, TAB.cellText) if isinstance(o, _Literal)]
+                if len(texts) != 1:
+                    return None, None, f"{len(texts)} cellText literals on {e}"
+                cols[col] = str(texts[0])
+            if not cols:
+                return None, None, f"leaf row with no populated cell: {row}"
+            seq.append((row, cols))
+    if not seq:
+        return None, None, "no leaf rows in the chain"
+    ncols = max(c for _, cols in seq for c in cols) + 1
+    grid = _UnitGrid(tuple(float(i) for i in range(ncols + 1)))
+    # 0.25/0.75 are NOT a tolerance and nothing is ever compared against them: they place the
+    # cell strictly inside its own unit column, and ANY interior point yields the same index
+    # from `regions.column_of` (`b[i] <= centre < b[i+1]`). The re-encoding is an identity.
+    out = tuple(_SeqRow(tuple(_SeqCell(col + 0.25, col + 0.75, text)
+                              for col, text in sorted(cols.items())))
+                for _, cols in seq)
+    return (out, grid), tuple(row for row, _ in seq), None
+
+
+def reconcile_chain_arithmetic(graph: Graph, chain) -> ChainArithmetic:
+    """Re-run the UNCHANGED loop-H arithmetic over one chain's logical table, and reconcile.
+
+    RECONCILIATION, AND WHY IT IS HONEST. The per-page pass already typed some rows
+    `tab:AggregationRow` / `tab:DetectedAggregationRow` with `tab:aggregationFunction` and
+    `tab:aggregates` edges. Those typings are an INTERMEDIATE produced under a window we now
+    know was too small — a page break cuts a group, so a page-local window can both MISS a
+    subtotal whose members are on the previous page (the stem's page-2 rows: 22 candidates, 0
+    confirmed) and, symmetrically, confirm one whose true operand set the wider window extends.
+    This pass therefore retracts all four predicates over the chain's rows and re-asserts them
+    from the document-level result, BEFORE the merged graph is consumed (the per-page SHACL
+    membrane has already run inside `compile_tables`; whole-graph validation is loop N task 4).
+    Refining your own intermediate is not falsification as long as it is COUNTED and stated:
+    `ChainArithmetic` records page-confirmed, document-confirmed, retracted and newly-confirmed
+    for exactly that reason, and the counts ride in the DocumentReport.
+
+    `tab:aggregates` edges may now CROSS member tables — a page-2 subtotal pointing at page-1
+    rows. That is the point: the operands are where the author put them, and the logical table is
+    the closure holon.
+
+    Only ever called for a chain of TWO OR MORE members (see `compile_document`), so a single-page
+    document and an unchained page are untouched by construction, not by a guard that could rot.
+    """
+    from .rows import detect_aggregation_rows
+
+    seq, row_uris, why = _logical_row_sequence(graph, chain)
+    if seq is None:
+        # the chain's page-local typing stands, unchanged, and the refusal is reported
+        page_local = sum(1 for t in chain for r in graph.objects(t, TAB.hasLeafRow)
+                         if (r, RDF.type, TAB.DetectedAggregationRow) in graph)
+        return ChainArithmetic(tuple(chain), page_local, page_local, 0, 0, why)
+
+    before = {r for r in row_uris if (r, RDF.type, TAB.DetectedAggregationRow) in graph}
+    rows, grid = seq
+    agg = detect_aggregation_rows(rows, grid)
+
+    for r in row_uris:                       # retract, then assert — never a mix of two windows
+        graph.remove((r, RDF.type, TAB.AggregationRow))
+        graph.remove((r, RDF.type, TAB.DetectedAggregationRow))
+        graph.remove((r, TAB.aggregationFunction, None))
+        graph.remove((r, TAB.aggregates, None))
+    after = set()
+    for i, (_lcol, _mcol, members) in agg.items():
+        row = row_uris[i]
+        after.add(row)
+        graph.add((row, RDF.type, TAB.AggregationRow))
+        graph.add((row, RDF.type, TAB.DetectedAggregationRow))
+        graph.add((row, TAB.aggregationFunction, Literal("sum")))
+        for m in members:
+            graph.add((row, TAB.aggregates, row_uris[m]))
+    return ChainArithmetic(tuple(chain), len(before), len(after),
+                           len(before - after), len(after - before))
+
+
 def compile_document(pdf_path: str, validate_shapes: bool = True,
                      span_proposer=None, row_role_proposer=None) -> DocumentReport:
     """Compile a whole document: every page under its own page-scoped document URI, merged into
@@ -362,8 +585,17 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             chain.append(successor[chain[-1]])
         chains.append(tuple(chain))
 
+    # LOOP N (R35): the subtotal arithmetic re-run over each chain's LOGICAL table, post-stitch
+    # and before the merged graph is consumed. Chains of ONE member are skipped — not as an
+    # optimisation but as the guarantee that a single-page document and an unrecognized page are
+    # byte-untouched (a one-member chain IS the page-local window, so re-running would only risk
+    # divergence for nothing).
+    arithmetic = tuple(reconcile_chain_arithmetic(graph, chain)
+                       for chain in chains if len(chain) > 1)
+
     asserted = sum(rep.asserted for rep in pages)
     escalated = sum(rep.escalated for rep in pages)
     denom = asserted + escalated
     score = 1.0 if denom == 0 else asserted / denom
-    return DocumentReport(score, tuple(pages), tuple(chains), graph, tuple(recognized))
+    return DocumentReport(score, tuple(pages), tuple(chains), graph, tuple(recognized),
+                          arithmetic)
