@@ -61,6 +61,12 @@ WHAT A CHAIN IS THEN FOR (loop N — the logical table is the closure holon; res
   arithmetic is untouched, only the holon it closes over grows from the page to the logical
   table. See that function and `_UnitGrid` for the §8 classification, the cross-member column
   licence, and why refining a page-local intermediate here is honest rather than a rewrite.
+  The ROW GROUPS follow the arithmetic that witnesses them: loop I's derivation (AXIOM,
+  unchanged) re-runs over the document-confirmed aggregations and attaches to the chain's HEAD,
+  and the members' page-local group sets are withdrawn rather than left in parallel — one
+  logical table, one group set, whichever page a member row sits on. See
+  `_supersede_page_groups` for that decision and `_link_columns` for the committed
+  `tab:continuesColumn` correspondence that lets a key be read across the break at all.
 
     * `DocumentReport.chains` links tables that were RECOGNIZED **and** ASSERTED. A chain is a
       tuple of table URIs, so a page that asserted no table cannot appear in one — which is
@@ -103,9 +109,17 @@ class ChainArithmetic:
     `_retract_orphaned_groups`). It is reported separately from `retracted` because a retracted
     row need not have carried a group at all (loop I refuses one when the key is not unique).
 
+    `groups_superseded` counts the page-derived groups withdrawn because the DOCUMENT-level
+    derivation replaces them (loop N task 3): a chain member's page-local group set and the
+    logical table's group set are two readings of the same rows, and keeping both would leave
+    the feed two truths to choose between. `groups_derived` counts what the document-level
+    derivation then built, attached to the chain's HEAD. The two are reported separately from
+    `groups_retracted` because they answer different questions — "what did the wider window
+    destroy" versus "what did it rebuild".
+
     `abstained` is not None when the pass refused this chain outright and changed nothing: the
     graph did not admit an unambiguous logical row sequence (see `_logical_row_sequence`).
-    Refusal is not a verdict — the page-local typing simply stands.
+    Refusal is not a verdict — the page-local typing AND the page-local groups simply stand.
     """
     chain: tuple[URIRef, ...]
     page_confirmed: int = 0
@@ -114,6 +128,8 @@ class ChainArithmetic:
     newly_confirmed: int = 0
     abstained: str | None = None
     groups_retracted: int = 0
+    groups_superseded: int = 0
+    groups_derived: int = 0
 
 
 @dataclass(frozen=True)
@@ -401,6 +417,42 @@ def _index_suffix(uri, table_uri, mark: str):
     return int(tail) if tail.isdigit() else None
 
 
+def _link_columns(graph: Graph, cur_uri: URIRef, prev_uri: URIRef) -> int:
+    """Assert `tab:continuesColumn` column-for-column, at EQUAL INDEX, for a licensed pair.
+
+    The column half of `tab:continuesTable`, asserted in the same place and on the same
+    licence: clauses (b)+(c) of continuation-of.rq put the two pages' leaf columns in 1:1
+    correspondence AT EQUAL INDEX (every column of page N-1's leaf row has a counterpart at the
+    same index with the same text at an agreeing ink origin, and none of page N's is left
+    without one), so index i on the continuation page IS index i on the page it continues.
+
+    WHY COMMIT IT rather than recompute it where it is needed: two consumers must recognize one
+    logical column across the break — the document-level row-group key (which member cell sits
+    in "the label column"?) and the feed's key injection (does this row already carry a value in
+    that column?). Without the edge each would have to parse `-c{i}` out of the column IRIs, and
+    the feed in particular is explicitly IRI-parsing-free. The edge is read, not named.
+
+    Indices are read back out of OUR OWN minting (`_index_suffix`), and a column URI that does
+    not follow the convention is simply not linked — no guess, and the pair's other columns are
+    unaffected. An index present on only one side gets no edge either: the law licensed a
+    bijection, and asserting an edge the evidence does not carry would be fabrication (§7).
+    Returns the number of edges asserted."""
+    def _by_index(t):
+        out = {}
+        for c in graph.objects(t, TAB.hasLeafColumn):
+            i = _index_suffix(c, t, "c")
+            if i is not None:
+                out[i] = c
+        return out
+
+    prev_cols, cur_cols = _by_index(prev_uri), _by_index(cur_uri)
+    n = 0
+    for i in sorted(set(prev_cols) & set(cur_cols)):
+        graph.add((cur_cols[i], TAB.continuesColumn, prev_cols[i]))
+        n += 1
+    return n
+
+
 def _logical_row_sequence(graph: Graph, chain):
     """`(rows, row_uris, note)` — the chain's LOGICAL row sequence, or `(None, None, reason)`.
 
@@ -508,6 +560,69 @@ def _retract_orphaned_groups(graph: Graph, retracted_rows) -> int:
     return n
 
 
+def _supersede_page_groups(graph: Graph, chain) -> int:
+    """Withdraw every SURVIVING page-derived row group on this chain's member tables.
+
+    THE SUPERSESSION DECISION, stated because it is a decision (loop N task 3). After the
+    document window has re-typed the chain's aggregations, a chain member can still carry loop
+    I's page-local `tab:DerivedRowGroup` nodes — derived, honestly, from the page-local reading
+    of a table the pagination had cut. The document-level derivation now produces the LOGICAL
+    table's group set over the same rows. Two options existed and only one is honest:
+
+      * leave both — the graph then holds two parallel group sets over one row axis, and the
+        feed picks between them by iteration order. A record's identity and its injected keys
+        would depend on which set the reader happened to walk. That is a §3 violation dressed as
+        conservatism: a page-local group over a CUT group is a proposition the wider window has
+        already disposed of, and letting it stand is letting it pass as an assertion;
+      * withdraw the page-local set and re-derive at document level — ONE truth about the
+        chain's row groups, derived from the document-confirmed facts, with the page-local
+        reading recorded as `groups_superseded` in the ledger rather than silently dropped.
+
+    We take the second. It is the same idiom `_retract_orphaned_groups` uses (that one withdraws
+    a derivation whose GROUND was retracted; this one withdraws a derivation the wider holon
+    RE-TOOK), and it makes two task-2 residues moot for chains rather than fixed in place: a
+    surviving sibling's stale `tab:headerLevel` (appendix (c)) and a surviving group's
+    stale-but-not-orphaned `tab:coversRow` (appendix (d)) both belonged to nodes that no longer
+    exist — every level and every member edge on a chain is now derived fresh, in one pass, from
+    the document-level `tab:aggregates`.
+
+    SCOPE: member tables of THIS chain only, and only when the pass did not abstain. A
+    non-chained table is never reached (a one-member chain never calls this), so its page-local
+    groups are byte-untouched. Returns the number of groups withdrawn."""
+    n = 0
+    for t in chain:
+        for grp in set(graph.objects(t, TAB.hasHeaderNode)):
+            if (grp, RDF.type, TAB.DerivedRowGroup) not in graph:
+                continue                     # an AUTHORED header node — never ours to withdraw
+            graph.remove((grp, None, None))
+            graph.remove((None, None, grp))  # hasHeaderNode, and any child's parentHeader
+            n += 1
+    return n
+
+
+def _derive_document_row_groups(graph: Graph, chain, agg, row_uris) -> int:
+    """Re-derive loop I's row groups over the LOGICAL table, attached to the chain's HEAD.
+
+    Loop I's derivation is unchanged and still an AXIOM (row-group-key-logical.rq +
+    row-group-nesting.rq); this is the caller that resolves its three URIs for a chain — the
+    witness row and its members from the merged graph's own row URIs (so `tab:coversRow` edges
+    MAY cross member tables, which is the point), and the label column from the HEAD table at
+    the index the arithmetic read the level off. The head's column stands for the logical column
+    because `tab:continuesColumn` links each member's column to it — the committed record of
+    clauses (b)+(c), which the key query walks with `tab:continuesColumn*` rather than parsing
+    any IRI.
+
+    Group nodes are minted `{head}-rg{k}` on the LOGICAL sequence position k. For the head's own
+    rows that is exactly the URI loop I minted (the sequence opens with the head's rows, in row
+    order), so a group that survives the wider window keeps its identity; a member's group gets a
+    URI in the head's space because the group is the LOGICAL table's, not the page's."""
+    from .rowgroups import derive_row_groups_over
+    head = chain[0]
+    witnesses = tuple((row_uris[k], URIRef(f"{head}-c{agg[k][0]}"), URIRef(f"{head}-rg{k}"))
+                      for k in sorted(agg))
+    return derive_row_groups_over(graph, head, witnesses, "row-group-key-logical.rq")
+
+
 def reconcile_chain_arithmetic(graph: Graph, chain) -> ChainArithmetic:
     """Re-run the UNCHANGED loop-H arithmetic over one chain's logical table, and reconcile.
 
@@ -567,8 +682,18 @@ def reconcile_chain_arithmetic(graph: Graph, chain) -> ChainArithmetic:
         for m in members:
             graph.add((row, TAB.aggregates, row_uris[m]))
     groups = _retract_orphaned_groups(graph, before - after)
+    # THE GROUP SET IS RE-TAKEN AT DOCUMENT LEVEL (task 3): whatever page-local groups survive
+    # are withdrawn (`_supersede_page_groups` states the decision and why the alternative is
+    # dishonest), and loop I's derivation re-runs over the document-confirmed aggregations,
+    # attached to the HEAD. Ordering is load-bearing twice over: supersession must follow the
+    # orphan retraction (so `groups_retracted` still counts the destroyed derivations, not the
+    # superseded ones), and both must precede the re-derivation (or the fresh groups would be
+    # swept away by the very sweep that clears the stale ones).
+    superseded = _supersede_page_groups(graph, chain)
+    derived = _derive_document_row_groups(graph, chain, agg, row_uris)
     return ChainArithmetic(tuple(chain), len(before), len(after),
-                           len(before - after), len(after - before), None, groups)
+                           len(before - after), len(after - before), None, groups,
+                           superseded, derived)
 
 
 def compile_document(pdf_path: str, validate_shapes: bool = True,
@@ -637,6 +762,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         if prev_uri is None or cur_uri is None:
             continue                          # recognized, but one side asserted no table (R29)
         graph.add((cur_uri, TAB.continuesTable, prev_uri))
+        _link_columns(graph, cur_uri, prev_uri)   # the column half of the same link (loop N)
         links[cur_uri] = prev_uri
 
     ordered = [r.table_uri for rep in pages for r in rep.regions if r.table_uri is not None]

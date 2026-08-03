@@ -266,6 +266,46 @@ def test_stem_r35_closed(stem_document):
 
 
 @needs_stem
+def test_stem_record_identity_is_one_kind(stem_document):
+    """R35's third face: the document's records are identified ONE way, not two (loop N).
+
+    Before the document-level groups, a chain member's rows could only be covered by their own
+    page's groups, so page 1 and page 2 minted a mixture: group paths where a page-local
+    subtotal happened to confirm, opaque `p2 htable1-r41` discriminators everywhere else
+    (measured: 47 opaque of 133, plus 19 truncated 2-level paths). The identity kind depended
+    on which page a row landed on — an artefact of pagination, exactly what loop N un-does.
+
+    The invariant asserted here is structural, not a tally: a record is identified by its group
+    path IF AND ONLY IF a derived group covers its row. Anything else would mean the feed and
+    the derivation disagree. The remaining opaque ids are therefore not a second kind of
+    identity but the honest §7 answer for a row no confirmed aggregation covers — on this
+    edition exactly one, the document's 'Grand Total' row, whose printed value (2,402,500) the
+    arithmetic refuses because it does not equal the sum of the rows above it (measured:
+    4,606,000 over the chain's 111 non-aggregation rows). Tallies printed, not pinned.
+    """
+    from collections import Counter
+    from rdflib import RDF
+    from iladub.etkl.holon import TAB
+    from iladub.feed import table_records, _row_discriminator
+
+    g = stem_document.graph
+    recs = table_records(g)
+    covered = {_row_discriminator(g, m)
+               for grp in g.subjects(RDF.type, TAB.DerivedRowGroup)
+               for m in g.objects(grp, TAB.coversRow)}
+    shapes = Counter(f"{r.row_id.count(' > ') + 1}-level path" if " > " in r.row_id
+                     else "opaque discriminator" for r in recs)
+    opaque = [r.row_id for r in recs if " > " not in r.row_id]
+    print(f"\nstem record-id shapes: {dict(shapes)}  opaque={opaque}")
+    # no opaque id names a row a group covers: the two readings agree
+    assert not [rid for rid in opaque if rid in covered], opaque
+    # and every path id is a group path (3 levels: year > month > port) with at most one
+    # collision discriminator appended — never a truncated or deeper shape
+    depths = {rid.count(" > ") + 1 for rid in (r.row_id for r in recs) if " > " in rid}
+    assert depths <= {3, 4}, depths
+
+
+@needs_stem
 def test_stem_keys_reach_every_page(stem_document):
     """Every record carries the outer fiscal-year key (was: p1 1/51, p2 3/65).
 
