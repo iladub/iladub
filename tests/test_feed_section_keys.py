@@ -60,9 +60,26 @@ def _table(g, table, page, headers, rows):
 
 
 def _caption(g, table, k, text):
-    """One `tab:RegionCaption`, positionally ordered by `tab:captionRow` — exactly the shape
-    `compile._emit_band_captions` commits."""
+    """One `tab:SectionCaption` (+ its `tab:RegionCaption` supertype), positionally ordered by
+    `tab:captionRow` — exactly the shape `compile._emit_band_captions` commits post fix-round-2
+    (R54/stem-pollution fix, 2026-08-04): the section-repair peel path types EVERY caption it
+    emits `tab:SectionCaption`, the subclass `feed._table_captions` now requires."""
     cap = URIRef(f"{table}-bandcap{k}")
+    g.add((cap, RDF.type, TAB.RegionCaption))
+    g.add((cap, RDF.type, TAB.SectionCaption))
+    g.add((cap, TAB.captionText, Literal(text)))
+    g.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
+    g.add((table, TAB.hasCaption, cap))
+    return cap
+
+
+def _furniture_caption(g, table, k, text):
+    """One PLAIN `tab:RegionCaption` — the loop-C `rowrole.emit_reading_evidence` shape (reading
+    furniture: a print-timestamp/title line inside a table's header region), NEVER typed
+    `tab:SectionCaption`. This is the shape that polluted the real stem's record identities
+    before the fix-round-2 scoping — 'Friday, 31'/'July 2026' furniture captions were being read
+    as candidate section keys. Must never be injected or used to prefix a record identity."""
+    cap = URIRef(f"{table}-cap{k}")
     g.add((cap, RDF.type, TAB.RegionCaption))
     g.add((cap, TAB.captionText, Literal(text)))
     g.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
@@ -139,6 +156,24 @@ def test_identities_distinct_across_sections():
     assert geraldton_r0.row_id != kwinana_r0.row_id
     assert geraldton_r0.row_id.startswith("GERALDTON > "), geraldton_r0.row_id
     assert kwinana_r0.row_id.startswith("KWINANA > "), kwinana_r0.row_id
+
+
+def test_plain_region_caption_never_injects_or_prefixes():
+    """CRITICAL fix (stem pollution, 2026-08-04): a table carrying only PLAIN `tab:RegionCaption`s
+    — the loop-C reading-furniture shape, e.g. a print-timestamp line ('Friday, 31'/'July 2026')
+    found inside a header region and carried so its text is never lost — must get NO injected
+    candidate concepts and NO identity prefix. Only `tab:SectionCaption` (the section-repair
+    peel's own subclass) is candidate-key evidence; an ordinary `RegionCaption` stays exactly
+    what it always was: carried, never read as a key."""
+    g = Graph()
+    _table(g, G, 0, ["ID", "Client", "Volume"], {0: {0: "10097", 1: "Brahman", 2: "30000"}})
+    _furniture_caption(g, G, 0, "Friday, 31")
+    _furniture_caption(g, G, 1, "July 2026")
+    recs = table_records(g)
+    assert len(recs) == 1
+    assert not any(c.is_section_marker for c in recs[0].concepts), recs[0].concepts
+    assert "Friday" not in recs[0].row_id and "July" not in recs[0].row_id
+    assert recs[0].row_id == "p0 table0-r0", recs[0].row_id
 
 
 def test_table_without_captions_behaves_as_today():

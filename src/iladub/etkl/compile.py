@@ -151,12 +151,21 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
 def _emit_band_captions(graph, table_uri, band):
     """Loop P §5/§7 carry: one tab:RegionCaption per peeled strip line. captionRow is
     the line's index within the ORIGINAL band (captions precede the grid, so their
-    order is their index)."""
+    order is their index).
+
+    ALSO typed tab:SectionCaption (fix round, 2026-08-04, stem-pollution close): this is
+    THE emitter for a peeled leading strip above a grid — the only kind of caption a
+    section repair (or the ordinary leading-peel this function has always served) ever
+    produces — and feed.py now reads ONLY tab:SectionCaption as candidate-key evidence.
+    Loop C's row-role reading-furniture captions (rowrole.emit_reading_evidence, a
+    print-timestamp/title line inside a header region) are a DIFFERENT emitter and stay
+    tab:RegionCaption only — untouched by this change, never a candidate key."""
     from rdflib import Literal, RDF, URIRef
     from rdflib.namespace import XSD
     for k, ln in enumerate(getattr(band, "captions", ()) or ()):
         cap = URIRef("%s-bandcap%d" % (table_uri, k))
         graph.add((cap, RDF.type, TAB.RegionCaption))
+        graph.add((cap, RDF.type, TAB.SectionCaption))
         graph.add((cap, TAB.captionText, Literal(" ".join(w.text for w in ln.words))))
         graph.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
         graph.add((table_uri, TAB.hasCaption, cap))

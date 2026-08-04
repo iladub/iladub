@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.2.4" ;
+    owl:versionInfo "0.2.5" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -293,6 +293,9 @@ tab:captionText a owl:DatatypeProperty ; rdfs:domain tab:RegionCaption ; rdfs:ra
 tab:captionRow a owl:DatatypeProperty ; rdfs:domain tab:RegionCaption ; rdfs:range xsd:integer ; rdfs:label "caption row"@en ;
     rdfs:comment "0-based header-region row index the furniture line came from (0 = topmost)."@en .
 tab:hasCaption a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:RegionCaption ; rdfs:label "has caption"@en .
+
+tab:SectionCaption a owl:Class ; rdfs:subClassOf tab:RegionCaption ; rdfs:label "Section caption"@en ;
+    rdfs:comment "A tab:RegionCaption emitted ONLY by the document driver's section-repair adoption (compile._emit_band_captions, loop P/Q's peeled-leading-strip carry) — the captions that carry CANDIDATE section KEYS (spec 2026-08-04 §4.2), read and injected by feed.py. Loop C's row-role reading-furniture captions (rowrole.emit_reading_evidence — a print-timestamp/title line inside a table's header region) stay tab:RegionCaption ONLY: furniture text is carried so it is never lost, but it was never a section key and must never be read as one. Measured 2026-08-04: the real GrainCorp stem's own furniture captions ('Friday, 31'/'July 2026') were being injected as candidate concepts and prefixed onto every record's identity before this subclass existed to scope feed.py's reading to the section-repair path only."@en .
 
 tab:HeaderSourceCell a owl:Class ; rdfs:label "Header source cell"@en ;
     rdfs:comment "A committed record of one header-region source cell, region-bound, and the target of tab:HeaderContentConservedShape: every one must be accounted for either inside an asserted header label or as a tab:RegionCaption. Distinct from tab:HeaderCell, which is transient pre-holon covering evidence."@en .

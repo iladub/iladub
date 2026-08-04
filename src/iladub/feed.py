@@ -295,18 +295,29 @@ def _inject_group_keys(graph: Graph, members, rows: dict, row_cols: dict, owner:
 
 
 def _table_captions(graph: Graph, table) -> list[tuple[str, str]]:
-    """A table's `tab:RegionCaption`s, ordered POSITIONALLY (`tab:captionRow`, the caption
-    node as a deterministic tie-break) — `[(text, region), ...]`. Empty for the vast majority
-    of tables, which assert no `tab:hasCaption` at all (every table before loop Q, and every
-    table loop Q's section repair never touched).
+    """A table's `tab:SectionCaption`s (a `tab:RegionCaption` SUBCLASS), ordered POSITIONALLY
+    (`tab:captionRow`, the caption node as a deterministic tie-break) — `[(text, region), ...]`.
+    Empty for the vast majority of tables, which assert no `tab:hasCaption` at all (every table
+    before loop Q, and every table loop Q's section repair never touched).
 
     Loop Q (spec §4.0-§4.2): a repaired section table's leading strips (the KEY line plus any
-    berth-notice furniture) are peeled and committed as `tab:RegionCaption` at compile time
-    (`compile._emit_band_captions`), then survive `document._band_subgraph`'s adoption merge
-    for free — that function copies every triple reachable from the table's own URI, and
-    `hasCaption`/`captionText`/`captionRow` are exactly such triples (measured on the real CBH
-    fixture: both adopted section tables carry their captions post-adoption). This function
-    only READS what compile already asserted — no new decision, §8.
+    berth-notice furniture) are peeled and committed as `tab:RegionCaption` + `tab:SectionCaption`
+    at compile time (`compile._emit_band_captions`), then survive `document._band_subgraph`'s
+    adoption merge for free — that function copies every triple reachable from the table's own
+    URI, and `hasCaption`/`captionText`/`captionRow`/`rdf:type` are exactly such triples
+    (measured on the real CBH fixture: both adopted section tables carry their captions
+    post-adoption). This function only READS what compile already asserted — no new decision, §8.
+
+    SCOPED TO `tab:SectionCaption` ONLY (fix round, 2026-08-04 — the real stem's own furniture
+    was measured injected as a false candidate key before this scoping existed): a PLAIN
+    `tab:RegionCaption` with no `tab:SectionCaption` type is loop C's reading-furniture shape
+    (`rowrole.emit_reading_evidence` — a print-timestamp/title line found inside a table's
+    header region, carried so its text is never lost) and was NEVER a section key; measured on
+    the real GrainCorp stem, its own furniture captions ('Friday, 31'/'July 2026') were being
+    read here before this filter existed, injecting false candidates and prefixing every
+    record's identity with print-timestamp text (`still-quarantined` drifted 1265→1341). Every
+    caption `compile._emit_band_captions` emits carries BOTH types (it is the one emitter for
+    the peeled-leading-strip mechanism), so the section-repair path is unaffected by this scope.
 
     `region` is the caption node's OWN fragment: a `RegionCaption` asserts no separate
     `prov:wasDerivedFrom` (compile.py commits captionText/captionRow directly on it), so this
@@ -314,6 +325,8 @@ def _table_captions(graph: Graph, table) -> list[tuple[str, str]]:
     its own provenance rather than pointing at one — not a new provenance convention."""
     caps = []
     for cap in graph.objects(table, TAB.hasCaption):
+        if (cap, RDF.type, TAB.SectionCaption) not in graph:
+            continue
         text = graph.value(cap, TAB.captionText)
         if text is None:
             continue
