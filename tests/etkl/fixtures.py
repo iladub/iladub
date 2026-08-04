@@ -1480,14 +1480,20 @@ def sectioned_ruled_table_pdf(path):
         return H - top
 
     cols = [72, 172, 292, 392, 492]   # 4 columns: ID | Time Nom Accepted | Client | Volume
-    sec_top, grid_top, hdr_bot, grid_bot = 60, 110, 140, 200
+    # CBH-fidelity spacing (fix round 1): the real section is ONE detect_bands band —
+    # tight, near-uniform line pitch (~6-8pt text gaps throughout), not the original
+    # fixture's 23pt notice->grid-top gap (which made detect_bands split heading+notice
+    # off from the grid before _build_ruled_band ever saw them together). Shape/content
+    # UNCHANGED — spacing only: heading->notice gap ~8pt, notice->grid-top gap ~7pt,
+    # header-box internal gap ~5pt, header-box->row0 and inter-row gaps ~9pt each.
+    sec_top, grid_top, hdr_bot, grid_bot = 60, 95, 123, 185
     c = canvas.Canvas(path, pagesize=letter)
     c.setFont("Courier", 9)
     # the section OUTER border (spans heading + notice + grid, like CBH's)
     c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
     # full-width strips: heading + notice (NO interior rules up here)
     c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
-    c.drawString(cols[0] + 4, y(sec_top + 30), "BERTH MAY BE UNAVAILABLE 2000HRS")
+    c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
     # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
     for x in cols[1:-1]:
         c.line(x, y(grid_bot), x, y(grid_top))
@@ -1497,10 +1503,10 @@ def sectioned_ruled_table_pdf(path):
     # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
     # name, line B carries the centered single-line names + the wrap's second word
     c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")
-    c.drawString(cols[0] + 4, y(grid_top + 24), "ID")
-    c.drawString(cols[1] + 4, y(grid_top + 24), "Accepted")
-    c.drawString(cols[2] + 4, y(grid_top + 24), "Client")
-    c.drawString(cols[3] + 4, y(grid_top + 24), "Volume")
+    c.drawString(cols[0] + 4, y(grid_top + 26), "ID")
+    c.drawString(cols[1] + 4, y(grid_top + 26), "Accepted")
+    c.drawString(cols[2] + 4, y(grid_top + 26), "Client")
+    c.drawString(cols[3] + 4, y(grid_top + 26), "Volume")
     # three data rows
     rows = [("10097", "15:01", "Brahman", "30,000"),
             ("10076", "14:38", "CBH", "50,000"),
