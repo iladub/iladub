@@ -17,6 +17,15 @@ def _compiled_fixture(tmp_path):
     return truth, compile_tables(str(pdf))
 
 
+def _labels(graph):
+    """Every asserted column-header label text (HeaderNode -hasLabel-> LabelCell -cellText),
+    the same leaf-label accessor as tests/etkl/test_header_stack.py."""
+    return [str(t)
+            for h in graph.subjects(RDF.type, TAB.HeaderNode)
+            for lc in graph.objects(h, TAB.hasLabel)
+            for t in graph.objects(lc, TAB.cellText)]
+
+
 def test_sectioned_ruled_table_reads(tmp_path):
     """RED on main: the heading/notice strips enter the header tree as fabricated
     all-column levels and the wrapped header box reads as several rows -> the section
@@ -25,15 +34,12 @@ def test_sectioned_ruled_table_reads(tmp_path):
     truth, rep = _compiled_fixture(tmp_path)
     asserted = [r for r in rep.regions if r.verdict == "asserted"]
     assert len(asserted) == 1, [(r.kind.name, r.verdict, r.reason) for r in rep.regions]
-    texts = {str(o) for o in rep.graph.objects(None, TAB.hasLabel)} | \
-            {str(o) for s in rep.graph.subjects(RDF.type, TAB.HeaderNode)
-             for o in rep.graph.objects(s, TAB.hasLabel)}
-    # hasLabel points at label NODES on some paths; fall back to any literal text field.
-    # The load-bearing assertion is on the WELDED name reaching the reading:
-    flat = " ".join(str(t) for t in rep.graph.objects(None, None)
-                    if hasattr(t, "value") or isinstance(t, str))
+    # Task 3 tightening: read the leaf header labels precisely (was a liberal whole-graph
+    # literal scan at RED time, per the Task-1 implementer note) — the load-bearing
+    # assertion is that the WELDED name 'Time Nom Accepted' reaches the leaf labels.
+    labels = _labels(rep.graph)
     for name in truth["header_names"]:
-        assert name in flat, f"header name {name!r} missing from the reading"
+        assert name in labels, (name, labels)
     assert rep.score >= 0.9, rep.score
 
 
@@ -93,3 +99,40 @@ def test_grid_region_query_has_no_numeric_literal():
     text = Path("vocab/queries/grid-region.rq").read_text()
     body = re.sub(r"#[^\n]*", "", text)          # strip comments
     assert not re.search(r"\b\d+\.?\d*\b", body), "numeric literal in the AXIOM"
+
+
+from iladub.etkl.geometry import HRule
+
+
+def test_weld_merges_rows_sharing_a_full_width_box():
+    """Two re-extracted rows inside ONE author-drawn full-width hrule box weld into
+    one row; per-column text joins top-to-bottom ('Time Nom' + 'Accepted')."""
+    from iladub.etkl.geometry import weld_hrule_boxes
+    r1 = _line(110, 118, "Time", "Nom")           # visual line A (col-1 words)
+    r2 = _line(122, 130, "ID", "Accepted")        # visual line B
+    # words must sit in rule columns for the column join; rebuild precisely:
+    a = Line((Word("Time Nom", 160, 220, 110, 118),), 110, 118)
+    b = Line((Word("ID", 80, 100, 122, 130), Word("Accepted", 160, 225, 122, 130)), 122, 130)
+    hrules = [HRule(105.0, 72.0, 300.0), HRule(140.0, 72.0, 300.0)]
+    out = weld_hrule_boxes([a, b], hrules, [72.0, 150.0, 300.0])
+    assert len(out) == 1
+    texts = sorted(w.text for w in out[0].words)
+    assert texts == ["ID", "Time Nom Accepted"]
+
+
+def test_weld_never_splits_and_ignores_partial_hrules():
+    """One row per box -> unchanged; an hrule NOT spanning the rule x-extent (a cell
+    border fragment) delimits nothing."""
+    from iladub.etkl.geometry import weld_hrule_boxes
+    a = Line((Word("A", 80, 90, 110, 118),), 110, 118)
+    b = Line((Word("B", 80, 90, 150, 158),), 150, 158)
+    full = [HRule(105.0, 72.0, 300.0), HRule(140.0, 72.0, 300.0), HRule(170.0, 72.0, 300.0)]
+    partial = [HRule(130.0, 72.0, 120.0)]          # spans a fraction of the width
+    assert weld_hrule_boxes([a, b], full, [72.0, 300.0]) == [a, b]
+    assert weld_hrule_boxes([a, b], full + partial, [72.0, 300.0]) == [a, b]
+
+
+def test_weld_without_hrules_is_identity():
+    from iladub.etkl.geometry import weld_hrule_boxes
+    a = Line((Word("A", 80, 90, 110, 118),), 110, 118)
+    assert weld_hrule_boxes([a], [], [72.0, 300.0]) == [a]

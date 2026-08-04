@@ -60,6 +60,9 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
 
     band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    if relines:
+        from .geometry import weld_hrule_boxes
+        relines = weld_hrule_boxes(relines, sub_hrules, xs)
     if not relines:
         return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
     band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)
