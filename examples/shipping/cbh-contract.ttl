@@ -1,0 +1,23 @@
+@prefix cbh:  <https://example.org/cbh#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Illustrative semantic data contract for a public CBH-style grain-receival roster (loop Q,
+# Task 6: the split-key naming cascade demo — spec 2026-08-04 §4.4). Same illustrative
+# posture as loop K's stem contract: example.org, public nomenclature, no identifying
+# fields. Declares TWO SKOS-scheme fields (port, commodity) on purpose — the cascade's
+# step 2 (unique-admitting-field AXIOM) needs an oracle to resolve CBH's bare section
+# markers ("GERALDTON", "KWINANA", ...) UNIQUELY to `port`; a second schemed field gives
+# the negative test (a doctored/extended terms graph, built in-test) a second admitting
+# field to force step 3's pick-among-verified path.
+cbh:cbh-contract a etkl:SemanticDataContract ;
+    rdfs:label "CBH grain receival roster"@en ;
+    etkl:targetClass cbh:ReceivalRecord ;
+    etkl:requiresKnowledge cbh:scheme-port , cbh:scheme-commodity ;
+    etkl:hasField cbh:f-port , cbh:f-commodity , cbh:f-id , cbh:f-client , cbh:f-volume .
+
+cbh:f-port      a etkl:Field ; etkl:fillsProperty cbh:port ;      etkl:admissibleScheme cbh:scheme-port .
+cbh:f-commodity a etkl:Field ; etkl:fillsProperty cbh:commodity ; etkl:admissibleScheme cbh:scheme-commodity .
+cbh:f-id        a etkl:Field ; etkl:fillsProperty cbh:id .
+cbh:f-client    a etkl:Field ; etkl:fillsProperty cbh:client .
+cbh:f-volume    a etkl:Field ; etkl:fillsProperty cbh:volume .

@@ -1,0 +1,248 @@
+"""Loop Q Task 6 (spec 2026-08-04 §4.3) — the split-key naming cascade. One test per
+cascade arm plus the cross-cutting invariants: every asserted name behind exactly one
+iladub:PromotionDecision, and confidence NEVER promotes (a high-scored zero-admitting
+proposal still quarantines)."""
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import SKOS
+
+from iladub.ground import load_contract
+from iladub.propose_ground import FakeSplitKeyNameProposer, ScoredKeyCandidate
+from iladub.splitkey import resolve_split_key_name
+
+ILADUB = Namespace("https://w3id.org/iladub#")
+CBH = Namespace("https://example.org/cbh#")
+CONTRACT = "examples/shipping/cbh-contract.ttl"
+TERMS = "examples/shipping/cbh-terms.ttl"
+
+WA_PORTS = ["GERALDTON", "KWINANA", "ALBANY", "ESPERANCE"]     # 4 of the 5 shipped ports
+GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
+
+
+def _contract():
+    return load_contract(CONTRACT)
+
+
+def _terms():
+    return Graph().parse(TERMS, format="turtle")
+
+
+class _RaisingProposer:
+    """Proves a cascade arm short-circuits: calling this must never happen."""
+    def propose_split_key_name(self, markers, context):
+        raise AssertionError("the proposer must not be called on this arm")
+
+
+def _grounded_nodes(g):
+    return list(g.subjects(RDF.type, ILADUB.GroundedNode))
+
+
+def _promotion_decisions(g):
+    return list(g.subjects(RDF.type, ILADUB.PromotionDecision))
+
+
+def _candidate_concepts(g):
+    return list(g.subjects(RDF.type, ILADUB.CandidateConcept))
+
+
+# --- Arm 1: AXIOM, explicit naming --------------------------------------------------
+
+def test_explicit_naming_short_circuits():
+    """A shared 'Key: Value' marker form names the dimension straight from the source —
+    no contract lookup (empty terms graph), no LLM (a proposer that raises if called)."""
+    markers = ["Port: GERALDTON", "Port: KWINANA", "Port: ALBANY"]
+    g = Graph()
+    res = resolve_split_key_name(markers, _contract(), Graph(), _RaisingProposer(), g)
+    assert res.outcome == "asserted"
+    assert res.name == "Port"
+    assert res.arm == "explicit-naming"
+    assert len(_grounded_nodes(g)) == 1
+    assert len(_promotion_decisions(g)) == 1
+    gn = _grounded_nodes(g)[0]
+    assert g.value(gn, ILADUB.wasPromotedBy) is not None
+    assert g.value(gn, ILADUB.status) == ILADUB.asserted
+
+
+def test_explicit_naming_abstains_on_a_bare_marker():
+    """CBH fails arm 1 (spec §4.3): its markers are bare values, no 'Key:' prefix — a
+    single non-conforming marker abstains the WHOLE arm, even when every other marker
+    DOES conform (the arm requires uniform explicit form across the full set)."""
+    from iladub.splitkey import _explicit_name
+    assert _explicit_name(["Port: GERALDTON", "Port: KWINANA"]) == "Port"     # uniform -> fires
+    assert _explicit_name(["Port: GERALDTON", "KWINANA"]) is None            # mixed -> abstains
+    assert _explicit_name(["GERALDTON", "KWINANA"]) is None                  # CBH's actual shape
+
+
+# --- Arm 2: AXIOM, unique admitting contract field ----------------------------------
+
+def test_unique_admitting_asserts_port_with_promotion_decision():
+    """CBH's bare markers vs the cbh-contract: only the `port` field's scheme admits the
+    whole marker set (commodity's scheme doesn't contain any of them) -> exactly one
+    admitting field -> asserts, no LLM needed."""
+    g = Graph()
+    res = resolve_split_key_name(WA_PORTS, _contract(), _terms(), _RaisingProposer(), g)
+    assert res.outcome == "asserted"
+    assert res.name == "port"
+    assert res.arm == "unique-admitting-field"
+    assert res.ambiguity_score == 1
+    assert res.field is not None and res.field.fills_property == str(CBH.port)
+    assert len(_grounded_nodes(g)) == 1
+    assert len(_promotion_decisions(g)) == 1
+    gn = _grounded_nodes(g)[0]
+    assert g.value(gn, ILADUB.groundsTo) == CBH.port
+    assert g.value(gn, ILADUB.wasPromotedBy) is not None
+
+
+def test_partial_membership_abstains_step_2():
+    """A marker set with one value OUTSIDE the port scheme (a typo/new port) is only a
+    PARTIAL match -> never asserts at step 2, falls to step 3 (proposer arm)."""
+    g = Graph()
+    markers = WA_PORTS + ["NOT-A-REAL-PORT"]
+    proposed = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("port", GIST_CATEGORY, 0.7, "geography vocabulary"),
+    ))
+    res = resolve_split_key_name(markers, _contract(), _terms(), proposed, g)
+    assert res.arm != "unique-admitting-field"
+    assert res.ambiguity_score == 0                       # port no longer whole-set-admits
+
+
+# --- Arm 3: NEURAL, BAML scored proposal --------------------------------------------
+
+def _doctored_terms_two_admitting():
+    """A terms graph where BOTH `port` and `commodity` schemes admit the whole WA-ports
+    marker set — the negative fixture spec §4.4 calls for, built in-test (not committed:
+    the real cbh-terms.ttl stays an honest, non-doctored public-nomenclature vocabulary)."""
+    terms = _terms()
+    for i, label in enumerate(WA_PORTS):
+        c = URIRef(str(CBH) + "commodity-decoy-%d" % i)
+        terms.add((c, RDF.type, SKOS.Concept))
+        terms.add((c, SKOS.inScheme, CBH["scheme-commodity"]))
+        terms.add((c, SKOS.prefLabel, Literal(label)))
+    return terms
+
+
+def test_two_admitting_fake_proposer_picks_among_verified():
+    """>=2 admitting fields (port AND the doctored commodity scheme both admit the whole
+    set): the Fake proposer's ranked candidates are matched against the VERIFIED admitting
+    fields only — the winner (highest-scoring MATCH) asserts."""
+    g = Graph()
+    terms = _doctored_terms_two_admitting()
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("port", GIST_CATEGORY, 0.91, "geography vocabulary"),
+        ScoredKeyCandidate("commodity", GIST_CATEGORY, 0.40, "less likely"),
+    ))
+    res = resolve_split_key_name(WA_PORTS, _contract(), terms, proposer, g)
+    assert res.outcome == "asserted"
+    assert res.name == "port"
+    assert res.arm == "proposer-pick-among-verified"
+    assert res.ambiguity_score == 2
+    assert len(_grounded_nodes(g)) == 1
+    assert len(_promotion_decisions(g)) == 1
+    gn = _grounded_nodes(g)[0]
+    assert g.value(gn, ILADUB.groundsTo) == CBH.port
+
+
+def test_two_admitting_ignores_a_proposal_that_names_no_verified_field():
+    """The proposer's TOP candidate doesn't name either verified field ('berth' matches
+    neither port nor commodity) -> the cascade must not fabricate a pick; it walks down to
+    the next candidate that DOES match a verified field."""
+    g = Graph()
+    terms = _doctored_terms_two_admitting()
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("berth", GIST_CATEGORY, 0.95, "top guess, but unverified"),
+        ScoredKeyCandidate("commodity", GIST_CATEGORY, 0.30, "verified, lower score"),
+    ))
+    res = resolve_split_key_name(WA_PORTS, _contract(), terms, proposer, g)
+    assert res.outcome == "asserted"
+    assert res.name == "commodity"
+    assert len(_grounded_nodes(g)) == 1
+
+
+def test_zero_admitting_quarantines_candidate_concept():
+    """No contract field admits the whole marker set: the top proposal stays a quarantined
+    CandidateConcept — nothing asserted, no GroundedNode, no PromotionDecision."""
+    g = Graph()
+    markers = ["NORTH ZONE", "SOUTH ZONE"]
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("region", GIST_CATEGORY, 0.6, "zone vocabulary"),
+    ))
+    res = resolve_split_key_name(markers, _contract(), _terms(), proposer, g)
+    assert res.outcome == "quarantined"
+    assert res.name is None
+    assert res.arm == "proposer-quarantine"
+    assert res.ambiguity_score == 0
+    assert not _grounded_nodes(g)
+    assert not _promotion_decisions(g)
+    cc = _candidate_concepts(g)
+    assert len(cc) == 1
+    assert g.value(cc[0], ILADUB.status) == ILADUB.proposed
+
+
+def test_confidence_never_promotes():
+    """A 0.99-scored zero-admitting proposal still quarantines — confidence is never a
+    substitute for a verified oracle (§3, the B1.2 confidence≠validity lesson)."""
+    g = Graph()
+    markers = ["NORTH ZONE", "SOUTH ZONE"]
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("port", GIST_CATEGORY, 0.99, "very confident guess"),
+    ))
+    res = resolve_split_key_name(markers, _contract(), _terms(), proposer, g)
+    assert res.outcome == "quarantined"
+    assert not _grounded_nodes(g)
+    assert not _promotion_decisions(g)
+    cc = _candidate_concepts(g)[0]
+    assert float(g.value(cc, ILADUB.confidence)) == 0.99
+    assert g.value(cc, ILADUB.status) == ILADUB.proposed          # never 'asserted'
+
+
+# --- Cross-cutting invariants -------------------------------------------------------
+
+def test_every_grounded_node_has_exactly_one_promotion():
+    """Across all three ASSERTING arms, sharing one graph: every GroundedNode carries
+    EXACTLY one wasPromotedBy, and every PromotionDecision produced exactly one
+    GroundedNode (1:1, no fan-out/fan-in)."""
+    g = Graph()
+    resolve_split_key_name(["Port: GERALDTON"], _contract(), Graph(), _RaisingProposer(), g)
+    resolve_split_key_name(WA_PORTS, _contract(), _terms(), _RaisingProposer(), g)
+    terms2 = _doctored_terms_two_admitting()
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("port", GIST_CATEGORY, 0.91, "geography vocabulary"),
+        ScoredKeyCandidate("commodity", GIST_CATEGORY, 0.40, "less likely"),
+    ))
+    resolve_split_key_name(WA_PORTS, _contract(), terms2, proposer, g)
+
+    gns = _grounded_nodes(g)
+    assert len(gns) == 3
+    for gn in gns:
+        promoters = list(g.objects(gn, ILADUB.wasPromotedBy))
+        assert len(promoters) == 1, (gn, promoters)
+
+    pds = _promotion_decisions(g)
+    assert len(pds) == 3
+    for pd in pds:
+        produced = [gn for gn in gns if g.value(gn, ILADUB.wasPromotedBy) == pd]
+        assert len(produced) == 1, (pd, produced)
+
+
+def test_asserted_shapes_conform_to_epistemics_shacl():
+    """The shipped promotion-invariant SHACL (used by ground.py's own tests) must accept
+    what this cascade asserts, and the quarantine path must never leak an 'asserted'
+    CandidateConcept."""
+    from iladub.validate import validate
+
+    def _knowledge():
+        kg = Graph()
+        for f in ("vocab/ontology/iladub.ttl", "vocab/ontology/dec.ttl"):
+            kg.parse(f, format="turtle")
+        return kg
+
+    def _shapes():
+        return Graph().parse("vocab/shapes/iladub-shapes.ttl", format="turtle")
+
+    g = Graph()
+    resolve_split_key_name(WA_PORTS, _contract(), _terms(), _RaisingProposer(), g)
+    resolve_split_key_name(["NORTH ZONE", "SOUTH ZONE"], _contract(), _terms(),
+                           FakeSplitKeyNameProposer((
+                               ScoredKeyCandidate("port", GIST_CATEGORY, 0.99, "guess"),
+                           )), g)
+    r = validate(g, _shapes(), _knowledge())
+    assert r.conforms, r.report_text
