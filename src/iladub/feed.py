@@ -404,6 +404,17 @@ def table_records(graph: Graph) -> list[Record]:
         # waits for naming). A table with no captions computes an empty list here and every one
         # of its rows keeps exactly today's identity — the byte-identity guarantee for every
         # table loop Q never touched.
+        #
+        # CAVEAT (reviewer's minor, task-5 review 2026-08-04): the prefixed id is a STRING, "
+        # > "-joined like every other rid this function mints — nothing here parses it back
+        # apart. A caption text that happened to look like `_row_discriminator`'s own output
+        # shape (`^p\d+ \S+$`, e.g. a caption literally reading "p0 table0-r0") would make the
+        # prefixed id ambiguous to a HYPOTHETICAL future parser trying to split "key" from
+        # "base" by pattern rather than by the one `>` this function itself inserts.
+        # UNREACHABLE today — no code in this repo parses a row_id back into parts; `rid` is
+        # read only as an opaque grounding-portal subject key (`_record_uri` slugs it whole)
+        # — named here so a future consumer does not assume the prefix is safely re-splittable
+        # by pattern-matching the base's shape.
         section_key = {t: (caps[0][0] if (caps := _table_captions(graph, t)) else None)
                        for t in members}
         rid_of = {}
