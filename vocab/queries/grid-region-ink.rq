@@ -1,0 +1,34 @@
+# grid-region-ink.rq — repair-scoped ink-witness interior derivation (loop Q Task 3,
+# spec 2026-08-04 §4.0). Salvaged VERBATIM from reverted commit b515283
+# (vocab/queries/grid-region.rq, loop P fixwave A) — the peel/weld defeat it fixes was
+# re-homed at SECTION scope (sectiongraph.py, loop Q) rather than shipped band-locally,
+# so this file is reachable ONLY via gridregion.grid_lines(..., ink_witness=True), which
+# compile._build_ruled_band calls ONLY when `section_repair=True` (the driver passes
+# that flag for a still-escalated band a page-level repeat group recognized — loop Q
+# Task 4). The DEFAULT band path keeps reading the unmodified grid-region.rq
+# (MIN/MAX-x interior test) — this file changes nothing about it.
+#
+# Open-world derivation over the per-band evidence graph (the band is the closure
+# boundary).
+#
+# A rule is INTERIOR iff it has ink on BOTH sides — tab:hasInkLeft/tab:hasInkRight,
+# emitted by gridregion.py from the band's words (a char/word CENTER strictly left,
+# resp. right, of the rule's x). A real column separator always has ink flanking it
+# on both sides; a double-drawn section-border twin has NO ink on its own outboard
+# side, however close it sits to another rule x. This replaces the band-local MIN/MAX-x
+# "strictly between the outermost rules" test, which a double-drawn edge defeats: on
+# the real CBH section the inner border twin sits strictly between the outer twin and
+# the far border, so the MIN/MAX-x test wrongly admits it (or the true outer rule
+# itself, once a twin extends the min/max past it) as interior (R31: closure by
+# PRESENCE, never distance — no tolerance survives a double-drawn edge).
+#
+# A line is a grid line iff an interior rule's y-extent crosses its center. ?x is
+# projected alongside ?idx so gridregion.interior_rule_xs can read this SAME query
+# result for the set of ink-interior rule x's — one AXIOM execution, two projections.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT DISTINCT ?idx ?x WHERE {
+  ?line a tab:BandLine ; tab:lineIndex ?idx ; tab:lineCenterY ?cy .
+  ?r a tab:RuleSpan ; tab:ruleX ?x ; tab:ruleTop ?rt ; tab:ruleBottom ?rb ;
+     tab:hasInkLeft true ; tab:hasInkRight true .
+  FILTER(?rt <= ?cy && ?rb >= ?cy)
+}

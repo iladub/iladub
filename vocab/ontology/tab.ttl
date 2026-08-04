@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.2.2" ;
+    owl:versionInfo "0.2.3" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -236,6 +236,12 @@ tab:RuleSpan a owl:Class ; rdfs:label "Vertical rule span (evidence)"@en ;
 tab:ruleX a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleTop a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleBottom a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
+tab:hasInkLeft a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:boolean ;
+    rdfs:label "has ink left"@en ;
+    rdfs:comment "Ink witness (loop P fixwave A, salvaged loop Q Task 3 — repair-scoped, grid-region-ink.rq only): true iff some band word/char CENTER lies strictly left of this rule's x (beyond COORD_EPS). A real interior column separator has ink on BOTH sides; a double-drawn section-border twin has none on its own outboard side, however close it sits to another rule (R31: closure by PRESENCE, never distance)."@en .
+tab:hasInkRight a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:boolean ;
+    rdfs:label "has ink right"@en ;
+    rdfs:comment "Ink witness (loop P fixwave A, salvaged loop Q Task 3 — repair-scoped, grid-region-ink.rq only): true iff some band word/char CENTER lies strictly right of this rule's x (beyond COORD_EPS). See tab:hasInkLeft."@en .
 # --- intra-page section-recognition evidence graph (transient, pre-holon; loop Q Task 2) ---
 tab:SectionBand a owl:Class ; rdfs:label "Section band (evidence)"@en ;
     rdfs:comment "A transient node standing for one RULED band of a page, carrying its header-box repetition signature for section-repeat.rq (spec §4.0). Recognition is VERDICT-INDEPENDENT: emitted for every ruled band the caller passes, escalated and already-asserting alike — a band whose header box could not be located (sectiongraph._header_box_text abstains) is simply never emitted, never a group of one."@en .

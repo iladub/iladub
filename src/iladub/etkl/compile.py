@@ -21,10 +21,22 @@ from .holon import assert_record_region, escalate_region, TAB
 _DOC = URIRef("https://example.org/etkl/doc")
 
 
-def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
+def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
     """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
     guard replicated this logic in its test body and was proven tautological).
+
+    `section_repair` (loop Q Task 3, default False): False is byte-identical to before this
+    parameter existed — the peel below reads grid_lines' default (band-level, MIN/MAX-x)
+    interior test, vocab/queries/grid-region.rq, exactly as shipped. True makes the SAME peel
+    call read the repair-scoped ink-witness variant instead (grid_lines(..., ink_witness=True)
+    -> grid-region-ink.rq, salvaged from reverted b515283) — everything else in this function
+    (the enclosed-lines guard, the leading-prefix rule in peel_leading_captions, the
+    leading-box weld in weld_hrule_boxes below) is UNCHANGED, still reading `xs` (every rule
+    x, not the ink-interior subset). Only `compile.page_bands` ever passes True, and only for
+    a band index the caller's `section_repair_bands` names (loop Q Task 4 wires that from the
+    driver's recognized, still-escalated repeat groups) — no other caller of this function is
+    affected.
 
     Flow — every refusal exits to the author-bucketed band, i.e. main's behavior:
       author-bucketed lines -> candidate boundaries (geometry.refine_rule_columns) ->
@@ -56,7 +68,7 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
     from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
         peel_leading_captions
-    gset = _grid_lines(sub, sub_rules)
+    gset = _grid_lines(sub, sub_rules, ink_witness=section_repair)
     enclosed = _enclosed_lines(sub, sub_rules)
     caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
     if caption_lines:
@@ -130,13 +142,26 @@ def _emit_band_captions(graph, table_uri, band):
         graph.add((table_uri, TAB.hasCaption, cap))
 
 
-def page_bands(pdf_path: str, page_number: int = 0):
+def page_bands(pdf_path: str, page_number: int = 0,
+               section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
 
     THE SEAM for loop M's document driver: continuation recognition must read the SAME bands the
     compile reads, or the recognized band and the compiled table are two different things and the
     chain links the wrong URIs. Extracted verbatim from compile_tables (which now calls it), so
     there is one band-construction path, not a copy that can drift.
+
+    BAND-INDEX ENUMERATION (loop Q Task 3, stated precisely since this is the load-bearing
+    contract for `section_repair_bands`): the index at which a band ends up in the `bands` list
+    THIS function returns is `len(bands)` at the moment of its append below — i.e. its final
+    position in append order, for a RULED band exactly as much as an unruled one (every sub-band
+    consumes one index, ruled or not). `compile_tables` calls `page_bands` and then enumerates
+    that SAME returned list unchanged (`for idx, band in enumerate(bands)`), so an index in
+    `section_repair_bands` names the identical band both here (feeding `_build_ruled_band`'s
+    `section_repair` flag) and in the driver's per-band verdict/report — there is exactly one
+    band-construction path and exactly one indexing scheme, never two that could drift apart.
+    `section_repair_bands=None` (the default) is falsy for every index, so every band builds with
+    `section_repair=False` — byte-identical to before this parameter existed.
     """
     from .geometry import extract_rules, extract_chars, extract_hrules
     from dataclasses import replace as _replace
@@ -151,13 +176,16 @@ def page_bands(pdf_path: str, page_number: int = 0):
         for sub in segment(band):
             sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
             sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
+            idx = len(bands)             # the position this band is about to occupy
             if not sub_rules:
                 bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
                 continue
             # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
             # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
             # become columns only when the header confirms them (_build_ruled_band, the seam).
-            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars))
+            section_repair = bool(section_repair_bands) and idx in section_repair_bands
+            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
+                                           section_repair=section_repair))
     return bands
 
 
@@ -228,7 +256,8 @@ def _validate(graph: Graph) -> tuple[bool, str]:
 def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None, doc_uri: URIRef | None = None,
-                   carried_header_roles: dict | None = None) -> CompilationReport:
+                   carried_header_roles: dict | None = None,
+                   section_repair_bands: frozenset[int] | None = None) -> CompilationReport:
     """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
     it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
     passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
@@ -247,10 +276,17 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     a reading for a band that `document.compile_document`'s continuation AXIOM did not license
     means asserting one table's header reading over another table's rows. The in-repo call graph
     upholds the invariant — `compile_document` is the only producer, and it keys the map by the
-    recognized band — but an external caller can bypass it. Registered as part of residue R34."""
+    recognized band — but an external caller can bypass it. Registered as part of residue R34.
+
+    `section_repair_bands` (loop Q Task 3, keyword-only, default None): forwarded verbatim to
+    `page_bands` — see its docstring for the exact band-index enumeration this parameter names
+    (the SAME index the `for idx, band in enumerate(bands)` loop just below uses, since `bands`
+    here IS `page_bands`' returned list, unmodified). None (the default — every caller before
+    this parameter existed, and every caller that omits it) makes `page_bands` build every band
+    with `section_repair=False`, byte-identical to before."""
     from .segment import is_multi_table_ambiguous
     doc = _DOC if doc_uri is None else doc_uri
-    bands = page_bands(pdf_path, page_number)
+    bands = page_bands(pdf_path, page_number, section_repair_bands=section_repair_bands)
     graph = Graph()
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
