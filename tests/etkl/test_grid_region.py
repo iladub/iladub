@@ -105,8 +105,13 @@ def test_peel_leading_captions_only():
     must SURVIVE in the band, never peeled. Peeling every non-grid line (the original
     Task-2 shape) swallowed page-local subtotal rows loop H/N's arithmetic derivations
     must see (test_continuation_licence/test_logical_arithmetic regression)."""
-    from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
-    heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)   # above interior rules -> LEADING, peeled
+    from iladub.etkl.gridregion import grid_lines, enclosed_lines, interior_rule_xs, \
+        straddling_lines, peel_leading_captions
+    # HEADING's word straddles x=150 (x0=130 < 150 < x1=170), the fixwave A round 2
+    # witness that distinguishes a peelable full-width strip from genuine column
+    # content (CBH's "GERALDTON"/notice strips chop mid-word at every interior rule
+    # they cross; a real header row's words never do — see straddling_lines).
+    heading = Line((Word("HEADING", 130, 170, 60, 70),), 60, 70)  # above interior rules -> LEADING, peeled
     row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
                   Word("C", 240, 280, 110, 120)), 110, 120)        # crossed by interior rules -> grid
     row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
@@ -121,7 +126,10 @@ def test_peel_leading_captions_only():
     gset = grid_lines(band, rules)
     assert gset == {1, 2}
     enclosed = enclosed_lines(band, rules)       # HEADING (60-70) IS inside the outer rules' 58-145
-    captions, kept = peel_leading_captions(lines, gset, enclosed)
+    ixs = interior_rule_xs(band, rules)
+    straddling = straddling_lines(band, ixs)
+    assert 0 in straddling, straddling           # HEADING's word crosses x=150
+    captions, kept = peel_leading_captions(lines, gset, enclosed, straddling)
     assert captions == (lines[0],)
     assert kept == (lines[1], lines[2], lines[3])   # TOTAL line survives, unpeeled
 
@@ -146,7 +154,8 @@ def test_peel_never_swallows_an_unenclosed_header_row():
     'leading-only' guard alone is INSUFFICIENT (it still swallowed this real case,
     since the floating row happens to be the sole leading line); enclosure is the
     second, necessary guard."""
-    from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
+    from iladub.etkl.gridregion import grid_lines, enclosed_lines, interior_rule_xs, \
+        straddling_lines, peel_leading_captions
     # "Voyage" floats at 16.9-25.9 with NO rule covering that y-range at all (rules
     # start at y=30) -- mirrors the real fixtures' measured geometry.
     lines = (_line(16.9, 25.9, "Voyage"),
@@ -159,8 +168,45 @@ def test_peel_never_swallows_an_unenclosed_header_row():
     assert gset == {1, 2}, gset          # "Voyage" (index 0) is not grid -> leading candidate
     enclosed = enclosed_lines(band, rules)
     assert 0 not in enclosed, enclosed   # "Voyage" is not covered by ANY rule's y-extent
-    captions, kept = peel_leading_captions(lines, gset, enclosed)
+    ixs = interior_rule_xs(band, rules)
+    straddling = straddling_lines(band, ixs)
+    captions, kept = peel_leading_captions(lines, gset, enclosed, straddling)
     assert captions == ()                # NOT peeled -> region stays HierarchicalTable-eligible
+    assert kept == lines
+
+
+def test_peel_never_swallows_a_rule_aligned_header_stack():
+    """Loop P fixwave A round 2 (measured on the real GrainCorp stem): a leading
+    line that IS enclosed by the outer rule's y-extent, but whose words sit
+    strictly INSIDE one rule column each (no straddling ink across any interior
+    rule -- the stem's leaf header / wrap rows, e.g. 'GC Fin Year Month Port',
+    one word per column), must NOT be peeled. The stem's interior verticals begin
+    BELOW the header stack, so the whole stack is 'above the rules' extent' and
+    enclosed by the outer box -- "leading + enclosed" alone wrongly peeled it as a
+    full-width strip, flattening a genuine header row into a headerless
+    RECORD_TABLE (measured: score 1.0000 vs truth 0.9655, chains [1,1,1] vs one
+    chain of 3, grounded 0 vs 585). Straddling ink is the missing witness."""
+    from iladub.etkl.gridregion import grid_lines, enclosed_lines, interior_rule_xs, \
+        straddling_lines, peel_leading_captions
+    header = Line((Word("GC", 80, 95, 60, 70), Word("Fin", 160, 178, 60, 70),
+                   Word("Year", 240, 265, 60, 70)), 60, 70)
+    row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
+                  Word("C", 240, 280, 110, 120)), 110, 120)
+    row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
+                  Word("3", 240, 280, 130, 140)), 130, 140)
+    lines = (header, row_a, row_1)
+    band = Band(lines, 60.0, 140.0)
+    rules = [Rule(72.0, 58.0, 145.0), Rule(300.0, 58.0, 145.0),
+             Rule(150.0, 105.0, 145.0), Rule(220.0, 105.0, 145.0)]
+    gset = grid_lines(band, rules)
+    assert gset == {1, 2}
+    enclosed = enclosed_lines(band, rules)
+    assert 0 in enclosed, enclosed          # the header line IS enclosed by the outer rule
+    ixs = interior_rule_xs(band, rules)
+    straddling = straddling_lines(band, ixs)
+    assert 0 not in straddling, straddling  # ...but none of its words straddle an interior rule
+    captions, kept = peel_leading_captions(lines, gset, enclosed, straddling)
+    assert captions == ()                   # NOT peeled -> stays a genuine header row
     assert kept == lines
 
 

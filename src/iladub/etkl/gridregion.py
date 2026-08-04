@@ -84,6 +84,37 @@ def interior_rule_xs(band: Band, rules: Sequence[Rule]) -> list[float]:
     return sorted({round(float(row.x), 2) for row in _grid_rows(band, rules)})
 
 
+def straddling_lines(band: Band, interior_xs: Sequence[float]) -> set[int]:
+    """Line indices with at least one word whose ink CROSSES an interior rule x
+    strictly (loop P fixwave A round 2 — the stem regression fix): some word `w`
+    with `w.x0 < x - COORD_EPS and w.x1 > x + COORD_EPS` for an interior x. Raw
+    geometric fact computation, the same PROCEDURAL class as grid_evidence's
+    ink-witness facts (it reads Band.lines' word bboxes directly; no decision
+    logic). It takes `interior_xs` — the AXIOM's already-derived interior rule
+    x's (via interior_rule_xs) — as an argument: a fact computed FROM a prior
+    derivation's result is still a fact, not a second decision.
+
+    Straddling ink across an author-drawn column boundary is positive evidence
+    the author did NOT mean the line as column content: CBH's 'GERALDTON'/notice
+    strips chop mid-word at every interior rule they cross (GERALDTO|N at
+    x=75.7) precisely because they are full-width prose, laid out with no regard
+    for the grid's columns. A genuine header/leaf row's words sit strictly
+    INSIDE one rule column each (loops C/G/L measured: the leaf is 1:1
+    rule-aligned; wraps are single-column) and never straddle — which is exactly
+    why the real GrainCorp stem's header stack (interior verticals beginning
+    BELOW the stack, so every stack line is enclosed by the outer box but
+    crosses no interior rule) was wrongly peeled by the leading+enclosed test
+    alone: it has no straddling word, so it is genuine column content that
+    happens not to be grid-crossed, not a full-width strip."""
+    out: set[int] = set()
+    for i, ln in enumerate(band.lines):
+        for w in ln.words:
+            if any(w.x0 < x - COORD_EPS and w.x1 > x + COORD_EPS for x in interior_xs):
+                out.add(i)
+                break
+    return out
+
+
 def enclosed_lines(band: Band, rules: Sequence[Rule]) -> set[int]:
     """Line indices ENCLOSED by at least one rule's y-extent (any rule — interior or
     outer). A leading strip only qualifies as document furniture (peelable) when it is
@@ -97,8 +128,9 @@ def enclosed_lines(band: Band, rules: Sequence[Rule]) -> set[int]:
 
 
 def peel_leading_captions(lines: Sequence, gset: set[int],
-                          enclosed: set[int] = frozenset()) -> tuple[tuple, tuple]:
-    """Split `lines` into (captions, kept): captions is the LEADING prefix strictly
+                          enclosed: set[int] = frozenset(),
+                          straddling: set[int] = frozenset()) -> tuple[tuple, tuple]:
+    """Split `lines` into (captions, kept): captions is a LEADING prefix strictly
     before the first grid-member index (min(gset)); kept is everything from there on,
     UNCHANGED. Loop P fix round 2 (regression repair): the peel's scope is strips
     ABOVE the grid only (spec §3) — an INTERIOR or TRAILING non-grid line (e.g. a
@@ -107,24 +139,41 @@ def peel_leading_captions(lines: Sequence, gset: set[int],
     rows that loop H/N's arithmetic derivations must see, breaking
     test_continuation_licence/test_logical_arithmetic on real fixtures.
 
-    A second guard, ALSO required (measured — "leading-only" alone was insufficient:
-    page_local_group_two_page_pdf's/case3_with_subtotals_pdf's "Voyage" merged parent
-    header row is itself the sole LEADING non-grid line, so restricting to a leading
-    run still swallowed it, flipping the region's classification away from
-    HierarchicalTable and breaking the very same two tests): every leading candidate
-    line must be ENCLOSED by some rule's y-extent (`enclosed_lines`) — a floating
-    header-hierarchy label with no rule anywhere near it is not document furniture and
-    is never peeled. Passing no `enclosed` (the default, empty set) is the conservative
-    abstain: nothing is peeled, byte-identical to "no peel".
+    A leading line peels only when it holds BOTH witnesses:
+      - ENCLOSED (`enclosed_lines`) — covered by some rule's y-extent, typically the
+        section's own outer border, proving it lies INSIDE the same author-drawn
+        section as the grid. A floating header-hierarchy label with no rule anywhere
+        near it (page_local_group_two_page_pdf's/case3_with_subtotals_pdf's "Voyage")
+        is not document furniture and is never peeled.
+      - STRADDLING (`straddling_lines`, loop P fixwave A round 2 — the stem
+        regression fix): at least one word's ink crosses an interior rule x. This is
+        the discriminating witness "leading + enclosed" alone lacks: on the real
+        GrainCorp stem, the interior verticals begin BELOW the header stack, so
+        every stack line is enclosed by the outer box (like a genuine caption) yet
+        crosses no interior rule — "leading + enclosed" alone wrongly peeled the
+        stem's wrap rows and leaf header as a headerless flat table. Straddling ink
+        across a column boundary is positive evidence of a full-width strip (CBH's
+        "GERALDTON"/notice chop mid-word at every rule they cross); its absence is
+        evidence of genuine column content, even when ungrid-crossed itself.
 
-    Returns ((), tuple(lines)) whenever gset is empty, its minimum is already 0, or the
-    leading run is not fully enclosed — no partial/ambiguous peel is ever produced."""
+    The peel walks the leading run from line 0 and STOPS at the first line failing
+    either witness — nothing beyond that point ever peels (the prefix rule stands).
+    This subsumes the old all-or-nothing abstain (a failure at line 0 peels nothing)
+    while allowing a genuine multi-line leading caption to peel up to, but not past,
+    a line that fails. Passing no `enclosed`/`straddling` (the defaults, empty sets)
+    is the conservative abstain: nothing is peeled, byte-identical to "no peel".
+
+    Returns ((), tuple(lines)) whenever gset is empty, its minimum is already 0, or
+    the very first leading line already fails a witness."""
     lines = tuple(lines)
     if not gset:
         return (), lines
     first = min(gset)
     if first <= 0:
         return (), lines
-    if not all(i in enclosed for i in range(first)):
+    k = 0
+    while k < first and k in enclosed and k in straddling:
+        k += 1
+    if k == 0:
         return (), lines
-    return lines[:first], lines[first:]
+    return lines[:k], lines[k:]

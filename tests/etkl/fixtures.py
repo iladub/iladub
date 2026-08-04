@@ -1502,8 +1502,16 @@ def sectioned_ruled_table_pdf(path):
     # near-identical-segment merge (which requires x AND top AND bottom all close).
     c.line(cols[0] + 0.3, y(grid_bot), cols[0] + 0.3, y(sec_top + 2))
     c.line(cols[-1] - 0.3, y(grid_bot), cols[-1] - 0.3, y(sec_top + 2))
-    # full-width strips: heading + notice (NO interior rules up here)
-    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
+    # full-width strips: heading + notice (NO interior rules up here). fixwave A
+    # round 2 (fixture truthfulness check, measured): a bare "GERALDTON" (9 Courier-9
+    # chars from cols[0]+4=76) ends at x=124.6 -- short of cols[1]=172, so it would
+    # NOT straddle the first interior rule, unlike the real CBH heading. "TERMINAL"
+    # is appended (still substring-safe for the "GERALDTON" truth text) so the line
+    # has a word (x0=130, x1=173.2) that DOES cross x=172, mirroring the real
+    # section's straddling heading/notice ink (see fixwave-a-report.md round 2 for
+    # the measured word extents). The notice's "UNAVAILABLE" (x0=146.2, x1=205.6,
+    # measured) already straddles cols[1]=172 unmodified.
+    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON TERMINAL")
     c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
     # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
     for x in cols[1:-1]:

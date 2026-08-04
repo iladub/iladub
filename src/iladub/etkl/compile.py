@@ -55,7 +55,8 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # "leading-only" alone still swallowed a floating merged-header row with no rule
     # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
     from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
-        interior_rule_xs as _interior_rule_xs, peel_leading_captions
+        interior_rule_xs as _interior_rule_xs, straddling_lines as _straddling_lines, \
+        peel_leading_captions
     gset = _grid_lines(sub, sub_rules)
     enclosed = _enclosed_lines(sub, sub_rules)
     # loop P fixwave A: the ink-interior rule x's (real column separators — has ink
@@ -65,7 +66,12 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # test below. rule_aware_lines' own column bucketing (xs, just above) is
     # UNCHANGED — it keeps using every rule x, including the outer edges.
     interior_xs = _interior_rule_xs(sub, sub_rules)
-    caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
+    # fixwave A round 2 (stem regression fix): the straddling witness — a leading
+    # line peels only if it ALSO has a word crossing an interior rule; without it,
+    # "leading + enclosed" alone wrongly peeled a rule-aligned header stack whose
+    # interior verticals start below it (measured on the real GrainCorp stem).
+    straddling = _straddling_lines(sub, interior_xs)
+    caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed, straddling)
     if caption_lines:
         sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
 
