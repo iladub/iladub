@@ -23,13 +23,16 @@ pytestmark = pytest.mark.corpus
 
 # Wall-clock ceiling per document — test infrastructure, not a tuned semantic
 # constant (precedent: tests/etkl/test_derivation_perf.py). Derivation (measured):
-# the whole 3-page stem compile cost 180 s at loop-N close
-# (tests/test_corpus_stem.py::stem_document) + ~23% headroom. Under the
+# loop N's 180 s figure (tests/test_corpus_stem.py::stem_document) went stale after
+# loop O added licence gating; the controller's real-battery run re-measured the
+# whole 3-page stem compile at 254.1 s on 2026-08-04 (this machine, post-loop-O) +
+# ~26% headroom, adjudicated by François (fix round 1, 2026-08-04). Under the
 # fluent-reader invariant (spec §2) a HANG is a harness defect — the alarm turns it
-# into a visible failure. R39 (row-group-nesting.rq, ~93 s of that budget) is the
-# named perf slice that will lower this. Never raise it to make a document pass:
-# report the overrun instead.
-BUDGET_S = 222
+# into a visible failure. R39 (row-group-nesting.rq) is still the dominant cost and
+# remains the named perf slice that will lower this. Never raise it to make a
+# document pass without adjudication: report the overrun instead — this raise WAS
+# adjudicated (see above).
+BUDGET_S = 320
 
 
 def manifest_entries(manifest_path):
