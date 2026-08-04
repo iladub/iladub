@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.2.1" ;
+    owl:versionInfo "0.2.2" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -236,6 +236,15 @@ tab:RuleSpan a owl:Class ; rdfs:label "Vertical rule span (evidence)"@en ;
 tab:ruleX a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleTop a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleBottom a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
+# --- intra-page section-recognition evidence graph (transient, pre-holon; loop Q Task 2) ---
+tab:SectionBand a owl:Class ; rdfs:label "Section band (evidence)"@en ;
+    rdfs:comment "A transient node standing for one RULED band of a page, carrying its header-box repetition signature for section-repeat.rq (spec §4.0). Recognition is VERDICT-INDEPENDENT: emitted for every ruled band the caller passes, escalated and already-asserting alike — a band whose header box could not be located (sectiongraph._header_box_text abstains) is simply never emitted, never a group of one."@en .
+tab:bandIndex a owl:DatatypeProperty ; rdfs:domain tab:SectionBand ; rdfs:range xsd:integer ; rdfs:label "band index"@en ;
+    rdfs:comment "The band's 0-based position among the page's bands, exactly as the driver (compile.page_bands) enumerates them — the identifier section_candidates groups and returns."@en .
+tab:headerBoxText a owl:DatatypeProperty ; rdfs:domain tab:SectionBand ; rdfs:range rdfs:Literal ; rdfs:label "header box text"@en ;
+    rdfs:comment "The grid region's leading full-width author-drawn hrule box (geometry.leading_hrule_box's box arithmetic), its K line texts joined with a newline, K = the box's line count. Two bands are the same repeated section only if this text is verbatim-identical between them AND their tab:ruleXsSignature agrees."@en .
+tab:ruleXsSignature a owl:DatatypeProperty ; rdfs:domain tab:SectionBand ; rdfs:range rdfs:Literal ; rdfs:label "rule x-positions signature"@en ;
+    rdfs:comment "A canonical space-joined string of the band's DISTINCT rounded (2dp) vertical rule x-positions, ascending — ALL of the band's rules, not just the grid-region.rq 'interior' subset (that test is exactly what a doubled-edge section defeats; reusing it here would reintroduce the same defeat one level up). Named honestly for what it is (an identity signature over every drawn rule x), not 'interiorRuleXs' — see sectiongraph.py."@en .
 tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
     rdfs:comment "The classification verdict for a band. Its individuals are verdicts, NOT the compiled-holon table classes (tab:RecordTable a owl:Class subClassOf tab:Table) — hence the distinct '…Kind' IRIs to avoid dual-typing an existing class."@en .
 tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .

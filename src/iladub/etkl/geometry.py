@@ -312,6 +312,27 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
     return sorted(lines, key=lambda ln: ln.top)
 
 
+def leading_hrule_box(hrules: Sequence[HRule], rule_xs: Sequence[float]) -> tuple[float, float] | None:
+    """The (top, bottom) y-extent of the grid's LEADING (topmost) author-drawn
+    FULL-WIDTH hrule box — the box arithmetic `weld_hrule_boxes` uses to decide which
+    rows to merge, factored out so a caller that needs only the box's IDENTITY (not
+    the merge) reuses the exact same arithmetic instead of duplicating it (loop Q's
+    section-repeat header-box signature, spec §4.0).
+
+    A full-width hrule spans the rule x-extent (both ends within COORD_EPS of
+    [min(rule_xs), max(rule_xs)] or beyond); boxes are consecutive full-width hrule
+    y-pairs. Returns None (honest abstain) with fewer than 2 rule x's or fewer than 2
+    distinct full-width hrule y's — no box can be formed."""
+    if not hrules or len(rule_xs) < 2:
+        return None
+    lo, hi = min(rule_xs), max(rule_xs)
+    full = sorted({round(h.y, 2) for h in hrules
+                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
+    if len(full) < 2:
+        return None
+    return full[0], full[1]
+
+
 def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
                      rule_xs: Sequence[float]) -> list[Line]:
     """Merge re-extracted rows that share the grid's LEADING (topmost) author-drawn
@@ -338,14 +359,11 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
     top-to-bottom with single spaces; the merged Word's bbox is the union of its parts."""
     if not relines or not hrules or len(rule_xs) < 2:
         return list(relines)
-    lo, hi = min(rule_xs), max(rule_xs)
-    full = sorted({round(h.y, 2) for h in hrules
-                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
-    if len(full) < 2:
+    box = leading_hrule_box(hrules, rule_xs)
+    if box is None:
         return list(relines)
     out: list[Line] = []
-    boxes = list(zip(full, full[1:]))
-    leading_top, leading_bottom = boxes[0]
+    leading_top, leading_bottom = box
 
     def box_of(ln: Line):
         cy = (ln.top + ln.bottom) / 2.0

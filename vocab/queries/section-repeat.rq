@@ -1,0 +1,22 @@
+# section-repeat.rq — intra-page section recognition (loop Q Task 2, spec §4.0).
+#
+# Open-world derivation over the per-page evidence graph (the page is the closure
+# boundary — one fresh Graph per section_candidates call, exactly like classify-kind.rq
+# and grid-region.rq close within their own transient graphs). Two ruled bands are the
+# SAME repeated author-drawn section iff BOTH their header-box text (tab:headerBoxText —
+# the leading full-width hrule box's line texts, joined) and their rule-x signature
+# (tab:ruleXsSignature — the band's DISTINCT rounded rule x-positions, space-joined) are
+# verbatim-identical. Recognition is VERDICT-INDEPENDENT: the caller passes ALL ruled
+# bands of the page, escalated and already-asserting alike; a band whose header box or
+# grid region could not be located emits no facts at all (sectiongraph.py's honest
+# abstain) and so can never appear here.
+#
+# Every value compared here is a FACT emitted by sectiongraph.py (raw geometry/text at
+# emission time) — this query contains no numeric literal. The reader (section_candidates)
+# assembles the derived (?a, ?b) pairs into connected groups of >= 2 band indices.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?a ?b WHERE {
+  ?u1 a tab:SectionBand ; tab:bandIndex ?a ; tab:headerBoxText ?ht ; tab:ruleXsSignature ?rx .
+  ?u2 a tab:SectionBand ; tab:bandIndex ?b ; tab:headerBoxText ?ht ; tab:ruleXsSignature ?rx .
+  FILTER(?a < ?b)
+}
