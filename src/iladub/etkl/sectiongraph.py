@@ -77,20 +77,45 @@ def _header_box_text(band: Band, rules: Sequence[Rule]) -> str | None:
 def _leading_box_y(band: Band, rules: Sequence[Rule]) -> tuple[float, float] | None:
     """The header box's Y-extent (top, bottom): `leading_hrule_box`'s exact box
     arithmetic (weld_hrule_boxes' own full-width test — reused VERBATIM, never
-    duplicated) when it locates a box; otherwise the first two DISTINCT
-    author-drawn hrule y-positions present in the band, X-EXTENT-FREE.
+    duplicated) when it locates a box; otherwise the fallback below.
 
-    The fallback is necessary and deliberate, not a shortcut: a doubled/inset outer
-    border (the real-CBH shape `multi_section_ruled_pdf` reproduces, spec §4.0)
-    defeats ANY coordinate-tolerance x-extent test the same way it defeats
-    grid_lines's interior-x test — see gridregion.grid_lines's inertness note; by
-    design, band-LOCAL machinery cannot see past a doubled edge. This module exists
-    precisely to recognize that repeated shape at PAGE scope instead, so it must not
-    inherit the same band-local blind spot for its OWN header-box identity. Dropping
-    the x-extent guard here is safe: unlike weld_hrule_boxes (which uses the box to
-    MERGE cell text and so must never merge a false box), a wrong y-only box here
-    only ever produces a wrong-but-deterministic FACT — a false GROUP still requires
-    the full compound match (header-box text AND rule-x signature, both verbatim)."""
+    THE DECISION (stated precisely, per CLAUDE.md §8): when the full-width test
+    abstains, select the author's first two DISTINCT drawn hrule y-positions,
+    X-EXTENT-FREE, as the CANDIDATE header box.
+
+    CLASSIFICATION: PROCEDURAL candidate generation, not a reading. It is a raw,
+    mechanical selection over author marks — sort the drawn hrule y's, take the two
+    lowest — the same shape as `extract_words`/`extract_rules`: a presence/ordering
+    test with zero tuned constant, zero magnitude comparison, zero invented mark
+    (every y here was drawn by the author; nothing is synthesised).
+
+    IRREDUCIBILITY: this candidate is never asserted as a reading — it never answers
+    "is this the header box" on its own, and it never reaches the graph as a fact
+    about the DOCUMENT's meaning. It reaches the graph only as `tab:headerBoxText`,
+    one input to `section-repeat.rq`'s compound match. THAT derivation is the
+    disposal: two candidates are treated as the SAME repeated header only when BOTH
+    the candidate's line texts AND the band's independent `tab:ruleXsSignature`
+    agree, verbatim, across bands. A wrong candidate on a real document produces
+    non-matching facts — no group, honest abstain — never a false assertion; it can
+    only ever cost RECALL (missing a repeat), never accuracy (fabricating one). This
+    is the AXIOM playing the oracle's role that a NEURAL proposal would otherwise
+    need a GenAI+SHACL/tiling oracle for — here the oracle is `section-repeat.rq`
+    itself, so the candidate needs no separate disposal step of its own.
+
+    WHY NOT AXIOM-only (emit every candidate pair, let the query choose): considered
+    and deferred, not ruled out — see residues.md R48. It is real work (widening the
+    evidence graph and the query's shape) not yet warranted by a measured document;
+    every fixture measured so far has the true header box as one of the first two
+    hrule y's, so there is no live case where a WIDER candidate set would change the
+    outcome.
+
+    WHY THE FALLBACK EXISTS AT ALL: a doubled/inset outer border (the real-CBH shape
+    `multi_section_ruled_pdf` reproduces, spec §4.0) defeats ANY coordinate-tolerance
+    x-extent test the same way it defeats grid_lines's interior-x test — see
+    gridregion.grid_lines's inertness note; by design, band-LOCAL machinery (weld)
+    cannot see past a doubled edge. This module exists precisely to recognize that
+    repeated shape at PAGE scope instead, so it must not inherit the same band-local
+    blind spot for its own header-box candidate."""
     xs = sorted({round(r.x, 2) for r in rules})
     box = leading_hrule_box(band.hrules, xs)
     if box is not None:
