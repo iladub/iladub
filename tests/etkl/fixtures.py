@@ -1465,13 +1465,89 @@ def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
             "label_page0": "Alpha", "label_page1": label1}
 
 
+def _draw_section(c, H, y_off, key, notice, rows, cols, doubled_edges=False):
+    """Draw ONE CBH-shaped section (spec 2026-08-04 §3 CORRECTION) at vertical offset
+    `y_off` (added to every top-based coordinate, so callers stack sections downward on
+    one page): an author-drawn section box containing, top to bottom, a bare key heading,
+    one notice line (both full-width strips no interior rule crosses), then an
+    interior-ruled grid whose header row is ONE hrule-delimited box holding TWO visual
+    text lines (col 1's name wraps: 'Time Nom' / 'Accepted'; cols 0/2/3 are single-line,
+    vertically centered), then the given data rows. Interior vertical rules span ONLY
+    the grid rows.
+
+    doubled_edges (loop Q Task 1, salvaged from commit b515283's edit to
+    `sectioned_ruled_table_pdf`): when True, draws the real-CBH DOUBLED outer border (a
+    second, near-coincident vertical stroke per edge, 0.3pt in from the true border —
+    measured left twins at 37.92/38.2, right twins at 1151.1/1151.5) with the full-width
+    hrules starting 0.5pt INSIDE that doubled border (measured hrules 38.4->1151.6) —
+    the geometry that defeats loop P's grid-region ink-witness interior test the same
+    way it defeated the pre-b515283 min/max-x test, so the section-scope repair (§4.0)
+    has a real escalated band to repair. Default False keeps the plain single-rule
+    border (the clean-edged, already-asserting shape `sectioned_ruled_table_pdf` pins).
+
+    Extracted from `sectioned_ruled_table_pdf` (loop Q Task 1) so `multi_section_ruled_pdf`
+    can stack N of this exact shape on one page — the drawing is byte-identical to the
+    pre-extraction body at y_off=0, key='GERALDTON', notice='BERTH MAY BE UNAVAILABLE
+    2000HRS', doubled_edges=False. Returns `grid_bot` (the section's bottom edge,
+    top-coords) so callers can place a trailing total line or the next section below it.
+    """
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    # CBH-fidelity spacing (fix round 1): the real section is ONE detect_bands band —
+    # tight, near-uniform line pitch (~6-8pt text gaps throughout), not the original
+    # fixture's 23pt notice->grid-top gap (which made detect_bands split heading+notice
+    # off from the grid before _build_ruled_band ever saw them together). Shape/content
+    # UNCHANGED — spacing only: heading->notice gap ~8pt, notice->grid-top gap ~7pt,
+    # header-box internal gap ~5pt, header-box->row0 and inter-row gaps ~9pt each.
+    sec_top, grid_top, hdr_bot, grid_bot = (60 + y_off, 95 + y_off, 123 + y_off, 185 + y_off)
+    # the section OUTER border (spans heading + notice + grid, like CBH's)
+    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    if doubled_edges:
+        # DOUBLED outer border (loop P fixwave A -- fixture truthfulness): a second,
+        # near-coincident vertical stroke per edge, 0.3pt in from the true border --
+        # mirrors the real CBH section's double-drawn edges, which defeats any
+        # x-distance-tolerance interior test (R31: closure by PRESENCE, never distance
+        # -- no tolerance survives a double-drawn edge that sits closer to its own twin
+        # than any tolerance would allow). The twin's y-extent is inset 2pt at the top
+        # so it is NOT deduplicated against the outer rect's own edge by extract_rules's
+        # near-identical-segment merge (which requires x AND top AND bottom all close).
+        c.line(cols[0] + 0.3, y(grid_bot), cols[0] + 0.3, y(sec_top + 2))
+        c.line(cols[-1] - 0.3, y(grid_bot), cols[-1] - 0.3, y(sec_top + 2))
+    # full-width strips: heading + notice (NO interior rules up here)
+    c.drawString(cols[0] + 4, y(sec_top + 14), key)
+    c.drawString(cols[0] + 4, y(sec_top + 31), notice)
+    # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
+    for x in cols[1:-1]:
+        c.line(x, y(grid_bot), x, y(grid_top))
+    if doubled_edges:
+        # full-width hrules start 0.5pt INSIDE the doubled outer border (never flush
+        # with either twin), mirroring the real section's measured hrules (38.4->1151.6)
+        # sitting inside its border twins (37.92/38.2, 1151.1/1151.5).
+        hx0, hx1 = cols[0] + 0.8, cols[-1] - 0.8
+    else:
+        hx0, hx1 = cols[0], cols[-1]
+    # full-width hrules: grid top, header-box bottom, grid bottom
+    for hy in (grid_top, hdr_bot, grid_bot):
+        c.line(hx0, y(hy), hx1, y(hy))
+    # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
+    # name, line B carries the centered single-line names + the wrap's second word
+    c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")
+    c.drawString(cols[0] + 4, y(grid_top + 26), "ID")
+    c.drawString(cols[1] + 4, y(grid_top + 26), "Accepted")
+    c.drawString(cols[2] + 4, y(grid_top + 26), "Client")
+    c.drawString(cols[3] + 4, y(grid_top + 26), "Volume")
+    # data rows
+    for k, row in enumerate(rows):
+        ry = hdr_bot + 16 + 18 * k
+        for x, cell in zip(cols, row):
+            c.drawString(x + 4, y(ry), cell)
+    return grid_bot
+
+
 def sectioned_ruled_table_pdf(path, trailing_total=False):
-    """The CBH shape (spec 2026-08-04 §3 CORRECTION): one author-drawn section box
-    containing, top to bottom: a bare key heading, one notice line (both full-width
-    strips no interior rule crosses), then an interior-ruled grid whose header row is
-    ONE hrule-delimited box holding TWO visual text lines (col 1's name wraps:
-    'Time Nom' / 'Accepted'; cols 0/2/3 are single-line, vertically centered), then
-    three data rows. Interior vertical rules span ONLY the grid rows.
+    """The CBH shape (spec 2026-08-04 §3 CORRECTION) — ONE `_draw_section` at y_off=0.
+    See `_draw_section` for the drawn shape.
 
     trailing_total (loop P final-review F1 pin): when True, adds ONE per-section total
     line BELOW the grid's closing rule (grid_bot), at the same tight ~9pt line pitch as
@@ -1489,41 +1565,12 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
         return H - top
 
     cols = [72, 172, 292, 392, 492]   # 4 columns: ID | Time Nom Accepted | Client | Volume
-    # CBH-fidelity spacing (fix round 1): the real section is ONE detect_bands band —
-    # tight, near-uniform line pitch (~6-8pt text gaps throughout), not the original
-    # fixture's 23pt notice->grid-top gap (which made detect_bands split heading+notice
-    # off from the grid before _build_ruled_band ever saw them together). Shape/content
-    # UNCHANGED — spacing only: heading->notice gap ~8pt, notice->grid-top gap ~7pt,
-    # header-box internal gap ~5pt, header-box->row0 and inter-row gaps ~9pt each.
-    sec_top, grid_top, hdr_bot, grid_bot = 60, 95, 123, 185
     c = canvas.Canvas(path, pagesize=letter)
     c.setFont("Courier", 9)
-    # the section OUTER border (spans heading + notice + grid, like CBH's)
-    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
-    # full-width strips: heading + notice (NO interior rules up here)
-    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
-    c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
-    # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
-    for x in cols[1:-1]:
-        c.line(x, y(grid_bot), x, y(grid_top))
-    # full-width hrules: grid top, header-box bottom, grid bottom
-    for hy in (grid_top, hdr_bot, grid_bot):
-        c.line(cols[0], y(hy), cols[-1], y(hy))
-    # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
-    # name, line B carries the centered single-line names + the wrap's second word
-    c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")
-    c.drawString(cols[0] + 4, y(grid_top + 26), "ID")
-    c.drawString(cols[1] + 4, y(grid_top + 26), "Accepted")
-    c.drawString(cols[2] + 4, y(grid_top + 26), "Client")
-    c.drawString(cols[3] + 4, y(grid_top + 26), "Volume")
-    # three data rows
     rows = [("10097", "15:01", "Brahman", "30,000"),
             ("10076", "14:38", "CBH", "50,000"),
             ("10118", "11:28", "Cargill", "48,904")]
-    for k, row in enumerate(rows):
-        ry = hdr_bot + 16 + 18 * k
-        for x, cell in zip(cols, row):
-            c.drawString(x + 4, y(ry), cell)
+    grid_bot = _draw_section(c, H, 0, "GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS", rows, cols)
     truth = {"cols": cols,
              "header_names": ["ID", "Time Nom Accepted", "Client", "Volume"],
              "caption_texts": ["GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS"]}
@@ -1536,3 +1583,159 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
         truth["trailing_total_text"] = "TOTAL"
     c.save()
     return truth
+
+
+def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True) -> dict:
+    """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
+    sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
+    (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
+    header/columns/interior-rule x-set, each followed (with_totals=True) by a full-width
+    total line drawn the same way as `sectioned_ruled_table_pdf`'s `trailing_total`
+    (below the grid's closing rule, no new hrule) — the sum of the Volume column,
+    comma-formatted. Section keys are real WA public port names (spec §4.4's demo
+    contract): 'GERALDTON', 'KWINANA' for n=2.
+
+    The doubled edges are load-bearing (measured 2026-08-04): a CLEAN-edged section (the
+    `sectioned_ruled_table_pdf` shape, `doubled_edges=False`) already asserts at band
+    level under today's `_build_ruled_band` — loop P's peel/weld handles it — so a
+    multi-section fixture built from clean-edged copies never gives the section-scope
+    repair (§4.0) anything to repair (each copy just asserts on its own; confirmed via a
+    `compile_tables` probe, both `RECORD_TABLE`/`asserted`/score 1.0). The doubled edges
+    defeat that same inline peel/weld the way they defeat the real CBH (this is the
+    documented target of the repair, not an artifact of the fixture), so each section band
+    escalates — which is the shape loop Q's section-repair (§4.0), stitching (§4.1), and
+    key attribution (§4.2) pins are actually built against. The repeated 3-line header
+    block is loop M's repeated-header signature, intra-page.
+
+    Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
+    """
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    H = letter[1]
+
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]   # same 4 columns/interior-rule x-set as the single section
+    keys = ["GERALDTON", "KWINANA", "ALBANY", "ESPERANCE"]
+    notices = [
+        "BERTH MAY BE UNAVAILABLE 2000HRS",
+        "VESSEL DELAYED PENDING SURVEY",
+        "PILOT BOOKING REQUIRED 24H PRIOR",
+        "CHANNEL DEPTH RESTRICTED NEAP TIDE",
+    ]
+    row_sets = [
+        [("10097", "15:01", "Brahman", "30,000"),
+         ("10076", "14:38", "CBH", "50,000"),
+         ("10118", "11:28", "Cargill", "48,904")],
+        [("20011", "09:15", "Viterra", "40,000"),
+         ("20032", "10:47", "CBH", "35,500"),
+         ("20050", "13:02", "GrainCorp", "52,600")],
+        [("30014", "07:22", "Bunge", "25,300"),
+         ("30028", "12:05", "CBH", "31,750"),
+         ("30041", "16:40", "Viterra", "22,900")],
+        [("40019", "08:50", "GrainCorp", "44,200"),
+         ("40033", "11:15", "Bunge", "38,600"),
+         ("40058", "14:29", "CBH", "29,750")],
+    ]
+    if n_sections > len(keys):
+        raise ValueError(f"multi_section_ruled_pdf supports at most {len(keys)} sections")
+
+    header_names = ["ID", "Time Nom Accepted", "Client", "Volume"]
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    # STEP is the per-section footprint (section body ~125pt + total-line pitch ~18pt +
+    # a >40pt gap, well over the ~9-16pt intra-section line pitch, so detect_bands always
+    # splits sections into distinct raw bands) — same drawing, shifted down the page.
+    STEP = 190.0
+    sections = []
+    for i in range(n_sections):
+        y_off = i * STEP
+        rows = row_sets[i]
+        grid_bot = _draw_section(c, H, y_off, keys[i], notices[i], rows, cols,
+                                  doubled_edges=True)
+        total = None
+        if with_totals:
+            vol_sum = sum(int(r[3].replace(",", "")) for r in rows)
+            total = f"{vol_sum:,}"
+            total_ry = grid_bot + 8
+            c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
+            c.drawString(cols[3] + 4, y(total_ry), total)
+        sections.append({"key": keys[i], "notice": notices[i], "rows": rows, "total": total})
+    c.save()
+    return {"sections": sections, "header_names": header_names, "cols": cols}
+
+
+def stem_shaped_ruled_table_pdf(path):
+    """The real GrainCorp stem's shape (loop P fixwave A round 3 — the fixture that
+    would have caught round 2's regression before the controller had to; SALVAGED for
+    loop Q Task 1 from reverted commit 6d7aa60, self-contained, no drawing-helper
+    dependency, so the salvage is a verbatim copy). One bare furniture line (a
+    date/context banner) above a TWO-line UNRULED header stack (one word per eventual
+    column; NO hrule box drawn around it, unlike CBH's boxed wrapped header) above a
+    grid whose interior verticals start BELOW the stack, and whose data rows are each
+    their OWN single-row hrule box (never a shared multi-row box). The furniture line
+    and the header stack are both a leading run, enclosed by the section's own outer
+    border — exactly the evidence round 1's "leading + enclosed" test and round 2's
+    per-line straddle witness both accepted, wrongly peeling this shape and stranding
+    loop L's row-above-the-block-rule licence. The opening-header-box disposal check
+    (round 3) must ABSTAIN here: the kept region's first full-width hrule box holds
+    exactly 1 row, never >= 2.
+
+    Loop Q reuses this shape as the monotonicity witness for §4.0's section-scope
+    repair: it has NO intra-page section repetition (a single section, no repeated
+    header block), so the repair must never fire on it — same regions/verdicts/reasons/
+    graph as a driver without the repair (test_repair_is_monotone_on_stem_shape)."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    H = letter[1]
+
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]   # 4 columns, same shape as CBH's
+    sec_top = 60                      # furniture line ("Friday, 31 July 2026")
+    hdr1_top, hdr2_top = 78, 92       # the 2-line UNRULED header stack
+    grid_top = 110                    # interior verticals start HERE -- BELOW the stack
+    row_h = 12
+    n_rows = 3
+    grid_bot = grid_top + row_h * n_rows   # 146
+
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    # the section OUTER border spans the FULL section (furniture + header stack +
+    # grid), exactly like CBH's -- both leading lines are enclosed by it, so the
+    # "leading + enclosed" proposal fires; only the opening-box disposal check
+    # (round 3) tells this shape apart from CBH's.
+    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    # furniture line (leading, non-grid, enclosed -- the peel PROPOSAL's target)
+    c.drawString(cols[0] + 4, y(sec_top + 14), "Friday, 31 July 2026")
+    # the 2-line unruled header stack -- one word per eventual column, NO hrule box
+    c.drawString(cols[0] + 4, y(hdr1_top + 10), "GC")
+    c.drawString(cols[1] + 4, y(hdr1_top + 10), "Fin")
+    c.drawString(cols[2] + 4, y(hdr1_top + 10), "Year")
+    c.drawString(cols[0] + 4, y(hdr2_top + 10), "Month")
+    c.drawString(cols[1] + 4, y(hdr2_top + 10), "Port")
+    c.drawString(cols[2] + 4, y(hdr2_top + 10), "Reference")
+    c.drawString(cols[3] + 4, y(hdr2_top + 10), "Number")
+    # interior vertical rules: GRID ROWS ONLY, starting BELOW the header stack
+    for x in cols[1:-1]:
+        c.line(x, y(grid_bot), x, y(grid_top))
+    # each data row is its OWN single-row hrule box (n_rows+1 full-width hrules,
+    # one per row boundary) -- the discriminator: CBH's header opens with ONE box
+    # holding 2 rows; this grid opens with a box holding exactly 1.
+    for k in range(n_rows + 1):
+        hy = grid_top + row_h * k
+        c.line(cols[0], y(hy), cols[-1], y(hy))
+    rows = [("10097", "15:01", "Brahman", "30,000"),
+            ("10076", "14:38", "CBH", "50,000"),
+            ("10118", "11:28", "Cargill", "48,904")]
+    for k, row in enumerate(rows):
+        ry = grid_top + row_h * k + row_h - 3
+        for x, cell in zip(cols, row):
+            c.drawString(x + 4, y(ry), cell)
+    c.save()
+    return {"cols": cols,
+            "furniture_text": "Friday, 31 July 2026",
+            "header_words": ["GC", "Fin", "Year", "Month", "Port", "Reference", "Number"],
+            "data_rows": rows}
