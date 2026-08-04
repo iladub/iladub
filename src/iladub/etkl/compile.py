@@ -162,6 +162,13 @@ def page_bands(pdf_path: str, page_number: int = 0,
     band-construction path and exactly one indexing scheme, never two that could drift apart.
     `section_repair_bands=None` (the default) is falsy for every index, so every band builds with
     `section_repair=False` — byte-identical to before this parameter existed.
+
+    Disambiguation (review round 1, minor): "the driver's per-band verdict/report" above means
+    THIS function's own caller, `compile_tables`'s per-PAGE loop (`for idx, band in
+    enumerate(bands)`) — NOT `document.py`'s multi-PAGE driver, which enumerates pages, not
+    bands, and (loop Q Task 4) will compute a fresh `section_repair_bands` per page from
+    `sectiongraph.section_candidates` before calling `compile_tables` again for that page's
+    pass-2 read. The index space this docstring pins is always page-local.
     """
     from .geometry import extract_rules, extract_chars, extract_hrules
     from dataclasses import replace as _replace

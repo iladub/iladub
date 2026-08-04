@@ -5,6 +5,7 @@ pytest.importorskip("pdfplumber")
 pytest.importorskip("reportlab")
 
 from rdflib import RDF
+from rdflib.compare import isomorphic
 
 from iladub.etkl.compile import compile_tables
 from iladub.etkl.document import compile_document
@@ -173,18 +174,15 @@ def test_section_repair_flag_peels_doubled_edge_captions(tmp_path):
     assert any("GERALDTON" in t for t in texts), texts
 
 
-def test_grid_lines_ink_witness_defeats_doubled_border():
-    """Resurrected from reverted b515283 (`test_grid_lines_interior_rule_presence`),
-    renamed + flag-scoped to loop Q's repair path: a line is grid iff an INTERIOR
-    rule (ink witness: some band word CENTER on BOTH sides, tab:hasInkLeft/
-    tab:hasInkRight) crosses it. A double-drawn outer-border twin, positioned
-    strictly between the true outer rule and the far border — which widens the
-    default min/max-x span so the TRUE outer rule wrongly passes IT as interior —
-    has no ink on its own outboard side, so `ink_witness=True` never admits either
-    the twin or the true outer rule as interior."""
+def _doubled_border_band_and_rules():
+    """The doubled-outer-border evidence shared by
+    `test_grid_lines_ink_witness_defeats_doubled_border` and
+    `test_interior_rule_xs_excludes_doubled_border` (review round 1 minor): one
+    band, four visual lines (heading/notice above the grid, two grid rows below),
+    six rules — a true outer pair (72.0/300.0), their doubled TWINS
+    (71.7/300.3), and the two real interior column separators (150.0/220.0)."""
     from iladub.etkl.bands import Band
     from iladub.etkl.geometry import Line, Rule, Word
-    from iladub.etkl.gridregion import grid_lines
     heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)
     notice = Line((Word("NOTICE", 80, 128, 75, 85), Word("TEXT", 138, 170, 75, 85)), 75, 85)
     row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
@@ -199,6 +197,20 @@ def test_grid_lines_ink_witness_defeats_doubled_border():
              Rule(300.3, 58.0, 145.0),            # outer-right TWIN (doubled border)
              Rule(150.0, 105.0, 145.0),           # INTERIOR: ink on both sides
              Rule(220.0, 105.0, 145.0)]           # INTERIOR: ink on both sides
+    return band, rules
+
+
+def test_grid_lines_ink_witness_defeats_doubled_border():
+    """Resurrected from reverted b515283 (`test_grid_lines_interior_rule_presence`),
+    renamed + flag-scoped to loop Q's repair path: a line is grid iff an INTERIOR
+    rule (ink witness: some band word CENTER on BOTH sides, tab:hasInkLeft/
+    tab:hasInkRight) crosses it. A double-drawn outer-border twin, positioned
+    strictly between the true outer rule and the far border — which widens the
+    default min/max-x span so the TRUE outer rule wrongly passes IT as interior —
+    has no ink on its own outboard side, so `ink_witness=True` never admits either
+    the twin or the true outer rule as interior."""
+    from iladub.etkl.gridregion import grid_lines
+    band, rules = _doubled_border_band_and_rules()
     assert grid_lines(band, rules, ink_witness=True) == {2, 3}
     # the default (band-level, non-repair) path stays byte-identical to today's
     # shipped inertness: the min/max-x test now admits the TRUE outer rules
@@ -207,6 +219,18 @@ def test_grid_lines_ink_witness_defeats_doubled_border():
     # defeat section-scope repair exists to fix (gridregion.grid_lines's inertness
     # note), pinned here as the contrast, not a bug in this test.
     assert grid_lines(band, rules) == {0, 1, 2, 3}
+
+
+def test_interior_rule_xs_excludes_doubled_border():
+    """Minor (review round 1): `interior_rule_xs`, salvaged alongside `grid_lines`
+    but never directly pinned, on the SAME evidence as the test above: only the
+    two real interior column separators (150.0, 220.0) have ink on BOTH sides —
+    the true outer rules AND their doubled twins (71.7/72.0/300.0/300.3) never
+    qualify, however close a twin sits to another rule x (R31: presence, not
+    distance)."""
+    from iladub.etkl.gridregion import interior_rule_xs
+    band, rules = _doubled_border_band_and_rules()
+    assert interior_rule_xs(band, rules) == [150.0, 220.0]
 
 
 def test_grid_region_ink_query_has_no_numeric_literal():
@@ -220,7 +244,18 @@ def test_grid_region_ink_query_has_no_numeric_literal():
 
 
 def _report_signature(rep):
-    return ([(r.kind, r.verdict, r.reason, r.cells) for r in rep.regions], rep.score)
+    """Every DETERMINISTIC, non-BNode-bearing field of a CompilationReport, for a
+    byte-identity comparison across two separate `compile_tables` calls.
+    `r.ascii` is included after verifying empirically (review round 1 F1: not
+    assumed) that it renders identically across both calls on all three fixtures
+    this pin exercises. `r.table_uri`/`r.header_reading` are deliberately NOT
+    listed here: `table_uri` is a plain URIRef (no BNode), so any mismatch there
+    would already break `rep.graph`'s isomorphism check below; `header_reading`
+    is an opaque object with no `__eq__` worth pinning on its own."""
+    return (
+        [(r.kind, r.verdict, r.reason, r.cells, r.ascii) for r in rep.regions],
+        rep.score, rep.asserted, rep.escalated,
+    )
 
 
 def test_section_repair_bands_none_is_byte_identical(tmp_path):
@@ -230,7 +265,18 @@ def test_section_repair_bands_none_is_byte_identical(tmp_path):
     single-section fixture, the stem-shaped (unruled-header) fixture, and the
     doubled-edge multi-section fixture this very flag exists to repair (its bands
     must escalate identically with or without the parameter present -- Task 4 is
-    what actually repairs them)."""
+    what actually repairs them).
+
+    Review round 1 F1: the report-field comparison alone (kind/verdict/reason/
+    cells/ascii/score/asserted/escalated) is necessary but not sufficient -- it
+    never looks at `rep.graph`, the actual compiled PRODUCT. Strengthened with an
+    ISOMORPHISM-aware graph comparison (`rdflib.compare.isomorphic`, NOT turtle-
+    string / triple-set equality): `holon.py` mints raw BNodes for cell/row
+    structure, so two runs' graphs can be the correct SAME graph without being
+    triple-for-triple identical (a BNode's opaque local id is not stable across
+    two independent compiles) -- isomorphism is the right notion of graph
+    equality here, exactly as `rdflib.compare`'s own docs recommend for BNode-
+    bearing graphs."""
     for name, builder in (
         ("sectioned", sectioned_ruled_table_pdf),
         ("stem-shaped", stem_shaped_ruled_table_pdf),
@@ -241,3 +287,38 @@ def test_section_repair_bands_none_is_byte_identical(tmp_path):
         omitted = compile_tables(str(pdf))
         explicit_none = compile_tables(str(pdf), section_repair_bands=None)
         assert _report_signature(omitted) == _report_signature(explicit_none), name
+        assert isomorphic(omitted.graph, explicit_none.graph), name
+
+
+def test_section_repair_bands_targets_only_the_named_index(tmp_path):
+    """F2 (review round 1): the flag's positive reach through the PUBLIC path was
+    untested -- every other test in this file either calls `_build_ruled_band`
+    directly (bypassing the `idx in section_repair_bands` glue) or passes
+    `section_repair_bands=None` (never exercising the `True` branch at all). This
+    pins the selection mechanism itself, through `page_bands` -- the same public
+    glue `compile_tables` forwards to and Task 4's driver will call.
+
+    Index mapping verified empirically (not assumed) with a probe script on
+    `multi_section_ruled_pdf`: `page_bands` returns exactly 2 bands, both ruled,
+    in page order -- band 0 = the GERALDTON section (top ~66.7), band 1 = the
+    KWINANA section (top ~256.7).
+
+    The honest MINIMAL form (per the review note): full `compile_tables`
+    assertion state does not yet change here -- probed separately, the region
+    still classifies MATRIX_AMBIGUOUS regardless of whether band 0 peeled,
+    because that classification happens upstream of the caption carry
+    (`_emit_band_captions` never runs for an escalated region); making the
+    peel's effect reach a compiled VERDICT is Task 4's job (recognition +
+    pass-2 re-compile + monotone adoption), not this task's. What Task 3 owns,
+    and what this test pins directly, is that `section_repair_bands={0}` peels
+    ONLY band 0's captions -- band 1, excluded from the set, stays exactly as
+    inert as the shipped default."""
+    from iladub.etkl.compile import page_bands
+    pdf = tmp_path / "multi.pdf"
+    truth = multi_section_ruled_pdf(str(pdf))
+    bands = page_bands(str(pdf), section_repair_bands=frozenset({0}))
+    assert len(bands) == 2, bands
+    assert bands[0].captions, bands[0].captions
+    texts0 = [" ".join(w.text for w in ln.words) for ln in bands[0].captions]
+    assert any(truth["sections"][0]["key"] in t for t in texts0), texts0
+    assert bands[1].captions == (), bands[1].captions
