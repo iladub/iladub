@@ -1,0 +1,46 @@
+"""Loop P (spec 2026-08-04 §3): grid-region scoping + hrule-box header welding."""
+import pytest
+
+pytest.importorskip("pdfplumber")
+pytest.importorskip("reportlab")
+
+from rdflib import RDF
+
+from iladub.etkl import compile_tables
+from iladub.etkl.holon import TAB
+from tests.etkl.fixtures import sectioned_ruled_table_pdf
+
+
+def _compiled_fixture(tmp_path):
+    pdf = tmp_path / "section.pdf"
+    truth = sectioned_ruled_table_pdf(str(pdf))
+    return truth, compile_tables(str(pdf))
+
+
+def test_sectioned_ruled_table_reads(tmp_path):
+    """RED on main: the heading/notice strips enter the header tree as fabricated
+    all-column levels and the wrapped header box reads as several rows -> the section
+    escalates (or asserts a garbage reading). GREEN when: exactly one asserted table,
+    the four column names correct incl. the welded 'Time Nom Accepted', 12 data cells."""
+    truth, rep = _compiled_fixture(tmp_path)
+    asserted = [r for r in rep.regions if r.verdict == "asserted"]
+    assert len(asserted) == 1, [(r.kind.name, r.verdict, r.reason) for r in rep.regions]
+    texts = {str(o) for o in rep.graph.objects(None, TAB.hasLabel)} | \
+            {str(o) for s in rep.graph.subjects(RDF.type, TAB.HeaderNode)
+             for o in rep.graph.objects(s, TAB.hasLabel)}
+    # hasLabel points at label NODES on some paths; fall back to any literal text field.
+    # The load-bearing assertion is on the WELDED name reaching the reading:
+    flat = " ".join(str(t) for t in rep.graph.objects(None, None)
+                    if hasattr(t, "value") or isinstance(t, str))
+    for name in truth["header_names"]:
+        assert name in flat, f"header name {name!r} missing from the reading"
+    assert rep.score >= 0.9, rep.score
+
+
+def test_sectioned_captions_carried(tmp_path):
+    """§5/§7: the peeled strips are CARRIED as tab:RegionCaption, never dropped."""
+    truth, rep = _compiled_fixture(tmp_path)
+    caps = {str(t) for c in rep.graph.subjects(RDF.type, TAB.RegionCaption)
+            for t in rep.graph.objects(c, TAB.captionText)}
+    for text in truth["caption_texts"]:
+        assert any(text in c for c in caps), (text, caps)

@@ -1463,3 +1463,53 @@ def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
             "page0_rows": body0, "page1_rows": body1, "page1_local_sum": 250,
             "conflicting_labels": conflicting_labels,
             "label_page0": "Alpha", "label_page1": label1}
+
+
+def sectioned_ruled_table_pdf(path):
+    """The CBH shape (spec 2026-08-04 §3 CORRECTION): one author-drawn section box
+    containing, top to bottom: a bare key heading, one notice line (both full-width
+    strips no interior rule crosses), then an interior-ruled grid whose header row is
+    ONE hrule-delimited box holding TWO visual text lines (col 1's name wraps:
+    'Time Nom' / 'Accepted'; cols 0/2/3 are single-line, vertically centered), then
+    three data rows. Interior vertical rules span ONLY the grid rows."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    H = letter[1]
+
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]   # 4 columns: ID | Time Nom Accepted | Client | Volume
+    sec_top, grid_top, hdr_bot, grid_bot = 60, 110, 140, 200
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    # the section OUTER border (spans heading + notice + grid, like CBH's)
+    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    # full-width strips: heading + notice (NO interior rules up here)
+    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
+    c.drawString(cols[0] + 4, y(sec_top + 30), "BERTH MAY BE UNAVAILABLE 2000HRS")
+    # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
+    for x in cols[1:-1]:
+        c.line(x, y(grid_bot), x, y(grid_top))
+    # full-width hrules: grid top, header-box bottom, grid bottom
+    for hy in (grid_top, hdr_bot, grid_bot):
+        c.line(cols[0], y(hy), cols[-1], y(hy))
+    # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
+    # name, line B carries the centered single-line names + the wrap's second word
+    c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")
+    c.drawString(cols[0] + 4, y(grid_top + 24), "ID")
+    c.drawString(cols[1] + 4, y(grid_top + 24), "Accepted")
+    c.drawString(cols[2] + 4, y(grid_top + 24), "Client")
+    c.drawString(cols[3] + 4, y(grid_top + 24), "Volume")
+    # three data rows
+    rows = [("10097", "15:01", "Brahman", "30,000"),
+            ("10076", "14:38", "CBH", "50,000"),
+            ("10118", "11:28", "Cargill", "48,904")]
+    for k, row in enumerate(rows):
+        ry = hdr_bot + 16 + 18 * k
+        for x, cell in zip(cols, row):
+            c.drawString(x + 4, y(ry), cell)
+    c.save()
+    return {"cols": cols,
+            "header_names": ["ID", "Time Nom Accepted", "Client", "Volume"],
+            "caption_texts": ["GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS"]}
