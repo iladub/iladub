@@ -45,7 +45,14 @@ def grid_evidence(band: Band, rules: Sequence[Rule]) -> Graph:
 
 def grid_lines(band: Band, rules: Sequence[Rule]) -> set[int]:
     """Grid-member line indices. Abstains (empty set) when the evidence cannot
-    decide: fewer than 3 DISTINCT rule x-positions means no rule can be interior."""
+    decide: fewer than 3 DISTINCT rule x-positions means no rule can be interior.
+
+    Inertness marker (F3, final review): on the real CBH specimen, this MIN/MAX-x
+    interior test is defeated by doubled border rules — the section's outer border is
+    drawn as a pair of near-coincident verticals (x=37.92/38.2), so the OUTER border
+    itself gets admitted as "interior" and the peel this feeds never fires there. See
+    R42's measured map (`docs/superpowers/residues.md`) — the repair is re-homed at
+    SECTION scope (loop Q), not this band-local MIN/MAX test."""
     if len({round(r.x, 2) for r in rules}) < 3:
         return set()
     g = grid_evidence(band, rules)

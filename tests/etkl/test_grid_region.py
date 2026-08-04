@@ -207,3 +207,61 @@ def test_weld_without_hrules_is_identity():
     from iladub.etkl.geometry import weld_hrule_boxes
     a = Line((Word("A", 80, 90, 110, 118),), 110, 118)
     assert weld_hrule_boxes([a], [], [72.0, 300.0]) == [a]
+
+
+def test_weld_scope_leading_box_only_trailing_total_not_welded(tmp_path):
+    """F1 pin (final review Critical), E2E reproduction of the reviewer's silent-wrong:
+    sectioned_ruled_table_pdf + ONE trailing total line below the grid's closing rule.
+    The total line extends the word-based band's bottom past grid_bot, pulling the
+    already-drawn grid_bot hrule into the ruled sub-band's hrules. Before this fix,
+    weld_hrule_boxes welded EVERY full-width hrule box, so the (hdr_bot, grid_bot) box
+    then contained all three data rows and they welded into one Line/cell per column
+    ('10097 10076 10118' | '15:01 14:38 11:28' | ...), asserting a single RECORD_TABLE
+    region at score 1.0. After the fix (weld scope = the leading/topmost full-width box
+    only), the three data rows stay separate rows; the trailing box is never welded."""
+    pdf = tmp_path / "section_trailing.pdf"
+    truth = sectioned_ruled_table_pdf(str(pdf), trailing_total=True)
+    rep = compile_tables(str(pdf))
+    cell_texts = [str(t) for t in rep.graph.objects(None, TAB.cellText)]
+    # the silent-wrong pin: no cell is two-or-more data-row IDs welded together
+    assert not any("10097 10076" in t or "10076 10118" in t for t in cell_texts), cell_texts
+    # each ID survives as its OWN cell -- the three rows were never merged
+    assert "10097" in cell_texts, cell_texts
+    assert "10076" in cell_texts, cell_texts
+    assert "10118" in cell_texts, cell_texts
+    # the welded header name still reaches the leaf labels (leading-box weld unaffected)
+    labels = _labels(rep.graph)
+    assert "Time Nom Accepted" in labels, labels
+    for name in truth["header_names"]:
+        assert name in labels, (name, labels)
+
+
+def test_weld_scope_only_first_box_welds():
+    """F1 unit pin: two full-width hrule boxes, each holding 2 rows -> only the FIRST
+    (leading/topmost) box welds; the second box's rows pass through unwelded."""
+    from iladub.etkl.geometry import weld_hrule_boxes
+    a1 = Line((Word("A1", 80, 90, 110, 118),), 110, 118)
+    a2 = Line((Word("A2", 80, 90, 122, 130),), 122, 130)
+    b1 = Line((Word("B1", 80, 90, 150, 158),), 150, 158)
+    b2 = Line((Word("B2", 80, 90, 162, 170),), 162, 170)
+    hrules = [HRule(105.0, 72.0, 300.0),   # box 0 top
+              HRule(140.0, 72.0, 300.0),   # box 0 bottom / box 1 top
+              HRule(175.0, 72.0, 300.0)]   # box 1 bottom
+    out = weld_hrule_boxes([a1, a2, b1, b2], hrules, [72.0, 300.0])
+    assert len(out) == 3, out                       # box0's two rows welded, box1's two kept
+    texts = [tuple(w.text for w in ln.words) for ln in out]
+    assert texts[0] == ("A1 A2",), texts
+    assert texts[1] == ("B1",), texts
+    assert texts[2] == ("B2",), texts
+
+
+def test_weld_all_partial_hrules_is_identity():
+    """Deferred minor 2: a full-width set with fewer than 2 members (every hrule here is
+    partial, spanning only a fraction of the rule x-extent) -> identity, all three lines
+    pass through untouched — no box can be formed."""
+    from iladub.etkl.geometry import weld_hrule_boxes
+    a = Line((Word("A", 80, 90, 110, 118),), 110, 118)
+    b = Line((Word("B", 80, 90, 130, 138),), 130, 138)
+    c = Line((Word("C", 80, 90, 150, 158),), 150, 158)
+    partial = [HRule(105.0, 72.0, 150.0), HRule(125.0, 72.0, 150.0), HRule(145.0, 72.0, 150.0)]
+    assert weld_hrule_boxes([a, b, c], partial, [72.0, 300.0]) == [a, b, c]

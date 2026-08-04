@@ -314,19 +314,28 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
 
 def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
                      rule_xs: Sequence[float]) -> list[Line]:
-    """Merge re-extracted rows that share one author-drawn FULL-WIDTH hrule box
-    (loop P; loop H's marks-are-the-row-delimiters, applied as a merge LICENCE: the
-    drawn box containing both rows is positive evidence they are one row — the CBH
-    header's wrapped names). Justified PROCEDURAL raw extraction: pure containment
-    over author marks; the only epsilon is the shipped COORD_EPS; welding only ever
-    MERGES rows inside a box — it never splits, and with no full-width hrules it is
-    the identity.
+    """Merge re-extracted rows that share the grid's LEADING (topmost) author-drawn
+    FULL-WIDTH hrule box (loop P; loop H's marks-are-the-row-delimiters, applied as a
+    merge LICENCE: the drawn box containing both rows is positive evidence they are one
+    row — the CBH header's wrapped names). Justified PROCEDURAL raw extraction: pure
+    containment over author marks; the only epsilon is the shipped COORD_EPS; welding
+    only ever MERGES rows inside the leading box — it never splits, and with fewer than
+    two full-width hrules (or no leading multi-row box) it is the identity.
+
+    Final-review F1 (Critical, silent-wrong fix): the licence is scoped to the grid's
+    HEADER region only (spec §3) — the leading full-width box, i.e. the one opening at
+    the FIRST full-width hrule y. Every later full-width box (data rows, a per-section
+    total below the grid's closing rule, ...) passes through UNWELDED. Welding every
+    full-width box was silently wrong: a trailing total line below the grid extends the
+    band past the grid's closing rule, pulling that rule into `hrules`, which then forms
+    a (header-bottom, grid-bottom) box spanning every data row — welding them all into
+    one fabricated row (see tests/etkl/test_grid_region.py's trailing-total pin).
 
     A full-width hrule spans the band's rule x-extent (both ends within COORD_EPS of
     [min(rule_xs), max(rule_xs)] or beyond). Boxes are consecutive full-width hrule
-    pairs; a row belongs to a box iff its y-center lies inside. Within a merged row,
-    each column's words join top-to-bottom with single spaces; the merged Word's bbox
-    is the union of its parts."""
+    pairs; only box 0 (the leading box) ever groups rows — a row's y-center inside any
+    later box is left untouched. Within a merged row, each column's words join
+    top-to-bottom with single spaces; the merged Word's bbox is the union of its parts."""
     if not relines or not hrules or len(rule_xs) < 2:
         return list(relines)
     lo, hi = min(rule_xs), max(rule_xs)
@@ -336,12 +345,12 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
         return list(relines)
     out: list[Line] = []
     boxes = list(zip(full, full[1:]))
+    leading_top, leading_bottom = boxes[0]
 
     def box_of(ln: Line):
         cy = (ln.top + ln.bottom) / 2.0
-        for bi, (a, b) in enumerate(boxes):
-            if a <= cy <= b:
-                return bi
+        if leading_top <= cy <= leading_bottom:
+            return 0
         return None
 
     i = 0

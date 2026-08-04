@@ -65,6 +65,8 @@ Two more exemplars shipped, both green on their synthetic fixture (490/490 in
   hrule box (a wrapped header name split across two printed lines) into one row, per
   rule-column text joined top-to-bottom. Merge-only, licensed purely by containment
   inside a drawn box — no distance, no tuned tolerance beyond the shipped `COORD_EPS`.
+  Final review (F1, 2026-08-04): the licence is scoped to the grid's LEADING
+  (header-)box only, per spec §3 — every later full-width box passes through unwelded.
 
 **The negative lesson (measured, not merely argued):** a gate-clean licence — evidence-
 positive, presence-tested, zero tuned constants, exactly the shape §8 asks for — can
