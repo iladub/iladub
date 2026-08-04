@@ -1585,7 +1585,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
     return truth
 
 
-def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True) -> dict:
+def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
+                            bad_total_in: int | None = None) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1606,6 +1607,12 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     escalates — which is the shape loop Q's section-repair (§4.0), stitching (§4.1), and
     key attribution (§4.2) pins are actually built against. The repeated 3-line header
     block is loop M's repeated-header signature, intra-page.
+
+    bad_total_in (loop Q Task 4): the index of ONE section whose printed total is TAMPERED
+    (true Volume sum + 1) — the negative-evidence knob for the section-total oracle: exact
+    Decimal arithmetic must refuse the association (no tab:SectionTotal / tab:confirmsSection
+    for that section; a DocumentReport note instead). The returned truth dict's "total" carries
+    the PRINTED (tampered) string, since the truth of the drawing is what was drawn.
 
     Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
     """
@@ -1657,6 +1664,8 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
         total = None
         if with_totals:
             vol_sum = sum(int(r[3].replace(",", "")) for r in rows)
+            if bad_total_in is not None and i == bad_total_in:
+                vol_sum += 1              # the tamper: off by exactly one, never reconciles
             total = f"{vol_sum:,}"
             total_ry = grid_bot + 8
             c.drawString(cols[0] + 4, y(total_ry), "TOTAL")

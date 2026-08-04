@@ -312,6 +312,20 @@ tab:DetectedAggregationRowShape a sh:NodeShape ;
                   sh:message "A detected aggregation row needs exactly one aggregationFunction." ] .
 
 #################################################################
+#  Section totals (loop Q): a row CLAIMED as a confirmed
+#  per-section total must name exactly the one section table its
+#  arithmetic confirmed — a SectionTotal typing without its
+#  tab:confirmsSection witness (or with two) is a contradiction of
+#  the term's own definition (typed only where the section-scoped
+#  exact arithmetic confirmed, one section per total row).
+#################################################################
+
+tab:SectionTotalShape a sh:NodeShape ;
+    sh:targetClass tab:SectionTotal ;
+    sh:property [ sh:path tab:confirmsSection ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A confirmed section total names exactly one section table it confirms." ] .
+
+#################################################################
 #  Derived row groups (loop I): a derived group must be
 #  explained — one label (the source key cell), at least one
 #  member, and its witnessing aggregation row. Targets the

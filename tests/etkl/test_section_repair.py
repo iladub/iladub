@@ -322,3 +322,124 @@ def test_section_repair_bands_targets_only_the_named_index(tmp_path):
     texts0 = [" ".join(w.text for w in ln.words) for ln in bands[0].captions]
     assert any(truth["sections"][0]["key"] in t for t in texts0), texts0
     assert bands[1].captions == (), bands[1].captions
+
+
+# --- Task 4: the driver's section repair — recognition, pass-2 re-compile, monotone
+# adoption, intra-page chains, arithmetic totals (spec §4.0/§4.1 as corrected) ---
+
+
+def test_adoption_withdraws_the_pass1_escalation_record(tmp_path):
+    """Adopting a band's pass-2 re-read SUPERSEDES its pass-1 escalation record: the
+    `#region{idx}` CandidateConcept triples are withdrawn whole (two parallel truths
+    over one band would leave the feed to pick by iteration order — the
+    _supersede_page_groups idiom), the adoption is recorded on `repaired_bands`, and
+    the page's score is recomputed honestly from the per-band token ledger."""
+    from rdflib import URIRef
+    from iladub.etkl.document import page_doc_uri
+    from iladub.etkl.holon import ILADUB
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf))
+    rep = compile_document(str(pdf))
+    assert rep.repaired_bands == ((0, 0), (0, 1)), rep.repaired_bands
+    for idx in (0, 1):
+        cand = URIRef(f"{page_doc_uri(0)}#region{idx}")
+        assert not list(rep.graph.predicate_objects(cand)), cand
+    assert not list(rep.graph.subjects(RDF.type, ILADUB.CandidateConcept))
+    assert rep.score == 1.0, rep.score
+    # the per-band token ledger's invariant: the page totals ARE the bands' sums
+    page = rep.pages[0]
+    assert sum(r.tokens_asserted for r in page.regions) == page.asserted
+    assert sum(r.tokens_escalated for r in page.regions) == page.escalated
+
+
+def test_adoption_swaps_only_asserting_bands(tmp_path, monkeypatch):
+    """A recognized candidate whose pass-2 re-read STILL escalates is left byte-
+    untouched — its pass-1 report (verdict, reason) stands, its pass-1 escalation
+    record stays in the graph, it never enters `repaired_bands` (only ADOPTED bands
+    do), and the refusal is recorded as a report note. Simulated by failing band 1's
+    pass-2 read at the driver's own seam (the /r2-scoped compile_tables call)."""
+    from dataclasses import replace as dc_replace
+    from rdflib import URIRef
+    import iladub.etkl.document as docmod
+    real = docmod.compile_tables
+
+    def failing_pass2(pdf_path, page_number=0, **kw):
+        rep = real(pdf_path, page_number=page_number, **kw)
+        doc_uri = kw.get("doc_uri")
+        if doc_uri is not None and str(doc_uri).endswith("/r2"):
+            regs = list(rep.regions)
+            regs[1] = dc_replace(regs[1], verdict="escalated",
+                                 reason="SIMULATED_PASS2_FAIL", cells=0, table_uri=None)
+            rep = dc_replace(rep, regions=tuple(regs))
+        return rep
+
+    monkeypatch.setattr(docmod, "compile_tables", failing_pass2)
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf))
+    rep = docmod.compile_document(str(pdf))
+    assert rep.repaired_bands == ((0, 0),), rep.repaired_bands
+    page = rep.pages[0]
+    assert page.regions[0].verdict == "asserted"
+    # band 1's PASS-1 report stands — the simulated pass-2 reason never leaks into it
+    assert page.regions[1].verdict == "escalated"
+    assert page.regions[1].reason == "MATRIX_AMBIGUOUS", page.regions[1].reason
+    assert any("band 1" in n and "still escalated" in n for n in rep.notes), rep.notes
+    cand1 = URIRef(f"{docmod.page_doc_uri(0)}#region1")
+    assert list(rep.graph.predicate_objects(cand1)), "pass-1 escalation must survive"
+    cand0 = URIRef(f"{docmod.page_doc_uri(0)}#region0")
+    assert not list(rep.graph.predicate_objects(cand0)), "adopted band's record withdrawn"
+    # one section asserting alone cannot chain
+    assert not any(len(c) == 2 for c in rep.chains), rep.chains
+    assert 0.0 < rep.score < 1.0, rep.score
+
+
+def test_section_totals_associate_on_the_fixture(tmp_path):
+    """with_totals=True: each section's printed TOTAL row reconciles exactly with its
+    own section's Volume-column Decimal sum -> tab:SectionTotal + tab:confirmsSection
+    for BOTH sections, and no refusal note."""
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf))
+    rep = compile_document(str(pdf))
+    tables = {r.table_uri for r in rep.pages[0].regions if r.verdict == "asserted"}
+    confirms = list(rep.graph.subject_objects(TAB.confirmsSection))
+    assert {o for _, o in confirms} == tables and len(confirms) == 2, confirms
+    assert len(set(rep.graph.subjects(RDF.type, TAB.SectionTotal))) == 2
+    assert not rep.notes, rep.notes
+
+
+def test_section_totals_refuse_tampered_total(tmp_path):
+    """bad_total_in=1: KWINANA's printed total is off by one, so the exact-arithmetic
+    oracle REFUSES the association — no tab:SectionTotal/tab:confirmsSection for that
+    section (absence, never a guess) plus a report note — while GERALDTON's total
+    still associates and the intra-page stitch itself is unaffected."""
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf), bad_total_in=1)
+    rep = compile_document(str(pdf))
+    confirms = list(rep.graph.subject_objects(TAB.confirmsSection))
+    assert len(confirms) == 1, confirms
+    (_, table), = confirms
+    assert str(table).endswith("table0"), table
+    assert any("does not reconcile" in n for n in rep.notes), rep.notes
+    assert any(len(c) == 2 for c in rep.chains), rep.chains
+
+
+def test_without_totals_nothing_associates_and_stitch_only_path_chains(tmp_path):
+    """with_totals=False: MEASURED (not assumed) — dropping the total line pulls the
+    band's bottom up to the last data row, which drops the grid's closing hrule out of
+    the band's hrule set, and BOTH sections then assert at BAND level (the loop-L
+    ruled path, htable URIs). That makes this fixture the stitch-only witness for
+    spec §4.0's corrected point 1: members that already assert pass through untouched
+    (`repaired_bands` stays EMPTY — repair never fires on an asserting band) and §4.1
+    stitching runs over them all the same, 'whichever route they took'. And with no
+    trailing strip below any closing rule there is no total CANDIDATE at all: the
+    oracle emits nothing and notes nothing (a refusal note is for a printed total
+    that fails, not for a total that was never drawn)."""
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf), with_totals=False)
+    rep = compile_document(str(pdf))
+    page = rep.pages[0]
+    assert [r.verdict for r in page.regions] == ["asserted", "asserted"], page.regions
+    assert rep.repaired_bands == (), rep.repaired_bands
+    assert not list(rep.graph.subjects(RDF.type, TAB.SectionTotal))
+    assert not rep.notes, rep.notes
+    assert any(len(c) == 2 for c in rep.chains), rep.chains

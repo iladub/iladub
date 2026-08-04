@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.2.3" ;
+    owl:versionInfo "0.2.4" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -351,6 +351,14 @@ tab:DetectedAggregationRow a owl:Class ; rdfs:subClassOf tab:AggregationRow ;
     rdfs:label "Detected aggregation row"@en ;
     rdfs:comment "An aggregation row DETECTED by exact arithmetic in the extraction path (loop H): a sparse body row whose measure equals the token-sum of its member rows. Distinct subclass on purpose: denormalization's reshape path types rows bare tab:AggregationRow without row-level operands, and the operand-requiring shape must not fire on those. Detection never reads label text — sparsity, label column and arithmetic only."@en .
 
+# --- per-section totals (loop Q, spec 2026-08-04 §4.0/§4.1) ---
+tab:SectionTotal a owl:Class ; rdfs:subClassOf tab:AggregationRow ;
+    rdfs:label "Section total"@en ;
+    rdfs:comment "The printed per-section TOTAL row of a repeated intra-page section, CONFIRMED by exact arithmetic at SECTION scope (loop Q): the trailing row below the section grid's closing rule whose measure equals the exact Decimal token-sum of the section's own rows in the measure column — loop H's detect_aggregation_rows run with the SECTION as the closure window, never a text reading ('TOTAL' is never matched as a word). Typed by document.compile_document's section-repair pass ONLY when the arithmetic confirms; a printed total that does not reconcile gets NO SectionTotal typing and no tab:confirmsSection edge — the refusal is recorded by absence plus a DocumentReport note, never guessed (CLAUDE.md §7)."@en .
+tab:confirmsSection a owl:ObjectProperty ; rdfs:domain tab:SectionTotal ; rdfs:range tab:Table ;
+    rdfs:label "confirms section"@en ;
+    rdfs:comment "This confirmed section-total row CONFIRMS that section table: its printed measure equals the exact Decimal sum of the table's own rows in the measure column, so it is the arithmetic witness of where the section's rows end (spec §4.0 — 'the section boundary oracle is arithmetic'). Asserted exactly where tab:SectionTotal is typed, one section table per total row."@en .
+
 # --- derived row groups (loop I) ---
 tab:DerivedRowGroup a owl:Class ;
     rdfs:subClassOf tab:HeaderNode ;
@@ -365,7 +373,7 @@ tab:DerivedRowGroup a owl:Class ;
 # mistaken for a body row).
 tab:continuesTable a owl:ObjectProperty ; rdfs:label "continues table"@en ;
     rdfs:domain tab:Table ; rdfs:range tab:Table ;
-    rdfs:comment "This table is the CONTINUATION of that one across a page break: the same logical table, resumed. Asserted only when the continuation-of.rq derivation licensed it from the two pages' repeated header blocks (identical leaf labels, column for column, at agreeing origins, over author-drawn column boundaries agreeing AS SETS under COORD_EPS) — never assumed from page adjacency. KNOWN LIMIT, stated where the term is defined (residue R33): the evidence is the repeated HEADER BLOCK, which two logically INDEPENDENT tables built from one template share exactly — measured, a 2-page template document with different data on each page is stitched. This is the taxonomy case-2 / case-3 boundary (spec §2b defers case 3): the property means 'the header block repeats and the grid matches', which is necessary but not sufficient for 'one table'. The available discriminator is the BODY side (does the earlier table run to its page's last text line?), not text reading."@en .
+    rdfs:comment "This table is the CONTINUATION of that one across a page break — or, since loop Q (spec 2026-08-04 §4.0/§4.1), across an intra-page SECTION break: the repeated 3-line header block is the same repeated-header signature loop M reads at page breaks, read between BAND pairs within one page (section-repeat.rq), and the recognized section tables chain into one logical table exactly as pages do. Either way: the same logical table, resumed. Asserted only when the continuation-of.rq derivation licensed it from the two pages' repeated header blocks (identical leaf labels, column for column, at agreeing origins, over author-drawn column boundaries agreeing AS SETS under COORD_EPS) — never assumed from page adjacency. KNOWN LIMIT, stated where the term is defined (residue R33): the evidence is the repeated HEADER BLOCK, which two logically INDEPENDENT tables built from one template share exactly — measured, a 2-page template document with different data on each page is stitched. This is the taxonomy case-2 / case-3 boundary (spec §2b defers case 3): the property means 'the header block repeats and the grid matches', which is necessary but not sufficient for 'one table'. The available discriminator is the BODY side (does the earlier table run to its page's last text line?), not text reading."@en .
 tab:RepeatedHeader a owl:Class ; rdfs:label "Repeated header"@en ;
     rdfs:comment "A header block REPEATED on a continuation page: the renderer redrew the head table's header so the split page could be read standalone. Carried as a fact with its own page and bbox provenance — it is neither a second header tree nor a body row. ONE node per repeated ROW (the leaf row included — it is the most repeated row of all), carrying: tab:cellText, the row's surface text in reading order; tab:onPage and tab:hasBBox, measured on the continuation page; and prov:wasDerivedFrom, pointing at the tab:HeaderSourceCell nodes of the ORIGINATING (head) page's row it repeats — pinned to the head page even three pages down the chain, so the trail never degenerates into page-to-page hearsay. A repeated header row is never a tab:EntryCell: the carried reading reads it as a header row, so it can never reach the body."@en .
 tab:hasRepeatedHeader a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:RepeatedHeader ;

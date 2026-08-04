@@ -31,7 +31,7 @@ from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
 from .bands import Band
-from .geometry import Rule, leading_hrule_box
+from .geometry import Rule, leading_hrule_box, leading_box_y_fallback
 from .gridregion import grid_lines, enclosed_lines, peel_leading_captions
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -120,10 +120,9 @@ def _leading_box_y(band: Band, rules: Sequence[Rule]) -> tuple[float, float] | N
     box = leading_hrule_box(band.hrules, xs)
     if box is not None:
         return box
-    ys = sorted({round(h.y, 2) for h in band.hrules})
-    if len(ys) < 2:
-        return None
-    return ys[0], ys[1]
+    # the fallback arithmetic lives in geometry.leading_box_y_fallback (loop Q Task 4
+    # factored it there so the repair path's weld reuses it verbatim, never a copy)
+    return leading_box_y_fallback(band.hrules)
 
 
 def _rule_xs_signature(rules: Sequence[Rule]) -> str | None:

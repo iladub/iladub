@@ -26,15 +26,21 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
     guard replicated this logic in its test body and was proven tautological).
 
-    `section_repair` (loop Q Task 3, default False): False is byte-identical to before this
+    `section_repair` (loop Q Tasks 3-4, default False): False is byte-identical to before this
     parameter existed — the peel below reads grid_lines' default (band-level, MIN/MAX-x)
-    interior test, vocab/queries/grid-region.rq, exactly as shipped. True makes the SAME peel
-    call read the repair-scoped ink-witness variant instead (grid_lines(..., ink_witness=True)
-    -> grid-region-ink.rq, salvaged from reverted b515283) — everything else in this function
-    (the enclosed-lines guard, the leading-prefix rule in peel_leading_captions, the
-    leading-box weld in weld_hrule_boxes below) is UNCHANGED, still reading `xs` (every rule
-    x, not the ink-interior subset). Only `compile.page_bands` ever passes True, and only for
-    a band index the caller's `section_repair_bands` names (loop Q Task 4 wires that from the
+    interior test, vocab/queries/grid-region.rq, exactly as shipped, and the weld reads
+    leading_hrule_box's full-width test exactly as shipped. True switches the repair pair on
+    (spec §4.0's 'peel leading non-grid strips + weld the leading header box'): the SAME peel
+    call reads the repair-scoped ink-witness variant (grid_lines(..., ink_witness=True) ->
+    grid-region-ink.rq, salvaged from reverted b515283), and the SAME weld call falls back to
+    the x-extent-free leading-box candidate (geometry.leading_box_y_fallback — Task 2's
+    justified candidate rule, see the weld call site below) ONLY when the full-width test
+    abstains, which is exactly what a doubled-edge border forces (measured: the CBH shape's
+    hrules start strictly inside the border twins, so no hrule is ever full-width).
+    Everything else in this function (the enclosed-lines guard, the leading-prefix rule in
+    peel_leading_captions) is UNCHANGED, still reading `xs` (every rule x, not the
+    ink-interior subset). Only `compile.page_bands` ever passes True, and only for a band
+    index the caller's `section_repair_bands` names (loop Q Task 4 wires that from the
     driver's recognized, still-escalated repeat groups) — no other caller of this function is
     affected.
 
@@ -78,7 +84,21 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
     if relines:
         from .geometry import weld_hrule_boxes
-        relines = weld_hrule_boxes(relines, sub_hrules, xs)
+        # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
+        # + weld the leading header box"). A doubled-edge border defeats leading_hrule_box's
+        # full-width test (the hrules start strictly inside the border twins, measured on
+        # the CBH shape), so under section_repair ONLY, when that test abstains, the weld
+        # reads sectiongraph's x-extent-free candidate instead (geometry.
+        # leading_box_y_fallback — same §8 posture: a PROCEDURAL candidate whose disposal
+        # is the region membrane the pass-2 re-read must still pass; a wrong candidate
+        # welds a wrong header row, which the tiling shapes then refuse — escalation, never
+        # a false assertion). The default path passes box=None: byte-identical to shipped.
+        weld_box = None
+        if section_repair:
+            from .geometry import leading_hrule_box, leading_box_y_fallback
+            if leading_hrule_box(sub_hrules, xs) is None:
+                weld_box = leading_box_y_fallback(sub_hrules)
+        relines = weld_hrule_boxes(relines, sub_hrules, xs, box=weld_box)
     if not relines:
         return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
     band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)
@@ -213,6 +233,14 @@ class RegionReport:
     # M's driver carries it onto the next page when the continuation AXIOM licenses the pair —
     # it is never read for any other purpose, so a None here only means "nothing to carry".
     header_reading: object | None = None
+    # THIS band's own contribution to the page's asserted/escalated token totals (loop Q Task 4).
+    # Recorded by DIFFERENCING the running totals around each band's turn of the loop below —
+    # never a re-derivation, so the invariant sum(r.tokens_*) == CompilationReport.asserted/
+    # escalated holds by construction. The document driver's section repair needs it to
+    # recompute a page's score honestly after swapping ONE band's report for its pass-2 re-read
+    # (the page aggregates alone cannot be split back into per-band contributions).
+    tokens_asserted: int = 0
+    tokens_escalated: int = 0
 
 
 @dataclass(frozen=True)
@@ -298,7 +326,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     reports: list[RegionReport] = []
     asserted_total = escalated_total = 0
 
+    # Per-band token accounting (loop Q Task 4): snapshot the running totals at the TOP of each
+    # band's turn (the one point every branch passes through — `continue` never skips it), close
+    # with a sentinel after the loop, and difference. Every branch appends exactly one report per
+    # band, so band_marks[i+1] - band_marks[i] IS band i's own contribution, exactly.
+    band_marks: list[tuple[int, int]] = []
+
     for idx, band in enumerate(bands):
+        band_marks.append((asserted_total, escalated_total))
         ascii_view = render_ascii(band)
         if is_multi_table_ambiguous(band):
             cand_uri = URIRef(f"{doc}#region{idx}")
@@ -560,6 +595,13 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     reports.append(RegionReport(region.kind, "escalated", 0,
                                                 "KIND_NOT_SUPPORTED",
                                                 str(TAB.HierarchicalTable), ascii_view))
+
+    band_marks.append((asserted_total, escalated_total))
+    from dataclasses import replace as _dc_replace
+    reports = [_dc_replace(r,
+                           tokens_asserted=band_marks[i + 1][0] - band_marks[i][0],
+                           tokens_escalated=band_marks[i + 1][1] - band_marks[i][1])
+               for i, r in enumerate(reports)]
 
     denom = asserted_total + escalated_total
     score = 1.0 if denom == 0 else asserted_total / denom
