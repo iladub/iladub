@@ -294,6 +294,66 @@ def _inject_group_keys(graph: Graph, members, rows: dict, row_cols: dict, owner:
                 row_cols.setdefault(row, set()).add(lcol)
 
 
+def _table_captions(graph: Graph, table) -> list[tuple[str, str]]:
+    """A table's `tab:RegionCaption`s, ordered POSITIONALLY (`tab:captionRow`, the caption
+    node as a deterministic tie-break) — `[(text, region), ...]`. Empty for the vast majority
+    of tables, which assert no `tab:hasCaption` at all (every table before loop Q, and every
+    table loop Q's section repair never touched).
+
+    Loop Q (spec §4.0-§4.2): a repaired section table's leading strips (the KEY line plus any
+    berth-notice furniture) are peeled and committed as `tab:RegionCaption` at compile time
+    (`compile._emit_band_captions`), then survive `document._band_subgraph`'s adoption merge
+    for free — that function copies every triple reachable from the table's own URI, and
+    `hasCaption`/`captionText`/`captionRow` are exactly such triples (measured on the real CBH
+    fixture: both adopted section tables carry their captions post-adoption). This function
+    only READS what compile already asserted — no new decision, §8.
+
+    `region` is the caption node's OWN fragment: a `RegionCaption` asserts no separate
+    `prov:wasDerivedFrom` (compile.py commits captionText/captionRow directly on it), so this
+    is the SAME fallback `_read_table` and `_inject_group_keys` already use when a node names
+    its own provenance rather than pointing at one — not a new provenance convention."""
+    caps = []
+    for cap in graph.objects(table, TAB.hasCaption):
+        text = graph.value(cap, TAB.captionText)
+        if text is None:
+            continue
+        row_lit = graph.value(cap, TAB.captionRow)
+        row = int(row_lit) if row_lit is not None else 0
+        caps.append((row, str(cap), str(text)))
+    caps.sort(key=lambda t: (t[0], t[1]))
+    return [(text, str(cap).split("#")[-1]) for _, cap, text in caps]
+
+
+def _inject_section_captions(graph: Graph, members, rows: dict, owner: dict) -> None:
+    """Inject every captioned member table's captions into EVERY record it owns — loop Q §4.2,
+    imitating `_inject_group_keys`'s SHAPE (one SurfaceConcept appended per row, provenanced to
+    the SOURCE node, the row's own extent as the y-sort key so record ORDER is untouched) over
+    a NEW evidence source that is table-wide rather than column-scoped.
+
+    NO OCCUPANCY GUARD (the one deliberate divergence from `_inject_group_keys`): a suppressed
+    group key fills a specific COLUMN a row might already have written; a caption names no
+    column at all — 'GERALDTON' is not a value ANY of the section's own cells could already
+    carry, so there is nothing to avoid overwriting. Every record of a captioned table gets
+    every one of that table's captions, undiscriminated (key-vs-notice is §4.3's job, not this
+    layer's — feed injects ALL captions as candidates; §7's honest refusal quarantines the
+    non-members downstream).
+
+    ORDER: captions are given NEGATIVE x0 (by caption index, so multiple captions keep their
+    OWN positional order) — they read as the heading evidence the record's cells sit under,
+    ahead of the record's own leftmost cell, never interleaved among them."""
+    for t in members:
+        caps = _table_captions(graph, t)
+        if not caps:
+            continue
+        for row, cells in rows.items():
+            if owner.get(row) != t:
+                continue
+            own_y = min(y for _, y, _ in cells)
+            for k, (text, region) in enumerate(caps):
+                cells.append((-1000.0 + k, own_y,
+                             SurfaceConcept(text, text, region, is_section_marker=True)))
+
+
 def table_records(graph: Graph) -> list[Record]:
     """Each asserted tab:RecordTable OR tab:HierarchicalTable -> one Record per data row; each data
     cell -> a SurfaceConcept (text=its column's HEADER PATH, value=cell text, region=cell provenance).
@@ -336,9 +396,21 @@ def table_records(graph: Graph) -> list[Record]:
         # rows exist and are ordered: a chain's groups hang off its HEAD and cover rows on
         # every page (loop N). Injection cannot perturb the order — `ordered` is already fixed.
         _inject_group_keys(graph, members, rows, row_cols, owner)
+        _inject_section_captions(graph, members, rows, owner)
         row_path = _logical_row_paths(graph, members)
-        rid_of = {row: (row_path[row] if row in row_path
-                        else _row_discriminator(graph, row)) for row in ordered}
+        # Loop Q §4.2: a captioned member's FIRST caption (positionally) prefixes every one of
+        # ITS OWN rows' identity — "GERALDTON > p0 table0-r0" — before anything has decided
+        # what to CALL that value (§4.3's cascade names the field later; attribution never
+        # waits for naming). A table with no captions computes an empty list here and every one
+        # of its rows keeps exactly today's identity — the byte-identity guarantee for every
+        # table loop Q never touched.
+        section_key = {t: (caps[0][0] if (caps := _table_captions(graph, t)) else None)
+                       for t in members}
+        rid_of = {}
+        for row in ordered:
+            base = row_path[row] if row in row_path else _row_discriminator(graph, row)
+            key = section_key.get(owner.get(row))
+            rid_of[row] = f"{key} > {base}" if key is not None else base
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
         per_logical.append((ordered, rows, rid_of))
