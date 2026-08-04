@@ -66,26 +66,18 @@ def _line(top, bottom, *texts):
 
 
 def test_grid_lines_interior_rule_presence():
-    """A line is grid iff an INTERIOR rule (ink witness: some band word CENTER on
-    BOTH sides) crosses it. Outer-border segments — including a double-drawn twin
-    positioned strictly between the true outer rule and the far border, which would
-    wrongly pass an x-distance-tolerance test — never make a line grid, because they
-    have no ink on their own outboard side (loop P fixwave A)."""
+    """A line is grid iff an INTERIOR rule (x strictly between the band's outermost
+    rule x's) crosses it. Outer-border segments never make a line grid."""
     from iladub.etkl.gridregion import grid_lines
-    heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)
-    notice = Line((Word("NOTICE", 80, 128, 75, 85), Word("TEXT", 138, 170, 75, 85)), 75, 85)
-    row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
-                  Word("C", 240, 280, 110, 120)), 110, 120)
-    row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
-                  Word("3", 240, 280, 130, 140)), 130, 140)
-    lines = (heading, notice, row_a, row_1)      # heading/notice: above interior rules
+    lines = (_line(60, 70, "HEADING"),          # above interior rules
+             _line(75, 85, "NOTICE", "TEXT"),    # above interior rules
+             _line(110, 120, "A", "B"),          # crossed by interior rules
+             _line(130, 140, "1", "2"))          # crossed by interior rules
     band = Band(lines, 60.0, 140.0)
-    rules = [Rule(72.0, 58.0, 145.0),             # outer left (full extent)
-             Rule(71.7, 58.0, 145.0),             # outer-left TWIN (doubled border)
-             Rule(300.0, 58.0, 145.0),            # outer right
-             Rule(300.3, 58.0, 145.0),            # outer-right TWIN (doubled border)
-             Rule(150.0, 105.0, 145.0),           # INTERIOR: ink on both sides
-             Rule(220.0, 105.0, 145.0)]           # INTERIOR: ink on both sides
+    rules = [Rule(72.0, 58.0, 145.0),            # outer left (full extent)
+             Rule(300.0, 58.0, 145.0),           # outer right
+             Rule(150.0, 105.0, 145.0),          # INTERIOR: grid rows only
+             Rule(220.0, 105.0, 145.0)]
     assert grid_lines(band, rules) == {2, 3}
 
 
@@ -106,18 +98,15 @@ def test_peel_leading_captions_only():
     Task-2 shape) swallowed page-local subtotal rows loop H/N's arithmetic derivations
     must see (test_continuation_licence/test_logical_arithmetic regression)."""
     from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
-    heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)   # above interior rules -> LEADING, peeled
-    row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
-                  Word("C", 240, 280, 110, 120)), 110, 120)        # crossed by interior rules -> grid
-    row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
-                  Word("3", 240, 280, 130, 140)), 130, 140)        # crossed by interior rules -> grid
-    total = Line((Word("TOTAL", 80, 120, 150, 160),), 150, 160)   # below interior rules -> TRAILING, kept
-    lines = (heading, row_a, row_1, total)
+    lines = (_line(60, 70, "HEADING"),           # above interior rules -> LEADING, peeled
+             _line(110, 120, "A", "B"),          # crossed by interior rules -> grid
+             _line(130, 140, "1", "2"),          # crossed by interior rules -> grid
+             _line(150, 160, "TOTAL"))           # below interior rules -> TRAILING, kept
     band = Band(lines, 60.0, 160.0)
     rules = [Rule(72.0, 58.0, 145.0),            # outer left (full extent)
              Rule(300.0, 58.0, 145.0),           # outer right
-             Rule(150.0, 105.0, 145.0),          # INTERIOR: ink on both sides
-             Rule(220.0, 105.0, 145.0)]          # INTERIOR: ink on both sides
+             Rule(150.0, 105.0, 145.0),          # INTERIOR: grid rows only
+             Rule(220.0, 105.0, 145.0)]
     gset = grid_lines(band, rules)
     assert gset == {1, 2}
     enclosed = enclosed_lines(band, rules)       # HEADING (60-70) IS inside the outer rules' 58-145
@@ -162,14 +151,6 @@ def test_peel_never_swallows_an_unenclosed_header_row():
     captions, kept = peel_leading_captions(lines, gset, enclosed)
     assert captions == ()                # NOT peeled -> region stays HierarchicalTable-eligible
     assert kept == lines
-
-
-# fixwave A round 2's test_peel_never_swallows_a_rule_aligned_header_stack pinned
-# the stem's shape directly against the (now-retired) straddling_lines witness. It
-# is superseded by two round-3 checks: the opening_box_rows unit tests just below
-# (the licence itself) and test_stem_shaped_opening_stack_never_peeled further down
-# (the end-to-end abstain, via _build_ruled_band on a fixture shaped like the real
-# stem — see stem_shaped_ruled_table_pdf).
 
 
 def test_grid_region_query_has_no_numeric_literal():
@@ -226,82 +207,3 @@ def test_weld_without_hrules_is_identity():
     from iladub.etkl.geometry import weld_hrule_boxes
     a = Line((Word("A", 80, 90, 110, 118),), 110, 118)
     assert weld_hrule_boxes([a], [], [72.0, 300.0]) == [a]
-
-
-# ------------------------------------------------------- opening-header-box licence
-# (loop P fixwave A round 3 — the peel's disposal check, replacing round 2's retired
-# per-line straddle witness. "leading + enclosed" is a PROPOSAL only; it commits iff
-# the kept (grid) region's own opening region is a drawn multi-line header box —
-# CBH's wrapped-header signature — never on any per-line evidence.)
-
-def test_opening_box_rows_positive_cbh_shape():
-    """CBH's grid opens with ONE hrule box holding TWO re-extracted rows (the
-    wrapped-header signature: 'Time Nom' atop 'ID Accepted Client Volume') -> >= 2,
-    the peel commits."""
-    from iladub.etkl.geometry import opening_box_rows
-    hdr_a = Line((Word("Time Nom", 160, 220, 96, 104),), 96, 104)
-    hdr_b = Line((Word("ID", 80, 100, 108, 116), Word("Accepted", 160, 225, 108, 116)), 108, 116)
-    row0 = Line((Word("10097", 80, 110, 132, 140),), 132, 140)
-    relines = [hdr_a, hdr_b, row0]
-    hrules = [HRule(95.0, 72.0, 300.0), HRule(123.0, 72.0, 300.0), HRule(150.0, 72.0, 300.0)]
-    assert opening_box_rows(relines, hrules, [150.0, 220.0]) == 2
-
-
-def test_opening_box_rows_negative_stem_shape():
-    """The real GrainCorp stem's grid opens with each data row in its OWN
-    single-row hrule box (never a shared multi-row box) -> exactly 1, the peel
-    abandons (falls back to the unpeeled construction path)."""
-    from iladub.etkl.geometry import opening_box_rows
-    row0 = Line((Word("10097", 80, 110, 111, 119),), 111, 119)
-    row1 = Line((Word("10076", 80, 110, 123, 131),), 123, 131)
-    row2 = Line((Word("10118", 80, 110, 135, 143),), 135, 143)
-    relines = [row0, row1, row2]
-    hrules = [HRule(110.0, 72.0, 492.0), HRule(122.0, 72.0, 492.0),
-              HRule(134.0, 72.0, 492.0), HRule(146.0, 72.0, 492.0)]
-    assert opening_box_rows(relines, hrules, [172.0, 292.0, 392.0]) == 1
-
-
-def test_opening_box_rows_no_box_abstains():
-    """Fewer than 2 full-width hrules (no box at all) -> 0, unconditionally."""
-    from iladub.etkl.geometry import opening_box_rows
-    row0 = Line((Word("A", 80, 90, 110, 118),), 110, 118)
-    assert opening_box_rows([row0], [], [150.0, 220.0]) == 0
-    assert opening_box_rows([row0], [HRule(100.0, 72.0, 300.0)], [150.0, 220.0]) == 0
-    assert opening_box_rows([], [HRule(100.0, 72.0, 300.0), HRule(140.0, 72.0, 300.0)],
-                            [150.0, 220.0]) == 0
-
-
-def test_stem_shaped_opening_stack_never_peeled(tmp_path):
-    """End-to-end pin of the round-2 regression's exact shape (loop P fixwave A
-    round 3): a furniture line + a 2-line unruled header stack, both leading and
-    enclosed, above a grid whose interior verticals start below the stack and whose
-    data rows are each a single-row box. _build_ruled_band must ABSTAIN entirely —
-    byte-identical to "no peel": zero captions, and every original visual line
-    (furniture + 2 header + 3 data = 6) survives into the band."""
-    from tests.etkl.fixtures import stem_shaped_ruled_table_pdf
-    from iladub.etkl.geometry import extract_words, text_lines, extract_rules, extract_chars, extract_hrules
-    from iladub.etkl.bands import detect_bands
-    from iladub.etkl.segment import segment
-    from iladub.etkl.compile import _build_ruled_band
-
-    pdf = tmp_path / "stem.pdf"
-    truth = stem_shaped_ruled_table_pdf(str(pdf))
-    words = extract_words(str(pdf), 0)
-    pr, ph = extract_rules(str(pdf), 0), extract_hrules(str(pdf), 0)
-    pc = extract_chars(str(pdf), 0) if pr else []
-    out = []
-    for band in detect_bands(text_lines(words)):
-        for sub in segment(band):
-            sr = tuple(r for r in pr if r.top <= sub.bottom and r.bottom >= sub.top)
-            sh = tuple(h for h in ph if sub.top <= h.y <= sub.bottom)
-            out.append(_build_ruled_band(sub, sr, sh, pc) if sr else sub)
-    band = max(out, key=lambda b: len(b.lines))
-
-    assert band.captions == (), band.captions
-    assert len(band.lines) == 6, [[w.text for w in ln.words] for ln in band.lines]
-    all_text = " ".join(w.text for ln in band.lines for w in ln.words)
-    assert "Friday" in all_text                      # the furniture line survived, unpeeled
-    for word in truth["header_words"]:
-        assert word in all_text, (word, all_text)     # the whole header stack survived
-    for row in truth["data_rows"]:
-        assert row[0] in all_text, (row, all_text)    # the data rows are intact

@@ -39,7 +39,7 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     (closes attempt 1's single-row over-split structurally)."""
     from dataclasses import replace as _replace
     from .bands import Band
-    from .geometry import refine_rule_columns, rule_aware_lines, weld_hrule_boxes, opening_box_rows
+    from .geometry import refine_rule_columns, rule_aware_lines
 
     xs = sorted({round(r.x, 2) for r in sub_rules})
 
@@ -55,47 +55,18 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # "leading-only" alone still swallowed a floating merged-header row with no rule
     # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
     from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
-        interior_rule_xs as _interior_rule_xs, peel_leading_captions
+        peel_leading_captions
     gset = _grid_lines(sub, sub_rules)
     enclosed = _enclosed_lines(sub, sub_rules)
-    # loop P fixwave A: the ink-interior rule x's (real column separators — has ink
-    # on both sides; never a double-drawn outer-border twin), computed once on the
-    # PRE-peel band/rules (interior-ness is a property of the rules + band words,
-    # unaffected by whether captions are peeled) and fed to the welder's/opening-box
-    # test below. rule_aware_lines' own column bucketing (xs, just above) is
-    # UNCHANGED — it keeps using every rule x, including the outer edges.
-    interior_xs = _interior_rule_xs(sub, sub_rules)
     caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
-
-    # fixwave A round 3 (stem regression fix, round 2's per-line straddle witness
-    # retired — it broke BOTH specimens): "leading + enclosed" is a PROPOSAL, not a
-    # licence. The stem's header stack is a leading, enclosed run too (its interior
-    # verticals start below it), so peeling it on that evidence alone strands loop
-    # L's row-above-the-block-rule licence. Dispose the proposal by re-extracting
-    # the TENTATIVE kept band and checking whether its own grid opens with a drawn
-    # multi-line header box (CBH's wrapped-header signature, >= 2 re-extracted rows
-    # in the first full-width hrule box, geometry.opening_box_rows) — the stem's
-    # grid opens with bare single-row data-row boxes, so it fails this check and
-    # the peel is abandoned, falling back to the UNPEELED construction path,
-    # byte-identical to "no peel". Single propose -> check -> commit-or-fallback;
-    # no further candidate peel length is ever tried (deterministic, no retry loop).
-    committed = False
     if caption_lines:
-        tentative_sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
-        tentative_chars = [c for c in page_chars
-                           if c.top >= tentative_sub.top - 0.5 and c.bottom <= tentative_sub.bottom + 0.5]
-        tentative_relines = rule_aware_lines(tentative_chars, xs) if len(xs) >= 2 else []
-        if opening_box_rows(tentative_relines, sub_hrules, interior_xs) >= 2:
-            sub, band_chars, relines = tentative_sub, tentative_chars, tentative_relines
-            committed = True
-        else:
-            caption_lines = ()
-    if not committed:
-        band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-        relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+        sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
 
+    band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
+    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
     if relines:
-        relines = weld_hrule_boxes(relines, sub_hrules, interior_xs)
+        from .geometry import weld_hrule_boxes
+        relines = weld_hrule_boxes(relines, sub_hrules, xs)
     if not relines:
         return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
     band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)
