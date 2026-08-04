@@ -124,7 +124,15 @@ def check_verdict(rep, entry):
 @pytest.mark.parametrize("entry", ENTRIES, ids=[e["file"] for e in ENTRIES])
 def test_expected_verdict(entry):
     dest = require_pinned_edition(entry, CORPUS)
-    rep, dt = _compiled(str(dest))
+    try:
+        rep, dt = _compiled(str(dest))
+    except AssertionError:
+        raise
+    except Exception as e:
+        raise AssertionError(
+            f"{entry['file']}: compile CRASHED ({type(e).__name__}: {e}) — a measured "
+            f"defect of the compiler, not necessarily your change; check "
+            f"docs/superpowers/residues.md (crash class) before debugging") from e
     verdicts = check_verdict(rep, entry)
     print(f"\n{entry['file']}: score={rep.score:.4f} pages={len(rep.pages)} "
           f"chains={[len(c) for c in rep.chains]} wall={dt:.0f}s")

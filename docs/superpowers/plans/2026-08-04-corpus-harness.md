@@ -892,9 +892,8 @@ recorded here verbatim; Steps 3–6 (adjudication table, residues, wiki, commit)
 `BUDGET_S` started this loop stale at **222 s** (carried from loop N's 180 s whole-stem compile +
 ~23% headroom, documented at the constant in `tests/test_corpus.py`). Measured this loop: **254.1 s**
 standalone stem compile / **270 s** in-battery / **232 s** in this final run. **François adjudicated
-the budget to 320 s** — the constant has not been edited in this task (code-file edit is out of
-scope for Task 8); the adjudicated value is recorded here as the loop-close evidence for whichever
-loop next touches `tests/test_corpus.py`.
+the budget to 320 s**, and the constant was raised to 320 in commit `ac3bbf4` (Task 3 fix round 1,
+adjudicated) before the seed tasks ran; this section records the adjudication trail for that change.
 
 ### ABS → ONS substitution (Task 5)
 

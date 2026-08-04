@@ -8,7 +8,8 @@ pytest.importorskip("reportlab")
 
 from rdflib import RDF, Graph
 
-from scripts.fetch_corpus import COR, USER_AGENT, _download, fetch_one
+import scripts.fetch_corpus as fetch_corpus
+from scripts.fetch_corpus import COR, USER_AGENT, _download, fetch_one, main
 from tests.etkl.fixtures import simple_table_pdf
 
 ENTRY = """@prefix cor: <https://w3id.org/iladub/corpus#> .
@@ -64,15 +65,36 @@ def test_mismatch_removes_file(tmp_path, capsys):
 
 
 def test_present_short_circuits_network(tmp_path):
-    g = _graph()
+    """Present AND pinned: no network touched, returns 'present'."""
+    data = _pdf_bytes(tmp_path)
+    g = _graph(hashlib.sha256(data).hexdigest())
     dest = tmp_path / "corpus" / "fam" / "doc.pdf"
     dest.parent.mkdir(parents=True)
-    dest.write_bytes(b"x")
+    dest.write_bytes(data)
 
     def boom(url):
         raise AssertionError("network touched for a present file")
 
     assert fetch_one(g, _doc(g), tmp_path / "corpus", download=boom) == "present"
+
+
+def test_present_but_unpinned_returns_pin(tmp_path, capsys):
+    """Present but no cor:sha256 in the manifest (e.g. an interrupted first fetch,
+    re-run): the pin block must be reprinted from the on-disk file and the exit
+    contract must stay nonzero ('pin'), not silently 'present'. No network touched."""
+    data = _pdf_bytes(tmp_path)
+    g = _graph()  # no sha -> unpinned
+    dest = tmp_path / "corpus" / "fam" / "doc.pdf"
+    dest.parent.mkdir(parents=True)
+    dest.write_bytes(data)
+
+    def boom(url):
+        raise AssertionError("network touched for a present file")
+
+    assert fetch_one(g, _doc(g), tmp_path / "corpus", download=boom) == "pin"
+    printed = capsys.readouterr().out
+    assert hashlib.sha256(data).hexdigest() in printed
+    assert "cor:pages 1" in printed
 
 
 def test_fetch_failure_reported(tmp_path, capsys):
@@ -83,6 +105,43 @@ def test_fetch_failure_reported(tmp_path, capsys):
 
     assert fetch_one(g, _doc(g), tmp_path / "corpus", download=down) == "failed"
     assert "FETCH FAILED" in capsys.readouterr().out
+
+
+def _write_repo(tmp_path, sha=None):
+    """Build a minimal tmp repo with tests/corpus-manifest.ttl + corpus/ so main()
+    can be exercised end-to-end via a monkeypatched REPO, download injected."""
+    repo = tmp_path / "repo"
+    (repo / "tests").mkdir(parents=True)
+    pin = f'; cor:sha256 "{sha}" ' if sha else ""
+    (repo / "tests" / "corpus-manifest.ttl").write_text(ENTRY.format(pin=pin))
+    return repo
+
+
+def test_main_returns_nonzero_when_unpinned(tmp_path, monkeypatch):
+    repo = _write_repo(tmp_path, sha=None)
+    dest = repo / "corpus" / "fam" / "doc.pdf"
+    dest.parent.mkdir(parents=True)
+    simple_table_pdf(str(dest))
+    monkeypatch.setattr(fetch_corpus, "REPO", repo)
+
+    def boom(url):
+        raise AssertionError("network touched")
+
+    assert main(download=boom) == 1
+
+
+def test_main_returns_zero_when_pinned_and_present(tmp_path, monkeypatch):
+    data = _pdf_bytes(tmp_path)
+    repo = _write_repo(tmp_path, sha=hashlib.sha256(data).hexdigest())
+    dest = repo / "corpus" / "fam" / "doc.pdf"
+    dest.parent.mkdir(parents=True)
+    dest.write_bytes(data)
+    monkeypatch.setattr(fetch_corpus, "REPO", repo)
+
+    def boom(url):
+        raise AssertionError("network touched")
+
+    assert main(download=boom) == 0
 
 
 def test_download_sends_browser_ua(monkeypatch):

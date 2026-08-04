@@ -2,13 +2,17 @@
 # cor: is repo-internal (like dg:) — not published, not w3id-registered.
 # Documents are FETCHED, never committed; the sha256 pins the edition measured.
 #
-# cor:expectedVerdict semantics (no SHACL shape yet — recorded here for the future
-# test_corpus.py that will read this manifest as an oracle):
+# cor:expectedVerdict semantics (no SHACL shape — the shape lives at
+# tests/corpus-shapes.ttl and the oracle that reads this manifest is
+# tests/test_corpus.py):
 #   cor:CompilesAbove — the document is expected to compile via compile_document (the
 #     document-level driver — one chain across its pages, not a per-page reading) at a
 #     score >= cor:scoreFloor (a decimal literal: the regression FLOOR the corpus battery
 #     asserts against, deliberately at-or-below the measured score, never the measured
 #     value itself).
+#   cor:SemanticEscalation — the document is expected to compile with at least one region
+#     verdict of "escalated" (a genuine semantic ambiguity, not a crash); cor:ambiguity
+#     carries the reviewer's note on what is ambiguous.
 #   cor:Unadjudicated — no verdict recorded yet. There is no separate cor:Hold term: a HOLD
 #     is encoded AS cor:Unadjudicated plus a cor:adjudication node carrying the reviewer's
 #     rationale — the hold state is "unadjudicated, with a recorded reason," not a fourth

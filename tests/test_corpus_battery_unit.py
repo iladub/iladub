@@ -78,3 +78,27 @@ def test_edition_drift_fails_not_skips(tmp_path):
     [entry] = manifest_entries(m)
     with pytest.raises(AssertionError, match="pinned"):
         require_pinned_edition(entry, root)
+
+
+def test_compilesabove_below_floor_fails(tmp_path):
+    # Floor set above 1.0 so the synthetic fixture's score can never reach it —
+    # proves the floor assertion actually refuses, not just passes by construction.
+    m, root = _seed(tmp_path, verdict="cor:CompilesAbove",
+                    extra='cor:scoreFloor "1.1"^^xsd:decimal ;')
+    [entry] = manifest_entries(m)
+    dest = require_pinned_edition(entry, root)
+    rep, _ = _compiled(str(dest))
+    with pytest.raises(AssertionError):
+        check_verdict(rep, entry)
+
+
+def test_semantic_escalation_without_escalated_region_fails(tmp_path):
+    # The clean synthetic fixture only asserts (no escalated region), so a
+    # cor:SemanticEscalation verdict must be refused, not silently accepted.
+    m, root = _seed(tmp_path, verdict="cor:SemanticEscalation",
+                    extra='cor:ambiguity "synthetic" ;')
+    [entry] = manifest_entries(m)
+    dest = require_pinned_edition(entry, root)
+    rep, _ = _compiled(str(dest))
+    with pytest.raises(AssertionError):
+        check_verdict(rep, entry)

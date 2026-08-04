@@ -45,6 +45,17 @@ def fetch_one(g: Graph, doc, corpus_root: Path, download=_download) -> str:
     want = g.value(doc, COR.sha256)
     dest = Path(corpus_root) / rel
     if dest.is_file():
+        if want is None:
+            got = hashlib.sha256(dest.read_bytes()).hexdigest()
+            producer, pages = _pdf_facts(dest)
+            print(f"present  {rel} (UNPINNED)")
+            print("  PRESENT BUT UNPINNED — pin these in tests/corpus-manifest.ttl "
+                  "(a deliberate edit, never automatic):")
+            print(f'    cor:producer "{producer}" ;')
+            print(f'    cor:fetched "{datetime.date.today().isoformat()}"^^xsd:date ;')
+            print(f'    cor:sha256 "{got}" ;')
+            print(f"    cor:pages {pages} ;")
+            return "pin"
         print(f"present  {rel}")
         return "present"
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -74,9 +85,11 @@ def fetch_one(g: Graph, doc, corpus_root: Path, download=_download) -> str:
     return "fetched"
 
 
-def main() -> int:
+def main(download=_download) -> int:
+    """`download` is a minimal testability seam (default is the real network
+    fetch); CLI behavior is unchanged."""
     g = Graph().parse(REPO / "tests" / "corpus-manifest.ttl", format="turtle")
-    outcomes = [fetch_one(g, doc, REPO / "corpus")
+    outcomes = [fetch_one(g, doc, REPO / "corpus", download=download)
                 for doc in g.subjects(RDF.type, COR.Document)]
     return 1 if any(o in ("mismatch", "failed", "pin") for o in outcomes) else 0
 
