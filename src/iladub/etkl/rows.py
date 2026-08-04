@@ -78,6 +78,29 @@ def _numeric_token_sum(text):
     return total
 
 
+def row_column_count(row, grid) -> int:
+    """Number of DISTINCT OCCUPIED COLUMNS in `row` — cells bucketed by `column_of`, so two
+    cells landing in the same column count ONCE. This is the unit `detect_aggregation_rows`
+    (below) has always judged shape by (its `row_cols` dicts collapse same-column cells by
+    construction); it diverged, before final-review F2, from a sibling check in
+    `document._confirm_section_total` that counted raw `len(row.cells)` instead — the two
+    coincide only when no row ever has two cells in one column. Factored out so both sites
+    share ONE counting rule and can never drift apart again."""
+    b = grid.boundaries
+    return len({column_of((c.x0 + c.x1) / 2.0, b) for c in row.cells})
+
+
+def is_aggregation_shaped(row, widest: int, grid) -> bool:
+    """True iff `row` has the CANDIDATE aggregation shape (loop H, R4): exactly two distinct
+    occupied columns (`row_column_count`, not raw cell count), strictly fewer than `widest`
+    (the region's widest row, counted the SAME way). Shared by `detect_aggregation_rows` (the
+    confirmed classifier, below) and `document._confirm_section_total`'s refusal-note gate —
+    final-review F2's fix for the two having counted different things at the same shape
+    question."""
+    n = row_column_count(row, grid)
+    return n == 2 and n < widest
+
+
 def detect_aggregation_rows(rows, grid):
     """Arithmetic subtotal detection (loop H, residue R4). PROCEDURAL — and justified: this is
     the §8 gate's second procedural class, DECIDABLE EXACT ARITHMETIC (exact Decimal sums over
@@ -86,11 +109,13 @@ def detect_aggregation_rows(rows, grid):
     (tab:DetectedAggregationRowShape); language is NEVER read — a ' Total' suffix test is the
     tuned constant of natural language and is forbidden (spec §5).
 
-    A row is a CANDIDATE iff it has exactly two cells, strictly fewer than the WIDEST
-    populated-cell count of the region's rows (a frequency mode dies on small groups — the
-    Task 2 catch), one cell whose tokens are ALL numeric (the measure) and one that is not
-    (the label). The label's COLUMN encodes the nesting level (measured: port totals carry
-    their label in the Port column, month totals in the Month column).
+    A row is a CANDIDATE iff it has exactly two DISTINCT OCCUPIED COLUMNS (`is_aggregation_shaped`
+    below — cells bucketed by `column_of`, not raw cell count: two cells sharing one column
+    count once), strictly fewer than the WIDEST populated-column count of the region's rows (a
+    frequency mode dies on small groups — the Task 2 catch), one cell whose tokens are ALL
+    numeric (the measure) and one that is not (the label). The label's COLUMN encodes the
+    nesting level (measured: port totals carry their label in the Port column, month totals in
+    the Month column).
 
     A candidate at row i with label column L and measure value v is CONFIRMED iff
     v == the token-sum, in the measure column, of the non-aggregation rows above i back to
@@ -118,7 +143,10 @@ def detect_aggregation_rows(rows, grid):
     widest = max(len(rc) for rc in row_cols)
     agg = {}
     for i, rc in enumerate(row_cols):
-        if len(rc) != 2 or len(rc) >= widest:
+        # final-review F2: the shape test is the SAME `is_aggregation_shaped` predicate
+        # `document._confirm_section_total` uses — `rows[i]` re-buckets by `column_of` exactly
+        # as `rc` above already did, so this is behavior-identical, not a new rule.
+        if not is_aggregation_shaped(rows[i], widest, grid):
             continue
         # CANDIDATE classification is STRICT (every token numeric), while MEMBER contributions
         # below stay lenient (_numeric_token_sum). The distinction is load-bearing and was

@@ -253,6 +253,17 @@ def test_stem_document_grounds_full(stem_document):
     records = table_records(rep.graph)
     assert len(records) == result.records
     assert len({str(_record_uri(r.row_id)) for r in records}) == len(records)
+    # Loop Q fix round 2 (2026-08-04): the stem's own loop-C reading-furniture captions
+    # ('Friday, 31'/'July 2026', a print-timestamp line inside a header region, carried by
+    # rowrole.emit_reading_evidence as a plain tab:RegionCaption — never a section key) must
+    # never be read as a candidate section key: no record identity may be furniture-prefixed,
+    # and no record may carry a furniture-sourced is_section_marker concept. Measured before
+    # this pin existed: still-quarantined drifted 1265->1341 and identities read
+    # 'Friday, 31 > 2025/26 > Jul 26 > Mackay' instead of '2025/26 > Jul 26 > Mackay > r9'.
+    assert not any(c.is_section_marker for r in records for c in r.concepts), \
+        [c for r in records for c in r.concepts if c.is_section_marker]
+    assert not any("Friday" in r.row_id or "July 2026" in r.row_id for r in records), \
+        [r.row_id for r in records if "Friday" in r.row_id or "July 2026" in r.row_id]
 
 
 @needs_stem

@@ -1,0 +1,20 @@
+# Illustrative SKOS terminology for the CBH-style demo contract (loop Q, Task 6). Port
+# names are Western Australia's public CBH grain-receival network (public nomenclature);
+# commodity names are generic grain commodities. No commercially identifying data
+# (volumes, clients, vessels) appears here — same posture as loop K's stem-terms.ttl.
+@prefix cbh:  <https://example.org/cbh#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+cbh:scheme-port a skos:ConceptScheme ; skos:prefLabel "WA public ports"@en .
+cbh:p-geraldton a skos:Concept ; skos:inScheme cbh:scheme-port ; skos:prefLabel "GERALDTON"@en .
+cbh:p-kwinana   a skos:Concept ; skos:inScheme cbh:scheme-port ; skos:prefLabel "KWINANA"@en .
+cbh:p-albany    a skos:Concept ; skos:inScheme cbh:scheme-port ; skos:prefLabel "ALBANY"@en .
+cbh:p-esperance a skos:Concept ; skos:inScheme cbh:scheme-port ; skos:prefLabel "ESPERANCE"@en .
+cbh:p-bunbury   a skos:Concept ; skos:inScheme cbh:scheme-port ; skos:prefLabel "BUNBURY"@en .
+
+cbh:scheme-commodity a skos:ConceptScheme ; skos:prefLabel "Grain commodities"@en .
+cbh:c-wheat   a skos:Concept ; skos:inScheme cbh:scheme-commodity ; skos:prefLabel "Wheat"@en .
+cbh:c-barley  a skos:Concept ; skos:inScheme cbh:scheme-commodity ; skos:prefLabel "Barley"@en .
+cbh:c-canola  a skos:Concept ; skos:inScheme cbh:scheme-commodity ; skos:prefLabel "Canola"@en .
+cbh:c-oats    a skos:Concept ; skos:inScheme cbh:scheme-commodity ; skos:prefLabel "Oats"@en .
+cbh:c-lupins  a skos:Concept ; skos:inScheme cbh:scheme-commodity ; skos:prefLabel "Lupins"@en .

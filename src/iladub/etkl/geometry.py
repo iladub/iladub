@@ -312,8 +312,74 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
     return sorted(lines, key=lambda ln: ln.top)
 
 
+def hrule_boxes(hrules: Sequence[HRule], rule_xs: Sequence[float]) -> list[tuple[float, float]]:
+    """EVERY consecutive full-width author-drawn hrule y-pair, in y-order (top to
+    bottom) — `leading_hrule_box`'s box arithmetic, extended to expose the whole
+    ordered list instead of only the first. `leading_hrule_box`/`weld_hrule_boxes`
+    (the default compile path) stay box-0-only, UNCHANGED — this is a read-only,
+    ADDITIVE enumeration for callers that must consider more than the leading box
+    (loop Q Task 2 fix round 2's section-repeat header-box selection; see
+    sectiongraph._leading_box_y).
+
+    A full-width hrule spans the rule x-extent (both ends within COORD_EPS of
+    [min(rule_xs), max(rule_xs)] or beyond); boxes are consecutive full-width hrule
+    y-pairs. [] (honest abstain) with fewer than 2 rule x's or fewer than 2 distinct
+    full-width hrule y's — no box can be formed."""
+    if not hrules or len(rule_xs) < 2:
+        return []
+    lo, hi = min(rule_xs), max(rule_xs)
+    full = sorted({round(h.y, 2) for h in hrules
+                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
+    return list(zip(full, full[1:]))
+
+
+def leading_hrule_box(hrules: Sequence[HRule], rule_xs: Sequence[float]) -> tuple[float, float] | None:
+    """The (top, bottom) y-extent of the grid's LEADING (topmost) author-drawn
+    FULL-WIDTH hrule box — the box arithmetic `weld_hrule_boxes` uses to decide which
+    rows to merge, factored out so a caller that needs only the box's IDENTITY (not
+    the merge) reuses the exact same arithmetic instead of duplicating it (loop Q's
+    section-repeat header-box signature, spec §4.0). Box 0 of `hrule_boxes` — kept as
+    its own function because `weld_hrule_boxes` and every pre-fix-round-2 caller must
+    stay box-0-only, byte-identical."""
+    boxes = hrule_boxes(hrules, rule_xs)
+    return boxes[0] if boxes else None
+
+
+def box_y_fallback_candidates(hrules: Sequence[HRule]) -> list[tuple[float, float]]:
+    """EVERY consecutive DISTINCT-hrule-y pair, X-EXTENT-FREE, in y-order —
+    `leading_box_y_fallback`'s arithmetic, extended to expose the whole ordered list
+    instead of only the first. `leading_box_y_fallback` (the default repair path,
+    loop Q Task 4) stays box-0-only, UNCHANGED. [] with fewer than 2 distinct hrule
+    y's — no box can be formed."""
+    ys = sorted({round(h.y, 2) for h in hrules})
+    return list(zip(ys, ys[1:]))
+
+
+def leading_box_y_fallback(hrules: Sequence[HRule]) -> tuple[float, float] | None:
+    """The X-EXTENT-FREE leading-box candidate: the author's first two DISTINCT drawn
+    hrule y-positions. The candidate rule sectiongraph._leading_box_y established for
+    the doubled-edge shape (loop Q Task 2 — see its docstring for the full §8
+    justification: PROCEDURAL candidate GENERATION over author marks, zero tuned
+    constant, never asserted as a reading on its own), factored here so the repair
+    path's weld (loop Q Task 4) reuses the exact same arithmetic instead of a copy.
+    Box 0 of `box_y_fallback_candidates` — kept as its own function because the
+    repair-path weld must stay box-0-only, byte-identical.
+
+    WHY it exists: a doubled/inset outer border defeats `leading_hrule_box`'s
+    full-width test (the hrules start strictly inside the border twins, so no hrule
+    ever spans [min(rule_xs), max(rule_xs)]) — by design, no x-extent test survives
+    that shape (see gridregion.grid_lines's inertness note). Callers use this ONLY
+    where a disposal exists downstream: section-repeat.rq's compound match
+    (sectiongraph), or the region membrane the pass-2 re-read must pass
+    (_build_ruled_band under section_repair=True). None with fewer than 2 distinct
+    hrule y's — no box can be formed."""
+    boxes = box_y_fallback_candidates(hrules)
+    return boxes[0] if boxes else None
+
+
 def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
-                     rule_xs: Sequence[float]) -> list[Line]:
+                     rule_xs: Sequence[float],
+                     box: tuple[float, float] | None = None) -> list[Line]:
     """Merge re-extracted rows that share the grid's LEADING (topmost) author-drawn
     FULL-WIDTH hrule box (loop P; loop H's marks-are-the-row-delimiters, applied as a
     merge LICENCE: the drawn box containing both rows is positive evidence they are one
@@ -335,17 +401,22 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
     [min(rule_xs), max(rule_xs)] or beyond). Boxes are consecutive full-width hrule
     pairs; only box 0 (the leading box) ever groups rows — a row's y-center inside any
     later box is left untouched. Within a merged row, each column's words join
-    top-to-bottom with single spaces; the merged Word's bbox is the union of its parts."""
+    top-to-bottom with single spaces; the merged Word's bbox is the union of its parts.
+
+    `box` (loop Q Task 4, default None): a caller-supplied leading-box y-extent that
+    OVERRIDES the full-width derivation — the repair path (`_build_ruled_band` under
+    section_repair=True) passes `leading_box_y_fallback`'s candidate when the
+    full-width test abstains against a doubled-edge border. None (every caller before
+    the parameter existed) derives the box from `leading_hrule_box` exactly as
+    shipped — byte-identical."""
     if not relines or not hrules or len(rule_xs) < 2:
         return list(relines)
-    lo, hi = min(rule_xs), max(rule_xs)
-    full = sorted({round(h.y, 2) for h in hrules
-                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
-    if len(full) < 2:
+    if box is None:
+        box = leading_hrule_box(hrules, rule_xs)
+    if box is None:
         return list(relines)
     out: list[Line] = []
-    boxes = list(zip(full, full[1:]))
-    leading_top, leading_bottom = boxes[0]
+    leading_top, leading_bottom = box
 
     def box_of(ln: Line):
         cy = (ln.top + ln.bottom) / 2.0

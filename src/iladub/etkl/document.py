@@ -177,6 +177,18 @@ class DocumentReport:
     refused pair; the matching `tab:licenceRefused` graph fact needs two table URIs to name, so a
     pair one of whose pages asserted no table appears here and not in the graph — the same
     asymmetry `recognized` already has with `chains`.
+
+    `repaired_bands` (loop Q, spec §4.0) holds every (page, band_index) whose pass-2
+    section-repair re-read the membrane ADMITTED and the driver therefore adopted — the honest
+    record of the repair's reach. ONLY adopted bands appear: a recognized candidate whose pass-2
+    re-read still escalates leaves no entry here (its pass-1 report stands byte-untouched) but
+    gets a `notes` line, and a page with no recognized intra-page section group never reaches
+    the repair at all (the monotonicity the stem shapes pin).
+
+    `notes` carries the repair's and the section-total oracle's REFUSALS as prose — a failed
+    pass-2 candidate, a printed section total that does not reconcile — because a refusal
+    signal that exists must be recorded (R34's discipline), and neither has a graph node to
+    hang a fact on (the refused state IS the absence of the fact).
     """
     score: float
     pages: tuple[CompilationReport, ...]
@@ -185,6 +197,8 @@ class DocumentReport:
     recognized: tuple[tuple[int, int], ...] = ()
     arithmetic: tuple[ChainArithmetic, ...] = ()
     refused_licences: tuple[tuple[int, int], ...] = ()
+    repaired_bands: tuple[tuple[int, int], ...] = ()
+    notes: tuple[str, ...] = ()
 
     def to_turtle(self) -> str:
         return self.graph.serialize(format="turtle")
@@ -925,6 +939,105 @@ def reconcile_chain_arithmetic(graph: Graph, chain) -> ChainArithmetic:
                            superseded, derived)
 
 
+# --------------------------------------- the SECTION repair (loop Q, spec 2026-08-04 §4.0-§4.1)
+#
+# §8 CLASSIFICATION
+#   * WHICH bands repeat the same author-drawn section shape is the sectiongraph AXIOM
+#     (section-repeat.rq), verdict-independent — this module only calls it.
+#   * WHETHER a re-read candidate may be ADOPTED is decided by the EXISTING region membrane
+#     (tiling shapes + score) inside the pass-2 `compile_tables` call — no new decision here.
+#   * WHETHER a printed per-section total CONFIRMS its section is loop H's
+#     `detect_aggregation_rows`, VERBATIM, run with the SECTION as the closure window —
+#     justified PROCEDURAL for loop H's own reason (decidable exact Decimal arithmetic).
+#   * Everything below is PROCEDURAL glue in the reconcile_chain_arithmetic mould: subgraph
+#     copy, triple retraction of our own minting, report bookkeeping. It reads no text for
+#     meaning and carries no tuned constant.
+
+
+def _remove_escalation_record(graph: Graph, page_doc: URIRef, idx: int) -> None:
+    """Withdraw the pass-1 escalation record of ONE adopted band — precisely what the compile
+    minted for an escalated band and nothing else. Two possible subjects, both OUR OWN minting
+    (`compile_tables` / `holon.assert_hier_region`): `{page_doc}#region{idx}` (every
+    escalate_region call site in compile_tables) and `{page_doc}#htable{idx}-rt` (the hier
+    path's ROUND_TRIP_FAIL candidate). `holon.escalate_region` emits OUTGOING triples only and
+    nothing in the repo ever points AT a candidate node, so removing the subjects' triples
+    removes the records whole. THE DECISION (stated per the plan's 'document your choice'): the
+    pass-1 escalation is NOT kept as history — the pass-2 re-read supersedes the proposition the
+    escalation was (the same idiom `_supersede_page_groups` documents: two parallel truths over
+    one band would leave the feed to pick by iteration order, a §3 violation), and the adoption
+    is recorded on `DocumentReport.repaired_bands` instead."""
+    for cand in (URIRef(f"{page_doc}#region{idx}"), URIRef(f"{page_doc}#htable{idx}-rt")):
+        graph.remove((cand, None, None))
+
+
+def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
+    """The ONE band's subgraph out of a pass-2 whole-page compile: every subject minted under
+    the table's URI space (`{table_uri}`, `{table_uri}-...` — the compile's own minting
+    convention, the `_index_suffix` licence read in the other direction; this catches the
+    ROUND_TRIP_FAIL `-cc{r}_{col}` propositions, which hang off no table edge), closed over
+    outgoing reachability so BNode bboxes ride along. Objects outside the band (the pass-2 doc
+    URI, provenance region URIs) have no outgoing triples in the page graph and contribute
+    nothing. A COPY, never a mutation of the pass-2 graph."""
+    from rdflib import BNode
+    out = Graph()
+    prefix = str(table_uri) + "-"
+    roots = [s for s in set(g.subjects())
+             if isinstance(s, URIRef) and (s == table_uri or str(s).startswith(prefix))]
+    seen: set = set(roots)
+    frontier = list(roots)
+    while frontier:
+        s = frontier.pop()
+        for pred, o in g.predicate_objects(s):
+            out.add((s, pred, o))
+            if isinstance(o, (URIRef, BNode)) and o not in seen:
+                seen.add(o)
+                frontier.append(o)
+    return out
+
+
+def _confirm_section_total(graph: Graph, table_uri: URIRef, band) -> tuple[bool, str | None]:
+    """Associate a section table's printed trailing total with the table — or refuse.
+
+    THE ORACLE IS ARITHMETIC (spec §4.0: 'the section boundary oracle is arithmetic'): the
+    total candidate is the section table's LAST row, positioned strictly BELOW the section
+    grid's closing rule (the band's last drawn hrule — presence/ordering over author marks,
+    no tolerance: bands' lines and hrules are measured, disjoint quantities), and it CONFIRMS
+    iff loop H's `detect_aggregation_rows` — unchanged, run over THIS table's own row sequence,
+    the section being the closure window — confirms it: exact Decimal equality between the
+    printed measure and the section rows' measure-column token-sum. 'TOTAL' is never read as a
+    word; language is never evidence (loop H's own law).
+
+    Returns (confirmed, note): confirmed=True emits `tab:SectionTotal` + `tab:confirmsSection`;
+    a candidate-shaped last row that does NOT reconcile returns a refusal note and emits
+    NOTHING (absence + note, §7 — never guessed); a section with no trailing strip below its
+    closing rule, or no candidate-shaped last row, has no total to judge — (False, None)."""
+    from .rows import detect_aggregation_rows, is_aggregation_shaped, row_column_count
+    hy = [round(float(h.y), 2) for h in (getattr(band, "hrules", ()) or ())]
+    if not hy or not any((ln.top + ln.bottom) / 2.0 > max(hy) for ln in band.lines):
+        return False, None            # nothing printed below the grid's closing rule
+    seq, row_uris, why = _logical_row_sequence(graph, (table_uri,))
+    if seq is None:
+        return False, f"section-total window abstained ({why})"
+    rows, grid = seq
+    if len(rows) < 2:
+        return False, None
+    agg = detect_aggregation_rows(rows, grid)
+    last = len(rows) - 1
+    if last in agg:
+        graph.add((row_uris[last], RDF.type, TAB.SectionTotal))
+        graph.add((row_uris[last], TAB.confirmsSection, table_uri))
+        return True, None
+    # final-review F2: was `max(len(r.cells) for r in rows)` / `len(rows[last].cells) == 2` —
+    # RAW CELL counts, which diverge from `detect_aggregation_rows`'s DISTINCT-COLUMN counting
+    # (rows.py:121) whenever a row has two cells in one column. Now the SAME predicate, so the
+    # two checks can never drift apart again.
+    widest = max(row_column_count(r, grid) for r in rows)
+    if is_aggregation_shaped(rows[last], widest, grid):
+        return False, ("printed section total does not reconcile with the section's "
+                       "measure-column sum; association refused")
+    return False, None                # no total candidate printed — nothing to confirm
+
+
 def compile_document(pdf_path: str, validate_shapes: bool = True,
                      span_proposer=None, row_role_proposer=None) -> DocumentReport:
     """Compile a whole document: every page under its own page-scoped document URI, merged into
@@ -973,6 +1086,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     n_pages = page_count(pdf_path)
     pages: list[CompilationReport] = []
     blocks: list[dict] = []
+    band_lists: list[list] = []               # page p's band inventory, kept for loop Q's repair
     graph = Graph()
     recognized: list[tuple[int, int]] = []
     refused: list[tuple[int, int]] = []       # recognized, then REFUSED by the licence (loop O)
@@ -986,6 +1100,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # chains: page 2 is carried from page 1's confirmed reading, which page 1 in turn carried.
     for p in range(n_pages):
         bands = page_bands(pdf_path, p)
+        band_lists.append(bands)
         blocks.append(_recognition_blocks(bands))
         carried, pair, refused_pair = None, None, None
         if p > 0 and blocks[p - 1] and blocks[p]:
@@ -1041,6 +1156,98 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         _link_columns(graph, cur_uri, prev_uri)   # the column half of the same link (loop N)
         links[cur_uri] = prev_uri
 
+    # ------------------------------------------------------ LOOP Q (spec §4.0): SECTION REPAIR
+    # Strictly AFTER band reading and carriage — the order of authority (band reading →
+    # carriage → section repair) is load-bearing and pinned on both specimen shapes. Per page:
+    # recognize the intra-page section repetition over ALL ruled bands, VERDICT-INDEPENDENT
+    # (sectiongraph.section_candidates — the identity evidence is raw author marks + raw text,
+    # no successful reading required); within a recognized group, re-read ONLY the
+    # still-escalated members (pass-2 compile_tables with `section_repair_bands`, under the
+    # page-scoped `{page_uri}/r2` URI so pass-2 mints can never collide with pass-1's); ADOPT a
+    # candidate's re-read IFF the existing region membrane admitted it. MONOTONE BY
+    # CONSTRUCTION: a band that asserted in pass 1 is never re-read; a candidate whose pass-2
+    # still escalates keeps its pass-1 report byte-untouched (noted, never traced); a page with
+    # no recognized group skips everything — the stem shapes never reach this code (their pages
+    # carry at most one ruled band, and recognition needs two).
+    from .sectiongraph import section_candidates
+    from dataclasses import replace as _dc_replace
+    repaired: list[tuple[int, int]] = []
+    notes: list[str] = []
+    page_section_groups: list[tuple[int, tuple[tuple[int, ...], ...]]] = []
+    for p in range(n_pages):
+        ruled = [(i, b, tuple(b.rules)) for i, b in enumerate(band_lists[p]) if b.rules]
+        if len(ruled) < 2:
+            continue                  # nothing can repeat intra-page: recognition needs a pair
+        groups = section_candidates(ruled)
+        if not groups:
+            continue
+        page_section_groups.append((p, groups))
+        # region report index IS band index (page_bands' pinned enumeration contract), so the
+        # verdict filter and the repair flag name the same band by the same integer.
+        candidates = frozenset(i for grp in groups for i in grp
+                               if pages[p].regions[i].verdict == "escalated")
+        if not candidates:
+            continue                  # every member asserted at band level: stitch-only page
+        # final-review F4: `validate_shapes=validate_shapes` — pass 2 inherits pass 1's SHACL
+        # policy verbatim, on purpose. `compile_tables` raises AssertionError if an ASSERTED
+        # holon fails the tab: SHACL membrane; that is a COMPILER-INVARIANT violation ("this
+        # code minted a graph its own contract rejects"), never a fact about the document, so
+        # it must abort here exactly as it would on a pass-1 band — a repaired band silently
+        # let through with a laxer policy would be evidence laundering, not repair.
+        rep2 = compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
+                              span_proposer=span_proposer,
+                              row_role_proposer=row_role_proposer,
+                              doc_uri=URIRef(f"{page_doc_uri(p)}/r2"),
+                              section_repair_bands=candidates)
+        new_regions = list(pages[p].regions)
+        adopted_any = False
+        for idx in sorted(candidates):
+            r2 = rep2.regions[idx]
+            if r2.verdict == "asserted" and r2.table_uri is not None:
+                # ADOPTION: swap the region report, swap the triples. The pass-1 escalation
+                # record is withdrawn (superseded, not kept as parallel history — see
+                # _remove_escalation_record for the decision) and the pass-2 table's own
+                # subgraph — already membrane-validated inside the pass-2 compile — merges in.
+                _remove_escalation_record(graph, page_doc_uri(p), idx)
+                graph += _band_subgraph(rep2.graph, r2.table_uri)
+                new_regions[idx] = r2
+                repaired.append((p, idx))
+                adopted_any = True
+            else:
+                notes.append(f"page {p} band {idx}: section-repair pass-2 re-read still "
+                             f"escalated ({r2.reason}); pass-1 report kept")
+        if adopted_any:
+            # the page's score is recomputed HONESTLY from the per-band token ledger the
+            # compile now carries (RegionReport.tokens_*): the adopted bands' tokens moved
+            # from escalated to (mostly) asserted, and the document score below inherits it.
+            # final-review F5: a repaired band's peeled strip lines re-emit as
+            # `tab:RegionCaption` (`_emit_band_captions`), NOT as cells — caption words never
+            # entered `tokens_asserted`/`tokens_escalated` in pass 1 or pass 2, so they leave
+            # this asserted+escalated denominator exactly as they always have: captions are
+            # carried context, not table content.
+            a = sum(r.tokens_asserted for r in new_regions)
+            e = sum(r.tokens_escalated for r in new_regions)
+            pages[p] = _dc_replace(pages[p], regions=tuple(new_regions), asserted=a,
+                                   escalated=e, score=1.0 if (a + e) == 0 else a / (a + e))
+
+    # §4.1 intra-page stitching: link ALL recognized members that ASSERT — band-level-asserted
+    # and repaired alike, whichever route they took — in reading order, and feed the links into
+    # loop M's OWN successor map, so the existing chain assembly (and loop N's arithmetic
+    # riding it) builds the section chain with no second mechanism.
+    section_facts = bool(repaired)
+    for p, groups in page_section_groups:
+        for grp in groups:
+            uris = [pages[p].regions[i].table_uri for i in grp
+                    if pages[p].regions[i].verdict == "asserted"
+                    and pages[p].regions[i].table_uri is not None]
+            for prev_uri, cur_uri in zip(uris, uris[1:]):
+                if cur_uri in links or prev_uri in set(links.values()):
+                    continue          # never fork loop M's successor map — refusal, not a guess
+                graph.add((cur_uri, TAB.continuesTable, prev_uri))
+                _link_columns(graph, cur_uri, prev_uri)
+                links[cur_uri] = prev_uri
+                section_facts = True
+
     ordered = [r.table_uri for rep in pages for r in rep.regions if r.table_uri is not None]
     successor = {prev: cur for cur, prev in links.items()}
     chains = []
@@ -1060,11 +1267,29 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     arithmetic = tuple(reconcile_chain_arithmetic(graph, chain)
                        for chain in chains if len(chain) > 1)
 
+    # §4.0 TOTALS — the arithmetic section-boundary oracle, run over every recognized member
+    # that asserted (repaired or not), AFTER the chain arithmetic so nothing it emits can be
+    # swept by the reconciliation's retract-then-assert. See _confirm_section_total for the
+    # law; refusals land in `notes`, associations in the graph — never both for one section.
+    for p, groups in page_section_groups:
+        for grp in groups:
+            for i in grp:
+                r = pages[p].regions[i]
+                if r.verdict != "asserted" or r.table_uri is None:
+                    continue
+                confirmed, note = _confirm_section_total(graph, r.table_uri, band_lists[p][i])
+                section_facts = section_facts or confirmed
+                if note:
+                    notes.append(f"page {p} band {i}: {note}")
+
     # WHOLE-GRAPH VALIDATION (task 4; see the docstring above for why the gate is `recognized`
-    # rather than always-on). Every document-level fact is asserted by this point: the pairing
-    # loop above added continuesTable/continuesColumn/inLogicalColumn, and the arithmetic pass
-    # just above retyped aggregations and rebuilt row groups over the logical table.
-    if validate_shapes and recognized:
+    # rather than always-on — and, since loop Q, `section_facts` for exactly the same reason:
+    # an adoption, an intra-page stitch or a section total puts document-level facts into the
+    # merged graph that no per-page membrane ever saw). Every document-level fact is asserted
+    # by this point: the pairing loop above added continuesTable/continuesColumn/
+    # inLogicalColumn, the arithmetic pass retyped aggregations and rebuilt row groups over the
+    # logical table, and the section pass added its adoptions, links and totals.
+    if validate_shapes and (recognized or section_facts):
         conforms, text = _validate(graph)
         if not conforms:
             raise AssertionError(f"document-level facts failed tab: SHACL:\n{text}")
@@ -1074,4 +1299,4 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     denom = asserted + escalated
     score = 1.0 if denom == 0 else asserted / denom
     return DocumentReport(score, tuple(pages), tuple(chains), graph, tuple(recognized),
-                          arithmetic, tuple(refused))
+                          arithmetic, tuple(refused), tuple(repaired), tuple(notes))

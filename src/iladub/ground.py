@@ -34,6 +34,11 @@ class SurfaceConcept:
     text: str
     value: str
     region: str
+    # Loop Q §4.2: True for a candidate injected from a section's peeled captions (feed.py's
+    # `_inject_section_captions`) — undiscriminated key-or-notice evidence, never set by any
+    # other caller. Defaulted so every existing 3-arg call site (positional or keyword) is
+    # untouched; grounding disposal does not branch on it today (§4.3's naming cascade will).
+    is_section_marker: bool = False
 
 
 @dataclass(frozen=True)

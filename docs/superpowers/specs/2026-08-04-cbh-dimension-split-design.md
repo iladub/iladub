@@ -1,6 +1,8 @@
 # CBH dimension-split-as-denormalization — loops P and Q — design
 
-**Date:** 2026-08-04 · **Status:** approved in brainstorm (François), loops not started ·
+**Date:** 2026-08-04 · **Status:** loop Q closed 2026-08-04 (Task 7, §4.6) — CBH measured
+end-to-end at score 0.9047; loop P's band-scoped fix-wave reverted (its shipped machinery
+is what loop Q builds on) — see the R42 register row ·
 **Discharges:** R42 (both gaps) · **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf`
 (sha256-pinned in `tests/corpus-manifest.ttl`; battery id `cbh-stem-2026-08-03`)
 
@@ -141,7 +143,47 @@ byte-identical; full suite + corpus battery re-run; R42 gap (a) closed in the re
 
 ## 4. Loop Q — split-key attribution and naming
 
-### 4.1 Section recognition and stitching (AXIOM; generalize loop M intra-page)
+### 4.0 The section-scope repair (added 2026-08-04 from loop P's architectural finding)
+
+Loop P proved no band-local licence can serve the peel/weld repair: the
+`_build_ruled_band` seam is shared by loop L's engagement (stem p0 needs its furniture
+row KEPT), loop M's carriage (stem p1–2 must keep escalating standalone), and CBH's
+sections (strips must peel) — three consumers, contradictory demands, three measured
+whipsaws (the R42 register row carries the map). The repair therefore runs at SECTION
+scope inside the document driver, **strictly after** the readers it must not disturb:
+
+1. **Band-level compile** runs exactly as today. *(CORRECTION, measured 2026-08-04 at
+   loop Q Task 1: loop P's peel/weld IS wired in `_build_ruled_band` and fires wherever
+   section edges are CLEAN — the loop-P synthetic asserts at band level, score 1.0.
+   It is defeated — hence inert — precisely on doubled-edge documents like the real
+   CBH, which escalate. Both outcomes are acceptable inputs to this step's ordering:
+   a clean-edged section that asserts at band level needs no repair, only stitching;
+   a doubled-edge section escalates and becomes a repair candidate. The stem is
+   untouched either way — measured exact through loop P's close.)*
+2. **Document carriage** (loop M recognition + loop O licence) runs next, unchanged —
+   stem pages 1–2 are carried cross-page and never reach step 3.
+3. **Section repair (NEW):** the page's **intra-page section repetition** is recognized
+   over ruled bands REGARDLESS of their band-level verdict (the identity evidence is
+   raw: header-box line texts repeating verbatim + agreeing interior-rule x-sets —
+   author marks + raw text, no successful reading required). Within a recognized group,
+   ONLY the still-escalated members are re-read as repair candidates; members that
+   already assert (clean-edged sections read at band level) pass through untouched.
+   Stitching (§4.1) then runs over ALL recognized members that assert, whichever route
+   they took. Each
+   recognized member is re-read as a **candidate**: peel leading non-grid strips (loop
+   P's `grid_lines`/`enclosed` machinery, with the ink-witness interior definition —
+   safe HERE because the scope guarantees a sectioned page, which the stem never
+   presents to this step) + weld the leading header box; the candidate is **disposed by
+   the existing region membrane** (tiling shapes + `merge_tiling_ok` + score): it
+   ASSERTS only if the re-reading passes; otherwise the band stays escalated exactly as
+   before. The repair is **monotone by construction** — it can only turn escalations
+   into membrane-passing assertions, never touch an asserting band, never worsen an
+   escalation — which is precisely the property the loop-P wave lacked and the reason
+   it whipsawed.
+
+§4.1's stitching then runs over the repaired sections; the peeled captions are the
+key evidence §4.2 consumes. Loops' order of authority (band reading → carriage →
+section repair) is load-bearing and must be pinned by a test on BOTH specimen shapes.
 
 The repeated 3-line header block is loop M's **repeated-header signature**, intra-page: the
 recognition AXIOM (leaf-header identity between blocks) generalizes from page pairs to
@@ -215,6 +257,46 @@ across pages if the roster continues), records carrying port keys
 records/grounded/quarantined tallies in the loop evidence; corpus battery re-run green on
 the new expectation (François adjudicates the manifest verdict flip — the loop proposes,
 never edits it); R42 deleted from the register.
+
+### 4.6 Status (loop Q close, Task 7, 2026-08-04)
+
+**§4.0-§4.4 SHIPPED and measured end-to-end on the real specimen** (`tests/test_cbh_e2e.py`,
+one module-scoped `compile_document` over `corpus/ag-trade/cbh-stem-2026-08-03.pdf`):
+
+- **§4.0 (section-scope repair):** score 0.0698 → **0.9047** (0.9046563192904656); all
+  4 of the doubled-edge escalated bands recognized, ink-witness-repaired and adopted
+  (`repaired_bands = ((0,1),(0,3),(0,5),(0,7))`) — monotone, byte-identical on the stem
+  shape throughout Tasks 1-4.
+- **§4.1 (stitching + arithmetic):** the four repaired sections chain into ONE 4-member
+  logical table (`chains` = one 4-chain + one unrelated singleton, `[4, 1]`) via
+  `tab:continuesTable`. The per-section printed-total confirmation half of §4.1 did
+  **NOT** measure on the real document: `document._confirm_section_total` produced
+  **zero** `tab:SectionTotal` facts on CBH (registered as R50/R47's residual, not
+  silently dropped) — the section boundary the spec's arithmetic oracle describes is
+  not yet what closes CBH's sections; the repeated-header signature (§4.0) is.
+- **§4.2 (key-value attribution):** section captions injected as candidate concepts and
+  used to prefix record identity — measured on the real document: 49 of 58 records
+  section-prefixed, distinct across GERALDTON/KWINANA/ALBANY/ESPERANCE. Implemented as
+  the FEED-level positional form only (`row_id` prefix + injected `SurfaceConcept`s);
+  the spec's `tab:DerivedRowGroup`/`hasLabel`/`wasDerivedFrom` GRAPH-level form was not
+  built — open as **R49**, not overclaimed by this close.
+- **§4.3 (naming cascade):** the record-identity prefixes (`GERALDTON`/`KWINANA`/
+  `ALBANY`/`ESPERANCE`) resolve to the CBH contract's `port` field via the
+  **unique-admitting-field** AXIOM arm — `ambiguity_score=1`, one
+  `iladub:PromotionDecision`, no LLM call needed on this specimen (arm 1, explicit
+  naming, correctly abstains — CBH's markers are bare; a raising proposer confirmed
+  arm 3 is never reached).
+- **§4.4 (demo contract):** `examples/shipping/cbh-{contract,terms,shapes}.ttl` shipped
+  (Task 6) and now referenced from `tests/corpus-manifest.ttl`'s CBH entry
+  (`cor:contract`/`cor:terms`/`cor:shapes`, Task 7) — the membrane's all-or-none rule
+  satisfied; **verdict adjudication (the `Unadjudicated` → flip) is François's, not
+  changed by this loop**.
+- **Grounding, full document:** records=58, grounded=134, still-quarantined=775; every
+  `GroundedNode` behind exactly one `wasPromotedBy` (the §3 invariant, held over the
+  whole repaired document, not a fixture).
+- **R42 register outcome:** closed with both gaps measured (see the register row) —
+  kept as `~~R42~~` with its closure narrative (repo convention: R1/R2/R35 are struck
+  through and summarized, not deleted, so the resolution history stays legible).
 
 ## 5. Global constraints (hard; reviewers enforce)
 
