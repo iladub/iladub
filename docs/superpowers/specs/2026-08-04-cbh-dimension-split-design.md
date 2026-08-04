@@ -141,7 +141,39 @@ byte-identical; full suite + corpus battery re-run; R42 gap (a) closed in the re
 
 ## 4. Loop Q — split-key attribution and naming
 
-### 4.1 Section recognition and stitching (AXIOM; generalize loop M intra-page)
+### 4.0 The section-scope repair (added 2026-08-04 from loop P's architectural finding)
+
+Loop P proved no band-local licence can serve the peel/weld repair: the
+`_build_ruled_band` seam is shared by loop L's engagement (stem p0 needs its furniture
+row KEPT), loop M's carriage (stem p1–2 must keep escalating standalone), and CBH's
+sections (strips must peel) — three consumers, contradictory demands, three measured
+whipsaws (the R42 register row carries the map). The repair therefore runs at SECTION
+scope inside the document driver, **strictly after** the readers it must not disturb:
+
+1. **Band-level compile** runs exactly as today — loop P's machinery stays INERT here
+   (the peel/weld are never invoked from `_build_ruled_band`; stem p0 asserts through
+   loop L untouched).
+2. **Document carriage** (loop M recognition + loop O licence) runs next, unchanged —
+   stem pages 1–2 are carried cross-page and never reach step 3.
+3. **Section repair (NEW):** bands STILL ESCALATED after carriage become candidates iff
+   the page shows **intra-page section repetition**: ≥2 escalated ruled bands whose raw
+   grid-region line texts repeat verbatim (the loop-M identity test, applied to raw
+   lines because no reading exists yet) AND whose interior-rule x-sets agree — both
+   computable from author marks + raw text without a successful reading. Each
+   recognized member is re-read as a **candidate**: peel leading non-grid strips (loop
+   P's `grid_lines`/`enclosed` machinery, with the ink-witness interior definition —
+   safe HERE because the scope guarantees a sectioned page, which the stem never
+   presents to this step) + weld the leading header box; the candidate is **disposed by
+   the existing region membrane** (tiling shapes + `merge_tiling_ok` + score): it
+   ASSERTS only if the re-reading passes; otherwise the band stays escalated exactly as
+   before. The repair is **monotone by construction** — it can only turn escalations
+   into membrane-passing assertions, never touch an asserting band, never worsen an
+   escalation — which is precisely the property the loop-P wave lacked and the reason
+   it whipsawed.
+
+§4.1's stitching then runs over the repaired sections; the peeled captions are the
+key evidence §4.2 consumes. Loops' order of authority (band reading → carriage →
+section repair) is load-bearing and must be pinned by a test on BOTH specimen shapes.
 
 The repeated 3-line header block is loop M's **repeated-header signature**, intra-page: the
 recognition AXIOM (leaf-header identity between blocks) generalizes from page pairs to
