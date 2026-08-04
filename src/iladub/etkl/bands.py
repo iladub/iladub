@@ -23,6 +23,10 @@ class Band:
     # geometry.refine_rule_columns). `rules` stays exactly what the author drew; keeping them
     # separate is deliberate, so a derived boundary is never mistaken for a mark in the document.
     column_xs: tuple[float, ...] = ()
+    # Full-width strip lines peeled from ABOVE a ruled grid (key headings, notices —
+    # loop P). Kept word-based (never rule-re-extracted) and CARRIED to the asserted
+    # table as tab:RegionCaption; default empty so every existing constructor stands.
+    captions: tuple[Line, ...] = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:
