@@ -1,7 +1,8 @@
 # CBH dimension-split-as-denormalization — loops P and Q — design
 
 **Date:** 2026-08-04 · **Status:** loop Q closed 2026-08-04 (Task 7, §4.6) — CBH measured
-end-to-end at score 0.9047; loop P reverted (see the R42 register row) ·
+end-to-end at score 0.9047; loop P's band-scoped fix-wave reverted (its shipped machinery
+is what loop Q builds on) — see the R42 register row ·
 **Discharges:** R42 (both gaps) · **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf`
 (sha256-pinned in `tests/corpus-manifest.ttl`; battery id `cbh-stem-2026-08-03`)
 

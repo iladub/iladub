@@ -83,8 +83,11 @@ passed the §8 gate and fixed the specimen it targeted, and each one broke the o
 specimen — this re-measures loop L's lesson (R30/R31: a band-scoped law is blind to
 context a wider scope would see) at band scope for a peel/weld decision instead of a
 header-row law. All three were reverted (`1271156`) rather than shipped broken. The full
-measured map — every score, mechanism, and chain/grounded count per round — is recorded
-in the R42 row of `docs/superpowers/residues.md` (canonical; not duplicated here); the
+measured map — every score, mechanism, and chain/grounded count per round — WAS recorded
+in the R42 row of `docs/superpowers/residues.md`, but the loop Q close (`b89cf1b`) moved
+it OUT of the row to keep the closed row legible; it now lives only at that row's
+PRE-CLOSE revision (`git log --follow docs/superpowers/residues.md`, commit `b89cf1b`'s
+parent, `a83db3f`) and in the loop-P plan's status note — not duplicated here either. The
 architectural finding is that the repair belongs at SECTION scope (loop Q), where
 recognition already knows it faces a sectioned, repeated-header chain before any peel
 decision is made — not at one band deciding blind.

@@ -1011,7 +1011,7 @@ def _confirm_section_total(graph: Graph, table_uri: URIRef, band) -> tuple[bool,
     a candidate-shaped last row that does NOT reconcile returns a refusal note and emits
     NOTHING (absence + note, §7 — never guessed); a section with no trailing strip below its
     closing rule, or no candidate-shaped last row, has no total to judge — (False, None)."""
-    from .rows import detect_aggregation_rows
+    from .rows import detect_aggregation_rows, is_aggregation_shaped, row_column_count
     hy = [round(float(h.y), 2) for h in (getattr(band, "hrules", ()) or ())]
     if not hy or not any((ln.top + ln.bottom) / 2.0 > max(hy) for ln in band.lines):
         return False, None            # nothing printed below the grid's closing rule
@@ -1027,8 +1027,12 @@ def _confirm_section_total(graph: Graph, table_uri: URIRef, band) -> tuple[bool,
         graph.add((row_uris[last], RDF.type, TAB.SectionTotal))
         graph.add((row_uris[last], TAB.confirmsSection, table_uri))
         return True, None
-    widest = max(len(r.cells) for r in rows)
-    if len(rows[last].cells) == 2 and len(rows[last].cells) < widest:
+    # final-review F2: was `max(len(r.cells) for r in rows)` / `len(rows[last].cells) == 2` —
+    # RAW CELL counts, which diverge from `detect_aggregation_rows`'s DISTINCT-COLUMN counting
+    # (rows.py:121) whenever a row has two cells in one column. Now the SAME predicate, so the
+    # two checks can never drift apart again.
+    widest = max(row_column_count(r, grid) for r in rows)
+    if is_aggregation_shaped(rows[last], widest, grid):
         return False, ("printed section total does not reconcile with the section's "
                        "measure-column sum; association refused")
     return False, None                # no total candidate printed — nothing to confirm
@@ -1184,6 +1188,12 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                                if pages[p].regions[i].verdict == "escalated")
         if not candidates:
             continue                  # every member asserted at band level: stitch-only page
+        # final-review F4: `validate_shapes=validate_shapes` — pass 2 inherits pass 1's SHACL
+        # policy verbatim, on purpose. `compile_tables` raises AssertionError if an ASSERTED
+        # holon fails the tab: SHACL membrane; that is a COMPILER-INVARIANT violation ("this
+        # code minted a graph its own contract rejects"), never a fact about the document, so
+        # it must abort here exactly as it would on a pass-1 band — a repaired band silently
+        # let through with a laxer policy would be evidence laundering, not repair.
         rep2 = compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                               span_proposer=span_proposer,
                               row_role_proposer=row_role_proposer,
@@ -1210,6 +1220,11 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             # the page's score is recomputed HONESTLY from the per-band token ledger the
             # compile now carries (RegionReport.tokens_*): the adopted bands' tokens moved
             # from escalated to (mostly) asserted, and the document score below inherits it.
+            # final-review F5: a repaired band's peeled strip lines re-emit as
+            # `tab:RegionCaption` (`_emit_band_captions`), NOT as cells — caption words never
+            # entered `tokens_asserted`/`tokens_escalated` in pass 1 or pass 2, so they leave
+            # this asserted+escalated denominator exactly as they always have: captions are
+            # carried context, not table content.
             a = sum(r.tokens_asserted for r in new_regions)
             e = sum(r.tokens_escalated for r in new_regions)
             pages[p] = _dc_replace(pages[p], regions=tuple(new_regions), asserted=a,

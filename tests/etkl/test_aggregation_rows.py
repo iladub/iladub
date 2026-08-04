@@ -10,7 +10,8 @@ See docs/superpowers/specs/2026-07-30-subtotal-rows-design.md §2 Findings 4-5.
 """
 from iladub.etkl.geometry import Word
 from iladub.etkl.grid import LeafGrid
-from iladub.etkl.rows import RowBand, detect_aggregation_rows
+from iladub.etkl.rows import (RowBand, detect_aggregation_rows, is_aggregation_shaped,
+                              row_column_count)
 
 GRID = LeafGrid((0.0, 50.0, 100.0, 150.0, 200.0), 4, 50.0, 1.0)
 COLS = {0: (5, 45), 1: (55, 95), 2: (105, 145), 3: (155, 195)}
@@ -276,3 +277,23 @@ def test_a_row_with_no_measure_cell_is_not_an_operand():
                  {1: "SUB", 3: "250"})
     agg = detect_aggregation_rows(rows, GRID)
     assert agg == {3: (1, 3, (1, 2))}, agg   # row 0 is not among the operands
+
+
+def test_two_cells_in_one_column_is_not_aggregation_shaped():
+    """Final-review F2: `is_aggregation_shaped` (and `row_column_count`, the counting rule it
+    shares with `document._confirm_section_total`) counts DISTINCT OCCUPIED COLUMNS, cells
+    bucketed by `column_of` — not raw `len(row.cells)`. A row with two cells split WITHIN the
+    same column (e.g. a wrapped/split label with no interior rule) has raw cell count 2 — the
+    number the pre-fix `_confirm_section_total` inline check compared against 2 — but only ONE
+    distinct column is occupied, so it is NOT aggregation-shaped. This is the divergent case
+    the two counting rules disagreed on before they were factored into one function."""
+    from iladub.etkl.geometry import Word
+    from iladub.etkl.cells import _cell_from
+    w1 = Word("SUB", 55, 70, 10.0, 18.0)
+    w2 = Word("TOTAL", 75, 95, 10.0, 18.0)
+    c1 = _cell_from([w1], 0)
+    c2 = _cell_from([w2], 0)
+    row = RowBand(10.0, 18.0, (c1, c2))
+    assert len(row.cells) == 2                          # raw cell count — the OLD, wrong signal
+    assert row_column_count(row, GRID) == 1              # both cells land in column 1
+    assert not is_aggregation_shaped(row, 4, GRID)        # correctly refused: only 1 column

@@ -1623,6 +1623,14 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     key attribution (§4.2) pins are actually built against. The repeated 3-line header
     block is loop M's repeated-header signature, intra-page.
 
+    The synthetic's escalation REASON is `MATRIX_AMBIGUOUS`, not the real CBH's
+    `MERGE_AMBIGUOUS` (final-review F6) — the doubled edge here defeats a different
+    classify() branch than the real document's borderless header stack does. Immaterial:
+    the repair is REASON-AGNOSTIC (it re-reads `section_repair_bands` by index, never by
+    escalation reason), and `test_adoption_swaps_only_asserting_bands` pins the synthetic's
+    `MATRIX_AMBIGUOUS` reason precisely so this divergence stays visible rather than assumed
+    away.
+
     bad_total_in (loop Q Task 4): the index of ONE section whose printed total is TAMPERED
     (true Volume sum + 1) — the negative-evidence knob for the section-total oracle: exact
     Decimal arithmetic must refuse the association (no tab:SectionTotal / tab:confirmsSection

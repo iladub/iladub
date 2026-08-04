@@ -40,8 +40,11 @@ edge) that defeats simple min/max-x interior tests. Two matters are therefore st
 (b) once read, whose rows are they — a KEY that is nowhere written on the rows
 themselves, and whose NAME (`port`) is nowhere written in the document at all. Loop P
 attempted (a) at BAND scope and was reverted after three witness rounds each broke one
-of two real specimens (see `docs/superpowers/residues.md`'s `~~R42~~` row for the full
-measured map) — the finding that reopened the design: **the repair needs to know it is
+of two real specimens — the loop Q close (`b89cf1b`) moved that full measured map OUT of
+the `~~R42~~` row to keep the closed row legible; it survives only at the row's PRE-CLOSE
+revision (`git log --follow docs/superpowers/residues.md`, commit `b89cf1b`'s parent,
+`a83db3f`) and in the loop-P plan's status note — the finding that reopened the design:
+**the repair needs to know it is
 facing a sectioned, repeated-header chain BEFORE deciding how to peel a band**, which a
 single band cannot know about itself.
 

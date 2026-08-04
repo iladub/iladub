@@ -50,8 +50,8 @@
 **Interfaces:**
 - Produces: `multi_section_ruled_pdf(path, n_sections=2, with_totals=True) -> dict` with keys `sections` (list of `{"key": str, "notice": str, "rows": [...], "total": str}`), `header_names`, `cols`. Section keys: `"GERALDTON"`, `"KWINANA"` (n=2). Every later task imports it.
 
-- [ ] **Step 1:** Build `multi_section_ruled_pdf` by refactoring `sectioned_ruled_table_pdf`'s body into a parameterized `_draw_section(c, y_off, key, notice, rows, truth)` helper both builders call, plus per-section total lines (`with_totals=True`). **CORRECTION (measured at first dispatch):** the multi-section fixture MUST carry the real CBH's DOUBLED-EDGE geometry — a twin outer border ~0.3 pt beside the first and hrules starting ~0.5 pt inside (salvage the exact deltas from the wave: `/opt/homebrew/bin/git show b515283 -- tests/etkl/fixtures.py`) — so its sections ESCALATE at band level exactly like the specimen (clean edges let loop P's band-level peel/weld assert them at 1.0, which is a different, valid path that needs no repair). Verify by compile probe: every section band escalates. Keep `sectioned_ruled_table_pdf` itself byte-identical (its clean-edged, band-level-asserting behavior is the loop-P pin AND the future clean-edge stitching case).
-- [ ] **Step 2:** Red E2E pins in `tests/etkl/test_section_repair.py` (assert the CORRECT end state; RED now):
+- [x] **Step 1:** Build `multi_section_ruled_pdf` by refactoring `sectioned_ruled_table_pdf`'s body into a parameterized `_draw_section(c, y_off, key, notice, rows, truth)` helper both builders call, plus per-section total lines (`with_totals=True`). **CORRECTION (measured at first dispatch):** the multi-section fixture MUST carry the real CBH's DOUBLED-EDGE geometry — a twin outer border ~0.3 pt beside the first and hrules starting ~0.5 pt inside (salvage the exact deltas from the wave: `/opt/homebrew/bin/git show b515283 -- tests/etkl/fixtures.py`) — so its sections ESCALATE at band level exactly like the specimen (clean edges let loop P's band-level peel/weld assert them at 1.0, which is a different, valid path that needs no repair). Verify by compile probe: every section band escalates. Keep `sectioned_ruled_table_pdf` itself byte-identical (its clean-edged, band-level-asserting behavior is the loop-P pin AND the future clean-edge stitching case).
+- [x] **Step 2:** Red E2E pins in `tests/etkl/test_section_repair.py` (assert the CORRECT end state; RED now):
 
 ```python
 """Loop Q (spec 2026-08-04 §4.0-§4.2): section repair, stitching, key attribution."""
@@ -97,7 +97,7 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 ```
 
 (CORRECTION, verified at plan time: `stem_shaped_ruled_table_pdf` does NOT exist at branch head — it was added in the REVERTED wave commit `6d7aa60`. Task 1 must SALVAGE it: `/opt/homebrew/bin/git show 6d7aa60:tests/etkl/fixtures.py` and copy the stem-shaped builder (furniture line + in-column unruled 2-line header stack above a grid whose interior verticals start below the stack, single-row hrule boxes) into `tests/etkl/fixtures.py`, adapting only if its drawing helpers changed in the final fix wave.)
-- [ ] **Step 3:** Run — first test FAILS (sections escalate, no 2-chain), second FAILS (`repaired_bands` attribute missing). Record verdicts verbatim. Commit `test(loop-q): multi-section fixture + red pins`.
+- [x] **Step 3:** Run — first test FAILS (sections escalate, no 2-chain), second FAILS (`repaired_bands` attribute missing). Record verdicts verbatim. Commit `test(loop-q): multi-section fixture + red pins`.
 
 ---
 
@@ -112,8 +112,8 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 - Produces: `section_candidates(bands: Sequence[tuple[int, Band, tuple[Rule, ...]]]) -> tuple[tuple[int, ...], ...]` — groups (≥2 members) of band indices whose RAW grid-region line texts repeat verbatim and whose interior-rule x-sets agree. **Recognition is verdict-independent** (spec §4.0 point 3 as corrected): the caller passes ALL ruled bands of the page; only Task 4 filters which members get re-read (the still-escalated ones) vs pass through (already asserting). Grid-region lines = the band's lines minus the leading enclosed non-grid run (reuse `grid_lines`/`peel_leading_captions` in read-only form to compute WHICH lines, peeling nothing). The header-signature identity is over the grid's LEADING lines up to the first line that differs... NO — keep it evidence-positive and simple: identity over the RAW TEXTS of the grid region's first K lines where K = the leading full-width hrule box's line count (the drawn header box; reuse the box arithmetic). Two bands repeat iff those box texts are verbatim-identical AND their interior-x sets are equal (rounded 2dp).
 - The AXIOM (`section-repeat.rq`): zero numeric literals; the emitter provides per-band `tab:headerBoxText` (the box lines joined with `\n`) and `tab:interiorRuleXs`; the query derives pairs sharing both facts; the reader assembles connected groups.
 
-- [ ] **Step 1:** Failing units: two CBH-shaped bands (from `multi_section_ruled_pdf` via `detect_bands`/`segment` + per-band rules, mirroring the driver's band construction) → one group with both indices; a stem-shaped band + a CBH band → no group; a single band → no group.
-- [ ] **Step 2:** Implement (emitter facts, literal-free query — include the literal-free unit test in the same shape as loop P's). Run green. Commit `feat(loop-q): intra-page section recognition AXIOM`.
+- [x] **Step 1:** Failing units: two CBH-shaped bands (from `multi_section_ruled_pdf` via `detect_bands`/`segment` + per-band rules, mirroring the driver's band construction) → one group with both indices; a stem-shaped band + a CBH band → no group; a single band → no group.
+- [x] **Step 2:** Implement (emitter facts, literal-free query — include the literal-free unit test in the same shape as loop P's). Run green. Commit `feat(loop-q): intra-page section recognition AXIOM`.
 
 ---
 
@@ -129,8 +129,8 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 - Consumes: Task 2's groups (the driver passes their indices in Task 4).
 - Produces: `section_repair_bands` parameter; `None` byte-identical (pin: compile the loop-P `sectioned_ruled_table_pdf` and the stem-shaped fixture with and without `section_repair_bands=None` — identical reports).
 
-- [ ] **Step 1:** Failing unit: CBH-shaped band built with `section_repair=True` peels its strips (captions non-empty, ink-witness interior defeats the doubled border) while the same band with `False` peels nothing (the shipped inert behavior).
-- [ ] **Step 2:** Salvage + implement + green. `tests/etkl/ -q` full family: 0 failed (the flag default preserves everything). Commit `feat(loop-q): repair-scoped ink-witness peel behind section_repair_bands (salvaged b515283)`.
+- [x] **Step 1:** Failing unit: CBH-shaped band built with `section_repair=True` peels its strips (captions non-empty, ink-witness interior defeats the doubled border) while the same band with `False` peels nothing (the shipped inert behavior).
+- [x] **Step 2:** Salvage + implement + green. `tests/etkl/ -q` full family: 0 failed (the flag default preserves everything). Commit `feat(loop-q): repair-scoped ink-witness peel behind section_repair_bands (salvaged b515283)`.
 
 ---
 
@@ -146,8 +146,8 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 - Produces: `DocumentReport.repaired_bands: tuple[tuple[int, int], ...] = ()` (page, band-index pairs adopted); intra-page `tab:continuesTable` between adjacent repaired section tables of one recognized group; per-section total association: the NON-TABLE band strictly between section k's grid and section k+1's header (or page end) whose numeric token-sum EQUALS section k's Volume-column Decimal sum → `tab:SectionTotal` + `tab:confirmsSection` facts (justified PROCEDURAL exact arithmetic + presence; a non-matching total refuses association, recorded by absence + a report note, never guessed).
 - Driver order (spec §4.0 as corrected, pinned by Task 1's monotonicity test): existing per-page compile → existing carriage → NEW: per page, `section_candidates` over ALL ruled bands (verdict-independent) → pass-2 `compile_tables(page, section_repair_bands={still-escalated members only}, doc_uri=page_uri)` → adopt a band's pass-2 region IFF it asserts (loop-M page-scoped URI idiom; mint pass-2 URIs under `{page_uri}/r2`; record adoption in `repaired_bands`) → chains link ALL recognized members that assert (band-level-asserted AND repaired alike) → totals.
 
-- [ ] **Step 1:** Failing units: adoption swaps only asserting bands; a group whose pass-2 still escalates leaves everything untouched; `repaired_bands` recorded; totals associate on the fixture (`with_totals=True`) and refuse on a tampered total (build the fixture, then compile a variant with a wrong total value — `multi_section_ruled_pdf` gains an optional `bad_total_in=None` index parameter).
-- [ ] **Step 2:** Implement; Task 1's `test_sections_repair_and_stitch` goes GREEN except (possibly) the chain assertion if stitching details lag — finish them in this task; monotonicity pin green. `tests/etkl/ -q`: 0 failed. Commit `feat(loop-q): section repair in the driver — recognition, monotone adoption, intra-page chains, arithmetic totals`.
+- [x] **Step 1:** Failing units: adoption swaps only asserting bands; a group whose pass-2 still escalates leaves everything untouched; `repaired_bands` recorded; totals associate on the fixture (`with_totals=True`) and refuse on a tampered total (build the fixture, then compile a variant with a wrong total value — `multi_section_ruled_pdf` gains an optional `bad_total_in=None` index parameter).
+- [x] **Step 2:** Implement; Task 1's `test_sections_repair_and_stitch` goes GREEN except (possibly) the chain assertion if stitching details lag — finish them in this task; monotonicity pin green. `tests/etkl/ -q`: 0 failed. Commit `feat(loop-q): section repair in the driver — recognition, monotone adoption, intra-page chains, arithmetic totals`.
 
 ---
 
@@ -162,8 +162,8 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 - Produces: for every record of a repaired section table, one additional candidate `SurfaceConcept` per section caption (text = caption text, provenance = the caption node), marked as section-key CANDIDATES (`is_section_marker=True` on the SurfaceConcept or a parallel structure — follow loop K's injection shape). Attribution never waits for naming (§4.2): record identities gain the section discriminator (first caption text, positionally, the loop-I value-without-name idiom) so two sections' row r0 stay distinct.
 - The DISCRIMINATION of key-vs-notice among captions is NOT decided here — §4.3's cascade does it via scheme membership (a notice grounds nowhere; `GERALDTON` grounds in scheme-port). Feed injects ALL captions as candidates; §7 keeps the non-members quarantined.
 
-- [ ] **Step 1:** Failing tests: records of section 0 carry `GERALDTON` and the notice as candidate concepts with caption provenance; identities `GERALDTON > r0` vs `KWINANA > r0` distinct; a non-repaired table's records unchanged (byte-identity pin on an existing feed fixture).
-- [ ] **Step 2:** Implement + green + `tests/ -q -k "feed"` no regression. Commit `feat(loop-q): section captions injected as candidate key concepts (loop K pattern)`.
+- [x] **Step 1:** Failing tests: records of section 0 carry `GERALDTON` and the notice as candidate concepts with caption provenance; identities `GERALDTON > r0` vs `KWINANA > r0` distinct; a non-repaired table's records unchanged (byte-identity pin on an existing feed fixture).
+- [x] **Step 2:** Implement + green + `tests/ -q -k "feed"` no regression. Commit `feat(loop-q): section captions injected as candidate key concepts (loop K pattern)`.
 
 ---
 
@@ -180,8 +180,8 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
   2. unique-admitting-field AXIOM: whole-set scheme membership; ambiguity score = count of admitting fields; exactly 1 → name derived from the contract, asserted via `iladub:PromotionDecision` recording the membership evidence;
   3. BAML: ≥2 admitting → proposer picks among the VERIFIED candidates (winner asserts); 0 admitting → top proposal stays a quarantined `iladub:CandidateConcept` with score + suggested anchor (never asserts on confidence).
   Partial membership abstains step 2 to step 3; non-member markers quarantine as values regardless.
-- [ ] **Step 1:** Failing tests, one per cascade arm: unique-admitting asserts `port` with a promotion decision (markers = the four WA ports vs cbh-contract); explicit-naming short-circuits; two-admitting → Fake proposer's pick among the two verified asserts; zero-admitting → CandidateConcept quarantined, nothing asserted; every grounded node exactly one `wasPromotedBy`.
-- [ ] **Step 2:** Implement + green. Commit `feat(loop-q): split-key naming cascade + ProposeSplitKeyName + CBH demo contract`.
+- [x] **Step 1:** Failing tests, one per cascade arm: unique-admitting asserts `port` with a promotion decision (markers = the four WA ports vs cbh-contract); explicit-naming short-circuits; two-admitting → Fake proposer's pick among the two verified asserts; zero-admitting → CandidateConcept quarantined, nothing asserted; every grounded node exactly one `wasPromotedBy`.
+- [x] **Step 2:** Implement + green. Commit `feat(loop-q): split-key naming cascade + ProposeSplitKeyName + CBH demo contract`.
 
 ---
 

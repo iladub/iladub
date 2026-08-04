@@ -405,16 +405,26 @@ def table_records(graph: Graph) -> list[Record]:
         # of its rows keeps exactly today's identity — the byte-identity guarantee for every
         # table loop Q never touched.
         #
-        # CAVEAT (reviewer's minor, task-5 review 2026-08-04): the prefixed id is a STRING, "
-        # > "-joined like every other rid this function mints — nothing here parses it back
-        # apart. A caption text that happened to look like `_row_discriminator`'s own output
-        # shape (`^p\d+ \S+$`, e.g. a caption literally reading "p0 table0-r0") would make the
-        # prefixed id ambiguous to a HYPOTHETICAL future parser trying to split "key" from
-        # "base" by pattern rather than by the one `>` this function itself inserts.
-        # UNREACHABLE today — no code in this repo parses a row_id back into parts; `rid` is
-        # read only as an opaque grounding-portal subject key (`_record_uri` slugs it whole)
-        # — named here so a future consumer does not assume the prefix is safely re-splittable
-        # by pattern-matching the base's shape.
+        # CAVEAT (reviewer's minor, task-5 review 2026-08-04; AMENDED final-review F3 — the
+        # "unreachable" claim below is now false): the prefixed id is a STRING, " > "-joined
+        # like every other rid this function mints — nothing in feed.py itself parses it back
+        # apart, and production reads `rid` only as an opaque grounding-portal subject key
+        # (`_record_uri` slugs it whole). But `tests/test_cbh_e2e.py` DOES now parse it, at
+        # three sites (:159 `" > " in r.row_id`, :162 `rid.split(" > ")[0]`, :191
+        # `r.row_id.split(" > ")[0]`) — an e2e-only MARKER-DERIVATION pattern, recovering the
+        # section-key set for its cascade assertions, not a production consumer. The SAFE
+        # DIRECTION: this function inserts exactly one " > " and the key is always the
+        # LEFTMOST segment, so `split(" > ")[0]` recovers the key regardless of how many
+        # further " > " sequences the BASE (a row path / discriminator) happens to contain.
+        # The one case this does NOT cover — an honestly-named, unmitigated DEGRADATION, not a
+        # guard that exists: a caption whose own text contains the literal substring " > "
+        # would make `[0]` return only the caption's own prefix, silently truncating the
+        # recovered key instead of the whole caption. No specimen has produced such a caption;
+        # named here so a future consumer does not assume `split(" > ")[0]` is a general-purpose
+        # row_id parser, or that today's e2e usage proves it safe in general. A caption text
+        # that happened to look like `_row_discriminator`'s own output shape (`^p\d+ \S+$`,
+        # e.g. a caption literally reading "p0 table0-r0") remains a second, separate way the
+        # prefixed id can be ambiguous to a pattern-matching parser, as originally noted.
         section_key = {t: (caps[0][0] if (caps := _table_captions(graph, t)) else None)
                        for t in members}
         rid_of = {}
