@@ -3,7 +3,7 @@ cascade arm plus the cross-cutting invariants: every asserted name behind exactl
 iladub:PromotionDecision, and confidence NEVER promotes (a high-scored zero-admitting
 proposal still quarantines)."""
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import SKOS
+from rdflib.namespace import RDFS, SKOS
 
 from iladub.ground import load_contract
 from iladub.propose_ground import FakeSplitKeyNameProposer, ScoredKeyCandidate
@@ -70,6 +70,46 @@ def test_explicit_naming_abstains_on_a_bare_marker():
     assert _explicit_name(["Port: GERALDTON", "Port: KWINANA"]) == "Port"     # uniform -> fires
     assert _explicit_name(["Port: GERALDTON", "KWINANA"]) is None            # mixed -> abstains
     assert _explicit_name(["GERALDTON", "KWINANA"]) is None                  # CBH's actual shape
+
+
+def test_explicit_naming_abstains_on_differing_keys():
+    """F3: two markers, each individually a valid 'Key: Value' form, but with DIFFERENT
+    keys ('Port' vs 'Berth') — no single shared key names the dimension, so the arm
+    abstains (_explicit_name returns None) and the cascade proceeds past it, exactly like
+    a fully bare marker set."""
+    from iladub.splitkey import _explicit_name
+    assert _explicit_name(["Port: X", "Berth: Y"]) is None
+
+    g = Graph()
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("region", GIST_CATEGORY, 0.5, "no shared explicit key"),
+    ))
+    res = resolve_split_key_name(["Port: X", "Berth: Y"], _contract(), _terms(), proposer, g)
+    assert res.arm not in ("explicit-naming", "explicit-unverified")   # cascade proceeded
+
+
+def test_explicit_unverified_key_quarantines():
+    """F1 (CRITICAL, §3 violation reproduced by the reviewer): an explicit 'Key: Value'
+    form whose key names NO contract field must NEVER assert — minting a synthetic
+    groundsTo IRI and asserting on presence alone fabricates a target the membrane cannot
+    verify (GroundedNodeShape only checks minCount, not resolution). 'Berth: 12A' /
+    'Berth: 7B' against cbh-contract (which has no `berth` field) must quarantine the
+    recovered name 'Berth' as a CandidateConcept — nothing asserted, nothing
+    wasPromotedBy."""
+    markers = ["Berth: 12A", "Berth: 7B"]
+    g = Graph()
+    res = resolve_split_key_name(markers, _contract(), _terms(), _RaisingProposer(), g)
+    assert res.outcome == "quarantined"
+    assert res.name is None
+    assert res.arm == "explicit-unverified"
+    assert res.field is None
+    assert not _grounded_nodes(g)
+    assert not _promotion_decisions(g)
+    assert not list(g.subjects(ILADUB.wasPromotedBy, None))        # nothing promoted, at all
+    cc = _candidate_concepts(g)
+    assert len(cc) == 1
+    assert g.value(cc[0], ILADUB.status) == ILADUB.proposed
+    assert str(g.value(cc[0], ILADUB.surfaceText)) == "Berth: 12A, Berth: 7B"
 
 
 # --- Arm 2: AXIOM, unique admitting contract field ----------------------------------
@@ -155,6 +195,29 @@ def test_two_admitting_ignores_a_proposal_that_names_no_verified_field():
     assert res.outcome == "asserted"
     assert res.name == "commodity"
     assert len(_grounded_nodes(g)) == 1
+
+
+def test_two_admitting_no_candidate_matches_any_verified_field():
+    """F4: >=2 admitting fields, but NO proposed candidate names EITHER verified field
+    ('berth' and 'region' match neither 'port' nor 'commodity') -> honest refusal, not a
+    fabricated pick: nothing asserts, and the arm is reported explicitly as
+    'proposer-no-verified-match' (distinct from the 0-admitting 'proposer-quarantine')."""
+    g = Graph()
+    terms = _doctored_terms_two_admitting()
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("berth", GIST_CATEGORY, 0.95, "top guess, unverified"),
+        ScoredKeyCandidate("region", GIST_CATEGORY, 0.80, "also unverified"),
+    ))
+    res = resolve_split_key_name(WA_PORTS, _contract(), terms, proposer, g)
+    assert res.outcome == "quarantined"
+    assert res.name is None
+    assert res.arm == "proposer-no-verified-match"
+    assert res.ambiguity_score == 2
+    assert not _grounded_nodes(g)
+    assert not _promotion_decisions(g)
+    cc = _candidate_concepts(g)
+    assert len(cc) == 1
+    assert g.value(cc[0], RDFS.label) == Literal("berth")          # the top-scored proposal
 
 
 def test_zero_admitting_quarantines_candidate_concept():

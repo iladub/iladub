@@ -6,10 +6,17 @@ section markers (loop Q §4.2's key-value attribution already mints the row iden
 "GERALDTON > r3" — before any name is known; "attribution never waits for naming").
 Three arms, gate-shaped: each fires only when the previous one abstains.
 
-  1. AXIOM — explicit naming in the source (no oracle, no LLM): a "Key: Value" marker
-     form, the SAME key shared by every marker, names the dimension directly from raw
-     document structure ("Port: GERALDTON"). CBH fails this arm — its markers are bare
-     ("GERALDTON") — and abstains to step 2.
+  1. AXIOM — explicit naming in the source (no LLM): a "Key: Value" marker form, the SAME
+     key shared by every marker, recovers the dimension name directly from raw document
+     structure ("Port: GERALDTON"). CBH fails this arm — its markers are bare
+     ("GERALDTON") — and abstains to step 2. The recovered key is real §0 evidence, but it
+     still needs an oracle to ASSERT (§3: assert only what you can ground): when it
+     matches a contract field exactly, it asserts against that field; when it matches NO
+     field ("Berth: 12A" against a contract with no `berth` field), it is NOT asserted —
+     minting a synthetic groundsTo IRI and asserting on presence alone would fabricate a
+     target the membrane cannot actually verify. It quarantines instead, as an
+     `iladub:CandidateConcept` (arm `explicit-unverified`) — the same disposal shape as
+     arm 3's zero-admitting outcome.
   2. AXIOM — unique admitting contract field: ground the marker VALUES against the
      destination contract's SKOS schemes (the shipped `ground.scheme_member` oracle). A
      field ADMITS the set iff its scheme contains a matching label for EVERY marker
@@ -163,15 +170,22 @@ def resolve_split_key_name(markers, contract: Contract, terms: Graph, proposer, 
     explicit = _explicit_name(markers)
     if explicit is not None:
         field = exact_field(SurfaceConcept(explicit, "", "na"), contract)
-        grounds_to = (field.fills_property if field is not None
-                     else "urn:iladub:dimension-name/" + _norm(explicit))
-        gn = _emit_assertion(
-            graph, explicit, markers, grounds_to, _EXPLICIT_RULE, 1.0,
-            "Explicit '%s: <value>' marker form, shared by every marker, recovers the "
-            "dimension name directly from the source document (no scheme lookup needed)."
-            % explicit,
-            _GIST_CATEGORY)
-        return KeyNameResolution("asserted", explicit, "explicit-naming", None, field, gn)
+        if field is not None:
+            gn = _emit_assertion(
+                graph, explicit, markers, field.fills_property, _EXPLICIT_RULE, 1.0,
+                "Explicit '%s: <value>' marker form, shared by every marker, recovers the "
+                "dimension name directly from the source document AND matches contract "
+                "field '%s' (no scheme lookup needed)." % (explicit, _field_local_name(field)),
+                _GIST_CATEGORY)
+            return KeyNameResolution("asserted", explicit, "explicit-naming", None, field, gn)
+        # §3: the explicit form IS real §0 evidence (recovered exactly from the source),
+        # but it names NO contract field — nothing to ground it against. Assert only what
+        # you can ground; propose everything else. Never mint a synthetic groundsTo IRI
+        # and assert on presence alone (that both fabricates a target and defeats the
+        # membrane's only real check on groundsTo, which is minCount, not resolution).
+        cc, _ = _emit_candidate(
+            graph, explicit, markers, _GIST_CATEGORY, _EXPLICIT_RULE, 1.0)
+        return KeyNameResolution("quarantined", None, "explicit-unverified", None, None, cc)
 
     # --- Arm 2: AXIOM, unique admitting contract field ---
     admitting = _admitting_fields(markers, contract, terms)
