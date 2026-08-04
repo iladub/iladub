@@ -6,10 +6,11 @@ declarative DERIVATION over a per-page evidence graph (open-world -> SPARQL; the
 page is the closure boundary, one fresh Graph per `section_candidates` call — same
 shape as classifygraph.py/gridregion.py). This module is the PROCEDURAL layer only:
 locating each band's header box (reusing gridregion's `grid_lines`/
-`peel_leading_captions` and geometry's `leading_hrule_box`, ALL READ-ONLY — nothing
-here peels or welds a band), emitting the transient evidence graph, and invoking
-rdflib. No decision logic — the repeat decision lives entirely in
-vocab/queries/section-repeat.rq (AXIOM).
+`peel_leading_captions`/`interior_rule_xs` and geometry's `hrule_boxes`/
+`box_y_fallback_candidates`, ALL READ-ONLY — nothing here peels or welds a band, and
+none of it is imported by the default `section_repair=False` compile path),
+emitting the transient evidence graph, and invoking rdflib. No decision logic — the
+repeat decision lives entirely in vocab/queries/section-repeat.rq (AXIOM).
 
 Recognition is VERDICT-INDEPENDENT (spec §4.0 point 3, as corrected 2026-08-04): the
 caller passes ALL ruled bands of the page — escalated and already-asserting alike.
@@ -31,8 +32,8 @@ from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
 from .bands import Band
-from .geometry import Rule, leading_hrule_box, leading_box_y_fallback
-from .gridregion import grid_lines, enclosed_lines, peel_leading_captions
+from .geometry import Rule, hrule_boxes, box_y_fallback_candidates
+from .gridregion import grid_lines, enclosed_lines, peel_leading_captions, interior_rule_xs
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
@@ -74,20 +75,65 @@ def _header_box_text(band: Band, rules: Sequence[Rule]) -> str | None:
     return "\n".join(_line_text(ln) for ln in box_lines)
 
 
+def _interior_rules(band: Band, rules: Sequence[Rule]) -> list[Rule]:
+    """The band's ink-interior Rule OBJECTS (with real y-extents), matched back from
+    `gridregion.interior_rule_xs`' x-positions (ink on both sides — never a
+    double-drawn outer-border twin, see that function's docstring). READ-ONLY: calls
+    the same repair-scoped ink-witness query Task 3 already exposed for the pass-2
+    peel; nothing here mutates a band or reruns any query with side effects, so this
+    cannot touch the default compile path (`compile._build_ruled_band`'s
+    `section_repair=False` branch never imports this module at all)."""
+    ixs = {round(x, 2) for x in interior_rule_xs(band, rules)}
+    return [r for r in rules if round(r.x, 2) in ixs]
+
+
+def _overlaps_interior(box: tuple[float, float], interior: Sequence[Rule]) -> bool:
+    """STRICT (open-interval) y-overlap: box and rule share more than a single
+    boundary point. A box whose edge merely TOUCHES an interior rule's top (the
+    exact-coincidence case a synthetic fixture with grid_top as both a box boundary
+    AND the interior rules' own top produces) does not count — there is no shared
+    row height, only a point, so no real ink co-location. This also matches the real
+    specimen's measured small gap (notices box bottom 105.4 vs interior rule top
+    105.5 — NOT touching at all) without needing a tuned gap tolerance: strict `<`
+    already refuses both the touching AND the near-touching case identically."""
+    lo, hi = box
+    return any(r.top < hi and lo < r.bottom for r in interior)
+
+
 def _leading_box_y(band: Band, rules: Sequence[Rule]) -> tuple[float, float] | None:
-    """The header box's Y-extent (top, bottom): `leading_hrule_box`'s exact box
-    arithmetic (weld_hrule_boxes' own full-width test — reused VERBATIM, never
-    duplicated) when it locates a box; otherwise the fallback below.
+    """The header box's Y-extent (top, bottom): among ALL candidate boxes — every
+    consecutive full-width hrule y-pair (`geometry.hrule_boxes`, y-order, topmost
+    first) tried before every consecutive DISTINCT-hrule-y pair, X-EXTENT-FREE
+    (`geometry.box_y_fallback_candidates`) — the FIRST one whose y-range is
+    ink-interior-CROSSED: at least one of the band's ink-interior vertical rules
+    (`_interior_rules`, above) has a y-extent that genuinely overlaps the box
+    (`_overlaps_interior`). None (honest abstain) if no candidate qualifies.
 
-    THE DECISION (stated precisely, per CLAUDE.md §8): when the full-width test
-    abstains, select the author's first two DISTINCT drawn hrule y-positions,
-    X-EXTENT-FREE, as the CANDIDATE header box.
+    FIX ROUND 2 (task review, 2026-08-04): MEASURED on the real CBH specimen —
+    additional full-width strip separators sit ABOVE the true header box (heading
+    strip, then a separate notices strip, THEN the header box), so the box-0-only
+    selection this function used before now picked the NOTICES box, whose text
+    differs per section (the section's own printed notice) — `section_candidates`
+    then found no matching signature and silently returned no group on the real
+    page. The header box is exactly where the ink-interior column rules BEGIN
+    (measured: interior rules span 105.5-199.6; the notices box 71.7-105.4 sits
+    entirely above that span; the header box 105.3-119.1 sits inside it) — selecting
+    by interior-rule-crossing generalizes past box-0 without introducing any new
+    constant: `hrule_boxes`/`box_y_fallback_candidates` are the SAME enumerations
+    (extended to expose every candidate, not just the first — see their docstrings
+    in geometry.py); `interior_rule_xs` is Task 3's ALREADY-SHIPPED ink-witness
+    evidence, read here READ-ONLY (see `_interior_rules`'s docstring: this cannot
+    touch the default compile path, which never imports sectiongraph at all).
 
-    CLASSIFICATION: PROCEDURAL candidate generation, not a reading. It is a raw,
-    mechanical selection over author marks — sort the drawn hrule y's, take the two
-    lowest — the same shape as `extract_words`/`extract_rules`: a presence/ordering
-    test with zero tuned constant, zero magnitude comparison, zero invented mark
-    (every y here was drawn by the author; nothing is synthesised).
+    THE DECISION (stated precisely, per CLAUDE.md §8): among the ordered candidate
+    boxes, select the first one an ink-interior rule's y-extent overlaps.
+
+    CLASSIFICATION: PROCEDURAL candidate SELECTION, not a reading. Every input is a
+    raw fact already emitted by an earlier PROCEDURAL/AXIOM layer (drawn hrule y's,
+    drawn rule x's, the ink-witness interior test) — this function performs no
+    magnitude comparison of its own beyond the zero-tuned-constant overlap test
+    above, invents no mark, and reads no new evidence beyond what Task 3 already
+    exposed for a different (repair) purpose.
 
     IRREDUCIBILITY: this candidate is never asserted as a reading — it never answers
     "is this the header box" on its own, and it never reaches the graph as a fact
@@ -103,26 +149,30 @@ def _leading_box_y(band: Band, rules: Sequence[Rule]) -> tuple[float, float] | N
     itself, so the candidate needs no separate disposal step of its own.
 
     WHY NOT AXIOM-only (emit every candidate pair, let the query choose): considered
-    and deferred, not ruled out — see residues.md R48. It is real work (widening the
-    evidence graph and the query's shape) not yet warranted by a measured document;
-    every fixture measured so far has the true header box as one of the first two
-    hrule y's, so there is no live case where a WIDER candidate set would change the
-    outcome.
+    and deferred, not ruled out — see residues.md R48 (updated fix round 2: the
+    false-candidate risk it flagged materialized once, on this exact box-0-only
+    shape, and closes with THIS fix; the row stays open for the residual class the
+    interior-crossing test does not cover — a notices strip genuinely CROSSED by an
+    interior rule). It remains real, not-yet-warranted work: every candidate box
+    this function can now select is disposed by BOTH the interior-crossing test AND
+    section-repeat.rq's compound match, two independent checks, not one.
 
-    WHY THE FALLBACK EXISTS AT ALL: a doubled/inset outer border (the real-CBH shape
-    `multi_section_ruled_pdf` reproduces, spec §4.0) defeats ANY coordinate-tolerance
-    x-extent test the same way it defeats grid_lines's interior-x test — see
-    gridregion.grid_lines's inertness note; by design, band-LOCAL machinery (weld)
-    cannot see past a doubled edge. This module exists precisely to recognize that
-    repeated shape at PAGE scope instead, so it must not inherit the same band-local
-    blind spot for its own header-box candidate."""
+    WHY A FALLBACK TIER EXISTS AT ALL: a doubled/inset outer border (the real-CBH
+    shape `multi_section_ruled_pdf` reproduces, spec §4.0) defeats ANY
+    coordinate-tolerance x-extent test the same way it defeats grid_lines's
+    interior-x test — see gridregion.grid_lines's inertness note; by design,
+    band-LOCAL machinery (weld) cannot see past a doubled edge. This module exists
+    precisely to recognize that repeated shape at PAGE scope instead, so it must not
+    inherit the same band-local blind spot for its own header-box candidate."""
+    interior = _interior_rules(band, rules)
     xs = sorted({round(r.x, 2) for r in rules})
-    box = leading_hrule_box(band.hrules, xs)
-    if box is not None:
-        return box
-    # the fallback arithmetic lives in geometry.leading_box_y_fallback (loop Q Task 4
-    # factored it there so the repair path's weld reuses it verbatim, never a copy)
-    return leading_box_y_fallback(band.hrules)
+    for box in hrule_boxes(band.hrules, xs):
+        if _overlaps_interior(box, interior):
+            return box
+    for box in box_y_fallback_candidates(band.hrules):
+        if _overlaps_interior(box, interior):
+            return box
+    return None
 
 
 def _rule_xs_signature(rules: Sequence[Rule]) -> str | None:

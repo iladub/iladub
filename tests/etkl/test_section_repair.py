@@ -107,6 +107,49 @@ def test_section_candidates_single_band_no_group(tmp_path):
     assert section_candidates([(0, bands[0], bands[0].rules)]) == ()
 
 
+def test_header_box_text_picks_the_header_stack_not_the_notices_strip(tmp_path):
+    """Fix round 2 (task review, 2026-08-04): MEASURED on the real CBH specimen —
+    real sections draw an ADDITIONAL full-width hrule separating the heading strip
+    from the notice strip (three boxes stacked: heading, notices, header), which the
+    original `multi_section_ruled_pdf` lacked. `_leading_box_y`'s box-0-only
+    selection then picked the NOTICES box (its text differs per section: the
+    section's own notice), never the true header box ('Time Nom' / 'ID Accepted
+    Client Volume', identical across sections) -> `section_candidates` silently
+    returned no group on the real page. `multi_section_ruled_pdf(strip_separators=
+    True)` reproduces that extra separator; this pins the FIX directly on
+    `tab:headerBoxText`'s content, via the public `section_evidence` graph."""
+    from rdflib import Literal
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.sectiongraph import section_evidence, TAB
+    pdf = tmp_path / "multi_strips.pdf"
+    multi_section_ruled_pdf(str(pdf), strip_separators=True)
+    bands = page_bands(str(pdf))
+    ruled = [(i, b, b.rules) for i, b in enumerate(bands) if b.rules]
+    assert len(ruled) == 2, ruled
+    g = section_evidence(ruled)
+    texts = {str(t) for t in g.objects(None, TAB.headerBoxText)}
+    assert texts, "no band emitted a headerBoxText fact at all"
+    for t in texts:
+        assert "Time Nom" in t and "ID Accepted Client Volume" in t, texts
+        assert "BERTH MAY" not in t and "VESSEL DELAYED" not in t, texts
+
+
+def test_section_candidates_groups_real_cbh_shaped_bands_with_strip_separators(tmp_path):
+    """The end-to-end counterpart of the unit above, over the public API: with the
+    extra heading/notice separator (the real CBH shape), the two sections still
+    repeat the SAME header box and rule-x signature -> ONE group of both band
+    indices, exactly as the simpler (pre-fix-round-2) fixture already pinned."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.sectiongraph import section_candidates
+    pdf = tmp_path / "multi_strips.pdf"
+    multi_section_ruled_pdf(str(pdf), strip_separators=True)
+    bands = page_bands(str(pdf))
+    ruled = [(i, b, b.rules) for i, b in enumerate(bands) if b.rules]
+    assert len(ruled) == 2, ruled
+    groups = section_candidates(ruled)
+    assert groups == ((0, 1),), groups
+
+
 def test_section_repeat_query_has_no_numeric_literal():
     """§8: the derivation reads facts only; every number is emitted by the
     PROCEDURAL layer (sectiongraph.py), same gate as loop P's grid-region.rq."""

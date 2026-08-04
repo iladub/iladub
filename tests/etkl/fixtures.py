@@ -1465,7 +1465,8 @@ def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
             "label_page0": "Alpha", "label_page1": label1}
 
 
-def _draw_section(c, H, y_off, key, notice, rows, cols, doubled_edges=False):
+def _draw_section(c, H, y_off, key, notice, rows, cols, doubled_edges=False,
+                   extra_hrule_offsets: tuple = ()):
     """Draw ONE CBH-shaped section (spec 2026-08-04 §3 CORRECTION) at vertical offset
     `y_off` (added to every top-based coordinate, so callers stack sections downward on
     one page): an author-drawn section box containing, top to bottom, a bare key heading,
@@ -1490,6 +1491,14 @@ def _draw_section(c, H, y_off, key, notice, rows, cols, doubled_edges=False):
     pre-extraction body at y_off=0, key='GERALDTON', notice='BERTH MAY BE UNAVAILABLE
     2000HRS', doubled_edges=False. Returns `grid_bot` (the section's bottom edge,
     top-coords) so callers can place a trailing total line or the next section below it.
+
+    extra_hrule_offsets (loop Q Task 2 fix round 2): additional full-width hrules drawn
+    ABOVE the grid, each at `sec_top + offset`, same x-extent convention as the grid's own
+    3 hrules (inset when `doubled_edges`, flush otherwise) — reproducing the real CBH
+    specimen's measured strip separators (heading/notice/header each its own full-width
+    box; measured 63.3-71.8 / 71.7-105.4 / 105.3-119.1) that the original 2-section fixture
+    lacked. Default `()` draws nothing extra — `sectioned_ruled_table_pdf` never passes
+    this, so its drawing is byte-identical to before this parameter existed.
     """
     def y(top):                       # page-top -> reportlab bottom-up
         return H - top
@@ -1529,6 +1538,11 @@ def _draw_section(c, H, y_off, key, notice, rows, cols, doubled_edges=False):
         hx0, hx1 = cols[0], cols[-1]
     # full-width hrules: grid top, header-box bottom, grid bottom
     for hy in (grid_top, hdr_bot, grid_bot):
+        c.line(hx0, y(hy), hx1, y(hy))
+    # extra full-width separator hrules ABOVE the grid (loop Q fix round 2 — see
+    # docstring); same hx0/hx1 convention as the 3 hrules above.
+    for off in extra_hrule_offsets:
+        hy = sec_top + off
         c.line(hx0, y(hy), hx1, y(hy))
     # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
     # name, line B carries the centered single-line names + the wrap's second word
@@ -1586,7 +1600,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
 
 
 def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
-                            bad_total_in: int | None = None) -> dict:
+                            bad_total_in: int | None = None,
+                            strip_separators: bool = False) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1613,6 +1628,25 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     Decimal arithmetic must refuse the association (no tab:SectionTotal / tab:confirmsSection
     for that section; a DocumentReport note instead). The returned truth dict's "total" carries
     the PRINTED (tampered) string, since the truth of the drawing is what was drawn.
+
+    strip_separators (loop Q Task 2 fix round 2, default False, measured on the real CBH
+    specimen post-Task-4): the real document draws an ADDITIONAL full-width hrule
+    separating the heading strip from the notice strip (measured 63.3-71.8 / 71.7-105.4 /
+    105.3-119.1 as three distinct boxes), which the original 2-box synthetic (heading and
+    notice sharing one box, then the header box) lacked — `section_candidates`'s
+    box-0-only locator picked the NOTICES box (wrong: differs per section) instead of the
+    true header box, so recognition silently returned no group on the real page. True
+    draws that extra separator per section (`_draw_section(...,
+    extra_hrule_offsets=(22,))`, between the heading @ sec_top+14 and the notice @
+    sec_top+31) so THIS fixture reproduces the defeat instead of missing it — see
+    `tests/etkl/test_section_repair.py`'s `test_section_candidates_picks_the_header_box_...`
+    RED/GREEN pair. Default False is byte-identical to before this parameter existed:
+    the extra hrule also perturbs `ruledroles._header_block_rules` (an unrelated,
+    already-shipped law reading `band.hrules` for its OWN header-block-rule count), which
+    would silently regress `test_without_totals_nothing_associates_and_stitch_only_path_chains`'s
+    band-level assertion if applied unconditionally — measured, not assumed, when an
+    earlier draft of this fix made the extra hrule unconditional. Scoped to an opt-in
+    parameter, every existing caller (every OTHER test in this file) is unaffected.
 
     Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
     """
@@ -1660,7 +1694,8 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
         y_off = i * STEP
         rows = row_sets[i]
         grid_bot = _draw_section(c, H, y_off, keys[i], notices[i], rows, cols,
-                                  doubled_edges=True)
+                                  doubled_edges=True,
+                                  extra_hrule_offsets=(22,) if strip_separators else ())
         total = None
         if with_totals:
             vol_sum = sum(int(r[3].replace(",", "")) for r in rows)
