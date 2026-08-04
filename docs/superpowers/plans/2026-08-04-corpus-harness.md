@@ -877,15 +877,15 @@ recorded here verbatim; Steps 3–6 (adjudication table, residues, wiki, commit)
 
 ### Adjudication table (PROPOSALS for François — no manifest verdict has been changed)
 
-| Document | Family | Pages | Wall | Score | Measured outcome | Proposed adjudication |
-| --- | --- | --- | --- | --- | --- | --- |
-| `ag-trade/graincorp-stem-2026-07-31.pdf` | ag-trade | 3 | 232 s | 0.9655 | PASS `CompilesAbove` (floor 0.95); chain of 3; grounding 133 records / 585 grounded / 1265 still-quarantined | Already `CompilesAbove` 0.95 — re-verified, no change |
-| `ag-trade/graincorp-capacity-2026-08-04.pdf` | ag-trade | 1 | 11 s | 1.0000 | Compiles clean — 1 asserted `RECORD_TABLE` | PROPOSE `CompilesAbove`, floor 0.95 (measured 1.0000) |
-| `ag-trade/cbh-stem-2026-08-03.pdf` | ag-trade | 1 | 9 s | 0.0698 | 4/5 regions escalate `MERGE_AMBIGUOUS` (Excel-print stem, different house style) | PROPOSE keep `Unadjudicated` — defect-loop candidate (merged-header house style); see R42 |
-| `gov-stats/ons-index-of-services-2026-02.pdf` | gov-stats | 9 | 6 s | 0.4419 | 1× `REGION_TILING_FAILED`; oddity: one region prints `('UNSUPPORTED_TABLE', 'asserted', None)` — an UNSUPPORTED kind carrying an `asserted` verdict | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (tiling); see R43 |
-| `gov-stats/bfs-population-bilan-2023.pdf` | gov-stats | 7 | 23 s | 0.3438 | 2× `KIND_NOT_SUPPORTED`, 2× `REGION_TILING_FAILED`, 5× `ROUND_TRIP_FAIL`; 8 `RECORD_TABLE` regions assert | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (kind support / round-trip); see R44 |
-| `financial/apple-fy2026q3-statements.pdf` | financial | 3 | — | CRASH | `IndexError: tuple index out of range` at `src/iladub/etkl/headers.py:400` in `header_rows_of` (`band.lines[body_line].top`, `body_line=7` > `len(band.lines)`); trigger: a segment-footnote sub-table. Battery test RED — the honest state (fluent-reader invariant violation, crash class) | PROPOSE keep `Unadjudicated` — CRASH-loop candidate (`headers.py:400` bound check); battery stays red until that loop lands, or François substitutes the doc; see R41 |
-| `health/who-wfa-boys-zscore-0-5.pdf` | health | 3 | 45 s | 0.5597 | 3× `MATRIX_AMBIGUOUS` on the dense age × z-score matrix | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (matrix ambiguity); see R45 |
+| Document | Family | Pages | Wall | Score | Chains | Measured outcome | Proposed adjudication |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `ag-trade/graincorp-stem-2026-07-31.pdf` | ag-trade | 3 | 232 s | 0.9655 | `[3]` | PASS `CompilesAbove` (floor 0.95); chain of 3; grounding 133 records / 585 grounded / 1265 still-quarantined | Already `CompilesAbove` 0.95 — re-verified, no change |
+| `ag-trade/graincorp-capacity-2026-08-04.pdf` | ag-trade | 1 | 11 s | 1.0000 | `[1]` | Compiles clean — 1 asserted `RECORD_TABLE` | PROPOSE `CompilesAbove`, floor 0.95 (measured 1.0000) |
+| `ag-trade/cbh-stem-2026-08-03.pdf` | ag-trade | 1 | 9 s | 0.0698 | `[1]` | 4/5 regions escalate `MERGE_AMBIGUOUS` (Excel-print stem, different house style) | PROPOSE keep `Unadjudicated` — defect-loop candidate (merged-header house style); see R42 |
+| `gov-stats/ons-index-of-services-2026-02.pdf` | gov-stats | 9 | 6 s | 0.4419 | `[1]` | 1× `REGION_TILING_FAILED`; oddity: one region prints `('UNSUPPORTED_TABLE', 'asserted', None)` — an UNSUPPORTED kind carrying an `asserted` verdict | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (tiling); see R43 |
+| `gov-stats/bfs-population-bilan-2023.pdf` | gov-stats | 7 | 23 s | 0.3438 | `[1, 1, 1, 1, 1, 1, 1]` | 2× `KIND_NOT_SUPPORTED`, 2× `REGION_TILING_FAILED`, 5× `ROUND_TRIP_FAIL`; 8 `RECORD_TABLE` regions assert | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (kind support / round-trip); see R44 |
+| `financial/apple-fy2026q3-statements.pdf` | financial | 3 | 7 s | CRASH | — (crashed before a report) | `IndexError: tuple index out of range` at `src/iladub/etkl/headers.py:400` in `header_rows_of` (`band.lines[body_line].top`, `body_line=7` > `len(band.lines)`); trigger: a segment-footnote sub-table. Battery test RED — the honest state (fluent-reader invariant violation, crash class) | PROPOSE keep `Unadjudicated` — CRASH-loop candidate (`headers.py:400` bound check); battery stays red until that loop lands, or François substitutes the doc; see R41 |
+| `health/who-wfa-boys-zscore-0-5.pdf` | health | 3 | 45 s | 0.5597 | `[1, 1, 1, 1, 1, 1, 1]` | 3× `MATRIX_AMBIGUOUS` on the dense age × z-score matrix | PROPOSE keep `Unadjudicated` — generalization-gap loop candidate (matrix ambiguity); see R45 |
 
 ### BUDGET_S adjudication history
 
