@@ -1503,15 +1503,12 @@ def sectioned_ruled_table_pdf(path):
     c.line(cols[0] + 0.3, y(grid_bot), cols[0] + 0.3, y(sec_top + 2))
     c.line(cols[-1] - 0.3, y(grid_bot), cols[-1] - 0.3, y(sec_top + 2))
     # full-width strips: heading + notice (NO interior rules up here). fixwave A
-    # round 2 (fixture truthfulness check, measured): a bare "GERALDTON" (9 Courier-9
-    # chars from cols[0]+4=76) ends at x=124.6 -- short of cols[1]=172, so it would
-    # NOT straddle the first interior rule, unlike the real CBH heading. "TERMINAL"
-    # is appended (still substring-safe for the "GERALDTON" truth text) so the line
-    # has a word (x0=130, x1=173.2) that DOES cross x=172, mirroring the real
-    # section's straddling heading/notice ink (see fixwave-a-report.md round 2 for
-    # the measured word extents). The notice's "UNAVAILABLE" (x0=146.2, x1=205.6,
-    # measured) already straddles cols[1]=172 unmodified.
-    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON TERMINAL")
+    # round 2 introduced a per-line "straddling ink" witness and widened this
+    # heading to "GERALDTON TERMINAL" so it would exercise that witness; round 3
+    # retired the straddle witness entirely (it broke both real specimens) in
+    # favour of the opening-header-box disposal check, which does not depend on
+    # any individual caption line's word extents — reverted to the plain heading.
+    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
     c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
     # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
     for x in cols[1:-1]:
@@ -1544,3 +1541,71 @@ def sectioned_ruled_table_pdf(path):
     return {"cols": cols,
             "header_names": ["ID", "Time Nom Accepted", "Client", "Volume"],
             "caption_texts": ["GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS"]}
+
+
+def stem_shaped_ruled_table_pdf(path):
+    """The real GrainCorp stem's shape (loop P fixwave A round 3 — the fixture that
+    would have caught round 2's regression before the controller had to). One bare
+    furniture line (a date/context banner) above a TWO-line UNRULED header stack
+    (one word per eventual column; NO hrule box drawn around it, unlike CBH's boxed
+    wrapped header) above a grid whose interior verticals start BELOW the stack, and
+    whose data rows are each their OWN single-row hrule box (never a shared
+    multi-row box). The furniture line and the header stack are both a leading run,
+    enclosed by the section's own outer border — exactly the evidence round 1's
+    "leading + enclosed" test and round 2's per-line straddle witness both accepted,
+    wrongly peeling this shape and stranding loop L's row-above-the-block-rule
+    licence. The opening-header-box disposal check (round 3) must ABSTAIN here: the
+    kept region's first full-width hrule box holds exactly 1 row, never >= 2."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    H = letter[1]
+
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]   # 4 columns, same shape as CBH's
+    sec_top = 60                      # furniture line ("Friday, 31 July 2026")
+    hdr1_top, hdr2_top = 78, 92       # the 2-line UNRULED header stack
+    grid_top = 110                    # interior verticals start HERE -- BELOW the stack
+    row_h = 12
+    n_rows = 3
+    grid_bot = grid_top + row_h * n_rows   # 146
+
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    # the section OUTER border spans the FULL section (furniture + header stack +
+    # grid), exactly like CBH's -- both leading lines are enclosed by it, so the
+    # "leading + enclosed" proposal fires; only the opening-box disposal check
+    # (round 3) tells this shape apart from CBH's.
+    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    # furniture line (leading, non-grid, enclosed -- the peel PROPOSAL's target)
+    c.drawString(cols[0] + 4, y(sec_top + 14), "Friday, 31 July 2026")
+    # the 2-line unruled header stack -- one word per eventual column, NO hrule box
+    c.drawString(cols[0] + 4, y(hdr1_top + 10), "GC")
+    c.drawString(cols[1] + 4, y(hdr1_top + 10), "Fin")
+    c.drawString(cols[2] + 4, y(hdr1_top + 10), "Year")
+    c.drawString(cols[0] + 4, y(hdr2_top + 10), "Month")
+    c.drawString(cols[1] + 4, y(hdr2_top + 10), "Port")
+    c.drawString(cols[2] + 4, y(hdr2_top + 10), "Reference")
+    c.drawString(cols[3] + 4, y(hdr2_top + 10), "Number")
+    # interior vertical rules: GRID ROWS ONLY, starting BELOW the header stack
+    for x in cols[1:-1]:
+        c.line(x, y(grid_bot), x, y(grid_top))
+    # each data row is its OWN single-row hrule box (n_rows+1 full-width hrules,
+    # one per row boundary) -- the discriminator: CBH's header opens with ONE box
+    # holding 2 rows; this grid opens with a box holding exactly 1.
+    for k in range(n_rows + 1):
+        hy = grid_top + row_h * k
+        c.line(cols[0], y(hy), cols[-1], y(hy))
+    rows = [("10097", "15:01", "Brahman", "30,000"),
+            ("10076", "14:38", "CBH", "50,000"),
+            ("10118", "11:28", "Cargill", "48,904")]
+    for k, row in enumerate(rows):
+        ry = grid_top + row_h * k + row_h - 3
+        for x, cell in zip(cols, row):
+            c.drawString(x + 4, y(ry), cell)
+    c.save()
+    return {"cols": cols,
+            "furniture_text": "Friday, 31 July 2026",
+            "header_words": ["GC", "Fin", "Year", "Month", "Port", "Reference", "Number"],
+            "data_rows": rows}

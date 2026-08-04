@@ -312,6 +312,58 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
     return sorted(lines, key=lambda ln: ln.top)
 
 
+def _full_width_hrule_ys(hrules: Sequence[HRule], interior_xs: Sequence[float]) -> list[float]:
+    """The distinct y's of hrules spanning the band's ink-INTERIOR rule x-extent
+    (both ends within COORD_EPS of [min(interior_xs), max(interior_xs)] or beyond)
+    — the one full-width test shared by `weld_hrule_boxes` (the merge licence) and
+    `opening_box_rows` (the peel's disposal check, loop P fixwave A round 3), so
+    both read the SAME definition of "the grid's drawn header/row box". Empty
+    when fewer than 2 interior xs exist (no interior span to test against)."""
+    if len(interior_xs) < 2:
+        return []
+    lo, hi = min(interior_xs), max(interior_xs)
+    return sorted({round(h.y, 2) for h in hrules
+                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
+
+
+def opening_box_rows(relines: Sequence[Line], hrules: Sequence[HRule],
+                     interior_xs: Sequence[float]) -> int:
+    """How many RE-EXTRACTED rows (pre-weld `relines`, e.g. rule_aware_lines' output)
+    fall inside the FIRST full-width-hrule box at the top of the band (loop P
+    fixwave A round 3 — the peel's disposal check, not a merge). Uses the SAME
+    full-width test `weld_hrule_boxes`' merge licence uses (`_full_width_hrule_ys`).
+
+    The discriminator (measured on both real specimens): CBH's grid OPENS with a
+    drawn multi-line header box (hrules 105.0–118.7 containing 3 re-extracted
+    rows — the wrapped-header signature: 'Time Nom' / 'ID Accepted Client
+    Volume' / the confirmed leaf); the real GrainCorp stem's grid opens with bare
+    DATA rows, each in its OWN single-row hrule box — its header stack is
+    un-boxed and must be left in the band for loop L's row-above-the-block-rule
+    licence to see. `opening_box_rows` >= 2 is exactly "the kept region begins
+    with a genuine multi-row header box"; < 2 (including 0, no box at all) means
+    there is nothing here to license a peel.
+
+    Returns 0 when there are fewer than 2 full-width hrules (no box at all), or
+    when the FIRST re-extracted row's center already falls outside the box
+    formed by the first two full-width hrules (the band doesn't open inside a
+    box). Otherwise counts the leading run of consecutive rows whose center lies
+    in [full[0], full[1]] — `relines` is y-sorted, so this run is always a
+    prefix; the loop stops at the first row outside it."""
+    if not relines:
+        return 0
+    full = _full_width_hrule_ys(hrules, interior_xs)
+    if len(full) < 2:
+        return 0
+    top, bottom = full[0], full[1]
+    count = 0
+    for ln in relines:
+        cy = (ln.top + ln.bottom) / 2.0
+        if not (top <= cy <= bottom):
+            break
+        count += 1
+    return count
+
+
 def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
                      interior_xs: Sequence[float]) -> list[Line]:
     """Merge re-extracted rows that share one author-drawn FULL-WIDTH hrule box
@@ -343,9 +395,7 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
     colliding with an interior one."""
     if not relines or not hrules or len(interior_xs) < 2:
         return list(relines)
-    lo, hi = min(interior_xs), max(interior_xs)
-    full = sorted({round(h.y, 2) for h in hrules
-                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
+    full = _full_width_hrule_ys(hrules, interior_xs)
     if len(full) < 2:
         return list(relines)
     out: list[Line] = []
