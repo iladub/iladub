@@ -68,6 +68,35 @@ engagement condition exists (loop L's lesson: demand positive evidence per role;
 be gate-clean and wrong). **A Python geometry heuristic or tuned tolerance is a review
 failure** (CLAUDE.md §8); abstention/escalation stays the honest floor.
 
+**CORRECTION + diagnosis (measured 2026-08-04, systematic-debugging probes; supersedes the
+two paragraphs above and §1's "no vector rules" claim):** the page IS ruled —
+`page.lines` is 0 but Excel draws borders as RECTS, and `extract_rules` reads them (142
+vertical rules, 95 hrules on page 0), so the failing path is the RULED one and loop L's
+territory after all. Measured on the GERALDTON section: (i) every INTERIOR vertical rule
+spans exactly the grid rows (y 105.5→199.6); only the OUTER border spans the whole section
+(63.3→199.6), segmented by the author's row borders at 71.8 / 105.4 / **119.1**; (ii) the
+heading and the four notice lines sit ABOVE the interior rules' extent — full-width merged
+strips no interior vertical crosses — yet band construction feeds them to the header
+builder, which fabricates 5 all-column spanning levels (`GERALDTON` > notices > …), and
+the rule-aware re-extraction even chops the heading at column rules (`GERALDTO N`, the
+R14/loop-G class); (iii) the "3-line stack" is ONE author-ruled header row (border segment
+105.3→119.1 contains all three visual lines): per-column wrapped text (`Time Nom` +
+`Accepted` = one cell's two lines, centered single-line names on the middle line);
+(iv) `merge_tiling_ok` correctly refuses the fabricated tree on all four sections (no
+ambiguous nodes — the centering/overlap arms), and no NEURAL proposer is wired in
+production (R7), so the honest escalation is `MERGE_AMBIGUOUS` at 0 cells. **The
+mechanism is therefore pinned as two evidence-positive presence-test AXIOMs, both
+shipped patterns:** (1) **grid-region scoping** — a band line belongs to the ruled grid
+iff ≥1 interior vertical rule crosses its y; lines above are peeled and CARRIED as
+captions (`tab:RegionCaption`, loop C's class — which hands loop Q its section-key
+evidence for free); (2) **header-row welding by author hrules** — visual lines between
+consecutive author row-borders inside the grid's header region are ONE header row (loop
+H's "author rules ARE the row delimiters", applied to the header side), cell text
+recovered per rule column across the welded lines by the existing rule-aware char
+machinery. No tuned constant; no NEURAL required on this evidence; the doubled rules
+measured at x=345.1/345.6 are R31's known class and must collapse by the shipped
+presence-test, not a distance. The loop P plan implements exactly this.
+
 **DoD:** CBH page-0 sections compile (or escalate with a *semantic* reason François
 adjudicates); the measured score replaces 0.0698 in the loop evidence; the 66-cell region
 byte-identical; full suite + corpus battery re-run; R42 gap (a) closed in the register.
