@@ -61,6 +61,9 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "3f180e23c397c3703b75fa104f2fdf1510edb45be25d737232c8ac060c6e1612" ;
     cor:pages 1 ;
+    cor:contract "examples/shipping/cbh-contract.ttl" ;
+    cor:terms "examples/shipping/cbh-terms.ttl" ;
+    cor:shapes "examples/shipping/cbh-shapes.ttl" ;
     cor:expectedVerdict cor:Unadjudicated .
 
 <urn:iladub:corpus:ons-index-of-services-2026-02> a cor:Document ;
