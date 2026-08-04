@@ -48,15 +48,19 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # BEFORE anything downstream reads sub.lines/sub.top, so they cannot leak into the
     # grid as fabricated all-column header levels. grid_lines is the AXIOM (interior-rule
     # presence, vocab/queries/grid-region.rq); this call site is the PROCEDURAL peel only.
-    from .gridregion import grid_lines as _grid_lines
+    # Fix round 2 (regression repair): peel scope is a LEADING strip only (spec §3) —
+    # peel_leading_captions leaves interior and TRAILING non-grid lines (e.g. a
+    # below-grid total row) untouched in the band, main's byte-identical behavior. It
+    # ALSO requires the leading run to be ENCLOSED by some rule's y-extent (measured:
+    # "leading-only" alone still swallowed a floating merged-header row with no rule
+    # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
+    from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
+        peel_leading_captions
     gset = _grid_lines(sub, sub_rules)
-    caption_lines: tuple = ()
-    if gset and gset != set(range(len(sub.lines))):
-        keep = sorted(gset)
-        caption_lines = tuple(ln for i, ln in enumerate(sub.lines) if i not in gset)
-        sub = _replace(sub,
-                       lines=tuple(sub.lines[i] for i in keep),
-                       top=min(sub.lines[i].top for i in keep))
+    enclosed = _enclosed_lines(sub, sub_rules)
+    caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
+    if caption_lines:
+        sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
 
     band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []

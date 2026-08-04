@@ -91,6 +91,68 @@ def test_grid_lines_abstains_without_interior_rules():
     assert grid_lines(band, rules) == set()
 
 
+def test_peel_leading_captions_only():
+    """Loop P fix round 2 (regression repair): the peel's scope is a LEADING strip
+    only (spec §3) — a TRAILING full-width line (a subtotal/total row below the grid)
+    must SURVIVE in the band, never peeled. Peeling every non-grid line (the original
+    Task-2 shape) swallowed page-local subtotal rows loop H/N's arithmetic derivations
+    must see (test_continuation_licence/test_logical_arithmetic regression)."""
+    from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
+    lines = (_line(60, 70, "HEADING"),           # above interior rules -> LEADING, peeled
+             _line(110, 120, "A", "B"),          # crossed by interior rules -> grid
+             _line(130, 140, "1", "2"),          # crossed by interior rules -> grid
+             _line(150, 160, "TOTAL"))           # below interior rules -> TRAILING, kept
+    band = Band(lines, 60.0, 160.0)
+    rules = [Rule(72.0, 58.0, 145.0),            # outer left (full extent)
+             Rule(300.0, 58.0, 145.0),           # outer right
+             Rule(150.0, 105.0, 145.0),          # INTERIOR: grid rows only
+             Rule(220.0, 105.0, 145.0)]
+    gset = grid_lines(band, rules)
+    assert gset == {1, 2}
+    enclosed = enclosed_lines(band, rules)       # HEADING (60-70) IS inside the outer rules' 58-145
+    captions, kept = peel_leading_captions(lines, gset, enclosed)
+    assert captions == (lines[0],)
+    assert kept == (lines[1], lines[2], lines[3])   # TOTAL line survives, unpeeled
+
+
+def test_peel_leading_captions_no_op_without_leading_strip():
+    """No leading non-grid line (min(gset) == 0) -> identity, nothing peeled — the
+    interior/trailing-only case (e.g. a bare grid with a trailing total and no
+    heading) is main's byte-identical behavior."""
+    from iladub.etkl.gridregion import peel_leading_captions
+    lines = (_line(110, 120, "A", "B"), _line(130, 140, "1", "2"), _line(150, 160, "TOTAL"))
+    captions, kept = peel_leading_captions(lines, {0, 1}, {0, 1, 2})
+    assert captions == ()
+    assert kept == lines
+
+
+def test_peel_never_swallows_an_unenclosed_header_row():
+    """Loop P fix round 2's actual root cause, pinned directly: a LEADING non-grid
+    line that is NOT enclosed by any rule's y-extent (a merged parent header row like
+    'Voyage', drawn with no rule anywhere near it — page_local_group_two_page_pdf's and
+    case3_with_subtotals_pdf's shape, where the interior rules start exactly at the
+    leaf header row and exclude the spanning parent above it) is NEVER peeled — the
+    'leading-only' guard alone is INSUFFICIENT (it still swallowed this real case,
+    since the floating row happens to be the sole leading line); enclosure is the
+    second, necessary guard."""
+    from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
+    # "Voyage" floats at 16.9-25.9 with NO rule covering that y-range at all (rules
+    # start at y=30) -- mirrors the real fixtures' measured geometry.
+    lines = (_line(16.9, 25.9, "Voyage"),
+             _line(32.9, 41.9, "Mon", "Port", "Ship", "Qty", "Berth"),
+             _line(49.7, 57.7, "Jul", "Mackay", "V3", "100", "B3"))
+    band = Band(lines, 16.9, 57.7)
+    rules = [Rule(36.0, 30.0, 94.0), Rule(106.0, 30.0, 94.0), Rule(186.0, 30.0, 94.0),
+             Rule(246.0, 30.0, 94.0), Rule(316.0, 30.0, 94.0), Rule(364.0, 30.0, 94.0)]
+    gset = grid_lines(band, rules)
+    assert gset == {1, 2}, gset          # "Voyage" (index 0) is not grid -> leading candidate
+    enclosed = enclosed_lines(band, rules)
+    assert 0 not in enclosed, enclosed   # "Voyage" is not covered by ANY rule's y-extent
+    captions, kept = peel_leading_captions(lines, gset, enclosed)
+    assert captions == ()                # NOT peeled -> region stays HierarchicalTable-eligible
+    assert kept == lines
+
+
 def test_grid_region_query_has_no_numeric_literal():
     """§8: the derivation reads facts only; every number is emitted by the
     PROCEDURAL layer (the header-covers.rq / tab:inkCenterX precedent)."""
@@ -98,6 +160,15 @@ def test_grid_region_query_has_no_numeric_literal():
     from pathlib import Path
     text = Path("vocab/queries/grid-region.rq").read_text()
     body = re.sub(r"#[^\n]*", "", text)          # strip comments
+    assert not re.search(r"\b\d+\.?\d*\b", body), "numeric literal in the AXIOM"
+
+
+def test_line_enclosed_query_has_no_numeric_literal():
+    """§8, same gate, for the fix round-2 enclosure AXIOM."""
+    import re
+    from pathlib import Path
+    text = Path("vocab/queries/line-enclosed.rq").read_text()
+    body = re.sub(r"#[^\n]*", "", text)
     assert not re.search(r"\b\d+\.?\d*\b", body), "numeric literal in the AXIOM"
 
 
