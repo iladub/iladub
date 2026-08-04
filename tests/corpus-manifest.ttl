@@ -27,6 +27,9 @@
     cor:sha256 "3bda68331024dbc802ad7d965dd114aeaff138c65c0571cc4d0a90d2a8b64eee" ;
     cor:expectedVerdict cor:CompilesAbove ;
     cor:scoreFloor "0.95"^^xsd:decimal ;
+    cor:contract "examples/shipping/stem-contract.ttl" ;
+    cor:terms "examples/shipping/stem-terms.ttl" ;
+    cor:shapes "examples/shipping/stem-shapes.ttl" ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-02"^^xsd:date ;
         cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
