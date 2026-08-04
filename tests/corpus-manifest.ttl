@@ -95,3 +95,14 @@
     cor:sha256 "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5" ;
     cor:pages 3 ;
     cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:who-wfa-boys-zscore-0-5> a cor:Document ;
+    cor:file "health/who-wfa-boys-zscore-0-5.pdf" ;
+    cor:url "https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa-boys-0-5-zscores.pdf?sfvrsn=be07c977_11" ;
+    cor:family "health" ;
+    cor:series "who-child-growth-standards-wfa" ;
+    cor:producer "Acrobat Distiller 7.0 (Windows)" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "ca6437e29134dee2951736f25905b8d60a07255c987b28fce7a6a639fca24ab8" ;
+    cor:pages 3 ;
+    cor:expectedVerdict cor:Unadjudicated .
