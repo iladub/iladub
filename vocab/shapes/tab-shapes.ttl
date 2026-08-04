@@ -363,6 +363,23 @@ tab:ContinuesColumnDisciplineShape a sh:NodeShape ;
             }
         """ ] .
 
+# THE LICENCE'S TWO VERDICTS ARE EXCLUSIVE (loop O, R33). A recognized page pair is either
+# STITCHED (tab:continuesTable, the licence held) or REFUSED (tab:licenceRefused, it did not) —
+# never both, in either direction. The graph would otherwise state that one pair of tables is
+# both one logical table and two independent ones, and every consumer of a chain (the arithmetic
+# window, the row-group key, the feed's chain walk) would be free to pick the reading it liked.
+tab:LicenceRefusalShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:licenceRefused ;
+    sh:sparql [
+        sh:message "A table pair is linked by BOTH tab:licenceRefused and tab:continuesTable — the continuation licence's two verdicts are exclusive over one recognized pair." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:licenceRefused ?prev .
+                { $this tab:continuesTable ?prev } UNION { ?prev tab:continuesTable $this }
+            }
+        """ ] .
+
 tab:InLogicalColumnDisciplineShape a sh:NodeShape ;
     sh:targetSubjectsOf tab:inLogicalColumn ;
     sh:sparql [

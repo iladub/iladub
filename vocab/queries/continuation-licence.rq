@@ -1,0 +1,165 @@
+# continuation-licence.rq (loop O, 2026-08-03) — THE CONTINUATION LICENCE (residue R33).
+#
+# Open-world derivation (CLAUDE.md §8): "the pair (N-1, N) the recognition AXIOM licensed may
+# actually be STITCHED" is GROWN from evidence both pages carry — the NON-TABLE text blocks the
+# renderer drew around the table. Every input is a presence fact emitted by
+# document.licence_evidence (one node per non-table block: its exact text, that same text with
+# whole tokens equal to its page's printed ordinal cancelled, which page it sits on, and whether
+# it sits ABOVE or BELOW that page's table), so this query carries NO numeric LITERAL, no
+# threshold, no tolerance: no digit is ever READ AS DATA here (digits in the text are
+# variable suffixes like ?n2 and the clause labels in these comments — the PREFIX IRI w3id also
+# carries a digit). A pair whose evidence does not meet the law stays UNLICENSED, and an
+# unlicensed pair is two independent documents: recognition alone never stitches.
+#
+# WHY IT EXISTS. continuation-of.rq recognizes that page N redraws page N-1's header block on the
+# same author grid. That is necessary but NOT sufficient for "one table" — two INDEPENDENT
+# documents built from one TEMPLATE share exactly that evidence (measured, loop M task 2 review;
+# residue R33, taxonomy case 2 vs case 3). The discriminator R33 names is the BODY side, and it is
+# not text reading: a paginated table is CUT by the page edge, so what surrounds it either repeats
+# on both pages (page furniture: running head, footer) or is new content — and new content at the
+# CUT means a new document, not a continuation.
+#
+# READING vs COMPARING (the same distinction continuation-of.rq draws, and for the same reason —
+# see its header's READING-vs-COMPARING block, which this query inherits verbatim in spirit). The
+# law compares two renderings of the SAME string for literal identity. It draws no meaning from any
+# string — no keyword, no "looks like a banner" judgment, and (see clause (b)) no notion of what a
+# page number IS. The ordinal cancellation happens ENTIRELY AT EMISSION: this query compares two
+# emitted strings for identity and never learns what an ordinal, a numeral or a token is; it does
+# not contain a NUMERAL, a REPLACE, or any string surgery at all. Asking "did the renderer draw this
+# block again on the other page?" is evidence comparison; asking "what does this block say?" would
+# be reading, and would belong to NEURAL (§8).
+#
+# THE LAW — V4 (François's call, 2026-08-03, after V1-V3 were measured; see the task-2 report):
+#   a recognized pair is licensed iff
+#     (a) HEAD SIDE, STRICT — every non-table block ABOVE page N's table, other than the repeated
+#         header block, has a TEXT-IDENTICAL counterpart block on page N-1; AND
+#     (b) TAILS, INVARIANT MODULO THE PRINTED PAGE ORDINAL — every block BELOW EITHER page's table
+#         has a counterpart on the other page whose text matches it EXCEPT for WHOLE TOKENS equal
+#         to that block's OWN printed page ordinal (each side normalized by its own ordinal, then
+#         compared for identity). Both directions: neither page's tail may carry a block the other
+#         does not answer.
+#   TOKENS MEANS TOKENS (round-2 review, F1): the unit is a whitespace-delimited token — the
+#   repo's tokenization convention, the one rows._numeric_token_sum uses — so `1` cancels in
+#   `... change 1` and does NOT cancel inside `141`, `11`, `1000` or `A1`. The normalization is
+#   performed at emission by document._ordinal_normalized and reaches this query as a fact.
+#   Blocks ABOVE page N-1's table are UNCONSTRAINED.
+# THE ASYMMETRY IS LOAD-BEARING, and it is exactly the asymmetry of the CUT. The cut runs between
+# page N-1's tail and page N's head, so those are the sides that must be furniture. What page N-1
+# drew BEFORE its table says nothing about whether that table was cut: a document's opening
+# furniture (its title, its print timestamp) is drawn ONCE, on the first page, and legitimately so
+# — measured on the specimen, whose 'SHIPPING STEM' band and print timestamp are p0-only. A
+# symmetric law would read that opening furniture as "page N-1 carries something page N does not"
+# and refuse the GENUINE stitch.
+# The answering side is unrestricted in both clauses: a constrained block may be answered by ANY
+# block on the other page, wherever that one sits. Position decides whether a block must be
+# ANSWERED, never what may answer it.
+#
+# WHY CLAUSE (b) IS MODULO THE ORDINAL — MEASURED, not assumed (specimen: the 3-page GrainCorp
+# stem, corpus/ag-trade/graincorp-stem-2026-07-31.pdf, measured 2026-08-03).
+# The stem is a GENUINE case-2 pagination, and a strictly-identical tail clause REFUSES both of its
+# pairs. Its footer band (top=573.87 on all three pages, below the table on all three) reads
+#   "GrainCorp advise that the load dates shown are indicative only and are subject to change 1"
+#   "... 2"   "... 3"
+# — the sentence is invariant and the PAGE NUMBER is not. That defeats a strict tail clause at
+# EVERY block granularity (band, line, or word run: the numeral is its own word at x0=419.04, the
+# sentence ending at x1=261.73), and it cannot be told apart, positionally, from the marked case-3
+# banner this law exists to refuse — both are "same laid-out position, different text". So the
+# difference the law reads is not position but WHAT the difference is: a whole token equal to the
+# page's own printed ordinal, which the emitter cancels as a fact rather than the query
+# recognizing a numeral. Head-side blocks stay STRICT precisely because that is where the marked
+# case-3 evidence lives, and weakening them would give the false stitch back.
+#
+# WHAT THE NORMALIZATION DOES AND DOES NOT CANCEL (honest, §7 — measured at the token boundary,
+# round-2 review; every line below is pinned by a probe in tests/etkl/test_continuation_licence):
+#   * IT DOES NOT CANCEL A DIGIT INSIDE ANOTHER NUMBER, which is the whole reason the boundary
+#     exists. `Subtotal 141` / `Subtotal 242` REFUSE, and so do `TOTAL 1000` / `TOTAL 2000` and
+#     `Lot 11` / `Lot 22` — different numbers whose leading digit merely coincides with the page
+#     ordinal, and precisely the below-table subtotal/total shape R33 must refuse. An earlier
+#     substring form licensed all three (F1).
+#   * IT DOES NOT CANCEL A DIGIT INSIDE A WORD-LIKE TOKEN: `Store A1 summary` / `Store A2
+#     summary` REFUSE, because `A1` is one token and is not `1`. A per-page mark ATTACHED to
+#     other characters is therefore content, not furniture.
+#   * IT LICENSES THE COMMONEST REAL FOOTER IDIOM: `Page 1 of 12` / `Page 2 of 12` — `12` is not
+#     the token `1`, so only the true ordinal cancels (the substring form refused this, F2).
+#   * THE REMAINING PERMISSIVE CLASS, stated precisely because it is irreducible: two tails
+#     differing ONLY by a STANDALONE token equal to each page's own ordinal, where that token is
+#     not actually a page number — the honest WORST example is `TOTAL 1` / `TOTAL 2`, the
+#     below-table subtotal shape of the bullet above in its SIMPLEST form: `TOTAL 1000` /
+#     `TOTAL 2000` refuses, but `TOTAL 1` / `TOTAL 2` LICENSES. Also `Rev 1` / `Rev 2`,
+#     `Note 1` / `Note 2`. Nothing short of reading the text can tell such a mark from a page
+#     number, and this law does not pretend to. Registered under R33 rather than fixed.
+#     ADV-A NARROWS IT (measured, loop O close): the residual bites ONLY where the mark
+#     COINCIDES with that page's own printed ordinal. The SAME tails at ordinals 5 / 6 REFUSE
+#     (`TOTAL 1` / `TOTAL 2` -> False, `Rev 1` / `Rev 2` -> False), because neither token is its
+#     page's ordinal and nothing cancels. Pinned by
+#     test_licence_law_licenses_a_standalone_ordinal_token_only_at_that_ordinal.
+#   * OVER-normalization (CONSERVATIVE, refuses): a STANDALONE ordinal token occurring elsewhere
+#     in a tail is cancelled too, and each side cancels its OWN ordinal, so two genuinely
+#     invariant tails carrying such a token normalize DIFFERENTLY (`Depot 1 line` under ordinal 1
+#     vs the same string under ordinal 2) and the pair REFUSES. Refusal is the safe direction: an
+#     unlicensed pair stays two independent documents.
+#   * A document whose PRINTED ordinal differs from its page index (roman front matter, an offset
+#     first page) simply fails to cancel, and the pair refuses — conservative again, and now
+#     genuinely so: `Page 11` / `Page 22` under ordinals 1/2 REFUSE, where the substring form
+#     breached the fail-safe and licensed them. The emitter states the assumption where it makes
+#     it.
+#
+# VACUITY IS LICENCE, deliberately: a pair whose pages carry no non-table block at all (two bare
+# tables, nothing around them) meets every clause trivially and is licensed. That is the
+# fluent-reader invariant cutting the other way — two indistinguishable bare tables on consecutive
+# pages ARE read as one continued table by a human reader, so stitching them is the correct
+# reading, not a false positive. The law refuses on MARKS; absent marks it does not invent one.
+#
+# ROLE OF THE PAGE INDEX: none. The pair is chosen by the caller; the law reads only the two pages'
+# block inventories. Nothing here counts pages or blocks, and no ordinal is ever compared for
+# order — the ordinal never enters this query at all (tab:pageOrdinal is emitted for the audit
+# trail, and this query does not read it).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?pair WHERE {
+  ?pair a tab:ContinuationPairUnderTest .
+  # CLAUSE (a) — PAGE N'S HEAD CARRIES NOTHING NEW, STRICTLY. Every block the continuation page
+  # drew ABOVE its table must be one the prior page also drew, character for character. The ?t
+  # join IS the identity test (no normalisation, no fuzzy match), exactly as continuation-of.rq's
+  # clause (b) joins on ?t. The repeated header block needs no exclusion of its own: it is drawn
+  # INSIDE the recognized table band, and bands do not overlap, so no emitted block is it.
+  FILTER NOT EXISTS {
+    ?pair tab:hasPageBlock ?curHead .
+    ?curHead a tab:ContinuationPageTextBlock .
+    ?curHead a tab:AboveTableBlock .
+    ?curHead tab:blockText ?t .
+    FILTER NOT EXISTS {
+      ?pair tab:hasPageBlock ?prior .
+      ?prior a tab:PriorPageTextBlock .
+      ?prior tab:blockText ?t .
+    }
+  }
+  # CLAUSE (b1) — PAGE N-1's TAIL IS FURNITURE, NOT CONTENT. Whatever the prior page drew BELOW
+  # its table must reappear on page N, up to that block's own printed ordinal; if it does not,
+  # that page's table was not cut by the page edge — something else followed it, and the pages are
+  # two documents. Each side arrives ALREADY normalized by its own ordinal (at emission, whole
+  # tokens only), so the ?n join IS the comparison — the same identity-by-join idiom clause (a)
+  # uses on ?t, and no numeral or string function enters this query.
+  FILTER NOT EXISTS {
+    ?pair tab:hasPageBlock ?priorTail .
+    ?priorTail a tab:PriorPageTextBlock .
+    ?priorTail a tab:BelowTableBlock .
+    ?priorTail tab:ordinalNormalizedText ?n .
+    FILTER NOT EXISTS {
+      ?pair tab:hasPageBlock ?answer .
+      ?answer a tab:ContinuationPageTextBlock .
+      ?answer tab:ordinalNormalizedText ?n .
+    }
+  }
+  # CLAUSE (b2) — THE MIRROR, so neither page's tail may carry a block the other does not answer.
+  FILTER NOT EXISTS {
+    ?pair tab:hasPageBlock ?curTail .
+    ?curTail a tab:ContinuationPageTextBlock .
+    ?curTail a tab:BelowTableBlock .
+    ?curTail tab:ordinalNormalizedText ?n2 .
+    FILTER NOT EXISTS {
+      ?pair tab:hasPageBlock ?answer2 .
+      ?answer2 a tab:PriorPageTextBlock .
+      ?answer2 tab:ordinalNormalizedText ?n2 .
+    }
+  }
+}

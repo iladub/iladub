@@ -7,8 +7,10 @@ sources:
   - vocab/shapes/tab-shapes.ttl
   - tests/test_corpus_stem.py
   - vocab/queries/continuation-of.rq
+  - vocab/queries/continuation-licence.rq
   - src/iladub/etkl/document.py
   - src/iladub/etkl/rows.py
+  - tests/etkl/test_continuation_licence.py
 related: ["[[assert-propose-promote]]", "[[grounding-membrane]]"]
 confidence: high
 updated: 2026-08-03
@@ -100,7 +102,8 @@ compilation and grounding. On the live 3-page GrainCorp stem this compiles ONE c
 has two measured open edges, both registered rather than hidden: R33 — the same
 repeated-header evidence cannot distinguish a genuine page-cut (taxonomy case 2) from two
 independent tables sharing a template (case 3), so the AXIOM can license a stitch between
-tables that are not truly one; and R35 — subtotal confirmation is closed within one page, so
+tables that are not truly one (closed for MARKED documents by loop O's continuation licence,
+below); and R35 — subtotal confirmation is closed within one page, so
 a row group cut by the page break never confirms on the continuation page, leaving that
 page's records without their injected keys and its subtotal rows unmarked in the feed.
 
@@ -120,11 +123,47 @@ document-wide), so `feed._header_path`'s tie-break was made a deterministic tota
 stores, and library versions. What remains open, named by ID rather than left implicit: R33's
 false-stitch exposure now reaches this same machinery (a wrong continuation can destroy
 page-confirmed facts, not just fail to gain them, and can fabricate or silently drop record
-keys — measured only as a mechanism, not on a real false stitch); R37 (the wider-window
+keys — measured at this point only as a mechanism; loop O, below, measured it on real
+false-stitch compiles and then gated it); R37 (the wider-window
 retraction reading is a modelling choice no oracle disposes); R38 (a headerLevel staleness
 mode, closed for chains today but not proven unreachable in general); and R39
 (`row-group-nesting.rq`, loop I's unchanged AXIOM, now the dominant compile cost at ~93–97 s
 over the logical table's larger group count, queued for the derivation-scaling playbook).
+
+**Loop O (2026-08-03) — recognition is not permission: the continuation LICENCE.** Loops M and N
+built the whole document-level machinery on ONE question ("does page N redraw page N−1's header
+block on the same grid?"), and R33 measured that this question cannot separate a paginated table
+(taxonomy case 2) from two independent tables printed from one template (case 3). Loop O splits
+the question in two: recognition still answers *did the renderer repeat the header*, and a
+**second AXIOM** — `vocab/queries/continuation-licence.rq`, open-world, with **no numeric
+literal**: no digit is ever read as data, the ordinal cancellation happening entirely at
+emission — answers *may that pair actually be stitched*, by asking whether the
+non-table blocks the renderer drew AROUND the table are page-invariant furniture or new content.
+The law (V4): page N's ABOVE-table blocks must be text-identical to blocks page N−1 also drew
+(strict); blocks BELOW either page's table must answer each other modulo whole tokens equal to
+that block's own printed page ordinal (cancelled at emission, so the query never learns what a
+numeral is); blocks above page N−1's table are unconstrained, because a document's opening
+furniture is legitimately drawn once — the asymmetry of the cut, and a symmetric law was measured
+to refuse the stem's genuine stitch. `compile_document` gates carriage, `tab:continuesTable`, the
+chain, the document-level arithmetic window and the document-level row groups behind that licence,
+and a refusal is **recorded, not discarded** (`DocumentReport.refused_licences`, the graph fact
+`tab:licenceRefused`, and `tab:LicenceRefusalShape` making the two verdicts exclusive over one
+pair). What the loop measured, in the order it matters: **first the damage, on real compiles** —
+a purpose-built two-page case-3 fixture with a page-local subtotal showed the false stitch
+FABRICATING (a document-level row group keyed `Alpha` silently absorbing the other page's
+unrelated row) and LOSING (the page's own legitimately-earned group superseded, then not
+re-derived because the two pages' key values conflict); **then the fix** — the marked pair now
+refuses, its page-local subtotal confirmation survives untouched, and the two pages compile as two
+independent documents; **and the wall** — the genuine 3-page stem licenses both pairs and is
+byte-identical on every tally (0.9655 over 2152 cells, one chain of 3, 133 records / 585 grounded
+/ 1265 quarantined, ledger 41/62/0/21). R33 therefore closes **for marked documents only**, and
+the boundary is stated rather than hidden: two markless byte-identical template pages still
+stitch, which is invariant-*consistent* — no page-invariance evidence distinguishes them, and a
+fluent reader reads them as one table — plus one narrow permissive class of the tail clause (two
+tails differing only by a standalone token that happens to equal each page's own ordinal, e.g.
+`TOTAL 1`/`TOTAL 2`; measured to bite only at that coincidence — the same tails at ordinals 5/6
+refuse). R37 narrows in consequence: the wider-window retraction reading is now only ever
+exercised inside a licensed continuation.
 
 **Settled vs open.** The verifier-first paradigm, the round-trip oracle, and
 the tiling/coverage SHACL are shipped and enforced across the sources here.

@@ -1327,3 +1327,139 @@ def page_local_group_two_page_pdf(path: str) -> dict:
     return {"leaves": leaves, "names": names, "rule_xs": edges,
             "page0_rows": body0, "page1_rows": body1,
             "page1_local_sum": 250, "document_sum": 500}
+
+
+def bare_identical_two_page_pdf(path: str) -> dict:
+    """LOOP O FIXTURE (R33, task 1) — the genuinely INDISTINGUISHABLE case-3 sibling.
+
+    The SAME template (`Store|Item|Qty`, same ruled grid, same header text and origin) on
+    BOTH pages — NO banner, NO subtotal, just different data. A fluent reader cannot tell
+    these two pages apart from one continuous table split at the page break; stitching them
+    is the CORRECT reading here, not a defect (loop O's residual — `test_bare_identical_-
+    still_stitches` pins this as invariant-consistent behaviour that must survive whatever
+    licence closes R33). Contrast with `case3_with_subtotals_pdf`, whose per-page banners
+    are the (non-table-band) evidence that the two tables are logically independent.
+
+    Geometry is `test_template_pages_are_refused_by_the_continuation_licence`'s own fixture
+    (test_document.py; named `..._stitch_the_known_case3_false_positive` until loop O inverted
+    the pin) with the banner line removed — everything else (columns, rules,
+    header text) is unchanged, since only the leaf header block and the author-drawn grid
+    are what the continuation law (continuation-of.rq) ever reads."""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+
+    cols = [(60.0, 160.0), (170.0, 260.0), (270.0, 360.0)]
+
+    def _page(c, rows, top):
+        c.setFont("Courier-Bold", 10)
+        for (l, _r), h in zip(cols, ["Store", "Item", "Qty"]):
+            c.drawString(l, top, h)
+        c.setFont("Courier", 10)
+        for i, row in enumerate(rows):
+            y = top - (i + 1) * 18.0
+            for (l, _r), cell in zip(cols, row):
+                c.drawString(l, y, cell)
+        c.setLineWidth(0.7)
+        bottom = top - (len(rows) + 1) * 18.0
+        for (l, _r) in cols:
+            c.line(l - 4, top + 12, l - 4, bottom)
+        c.line(cols[-1][1] + 4, top + 12, cols[-1][1] + 4, bottom)
+
+    page0_rows = [("Alpha", "Bolt", "10"), ("Beta", "Nut", "20")]
+    page1_rows = [("Gamma", "Screw", "30"), ("Delta", "Nail", "40")]
+    top = letter[1] - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    _page(c, page0_rows, top)
+    c.showPage()
+    _page(c, page1_rows, top)
+    c.save()
+    return {"cols": cols, "page0_rows": page0_rows, "page1_rows": page1_rows}
+
+
+def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
+    """LOOP O FIXTURE (R33, task 1) — the pinned case-3 shape (independent template tables
+    sharing one header+grid, DIFFERENT per-page banners in a non-table band — see
+    test_document.py's test_template_pages_are_refused_by_the_continuation_licence and
+    continuation-of.rq's header, whose measurement this reproduces) EXTENDED with a
+    per-store subtotal row that CONFIRMS PAGE-LOCALLY on its own page (loop-H arithmetic,
+    `rows.detect_aggregation_rows`, reached via the HIERARCHICAL path: a 'Voyage' parent
+    merged over Ship/Qty/Berth forces UNSUPPORTED_TABLE classification, exactly the proven
+    shape `cut_group_two_page_pdf` / `page_local_group_two_page_pdf` already compile
+    through `holon.assert_hier_region`).
+
+    Page 0 ("NORTH REGION WEEKLY"): ONE data row, Qty=0 — a DELIBERATELY zero quantity.
+    Chosen so that IF the false continuation stitches the pair (measured: it does — R33)
+    and the document-level pass (`document.reconcile_chain_arithmetic`) widens page 1's
+    subtotal window across the break, the document-level sum is UNCHANGED from page 1's
+    own local sum (a zero operand contributes nothing to the walk-back total). This
+    isolates the loop's two faces from one another on purpose: it lets face 5 (does a
+    document-level GROUP derive across the two independent tables?) be observed without
+    face 4 (does the wider window RETRACT the confirmation?) also firing and destroying
+    the group by orphaning its witness first — see the task-1 report for which faces this
+    fixture actually measures, and which do not reproduce on it.
+
+    Page 1 ("SOUTH REGION MONTHLY"): two data rows + one 'SUB' row whose value is exactly
+    their sum (100 + 150 = 250) — confirms PAGE-LOCALLY on page 1 alone.
+
+    `conflicting_labels` controls the group-identity column ('Port'):
+      False — the SAME label ('Alpha') on every row of BOTH pages: the shape under which,
+              if a document-level group is derived at all, it silently ADOPTS page 0's row
+              as a member sharing page 1's key (the fabrication face).
+      True  — page 0's row carries a DIFFERENT label ('Beta') from page 1's rows
+              ('Alpha'): the shape under which the group KEY becomes non-unique across the
+              false boundary and the document-level re-derivation refuses outright, while
+              page 1's OWN page-local group (superseded once the chain forms — see
+              `document._supersede_page_groups`) is never replaced (the loss face).
+    Every OTHER fact (header text, grid, rule positions) is identical between the two
+    variants and between the two pages, because only the leaf header block and the
+    author-drawn grid are what the continuation law reads."""
+    from reportlab.pdfgen import canvas as _canvas
+
+    leaves = [(40.0, 90.0), (110.0, 170.0), (190.0, 230.0), (250.0, 300.0), (320.0, 360.0)]
+    names = ["Mon", "Port", "Ship", "Qty", "Berth"]
+    rh = 16.0
+    table_top = 196.0
+    banner_gap = 40.0                 # >> 1.8x the table's own ~9pt median line gap
+    W = 400.0
+    H = table_top + banner_gap + 30.0
+    edges = [leaves[0][0] - 4.0] + [l - 4.0 for (l, r) in leaves[1:]] + [leaves[-1][1] + 4.0]
+
+    c = _canvas.Canvas(str(path), pagesize=(W, H))
+
+    def _page(banner, body_rows):
+        c.setFont("Courier-Bold", 11)
+        c.drawString(leaves[0][0], table_top + banner_gap, banner)   # non-table band
+        c.setFont("Helvetica", 9)
+        c.drawCentredString((leaves[2][0] + leaves[3][1]) / 2.0, table_top, "Voyage")
+        for (l, r), n in zip(leaves, names):
+            c.drawString(l, table_top - rh, n)
+        c.setFont("Helvetica", 8)
+        ys = []
+        y = table_top - 2 * rh
+        for row in body_rows:
+            for (l, r), v in zip(leaves, row):
+                if v:
+                    c.drawString(l, y, v)
+            ys.append(y)
+            y -= rh
+        c.setLineWidth(0.7)
+        bottom = y + rh - 6.0
+        for e in edges:
+            c.line(e, table_top - rh + 10.0, e, bottom)
+        c.line(edges[0], table_top - rh - 4.0, edges[-1], table_top - rh - 4.0)
+        for yy in ys:
+            c.line(edges[0], yy - 4.0, edges[-1], yy - 4.0)
+
+    label1 = "Beta" if conflicting_labels else "Alpha"
+    body0 = [("Jul", "Alpha", "V1", "0", "B1")]
+    body1 = [("Jul", label1, "V2", "100", "B2"), ("Jul", label1, "V3", "150", "B3"),
+             ("", "SUB", "", "250", "")]
+
+    _page("NORTH REGION WEEKLY", body0)
+    c.showPage()
+    _page("SOUTH REGION MONTHLY", body1)
+    c.save()
+    return {"leaves": leaves, "names": names, "rule_xs": edges,
+            "page0_rows": body0, "page1_rows": body1, "page1_local_sum": 250,
+            "conflicting_labels": conflicting_labels,
+            "label_page0": "Alpha", "label_page1": label1}
