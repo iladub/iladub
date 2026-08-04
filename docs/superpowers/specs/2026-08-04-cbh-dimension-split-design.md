@@ -97,6 +97,44 @@ machinery. No tuned constant; no NEURAL required on this evidence; the doubled r
 measured at x=345.1/345.6 are R31's known class and must collapse by the shipped
 presence-test, not a distance. The loop P plan implements exactly this.
 
+**Loop P outcome (François's adjudication, 2026-08-04 — supersedes this section's DoD
+expectation of a closed gap (a)):** Tasks 1–3 shipped the two AXIOMs designed above —
+`vocab/queries/grid-region.rq` + `vocab/queries/line-enclosed.rq` (`src/iladub/etkl/gridregion.py`)
+and `weld_hrule_boxes` (`src/iladub/etkl/geometry.py`) — green on the synthetic fixture
+(490/490 in `tests/etkl/`), but **inert on both real specimens**: the shipped
+`grid_lines`/interior-rule test alone does not fire on CBH (border twins x=37.92/38.2
+read as interior) and a subsequent fix wave (3 commits) attempting to make it fire was
+**reverted** (`1271156`) after the breaker tripped. Three witness licences were tried at
+the `_build_ruled_band` seam and each fixed one real specimen while breaking the other:
+- **ink-witness** (interior rules must show header/body ink on both sides) — CBH 0.9926
+  (4/4 sections assert, correct captions) but the stem regresses to 1.0000-WRONG: the same
+  test that frees CBH's border twins also frees the stem's real header stack, which the
+  peel then swallows (chains `[1,1,1]`, grounded 0).
+- **straddle witness** (peel licensed only where the heading text straddles a rule) — CBH
+  0.3636 (KWINANA's short heading doesn't straddle, peel stalls) and the stem's
+  `'Friday, 31 July 2026'` line gets peeled, disengaging loop L's clause-0 engagement →
+  `REGION_TILING_FAILED`.
+- **opening-box witness** (peel licensed by the grid's own drawn opening header box) — CBH
+  0.0724 (near-unchanged) and the stem drops to 0.9660 ≠ 0.9655: pages 1–2 flat-assert
+  STANDALONE, loop M's carriage dead (chains `[1,1,1]`, grounded 167).
+
+**The conflicting seam requirement, stated once:** `_build_ruled_band` is shared by three
+laws that each need a DIFFERENT licence from the same peel decision — loop L's engagement
+(stem p0's furniture row must stay), loop M's carriage (stem p1–2 must keep escalating
+standalone when read alone), and CBH's sections (strips above the grid must peel). No
+band-local licence satisfies all three; a repair scoped to one band cannot see enough
+context to arbitrate between them.
+
+**Loop Q's design is amended accordingly:** the peel/weld repair re-homes at SECTION
+scope, disposed inside loop Q's design once recognition has already established it is
+facing a sectioned chain with repeated headers (§4.1's recognition AXIOM) — i.e.
+recognition first, then the re-reading licence for the strips above each section's grid,
+rather than a single band deciding blind. Gap (a) of R42 stays OPEN; the full measured map
+is recorded in the R42 row of `docs/superpowers/residues.md` (canonical; not duplicated
+here). Section §3's "candidate homes" and "CORRECTION" text above stand as the diagnosis
+that IS correct — the mechanism it names is real evidence, just insufficient at band
+scope to arbitrate the three laws sharing the seam.
+
 **DoD:** CBH page-0 sections compile (or escalate with a *semantic* reason François
 adjudicates); the measured score replaces 0.0698 in the loop evidence; the 66-cell region
 byte-identical; full suite + corpus battery re-run; R42 gap (a) closed in the register.
