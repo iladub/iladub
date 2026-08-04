@@ -66,18 +66,26 @@ def _line(top, bottom, *texts):
 
 
 def test_grid_lines_interior_rule_presence():
-    """A line is grid iff an INTERIOR rule (x strictly between the band's outermost
-    rule x's) crosses it. Outer-border segments never make a line grid."""
+    """A line is grid iff an INTERIOR rule (ink witness: some band word CENTER on
+    BOTH sides) crosses it. Outer-border segments — including a double-drawn twin
+    positioned strictly between the true outer rule and the far border, which would
+    wrongly pass an x-distance-tolerance test — never make a line grid, because they
+    have no ink on their own outboard side (loop P fixwave A)."""
     from iladub.etkl.gridregion import grid_lines
-    lines = (_line(60, 70, "HEADING"),          # above interior rules
-             _line(75, 85, "NOTICE", "TEXT"),    # above interior rules
-             _line(110, 120, "A", "B"),          # crossed by interior rules
-             _line(130, 140, "1", "2"))          # crossed by interior rules
+    heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)
+    notice = Line((Word("NOTICE", 80, 128, 75, 85), Word("TEXT", 138, 170, 75, 85)), 75, 85)
+    row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
+                  Word("C", 240, 280, 110, 120)), 110, 120)
+    row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
+                  Word("3", 240, 280, 130, 140)), 130, 140)
+    lines = (heading, notice, row_a, row_1)      # heading/notice: above interior rules
     band = Band(lines, 60.0, 140.0)
-    rules = [Rule(72.0, 58.0, 145.0),            # outer left (full extent)
-             Rule(300.0, 58.0, 145.0),           # outer right
-             Rule(150.0, 105.0, 145.0),          # INTERIOR: grid rows only
-             Rule(220.0, 105.0, 145.0)]
+    rules = [Rule(72.0, 58.0, 145.0),             # outer left (full extent)
+             Rule(71.7, 58.0, 145.0),             # outer-left TWIN (doubled border)
+             Rule(300.0, 58.0, 145.0),            # outer right
+             Rule(300.3, 58.0, 145.0),            # outer-right TWIN (doubled border)
+             Rule(150.0, 105.0, 145.0),           # INTERIOR: ink on both sides
+             Rule(220.0, 105.0, 145.0)]           # INTERIOR: ink on both sides
     assert grid_lines(band, rules) == {2, 3}
 
 
@@ -98,15 +106,18 @@ def test_peel_leading_captions_only():
     Task-2 shape) swallowed page-local subtotal rows loop H/N's arithmetic derivations
     must see (test_continuation_licence/test_logical_arithmetic regression)."""
     from iladub.etkl.gridregion import grid_lines, enclosed_lines, peel_leading_captions
-    lines = (_line(60, 70, "HEADING"),           # above interior rules -> LEADING, peeled
-             _line(110, 120, "A", "B"),          # crossed by interior rules -> grid
-             _line(130, 140, "1", "2"),          # crossed by interior rules -> grid
-             _line(150, 160, "TOTAL"))           # below interior rules -> TRAILING, kept
+    heading = Line((Word("HEADING", 80, 136, 60, 70),), 60, 70)   # above interior rules -> LEADING, peeled
+    row_a = Line((Word("A", 80, 100, 110, 120), Word("B", 160, 200, 110, 120),
+                  Word("C", 240, 280, 110, 120)), 110, 120)        # crossed by interior rules -> grid
+    row_1 = Line((Word("1", 80, 100, 130, 140), Word("2", 160, 200, 130, 140),
+                  Word("3", 240, 280, 130, 140)), 130, 140)        # crossed by interior rules -> grid
+    total = Line((Word("TOTAL", 80, 120, 150, 160),), 150, 160)   # below interior rules -> TRAILING, kept
+    lines = (heading, row_a, row_1, total)
     band = Band(lines, 60.0, 160.0)
     rules = [Rule(72.0, 58.0, 145.0),            # outer left (full extent)
              Rule(300.0, 58.0, 145.0),           # outer right
-             Rule(150.0, 105.0, 145.0),          # INTERIOR: grid rows only
-             Rule(220.0, 105.0, 145.0)]
+             Rule(150.0, 105.0, 145.0),          # INTERIOR: ink on both sides
+             Rule(220.0, 105.0, 145.0)]          # INTERIOR: ink on both sides
     gset = grid_lines(band, rules)
     assert gset == {1, 2}
     enclosed = enclosed_lines(band, rules)       # HEADING (60-70) IS inside the outer rules' 58-145

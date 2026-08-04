@@ -16,7 +16,7 @@ from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
 from .bands import Band
-from .geometry import Rule
+from .geometry import COORD_EPS, Rule
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
@@ -26,8 +26,16 @@ LINE_ENCLOSED_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "
 
 
 def grid_evidence(band: Band, rules: Sequence[Rule]) -> Graph:
-    """Emit the transient line/rule evidence graph for one band."""
+    """Emit the transient line/rule evidence graph for one band, including the
+    ink-witness facts (loop P fixwave A): for each rule, does any band word CENTER
+    lie strictly left (tab:hasInkLeft), resp. right (tab:hasInkRight), of its x
+    (beyond COORD_EPS)? Words are the band's ink at this layer (the evidence is
+    built from Band.lines, which are word-bucketed at this point in the pipeline —
+    see compile.py::_build_ruled_band's docstring); no new extraction is needed. A
+    real column separator has ink on both sides; a double-drawn outer-border twin
+    does not, however close it sits to another rule x (R31: PRESENCE, not distance)."""
     g = Graph()
+    centers = [(w.x0 + w.x1) / 2.0 for ln in band.lines for w in ln.words]
     for i, ln in enumerate(band.lines):
         u = _EV["line-%d" % i]
         g.add((u, RDF.type, TAB.BandLine))
@@ -40,17 +48,40 @@ def grid_evidence(band: Band, rules: Sequence[Rule]) -> Graph:
         g.add((u, TAB.ruleX, Literal(round(r.x, 2), datatype=XSD.decimal)))
         g.add((u, TAB.ruleTop, Literal(round(r.top, 2), datatype=XSD.decimal)))
         g.add((u, TAB.ruleBottom, Literal(round(r.bottom, 2), datatype=XSD.decimal)))
+        has_left = any(cx < r.x - COORD_EPS for cx in centers)
+        has_right = any(cx > r.x + COORD_EPS for cx in centers)
+        g.add((u, TAB.hasInkLeft, Literal(has_left, datatype=XSD.boolean)))
+        g.add((u, TAB.hasInkRight, Literal(has_right, datatype=XSD.boolean)))
     return g
+
+
+def _grid_rows(band: Band, rules: Sequence[Rule]):
+    """Shared grid-region.rq execution (idx, x) rows, read by both grid_lines and
+    interior_rule_xs — one AXIOM query, two projections. Abstains (empty) when
+    fewer than 3 DISTINCT rule x-positions exist: no rule can be interior with
+    fewer than an outer pair plus one candidate."""
+    if len({round(r.x, 2) for r in rules}) < 3:
+        return []
+    g = grid_evidence(band, rules)
+    query = GRID_REGION_RQ.read_text()
+    return list(g.query(query))
 
 
 def grid_lines(band: Band, rules: Sequence[Rule]) -> set[int]:
     """Grid-member line indices. Abstains (empty set) when the evidence cannot
     decide: fewer than 3 DISTINCT rule x-positions means no rule can be interior."""
-    if len({round(r.x, 2) for r in rules}) < 3:
-        return set()
-    g = grid_evidence(band, rules)
-    query = GRID_REGION_RQ.read_text()
-    return {int(row.idx) for row in g.query(query)}
+    return {int(row.idx) for row in _grid_rows(band, rules)}
+
+
+def interior_rule_xs(band: Band, rules: Sequence[Rule]) -> list[float]:
+    """Ink-interior rule x positions (loop P fixwave A §2): the vertical rules with
+    ink on BOTH sides — real column separators, never a double-drawn outer-border
+    twin (which has no ink on its own outboard side). Reads the SAME grid-region.rq
+    query result as grid_lines, projecting ?x instead of ?idx. Feeds
+    weld_hrule_boxes' full-width test; rule_aware_lines' column bucketing keeps
+    using ALL rule xs, unchanged — the author's outer edges are still real column
+    boundaries for bucketing, just never eligible to be grid-interior."""
+    return sorted({round(float(row.x), 2) for row in _grid_rows(band, rules)})
 
 
 def enclosed_lines(band: Band, rules: Sequence[Rule]) -> set[int]:

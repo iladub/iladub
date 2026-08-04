@@ -16,7 +16,7 @@
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-07-05"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.2.1" ;
+    owl:versionInfo "0.2.2" ;
     vann:preferredNamespacePrefix "tab" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
 
@@ -236,6 +236,12 @@ tab:RuleSpan a owl:Class ; rdfs:label "Vertical rule span (evidence)"@en ;
 tab:ruleX a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleTop a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
 tab:ruleBottom a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:decimal .
+tab:hasInkLeft a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:boolean ;
+    rdfs:label "has ink left"@en ;
+    rdfs:comment "Ink witness (loop P fixwave A): true iff some band word/char CENTER lies strictly left of this rule's x (beyond COORD_EPS). A real interior column separator has ink on BOTH sides; a double-drawn section-border twin has none on its own outboard side, however close it sits to another rule (R31: closure by PRESENCE, never distance)."@en .
+tab:hasInkRight a owl:DatatypeProperty ; rdfs:domain tab:RuleSpan ; rdfs:range xsd:boolean ;
+    rdfs:label "has ink right"@en ;
+    rdfs:comment "Ink witness (loop P fixwave A): true iff some band word/char CENTER lies strictly right of this rule's x (beyond COORD_EPS). See tab:hasInkLeft."@en .
 tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
     rdfs:comment "The classification verdict for a band. Its individuals are verdicts, NOT the compiled-holon table classes (tab:RecordTable a owl:Class subClassOf tab:Table) — hence the distinct '…Kind' IRIs to avoid dual-typing an existing class."@en .
 tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .

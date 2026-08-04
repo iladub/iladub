@@ -1,21 +1,26 @@
-# grid-region.rq — which band lines are INSIDE the ruled grid (loop P AXIOM).
-# Open-world derivation over the per-band evidence graph (the band is the closure
-# boundary — the MIN/MAX aggregation closes within the one transient graph).
-# A line is a grid line iff at least one INTERIOR vertical rule crosses its center:
-# interior = a rule strictly between the band's outermost rule x-positions (the outer
-# border of the author's section box never counts). Every number here is a FACT
-# emitted by gridregion.py (raw geometry) — this query contains no numeric literal.
+# grid-region.rq — which band lines are INSIDE the ruled grid (loop P AXIOM,
+# fixwave A: ink-witness refinement). Open-world derivation over the per-band
+# evidence graph (the band is the closure boundary).
+#
+# A rule is INTERIOR iff it has ink on BOTH sides — tab:hasInkLeft/tab:hasInkRight,
+# emitted by gridregion.py from the band's words (a char/word CENTER strictly left,
+# resp. right, of the rule's x). A real column separator always has ink flanking it
+# on both sides; a double-drawn section-border twin has NO ink on its own outboard
+# side, however close it sits to another rule x. This replaces the earlier MIN/MAX-x
+# "strictly between the outermost rules" test, which a double-drawn edge defeats:
+# on the real CBH section the inner border twin sits strictly between the outer
+# twin and the far border, so the old distance-based test wrongly admitted it as
+# interior (R31: closure by PRESENCE, never distance — no tolerance survives a
+# double-drawn edge). The MIN/MAX sub-select is gone; there is no numeric literal.
+#
+# A line is a grid line iff an interior rule's y-extent crosses its center. ?x is
+# projected alongside ?idx so gridregion.interior_rule_xs can read this SAME query
+# result for the set of ink-interior rule x's (fixwave A §2, weld_hrule_boxes'
+# full-width test) — one AXIOM execution, two projections.
 PREFIX tab: <https://w3id.org/iladub/tab#>
-SELECT ?idx WHERE {
-  {
-    SELECT (MIN(?rx) AS ?minx) (MAX(?rx) AS ?maxx) WHERE {
-      ?rr a tab:RuleSpan ; tab:ruleX ?rx .
-    }
-  }
+SELECT DISTINCT ?idx ?x WHERE {
   ?line a tab:BandLine ; tab:lineIndex ?idx ; tab:lineCenterY ?cy .
-  FILTER EXISTS {
-    ?r a tab:RuleSpan ; tab:ruleX ?x ; tab:ruleTop ?rt ; tab:ruleBottom ?rb .
-    FILTER(?rt <= ?cy && ?rb >= ?cy)
-    FILTER(?x > ?minx && ?x < ?maxx)
-  }
+  ?r a tab:RuleSpan ; tab:ruleX ?x ; tab:ruleTop ?rt ; tab:ruleBottom ?rb ;
+     tab:hasInkLeft true ; tab:hasInkRight true .
+  FILTER(?rt <= ?cy && ?rb >= ?cy)
 }

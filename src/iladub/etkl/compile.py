@@ -55,9 +55,16 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     # "leading-only" alone still swallowed a floating merged-header row with no rule
     # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
     from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
-        peel_leading_captions
+        interior_rule_xs as _interior_rule_xs, peel_leading_captions
     gset = _grid_lines(sub, sub_rules)
     enclosed = _enclosed_lines(sub, sub_rules)
+    # loop P fixwave A: the ink-interior rule x's (real column separators — has ink
+    # on both sides; never a double-drawn outer-border twin), computed once on the
+    # PRE-peel band/rules (interior-ness is a property of the rules + band words,
+    # unaffected by whether captions are peeled) and fed to the welder's full-width
+    # test below. rule_aware_lines' own column bucketing (xs, just above) is
+    # UNCHANGED — it keeps using every rule x, including the outer edges.
+    interior_xs = _interior_rule_xs(sub, sub_rules)
     caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
     if caption_lines:
         sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
@@ -66,7 +73,7 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
     if relines:
         from .geometry import weld_hrule_boxes
-        relines = weld_hrule_boxes(relines, sub_hrules, xs)
+        relines = weld_hrule_boxes(relines, sub_hrules, interior_xs)
     if not relines:
         return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
     band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)

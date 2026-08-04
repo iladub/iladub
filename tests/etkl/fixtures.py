@@ -1491,15 +1491,32 @@ def sectioned_ruled_table_pdf(path):
     c.setFont("Courier", 9)
     # the section OUTER border (spans heading + notice + grid, like CBH's)
     c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    # DOUBLED outer border (loop P fixwave A -- fixture truthfulness): a second,
+    # near-coincident vertical stroke per edge, 0.3pt in from the true border --
+    # mirrors the real CBH section's double-drawn edges (left twins measured at
+    # 37.92/38.2, right twins at 1151.1/1151.5), which defeats any x-distance-
+    # tolerance interior test (R31: closure by PRESENCE, never distance -- no
+    # tolerance survives a double-drawn edge that sits closer to its own twin than
+    # any tolerance would allow). The twin's y-extent is inset 2pt at the top so it
+    # is NOT deduplicated against the outer rect's own edge by extract_rules's
+    # near-identical-segment merge (which requires x AND top AND bottom all close).
+    c.line(cols[0] + 0.3, y(grid_bot), cols[0] + 0.3, y(sec_top + 2))
+    c.line(cols[-1] - 0.3, y(grid_bot), cols[-1] - 0.3, y(sec_top + 2))
     # full-width strips: heading + notice (NO interior rules up here)
     c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
     c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
     # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
     for x in cols[1:-1]:
         c.line(x, y(grid_bot), x, y(grid_top))
-    # full-width hrules: grid top, header-box bottom, grid bottom
+    # full-width hrules: grid top, header-box bottom, grid bottom -- start 0.5pt
+    # INSIDE the doubled outer border (never flush with either twin), mirroring the
+    # real section's measured hrules (38.4->1151.6) sitting inside its border twins
+    # (37.92/38.2, 1151.1/1151.5). A distance-tolerance full-width test misses this;
+    # only ink-interior containment (weld_hrule_boxes' new interior_xs contract)
+    # still recognizes these as full-width.
+    hx0, hx1 = cols[0] + 0.8, cols[-1] - 0.8
     for hy in (grid_top, hdr_bot, grid_bot):
-        c.line(cols[0], y(hy), cols[-1], y(hy))
+        c.line(hx0, y(hy), hx1, y(hy))
     # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
     # name, line B carries the centered single-line names + the wrap's second word
     c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")

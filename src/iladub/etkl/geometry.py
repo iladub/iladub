@@ -313,7 +313,7 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
 
 
 def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
-                     rule_xs: Sequence[float]) -> list[Line]:
+                     interior_xs: Sequence[float]) -> list[Line]:
     """Merge re-extracted rows that share one author-drawn FULL-WIDTH hrule box
     (loop P; loop H's marks-are-the-row-delimiters, applied as a merge LICENCE: the
     drawn box containing both rows is positive evidence they are one row — the CBH
@@ -322,14 +322,28 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
     MERGES rows inside a box — it never splits, and with no full-width hrules it is
     the identity.
 
-    A full-width hrule spans the band's rule x-extent (both ends within COORD_EPS of
-    [min(rule_xs), max(rule_xs)] or beyond). Boxes are consecutive full-width hrule
-    pairs; a row belongs to a box iff its y-center lies inside. Within a merged row,
-    each column's words join top-to-bottom with single spaces; the merged Word's bbox
-    is the union of its parts."""
-    if not relines or not hrules or len(rule_xs) < 2:
+    A full-width hrule spans the band's ink-INTERIOR rule x-extent (both ends within
+    COORD_EPS of [min(interior_xs), max(interior_xs)] or beyond) — loop P fixwave A:
+    `interior_xs` is gridregion.interior_rule_xs' output (ink on both sides), which
+    excludes a double-drawn outer-border twin. Measured on the real CBH section: the
+    hrules (38.4->1151.6) never reach the border twins (37.92/38.2, 1151.1/1151.5),
+    so a min/max test over ALL rule xs wrongly rejected them as non-full-width; they
+    DO cover every ink-interior column separator (75.7...1151.1), which is what
+    "full-width" means here. Boxes are consecutive full-width hrule pairs; a row
+    belongs to a box iff its y-center lies inside. Within a merged row, each
+    column's words join top-to-bottom with single spaces; the merged Word's bbox is
+    the union of its parts.
+
+    Column attribution for the join uses interior_xs too, via a monotonic partition
+    into len(interior_xs)+1 regions (before the first separator, between each pair,
+    after the last) — NOT the old min/max-bounded scheme, which assumed the xs list
+    always bounded every word (true when it held every rule x, including the outer
+    edges; no longer true for interior_xs alone). An outer-edge column (e.g. CBH's
+    leftmost/rightmost, outside the interior span) gets its own region instead of
+    colliding with an interior one."""
+    if not relines or not hrules or len(interior_xs) < 2:
         return list(relines)
-    lo, hi = min(rule_xs), max(rule_xs)
+    lo, hi = min(interior_xs), max(interior_xs)
     full = sorted({round(h.y, 2) for h in hrules
                    if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
     if len(full) < 2:
@@ -344,6 +358,14 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
                 return bi
         return None
 
+    xs = sorted(interior_xs)
+
+    def col_of(cx: float) -> int:
+        for i, x in enumerate(xs):
+            if cx < x:
+                return i
+        return len(xs)
+
     i = 0
     while i < len(relines):
         bi = box_of(relines[i])
@@ -356,13 +378,10 @@ def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
             out.append(relines[i])
         else:
             cols: dict[int, list[Word]] = {}
-            xs = sorted(rule_xs)
             for ln in group:
                 for w in ln.words:
                     cx = (w.x0 + w.x1) / 2.0
-                    col = next((k for k in range(len(xs) - 1)
-                                if xs[k] <= cx < xs[k + 1]), len(xs) - 2)
-                    cols.setdefault(col, []).append(w)
+                    cols.setdefault(col_of(cx), []).append(w)
             words = []
             for col in sorted(cols):
                 ws = sorted(cols[col], key=lambda w: (w.top, w.x0))
