@@ -191,9 +191,33 @@ def test_repair_is_monotone_on_stem_shape(tmp_path):
 - Modify: `tests/corpus-manifest.ttl` — ONLY to add `cor:contract/terms/shapes` (the cbh trio) to the CBH entry (the membrane's all-or-none rule); NO verdict change — François adjudicates.
 - Docs: `docs/superpowers/residues.md` (R42 close or narrowing — per measurement; R47 revisit — the totals now read), spec status note, `docs/wiki/concepts/neurosymbolic-exemplars.md` entries, NEW `docs/wiki/concepts/dimension-split.md` + index line, plan status note.
 
-- [ ] **Step 1 (controller runs the batteries):** CBH through `compile_document` + grounding: measure score (from 0.0698), sections asserted, chain, records-with-keys, name resolution (`port` asserted via the cascade), quarantine tallies. STEM: exact-pin re-measure. Full non-corpus suite. Record everything verbatim.
-- [ ] **Step 2:** Docs per measurement — R42 closes ONLY for what actually measured (if any face stays open, narrow honestly); dimension-split wiki page (proposition, sources, confidence); exemplars entries (recognition AXIOM, repair monotonicity, cascade). Doc gates green.
-- [ ] **Step 3:** ONE docs commit; then the controller runs the final whole-branch review and the finishing flow.
+- [x] **Step 1 (controller runs the batteries):** CBH through `compile_document` + grounding: measure score (from 0.0698), sections asserted, chain, records-with-keys, name resolution (`port` asserted via the cascade), quarantine tallies. STEM: exact-pin re-measure. Full non-corpus suite. Record everything verbatim.
+- [x] **Step 2:** Docs per measurement — R42 closes ONLY for what actually measured (if any face stays open, narrow honestly); dimension-split wiki page (proposition, sources, confidence); exemplars entries (recognition AXIOM, repair monotonicity, cascade). Doc gates green.
+- [x] **Step 3:** ONE docs commit; then the controller runs the final whole-branch review and the finishing flow.
+
+**Status (loop close, 2026-08-04):** Task 7 shipped `tests/test_cbh_e2e.py` — one
+module-scoped `compile_document` over the real CBH stem composing structural,
+grounding, and cascade assertions in a single measured pass. Measured: score
+0.0698 → **0.9047** (0.9046563192904656, floor pinned at 0.90 per convention, never
+the measured value); `repaired_bands = ((0,1),(0,3),(0,5),(0,7))` (all 4 escalated
+sections repaired and adopted); chains **[4, 1]**; grounding records=58 grounded=134
+still-quarantined=775, every `GroundedNode` exactly one `wasPromotedBy`; 49
+section-prefixed records distinct across GERALDTON/KWINANA/ALBANY/ESPERANCE; the
+naming cascade resolves `port` via the unique-admitting-field AXIOM arm
+(`ambiguity_score=1`, one `iladub:PromotionDecision`, no LLM call). `tests/
+corpus-manifest.ttl`'s CBH entry gained the `cor:contract`/`cor:terms`/`cor:shapes`
+trio (verdict unchanged — François adjudicates). `docs/superpowers/residues.md`:
+R42 closed (both gaps, per measurement) as `~~R42~~`; R47 updated (stale
+"unexercised" claim corrected — Task 4's adjacent total-confirmation oracle WAS run
+on the real document and measured zero `tab:SectionTotal` facts, still open); R48
+reviewed, unchanged (accurate); four new residues registered: R50 (totals oracle
+LAST-row-only scope), R51 (`_band_subgraph`'s URI-prefix licence coupling), R52
+(class-level `.ttl` example debt for `DetectedAggregationRow`/`continuesTable`/
+`SectionTotal`), R53 (`GroundedNodeShape` validates `groundsTo` presence, not
+resolution — the leak itself is fixed, the membrane gap is not). New wiki page
+`docs/wiki/concepts/dimension-split.md` + index line; `neurosymbolic-exemplars.md`
+gained a Loop Q section. Full report:
+`.superpowers/sdd/2026-08-04-loop-q-section-repair/task-7-report.md`.
 
 ---
 

@@ -1,6 +1,7 @@
 # CBH dimension-split-as-denormalization — loops P and Q — design
 
-**Date:** 2026-08-04 · **Status:** approved in brainstorm (François), loops not started ·
+**Date:** 2026-08-04 · **Status:** loop Q closed 2026-08-04 (Task 7, §4.6) — CBH measured
+end-to-end at score 0.9047; loop P reverted (see the R42 register row) ·
 **Discharges:** R42 (both gaps) · **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf`
 (sha256-pinned in `tests/corpus-manifest.ttl`; battery id `cbh-stem-2026-08-03`)
 
@@ -255,6 +256,46 @@ across pages if the roster continues), records carrying port keys
 records/grounded/quarantined tallies in the loop evidence; corpus battery re-run green on
 the new expectation (François adjudicates the manifest verdict flip — the loop proposes,
 never edits it); R42 deleted from the register.
+
+### 4.6 Status (loop Q close, Task 7, 2026-08-04)
+
+**§4.0-§4.4 SHIPPED and measured end-to-end on the real specimen** (`tests/test_cbh_e2e.py`,
+one module-scoped `compile_document` over `corpus/ag-trade/cbh-stem-2026-08-03.pdf`):
+
+- **§4.0 (section-scope repair):** score 0.0698 → **0.9047** (0.9046563192904656); all
+  4 of the doubled-edge escalated bands recognized, ink-witness-repaired and adopted
+  (`repaired_bands = ((0,1),(0,3),(0,5),(0,7))`) — monotone, byte-identical on the stem
+  shape throughout Tasks 1-4.
+- **§4.1 (stitching + arithmetic):** the four repaired sections chain into ONE 4-member
+  logical table (`chains` = one 4-chain + one unrelated singleton, `[4, 1]`) via
+  `tab:continuesTable`. The per-section printed-total confirmation half of §4.1 did
+  **NOT** measure on the real document: `document._confirm_section_total` produced
+  **zero** `tab:SectionTotal` facts on CBH (registered as R50/R47's residual, not
+  silently dropped) — the section boundary the spec's arithmetic oracle describes is
+  not yet what closes CBH's sections; the repeated-header signature (§4.0) is.
+- **§4.2 (key-value attribution):** section captions injected as candidate concepts and
+  used to prefix record identity — measured on the real document: 49 of 58 records
+  section-prefixed, distinct across GERALDTON/KWINANA/ALBANY/ESPERANCE. Implemented as
+  the FEED-level positional form only (`row_id` prefix + injected `SurfaceConcept`s);
+  the spec's `tab:DerivedRowGroup`/`hasLabel`/`wasDerivedFrom` GRAPH-level form was not
+  built — open as **R49**, not overclaimed by this close.
+- **§4.3 (naming cascade):** the record-identity prefixes (`GERALDTON`/`KWINANA`/
+  `ALBANY`/`ESPERANCE`) resolve to the CBH contract's `port` field via the
+  **unique-admitting-field** AXIOM arm — `ambiguity_score=1`, one
+  `iladub:PromotionDecision`, no LLM call needed on this specimen (arm 1, explicit
+  naming, correctly abstains — CBH's markers are bare; a raising proposer confirmed
+  arm 3 is never reached).
+- **§4.4 (demo contract):** `examples/shipping/cbh-{contract,terms,shapes}.ttl` shipped
+  (Task 6) and now referenced from `tests/corpus-manifest.ttl`'s CBH entry
+  (`cor:contract`/`cor:terms`/`cor:shapes`, Task 7) — the membrane's all-or-none rule
+  satisfied; **verdict adjudication (the `Unadjudicated` → flip) is François's, not
+  changed by this loop**.
+- **Grounding, full document:** records=58, grounded=134, still-quarantined=775; every
+  `GroundedNode` behind exactly one `wasPromotedBy` (the §3 invariant, held over the
+  whole repaired document, not a fixture).
+- **R42 register outcome:** closed with both gaps measured (see the register row) —
+  kept as `~~R42~~` with its closure narrative (repo convention: R1/R2/R35 are struck
+  through and summarized, not deleted, so the resolution history stays legible).
 
 ## 5. Global constraints (hard; reviewers enforce)
 
