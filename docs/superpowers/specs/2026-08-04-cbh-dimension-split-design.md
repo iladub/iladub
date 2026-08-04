@@ -150,16 +150,24 @@ sections (strips must peel) — three consumers, contradictory demands, three me
 whipsaws (the R42 register row carries the map). The repair therefore runs at SECTION
 scope inside the document driver, **strictly after** the readers it must not disturb:
 
-1. **Band-level compile** runs exactly as today — loop P's machinery stays INERT here
-   (the peel/weld are never invoked from `_build_ruled_band`; stem p0 asserts through
-   loop L untouched).
+1. **Band-level compile** runs exactly as today. *(CORRECTION, measured 2026-08-04 at
+   loop Q Task 1: loop P's peel/weld IS wired in `_build_ruled_band` and fires wherever
+   section edges are CLEAN — the loop-P synthetic asserts at band level, score 1.0.
+   It is defeated — hence inert — precisely on doubled-edge documents like the real
+   CBH, which escalate. Both outcomes are acceptable inputs to this step's ordering:
+   a clean-edged section that asserts at band level needs no repair, only stitching;
+   a doubled-edge section escalates and becomes a repair candidate. The stem is
+   untouched either way — measured exact through loop P's close.)*
 2. **Document carriage** (loop M recognition + loop O licence) runs next, unchanged —
    stem pages 1–2 are carried cross-page and never reach step 3.
-3. **Section repair (NEW):** bands STILL ESCALATED after carriage become candidates iff
-   the page shows **intra-page section repetition**: ≥2 escalated ruled bands whose raw
-   grid-region line texts repeat verbatim (the loop-M identity test, applied to raw
-   lines because no reading exists yet) AND whose interior-rule x-sets agree — both
-   computable from author marks + raw text without a successful reading. Each
+3. **Section repair (NEW):** the page's **intra-page section repetition** is recognized
+   over ruled bands REGARDLESS of their band-level verdict (the identity evidence is
+   raw: header-box line texts repeating verbatim + agreeing interior-rule x-sets —
+   author marks + raw text, no successful reading required). Within a recognized group,
+   ONLY the still-escalated members are re-read as repair candidates; members that
+   already assert (clean-edged sections read at band level) pass through untouched.
+   Stitching (§4.1) then runs over ALL recognized members that assert, whichever route
+   they took. Each
    recognized member is re-read as a **candidate**: peel leading non-grid strips (loop
    P's `grid_lines`/`enclosed` machinery, with the ink-witness interior definition —
    safe HERE because the scope guarantees a sectioned page, which the stem never
