@@ -84,3 +84,14 @@
     cor:sha256 "4d1796d1ba90788f01c163ad636d5ac57a4461bb46dbbbbbc3327db11e113fb0" ;
     cor:pages 7 ;
     cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:apple-fy2026q3-statements> a cor:Document ;
+    cor:file "financial/apple-fy2026q3-statements.pdf" ;
+    cor:url "https://www.apple.com/newsroom/pdfs/fy2026q3/FY26_Q3_Consolidated_Financial_Statements.pdf" ;
+    cor:family "financial" ;
+    cor:series "apple-consolidated-statements" ;
+    cor:producer "macOS Version 26.3.1 (a) (Build 25D771280a) Quartz PDFContext" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5" ;
+    cor:pages 3 ;
+    cor:expectedVerdict cor:Unadjudicated .
