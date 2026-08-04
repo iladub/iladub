@@ -1,0 +1,56 @@
+# tests/corpus-shapes.ttl — membrane over the corpus register (spec 2026-08-02 §4).
+# cor: is repo-internal (like dg:) — not published, not w3id-registered. The shape
+# guards the REGISTER's integrity before a 3-minute compile trusts it; it never
+# validates the corpus documents themselves. Closed-world constraint (§8 split).
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix cor: <https://w3id.org/iladub/corpus#> .
+
+cor:prefixes sh:declare [ sh:prefix "cor" ;
+    sh:namespace "https://w3id.org/iladub/corpus#"^^xsd:anyURI ] .
+
+cor:DocumentShape a sh:NodeShape ;
+    sh:targetClass cor:Document ;
+    sh:property [ sh:path cor:file ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cor:url ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cor:family ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ("ag-trade" "gov-stats" "financial" "health") ] ;
+    sh:property [ sh:path cor:series ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cor:expectedVerdict ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in (cor:CompilesAbove cor:SemanticEscalation cor:Unadjudicated) ] ;
+    sh:property [ sh:path cor:sha256 ; sh:maxCount 1 ;
+                  sh:pattern "^[0-9a-f]{64}$" ] ;
+    sh:property [ sh:path cor:scoreFloor ; sh:maxCount 1 ; sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path cor:pages ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path cor:contract ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cor:terms ; sh:maxCount 1 ] ;
+    sh:property [ sh:path cor:shapes ; sh:maxCount 1 ] ;
+    sh:sparql [
+        sh:message "cor:CompilesAbove requires exactly one cor:scoreFloor" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this cor:expectedVerdict cor:CompilesAbove .
+            FILTER NOT EXISTS { $this cor:scoreFloor ?f } }""" ] ;
+    sh:sparql [
+        sh:message "cor:SemanticEscalation requires cor:ambiguity naming it in prose" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this cor:expectedVerdict cor:SemanticEscalation .
+            FILTER NOT EXISTS { $this cor:ambiguity ?a } }""" ] ;
+    sh:sparql [
+        sh:message "an adjudicated verdict requires a pinned edition (cor:sha256) and a recorded cor:adjudication" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this cor:expectedVerdict ?v .
+            FILTER(?v != cor:Unadjudicated)
+            FILTER(NOT EXISTS { $this cor:sha256 ?s } ||
+                   NOT EXISTS { $this cor:adjudication ?a }) }""" ] ;
+    sh:sparql [
+        sh:message "cor:contract / cor:terms / cor:shapes travel together (all or none)" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this WHERE {
+            { $this cor:contract ?x } UNION { $this cor:terms ?x }
+            UNION { $this cor:shapes ?x }
+            FILTER(NOT EXISTS { $this cor:contract ?c } ||
+                   NOT EXISTS { $this cor:terms ?t } ||
+                   NOT EXISTS { $this cor:shapes ?p }) }""" ] .

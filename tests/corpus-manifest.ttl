@@ -2,13 +2,17 @@
 # cor: is repo-internal (like dg:) — not published, not w3id-registered.
 # Documents are FETCHED, never committed; the sha256 pins the edition measured.
 #
-# cor:expectedVerdict semantics (no SHACL shape yet — recorded here for the future
-# test_corpus.py that will read this manifest as an oracle):
+# cor:expectedVerdict semantics (no SHACL shape — the shape lives at
+# tests/corpus-shapes.ttl and the oracle that reads this manifest is
+# tests/test_corpus.py):
 #   cor:CompilesAbove — the document is expected to compile via compile_document (the
 #     document-level driver — one chain across its pages, not a per-page reading) at a
 #     score >= cor:scoreFloor (a decimal literal: the regression FLOOR the corpus battery
 #     asserts against, deliberately at-or-below the measured score, never the measured
 #     value itself).
+#   cor:SemanticEscalation — the document is expected to compile with at least one region
+#     verdict of "escalated" (a genuine semantic ambiguity, not a crash); cor:ambiguity
+#     carries the reviewer's note on what is ambiguous.
 #   cor:Unadjudicated — no verdict recorded yet. There is no separate cor:Hold term: a HOLD
 #     is encoded AS cor:Unadjudicated plus a cor:adjudication node carrying the reviewer's
 #     rationale — the hold state is "unadjudicated, with a recorded reason," not a fourth
@@ -27,9 +31,82 @@
     cor:sha256 "3bda68331024dbc802ad7d965dd114aeaff138c65c0571cc4d0a90d2a8b64eee" ;
     cor:expectedVerdict cor:CompilesAbove ;
     cor:scoreFloor "0.95"^^xsd:decimal ;
+    cor:contract "examples/shipping/stem-contract.ttl" ;
+    cor:terms "examples/shipping/stem-terms.ttl" ;
+    cor:shapes "examples/shipping/stem-shapes.ttl" ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-02"^^xsd:date ;
         cor:rationale "HOLD until the full document compiles (pages 1-2 escalate non-semantically — repeated-header continuations, Loop M). Page-0 measurements: 586 cells / 0.9560; grounded 167 / quarantined 385; non-grain refused." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
         cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
         cor:rationale "Loop N (R35 closed): document-level arithmetic — p2 confirms 21 subtotals with cross-page operands; every record carries its group keys (missing-year-key 0); records 133 / grounded 585 / quarantined 1265; score 0.9655; floor 0.95 re-verified and unchanged." ] .
+
+<urn:iladub:corpus:graincorp-capacity-2026-08-04> a cor:Document ;
+    cor:file "ag-trade/graincorp-capacity-2026-08-04.pdf" ;
+    cor:url "https://grains.graincorp.com.au/wp-content/uploads/2021/02/Capacity-2026-08-04.pdf" ;
+    cor:family "ag-trade" ;
+    cor:series "graincorp-capacity" ;
+    cor:producer "Microsoft: Print To PDF" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "ac66b478e20e82d4adede719c04a85f2071d5d5f005876b04851b94a76da2021" ;
+    cor:pages 1 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:cbh-stem-2026-08-03> a cor:Document ;
+    cor:file "ag-trade/cbh-stem-2026-08-03.pdf" ;
+    cor:url "https://cbhprd.azureedge.net/-/media/Project/CBH-Group/CBH-Group/CBH-Website/Documents/Supply-Chain/Shipping-and-exports/Shipping-stem/2026/08/CBH-Shipping-Stem-03082026.pdf?rev=df4ab7236b1241468074e95424aab0b6" ;
+    cor:family "ag-trade" ;
+    cor:series "cbh-shipping-stem" ;
+    cor:producer "Microsoft® Excel® for Microsoft 365" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "3f180e23c397c3703b75fa104f2fdf1510edb45be25d737232c8ac060c6e1612" ;
+    cor:pages 1 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:ons-index-of-services-2026-02> a cor:Document ;
+    # ABS release table substitution (spec §5): modern abs.gov.au releases are xlsx/web-only
+    # (verified 2026-08-04 across national-accounts, labour, trade series — no PDF table
+    # ships). Substitute: ONS "Index of Services, UK" — a compact PDF release table with
+    # hierarchical column headers (industry sections, SIC2007) and a Total aggregate column.
+    cor:file "gov-stats/ons-index-of-services-2026-02.pdf" ;
+    cor:url "https://www.ons.gov.uk/economy/economicoutputandproductivity/output/bulletins/indexofservices/february2026/pdf" ;
+    cor:family "gov-stats" ;
+    cor:series "ons-index-of-services" ;
+    cor:producer "OpenPDF 1.3.35" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "c90a6ae01cd6cad6deef61ef1a2916f975ec3599b6c83a279a08f2471f633018" ;
+    cor:pages 9 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:bfs-population-bilan-2023> a cor:Document ;
+    cor:file "gov-stats/bfs-population-bilan-2023.pdf" ;
+    cor:url "https://dam-api.bfs.admin.ch/hub/api/dam/assets/32174453/master" ;
+    cor:family "gov-stats" ;
+    cor:series "bfs-population-bilan" ;
+    cor:producer "Adobe PDF Library 24.1.163" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "4d1796d1ba90788f01c163ad636d5ac57a4461bb46dbbbbbc3327db11e113fb0" ;
+    cor:pages 7 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:apple-fy2026q3-statements> a cor:Document ;
+    cor:file "financial/apple-fy2026q3-statements.pdf" ;
+    cor:url "https://www.apple.com/newsroom/pdfs/fy2026q3/FY26_Q3_Consolidated_Financial_Statements.pdf" ;
+    cor:family "financial" ;
+    cor:series "apple-consolidated-statements" ;
+    cor:producer "macOS Version 26.3.1 (a) (Build 25D771280a) Quartz PDFContext" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5" ;
+    cor:pages 3 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:who-wfa-boys-zscore-0-5> a cor:Document ;
+    cor:file "health/who-wfa-boys-zscore-0-5.pdf" ;
+    cor:url "https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa-boys-0-5-zscores.pdf?sfvrsn=be07c977_11" ;
+    cor:family "health" ;
+    cor:series "who-child-growth-standards-wfa" ;
+    cor:producer "Acrobat Distiller 7.0 (Windows)" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "ca6437e29134dee2951736f25905b8d60a07255c987b28fce7a6a639fca24ab8" ;
+    cor:pages 3 ;
+    cor:expectedVerdict cor:Unadjudicated .
