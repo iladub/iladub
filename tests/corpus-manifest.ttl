@@ -36,3 +36,25 @@
         cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
         cor:rationale "Loop N (R35 closed): document-level arithmetic — p2 confirms 21 subtotals with cross-page operands; every record carries its group keys (missing-year-key 0); records 133 / grounded 585 / quarantined 1265; score 0.9655; floor 0.95 re-verified and unchanged." ] .
+
+<urn:iladub:corpus:graincorp-capacity-2026-08-04> a cor:Document ;
+    cor:file "ag-trade/graincorp-capacity-2026-08-04.pdf" ;
+    cor:url "https://grains.graincorp.com.au/wp-content/uploads/2021/02/Capacity-2026-08-04.pdf" ;
+    cor:family "ag-trade" ;
+    cor:series "graincorp-capacity" ;
+    cor:producer "Microsoft: Print To PDF" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "ac66b478e20e82d4adede719c04a85f2071d5d5f005876b04851b94a76da2021" ;
+    cor:pages 1 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:corpus:cbh-stem-2026-08-03> a cor:Document ;
+    cor:file "ag-trade/cbh-stem-2026-08-03.pdf" ;
+    cor:url "https://cbhprd.azureedge.net/-/media/Project/CBH-Group/CBH-Group/CBH-Website/Documents/Supply-Chain/Shipping-and-exports/Shipping-stem/2026/08/CBH-Shipping-Stem-03082026.pdf?rev=df4ab7236b1241468074e95424aab0b6" ;
+    cor:family "ag-trade" ;
+    cor:series "cbh-shipping-stem" ;
+    cor:producer "Microsoft® Excel® for Microsoft 365" ;
+    cor:fetched "2026-08-04"^^xsd:date ;
+    cor:sha256 "3f180e23c397c3703b75fa104f2fdf1510edb45be25d737232c8ac060c6e1612" ;
+    cor:pages 1 ;
+    cor:expectedVerdict cor:Unadjudicated .
