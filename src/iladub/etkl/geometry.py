@@ -10,6 +10,7 @@ No bands, no grid logic — those live in later tasks.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from statistics import median
 
@@ -309,6 +310,79 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
         if words:
             lines.append(Line(tuple(words), min(w.top for w in words), max(w.bottom for w in words)))
     return sorted(lines, key=lambda ln: ln.top)
+
+
+def weld_hrule_boxes(relines: list[Line], hrules: Sequence[HRule],
+                     rule_xs: Sequence[float]) -> list[Line]:
+    """Merge re-extracted rows that share the grid's LEADING (topmost) author-drawn
+    FULL-WIDTH hrule box (loop P; loop H's marks-are-the-row-delimiters, applied as a
+    merge LICENCE: the drawn box containing both rows is positive evidence they are one
+    row — the CBH header's wrapped names). Justified PROCEDURAL raw extraction: pure
+    containment over author marks; the only epsilon is the shipped COORD_EPS; welding
+    only ever MERGES rows inside the leading box — it never splits, and with fewer than
+    two full-width hrules (or no leading multi-row box) it is the identity.
+
+    Final-review F1 (Critical, silent-wrong fix): the licence is scoped to the grid's
+    HEADER region only (spec §3) — the leading full-width box, i.e. the one opening at
+    the FIRST full-width hrule y. Every later full-width box (data rows, a per-section
+    total below the grid's closing rule, ...) passes through UNWELDED. Welding every
+    full-width box was silently wrong: a trailing total line below the grid extends the
+    band past the grid's closing rule, pulling that rule into `hrules`, which then forms
+    a (header-bottom, grid-bottom) box spanning every data row — welding them all into
+    one fabricated row (see tests/etkl/test_grid_region.py's trailing-total pin).
+
+    A full-width hrule spans the band's rule x-extent (both ends within COORD_EPS of
+    [min(rule_xs), max(rule_xs)] or beyond). Boxes are consecutive full-width hrule
+    pairs; only box 0 (the leading box) ever groups rows — a row's y-center inside any
+    later box is left untouched. Within a merged row, each column's words join
+    top-to-bottom with single spaces; the merged Word's bbox is the union of its parts."""
+    if not relines or not hrules or len(rule_xs) < 2:
+        return list(relines)
+    lo, hi = min(rule_xs), max(rule_xs)
+    full = sorted({round(h.y, 2) for h in hrules
+                   if h.x0 <= lo + COORD_EPS and h.x1 >= hi - COORD_EPS})
+    if len(full) < 2:
+        return list(relines)
+    out: list[Line] = []
+    boxes = list(zip(full, full[1:]))
+    leading_top, leading_bottom = boxes[0]
+
+    def box_of(ln: Line):
+        cy = (ln.top + ln.bottom) / 2.0
+        if leading_top <= cy <= leading_bottom:
+            return 0
+        return None
+
+    i = 0
+    while i < len(relines):
+        bi = box_of(relines[i])
+        group = [relines[i]]
+        j = i + 1
+        while bi is not None and j < len(relines) and box_of(relines[j]) == bi:
+            group.append(relines[j])
+            j += 1
+        if len(group) == 1:
+            out.append(relines[i])
+        else:
+            cols: dict[int, list[Word]] = {}
+            xs = sorted(rule_xs)
+            for ln in group:
+                for w in ln.words:
+                    cx = (w.x0 + w.x1) / 2.0
+                    col = next((k for k in range(len(xs) - 1)
+                                if xs[k] <= cx < xs[k + 1]), len(xs) - 2)
+                    cols.setdefault(col, []).append(w)
+            words = []
+            for col in sorted(cols):
+                ws = sorted(cols[col], key=lambda w: (w.top, w.x0))
+                words.append(Word(" ".join(w.text for w in ws),
+                                  min(w.x0 for w in ws), max(w.x1 for w in ws),
+                                  min(w.top for w in ws), max(w.bottom for w in ws)))
+            out.append(Line(tuple(sorted(words, key=lambda w: w.x0)),
+                            min(ln.top for ln in group),
+                            max(ln.bottom for ln in group)))
+        i = j if j > i + 1 else i + 1
+    return out
 
 
 def text_lines(words: list[Word], y_tol: float | None = None) -> list[Line]:

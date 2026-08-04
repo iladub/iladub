@@ -42,11 +42,34 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     from .geometry import refine_rule_columns, rule_aware_lines
 
     xs = sorted({round(r.x, 2) for r in sub_rules})
+
+    # Loop P peel: full-width strips ABOVE the ruled grid (key headings, notices) are
+    # never grid rows — split them off the WORD-based sub band (never rule-re-extracted)
+    # BEFORE anything downstream reads sub.lines/sub.top, so they cannot leak into the
+    # grid as fabricated all-column header levels. grid_lines is the AXIOM (interior-rule
+    # presence, vocab/queries/grid-region.rq); this call site is the PROCEDURAL peel only.
+    # Fix round 2 (regression repair): peel scope is a LEADING strip only (spec §3) —
+    # peel_leading_captions leaves interior and TRAILING non-grid lines (e.g. a
+    # below-grid total row) untouched in the band, main's byte-identical behavior. It
+    # ALSO requires the leading run to be ENCLOSED by some rule's y-extent (measured:
+    # "leading-only" alone still swallowed a floating merged-header row with no rule
+    # near it, e.g. "Voyage" — see gridregion.peel_leading_captions's docstring).
+    from .gridregion import grid_lines as _grid_lines, enclosed_lines as _enclosed_lines, \
+        peel_leading_captions
+    gset = _grid_lines(sub, sub_rules)
+    enclosed = _enclosed_lines(sub, sub_rules)
+    caption_lines, kept_lines = peel_leading_captions(sub.lines, gset, enclosed)
+    if caption_lines:
+        sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
+
     band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    if relines:
+        from .geometry import weld_hrule_boxes
+        relines = weld_hrule_boxes(relines, sub_hrules, xs)
     if not relines:
-        return _replace(sub, rules=sub_rules, hrules=sub_hrules)
-    band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules)
+        return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
+    band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)
 
     candidates = [x for x in refine_rule_columns(band_chars, xs) if x not in xs]
     if not candidates:
@@ -89,7 +112,22 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars):
     relines2 = rule_aware_lines(band_chars, col_xs)
     if not relines2:
         return band
-    return Band(tuple(relines2), sub.top, sub.bottom, sub_rules, sub_hrules, tuple(col_xs))
+    return Band(tuple(relines2), sub.top, sub.bottom, sub_rules, sub_hrules, tuple(col_xs),
+               captions=caption_lines)
+
+
+def _emit_band_captions(graph, table_uri, band):
+    """Loop P §5/§7 carry: one tab:RegionCaption per peeled strip line. captionRow is
+    the line's index within the ORIGINAL band (captions precede the grid, so their
+    order is their index)."""
+    from rdflib import Literal, RDF, URIRef
+    from rdflib.namespace import XSD
+    for k, ln in enumerate(getattr(band, "captions", ()) or ()):
+        cap = URIRef("%s-bandcap%d" % (table_uri, k))
+        graph.add((cap, RDF.type, TAB.RegionCaption))
+        graph.add((cap, TAB.captionText, Literal(" ".join(w.text for w in ln.words))))
+        graph.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
+        graph.add((table_uri, TAB.hasCaption, cap))
 
 
 def page_bands(pdf_path: str, page_number: int = 0):
@@ -259,6 +297,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.RecordTable), ascii_view))
                     else:
                         graph += scratch
+                        _emit_band_captions(graph, table_uri, band)
                         b = region.grid.boundaries
                         value_cells = [c for c in region.cells if c.col >= 1]
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
@@ -285,6 +324,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     n = assert_row_hier_region(scratch, rreg, band, table_uri, doc, page_number)
                 if rreg is not None and region_tiles(scratch):
                     graph += scratch
+                    _emit_band_captions(graph, table_uri, band)
                     b = rreg.grid.boundaries
                     for rb in rreg.leaf_rows:
                         for c in rb.cells:
@@ -321,6 +361,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                 str(TAB.RecordTable), ascii_view))
                 else:
                     graph += scratch
+                    _emit_band_captions(graph, table_uri, band)
                     b = region.grid.boundaries
                     data_cells = [c for c in region.cells if c.row > 0]
                     asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
@@ -341,6 +382,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     n = assert_matrix_region(scratch, mreg, band, table_uri, doc, page_number)
                 if mreg is not None and region_tiles(scratch):
                     graph += scratch
+                    _emit_band_captions(graph, table_uri, band)
                     b = mreg.grid.boundaries
                     for rb in mreg.leaf_rows:
                         for sc in rb.cells:
@@ -389,6 +431,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if ruled_reading is not None:
                     n_ruled, reading = ruled_reading
                     graph += ruled_scratch
+                    _emit_band_captions(graph, table_uri, band)
                     tokens = sum(len(ln.words) for ln in band.lines)
                     asserted_total += n_ruled
                     escalated_total += max(0, tokens - n_ruled)
@@ -411,6 +454,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                             graph, hreg, band, table_uri, doc, page_number, row_role_proposer)
                     if resolved is not None:
                         n, _promos = resolved
+                        _emit_band_captions(graph, table_uri, band)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)
@@ -448,6 +492,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         # wrote its ROUND_TRIP_FAIL escalation into scratch; merge and report as
                         # before. A tiling region merges exactly as it always did.
                         graph += scratch
+                        if n:
+                            _emit_band_captions(graph, table_uri, band)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)

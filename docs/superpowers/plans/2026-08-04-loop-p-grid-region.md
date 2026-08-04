@@ -624,3 +624,46 @@ by drawn boxes).
 - **Spec coverage:** §3 CORRECTION mechanism (1) grid-region scoping → Task 2; mechanism (2) hrule welding → Task 3; §5/§7 caption carry → Tasks 2/3 tests; no-overfit counter-pins → Tasks 2 Step 9 / 3 Step 6; stem byte-identity → Task 4 Step 3; R31 doubled rules — `weld_hrule_boxes` deduplicates hrule y's via `round(…, 2)` set and the rule-x dedup in `_build_ruled_band` already rounds; if CBH's x=345.1/345.6 pair still splits a column, that is R31's OPEN residue measured again — report, don't absorb (Task 4 Step 2's honest-report clause covers it).
 - **Known risks, stated:** (a) rdflib sub-select scoping in `grid-region.rq` — restructuring note included, unit tests are the contract; (b) `_build_ruled_band`'s downstream (`refine_rule_columns` → `recover_leaf_grid` → `header_body_split` → confirmed boundaries) now sees a shorter band — the loop-G lesson (`recover_leaf_grid` must carry every boundary-bearing field) applies to the `captions` field: thread it through EVERY `_replace` return; (c) the Task-1 red test's liberal `flat` scan is deliberately temporary with an explicit tightening instruction.
 - **Type consistency:** `grid_lines(band, rules) -> set[int]` consistent across Tasks 2–3; `weld_hrule_boxes(relines, hrules, rule_xs)` consistent between unit tests and seam integration; `Band.captions` default `()` used by `_emit_band_captions` via `getattr`.
+
+## Status note (loop close, 2026-08-04)
+
+**Outcome: closed honestly, without the real-CBH close this plan's Task 4 originally
+expected.** Tasks 1–3 shipped as designed — the sectioned-ruled synthetic fixture and red
+pins (Task 1), the grid-region scoping AXIOM (`vocab/queries/grid-region.rq` +
+`vocab/queries/line-enclosed.rq`, `src/iladub/etkl/gridregion.py`, `Band.captions` +
+caption carry at all assert sites, Task 2), and `weld_hrule_boxes` header/wrapped-row
+welding (`src/iladub/etkl/geometry.py`, Task 3) — all green, 490/490 in `tests/etkl/` at
+branch head.
+
+**Task 4 closed differently than planned.** Measuring the shipped machinery against the
+real CBH specimen (Task 4 Step 2) found it inert: `grid_lines`'s interior-rule test does
+not fire on CBH (border twins x=37.92/38.2 read as interior, defeating the min/max-x
+test), so no peel happens and CBH's score stays 0.0698. A follow-on fix wave (3 commits —
+ink-witness `b515283`, straddle `33f213f`, opening-box `6d7aa60`) tried three different
+band-local peel licences at the `_build_ruled_band` seam. Each one fixed CBH while
+breaking the GrainCorp stem, or vice versa, in a different way:
+
+- ink-witness: CBH 0.9926 (4/4 sections assert) but stem 1.0000-WRONG (header stack
+  swallowed, chains `[1,1,1]`, grounded 0);
+- straddle: CBH 0.3636 (peel stalls on KWINANA's short heading) and stem
+  `REGION_TILING_FAILED` (loop L clause-0 disengaged);
+- opening-box: CBH 0.0724 (near-unchanged) and stem 0.9660 ≠ 0.9655 (loop M carriage
+  dead, chains `[1,1,1]`, grounded 167).
+
+The wave was **reverted** (`1271156`) rather than iterated further, once the pattern
+showed a structural conflict, not a tuning problem: `_build_ruled_band` is one seam
+shared by three laws (loop L's engagement, loop M's carriage, CBH's section peel) that
+each need a different licence from the same peel decision, and no band-local licence
+satisfies all three. Branch content is now byte-identical to `f06276f`
+(controller-verified empty diff) — the stem battery is exactly intact at
+0.9655/2152 cells/133 records/585 grounded/1265 quarantined, 10/10 stem tests, and real
+CBH is unchanged at 0.0698.
+
+**R42 gap (a) stays OPEN**, with the full measured map recorded in its residues.md row;
+close re-homes at SECTION scope inside loop Q's design (recognition of a sectioned,
+repeated-header chain first, then the re-reading licence for the strips above each
+section's grid — never a single band deciding blind). The docs close (this task) records
+the outcome in `docs/superpowers/residues.md` (R42), the spec's §3 status note
+(`docs/superpowers/specs/2026-08-04-cbh-dimension-split-design.md`), and a new loop-P
+entry plus negative lesson in `docs/wiki/concepts/neurosymbolic-exemplars.md`. No code,
+manifest, or verdict changes — docs only, per François's 2026-08-04 adjudication.

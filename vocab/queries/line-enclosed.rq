@@ -1,0 +1,21 @@
+# line-enclosed.rq — which band lines are ENCLOSED by at least one author-drawn rule's
+# vertical extent (loop P fix round 2 — the peel's true scope test).
+#
+# A leading strip only qualifies as a peelable CAPTION when it is itself enclosed by
+# some rule (typically the section's own outer border, e.g. sectioned_ruled_table_pdf's
+# c.rect() spanning heading+notice+grid) — proving it lies INSIDE the same author-drawn
+# section as the grid. A header-hierarchy label with NO rule anywhere near it (a merged
+# parent row drawn above a boxed sub-header — page_local_group_two_page_pdf's "Voyage",
+# case3_with_subtotals_pdf's "Voyage") is not enclosed by anything and must never be
+# peeled: it is a genuine header level, not document furniture, and losing it flips the
+# region's classification away from HierarchicalTable, which broke loop H/N's page-local
+# subtotal detection (the fix-round-2 regression). Every number here is a FACT emitted
+# by gridregion.py — this query contains no numeric literal.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?idx WHERE {
+  ?line a tab:BandLine ; tab:lineIndex ?idx ; tab:lineCenterY ?cy .
+  FILTER EXISTS {
+    ?r a tab:RuleSpan ; tab:ruleTop ?rt ; tab:ruleBottom ?rb .
+    FILTER(?rt <= ?cy && ?rb >= ?cy)
+  }
+}

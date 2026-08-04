@@ -1,0 +1,21 @@
+# grid-region.rq — which band lines are INSIDE the ruled grid (loop P AXIOM).
+# Open-world derivation over the per-band evidence graph (the band is the closure
+# boundary — the MIN/MAX aggregation closes within the one transient graph).
+# A line is a grid line iff at least one INTERIOR vertical rule crosses its center:
+# interior = a rule strictly between the band's outermost rule x-positions (the outer
+# border of the author's section box never counts). Every number here is a FACT
+# emitted by gridregion.py (raw geometry) — this query contains no numeric literal.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?idx WHERE {
+  {
+    SELECT (MIN(?rx) AS ?minx) (MAX(?rx) AS ?maxx) WHERE {
+      ?rr a tab:RuleSpan ; tab:ruleX ?rx .
+    }
+  }
+  ?line a tab:BandLine ; tab:lineIndex ?idx ; tab:lineCenterY ?cy .
+  FILTER EXISTS {
+    ?r a tab:RuleSpan ; tab:ruleX ?x ; tab:ruleTop ?rt ; tab:ruleBottom ?rb .
+    FILTER(?rt <= ?cy && ?rb >= ?cy)
+    FILTER(?x > ?minx && ?x < ?maxx)
+  }
+}

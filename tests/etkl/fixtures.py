@@ -1463,3 +1463,76 @@ def case3_with_subtotals_pdf(path: str, conflicting_labels: bool) -> dict:
             "page0_rows": body0, "page1_rows": body1, "page1_local_sum": 250,
             "conflicting_labels": conflicting_labels,
             "label_page0": "Alpha", "label_page1": label1}
+
+
+def sectioned_ruled_table_pdf(path, trailing_total=False):
+    """The CBH shape (spec 2026-08-04 §3 CORRECTION): one author-drawn section box
+    containing, top to bottom: a bare key heading, one notice line (both full-width
+    strips no interior rule crosses), then an interior-ruled grid whose header row is
+    ONE hrule-delimited box holding TWO visual text lines (col 1's name wraps:
+    'Time Nom' / 'Accepted'; cols 0/2/3 are single-line, vertically centered), then
+    three data rows. Interior vertical rules span ONLY the grid rows.
+
+    trailing_total (loop P final-review F1 pin): when True, adds ONE per-section total
+    line BELOW the grid's closing rule (grid_bot), at the same tight ~9pt line pitch as
+    the rest of the section — the real CBH shape. It draws NO new hrule; the grid_bot
+    hrule already drawn at y=grid_bot is enough. Adding this line only extends the
+    WORD-based band's bottom past grid_bot, which pulls the already-drawn grid_bot hrule
+    into range for the ruled sub-band's hrules — reproducing the reviewer's silent-wrong
+    (weld_hrule_boxes then sees a (hdr_bot, grid_bot) box spanning all three data rows).
+    Default False leaves the truth dict byte-identical to before this parameter existed."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    H = letter[1]
+
+    def y(top):                       # page-top -> reportlab bottom-up
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]   # 4 columns: ID | Time Nom Accepted | Client | Volume
+    # CBH-fidelity spacing (fix round 1): the real section is ONE detect_bands band —
+    # tight, near-uniform line pitch (~6-8pt text gaps throughout), not the original
+    # fixture's 23pt notice->grid-top gap (which made detect_bands split heading+notice
+    # off from the grid before _build_ruled_band ever saw them together). Shape/content
+    # UNCHANGED — spacing only: heading->notice gap ~8pt, notice->grid-top gap ~7pt,
+    # header-box internal gap ~5pt, header-box->row0 and inter-row gaps ~9pt each.
+    sec_top, grid_top, hdr_bot, grid_bot = 60, 95, 123, 185
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    # the section OUTER border (spans heading + notice + grid, like CBH's)
+    c.rect(cols[0], y(grid_bot), cols[-1] - cols[0], grid_bot - sec_top, stroke=1, fill=0)
+    # full-width strips: heading + notice (NO interior rules up here)
+    c.drawString(cols[0] + 4, y(sec_top + 14), "GERALDTON")
+    c.drawString(cols[0] + 4, y(sec_top + 31), "BERTH MAY BE UNAVAILABLE 2000HRS")
+    # interior vertical rules: GRID ROWS ONLY (grid_top..grid_bot)
+    for x in cols[1:-1]:
+        c.line(x, y(grid_bot), x, y(grid_top))
+    # full-width hrules: grid top, header-box bottom, grid bottom
+    for hy in (grid_top, hdr_bot, grid_bot):
+        c.line(cols[0], y(hy), cols[-1], y(hy))
+    # header box (grid_top..hdr_bot) with TWO visual lines: line A tops the wrapped
+    # name, line B carries the centered single-line names + the wrap's second word
+    c.drawString(cols[1] + 4, y(grid_top + 12), "Time Nom")
+    c.drawString(cols[0] + 4, y(grid_top + 26), "ID")
+    c.drawString(cols[1] + 4, y(grid_top + 26), "Accepted")
+    c.drawString(cols[2] + 4, y(grid_top + 26), "Client")
+    c.drawString(cols[3] + 4, y(grid_top + 26), "Volume")
+    # three data rows
+    rows = [("10097", "15:01", "Brahman", "30,000"),
+            ("10076", "14:38", "CBH", "50,000"),
+            ("10118", "11:28", "Cargill", "48,904")]
+    for k, row in enumerate(rows):
+        ry = hdr_bot + 16 + 18 * k
+        for x, cell in zip(cols, row):
+            c.drawString(x + 4, y(ry), cell)
+    truth = {"cols": cols,
+             "header_names": ["ID", "Time Nom Accepted", "Client", "Volume"],
+             "caption_texts": ["GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS"]}
+    if trailing_total:
+        # same ~9pt pitch as the header-box->row0 and inter-row gaps above; NO new hrule —
+        # the already-drawn grid_bot hrule is the one that must join the band's hrules.
+        total_ry = grid_bot + 8
+        c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
+        c.drawString(cols[3] + 4, y(total_ry), "128,904")
+        truth["trailing_total_text"] = "TOTAL"
+    c.save()
+    return truth
