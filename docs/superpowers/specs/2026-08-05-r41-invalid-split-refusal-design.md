@@ -138,10 +138,10 @@ entry) to extend the plan in-loop rather than defer: Task 5 (the R19 gate extens
 (full-suite regression proof) were added, and this Task 4 close discharges both R41 and R19
 together.
 
-**Closure mechanism.** Both physical shapes' Concise Bounded Descriptions join
-`_TILING_SHAPE_IRIS` (renamed/extended in `src/iladub/etkl/tiling.py` as
-`_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]`), parsed from
-`vocab/shapes/tab-physical-shapes.ttl` alongside the existing `tab-shapes.ttl` tiling shapes.
+**Closure mechanism.** Both physical shapes' Concise Bounded Descriptions are extracted via a new
+sibling list `_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]` in
+`src/iladub/etkl/tiling.py`, parsed from `vocab/shapes/tab-physical-shapes.ttl` alongside the
+existing `_TILING_SHAPE_IRIS` tiling shapes from `tab-shapes.ttl`.
 `region_tiles` now extracts and validates both families in the same pySHACL call, so a physical
 violation refuses (escalates) at the region gate instead of surviving through every gate class
 (record/transposed/hier/matrix/row-hier alike) to crash at final validation. On the apple

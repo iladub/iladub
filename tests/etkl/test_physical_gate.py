@@ -44,7 +44,6 @@ def test_gate_refuses_entrycell_missing_physical_facts():
 def test_gate_still_passes_a_well_formed_physical_cell():
     # Guard: a complete cell (text + bbox) must not be refused by the extension.
     from iladub.etkl.tiling import region_tiles
-    from rdflib.namespace import XSD
     g = Graph()
     cell = URIRef("urn:r19:cell2")
     g.add((cell, RDF.type, TAB.Cell))
