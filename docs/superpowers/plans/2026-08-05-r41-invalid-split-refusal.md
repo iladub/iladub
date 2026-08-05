@@ -350,6 +350,186 @@ export PATH=/opt/homebrew/bin:$PATH && cd "/Volumes/WD Green/dev/git/iladub" && 
 
 ---
 
+### Task 5: R19 gate extension — the physical shapes join the region gate
+
+**Adjudicated scope extension (François, 2026-08-05).** Task 3 measured that with R41's
+IndexError fixed, the apple compile proceeds to page 1 and CRASHES at final validation
+(`compile.py:624`, `AssertionError`): `tab:WrappedCellShape` violations on
+`p1#mtable4-cc0_2` / `cc1_2` — matrix-path cells carrying a bbox with empty `cellText`.
+This is registered residue **R19** exactly (the region gates validate the eleven TILING
+shapes only; a physical-shape defect crashes THROUGH every gate), whose own closure
+condition — "once any real document can reach the crash" — is now met, measured. The fix
+is R19's named closure: extend the gate's CBD extraction with the two physical shapes.
+
+**Files:**
+- Modify: `src/iladub/etkl/tiling.py` (`_TILING_SHAPE_IRIS`, `_build_tiling_shapes`, module/function docstrings)
+- Create: `tests/etkl/test_physical_gate.py`
+
+**Interfaces:**
+- Consumes: `region_tiles(graph)` (unchanged signature); `vocab/shapes/tab-physical-shapes.ttl` (read-only — the shapes are NOT edited, only included).
+- Produces: `region_tiles` refusing a region whose scratch graph violates `tab:EntryCellPhysicalShape` or `tab:WrappedCellShape`; every `compile_tables` path then escalates such a region through its existing gate branch (matrix → `MATRIX_AMBIGUOUS`, hier → `REGION_TILING_FAILED`, etc.) instead of crashing at final validation.
+
+- [ ] **Step 1: Write the failing test** — create `tests/etkl/test_physical_gate.py`:
+
+```python
+"""R19: the region gate must refuse a PHYSICAL-shape defect, not let it crash compile at
+final validation. Measured activation (2026-08-05, loop R41 Task 3): with R41's IndexError
+fixed, corpus/financial/apple-fy2026q3-statements.pdf page 1's mtable4 emits matrix cells
+carrying a bbox with EMPTY cellText; region_tiles (eleven tiling shapes only) passes the
+region, and compile_tables raises AssertionError at final whole-graph validation
+(tab:WrappedCellShape, compile.py:624). The gate must include the physical shapes so the
+region ESCALATES (fluent-reader invariant: never crash, always at worst escalate)."""
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF
+
+TAB = Namespace("https://w3id.org/iladub/tab#")
+
+
+def _bbox(g, cell, n):
+    bb = URIRef(f"urn:r19:bb{n}")
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((cell, TAB.hasBBox, bb))
+
+
+def test_gate_refuses_bbox_cell_with_empty_text():
+    # The apple p1#mtable4 defect, minimal: a Cell with a bbox and empty cellText.
+    # Pre-fix: region_tiles returns True (the tiling shapes don't see it) — RED.
+    from iladub.etkl.tiling import region_tiles
+    g = Graph()
+    cell = URIRef("urn:r19:cell0")
+    g.add((cell, RDF.type, TAB.Cell))
+    g.add((cell, TAB.cellText, Literal("")))
+    _bbox(g, cell, 0)
+    assert not region_tiles(g)
+
+
+def test_gate_refuses_entrycell_missing_physical_facts():
+    # EntryCellPhysicalShape's other half: an asserted EntryCell must carry text,
+    # onPage, and bbox. One missing onPage must now refuse at the gate too.
+    from iladub.etkl.tiling import region_tiles
+    g = Graph()
+    cell = URIRef("urn:r19:cell1")
+    g.add((cell, RDF.type, TAB.EntryCell))
+    g.add((cell, TAB.cellText, Literal("x")))
+    _bbox(g, cell, 1)          # bbox + text present, onPage missing
+    assert not region_tiles(g)
+
+
+def test_gate_still_passes_a_well_formed_physical_cell():
+    # Guard: a complete cell (text + bbox) must not be refused by the extension.
+    from iladub.etkl.tiling import region_tiles
+    from rdflib.namespace import XSD
+    g = Graph()
+    cell = URIRef("urn:r19:cell2")
+    g.add((cell, RDF.type, TAB.Cell))
+    g.add((cell, TAB.cellText, Literal("Americas")))
+    _bbox(g, cell, 2)
+    assert region_tiles(g)
+```
+
+- [ ] **Step 2: Run — verify red**
+
+Run: `cd "/Volumes/WD Green/dev/git/iladub" && python -m pytest tests/etkl/test_physical_gate.py -v`
+Expected: the two refusal tests FAIL (`region_tiles` returns True — the gate doesn't carry the physical shapes yet); the guard PASSES.
+
+- [ ] **Step 3: Extend the gate** — in `src/iladub/etkl/tiling.py`:
+
+Add after the `_TILING_SHAPE_IRIS` list:
+
+```python
+# R19 closure (2026-08-05): the TWO physical shapes join the gate. Measured activation:
+# apple-fy2026q3 p1#mtable4 (matrix cells with bbox + empty cellText) crashed compile at
+# final validation THROUGH this gate; the physical shapes were only in compile._validate's
+# full set. Region defects expressible in the physical layer now refuse HERE, so every
+# path's existing escalation branch handles them (never crash, always at worst escalate).
+_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]
+```
+
+and change `_build_tiling_shapes` to parse both files and extract all thirteen CBDs:
+
+```python
+    full = Graph().parse(os.path.join(_VOCAB, "shapes", "tab-shapes.ttl"), format="turtle")
+    full.parse(os.path.join(_VOCAB, "shapes", "tab-physical-shapes.ttl"), format="turtle")
+    sub = Graph()
+    for s in _TILING_SHAPE_IRIS + _PHYSICAL_SHAPE_IRIS + [TAB.prefixes]:
+        sub += full.cbd(s)
+    return sub
+```
+
+Update the module docstring and `_build_tiling_shapes`/`region_tiles` docstrings: "eleven tiling invariants" → "eleven tiling invariants + the two physical shapes (R19)". Do not edit `vocab/shapes/*.ttl`.
+
+- [ ] **Step 4: Run — verify green + gate cost**
+
+Run: `cd "/Volumes/WD Green/dev/git/iladub" && python -m pytest tests/etkl/test_physical_gate.py tests/etkl/test_invalid_split_refusal.py -v`
+Expected: all PASS. Then measure the healthy-gate cost R19's row asks for:
+
+```bash
+cd "/Volumes/WD Green/dev/git/iladub" && python - <<'EOF'
+import time
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF
+from iladub.etkl.tiling import region_tiles
+TAB = Namespace("https://w3id.org/iladub/tab#")
+g = Graph()
+c = URIRef("urn:r19:t"); g.add((c, RDF.type, TAB.Cell)); g.add((c, TAB.cellText, Literal("x")))
+region_tiles(g)                      # warm the cached shapes
+t0 = time.monotonic(); [region_tiles(g) for _ in range(10)]
+print(f"gate call: {(time.monotonic()-t0)/10:.3f}s (R19 row's pre-extension baseline: ~0.26s)")
+EOF
+```
+
+Record the number in the report — it goes into the close commit.
+
+- [ ] **Step 5: The apple document end to end** (the measurement Task 3 could not complete):
+
+```bash
+cd "/Volumes/WD Green/dev/git/iladub" && python - <<'EOF'
+import time
+from iladub.etkl.document import compile_document
+t0 = time.monotonic()
+rep = compile_document("corpus/financial/apple-fy2026q3-statements.pdf")
+dt = time.monotonic() - t0
+print(f"score={rep.score:.4f} pages={len(rep.pages)} chains={[len(c) for c in rep.chains]} wall={dt:.0f}s")
+for i, p in enumerate(rep.pages):
+    print(f"  p{i}: {[(r.kind.name, r.verdict, r.reason) for r in p.regions]}")
+EOF
+```
+
+Expected: RETURNS (p1's mtable4 escalated, reason `MATRIX_AMBIGUOUS`). If a THIRD crash site appears: capture the traceback, do NOT fix, report to the controller — it is a register decision, not more scope by default.
+
+- [ ] **Step 6: Battery + regression proof**
+
+Run: `cd "/Volumes/WD Green/dev/git/iladub" && python -m pytest "tests/test_corpus.py::test_expected_verdict[financial/apple-fy2026q3-statements.pdf]" -v -s`
+Expected: PASS (prints the UNADJUDICATED region record).
+Then the stem + CBH pins (the gate runs on every region of every document — these are the byte-identity proof):
+`python -m pytest tests/test_corpus_stem.py tests/test_cbh_e2e.py -q` — expected: same pass/skip counts as main, stem score 0.9655 unchanged.
+
+- [ ] **Step 7: Commit**
+
+```bash
+export PATH=/opt/homebrew/bin:$PATH && cd "/Volumes/WD Green/dev/git/iladub" && git add src/iladub/etkl/tiling.py tests/etkl/test_physical_gate.py && git commit -m "fix(loop-r41): R19 — the physical shapes join the region gate
+
+Measured activation: apple p1#mtable4 (bbox + empty cellText matrix cells) crashed
+compile at final validation through the tiling-only gate. The gate now extracts
+tab:EntryCellPhysicalShape + tab:WrappedCellShape CBDs too; the region escalates
+MATRIX_AMBIGUOUS and the document compiles end to end. Healthy-gate cost <T>s/call.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+```
+
+(Replace `<T>` with Step 4's measured cost.)
+
+---
+
+### Task 6: Full suite — the whole branch has no regression
+
+**Files:** none (measurement only).
+
+- [ ] **Step 1:** Run: `cd "/Volumes/WD Green/dev/git/iladub" && python -m pytest -q 2>&1 | tail -8`
+Expected: 0 failed (skips as on main). Slow (~15+ min). Any failure: diagnose regression-vs-pre-existing; never weaken a pin.
+
+---
+
 ### Task 4: Close the loop — register, docs, merge
 
 **Files:**
@@ -360,7 +540,7 @@ export PATH=/opt/homebrew/bin:$PATH && cd "/Volumes/WD Green/dev/git/iladub" && 
 - Consumes: Task 3's measured apple record (score/verdicts/wall).
 - Produces: the merged loop.
 
-- [ ] **Step 1: Edit the register.** In `docs/superpowers/residues.md`, DELETE the R41 row (the row starting `| R41 | **The compiler CRASHES (not escalates) on a real financial-statements document**`). If Task 3 Step 1 measured a further defect (second crash site, hang, or a notable verdict oddity worth naming), APPEND a new row `R55` following the house format: what was measured (with the exact probe/traceback), why deferred (each defect its own loop), what would close it.
+- [ ] **Step 1: Edit the register.** In `docs/superpowers/residues.md`: DELETE the R41 row (the row starting `| R41 | **The compiler CRASHES (not escalates) on a real financial-statements document**`). MARK the R19 row CLOSED in the house style (`| ~~R19~~ | **CLOSED (Loop R41 Task 5, 2026-08-05)** — …`), recording: the measured activation (apple p1#mtable4, bbox + empty cellText, crash at final validation with R41 fixed), the closure (both physical shapes' CBDs join the gate's extraction; the region escalates `MATRIX_AMBIGUOUS`), the measured healthy-gate cost from Task 5 Step 4, and the honest residual R19 itself named (the alternate closure — dropping the bbox from ROUND_TRIP_FAIL candidates — was not needed and not done; a candidate typing as `tab:Cell` via domain inference now REFUSES at the gate rather than crashing, which is the honest direction). If Task 5/6 measured a further defect (third crash site, hang, notable verdict oddity), APPEND a new row `R55` following the house format: what was measured (exact probe/traceback), why deferred, what would close it.
 
 - [ ] **Step 2: Update the spec status line** to `**Status:** closed 2026-08-05 — apple compiles end-to-end (score <measured>, regions <summary>); battery green` with Task 3's real numbers.
 
