@@ -1,8 +1,13 @@
 # header-body-split.rq (v2) — MIN body-start row s>=1 over DATA columns, robust to a single
-# anomalous bottom row corrupting the reference type, and to missing-value cells. (The reference
-# TYPE is a mode, so one off-type bottom row can't flip it; but the all-rows mismatch scan below
-# is NOT in general robust to a trailing off-type NON-Blank footer inside a data column — a lone
-# such column can yield a split past the body instead of escalating; see Loop B/C.) Per column:
+# anomalous bottom row corrupting the reference type, and to missing-value cells.
+# (The reference TYPE is a mode, so one off-type bottom row can't flip it. R41, 2026-08-05: a
+# column whose mismatch scan lands PAST the last evidence row — e.g. a $-sandwiched numeric
+# column whose LAST row is off-modal — never completed its label->data transition and is
+# EXCLUDED from the MIN (the `?s_col <= ?maxrow` clause; same treatment as the -1 no-body
+# exclusion), so a derived split always leaves >=1 body row. Presence-based, no constant.
+# HONEST REMAINDER: an INTERIOR off-type non-Blank footer still shifts the split within
+# range — an in-range-but-wrong split is a reading-quality question, not a crash; see Loop B/C.)
+# Per column:
 # D = the MODAL (dominant) non-Blank cellDatatype
 # computed OVER ROWS BELOW THE FIRST (row>=1) — a group-count argmax that answers "what type is the
 # body?" so the single label row (row 0) cannot out-vote the body. SCOPE/HONESTY: row>=1 excludes
@@ -49,7 +54,8 @@ SELECT (MIN(?s_col) AS ?split) WHERE {
       BIND(IF(?crow >= 1, ?crow, -1) AS ?bodyrow)
     } GROUP BY ?col ?D
   }
+  { SELECT (MAX(?anyrow) AS ?maxrow) WHERE { ?anycell tab:atGridRow ?anyrow } }
   BIND(IF(?maxdiff >= 0, ?maxdiff + 1, 1) AS ?s_cand)
   BIND(IF(?maxbody >= 1, ?s_cand, -1) AS ?s_col)     # -1 => no non-Blank body cell, excluded
-  FILTER(?s_col >= 1)
+  FILTER(?s_col >= 1 && ?s_col <= ?maxrow)           # R41: a split must leave >=1 body row
 }
