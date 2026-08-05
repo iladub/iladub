@@ -176,11 +176,22 @@ def _emit_unit_markers(graph, table_uri, band, boundaries):
     column, attached to the SURVIVING neighbor column's URI (resolved against the
     FINAL grid boundaries via the carried neighbor_x). Provenance rides
     tab:markerRegion -> tab:BBox — deliberately NOT tab:hasBBox, whose rdfs:domain
-    would type the marker as tab:Cell and trip WrappedCellShape at the gate (R19)."""
+    would type the marker as tab:Cell and trip WrappedCellShape at the gate (R19).
+
+    `boundaries=None` (fix round 1, transposed branch ONLY): assert_transposed_region
+    mints its `{table_uri}-c{k}` leaf-column URIs keyed by PHYSICAL ROW index (the axis
+    flip — logical column k <- physical row k), while column_of(neighbor_x, boundaries)
+    would resolve a PHYSICAL COLUMN index — a different axis entirely. Reusing that index
+    against the flipped leaf columns would attach the marker to a coincidentally-numbered,
+    semantically unrelated column: a false claim the evidence does not support. Rather
+    than assert a mapping across an axis the flip does not preserve, a caller passing
+    boundaries=None gets the marker attached to the TABLE itself instead — still carries
+    the ink (CLAUDE.md §5: context is carried, not discarded), makes no column claim.
+    Unmeasured shape: no document seen so far exhibits a marker column in a transposed
+    table."""
     from rdflib import Literal, RDF, URIRef
     from rdflib.namespace import XSD
     for k, (sym, neighbor_x, regions) in enumerate(getattr(band, "unit_markers", ()) or ()):
-        col = column_of(neighbor_x, boundaries)
         um = URIRef("%s-um%d" % (table_uri, k))
         graph.add((um, RDF.type, TAB.UnitMarker))
         graph.add((um, TAB.markerSymbol, Literal(sym)))
@@ -192,7 +203,11 @@ def _emit_unit_markers(graph, table_uri, band, boundaries):
             graph.add((bb, TAB.x1, Literal(float(x1), datatype=XSD.decimal)))
             graph.add((bb, TAB.y1, Literal(float(bottom), datatype=XSD.decimal)))
             graph.add((um, TAB.markerRegion, bb))
-        graph.add((URIRef("%s-c%d" % (table_uri, col)), TAB.hasUnitMarker, um))
+        if boundaries is None:
+            graph.add((table_uri, TAB.hasUnitMarker, um))
+        else:
+            col = column_of(neighbor_x, boundaries)
+            graph.add((URIRef("%s-c%d" % (table_uri, col)), TAB.hasUnitMarker, um))
 
 
 def page_bands(pdf_path: str, page_number: int = 0,
@@ -411,7 +426,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     else:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
-                        _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
+                        # fix round 1: this branch's leaf-column URIs are keyed by PHYSICAL
+                        # ROW (the axis flip — see assert_transposed_region), not physical
+                        # column, so column_of(neighbor_x, region.grid.boundaries) would name
+                        # the wrong axis entirely. boundaries=None attaches the marker to the
+                        # table instead of asserting an unsupported column mapping.
+                        _emit_unit_markers(graph, table_uri, band, None)
                         b = region.grid.boundaries
                         value_cells = [c for c in region.cells if c.col >= 1]
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))

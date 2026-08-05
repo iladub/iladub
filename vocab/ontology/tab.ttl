@@ -475,8 +475,8 @@ tab:blockText a owl:DatatypeProperty ; rdfs:range rdfs:Literal ; rdfs:label "blo
 tab:UnitMarker a owl:Class ; rdfs:label "Unit marker"@en ;
     rdfs:comment "An absorbed currency-marker column: unit evidence carried on its neighbor column, spec 2026-08-05."@en .
 tab:hasUnitMarker a owl:ObjectProperty ; rdfs:label "has unit marker"@en ;
-    rdfs:domain tab:LeafColumn ; rdfs:range tab:UnitMarker ;
-    rdfs:comment "Links a leaf column to the currency-marker column absorbed onto it as unit evidence (spec 2026-08-05)."@en .
+    rdfs:range tab:UnitMarker ;
+    rdfs:comment "Links a leaf column to the currency-marker column absorbed onto it as unit evidence (spec 2026-08-05) — OR, where the absorbing reading's axis flip makes the column attribution undefined, links the TABLE itself (fix round 1: the TRANSPOSED path only, where assert_transposed_region keys leaf-column URIs by PHYSICAL ROW rather than physical column, so the marker's physical-column-derived neighbor cannot be resolved against that axis without asserting a mapping the evidence does not support; unmeasured shape, no document seen exhibits a marker column in a transposed table). Domain deliberately left undeclared, the same reason tab:aggregates above is domainless: an rdfs:domain tab:LeafColumn would RDFS-infer every table-attached use of this property (compile._validate runs inference=\"rdfs\") into ALSO being a tab:LeafColumn, entailing a foreign class onto the table subject."@en .
 tab:markerSymbol a owl:DatatypeProperty ; rdfs:label "marker symbol"@en ;
     rdfs:domain tab:UnitMarker ; rdfs:range rdfs:Literal ;
     rdfs:comment "The absorbed currency symbol (e.g. \"$\")."@en .

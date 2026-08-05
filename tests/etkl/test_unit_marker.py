@@ -165,3 +165,34 @@ def test_example_pair_conforms():
     shapes = Graph().parse("vocab/shapes/tab-shapes.ttl", format="turtle")
     conforms, _, report = validate(g, shacl_graph=shapes, advanced=True)
     assert conforms, report
+
+
+def test_transposed_marker_attaches_to_table_not_a_column():
+    """Fix round 1 (CRITICAL): assert_transposed_region keys its `{table_uri}-c{k}`
+    leaf-column URIs by PHYSICAL ROW index (the axis flip — logical column k <- physical
+    row k), while column_of(neighbor_x, boundaries) resolves a PHYSICAL COLUMN index — a
+    different axis entirely. Reusing that index would attach the marker to a
+    coincidentally-numbered, semantically unrelated LeafColumn. compile.py's transposed
+    call site passes boundaries=None for exactly this reason; this test exercises
+    _emit_unit_markers directly with boundaries=None and checks the marker hangs off the
+    TABLE, carries its symbol + provenance, and mints NO `-c{n}` column subject."""
+    from dataclasses import replace
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from iladub.etkl.compile import _emit_unit_markers
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    band = replace(_mkband(APPLE_BAND_ROWS, APPLE_BAND_COLS),
+                   unit_markers=(("$", 300.0, ((220.0, 100.0, 228.0, 110.0),)),))
+    g = Graph()
+    table_uri = URIRef("urn:test:ttable0")
+    _emit_unit_markers(g, table_uri, band, None)
+
+    markers = list(g.subjects(RDF.type, TAB.UnitMarker))
+    assert len(markers) == 1
+    m = markers[0]
+    assert list(g.objects(m, TAB.markerSymbol)) == [Literal("$")]
+    assert list(g.objects(m, TAB.markerRegion)), "marker without provenance"
+
+    holders = list(g.subjects(TAB.hasUnitMarker, m))
+    assert holders == [table_uri], "marker must hang off the table, not a column"
+    assert not any(str(h).startswith(f"{table_uri}-c") for h in holders), \
+        "no -c{n} column URI may hold a transposed-branch marker (axis confusion)"
