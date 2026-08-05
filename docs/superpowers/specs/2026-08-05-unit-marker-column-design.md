@@ -1,6 +1,15 @@
 # The accounting currency-marker column — design
 
-**Date:** 2026-08-05 · **Status:** approved (François, 2026-08-05) ·
+**Date:** 2026-08-05 · **Status:** closed 2026-08-05 — apple 0.0106 (pre-loop 0.0106,
+byte-identical, unchanged); p0 0 new bands asserted — band 4.0 (the measured floor) never
+reaches absorption at all, because every page-0 content band is author-RULED and §4's ruled
+path is explicitly untouched by design ("a ruled `$` column is the author's drawn column and
+stays"); band 4.0 is independently blocked by R55 (`(171)`-style accounting negatives typing
+`tab:Text`, §6.2), confirmed as its sole blocker by direct row-homogeneity inspection. The
+mechanism fires exactly once on the whole document (p2 band2, borderless, 2 `$` markers
+absorbed, ncols reduced) — that band still fails to tile, for the already-registered §6.3
+detached-header/caption class. Stem 0.9655 / CBH 0.9047 byte-identical; full suite green
+(934 passed, 1 pre-existing environmental failure, 5 skipped) ·
 **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf` (sha256 `dc0cf747…`, pinned;
 battery id `apple-fy2026q3-statements`; compiles since loop R41 at score 0.0106 — unblocked,
 unread) · **Follows:** `2026-08-05-r41-invalid-split-refusal-design.md` §4's named reading loop,
