@@ -4,6 +4,8 @@
 
 **Goal:** The `header-body-split.rq` AXIOM refuses a split with zero body rows, turning the apple-document crash (`IndexError` at `headers.py:400`) into the existing honest escalation.
 
+**Doc impact:** none — execution plan for the R41/R19 defect fixes; the design spec (2026-08-05-r41-invalid-split-refusal-design.md) carries the loop's own `Doc impact: none`.
+
 **Architecture:** One validity clause added to an existing open-world SPARQL derivation (`vocab/queries/header-body-split.rq`), mirrored in its committed Python reference (`_ref_hbs` in `tests/etkl/test_derivation_equiv.py`). No new escalation plumbing: an empty query result already returns `None` from `header_body_split`, falls back to `_hrule_split`, and escalates through `classify_hierarchical`'s normal `None` path (`KIND_NOT_SUPPORTED` at `compile.py:596-606`). TDD from a synthetic apple-shaped fixture; the corpus battery's red apple entry is the end-to-end gate.
 
 **Tech Stack:** Python 3 / pytest, rdflib SPARQL, reportlab (test fixtures), pdfplumber (geometry).
