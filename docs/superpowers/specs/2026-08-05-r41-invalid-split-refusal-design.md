@@ -1,7 +1,12 @@
 # R41 — the invalid header/body split is refused at derivation — design
 
-**Date:** 2026-08-05 · **Status:** approved (François, 2026-08-05) ·
-**Discharges:** R41 (the apple crash) · **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf`
+**Date:** 2026-08-05 ·
+**Status:** closed 2026-08-05 — R41 fixed in the AXIOM (split must leave ≥1 body row); the fix
+unmasked R19 (physical shapes absent from the region gate), closed in the same loop by adjudicated
+extension; apple compiles end to end (score 0.0106, 3 pages, p1 mtable4 → `MATRIX_AMBIGUOUS`);
+battery green ·
+**Discharges:** R41 (the apple crash), R19 (adjudicated scope extension, see §6) ·
+**Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf`
 (sha256 `dc0cf747…`, pinned in `tests/corpus-manifest.ttl`; battery id `apple-fy2026q3-statements`)
 
 **Doc impact:** none — a defect fix inside an existing AXIOM; no new vocabulary, no new
@@ -108,3 +113,52 @@ rather than smuggled in here.
 - No overfitting: the clause is a validity condition (a split must leave a body), not an
   apple-shaped special case; the equivalence battery + stem/CBH byte-identity are the
   generalization evidence.
+
+## 6. Addendum — the unmasked second defect (close, 2026-08-05)
+
+Task 3's end-to-end measurement on the apple specimen did what §3 step 4 said it would: once
+R41's `IndexError` stopped firing, `compile_document` proceeded past the segment sub-table and
+reached final validation on page 1's mtable4 region — where it crashed a second way, with an
+`AssertionError`. This was not a new defect; it was registered residue **R19** ("the region
+gates validate the eleven TILING shapes only"), previously judged unreachable from any shipped
+or constructed document, now reachable for real because R41's fix let compilation get far enough
+to reach it.
+
+**Measured activation.** The region's `ROUND_TRIP_FAIL` candidate on `p1#mtable4` — cells
+`cc0_2` and `cc1_2` — carries a bbox and empty `cellText`. `tab:hasBBox`'s domain RDFS-types the
+candidate as `tab:Cell`, which brings it into scope for `tab:WrappedCellShape`; that shape's
+violation (a `tab:Cell` with a bbox but no text) was never checked by `region_tiles`, which only
+extracted CBDs for the eleven *tiling* shapes, so the violation surfaced only at final
+whole-graph SHACL validation — an `AssertionError` outside the gate, not an in-band escalation.
+
+**Adjudicated scope extension.** Fixing R41 alone would have left this second crash site
+reachable and undischarged — the loop's own stated goal (apple compiles end to end) would not
+have been met. François adjudicated (2026-08-05, recorded in `progress.md`'s Task 3 ledger
+entry) to extend the plan in-loop rather than defer: Task 5 (the R19 gate extension) and Task 6
+(full-suite regression proof) were added, and this Task 4 close discharges both R41 and R19
+together.
+
+**Closure mechanism.** Both physical shapes' Concise Bounded Descriptions join
+`_TILING_SHAPE_IRIS` (renamed/extended in `src/iladub/etkl/tiling.py` as
+`_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]`), parsed from
+`vocab/shapes/tab-physical-shapes.ttl` alongside the existing `tab-shapes.ttl` tiling shapes.
+`region_tiles` now extracts and validates both families in the same pySHACL call, so a physical
+violation refuses (escalates) at the region gate instead of surviving through every gate class
+(record/transposed/hier/matrix/row-hier alike) to crash at final validation. On the apple
+specimen this is measured directly: p1's mtable4 region now shows
+`('UNSUPPORTED_TABLE', 'escalated', 'MATRIX_AMBIGUOUS')` where it previously crashed.
+
+**Honest caveats, carried forward (not smoothed over):**
+- The measured healthy-gate cost is **0.095 s/call** — *below* R19's stated pre-extension
+  baseline of ~0.26 s/call, despite the gate now extracting two additional shape families. This
+  is flagged in the Task 5 report as load-variance-suspect (a background pytest run may still
+  have been executing during the timing probe) rather than presented as a genuine speedup from
+  adding shapes to one pySHACL call.
+- Apple's score of **0.0106** is adjudication evidence that the document *compiles* — it is not
+  a claim about reading quality. The document's real reading gap is the currency-typing question
+  named out of scope in §4 (`$`-prefixed cells typed off-modal, driving the segment sub-table to
+  escalate rather than assert as data) — its own future loop, not touched here.
+
+See `docs/superpowers/residues.md`'s R19 row (marked `~~R19~~ CLOSED (Loop R41 Task 5,
+2026-08-05)`) for the full measured record, including the fix-round-1 fixture-completeness
+consequence (`tests/etkl/test_row_groups.py`, commit `78be731`).
