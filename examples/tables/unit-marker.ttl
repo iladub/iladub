@@ -1,0 +1,12 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Worked example — the accounting currency-marker column (spec 2026-08-05).
+# A `$` column absorbed as unit evidence on its value column: the marker carries its
+# symbol and provenance to the source glyphs; the column carries the marker.
+<urn:example:um:table0-c1> tab:hasUnitMarker <urn:example:um:table0-um0> .
+<urn:example:um:table0-um0> a tab:UnitMarker ;
+    tab:markerSymbol "$" ;
+    tab:markerRegion <urn:example:um:table0-um0-r0> .
+<urn:example:um:table0-um0-r0> a tab:BBox ;
+    tab:x0 220.0 ; tab:y0 692.0 ; tab:x1 228.0 ; tab:y1 702.0 .

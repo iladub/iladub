@@ -211,6 +211,8 @@ tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
 tab:Text     a tab:CellDatatype ; rdfs:label "Text"@en .
 tab:Date     a tab:CellDatatype ; rdfs:label "Date"@en .
 tab:Currency a tab:CellDatatype ; rdfs:label "Currency"@en .
+tab:CurrencyGlyph a tab:CellDatatype ; rdfs:label "Currency glyph"@en ;
+    rdfs:comment "A cell that is exactly one currency symbol; emitted only by the unit-marker evidence (unitmarker.py), deliberately absent from the shared celltype lattice."@en .
 tab:cellDatatype a owl:ObjectProperty ; rdfs:domain tab:GridCell ; rdfs:range tab:CellDatatype ; rdfs:label "cell datatype"@en .
 tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "column index"@en ;
     rdfs:comment "A grid column marker (0..ncols-1) so empty columns are visible to the stub/data derivation."@en .
@@ -465,3 +467,19 @@ tab:hasPageBlock a owl:ObjectProperty ; rdfs:domain tab:ContinuationPairUnderTes
     rdfs:comment "Links the pair under test to one non-table text block of either of its two pages. Which page the block belongs to is carried by the block's own type (tab:PriorPageTextBlock / tab:ContinuationPageTextBlock), never by this property, so the two sides can never collapse."@en .
 tab:blockText a owl:DatatypeProperty ; rdfs:range rdfs:Literal ; rdfs:label "block text"@en ;
     rdfs:comment "The block's exact surface text, its lines in reading order. Compared by literal identity across the page break and by nothing else — no normalisation, no fuzzy match, no meaning. Asserted on both block classes, hence no rdfs:domain (the loop-L F6 finding: an rdfs:domain here would let inference type every continuation block as a prior block)."@en .
+
+# --- unit-marker column (spec 2026-08-05): a borderless currency-marker column
+# (unitmarker.py's AXIOM, unit-marker-column.rq) is absorbed rather than asserted as
+# its own LeafColumn; these terms carry it as unit evidence on the SURVIVING numeric
+# neighbor column instead. ---
+tab:UnitMarker a owl:Class ; rdfs:label "Unit marker"@en ;
+    rdfs:comment "An absorbed currency-marker column: unit evidence carried on its neighbor column, spec 2026-08-05."@en .
+tab:hasUnitMarker a owl:ObjectProperty ; rdfs:label "has unit marker"@en ;
+    rdfs:domain tab:LeafColumn ; rdfs:range tab:UnitMarker ;
+    rdfs:comment "Links a leaf column to the currency-marker column absorbed onto it as unit evidence (spec 2026-08-05)."@en .
+tab:markerSymbol a owl:DatatypeProperty ; rdfs:label "marker symbol"@en ;
+    rdfs:domain tab:UnitMarker ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The absorbed currency symbol (e.g. \"$\")."@en .
+tab:markerRegion a owl:ObjectProperty ; rdfs:label "marker region"@en ;
+    rdfs:domain tab:UnitMarker ; rdfs:range tab:BBox ;
+    rdfs:comment "Provenance to the page: the bounding box of one absorbed marker glyph. Deliberately NOT tab:hasBBox — that property's domain would RDFS-type the marker as tab:Cell and trip tab:WrappedCellShape at the gate (the R19 mechanism)."@en .

@@ -171,6 +171,30 @@ def _emit_band_captions(graph, table_uri, band):
         graph.add((table_uri, TAB.hasCaption, cap))
 
 
+def _emit_unit_markers(graph, table_uri, band, boundaries):
+    """Spec 2026-08-05 §4 carry: one tab:UnitMarker per absorbed currency-marker
+    column, attached to the SURVIVING neighbor column's URI (resolved against the
+    FINAL grid boundaries via the carried neighbor_x). Provenance rides
+    tab:markerRegion -> tab:BBox — deliberately NOT tab:hasBBox, whose rdfs:domain
+    would type the marker as tab:Cell and trip WrappedCellShape at the gate (R19)."""
+    from rdflib import Literal, RDF, URIRef
+    from rdflib.namespace import XSD
+    for k, (sym, neighbor_x, regions) in enumerate(getattr(band, "unit_markers", ()) or ()):
+        col = column_of(neighbor_x, boundaries)
+        um = URIRef("%s-um%d" % (table_uri, k))
+        graph.add((um, RDF.type, TAB.UnitMarker))
+        graph.add((um, TAB.markerSymbol, Literal(sym)))
+        for j, (x0, top, x1, bottom) in enumerate(regions):
+            bb = URIRef("%s-um%d-r%d" % (table_uri, k, j))
+            graph.add((bb, RDF.type, TAB.BBox))
+            graph.add((bb, TAB.x0, Literal(float(x0), datatype=XSD.decimal)))
+            graph.add((bb, TAB.y0, Literal(float(top), datatype=XSD.decimal)))
+            graph.add((bb, TAB.x1, Literal(float(x1), datatype=XSD.decimal)))
+            graph.add((bb, TAB.y1, Literal(float(bottom), datatype=XSD.decimal)))
+            graph.add((um, TAB.markerRegion, bb))
+        graph.add((URIRef("%s-c%d" % (table_uri, col)), TAB.hasUnitMarker, um))
+
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -387,6 +411,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     else:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
+                        _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                         b = region.grid.boundaries
                         value_cells = [c for c in region.cells if c.col >= 1]
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
@@ -414,6 +439,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if rreg is not None and region_tiles(scratch):
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, rreg.grid.boundaries)
                     b = rreg.grid.boundaries
                     for rb in rreg.leaf_rows:
                         for c in rb.cells:
@@ -451,6 +477,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 else:
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                     b = region.grid.boundaries
                     data_cells = [c for c in region.cells if c.row > 0]
                     asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
@@ -472,6 +499,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if mreg is not None and region_tiles(scratch):
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, mreg.grid.boundaries)
                     b = mreg.grid.boundaries
                     for rb in mreg.leaf_rows:
                         for sc in rb.cells:
@@ -521,6 +549,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     n_ruled, reading = ruled_reading
                     graph += ruled_scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                     tokens = sum(len(ln.words) for ln in band.lines)
                     asserted_total += n_ruled
                     escalated_total += max(0, tokens - n_ruled)
@@ -544,6 +573,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if resolved is not None:
                         n, _promos = resolved
                         _emit_band_captions(graph, table_uri, band)
+                        _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)
@@ -583,6 +613,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         graph += scratch
                         if n:
                             _emit_band_captions(graph, table_uri, band)
+                            _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)

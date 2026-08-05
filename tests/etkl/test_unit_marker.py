@@ -118,3 +118,50 @@ def test_absorb_is_identity_for_ruled_bands():
     band = replace(_mkband(APPLE_BAND_ROWS, APPLE_BAND_COLS),
                    rules=(Rule(x=250.0, top=100.0, bottom=170.0),))
     assert absorb_unit_markers(band) is band
+
+
+# ---------------------------------------------------------------- emission + membrane
+
+def test_marker_facts_emitted_with_provenance(tmp_path):
+    from rdflib import Namespace, RDF
+    from iladub.etkl import compile_tables
+    from tests.etkl.fixtures import currency_marker_column_pdf
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    pdf = str(tmp_path / "marker.pdf")
+    currency_marker_column_pdf(pdf)
+    rep = compile_tables(pdf, page_number=0)
+    assert any(r.verdict == "asserted" for r in rep.regions), \
+        [(r.kind.name, r.verdict, r.reason) for r in rep.regions]
+    markers = list(rep.graph.subjects(RDF.type, TAB.UnitMarker))
+    assert markers, "no tab:UnitMarker emitted"
+    for m in markers:
+        assert list(rep.graph.objects(m, TAB.markerSymbol)) == \
+               [x for x in rep.graph.objects(m, TAB.markerSymbol)]  # present
+        assert list(rep.graph.objects(m, TAB.markerRegion)), "marker without provenance"
+        assert not list(rep.graph.objects(m, TAB.hasBBox)), \
+            "R19 trap: marker must never carry tab:hasBBox"
+        cols = list(rep.graph.subjects(TAB.hasUnitMarker, m))
+        assert len(cols) == 1, "marker must hang off exactly one column"
+
+
+def test_unit_marker_shape_negative():
+    # The membrane refuses a marker without provenance (the example pair's negative half).
+    from pyshacl import validate
+    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    g = Graph()
+    m = URIRef("urn:um:bad")
+    g.add((m, RDF.type, TAB.UnitMarker))
+    g.add((m, TAB.markerSymbol, Literal("$")))          # no markerRegion
+    shapes = Graph().parse("vocab/shapes/tab-shapes.ttl", format="turtle")
+    conforms, _, _ = validate(g, shacl_graph=shapes, advanced=True)
+    assert not conforms
+
+
+def test_example_pair_conforms():
+    from pyshacl import validate
+    from rdflib import Graph
+    g = Graph().parse("examples/tables/unit-marker.ttl", format="turtle")
+    shapes = Graph().parse("vocab/shapes/tab-shapes.ttl", format="turtle")
+    conforms, _, report = validate(g, shacl_graph=shapes, advanced=True)
+    assert conforms, report
