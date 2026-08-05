@@ -57,3 +57,64 @@ def test_two_marker_columns_both_derive():
         (1, 0, "B"), (1, 1, "$"), (1, 2, "11"), (1, 3, "$"), (1, 4, "21"),
     ]
     assert derive_marker_columns(cells, 5) == ((1, "$"), (3, "$"))
+
+
+# ---------------------------------------------------------------- absorption
+
+def _mkband(rows, cols):
+    """A synthetic borderless Band: rows = list of {col_index: text}, cols = left x
+    per column (Courier-ish 40pt-wide words at exact x positions)."""
+    from iladub.etkl.geometry import Word, Line
+    from iladub.etkl.bands import Band
+    lines = []
+    for r, row in enumerate(rows):
+        top = 100.0 + r * 14.0
+        words = tuple(Word(text=t, x0=cols[c], x1=cols[c] + max(8.0, 6.0 * len(t)),
+                           top=top, bottom=top + 10.0)
+                      for c, t in sorted(row.items()))
+        lines.append(Line(words=words, top=top, bottom=top + 10.0))
+    return Band(tuple(lines), lines[0].top, lines[-1].bottom)
+
+
+APPLE_BAND_ROWS = [
+    {0: "Label", 2: "Amount", 4: "Total"},
+    {0: "Products", 1: "$", 2: "78,678", 3: "$", 4: "272,629"},
+    {0: "Services", 2: "30,739", 4: "91,728"},
+    {0: "Other", 2: "11,729", 4: "34,035"},
+    {0: "Sum", 1: "$", 2: "121,146", 3: "$", 4: "398,392"},
+]
+APPLE_BAND_COLS = {0: 72.0, 1: 220.0, 2: 260.0, 3: 380.0, 4: 420.0}
+
+
+def test_absorb_removes_marker_words_and_carries_them():
+    from iladub.etkl.unitmarker import absorb_unit_markers
+    band = _mkband(APPLE_BAND_ROWS, APPLE_BAND_COLS)
+    out = absorb_unit_markers(band)
+    texts = [w.text for ln in out.lines for w in ln.words]
+    assert "$" not in texts                       # the glyphs left the word stream
+    assert len(out.unit_markers) == 2             # one per absorbed column
+    syms = sorted(m[0] for m in out.unit_markers)
+    assert syms == ["$", "$"]
+    # provenance: each marker carries one region per absorbed glyph (2 rows drew $)
+    assert all(len(m[2]) == 2 for m in out.unit_markers)
+    # neighbor_x falls inside the value column's x-range
+    assert any(260.0 <= m[1] <= 380.0 for m in out.unit_markers)
+
+
+def test_absorb_is_identity_without_markers():
+    from iladub.etkl.unitmarker import absorb_unit_markers
+    band = _mkband([{0: "A", 1: "10"}, {0: "B", 1: "20"}, {0: "C", 1: "30"}],
+                   {0: 72.0, 1: 200.0})
+    out = absorb_unit_markers(band)
+    assert out.unit_markers == ()
+    assert [w.text for ln in out.lines for w in ln.words] == \
+           [w.text for ln in band.lines for w in ln.words]
+
+
+def test_absorb_is_identity_for_ruled_bands():
+    from dataclasses import replace
+    from iladub.etkl.geometry import Rule
+    from iladub.etkl.unitmarker import absorb_unit_markers
+    band = replace(_mkband(APPLE_BAND_ROWS, APPLE_BAND_COLS),
+                   rules=(Rule(x=250.0, top=100.0, bottom=170.0),))
+    assert absorb_unit_markers(band) is band

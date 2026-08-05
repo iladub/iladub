@@ -27,6 +27,11 @@ class Band:
     # loop P). Kept word-based (never rule-re-extracted) and CARRIED to the asserted
     # table as tab:RegionCaption; default empty so every existing constructor stands.
     captions: tuple[Line, ...] = ()
+    # Absorbed currency-marker columns (spec 2026-08-05-unit-marker-column-design.md):
+    # (symbol, neighbor_x, regions) per absorbed column — the marker ink CARRIED (§5),
+    # emitted at assert time as tab:hasUnitMarker on the neighbor column. Default empty
+    # so every existing constructor stands (the Band.captions precedent).
+    unit_markers: tuple = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

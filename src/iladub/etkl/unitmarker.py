@@ -67,3 +67,45 @@ def derive_marker_columns(cells, ncols) -> tuple[tuple[int, str], ...]:
     with open(_RQ, encoding="utf-8") as f:
         q = f.read()
     return tuple(sorted((int(row[0]), str(row[1])) for row in g.query(q)))
+
+
+def absorb_unit_markers(band):
+    """Two-pass absorption (the loop-G candidates pattern): pass-1 grid -> AXIOM ->
+    marker words filtered out, markers carried on Band.unit_markers -> downstream
+    re-derives the grid on the remainder. Identity for ruled bands (the author drew
+    those columns), narrow grids, and bands with no derived marker. PROCEDURAL
+    engine glue; the decision is the query's."""
+    from dataclasses import replace
+    from .cells import recover_leaf_grid
+    from .headers import _grid_cells
+
+    if band.rules:
+        return band
+    grid = recover_leaf_grid(band)
+    if grid.ncols < 2:
+        return band
+    cells = _grid_cells(band, grid)
+    derived = derive_marker_columns(cells, grid.ncols)
+    if not derived:
+        return band
+
+    b = grid.boundaries
+    markers = []
+    drop = set()
+    for col, sym in derived:
+        regions = []
+        for ln in band.lines:
+            for w in ln.words:
+                cx = (w.x0 + w.x1) / 2.0
+                if b[col] <= cx < b[col + 1] and w.text.strip() == sym:
+                    drop.add(id(w))
+                    regions.append((w.x0, w.top, w.x1, w.bottom))
+        neighbor_x = (b[col + 1] + b[col + 2]) / 2.0
+        markers.append((sym, neighbor_x, tuple(regions)))
+
+    new_lines = []
+    for ln in band.lines:
+        kept = tuple(w for w in ln.words if id(w) not in drop)
+        if kept:
+            new_lines.append(replace(ln, words=kept))
+    return replace(band, lines=tuple(new_lines), unit_markers=tuple(markers))

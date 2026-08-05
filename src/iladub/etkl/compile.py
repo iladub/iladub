@@ -222,6 +222,8 @@ def page_bands(pdf_path: str, page_number: int = 0,
             section_repair = bool(section_repair_bands) and idx in section_repair_bands
             bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
                                            section_repair=section_repair))
+    from .unitmarker import absorb_unit_markers
+    bands = [absorb_unit_markers(b) for b in bands]
     return bands
 
 
