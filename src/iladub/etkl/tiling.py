@@ -2,9 +2,11 @@
 
 Tiling (coverage / no-overlap / refinement) is a CONFORMANCE check — closed-world — so it
 belongs to SHACL, reusing the existing tab: tiling shapes (the closed-world mirror of loop B's
-open-world SPARQL derivation). The ONLY Python here is PROCEDURAL engine glue: build the tiling
-shapes subset once, and invoke pySHACL. No transform logic, no tuned constant. Irreducible
-because a SHACL engine must be invoked from somewhere; the invocation carries no domain decision.
+open-world SPARQL derivation). The gate also carries the two physical shapes (R19, 2026-08-05):
+a physical-shape defect must refuse HERE, not crash compile.py's final whole-graph validation.
+The ONLY Python here is PROCEDURAL engine glue: build the tiling + physical shapes subset once,
+and invoke pySHACL. No transform logic, no tuned constant. Irreducible because a SHACL engine
+must be invoked from somewhere; the invocation carries no domain decision.
 """
 from __future__ import annotations
 
@@ -30,17 +32,26 @@ _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape
                       TAB.HeaderContentConservedShape, TAB.DetectedAggregationRowShape,
                       TAB.DerivedRowGroupShape]
 
+# R19 closure (2026-08-05): the TWO physical shapes join the gate. Measured activation:
+# apple-fy2026q3 p1#mtable4 (matrix cells with bbox + empty cellText) crashed compile at
+# final validation THROUGH this gate; the physical shapes were only in compile._validate's
+# full set. Region defects expressible in the physical layer now refuse HERE, so every
+# path's existing escalation branch handles them (never crash, always at worst escalate).
+_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]
+
 
 def _build_tiling_shapes():
-    """The eleven tiling shapes (the original eight + tab:HeaderContentConservedShape +
-    tab:DetectedAggregationRowShape + tab:DerivedRowGroupShape), extracted from the single
-    tab-shapes.ttl as CBDs (+ tab:prefixes, which the sh:sparql shapes reference). Keeps ONE
-    source of the shapes — no duplicate file. Includes Unambiguous(Row)AccessShape: exactly one
-    LEAF header per column/row — the leaf-partition invariant the retired exact-partition Python
-    backstops enforced."""
+    """The eleven tiling invariants + the two physical shapes (R19) (the original eight +
+    tab:HeaderContentConservedShape + tab:DetectedAggregationRowShape +
+    tab:DerivedRowGroupShape + tab:EntryCellPhysicalShape + tab:WrappedCellShape), extracted
+    from tab-shapes.ttl + tab-physical-shapes.ttl as CBDs (+ tab:prefixes, which the
+    sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file. Includes
+    Unambiguous(Row)AccessShape: exactly one LEAF header per column/row — the leaf-partition
+    invariant the retired exact-partition Python backstops enforced."""
     full = Graph().parse(os.path.join(_VOCAB, "shapes", "tab-shapes.ttl"), format="turtle")
+    full.parse(os.path.join(_VOCAB, "shapes", "tab-physical-shapes.ttl"), format="turtle")
     sub = Graph()
-    for s in _TILING_SHAPE_IRIS + [TAB.prefixes]:
+    for s in _TILING_SHAPE_IRIS + _PHYSICAL_SHAPE_IRIS + [TAB.prefixes]:
         sub += full.cbd(s)
     return sub
 
@@ -51,8 +62,9 @@ _ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle
 
 def region_tiles(graph):
     """True iff `graph` (one candidate region's RDF) conforms to the eleven tiling invariants
-    (coverage / no-overlap / refinement / unambiguous-leaf-access, both axes, + header-content
-    conservation + detected-aggregation evidence + derived-row-group well-formedness).
+    + the two physical shapes (R19) (coverage / no-overlap / refinement / unambiguous-leaf-
+    access, both axes, + header-content conservation + detected-aggregation evidence +
+    derived-row-group well-formedness + entry-cell/wrapped-cell physical well-formedness).
     PROCEDURAL glue over the AXIOM shapes."""
     from pyshacl import validate
     conforms, _, _ = validate(graph, shacl_graph=_TILING_SHAPES, ont_graph=_ONT,

@@ -34,6 +34,7 @@ def _emit(g, rows, aggs, table=T):
             g.add((e, TAB.atRow, ru))
             g.add((e, TAB.atColumn, URIRef(f"{table}-c{c}")))
             g.add((e, TAB.cellText, Literal(text)))
+            g.add((e, TAB.onPage, Literal(0, datatype=XSD.integer)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
             g.add((bb, TAB.y0, Literal(10.0 * r, datatype=XSD.decimal)))

@@ -87,7 +87,10 @@ def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     Iterates candidate splits from line 1 onward. A split is accepted when at
     least one leaf column has exclusively numeric text from that line to the end
     of the band (the label→data transition). Returns None if no such split exists
-    (e.g. an all-text table) → caller escalates.
+    (e.g. an all-text table) → caller escalates. R41 (2026-08-05): the AXIOM also
+    returns None when every candidate transition lands past the last line (a split
+    must leave >=1 body row — see header-body-split.rq's ?maxrow clause), so a
+    returned split always satisfies 1 <= split < len(band.lines).
 
     Design note — numeric-homogeneity as the operative proxy:
     This function uses numeric-column homogeneity as the intentional operative proxy

@@ -45,7 +45,9 @@ def _ref_hbs(cells, ncols):
     0), of a non-Blank cell whose type != D (or 1 if homogeneous) — the diff scan locates the
     header boundary and is deliberately NOT restricted to body rows. Blank cells are wildcards.
     split = MIN(s_col) over data columns and tied D; None if none qualify. Types via the SAME
-    celltype._cell_datatype the graph uses."""
+    celltype._cell_datatype the graph uses.
+    R41 (2026-08-05): an s_col past the last evidence row is excluded — a valid split leaves >=1
+    body row (mirrors the query's ?maxrow clause)."""
     from collections import Counter
     BLANK = _cell_datatype("")      # tab:Blank
     TEXT = _cell_datatype("Alice")  # tab:Text
@@ -53,6 +55,7 @@ def _ref_hbs(cells, ncols):
     for (r, c, t) in cells:
         by_col.setdefault(c, []).append((r, _cell_datatype(t)))
     best = None
+    maxrow = max(r for (r, c, t) in cells)   # every line has >=1 cell (text_lines invariant)
     for c, rt in by_col.items():
         nonblank = [(r, dt) for (r, dt) in rt if dt != BLANK]
         body = [(r, dt) for (r, dt) in nonblank if r >= 1]
@@ -66,7 +69,7 @@ def _ref_hbs(cells, ncols):
                 continue
             diffs = [r for (r, dt) in nonblank if dt != D]       # diff scan over ALL rows
             s_col = (max(diffs) + 1) if diffs else 1
-            if s_col >= 1:
+            if 1 <= s_col <= maxrow:         # R41: a split must leave >=1 body row
                 best = s_col if best is None else min(best, s_col)
     return best
 

@@ -1791,3 +1791,33 @@ def stem_shaped_ruled_table_pdf(path):
             "furniture_text": "Friday, 31 July 2026",
             "header_words": ["GC", "Fin", "Year", "Month", "Port", "Reference", "Number"],
             "data_rows": rows}
+
+
+def currency_sandwich_pdf(path: str) -> dict:
+    """R41's crash shape, synthetic (no third-party PDF): a caption line over a table whose
+    data columns are $-SANDWICHED — first and last body rows Currency ('$ 45,781'-style),
+    interior rows bare Numeric. Modal body type = Numeric, so the mismatch scan's
+    s_col = MAX(mismatch row)+1 lands one PAST the band in EVERY data column and
+    header-body-split.rq (pre-fix) returns split == len(band.lines) — the out-of-range
+    index behind the apple-fy2026q3 IndexError (headers.py:400). Measured 2026-08-05:
+    the cells-level twin of this layout mints split=7 on 7 lines. Borderless, single band."""
+    cols = [72.0, 250.0, 340.0, 430.0, 520.0]     # label col + 4 data cols
+    rows = [
+        ("(1) Net sales by reportable segment:", "", "", "", ""),
+        ("Americas", "$ 45,781", "$ 41,198", "$ 149,403", "$ 134,161"),
+        ("Europe", "29,395", "24,014", "95,596", "82,329"),
+        ("Greater China", "18,816", "15,369", "64,839", "49,884"),
+        ("Japan", "6,554", "5,782", "24,368", "22,067"),
+        ("Rest of Asia Pacific", "8,871", "7,673", "30,151", "25,254"),
+        ("Total net sales", "$ 109,417", "$ 94,036", "$ 364,357", "$ 313,695"),
+    ]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, cell in zip(cols, row):
+            if cell:
+                c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_lines": len(rows)}
