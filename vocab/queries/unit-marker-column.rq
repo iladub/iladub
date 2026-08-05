@@ -1,0 +1,28 @@
+# unit-marker-column.rq — the accounting currency-marker column (AXIOM, open world).
+# A grid column ?col is a UNIT MARKER for its right neighbor iff:
+#   (1) it has >=1 tab:CurrencyGlyph cell, and every non-Blank cell in it is a
+#       CurrencyGlyph carrying the SAME symbol text (Blank cells are wildcards,
+#       the split query's convention);
+#   (2) the right neighbor column (?col + 1) carries >=1 Numeric or Currency cell.
+# Presence-based: no distance, no count, no tolerance. The symbol set lives in the
+# emitter's is_currency_glyph (B2b's shipped [$€£¥] class, reused — no new constant);
+# this query reads only the emitted tab:CurrencyGlyph datatype facts.
+# Consumed by unitmarker.derive_marker_columns; evidence = unitmarker.marker_evidence.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT DISTINCT ?col ?sym WHERE {
+  ?c1 tab:atGridColumn ?col ; tab:cellDatatype tab:CurrencyGlyph ; tab:gridText ?sym .
+  FILTER NOT EXISTS {
+    ?cx tab:atGridColumn ?col ; tab:cellDatatype ?dx .
+    FILTER(?dx != tab:CurrencyGlyph && ?dx != tab:Blank)
+  }
+  FILTER NOT EXISTS {
+    ?cy tab:atGridColumn ?col ; tab:cellDatatype tab:CurrencyGlyph ; tab:gridText ?sy .
+    FILTER(STR(?sy) != STR(?sym))
+  }
+  BIND(?col + 1 AS ?nc)
+  FILTER EXISTS {
+    ?cn tab:atGridColumn ?nc ; tab:cellDatatype ?dn .
+    FILTER(?dn = tab:Numeric || ?dn = tab:Currency)
+  }
+}
+ORDER BY ?col
