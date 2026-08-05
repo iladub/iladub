@@ -20,7 +20,7 @@ The corpus battery's one honest red: compiling
 **Root cause, measured by probe (2026-08-05) — not the register's trailing-footer guess.**
 The failing band is the segment-footnote sub-table (7 lines × 5 columns):
 
-```
+```text
 line 0: (1) Net sales by reportable segment:
 line 1: Americas | $ 45,781 | $ 41,198 | $ 149,403 | $ 134,161
 line 2: Europe | 29,395 | 24,014 | 95,596 | 82,329
