@@ -39,6 +39,20 @@ def test_symbol_column_without_numeric_neighbor_is_refused():
     assert derive_marker_columns(cells, 3) == ()
 
 
+def test_year_header_neighbor_is_refused():
+    # I1 (final-review): the neighbor condition is SAME-ROW. Column 1's glyphs sit on
+    # rows 1-2, but the ONLY numeric cell in column 2 is the row-0 YEAR HEADER ("2026")
+    # over an all-TEXT body ("Sales"/"Revenue") — no row has a glyph in c AND a
+    # Numeric/Currency cell in c+1 on the SAME row, so absorption must be refused. Pre-
+    # fix (ANY-row neighbor), this column wrongly derived as a marker.
+    cells = [
+        (0, 0, "x"), (0, 2, "2026"),
+        (1, 1, "$"), (1, 2, "Sales"),
+        (2, 1, "$"), (2, 2, "Revenue"),
+    ]
+    assert derive_marker_columns(cells, 3) == ()
+
+
 def test_column_with_any_non_symbol_cell_is_refused():
     # One stray text cell among the symbols disqualifies the whole column.
     cells = APPLE_SHAPE + [(2, 1, "note")]
@@ -135,8 +149,7 @@ def test_marker_facts_emitted_with_provenance(tmp_path):
     markers = list(rep.graph.subjects(RDF.type, TAB.UnitMarker))
     assert markers, "no tab:UnitMarker emitted"
     for m in markers:
-        assert list(rep.graph.objects(m, TAB.markerSymbol)) == \
-               [x for x in rep.graph.objects(m, TAB.markerSymbol)]  # present
+        assert list(rep.graph.objects(m, TAB.markerSymbol))
         assert list(rep.graph.objects(m, TAB.markerRegion)), "marker without provenance"
         assert not list(rep.graph.objects(m, TAB.hasBBox)), \
             "R19 trap: marker must never carry tab:hasBBox"
@@ -196,3 +209,41 @@ def test_transposed_marker_attaches_to_table_not_a_column():
     assert holders == [table_uri], "marker must hang off the table, not a column"
     assert not any(str(h).startswith(f"{table_uri}-c") for h in holders), \
         "no -c{n} column URI may hold a transposed-branch marker (axis confusion)"
+
+
+def test_marker_carried_on_escalation_path(tmp_path):
+    """Final-review fix wave (C1, CRITICAL): _emit_unit_markers was called only on the
+    seven ASSERTED branches of compile_tables — every escalation branch (and the
+    NON_TABLE-ignored branch) silently dropped a band's absorbed marker ink from both
+    the graph and the token accounting. currency_marker_escalating_pdf's single band
+    absorbs 2 `$` markers but then escalates REGION_TILING_FAILED for an UNRELATED
+    reason (a dropped 'Total' header word, not the markers). Post-fix: the ink must
+    still land in the graph, attached to the region CANDIDATE uri (cand_uri), never a
+    `-c{n}` column fact (no column was ever asserted on an escalated band)."""
+    from rdflib import Literal, Namespace, RDF, URIRef
+    from iladub.etkl import compile_tables
+    from tests.etkl.fixtures import currency_marker_escalating_pdf
+    TAB = Namespace("https://w3id.org/iladub/tab#")
+    pdf = str(tmp_path / "escalating_marker.pdf")
+    currency_marker_escalating_pdf(pdf)
+    rep = compile_tables(pdf, page_number=0)
+
+    assert len(rep.regions) == 1
+    region = rep.regions[0]
+    assert region.verdict == "escalated", [(r.kind.name, r.verdict, r.reason) for r in rep.regions]
+    assert region.reason == "REGION_TILING_FAILED"
+
+    cand_uri = URIRef("https://example.org/etkl/doc#region0")
+    markers = list(rep.graph.subjects(RDF.type, TAB.UnitMarker))
+    assert len(markers) == 2, "both absorbed $ markers must be carried into the graph"
+    for m in markers:
+        assert list(rep.graph.objects(m, TAB.markerSymbol)) == [Literal("$")]
+        assert list(rep.graph.objects(m, TAB.markerRegion)), "marker without provenance"
+        holders = list(rep.graph.subjects(TAB.hasUnitMarker, m))
+        assert holders == [cand_uri], \
+            f"marker must hang off the region candidate {cand_uri}, not a -c{{n}} column: {holders}"
+
+    # accounting parity: the carried marker words are counted in escalated_total, not
+    # silently dropped from the score's denominator.
+    assert region.tokens_escalated > 0
+    assert rep.escalated > 0 and rep.asserted == 0

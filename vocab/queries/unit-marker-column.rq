@@ -3,14 +3,19 @@
 #   (1) it has >=1 tab:CurrencyGlyph cell, and every non-Blank cell in it is a
 #       CurrencyGlyph carrying the SAME symbol text (Blank cells are wildcards,
 #       the split query's convention);
-#   (2) the right neighbor column (?col + 1) carries >=1 Numeric or Currency cell.
+#   (2) SAME-ROW form (final-review fix, I1): there exists at least one row ?r such
+#       that column ?col carries a CurrencyGlyph AT THAT ROW, and the right neighbor
+#       column (?col + 1) carries a non-blank Numeric or Currency cell ON THE SAME
+#       ROW ?r — the "$ beside its value" shape. Any-row (the pre-fix form) would let
+#       a numeric YEAR HEADER over an all-text body license absorption; the marker
+#       must sit beside a value it actually marks.
 # Presence-based: no distance, no count, no tolerance. The symbol set lives in the
 # emitter's is_currency_glyph (B2b's shipped [$€£¥] class, reused — no new constant);
 # this query reads only the emitted tab:CurrencyGlyph datatype facts.
 # Consumed by unitmarker.derive_marker_columns; evidence = unitmarker.marker_evidence.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT DISTINCT ?col ?sym WHERE {
-  ?c1 tab:atGridColumn ?col ; tab:cellDatatype tab:CurrencyGlyph ; tab:gridText ?sym .
+  ?c1 tab:atGridColumn ?col ; tab:atGridRow ?r ; tab:cellDatatype tab:CurrencyGlyph ; tab:gridText ?sym .
   FILTER NOT EXISTS {
     ?cx tab:atGridColumn ?col ; tab:cellDatatype ?dx .
     FILTER(?dx != tab:CurrencyGlyph && ?dx != tab:Blank)
@@ -21,7 +26,7 @@ SELECT DISTINCT ?col ?sym WHERE {
   }
   BIND(?col + 1 AS ?nc)
   FILTER EXISTS {
-    ?cn tab:atGridColumn ?nc ; tab:cellDatatype ?dn .
+    ?cn tab:atGridColumn ?nc ; tab:atGridRow ?r ; tab:cellDatatype ?dn .
     FILTER(?dn = tab:Numeric || ?dn = tab:Currency)
   }
 }

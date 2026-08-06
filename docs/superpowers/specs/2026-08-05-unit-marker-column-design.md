@@ -1,15 +1,21 @@
 # The accounting currency-marker column — design
 
-**Date:** 2026-08-05 · **Status:** closed 2026-08-05 — apple 0.0106 (pre-loop 0.0106,
-byte-identical, unchanged); p0 0 new bands asserted — band 4.0 (the measured floor) never
-reaches absorption at all, because every page-0 content band is author-RULED and §4's ruled
-path is explicitly untouched by design ("a ruled `$` column is the author's drawn column and
-stays"); band 4.0 is independently blocked by R55 (`(171)`-style accounting negatives typing
-`tab:Text`, §6.2), confirmed as its sole blocker by direct row-homogeneity inspection. The
+**Date:** 2026-08-05 · **Status:** closed 2026-08-05, final-review fix wave 2026-08-06 —
+apple 0.0106 at 4dp (pre-loop 0.0106, unchanged at 4dp); the deep decimal MOVED
+(0.0106100796 → 0.0105540897) after the final-review C1 fix made escalation branches
+carry previously-silently-dropped marker tokens into `escalated_total` (the p2
+MATRIX_AMBIGUOUS band's 2 absorbed `$` markers, formerly uncounted) — an honest, more
+conservative score, not a capability change; p0 0 new bands asserted, band 4.0 (the
+measured floor) is still MISSED — it never reaches absorption at all, because every
+page-0 content band is author-RULED and §4's ruled path is explicitly untouched by
+design ("a ruled `$` column is the author's drawn column and stays"); band 4.0 is
+independently blocked by R55 (`(171)`-style accounting negatives typing `tab:Text`,
+§6.2), confirmed as its sole blocker by direct row-homogeneity inspection. The
 mechanism fires exactly once on the whole document (p2 band2, borderless, 2 `$` markers
 absorbed, ncols reduced) — that band still fails to tile, for the already-registered §6.3
-detached-header/caption class. Stem 0.9655 / CBH 0.9047 byte-identical; full suite green
-(934 passed, 1 pre-existing environmental failure, 5 skipped) ·
+detached-header/caption class. Stem 0.9655 / CBH 0.9047 byte-identical (re-verified
+2026-08-06, `tests/test_corpus_stem.py`+`tests/test_cbh_e2e.py` 13 passed); full suite
+green pre-wave (934 passed, 1 pre-existing environmental failure, 5 skipped) ·
 **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf` (sha256 `dc0cf747…`, pinned;
 battery id `apple-fy2026q3-statements`; compiles since loop R41 at score 0.0106 — unblocked,
 unread) · **Follows:** `2026-08-05-r41-invalid-split-refusal-design.md` §4's named reading loop,
@@ -59,7 +65,10 @@ new query `vocab/queries/unit-marker-column.rq`:
   lattice datatype for a cell that is exactly one currency symbol, recognized by **B2b's
   already-shipped symbol set `[$€£¥]`** (`celltype._CURRENCY`'s symbol class, reused —
   no new constant), and all of *c*'s non-blank cells are the **same** symbol;
-- column *c+1* carries ≥ 1 non-blank body cell typed `tab:Numeric` or `tab:Currency`.
+- column *c+1* carries, **ON THE SAME ROW as at least one marker glyph**, a non-blank
+  cell typed `tab:Numeric` or `tab:Currency` — the "$ beside its value" shape (final-
+  review fix, I1: an *any-row* neighbor form would let a numeric YEAR HEADER over an
+  all-text body license absorption; tightened to same-row 2026-08-05).
 
 Presence-based: no distance, no count, no tolerance. The typing addition
 (`is_currency_glyph` → `tab:CurrencyGlyph`) is PROCEDURAL raw typing exactly like B2b's
@@ -80,7 +89,10 @@ a ruled `$` column is the author's drawn column and stays).
 marker glyphs' source regions (bbox), so a contract can ground the column's unit later
 and no ink is dropped. A membrane shape (`tab:UnitMarkerShape`: a `hasUnitMarker` fact
 requires its provenance) ships with a conformant example and a negative test, per the
-house rule.
+house rule. On a band that ESCALATES (or is NON_TABLE-ignored) for reasons unrelated to
+its markers, the marker facts attach to the escalation region's candidate node instead
+of a column — no column claim was ever asserted for that band — so the carry holds on
+every verdict path, not only the seven asserted branches (final-review fix, C1).
 
 ## 5. Guards (no overfitting)
 
