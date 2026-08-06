@@ -333,7 +333,6 @@ _FULL_ONT = None
 
 
 def _validate(graph: Graph) -> tuple[bool, str]:
-    from pyshacl import validate
     global _FULL_SHAPES, _FULL_ONT
     if _FULL_SHAPES is None:
         v = _repo_vocab()
@@ -342,9 +341,8 @@ def _validate(graph: Graph) -> tuple[bool, str]:
         s.parse(os.path.join(v, "shapes", "tab-physical-shapes.ttl"), format="turtle")
         _FULL_SHAPES = s
         _FULL_ONT = Graph().parse(os.path.join(v, "ontology", "tab.ttl"), format="turtle")
-    conforms, _, text = validate(graph, shacl_graph=_FULL_SHAPES, ont_graph=_FULL_ONT,
-                                 inference="rdfs", advanced=True)
-    return conforms, text
+    from . import membrane
+    return membrane.validate(graph, _FULL_SHAPES, _FULL_ONT)
 
 
 def compile_tables(pdf_path: str, page_number: int = 0,

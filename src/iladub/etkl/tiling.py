@@ -66,7 +66,6 @@ def region_tiles(graph):
     access, both axes, + header-content conservation + detected-aggregation evidence +
     derived-row-group well-formedness + entry-cell/wrapped-cell physical well-formedness).
     PROCEDURAL glue over the AXIOM shapes."""
-    from pyshacl import validate
-    conforms, _, _ = validate(graph, shacl_graph=_TILING_SHAPES, ont_graph=_ONT,
-                              inference="rdfs", advanced=True)
+    from . import membrane
+    conforms, _ = membrane.validate(graph, _TILING_SHAPES, _ONT)
     return conforms

@@ -46,6 +46,7 @@ baml = [
 etkl = [
     "pdfplumber>=0.11",
     "numpy>=1.26",
+    "owlrl>=6.0",
 ]
 demo = [
     # ET(K)L showcase notebook (no LLM/baml dependency)
@@ -64,6 +65,7 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
     "reportlab>=4.0",
+    "pyrudof==0.3.7",
 ]
 docs = [
     "mkdocs-material>=9.7",
@@ -73,6 +75,9 @@ readers = [
     "openpyxl>=3.1",
     "python-docx>=1.1",
     "beautifulsoup4>=4.12",
+]
+rudof = [
+    "pyrudof==0.3.7",
 ]
 
 [tool.hatch.build.targets.wheel]
