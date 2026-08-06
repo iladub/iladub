@@ -91,6 +91,9 @@ def test_both_closures_agree_on_every_committed_leak(path):
     assert sub_ok is False, (
         f"REGRESSION: subclass-only closure ADMITS {name}, which full closure refuses — "
         f"a shape lost sight of its focus node")
+    assert full_v, (
+        f"{name} produced no violations under full closure — fixture is inert, and "
+        f"full_v == sub_v below would pass vacuously")
     assert full_v == sub_v, (
         f"violation-set divergence on {name} ((constraintComponent, focusNode, resultPath) "
         f"triples): only-full={sorted(full_v - sub_v)} only-sub={sorted(sub_v - full_v)}")

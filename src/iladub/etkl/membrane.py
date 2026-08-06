@@ -44,9 +44,13 @@ def engine_name() -> str:
 def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[bool, str]:
     """(conforms, report_text) for `data_graph` against `shapes_graph`.
 
-    Semantics are exactly today's: RDFS inference over data + ontology, SHACL advanced
-    features on. Callers must not depend on the report's exact wording — it differs by
-    engine; only its content (shape names, focus nodes) is stable.
+    Both engines now validate the SAME subclass-only-closed graph (spec
+    2026-08-06-subclass-only-closure-design.md): the seam expands `data_graph` with
+    `subclass_closure` and hands each engine its own inference turned OFF, so the engine is
+    the only variable — `ILADUB_MEMBRANE=pyshacl` isolates the engine, as intended, rather
+    than also swapping the inference semantics underneath it. SHACL advanced features on.
+    Callers must not depend on the report's exact wording — it differs by engine; only its
+    content (shape names, focus nodes) is stable.
     """
     if engine_name() == "rudof":
         return _validate_rudof(data_graph, shapes_graph, ont_graph)
@@ -54,9 +58,15 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[
 
 
 def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
+    """pySHACL's own inference is OFF (`inference="none"`): the seam supplies the SAME
+    subclass-only closure `_validate_rudof` uses, via `subclass_closure`, so this path no
+    longer materialises domain/range typing either (R19's mechanism — see
+    `subclass_closure`'s docstring). Before this, `_validate_pyshacl` was the ONLY path that
+    still ran full RDFS inference (`inference="rdfs"`), so any install without `pyrudof` (core
+    and `[etkl]` installs both lack it) kept R19 alive under a different name."""
     from pyshacl import validate as _v
-    conforms, _, text = _v(data_graph, shacl_graph=shapes_graph, ont_graph=ont_graph,
-                           inference="rdfs", advanced=True)
+    expanded = subclass_closure(data_graph, ont_graph)
+    conforms, _, text = _v(expanded, shacl_graph=shapes_graph, inference="none", advanced=True)
     return bool(conforms), text
 
 
@@ -185,6 +195,10 @@ def subclass_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
 
     The ontology is READ for its `rdfs:subClassOf` axioms and never mixed in, so no ontology
     node can become a focus node and the validated graph is data plus its type closure.
+    Axioms are sourced from `ont_graph` ONLY: any `rdfs:subClassOf` triple appearing in
+    `data_graph` itself is copied through into the output (it is ordinary data, like any other
+    triple) but is never consulted for materialisation — inert today, since nothing under
+    `src/iladub/` emits `rdfs:subClassOf` into a data graph.
 
     WHAT THIS DELIBERATELY DOES NOT DO (spec 2026-08-06-subclass-only-closure-design.md):
     domain/range typing. A node no longer becomes a `tab:Cell` merely by carrying

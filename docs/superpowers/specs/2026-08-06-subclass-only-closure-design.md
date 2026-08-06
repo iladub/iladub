@@ -120,10 +120,10 @@ of the predecessor loop's engine differential:
 - **Closure timing:** full RDFS closure 1.311 s → subclass-only **0.047 s**.
 
 **§4's "corpus scores byte-identical" criterion was NOT met as written.** Stem and CBH held
-byte-identical; **apple's did not**: **0.0105540897 → 0.0326975477**. Per §2 Step 2's own stop
-condition ("if any score moves, STOP and report BLOCKED — a moved score means the closure
-changed a real verdict, which outranks the speedup"), this was investigated rather than waved
-through.
+byte-identical; **apple's did not**: **0.0105540897 → 0.0326975477**. Per the implementation
+plan's Task 4 Step 2 stop condition (`docs/superpowers/plans/2026-08-06-subclass-only-closure.md`
+— "if any score moves, STOP and report BLOCKED — a moved score means the closure changed a
+real verdict, which outranks the speedup"), this was investigated rather than waved through.
 
 Diagnosis: apple p1's region 4 flipped from `MATRIX_AMBIGUOUS` to **asserted (8 cells)**. Two
 nodes — `mtable4-cc0_2` and `mtable4-cc1_2` — are `iladub:CandidateConcept` instances
@@ -142,3 +142,18 @@ reworded after the fact to match the outcome.
 
 All other §4 criteria held: page-0 below 12.5 s (10.1 s), both batteries green, full suite green
 apart from the known machine-environmental failure, R58 closed, R19 closed at its root.
+
+**Two further divergences between §3's promise and what shipped** (fix-wave final review,
+2026-08-06; recorded here rather than retroactively edited into §3, matching how the apple
+byte-identity failure above is handled). §3 item 1 promised verdict parity "for real compiled
+page graph**s**" (plural); what shipped exercises exactly one —
+`graincorp-stem-2026-07-31.pdf` page 0 — the identical single-page scope R59 already names for
+the engine battery (see the widened R59 residue row). §3 item 2 promised "the set of focus
+nodes **per shape** must be identical between the two closures"; what shipped
+(`tests/etkl/test_closure_equiv.py`'s `_violations`) compares
+`(sourceConstraintComponent, focusNode, resultPath)` triples across the whole shape set, not
+per shape — `sh:sourceShape` blank-node labels are minted fresh per engine/run and are not
+stable across separate `validate()` calls (the same reason `test_membrane_equiv.py`'s
+`_focus_node_sets` avoids comparing `sh:sourceShape`), so a true per-shape comparison was not
+available without a stable shape-identifying property the shapes graph doesn't carry. The
+triple comparison is narrower than promised, not equivalent to it, and is recorded as such.
