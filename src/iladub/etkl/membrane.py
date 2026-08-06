@@ -109,10 +109,12 @@ def _conforms_from_report(report: str) -> bool:
 
 
 def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
-    """rudof does NO inference of its own — rdfs_closure supplies the expanded graph, and
-    its literal-subject filter is what makes the payload parseable by rudof's strict reader."""
+    """rudof does NO inference of its own — the seam now supplies a SUBCLASS-ONLY closure
+    (spec 2026-08-06-subclass-only-closure-design.md), not the old full RDFS closure:
+    domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
+    is what makes the payload parseable by rudof's strict reader."""
     import pyrudof
-    expanded = rdfs_closure(data_graph, ont_graph)
+    expanded = subclass_closure(data_graph, ont_graph)
     r = _rudof_instance(shapes_graph)
     r.reset_data()
     r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
@@ -123,7 +125,13 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
 
 
 def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
-    """A NEW graph: data + ontology axioms, RDFS-expanded, minus every literal-subject triple.
+    """SUPERSEDED for production (spec 2026-08-06-subclass-only-closure-design.md): the seam now
+    calls `subclass_closure`. This function is RETAINED as the reference implementation the
+    closure differential (tests/etkl/test_closure_equiv.py) compares against — it is what
+    pySHACL's `inference="rdfs"` produces, so it is the baseline any claim of "no verdict
+    changed" must be measured against. Not called in production.
+
+    A NEW graph: data + ontology axioms, RDFS-expanded, minus every literal-subject triple.
 
     Reproduces exactly what pySHACL's `inference="rdfs"` does today — subclass closure AND
     domain/range typing (the latter is the R19 mechanism, deliberately preserved here; the

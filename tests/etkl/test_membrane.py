@@ -61,16 +61,21 @@ def test_membrane_catches_a_sparql_constraint_violation():
     assert "cellText" in report or "WrappedCellShape" in report
 
 
-def test_membrane_applies_rdfs_inference():
-    """The R19 mechanism: a node typed tab:Cell ONLY via tab:hasBBox's rdfs:domain must
-    still be validated. This pins that the seam preserves inference="rdfs" semantics."""
+def test_membrane_no_longer_infers_types_from_property_domains():
+    """INVERTED by spec 2026-08-06 (was test_membrane_applies_rdfs_inference).
+
+    A node carrying tab:hasBBox but no explicit type is NO LONGER a tab:Cell, so
+    WrappedCellShape does not fire on it. That inference was the R19 accident — a
+    ROUND_TRIP_FAIL candidate carrying a bbox typed as a Cell and crashing the compile — and
+    dropping it closes R19 at its root. The graph below carries no OTHER violation, so it now
+    conforms."""
     from iladub.etkl import membrane
     g = Graph()
     node, bb = URIRef("urn:m:inf"), URIRef("urn:m:infbb")
-    g.add((node, TAB.hasBBox, bb))          # NO explicit rdf:type
+    g.add((node, TAB.hasBBox, bb))          # no explicit rdf:type
     g.add((bb, RDF.type, TAB.BBox))
     conforms, report = membrane.validate(g, _shapes(), _ont())
-    assert conforms is False, "inference must type the node as tab:Cell and fire WrappedCellShape"
+    assert conforms is True, report
 
 
 def test_engine_name_is_reported():
@@ -91,7 +96,11 @@ def test_call_sites_use_the_seam():
 
 def test_rdfs_closure_materializes_subclass_and_domain_types():
     """Closure must reproduce what inference='rdfs' gives pySHACL today: subclass closure
-    (EntryCell -> Cell, which sh:targetClass needs) AND domain typing (the R19 mechanism)."""
+    (EntryCell -> Cell, which sh:targetClass needs) AND domain typing (the R19 mechanism).
+
+    This pins the RETAINED reference closure (rdfs_closure), not production; production now
+    uses subclass_closure, whose domain-typing behaviour is pinned by
+    test_subclass_closure_drops_domain_typing."""
     from iladub.etkl import membrane
     g = Graph()
     ec, node, bb = URIRef("urn:c:ec"), URIRef("urn:c:n"), URIRef("urn:c:bb")
@@ -200,16 +209,20 @@ def test_rudof_engine_catches_a_sparql_constraint_violation():
 
 
 @needs_rudof
-def test_rudof_engine_sees_inferred_types():
-    """rudof does NO inference of its own — this passes only because the seam runs
-    rdfs_closure first. Pins the R19 mechanism end to end on the new engine."""
+def test_rudof_engine_does_not_see_domain_inferred_types():
+    """INVERTED by spec 2026-08-06 (was test_rudof_engine_sees_inferred_types).
+
+    rudof does NO inference of its own — the seam now runs subclass_closure, not
+    rdfs_closure, so a node carrying tab:hasBBox but no explicit type is NO LONGER typed
+    tab:Cell and WrappedCellShape does not fire. Rudof-path twin of
+    test_membrane_no_longer_infers_types_from_property_domains."""
     from iladub.etkl import membrane
     g = Graph()
     n, bb = URIRef("urn:r:inf"), URIRef("urn:r:infbb")
     g.add((n, TAB.hasBBox, bb))
     g.add((bb, RDF.type, TAB.BBox))
-    ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
-    assert ok_r is False
+    ok_r, report = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_r is True, report
 
 
 @needs_rudof
