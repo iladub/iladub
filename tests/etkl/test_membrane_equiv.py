@@ -110,8 +110,20 @@ def _mutations(g, seed):
 def test_both_engines_catch_every_injected_violation(seed):
     from iladub.etkl import compile_tables
     rep = compile_tables(STEM, page_number=0, validate_shapes=False)
+    # Pin the precondition the coverage below depends on, so a failure points at the
+    # cause (no EntryCells in the compiled page) rather than the symptom (missing kinds).
+    cells = list(rep.graph.subjects(RDF.type, TAB.EntryCell))
+    assert cells, "no tab:EntryCell in the compiled page — mutation legs would be vacuous"
     muts = _mutations(rep.graph, seed)
-    assert muts, "mutation generator produced nothing — the graph shape changed"
+    # A battery that passes while silently exercising only a quarter of its mutations
+    # (e.g. because tab:EntryCell ever went to zero — corpus swap, extraction regression,
+    # changed page_number) manufactures false confidence in the engine swap, which is
+    # worse than no battery. `assert muts` alone is satisfied by the one unconditional
+    # mutation, so pin full coverage explicitly.
+    kinds = {name for name, _ in muts}
+    assert kinds == {"drop-onPage", "blank-cellText", "drop-bbox", "orphan-unit-marker"}, (
+        f"mutation coverage collapsed to {sorted(kinds)} — the graph shape changed "
+        f"(zero tab:EntryCell would silently drop three of the four kinds)")
     for name, m in muts:
         p, r = _both(m)
         assert p is False, f"[{name}] fixture precondition: pySHACL must catch it"
