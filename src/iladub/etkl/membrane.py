@@ -16,8 +16,17 @@ from rdflib import Graph
 
 
 def engine_name() -> str:
-    """The engine this process validates with. `ILADUB_MEMBRANE` selects it."""
-    return os.environ.get("ILADUB_MEMBRANE", "pyshacl")
+    """The engine this process validates with.
+
+    rudof (Rust) is preferred where installed; pySHACL is the fallback AND the escape hatch:
+    `ILADUB_MEMBRANE=pyshacl` re-runs any suspect verdict under the reference engine without
+    a code change. Correctness is established by tests/etkl/test_membrane_equiv.py, not by
+    trust — see spec 2026-08-06 §3.3.
+    """
+    forced = os.environ.get("ILADUB_MEMBRANE")
+    if forced:
+        return forced
+    return "rudof" if rudof_available() else "pyshacl"
 
 
 def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[bool, str]:
