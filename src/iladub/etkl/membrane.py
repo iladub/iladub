@@ -51,15 +51,30 @@ def _rudof_instance(shapes_graph):
     """One instance per process, keyed by the shapes graph's identity — the two call sites
     use DIFFERENT shape sets, so a single cached instance would validate against the wrong
     one. Shapes parsing is 0.02 s; data loading (0.58 s on an 8k-triple page) dominates and
-    is per-call regardless."""
+    is per-call regardless.
+
+    The cache holds a STRONG reference to `shapes_graph` deliberately, compared with `is`:
+    an id()-only key is unsafe because CPython reuses object ids after garbage collection, so
+    a freed shapes graph's address could later be handed to an unrelated Graph, silently
+    matching the stale cache entry and validating against the wrong shape set with no error.
+    That the two production call sites (`compile._FULL_SHAPES`, `tiling._TILING_SHAPES`)
+    happen to hold process-lifetime singletons is not a guarantee a future caller inherits —
+    keeping the graph alive here removes the hazard regardless of caller lifetime."""
     global _RUDOF
     import pyrudof
-    key = id(shapes_graph)
-    if _RUDOF is None or _RUDOF[0] != key:
+    if _RUDOF is None or _RUDOF[0] is not shapes_graph:
         r = pyrudof.Rudof(pyrudof.RudofConfig())
         r.read_shacl(shapes_graph.serialize(format="turtle"), format=pyrudof.ShaclFormat.Turtle)
-        _RUDOF = (key, r)
+        _RUDOF = (shapes_graph, r)
     return _RUDOF[1]
+
+
+def _conforms_from_report(report: str) -> bool:
+    """True only when the serialized SHACL report contains a bare `sh:conforms true`.
+
+    Fails closed: an empty, malformed, or otherwise unparseable report never reads as
+    conformance — it simply doesn't contain the substring, so this returns False."""
+    return "sh:conforms true" in " ".join(report.split())
 
 
 def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
@@ -73,8 +88,7 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     r.validate_shacl(mode=pyrudof.ShaclValidationMode.Native)
     report = str(r.serialize_shacl_validation_results(
         pyrudof.ResultShaclValidationFormat.Turtle))
-    conforms = "sh:conforms true" in " ".join(report.split())
-    return conforms, report
+    return _conforms_from_report(report), report
 
 
 def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:

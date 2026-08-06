@@ -199,3 +199,17 @@ def test_engine_switch_selects_rudof(monkeypatch):
     assert membrane.engine_name() == "rudof"
     monkeypatch.setenv("ILADUB_MEMBRANE", "pyshacl")
     assert membrane.engine_name() == "pyshacl"
+
+
+def test_rudof_unparseable_report_is_not_conformance():
+    """Fail-safe direction, pinned independent of pyrudof being installed: an empty or
+    malformed report must never read as conformance."""
+    from iladub.etkl import membrane
+    assert membrane._conforms_from_report("") is False
+    assert membrane._conforms_from_report("garbage, not turtle at all") is False
+    assert membrane._conforms_from_report(
+        "@prefix sh: <http://www.w3.org/ns/shacl#> .\n_:1 a sh:ValidationReport ;\n"
+        "\tsh:conforms false .\n") is False
+    assert membrane._conforms_from_report(
+        "@prefix sh: <http://www.w3.org/ns/shacl#> .\n_:1 a sh:ValidationReport ;\n"
+        "\tsh:conforms true .\n") is True
