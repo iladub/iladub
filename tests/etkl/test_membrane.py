@@ -123,3 +123,22 @@ def test_rdfs_closure_does_not_mutate_its_input():
     before = len(g)
     membrane.rdfs_closure(g, _ont())
     assert len(g) == before, "rdfs_closure must return a NEW graph"
+
+
+def test_rdfs_closure_injects_only_ontology_axioms():
+    """rdfs_closure must mix the ontology in the way pySHACL's inoculate() does: only
+    RDFS/OWL axioms cross into the merged graph, not arbitrary triples the ontology graph
+    happens to carry. A full graph union would leak the latter into what rudof sees, making
+    the Task 4 engine differential compare two different graphs, not two engines."""
+    from rdflib.namespace import RDFS
+    from iladub.etkl import membrane
+    ont = Graph()
+    sub, sup, thing = URIRef("urn:o:Sub"), URIRef("urn:o:Super"), URIRef("urn:o:thing")
+    ont.add((sub, RDFS.subClassOf, sup))                              # a real RDFS axiom
+    ont.add((thing, URIRef("urn:o:randomPredicate"), Literal("x")))   # NOT an axiom
+    data = Graph()
+    data.add((URIRef("urn:c:d"), RDF.type, sub))
+    out = membrane.rdfs_closure(data, ont)
+    assert (URIRef("urn:c:d"), RDF.type, sup) in out, "axiom's subclass closure missing"
+    assert (thing, URIRef("urn:o:randomPredicate"), Literal("x")) not in out, \
+        "non-axiom ontology triple leaked through — full union, not inoculate()"
