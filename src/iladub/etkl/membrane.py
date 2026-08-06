@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 
 def engine_name() -> str:
@@ -169,4 +169,54 @@ def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
         if isinstance(s, _Literal):
             continue
         out.add((s, p, o))
+    return out
+
+
+def subclass_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
+    """A NEW graph: the data plus its own rdfs:subClassOf type closure. Nothing else.
+
+    The ontology is READ for its `rdfs:subClassOf` axioms and never mixed in, so no ontology
+    node can become a focus node and the validated graph is data plus its type closure.
+
+    WHAT THIS DELIBERATELY DOES NOT DO (spec 2026-08-06-subclass-only-closure-design.md):
+    domain/range typing. A node no longer becomes a `tab:Cell` merely by carrying
+    `tab:hasBBox` — that inference is the R19 accident, and dropping it closes that hazard at
+    its root. Measured on the real stem page: the only typings lost are 2,105 vacuous
+    `rdfs:Resource`, 207 ontology-node types, and 18 `tab:LabelCell` — and NO shape targets
+    `tab:LabelCell`, so no verdict changes. Consequence to know: `sh:class tab:BBox` becomes
+    FALSIFIABLE again, because `tab:hasBBox`'s range no longer types its object regardless
+    (all 586 bbox objects on the real page are explicitly typed, so nothing relied on it).
+
+    The literal-subject filter is an INVARIANT GUARD here, not a repair: no code path in this
+    function can emit a literal-subject triple (unlike owlrl's closure, which emitted 1,533).
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue — a transitive closure over
+    declared axioms. No domain decision, no tuned constant.
+    """
+    from rdflib import Literal as _Literal
+    from rdflib.namespace import RDFS
+
+    supers: dict = {}
+    for a, _, b in ont_graph.triples((None, RDFS.subClassOf, None)):
+        supers.setdefault(a, set()).add(b)
+    changed = True                       # transitive closure over the axioms, computed once
+    while changed:
+        changed = False
+        for a in list(supers):
+            for b in list(supers[a]):
+                for c in supers.get(b, ()):
+                    if c not in supers[a]:
+                        supers[a].add(c)
+                        changed = True
+
+    out = Graph()
+    for s, p, o in data_graph:
+        if isinstance(s, _Literal):
+            continue
+        out.add((s, p, o))
+    for s, _, cls in data_graph.triples((None, RDF.type, None)):
+        if isinstance(s, _Literal):
+            continue
+        for c in supers.get(cls, ()):
+            out.add((s, RDF.type, c))
     return out
