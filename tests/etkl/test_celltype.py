@@ -14,6 +14,60 @@ def _is_numeric(s):
         return False
 
 
+# ---- loop-quantity-typing (fix round 1): independent port of the family/abstain rule ----
+# The predicates below are hand-written from the SPEC's stated rule ("Blank and
+# ParenthesizedNumber take no part in a homogeneity judgement; Numeric and Currency are
+# ONE family") — NOT derived by reading vocab/queries/*.rq or copying its COALESCE/
+# FILTER-NOT-EXISTS idiom. Same discipline as _is_numeric above: an independent
+# reimplementation, so a bug IN the SPARQL idiom (wrong predicate, inverted abstains
+# check, wrong family map) shows up as a genuine mismatch here instead of being
+# replicated on both sides of the comparison.
+def _is_currency(s):
+    t = s.strip()
+    return bool(re.match(r"^-?[$€£¥]\s?-?[\d,]+(\.\d+)?$|^-?[\d,]+(\.\d+)?\s?[$€£¥]$", t))
+
+
+def _is_paren_shaped(s):
+    return bool(re.match(r"^\(\s*-?[\d,]+(\.\d+)?\s*\)$", s.strip()))
+
+
+def _is_blank_shaped(s):
+    t = s.strip()
+    return t == "" or t.lower() == "(blank)" or t == "-"
+
+
+def _abstains(s):
+    """A value that takes no part in a homogeneity judgement: missing (Blank-shaped) or
+    a parenthesized number (footnote-ambiguous, per the spec)."""
+    return _is_blank_shaped(s) or _is_paren_shaped(s)
+
+
+def _is_quantity(s):
+    """Numeric-shaped OR Currency-shaped: the spec's Quantity family, generalising
+    _is_numeric to also admit currency amounts."""
+    return _is_numeric(s) or _is_currency(s)
+
+
+def _ref_type_key(s):
+    """The homogeneity key a non-abstaining value normalises to: 'quantity' for
+    Numeric/Currency-shaped values (one family), else 'text'. Sufficient for these
+    batteries — matches the pre-loop reference's binary numeric-vs-not shape, extended
+    only along the axis this fix covers (Currency joins Numeric's family); no fixture
+    here mixes quantities with dates."""
+    return "quantity" if _is_quantity(s) else "text"
+
+
+def _ref_typed_non_text(vals):
+    """A group of cell values (a row's or column's cells) counts as homogeneous-non-Text
+    iff, after dropping abstaining values, at least one survives and every survivor
+    normalises to the SAME (non-'text') key."""
+    kept = [v for v in vals if not _abstains(v)]
+    if not kept:
+        return False
+    keys = {_ref_type_key(v) for v in kept}
+    return len(keys) == 1 and "text" not in keys
+
+
 def _ref_header_body_split(grid, ncols):
     """grid = list of rows; each row = list of (col, text). Port of headers.header_body_split."""
     for start in range(1, len(grid)):
@@ -50,7 +104,12 @@ def test_header_body_split_matches_reference():
 
 
 def _ref_stub_data_split(grid, ncols):
-    """Port of rowheaders.stub_data_split."""
+    """Port of rowheaders.stub_data_split. The split ROW is still located via
+    _ref_header_body_split (untouched — header-body-split.rq already has its own
+    independent oracle, _ref_hbs in test_derivation_equiv.py). The per-column DATA
+    check (loop-quantity-typing fix round 1) now goes through _ref_typed_non_text —
+    Numeric/Currency are one family and abstaining values (Blank, ParenthesizedNumber-
+    shaped) take no part — instead of the old is_numeric-only check."""
     split = _ref_header_body_split(grid, ncols)
     if split is None:
         return None
@@ -58,7 +117,7 @@ def _ref_stub_data_split(grid, ncols):
     for r in range(split, len(grid)):
         for (c, t) in grid[r]:
             cols[c].append(t)
-    numeric = [bool(cols[i]) and all(_is_numeric(v) for v in cols[i]) for i in range(ncols)]
+    numeric = [_ref_typed_non_text(cols[i]) for i in range(ncols)]
     k = next((i for i in range(ncols) if numeric[i]), None)
     if k is None or k == 0:
         return None
@@ -72,6 +131,23 @@ SD_BATTERY = [
     ("k=0 no stub->None", [[(0, "V1"), (1, "V2")], [(0, "1"), (1, "2")], [(0, "3"), (1, "4")]], 2),
     ("text after data->None", [[(0, "A"), (1, "V"), (2, "Note")], [(0, "a"), (1, "1"), (2, "hi")], [(0, "b"), (1, "2"), (2, "yo")]], 3),
     ("all-text->None", [[(0, "A"), (1, "B")], [(0, "x"), (1, "y")]], 2),
+    # loop-quantity-typing fix round 1 (a): col "Cost" mixes Numeric ("30,739") and
+    # Currency ("$5") body values. Under the OLD raw-type comparison these are two
+    # DISTINCT types, so "Cost" would NOT be a data column, the [1, ncols) suffix
+    # would not be all-data, and this would resolve to None. Under the new Quantity
+    # family both normalise the same way, "Cost" is a data column, and k=1 (col "Reg"
+    # is the only stub).
+    ("currency+numeric mixed data k=1", [[(0, "Reg"), (1, "Yr"), (2, "Cost")], [(0, "N"), (1, "2020"), (2, "$5")], [(0, "S"), (1, "2021"), (2, "30,739")]], 3),
+    # (b): col "Cost" has a genuine ParenthesizedNumber-shaped footnote cell ("(171)")
+    # among otherwise-Numeric body values. The abstaining cell must take NO part —
+    # dropped, the survivors ("5", "6") are still homogeneous, so "Cost" stays a data
+    # column and k=1, exactly as if the footnote cell were absent.
+    ("paren abstains inside data column k=1", [[(0, "Reg"), (1, "Yr"), (2, "Cost")], [(0, "N"), (1, "2020"), (2, "5")], [(0, "S"), (1, "2021"), (2, "(171)")], [(0, "T"), (1, "2022"), (2, "6")]], 3),
+    # (c) control: a genuine Text cell ("oops") in col "Cost" must still break its
+    # data-column-ness — the fix must not have over-broadened the family/abstain rule
+    # to also swallow Text. "Cost" is heterogeneous -> not a data column -> the [1,
+    # ncols) suffix is not all-data -> None, same as the pre-fix behaviour.
+    ("text cell still breaks data column->None", [[(0, "Reg"), (1, "Yr"), (2, "Cost")], [(0, "N"), (1, "2020"), (2, "5")], [(0, "S"), (1, "2021"), (2, "oops")]], 3),
 ]
 
 
@@ -136,23 +212,30 @@ def test_stub_data_split_recall():
 
 
 def _ref_looks_transposed(cells):
+    """loop-quantity-typing fix round 1: row/column homogeneity now goes through
+    _ref_typed_non_text (Numeric+Currency one family, abstaining values dropped first)
+    instead of a bare _is_numeric-only check."""
     rows, cols = {}, {}
     for (r, c, t) in cells:
         if r > 0:
             rows.setdefault(r, {})[c] = t
             cols.setdefault(c, []).append(t)
-    typed_row = any(any(cc >= 1 for cc in rm) and all(_is_numeric(rm[cc]) for cc in rm if cc >= 1) for rm in rows.values())
-    typed_col = any(vals and all(_is_numeric(v) for v in vals) for vals in cols.values())
+    typed_row = any(_ref_typed_non_text([rm[cc] for cc in rm if cc >= 1]) for rm in rows.values())
+    typed_col = any(_ref_typed_non_text(vals) for vals in cols.values())
     return typed_row and not typed_col
 
 
 def _ref_transpose_coherent(cells):
+    """loop-quantity-typing fix round 1: a row is incoherent iff, after dropping
+    abstaining values, its col>=1 cells normalise to MORE THAN ONE key (Numeric and
+    Currency share the 'quantity' key)."""
     rows = {}
     for (r, c, t) in cells:
         if c >= 1:
             rows.setdefault(r, []).append(t)
     for vals in rows.values():
-        if vals and not (all(_is_numeric(v) for v in vals) or all(not _is_numeric(v) for v in vals)):
+        kept = [v for v in vals if not _abstains(v)]
+        if len({_ref_type_key(v) for v in kept}) > 1:
             return False
     return True
 
@@ -176,6 +259,24 @@ ORI_BATTERY = [
     # query returns False on this case; a hand-mutated `?col >= 1` variant of the
     # typed-COLUMN check flips it to True.
     ("numeric-col0-mixed-rows", [(0, 0, "Id"), (0, 1, "A"), (0, 2, "B"), (1, 0, "1"), (1, 1, "10"), (1, 2, "20"), (2, 0, "2"), (2, 1, "x"), (2, 2, "y")]),
+    # loop-quantity-typing fix round 1 (a): col 1 mixes Numeric ("10") and Currency
+    # ("$3") — under the OLD raw-type comparison these are two DISTINCT types, so col 1
+    # would NOT be homogeneous, typed_col would be False, and looks_transposed would
+    # WRONGLY read True (this is the apple-band-4 bug class). Under the new Quantity
+    # family both normalise the same way, col 1 is homogeneous, typed_col is True, and
+    # looks_transposed correctly reads False.
+    ("currency-numeric-family-col-homogeneous", [(0, 0, "Metric"), (0, 1, "Val"), (1, 0, "Rev"), (1, 1, "10"), (2, 0, "Cost"), (2, 1, "$3")]),
+    # (b): col 1 mixes Numeric with a ParenthesizedNumber-shaped footnote cell
+    # ("(171)"). The abstaining cell must take NO part — dropped, it leaves two
+    # Numeric survivors ("10", "30,739"), still homogeneous, so col 1 stays typed and
+    # looks_transposed stays False (the abstaining cell must not manufacture a second
+    # "type" the way it would under naive raw-type comparison).
+    ("paren-abstains-col-still-homogeneous", [(0, 0, "Metric"), (0, 1, "Val"), (1, 0, "Rev"), (1, 1, "10"), (2, 0, "Note"), (2, 1, "(171)"), (3, 0, "Cost"), (3, 1, "30,739")]),
+    # (c) control: a genuine Text cell ("oops") in col 1 must still break homogeneity —
+    # the fix must not have over-broadened the family/abstain rule to also swallow
+    # Text. col 1 heterogeneous -> typed_col False; row 1 (single cell "10") is
+    # trivially typed -> typed_row True -> looks_transposed reads True.
+    ("text-cell-still-breaks-col-homogeneity", [(0, 0, "Metric"), (0, 1, "Val"), (1, 0, "Rev"), (1, 1, "10"), (2, 0, "Cost"), (2, 1, "oops")]),
 ]
 
 
