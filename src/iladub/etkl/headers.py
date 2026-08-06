@@ -82,23 +82,27 @@ def _grid_cells(band, grid):
 
 
 def header_body_split(band: Band, grid: LeafGrid) -> int | None:
-    """First line index at/after which >=1 leaf column is all-numeric.
+    """First line index at/after which >=1 leaf column is homogeneous in a single
+    non-Text datatype FAMILY (tab:inDatatypeFamily — Quantity subsumes Numeric and
+    Currency; Date is its own family), after dropping abstaining cells (tab:Blank,
+    tab:ParenthesizedNumber — tab:datatypeAbstains).
 
     Iterates candidate splits from line 1 onward. A split is accepted when at
-    least one leaf column has exclusively numeric text from that line to the end
+    least one leaf column is family-homogeneous non-Text from that line to the end
     of the band (the label→data transition). Returns None if no such split exists
     (e.g. an all-text table) → caller escalates. R41 (2026-08-05): the AXIOM also
     returns None when every candidate transition lands past the last line (a split
     must leave >=1 body row — see header-body-split.rq's ?maxrow clause), so a
     returned split always satisfies 1 <= split < len(band.lines).
 
-    Design note — numeric-homogeneity as the operative proxy:
-    This function uses numeric-column homogeneity as the intentional operative proxy
-    for the spec's "type-homogeneous" header/body boundary: returns the first line
-    index at/after which at least one leaf column is all-numeric down the remaining
-    lines. This correctly yields None-escalation for all-text tables (no column ever
-    homogenizes to numeric), which is the desired behavior — the caller (or downstream
-    SHACL) handles the ambiguity rather than guessing a boundary.
+    Design note — type-family homogeneity as the operative proxy:
+    This function uses type-family-column homogeneity as the intentional operative
+    proxy for the spec's "type-homogeneous" header/body boundary: returns the first
+    line index at/after which at least one leaf column is homogeneous in a single
+    non-Text family down the remaining lines. This correctly yields None-escalation
+    for all-text tables (no column ever homogenizes to a non-Text family), which is
+    the desired behavior — the caller (or downstream SHACL) handles the ambiguity
+    rather than guessing a boundary.
 
     Declarative derivation (loop B2a): the typed-cell evidence graph + header-body-split.rq.
     """

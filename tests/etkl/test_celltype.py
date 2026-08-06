@@ -48,13 +48,35 @@ def _is_quantity(s):
     return _is_numeric(s) or _is_currency(s)
 
 
+# Independent port of celltype.is_date's shape (not its range validation — that precision
+# is irrelevant to which FAMILY key a value normalises to). tab:Date deliberately stays
+# its own family, disjoint from Quantity (spec §3.2) — the fixture batteries below never
+# mix quantities with dates, so this key never fires against a real assertion today, but a
+# future date-bearing fixture must NOT silently fall into 'text' (M3, final review): a
+# column of nothing but dates IS family-homogeneous non-Text, and _ref_type_key conflating
+# it with plain text would make the reference oracle wrong, not just incomplete.
+_ISO_DATE_SHAPED = re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$")
+_DMY_DATE_SHAPED = re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$")
+_MON_DATE_SHAPED = re.compile(r"^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}$", re.I)
+
+
+def _is_date_shaped(s):
+    t = s.strip()
+    return bool(_ISO_DATE_SHAPED.match(t) or _DMY_DATE_SHAPED.match(t) or _MON_DATE_SHAPED.match(t))
+
+
 def _ref_type_key(s):
     """The homogeneity key a non-abstaining value normalises to: 'quantity' for
-    Numeric/Currency-shaped values (one family), else 'text'. Sufficient for these
-    batteries — matches the pre-loop reference's binary numeric-vs-not shape, extended
-    only along the axis this fix covers (Currency joins Numeric's family); no fixture
-    here mixes quantities with dates."""
-    return "quantity" if _is_quantity(s) else "text"
+    Numeric/Currency-shaped values (one family), 'date' for date-shaped values (its own
+    family — never equal to 'quantity'), else 'text'. The three-way split (M3, final
+    review) matches the vocabulary's actual family lattice rather than the pre-loop
+    reference's binary numeric-vs-not shape, so a date-bearing fixture cannot produce a
+    spurious mismatch against ORI_BATTERY/SD_BATTERY by being conflated with 'text'."""
+    if _is_quantity(s):
+        return "quantity"
+    if _is_date_shaped(s):
+        return "date"
+    return "text"
 
 
 def _ref_typed_non_text(vals):

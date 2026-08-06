@@ -9,6 +9,7 @@ invoked from somewhere; the invocation carries no domain decision.
 """
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -24,7 +25,10 @@ _ISO_DATE = re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$")
 _DMY_DATE = re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$")
 _MON_DATE = re.compile(r"^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}$", re.I)
 _CURRENCY = re.compile(r"^-?[$€£¥]\s?-?[\d,]+(\.\d+)?$|^-?[\d,]+(\.\d+)?\s?[$€£¥]$")
-_PAREN_NUMBER = re.compile(r"^\(\s*-?[\d,]+(\.\d+)?\s*\)$")
+# `\d[\d,]*` (final-review deferred minor) requires >=1 digit, so a comma-only shell
+# ("(,,,)") no longer matches — was `[\d,]+`. _CURRENCY keeps the wider (pre-existing)
+# form; see docs/superpowers/residues.md for that residue.
+_PAREN_NUMBER = re.compile(r"^\(\s*-?\d[\d,]*(\.\d+)?\s*\)$")
 
 
 def is_date(s):
@@ -84,14 +88,27 @@ def _cell_datatype(t):
     return TAB.Text
 
 
+_VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
+_ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle")
+# The homogeneity rules the queries read, READ from vocab/ontology/tab.ttl (the ontology is
+# the published source of truth) rather than hand-duplicated — parsed ONCE at import (the
+# tiling.py caching pattern: _build_tiling_shapes / _TILING_SHAPES), so there is one source,
+# not two, and editing tab.ttl to add e.g. a future Percentage member changes what every band
+# emits without a second edit here. Filtered to exactly the two predicates the queries read;
+# datatype-declaration triples elsewhere in tab.ttl (rdf:type, rdfs:label, ...) are irrelevant.
+_DATATYPE_DECLARATIONS = tuple(
+    (s, p, o) for s, p, o in _ONT if p in (TAB.datatypeAbstains, TAB.inDatatypeFamily)
+)
+
+
 def _emit_datatype_declarations(g):
     """The homogeneity rules the queries read. Emitted into every evidence graph because that
     graph is transient and carries no ontology — without these the normalisations silently
-    no-op. Mirrors vocab/ontology/tab.ttl; the ontology is the published source of truth."""
-    g.add((TAB.Blank, TAB.datatypeAbstains, Literal(True)))
-    g.add((TAB.ParenthesizedNumber, TAB.datatypeAbstains, Literal(True)))
-    g.add((TAB.Numeric, TAB.inDatatypeFamily, TAB.Quantity))
-    g.add((TAB.Currency, TAB.inDatatypeFamily, TAB.Quantity))
+    no-op. READS the triples cached in _DATATYPE_DECLARATIONS (parsed once from
+    vocab/ontology/tab.ttl at import) rather than repeating them, so the mirror cannot drift
+    silently (I1, final review)."""
+    for t in _DATATYPE_DECLARATIONS:
+        g.add(t)
 
 
 def grid_evidence(cells, ncols):

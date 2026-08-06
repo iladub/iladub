@@ -168,6 +168,11 @@ def test_paren_cells_do_not_break_row_homogeneity():
     g_plain = celltype.grid_evidence(plain_cells, 5)
     verdict_with_parens = celltype.run_ask(q, g_paren)
     verdict_plain = celltype.run_ask(q, g_plain)
+    assert verdict_plain is True, (
+        "fixture regression: the plain-numeric verdict must be True (traced by the "
+        "reviewer) — otherwise the equality assertion below would pass vacuously with "
+        "both verdicts False"
+    )
     assert verdict_with_parens == verdict_plain, (
         f"paren cells changed the looks-transposed verdict ({verdict_with_parens} vs "
         f"{verdict_plain}) — they did not genuinely abstain"

@@ -17,6 +17,13 @@ derivation, closure, membrane) together: **45 passed in 386.18 s**. Full suite: 
 PATH hits this machine's broken Xcode git shim; no branch commit touches that test; green in
 CI). §6's success criteria are all met on these numbers.
 
+**Coverage gap, named explicitly (final review, 2026-08-06):** the corpus-level evidence in
+§5 item 1 is narrower than this section originally claimed — it pins page 0 only, of four of
+the seven fetched corpus documents (WHO, BFS, ONS are unseen), and covers only four of the
+five queries; `stub-data-split` and `unit-marker-column` have synthetic-only coverage (no
+corpus-level differential). Same shape as R59; see §5 item 1 and R59 in
+`docs/superpowers/residues.md`.
+
 **The cross-loop finding, the most interesting thing this loop learned:** the full suite caught
 loop R41's `test_axiom_refuses_past_the_end_split` failing. Diagnosed, not assumed: R41's
 `$`-sandwich fixture typed `[Currency, Numeric, Numeric, Numeric, Numeric, Currency]`, and its
@@ -33,8 +40,12 @@ predicted, in a good direction: a defect this spec never named was resolved as a
 correctly modelling the domain.
 
 **Doc impact:** increment — two new owned `tab:` lattice members plus a datatype-family
-vocabulary; a wiki note on quantity typing queues for the next release. No site page
-contradicted.
+vocabulary. Per CLAUDE.md's documentation-governance rule, this belongs as a **wiki note**
+(committed synthesis, never published) rather than a site page — corrected at final review
+(2026-08-06): a wiki increment is committed directly, it does not "queue for the next
+release" the way a site increment does (only site increments queue; wiki pages are not
+gated by `scripts/release_gate.py`). No site page contradicted, so nothing here blocks a
+release tag.
 
 ## 1. The question
 
@@ -126,9 +137,18 @@ Simulated end-to-end (paren → wildcard, Currency → Numeric) on every fetched
 
 ## 5. The evidence
 
-1. **Typing differential** — old lattice versus new, comparing each of the five queries'
-   verdicts over every corpus document's compiled page graphs. The direct analogue of this
-   repo's closure and engine differentials.
+1. **Typing differential** — old lattice versus new, comparing verdicts over corpus
+   documents' compiled page graphs. **Corrected at final review (2026-08-06) to describe
+   what actually shipped, not the original intent:** `tests/etkl/test_typing_equiv.py` pins
+   a recorded baseline over **four** band-level judgements (`header_body_split`,
+   `looks_transposed`, `transpose_is_coherent`, plus band `kind`) — not all five queries —
+   on **page 0 only**, of **four of seven** fetched corpus documents (stem, CBH, capacity,
+   apple; WHO, BFS, ONS are absent from `DOCS`). `stub-data-split` and `unit-marker-column`
+   have no corpus-level coverage at all — both are exercised only by synthetic fixtures
+   (`tests/etkl/test_celltype.py`, `tests/etkl/test_unit_marker.py`). This is the same shape
+   of gap as R59 (a positive leg narrower than the claim describing it) — see R59 in
+   `docs/superpowers/residues.md`; it is not independently re-registered there because the
+   gap is named here, at the point the coverage claim is made, rather than deferred.
 2. **Recall/precision battery for the paren grammar**, which R55's own register row mandates
    before the grammar is trusted to flip any homogeneity verdict: footnote `(1)`;
    non-numeric parentheticals (`(see p.250)`, `(cont'd)`, `(a)`, `(i)`); the existing

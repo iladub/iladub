@@ -1,8 +1,13 @@
 # unit-marker-column.rq — the accounting currency-marker column (AXIOM, open world).
 # A grid column ?col is a UNIT MARKER for its right neighbor iff:
 #   (1) it has >=1 tab:CurrencyGlyph cell, and every non-Blank cell in it is a
-#       CurrencyGlyph carrying the SAME symbol text (Blank cells are wildcards,
-#       the split query's convention);
+#       CurrencyGlyph carrying the SAME symbol text (Blank cells are wildcards
+#       here, but this OWN-COLUMN purity check deliberately does NOT extend the
+#       wildcard to tab:ParenthesizedNumber the way the split/homogeneity queries'
+#       datatypeAbstains normalisation does: this asks "is anything ELSE present
+#       in the column?", not "what type is the column?", and a parenthesized
+#       number is a present, real value that genuinely disqualifies a marker
+#       column — R63, ruled 2026-08-06, not an oversight);
 #   (2) SAME-ROW form (final-review fix, I1): there exists at least one row ?r such
 #       that column ?col carries a CurrencyGlyph AT THAT ROW, and the right neighbor
 #       column (?col + 1) carries a non-blank Numeric or Currency cell ON THE SAME
