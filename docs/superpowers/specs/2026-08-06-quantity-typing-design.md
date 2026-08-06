@@ -1,10 +1,36 @@
 # Quantity typing — when two lexical forms of a number are the same type — design
 
-**Date:** 2026-08-06 · **Status:** approved (François, 2026-08-06) ·
+**Date:** 2026-08-06 · **Status:** closed 2026-08-06 ·
 **Discharges:** R55 (parenthesized accounting negatives) **and** the unit-marker spec's §6.1
 (the `$ 45,781`-mixed-with-`45,781` homogeneity question) — measured to be one loop, not two
 (§2) · **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf` page 0, band 4
 (`Operating income … Net income`)
+
+**Close-out (2026-08-06), measured, not simulated:** apple page 0 **0.0000 → 0.1170**, band 4
+asserted with **20 cells** exactly as simulated in §4; apple whole document
+**0.0326975477 → 0.0606860158**. Byte-identity gate all held (`tests/test_corpus_stem.py` +
+`tests/test_cbh_e2e.py`: **13 passed in 248.79 s** — stem 0.9655 / 2152 cells / chain [3], CBH
+0.9047; capacity **1.0000000000**; WHO **0.5597484277**). All four batteries (typing,
+derivation, closure, membrane) together: **45 passed in 386.18 s**. Full suite: **1011 passed,
+1 failed, 5 skipped, 1328.48 s** — the one failure is the known machine-environmental
+`tests/test_release_gate.py::test_since_date_fallback_and_previous_tag` (bare env dict without
+PATH hits this machine's broken Xcode git shim; no branch commit touches that test; green in
+CI). §6's success criteria are all met on these numbers.
+
+**The cross-loop finding, the most interesting thing this loop learned:** the full suite caught
+loop R41's `test_axiom_refuses_past_the_end_split` failing. Diagnosed, not assumed: R41's
+`$`-sandwich fixture typed `[Currency, Numeric, Numeric, Numeric, Numeric, Currency]`, and its
+past-the-end split existed **because** Currency and Numeric were different types (modal
+Numeric, last row a Currency mismatch → `s_col = len(rows)`). The `tab:Quantity` family this
+loop shipped makes that column homogeneous, so `s_col = 1` — a correct in-range split. **This
+loop dissolved R41's failure mode at its source.** R41's invariant (`?s_col <= ?maxrow`) is
+untouched; only its fixture stopped exercising it. Fixed by renaming the sandwich test to
+record the change honestly and adding a replacement `test_axiom_refuses_past_the_end_split` on
+a `tab:Date`-terminated shape — verified empirically by both implementer and reviewer to return
+`None` with the `?maxrow` guard and `7` with it stripped, proving it exercises that clause and
+not some other refusal path. This is evidence the change reached further than this spec
+predicted, in a good direction: a defect this spec never named was resolved as a side effect of
+correctly modelling the domain.
 
 **Doc impact:** increment — two new owned `tab:` lattice members plus a datatype-family
 vocabulary; a wiki note on quantity typing queues for the next release. No site page
