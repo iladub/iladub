@@ -8,18 +8,20 @@
 # HONEST REMAINDER: an INTERIOR off-type non-Blank footer still shifts the split within
 # range — an in-range-but-wrong split is a reading-quality question, not a crash; see Loop B/C.)
 # Per column:
-# D = the MODAL (dominant) non-Blank cellDatatype
+# D = the MODAL (dominant) non-abstaining NORMALISED cellDatatype (tab:inDatatypeFamily; e.g.
+# Numeric/Currency both normalise to tab:Quantity)
 # computed OVER ROWS BELOW THE FIRST (row>=1) — a group-count argmax that answers "what type is the
 # body?" so the single label row (row 0) cannot out-vote the body. SCOPE/HONESTY: row>=1 excludes
 # only row 0 from the mode; a header that WRAPS across rows 1,2,... still votes, so a multi-row
 # wrapped Text header over few data rows can still be mis-typed Text -> the column is excluded ->
 # split escalates. Robust multi-row-wrapped-header recovery is a deferred later loop (Loop B), not
-# claimed here. A DATA column has D != tab:Text and >=1 non-Blank body cell (row>=1). tab:Blank
-# cells are WILDCARDS — excluded from the mode and never a mismatch. The
+# claimed here. A DATA column has D != tab:Text and >=1 non-abstaining body cell (row>=1).
+# Abstaining datatypes (tab:datatypeAbstains — Blank and ParenthesizedNumber) are WILDCARDS —
+# excluded from the mode and never a mismatch. The
 # mismatch/diff scan below, by contrast, spans ALL rows (incl. row 0) — that is how the header
 # boundary is located: for a data column,
-#   s_col = MAX(row of a non-Blank cell whose type != D, over ALL rows) + 1   (the label->data
-#           transition),
+#   s_col = MAX(row of a non-abstaining cell whose NORMALISED type != D, over ALL rows) + 1  (the
+#           label->data transition),
 #         = 1                                                                  if homogeneous in D.
 # split = MIN(s_col). Empty result -> None (all-text -> caller escalates; unchanged).
 # Replaces the v1 BOTTOM-cell reference (corrupted by total/footer rows) + no missing-value notion.
@@ -29,33 +31,42 @@ PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?s_col) AS ?split) WHERE {
   {
     SELECT ?col ?D (MAX(?diffrow) AS ?maxdiff) (MAX(?bodyrow) AS ?maxbody) WHERE {
-      # D = modal non-Blank datatype for ?col, over rows below the first (row>=1) — argmax of
-      # per-type counts, so the single label row (row 0) cannot out-vote the body. (A header that
-      # wraps into rows 1,2,... is NOT excluded here — that is deferred Loop B, see the header note.)
+      # D = modal non-abstaining NORMALISED datatype for ?col, over rows below the first (row>=1)
+      # — argmax of per-type counts, so the single label row (row 0) cannot out-vote the body.
+      # (A header that wraps into rows 1,2,... is NOT excluded here — that is deferred Loop B,
+      # see the header note.)
       {
         SELECT ?col ?D WHERE {
           { SELECT ?col ?D (COUNT(*) AS ?n) WHERE {
-              ?c tab:atGridColumn ?col ; tab:cellDatatype ?D ; tab:atGridRow ?cr .
-              FILTER(?D != tab:Blank && ?cr >= 1)
+              ?c tab:atGridColumn ?col ; tab:cellDatatype ?Draw ; tab:atGridRow ?cr .
+              FILTER NOT EXISTS { ?Draw tab:datatypeAbstains true }
+              OPTIONAL { ?Draw tab:inDatatypeFamily ?Dfam }
+              BIND(COALESCE(?Dfam, ?Draw) AS ?D)
+              FILTER(?cr >= 1)
           } GROUP BY ?col ?D }
           { SELECT ?col (MAX(?n2) AS ?maxn) WHERE {
               { SELECT ?col ?d2 (COUNT(*) AS ?n2) WHERE {
-                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2 ; tab:atGridRow ?cr2 .
-                  FILTER(?d2 != tab:Blank && ?cr2 >= 1)
+                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2raw ; tab:atGridRow ?cr2 .
+                  FILTER NOT EXISTS { ?d2raw tab:datatypeAbstains true }
+                  OPTIONAL { ?d2raw tab:inDatatypeFamily ?d2fam }
+                  BIND(COALESCE(?d2fam, ?d2raw) AS ?d2)
+                  FILTER(?cr2 >= 1)
               } GROUP BY ?col ?d2 }
           } GROUP BY ?col }
           FILTER(?n = ?maxn)
         }
       }
       FILTER(?D != tab:Text)
-      ?cell tab:atGridColumn ?col ; tab:atGridRow ?crow ; tab:cellDatatype ?ct .
-      FILTER(?ct != tab:Blank)                       # Blank cells are wildcards
+      ?cell tab:atGridColumn ?col ; tab:atGridRow ?crow ; tab:cellDatatype ?ctraw .
+      FILTER NOT EXISTS { ?ctraw tab:datatypeAbstains true }   # abstaining cells are wildcards
+      OPTIONAL { ?ctraw tab:inDatatypeFamily ?ctfam }
+      BIND(COALESCE(?ctfam, ?ctraw) AS ?ct)
       BIND(IF(?ct != ?D, ?crow, -1) AS ?diffrow)
       BIND(IF(?crow >= 1, ?crow, -1) AS ?bodyrow)
     } GROUP BY ?col ?D
   }
   { SELECT (MAX(?anyrow) AS ?maxrow) WHERE { ?anycell tab:atGridRow ?anyrow } }
   BIND(IF(?maxdiff >= 0, ?maxdiff + 1, 1) AS ?s_cand)
-  BIND(IF(?maxbody >= 1, ?s_cand, -1) AS ?s_col)     # -1 => no non-Blank body cell, excluded
+  BIND(IF(?maxbody >= 1, ?s_cand, -1) AS ?s_col)     # -1 => no non-abstaining body cell, excluded
   FILTER(?s_col >= 1 && ?s_col <= ?maxrow)           # R41: a split must leave >=1 body row
 }

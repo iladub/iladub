@@ -24,11 +24,13 @@ def looks_transposed(region) -> bool:
     """True iff the region's body has a type-homogeneous structured ROW but no
     type-homogeneous structured COLUMN — the transposition signature.
 
-    A body row is "structured" when its value cells (columns >= 1) are homogeneous
-    in a single non-Text type (Numeric, Date, or Currency). Conservative and keyed
-    on structured (non-Text) typing: plain text is symmetric (both axes carry
-    labels) and ignored, so an all-text table is never flagged, and a normal
-    structured table (which has a typed column by definition) is never flagged.
+    A body row is "structured" when its value cells (columns >= 1), after dropping
+    abstaining cells (tab:Blank, tab:ParenthesizedNumber — tab:datatypeAbstains),
+    are homogeneous in a single non-Text type FAMILY (tab:inDatatypeFamily: Quantity
+    — Numeric or Currency — or Date). Conservative and keyed on structured (non-Text)
+    typing: plain text is symmetric (both axes carry labels) and ignored, so an
+    all-text table is never flagged, and a normal structured table (which has a
+    typed column by definition) is never flagged.
     """
     from . import celltype
     g = celltype.grid_evidence(_region_cells(region), _ncols(region))
@@ -42,9 +44,12 @@ def transpose_is_coherent(region) -> bool:
     row is a single-typed field. The second oracle of the compile gate:
     `looks_transposed` detects, `transpose_is_coherent` decides whether to compile.
 
-    Type-exact: each value row's cells must share a single concrete type (Numeric,
-    Date, or Currency) — a row mixing, say, a Date cell and a Currency cell is
-    incoherent, not just "all structured vs. all not". A coincidentally-flagged
+    Type-exact: each value row's non-abstaining cells (tab:Blank and
+    tab:ParenthesizedNumber take no part, tab:datatypeAbstains) must share a
+    single type FAMILY (tab:inDatatypeFamily: Quantity — Numeric or Currency — or
+    Date) — a row mixing, say, a Date cell and a Currency cell is incoherent, not
+    just "all structured vs. all not"; a row mixing a Numeric cell and a Currency
+    cell IS coherent, both being Quantity. A coincidentally-flagged
     upright record table has rows that mix a text label, a number and a unit, so at
     least one row is not homogeneous and this returns False — the region is then
     escalated (detect-and-escalate stays the floor), never compiled into an

@@ -204,7 +204,7 @@ tab:atGridRow a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd
 tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid column"@en .
 tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
-    rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop."@en .
+    rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop. loop-quantity-typing adds tab:ParenthesizedNumber (a datatype that ABSTAINS from homogeneity judgements, via tab:datatypeAbstains) and the tab:CellDatatypeFamily grouping (via tab:inDatatypeFamily) that normalises tab:Numeric and tab:Currency into tab:Quantity."@en .
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;
     rdfs:comment "A genuinely-missing cell: empty, the self-declaring '(blank)', or a lone '-'. Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation."@en .
 tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
@@ -216,6 +216,28 @@ tab:CurrencyGlyph a tab:CellDatatype ; rdfs:label "Currency glyph"@en ;
 tab:cellDatatype a owl:ObjectProperty ; rdfs:domain tab:GridCell ; rdfs:range tab:CellDatatype ; rdfs:label "cell datatype"@en .
 tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "column index"@en ;
     rdfs:comment "A grid column marker (0..ncols-1) so empty columns are visible to the stub/data derivation."@en .
+
+tab:ParenthesizedNumber a tab:CellDatatype ; rdfs:label "Parenthesized number"@en ;
+    tab:datatypeAbstains true ;
+    rdfs:comment "A number in parentheses — US accounting notation for a negative. FORMAT-IDENTICAL to a footnote marker ('(1)'), which no grammar can separate from a one-digit negative, so this datatype ABSTAINS from every homogeneity judgement exactly as tab:Blank does: it never votes in a modal computation and never counts as a mismatch. Separating the two readings would need context, not format, and guessing would need a digit-count threshold the neurosymbolic gate forbids. Measured on apple-fy2026q3: 34 negative-shaped cells, 3 footnote-shaped, all footnotes exactly '(1)'."@en .
+
+tab:CellDatatypeFamily a owl:Class ; rdfs:label "Cell datatype family"@en ;
+    rdfs:comment "A group of cell datatypes that count as THE SAME TYPE for homogeneity purposes. The grouping is declared here rather than repeated inside each query, so the rule is published with the ontology and a new member is one triple rather than five query edits."@en .
+
+tab:Quantity a tab:CellDatatypeFamily ; rdfs:label "Quantity"@en ;
+    rdfs:comment "Numbers and currency amounts. '$ 45,781' and '45,781' are the same kind of thing: the currency symbol is a UNIT MARKER rendered on some rows only (a reading this vocabulary already carries as tab:UnitMarker), not a different datatype. tab:Date deliberately stays outside — a date column is not a quantity column."@en .
+
+tab:inDatatypeFamily a owl:ObjectProperty ; rdfs:label "in datatype family"@en ;
+    rdfs:domain tab:CellDatatype ; rdfs:range tab:CellDatatypeFamily ;
+    rdfs:comment "The homogeneity family a cell datatype normalises to. Queries compare families, not raw datatypes."@en .
+
+tab:datatypeAbstains a owl:DatatypeProperty ; rdfs:label "datatype abstains"@en ;
+    rdfs:domain tab:CellDatatype ; rdfs:range xsd:boolean ;
+    rdfs:comment "True for a datatype whose cells take no part in a homogeneity judgement — neither voting nor mismatching. tab:Blank abstains because the cell is missing; tab:ParenthesizedNumber abstains because its form is genuinely ambiguous."@en .
+
+tab:Numeric  tab:inDatatypeFamily tab:Quantity .
+tab:Currency tab:inDatatypeFamily tab:Quantity .
+tab:Blank    tab:datatypeAbstains true .
 
 # --- band-classification evidence graph (transient, pre-holon; loop B2c) ---
 tab:ClassifyBand a owl:Class ; rdfs:label "Classify band"@en ;

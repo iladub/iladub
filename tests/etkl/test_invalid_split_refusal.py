@@ -31,11 +31,60 @@ def _split(cells, ncols):
     return celltype.run_scalar(HBS, celltype.grid_evidence(cells, ncols))
 
 
+PAST_END_CELLS = [(0, 0, "(1) Net sales by reportable segment:")] + [
+    (r, 0, t) for r, t in enumerate(
+        ["Americas", "Europe", "Greater China", "Japan", "Rest of Asia Pacific",
+         "Total net sales"], 1)
+] + [
+    (1, 1, "45,781"), (2, 1, "29,395"), (3, 1, "18,816"),
+    (4, 1, "6,554"), (5, 1, "8,871"), (6, 1, "2020-01-02"),
+]
+
+# Single-column minimal form of PAST_END_CELLS (mirrors SANDWICH_ONE_COL).
+PAST_END_ONE_COL = [
+    (0, 0, "Qty"), (1, 0, "45,781"), (2, 0, "29,395"), (3, 0, "18,816"),
+    (4, 0, "6,554"), (5, 0, "8,871"), (6, 0, "2020-01-02"),
+]
+
+
+def test_currency_sandwich_no_longer_produces_a_past_the_end_split():
+    """R41 (this test's former name/body) pinned that a $-sandwiched numeric column
+    (first and last body rows Currency, interior Numeric) produced a past-the-end
+    split candidate, refused by the ?maxrow clause: Currency and Numeric were
+    DIFFERENT raw tab:cellDatatype values, so the modal type (Numeric, 4 interior
+    rows) mismatched the first/last Currency rows, and the LAST mismatch (row 6 of a
+    7-row grid) drove s_col = 7 — one past the last row.
+
+    loop-quantity-typing (2026-08-06, docs/superpowers/specs/2026-08-06-quantity-typing-
+    design.md) unifies tab:Currency and tab:Numeric under tab:inDatatypeFamily
+    tab:Quantity, and header-body-split.rq now votes/mismatches on the NORMALISED
+    family, not the raw type. SANDWICH_CELLS/SANDWICH_ONE_COL are therefore now
+    HOMOGENEOUS quantity columns — no mismatch anywhere — so s_col = 1, an ordinary
+    in-range split. The shape no longer exercises R41's invariant (the ?maxrow guard
+    against a split that would leave zero body rows); that invariant is now pinned by
+    test_axiom_refuses_past_the_end_split below, using a shape the Quantity family
+    does NOT dissolve (a genuinely different, non-family, non-abstaining type on the
+    last row)."""
+    assert _split(SANDWICH_CELLS, 2) == 1
+    assert _split(SANDWICH_ONE_COL, 1) == 1
+
+
 def test_axiom_refuses_past_the_end_split():
-    # A split at row 7 of a 7-row grid leaves zero body rows: not a label->data
-    # transition, refused (None -> caller falls back / escalates). Pre-fix: returns 7.
-    assert _split(SANDWICH_CELLS, 2) is None
-    assert _split(SANDWICH_ONE_COL, 1) is None
+    # R41's invariant, re-pinned post-quantity-typing (see the docstring above): a
+    # split must leave >=1 body row. PAST_END_CELLS/PAST_END_ONE_COL keep the SAME
+    # mechanism R41 exercised (modal-type-of-the-body vs. a mismatched LAST row
+    # driving s_col = len(rows)) but with a last-row type the Quantity family does
+    # NOT unify with Numeric: tab:Date ("2020-01-02"), a genuinely different,
+    # non-abstaining, non-family type. Interior body rows 1-5 are plain Numeric (5
+    # votes) so the modal type D = Numeric; row 6's Date mismatches D, giving
+    # s_col = 6 + 1 = 7 on a 7-row (0..6) grid -- one past the last row, refused by
+    # the ?maxrow clause exactly as R41 pinned. Verified empirically (measured
+    # 2026-08-06): WITH the ?maxrow guard both fixtures return None; mechanically
+    # removing the guard (`FILTER(?s_col >= 1 && ?s_col <= ?maxrow)` ->
+    # `FILTER(?s_col >= 1)`) makes both return 7 -- confirming this shape genuinely
+    # drives the clause under test, not some other refusal path.
+    assert _split(PAST_END_CELLS, 2) is None
+    assert _split(PAST_END_ONE_COL, 1) is None
 
 
 def test_split_still_derived_when_another_column_transitions():

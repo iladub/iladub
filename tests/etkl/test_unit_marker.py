@@ -60,9 +60,41 @@ def test_column_with_any_non_symbol_cell_is_refused():
 
 
 def test_blank_cells_do_not_disqualify():
-    # Blanks are wildcards, exactly as in the split query's Blank convention.
+    # Blanks are wildcards in the marker column's own-column purity check. This is
+    # NARROWER than the split/homogeneity queries' datatypeAbstains normalisation
+    # (which also treats tab:ParenthesizedNumber as taking no part): here the
+    # question is "is anything ELSE present in the column?", and a parenthesized
+    # number IS a present value — see test_paren_number_inside_marker_column_
+    # breaks_purity below, R63 (ruled 2026-08-06).
     cells = APPLE_SHAPE + [(2, 1, "-")]
     assert derive_marker_columns(cells, 3) == ((1, "$"),)
+
+
+def test_paren_number_inside_marker_column_breaks_purity():
+    # I2(c), final review: a tab:ParenthesizedNumber cell is a PRESENT value, unlike
+    # tab:Blank — it makes the candidate marker column impure and refuses absorption,
+    # even though the split/homogeneity queries would treat it as an abstainer. Pins
+    # R63's deliberate asymmetry as a test, not just a comment.
+    cells = APPLE_SHAPE + [(2, 1, "(171)")]
+    assert derive_marker_columns(cells, 3) == ()
+
+
+def test_currency_neighbor_family_path_is_derived():
+    # I2(a), final review: the neighbor is tab:Currency ("$5"/"$6"), not tab:Numeric.
+    # This is the family path added by loop-quantity-typing (tab:inDatatypeFamily
+    # normalises Currency and Numeric to tab:Quantity) — deleting the
+    # TAB.Currency -> TAB.Quantity emitter triple would leave every OTHER
+    # unit-marker test passing while this path silently died.
+    cells = [(0, 0, "x"), (1, 1, "$"), (1, 2, "$5"), (2, 1, "$"), (2, 2, "$6")]
+    assert derive_marker_columns(cells, 3) == ((1, "$"),)
+
+
+def test_paren_neighbor_never_derives():
+    # I2(b), final review: the neighbor is tab:ParenthesizedNumber ("(171)"/"(172)"),
+    # which ABSTAINS (tab:datatypeAbstains) and so never satisfies the query's
+    # `?tn = tab:Quantity` neighbor check — the marker must NOT be derived.
+    cells = [(0, 0, "x"), (1, 1, "$"), (1, 2, "(171)"), (2, 1, "$"), (2, 2, "(172)")]
+    assert derive_marker_columns(cells, 3) == ()
 
 
 def test_two_marker_columns_both_derive():
