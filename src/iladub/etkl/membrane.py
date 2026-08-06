@@ -120,14 +120,28 @@ def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
     is a Literal (`"307.47"^^xsd:decimal rdf:type rdfs:Resource`), which is illegal RDF.
     rdflib tolerates them; a strict parser rejects the whole graph. They are semantically
     vacuous, so dropping them changes no verdict.
+
+    The RDFS semantics class is pySHACL's own `CustomRDFSSemantics`, NOT plain
+    `owlrl.RDFS_Semantics`. Plain `RDFS_Semantics` runs owlrl's `one_time_rules()`, which
+    does literal VALUE-SPACE unification and fabricates triples: measured on the
+    test_row_groups fixture, a cell with `tab:onPage "0"^^xsd:integer` came out of closure
+    ALSO carrying a fabricated `"0.0"^^xsd:decimal` twin, invented from an unrelated
+    xsd:decimal elsewhere in the graph because 0 and 0.0 are the same value. That fabricated
+    literal then fails `sh:datatype xsd:integer` — rudof would refuse a graph pySHACL admits.
+    pySHACL avoids this itself (`pyshacl/inference/custom_rdfs_closure.py`: `CustomRDFSSemantics`
+    overrides `one_time_rules()` to a no-op, with the docstring "These rules usually add
+    'hidden' literals to the graph in such a way that breaks some SHACL validation tests").
+    We reuse pySHACL's own class rather than re-suppressing the rule by hand, for the same
+    reason as the `inoculate` mix-in above: the two engines must validate the same graph.
     """
+    from pyshacl.inference.custom_rdfs_closure import CustomRDFSSemantics
     from pyshacl.rdfutil.inoculate import inoculate
     from rdflib import Literal as _Literal
     import owlrl
     merged = Graph()
     merged += data_graph
     inoculate(merged, ont_graph)
-    owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(merged)
+    owlrl.DeductiveClosure(CustomRDFSSemantics).expand(merged)
     out = Graph()
     for s, p, o in merged:
         if isinstance(s, _Literal):

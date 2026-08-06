@@ -144,6 +144,26 @@ def test_rdfs_closure_injects_only_ontology_axioms():
         "non-axiom ontology triple leaked through — full union, not inoculate()"
 
 
+def test_rdfs_closure_does_not_fabricate_hidden_literals():
+    """Plain owlrl.RDFS_Semantics runs one_time_rules(), which does literal VALUE-SPACE
+    unification and fabricates triples: measured on the test_row_groups fixture, a cell with
+    tab:onPage "0"^^xsd:integer came out of closure ALSO carrying "0.0"^^xsd:decimal, invented
+    from an unrelated xsd:decimal elsewhere in the graph because 0 and 0.0 are the same value.
+    pySHACL avoids this by suppressing one_time_rules (CustomRDFSSemantics) — rdfs_closure
+    must do the same, or rudof rejects graphs pySHACL admits (sh:datatype violated by the
+    fabricated twin)."""
+    from rdflib.namespace import XSD
+    from iladub.etkl import membrane
+    g = Graph()
+    cell, other = URIRef("urn:c:cell"), URIRef("urn:c:other")
+    g.add((cell, TAB.onPage, Literal(0, datatype=XSD.integer)))
+    g.add((other, TAB.y0, Literal(0.0, datatype=XSD.decimal)))
+    out = membrane.rdfs_closure(g, _ont())
+    values = list(out.objects(cell, TAB.onPage))
+    assert len(values) == 1, f"onPage gained fabricated twin(s): {values}"
+    assert values[0].datatype == XSD.integer, f"onPage datatype corrupted: {values[0].datatype}"
+
+
 # ---------------------------------------------------------------- rudof engine
 
 import pytest
