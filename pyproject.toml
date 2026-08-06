@@ -75,6 +75,9 @@ readers = [
     "python-docx>=1.1",
     "beautifulsoup4>=4.12",
 ]
+rudof = [
+    "pyrudof==0.3.7",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/iladub"]

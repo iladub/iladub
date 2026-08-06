@@ -27,6 +27,8 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[
     features on. Callers must not depend on the report's exact wording — it differs by
     engine; only its content (shape names, focus nodes) is stable.
     """
+    if engine_name() == "rudof" and rudof_available():
+        return _validate_rudof(data_graph, shapes_graph, ont_graph)
     return _validate_pyshacl(data_graph, shapes_graph, ont_graph)
 
 
@@ -35,6 +37,44 @@ def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     conforms, _, text = _v(data_graph, shacl_graph=shapes_graph, ont_graph=ont_graph,
                            inference="rdfs", advanced=True)
     return bool(conforms), text
+
+
+_RUDOF = None          # persistent instance: shapes parse ONCE (0.02 s), data resets per call
+
+
+def rudof_available() -> bool:
+    import importlib.util
+    return importlib.util.find_spec("pyrudof") is not None
+
+
+def _rudof_instance(shapes_graph):
+    """One instance per process, keyed by the shapes graph's identity — the two call sites
+    use DIFFERENT shape sets, so a single cached instance would validate against the wrong
+    one. Shapes parsing is 0.02 s; data loading (0.58 s on an 8k-triple page) dominates and
+    is per-call regardless."""
+    global _RUDOF
+    import pyrudof
+    key = id(shapes_graph)
+    if _RUDOF is None or _RUDOF[0] != key:
+        r = pyrudof.Rudof(pyrudof.RudofConfig())
+        r.read_shacl(shapes_graph.serialize(format="turtle"), format=pyrudof.ShaclFormat.Turtle)
+        _RUDOF = (key, r)
+    return _RUDOF[1]
+
+
+def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
+    """rudof does NO inference of its own — rdfs_closure supplies the expanded graph, and
+    its literal-subject filter is what makes the payload parseable by rudof's strict reader."""
+    import pyrudof
+    expanded = rdfs_closure(data_graph, ont_graph)
+    r = _rudof_instance(shapes_graph)
+    r.reset_data()
+    r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
+    r.validate_shacl(mode=pyrudof.ShaclValidationMode.Native)
+    report = str(r.serialize_shacl_validation_results(
+        pyrudof.ResultShaclValidationFormat.Turtle))
+    conforms = "sh:conforms true" in " ".join(report.split())
+    return conforms, report
 
 
 def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:

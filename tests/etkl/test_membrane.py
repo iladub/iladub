@@ -142,3 +142,60 @@ def test_rdfs_closure_injects_only_ontology_axioms():
     assert (URIRef("urn:c:d"), RDF.type, sup) in out, "axiom's subclass closure missing"
     assert (thing, URIRef("urn:o:randomPredicate"), Literal("x")) not in out, \
         "non-axiom ontology triple leaked through — full union, not inoculate()"
+
+
+# ---------------------------------------------------------------- rudof engine
+
+import pytest
+
+needs_rudof = pytest.mark.skipif(
+    not __import__("importlib").util.find_spec("pyrudof"),
+    reason="pyrudof not installed (optional dependency)")
+
+
+@needs_rudof
+def test_rudof_engine_agrees_on_a_clean_graph():
+    from iladub.etkl import membrane
+    g = Graph()
+    c = URIRef("urn:r:c")
+    g.add((c, RDF.type, TAB.Cell))
+    g.add((c, TAB.cellText, Literal("Americas")))
+    ok_p, _ = membrane._validate_pyshacl(g, _shapes(), _ont())
+    ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_p == ok_r is True
+
+
+@needs_rudof
+def test_rudof_engine_catches_a_sparql_constraint_violation():
+    from iladub.etkl import membrane
+    g = Graph()
+    c, bb = URIRef("urn:r:c2"), URIRef("urn:r:bb2")
+    g.add((c, RDF.type, TAB.Cell))
+    g.add((c, TAB.cellText, Literal("")))
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((c, TAB.hasBBox, bb))
+    ok_r, report = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_r is False
+    assert "cellText" in report or "WrappedCellShape" in report
+
+
+@needs_rudof
+def test_rudof_engine_sees_inferred_types():
+    """rudof does NO inference of its own — this passes only because the seam runs
+    rdfs_closure first. Pins the R19 mechanism end to end on the new engine."""
+    from iladub.etkl import membrane
+    g = Graph()
+    n, bb = URIRef("urn:r:inf"), URIRef("urn:r:infbb")
+    g.add((n, TAB.hasBBox, bb))
+    g.add((bb, RDF.type, TAB.BBox))
+    ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_r is False
+
+
+@needs_rudof
+def test_engine_switch_selects_rudof(monkeypatch):
+    from iladub.etkl import membrane
+    monkeypatch.setenv("ILADUB_MEMBRANE", "rudof")
+    assert membrane.engine_name() == "rudof"
+    monkeypatch.setenv("ILADUB_MEMBRANE", "pyshacl")
+    assert membrane.engine_name() == "pyshacl"
