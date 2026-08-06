@@ -171,6 +171,54 @@ def _emit_band_captions(graph, table_uri, band):
         graph.add((table_uri, TAB.hasCaption, cap))
 
 
+def _emit_unit_markers(graph, table_uri, band, boundaries):
+    """Spec 2026-08-05 §4 carry: one tab:UnitMarker per absorbed currency-marker
+    column, attached to the SURVIVING neighbor column's URI (resolved against the
+    FINAL grid boundaries via the carried neighbor_x). Provenance rides
+    tab:markerRegion -> tab:BBox — deliberately NOT tab:hasBBox, whose rdfs:domain
+    would type the marker as tab:Cell and trip WrappedCellShape at the gate (R19).
+
+    `boundaries=None` (fix round 1, transposed branch ONLY): assert_transposed_region
+    mints its `{table_uri}-c{k}` leaf-column URIs keyed by PHYSICAL ROW index (the axis
+    flip — logical column k <- physical row k), while column_of(neighbor_x, boundaries)
+    would resolve a PHYSICAL COLUMN index — a different axis entirely. Reusing that index
+    against the flipped leaf columns would attach the marker to a coincidentally-numbered,
+    semantically unrelated column: a false claim the evidence does not support. Rather
+    than assert a mapping across an axis the flip does not preserve, a caller passing
+    boundaries=None gets the marker attached to the TABLE itself instead — still carries
+    the ink (CLAUDE.md §5: context is carried, not discarded), makes no column claim.
+    Unmeasured shape: no document seen so far exhibits a marker column in a transposed
+    table."""
+    from rdflib import Literal, RDF, URIRef
+    from rdflib.namespace import XSD
+    for k, (sym, neighbor_x, regions) in enumerate(getattr(band, "unit_markers", ()) or ()):
+        um = URIRef("%s-um%d" % (table_uri, k))
+        graph.add((um, RDF.type, TAB.UnitMarker))
+        graph.add((um, TAB.markerSymbol, Literal(sym)))
+        for j, (x0, top, x1, bottom) in enumerate(regions):
+            bb = URIRef("%s-um%d-r%d" % (table_uri, k, j))
+            graph.add((bb, RDF.type, TAB.BBox))
+            graph.add((bb, TAB.x0, Literal(float(x0), datatype=XSD.decimal)))
+            graph.add((bb, TAB.y0, Literal(float(top), datatype=XSD.decimal)))
+            graph.add((bb, TAB.x1, Literal(float(x1), datatype=XSD.decimal)))
+            graph.add((bb, TAB.y1, Literal(float(bottom), datatype=XSD.decimal)))
+            graph.add((um, TAB.markerRegion, bb))
+        if boundaries is None:
+            graph.add((table_uri, TAB.hasUnitMarker, um))
+        else:
+            col = column_of(neighbor_x, boundaries)
+            graph.add((URIRef("%s-c%d" % (table_uri, col)), TAB.hasUnitMarker, um))
+
+
+def _marker_word_count(band) -> int:
+    """Final-review fix (C1): one accounted word per carried glyph region — the same
+    unit an asserted branch counts (len(cell.words)). Used to restore token-accounting
+    parity on an escalation/ignored path, where the marker ink is carried into the
+    graph (via _emit_unit_markers, attached to the region/table node) but was never
+    part of a Cell the round-trip accounting already counts."""
+    return sum(len(m[2]) for m in getattr(band, "unit_markers", ()) or ())
+
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -222,6 +270,8 @@ def page_bands(pdf_path: str, page_number: int = 0,
             section_repair = bool(section_repair_bands) and idx in section_repair_bands
             bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
                                            section_repair=section_repair))
+    from .unitmarker import absorb_unit_markers
+    bands = [absorb_unit_markers(b) for b in bands]
     return bands
 
 
@@ -348,6 +398,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             cand_uri = URIRef(f"{doc}#region{idx}")
             escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
                             TAB.HierarchicalTable, 0.4)
+            if getattr(band, "unit_markers", ()):
+                _emit_unit_markers(graph, cand_uri, band, None)
+                escalated_total += _marker_word_count(band)
             escalated_total += sum(len(ln.words) for ln in band.lines)
             reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
                                         "MULTI_TABLE_AMBIGUOUS", str(TAB.HierarchicalTable), ascii_view))
@@ -355,6 +408,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         region = classify(band)
 
         if region.kind is RegionKind.NON_TABLE:
+            if getattr(band, "unit_markers", ()):
+                # C1 fix: an ignored band never contributed to the score, so no
+                # accounting change — only the invariant "absorbed ink always lands
+                # in the graph with provenance" applies here.
+                cand_uri = URIRef(f"{doc}#region{idx}")
+                _emit_unit_markers(graph, cand_uri, band, None)
             reports.append(RegionReport(region.kind, "ignored", 0,
                                         region.reason, None, ascii_view))
             continue
@@ -378,6 +437,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
                                         "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                        if getattr(band, "unit_markers", ()):
+                            _emit_unit_markers(graph, cand_uri, band, None)
+                            escalated_total += _marker_word_count(band)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "REGION_TILING_FAILED",
@@ -385,6 +447,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     else:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
+                        # fix round 1: this branch's leaf-column URIs are keyed by PHYSICAL
+                        # ROW (the axis flip — see assert_transposed_region), not physical
+                        # column, so column_of(neighbor_x, region.grid.boundaries) would name
+                        # the wrong axis entirely. boundaries=None attaches the marker to the
+                        # table instead of asserting an unsupported column mapping.
+                        _emit_unit_markers(graph, table_uri, band, None)
                         b = region.grid.boundaries
                         value_cells = [c for c in region.cells if c.col >= 1]
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
@@ -397,6 +465,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view, "TRANSPOSED",
                                     TAB.TransposedTable, 0.4)
+                    if getattr(band, "unit_markers", ()):
+                        _emit_unit_markers(graph, cand_uri, band, None)
+                        escalated_total += _marker_word_count(band)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
                                                 str(TAB.TransposedTable), ascii_view))
@@ -412,6 +483,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if rreg is not None and region_tiles(scratch):
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, rreg.grid.boundaries)
                     b = rreg.grid.boundaries
                     for rb in rreg.leaf_rows:
                         for c in rb.cells:
@@ -428,6 +500,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view, "ROW_GROUP_AMBIGUOUS",
                                     TAB.HierarchicalTable, 0.4)
+                    if getattr(band, "unit_markers", ()):
+                        _emit_unit_markers(graph, cand_uri, band, None)
+                        escalated_total += _marker_word_count(band)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "ROW_GROUP_AMBIGUOUS",
                                                 str(TAB.HierarchicalTable), ascii_view))
@@ -442,6 +517,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view,
                                     "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                    if getattr(band, "unit_markers", ()):
+                        _emit_unit_markers(graph, cand_uri, band, None)
+                        escalated_total += _marker_word_count(band)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0,
                                                 "REGION_TILING_FAILED",
@@ -449,6 +527,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 else:
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                     b = region.grid.boundaries
                     data_cells = [c for c in region.cells if c.row > 0]
                     asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
@@ -470,6 +549,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if mreg is not None and region_tiles(scratch):
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, mreg.grid.boundaries)
                     b = mreg.grid.boundaries
                     for rb in mreg.leaf_rows:
                         for sc in rb.cells:
@@ -487,6 +567,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view, "MATRIX_AMBIGUOUS",
                                     TAB.HierarchicalTable, 0.4)
+                    if getattr(band, "unit_markers", ()):
+                        _emit_unit_markers(graph, cand_uri, band, None)
+                        escalated_total += _marker_word_count(band)
                     escalated_total += sum(len(ln.words) for ln in band.lines)
                     reports.append(RegionReport(region.kind, "escalated", 0, "MATRIX_AMBIGUOUS",
                                                 str(TAB.HierarchicalTable), ascii_view))
@@ -519,6 +602,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     n_ruled, reading = ruled_reading
                     graph += ruled_scratch
                     _emit_band_captions(graph, table_uri, band)
+                    _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                     tokens = sum(len(ln.words) for ln in band.lines)
                     asserted_total += n_ruled
                     escalated_total += max(0, tokens - n_ruled)
@@ -542,6 +626,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if resolved is not None:
                         n, _promos = resolved
                         _emit_band_captions(graph, table_uri, band)
+                        _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)
@@ -552,6 +637,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view, "MERGE_AMBIGUOUS",
                                         TAB.HierarchicalTable, 0.4)
+                        if getattr(band, "unit_markers", ()):
+                            _emit_unit_markers(graph, cand_uri, band, None)
+                            escalated_total += _marker_word_count(band)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
                                                     str(TAB.HierarchicalTable), ascii_view))
@@ -570,6 +658,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
                                         "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4)
+                        if getattr(band, "unit_markers", ()):
+                            _emit_unit_markers(graph, cand_uri, band, None)
+                            escalated_total += _marker_word_count(band)
                         escalated_total += sum(len(ln.words) for ln in band.lines)
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "REGION_TILING_FAILED",
@@ -581,6 +672,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         graph += scratch
                         if n:
                             _emit_band_captions(graph, table_uri, band)
+                            _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
                         tokens = sum(len(ln.words) for ln in band.lines)
                         asserted_total += n
                         escalated_total += max(0, tokens - n)
@@ -599,6 +691,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     escalate_region(graph, cand_uri, doc, ascii_view,
                                     reason="KIND_NOT_SUPPORTED",
                                     anchor=TAB.HierarchicalTable, confidence=0.4)
+                    if getattr(band, "unit_markers", ()):
+                        _emit_unit_markers(graph, cand_uri, band, None)
+                        escalated_total += _marker_word_count(band)
                     tokens = sum(len(ln.words) for ln in band.lines)
                     escalated_total += tokens
                     reports.append(RegionReport(region.kind, "escalated", 0,

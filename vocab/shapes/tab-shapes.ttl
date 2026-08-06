@@ -394,6 +394,19 @@ tab:LicenceRefusalShape a sh:NodeShape ;
             }
         """ ] .
 
+#################################################################
+#  Unit marker (spec 2026-08-05): an absorbed currency-marker
+#  column must carry its symbol and at least one region of
+#  provenance to the page.
+#################################################################
+
+tab:UnitMarkerShape a sh:NodeShape ;
+    sh:targetClass tab:UnitMarker ;
+    sh:property [ sh:name "UnitMarkerShape" ; sh:path tab:markerSymbol ;
+                  sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:name "UnitMarkerShape" ; sh:path tab:markerRegion ;
+                  sh:minCount 1 ] .
+
 tab:InLogicalColumnDisciplineShape a sh:NodeShape ;
     sh:targetSubjectsOf tab:inLogicalColumn ;
     sh:sparql [

@@ -1821,3 +1821,65 @@ def currency_sandwich_pdf(path: str) -> dict:
                 c.drawString(x, y, cell)
     c.save()
     return {"cols": cols, "n_lines": len(rows)}
+
+
+def currency_marker_column_pdf(path: str) -> dict:
+    """The accounting $-marker column, synthetic (spec 2026-08-05): a borderless
+    record table whose value columns carry a `$` glyph column on the first and last
+    data rows only (US financial-statement style). Pre-loop the glyph columns
+    fabricate grid columns and the band fails tiling / mis-reads; post-loop the
+    markers absorb, the grid recovers the true 3 columns, and the band asserts with
+    tab:hasUnitMarker facts."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    rows = [
+        ("Item",     "",  "Amount",  "",  "Total"),
+        ("Products", "$", "78,678",  "$", "272,629"),
+        ("Services", "",  "30,739",  "",  "91,728"),
+        ("Other",    "",  "11,729",  "",  "34,035"),
+        ("Overall",  "$", "121,146", "$", "398,392"),
+    ]
+    xs = [72.0, 220.0, 260.0, 380.0, 420.0]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, t in zip(xs, row):
+            if t:
+                c.drawString(x, y, t)
+    c.save()
+    return {"cols": xs, "n_rows": len(rows)}
+
+
+def currency_marker_escalating_pdf(path: str) -> dict:
+    """Final-review fix wave (C1) — the same accounting `$`-marker shape as
+    currency_marker_column_pdf, but the header row DROPS the 'Total' label (only
+    'Item'/'Amount' are drawn on line 0, while the Total column still carries data on
+    every body row). Marker absorption still fires (page_bands runs it on every band
+    before classification) and removes the two `$` glyph columns, but the resulting
+    header has 2 words against the grid's 3 recovered data columns — a genuine,
+    marker-UNRELATED classification mismatch (UNSUPPORTED_TABLE, 'header has 2 words
+    but 3 columns') that reaches classify_hierarchical, tiles under merge_tiling_ok,
+    asserts into scratch, and then fails region_tiles -> escalates
+    REGION_TILING_FAILED. Measured 2026-08-05 while writing the C1 pin test: this is
+    the band's ONLY verdict on this document (single band, single page). Exercises the
+    C1 fix's escalation-path carry: the two absorbed `$` markers must still land in the
+    graph (attached to the region candidate URI, not a `-c{n}` column) and count
+    against escalated_total."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    rows = [
+        ("Item",     "",  "Amount",  "",  ""),
+        ("Products", "$", "78,678",  "$", "272,629"),
+        ("Services", "",  "30,739",  "",  "91,728"),
+        ("Other",    "",  "11,729",  "",  "34,035"),
+        ("Overall",  "$", "121,146", "$", "398,392"),
+    ]
+    xs = [72.0, 220.0, 260.0, 380.0, 420.0]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, t in zip(xs, row):
+            if t:
+                c.drawString(x, y, t)
+    c.save()
+    return {"cols": xs, "n_rows": len(rows)}
