@@ -221,6 +221,31 @@ def test_engine_switch_selects_rudof(monkeypatch):
     assert membrane.engine_name() == "pyshacl"
 
 
+@needs_rudof
+def test_engine_defaults_to_rudof_when_unset(monkeypatch):
+    """Pins the loop's headline behaviour: with no override, rudof is what actually runs."""
+    from iladub.etkl import membrane
+    monkeypatch.delenv("ILADUB_MEMBRANE", raising=False)
+    assert membrane.engine_name() == "rudof"
+
+
+def test_engine_name_rejects_an_unknown_forced_value(monkeypatch):
+    from iladub.etkl import membrane
+    monkeypatch.setenv("ILADUB_MEMBRANE", "not-a-real-engine")
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        membrane.engine_name()
+
+
+def test_engine_name_refuses_to_silently_fall_back_when_rudof_forced_but_unavailable(monkeypatch):
+    from iladub.etkl import membrane
+    monkeypatch.setenv("ILADUB_MEMBRANE", "rudof")
+    monkeypatch.setattr(membrane, "rudof_available", lambda: False)
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        membrane.engine_name()
+
+
 def test_rudof_unparseable_report_is_not_conformance():
     """Fail-safe direction, pinned independent of pyrudof being installed: an empty or
     malformed report must never read as conformance."""
@@ -233,3 +258,24 @@ def test_rudof_unparseable_report_is_not_conformance():
     assert membrane._conforms_from_report(
         "@prefix sh: <http://www.w3.org/ns/shacl#> .\n_:1 a sh:ValidationReport ;\n"
         "\tsh:conforms true .\n") is True
+
+
+@needs_rudof
+def test_conforms_parse_is_not_fooled_by_a_literal_containing_the_token():
+    """C1 regression: a substring test over the report is unsound because rudof echoes
+    offending literal values into sh:value. A tab:EntryCell whose tab:onPage literal IS the
+    string "sh:conforms true" must still be refused — that literal also violates
+    EntryCellPhysicalShape's sh:datatype xsd:integer, so the report legitimately contains
+    the string `sh:conforms false` (the real verdict) alongside the echoed offending value."""
+    from iladub.etkl import membrane
+    g = Graph()
+    cell, bb = URIRef("urn:m:injected"), URIRef("urn:m:injectedbb")
+    g.add((cell, RDF.type, TAB.EntryCell))
+    g.add((cell, TAB.cellText, Literal("x")))
+    g.add((cell, TAB.onPage, Literal("sh:conforms true")))  # plain string, not xsd:integer
+    g.add((cell, TAB.hasBBox, bb))
+    g.add((bb, RDF.type, TAB.BBox))
+    ok_p, _ = membrane._validate_pyshacl(g, _shapes(), _ont())
+    ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_p is False, "fixture precondition: pySHACL must refuse this graph"
+    assert ok_r is False, "rudof's report was fooled by the echoed literal — substring bug"

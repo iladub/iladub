@@ -119,10 +119,16 @@ touched by this loop.
 A committed differential battery, `tests/etkl/test_membrane_equiv.py`, running pySHACL
 against rudof on three fronts:
 
-1. **Positive** — every corpus document's compiled page graphs and every shipped fixture:
-   both engines must agree on conformance.
-2. **Negative** — every negative fixture already in the repo: both engines must report a
-   violation, on the same focus node and source shape.
+1. **Positive** — corrected to what ships (final-review wave, 2026-08-06): the stem
+   document's page-0 compiled graph, compared against both engines. The spec originally
+   claimed "every corpus document's compiled page graphs and every shipped fixture" for this
+   leg; that was aspirational, not what was built — the positive leg is single-document,
+   single-page. See R59 for the coverage gap this leaves (both the corpus-only scope and the
+   single-page scope) and what would close it.
+2. **Negative** — every negative fixture already in the repo (the committed `tab-*-leak.ttl`
+   set): both engines must report a violation, on the same focus node. Source shapes are
+   frequently blank nodes with engine-specific labels — comparing those is not reliable (see
+   §8), so only focus-node IRIs are compared, not source shapes.
 3. **Mutation battery (the load-bearing one)** — seeded random mutations injected into real
    compiled graphs: drop a required triple, blank a `cellText`, duplicate a column claim,
    orphan a `tab:UnitMarker`'s `tab:markerRegion`. **Both engines must catch every injected
@@ -167,7 +173,12 @@ Python/Rust boundary dominates, and owlrl dominates that.)
 ## 6. Measured but deliberately not acted on
 
 **8.2 of the final validation's 12.6 s re-checks shapes the region gate already checked**
-(gate subset alone 8.2 s; the remaining eleven shapes 5.1 s). Scoping the final pass to
+(gate subset alone 8.2 s; the remaining eleven shapes 5.1 s). This 12.6 s and §1's 12.1 s are
+**two different measurements, not one number that drifted**: §1 is the end-to-end profile's
+whole-call figure for `compile._validate`; §6 is a separate shape-subset experiment (gate
+shapes run alone, then the remaining eleven run alone) done to attribute the redundancy, not
+to re-measure the whole call — the two runs are not expected to agree to the decimal. Scoping
+the final pass to
 non-gate shapes would recover ~25% *today* — but at rudof speed it recovers ~0.06 s, so it
 is not worth a locality proof for performance reasons. It remains open as an **architectural
 clarity** question (what does each membrane mean?), and it needs a per-shape proof that

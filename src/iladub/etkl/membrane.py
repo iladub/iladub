@@ -22,9 +22,21 @@ def engine_name() -> str:
     `ILADUB_MEMBRANE=pyshacl` re-runs any suspect verdict under the reference engine without
     a code change. Correctness is established by tests/etkl/test_membrane_equiv.py, not by
     trust — see spec 2026-08-06 §3.3.
+
+    Fails LOUD, not silent: an `ILADUB_MEMBRANE` value that names neither engine is a
+    misconfiguration, not a silent fallback — and forcing `rudof` on a process where
+    `pyrudof` isn't importable must not quietly resolve to pySHACL, or an operator who
+    thinks they forced the new engine has actually re-run the old one unnoticed.
     """
     forced = os.environ.get("ILADUB_MEMBRANE")
     if forced:
+        if forced not in ("pyshacl", "rudof"):
+            raise ValueError(
+                f"ILADUB_MEMBRANE={forced!r} is not a known engine (expected 'pyshacl' or "
+                f"'rudof')")
+        if forced == "rudof" and not rudof_available():
+            raise ValueError(
+                "ILADUB_MEMBRANE=rudof was forced but pyrudof is not installed")
         return forced
     return "rudof" if rudof_available() else "pyshacl"
 
@@ -36,7 +48,7 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[
     features on. Callers must not depend on the report's exact wording — it differs by
     engine; only its content (shape names, focus nodes) is stable.
     """
-    if engine_name() == "rudof" and rudof_available():
+    if engine_name() == "rudof":
         return _validate_rudof(data_graph, shapes_graph, ont_graph)
     return _validate_pyshacl(data_graph, shapes_graph, ont_graph)
 
@@ -79,11 +91,21 @@ def _rudof_instance(shapes_graph):
 
 
 def _conforms_from_report(report: str) -> bool:
-    """True only when the serialized SHACL report contains a bare `sh:conforms true`.
+    """The verdict, read as RDF rather than matched as text.
 
-    Fails closed: an empty, malformed, or otherwise unparseable report never reads as
-    conformance — it simply doesn't contain the substring, so this returns False."""
-    return "sh:conforms true" in " ".join(report.split())
+    A substring test over the report is unsound: rudof echoes offending literal values into
+    sh:value, so a graph containing the token would flip the verdict — measured, a violating
+    graph read as conforming. Fails CLOSED: an unparseable or ambiguous report is never
+    conformance.
+    """
+    from rdflib import Graph as _Graph, Literal as _Literal
+    from rdflib.namespace import SH
+    try:
+        g = _Graph().parse(data=report, format="turtle")
+    except Exception:
+        return False
+    vals = list(g.objects(None, SH.conforms))
+    return len(vals) == 1 and vals[0] == _Literal(True)
 
 
 def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:

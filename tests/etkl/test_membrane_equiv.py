@@ -8,7 +8,7 @@ import os
 import random
 import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, SH
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,6 +40,30 @@ def _both(g):
     return p, r
 
 
+def _focus_node_sets(g):
+    """Each engine's set of sh:focusNode IRIs, for the ONE comparison that is reliably
+    engine-independent: focus nodes are IRIs in our graphs. Source shapes are frequently
+    blank nodes with engine-specific labels (each engine mints its own), so they are NOT
+    compared here — see spec 2026-08-06 §8's blank-node-label risk.
+
+    pySHACL's own `(bool, str)` contract in membrane.py is left unchanged for this: the
+    battery calls `pyshacl.validate` directly to get the results Graph, rather than having
+    `_validate_pyshacl` grow a return value only this test needs."""
+    import pyshacl
+    from iladub.etkl import membrane
+    s, o = _shapes(), _ont()
+
+    _, results_graph, _ = pyshacl.validate(
+        g, shacl_graph=s, ont_graph=o, inference="rdfs", advanced=True)
+    p_nodes = {n for n in results_graph.objects(None, SH.focusNode) if isinstance(n, URIRef)}
+
+    _, report = membrane._validate_rudof(g, s, o)
+    report_graph = Graph().parse(data=report, format="turtle")
+    r_nodes = {n for n in report_graph.objects(None, SH.focusNode) if isinstance(n, URIRef)}
+
+    return p_nodes, r_nodes
+
+
 # ---------- leg 1: NEGATIVE — the committed leak fixtures (both must REFUSE) ----------
 
 LEAKS = sorted(glob.glob(os.path.join(TESTS, "tab-*-leak.ttl")))
@@ -51,6 +75,14 @@ def test_both_engines_refuse_every_committed_leak(path):
     p, r = _both(g)
     assert p is False, f"fixture precondition: pySHACL must refuse {os.path.basename(path)}"
     assert r is False, f"rudof ADMITTED a leak pySHACL refuses: {os.path.basename(path)}"
+
+    # Spec §3.3 item 2: both engines must report a violation on the same focus node.
+    # Source shapes are frequently blank nodes with engine-specific labels and are
+    # deliberately NOT compared — see _focus_node_sets' docstring and spec §8.
+    p_nodes, r_nodes = _focus_node_sets(g)
+    assert p_nodes == r_nodes, (
+        f"focus-node sets differ for {os.path.basename(path)}: "
+        f"pySHACL={p_nodes} rudof={r_nodes}")
 
 
 def test_leak_battery_is_not_empty():

@@ -65,6 +65,7 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
     "reportlab>=4.0",
+    "pyrudof==0.3.7",
 ]
 docs = [
     "mkdocs-material>=9.7",
