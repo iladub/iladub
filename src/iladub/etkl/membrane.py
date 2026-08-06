@@ -35,3 +35,29 @@ def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     conforms, _, text = _v(data_graph, shacl_graph=shapes_graph, ont_graph=ont_graph,
                            inference="rdfs", advanced=True)
     return bool(conforms), text
+
+
+def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
+    """A NEW graph: data + ontology, RDFS-expanded, minus every literal-subject triple.
+
+    Reproduces exactly what pySHACL's `inference="rdfs"` does today — subclass closure AND
+    domain/range typing (the latter is the R19 mechanism, deliberately preserved here; the
+    successor loop, spec 2026-08-06 §7, is where dropping it is argued and measured).
+
+    The literal-subject filter is NOT optional: owlrl's closure emits triples whose subject
+    is a Literal (`"307.47"^^xsd:decimal rdf:type rdfs:Resource`), which is illegal RDF.
+    rdflib tolerates them; a strict parser rejects the whole graph. They are semantically
+    vacuous, so dropping them changes no verdict.
+    """
+    from rdflib import Literal as _Literal
+    import owlrl
+    merged = Graph()
+    merged += data_graph
+    merged += ont_graph
+    owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(merged)
+    out = Graph()
+    for s, p, o in merged:
+        if isinstance(s, _Literal):
+            continue
+        out.add((s, p, o))
+    return out

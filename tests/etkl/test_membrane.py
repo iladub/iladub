@@ -85,3 +85,41 @@ def test_call_sites_use_the_seam():
     import iladub.etkl.compile as C
     assert "membrane" in inspect.getsource(tiling.region_tiles)
     assert "membrane" in inspect.getsource(C._validate)
+
+
+# ---------------------------------------------------------------- closure
+
+def test_rdfs_closure_materializes_subclass_and_domain_types():
+    """Closure must reproduce what inference='rdfs' gives pySHACL today: subclass closure
+    (EntryCell -> Cell, which sh:targetClass needs) AND domain typing (the R19 mechanism)."""
+    from iladub.etkl import membrane
+    g = Graph()
+    ec, node, bb = URIRef("urn:c:ec"), URIRef("urn:c:n"), URIRef("urn:c:bb")
+    g.add((ec, RDF.type, TAB.EntryCell))     # subclass of tab:Cell in tab.ttl
+    g.add((node, TAB.hasBBox, bb))           # rdfs:domain tab:Cell
+    out = membrane.rdfs_closure(g, _ont())
+    assert (ec, RDF.type, TAB.Cell) in out, "subclass closure missing"
+    assert (node, RDF.type, TAB.Cell) in out, "domain typing missing (R19 mechanism)"
+
+
+def test_rdfs_closure_drops_literal_subject_triples():
+    """owlrl emits `"307.47"^^xsd:decimal rdf:type rdfs:Resource` — illegal RDF that rdflib
+    tolerates and a strict parser refuses. The closure must remove every such triple."""
+    from iladub.etkl import membrane
+    from rdflib.namespace import XSD
+    g = Graph()
+    c = URIRef("urn:c:cell")
+    g.add((c, RDF.type, TAB.Cell))
+    g.add((c, TAB.x0, Literal("307.47", datatype=XSD.decimal)))
+    out = membrane.rdfs_closure(g, _ont())
+    bad = [s for s in out.subjects() if isinstance(s, Literal)]
+    assert bad == [], f"literal-subject triples survived: {bad[:3]}"
+
+
+def test_rdfs_closure_does_not_mutate_its_input():
+    from iladub.etkl import membrane
+    g = Graph()
+    g.add((URIRef("urn:c:x"), RDF.type, TAB.EntryCell))
+    before = len(g)
+    membrane.rdfs_closure(g, _ont())
+    assert len(g) == before, "rdfs_closure must return a NEW graph"

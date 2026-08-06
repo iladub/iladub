@@ -46,6 +46,7 @@ baml = [
 etkl = [
     "pdfplumber>=0.11",
     "numpy>=1.26",
+    "owlrl>=6.0",
 ]
 demo = [
     # ET(K)L showcase notebook (no LLM/baml dependency)
