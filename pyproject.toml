@@ -46,7 +46,6 @@ baml = [
 etkl = [
     "pdfplumber>=0.11",
     "numpy>=1.26",
-    "owlrl>=6.0",
 ]
 demo = [
     # ET(K)L showcase notebook (no LLM/baml dependency)
@@ -66,6 +65,7 @@ dev = [
     "ruff>=0.6",
     "reportlab>=4.0",
     "pyrudof==0.3.7",
+    "owlrl>=6.0",
 ]
 docs = [
     "mkdocs-material>=9.7",

@@ -61,16 +61,21 @@ def test_membrane_catches_a_sparql_constraint_violation():
     assert "cellText" in report or "WrappedCellShape" in report
 
 
-def test_membrane_applies_rdfs_inference():
-    """The R19 mechanism: a node typed tab:Cell ONLY via tab:hasBBox's rdfs:domain must
-    still be validated. This pins that the seam preserves inference="rdfs" semantics."""
+def test_membrane_no_longer_infers_types_from_property_domains():
+    """INVERTED by spec 2026-08-06 (was test_membrane_applies_rdfs_inference).
+
+    A node carrying tab:hasBBox but no explicit type is NO LONGER a tab:Cell, so
+    WrappedCellShape does not fire on it. That inference was the R19 accident — a
+    ROUND_TRIP_FAIL candidate carrying a bbox typed as a Cell and crashing the compile — and
+    dropping it closes R19 at its root. The graph below carries no OTHER violation, so it now
+    conforms."""
     from iladub.etkl import membrane
     g = Graph()
     node, bb = URIRef("urn:m:inf"), URIRef("urn:m:infbb")
-    g.add((node, TAB.hasBBox, bb))          # NO explicit rdf:type
+    g.add((node, TAB.hasBBox, bb))          # no explicit rdf:type
     g.add((bb, RDF.type, TAB.BBox))
     conforms, report = membrane.validate(g, _shapes(), _ont())
-    assert conforms is False, "inference must type the node as tab:Cell and fire WrappedCellShape"
+    assert conforms is True, report
 
 
 def test_engine_name_is_reported():
@@ -91,7 +96,11 @@ def test_call_sites_use_the_seam():
 
 def test_rdfs_closure_materializes_subclass_and_domain_types():
     """Closure must reproduce what inference='rdfs' gives pySHACL today: subclass closure
-    (EntryCell -> Cell, which sh:targetClass needs) AND domain typing (the R19 mechanism)."""
+    (EntryCell -> Cell, which sh:targetClass needs) AND domain typing (the R19 mechanism).
+
+    This pins the RETAINED reference closure (rdfs_closure), not production; production now
+    uses subclass_closure, whose domain-typing behaviour is pinned by
+    test_subclass_closure_drops_domain_typing."""
     from iladub.etkl import membrane
     g = Graph()
     ec, node, bb = URIRef("urn:c:ec"), URIRef("urn:c:n"), URIRef("urn:c:bb")
@@ -200,16 +209,20 @@ def test_rudof_engine_catches_a_sparql_constraint_violation():
 
 
 @needs_rudof
-def test_rudof_engine_sees_inferred_types():
-    """rudof does NO inference of its own — this passes only because the seam runs
-    rdfs_closure first. Pins the R19 mechanism end to end on the new engine."""
+def test_rudof_engine_does_not_see_domain_inferred_types():
+    """INVERTED by spec 2026-08-06 (was test_rudof_engine_sees_inferred_types).
+
+    rudof does NO inference of its own — the seam now runs subclass_closure, not
+    rdfs_closure, so a node carrying tab:hasBBox but no explicit type is NO LONGER typed
+    tab:Cell and WrappedCellShape does not fire. Rudof-path twin of
+    test_membrane_no_longer_infers_types_from_property_domains."""
     from iladub.etkl import membrane
     g = Graph()
     n, bb = URIRef("urn:r:inf"), URIRef("urn:r:infbb")
     g.add((n, TAB.hasBBox, bb))
     g.add((bb, RDF.type, TAB.BBox))
-    ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
-    assert ok_r is False
+    ok_r, report = membrane._validate_rudof(g, _shapes(), _ont())
+    assert ok_r is True, report
 
 
 @needs_rudof
@@ -279,3 +292,97 @@ def test_conforms_parse_is_not_fooled_by_a_literal_containing_the_token():
     ok_r, _ = membrane._validate_rudof(g, _shapes(), _ont())
     assert ok_p is False, "fixture precondition: pySHACL must refuse this graph"
     assert ok_r is False, "rudof's report was fooled by the echoed literal — substring bug"
+
+
+# ---------------------------------------------------------------- subclass-only closure
+
+def test_subclass_closure_materializes_supertypes():
+    """The half the shapes actually use: sh:targetClass tab:Cell must still see an
+    explicitly-typed tab:EntryCell (tab:EntryCell rdfs:subClassOf tab:Cell in tab.ttl)."""
+    from iladub.etkl import membrane
+    g = Graph()
+    ec = URIRef("urn:s:ec")
+    g.add((ec, RDF.type, TAB.EntryCell))
+    out = membrane.subclass_closure(g, _ont())
+    assert (ec, RDF.type, TAB.Cell) in out, "subclass closure missing"
+
+
+def test_subclass_closure_is_transitive():
+    """A -> B -> C must yield C, not just B."""
+    from rdflib.namespace import RDFS
+    from iladub.etkl import membrane
+    ont = Graph()
+    a, b, c = URIRef("urn:s:A"), URIRef("urn:s:B"), URIRef("urn:s:C")
+    ont.add((a, RDFS.subClassOf, b))
+    ont.add((b, RDFS.subClassOf, c))
+    data = Graph()
+    node = URIRef("urn:s:n")
+    data.add((node, RDF.type, a))
+    out = membrane.subclass_closure(data, ont)
+    assert (node, RDF.type, b) in out and (node, RDF.type, c) in out
+
+
+def test_subclass_closure_drops_domain_typing():
+    """THE BEHAVIOUR CHANGE, pinned positively. A node carrying tab:hasBBox must NOT become
+    a tab:Cell — that inference is the R19 accident (a ROUND_TRIP_FAIL candidate with a bbox
+    typed as a Cell and tripped WrappedCellShape). Dropping it closes R19 at its root."""
+    from iladub.etkl import membrane
+    g = Graph()
+    node, bb = URIRef("urn:s:n"), URIRef("urn:s:bb")
+    g.add((node, TAB.hasBBox, bb))      # rdfs:domain tab:Cell in tab.ttl
+    g.add((bb, RDF.type, TAB.BBox))
+    out = membrane.subclass_closure(g, _ont())
+    assert (node, RDF.type, TAB.Cell) not in out, "domain typing survived — R19 still open"
+
+
+def test_subclass_closure_drops_range_typing():
+    """The other half of the same change, and the reason R58 mandates an sh:class case:
+    tab:hasBBox rdfs:range tab:BBox must no longer type its object, which is what makes
+    sh:class tab:BBox falsifiable again."""
+    from iladub.etkl import membrane
+    g = Graph()
+    node, bb = URIRef("urn:s:n2"), URIRef("urn:s:bb2")
+    g.add((node, TAB.hasBBox, bb))      # bb NOT explicitly typed
+    out = membrane.subclass_closure(g, _ont())
+    assert (bb, RDF.type, TAB.BBox) not in out, "range typing survived — sh:class stays unfalsifiable"
+
+
+def test_subclass_closure_injects_no_ontology_triples():
+    """The ontology is READ for its axioms, never mixed into the validated graph. So the
+    graph rudof sees is data plus its own type closure — nothing else — and no ontology node
+    can ever become a focus node."""
+    from rdflib.namespace import RDFS
+    from iladub.etkl import membrane
+    ont = Graph()
+    sub, sup = URIRef("urn:o:Sub"), URIRef("urn:o:Super")
+    ont.add((sub, RDFS.subClassOf, sup))
+    ont.add((URIRef("urn:o:thing"), URIRef("urn:o:randomPredicate"), Literal("x")))
+    data = Graph()
+    d = URIRef("urn:s:d")
+    data.add((d, RDF.type, sub))
+    out = membrane.subclass_closure(data, ont)
+    assert (d, RDF.type, sup) in out, "the axiom's effect is missing"
+    assert (sub, RDFS.subClassOf, sup) not in out, "a subClassOf axiom leaked into the data graph"
+    assert (URIRef("urn:o:thing"), URIRef("urn:o:randomPredicate"), Literal("x")) not in out
+
+
+def test_subclass_closure_does_not_mutate_its_input():
+    from iladub.etkl import membrane
+    g = Graph()
+    g.add((URIRef("urn:s:x"), RDF.type, TAB.EntryCell))
+    before = len(g)
+    membrane.subclass_closure(g, _ont())
+    assert len(g) == before, "subclass_closure must return a NEW graph"
+
+
+def test_subclass_closure_drops_literal_subject_triples():
+    """The filter survives as an INVARIANT GUARD, not a workaround: nothing in this closure
+    can produce a literal-subject triple, so this pins that property rather than repairing
+    owlrl's output. Built by injecting one directly, since no code path emits one."""
+    from rdflib.namespace import XSD
+    from iladub.etkl import membrane
+    g = Graph()
+    g.add((URIRef("urn:s:c"), RDF.type, TAB.EntryCell))
+    g.add((Literal("307.47", datatype=XSD.decimal), RDF.type, TAB.Cell))   # illegal RDF
+    out = membrane.subclass_closure(g, _ont())
+    assert [s for s in out.subjects() if isinstance(s, Literal)] == []

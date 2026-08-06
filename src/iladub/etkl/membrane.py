@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 
 def engine_name() -> str:
@@ -44,9 +44,13 @@ def engine_name() -> str:
 def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[bool, str]:
     """(conforms, report_text) for `data_graph` against `shapes_graph`.
 
-    Semantics are exactly today's: RDFS inference over data + ontology, SHACL advanced
-    features on. Callers must not depend on the report's exact wording — it differs by
-    engine; only its content (shape names, focus nodes) is stable.
+    Both engines now validate the SAME subclass-only-closed graph (spec
+    2026-08-06-subclass-only-closure-design.md): the seam expands `data_graph` with
+    `subclass_closure` and hands each engine its own inference turned OFF, so the engine is
+    the only variable — `ILADUB_MEMBRANE=pyshacl` isolates the engine, as intended, rather
+    than also swapping the inference semantics underneath it. SHACL advanced features on.
+    Callers must not depend on the report's exact wording — it differs by engine; only its
+    content (shape names, focus nodes) is stable.
     """
     if engine_name() == "rudof":
         return _validate_rudof(data_graph, shapes_graph, ont_graph)
@@ -54,9 +58,15 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[
 
 
 def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
+    """pySHACL's own inference is OFF (`inference="none"`): the seam supplies the SAME
+    subclass-only closure `_validate_rudof` uses, via `subclass_closure`, so this path no
+    longer materialises domain/range typing either (R19's mechanism — see
+    `subclass_closure`'s docstring). Before this, `_validate_pyshacl` was the ONLY path that
+    still ran full RDFS inference (`inference="rdfs"`), so any install without `pyrudof` (core
+    and `[etkl]` installs both lack it) kept R19 alive under a different name."""
     from pyshacl import validate as _v
-    conforms, _, text = _v(data_graph, shacl_graph=shapes_graph, ont_graph=ont_graph,
-                           inference="rdfs", advanced=True)
+    expanded = subclass_closure(data_graph, ont_graph)
+    conforms, _, text = _v(expanded, shacl_graph=shapes_graph, inference="none", advanced=True)
     return bool(conforms), text
 
 
@@ -109,10 +119,12 @@ def _conforms_from_report(report: str) -> bool:
 
 
 def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
-    """rudof does NO inference of its own — rdfs_closure supplies the expanded graph, and
-    its literal-subject filter is what makes the payload parseable by rudof's strict reader."""
+    """rudof does NO inference of its own — the seam now supplies a SUBCLASS-ONLY closure
+    (spec 2026-08-06-subclass-only-closure-design.md), not the old full RDFS closure:
+    domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
+    is what makes the payload parseable by rudof's strict reader."""
     import pyrudof
-    expanded = rdfs_closure(data_graph, ont_graph)
+    expanded = subclass_closure(data_graph, ont_graph)
     r = _rudof_instance(shapes_graph)
     r.reset_data()
     r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
@@ -123,7 +135,13 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
 
 
 def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
-    """A NEW graph: data + ontology axioms, RDFS-expanded, minus every literal-subject triple.
+    """SUPERSEDED for production (spec 2026-08-06-subclass-only-closure-design.md): the seam now
+    calls `subclass_closure`. This function is RETAINED as the reference implementation the
+    closure differential (tests/etkl/test_closure_equiv.py) compares against — it is what
+    pySHACL's `inference="rdfs"` produces, so it is the baseline any claim of "no verdict
+    changed" must be measured against. Not called in production.
+
+    A NEW graph: data + ontology axioms, RDFS-expanded, minus every literal-subject triple.
 
     Reproduces exactly what pySHACL's `inference="rdfs"` does today — subclass closure AND
     domain/range typing (the latter is the R19 mechanism, deliberately preserved here; the
@@ -169,4 +187,58 @@ def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
         if isinstance(s, _Literal):
             continue
         out.add((s, p, o))
+    return out
+
+
+def subclass_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
+    """A NEW graph: the data plus its own rdfs:subClassOf type closure. Nothing else.
+
+    The ontology is READ for its `rdfs:subClassOf` axioms and never mixed in, so no ontology
+    node can become a focus node and the validated graph is data plus its type closure.
+    Axioms are sourced from `ont_graph` ONLY: any `rdfs:subClassOf` triple appearing in
+    `data_graph` itself is copied through into the output (it is ordinary data, like any other
+    triple) but is never consulted for materialisation — inert today, since nothing under
+    `src/iladub/` emits `rdfs:subClassOf` into a data graph.
+
+    WHAT THIS DELIBERATELY DOES NOT DO (spec 2026-08-06-subclass-only-closure-design.md):
+    domain/range typing. A node no longer becomes a `tab:Cell` merely by carrying
+    `tab:hasBBox` — that inference is the R19 accident, and dropping it closes that hazard at
+    its root. Measured on the real stem page: the only typings lost are 2,105 vacuous
+    `rdfs:Resource`, 207 ontology-node types, and 18 `tab:LabelCell` — and NO shape targets
+    `tab:LabelCell`, so no verdict changes. Consequence to know: `sh:class tab:BBox` becomes
+    FALSIFIABLE again, because `tab:hasBBox`'s range no longer types its object regardless
+    (all 586 bbox objects on the real page are explicitly typed, so nothing relied on it).
+
+    The literal-subject filter is an INVARIANT GUARD here, not a repair: no code path in this
+    function can emit a literal-subject triple (unlike owlrl's closure, which emitted 1,533).
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue — a transitive closure over
+    declared axioms. No domain decision, no tuned constant.
+    """
+    from rdflib import Literal as _Literal
+    from rdflib.namespace import RDFS
+
+    supers: dict = {}
+    for a, _, b in ont_graph.triples((None, RDFS.subClassOf, None)):
+        supers.setdefault(a, set()).add(b)
+    changed = True                       # transitive closure over the axioms, computed once
+    while changed:
+        changed = False
+        for a in list(supers):
+            for b in list(supers[a]):
+                for c in supers.get(b, ()):
+                    if c not in supers[a]:
+                        supers[a].add(c)
+                        changed = True
+
+    out = Graph()
+    for s, p, o in data_graph:
+        if isinstance(s, _Literal):
+            continue
+        out.add((s, p, o))
+    for s, _, cls in data_graph.triples((None, RDF.type, None)):
+        if isinstance(s, _Literal):
+            continue
+        for c in supers.get(cls, ()):
+            out.add((s, RDF.type, c))
     return out
