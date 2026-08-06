@@ -24,6 +24,7 @@ _ISO_DATE = re.compile(r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$")
 _DMY_DATE = re.compile(r"^\d{1,2}[-/]\d{1,2}[-/]\d{4}$")
 _MON_DATE = re.compile(r"^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}$", re.I)
 _CURRENCY = re.compile(r"^-?[$€£¥]\s?-?[\d,]+(\.\d+)?$|^-?[\d,]+(\.\d+)?\s?[$€£¥]$")
+_PAREN_NUMBER = re.compile(r"^\(\s*-?[\d,]+(\.\d+)?\s*\)$")
 
 
 def is_date(s):
@@ -50,6 +51,15 @@ def is_currency(s):
     return bool(_CURRENCY.match(s.strip()))
 
 
+def is_paren_number(s):
+    """A number wrapped in parentheses — US accounting notation for a negative. PROCEDURAL
+    raw typing: a format grammar, like is_date/is_currency, with no context and no tuned
+    constant. It deliberately also matches the footnote form '(1)', which is the SAME format;
+    tab:ParenthesizedNumber abstains from homogeneity judgements precisely because nothing in
+    the lexical form can tell the two readings apart."""
+    return bool(_PAREN_NUMBER.match(s.strip()))
+
+
 def is_blank(s):
     """A genuinely-missing cell: empty/whitespace, the self-declaring '(blank)', or a lone '-'.
     Minimal, self-documenting missing-value recognition (a format signal, like is_date/is_currency)
@@ -65,11 +75,23 @@ def _cell_datatype(t):
         return TAB.Blank
     if is_numeric(t):
         return TAB.Numeric
+    if is_paren_number(t):
+        return TAB.ParenthesizedNumber
     if is_date(t):
         return TAB.Date
     if is_currency(t):
         return TAB.Currency
     return TAB.Text
+
+
+def _emit_datatype_declarations(g):
+    """The homogeneity rules the queries read. Emitted into every evidence graph because that
+    graph is transient and carries no ontology — without these the normalisations silently
+    no-op. Mirrors vocab/ontology/tab.ttl; the ontology is the published source of truth."""
+    g.add((TAB.Blank, TAB.datatypeAbstains, Literal(True)))
+    g.add((TAB.ParenthesizedNumber, TAB.datatypeAbstains, Literal(True)))
+    g.add((TAB.Numeric, TAB.inDatatypeFamily, TAB.Quantity))
+    g.add((TAB.Currency, TAB.inDatatypeFamily, TAB.Quantity))
 
 
 def grid_evidence(cells, ncols):
@@ -85,6 +107,7 @@ def grid_evidence(cells, ncols):
         g.add((u, TAB.cellDatatype, _cell_datatype(t)))
     for c in range(ncols):
         g.add((_EV["col-%d" % c], TAB.columnIndex, Literal(c, datatype=XSD.integer)))
+    _emit_datatype_declarations(g)
     return g
 
 
