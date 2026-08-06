@@ -1,11 +1,38 @@
 # The membrane seam — a Rust SHACL engine behind one interface — design
 
-**Date:** 2026-08-06 · **Status:** approved (François, 2026-08-06) ·
+**Date:** 2026-08-06 · **Status:** closed 2026-08-06 ·
 **Measured baseline:** `corpus/ag-trade/graincorp-stem-2026-07-31.pdf` page 0 —
 compile **28.4 s**, of which **20.4 s (72%) is pySHACL** in exactly **two calls**
 (`tiling.region_tiles` 8.3 s, `compile._validate` 12.1 s), both over the same 8,424-triple
 graph · **Scope:** engine swap only; the inference-semantics change is deliberately split
 into its own successor loop (§7)
+
+**Closed, measured (2026-08-06):** page-0 compile **28.4 s → 12.5 s** (score **0.9560**,
+byte-identical) — a **2.3×** win, well short of §5's ~6× arithmetic, because that arithmetic
+was per-validation-call, while wall-clock also carries owlrl's closure and rudof's own parse
+across the Python/Rust boundary (§8). Whole-stem document: **~180–202 s baseline → 166 s**
+(score **0.9655**, **2152** cells, one chain **[3]**, byte-identical) — a much smaller win,
+stated plainly rather than alongside only the flattering page number, because a document
+compile is dominated by other costs this loop never touched, chiefly R39's
+`row-group-nesting.rq` self-join (~93 s). Corpus byte-identity gate
+(`tests/test_corpus_stem.py` + `tests/test_cbh_e2e.py`): **13 passed in 251.79 s** (stem
+0.9655, CBH 0.9047); apple **0.0105540897**, exactly the expected value. Full suite (final,
+after the closure fix below): **968 passed, 1 failed, 5 skipped, 1281.74 s** — the single
+failure is the known machine-environmental
+`tests/test_release_gate.py::test_since_date_fallback_and_previous_tag` (a bare env dict
+without PATH hits this machine's broken Xcode git shim; zero branch commits touch those
+files; green in CI). Differential + mutation battery: **16 passed (~236 s)** — 11 committed
+leak fixtures refused by BOTH engines, 1 real compiled page admitted by both, 3 seeds × 4
+mutation kinds all caught by BOTH engines. The battery's real-corpus agreement was necessary
+but not sufficient: the full suite subsequently found a genuine engine disagreement on a
+*synthetic* fixture (`tests/etkl/test_row_groups.py`), root-caused to `rdfs_closure` using
+plain `owlrl.RDFS_Semantics` (whose `one_time_rules()` fabricates hidden literals by
+value-space unification, unlike pySHACL's own `CustomRDFSSemantics`, which disables exactly
+those rules); fixed in `f9ea992`, pinned by
+`test_rdfs_closure_does_not_fabricate_hidden_literals`. Three residues registered in
+`docs/superpowers/residues.md` for the deferred work — the membrane redundancy (§6), owlrl as
+the new bottleneck (§7/§8), and the battery's positive leg needing synthetic-fixture coverage
+alongside corpus graphs.
 
 **Doc impact:** increment — a new module and a new optional dependency; a wiki note on the
 membrane seam queues for the next release. No published vocabulary or ontology term changes,
