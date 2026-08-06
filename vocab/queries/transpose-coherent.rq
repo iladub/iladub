@@ -1,10 +1,20 @@
 # transpose-coherent.rq — TRUE iff every row is type-EXACT across its value columns (col>=1):
-# NOT EXISTS a row with two DIFFERENT cell types (Numeric/Date/Currency/Text) in col>=1.
+# NOT EXISTS a row with two DIFFERENT cell type FAMILIES (Quantity/Date/Text) in col>=1.
+# Types are normalised via tab:inDatatypeFamily before comparison, and abstaining datatypes
+# (tab:datatypeAbstains — Blank, ParenthesizedNumber) are dropped on BOTH sides, so a
+# parenthesized cell can never be one half of a mismatch pair.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
-  # coherent iff NOT EXISTS a row with two DIFFERENT cell types among its value columns (col>=1)
+  # coherent iff NOT EXISTS a row with two DIFFERENT normalised types among its value columns (col>=1)
   FILTER NOT EXISTS {
-    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?at . FILTER(?ac >= 1)
-    ?b tab:atGridRow ?r ; tab:atGridColumn ?bc ; tab:cellDatatype ?bt . FILTER(?bc >= 1 && ?at != ?bt)
+    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?araw . FILTER(?ac >= 1)
+    FILTER NOT EXISTS { ?araw tab:datatypeAbstains true }
+    OPTIONAL { ?araw tab:inDatatypeFamily ?afam }
+    BIND(COALESCE(?afam, ?araw) AS ?ta)
+    ?b tab:atGridRow ?r ; tab:atGridColumn ?bc ; tab:cellDatatype ?braw . FILTER(?bc >= 1)
+    FILTER NOT EXISTS { ?braw tab:datatypeAbstains true }
+    OPTIONAL { ?braw tab:inDatatypeFamily ?bfam }
+    BIND(COALESCE(?bfam, ?braw) AS ?tb)
+    FILTER(?ta != ?tb)
   }
 }

@@ -8,7 +8,11 @@
 #       column (?col + 1) carries a non-blank Numeric or Currency cell ON THE SAME
 #       ROW ?r — the "$ beside its value" shape. Any-row (the pre-fix form) would let
 #       a numeric YEAR HEADER over an all-text body license absorption; the marker
-#       must sit beside a value it actually marks.
+#       must sit beside a value it actually marks. The neighbor check compares the
+#       NORMALISED datatype family (tab:inDatatypeFamily) — ?tn = tab:Quantity —
+#       rather than enumerating tab:Numeric/tab:Currency, so it tracks the loop's
+#       own family rule instead of drifting from it; abstaining datatypes never
+#       satisfy it.
 # Presence-based: no distance, no count, no tolerance. The symbol set lives in the
 # emitter's is_currency_glyph (B2b's shipped [$€£¥] class, reused — no new constant);
 # this query reads only the emitted tab:CurrencyGlyph datatype facts.
@@ -26,8 +30,11 @@ SELECT DISTINCT ?col ?sym WHERE {
   }
   BIND(?col + 1 AS ?nc)
   FILTER EXISTS {
-    ?cn tab:atGridColumn ?nc ; tab:atGridRow ?r ; tab:cellDatatype ?dn .
-    FILTER(?dn = tab:Numeric || ?dn = tab:Currency)
+    ?cn tab:atGridColumn ?nc ; tab:atGridRow ?r ; tab:cellDatatype ?dnraw .
+    FILTER NOT EXISTS { ?dnraw tab:datatypeAbstains true }
+    OPTIONAL { ?dnraw tab:inDatatypeFamily ?dnfam }
+    BIND(COALESCE(?dnfam, ?dnraw) AS ?tn)
+    FILTER(?tn = tab:Quantity)
   }
 }
 ORDER BY ?col

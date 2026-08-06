@@ -22,7 +22,7 @@ import os
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
-from .celltype import _cell_datatype, is_blank
+from .celltype import _cell_datatype, _emit_datatype_declarations, is_blank
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
@@ -47,7 +47,14 @@ def _marker_datatype(t: str):
 
 def marker_evidence(cells, ncols) -> Graph:
     """The dedicated typed-cell evidence graph for the marker AXIOM. Same shape as
-    celltype.grid_evidence, with _marker_datatype in place of _cell_datatype."""
+    celltype.grid_evidence, with _marker_datatype in place of _cell_datatype — including the
+    SAME datatypeAbstains/inDatatypeFamily declarations (loop-quantity-typing task 2), since
+    this graph is transient exactly like celltype.grid_evidence's and unit-marker-column.rq's
+    neighbor check normalises through tab:inDatatypeFamily (?tn = tab:Quantity) rather than
+    enumerating tab:Numeric/tab:Currency. Without these triples here too the normalisation
+    would silently no-op for this query specifically, even though grid_evidence emits them —
+    the two evidence-graph builders are separate by design (marker-local typing, see the
+    module docstring), so each must carry its own copy."""
     g = Graph()
     for i, (r, c, t) in enumerate(cells):
         u = _EV["umcell-%d" % i]
@@ -58,6 +65,7 @@ def marker_evidence(cells, ncols) -> Graph:
         g.add((u, TAB.cellDatatype, _marker_datatype(t)))
     for c in range(ncols):
         g.add((_EV["umcol-%d" % c], TAB.columnIndex, Literal(c, datatype=XSD.integer)))
+    _emit_datatype_declarations(g)
     return g
 
 

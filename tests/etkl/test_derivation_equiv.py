@@ -33,32 +33,46 @@ def _run_text(query_text, cells, ncols, bindings=None):
 # both v2 (modal non-Blank column type, Blank wildcard) — see header-body-split.rq for the design
 # note and docs/superpowers/specs/2026-07-26-header-body-split-robust-design.md.
 
-_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", "(blank)", ""]  # incl. Blank markers
+_TYPES = ["7", "3.5", "1,200", "$5", "2020-01-02", "Alice", "N/A", "(blank)", "", "(171)"]  # incl. Blank/abstaining markers
 
 
 def _ref_hbs(cells, ncols):
-    """Fast python reference for header-body-split.rq v2: per column D = modal non-Blank datatype
-    computed over rows below the first (row>=1) (argmax of counts; ALL count-tied datatypes
-    considered) — the single label row (row 0) must not out-vote the body (a header wrapping into
-    rows 1,2,... still votes; that general case is deferred Loop B). A data column has
-    D != Text and >=1 non-Blank body cell (row>=1); s_col = 1 + max row, OVER ALL ROWS (incl. row
-    0), of a non-Blank cell whose type != D (or 1 if homogeneous) — the diff scan locates the
-    header boundary and is deliberately NOT restricted to body rows. Blank cells are wildcards.
+    """Fast python reference for header-body-split.rq v2: per column D = modal non-abstaining
+    NORMALISED datatype computed over rows below the first (row>=1) (argmax of counts; ALL
+    count-tied datatypes considered) — the single label row (row 0) must not out-vote the body (a
+    header wrapping into rows 1,2,... still votes; that general case is deferred Loop B). A data
+    column has D != Text and >=1 non-abstaining body cell (row>=1); s_col = 1 + max row, OVER ALL
+    ROWS (incl. row 0), of a non-abstaining cell whose NORMALISED type != D (or 1 if homogeneous)
+    — the diff scan locates the header boundary and is deliberately NOT restricted to body rows.
+    Abstaining datatypes (Blank, ParenthesizedNumber — tab:datatypeAbstains) are wildcards.
     split = MIN(s_col) over data columns and tied D; None if none qualify. Types via the SAME
-    celltype._cell_datatype the graph uses.
+    celltype._cell_datatype the graph uses, normalised the SAME way the graph's
+    tab:inDatatypeFamily declarations do (Numeric/Currency -> Quantity).
     R41 (2026-08-05): an s_col past the last evidence row is excluded — a valid split leaves >=1
-    body row (mirrors the query's ?maxrow clause)."""
+    body row (mirrors the query's ?maxrow clause).
+    Loop quantity-typing (task 2): abstainers now include tab:ParenthesizedNumber alongside
+    tab:Blank, and tab:Currency is normalised to tab:Quantity (with tab:Numeric) before both the
+    modal vote and the mismatch scan — mirroring the query's THE ONE IDIOM."""
     from collections import Counter
-    BLANK = _cell_datatype("")      # tab:Blank
-    TEXT = _cell_datatype("Alice")  # tab:Text
+    BLANK = _cell_datatype("")           # tab:Blank
+    TEXT = _cell_datatype("Alice")       # tab:Text
+    PAREN = _cell_datatype("(171)")      # tab:ParenthesizedNumber
+    NUMERIC = _cell_datatype("7")        # tab:Numeric
+    CURRENCY = _cell_datatype("$5")      # tab:Currency
+    ABSTAIN = {BLANK, PAREN}
+    FAMILY = {NUMERIC: TAB.Quantity, CURRENCY: TAB.Quantity}
+
+    def _norm(dt):
+        return FAMILY.get(dt, dt)
+
     by_col = {}
     for (r, c, t) in cells:
         by_col.setdefault(c, []).append((r, _cell_datatype(t)))
     best = None
     maxrow = max(r for (r, c, t) in cells)   # every line has >=1 cell (text_lines invariant)
     for c, rt in by_col.items():
-        nonblank = [(r, dt) for (r, dt) in rt if dt != BLANK]
-        body = [(r, dt) for (r, dt) in nonblank if r >= 1]
+        nonabstain = [(r, _norm(dt)) for (r, dt) in rt if dt not in ABSTAIN]
+        body = [(r, dt) for (r, dt) in nonabstain if r >= 1]
         if not body:
             continue
         counts = Counter(dt for _, dt in body)          # mode over BODY rows only
@@ -67,7 +81,7 @@ def _ref_hbs(cells, ncols):
         for D in modal:
             if D == TEXT:
                 continue
-            diffs = [r for (r, dt) in nonblank if dt != D]       # diff scan over ALL rows
+            diffs = [r for (r, dt) in nonabstain if dt != D]     # diff scan over ALL rows
             s_col = (max(diffs) + 1) if diffs else 1
             if 1 <= s_col <= maxrow:         # R41: a split must leave >=1 body row
                 best = s_col if best is None else min(best, s_col)
@@ -109,45 +123,91 @@ def _run_ask_text(query_text, cells, ncols):
     return bool(g.query(query_text).askAnswer)
 
 
-OLD_LT = r"""# looks-transposed.rq
+# OLD_LT/OLD_STUB below are the naive PAIRWISE forms the aggregation rewrite (loop N-era) replaced;
+# their job is to prove the aggregated query is behaviorally equivalent to the naive form, NOT to
+# pin pre-loop-quantity-typing semantics. Loop quantity-typing (task 2) made the aggregated queries
+# compare NORMALISED families and drop abstainers (THE ONE IDIOM); to keep proving the SAME
+# structural property (aggregated == naive-pairwise) these naive forms now apply the identical idiom
+# inline at every type comparison, rather than being retired — the divergence surfaced here was the
+# naive forms lagging the new semantics, not the rewritten .rq files (verified against the brief's
+# idiom and against _ref_hbs/header-body-split.rq, which used the SAME idiom and pass).
+OLD_LT = r"""# looks-transposed.rq (naive pairwise form, idiom-normalised — see comment above)
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
-  ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol . FILTER(?r >= 1 && ?rcol >= 1)
+  ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol ; tab:cellDatatype ?rcraw . FILTER(?r >= 1 && ?rcol >= 1)
+  FILTER NOT EXISTS { ?rcraw tab:datatypeAbstains true }   # anchor must be a non-abstaining cell
   FILTER NOT EXISTS { ?rt tab:atGridRow ?r ; tab:atGridColumn ?rtc ; tab:cellDatatype tab:Text . FILTER(?rtc >= 1) }
-  FILTER NOT EXISTS { ?ra tab:atGridRow ?r ; tab:atGridColumn ?rac ; tab:cellDatatype ?rat .
-                      ?rb tab:atGridRow ?r ; tab:atGridColumn ?rbc ; tab:cellDatatype ?rbt .
-                      FILTER(?rac >= 1 && ?rbc >= 1 && ?rat != ?rbt) }
   FILTER NOT EXISTS {
-    ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr . FILTER(?cr >= 1)
+    ?ra tab:atGridRow ?r ; tab:atGridColumn ?rac ; tab:cellDatatype ?raraw . FILTER(?rac >= 1)
+    FILTER NOT EXISTS { ?raraw tab:datatypeAbstains true }
+    OPTIONAL { ?raraw tab:inDatatypeFamily ?rafam }
+    BIND(COALESCE(?rafam, ?raraw) AS ?rat)
+    ?rb tab:atGridRow ?r ; tab:atGridColumn ?rbc ; tab:cellDatatype ?rbraw . FILTER(?rbc >= 1)
+    FILTER NOT EXISTS { ?rbraw tab:datatypeAbstains true }
+    OPTIONAL { ?rbraw tab:inDatatypeFamily ?rbfam }
+    BIND(COALESCE(?rbfam, ?rbraw) AS ?rbt)
+    FILTER(?rat != ?rbt)
+  }
+  FILTER NOT EXISTS {
+    ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?ccraw . FILTER(?cr >= 1)
+    FILTER NOT EXISTS { ?ccraw tab:datatypeAbstains true }   # anchor must be a non-abstaining cell
     FILTER NOT EXISTS { ?ct tab:atGridColumn ?col ; tab:atGridRow ?ctr ; tab:cellDatatype tab:Text . FILTER(?ctr >= 1) }
-    FILTER NOT EXISTS { ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?cat .
-                        ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbt .
-                        FILTER(?car >= 1 && ?cbr >= 1 && ?cat != ?cbt) }
+    FILTER NOT EXISTS {
+      ?ca tab:atGridColumn ?col ; tab:atGridRow ?car ; tab:cellDatatype ?caraw . FILTER(?car >= 1)
+      FILTER NOT EXISTS { ?caraw tab:datatypeAbstains true }
+      OPTIONAL { ?caraw tab:inDatatypeFamily ?cafam }
+      BIND(COALESCE(?cafam, ?caraw) AS ?cat)
+      ?cb tab:atGridColumn ?col ; tab:atGridRow ?cbr ; tab:cellDatatype ?cbraw . FILTER(?cbr >= 1)
+      FILTER NOT EXISTS { ?cbraw tab:datatypeAbstains true }
+      OPTIONAL { ?cbraw tab:inDatatypeFamily ?cbfam }
+      BIND(COALESCE(?cbfam, ?cbraw) AS ?cbt)
+      FILTER(?cat != ?cbt)
+    }
   }
 }
 """
 
-OLD_STUB = r"""# stub-data-split.rq
+OLD_STUB = r"""# stub-data-split.rq (naive pairwise form, idiom-normalised — see comment above OLD_LT)
 PREFIX tab: <https://w3id.org/iladub/tab#>
 SELECT (MIN(?k) AS ?stub) WHERE {
   ?km tab:columnIndex ?k . FILTER(?k >= 1)
   FILTER NOT EXISTS {
     ?cm3 tab:columnIndex ?c3 . FILTER(?c3 >= ?k)
     FILTER NOT EXISTS {
-      ?bc3 tab:atGridColumn ?c3 ; tab:atGridRow ?br3 . FILTER(?br3 >= ?split)
+      ?bc3 tab:atGridColumn ?c3 ; tab:atGridRow ?br3 ; tab:cellDatatype ?bc3raw . FILTER(?br3 >= ?split)
+      FILTER NOT EXISTS { ?bc3raw tab:datatypeAbstains true }   # anchor must be a non-abstaining cell
       FILTER NOT EXISTS { ?tc3 tab:atGridColumn ?c3 ; tab:atGridRow ?tr3 ; tab:cellDatatype tab:Text . FILTER(?tr3 >= ?split) }
-      FILTER NOT EXISTS { ?ac3 tab:atGridColumn ?c3 ; tab:atGridRow ?ar3 ; tab:cellDatatype ?at3 .
-                          ?dc3 tab:atGridColumn ?c3 ; tab:atGridRow ?dr3 ; tab:cellDatatype ?dt3 .
-                          FILTER(?ar3 >= ?split && ?dr3 >= ?split && ?at3 != ?dt3) }
+      FILTER NOT EXISTS {
+        ?ac3 tab:atGridColumn ?c3 ; tab:atGridRow ?ar3 ; tab:cellDatatype ?araw3 . FILTER(?ar3 >= ?split)
+        FILTER NOT EXISTS { ?araw3 tab:datatypeAbstains true }
+        OPTIONAL { ?araw3 tab:inDatatypeFamily ?afam3 }
+        BIND(COALESCE(?afam3, ?araw3) AS ?at3)
+        ?dc3 tab:atGridColumn ?c3 ; tab:atGridRow ?dr3 ; tab:cellDatatype ?draw3 . FILTER(?dr3 >= ?split)
+        FILTER NOT EXISTS { ?draw3 tab:datatypeAbstains true }
+        OPTIONAL { ?draw3 tab:inDatatypeFamily ?dfam3 }
+        BIND(COALESCE(?dfam3, ?draw3) AS ?dt3)
+        FILTER(?at3 != ?dt3)
+      }
     }
   }
   FILTER NOT EXISTS {
     ?cm4 tab:columnIndex ?c4 . FILTER(?c4 < ?k)
-    FILTER EXISTS { ?bc4 tab:atGridColumn ?c4 ; tab:atGridRow ?br4 . FILTER(?br4 >= ?split) }
+    FILTER EXISTS {
+      ?bc4 tab:atGridColumn ?c4 ; tab:atGridRow ?br4 ; tab:cellDatatype ?bc4raw . FILTER(?br4 >= ?split)
+      FILTER NOT EXISTS { ?bc4raw tab:datatypeAbstains true }   # anchor must be a non-abstaining cell
+    }
     FILTER NOT EXISTS { ?tc4 tab:atGridColumn ?c4 ; tab:atGridRow ?tr4 ; tab:cellDatatype tab:Text . FILTER(?tr4 >= ?split) }
-    FILTER NOT EXISTS { ?ac4 tab:atGridColumn ?c4 ; tab:atGridRow ?ar4 ; tab:cellDatatype ?at4 .
-                        ?dc4 tab:atGridColumn ?c4 ; tab:atGridRow ?dr4 ; tab:cellDatatype ?dt4 .
-                        FILTER(?ar4 >= ?split && ?dr4 >= ?split && ?at4 != ?dt4) }
+    FILTER NOT EXISTS {
+      ?ac4 tab:atGridColumn ?c4 ; tab:atGridRow ?ar4 ; tab:cellDatatype ?araw4 . FILTER(?ar4 >= ?split)
+      FILTER NOT EXISTS { ?araw4 tab:datatypeAbstains true }
+      OPTIONAL { ?araw4 tab:inDatatypeFamily ?afam4 }
+      BIND(COALESCE(?afam4, ?araw4) AS ?at4)
+      ?dc4 tab:atGridColumn ?c4 ; tab:atGridRow ?dr4 ; tab:cellDatatype ?draw4 . FILTER(?dr4 >= ?split)
+      FILTER NOT EXISTS { ?draw4 tab:datatypeAbstains true }
+      OPTIONAL { ?draw4 tab:inDatatypeFamily ?dfam4 }
+      BIND(COALESCE(?dfam4, ?draw4) AS ?dt4)
+      FILTER(?at4 != ?dt4)
+    }
   }
 }
 """

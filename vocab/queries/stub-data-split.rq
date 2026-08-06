@@ -1,9 +1,10 @@
 # stub-data-split.rq — leading text-stub column count k: the data columns form a contiguous suffix
 # [k, ncols), k>=1. A column is DATA iff it has a body cell (row>=?split) and is homogeneous non-Text
-# (no Text body cell, one distinct cellDatatype). Empty result -> None. AGGREGATION FORM (linear in
-# rows): column data-ness is a GROUP BY + HAVING (one distinct type, no Text) over body cells,
-# replacing the O(cells^2) pair self-joins; the two membrane clauses (every col>=k is data; no data
-# col below k) are preserved. Equivalent to the prior pairwise form — proven by the celltype
+# (no Text body cell, one distinct normalised type — tab:inDatatypeFamily — after abstaining
+# datatypes, tab:datatypeAbstains, are dropped). Empty result -> None. AGGREGATION FORM (linear in
+# rows): column data-ness is a GROUP BY + HAVING (one distinct normalised type, no Text) over body
+# cells, replacing the O(cells^2) pair self-joins; the two membrane clauses (every col>=k is data; no
+# data col below k) are preserved. Equivalent to the prior pairwise form — proven by the celltype
 # differential oracle (test_stub_data_split_matches_reference) + the randomized new-vs-reference test
 # (tests/etkl/test_derivation_equiv.py). k=MIN over data columns whose suffix is all-data and which
 # have no data column below them.
@@ -12,7 +13,10 @@ SELECT (MIN(?dcol) AS ?stub) WHERE {
   # ?dcol ranges over DATA columns (>=1)
   {
     SELECT ?dcol WHERE {
-      ?bc tab:atGridColumn ?dcol ; tab:atGridRow ?br ; tab:cellDatatype ?ct . FILTER(?br >= ?split)
+      ?bc tab:atGridColumn ?dcol ; tab:atGridRow ?br ; tab:cellDatatype ?craw . FILTER(?br >= ?split)
+      FILTER NOT EXISTS { ?craw tab:datatypeAbstains true }
+      OPTIONAL { ?craw tab:inDatatypeFamily ?cfam }
+      BIND(COALESCE(?cfam, ?craw) AS ?ct)
     } GROUP BY ?dcol HAVING(COUNT(DISTINCT ?ct) = 1 && SUM(IF(?ct = tab:Text, 1, 0)) = 0)
   }
   FILTER(?dcol >= 1)
@@ -22,7 +26,10 @@ SELECT (MIN(?dcol) AS ?stub) WHERE {
     FILTER NOT EXISTS {
       {
         SELECT ?d2 WHERE {
-          ?b2 tab:atGridColumn ?d2 ; tab:atGridRow ?r2 ; tab:cellDatatype ?t2 . FILTER(?r2 >= ?split)
+          ?b2 tab:atGridColumn ?d2 ; tab:atGridRow ?r2 ; tab:cellDatatype ?t2raw . FILTER(?r2 >= ?split)
+          FILTER NOT EXISTS { ?t2raw tab:datatypeAbstains true }
+          OPTIONAL { ?t2raw tab:inDatatypeFamily ?t2fam }
+          BIND(COALESCE(?t2fam, ?t2raw) AS ?t2)
         } GROUP BY ?d2 HAVING(COUNT(DISTINCT ?t2) = 1 && SUM(IF(?t2 = tab:Text, 1, 0)) = 0)
       }
       FILTER(?d2 = ?nc)
@@ -32,7 +39,10 @@ SELECT (MIN(?dcol) AS ?stub) WHERE {
   FILTER NOT EXISTS {
     {
       SELECT ?d3 WHERE {
-        ?b3 tab:atGridColumn ?d3 ; tab:atGridRow ?r3 ; tab:cellDatatype ?t3 . FILTER(?r3 >= ?split)
+        ?b3 tab:atGridColumn ?d3 ; tab:atGridRow ?r3 ; tab:cellDatatype ?t3raw . FILTER(?r3 >= ?split)
+        FILTER NOT EXISTS { ?t3raw tab:datatypeAbstains true }
+        OPTIONAL { ?t3raw tab:inDatatypeFamily ?t3fam }
+        BIND(COALESCE(?t3fam, ?t3raw) AS ?t3)
       } GROUP BY ?d3 HAVING(COUNT(DISTINCT ?t3) = 1 && SUM(IF(?t3 = tab:Text, 1, 0)) = 0)
     }
     FILTER(?d3 < ?dcol)   # ANY data column below dcol (incl. col 0) breaks the clean stub|data split
