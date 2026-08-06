@@ -1,6 +1,6 @@
 # Subclass-only closure — the membrane's inference, narrowed to what shapes use — design
 
-**Date:** 2026-08-06 · **Status:** approved (François, 2026-08-06) ·
+**Date:** 2026-08-06 · **Status:** closed 2026-08-06 ·
 **Discharges:** R58 (owlrl is the membrane's bottleneck); closes the **R19 hazard class at its
 root** · **Predecessor:** `2026-08-06-membrane-engine-swap-design.md` §7, which split this
 change out precisely because it changes behaviour
@@ -104,3 +104,41 @@ of the predecessor loop's engine differential:
 - §7 credibility: the focus-node parity leg exists because a membrane that silently stops
   refusing is worse than a slow one.
 - Source ownership: the ontology is read, never edited.
+
+## 7. Close-out (measured 2026-08-06)
+
+- **Page-0 stem compile:** 12.5 s → **10.1 s**; score **0.9560**, byte-identical.
+- **Whole stem document:** 166 s → **151 s**; score **0.9655**, byte-identical.
+- **Corpus pins** (`tests/test_corpus_stem.py` + `tests/test_cbh_e2e.py`): **13 passed in
+  223.32 s** (stem 0.9655, CBH 0.9047 — both byte-identical).
+- **Closure + engine batteries together** (`test_closure_equiv.py` + `test_membrane_equiv.py`):
+  **33 passed in 285.28 s** (closure differential 17, engine differential 16).
+- **Full suite:** **996 passed, 1 failed, 5 skipped, 1232.34 s** — the failure is the known
+  machine-environmental `tests/test_release_gate.py::test_since_date_fallback_and_previous_tag`
+  (a bare env dict without `PATH` hits this machine's broken Xcode git shim; zero branch commits
+  touch it; green in CI).
+- **Closure timing:** full RDFS closure 1.311 s → subclass-only **0.047 s**.
+
+**§4's "corpus scores byte-identical" criterion was NOT met as written.** Stem and CBH held
+byte-identical; **apple's did not**: **0.0105540897 → 0.0326975477**. Per §2 Step 2's own stop
+condition ("if any score moves, STOP and report BLOCKED — a moved score means the closure
+changed a real verdict, which outranks the speedup"), this was investigated rather than waved
+through.
+
+Diagnosis: apple p1's region 4 flipped from `MATRIX_AMBIGUOUS` to **asserted (8 cells)**. Two
+nodes — `mtable4-cc0_2` and `mtable4-cc1_2` — are `iladub:CandidateConcept` instances
+(escalation records that carry a `tab:hasBBox` for provenance) with **no `tab:cellText`
+property at all**. Under full closure, `tab:hasBBox`'s `rdfs:domain tab:Cell` typed them as
+`tab:Cell`, so `tab:WrappedCellShape` fired on them and refused the entire region. That is
+**R19 verbatim** — and it proves R19 was **not a latent hazard but an active defect**,
+suppressing a real region on a real document. A shape was firing on something that was never a
+cell.
+
+**Adjudication (François, 2026-08-06):** accept as a measured fix. The score movement is the
+loop's intended effect, not a regression — the criterion as literally written ("byte-identical")
+is superseded by the criterion the loop actually exists to serve (§3: no shape silently stops
+seeing a node it should see). The criterion is recorded here as not met, honestly, rather than
+reworded after the fact to match the outcome.
+
+All other §4 criteria held: page-0 below 12.5 s (10.1 s), both batteries green, full suite green
+apart from the known machine-environmental failure, R58 closed, R19 closed at its root.
