@@ -1,6 +1,6 @@
 # The kind gate is load-bearing — why slice B cannot start yet — design
 
-**Date:** 2026-08-07 · **Status:** approved (François, 2026-08-07) ·
+**Date:** 2026-08-07 · **Status:** closed 2026-08-07 ·
 **Opens:** R71 · **Blocks:** slice B of the reading-as-differential-diagnosis
 architecture (`2026-08-07-reading-decision-record-design.md` §7) ·
 **Specimen:** `corpus/ag-trade/graincorp-stem-2026-07-31.pdf`, page 0 region 2 and
@@ -150,3 +150,76 @@ corpus.
   than a refactor: the evidence refuted the plan, and reporting that is the result.
 - The guard is a characterisation test, not an assertion that the current behaviour is
   correct. Its docstring carries that distinction.
+
+## 9. Close-out: measured results (2026-08-07)
+
+**Controller-run confirmation (Step 1 of Task 2), no `src/` file changed on this
+branch:** `pytest tests/test_corpus_stem.py tests/test_cbh_e2e.py -q` → **13 passed in
+278s** (stem 0.9655 / 2152 cells / chain [3]; CBH 0.9047). `git diff --stat` for `src/`
+and `*.ttl` across the whole branch is **empty** — no source or ontology change, which
+is why no verdict could move. Both figures match this document's own §6 expectation of
+"corpus scores unchanged."
+
+**The guard (Task 1), `tests/etkl/test_kind_gate_is_load_bearing.py`:** 10 tests, all
+passing, none skipped. Nine pin the `kind` / `looks_transposed` / `transpose_is_coherent`
+triple (parametrized over both stem bands — page 0 region2, page 2 region1). One,
+`test_page0_region2_still_compiles_through_the_unsupported_path`, exercises the real
+routing via `compile_tables(STEM, page_number=0)` and asserts
+`regions[2].verdict == "asserted"` and `.cells == 586`. Both the oracle-fact assertions
+and the routing assertion were demonstrated capable of failing (inverted, observed
+FAILING, reverted) — see Task 1's report for the transcripts.
+
+### A correction this loop discovered, not stated in §3/§4 as originally written
+
+Compiling stem **page 2 standalone** (`compile_tables(STEM, page_number=2)`) yields
+`verdict=escalated, cells=0`. Its 741 asserted cells, reported in §3's table, exist
+**only** under `compile_document`'s cross-page header carry (~150s) — not from a
+standalone page-2 compile. So §3/§4's cell figures are **document-level**, not
+per-page-standalone; a future reader re-deriving them by compiling page 2 alone would
+get 0, not 741, and would wrongly conclude this spec was in error. Page 0's 586 cells,
+by contrast, are reproducible standalone in ~10s — no document-level carry is needed.
+This asymmetry is also why the guard's routing test (added in Task 1's fix round 1)
+covers page 0 only: a `compile_document`-based test for page 2 would cost ~150s per
+run, which was judged (François) not worth adding to this file. The cost, and the
+resulting coverage gap, is recorded as part of R71 rather than closed here.
+
+### §6 criterion-by-criterion pass
+
+- **"The suppressed-positive scan is reproducible from the method in §3, and its result
+  table is recorded here."** — **Met.** §3's table is present in this document, sourced
+  from the corpus-wide scan described there.
+- **"The guard fails if either stem band's `looks_transposed` /
+  `transpose_is_coherent` / kind triple changes — verified by inverting one assertion
+  and observing the failure."** — **Met, for the triple exactly as worded.** Both
+  bands' triples are pinned (parametrized `key0`/`key1` in
+  `tests/etkl/test_kind_gate_is_load_bearing.py`), and Task 1's falsifiability
+  demonstration inverted `test_looks_transposed_is_a_false_positive_here`'s assertion
+  and observed both `key0` and `key1` FAIL, then reverted to 10/10 passing. **A
+  narrower claim this criterion does not, on its literal wording, cover: a routing
+  change that leaves the triple untouched but drops asserted cells to zero.** Task 1's
+  review found exactly that gap and closed it for page 0 only
+  (`test_page0_region2_still_compiles_through_the_unsupported_path`, pinning
+  `verdict == "asserted"`, `cells == 586`). Page 2 region1's 741 cells have **no**
+  routing-level guard — only the oracle-fact triple is pinned for that band. A future
+  refactor that changes routing (e.g. removing the `RECORD_TABLE`/`UNSUPPORTED_TABLE`
+  branch in `compile.py`) while leaving `classify()`'s and the orientation oracles'
+  outputs unchanged would pass all 10 tests in this file while silently dropping page
+  2's 741 cells. This is recorded in R71's Measured column rather than silently
+  accepted.
+- **"No `src/` change, so no verdict can move; corpus scores unchanged."** — **Met.**
+  Controller's `git diff --stat` for `src/` and `*.ttl` is empty across the whole
+  branch; the corpus run above reproduces the same 13 passed / 0.9655 / 2152 cells /
+  chain [3] / 0.9047 figures the brief expected.
+- **"R71 states the closing condition precisely enough that slice B can be re-planned
+  against it without re-deriving this measurement."** — **Met.** R71's *what would
+  close it* column names the two candidate paths (close R10 first, or an open-world
+  AXIOM/NEURAL fix to `looks-transposed.rq`, explicitly not a tuned Python threshold)
+  and the check-R10-first ordering from §7, plus a separate closing note for the
+  routing-coverage gap this section describes.
+
+**Summary: three of four §6 criteria are met without qualification; the second is met
+exactly as worded (both bands' triples are pinned and demonstrated falsifiable) but
+carries a narrower practical guarantee than "the corpus's 1,327 cells are protected" —
+that stronger guarantee holds only for page 0's 586 cells at the routing level. Page
+2's 741 cells remain protected at the oracle-fact level only, a gap this document and
+R71 both now record rather than obscure.**
