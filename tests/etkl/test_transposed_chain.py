@@ -22,10 +22,12 @@ QDIR = os.path.join(ROOT, "vocab", "queries")
 
 
 def _run(name, g, region):
-    """Returns tuples, not dicts: every row in this module has every SELECTed variable bound
-    (there is no absence to distinguish), so positional access is simpler and matches how
-    _order/_chain below consume the results. See test_supersession_queries.py's _run for why
-    it uses .asdict() instead — that divergence is deliberate, not an oversight to unify."""
+    """Returns tuples, not dicts: this module never READS a column that can be unbound, so
+    positional access is simpler and matches how _order/_chain below consume the results.
+    (Some columns here ARE unbound — `?supersededBy` always, since compile_tables never emits
+    dec:supersedes, and `?refutedBy` for a chosen option — this module just never reads them.)
+    See test_supersession_queries.py's _run for why it uses .asdict() instead: asserting the
+    ABSENCE of a binding needs a dict. That divergence is deliberate, not an oversight to unify."""
     q = open(os.path.join(QDIR, name), encoding="utf-8").read()
     return [tuple(r) for r in g.query(q, initBindings={"region": region})]
 

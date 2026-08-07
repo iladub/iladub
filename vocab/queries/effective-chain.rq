@@ -20,7 +20,7 @@
 # superseding verdict, ?v2) must carry dec:regarding. If one ever lacked it, branch A could
 # not bind ?effective for that edge and branch B is excluded by the NOT EXISTS for the
 # superseded region, so the query would return NOTHING for that region rather than falling
-# back to the superseded chain. Unreachable today: decisionlog.py:52 (Ledger.judge) emits
+# back to the superseded chain. Unreachable today: decisionlog.py:52 (BandRecorder.record) emits
 # dec:regarding on every judgement unconditionally.
 #
 # SINGLE-HOP ASSUMPTION: this query follows exactly one dec:supersedes edge (v1 -> v2), not a
