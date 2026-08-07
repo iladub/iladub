@@ -88,20 +88,25 @@ class ReadingRecorder:
             # Only label the default agent; caller agents are expected to be pre-labelled.
             graph.add((self._agent, RDFS.label, Literal("iladub reading compiler", lang="en")))
 
-        # Page is a dec:Process, not a decision.
+        # Page is a dec:Process, not a decision. NO dec:regarding here (final-review I5):
+        # dec:regarding's rdfs:domain is dec:DecisionHolon (widened on this branch only to
+        # unionOf(dec:DecisionHolon, dec:ExpansionRequest)), and a dec:Process is neither —
+        # emitting it on a container asserted a term outside its own declared domain. The
+        # structure the containers carry is dcterms:isPartOf; the JUDGEMENTS keep their own
+        # dec:regarding, which is the only thing the committed queries read (all three bind
+        # `?d a dec:DecisionHolon`, so a container never matched them anyway).
         graph.add((self._page_node, RDF.type, DEC.Process))
         graph.add((self._page_node, RDFS.label, Literal(f"reading page {page}")))
         graph.add((self._page_node, DCTERMS.isPartOf, doc_uri))
-        graph.add((self._page_node, DEC.regarding, doc_uri))
 
     def band(self, idx: int) -> BandRecorder:
         prefix = f"{self._doc}#region{idx}"
         band_node = URIRef(f"{prefix}-reading")
-        # Band is a dec:Process, not a decision.
+        # Band is a dec:Process, not a decision — see the page node above for why it carries
+        # no dec:regarding.
         self._g.add((band_node, RDF.type, DEC.Process))
         self._g.add((band_node, RDFS.label, Literal(f"reading band {idx}")))
         self._g.add((band_node, DCTERMS.isPartOf, self._page_node))
-        self._g.add((band_node, DEC.regarding, URIRef(prefix)))
         return BandRecorder(self._g, band_node, URIRef(prefix), prefix, self._agent)
 
 

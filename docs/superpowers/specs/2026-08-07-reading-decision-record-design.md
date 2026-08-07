@@ -61,9 +61,14 @@ Per decision:
 | `dec:rejectedBecause` | on each discarded option — the observation that refuted it |
 | `dec:rationale` | the human-readable statement (today's reason string, no longer the only record) |
 | `dec:order` | position in the sequence for that band |
-| `dec:partOf` | the parent decision — document → page → band → judgement |
+| `dec:withinProcess` | the band process this judgement was made inside |
 
-`dec:order` and `dec:partOf` give the document→table decision hierarchy with no new terms.
+The containers are the other half of the hierarchy, and they are **processes, not decisions**: a
+page and a band are `dec:Process` nodes, nested with `dcterms:isPartOf` (band → page →
+document). So the hierarchy is `dcterms:isPartOf` between the containers and
+`dec:withinProcess` from a judgement to its band — `dec:partOf` is decision→decision and a page
+is not a decision, so it is *not* what carries this. With `dec:order` that gives the
+document→table decision hierarchy with no new terms.
 
 **Which judgements** — every one on the band-to-verdict path, so each band carries a *complete*
 chain rather than a partial one: kind classification (`regions.classify`), header/body split,

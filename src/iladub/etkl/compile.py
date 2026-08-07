@@ -37,6 +37,38 @@ def _tiles_rationale(tiles: bool, n: int, unit: str) -> str:
             f"the {n} {unit} asserted into scratch")
 
 
+# Which OTHER kind each `regions._reason` observation genuinely refutes (final-review C2).
+# `_reason` (regions.py:88-98) returns a justification of the CHOSEN kind, NOT a per-option
+# refutation, so broadcasting it onto every loser asserted observations the classifier never
+# made (measured on apple page 0: 1 of 4 emitted refutations was true). What each observation
+# actually says, read off `_reason`:
+#   * NON_TABLE          -> "fewer than 2 lines" / "fewer than 2 columns": the band has no
+#     table shape at all, which refutes BOTH table kinds.
+#   * UNSUPPORTED_TABLE  -> "header has N words but M columns" / "header word 'X' is not
+#     aligned 1:1 with column K": a header/column-ALIGNMENT observation, which is exactly what
+#     separates the two TABLE kinds. It refutes RECORD_TABLE and says nothing whatever about
+#     NON_TABLE (the band is a table either way).
+#   * RECORD_TABLE       -> "flat single-level header": a POSITIVE justification of the winner.
+#     It refutes nothing, so nothing is emitted — silence is the honest record (§7).
+# A kind absent from a tuple carries no dec:rejectedBecause at all: the option is still in the
+# dec:optionSpace (it was considered), it simply carries no refutation the reader ever made.
+_KIND_REFUTED_BY_REASON = {
+    "NON_TABLE": ("RECORD_TABLE", "UNSUPPORTED_TABLE"),
+    "UNSUPPORTED_TABLE": ("RECORD_TABLE",),
+    "RECORD_TABLE": (),
+}
+
+
+def _kind_refutations(chosen_name: str, reason: str | None) -> dict:
+    """`{option name: the observation that genuinely refutes it}` for one kind judgement.
+
+    Pure lookup over `_KIND_REFUTED_BY_REASON` — no judgement is re-evaluated here, and an
+    absent reason yields no refutation at all."""
+    if not reason:
+        return {}
+    return {name: reason for name in _KIND_REFUTED_BY_REASON.get(chosen_name, ())}
+
+
 def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
     """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
@@ -431,8 +463,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         region = classify(band)
         _kind_options = ["RECORD_TABLE", "UNSUPPORTED_TABLE", "NON_TABLE"]
         brec.record("kind", _kind_options, region.kind.name, region.reason or "",
-                    rejected={name: region.reason for name in _kind_options
-                              if name != region.kind.name and region.reason})
+                    rejected=_kind_refutations(region.kind.name, region.reason))
 
         if region.kind is RegionKind.NON_TABLE:
             if getattr(band, "unit_markers", ()):

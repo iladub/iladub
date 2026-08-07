@@ -201,8 +201,22 @@ APPLE = os.path.join(ROOT, "corpus", "financial", "apple-fy2026q3-statements.pdf
 needs_apple = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus doc not fetched")
 
 
+@pytest.fixture(scope="module")
+def apple_report():
+    """Compile apple page 0 ONCE for the whole module — a compile takes ~1 minute, and six
+    tests below read the same page (final-review I4; the same module-scoped pattern
+    test_decision_queries.py already uses). Nothing is mutated by any reader."""
+    from iladub.etkl import compile_tables
+    return compile_tables(APPLE, page_number=0)
+
+
+@pytest.fixture(scope="module")
+def apple_graph(apple_report):
+    return apple_report.graph
+
+
 @needs_apple
-def test_every_band_carries_a_chain():
+def test_every_band_carries_a_chain(apple_graph):
     """No region may end without a record of how it got there (spec §6).
 
     Task 1's interface differs from the original brief: band/page containers are
@@ -211,9 +225,7 @@ def test_every_band_carries_a_chain():
     RDF.type, DEC.Process; every one of them must have at least one judgement
     decision hanging off it via dec:withinProcess.
     """
-    from iladub.etkl import compile_tables
-    rep = compile_tables(APPLE, page_number=0)
-    g = rep.graph
+    g = apple_graph
     bands = list(g.subjects(RDF.type, DEC.Process))
     bands = [b for b in bands if str(b).endswith("-reading") and "region" in str(b)]
     assert bands, "no band processes recorded at all"
@@ -223,23 +235,21 @@ def test_every_band_carries_a_chain():
 
 
 @needs_apple
-def test_the_kind_rejection_is_recorded_for_band_3():
+def test_the_kind_rejection_is_recorded_for_band_3(apple_graph):
     """Spec §5's honest limit, made concrete: band 3 rejected RECORD_TABLE because the
     caption line was read as a header row — and nothing else was ever a candidate."""
-    from iladub.etkl import compile_tables
-    g = compile_tables(APPLE, page_number=0).graph
+    g = apple_graph
     rejections = [str(o) for _, _, o in g.triples((None, DEC.rejectedBecause, None))]
     assert any("1 words" in r for r in rejections), \
         f"band 3's kind rejection is not in the record; got {rejections[:5]}"
 
 
 @needs_apple
-def test_band_4_records_transposed_before_coherence():
+def test_band_4_records_transposed_before_coherence(apple_graph):
     """THE R55 QUESTION. The register claimed coherence failed 'solely' because of
     parenthesized negatives; the truth is looks_transposed fired FIRST and the coherence
     oracle was only then consulted. dec:order must make that readable."""
-    from iladub.etkl import compile_tables
-    g = compile_tables(APPLE, page_number=0).graph
+    g = apple_graph
     orders = {}
     for d in g.subjects(RDF.type, DEC.DecisionHolon):
         if "region4-d" not in str(d):
@@ -247,20 +257,24 @@ def test_band_4_records_transposed_before_coherence():
         label = str(next(g.objects(d, RDFS.label)))
         orders[label] = int(next(g.objects(d, DEC.order)))
     assert "transposed" in orders, f"no transposed judgement recorded; got {sorted(orders)}"
-    if "transpose_coherent" in orders:
-        assert orders["transposed"] < orders["transpose_coherent"]
+    # Final-review I6 (same defect as test_decision_queries' r55 test, same fix): a silent `if`
+    # meant the ordering assertion this test is NAMED for never ran. No corpus document's
+    # `transposed` judgement ever chooses "transposed", so the coherence oracle is never
+    # consulted. Skip loudly — the inertness belongs in the test output, not only in R68.
+    if "transpose_coherent" not in orders:
+        pytest.skip("R68: no corpus document reaches the coherence oracle")
+    assert orders["transposed"] < orders["transpose_coherent"]
 
 
 @needs_apple
-def test_rationale_is_not_a_restatement_of_chosen():
+def test_rationale_is_not_a_restatement_of_chosen(apple_graph):
     """Fix round 1: transpose_coherent / row_grouped / matrix_candidate / hierarchical /
     region_tiles must each carry a rationale distinct from dec:chosen — a diagnostic
     sentence answering 'why', not a bare restatement of the enum value ('because
     incoherent'). transposed already set this standard (chosen='transposed',
     rationale='looks transposed'); this guards the other five against regressing to a
     restated label, which is truthful but empty."""
-    from iladub.etkl import compile_tables
-    g = compile_tables(APPLE, page_number=0).graph
+    g = apple_graph
     diagnostic_labels = {"transpose_coherent", "row_grouped", "matrix_candidate",
                           "hierarchical", "region_tiles"}
     found = 0
@@ -279,7 +293,7 @@ def test_rationale_is_not_a_restatement_of_chosen():
 
 
 @needs_apple
-def test_region_tiles_rationale_names_the_real_unit():
+def test_region_tiles_rationale_names_the_real_unit(apple_graph):
     """Fix round 2: `n` is an EntryCell count (asserted += 1) on the
     assert_record_region / assert_transposed_region / assert_row_hier_region /
     assert_matrix_region paths, but a body-TOKEN count (asserted += len(cell.words),
@@ -296,8 +310,7 @@ def test_region_tiles_rationale_names_the_real_unit():
     (assert_transposed_region / assert_row_hier_region / assert_record_region, all
     "asserted += 1") or matrix_candidate="matrix" (assert_matrix_region, also
     "asserted += 1")."""
-    from iladub.etkl import compile_tables
-    g = compile_tables(APPLE, page_number=0).graph
+    g = apple_graph
     by_band: dict = {}
     for d in g.subjects(RDF.type, DEC.DecisionHolon):
         band = str(next(g.objects(d, DEC.withinProcess)))
@@ -333,10 +346,9 @@ def test_region_tiles_rationale_names_the_real_unit():
 
 
 @needs_apple
-def test_recording_does_not_change_the_verdicts():
+def test_recording_does_not_change_the_verdicts(apple_report):
     """This slice records; it does not decide."""
-    from iladub.etkl import compile_tables
-    rep = compile_tables(APPLE, page_number=0)
+    rep = apple_report
     verdicts = [(r.kind.name, r.verdict, r.reason, r.cells) for r in rep.regions]
     assert abs(rep.score - 0.1170) < 0.0001, f"score moved: {rep.score}"
     assert sum(1 for v in verdicts if v[1] == "asserted") == 1
