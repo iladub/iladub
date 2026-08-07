@@ -1,0 +1,11 @@
+# what-was-considered.rq — every candidate the reader had for a region, with the refuting
+# observation where one exists. Answers spec 2026-08-07 §4 question 2. A thin optionSpace is
+# itself the finding (§5): it shows the reader had no differential to reason over.
+PREFIX dec: <https://w3id.org/iladub/dec#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?judgement ?option ?refutedBy WHERE {
+  ?d a dec:DecisionHolon ; dec:regarding ?region ; rdfs:label ?judgement ;
+     dec:optionSpace ?o .
+  ?o rdfs:label ?option .
+  OPTIONAL { ?o dec:rejectedBecause ?refutedBy }
+}

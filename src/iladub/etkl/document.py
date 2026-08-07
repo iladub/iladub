@@ -103,10 +103,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from rdflib import Graph, Literal, Namespace, RDF, URIRef
+from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
 from rdflib.namespace import XSD
 
 from .compile import CompilationReport, compile_tables, page_bands, _DOC, _validate
+from .decisionlog import DEC
 from .geometry import COORD_EPS
 from .holon import TAB
 
@@ -955,19 +956,74 @@ def reconcile_chain_arithmetic(graph: Graph, chain) -> ChainArithmetic:
 
 
 def _remove_escalation_record(graph: Graph, page_doc: URIRef, idx: int) -> None:
-    """Withdraw the pass-1 escalation record of ONE adopted band — precisely what the compile
+    """Withdraw the pass-1 escalation CANDIDATE of ONE adopted band — precisely what the compile
     minted for an escalated band and nothing else. Two possible subjects, both OUR OWN minting
     (`compile_tables` / `holon.assert_hier_region`): `{page_doc}#region{idx}` (every
     escalate_region call site in compile_tables) and `{page_doc}#htable{idx}-rt` (the hier
-    path's ROUND_TRIP_FAIL candidate). `holon.escalate_region` emits OUTGOING triples only and
-    nothing in the repo ever points AT a candidate node, so removing the subjects' triples
-    removes the records whole. THE DECISION (stated per the plan's 'document your choice'): the
-    pass-1 escalation is NOT kept as history — the pass-2 re-read supersedes the proposition the
-    escalation was (the same idiom `_supersede_page_groups` documents: two parallel truths over
-    one band would leave the feed to pick by iteration order, a §3 violation), and the adoption
-    is recorded on `DocumentReport.repaired_bands` instead."""
+    path's ROUND_TRIP_FAIL candidate). `holon.escalate_region` emits OUTGOING triples only, so
+    removing the subjects' triples removes the PROPOSITION whole. THE DECISION (stated per the
+    plan's 'document your choice'): the pass-1 escalation is not kept as a parallel proposition
+    — the pass-2 re-read supersedes it (the same idiom `_supersede_page_groups` documents: two
+    parallel truths over one band would leave the feed to pick by iteration order, a §3
+    violation), and the adoption is recorded on `DocumentReport.repaired_bands` instead.
+
+    WHAT THIS DOES **NOT** REMOVE, and why (final-review C1). An earlier form of this docstring
+    claimed 'nothing in the repo ever points AT a candidate node'. Since the reading decision
+    record (spec 2026-08-07) that is FALSE: the band's pass-1 judgement chain
+    (`{page_doc}#region{idx}-reading`, `-d{n}`, `-d{n}-opt-*`) points at the candidate with
+    `dec:regarding`, and it is deliberately LEFT STANDING. The chain is not a proposition about
+    the document — it is the truthful account of what the reader did on pass 1, and 'pass 1
+    escalated, pass 2 recovered' is exactly the reasoning this record exists to preserve
+    (CLAUDE.md §5: context is carried, not discarded). What makes it non-contradictory is that
+    the caller carries the pass-2 chain in beside it and links the two verdict decisions with
+    `dec:supersedes` — see `_band_reading_subgraph` / `_verdict_decision` and the adoption site
+    in `compile_document`. So the candidate IRI survives as the OBJECT of `dec:regarding` with
+    no outgoing triples of its own: it names the band region the reading was about, and asserts
+    nothing about it."""
     for cand in (URIRef(f"{page_doc}#region{idx}"), URIRef(f"{page_doc}#htable{idx}-rt")):
         graph.remove((cand, None, None))
+
+
+def _band_reading_subgraph(g: Graph, page_doc: URIRef, idx: int) -> Graph:
+    """ONE band's READING DECISION RECORD out of a whole-page compile (final-review C1).
+
+    The companion of `_band_subgraph`, over the other URI space the compile mints per band:
+    `decisionlog` hangs the band process, its judgements and their options off
+    `{page_doc}#region{idx}-` (`-reading`, `-d{n}`, `-d{n}-opt-{slug}`). The trailing hyphen is
+    what keeps band 1 from swallowing band 10 — `region10-reading` does not start with
+    `region1-`. Closed over outgoing reachability exactly as `_band_subgraph` is, so the page
+    process (`dcterms:isPartOf`) and the reader agent (`dec:decidedBy`) ride along; the
+    `dec:regarding` object is the band's own region node, which on an ASSERTED band has no
+    outgoing triples and so contributes nothing. A COPY, never a mutation of `g`."""
+    from rdflib import BNode
+    out = Graph()
+    prefix = f"{page_doc}#region{idx}-"
+    seen: set = {s for s in set(g.subjects())
+                 if isinstance(s, URIRef) and str(s).startswith(prefix)}
+    frontier = list(seen)
+    while frontier:
+        s = frontier.pop()
+        for pred, o in g.predicate_objects(s):
+            out.add((s, pred, o))
+            if isinstance(o, (URIRef, BNode)) and o not in seen:
+                seen.add(o)
+                frontier.append(o)
+    return out
+
+
+def _verdict_decision(g: Graph, page_doc: URIRef, idx: int):
+    """ONE band's `verdict` judgement node, or None (final-review C1).
+
+    Read back out of OUR OWN minting, as `_index_suffix` reads the table URIs: `decisionlog`
+    mints `{page_doc}#region{idx}-d{n}` and labels it with the judgement name, and
+    `compile_tables` records exactly ONE `verdict` judgement per band on every branch. A band
+    with no chain (or none yet recorded) yields None and the caller simply asserts no lineage —
+    an edge the evidence does not carry is never invented (§7)."""
+    prefix = f"{page_doc}#region{idx}-d"
+    for d in g.subjects(RDF.type, DEC.DecisionHolon):
+        if str(d).startswith(prefix) and (d, RDFS.label, Literal("verdict")) in g:
+            return d
+    return None
 
 
 def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
@@ -1194,10 +1250,11 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # code minted a graph its own contract rejects"), never a fact about the document, so
         # it must abort here exactly as it would on a pass-1 band — a repaired band silently
         # let through with a laxer policy would be evidence laundering, not repair.
+        r2_doc = URIRef(f"{page_doc_uri(p)}/r2")
         rep2 = compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                               span_proposer=span_proposer,
                               row_role_proposer=row_role_proposer,
-                              doc_uri=URIRef(f"{page_doc_uri(p)}/r2"),
+                              doc_uri=r2_doc,
                               section_repair_bands=candidates)
         new_regions = list(pages[p].regions)
         adopted_any = False
@@ -1205,11 +1262,25 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             r2 = rep2.regions[idx]
             if r2.verdict == "asserted" and r2.table_uri is not None:
                 # ADOPTION: swap the region report, swap the triples. The pass-1 escalation
-                # record is withdrawn (superseded, not kept as parallel history — see
+                # CANDIDATE is withdrawn (superseded, not kept as a parallel proposition — see
                 # _remove_escalation_record for the decision) and the pass-2 table's own
                 # subgraph — already membrane-validated inside the pass-2 compile — merges in.
                 _remove_escalation_record(graph, page_doc_uri(p), idx)
                 graph += _band_subgraph(rep2.graph, r2.table_uri)
+                # THE READING RECORD OF THE RE-READ (final-review C1). Before this, the merged
+                # graph kept ONLY the pass-1 chain, whose verdict says `escalated`, next to a
+                # region the graph now ASSERTS — the record contradicted the graph, silently.
+                # Carrying the pass-2 chain in and linking the two VERDICT decisions with
+                # `dec:supersedes` (`vocab/ontology/dec.ttl:174` — domain and range are both
+                # dec:DecisionHolon, which is why the link joins the two judgements and NOT the
+                # two dec:Process containers) keeps both readings and makes the supersession
+                # queryable: a chain whose verdict decision is the object of a `dec:supersedes`
+                # is history, and the one that is not is the effective verdict.
+                graph += _band_reading_subgraph(rep2.graph, r2_doc, idx)
+                v1 = _verdict_decision(graph, page_doc_uri(p), idx)
+                v2 = _verdict_decision(rep2.graph, r2_doc, idx)
+                if v1 is not None and v2 is not None:
+                    graph.add((v2, DEC.supersedes, v1))
                 new_regions[idx] = r2
                 repaired.append((p, idx))
                 adopted_any = True

@@ -1,0 +1,9 @@
+# judgement-order.rq — the judgements for a region ordered by when they were made. This is
+# the query that would have prevented R55's misattribution: it shows which gate fired FIRST,
+# so a later gate's failure cannot be mistaken for the cause.
+PREFIX dec: <https://w3id.org/iladub/dec#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?judgement ?order WHERE {
+  ?d a dec:DecisionHolon ; dec:regarding ?region ; dec:order ?order ; rdfs:label ?judgement .
+}
+ORDER BY ?order
