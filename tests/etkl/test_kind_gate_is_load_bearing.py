@@ -25,6 +25,18 @@ When that hardening lands, `looks_transposed` will return False here and these a
 SHOULD fail. Update them then — deliberately, with the corpus re-measured. Do not "fix"
 this test by relaxing it while the oracle still misfires; that is the silent-regression
 path this guard exists to block.
+
+WHAT THIS FILE DOES AND DOES NOT GUARD: everything above calls `regions.classify()` and
+the `orientation` oracles directly — it pins the FACTS that justify the kind gate, not
+the gate's EFFECT. A pure routing change at compile.py (e.g. deleting the
+`RECORD_TABLE`/`UNSUPPORTED_TABLE` if/else) would leave `region.kind`,
+`looks_transposed`, and `transpose_is_coherent` all unchanged, so every test above would
+keep passing while the regression happened anyway. `test_page0_region2_still_compiles_through_the_unsupported_path`
+below closes that hole for page 0's band by exercising the real `compile_tables` path.
+Page 2's band is NOT guarded this way — standalone it compiles to `escalated`/0 cells;
+its 741 asserted cells exist only under `compile_document`'s cross-page header carry
+(~150s to run), so that half of the regression is recorded as a residue (R71) rather
+than pinned here.
 """
 import os
 
@@ -111,3 +123,28 @@ def test_both_bands_carry_real_content(suppressed):
         _, region = suppressed[key]
         assert len(region.cells) > 100, \
             f"stem p{key[0]} region{key[1]} has only {len(region.cells)} cells"
+
+
+def test_page0_region2_still_compiles_through_the_unsupported_path():
+    """THE ROUTING GUARD — the rest of this file pins the oracle facts that JUSTIFY the
+    kind gate; this pins its EFFECT. If a future change lets this band reach the
+    transposed branch, `looks_transposed` fires, the coherence oracle refuses, and the
+    incoherent `else` escalates it at 0 cells (compile.py's
+    `escalate_region(..., "TRANSPOSED", ...)`). That is the 586-cell half of the
+    1,327-cell regression this whole file exists to prevent, and it is the ONLY
+    assertion here that would catch it.
+
+    Page 2's region1 is not guarded this way: standalone it compiles to
+    `escalated / 0 cells`, and its 741 asserted cells exist only under
+    `compile_document`'s cross-page header carry (~150s). Recorded in R71.
+    """
+    from iladub.etkl.compile import compile_tables
+    report = compile_tables(STEM, page_number=0)
+    region = report.regions[2]
+    assert region.verdict == "asserted", \
+        f"stem p0 region2 no longer compiles ({region.verdict}, reason={region.reason!r}). " \
+        "If the kind gate was removed, this is the regression spec §4 predicts — the band " \
+        "reaches the transposed branch and escalates at 0 cells. Do not relax this."
+    assert region.cells == 586, \
+        f"stem p0 region2 asserted-cell count moved: {region.cells} (was 586). Re-measure " \
+        "before changing this number — spec §3/§4."
