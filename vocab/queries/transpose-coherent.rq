@@ -21,7 +21,13 @@
 # When the triple sat inside the NOT EXISTS group, an evidence graph missing tab:bodyStartsAt made
 # the group unsatisfiable, so NOT EXISTS held and the query asserted COHERENT from absent evidence.
 # Hoisted, the ASK simply fails to match and returns False — it fails CLOSED. Behaviour is
-# unchanged whenever the triple is present (a plain conjunct either way).
+# unchanged whenever the triple is present with a single value — the grid_evidence guarantee
+# (celltype.py emits exactly one). With multiple values the hoist selects the MOST PERMISSIVE
+# boundary (some value admits none), where the un-hoisted form required ALL of them (no value
+# admits a mismatch) — an existential/universal divergence, not a plain-conjunct equivalence.
+# The divergence runs escalate->assert, so a future emitter putting two values on one band node
+# (classifygraph.py:47 already reuses the same _EV["band"] URI, typed tab:ClassifyBand) would
+# loosen this oracle silently.
 # NOTE this hoist works HERE only because both groups are plain graph patterns; it is NOT
 # available in looks-transposed.rq, whose body bound is inside SELECT subqueries an outer
 # binding cannot reach.
