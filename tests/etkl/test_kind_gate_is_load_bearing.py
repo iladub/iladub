@@ -16,10 +16,18 @@ Both bands compile successfully today down the UNSUPPORTED -> hierarchical path 
 `else` calls escalate_region(..., "TRANSPOSED", ...) and reports 0 asserted cells — so
 1,327 of stem's 2,152 asserted cells would go to zero.
 
-THIS TEST DOES NOT ENDORSE `looks_transposed` RETURNING True HERE. It is wrong: a 1-2 word
-caption line spanning 17 columns produces the transposition signature (one type-homogeneous
-row, no type-homogeneous column) without any transposition being present. Hardening that
-oracle is the NEXT loop (spec §7), and R10 may be its real root cause.
+THIS TEST DOES NOT ENDORSE `looks_transposed` RETURNING True HERE. It is wrong: both bands
+carry a multi-row WRAPPED column header. `classify_evidence` reads header words from
+`band.lines[0]` only, and `assign_cells` has no header/body split, so the wrapped header's
+own trailing lines enter the cell grid as body rows, seeding Text cells into every column
+and destroying the column type-homogeneity whose absence `looks_transposed` tests for —
+producing the transposition signature (one type-homogeneous row, no type-homogeneous
+column) without any transposition being present. Verified by ablation: dropping only the
+leading line leaves `looks_transposed=True` on both bands; only stripping the whole
+wrapped-header block flips both to `RECORD_TABLE`. Routing the orientation oracles' body-cell
+evidence through a header/body split is the NEXT loop (spec §7). R10 was checked as a
+possible root cause and is refuted by this same ablation (p2 has no report date at all and
+fails identically) — see spec §7 and residue R71.
 
 When that hardening lands, `looks_transposed` will return False here and these assertions
 SHOULD fail. Update them then — deliberately, with the corpus re-measured. Do not "fix"
@@ -37,6 +45,12 @@ Page 2's band is NOT guarded this way — standalone it compiles to `escalated`/
 its 741 asserted cells exist only under `compile_document`'s cross-page header carry
 (~150s to run), so that half of the regression is recorded as a residue (R71) rather
 than pinned here.
+
+NOTE ON "FAILS LOUDLY": `corpus/` is gitignored and not fetched in CI, so this guard
+`skipif`s (see `pytestmark` below) rather than failing there — it only fails loudly on a
+machine where the corpus doc is present. This is existing house convention, not
+introduced by this file; `tests/test_corpus_stem.py` and `tests/test_cbh_e2e.py` skip
+the same way.
 """
 import os
 
@@ -105,10 +119,12 @@ def test_the_coherence_oracle_refuses_the_transposed_reading(suppressed, key):
 
 
 @pytest.mark.parametrize("key,n_header_words,ncols", [((0, 2), 2, 17), ((2, 1), 1, 17)])
-def test_the_header_is_a_caption_line(suppressed, key, n_header_words, ncols):
-    """WHY the oracle misfires: a 1-2 word line spanning 17 columns is a caption, not a
-    header. Pinning this keeps the diagnosis attached to the evidence, so the next loop
-    knows what to harden against (and can check R10 first)."""
+def test_the_header_is_a_multi_row_wrapped_header(suppressed, key, n_header_words, ncols):
+    """WHY the oracle misfires: `band.lines[0]` — a 1-2 word line spanning 17 columns — is
+    only the TOP of a multi-row wrapped column header, not the whole header. Pinning this
+    keeps the diagnosis attached to the evidence, so the next loop knows what to fix
+    (route the orientation oracles through a header/body split — spec §7; R10 was checked
+    and refuted as the cause, see spec §7 and R71)."""
     band, region = suppressed[key]
     assert len(band.lines[0].words) == n_header_words, \
         f"header word count changed: {[w.text for w in band.lines[0].words]}"

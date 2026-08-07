@@ -92,15 +92,29 @@ cell movement and the code path that produces it. That is already decisive, and 
 estimated score would be a number this loop did not earn.
 
 **`looks_transposed` is a false positive on these bands.** Its signature is "a
-type-homogeneous structured row, and no type-homogeneous structured column." A
-caption line read as a header (`Friday, 31 July 2026` spanning 17 columns) produces
-exactly that shape without any transposition being present. The coherence oracle
-catches it — which is the R55 lesson intact: detection is not decision.
+type-homogeneous structured row, and no type-homogeneous structured column." Both
+bands carry a **multi-row wrapped column header**: `classify_evidence`
+(`src/iladub/etkl/classifygraph.py`) reads header words from `band.lines[0]` only, so
+a wrapped header's narrow top line (`['Friday, 31', 'July 2026']` / `['Date of
+Grain']`) is what `classify-kind.rq` sees, and it is what drives the
+`header has N words but 17 columns` mismatch to `UnsupportedTableKind` — the rest of
+the header is never consulted for the kind decision. Because the `UNSUPPORTED_TABLE`
+path runs no header/body split, `assign_cells` (`src/iladub/etkl/regions.py`) maps
+every physical line after line 0 straight to a body row — including the wrapped
+header's own remaining lines — which seeds Text cells into every column and destroys
+the column type-homogeneity whose *absence* `looks_transposed` tests for.
+
+Verified by ablation, dropping leading lines from each band and re-classifying:
+removing only line 0 (the line `region.reason` names) leaves `looks_transposed=True`
+on both bands; only stripping the *entire* wrapped-header block — 3 lines on p0, 2 on
+p2 — flips both to `RECORD_TABLE` with `looks_transposed=False`. The coherence oracle
+catches the resulting false positive regardless — which is the R55 lesson intact:
+detection is not decision.
 
 **The finding:** the kind gate is currently doing undocumented double duty as a guard
 against this false positive. Nothing recorded that, and nothing would have caught it —
-a "carry all candidates" refactor would have looked principled and lost a third of the
-corpus.
+a "carry all candidates" refactor would have looked principled and lost the majority
+of stem's asserted cells.
 
 ## 5. What ships
 
@@ -112,10 +126,15 @@ corpus.
    candidates without hardening the oracle first, this fires with the reason attached
    instead of the corpus silently dropping 1,327 cells.
 
-   It uses `page_bands` + `classify` on two pages, not a document compile, so it costs
-   seconds. It is a **characterisation** test: it pins behaviour that is currently
-   *wrong but protective*, and its docstring must say so, or a later reader will mistake
-   it for an endorsement of the false positive.
+   Most of it uses `page_bands` + `classify` on two pages directly, which costs seconds.
+   One test, `test_page0_region2_still_compiles_through_the_unsupported_path` (added in
+   fix round 1, recorded in §9), exercises the real routing via `compile_tables` on page
+   0 and costs ~10s. Page 2 region1's 741-cell path is not guarded at that level — it
+   requires `compile_document`'s cross-page header carry (~150s) — and that asymmetry is
+   recorded in R71 rather than paid for in this file's runtime. It is a
+   **characterisation** test: it pins behaviour that is currently *wrong but
+   protective*, and its docstring must say so, or a later reader will mistake it for an
+   endorsement of the false positive.
 
 ## 6. Success criteria
 
@@ -129,18 +148,36 @@ corpus.
 
 ## 7. What slice B needs before it can start
 
-- **Harden `looks_transposed` against caption-line headers.** A 1–2 word line spanning
-  many columns is a caption, not a header, and must not produce the transposition
-  signature. Per the gate (CLAUDE.md §8) this is a recovery decision — open-world,
-  evidence-positive — so it belongs in the `looks-transposed.rq` AXIOM or, if the
-  judgement is genuinely perceptual, in a NEURAL proposal disposed by the coherence
-  oracle. **Not a tuned word-count threshold in Python.**
+- **Route the transposition oracles' evidence through a header/body split, not the
+  raw per-line cell grid.** `looks_transposed` and `transpose_is_coherent`
+  (`src/iladub/etkl/orientation.py`) both treat `region.cells` row `0` as the header
+  and every row `>= 1` as body — correct only when the header is exactly one
+  physical line. For the two bands measured here the header is a multi-row
+  *wrapped* column header (§4); `assign_cells` (`src/iladub/etkl/regions.py`) has no
+  concept of that and maps every physical line straight to a row, so the wrapped
+  header's own trailing lines are read as body, seed Text cells into every column,
+  and manufacture the transposition signature. `vocab/queries/header-body-split.rq`
+  already exists and is already consumed, via `header_body_split`
+  (`src/iladub/etkl/headers.py`), by the RECORD_TABLE / matrix / hierarchical
+  paths — the fix is routing the orientation oracles' body-cell evidence through
+  that same split, not writing a new query. Per the gate (CLAUDE.md §8) this is an
+  AXIOM change to the evidence a `SELECT`/`ASK` query consumes over an open-world
+  grid, not a tuned threshold — the no-tuned-threshold constraint carries forward
+  unchanged.
 - **Then** the candidate set can be carried, because the evidence that narrows it will
   no longer contain a known false positive.
-- Note R10 is adjacent and may be the real root: it records that `detect_bands` cuts
-  one line too high, leaving the report date inside the table band. The caption line
-  these two regions read as a header is plausibly that same defect. Closing R10 might
-  dissolve this one — worth checking before hardening the oracle.
+- **R10 was considered as the root cause and is refuted, not merely unproven, by
+  this branch's own measurement.** R10 records that `detect_bands` cuts one line too
+  high, leaving the report date inside the band, and this spec originally guessed
+  the leading line these two regions read as a header was that same defect. The
+  ablation in §4 rules it out: on p0, removing only the leading date line
+  (`['Friday, 31', 'July 2026']`) leaves `looks_transposed=True`; on p2 the band
+  carries **no report date at all** (`['Date of Grain']`) and fails identically. So
+  even a full fix of R10 — deleting the report-date line from both bands — would not
+  change either band's classification or oracle result. R10 remains open as its own
+  residue (a real `detect_bands` defect on its own terms) but is not the cause of
+  the kind-gate/`looks_transposed` interaction this spec measures; the wrapped-header
+  / missing-header-body-split mechanism above is.
 
 ## 8. Global constraints (carried, per CLAUDE.md)
 
@@ -161,9 +198,13 @@ is why no verdict could move. Both figures match this document's own §6 expecta
 "corpus scores unchanged."
 
 **The guard (Task 1), `tests/etkl/test_kind_gate_is_load_bearing.py`:** 10 tests, all
-passing, none skipped. Nine pin the `kind` / `looks_transposed` / `transpose_is_coherent`
-triple (parametrized over both stem bands — page 0 region2, page 2 region1). One,
-`test_page0_region2_still_compiles_through_the_unsupported_path`, exercises the real
+passing, none skipped. Six of the ten pin the `kind` / `looks_transposed` /
+`transpose_is_coherent` triple — the first three test functions, each parametrized
+over both stem bands (page 0 region2, page 2 region1). The other four pin different
+facts: two parametrized instances (rename pending, see below) pin the header word
+count and the `reason` string; one instance of `test_both_bands_carry_real_content`
+pins both bands' cell counts (`> 100`); and
+`test_page0_region2_still_compiles_through_the_unsupported_path` exercises the real
 routing via `compile_tables(STEM, page_number=0)` and asserts
 `regions[2].verdict == "asserted"` and `.cells == 586`. Both the oracle-fact assertions
 and the routing assertion were demonstrated capable of failing (inverted, observed
@@ -212,10 +253,13 @@ resulting coverage gap, is recorded as part of R71 rather than closed here.
   chain [3] / 0.9047 figures the brief expected.
 - **"R71 states the closing condition precisely enough that slice B can be re-planned
   against it without re-deriving this measurement."** — **Met.** R71's *what would
-  close it* column names the two candidate paths (close R10 first, or an open-world
-  AXIOM/NEURAL fix to `looks-transposed.rq`, explicitly not a tuned Python threshold)
-  and the check-R10-first ordering from §7, plus a separate closing note for the
-  routing-coverage gap this section describes.
+  close it* column names routing the orientation oracles' evidence through a
+  header/body split (`vocab/queries/header-body-split.rq`, already consumed
+  elsewhere via `header_body_split`) as an open-world AXIOM change, explicitly not a
+  tuned Python threshold, per §7 — and its *why deferred* column records that R10
+  was checked first, as §7 required, and refuted rather than confirmed. It also
+  carries a separate closing note for the routing-coverage gap this section
+  describes.
 
 **Summary: three of four §6 criteria are met without qualification; the second is met
 exactly as worded (both bands' triples are pinned and demonstrated falsifiable) but
