@@ -245,6 +245,8 @@ tab:ClassifyBand a owl:Class ; rdfs:label "Classify band"@en ;
 tab:lineCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "line count"@en .
 tab:gridColumnCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "grid column count"@en ;
     rdfs:comment "grid.ncols from infer_leaf_grid; 0 when the band has fewer than 2 lines (grid undefined)."@en .
+tab:bodyStartsAt a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "body starts at"@en ;
+    rdfs:comment "First grid ROW that is body rather than header, as derived by header_body_split (headers.py) from the typed-cell evidence. 1 when the header is a single physical line — the assumption the transposition oracles previously hardcoded. A multi-row WRAPPED column header makes it >1; without it, header rows are read as data and destroy the column type-homogeneity looks_transposed tests for."@en .
 tab:HeaderWord a owl:Class ; rdfs:label "Header word"@en ;
     rdfs:comment "A word on the band's header line (line 0), for the 1:1 clean-tiling test."@en .
 tab:headerWordOrder a owl:DatatypeProperty ; rdfs:domain tab:HeaderWord ; rdfs:range xsd:integer ; rdfs:label "header word order"@en ;
