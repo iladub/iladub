@@ -1,11 +1,31 @@
 # why-escalated.rq — the chain of judgements for one region, in the order they were made,
 # each with its rationale and (where the candidate was refuted) the observation that killed
 # it. Answers spec 2026-08-07 §4 question 1: "why was this region escalated?"
+#
+# ?supersededBy is bound when a LATER reading of this band replaced this one (section repair
+# adopts a pass-2 re-read and links the two verdict decisions with dec:supersedes). It binds
+# at REGION level, so every row of a superseded chain carries it — a consumer reading any one
+# row learns the whole chain was replaced. Follow effective-chain.rq for the live reading.
 PREFIX dec: <https://w3id.org/iladub/dec#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?order ?judgement ?chosen ?rationale WHERE {
+SELECT ?order ?judgement ?chosen ?rationale ?supersededBy WHERE {
   ?d a dec:DecisionHolon ; dec:regarding ?region ; dec:order ?order ;
      rdfs:label ?judgement ; dec:rationale ?rationale .
   OPTIONAL { ?d dec:chosen/rdfs:label ?chosen }
+# AT-MOST-ONE-SUPERSESSION ASSUMPTION: the OPTIONAL below has ?v1 range over EVERY decision
+# regarding ?region, not just the verdict, joined to every ?v2 that supersedes it — an
+# unrestricted cross-product. If a region ever accumulated more than one incoming
+# dec:supersedes edge, every row of the chain would be multiplied, once per (?v1, ?v2) pair,
+# with differing ?supersededBy values; DISTINCT would not collapse that, since the rows would
+# carry genuinely different bindings. Unreachable today: document.py's section-repair
+# (~L1258-1284) runs pass 2 at most once per band per compile and links only the two verdict
+# decisions, so a region can gain at most one dec:supersedes edge. An iterative-repair
+# pipeline would break this assumption and needs to either restrict ?v1 to the verdict
+# decision or dedupe downstream.
+  OPTIONAL {
+    ?v1 dec:regarding ?region .
+    ?v2 dec:supersedes ?v1 .
+    BIND(?v2 AS ?supersededBy)
+  }
 }
 ORDER BY ?order

@@ -1,0 +1,48 @@
+# effective-chain.rq — the LIVE chain of judgements for one region: the reading that was not
+# superseded. Section repair adopts a pass-2 re-read of a band and links the two verdict
+# decisions with dec:supersedes, so asking why-escalated.rq the obvious question about a
+# repaired region returns the SUPERSEDED reading. This query follows that edge.
+#
+# Correct for both cases, so a consumer never needs to know which one they are in: if a
+# superseding reading exists, its chain is returned; otherwise the region's own chain is.
+# The FILTER NOT EXISTS is a HOLON-SCOPED closed-world guard (query-local, scoped to this one
+# region, per CLAUDE.md §8) — it selects between two present readings, it never derives a
+# fact from absence.
+#
+# ?region BINDING IS REQUIRED, not optional, and this is load-bearing: run with ?region
+# unbound, branch B's FILTER NOT EXISTS is satisfied by ANY dec:supersedes edge anywhere in
+# the graph (it is not scoped to a region until ?region is fixed), so the fallback branch
+# vanishes for every region and the query silently returns only superseded-chain rows across
+# the whole graph. Callers MUST pass ?region via initBindings (or an equivalent pre-bind);
+# there is no way for the query itself to detect an unbound ?region and refuse.
+#
+# PRECONDITION: every dec:DecisionHolon that is the object of a dec:supersedes edge (a
+# superseding verdict, ?v2) must carry dec:regarding. If one ever lacked it, branch A could
+# not bind ?effective for that edge and branch B is excluded by the NOT EXISTS for the
+# superseded region, so the query would return NOTHING for that region rather than falling
+# back to the superseded chain. Unreachable today: decisionlog.py:52 (BandRecorder.record) emits
+# dec:regarding on every judgement unconditionally.
+#
+# SINGLE-HOP ASSUMPTION: this query follows exactly one dec:supersedes edge (v1 -> v2), not a
+# chain of them. Safe today because document.py's section-repair (~L1258-1284) runs pass-2 at
+# most once per band per compile, so no region can accumulate a second supersession — but an
+# iterative-repair pipeline would need this query to walk the edge transitively, or a stale
+# middle link would be returned as "effective" silently.
+PREFIX dec: <https://w3id.org/iladub/dec#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?order ?judgement ?chosen ?rationale WHERE {
+  {
+    ?v1 dec:regarding ?region .
+    ?v2 dec:supersedes ?v1 ;
+        dec:regarding ?effective .
+  }
+  UNION
+  {
+    FILTER NOT EXISTS { ?s dec:supersedes ?v . ?v dec:regarding ?region }
+    BIND(?region AS ?effective)
+  }
+  ?d a dec:DecisionHolon ; dec:regarding ?effective ; dec:order ?order ;
+     rdfs:label ?judgement ; dec:rationale ?rationale .
+  OPTIONAL { ?d dec:chosen/rdfs:label ?chosen }
+}
+ORDER BY ?order
