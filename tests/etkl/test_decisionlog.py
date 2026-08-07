@@ -279,6 +279,60 @@ def test_rationale_is_not_a_restatement_of_chosen():
 
 
 @needs_apple
+def test_region_tiles_rationale_names_the_real_unit():
+    """Fix round 2: `n` is an EntryCell count (asserted += 1) on the
+    assert_record_region / assert_transposed_region / assert_row_hier_region /
+    assert_matrix_region paths, but a body-TOKEN count (asserted += len(cell.words),
+    holon.py:482, docstring holon.py:382) on the plain-hierarchical assert_hier_region
+    path — a cell with 2 words contributes 2 there, not 1. A rationale that calls that
+    "entries" overstates the count. This asserts BOTH units are actually observed on the
+    real corpus doc, so a regression to one generic word for both cannot pass silently.
+
+    A band is identified as the assert_hier_region path when it carries a "hierarchical"
+    judgement chosen "hierarchical" (UNSUPPORTED_TABLE + not-matrix + classify_hierarchical
+    succeeded) alongside a region_tiles judgement — the only region_tiles call in that
+    branch of compile_tables is assert_hier_region's. A band is identified as an
+    entry-counting path when it carries region_tiles alongside either kind="RECORD_TABLE"
+    (assert_transposed_region / assert_row_hier_region / assert_record_region, all
+    "asserted += 1") or matrix_candidate="matrix" (assert_matrix_region, also
+    "asserted += 1")."""
+    from iladub.etkl import compile_tables
+    g = compile_tables(APPLE, page_number=0).graph
+    by_band: dict = {}
+    for d in g.subjects(RDF.type, DEC.DecisionHolon):
+        band = str(next(g.objects(d, DEC.withinProcess)))
+        label = str(next(g.objects(d, RDFS.label), ""))
+        chosen = next(g.objects(d, DEC.chosen))
+        chosen_label = str(next(g.objects(chosen, RDFS.label)))
+        rationale = str(next(g.objects(d, DEC.rationale), ""))
+        by_band.setdefault(band, {})[label] = (chosen_label, rationale)
+
+    saw_body_tokens = saw_entries = False
+    for judgements in by_band.values():
+        if "region_tiles" not in judgements:
+            continue
+        _, tiles_rationale = judgements["region_tiles"]
+        hier_chosen = judgements.get("hierarchical", (None, None))[0]
+        kind_chosen = judgements.get("kind", (None, None))[0]
+        matrix_chosen = judgements.get("matrix_candidate", (None, None))[0]
+        if hier_chosen == "hierarchical":
+            assert "body tokens" in tiles_rationale, \
+                f"assert_hier_region path rationale should name body tokens, got {tiles_rationale!r}"
+            saw_body_tokens = True
+        elif kind_chosen == "RECORD_TABLE" or matrix_chosen == "matrix":
+            assert "entries" in tiles_rationale, \
+                f"entry-counting path rationale should name entries, got {tiles_rationale!r}"
+            saw_entries = True
+
+    assert saw_body_tokens, \
+        "the apple corpus doc's page 0 does not exercise the assert_hier_region " \
+        "(body-token) region_tiles path — cannot assert the unit fix on this fixture"
+    assert saw_entries, \
+        "the apple corpus doc's page 0 does not exercise an entry-counting " \
+        "region_tiles path — cannot assert the unit fix on this fixture"
+
+
+@needs_apple
 def test_recording_does_not_change_the_verdicts():
     """This slice records; it does not decide."""
     from iladub.etkl import compile_tables

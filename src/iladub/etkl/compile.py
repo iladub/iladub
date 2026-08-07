@@ -21,12 +21,20 @@ from .holon import assert_record_region, escalate_region, TAB
 _DOC = URIRef("https://example.org/etkl/doc")
 
 
-def _tiles_rationale(tiles: bool, n: int) -> str:
+def _tiles_rationale(tiles: bool, n: int, unit: str) -> str:
     """Formats the (tiles, n) pair a region_tiles gate call already produced into a
     diagnostic rationale distinct from the "tiles"/"does_not_tile" chosen label — pure
-    formatting of state already computed at the call site, no judgement re-evaluated."""
+    formatting of state already computed at the call site, no judgement re-evaluated.
+
+    `unit` names what `n` actually counts at THIS call site — the five assert_*_region
+    functions do not all return the same kind of quantity. Four (assert_record_region,
+    assert_transposed_region, assert_row_hier_region, assert_matrix_region) increment by
+    1 per tab:EntryCell (holon.py:108,168,268,363) — "entries". assert_hier_region
+    increments by len(cell.words) per cell (holon.py:482) — its own docstring
+    (holon.py:382) calls this the "body-token count", so "body tokens" here, not
+    "entries" — a cell with 2 words would otherwise be misreported as 2 entries."""
     return (f"region_tiles {'validated' if tiles else 'rejected'} "
-            f"the {n} entries asserted into scratch")
+            f"the {n} {unit} asserted into scratch")
 
 
 def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
@@ -467,7 +475,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    _tiles_rationale(tiles, n))
+                                    _tiles_rationale(tiles, n, "entries"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
@@ -532,7 +540,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    _tiles_rationale(tiles, n))
+                                    _tiles_rationale(tiles, n, "entries"))
                     if rreg is not None and tiles:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
@@ -574,7 +582,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    _tiles_rationale(tiles, n))
+                                    _tiles_rationale(tiles, n, "entries"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
@@ -622,7 +630,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if tiles is not None:
                     brec.record("region_tiles", ["tiles", "does_not_tile"],
                                 "tiles" if tiles else "does_not_tile",
-                                _tiles_rationale(tiles, n))
+                                _tiles_rationale(tiles, n, "entries"))
                 if mreg is not None and tiles:
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
@@ -750,7 +758,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    _tiles_rationale(tiles, n))
+                                    _tiles_rationale(tiles, n, "body tokens"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
