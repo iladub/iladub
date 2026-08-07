@@ -1,9 +1,16 @@
 # looks-transposed.rq — a typed-STRUCTURED body ROW (cols>=1 homogeneous non-Text) but NO
-# typed-STRUCTURED COLUMN (any column with all body cells homogeneous non-Text). Body = row>=1.
+# typed-STRUCTURED COLUMN (any column with all body cells homogeneous non-Text).
 # The transposition signature, generalized to all structured datatypes (Numeric/Date/Currency).
 # Homogeneity is judged over datatype FAMILIES (tab:inDatatypeFamily), not raw tab:cellDatatype
 # values, and abstaining datatypes (tab:datatypeAbstains — Blank, ParenthesizedNumber) take no
 # part: they neither count toward nor break the distinct-type tally.
+#
+# BODY = row >= ?bodyStart, read from tab:bodyStartsAt rather than assumed to be 1. A multi-row
+# WRAPPED column header would otherwise enter the grid as body rows, seeding Text cells across
+# every column and destroying the column homogeneity whose ABSENCE this query tests for — the
+# false positive R71 recorded. ?bodyStart is bound INSIDE each subquery on purpose: SPARQL
+# evaluates subqueries bottom-up, so an outer binding would not reach them.
+#
 # AGGREGATION FORM (linear in cells): the typed-row EXISTENCE and the typed-column NON-existence are
 # two INDEPENDENT existence checks, each a single GROUP BY + HAVING over the body cells (homogeneity
 # = one distinct normalised type and no Text), replacing the O(cells^2) pair self-joins AND avoiding
@@ -15,16 +22,18 @@ ASK {
   # EXISTS a typed-structured body row (its col>=1 cells homogeneous non-Text)
   FILTER EXISTS {
     SELECT ?r WHERE {
-      ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol ; tab:cellDatatype ?rraw . FILTER(?r >= 1 && ?rcol >= 1)
+      ?b tab:bodyStartsAt ?bodyStart .
+      ?rc tab:atGridRow ?r ; tab:atGridColumn ?rcol ; tab:cellDatatype ?rraw . FILTER(?r >= ?bodyStart && ?rcol >= 1)
       FILTER NOT EXISTS { ?rraw tab:datatypeAbstains true }
       OPTIONAL { ?rraw tab:inDatatypeFamily ?rfam }
       BIND(COALESCE(?rfam, ?rraw) AS ?rt)
     } GROUP BY ?r HAVING(COUNT(DISTINCT ?rt) = 1 && SUM(IF(?rt = tab:Text, 1, 0)) = 0)
   }
-  # AND NO typed-structured column (all body cells row>=1 homogeneous non-Text)
+  # AND NO typed-structured column (all body cells row>=?bodyStart homogeneous non-Text)
   FILTER NOT EXISTS {
     SELECT ?col WHERE {
-      ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?craw . FILTER(?cr >= 1)
+      ?b2 tab:bodyStartsAt ?bodyStart2 .
+      ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?craw . FILTER(?cr >= ?bodyStart2)
       FILTER NOT EXISTS { ?craw tab:datatypeAbstains true }
       OPTIONAL { ?craw tab:inDatatypeFamily ?cfam }
       BIND(COALESCE(?cfam, ?craw) AS ?ct)

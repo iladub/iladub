@@ -1,13 +1,19 @@
-# transpose-coherent.rq — TRUE iff every row is type-EXACT across its value columns (col>=1):
-# NOT EXISTS a row with two DIFFERENT cell type FAMILIES (Quantity/Date/Text) in col>=1.
+# transpose-coherent.rq — TRUE iff every BODY row is type-EXACT across its value columns (col>=1):
+# NOT EXISTS a body row with two DIFFERENT cell type FAMILIES (Quantity/Date/Text) in col>=1.
 # Types are normalised via tab:inDatatypeFamily before comparison, and abstaining datatypes
 # (tab:datatypeAbstains — Blank, ParenthesizedNumber) are dropped on BOTH sides, so a
 # parenthesized cell can never be one half of a mismatch pair.
+#
+# BODY = row >= ?bodyStart, from tab:bodyStartsAt. Before R71 this query had NO row filter at
+# all — only column bounds — so it read every physical row including the header. A multi-row
+# wrapped header therefore contributed label text as if it were data. This was the more
+# polluted of the two transposition oracles.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
-  # coherent iff NOT EXISTS a row with two DIFFERENT normalised types among its value columns (col>=1)
+  # coherent iff NOT EXISTS a body row with two DIFFERENT normalised types among its value columns
   FILTER NOT EXISTS {
-    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?araw . FILTER(?ac >= 1)
+    ?bd tab:bodyStartsAt ?bodyStart .
+    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?araw . FILTER(?ac >= 1 && ?r >= ?bodyStart)
     FILTER NOT EXISTS { ?araw tab:datatypeAbstains true }
     OPTIONAL { ?araw tab:inDatatypeFamily ?afam }
     BIND(COALESCE(?afam, ?araw) AS ?ta)

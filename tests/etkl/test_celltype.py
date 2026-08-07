@@ -233,13 +233,17 @@ def test_stub_data_split_recall():
         assert got == want, "%s: got %s want %s" % (name, got, want)
 
 
-def _ref_looks_transposed(cells):
+def _ref_looks_transposed(cells, body_starts_at=1):
     """loop-quantity-typing fix round 1: row/column homogeneity now goes through
     _ref_typed_non_text (Numeric+Currency one family, abstaining values dropped first)
-    instead of a bare _is_numeric-only check."""
+    instead of a bare _is_numeric-only check.
+
+    R71 hardening: `body_starts_at` replaces the hardcoded `r > 0`. This reference is the
+    differential oracle for looks-transposed.rq — if it does not track the query's body
+    boundary, the equivalence tests keep passing while testing nothing."""
     rows, cols = {}, {}
     for (r, c, t) in cells:
-        if r > 0:
+        if r >= body_starts_at:
             rows.setdefault(r, {})[c] = t
             cols.setdefault(c, []).append(t)
     typed_row = any(_ref_typed_non_text([rm[cc] for cc in rm if cc >= 1]) for rm in rows.values())
@@ -247,13 +251,16 @@ def _ref_looks_transposed(cells):
     return typed_row and not typed_col
 
 
-def _ref_transpose_coherent(cells):
+def _ref_transpose_coherent(cells, body_starts_at=1):
     """loop-quantity-typing fix round 1: a row is incoherent iff, after dropping
     abstaining values, its col>=1 cells normalise to MORE THAN ONE key (Numeric and
-    Currency share the 'quantity' key)."""
+    Currency share the 'quantity' key).
+
+    R71 hardening: this reference previously had NO row filter, mirroring the query's own
+    gap — it read header rows as data. `body_starts_at` closes both together."""
     rows = {}
     for (r, c, t) in cells:
-        if c >= 1:
+        if c >= 1 and r >= body_starts_at:
             rows.setdefault(r, []).append(t)
     for vals in rows.values():
         kept = [v for v in vals if not _abstains(v)]
@@ -308,11 +315,16 @@ def test_orientation_matches_reference():
     QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
     for name, cells in ORI_BATTERY:
         ncols = max(c for (_r, c, _t) in cells) + 1
-        g = celltype.grid_evidence(cells, ncols)
-        lt = celltype.run_ask(os.path.join(QDIR, "looks-transposed.rq"), g)
-        tc = celltype.run_ask(os.path.join(QDIR, "transpose-coherent.rq"), g)
-        assert lt == _ref_looks_transposed(cells), "%s looks_transposed: got %s" % (name, lt)
-        assert tc == _ref_transpose_coherent(cells), "%s coherent: got %s" % (name, tc)
+        # R71: exercise the default AND a shifted body boundary. Without the second, the
+        # bodyStartsAt code path is never covered and the equivalence proves nothing about it.
+        for body_start in (1, 2):
+            g = celltype.grid_evidence(cells, ncols, body_starts_at=body_start)
+            lt = celltype.run_ask(os.path.join(QDIR, "looks-transposed.rq"), g)
+            tc = celltype.run_ask(os.path.join(QDIR, "transpose-coherent.rq"), g)
+            assert lt == _ref_looks_transposed(cells, body_start), \
+                "%s looks_transposed @body%d: got %s" % (name, body_start, lt)
+            assert tc == _ref_transpose_coherent(cells, body_start), \
+                "%s coherent @body%d: got %s" % (name, body_start, tc)
 
 
 ORI_B2B = [   # (name, cells, expected looks_transposed, expected coherent)
