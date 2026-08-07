@@ -1,6 +1,6 @@
 # Harden the transposition oracles against multi-row headers — design
 
-**Date:** 2026-08-07 · **Status:** approved (François, 2026-08-07) ·
+**Date:** 2026-08-07 · **Status:** closed 2026-08-07 — blocked, see §10 ·
 **Closes:** R71 · **Unblocks:** slice B of the reading-as-differential-diagnosis
 architecture (`2026-08-07-reading-decision-record-design.md` §7) ·
 **Specimen:** `corpus/ag-trade/graincorp-stem-2026-07-31.pdf`, page 0 region 2 and
@@ -88,8 +88,13 @@ the caller's decision rather than the AXIOM's.
 ## 3. The differential oracle must move in lockstep
 
 `tests/etkl/test_celltype.py` holds Python reference implementations that prove the AXIOMs
-correct — `test_orientation_matches_reference` and the randomized
-`tests/etkl/test_derivation_equiv.py` compare query against reference:
+correct — `test_orientation_matches_reference` compares *both* oracles against their
+Python references. `tests/etkl/test_derivation_equiv.py` is the randomized differential
+battery, but it does **not** cover `transpose-coherent` at all: verified by grep, its
+coverage is `header-body-split`, `looks-transposed` (old-vs-new query text, not a Python
+reference), `stub-data-split`, `header-covers`, and `row-group-key-logical` only. So it is
+`test_orientation_matches_reference` alone — not `test_derivation_equiv` — that must keep
+biting on both oracles' references:
 
 - `_ref_looks_transposed` hardcodes `if r > 0`
 - `_ref_transpose_coherent` applies no row filter — mirroring the query's own gap
@@ -169,3 +174,115 @@ the evidence for slice B.
   guess a boundary.
 - Every vocabulary addition ships with a worked example that conforms and a negative test
   that must fail.
+
+## 10. Close-out — blocked (2026-08-07)
+
+**Task 1 and Task 2 shipped** (commits `7b8359e`, `9abcdc5`): `tab:bodyStartsAt` is declared
+in `vocab/ontology/tab.ttl`; `celltype.grid_evidence(cells, ncols, body_starts_at=1)` emits
+it; `looks-transposed.rq` and `transpose-coherent.rq` both read it, and the latter gained the
+row bound it never had; the Python reference implementations in `tests/etkl/test_celltype.py`
+were parameterised in lockstep and the equivalence battery extended to
+`body_start ∈ (1, 2)`. The default of 1 reproduces prior behaviour exactly, so these two
+tasks are **inert** in production: nothing calls `grid_evidence` with a non-default
+`body_starts_at` today.
+
+**Task 3 — wiring `orientation.looks_transposed`/`.transpose_is_coherent` to the derived
+boundary — was implemented, found to regress, and reverted.** The working tree at close is
+byte-identical to `9abcdc5`; `orientation.py` carries no reference to `tab:bodyStartsAt` or
+`header_body_split`.
+
+### The circularity
+
+`header_body_split` locates the header by searching for the first row from which **at least
+one column is family-homogeneous non-Text**. A transposed table is *defined* by having no
+type-homogeneous column — that absence is exactly what `looks_transposed` and
+`transpose_is_coherent` test for. Feeding the first AXIOM's output into the second conflates
+two different questions ("where does the header end column-wise" vs. "is this table
+transposed"). Measured directly on the two transposition fixtures (not the corpus — see the
+§7 post-mortem below):
+
+| fixture | `header_body_split` | consequence |
+| --- | --- | --- |
+| `false_transposed_pdf` (4 lines) | **3** | body collapses to the single last row; `looks_transposed` returns False; the compile pipeline never reaches `transpose_is_coherent`; the region compiles as an ordinary 9-cell `RECORD_TABLE` instead of escalating `TRANSPOSED` — a wrong assertion replacing a correct escalation |
+| `transposed_table_pdf` (3 lines) | **None** | no column is ever homogeneous — the transposition signature itself; the caller's None→1 fallback leaves this fixture unaffected |
+
+On the two stem bands the wiring worked exactly as designed: `header_body_split` returned 4
+and 3 respectively, `looks_transposed` flipped True→False on both, and
+`transpose_is_coherent` measured False on both, unchanged. **The blocker is the fixtures, not
+the stem specimens** — the same derivation that correctly separates the stem bands' wrapped
+headers from their bodies also, on `false_transposed_pdf`, finds a "header" that consumes
+everything but the row the transposition signature depends on.
+
+### Controller verification at the shipped state (commit `9abcdc5`)
+
+```
+pytest tests/test_corpus_stem.py tests/test_cbh_e2e.py tests/etkl/test_kind_gate_is_load_bearing.py tests/etkl/test_closing_slice.py tests/etkl/test_transposed_chain.py -q
+→ 46 passed in 301s
+```
+
+Tasks 1–2 inert, the guard still pins the old behaviour (`looks_transposed is True` on both
+stem bands) because nothing is wired to the new evidence.
+
+### §6 criteria, measured against the shipped state — most unmet
+
+1. *Both stem bands: `looks_transposed` returns False after the change, measured.* —
+   **Unmet.** The wiring that would make this true was reverted; `looks_transposed` still
+   returns True on both stem bands in the shipped code (the guard in
+   `tests/etkl/test_kind_gate_is_load_bearing.py` still asserts `is True` and is
+   byte-unchanged from before this loop).
+2. *`transpose_is_coherent` on those bands: measured and recorded either way, confirmed
+   against the shipped change.* — **Unmet as stated.** It was measured during Task 3's
+   uncommitted work (False on both, unchanged) but that work was reverted, so there is no
+   shipped change to confirm it against.
+3. *Corpus scores byte-identical* (stem 0.9655/2152/[3], CBH 0.9047, capacity 1.0000, apple
+   0.0606860158, WHO 0.5597). — **Not meaningfully tested.** Scores are trivially unchanged
+   because nothing shipped that could move them, not because the hardening was verified
+   neutral under load.
+4. *The fixtures still behave* (`false_transposed_pdf` → True/False escalating `TRANSPOSED`;
+   `transposed_table_pdf` → True/True compiling). — **Unmet in substance.** In the shipped
+   (unwired) code both fixtures still behave, again trivially, because nothing changed. But
+   the criterion's actual purpose — verify the fixtures survive the hardening — was tested
+   with the hardening active in Task 3, and `false_transposed_pdf` failed it (see the table
+   above: it stopped escalating `TRANSPOSED` and compiled as `RECORD_TABLE` instead).
+5. *`test_orientation_matches_reference` and `test_derivation_equiv` still pass with the
+   references parameterised, verified by inverting one reference and observing the
+   equivalence test fail.* — **Met.** Shipped in Task 2: `_ref_looks_transposed` and
+   `_ref_transpose_coherent` both take `body_starts_at`, and the differential-oracle-vacuous
+   check was run and observed failing before being restored (per the SDD ledger). Note per
+   the §3 correction above: `test_derivation_equiv` does not exercise
+   `transpose-coherent`, so it is `test_orientation_matches_reference` that carries this for
+   both oracles.
+6. *`tab:bodyStartsAt` ships with a conforming example and a negative test.* — **Partially
+   met.** `tests/etkl/test_body_start_evidence.py` ships conforming-example tests (default=1,
+   explicit=4, ontology declaration) and Task 2's review separately pinned the
+   fails-closed/fails-open asymmetry (see the note below). No dedicated negative test (one
+   that must fail validation) for `tab:bodyStartsAt` itself was found in this pass.
+7. *R71's row is deleted in the same change.* — **Unmet by design of this closing loop.**
+   R71 is not closed; it is rewritten in place, keeping the number, to record the real
+   blocker found here (docs/superpowers/residues.md).
+
+Of the seven, **one is met, one is partial, and five are unmet.**
+
+### Why §7's risk assessment failed
+
+§7 named "`header_body_split` returning a wrong split on some band, silently changing what an
+oracle sees" as a risk, and judged it "bounded today by §4's measurement (every reachable
+band is at 1)." §4 measured only the **corpus** bands that reach an oracle today (apple,
+capacity, WHO, stem) — it never measured the split on the two **fixtures**, which are
+precisely the transposition specimens where the instrument misbehaves. The measurement
+behind §7's bound was real, but its scope was corpus-only, and the risk section inherited
+that scope without noticing it was narrower than the risk it was trying to bound. The
+fixtures were listed as a §6 success criterion in the same spec, so the gap was between two
+sections of the same document, not a missing test class.
+
+### Note for the next loop — an unpinned precondition
+
+Task 2's review found: with the `tab:bodyStartsAt` triple **absent** from an evidence graph,
+`looks-transposed.rq` fails **closed** (returns False) but `transpose-coherent.rq` fails
+**open** (returns True — asserting coherence from the absence of evidence, the
+derive-by-absence shape CLAUDE.md §8 forbids). This is unreachable today because
+`celltype.grid_evidence` always emits the triple, and both production call sites go through
+it — but nothing pins that guarantee. `tests/etkl/test_celltype.py`'s
+`test_the_two_oracles_disagree_on_an_absent_body_boundary` (added, then reverted with the
+rest of Task 3) measured this directly; it is not in the shipped code. Whoever picks up R71
+next should decide whether to re-add that guard independent of whichever fix they pursue.
