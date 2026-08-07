@@ -21,6 +21,14 @@ from .holon import assert_record_region, escalate_region, TAB
 _DOC = URIRef("https://example.org/etkl/doc")
 
 
+def _tiles_rationale(tiles: bool, n: int) -> str:
+    """Formats the (tiles, n) pair a region_tiles gate call already produced into a
+    diagnostic rationale distinct from the "tiles"/"does_not_tile" chosen label — pure
+    formatting of state already computed at the call site, no judgement re-evaluated."""
+    return (f"region_tiles {'validated' if tiles else 'rejected'} "
+            f"the {n} entries asserted into scratch")
+
+
 def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
     """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
@@ -441,7 +449,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 is_coherent = transpose_is_coherent(region)
                 brec.record("transpose_coherent", ["coherent", "incoherent"],
                             "coherent" if is_coherent else "incoherent",
-                            "coherent" if is_coherent else "incoherent")
+                            "coherence oracle accepted the transposed reading"
+                            if is_coherent else
+                            "coherence oracle refused the transposed reading")
                 if is_coherent:
                     # compile by axis-flip: records run along columns -> a correct,
                     # un-inverted RecordTable (tab:sourceOrientation "transposed").
@@ -457,7 +467,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    "tiles" if tiles else "does_not_tile")
+                                    _tiles_rationale(tiles, n))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
@@ -506,7 +516,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 is_row_grouped = looks_row_grouped(region)
                 brec.record("row_grouped", ["flat", "row_grouped"],
                             "row_grouped" if is_row_grouped else "flat",
-                            "row_grouped" if is_row_grouped else "flat")
+                            "row-grouping oracle read repeated row labels as record groups"
+                            if is_row_grouped else
+                            "row-grouping oracle found no repeated row-label groups")
                 if is_row_grouped:
                     from .rowheaders import classify_row_hier
                     from .holon import assert_row_hier_region
@@ -520,7 +532,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    "tiles" if tiles else "does_not_tile")
+                                    _tiles_rationale(tiles, n))
                     if rreg is not None and tiles:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
@@ -562,7 +574,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    "tiles" if tiles else "does_not_tile")
+                                    _tiles_rationale(tiles, n))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
@@ -594,7 +606,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             is_matrix = is_matrix_candidate(band)
             brec.record("matrix_candidate", ["matrix", "not_matrix"],
                         "matrix" if is_matrix else "not_matrix",
-                        "matrix" if is_matrix else "not_matrix")
+                        "matrix-candidacy oracle read the band as a two-axis matrix header"
+                        if is_matrix else
+                        "matrix-candidacy oracle found no two-axis matrix header structure")
             if is_matrix:
                 from .matrix import classify_matrix
                 from .holon import assert_matrix_region
@@ -608,7 +622,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 if tiles is not None:
                     brec.record("region_tiles", ["tiles", "does_not_tile"],
                                 "tiles" if tiles else "does_not_tile",
-                                "tiles" if tiles else "does_not_tile")
+                                _tiles_rationale(tiles, n))
                 if mreg is not None and tiles:
                     graph += scratch
                     _emit_band_captions(graph, table_uri, band)
@@ -647,7 +661,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 hreg = classify_hierarchical(band)
                 brec.record("hierarchical", ["hierarchical", "not_hierarchical"],
                             "hierarchical" if hreg is not None else "not_hierarchical",
-                            "hierarchical" if hreg is not None else "not_hierarchical")
+                            f"hierarchical oracle inferred a {len(hreg.tree)}-node header tree"
+                            if hreg is not None else
+                            "hierarchical oracle inferred no header tree")
                 from .headers import merge_tiling_ok
                 # LOOP L (AXIOM) — the header-stack law. Under RULED evidence the author drew the
                 # columns, so which header row is the leaf and what each row above it is are FACTS
@@ -734,7 +750,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
                                     "tiles" if tiles else "does_not_tile",
-                                    "tiles" if tiles else "does_not_tile")
+                                    _tiles_rationale(tiles, n))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,

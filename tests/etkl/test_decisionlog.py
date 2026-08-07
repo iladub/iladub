@@ -252,6 +252,33 @@ def test_band_4_records_transposed_before_coherence():
 
 
 @needs_apple
+def test_rationale_is_not_a_restatement_of_chosen():
+    """Fix round 1: transpose_coherent / row_grouped / matrix_candidate / hierarchical /
+    region_tiles must each carry a rationale distinct from dec:chosen — a diagnostic
+    sentence answering 'why', not a bare restatement of the enum value ('because
+    incoherent'). transposed already set this standard (chosen='transposed',
+    rationale='looks transposed'); this guards the other five against regressing to a
+    restated label, which is truthful but empty."""
+    from iladub.etkl import compile_tables
+    g = compile_tables(APPLE, page_number=0).graph
+    diagnostic_labels = {"transpose_coherent", "row_grouped", "matrix_candidate",
+                          "hierarchical", "region_tiles"}
+    found = 0
+    for d in g.subjects(RDF.type, DEC.DecisionHolon):
+        label = str(next(g.objects(d, RDFS.label), ""))
+        if label not in diagnostic_labels:
+            continue
+        rationale = str(next(g.objects(d, DEC.rationale)))
+        chosen = next(g.objects(d, DEC.chosen))
+        chosen_label = str(next(g.objects(chosen, RDFS.label)))
+        assert rationale != chosen_label, \
+            f"{label} rationale '{rationale}' is a bare restatement of chosen '{chosen_label}'"
+        found += 1
+    assert found, ("no transpose_coherent/row_grouped/matrix_candidate/hierarchical/"
+                   "region_tiles judgement was recorded at all")
+
+
+@needs_apple
 def test_recording_does_not_change_the_verdicts():
     """This slice records; it does not decide."""
     from iladub.etkl import compile_tables
