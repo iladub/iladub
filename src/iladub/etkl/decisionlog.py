@@ -16,32 +16,42 @@ shape firing on something that is not what it thinks it is.
 from __future__ import annotations
 
 from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
+from rdflib.namespace import RDF, RDFS, XSD, DCTERMS, PROV
 
 DEC = Namespace("https://w3id.org/iladub/dec#")
+
+# Module-level default agent: the iladub reading compiler.
+_READER_AGENT = URIRef("https://w3id.org/iladub/etkl#reader")
 
 
 class BandRecorder:
     """Records the judgement sequence for one band. `dec:order` counts within the band."""
 
-    def __init__(self, graph: Graph, band_node: URIRef, region_uri: URIRef, prefix: str):
+    def __init__(self, graph: Graph, band_node: URIRef, region_uri: URIRef, prefix: str,
+                 agent: URIRef):
         self._g = graph
         self._band = band_node
         self._regarding = region_uri
         self._prefix = prefix
+        self._agent = agent
         self._n = 0
 
     def record(self, judgement: str, options, chosen, rationale: str,
                rejected: dict | None = None, evidence=None) -> URIRef:
-        """One judgement. `options` are candidate names; `chosen` is one of them (or None
-        when the judgement admitted nothing); `rejected` maps a candidate name to the
-        observation that refuted it."""
+        """One judgement. `options` are candidate names; `chosen` is one of them.
+        `rejected` maps a candidate name to the observation that refuted it."""
+        if len(options) < 2:
+            raise ValueError(f"A real decision needs at least 2 options; got {len(options)}")
+        if chosen not in options:
+            raise ValueError(f"chosen '{chosen}' is not in options {options}")
+
         g = self._g
         d = URIRef(f"{self._prefix}-d{self._n}")
         g.add((d, RDF.type, DEC.DecisionHolon))
         g.add((d, RDFS.label, Literal(judgement)))
         g.add((d, DEC.regarding, self._regarding))
-        g.add((d, DEC.partOf, self._band))
+        g.add((d, DEC.withinProcess, self._band))
+        g.add((d, DEC.decidedBy, self._agent))
         g.add((d, DEC.order, Literal(self._n, datatype=XSD.integer)))
         g.add((d, DEC.rationale, Literal(rationale)))
         rejected = rejected or {}
@@ -61,27 +71,40 @@ class BandRecorder:
 
 
 class ReadingRecorder:
-    """One per page compile. Mints the page decision under the document, and a band decision
-    under the page, so dec:partOf carries document -> page -> band -> judgement."""
+    """One per page compile. Mints the page process under the document, and a band process
+    under the page, so dcterms:isPartOf carries document -> page -> band -> judgement."""
 
-    def __init__(self, graph: Graph, doc_uri: URIRef, page: int):
+    def __init__(self, graph: Graph, doc_uri: URIRef, page: int,
+                 agent: URIRef | None = None):
         self._g = graph
         self._doc = doc_uri
         self._page = page
+        self._agent = agent or _READER_AGENT
         self._page_node = URIRef(f"{doc_uri}#p{page}-reading")
-        graph.add((self._page_node, RDF.type, DEC.DecisionHolon))
+
+        # Emit agent once per recorder (if not the default).
+        if agent is not None:
+            graph.add((agent, RDF.type, PROV.SoftwareAgent))
+        # Also emit default agent once (first time it's referenced).
+        if agent is None:
+            graph.add((_READER_AGENT, RDF.type, PROV.SoftwareAgent))
+            graph.add((_READER_AGENT, RDFS.label, Literal("iladub reading compiler", lang="en")))
+
+        # Page is a dec:Process, not a decision.
+        graph.add((self._page_node, RDF.type, DEC.Process))
         graph.add((self._page_node, RDFS.label, Literal(f"reading page {page}")))
-        graph.add((self._page_node, DEC.partOf, doc_uri))
+        graph.add((self._page_node, DCTERMS.isPartOf, doc_uri))
         graph.add((self._page_node, DEC.regarding, doc_uri))
 
     def band(self, idx: int) -> BandRecorder:
         prefix = f"{self._doc}#region{idx}"
         band_node = URIRef(f"{prefix}-reading")
-        self._g.add((band_node, RDF.type, DEC.DecisionHolon))
+        # Band is a dec:Process, not a decision.
+        self._g.add((band_node, RDF.type, DEC.Process))
         self._g.add((band_node, RDFS.label, Literal(f"reading band {idx}")))
-        self._g.add((band_node, DEC.partOf, self._page_node))
+        self._g.add((band_node, DCTERMS.isPartOf, self._page_node))
         self._g.add((band_node, DEC.regarding, URIRef(prefix)))
-        return BandRecorder(self._g, band_node, URIRef(prefix), prefix)
+        return BandRecorder(self._g, band_node, URIRef(prefix), prefix, self._agent)
 
 
 def _slug(name) -> str:

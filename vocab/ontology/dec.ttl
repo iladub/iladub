@@ -200,8 +200,10 @@ dec:ExpansionRequest a owl:Class ;
     rdfs:comment "The off-the-map boundary outcome: the declared boundary has no map for some content, so the holon emits an evidence-positive request to extend the map rather than asserting the content false (a violation) or admitting it (valid). Distinct from a boundary violation — 'I don't know', not 'no'. Being a dec:Event, it must carry a dec:condition; it must also name what it is about via dec:regarding."@en .
 
 dec:regarding a owl:ObjectProperty ;
-    rdfs:label "regarding"@en ; rdfs:domain dec:ExpansionRequest ; rdfs:range prov:Entity ;
-    rdfs:comment "The off-the-map content this expansion request was raised about (in iladub, the quarantined proposition). Naming it is what keeps 'I don't know' provenanced rather than a content-free silence."@en .
+    rdfs:label "regarding"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( dec:DecisionHolon dec:ExpansionRequest ) ] ;
+    rdfs:range prov:Entity ;
+    rdfs:comment "The content this entity was raised about. For a decision holon, it names the subject matter the decision addressed; for an expansion request, it is the off-the-map content (the quarantined proposition). Naming it is what keeps deliberation provenanced and specific rather than abstract or content-free."@en .
 
 #################################################################
 #  Apex escalation — vertical authority-holarchy lineage
