@@ -55,7 +55,7 @@ Per decision:
 | property | carries |
 | --- | --- |
 | `dec:regarding` | the band/region node the decision concerns |
-| `dec:consideredEvidence` | the observations consulted (the typed-cell and classify evidence already built per band) |
+| `dec:consideredEvidence` | designed to carry the observations consulted (the typed-cell and classify evidence already built per band) — **no producer in this slice**: `BandRecorder.record` (`src/iladub/etkl/decisionlog.py:39-40`) accepts an `evidence=` parameter, but no `brec.record(...)` call site in `compile.py` ever passes one, so no `dec:consideredEvidence` triple is emitted by this loop's judgement chain |
 | `dec:optionSpace` | the candidates available, each a `dec:Option` |
 | `dec:chosen` | the option taken |
 | `dec:rejectedBecause` | on each discarded option — the observation that refuted it |
