@@ -221,6 +221,147 @@ def test_looks_transposed_new_matches_old():
         assert old == new, f"looks-transposed divergence ncols={ncols} cells={cells}: old={old} new={new}"
 
 
+# ---------- transpose-coherent.rq: the ONE acknowledged behavioural change of loop
+# harden-transposition, pinned as a documented divergence rather than an equality ----------
+#
+# OLD_TC is embedded VERBATIM from `git show 7b8359e~1:vocab/queries/transpose-coherent.rq` — the
+# form that shipped before `tab:bodyStartsAt` existed. It has NO ROW FILTER AT ALL, only the
+# column bounds `?ac >= 1` / `?bc >= 1`, so it read EVERY physical row including the header.
+#
+# The shipped query filters `?r >= ?bodyStart`. At the DEFAULT ?bodyStart = 1 that is NOT an
+# identity — it drops row 0. `looks-transposed.rq` is the opposite case (its old filters were the
+# literal constants `?r >= 1` / `?cr >= 1`, so substituting ?bodyStart IS an identity at 1, and
+# test_looks_transposed_new_matches_old above asserts plain EQUALITY). This query had no such
+# guard, which is exactly why the change went unnoticed and was described as inert.
+#
+# The change is DELIBERATE and was adjudicated on merits: excluding the header from a BODY-
+# coherence check is the intended semantics, and header pollution is what R71 exists to fix. So
+# this test documents the divergence's exact shape instead of forbidding it — an UNINTENDED
+# divergence still fails.
+
+OLD_TRANSPOSE_COHERENT = r"""# transpose-coherent.rq @ 7b8359e~1 — no row filter, reads the header as data
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+  FILTER NOT EXISTS {
+    ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?araw . FILTER(?ac >= 1)
+    FILTER NOT EXISTS { ?araw tab:datatypeAbstains true }
+    OPTIONAL { ?araw tab:inDatatypeFamily ?afam }
+    BIND(COALESCE(?afam, ?araw) AS ?ta)
+    ?b tab:atGridRow ?r ; tab:atGridColumn ?bc ; tab:cellDatatype ?braw . FILTER(?bc >= 1)
+    FILTER NOT EXISTS { ?braw tab:datatypeAbstains true }
+    OPTIONAL { ?braw tab:inDatatypeFamily ?bfam }
+    BIND(COALESCE(?bfam, ?braw) AS ?tb)
+    FILTER(?ta != ?tb)
+  }
+}
+"""
+
+_TRANSPOSE_COHERENT_RQ = os.path.join(QDIR, "transpose-coherent.rq")
+_LOOKS_TRANSPOSED_RQ = os.path.join(QDIR, "looks-transposed.rq")
+
+
+def _run_ask_text_at(query_text, cells, ncols, body_starts_at):
+    g = celltype.grid_evidence(cells, ncols, body_starts_at=body_starts_at)
+    return bool(g.query(query_text).askAnswer)
+
+
+def _mismatch_rows(cells):
+    """Python reference for 'which rows carry a type mismatch across their value columns' — the
+    single fact BOTH queries are built on. A row mismatches iff its col>=1 cells hold more than one
+    distinct NORMALISED datatype family, with abstaining datatypes (Blank, ParenthesizedNumber)
+    dropped. Same idiom as `_ref_hbs` above and as the queries' own THE ONE IDIOM."""
+    BLANK = _cell_datatype("")
+    PAREN = _cell_datatype("(171)")
+    NUMERIC = _cell_datatype("7")
+    CURRENCY = _cell_datatype("$5")
+    ABSTAIN = {BLANK, PAREN}
+    FAMILY = {NUMERIC: TAB.Quantity, CURRENCY: TAB.Quantity}
+    by_row = {}
+    for (r, c, t) in cells:
+        if c < 1:
+            continue
+        dt = _cell_datatype(t)
+        if dt in ABSTAIN:
+            continue
+        by_row.setdefault(r, set()).add(FAMILY.get(dt, dt))
+    return {r for r, fams in by_row.items() if len(fams) > 1}
+
+
+def test_transpose_coherent_diverges_from_old_only_on_the_header_row():
+    """The shipped `transpose-coherent.rq` vs the pre-`tab:bodyStartsAt` form, with the divergence
+    CHARACTERISED rather than forbidden.
+
+    OLD answers 'coherent' iff NO row anywhere mismatches. NEW answers 'coherent' iff no row at or
+    below `?bodyStart` mismatches. So NEW can only ever be MORE permissive, and it differs from OLD
+    in exactly one situation:
+
+        some HEADER row (r < ?bodyStart) mismatches, and NO BODY row (r >= ?bodyStart) does.
+
+    That is a header whose labels mix types over a body that does not — precisely the pollution the
+    body bound exists to remove. Everything else must agree exactly. `_mismatch_rows` computes the
+    predicate independently in Python, so an unintended divergence — one not explained by a
+    header-only mismatch — fails here, and so does an unintended AGREEMENT where a divergence is
+    predicted.
+
+    Measured on this battery (400 grids x body_start in 1,2,3 = 1200 cases): 127 divergences, ALL
+    of them incoherent->coherent, ALL explained; 21 of those fall at the production default of 1.
+    """
+    new_text = open(_TRANSPOSE_COHERENT_RQ, encoding="utf-8").read()
+    diverged = 0
+    cases = 0
+    for cells, ncols in _rand_grids(seed=3, n=400, maxrows=9):
+        old = _run_ask_text(OLD_TRANSPOSE_COHERENT, cells, ncols)
+        mism = _mismatch_rows(cells)
+        for body_start in (1, 2, 3):
+            new = _run_ask_text_at(new_text, cells, ncols, body_start)
+            cases += 1
+            header_only = (bool({r for r in mism if r < body_start})
+                           and not {r for r in mism if r >= body_start})
+            assert (old != new) == header_only, (
+                f"unexplained transpose-coherent divergence ncols={ncols} body_start={body_start} "
+                f"cells={cells}: old={old} new={new} mismatch_rows={sorted(mism)}")
+            if old != new:
+                assert (old, new) == (False, True), (
+                    "the body bound can only RELAX coherence, never tighten it: "
+                    f"old={old} new={new} cells={cells}")
+                diverged += 1
+    assert cases == 1200, cases
+    assert diverged == 127, f"divergence count moved: {diverged} (was 127 when this was measured)"
+
+
+def test_both_transposition_oracles_fail_closed_without_a_body_boundary():
+    """The unpinned precondition, now pinned: with `tab:bodyStartsAt` ABSENT, neither oracle may
+    assert anything from the missing evidence (CLAUDE.md §8 — never derive by absence).
+
+    This was a live defect in `transpose-coherent.rq`: the binding sat INSIDE its
+    `FILTER NOT EXISTS` group, so removing the triple made the group unsatisfiable, NOT EXISTS
+    held vacuously, and the query returned True — COHERENT asserted out of nothing. Hoisting the
+    binding above the filter makes the ASK simply not match. Measured before the hoist: True.
+    Measured after, and asserted here: False, for both queries, on a grid where the boundary
+    being present would give True.
+
+    Unreachable in production today — `celltype.grid_evidence` always emits the triple — which is
+    why it needs a test rather than a fix downstream.
+    """
+    lt_text = open(_LOOKS_TRANSPOSED_RQ, encoding="utf-8").read()
+    tc_text = open(_TRANSPOSE_COHERENT_RQ, encoding="utf-8").read()
+    # a 2x2 grid whose body IS coherent, so transpose-coherent answers True while the boundary is
+    # present — the answer that must NOT survive the boundary's removal
+    cells = [(0, 0, "Metric"), (0, 1, "7"), (1, 0, "Date"), (1, 1, "2020-01-02")]
+
+    present = celltype.grid_evidence(cells, 2)
+    assert bool(present.query(tc_text).askAnswer) is True, \
+        "fixture precondition: with the boundary present this grid is coherent"
+
+    absent = celltype.grid_evidence(cells, 2)
+    absent.remove((None, TAB.bodyStartsAt, None))
+    assert (None, TAB.bodyStartsAt, None) not in absent
+    assert bool(absent.query(tc_text).askAnswer) is False, \
+        "transpose-coherent must fail CLOSED without tab:bodyStartsAt, not assert coherence"
+    assert bool(absent.query(lt_text).askAnswer) is False, \
+        "looks-transposed must fail CLOSED without tab:bodyStartsAt"
+
+
 def test_stub_data_split_new_matches_old():
     new_text = open(os.path.join(QDIR, "stub-data-split.rq"), encoding="utf-8").read()
     for cells, ncols in _rand_grids(seed=4, n=40, maxrows=5):

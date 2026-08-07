@@ -111,9 +111,17 @@ def _emit_datatype_declarations(g):
         g.add(t)
 
 
-def grid_evidence(cells, ncols):
+def grid_evidence(cells, ncols, body_starts_at=1):
     """Build the transient typed-cell evidence graph. `cells`: iterable of (row, col, text).
-    Emits a tab:GridCell per cell (row/col/text/cellDatatype) + a column marker per index."""
+    Emits a tab:GridCell per cell (row/col/text/cellDatatype) + a column marker per index,
+    and one tab:ClassifyBand carrying tab:bodyStartsAt.
+
+    `body_starts_at` is the first row that is BODY rather than header, derived by
+    headers.header_body_split. It DEFAULTS TO 1 — the assumption the transposition oracles
+    hardcoded before this parameter existed — so every caller that does not pass it behaves
+    exactly as before. Note header_body_split is itself a caller: it COMPUTES the split, so
+    it must never be given one, and its query does not read this term.
+    """
     g = Graph()
     for i, (r, c, t) in enumerate(cells):
         u = _EV["cell-%d" % i]
@@ -124,6 +132,8 @@ def grid_evidence(cells, ncols):
         g.add((u, TAB.cellDatatype, _cell_datatype(t)))
     for c in range(ncols):
         g.add((_EV["col-%d" % c], TAB.columnIndex, Literal(c, datatype=XSD.integer)))
+    g.add((_EV["band"], RDF.type, TAB.ClassifyBand))
+    g.add((_EV["band"], TAB.bodyStartsAt, Literal(int(body_starts_at), datatype=XSD.integer)))
     _emit_datatype_declarations(g)
     return g
 
