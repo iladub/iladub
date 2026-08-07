@@ -8,7 +8,7 @@ early branch and carry topology candidates instead. Measured across the whole co
 exactly two bands are "suppressed-positive" — UNSUPPORTED_TABLE where `looks_transposed`
 would return True — and BOTH are protected by the suppression:
 
-    looks_transposed  -> True   (a FALSE POSITIVE: the "header" is a caption line)
+    looks_transposed  -> True   (a FALSE POSITIVE: see the wrapped-header cause below)
     transpose_is_coherent -> False (the oracle correctly refuses it)
 
 Both bands compile successfully today down the UNSUPPORTED -> hierarchical path (586 and
