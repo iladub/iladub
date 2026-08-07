@@ -82,13 +82,11 @@ class ReadingRecorder:
         self._agent = agent or _READER_AGENT
         self._page_node = URIRef(f"{doc_uri}#p{page}-reading")
 
-        # Emit agent once per recorder (if not the default).
-        if agent is not None:
-            graph.add((agent, RDF.type, PROV.SoftwareAgent))
-        # Also emit default agent once (first time it's referenced).
+        # Emit agent once per recorder.
+        graph.add((self._agent, RDF.type, PROV.SoftwareAgent))
         if agent is None:
-            graph.add((_READER_AGENT, RDF.type, PROV.SoftwareAgent))
-            graph.add((_READER_AGENT, RDFS.label, Literal("iladub reading compiler", lang="en")))
+            # Only label the default agent; caller agents are expected to be pre-labelled.
+            graph.add((self._agent, RDFS.label, Literal("iladub reading compiler", lang="en")))
 
         # Page is a dec:Process, not a decision.
         graph.add((self._page_node, RDF.type, DEC.Process))

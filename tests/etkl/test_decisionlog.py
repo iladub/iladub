@@ -3,18 +3,42 @@
 Every judgement on the band-to-verdict path becomes a dec:DecisionHolon, so the reading is
 queryable rather than lost. Uses only the owned dec: vocabulary — the differential half
 (optionSpace/chosen/rejectedBecause) which had no producer before this loop."""
+from pathlib import Path
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, DCTERMS, PROV
 import pytest
-from pyshacl import validate
+
+from iladub.validate import validate
 
 DEC = Namespace("https://w3id.org/iladub/dec#")
 DOC = URIRef("urn:test:doc")
+
+# Path to vocab files.
+REPO_ROOT = Path(__file__).parent.parent.parent
+ONTO_PATH = REPO_ROOT / "vocab" / "ontology" / "dec.ttl"
+SHAPES_PATH = REPO_ROOT / "vocab" / "shapes" / "dec-shapes.ttl"
 
 
 def _rec(g, agent=None):
     from iladub.etkl.decisionlog import ReadingRecorder
     return ReadingRecorder(g, DOC, 0, agent=agent)
+
+
+def _validate_graph(g: Graph):
+    """Validate a data graph against dec-shapes using the dec ontology.
+
+    Returns a ValidationResult with conforms, report_text, and report_graph.
+    Raises AssertionError if validation fails, with the report text included.
+    """
+    onto_g = Graph()
+    onto_g.parse(str(ONTO_PATH), format="turtle")
+
+    shapes_g = Graph()
+    shapes_g.parse(str(SHAPES_PATH), format="turtle")
+
+    result = validate(g, shapes_g, onto_g)
+    assert result.conforms, f"Graph does not conform to dec-shapes:\n{result.report_text}"
+    return result
 
 
 def test_a_decision_records_its_option_space_and_choice():
@@ -99,8 +123,10 @@ def test_recorder_writes_only_to_the_graph_it_was_given():
 
 
 def test_every_emitted_decision_conforms_to_dec_shapes():
-    """Validate that all emitted dec:DecisionHolon nodes conform to dec:DecisionHolonShape."""
-    from pathlib import Path
+    """Validate that all emitted dec:DecisionHolon nodes conform to dec:DecisionHolonShape.
+
+    This is the positive control: a properly-formed graph must conform.
+    """
     g = Graph()
     r = _rec(g)
     # Build a representative graph with multiple bands and judgements.
@@ -111,23 +137,43 @@ def test_every_emitted_decision_conforms_to_dec_shapes():
     b5 = r.band(5)
     d3 = b5.record("kind", ["X", "Y"], "Y", "choice 3")
 
-    # Load the ontology and shapes.
-    repo_root = Path(__file__).parent.parent.parent
-    onto_path = repo_root / "vocab" / "ontology" / "dec.ttl"
-    shapes_path = repo_root / "vocab" / "shapes" / "dec-shapes.ttl"
+    # Validate using the validation helper.
+    _validate_graph(g)
 
+
+def test_malformed_decision_holon_fails_validation():
+    """Negative control: a deliberately malformed dec:DecisionHolon must fail validation.
+
+    This verifies the SHACL validator is actually live and can catch violations.
+    A test that always passes is not testing anything.
+    """
+    from rdflib import Literal
+    g = Graph()
+
+    # Create a deliberately malformed DecisionHolon.
+    bad_decision = URIRef("urn:test:bad-decision")
+    g.add((bad_decision, RDF.type, DEC.DecisionHolon))
+    g.add((bad_decision, RDFS.label, Literal("broken")))
+    g.add((bad_decision, DEC.rationale, Literal("no agent, no options, no chosen")))
+    # Intentionally missing:
+    # - dec:decidedBy (required minCount 1)
+    # - dec:optionSpace (required minCount 2)
+    # - dec:chosen (required minCount 1, maxCount 1)
+
+    # Load ontology and shapes.
     onto_g = Graph()
-    onto_g.parse(str(onto_path), format="turtle")
-
+    onto_g.parse(str(ONTO_PATH), format="turtle")
     shapes_g = Graph()
-    shapes_g.parse(str(shapes_path), format="turtle")
+    shapes_g.parse(str(SHAPES_PATH), format="turtle")
 
-    # Validate using pySHACL.
-    conforms, report_graph, report_text = validate(
-        g, shapesgraph=shapes_g, ontology=onto_g,
-        inference="rdfs", advanced=True
-    )
-    assert conforms, f"Graph does not conform to dec-shapes:\n{report_text}"
+    result = validate(g, shapes_g, onto_g)
+
+    # This must NOT conform.
+    assert not result.conforms, "A broken decision should fail validation"
+
+    # The report must mention at least one violation.
+    assert "violation" in result.report_text.lower() or "conforms: False" in result.report_text, \
+        f"Report should mention violations. Got:\n{result.report_text}"
 
 
 def test_record_raises_if_options_less_than_2():
