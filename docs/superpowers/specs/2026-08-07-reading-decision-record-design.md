@@ -1,6 +1,6 @@
 # The reading decision record — what iladub understood, as evidence — design
 
-**Date:** 2026-08-07 · **Status:** approved (François, 2026-08-07) ·
+**Date:** 2026-08-07 · **Status:** closed 2026-08-07 ·
 **Slice:** A of the reading-as-differential-diagnosis architecture (§7 names B–E) ·
 **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf` page 0
 
@@ -123,6 +123,95 @@ iladub's conclusion "unsupported" is a statement about iladub, not about the doc
   capacity 1.0000, apple 0.0606860158, WHO 0.5597. This slice records; it does not decide.
 - Graph-size and compile-time cost measured and recorded (every band now carries a chain).
 - Whole-graph SHACL still conforms with the decisions present.
+
+## 6.1 Measured results — the close (2026-08-07)
+
+**The artifact this loop exists to produce** — the committed `vocab/queries/why-escalated.rq`
+run over apple page 0, regions 3 and 4, verbatim:
+
+```
+--- region3 ---
+  0. multi_table          chosen=single             — single table
+  1. kind                 chosen=UNSUPPORTED_TABLE  — header has 1 words but 5 columns
+  2. matrix_candidate     chosen=not_matrix         — matrix-candidacy oracle found no two-axis matrix header structure
+  3. hierarchical         chosen=hierarchical       — hierarchical oracle inferred a 1-node header tree
+  4. region_tiles         chosen=does_not_tile      — region_tiles rejected the 15 body tokens asserted into scratch
+  5. verdict              chosen=escalated          — REGION_TILING_FAILED
+--- region4 ---
+  0. multi_table          chosen=single             — single table
+  1. kind                 chosen=RECORD_TABLE       — flat single-level header
+  2. transposed           chosen=upright            — upright
+  3. row_grouped          chosen=flat               — row-grouping oracle found no repeated row-label groups
+  4. region_tiles         chosen=tiles              — region_tiles validated the 20 entries asserted into scratch
+  5. verdict              chosen=asserted           —
+```
+
+**Verdict stability (the loop's binding constraint).** Byte-identical, verified three times
+across the loop: `tests/test_corpus_stem.py` + `tests/test_cbh_e2e.py` — 13 passed (stem
+0.9655 / 2152 cells / chain [3]; CBH 0.9047). Document scores: apple `0.0606860158`, capacity
+`1.0000000000`, WHO `0.5597484277` — each matching its pre-loop baseline exactly.
+
+**Cost of the record.** stem compile: 158s (pre-loop baseline ~151s). stem document-level
+graph: 30,015 triples, of which the record is 638 triples across 142 nodes (2.1%). 30,015 −
+638 = 29,377 — exactly the pre-loop triple count, so the record is purely additive and nothing
+else in the graph moved. stem carries 36 `dec:DecisionHolon` judgements and 13 `dec:Process`
+containers across 3 pages / 10 regions (≈3.6 judgements per region; 13 = 3 page-processes + 10
+band-processes).
+
+**§6 criteria, one by one:**
+
+- *Compiling apple page 0 yields a complete chain per band, and the three §4 questions are
+  answerable by SPARQL over the compiled graph alone.* **Met.** The chains above are that
+  answer, produced by the committed query, pinned by tests that run the queries rather than
+  asserting triple counts.
+- *Band 4's chain shows `looks_transposed` before `transpose_is_coherent` (the R55 link).*
+  **Not met.** See below — stated plainly, not softened.
+- *Every escalated region has a decision explaining it; no region ends without a chain.*
+  **Met.** Region 3's chain above ends in `verdict chosen=escalated — REGION_TILING_FAILED`,
+  itself the product of the preceding four judgements; region 4 ends in an asserted verdict
+  with the same completeness.
+- *Corpus scores byte-identical.* **Met.** stem 0.9655 / 2152 cells / chain [3], CBH 0.9047,
+  capacity 1.0000000000, apple 0.0606860158, WHO 0.5597484277 — all reproduced above.
+- *Graph-size and compile-time cost measured and recorded.* **Met.** 158s / 30,015 triples /
+  638 record triples (2.1%) / 36 decision holons / 13 process containers, above.
+- *Whole-graph SHACL still conforms with the decisions present.* **Met for the membrane the
+  compiler runs; not met against `dec-shapes.ttl`.** `compile._validate`
+  (`src/iladub/etkl/compile.py:335-345`) loads only `tab-shapes.ttl` and
+  `tab-physical-shapes.ttl` with `tab.ttl` as the ontology graph — it never loads
+  `dec-shapes.ttl` or `dec.ttl`. The corpus suite passing at the counts above shows the record
+  crosses that membrane without tripping a shape (the §3.1 hazard, and it held) — it says
+  nothing about `dec-shapes.ttl` conformance. Validating a real compiled apple page 0 against
+  `dec-shapes.ttl` with `dec.ttl` as ontology, `inference="rdfs"`, does **not** conform: five
+  non-conforming focus nodes, all regions (`region2`, `region3`, `region5`, `region6`,
+  `region7`), zero violations on any decision or process node this loop emits. Cause, traced
+  and pre-existing: `escalate_region` (`src/iladub/etkl/holon.py:375`) emits `dec:confidence`
+  on the region/candidate URI; `dec:confidence` has `rdfs:domain dec:DecisionHolon`
+  (`vocab/ontology/dec.ttl:81`), so under RDFS inference the region node is entailed to be a
+  `dec:DecisionHolon` and then fails `dec:DecisionHolonShape`'s `optionSpace`/`chosen`/
+  `decidedBy` requirements plus a `dec:ConfidenceShape` datatype violation on the same value.
+  The recorder never emits `dec:confidence`, and this loop's diff changes no `confidence`
+  line — the defect predates this loop; this loop merely built the first gate that can see it
+  (see R69). CBH was not scanned for this check, same caveat as the R55 table above.
+
+**The R55 criterion, not met — the evidence.** I measured this across four documents by
+compiling each and scanning every page's graph for judgements labelled `transposed` /
+`transpose_coherent`:
+
+| document | `transposed` judgements | `transpose_coherent` |
+| --- | --- | --- |
+| apple | `region4-d2`=upright, `region6-d2`=upright | none |
+| capacity | `region3-d2`=upright | none |
+| WHO | `region4-d2`=upright | none |
+| stem | zero `transposed` judgements at all (path never reached) | none |
+
+Every `transposed` judgement in the corpus chooses `upright`, so `transpose_is_coherent` is
+never consulted and the ordering §6 asks for cannot be observed. `test_judgement_order_answers_the_r55_question`
+guards that half behind `if "transpose_coherent" in order:`, so the assertion is inert — its
+unconditional `assert "transposed" in order` still bites, and the test does not conceal the
+situation, but the R55 link is unproven end-to-end. This is not an implementation defect: the
+recorder records what the code evaluates, and the code never evaluates the coherence oracle on
+this corpus. CBH was not scanned (different pipeline entry), so this table is not full
+coverage even of the shipped corpus — it is what was measured.
 
 ## 7. Out of scope — the rest of the architecture
 
