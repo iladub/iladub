@@ -149,10 +149,11 @@ of stem's asserted cells.
 ## 7. What slice B needs before it can start
 
 - **Route the transposition oracles' evidence through a header/body split, not the
-  raw per-line cell grid.** `looks_transposed` and `transpose_is_coherent`
-  (`src/iladub/etkl/orientation.py`) both treat `region.cells` row `0` as the header
-  and every row `>= 1` as body — correct only when the header is exactly one
-  physical line. For the two bands measured here the header is a multi-row
+  raw per-line cell grid.** `looks_transposed` (`src/iladub/etkl/orientation.py`)
+  skips row `0` as the header and treats every row `>= 1` as body — correct only
+  when the header is exactly one physical line; `transpose_is_coherent` applies no
+  row filter at all and consumes every physical row, so a multi-row wrapped header
+  pollutes it too. For the two bands measured here the header is a multi-row
   *wrapped* column header (§4); `assign_cells` (`src/iladub/etkl/regions.py`) has no
   concept of that and maps every physical line straight to a row, so the wrapped
   header's own trailing lines are read as body, seed Text cells into every column,
@@ -201,7 +202,7 @@ is why no verdict could move. Both figures match this document's own §6 expecta
 passing, none skipped. Six of the ten pin the `kind` / `looks_transposed` /
 `transpose_is_coherent` triple — the first three test functions, each parametrized
 over both stem bands (page 0 region2, page 2 region1). The other four pin different
-facts: two parametrized instances (rename pending, see below) pin the header word
+facts: two parametrized instances of `test_the_header_is_a_multi_row_wrapped_header` pin the header word
 count and the `reason` string; one instance of `test_both_bands_carry_real_content`
 pins both bands' cell counts (`> 100`); and
 `test_page0_region2_still_compiles_through_the_unsupported_path` exercises the real
@@ -256,8 +257,8 @@ resulting coverage gap, is recorded as part of R71 rather than closed here.
   close it* column names routing the orientation oracles' evidence through a
   header/body split (`vocab/queries/header-body-split.rq`, already consumed
   elsewhere via `header_body_split`) as an open-world AXIOM change, explicitly not a
-  tuned Python threshold, per §7 — and its *why deferred* column records that R10
-  was checked first, as §7 required, and refuted rather than confirmed. It also
+  tuned Python threshold, per §7 — and its *why deferred* column records that §7
+  refutes R10 as the cause, not merely leaves it unproven. It also
   carries a separate closing note for the routing-coverage gap this section
   describes.
 
