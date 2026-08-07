@@ -8,11 +8,28 @@
 # all — only column bounds — so it read every physical row including the header. A multi-row
 # wrapped header therefore contributed label text as if it were data. This was the more
 # polluted of the two transposition oracles.
+#
+# THIS IS A REAL BEHAVIOURAL CHANGE, NOT A REWRITE. Even at the default ?bodyStart = 1 the new
+# query differs from the old one: the old form had no row filter, so row 0 — the header — was
+# read as data. A header row mixing Text and Date over a uniformly numeric body made the OLD
+# query answer False (incoherent) and makes this one answer True (coherent). Excluding the
+# header from a BODY-coherence check is the intended semantics; the divergence is pinned and
+# documented by test_transpose_coherent_diverges_from_old_only_on_the_header_row
+# (tests/etkl/test_derivation_equiv.py), which fails on any OTHER divergence.
+#
+# ?bodyStart IS BOUND FIRST, OUTSIDE THE `FILTER NOT EXISTS` (CLAUDE.md §8, no derive-by-absence).
+# When the triple sat inside the NOT EXISTS group, an evidence graph missing tab:bodyStartsAt made
+# the group unsatisfiable, so NOT EXISTS held and the query asserted COHERENT from absent evidence.
+# Hoisted, the ASK simply fails to match and returns False — it fails CLOSED. Behaviour is
+# unchanged whenever the triple is present (a plain conjunct either way).
+# NOTE this hoist works HERE only because both groups are plain graph patterns; it is NOT
+# available in looks-transposed.rq, whose body bound is inside SELECT subqueries an outer
+# binding cannot reach.
 PREFIX tab: <https://w3id.org/iladub/tab#>
 ASK {
+  ?bd tab:bodyStartsAt ?bodyStart .
   # coherent iff NOT EXISTS a body row with two DIFFERENT normalised types among its value columns
   FILTER NOT EXISTS {
-    ?bd tab:bodyStartsAt ?bodyStart .
     ?a tab:atGridRow ?r ; tab:atGridColumn ?ac ; tab:cellDatatype ?araw . FILTER(?ac >= 1 && ?r >= ?bodyStart)
     FILTER NOT EXISTS { ?araw tab:datatypeAbstains true }
     OPTIONAL { ?araw tab:inDatatypeFamily ?afam }

@@ -8,8 +8,18 @@
 # BODY = row >= ?bodyStart, read from tab:bodyStartsAt rather than assumed to be 1. A multi-row
 # WRAPPED column header would otherwise enter the grid as body rows, seeding Text cells across
 # every column and destroying the column homogeneity whose ABSENCE this query tests for — the
-# false positive R71 recorded. ?bodyStart is bound INSIDE each subquery on purpose: SPARQL
-# evaluates subqueries bottom-up, so an outer binding would not reach them.
+# false positive R71 recorded. ?bodyStart is bound INSIDE each subquery because it MUST be:
+# SPARQL evaluates a SELECT subquery bottom-up and independently of its enclosing group, so a
+# binding made outside cannot reach in. Each subquery therefore reads tab:bodyStartsAt for
+# itself. The two bindings carry the SAME name and the SAME value — there is no scope
+# distinction to preserve, and neither subquery projects ?bodyStart, so nothing escapes either.
+# (transpose-coherent.rq CAN hoist its binding above the FILTER NOT EXISTS, because that group
+# is a plain graph pattern rather than a subquery; this query cannot.)
+#
+# Unlike transpose-coherent.rq, this substitution IS an identity at the default ?bodyStart = 1:
+# the filters it replaced were the literal constants ?r >= 1 / ?cr >= 1. Pinned by
+# test_looks_transposed_new_matches_old (tests/etkl/test_derivation_equiv.py), which compares it
+# against the pre-R71 pairwise form and asserts EQUALITY.
 #
 # AGGREGATION FORM (linear in cells): the typed-row EXISTENCE and the typed-column NON-existence are
 # two INDEPENDENT existence checks, each a single GROUP BY + HAVING over the body cells (homogeneity
@@ -32,8 +42,8 @@ ASK {
   # AND NO typed-structured column (all body cells row>=?bodyStart homogeneous non-Text)
   FILTER NOT EXISTS {
     SELECT ?col WHERE {
-      ?b2 tab:bodyStartsAt ?bodyStart2 .
-      ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?craw . FILTER(?cr >= ?bodyStart2)
+      ?b2 tab:bodyStartsAt ?bodyStart .
+      ?cc tab:atGridColumn ?col ; tab:atGridRow ?cr ; tab:cellDatatype ?craw . FILTER(?cr >= ?bodyStart)
       FILTER NOT EXISTS { ?craw tab:datatypeAbstains true }
       OPTIONAL { ?craw tab:inDatatypeFamily ?cfam }
       BIND(COALESCE(?cfam, ?craw) AS ?ct)
