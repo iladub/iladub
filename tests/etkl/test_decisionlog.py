@@ -190,3 +190,72 @@ def test_record_raises_if_chosen_not_in_options():
     b = _rec(g).band(1)
     with pytest.raises(ValueError, match="not in options"):
         b.record("kind", ["A", "B"], "C", "why")
+
+
+# ---------------------------------------------------------------- integration
+
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+APPLE = os.path.join(ROOT, "corpus", "financial", "apple-fy2026q3-statements.pdf")
+needs_apple = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus doc not fetched")
+
+
+@needs_apple
+def test_every_band_carries_a_chain():
+    """No region may end without a record of how it got there (spec §6).
+
+    Task 1's interface differs from the original brief: band/page containers are
+    dec:Process (not dec:DecisionHolon), and a judgement links to its band via
+    dec:withinProcess (not dec:partOf). Band containers are found by their
+    RDF.type, DEC.Process; every one of them must have at least one judgement
+    decision hanging off it via dec:withinProcess.
+    """
+    from iladub.etkl import compile_tables
+    rep = compile_tables(APPLE, page_number=0)
+    g = rep.graph
+    bands = list(g.subjects(RDF.type, DEC.Process))
+    bands = [b for b in bands if str(b).endswith("-reading") and "region" in str(b)]
+    assert bands, "no band processes recorded at all"
+    for b in bands:
+        judgements = list(g.subjects(DEC.withinProcess, b))
+        assert judgements, f"band {b} has no judgement decisions"
+
+
+@needs_apple
+def test_the_kind_rejection_is_recorded_for_band_3():
+    """Spec §5's honest limit, made concrete: band 3 rejected RECORD_TABLE because the
+    caption line was read as a header row — and nothing else was ever a candidate."""
+    from iladub.etkl import compile_tables
+    g = compile_tables(APPLE, page_number=0).graph
+    rejections = [str(o) for _, _, o in g.triples((None, DEC.rejectedBecause, None))]
+    assert any("1 words" in r for r in rejections), \
+        f"band 3's kind rejection is not in the record; got {rejections[:5]}"
+
+
+@needs_apple
+def test_band_4_records_transposed_before_coherence():
+    """THE R55 QUESTION. The register claimed coherence failed 'solely' because of
+    parenthesized negatives; the truth is looks_transposed fired FIRST and the coherence
+    oracle was only then consulted. dec:order must make that readable."""
+    from iladub.etkl import compile_tables
+    g = compile_tables(APPLE, page_number=0).graph
+    orders = {}
+    for d in g.subjects(RDF.type, DEC.DecisionHolon):
+        if "region4-d" not in str(d):
+            continue
+        label = str(next(g.objects(d, RDFS.label)))
+        orders[label] = int(next(g.objects(d, DEC.order)))
+    assert "transposed" in orders, f"no transposed judgement recorded; got {sorted(orders)}"
+    if "transpose_coherent" in orders:
+        assert orders["transposed"] < orders["transpose_coherent"]
+
+
+@needs_apple
+def test_recording_does_not_change_the_verdicts():
+    """This slice records; it does not decide."""
+    from iladub.etkl import compile_tables
+    rep = compile_tables(APPLE, page_number=0)
+    verdicts = [(r.kind.name, r.verdict, r.reason, r.cells) for r in rep.regions]
+    assert abs(rep.score - 0.1170) < 0.0001, f"score moved: {rep.score}"
+    assert sum(1 for v in verdicts if v[1] == "asserted") == 1
