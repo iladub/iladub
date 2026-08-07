@@ -22,6 +22,10 @@ QDIR = os.path.join(ROOT, "vocab", "queries")
 
 
 def _run(name, g, region):
+    """Returns tuples, not dicts: every row in this module has every SELECTed variable bound
+    (there is no absence to distinguish), so positional access is simpler and matches how
+    _order/_chain below consume the results. See test_supersession_queries.py's _run for why
+    it uses .asdict() instead — that divergence is deliberate, not an oversight to unify."""
     q = open(os.path.join(QDIR, name), encoding="utf-8").read()
     return [tuple(r) for r in g.query(q, initBindings={"region": region})]
 

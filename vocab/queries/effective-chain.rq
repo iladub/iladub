@@ -9,8 +9,22 @@
 # region, per CLAUDE.md §8) — it selects between two present readings, it never derives a
 # fact from absence.
 #
+# ?region BINDING IS REQUIRED, not optional, and this is load-bearing: run with ?region
+# unbound, branch B's FILTER NOT EXISTS is satisfied by ANY dec:supersedes edge anywhere in
+# the graph (it is not scoped to a region until ?region is fixed), so the fallback branch
+# vanishes for every region and the query silently returns only superseded-chain rows across
+# the whole graph. Callers MUST pass ?region via initBindings (or an equivalent pre-bind);
+# there is no way for the query itself to detect an unbound ?region and refuse.
+#
+# PRECONDITION: every dec:DecisionHolon that is the object of a dec:supersedes edge (a
+# superseding verdict, ?v2) must carry dec:regarding. If one ever lacked it, branch A could
+# not bind ?effective for that edge and branch B is excluded by the NOT EXISTS for the
+# superseded region, so the query would return NOTHING for that region rather than falling
+# back to the superseded chain. Unreachable today: decisionlog.py:52 (Ledger.judge) emits
+# dec:regarding on every judgement unconditionally.
+#
 # SINGLE-HOP ASSUMPTION: this query follows exactly one dec:supersedes edge (v1 -> v2), not a
-# chain of them. Safe today because document.py's section-repair (~L1215-1302) runs pass-2 at
+# chain of them. Safe today because document.py's section-repair (~L1258-1284) runs pass-2 at
 # most once per band per compile, so no region can accumulate a second supersession — but an
 # iterative-repair pipeline would need this query to walk the edge transitively, or a stale
 # middle link would be returned as "effective" silently.

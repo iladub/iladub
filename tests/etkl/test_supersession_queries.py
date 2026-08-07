@@ -27,6 +27,12 @@ def cbh():
 
 
 def _run(name, g, region):
+    """Returns dicts, not tuples: this module asserts the ABSENCE of ?supersededBy on an
+    unsuperseded chain (test_an_unsuperseded_chain_carries_no_marker), and rdflib's
+    ResultRow.asdict() omits unbound variables entirely — that is what makes
+    `"supersededBy" not in r` a meaningful check. A positional tuple has no way to express
+    "this variable was never bound" as opposed to "bound to something falsy"; do not unify
+    this with test_transposed_chain.py's tuple-based _run without checking that first."""
     q = open(os.path.join(QDIR, name), encoding="utf-8").read()
     return [r.asdict() for r in g.query(q, initBindings={"region": region})]
 
@@ -81,4 +87,5 @@ def test_effective_chain_equals_why_escalated_when_nothing_superseded_it(cbh):
 def test_effective_chain_is_ordered(cbh):
     g, page_doc = cbh
     orders = [int(r["order"]) for r in _run("effective-chain.rq", g, _region(page_doc, REPAIRED))]
+    assert orders, "effective-chain returned no rows for the repaired region"
     assert orders == sorted(orders), f"not ordered: {orders}"
