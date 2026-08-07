@@ -258,8 +258,10 @@ pytest tests/test_corpus_stem.py tests/test_cbh_e2e.py tests/etkl/test_kind_gate
 → 46 passed in 301s
 ```
 
-Tasks 1–2 inert, the guard still pins the old behaviour (`looks_transposed is True` on both
-stem bands) because nothing is wired to the new evidence.
+The `tab:bodyStartsAt` plumbing and `looks-transposed.rq` are inert; `transpose-coherent.rq`
+is not (see the correction above). The guard still pins the old behaviour
+(`looks_transposed is True` on both stem bands) because nothing is wired to the new evidence,
+and no corpus band reaches the transposed path at all — which is why these 46 pass.
 
 ### §6 criteria, measured against the shipped state — most unmet
 
