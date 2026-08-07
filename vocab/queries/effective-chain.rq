@@ -1,0 +1,28 @@
+# effective-chain.rq — the LIVE chain of judgements for one region: the reading that was not
+# superseded. Section repair adopts a pass-2 re-read of a band and links the two verdict
+# decisions with dec:supersedes, so asking why-escalated.rq the obvious question about a
+# repaired region returns the SUPERSEDED reading. This query follows that edge.
+#
+# Correct for both cases, so a consumer never needs to know which one they are in: if a
+# superseding reading exists, its chain is returned; otherwise the region's own chain is.
+# The FILTER NOT EXISTS is a HOLON-SCOPED closed-world guard (query-local, scoped to this one
+# region, per CLAUDE.md §8) — it selects between two present readings, it never derives a
+# fact from absence.
+PREFIX dec: <https://w3id.org/iladub/dec#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?order ?judgement ?chosen ?rationale WHERE {
+  {
+    ?v1 dec:regarding ?region .
+    ?v2 dec:supersedes ?v1 ;
+        dec:regarding ?effective .
+  }
+  UNION
+  {
+    FILTER NOT EXISTS { ?s dec:supersedes ?v . ?v dec:regarding ?region }
+    BIND(?region AS ?effective)
+  }
+  ?d a dec:DecisionHolon ; dec:regarding ?effective ; dec:order ?order ;
+     rdfs:label ?judgement ; dec:rationale ?rationale .
+  OPTIONAL { ?d dec:chosen/rdfs:label ?chosen }
+}
+ORDER BY ?order
