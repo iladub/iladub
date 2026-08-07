@@ -1,0 +1,88 @@
+"""decisionlog — the reading, recorded as evidence (spec 2026-08-07).
+
+iladub records the LAST step of its reasoning (iladub:PromotionDecision) and discards the
+rest: the reading that precedes it returns a kind and a reason string, the alternatives are
+never named, and the moment a branch is taken the others cease to exist. This module gives
+that reading a record, using only the OWNED dec: vocabulary — whose differential half
+(dec:optionSpace / dec:chosen / dec:rejectedBecause) had no producer before this loop.
+
+Gate classification (CLAUDE.md §8): PROCEDURAL engine glue. It makes no domain decision — it
+records ones already made at the call site, and no judgement function is modified.
+
+MEMBRANE HAZARD (spec §3.1): a recorder must be given the DOCUMENT graph, never a region's
+scratch graph. Decisions in a graph that region_tiles validates is the R19 hazard again — a
+shape firing on something that is not what it thinks it is.
+"""
+from __future__ import annotations
+
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF, RDFS, XSD
+
+DEC = Namespace("https://w3id.org/iladub/dec#")
+
+
+class BandRecorder:
+    """Records the judgement sequence for one band. `dec:order` counts within the band."""
+
+    def __init__(self, graph: Graph, band_node: URIRef, region_uri: URIRef, prefix: str):
+        self._g = graph
+        self._band = band_node
+        self._regarding = region_uri
+        self._prefix = prefix
+        self._n = 0
+
+    def record(self, judgement: str, options, chosen, rationale: str,
+               rejected: dict | None = None, evidence=None) -> URIRef:
+        """One judgement. `options` are candidate names; `chosen` is one of them (or None
+        when the judgement admitted nothing); `rejected` maps a candidate name to the
+        observation that refuted it."""
+        g = self._g
+        d = URIRef(f"{self._prefix}-d{self._n}")
+        g.add((d, RDF.type, DEC.DecisionHolon))
+        g.add((d, RDFS.label, Literal(judgement)))
+        g.add((d, DEC.regarding, self._regarding))
+        g.add((d, DEC.partOf, self._band))
+        g.add((d, DEC.order, Literal(self._n, datatype=XSD.integer)))
+        g.add((d, DEC.rationale, Literal(rationale)))
+        rejected = rejected or {}
+        for name in options:
+            o = URIRef(f"{d}-opt-{_slug(name)}")
+            g.add((o, RDF.type, DEC.Option))
+            g.add((o, RDFS.label, Literal(str(name))))
+            g.add((d, DEC.optionSpace, o))
+            if str(name) == str(chosen):
+                g.add((d, DEC.chosen, o))
+            elif str(name) in rejected:
+                g.add((o, DEC.rejectedBecause, Literal(rejected[str(name)])))
+        for e in (evidence or ()):
+            g.add((d, DEC.consideredEvidence, e))
+        self._n += 1
+        return d
+
+
+class ReadingRecorder:
+    """One per page compile. Mints the page decision under the document, and a band decision
+    under the page, so dec:partOf carries document -> page -> band -> judgement."""
+
+    def __init__(self, graph: Graph, doc_uri: URIRef, page: int):
+        self._g = graph
+        self._doc = doc_uri
+        self._page = page
+        self._page_node = URIRef(f"{doc_uri}#p{page}-reading")
+        graph.add((self._page_node, RDF.type, DEC.DecisionHolon))
+        graph.add((self._page_node, RDFS.label, Literal(f"reading page {page}")))
+        graph.add((self._page_node, DEC.partOf, doc_uri))
+        graph.add((self._page_node, DEC.regarding, doc_uri))
+
+    def band(self, idx: int) -> BandRecorder:
+        prefix = f"{self._doc}#region{idx}"
+        band_node = URIRef(f"{prefix}-reading")
+        self._g.add((band_node, RDF.type, DEC.DecisionHolon))
+        self._g.add((band_node, RDFS.label, Literal(f"reading band {idx}")))
+        self._g.add((band_node, DEC.partOf, self._page_node))
+        self._g.add((band_node, DEC.regarding, URIRef(prefix)))
+        return BandRecorder(self._g, band_node, URIRef(prefix), prefix)
+
+
+def _slug(name) -> str:
+    return "".join(c if c.isalnum() else "_" for c in str(name))
