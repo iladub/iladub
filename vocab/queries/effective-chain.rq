@@ -8,6 +8,12 @@
 # The FILTER NOT EXISTS is a HOLON-SCOPED closed-world guard (query-local, scoped to this one
 # region, per CLAUDE.md §8) — it selects between two present readings, it never derives a
 # fact from absence.
+#
+# SINGLE-HOP ASSUMPTION: this query follows exactly one dec:supersedes edge (v1 -> v2), not a
+# chain of them. Safe today because document.py's section-repair (~L1215-1302) runs pass-2 at
+# most once per band per compile, so no region can accumulate a second supersession — but an
+# iterative-repair pipeline would need this query to walk the edge transitively, or a stale
+# middle link would be returned as "effective" silently.
 PREFIX dec: <https://w3id.org/iladub/dec#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?order ?judgement ?chosen ?rationale WHERE {

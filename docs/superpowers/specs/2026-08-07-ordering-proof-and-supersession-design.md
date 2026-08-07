@@ -1,6 +1,6 @@
 # Proving the ordering, and making supersession visible — design
 
-**Date:** 2026-08-07 · **Status:** approved (François, 2026-08-07) ·
+**Date:** 2026-08-07 · **Status:** closed 2026-08-07 ·
 **Closes:** R68 (narrowed) and R70 from `docs/superpowers/residues.md` ·
 **Predecessor:** `2026-08-07-reading-decision-record-design.md` (slice A, closed) ·
 **Specimens:** `tests/etkl/fixtures.py::false_transposed_pdf` /
@@ -173,3 +173,64 @@ That row keeps the corpus gap measurable and keeps the two `pytest.skip`s meanin
 - Tests run the committed `.rq` files; query logic is never reimplemented in Python.
 - `docs/superpowers/**` is Evidence and immutable after close, so this loop does **not** edit
   slice A's closed spec. Corrections land here and in `residues.md`, the mutable register.
+
+## 9. Measured results (loop close, 2026-08-07)
+
+**Corpus confirmation (controller-run):** `pytest tests/test_corpus_stem.py tests/test_cbh_e2e.py -q`
+→ **13 passed in 253s** (stem 0.9655 / 2152 cells / chain `[3]`; CBH 0.9047) — the exact figures
+§4.1's baseline expected, confirming §8's "no `src/` change, therefore no verdict change" by
+observation rather than inference. `git diff --stat` for `src/` and `*.ttl` across the whole branch
+is **empty**; the whole-branch diff touches only `tests/etkl/test_transposed_chain.py` (new),
+`tests/etkl/test_supersession_queries.py` (new), `vocab/queries/effective-chain.rq` (new),
+`vocab/queries/why-escalated.rq` (+11/-1 lines: the `?supersededBy` `OPTIONAL` and its header
+comment), plus this plan/spec pair.
+
+**R68 — the ordering, proven (`tests/etkl/test_transposed_chain.py`, 3 passed, no skip/xfail on
+the fixture tests — only environment `importorskip("reportlab")`/`importorskip("pdfplumber")`
+guards):**
+
+```
+--- false_transposed_pdf ---            --- transposed_table_pdf ---
+  2. transposed  chosen=transposed        2. transposed  chosen=transposed
+  3. transpose_coherent  chosen=incoherent 3. transpose_coherent  chosen=coherent
+  4. verdict  chosen=escalated TRANSPOSED  5. verdict  chosen=asserted
+```
+
+`order(transposed) < order(transpose_coherent)` holds on both branches of the coherence oracle.
+The tests were shown to be real gates during Task 1: one assertion was inverted, observed
+**FAILING**, then reverted.
+
+**R70 — closed (`tests/etkl/test_supersession_queries.py`, 5 tests, all passing on CBH with
+`repaired_bands=((0,1),(0,3),(0,5),(0,7))`):** region 1 (repaired) — `why-escalated.rq` binds
+`?supersededBy` on every row and its verdict row still reads `escalated` (the pass-1 chain, as
+recorded); `effective-chain.rq` returns the pass-2 chain, verdict `asserted`. Region 0
+(unrepaired control) — `?supersededBy` is unbound on every row, and `effective-chain.rq` returns
+exactly what `why-escalated.rq` returns. Slice A's `tests/etkl/test_decision_queries.py` shows an
+**empty `git diff` against `main`** — unmodified, and still passing.
+
+### Criterion-by-criterion pass over §5
+
+1. *"The R55 ordering is asserted live on both fixtures, both oracle branches, by tests that run
+   the committed `.rq` files. No `xfail`, no guard, no skip on the fixture tests."* — **MET.**
+   `test_transposed_chain.py` reads `judgement-order.rq`/`why-escalated.rq` from disk (verified by
+   reading the test file), runs both fixtures and both branches, 3/3 passing, no
+   `skip`/`xfail`/guard on any assertion in the file.
+2. *"`why-escalated.rq` binds `?supersededBy` on every row of a superseded chain and leaves it
+   unbound otherwise; slice A's existing query tests pass unmodified."* — **MET.**
+   `test_a_superseded_chain_says_so_on_every_row` and `test_an_unsuperseded_chain_carries_no_marker`
+   cover both halves; `git diff --stat main -- tests/etkl/test_decision_queries.py` is empty and
+   the file still passes.
+3. *"`effective-chain.rq` returns the pass-2 chain for a repaired region and the region's own
+   chain for an unrepaired one."* — **MET.** `test_effective_chain_returns_the_live_reading_after_repair`
+   and `test_effective_chain_equals_why_escalated_when_nothing_superseded_it` cover both cases; the
+   control (§4.3's point) is present and passing.
+4. *"No `src/` file changes. This is checked by reading the diff, not inferred."* — **MET.**
+   `git diff --stat main -- src/ '*.ttl'` is empty; the full `git diff --stat main..HEAD` lists only
+   docs, tests, and the two `.rq` files.
+5. *"Corpus scores untouched — guaranteed by construction, and confirmed by one stem+CBH run."* —
+   **MET.** See the controller-run figures above, matching the pre-loop baseline exactly.
+6. *"R68's row is replaced by the narrower residue in §6; R70's row is deleted."* — **MET.**
+   `docs/superpowers/residues.md` R68 now reads the §6 text (with the overstatement correction
+   named in-row); the R70 row no longer exists in the table, and no other row was renumbered.
+
+All six criteria met; none required softening.
