@@ -75,20 +75,36 @@ algorithm. Two documents may resolve the same constraints in opposite orders and
 
 ### 2.1 Non-textual evidence is privileged — start there whenever it exists
 
-Signals fire concurrently, but they are not equally trustworthy, and the ranking follows from the
-authoring order: **compute → pivot → subtotal → band → border**. Decoration is applied *last*, once
-the author already knows the structure, and it is applied *deliberately to make that structure
-legible*.
+Signals fire concurrently, but they are not equally trustworthy, and the ranking is not a matter of
+taste. **Decoration is posterior to reshape by necessity, not by convention.**
 
-Two consequences:
+The authoring order is **compute → reshape → decorate → render**, and the middle arrow is
+one-directional for a structural reason:
 
-- **Rules and fills carry structure and nothing else.** A word is content, and its position is
-  structure — the two are entangled and every inference from text must disentangle them. A rule
-  carries no content at all. It is pure structural annotation, so its signal-to-noise for structure
-  is the highest on the page.
-- **It is the author's own statement of the answer.** apple's header tree is recoverable from rule
-  spans because the author drew exactly the tree they wanted read. We are not inferring their
-  intent; we are reading the annotation they added for that purpose.
+- **Pivoting changes the table's dimensions.** Rotating a dimension into the header axis changes
+  how many columns exist and how many rows remain. You cannot draw a rule across columns 1–2, or
+  band alternate rows, before the reshape has fixed how many columns and rows there are.
+- **This holds even with no transformation at all.** A flat table with no pivot, no grouping and no
+  subtotals must still *exist* before it can be banded. Decoration always describes a table that is
+  already final.
+
+The consequence is stronger than “decoration is a good hint”:
+
+- **Decoration geometry is a measurement of the post-reshape shape, not an interpretation of it.**
+  A rule spanning two leaf columns exists because, at decoration time, there were two columns to
+  span. The zebra's row count is the post-reshape row count. These are observations of the finished
+  dimensions, taken from ink the author laid onto those exact dimensions.
+- **It is dimensionally faithful by construction.** An author can mislabel a column, round a figure,
+  or write a misleading caption — text can be wrong about the table. A span cannot be wrong about
+  how many columns it crossed. Decoration is the one layer that cannot lie about shape.
+- **It carries structure and nothing else.** A word is content *and* its position is structure; the
+  two are entangled, and every inference from text must disentangle them first. A rule carries no
+  content at all.
+
+And it is exactly the shape we need. Inversion runs *from* the post-reshape table *to* the base —
+so the decoration hands us, by direct measurement, the very object the inverse operations take as
+their input. apple's header tree is recoverable from rule spans because the author drew the tree
+onto the finished grid; we are not inferring intent, we are reading the dimensions.
 
 So the solver **seeds from non-textual evidence wherever it exists**, and falls back to alignment,
 typography and datatype only for what the decoration does not settle. This is the inverse of the
