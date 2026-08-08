@@ -272,3 +272,78 @@ tie-break, they are the discriminator.**
 - **The prior-art citations in §2 are unverified.** They must be checked before publication.
 - **Nothing here has been implemented or scored.** This is a definition document; the claim
   that these axioms *identify* the grid on the corpus is untested and must not be assumed.
+
+---
+
+## 8. The fundamental, and the first measured rectangles (2026-08-08)
+
+François: *"How to detect something which is not defined? Let's start with the fundamentals —
+we have more than enough failures to understand what these fundamentals must be."*
+
+The failures were all the same failure: **detectors for an undefined object**. Columns derived
+from un-isolated ink; rows derived from types alone; frequency mistaken for data-ness;
+indentation mistaken for hierarchy. Each derived ONE axis in isolation.
+
+### 8.1 The definition
+
+> **A data grid is a maximal rectangle whose rows and columns are admitted together.**
+> Columns are admitted because the rows agree on their type; rows are admitted because the
+> columns agree on their shape. Neither axis is derived first, and the pair is admitted
+> together or not at all.
+
+This is a closure condition, and it dissolves the circularity that blocked every prior attempt.
+It is now vocabulary: `vocab/ontology/tab-datagrid.ttl` (`tab:DataGrid`, the typology
+`tab:UniformGrid` / `tab:MixedGrid` / `tab:AggregatingGrid` / `tab:StackedGrids`, the axioms
+G1–G7 and refutations R1–R5 as first-class `tab:GridAxiom` / `tab:GridRefutation` individuals,
+so a grid cites what it conformed to and a rejected candidate cites what killed it).
+
+**Candidate generation becomes free**, which removes the tuned profile at the root: rows sharing
+a structural signature necessarily share a run count, so their positional slots *are* the
+candidate columns. No gutter percentage, no minimum bin count, no sample target.
+
+**The typology is data-intrinsic** — decided from the grid alone, never from a header:
+uniform vs mixed by counting distinct column families; aggregating by *exact arithmetic* rather
+than indentation (measured: indentation is INVERTED for aggregates); stacked by two grids
+sharing a column extent.
+
+### 8.2 Derivation, in two phases
+
+1. **Data rows** = rows whose structural signature recurs (≥2) and carries a non-`Text` family.
+2. **Columns** = x-overlap classes of runs over *those rows only*.
+
+Phase 2 is safe precisely because phase 1 removed the metadata — the measured cause of the
+earlier collapse (§6.1), where one wide title or cut-in heading bridged every column and
+reduced apple p0 and bfs p6 to a single column each.
+
+### 8.3 Result: a rectangle for every document
+
+```
+page        data rows / lines   columns   rectangle x           y
+apple p0        29 / 44            9       52.6- 562.3    143.2- 744.9
+apple p1        25 / 43            5       70.6- 562.3    153.0- 724.5
+apple p2        14 / 41            5       52.6- 562.1    137.4- 702.2
+stem  p0        32 / 65           15       96.4- 829.6    101.3- 437.1
+capacity p0     23 / 32           15      128.5- 811.6    134.6- 406.1
+cbh   p0        49 / 85           19       50.0-1135.0    120.7- 721.7
+who   p0        25 / 30           12       84.6- 780.3    134.2- 465.3
+bfs   p6        32 / 43            9       72.6- 522.2    136.4- 480.8
+ons   p7        46 / 68            7       55.3- 505.4    155.7- 580.6
+```
+
+Metadata excluded, without ever being looked for — every title, caption and header line, plus
+cbh's section key `GERALDTON` and its berth notices, and WHO's `Z-scores (weight in kg)` and
+`Year: Month Month L M S …`. They are residue by construction.
+
+### 8.4 What is NOT yet right — measured, not smoothed
+
+- **Row recall is incomplete.** A data row whose signature is unique is dropped: apple p2 admits
+  14 of ~34 (parenthesised-negative rows each tokenise uniquely) and capacity p0 drops
+  `2025/26 August 2nd Half 0 N 10,000 Y …`. Recall must come from the columns re-admitting rows
+  that fit them — the second half of the mutual definition, not yet implemented.
+- **G1 is not yet enforced per column.** stem and cbh have columns reading `['Quantity','Text']`
+  and `['Date','Text']`. The rectangle's extent is right; its column homogeneity is not proven.
+- **cbh's rectangle spans a stacked panel** (y to 721.7 includes `Stock at Port`), which
+  `tab:StackedGrids` should separate and does not yet.
+- **The axioms are declared in the ontology but not yet executable** — no `.rq`, no SHACL, no
+  worked example, no negative test. Nothing here is wired into `compile_tables`, and no corpus
+  score has moved.

@@ -1,0 +1,200 @@
+@prefix tab:     <https://w3id.org/iladub/tab#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/tab-datagrid> a owl:Ontology ;
+    dcterms:title "tab-datagrid — the data grid, defined before it is detected"@en ;
+    dcterms:description """The DATA of a table, defined as a first-class object, prior to and
+independent of any metadata. Wang's distinction is the whole architecture: ENTRIES are data,
+CATEGORIES (boxhead, stub, spanners, captions, notes) are metadata — data about data. This
+module defines the entries only. Nothing here refers to a header, a stub, an indentation, or
+any drawn decoration: a data grid must be identifiable without them, or the reading is
+circular."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-08"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/iladub/tab> ;
+    vann:preferredNamespacePrefix "tab" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
+
+#################################################################
+#  1. The data grid — a MAXIMAL MUTUAL RECTANGLE
+#################################################################
+#
+#  The fundamental, and the correction to every failed detector that preceded it:
+#  a data rectangle is defined by MUTUAL agreement between its rows and its columns,
+#  never by either alone. Neither axis is derived first.
+#
+#      columns are admitted because the rows agree on their type,
+#      rows are admitted because the columns agree on their shape,
+#      and the pair is admitted together, or not at all.
+#
+#  This is a closure condition (a maximal rectangle of a relation — the formal-concept
+#  shape), and it is what makes the object DEFINABLE rather than merely detectable.
+#
+#  Measured reasons this form is required, each a recorded failure of a one-axis detector:
+#    (a) columns derived from all page ink COLLAPSE — one wide metadata run (a title, a
+#        cut-in heading, a wrapped label) overlaps every data column and bridges them:
+#        apple p0 and bfs p6 each yielded ONE column for the whole page;
+#    (b) rows derived from datatype alone OVER-COLLECT — a data row whose value types are
+#        unique (parenthesised negatives; a split number) is indistinguishable from a
+#        header row by type evidence;
+#    (c) rows derived by FREQUENCY pick the wrong structure — wrapped continuation
+#        fragments are the most numerous line shape on a real document, not the data.
+
+tab:DataGrid a owl:Class ; rdfs:label "Data grid"@en ;
+    rdfs:comment """The DATA of a table: a maximal rectangle of entry cells over a set of rows
+and a set of columns, admitted together. Wang's entries; the statistical 'field'. Everything a
+table contains that is NOT in some data grid is metadata, by definition and by construction.
+
+A data grid is an ASSERTED object with identity and provenance — never transient evidence. It
+carries the record of its own admission (tab:conformsTo, tab:admittedBy), so the question
+'why is this the data grid?' is answerable from the graph alone."""@en .
+
+tab:hasDataCell a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:EntryCell ;
+    rdfs:label "has data cell"@en ;
+    rdfs:comment "An entry belonging to this grid. The grid is the set of these; nothing else."@en .
+
+tab:hasGridColumn a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "has grid column"@en ;
+    rdfs:comment "A column admitted to this grid. Admission is mutual with the rows (§1)."@en .
+
+tab:hasGridRow a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "has grid row"@en ;
+    rdfs:comment "A row admitted to this grid. Admission is mutual with the columns (§1)."@en .
+
+tab:columnFamily a owl:ObjectProperty ; rdfs:range tab:CellDatatypeFamily ;
+    rdfs:label "column family"@en ;
+    rdfs:comment """The single datatype family this grid column agreed on, after abstaining
+datatypes (tab:datatypeAbstains) are dropped. Its EXISTENCE is the column's warrant for
+admission: a column with no single family is not a data column."""@en .
+
+#################################################################
+#  2. The typology — data-intrinsic, no metadata consulted
+#################################################################
+#
+#  Type is a property of the DATA's own addressing, so it is decided from the grid and
+#  nothing else. A header is never consulted: on these definitions it cannot be, because
+#  the header is not yet known when the type is decided.
+#
+#  These are PROPERTIES, not a partition. A grid may be several at once — apple page 0 is
+#  aggregating AND stacked — so they are asserted independently and may co-occur.
+
+tab:UniformGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Uniform grid"@en ;
+    rdfs:comment """Every admitted column shares ONE datatype family: the grid carries a single
+measure, so both axes must be categories. The data-intrinsic signature of a matrix /
+cross-tabulation. Decided by counting distinct tab:columnFamily values — one, or more."""@en .
+
+tab:MixedGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Mixed grid"@en ;
+    rdfs:comment """Admitted columns carry DIFFERENT datatype families: each column is a distinct
+attribute, so only one axis is a category and the rows are records. The data-intrinsic
+signature of a record / list table."""@en .
+
+tab:AggregatingGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Aggregating grid"@en ;
+    rdfs:comment """Contains at least one row whose entries reconcile EXACTLY with the entries of
+a subset of its other rows. The row axis therefore carries a hierarchy — a fact about the DATA,
+established by exact arithmetic, not by reading indentation.
+
+This is deliberate: indentation was measured to be an unreliable and INVERTED signal (an
+aggregate sits DEEPER than its own members — 'Total current assets' at x=88.6 above members at
+x=70.6), whereas the arithmetic is decidable. Reuses the shipped exact-Decimal detection."""@en .
+
+tab:StackedGrids a owl:Class ; rdfs:label "Stacked grids"@en ;
+    rdfs:comment """Two or more data grids on one page whose admitted column extents are
+identical. Purely data-defined: no separator, caption or footnote mark is consulted, because
+those are metadata and are not yet known. The panels of a stack are read as distinct grids that
+happen to share an addressing."""@en .
+
+tab:inStack a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:StackedGrids ;
+    rdfs:label "in stack"@en .
+
+#################################################################
+#  3. The axioms — named, so a grid can cite the ones it satisfied
+#################################################################
+#
+#  "I found the data grid because it conforms to this, this and this, and refuted this,
+#  this and this — so there is no doubt that the data grid is this."
+#
+#  Both halves are first-class. A grid cites the conformance axioms it satisfied; a REJECTED
+#  candidate cites the refutation axiom that killed it. Neither is a log message: both are
+#  triples, queryable, and carried in the decision holon.
+
+tab:GridAxiom a owl:Class ; rdfs:label "Grid axiom"@en ;
+    rdfs:comment "A named condition a data-grid candidate must satisfy to be admitted."@en .
+
+tab:GridRefutation a owl:Class ; rdfs:label "Grid refutation"@en ;
+    rdfs:comment "A named condition that DISQUALIFIES a data-grid candidate."@en .
+
+tab:conformsTo a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:GridAxiom ;
+    rdfs:label "conforms to"@en ;
+    rdfs:comment "This grid was tested against, and satisfied, this axiom. Absence is not conformance."@en .
+
+tab:refutedBy a owl:ObjectProperty ; rdfs:range tab:GridRefutation ;
+    rdfs:label "refuted by"@en ;
+    rdfs:comment "This candidate grid was rejected because it tripped this refutation."@en .
+
+tab:admittedBy a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "admitted by"@en ;
+    rdfs:comment """The decision that admitted this grid (a dec:DecisionHolon; named in prose
+rather than by rdfs:range so this module stays standalone). Its optionSpace is the candidate
+grids, its chosen is this one, and each loser carries tab:refutedBy."""@en .
+
+# --- conformance axioms ---------------------------------------------------------
+
+tab:ColumnHomogeneity a tab:GridAxiom ; rdfs:label "G1 column homogeneity"@en ;
+    rdfs:comment """Every admitted column has exactly one tab:columnFamily over the admitted
+rows, after abstaining datatypes are dropped, and that family is not tab:Text. A column that
+cannot agree on a family is not carrying data."""@en .
+
+tab:RowCompleteness a tab:GridAxiom ; rdfs:label "G2 row completeness"@en ;
+    rdfs:comment """Every admitted row has, in every admitted column, either an entry or a
+declared blank (tab:Blank). A row that simply stops is not a row of this rectangle."""@en .
+
+tab:Rectangularity a tab:GridAxiom ; rdfs:label "G3 rectangularity"@en ;
+    rdfs:comment "The admitted rows x the admitted columns are fully populated. SPATIAL."@en .
+
+tab:ColumnAlignment a tab:GridAxiom ; rdfs:label "G4 column alignment"@en ;
+    rdfs:comment """Every entry lies within its column's x-interval and straddles no boundary.
+SPATIAL, and a presence test: ink is inside the interval or it is not."""@en .
+
+tab:Maximality a tab:GridAxiom ; rdfs:label "G5 maximality"@en ;
+    rdfs:comment """No further row can be admitted without breaking G1, and no further column
+without breaking G1 or G4. This is the CLOSURE that makes the rectangle an object rather than
+an arbitrary sub-block, and it is what makes rows and columns mutually defining."""@en .
+
+tab:Conservation a tab:GridAxiom ; rdfs:label "G6 conservation"@en ;
+    rdfs:comment "No ink inside the grid's bounding box is unaccounted for. SPATIAL."@en .
+
+tab:ArithmeticCoherence a tab:GridAxiom ; rdfs:label "G7 arithmetic coherence"@en ;
+    rdfs:comment "Where aggregate rows exist, they reconcile exactly with the rows they cover."@en .
+
+# --- refutations ----------------------------------------------------------------
+
+tab:HeterogeneousColumn a tab:GridRefutation ; rdfs:label "R1 heterogeneous column"@en ;
+    rdfs:comment "A candidate column carries more than one datatype family over non-abstaining cells."@en .
+
+tab:FullWidthInterruption a tab:GridRefutation ; rdfs:label "R2 full-width interruption"@en ;
+    rdfs:comment """A candidate row spans the rectangle end to end as a single run. It occupies no
+column and is therefore not an entry row — it is metadata lying INSIDE the row extent (a cut-in
+heading). SPATIAL."""@en .
+
+tab:StraddlingEntry a tab:GridRefutation ; rdfs:label "R3 straddling entry"@en ;
+    rdfs:comment "An entry crosses a column boundary, so the column set is wrong. SPATIAL."@en .
+
+tab:NotMaximal a tab:GridRefutation ; rdfs:label "R4 not maximal"@en ;
+    rdfs:comment "The candidate is strictly contained in another candidate that also conforms."@en .
+
+tab:ArithmeticContradiction a tab:GridRefutation ; rdfs:label "R5 arithmetic contradiction"@en ;
+    rdfs:comment "A row presents as an aggregate of rows it does not sum to."@en .
