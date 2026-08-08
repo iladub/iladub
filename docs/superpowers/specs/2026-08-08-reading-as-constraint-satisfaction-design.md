@@ -73,7 +73,34 @@ iterate until one assignment satisfies every constraint  → the reading
 The order in which judgements resolve is a **trace**, recorded in the decision holon — not the
 algorithm. Two documents may resolve the same constraints in opposite orders and both be right.
 
-### 2.1 Spatial agency is relative to the table, never to the page
+### 2.1 Non-textual evidence is privileged — start there whenever it exists
+
+Signals fire concurrently, but they are not equally trustworthy, and the ranking follows from the
+authoring order: **compute → pivot → subtotal → band → border**. Decoration is applied *last*, once
+the author already knows the structure, and it is applied *deliberately to make that structure
+legible*.
+
+Two consequences:
+
+- **Rules and fills carry structure and nothing else.** A word is content, and its position is
+  structure — the two are entangled and every inference from text must disentangle them. A rule
+  carries no content at all. It is pure structural annotation, so its signal-to-noise for structure
+  is the highest on the page.
+- **It is the author's own statement of the answer.** apple's header tree is recoverable from rule
+  spans because the author drew exactly the tree they wanted read. We are not inferring their
+  intent; we are reading the annotation they added for that purpose.
+
+So the solver **seeds from non-textual evidence wherever it exists**, and falls back to alignment,
+typography and datatype only for what the decoration does not settle. This is the inverse of the
+authoring order, and it is why the reading protocol in §1 begins with the zebra and the rules
+rather than with the words.
+
+**When it does not exist**, the fallback is not optional: two corpus documents (`bfs`, `ons`) draw
+no rules and no fills at all. There, alignment and typography carry the whole load, and the solver
+must reach the same constraint set by a different route — or escalate naming the constraint it
+could not satisfy. See P6.
+
+### 2.2 Spatial agency is relative to the table, never to the page
 
 Signals are read against the table object's own extent — its top, bottom, left, right, centre — not
 against page coordinates. A rule "about one column wide, above the data zone" is a header underline
@@ -100,7 +127,10 @@ is using the machinery we have as a solver rather than as a series of gates.**
 ## 4. First slice
 
 Read the header tree from rule spans, and the data zone from banding, on apple page 0 — the
-smallest complete instance of the architecture.
+smallest complete instance of the architecture, and the one that exercises §2.1's privileged
+evidence directly. **All four sensors below read non-textual ink only**; not one of them looks at a
+word. That is the point: if the decoration alone yields the header tree, the text never had to be
+disentangled.
 
 1. **Data-zone sensor.** The banded run bounds the data; ink above it is header structure. Emits
    `tab:dataZoneStartsAt`.
