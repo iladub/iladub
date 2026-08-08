@@ -639,3 +639,60 @@ def test_adoption_never_touches_a_page_that_read_something():
     assert off.asserted > 0
     assert on.score == off.score
     assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 20
+
+
+# --- the fifth oracle: cbh, a DECORATION-universe page with two tables --------------
+# cbh-stem-2026-08-03.pdf page 0, transcribed (85 lines). Chosen because it is the only
+# corpus page whose columns come from the DECORATION universe rather than alignment, so
+# the drawn-rule path had no oracle at all until now.
+#
+# The page carries TWO tables:
+#   A  the ship roster — four port panels, each with a 3-line header and vessel rows
+#   B  a stock-at-port table (lines 75-80) with its own header and its own columns
+#
+# ENTRY ROWS of table A are the 45 vessel rows, PLUS the four per-panel volume totals
+# (20, 42, 63, 74) — an aggregate is a row of the grid, the convention used for apple.
+CBH_P0_VESSEL_ROWS = set(range(10, 20)) | set(range(26, 42)) | set(range(49, 63)) | set(range(69, 74))
+CBH_P0_PANEL_TOTALS = {20, 42, 63, 74}
+CBH_P0_TABLE_B = {75, 76, 77, 78, 79, 80}
+CBH_P0_DATA = CBH_P0_VESSEL_ROWS | CBH_P0_PANEL_TOTALS          # 49 rows
+CBH_P0_METADATA = set(range(85)) - CBH_P0_DATA - CBH_P0_TABLE_B  # 30 lines
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_cbh_p0_reads_all_four_panels_as_one_grid():
+    """The four panels are read as ONE grid — every vessel row across all four, from a
+    single page-wide decoration universe. This is the shipped answer to 'one grid or
+    four', and it needed no rejoin operation and no knowledge that the annotations name
+    ports."""
+    g = derive_data_grid(CBH, 0)
+    assert g is not None and g.universe == "decoration"
+    admitted = set(g.rows)
+    missed = sorted(CBH_P0_VESSEL_ROWS - admitted)
+    assert not missed, f"vessel rows missed: {missed}"
+    assert len(CBH_P0_VESSEL_ROWS) == 45
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_cbh_p0_admits_no_metadata():
+    """SOUNDNESS: no title, notice, port annotation or reprinted header may enter."""
+    g = derive_data_grid(CBH, 0)
+    leaked = sorted(set(g.rows) & CBH_P0_METADATA)
+    assert not leaked, f"metadata admitted as data: {leaked}"
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_cbh_p0_known_defects_are_pinned_not_hidden():
+    """Two measured defects, pinned so they cannot drift silently.
+
+    LEAK: line 75 belongs to the SECOND table on the page (stock at port) and is
+    admitted into the roster's grid. Recorded in the data-grid spec §8.4 as
+    'cbh's rectangle spans a stacked panel'; tab:StackedGrids is defined and not derived.
+
+    MISS: the four per-panel volume totals carry a measure but no key, so
+    tab:RowAddressability refuses them. They are aggregate rows of the grid and their
+    absence is a real gap, not a correct refusal."""
+    g = derive_data_grid(CBH, 0)
+    admitted = set(g.rows)
+    assert admitted & CBH_P0_TABLE_B == {75}, "the table-B leak changed"
+    assert not (admitted & CBH_P0_PANEL_TOTALS), "panel totals are expected to be missed"
