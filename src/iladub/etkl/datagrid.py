@@ -383,13 +383,13 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         # contradicts one and a placeholder row two, so the quantifier separates them
         # without counting anything.
         #
-        # Over TWO OR MORE measure columns only: over a single one the quantifier is
-        # vacuous and degenerates into the per-column refusal it replaces, which cost
-        # cbh 9 rows, ons 4 and bfs 2 — each a sparse row occupying one measure cell
-        # that happens to disagree. Two is the minimum at which "every" asserts
-        # anything, the same minimal-presence rule a lattice level uses.
+        # Over EVERY occupied measure column, however few. A ">= 2" carve-out was tried
+        # and REVERTED: it was justified by row counts on pages that had no oracle, and
+        # when ons was transcribed those extra rows turned out to BE the leaks — its
+        # title and two footnotes each occupy exactly one measure column and contradict
+        # it. Row counts on unverified pages are not evidence.
         occupied = measures & set(h)
-        if len(occupied) >= 2 and all(
+        if occupied and all(
                 not is_blank(h[k]) and columns[k].family
                 and columns[k].family not in _ABSTAIN
                 and family_of(h[k]) not in _ABSTAIN

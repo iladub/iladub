@@ -249,6 +249,47 @@ def test_stem_p0_recall_against_the_transcription():
         f"recall regressed: {len(recovered)}/{len(STEM_P0_DATA)}")
 
 
+# --- the third oracle: a different document class (time-series panels) -------------
+ONS = os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")
+ons_only = pytest.mark.skipif(not os.path.exists(ONS), reason="corpus not fetched")
+
+# ons-index-of-services page 7, transcribed (68 lines). METADATA is the title, the
+# five-line wrapped boxhead, the section captions, the series-code rows, and the
+# footnote block. The weights row (8) is data: it is a row of values.
+ONS_P7_METADATA = {
+    0,                       # IOS1 IOS: Index of Services 1            title
+    1, 2,                    # subtitle / 'Industry sections (SIC2007)'
+    3, 4, 5, 6, 7,           # the five-line wrapped boxhead + 'Section G-T ...'
+    9, 37, 44,               # series-code rows (S2KU S2MV KI7B ...)
+    15, 36, 43,              # panel captions
+    60, 61, 62, 63, 64, 65,  # footnotes 1-4
+    66, 67,                  # sources / contact block
+}
+ONS_P7_LINES = 68
+ONS_P7_DATA = set(range(ONS_P7_LINES)) - ONS_P7_METADATA   # 46 rows
+
+
+@ons_only
+def test_ons_p7_admits_no_metadata():
+    """This transcription found three REAL leaks on a page previously reported as fine:
+    the title and both footnote lines, each occupying exactly one measure column and
+    contradicting it. They were admitted by a ">= 2 measure columns" carve-out that had
+    been justified by row counts on pages with no oracle."""
+    g = derive_data_grid(ONS, 7)
+    assert g is not None
+    leaked = sorted(set(g.rows) & ONS_P7_METADATA)
+    assert not leaked, f"metadata admitted as data: lines {leaked}"
+
+
+@ons_only
+def test_ons_p7_recall_against_the_transcription():
+    """Floor. The gap to 46 is the year-prefixed rows ('2024 Q4 ...'), where a two-level
+    index puts two runs in one column — the index block is not yet an addressing axis."""
+    g = derive_data_grid(ONS, 7)
+    recovered = set(g.rows) & ONS_P7_DATA
+    assert len(recovered) >= 38, f"recall regressed: {len(recovered)}/{len(ONS_P7_DATA)}"
+
+
 CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")
 
 

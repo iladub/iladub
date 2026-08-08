@@ -894,3 +894,50 @@ block modelled as an addressing axis (G8/G9 wired), not a relaxation of the mini
 prediction would have produced a placeholder detector — and a first attempt at one (tokens
 recurring across columns of differing families) was measured and rejected, because it flags
 `Woodchip`, `Cement` and `Accepted`, which are genuine values, alongside `N/A`.
+
+### 8.15 A third oracle finds real leaks — and indicts a choice made on row counts
+
+ons page 7 transcribed (68 lines: 22 metadata — title, five-line wrapped boxhead, panel
+captions, series-code rows, footnote block — and 46 data rows). Chosen because it was the
+largest unexamined refusal set and a different document class from apple and stem.
+
+**It found three genuine soundness defects on a page previously reported as fine:**
+
+```
+ 0 :: IOS1 IOS: Index of Services 1                            TITLE, admitted as data
+66 :: 5 A complete run of data is available on the ONS website  FOOTNOTE, admitted
+67 :: Time series dataset 01633 456387; fax 01633 455300 ...    FOOTNOTE, admitted
+```
+
+Each occupies **exactly one** measure column and contradicts it — and each was let through by
+the `>= 2 measure columns` carve-out on the every-measure refutation.
+
+**That carve-out was justified by row counts on pages that had no oracle.** I added it because
+applying the quantifier over any non-empty set cost cbh 9 rows, ons 4 and bfs 2, and I read
+those as regressions. On ons the "recovered" rows were the leaks themselves. Reverted: the
+refutation now applies over every occupied measure column, however few.
+
+**Row counts on unverified pages are not evidence.** That is the second time the same mistake
+has been caught by a transcription — the first was cbh's reprinted headers — and it is now
+pinned by a mutation: restoring the carve-out fails `test_ons_p7_admits_no_metadata`.
+
+```
+page        rows/lines   oracle
+apple p0     31 / 44     31/31 recall, 0 leaked
+stem  p0     53 / 65     53/57 recall, 0 leaked
+ons   p7     38 / 68     38/46 recall, 0 leaked
+apple p1/p2  28 / 43, 29 / 41
+capacity     27 / 32     cbh 46/85    who 25/30    bfs 32/43
+
+3 oracles, 0 leaks.  Suite 32 passed.
+```
+
+**The honest cost:** bfs fell 33 → 32. Whether that row is data or metadata is **unknown** —
+bfs has no oracle, and by the rule just stated I must not claim the change was free.
+
+**ons's 8 remaining misses are one named class:** every year-prefixed row (`2024 Q4 …`,
+`2025 Jan …`, `2026 Jan …`). ons has a **two-level index** (year, then quarter or month), and
+both runs land in the single key column, so the row is refused for placing two runs in one
+column. This is the same structure as the stem's month/season totals: the index block needs to
+be an addressing axis with levels, not one key column. G8/G9 are defined and unwired; that is
+now the blocking item for two of the three oracles.
