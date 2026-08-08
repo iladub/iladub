@@ -1,6 +1,6 @@
 # The concurrent sensor bank — design
 
-**Date:** 2026-08-08 · **Status:** draft, pending adversarial review ·
+**Date:** 2026-08-08 · **Status:** **BLOCKED at adversarial review, 2026-08-08** — see §11 ·
 **Specimen:** `corpus/financial/apple-fy2026q3-statements.pdf` pages 0–2 ·
 **Succeeds:** `2026-08-08-reading-as-constraint-satisfaction-design.md` — its architecture
 (§2, §2.1, §2.2, §3) stands unchanged; its §1.1 transcription and its §4 first slice are
@@ -329,3 +329,117 @@ P8 and P9 are the two the loop must close. **P9 is the one to attack**: stem is 
 - **The decision holon records the trace** — which sensors fired, which proposals were pruned,
   by which constraint, and in what order. The order is evidence, not method.
 - **Source ownership.** `tab:` is ours; no HGA term appears as a subject.
+
+---
+
+## 11. Adversarial review — BLOCKED (2026-08-08)
+
+The review's job was to attack the premises before any plan was written. It did.
+Three findings were independently re-measured by the controller and stand.
+
+### 11.1 CRITICAL — P5 is refuted; the §3.3 locator fires on WHO
+
+The claim *"the header-rule signature fires on apple 0/1/2 and **zero** of the other fourteen
+gate-kept pages"* is false. It was produced by a design-time probe that filtered on
+"drawn twice within 1.5pt with an identical segment list" — **two magnitude constants that
+never reached §3.3's stated definition.** Under the definition as written, the signature
+fires on **6 of 17** pages:
+
+```
+===== who p0: maximal single-seg span=729.72; topmost such rule y=101.22
+  multi-segment rules ABOVE it: 5  -> SIGNATURE FIRES = True
+     y=  89.22 segs=[(675.71, 687.77), (689.87, 701.99)]
+  => LEAF rule (lowest multi-seg above) y=89.22
+  real body x-extent: 63.11 .. 780.29
+```
+
+The sensor proposes a **26pt-wide, two-column grid** — WHO emblem strokes in the top-right
+corner — for a table 717pt wide. And by §4 that is a *decoration-derived* proposal, which
+**outranks** the text-edge sensor's correct one.
+
+WHO currently scores 0.5597 and escalates 3× `MATRIX_AMBIGUOUS` (R45). This sensor could
+convert an honest escalation into a **wrong assertion** — strictly worse than the status quo
+and a direct §7 violation. **P9 was "ARGUED from P5"; with P5 refuted, P9 has no support.**
+
+Root cause: the ordinal *"above the topmost maximal-span row separator"* is not
+document-general. On apple that rule is the first zebra edge, with the header above it; on
+WHO it is the table's **box top**, with the header *inside*. WHO's real header rules sit at
+y=101.94 (5 leaf segments) and y=102.78 (one parent span 332.1–780.3) — **below** the
+locator, so the sensor simultaneously proposes garbage and misses the real tree.
+
+### 11.2 CRITICAL — §3.3's "none a magnitude test" is false, and §7's output is unreachable
+
+- *"Row separators are the single-segment rules of maximal span (50.0–563.1 on p0)"* — that
+  rule is **9 raw segments**, not one. A running-max abutment merge is load-bearing at step
+  one and is not stated. (A naive pairwise merge fails: the nested segment `(52.6, 300.04)`
+  fabricates a 2.64pt gap.)
+- Under the stated parent test, apple p0 yields **4 parent nodes, not the 2 §7 requires** —
+  every rule is drawn twice. Collapsing them needs the same undisclosed Δy ≤ 1.5pt constant.
+- **A constant-free fix exists** and should be adopted: the doubling is an artifact of
+  `extract_hrules` reading `page.lines + page.edges`, which reports the top and bottom edge of
+  each filled rect separately. Reading `page.rects` gives one object per drawn mark, and under
+  a tol=0 abutment merge apple p0's parent rect collapses to exactly `(302.68, 431.08)` and
+  `(434.68, 563.08)` — two spans, no constant. It does **not** rescue §11.1.
+
+### 11.3 HIGH — §4's "proposal versus silence" collapses on its only worked example
+
+Re-measured on apple p2:
+
+```
+color=(1.0,1.0,1.0):  152 rects, y 162.12..689.40      <- white stripes painted EXPLICITLY
+color=(0.937,...):    162 rects, y 148.92..703.56
+rects covering the first data row (y~137.4-151): 0
+```
+
+The zebra is three-valued — GREY / WHITE / NO-FILL — so NO-FILL is a **positive proposal of
+exclusion**, not an absence of opinion. §2.1 already treats the zebra's extent as a boundary
+proposal when refuting it, then §4 calls the same fact a silence. Decoration and text
+therefore **disagree** on that row, with decoration outranking — and under §4 the correct row
+would be discarded. §5's "no document demands a NEURAL disposal yet" is false: the specimen
+demands one today.
+
+### 11.4 HIGH — §7's score criterion cannot fail, and §3.4 overclaims
+
+- §7 accepts score-up, score-flat and score-down. No outcome is a failure. Worse, it is not
+  checkable: region 4 today asserts 20 cells (4 data rows × 5 columns, row 0 eaten as
+  header), and a *correct* reading of the same region is 5 data rows × 4 measure columns =
+  **20 cells again**. Right and wrong readings are numerically indistinguishable at the
+  headline score. The criterion must become cell-level against a committed ground-truth
+  transcription for apple p0 — which this spec removed when it replaced the predecessor's §1.1.
+- **§3.4's "row hierarchy" is wrong about direction.** Re-measured on apple p1: `Total current
+  assets 149,818` sits at x0=**88.6**, *deeper* than its six members at 70.6
+  (39,544+22,855+31,398+27,509+11,092+17,420 = 149,818), and `Total assets` deeper still at
+  106.6. Indent yields **levels**, not containment direction; direction needs the arithmetic
+  (C5). Also `Commitments and contingencies` (p1, measure-less, on-lattice at 52.6, no
+  children) is a **third row class** the §3.4 + §3.6 pair cannot express, so §2.1's
+  "all seven are parents" is true of p0 and false of p1.
+- §3.4's floor is not "untested" as §9 claims — it is **measurably wrong on p1**: the 79.6
+  level has exactly two members and both are wrap continuations, a 20% false-level rate on
+  the page §3.4 calls discriminating.
+
+### 11.5 Confirmed without qualification
+
+The review reproduced, exactly: §2.2's compile output including
+`score=0.11695906432748537 asserted=20 escalated=151` and every region reason; §2.1's whole
+refutation table; §3.1's plateau (and strengthened it — tie-break-invariant, tables surviving
+to g=33–60 against prose dying at g=3, a ~10× margin); §3.2's apple ratios with a 3× margin
+over every other page; §3.3's rule listings; §3.5's in-region figures. **P1, P2, P4, P7
+stand.** No contradiction with `residues.md` was found, and §7's "derived with no reference to
+cell datatypes" is a genuinely correct answer to R71's circularity.
+
+### 11.6 What would unblock
+
+1. **Replace the locator.** It must be relative to the table's own frame (predecessor §2.2)
+   and be **measured on WHO 0/1/2, cbh, stem, capacity before design closes** — not argued
+   from apple. This is the real work; everything else is repair.
+2. **Re-derive P5 honestly** under whatever locator survives, and demote P9 from "argued" to
+   measured, adding WHO to the byte-identity criterion with the same force as stem.
+3. Adopt the rect-based reader (§11.2) and state both merge rules explicitly.
+4. Drop §4's silence distinction; a sensor proposes across the y-extent its evidence covers.
+   Then dispose apple p2's row honestly, or name the deferral.
+5. Make §7 cell-level against a committed transcription.
+6. Correct §3.4 per §11.4; restate §3.2's verdict as a bijection test rather than a ratio.
+
+**The architecture is not what failed.** Concurrency, the decoration-over-text priority, the
+constraint set, and the non-circular answer to R71 all survive. What failed is one ordinal
+locator, generalised from a single document.
