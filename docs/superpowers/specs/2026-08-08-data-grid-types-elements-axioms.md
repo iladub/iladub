@@ -1,0 +1,274 @@
+# The data grid — table types, their elements, and the axioms that identify them
+
+**Date:** 2026-08-08 · **Status:** foundation draft — types and element definitions, with
+the axiom families each needs. Pending adversarial review. ·
+**Supersedes as the entry point:** `2026-08-08-concurrent-sensor-table-scan-design.md`
+(BLOCKED) and `2026-08-08-header-boundary-locator-measurement.md` — both of which worked on
+*metadata* (headers) before the data was established, which is the inversion this document
+exists to correct.
+
+**Doc impact:** increment — this defines owned `tab:` structure. No site page contradicted.
+
+---
+
+## 0. The governing principle
+
+François, 2026-08-08:
+
+> The data grid is data and all the rest metadata, so data about data. This is why the data
+> *sensu stricto* must be identified and proven before tackling the metadata topic. And since
+> spatial is a key dimension, we need spatial axioms.
+
+> I want to see: *I found the data grid because this conforms to this, this, and this, and
+> refuted this, this and this — so there is no doubt that the data grid is this.* This must be
+> the conjunction of a lot of sensor signals and iterative reasoning.
+
+> Once we have the grid safely identified we are left with residues that can be headers on the
+> top, more or less complex indices on the left or on the right, and potentially annotations in
+> all borders. We go in sequence, but the data grid is the origin of evidence.
+
+Three consequences, and they are binding on everything below:
+
+1. **Data before metadata.** No element may be defined in terms of a metadata element that has
+   not itself been derived from the data. In particular: *if you need the header to find the
+   grid, you have inverted it.*
+2. **Identification is conjunctive and records its refutations.** A grid is not "found"; it is
+   *admitted* when it conforms to every axiom of its type and every competing candidate is
+   refuted — with both recorded. This is CLAUDE.md §3's epistemics applied to the grid itself.
+3. **Spatial axioms are first-class**, not a tie-break. §6.3 shows by measurement that no
+   amount of type or repetition evidence separates a unique-typed data row from a header row;
+   only position does.
+
+## 1. Why this document exists: there is no grid axiom today
+
+Measured, not asserted:
+
+```
+src/iladub/etkl/grid.py:92
+def infer_leaf_grid(band, gutter_pct: float = 0.98,
+                    min_gutter_bins: int = 3, sample_target: int = 4) -> LeafGrid:
+    ...
+    Tuning guidance:
+      - ncols too high (column split): raise min_gutter_bins (e.g. 5 or 6).
+      - ncols too low (columns merged): lower gutter_pct (e.g. 0.95).
+    confidence = min(1.0, len(band.lines) / float(sample_target))
+```
+
+- **Three tuned constants** and a docstring section headed *"Tuning guidance"*, in the most
+  load-bearing decision in the pipeline. CLAUDE.md §8: a tuned constant is *prima facie*
+  evidence the decision belongs in AXIOM or NEURAL, and unjustified procedural code is a defect.
+- The confidence is **fabricated** — rows ÷ 4, capped at 1 — and carries no evidential meaning,
+  yet it propagates downstream as a decidability ceiling.
+- **No `tab:DataGrid` class exists.** Of tab.ttl's 58 classes, every grid-adjacent one
+  (`tab:GridCell`, `tab:GridColumn`, `tab:ClassifyBand`) is documented *"transient … never
+  asserted into a holon."* The grid has no identity, no provenance, and no decision record.
+- Every downstream AXIOM consumes it unexamined: `classify-kind.rq`'s entire grid content is
+  `?nc` = `tab:gridColumnCount` = `grid.ncols`; `stub-data-split.rq` presupposes the grid *and*
+  the header/body split; `header-covers.rq` presupposes the columns.
+- `grid-region.rq` is the only grid-adjacent axiom and it decides which *lines* fall inside a
+  **ruled** grid — it requires interior vertical rules, so it is inert on every borderless
+  document.
+
+So the axiomatic work of the last several loops sits on top of an unexamined procedural
+premise. That is the defect this document opens.
+
+## 2. Anchor: established prior art, not invented vocabulary
+
+Per CLAUDE.md (align-don't-reinvent; the naming discipline), the type system anchors on the
+existing table-model literature and on statistical-publishing vocabulary rather than on terms
+we coin.
+
+| Source | What it contributes | Confidence |
+| --- | --- | --- |
+| **Wang's abstract table model** (X. Wang, *Tabular Abstraction, Editing, and Formatting*, PhD, Waterloo, 1996) | A table is a mapping from the product of **category** (label) domains to **entries**. This is exactly the data/metadata split: entries are the data, categories are metadata. | High on the model; **verify the citation details before this leaves draft** |
+| **Hurst's layered model** (M. Hurst, *The Interpretation of Tables in Texts*, PhD, Edinburgh, ~2000) | Separates graphical/physical from functional/structural from semantic layers — our sensor evidence is physical, our axioms are functional. | Medium; **verify** |
+| **Statistical publishing vocabulary** (GPO/Chicago-style table anatomy) | `stub` (left label column), `boxhead` (column headers), `field`/`body` (the entries), `stub head`, `spanner` (a header over several columns), `cut-in heading` (a heading inside the body), notes. | High on the terms; **verify the style-guide attribution** |
+
+This vocabulary is also *the author's language*, which
+[[coarse-to-fine-human-reading]] requires: a statistician made a stub and a boxhead; nobody
+ever made a "band".
+
+**Mapping to François's words:** "headers on the top" = **boxhead**; "indices on the left or
+right" = **stub**; "annotations in all borders" = **notes / captions**; "the data grid" =
+**field** (Wang's *entries*).
+
+> **Open item, must close before implementation:** every citation above is stated from
+> knowledge, not from a fetched source. The naming discipline exists in this repo because a
+> prior-art check was once skipped. Verify each before any of this is published under CC-BY.
+
+## 3. The table types
+
+Type is determined by **how entries are addressed** — Wang's criterion — not by appearance.
+Each type is listed with the corpus instances that exhibit it, so no type is named that we
+have not seen, and any type from the literature we have *not* seen is marked as such.
+
+| # | Type | Addressing | Corpus instances |
+| --- | --- | --- | --- |
+| T1 | **Record / list table** | One category axis (columns = attributes); rows are records with no inherent order | stem 0–2, cbh 0, capacity 0 |
+| T2 | **Matrix / cross-tabulation** | Two category axes; each entry addressed by (row category, column category); one measure | who 0–2 (age × z-score), ons 7–8 |
+| T3 | **Hierarchical-stub table** | One category axis on top, a **tree** on the left (indentation or nesting), aggregates at internal nodes | apple 0–2, bfs 6 |
+| T4 | **Stacked / multi-panel table** | Several grids of the same type sharing one boxhead, separated by cut-in headings | apple p0 (three panels; `Total net sales 109,417/94,036/364,357` appears three times) |
+| T5 | **Transposed table** | Records run along columns instead of rows | **not exhibited by any corpus document** — R68 records that only synthetic fixtures reach this path |
+
+T1–T4 are measured. T5 is carried from the literature and from the shipped
+`tab:TransposedTable`, explicitly unexercised.
+
+**Types are not exclusive.** apple p0 is T3 *and* T4; who is T2 with a small T1 region
+(the L/M/S parameter columns). The type system must permit conjunction, so it is a set of
+**properties of an addressing**, not a partition of documents.
+
+## 4. The elements — data first, then metadata
+
+### 4.1 `tab:DataGrid` (the field / Wang's entries) — the only DATA element
+
+**Definition.** A `tab:DataGrid` is a maximal set of entry cells, spanning a set of columns and
+a set of rows, such that every entry is addressed by exactly one path in each category axis of
+its type, and every column is type-homogeneous under the shipped `tab:inDatatypeFamily`
+lattice.
+
+It is an **asserted holon object with identity and provenance** — not transient evidence. This
+is the change from today, where no such object exists.
+
+**Conformance axioms** (all must hold; the grid is admitted only on their conjunction):
+
+| # | Axiom | Family | Status |
+| --- | --- | --- | --- |
+| G1 | **Column homogeneity** — every grid column has one datatype family, after dropping abstainers (`tab:Blank`, `tab:ParenthesizedNumber`) and excluding `tab:Text` | type | machinery shipped (`stub-data-split.rq` uses it, one level too late) |
+| G2 | **Structural repetition** — each grid row instantiates a row signature shared by ≥2 rows | repetition | measured §6.2; presence test, no constant |
+| G3 | **Rectangularity** — the grid is a rectangle in (row, column) space; every (row, column) pair inside it is an entry or a declared blank | **spatial** | to define |
+| G4 | **Column alignment** — every entry of a column occupies that column's x-interval, and no entry straddles a column boundary | **spatial** | partially shipped (`confirm-boundary.rq`'s ink-witness idiom) |
+| G5 | **Address completeness** — each entry has exactly one address on each axis of its type (constraint C1) | structural | to define |
+| G6 | **Conservation** — no ink inside the grid's bbox is unaccounted for | membrane | **shipped** (conservation shape) |
+| G7 | **Arithmetic coherence** — where aggregates exist, they reconcile exactly with the members they cover | arithmetic | **shipped** (exact `Decimal`, loop H) |
+| G8 | **Round trip** — the reading regenerates the observed ink | membrane | **shipped** (`tab:ReshapeRecipe`) |
+
+**Refutation axioms** — a candidate grid is *rejected*, and the rejection recorded, when:
+
+| # | Refutation | Family |
+| --- | --- | --- |
+| R̄1 | A column is type-heterogeneous over non-abstaining cells | type |
+| R̄2 | A row inside the rectangle spans it end-to-end with a single run (a cut-in heading, not an entry row) | **spatial** |
+| R̄3 | An entry straddles a column boundary | **spatial** |
+| R̄4 | A candidate grid is strictly contained in another that also conforms — maximality | **spatial** |
+| R̄5 | The aggregate arithmetic fails | arithmetic |
+
+**The record François asked for** — *"I found the data grid because it conforms to this, this
+and this, and refuted this, this and this"* — is exactly a `dec:DecisionHolon` whose
+`optionSpace` is the candidate grids, `chosen` the admitted one, `rejectedBecause` the
+refutation axiom each loser tripped, and `consideredEvidence` the sensor facts. The
+differential half of `dec.ttl` (`optionSpace`/`chosen`/`rejectedBecause`) was built for this
+and, per the loop-decision-record spec, **has never had a producer**. This is its first real
+use.
+
+### 4.2 The metadata elements — the residue, classified by position
+
+Derived **only after** the grid is admitted, and defined **relative to it**. Each is a residue
+of ink that the grid does not account for, classified by its spatial relation to the grid.
+
+| Element | Prior-art name | Spatial definition (relative to the admitted grid) | Type-specific? |
+| --- | --- | --- | --- |
+| `tab:BoxheadBlock` | boxhead | ink **above** the grid, x-contained in the grid's column span | all types |
+| `tab:StubColumn` | stub | ink **left** of the grid, y-contained in the grid's row span | T1, T3 (a tree in T3) |
+| `tab:RightIndex` | — | ink **right** of the grid, y-contained in its row span | not yet observed in corpus |
+| `tab:StubHead` | stub head | ink above the grid **and** left of it — the corner | T1, T3 |
+| `tab:Spanner` | spanner | a boxhead node covering ≥2 leaf columns | T2, T3, T4 |
+| `tab:CutInHeading` | cut-in heading | a full-width single-run row **inside** the grid's row span | T3, T4 |
+| `tab:Annotation` | notes / caption | ink outside the grid on any side, not x- or y-contained | all types |
+
+Every one of these is a **spatial** predicate over the grid — which is precisely why the grid
+must come first, and why spatial axioms are load-bearing rather than decorative.
+
+**Note the earned correction:** a cut-in heading (`Net sales:`, `Operating expenses:`) is
+*inside* the grid's row span and is metadata; an annotation is *outside*. The blocked spec
+conflated these, and the measurement in §6.3 shows nothing but position separates them.
+
+## 5. The axiom families
+
+| Family | Answers | World | Form |
+| --- | --- | --- | --- |
+| **Type** | what kind of value is this cell | open | SPARQL over the shipped datatype lattice |
+| **Repetition** | does this structure recur | open | SPARQL, count ≥ 2 — the minimal presence test for a pattern |
+| **Spatial** | where is this, relative to what | open | SPARQL over interval/containment relations — **to be defined** |
+| **Arithmetic** | do the aggregates reconcile | open | exact `Decimal`, justified PROCEDURAL |
+| **Membrane** | may this cross into the clean holon | **closed** | SHACL, holon-scoped |
+
+The spatial family is the gap. It needs a small, closed relation set over x- and y-intervals —
+`contains`, `within`, `meets`, `overlaps`, `before`, `after`, `aligns` — and every one of those
+is a **presence or ordinal** predicate, so the family can be built without a single tolerance.
+The one honest exception to confront up front is coordinate noise (measured: WHO's visually
+abutting marks differ at the 2nd decimal), which is why the repo already carries `COORD_EPS`;
+whether that is a tolerance or a representation artifact must be argued, not assumed.
+
+## 6. What is measured
+
+### 6.1 Column recovery fails while metadata ink is present
+
+Overlap-clustering runs into columns, over the whole page, collapses catastrophically:
+
+```
+apple p0   44 lines ->  1 overlap-column   x  52.6-562.3   runs=207
+apple p2   41 lines ->  1 overlap-column
+bfs   p6   43 lines ->  1 overlap-column   x  70.9-522.9   runs=311
+stem  p0   65 lines -> 12 overlap-columns  (col1 x 55.0-311.7 welds 174 runs)
+```
+
+One wide metadata run — a title, a cut-in heading, a wrapped label — overlaps every data column
+and bridges them all. **Columns cannot be recovered from a page that still contains its
+metadata**, which is the formal reason the data must be isolated first.
+
+### 6.2 Structural repetition isolates data from metadata — necessary, not sufficient
+
+Row signature = the sequence of datatype families of a line's ink runs. Lines whose signature
+recurs (≥2) are data candidates; singletons are metadata candidates.
+
+```
+who p0:  28 shared / 2 singletons — and the singletons are EXACTLY the metadata:
+   y= 59.33 :: Weight-for-age BOYS                                   (title)
+   y=118.71 :: Year: Month Month L M S -3 SD -2 SD -1 SD Median ...  (boxhead)
+
+apple p0: 39 shared / 5 singletons; 3 are the boxhead rows (94.67, 107.39, 116.03)
+stem  p0: 58 shared / 7 singletons; 2 are the boxhead rows (74.43, 81.03)
+```
+
+The boxhead is a singleton on **every** document measured. The signal is real.
+
+### 6.3 …and it over-collects, in a way only space can fix
+
+```
+apple p0 singletons that are GENUINE DATA:
+   y=360.64 :: Other income/(expense), net 572 (171) 670 (698)   (parenthesised negatives)
+   y=593.20 :: Japan 6,554 5,782 24,368 2 2,067                  (R16 split-number defect)
+
+capacity p0: 6 singletons, 4 of them genuine data rows
+cbh      p0: 6 singletons, mostly genuine data rows
+```
+
+No type-lattice refinement separates these from a boxhead row — their uniqueness is a real
+property of their values. What separates them is that they sit **inside** the repeating block
+and **aligned to its columns**, whereas the boxhead sits **above** it and aligns to nothing.
+
+**This is the measured derivation of §0's third consequence: spatial axioms are not a
+tie-break, they are the discriminator.**
+
+### 6.4 Carried from the prior measurement passes
+
+- Marks read from `page.rects` (not `page.lines + page.edges`) give apple p0's two spanner
+  spans and four leaf columns with **no tolerance and no doubling filter**.
+- A merged header cell is **one drawn mark spanning its children** — a rule span on apple, a
+  filled box on WHO. Same idea, two renderings.
+- Decoration marks the header/body boundary **only** where the author distinguished the
+  boxhead's border treatment from the body rows'; row-uniform marking is genuine silence.
+
+## 7. What is NOT established
+
+- **G3, G4, G5 and the whole spatial family are undefined.** They are named here, not built.
+- **No candidate-generation strategy is chosen.** Today's generator is `infer_leaf_grid`'s
+  tuned profile. Whether the axioms *dispose* a procedurally-generated candidate set (the
+  shipped R13 pattern, whose recall is bounded by the generator) or whether candidates are
+  themselves derived, is open — and it is the difference between repairing the defect and
+  relocating it.
+- **T5 (transposed) has no corpus witness** (R68). Any axiom written for it is unfalsifiable
+  against real documents.
+- **The prior-art citations in §2 are unverified.** They must be checked before publication.
+- **Nothing here has been implemented or scored.** This is a definition document; the claim
+  that these axioms *identify* the grid on the corpus is untested and must not be assumed.
