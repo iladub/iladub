@@ -495,3 +495,62 @@ gap is now attributable to two named causes rather than to mystery:
 2. **A clean rule extractor does not exist.** Closing that — reading `page.rects` so a drawn
    rule is one object and a fill is not a rule — would let attempt B be retried honestly, and
    it is the prerequisite for using decoration as the column universe at all.
+
+### 8.8 The prerequisite fixed — strict improvement, no regressions
+
+§8.7 named the blocker: no clean rule extractor exists, and that conflation had broken two
+independent lines of work. Fixing it first — rather than patching row admission a third time —
+is what unblocked the rest.
+
+**A mark is a rule iff it contains no glyph centre.** A presence test: a fill contains the text
+it sits behind; a rule contains nothing. No thinness ratio, no minimum width.
+
+```
+doc       pg  rects  vrule  hrule  fill   clean column universe
+apple      0    807      2     23   672   [369.2, 501.2]                     (was 678 "vrules")
+apple      1    370      0     20   316   []
+capacity   0    512     17     32   390   [43.0, 109.0, 210.5, 281.5, ...]   (was 65)
+cbh        0    190     21     68    21   [38.2, 76.0, 154.5, 216.5, ...]    (was 95)
+bfs        6     43      9      4    20   [140.0, 187.6, 235.2, 282.7, ...]
+who        0     97      4      9    38   [735.9, 747.7, 768.7, 771.5]       (was 104 columns)
+stem       0    202      3     41   127   [13.0, 73.3, 832.6]                (page borders only)
+ons        7     15      0      8     7   []
+```
+
+Two further definitional rules were then forced by measurement, each after a failure:
+
+- **Decoration supplies the universe only when it resolves at least as finely as alignment
+  does** — an ordinal comparison of column counts, not a threshold. Preferring it
+  unconditionally cost stem every row, because its three drawn marks are page borders giving
+  2 columns where alignment gives 15.
+- **`tab:SeedFollowsUniverse` (G0): the seed is the modal class in whatever universe supplied
+  the columns** — occupancy of the drawn columns under a decoration universe, the signature
+  class under an alignment universe. Seeding a decoration universe by signature cost capacity
+  19 of its 27 rows. The seed must be modal in the same space the columns came from, or it
+  types the wrong columns.
+
+```
+page        rows/lines  cols (meas)  type     universe   baseline   delta
+apple p0      30 / 44     5  (4)     Uniform   ALIGN        30        +0
+apple p1      27 / 43     3  (2)     Uniform   ALIGN        27        +0
+apple p2      26 / 41     3  (2)     Uniform   ALIGN        25        +1
+stem  p0      17 / 65    15  (6)     Mixed     ALIGN        17        +0
+capacity p0   27 / 32    16  (4)     Uniform   RULES         7       +20
+cbh   p0      45 / 85    20  (7)     Mixed     RULES        39        +6
+who   p0      25 / 30    13 (12)     Uniform   ALIGN        21        +4
+bfs   p6      32 / 43     9  (2)     Uniform   ALIGN        32        +0
+ons   p7      28 / 68     6  (5)     Uniform   ALIGN        28        +0
+
+pages 9/9   data rows 257 (baseline 226)   REGRESSIONS: NONE
+```
+
+**The lesson, recorded because it cost four attempts to learn:** the two refinements of §8.7
+each fixed one failure mode and created another, because both patched row admission while the
+column universe stayed wrong. Fixing the universe moved four pages at once and cost nothing on
+the other five. When two successive fixes trade one error for another, the defect is upstream
+of both.
+
+**Still open, unchanged:** stem 17/65 remains the worst page — its drawn marks are borders, so
+it falls to alignment, and its `Blank`/`TBA` placeholders type as Text inside Date and Quantity
+columns. The axioms remain declared-only: no `.rq`, no SHACL, no worked example, no negative
+test, nothing wired into `compile_tables`, no corpus score moved.

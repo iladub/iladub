@@ -235,3 +235,54 @@ tab:NotMaximal a tab:GridRefutation ; rdfs:label "R4 not maximal"@en ;
 
 tab:ArithmeticContradiction a tab:GridRefutation ; rdfs:label "R5 arithmetic contradiction"@en ;
     rdfs:comment "A row presents as an aggregate of rows it does not sum to."@en .
+
+#################################################################
+#  4. The column universe — where the columns come from
+#################################################################
+#
+#  The columns must be fixed once (§1), which raises the question §1 does not answer:
+#  fixed from WHAT. Two sources exist, and the choice between them is ordinal, not tuned.
+
+tab:ColumnUniverse a owl:Class ; rdfs:label "Column universe"@en ;
+    rdfs:comment """The stable set of column boundaries a data grid is selected within.
+Established ONCE, before any row is admitted, because maximality is undefined against a
+moving candidate set."""@en .
+
+tab:DrawnRule a owl:Class ; rdfs:label "Drawn rule"@en ;
+    rdfs:comment """A drawn mark that contains NO glyph centre.
+
+This is the whole definition, and it is a presence test — no thinness ratio, no minimum
+width. A fill contains the text it sits behind; a rule contains nothing. Measured, this
+separates what every prior extractor conflated: apple page 0 reports 678 'vertical rules'
+when fill edges are counted and exactly 2 when they are not, and WHO's column universe
+collapses from 104 spurious columns to 4 emblem strokes. That conflation independently
+broke two earlier lines of work."""@en .
+
+tab:universeSource a owl:ObjectProperty ; rdfs:domain tab:ColumnUniverse ;
+    rdfs:label "universe source"@en .
+
+tab:DecorationUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+    rdfs:label "Decoration universe"@en ;
+    rdfs:comment """Columns bounded by tab:DrawnRule marks, each column ink-witnessed (at least
+two rows place a run inside it). Preferred where available, because decoration is applied to
+dimensions that already exist and so measures the post-reshape shape directly.
+
+Preferred only when it RESOLVES AT LEAST AS FINELY as alignment does — an ordinal comparison
+of column counts, not a threshold. Measured necessity: stem's drawn marks are page borders
+yielding 2 columns where alignment yields 15, and preferring them unconditionally cost that
+page every row."""@en .
+
+tab:AlignmentUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+    rdfs:label "Alignment universe"@en ;
+    rdfs:comment """Columns bounded by the gaps between the seed rows' run extents, used where
+no drawn universe resolves as finely. Carries the whole load on borderless documents — apple,
+ons and WHO have no usable drawn columns at all."""@en .
+
+tab:SeedFollowsUniverse a tab:GridAxiom ; rdfs:label "G0 seed follows the universe"@en ;
+    rdfs:comment """The seed is the modal class in WHATEVER universe supplied the columns:
+occupancy of the drawn columns under a tab:DecorationUniverse, the structural signature class
+under a tab:AlignmentUniverse.
+
+Not a convenience — the seed must be modal in the same space the columns came from, or it types
+the wrong columns. Measured: seeding a decoration universe by signature instead of occupancy
+cost capacity 19 of its 27 rows."""@en .
