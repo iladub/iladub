@@ -398,7 +398,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                    row_role_proposer=None, doc_uri: URIRef | None = None,
                    carried_header_roles: dict | None = None,
                    section_repair_bands: frozenset[int] | None = None,
-                   datagrid_fallback: bool = True) -> CompilationReport:
+                   datagrid_fallback: bool = True,
+                   datagrid_adopt: bool = False) -> CompilationReport:
     """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
     it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
     passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
@@ -865,6 +866,36 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     #
     # Found by the suite, not by reasoning: four escalation-path tests failed because a
     # second region appeared on a page they had pinned to exactly one.
+    # --- ADOPTION (R73). A page that read NOTHING and escalated everything is a total
+    # failure of the shipped reader, and where the data grid reads it completely the
+    # escalation is superseded rather than supplemented. Withdrawal is exact: the page's
+    # graph is rebuilt from the grid alone, so no token is ever counted on both sides —
+    # the defect that made the first wiring's 0.5941 meaningless.
+    #
+    # Warranted by an oracle, not by preference: apple page 1 is transcribed at 28 entry
+    # rows and the grid reads 28 of 28 with nothing leaked, while the pipeline asserts
+    # zero cells there.
+    #
+    # OFF by default, and that is not timidity. The document driver compiles each page
+    # standalone before re-compiling continuation pages with carried headers, and stem's
+    # pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. A
+    # page that adopts instead of escalating could silently deprive the driver of the
+    # signal it waits for, and that interaction has not been worked out.
+    if datagrid_adopt and asserted_total == 0 and escalated_total > 0:
+        from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
+        _grid = _dg(pdf_path, page_number)
+        if _grid is not None and _grid.rows:
+            _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
+                             if ln.words], key=lambda ln: ln.top)
+            graph = Graph()                       # exact withdrawal: nothing carried over
+            _emit(graph, _grid, _lines, doc, page_number)
+            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            asserted_total = sum(len(_lines[i].words) for i in _grid.rows)
+            escalated_total = 0
+            reports = [RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                    None, str(TAB.DataGrid), "")]
+            band_marks = [(0, 0)]
+
     if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
         from .datagrid import derive_data_grid, emit_data_grid
         _grid = derive_data_grid(pdf_path, page_number)

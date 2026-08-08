@@ -1155,3 +1155,39 @@ carry a table) and is not consulted by the score.
 **Residue.** R72 is now fixed (§8.19). R73 remains: widening the fallback past the
 nothing-at-all gate requires first solving escalation-masking and token double-counting,
 measured in §8.18 and not to be argued away.
+
+### 8.20 R73 — adoption, warranted by a fourth oracle and deliberately opt-in
+
+**The warrant is an oracle, not a preference.** apple page 1 transcribed: 43 lines, 15
+metadata, **28 entry rows**. The three judgement calls are the value-less rows —
+`Commitments and contingencies` (a line item with its values omitted, standard
+balance-sheet practice) and lines 36–37 (wrap continuations of the `Common stock …` label,
+whose values land on line 38). None carries an entry, so none is an entry row: a data row is a
+row *with* entries, and a label fragment is not one.
+
+**The data grid reads 28 of 28, nothing leaked — on a page where the pipeline asserts zero
+cells and escalates everything.** That is the measured case for replacing the escalation rather
+than living with it.
+
+**Adoption is exact withdrawal, not addition.** Where a page read nothing and escalated
+everything, its graph is rebuilt from the grid alone. No token is ever counted on both sides —
+the defect that made the first wiring's `0.5941` meaningless (§8.18).
+
+```
+pages where adoption fires:
+   apple p1   0.0000 -> 1.0000     0 ->  84 cells
+   stem  p1   0.0000 -> 1.0000     0 -> 811 cells
+   stem  p2   0.0000 -> 1.0000     0 -> 726 cells
+```
+
+**And it is OFF by default, for a measured hazard rather than caution.** The document driver
+compiles each page standalone *before* re-compiling continuation pages with carried headers,
+and **stem's pages 1 and 2 escalate standalone by design (R29) so that carriage can happen**.
+Both would adopt. Whether adopting deprives the driver of the signal it waits for has not been
+worked out — and stem is the document with the adjudicated floor. With the default off, its
+document compile returns **0.9654553611484971**, verified unchanged.
+
+So R73 is *implemented and measured, not enabled*. Closing it means working out the interaction
+with the continuation driver — deciding whether a continuation page should adopt at all, or
+only after carriage has been attempted and failed. That is a document-level question, and this
+loop is page-level.

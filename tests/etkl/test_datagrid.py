@@ -552,3 +552,90 @@ def test_an_unread_table_page_no_longer_scores_perfect():
     prose = compile_tables(p, 0, validate_shapes=False, datagrid_fallback=False)
     assert prose.asserted == 0 and prose.escalated == 0
     assert prose.score == 1.0, "a prose page has nothing to read and is not a failure"
+
+
+# --- the fourth oracle: a page the pipeline ESCALATES ------------------------------
+# apple page 1, transcribed (43 lines). Chosen because compile_tables asserts NOTHING
+# here and escalates instead — so it is the case R73 turns on: is a data-grid reading
+# actually better than the escalation it would replace?
+#
+# METADATA is the title block, the two-line boxhead, the cut-in headings, and three
+# rows that carry no entry at all:
+#   34  'Commitments and contingencies'  a line item with its values omitted, which is
+#                                        standard balance-sheet practice
+#   36, 37                               wrap continuations of the 'Common stock ...'
+#                                        label, whose values land on line 38
+# A data row is a row WITH entries; a label fragment is not one.
+APPLE_P1_METADATA = {0, 1, 2, 3, 4, 5, 6, 14, 21, 22, 29, 34, 35, 36, 37}
+APPLE_P1_DATA = set(range(43)) - APPLE_P1_METADATA          # 28 rows
+
+
+@corpus_only
+def test_apple_p1_is_complete_and_sound():
+    """The page the pipeline escalates: the data grid reads all 28 entry rows, none of
+    the 15 metadata lines. This is the measured warrant for R73 — replacing this
+    escalation with this reading is an improvement, not a swap."""
+    g = derive_data_grid(APPLE, 1)
+    assert g is not None
+    admitted = set(g.rows)
+    assert not sorted(admitted & APPLE_P1_METADATA), "metadata admitted as data"
+    assert admitted & APPLE_P1_DATA == APPLE_P1_DATA, (
+        f"missed {sorted(APPLE_P1_DATA - admitted)}")
+
+
+@corpus_only
+def test_the_pipeline_escalates_the_page_the_grid_reads_completely():
+    """The R73 gap, stated as a test: the shipped reader asserts zero cells on a page the
+    data grid reads completely. The fallback cannot help here, because filling in an
+    escalation would mask it and double-count its tokens."""
+    from iladub.etkl.compile import compile_tables
+
+    rep = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=True)
+    assert rep.asserted == 0, "fixture drift: this page is supposed to assert nothing"
+    assert rep.escalated > 0
+    assert len(derive_data_grid(APPLE, 1).rows) == 28
+
+
+# --- R73: adoption, and why it is opt-in ------------------------------------------
+
+@corpus_only
+def test_adoption_is_off_by_default():
+    """Not timidity — a measured hazard. The document driver compiles each page
+    standalone before re-compiling continuation pages with carried headers, and stem's
+    pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. Both
+    would adopt. Whether that deprives the driver of the signal it waits for is not yet
+    worked out, so the default must leave the driver's world untouched."""
+    from iladub.etkl.compile import compile_tables
+
+    default = compile_tables(APPLE, 1, validate_shapes=False)
+    explicit = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)
+    assert default.score == explicit.score == 0.0
+    assert default.escalated > 0
+
+
+@corpus_only
+def test_adoption_supersedes_an_escalation_exactly():
+    """The escalation is REPLACED, not supplemented: the page's graph is rebuilt from the
+    grid alone, so no token is counted on both sides. That double-count is what made the
+    first wiring's 0.5941 meaningless."""
+    from iladub.etkl.compile import compile_tables
+
+    off = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)
+    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=True)
+    assert off.asserted == 0 and off.escalated > 0
+    assert on.escalated == 0, "adoption must WITHDRAW the escalation, not add to it"
+    assert on.asserted > 0 and on.score == 1.0
+    assert sum(r.cells for r in on.regions) == 28 * 3, "28 entry rows x 3 columns"
+
+
+@corpus_only
+def test_adoption_never_touches_a_page_that_read_something():
+    """apple page 0 asserts 20 cells. A partial reading is not a total failure, and
+    adoption is scoped to total failure only."""
+    from iladub.etkl.compile import compile_tables
+
+    off = compile_tables(APPLE, 0, validate_shapes=False, datagrid_adopt=False)
+    on = compile_tables(APPLE, 0, validate_shapes=False, datagrid_adopt=True)
+    assert off.asserted > 0
+    assert on.score == off.score
+    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 20
