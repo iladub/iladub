@@ -52,8 +52,24 @@ _ABSTAIN = frozenset({"Blank", "ParenthesizedNumber"})
 _UNIT_MARKER = re.compile(r"^[$€£¥]$")
 
 
+# A run made only of digits and separators is ONE number, and the spaces inside it are
+# thousands separators. This is the SI/ISO 31-0 convention ("8 962 258"), used natively
+# by the Swiss federal statistics office throughout bfs, and it is ALSO the shape the
+# split-number defect R16 produces when a padding glyph lands inside a digit run
+# ("20,000" extracted as "2 0,000"). One rule covers both, because they are the same
+# lexical shape — nothing here is specific to either document.
+#
+# Measured candidates per page: bfs 192, stem 51, apple 1 (the single row that page was
+# missing), and ZERO on cbh, ons and who — so it corrects where the convention is used
+# and is inert everywhere else.
+_SPACED_NUMBER = re.compile(r"^-?\d[\d.,\s]*$")
+
+
 def family_of(text: str) -> str:
     """The cell's datatype family, via the shipped tab:inDatatypeFamily lattice."""
+    t = text.strip()
+    if " " in t and _SPACED_NUMBER.match(t):
+        text = re.sub(r"\s+", "", t)
     u = _cell_datatype(text)
     name = str(u).replace(_TAB, "") if u is not None else "Text"
     return _FAMILY.get(name, name)

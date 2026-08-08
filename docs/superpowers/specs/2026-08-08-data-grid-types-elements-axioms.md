@@ -837,3 +837,60 @@ the new cbh test.
 as Text inside Date columns — the same phenomenon `tab:Blank` already handles for `(blank)`)
 and the Total rows, whose two-run shape places into too few columns. G8/G9 remain unwired.
 Nothing is wired into `compile_tables`; no corpus score has moved.
+
+### 8.14 The space is a thousands separator — stem 36 → 53 of 57
+
+The remaining stem misses were **not** the placeholders I predicted. Measured, all 21 were
+aggregate rows:
+
+```
+17x RowAddressability/no-measure  ::  Mackay Total 2 0,000
+ 4x unplaceable                   ::  Jul 26 Total 1 18,000
+```
+
+`2 0,000` types as Text, so the tonnage is not a measure and the row carries none. That is the
+split-number defect R16 — but the fix is not a repair of R16, because **the same lexical shape
+is a legitimate convention**: bfs writes `8 962 258` and `1 788 440`, the space being the
+SI/ISO 31-0 thousands separator used natively by the Swiss federal statistics office.
+
+So one rule covers both: **a run made only of digits and separators is one number, and the
+spaces inside it are separators.** Nothing in it is specific to either document.
+
+```
+candidates per page:  bfs 192   stem 51   apple 1   cbh 0   ons 0   who 0
+```
+
+It corrects where the convention is used and is provably inert elsewhere — and apple's single
+candidate is the one row that page had been missing (`Japan 6,554 5,782 24,368 2 2,067`).
+
+```
+page        rows/lines   delta   oracle
+apple p0     31 / 44      +0     31/31, 0 leaked
+apple p1     28 / 43      +0
+apple p2     29 / 41      +0
+stem  p0     53 / 65     +17     53/57, 0 leaked      <- was 36
+capacity     27 / 32      +0
+cbh   p0     46 / 85      +0
+who   p0     25 / 30      +0
+bfs   p6     34 / 43      +1
+ons   p7     41 / 68      +0
+
+oracle leaks: 0.  Suite 30 passed.  stem floor pinned at 53.
+```
+
+**stem's four remaining misses are named and legitimate:**
+
+```
+15  Jul 26 Total 1 18,000        46  Aug 26 Total 6 32,000
+62  Sep 26 Total 1 77,500        63  2025/26 Total 9 27,500
+```
+
+Their label sits in the index block, which is outside the rectangle and therefore dropped, so
+one cell remains inside the grid and the two-cell minimum refuses them. These are month- and
+season-level aggregates whose key genuinely lives in the stub — recovering them needs the index
+block modelled as an addressing axis (G8/G9 wired), not a relaxation of the minimum.
+
+**Method note.** I predicted placeholders and was wrong; the measurement said aggregates. The
+prediction would have produced a placeholder detector — and a first attempt at one (tokens
+recurring across columns of differing families) was measured and rejected, because it flags
+`Woodchip`, `Cement` and `Accepted`, which are genuine values, alongside `N/A`.

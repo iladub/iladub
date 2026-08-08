@@ -245,7 +245,7 @@ def test_stem_p0_recall_against_the_transcription():
     in the ontology and NOT yet implemented here) and is named in the spec."""
     g = derive_data_grid(STEM, 0)
     recovered = set(g.rows) & STEM_P0_DATA
-    assert len(recovered) >= 36, (
+    assert len(recovered) >= 53, (
         f"recall regressed: {len(recovered)}/{len(STEM_P0_DATA)}")
 
 
