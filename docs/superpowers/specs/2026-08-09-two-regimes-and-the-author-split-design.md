@@ -338,3 +338,54 @@ membrane — and it is also why the split itself may not be provable without one
 contract; `compile_tables` takes none), §3.2's discriminator (confirmed and strengthened — stem
 p0 also repeats `Mackay Total 5 0,000` as data), §3.4 (confirmed to the decimal, including its
 own refuted centring hypothesis), and P7's stem control.
+
+### 8.6 RETIRED — the fifth oracle shows the slice solved a problem that does not exist
+
+cbh page 0 was transcribed after the block (85 lines; `tests/etkl/test_datagrid.py`). Measured:
+
+```text
+45 of 45 vessel rows admitted across ALL FOUR panels, from ONE page-wide
+decoration universe.  Zero metadata leaked — no title, no berth or maintenance
+notice, no port annotation, no reprinted header.
+```
+
+**The four panels were never separated.** The decoration universe spans the page, and the
+every-measure refutation removes the four reprinted headers. So `RejoinSectionsOp` has nothing
+to rejoin, and §4's first success criterion was already satisfied by code that shipped the day
+before this spec was written — which the adversarial review said (M4) and this now pins as a
+test.
+
+**This spec is retired, not merely blocked.** §2's slice is unnecessary; §0's architecture
+survives and is the part worth keeping. The one genuinely unsolved thing — naming the dimension
+whose values are `{GERALDTON, KWINANA, ALBANY, ESPERANCE}` — is contract-dependent, which is
+exactly where §0's boundary puts it and where `splitkey` already lives, implemented and unwired.
+
+Two defects the transcription surfaced are registered rather than carried in prose: **R74** (the
+grid leaks one row from the page's second table) and **R75** (per-panel aggregate rows with a
+measure but no key are refused).
+
+**What the block taught, worth carrying forward:** a round trip cannot dispose an assignment its
+own recipe records, so "evidence proposes, the round trip disposes" is not a general disposal
+pattern — it works only where the forward operation is parameterised by something the assignment
+does not supply. Decision 0.1(2) needs that qualification wherever it is reused.
+
+### 8.7 And the disposal that DOES work, measured
+
+The review's unblock item 1 named whole-set scheme membership (`splitkey._admitting_fields`) as
+the one disposal that could actually refuse. Run against the real cbh contract trio
+(`examples/shipping/cbh-{contract,terms,shapes}.ttl`) and the real marker sets:
+
+```text
+PORT NAMES                   admitting fields: 1   ['port']    -> asserts, no LLM
+MAINTENANCE NOTICES          admitting fields: 0   []          -> quarantine
+MIXED (3 ports + 1 notice)   admitting fields: 0   []          -> quarantine
+PORTS + a stray              admitting fields: 0   []          -> quarantine
+```
+
+It separates the port set from the rival maintenance set that defeated A1–A3, decisively and
+with no LLM. And **notice pollution is self-defeating rather than silently wrong**: a polluted
+marker set admits nothing and quarantines, which is why an imperfect marker-selection heuristic
+costs recall and never soundness.
+
+So the architecture of §0 is vindicated by the same measurement that retires §2's slice: the
+naming belongs at the membrane, it is decidable there, and it is decidable *only* there.
