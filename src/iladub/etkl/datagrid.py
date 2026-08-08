@@ -304,6 +304,47 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
             hit[k] = r.text
         return hit if len(hit) >= 2 else None
 
+    def index_ink(rs: list[Run]) -> bool:
+        """Does this row carry ink in the index block — outside the rectangle?"""
+        return any(r.x1 <= bounds[0] - 0.5 for r in rs)
+
+    def place_indexed(rs: list[Run], measure_cols: set) -> dict | None:
+        """Placement once the measures are known, with the stub read as an ADDRESSING
+        AXIS rather than one cell.
+
+        A stub carries LEVELS — year, then month, then port — and two of them may print
+        on one row. So several runs may share a non-measure column (they are levels of
+        one address, joined in document order), while a measure column still admits
+        exactly one value. And a row whose address lives entirely in the index block
+        outside the rectangle is addressed by that ink, so it needs only one measure
+        cell rather than two.
+
+        Measured cause, one structure with two symptoms: ons prints '2024 Q4 102 ...'
+        with year and quarter both inside the key column, and the stem prints
+        'Jul 26 Total 1 18,000' with its label out at the month level, left of the grid.
+        Both were refused — the first for two runs in a column, the second for having a
+        single cell inside it."""
+        if not rs:
+            return None
+        outside = index_ink(rs)
+        inside = [r for r in rs if r.x1 > bounds[0] - 0.5 and r.x0 < bounds[-1] + 0.5]
+        if not inside:
+            return None
+        hit: dict = {}
+        for r in inside:
+            centre = (r.x0 + r.x1) / 2
+            k = next((j for j in range(ncols) if bounds[j] <= centre < bounds[j + 1]), None)
+            if k is None:
+                return None                                    # R3 straddle
+            if k in hit:
+                if k in measure_cols:
+                    return None                                # a measure holds one value
+                hit[k] = f"{hit[k]} {r.text}"                   # stub levels, in order
+            else:
+                hit[k] = r.text
+        floor = 1 if outside else 2
+        return hit if len(hit) >= floor else None
+
     placed = [(i, place(runs[i])) for i in range(len(lines))]
     placed = [(i, h) for i, h in placed if h]
     if not placed:
@@ -363,10 +404,18 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         else {k: c.family for k, c in enumerate(columns)}
 
     # --- G2 tab:RowAddressability + G1 compatibility.
+    #
+    # Re-placed now that the measures are known, so the stub can be read as an addressing
+    # axis with levels. The columns themselves are unchanged — only the reading of runs
+    # into them — so the fixed universe of §8.5 still holds.
+    placed = [(i, place_indexed(runs[i], measures)) for i in range(len(lines))]
+    placed = [(i, h) for i, h in placed if h]
     rows: list[int] = []
     refusals: dict = {}
     for i, h in placed:
-        if key_col not in h:
+        # A row addressed from the index block outside the rectangle needs no key cell
+        # inside it — its address is the ink that was dropped.
+        if key_col not in h and not index_ink(runs[i]):
             refusals[i] = "RowAddressability/no-key"
             continue
         if not (measures & set(h)):

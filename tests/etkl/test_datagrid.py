@@ -148,6 +148,44 @@ def test_negative_prose_must_be_refused(tmp_path):
 
 
 @pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_a_measure_column_admits_one_value_only(tmp_path):
+    """The stub may hold several address levels in one column; a MEASURE may not.
+
+    Built because mutation testing showed the guard was unreachable on all three real
+    oracles — no corpus row happens to put two runs in a measure cell. An unreachable
+    guard is an unproven one, so this fixture reaches it: the last row carries a stray
+    second number inside the first measure column, and must be refused rather than have
+    the two silently joined into one cell."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    path = str(tmp_path / "double_measure.pdf")
+    c = canvas.Canvas(path, pagesize=A4)
+    c.setFont("Helvetica", 10)
+    for i, (name, a, b) in enumerate([("North", "120", "130"), ("South", "240", "250"),
+                                      ("East", "360", "370"), ("West", "480", "490")]):
+        y = 720 - i * 20
+        c.drawString(60, y, name)
+        c.drawString(200, y, a)
+        c.drawString(300, y, b)
+    y = 720 - 4 * 20
+    c.drawString(60, y, "Stray")
+    c.drawString(200, y, "555")
+    c.drawString(235, y, "666")          # a second value inside the SAME measure column
+    c.drawString(300, y, "777")
+    c.save()
+
+    g = derive_data_grid(path, 0)
+    assert g is not None
+    lines = [l for l in sorted(text_lines(extract_words(path, 0)), key=lambda l: l.top)
+             if l.words]
+    stray = next(i for i, l in enumerate(lines)
+                 if " ".join(w.text for w in l.words).startswith("Stray"))
+    assert stray not in set(g.rows), "two runs in one measure column must refuse the row"
+    assert len(g.rows) == 4, "the four well-formed rows still stand"
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
 def test_non_degeneracy_is_a_redundant_backstop(tmp_path):
     """G1b is UNREACHABLE as a distinct refusal, and this pins the fact rather than
     hiding it.
@@ -241,11 +279,11 @@ def test_stem_p0_admits_no_metadata():
 
 @stem_only
 def test_stem_p0_recall_against_the_transcription():
-    """Floor, not aspiration. The gap to 57 is the index-column rows (G8/G9 are defined
-    in the ontology and NOT yet implemented here) and is named in the spec."""
+    """COMPLETE: all 57 entry rows, including the month and season totals whose label
+    lives out in the index block, left of the rectangle."""
     g = derive_data_grid(STEM, 0)
     recovered = set(g.rows) & STEM_P0_DATA
-    assert len(recovered) >= 53, (
+    assert len(recovered) == len(STEM_P0_DATA), (
         f"recall regressed: {len(recovered)}/{len(STEM_P0_DATA)}")
 
 
@@ -283,11 +321,12 @@ def test_ons_p7_admits_no_metadata():
 
 @ons_only
 def test_ons_p7_recall_against_the_transcription():
-    """Floor. The gap to 46 is the year-prefixed rows ('2024 Q4 ...'), where a two-level
-    index puts two runs in one column — the index block is not yet an addressing axis."""
+    """COMPLETE: all 46 entry rows, once the stub is read as an addressing axis with
+    levels ('2024 Q4 ...' places year and quarter as two levels of one address)."""
     g = derive_data_grid(ONS, 7)
     recovered = set(g.rows) & ONS_P7_DATA
-    assert len(recovered) >= 38, f"recall regressed: {len(recovered)}/{len(ONS_P7_DATA)}"
+    assert len(recovered) == len(ONS_P7_DATA), (
+        f"recall regressed: {len(recovered)}/{len(ONS_P7_DATA)}")
 
 
 CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")

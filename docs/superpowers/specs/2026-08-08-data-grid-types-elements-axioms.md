@@ -941,3 +941,46 @@ both runs land in the single key column, so the row is refused for placing two r
 column. This is the same structure as the stem's month/season totals: the index block needs to
 be an addressing axis with levels, not one key column. G8/G9 are defined and unwired; that is
 now the blocking item for two of the three oracles.
+
+### 8.16 The stub is an addressing axis — all three oracles complete
+
+Two symptoms, one structure. The stub carries **levels** — year, then month, then port — and
+the implementation gave it one cell:
+
+```
+ons  '2024 Q4 102 99.7 106 ...'   year and quarter both inside the key column -> two runs, refused
+stem 'Jul 26 Total 1 18,000'      label out at the month level, left of the grid -> one cell, refused
+```
+
+So placement is repeated once the measures are known, with the stub read as an addressing axis:
+several runs may share a **non-measure** column (levels of one address, joined in document
+order), while a measure column still admits exactly one value; and a row whose address lives in
+the index block outside the rectangle is addressed by that ink, so it needs one measure cell
+rather than two. The columns do not move — only the reading of runs into them — so the fixed
+universe of §8.5 is untouched.
+
+```
+page        rows/lines   delta   oracle
+apple p0     31 / 44      +0     31/31   0 leaked
+stem  p0     57 / 65      +4     57/57   0 leaked   <- complete
+ons   p7     46 / 68      +8     46/46   0 leaked   <- complete
+apple p1/p2  28 / 43, 29 / 41
+capacity 27/32   cbh 46/85   who 25/30   bfs 32/43
+
+3 oracles COMPLETE — 134 of 134 transcribed entry rows, zero metadata admitted.
+Suite 33 passed.
+```
+
+**Mutation testing found a second unreachable guard.** Deleting "a measure column holds one
+value" left every test green: no corpus row happens to put two runs in a measure cell. An
+unreachable guard is an unproven one, so rather than record it as a backstop (the G1b
+disposition) a synthetic fixture was built to reach it — a row carrying a stray second number
+inside the first measure column, which must be refused rather than have the two silently joined.
+The guard now fails under mutation.
+
+**Where this leaves the milestone.** All three transcribed pages are complete and sound. The six
+untranscribed pages remain unfalsified beyond cbh's partial header oracle, and their row counts
+are still not evidence: capacity 27/32, cbh 46/85, who 25/30, bfs 32/43, apple p1 28/43, apple
+p2 29/41. Whether those gaps are honest refusals or silent losses is unknown until transcribed.
+
+Nothing is wired into `compile_tables`; no corpus score has moved.
