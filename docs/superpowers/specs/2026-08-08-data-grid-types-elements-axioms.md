@@ -394,3 +394,50 @@ parameter.
 measured result: one rectangle on every one of 9 pages, metadata excluded by construction, no
 tuned constant. Its known gap remains row recall (§8.4). The iterated closure does not improve
 on it and must not be presented as if it did.
+
+### 8.6 Refined until universal — 9 of 9 pages admit a grid
+
+Three changes to the DEFINITION, each forced by a measured failure, not by tuning:
+
+1. **Columns are fixed once, by the seed, and never re-derived.** Re-derivation changes the
+   columns' identity between rounds, so the operators are not a closure and do not converge
+   (§8.5). Maximality is only well defined against a stable candidate set.
+2. **`tab:Text` is a legal column family.** Excluding it imported the assumption that every
+   table is a matrix of measures, and so excluded every record table — a vessel name is data.
+   Measure-ness (family ≠ Text) now *types* the grid; it never decides admission. Added
+   `tab:MeasureColumn` and `G1b` non-degeneracy (a rectangle of text columns alone is aligned
+   prose).
+3. **G2 completeness → `tab:RowAddressability`.** Requiring ink in every column is true of
+   dense financial statements and false of sparse operational registers; it cut stem to 17/65
+   and capacity to 6/32. A row must instead carry ink in the key column *and* in ≥1 measure
+   column — which is what completeness was actually protecting against, and still refuses the
+   bare period-header `2026 2025 2026 2025` (measures, no key) and the cut-in heading
+   `Net sales:` (key, no measure).
+
+Plus one precondition: **unit markers are absorbed before signatures are taken** (a lone `$` is
+a `tab:UnitMarker` on its neighbour, not a column — leaving it in split apple's identical rows
+into n=9 and n=5, one table read as two), and **abstaining datatypes must not erase a column**
+that has nothing else (apple p2's value columns are entirely parenthesised negatives; erasing
+them read the page as "not a table").
+
+```
+page        rows/lines  cols (measure)  type     rectangle x          y
+apple p0      30 / 44     5  (4)        Uniform   52.6- 562.3   143.2- 744.9
+apple p1      27 / 43     3  (2)        Uniform   70.6- 562.3   153.0- 724.5
+apple p2      25 / 41     3  (2)        Uniform   70.6- 562.3   180.2- 616.7
+stem  p0      17 / 65    15  (6)        Mixed     96.4- 829.6   101.3- 417.6
+capacity p0    7 / 32    15  (6)        Uniform  129.6- 811.6   123.5- 317.8
+cbh   p0      39 / 85    16  (8)        Mixed     50.0- 986.7   136.8- 656.0
+who   p0      21 / 30    13 (12)        Uniform   84.6- 780.3   134.2- 465.3
+bfs   p6      32 / 43     9  (2)        Uniform   72.6- 522.2   136.4- 480.8
+ons   p7      28 / 68     6  (5)        Uniform   55.3- 505.4   155.7- 580.6
+
+pages with an admitted grid: 9/9
+```
+
+**Universal in admission, not yet in recall.** Every page yields a grid, every grid excludes
+its metadata, and no tuned constant appears anywhere. But recall is uneven: apple, who, bfs and
+cbh are good, while **stem (17/65), capacity (7/32) and ons (28/68) still lose data rows** whose
+run structure differs from the seed's — a sparse register's rows genuinely vary. Closing that
+is the next refinement, and it must not be closed by relaxing a test until the numbers rise:
+the rows lost are lost for identifiable structural reasons, and those reasons are the evidence.

@@ -41,13 +41,19 @@ circular."""@en ;
 #  This is a closure condition, and it is what makes the object DEFINABLE rather than
 #  merely detectable.
 #
-#  NOT YET a formal-concept lattice, and the difference is load-bearing. A Galois
-#  connection needs a FIXED attribute universe; column intervals re-derived from the
-#  admitted rows change identity on every round, so iterating rows->columns->rows is not
-#  a closure operator and was MEASURED not to converge (apple p0 collapsed to 1 row of
-#  44, capacity to 1 of 32, cbh to 3 of 85). Establishing the column universe ONCE, and
-#  selecting maximal sub-rectangles within it, is what would earn the lattice claim.
-#  Until then this vocabulary defines the object; it does not yet supply its closure.
+#  THE COLUMNS ARE FIXED ONCE, BY THE SEED, AND NEVER RE-DERIVED. This is not an
+#  implementation note; it is part of the definition, and it was earned by measurement.
+#  Re-deriving column intervals from the growing row set changes the columns' identity on
+#  every round, so the pair of operators is NOT a closure operator (it is not a Galois
+#  connection, whatever the resemblance to formal concept analysis) and it does not
+#  converge: measured, the union form collapsed cbh 49->3 rows and who 25->4, while the
+#  intersection form collapsed apple p0 to 1 row of 44 and capacity to 1 of 32.
+#  Maximality is only well defined against a STABLE candidate column set.
+#
+#  PRECONDITION -- unit markers are absorbed before signatures are taken. A lone currency
+#  glyph is a tab:UnitMarker on its neighbour, not a column; leaving it in splits
+#  otherwise identical rows into different signatures (measured on apple: n=9 with the
+#  '$' present, n=5 without, one table read as two).
 #
 #  Measured reasons this form is required, each a recorded failure of a one-axis detector:
 #    (a) columns derived from all page ink COLLAPSE — one wide metadata run (a title, a
@@ -162,13 +168,36 @@ grids, its chosen is this one, and each loser carries tab:refutedBy."""@en .
 # --- conformance axioms ---------------------------------------------------------
 
 tab:ColumnHomogeneity a tab:GridAxiom ; rdfs:label "G1 column homogeneity"@en ;
-    rdfs:comment """Every admitted column has exactly one tab:columnFamily over the admitted
-rows, after abstaining datatypes are dropped, and that family is not tab:Text. A column that
-cannot agree on a family is not carrying data."""@en .
+    rdfs:comment """Every admitted column agrees on exactly one tab:columnFamily over the
+admitted rows. Abstaining datatypes (tab:datatypeAbstains) are dropped — EXCEPT where they are
+all a column has, in which case they are its family: abstention governs comparison between
+families, it must not erase a column. Measured: erasing them read apple page 2, whose value
+columns are entirely parenthesised negatives, as 'not a table'.
 
-tab:RowCompleteness a tab:GridAxiom ; rdfs:label "G2 row completeness"@en ;
-    rdfs:comment """Every admitted row has, in every admitted column, either an entry or a
-declared blank (tab:Blank). A row that simply stops is not a row of this rectangle."""@en .
+tab:Text IS a legal family. This is the correction that made the definition universal: in a
+record table a text column is DATA (a vessel name is data, not a label). Excluding Text was
+importing an assumption that every table is a matrix of measures."""@en .
+
+tab:MeasureColumn a owl:Class ; rdfs:label "Measure column"@en ;
+    rdfs:comment """An admitted column whose family is not tab:Text — it carries values rather
+than identifiers. Measure-ness TYPES the grid (uniform vs mixed); it never decides admission.
+Conflating the two is what excluded every record table."""@en .
+
+tab:NonDegeneracy a tab:GridAxiom ; rdfs:label "G1b non-degeneracy"@en ;
+    rdfs:comment """At least one admitted column is a tab:MeasureColumn. A rectangle of text
+columns alone is aligned prose, not a data grid."""@en .
+
+tab:RowAddressability a tab:GridAxiom ; rdfs:label "G2 row addressability"@en ;
+    rdfs:comment """An admitted row carries ink in the key column AND in at least one
+tab:MeasureColumn.
+
+This REPLACES an earlier 'row completeness' axiom (ink or a declared blank in EVERY column),
+which was measured to be false of real tables: it is true of dense financial statements and
+false of sparse operational registers, and requiring it cut stem to 17 rows of 65 and capacity
+to 6 of 32. Addressability is what completeness was actually protecting against — it still
+refuses a bare period-header row such as '2026 2025 2026 2025', which carries measures but
+nothing in the key column, and a cut-in heading such as 'Net sales:', which carries a key but
+no measure."""@en .
 
 tab:Rectangularity a tab:GridAxiom ; rdfs:label "G3 rectangularity"@en ;
     rdfs:comment "The admitted rows x the admitted columns are fully populated. SPATIAL."@en .
