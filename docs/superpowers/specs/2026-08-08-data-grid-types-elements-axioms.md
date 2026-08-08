@@ -618,3 +618,52 @@ instead of skipping two rows whose leading index runs varied.
 
 **Honest limit, stated in the axiom itself:** a grouping level with no totals has no witness
 and stays in the grid. G8 is sound, not complete.
+
+### 8.10 Groupability, and why the "mystery" is a checkbox
+
+François: *"Indentation is here for grouping, we group to aggregate, and to aggregate we sort
+first — so a sorted column without aggregated values is not metadata but data."*
+
+**Adjacency, not sortedness.** Grouping requires only that equal values sit together, so no
+order relation is needed — which removes collation, locale and date-parsing from the test
+entirely. G9 `tab:Groupability` is a contiguity test.
+
+**Contiguity is relative to the parent.** Measured, and evaluating it globally is a real error:
+
+```
+stem  Year  contiguous globally YES   within parent YES
+      Month contiguous globally YES   within parent YES
+      Port  contiguous globally no    within parent YES   <- Mackay recurs Jul/Aug/Sep
+who   Year  globally YES              within parent YES
+      Month globally no               within parent YES
+ons   Year  globally no               within parent no    <- genuine negative: no index block
+```
+
+A global test rejects exactly the levels it should accept. ONS is the control case: its
+left-hand columns are contiguous neither way, so they stay data.
+
+**The refutation, R6 `tab:SortedWithoutAggregate`:** a groupable column with no aggregate
+witness is sorted DATA. The argument is the authoring chain, not a heuristic — one groups in
+order to aggregate, so a column grouped but never aggregated was never grouped *for* anything.
+Conservative per §7, and it costs recall honestly: the WHO age index is a genuine category with
+no totals (z-scores cannot be summed), so it reads as data.
+
+**Is this native spreadsheet behaviour? Verified, not assumed — and yes, exactly.**
+
+- Excel's **Subtotal** command requires the data to be **sorted by the grouping column first**,
+  and then **outlines the list automatically**. Sort → group → aggregate is the native authoring
+  order, and outline indentation is its by-product. François's chain is Excel's own workflow.
+- **"Repeat item labels" is a PER-FIELD print option** (Field Settings → Layout & Print, exposed
+  as `PivotField.RepeatLabels`), shown only in **tabular form**. One field may repeat while its
+  sibling is suppressed, in one table, with no difference of meaning. Microsoft's guidance even
+  recommends it "when subtotals are turned off or there are multiple fields for items."
+
+So the GrainCorp author has a tabular-form PivotTable with repeat-item-labels **on for Port and
+off for Year and Month**. The "mystery" is a checkbox. Recorded as
+`tab:PivotFieldRepeatLabels` so no future reading treats repeated labels as evidence about
+structure — it is evidence about a setting.
+
+Sources:
+[Insert subtotals in a list of data](https://support.microsoft.com/en-us/excel/insert-subtotals-in-a-list-of-data-in-a-worksheet) ·
+[Repeat item labels in a PivotTable](https://support.microsoft.com/en-us/office/repeat-item-labels-in-a-pivottable-882bdb55-9cdc-4d8d-b531-8e96e41dea31) ·
+[PivotField.RepeatLabels](https://learn.microsoft.com/en-us/office/vba/api/excel.pivotfield.repeatlabels)

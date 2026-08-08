@@ -342,3 +342,55 @@ consistent ~4.7pt step at every level.
 Corroborating only, because the direction is not universal: on apple the aggregate sits DEEPER
 than its members ('Total current assets' x=88.6 over members at x=70.6). Indentation says a
 boundary is here; it does not say which side is the parent."""@en .
+
+tab:Groupability a tab:GridAxiom ; rdfs:label "G9 groupability"@en ;
+    rdfs:comment """An index level's equal values are ADJACENT within the group its parent
+levels define. Necessary for a tab:IndexColumn; never sufficient on its own.
+
+Adjacency, not sortedness: grouping needs only that equal values sit together, so no order
+relation, collation or type comparison is required. This matters — an order test would need a
+locale for text and a parse for dates, and would still say nothing a contiguity test does not.
+
+CONTIGUITY IS RELATIVE TO THE PARENT, and evaluating it globally is a measurable error.
+Measured on the shipping stem page 0: port values are NOT contiguous across the page (Mackay
+recurs under July, August and September) yet ARE contiguous within each month. Same on the WHO
+z-score table, whose month level recurs under every year. A global test rejects exactly the
+levels it should accept.
+
+The negative case is real: the ONS index-of-services page has left-hand columns that are
+contiguous NEITHER globally NOR within a parent, so it has no index block, and its left columns
+stay data."""@en .
+
+tab:SortedWithoutAggregate a tab:GridRefutation ; rdfs:label "R6 sorted without aggregate"@en ;
+    rdfs:comment """A groupable column with NO aggregate witness is NOT an index column — it is
+sorted DATA, and it stays in the grid.
+
+The reasoning is the authoring chain, not a heuristic: indentation exists to group, one groups
+in order to aggregate, and aggregating requires the equal values to be brought together first.
+So a column that was grouped but never aggregated was never grouped FOR anything — the sort is
+presentational.
+
+This is the conservative direction required by §7: absent proof of grouping, the column stays
+data. It costs recall on real cases — the WHO age index is a genuine category with no totals,
+because z-scores cannot be summed, so it is read as data — and that is the honest price of
+refusing to assert what the source does not support."""@en .
+
+tab:PivotFieldRepeatLabels a owl:Class ; rdfs:subClassOf tab:SuppressedRepeat ;
+    rdfs:label "Pivot field repeat labels"@en ;
+    rdfs:comment """The producer-side explanation of why one index level repeats its values while
+its siblings are left blank, verified against Microsoft's documentation rather than inferred.
+
+Excel's Subtotal command requires the data to be sorted by the grouping column first and then
+outlines the list automatically — so sort, group, aggregate is the native authoring order, and
+the outline indentation is its by-product.
+
+Repeating labels is a PER-FIELD print option (Field Settings > Layout & Print > 'Repeat item
+labels', exposed as PivotField.RepeatLabels), shown only in tabular form. One field can repeat
+while another is suppressed, in one table, with no difference of meaning. That is exactly the
+GrainCorp shipping stem: port repeats, year and month do not.
+
+Recorded so that no future reading treats the presence or absence of repeated labels as
+evidence about structure. It is evidence about a checkbox.
+
+See https://support.microsoft.com/en-us/excel/insert-subtotals-in-a-list-of-data-in-a-worksheet
+and https://support.microsoft.com/en-us/office/repeat-item-labels-in-a-pivottable-882bdb55-9cdc-4d8d-b531-8e96e41dea31"""@en .
