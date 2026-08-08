@@ -453,3 +453,63 @@ def test_emitted_graph_crosses_the_membrane(path, page):
     ont = Graph().parse(os.path.join(vocab, "ontology", "tab.ttl"), format="turtle")
     ok, report = membrane.validate(g, shapes, ont)
     assert ok, report[:2000]
+
+
+# --- wiring: the fallback, and what it must NOT touch -----------------------------
+
+ONS_P = os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")
+
+
+@pytest.mark.skipif(not os.path.exists(ONS_P), reason="corpus not fetched")
+def test_fallback_fires_only_where_the_page_produced_nothing_at_all():
+    """ons page 7 asserted nothing AND escalated nothing — a degenerate 1.0 over an empty
+    reading. The data grid gives it 276 real cells.
+
+    The gate is nothing-at-all, not merely nothing-asserted. A page that ESCALATED has
+    already accounted for its ink, so appending a reading there masks an honest
+    escalation and double-counts the same tokens on both sides of the ratio. Both were
+    measured: apple page 1 reported 0.5941 under the broader gate, and four
+    escalation-path tests failed because a second region appeared where they had pinned
+    exactly one."""
+    from iladub.etkl.compile import compile_tables
+
+    off = compile_tables(ONS_P, 7, validate_shapes=False, datagrid_fallback=False)
+    on = compile_tables(ONS_P, 7, validate_shapes=False, datagrid_fallback=True)
+    assert off.asserted == 0 and off.escalated == 0
+    assert sum(r.cells for r in off.regions) == 0
+    assert sum(r.cells for r in on.regions) == 276
+
+
+@corpus_only
+def test_fallback_never_masks_an_escalation():
+    """apple page 1 escalates. The fallback must leave it alone — an escalation is a
+    result, and filling it in silently is what §7 forbids."""
+    from iladub.etkl.compile import compile_tables
+
+    off = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=False)
+    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=True)
+    assert off.escalated > 0, "fixture drift: this page is supposed to escalate"
+    assert on.score == off.score
+    assert len(on.regions) == len(off.regions)
+
+
+@stem_only
+def test_fallback_leaves_the_adjudicated_document_byte_identical():
+    """The stem carries the corpus's only adjudicated verdict (cor:CompilesAbove, floor
+    0.95). The fallback must not move it by a single cell — it fires only on a page that
+    asserts nothing, and this page asserts 586."""
+    from iladub.etkl.compile import compile_tables
+
+    off = compile_tables(STEM, 0, validate_shapes=False, datagrid_fallback=False)
+    on = compile_tables(STEM, 0, validate_shapes=False, datagrid_fallback=True)
+    assert on.score == off.score
+    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 586
+
+
+@corpus_only
+def test_fallback_output_passes_full_shacl_through_the_production_path():
+    """validate_shapes=True is the gate the pipeline applies to any asserted holon."""
+    from iladub.etkl.compile import compile_tables
+
+    rep = compile_tables(ONS_P, 7, validate_shapes=True, datagrid_fallback=True)
+    assert sum(r.cells for r in rep.regions) == 276

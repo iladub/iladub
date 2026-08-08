@@ -397,7 +397,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None, doc_uri: URIRef | None = None,
                    carried_header_roles: dict | None = None,
-                   section_repair_bands: frozenset[int] | None = None) -> CompilationReport:
+                   section_repair_bands: frozenset[int] | None = None,
+                   datagrid_fallback: bool = True) -> CompilationReport:
     """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
     it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
     passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
@@ -844,6 +845,41 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     reports.append(RegionReport(region.kind, "escalated", 0,
                                                 "KIND_NOT_SUPPORTED",
                                                 str(TAB.HierarchicalTable), ascii_view))
+
+    # --- DATA-GRID FALLBACK (spec 2026-08-08-data-grid-types-elements-axioms.md §8.18)
+    #
+    # Only where the shipped path asserts NOTHING. Measured on the corpus, the two paths
+    # segment cells differently — on the stem they share 441 cells with 59 old-only and
+    # 51 new-only, because the ruled path re-extracts by drawn columns while the data
+    # grid reads ink runs. Replacing wholesale would churn the one document with an
+    # adjudicated floor (0.95) for no measured gain, so it does not replace: it fills in
+    # where the page currently yields zero cells (apple page 1, ons page 7, cbh).
+    #
+    # The gate is NOTHING AT ALL — no assertion and no escalation. Not merely "asserted
+    # nothing": a page that ESCALATED has already accounted for its ink, and appending a
+    # reading there does two forbidden things. It masks an honest escalation, which §7
+    # and the fluent-reader invariant require be FIXED rather than papered over. And it
+    # DOUBLE-COUNTS — those lines' tokens are already in escalated_total, so adding them
+    # to asserted_total inflates the ratio. Measured: apple page 1 reported 0.5941 under
+    # the broader gate, a number in which the same tokens sat on both sides.
+    #
+    # Found by the suite, not by reasoning: four escalation-path tests failed because a
+    # second region appeared on a page they had pinned to exactly one.
+    if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
+        from .datagrid import derive_data_grid, emit_data_grid
+        _grid = derive_data_grid(pdf_path, page_number)
+        if _grid is not None and _grid.rows:
+            _lines = [ln for ln in text_lines(extract_words(pdf_path, page_number))
+                      if ln.words]
+            _lines.sort(key=lambda ln: ln.top)
+            _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            emit_data_grid(graph, _grid, _lines, doc, page_number)
+            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before
+            _tokens = sum(len(_lines[i].words) for i in _grid.rows)
+            asserted_total += _tokens
+            reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                        None, str(TAB.DataGrid), ""))
+            band_marks.append((asserted_total, escalated_total))
 
     band_marks.append((asserted_total, escalated_total))
     from dataclasses import replace as _dc_replace

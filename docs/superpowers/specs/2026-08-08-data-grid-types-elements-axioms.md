@@ -1026,3 +1026,88 @@ Suite 21 datagrid tests, 35 with the gate, vocab and ownership tests. New vocabu
 
 **Remaining for the close:** wiring into `compile_tables` so a corpus score moves, gated on
 stem's 0.95 floor. Nothing is wired yet.
+
+### 8.18 Wired — measured first, switched second, and narrowed by the suite
+
+The differential ran BEFORE any switch, comparing the shipped path's asserted cells with the
+data grid's:
+
+```
+doc       pg    OLD    NEW  shared oldonly newonly  oldscore
+apple      0     20    155      16       4     139  0.1170
+apple      1      0     84       0       0      84  0.0000
+apple      2      3     87       1       2      86  0.0270
+stem       0    586    578     441      59      51  0.9560   <- the adjudicated floor
+capacity   0    390    406     151       7      15  1.0000
+cbh        0     13    737       0      13     682  0.0698
+who        0    185    321     173      12     138  0.5969
+bfs        6    222    288     207      14      80  0.8952
+ons        7      0    276       0       0     271  1.0000   <- 1.0 on ZERO cells
+```
+
+**That killed the replacement plan.** On the stem the two paths *segment cells differently* —
+441 shared, 59 old-only, 51 new-only — because the ruled path re-extracts by drawn columns
+while the data grid reads ink runs. Swapping them would churn the one document carrying an
+adjudicated 0.95 floor for no measured gain. Row-level completeness on the oracles says nothing
+about cell-level agreement; the differential is what separated those questions.
+
+**Then the suite narrowed the gate, and it was right to.** The first wire fired wherever a page
+asserted nothing — including pages that ESCALATED. Four escalation-path tests failed
+(`test_r17_gate`, `test_rowrole_integration`, `test_section_repair`, `test_unit_marker`),
+each pinning a page to exactly one region and now seeing two. That surfaced a defect reasoning
+had not:
+
+- **It masked honest escalations.** §7 and the fluent-reader invariant require a non-semantic
+  escalation be *fixed*, not filled in silently.
+- **It double-counted.** Those lines' tokens were already in `escalated_total`; adding them to
+  `asserted_total` put the same tokens on both sides of the ratio. apple page 1's reported
+  **0.5941 was not a real number.**
+
+So the gate is **nothing at all** — no assertion and no escalation:
+
+```
+fallback fires on 2 of 27 pages
+   ons p7: cells 0 -> 276   (was asserted=0 escalated=0)
+   ons p8: cells 0 -> 276   (was asserted=0 escalated=0)
+```
+
+Every other page byte-identical, including both protected documents. **stem's document compile
+returns 0.9654553611484971** — the adjudicated value, unchanged.
+
+**What this honestly delivers.** 552 real cells on two pages that previously produced none, all
+crossing full SHACL through the production path. **No score moves**: both ons pages already
+read 1.0000, because `denom == 0` returns 1.0 — a degenerate score over an empty reading, now
+a degenerate score over 276 cells. The scoring cannot express the improvement, which is a
+finding about the metric rather than about the grid.
+
+So by the repo's rule this loop **has not closed**: the wiring is real, sound and switchable
+(`datagrid_fallback: bool = True`), but no corpus score moved. Closing it means either widening
+the gate — which needs the escalation-masking and double-counting problems solved first, not
+argued away — or fixing the degenerate `denom == 0` score so an empty reading stops scoring
+perfect.
+
+### 8.19 The metric cannot see this improvement — 11 of 27 pages score a degenerate 1.0
+
+`score = 1.0 if denom == 0 else asserted / denom`, so a page that asserts nothing AND escalates
+nothing scores **perfect**. Measured across the corpus:
+
+```
+pages scoring a degenerate 1.0 on an empty reading: 11 of 27
+   bfs p1, p2, p3
+   ons p0, p1, p2, p3, p5, p6, p7, p8
+```
+
+Most are correctly empty — bfs p1–p3 and ons p0–p3/p5/p6 are prose pages the grid gate rightly
+discards. But **ons p7 and p8 are real tables that produced nothing and scored 1.0**, and the
+metric cannot tell the two cases apart. Reading 276 cells where there were none leaves the
+score at 1.0000 either way.
+
+This is why the loop cannot close on a score today, and the obstacle is the metric rather than
+the grid: an empty reading should not score perfect. Distinguishing "nothing to read" from
+"failed to read" needs the grid gate's own page-level verdict — which exists (17 of 27 pages
+carry a table) and is not consulted by the score.
+
+**Residue.** Two ways forward, and both are their own loop: fix the degenerate score so an
+empty reading on a table page is not perfect, or widen the fallback past the nothing-at-all
+gate — which requires first solving escalation-masking and token double-counting, measured in
+§8.18 and not to be argued away.
