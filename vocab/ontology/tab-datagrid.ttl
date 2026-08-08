@@ -286,3 +286,59 @@ under a tab:AlignmentUniverse.
 Not a convenience — the seed must be modal in the same space the columns came from, or it types
 the wrong columns. Measured: seeding a decoration universe by signature instead of occupancy
 cost capacity 19 of its 27 rows."""@en .
+
+#################################################################
+#  5. Index columns — the row axis's categories, which are METADATA
+#################################################################
+#
+#  A table's left-hand levels (year, month, port; the statistical STUB) are categories,
+#  not entries. They locate data; they are not data. Excluding them is therefore not a
+#  convenience but a consequence of §0: entries are data, categories are data ABOUT data.
+
+tab:IndexColumn a owl:Class ; rdfs:label "Index column"@en ;
+    rdfs:comment """A level of the row axis's category structure — a stub level. METADATA, and
+so excluded from every tab:DataGrid, however value-like its cells appear."""@en .
+
+tab:IndexLevel a owl:DatatypeProperty ; rdfs:domain tab:IndexColumn ; rdfs:range xsd:integer ;
+    rdfs:label "index level"@en ;
+    rdfs:comment "Depth in the row-axis category tree, outermost = 0."@en .
+
+tab:SuppressedRepeat a owl:Class ; rdfs:label "Suppressed repeat"@en ;
+    rdfs:comment """An index level whose repeated values the author printed only once per group
+(the spreadsheet ditto/outline convention), leaving the rows beneath visually blank.
+
+SUPPRESSION IS COSMETIC, NOT SEMANTIC — and this is the load-bearing claim of this section.
+An author may suppress repeats at one level and print them at another with no change of
+meaning. Measured on the GrainCorp shipping stem, page 0: year (x=18.8) and month (x=57–62)
+are printed once per group and suppressed beneath, while port (x=96.4) is REPRINTED on all 33
+rows. All three are the same kind of thing. A reader who inferred 'repeated therefore data'
+would take the port column for data and the year column for structure, on the strength of a
+typographic choice."""@en .
+
+tab:AggregateWitness a tab:GridAxiom ; rdfs:label "G8 aggregate witness"@en ;
+    rdfs:comment """A column is a tab:IndexColumn when rows exist whose measures reconcile
+EXACTLY with the rows sharing a value in that column. A total over a column is meaningful only
+if that column is a key: 'Mackay Total' is arithmetic nonsense unless 'Mackay' identifies a
+group rather than stating a value.
+
+This is the language-free discriminator, and it is why repetition alone must never be used.
+Measured on the shipping stem page 0: 12 of 15 port-level totals reconcile exactly by Decimal
+arithmetic (e.g. Fisherman Islands Total 76,000 over 3 member rows; Geelong Total 233,000 over
+6). No word is read — not 'Total', which would be English-specific — only the sums.
+
+The three that do not reconcile are recorded rather than hidden: one has its members cut by a
+group boundary and two hit the known split-number defect, where a tonnage is extracted as
+'5 0,000'.
+
+HONEST LIMIT: a grouping level with no totals has no witness under this axiom and stays in the
+grid. The axiom is sound, not complete."""@en .
+
+tab:IndexAtTotalIndent a owl:Class ; rdfs:label "Index at total indent"@en ;
+    rdfs:comment """Corroborating spatial evidence, not a test on its own: in an outline layout
+each level prints its totals at a slightly shallower indent than its values. Measured on the
+stem: port values x=96.4 with port totals x=91.7; month values x=62 with month totals x=57 — a
+consistent ~4.7pt step at every level.
+
+Corroborating only, because the direction is not universal: on apple the aggregate sits DEEPER
+than its members ('Total current assets' x=88.6 over members at x=70.6). Indentation says a
+boundary is here; it does not say which side is the parent."""@en .

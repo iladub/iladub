@@ -554,3 +554,67 @@ of both.
 it falls to alignment, and its `Blank`/`TBA` placeholders type as Text inside Date and Quantity
 columns. The axioms remain declared-only: no `.rq`, no SHACL, no worked example, no negative
 test, nothing wired into `compile_tables`, no corpus score moved.
+
+### 8.9 Index columns: repeated cells ARE indentation, and the aggregate proves it
+
+François, on the shipping stem: *"Port should also be part of the indentation. We have to
+question if repeated cells can or cannot be considered as differently typed indentation — and
+the hint is that we have totals in the same column, which means port names are semantically
+identical and a single repeated entity. The author might have removed repeated occurrences to
+highlight the indentation and still let port names repeat, for a reason we ignore. But this
+does not change the logic: the port column is metadata and not data."*
+
+Measured on page 0, and it holds:
+
+```
+x= 18.8  '2025/26'                          Year   — printed once, suppressed beneath
+x= 57-62 'Jul 26','Aug 26','Sep 26'         Month  — printed once per group, suppressed
+x= 96.4  'Mackay','Gladstone','Geelong' ...  Port  — REPRINTED on all 33 rows
+x= 91.7  'Mackay Total','Fisherman Islands Total' ...  port totals
+x= 57.2  'Jul 26 Total','Aug 26 Total','Sep 26 Total'  month totals
+x= 14    'GC Fin Year','2025/26 Total'                 season total
+```
+
+Three levels, each with a value indent and a total indent ~4.7pt shallower. Year and month are
+ditto-suppressed; port is not. **The difference is typographic; the structure is identical.**
+
+**The witness is arithmetic, not vocabulary.** Reading the word "Total" would be
+English-specific and is forbidden. Instead: does a row's measure equal the sum of the rows
+sharing its neighbour's value?
+
+```
+Gladstone Total          20,000  = 1 member    MATCH
+Carrington Total         23,000  = 1 member    MATCH
+Gladstone Total          36,500  = 3 members   MATCH
+Fisherman Islands Total  76,000  = 3 members   MATCH
+Port Kembla Total        62,500  = 1 member    MATCH
+Geelong Total           233,000  = 6 members   MATCH
+Portland Total          144,000  = 5 members   MATCH
+...
+confirmed port-level aggregates: 12 of 15
+```
+
+Twelve exact reconciliations. `Mackay Total` is arithmetic nonsense unless `Mackay` names a
+group — so the port column is a **key**, and keys are metadata. (The three failures are
+recorded, not hidden: one has its members cut by a group boundary; two hit the known
+split-number defect that extracts a tonnage as `5 0,000`.)
+
+**Vocabulary added:** `tab:IndexColumn` (a stub level; metadata, excluded from every data
+grid), `tab:IndexLevel`, `tab:SuppressedRepeat` (suppression is cosmetic, not semantic),
+`tab:AggregateWitness` (G8, the arithmetic discriminator), and `tab:IndexAtTotalIndent`
+(corroborating spatial evidence only — its direction is not universal, since apple's aggregates
+sit *deeper* than their members while the stem's sit shallower).
+
+**Measured effect on the stem's grid:**
+
+```
+index block INCLUDED (today):   seed n=15 x11 | 15 cols (6 measure) | 17/65 rows  y 101.3-417.6
+index block EXCLUDED:           seed n=14 x13 | 14 cols (6 measure) | 19/65 rows  y  88.4-417.6
+```
+
+The gain is small but the correction is structural: the grid's left boundary no longer runs
+through the row-axis categories, and its extent now starts at the first data row (y=88.4)
+instead of skipping two rows whose leading index runs varied.
+
+**Honest limit, stated in the axiom itself:** a grouping level with no totals has no witness
+and stays in the grid. G8 is sound, not complete.
