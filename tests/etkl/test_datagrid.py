@@ -245,8 +245,30 @@ def test_stem_p0_recall_against_the_transcription():
     in the ontology and NOT yet implemented here) and is named in the spec."""
     g = derive_data_grid(STEM, 0)
     recovered = set(g.rows) & STEM_P0_DATA
-    assert len(recovered) >= 33, (
+    assert len(recovered) >= 36, (
         f"recall regressed: {len(recovered)}/{len(STEM_P0_DATA)}")
+
+
+CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_cbh_repeated_headers_are_not_data():
+    """A PARTIAL oracle: cheap soundness without a full transcription.
+
+    cbh reprints its header once per port section. Four such rows were being admitted as
+    data, and were only caught when the every-measure refutation landed and the row count
+    FELL — which I first read as a regression. Row count is not a quality measure; this
+    test is, for the part it covers."""
+    g = derive_data_grid(CBH, 0)
+    assert g is not None
+    lines = [l for l in sorted(text_lines(extract_words(CBH, 0)), key=lambda l: l.top)
+             if l.words]
+    headers = {i for i, l in enumerate(lines)
+               if " ".join(w.text for w in l.words).startswith("VNA #")}
+    assert headers, "fixture drift: the repeated header rows are gone"
+    leaked = sorted(set(g.rows) & headers)
+    assert not leaked, f"repeated header rows admitted as data: {leaked}"
 
 
 @corpus_only

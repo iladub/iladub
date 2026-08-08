@@ -267,8 +267,17 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         return None
 
     def place(rs: list[Run]) -> dict | None:
-        """Map a row's runs into the fixed columns, or refuse it."""
-        if not rs or rs[0].x0 < bounds[0] - 0.5 or rs[-1].x1 > bounds[-1] + 0.5:
+        """Map a row's runs into the fixed columns, or refuse it.
+
+        Ink OUTSIDE the column extent is not a refusal. The grid is the rectangle, so ink
+        beyond it is metadata by construction — an index value, not a defect in the row.
+        Measured on the stem: 24 real data rows carry a year or month value that their
+        neighbours ditto-suppress, and treating that ink as grounds for refusal discarded
+        every row that begins a group."""
+        if not rs:
+            return None
+        rs = [r for r in rs if r.x1 > bounds[0] - 0.5 and r.x0 < bounds[-1] + 0.5]
+        if not rs:
             return None
         hit: dict = {}
         for r in rs:
@@ -346,6 +355,31 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
             continue
         if not (measures & set(h)):
             refusals[i] = "RowAddressability/no-measure"
+            continue
+        # A row contradicting the seed's family in EVERY measure column it occupies is
+        # not a row of this grid — it is a header. A universal quantifier, not a count.
+        #
+        # It exists because the asymmetric relaxation above disarmed the refusal that
+        # used to catch a boxhead: the stem's placeholder and mixed-cargo rows null
+        # several column families between them, after which the header row places
+        # cleanly into the very columns it labels. Measured, it contradicts all six
+        # measure columns (Text against Date and Quantity) while a mixed-cargo row
+        # contradicts one and a placeholder row two, so the quantifier separates them
+        # without counting anything.
+        #
+        # Over TWO OR MORE measure columns only: over a single one the quantifier is
+        # vacuous and degenerates into the per-column refusal it replaces, which cost
+        # cbh 9 rows, ons 4 and bfs 2 — each a sparse row occupying one measure cell
+        # that happens to disagree. Two is the minimum at which "every" asserts
+        # anything, the same minimal-presence rule a lattice level uses.
+        occupied = measures & set(h)
+        if len(occupied) >= 2 and all(
+                not is_blank(h[k]) and columns[k].family
+                and columns[k].family not in _ABSTAIN
+                and family_of(h[k]) not in _ABSTAIN
+                and family_of(h[k]) != columns[k].family
+                for k in occupied):
+            refusals[i] = "HeterogeneousColumn/every-measure"
             continue
         clash = next((k for k, t in h.items()
                       if not is_blank(t) and refusing.get(k)

@@ -786,3 +786,54 @@ yet wired into the derivation** — that is the next step, and the stem oracle i
 judge it.
 
 Still true: nothing is wired into `compile_tables`, and no corpus score has moved.
+
+### 8.13 Index ink admitted; a boxhead caught; and row count retired as a measure
+
+**Index ink is outside the rectangle, so it cannot refuse a row.** The 24 stem rows refused as
+`unplaceable` carried a year or month value their neighbours ditto-suppress; that ink sits left
+of the grid's first column, which by the definition makes it metadata, not a defect in the row.
+Runs outside the column extent are now dropped rather than fatal.
+
+**The oracle immediately caught what that let in.** stem line 6 — the header row `GC Fin Year
+Month Port Reference Number Exporter ...` — was admitted as data, because with its leading ink
+dropped it places cleanly into the very columns it labels. Recall rose 33→36 and a boxhead came
+with it, which §7 ranks as strictly worse than the miss. Without the transcription this would
+have read as an unqualified gain.
+
+**The refutation, measured rather than guessed.** Line 6 contradicts the seed family in *all
+six* measure columns (Text against Date and Quantity); a mixed-cargo row contradicts one; a
+placeholder row two. So: **a row contradicting every measure column it occupies is a header** —
+a universal quantifier, nothing compared to a threshold. It applies over two or more measure
+columns, because over a single one the quantifier is vacuous and degenerates into the
+per-column refusal it replaces (that vacuous form cost cbh 9 rows, ons 4, bfs 2).
+
+**And it retired a metric I had been leaning on.** The rule dropped cbh from 55 rows to 46, and
+I first read that as a regression. It is a correction:
+
+```
+  8, 24, 47, 67 :: VNA # Vessel Name Time Nominated Date Nominated Client ETA ...  repeated HEADERS
+ 76-80          :: PORT WHEAT MAIN WHEAT GRADES BARLEY ... / ALB 129,183 ...       a SECOND table
+```
+
+Four reprinted header rows that had been counted as data, and five rows of the stacked
+"Stock at Port" grid. **Total row count is not a quality measure** — it is unfalsifiable
+without a transcription, and on the two pages where truth is known this version is better or
+equal (apple 31/31 both; stem 36 against 33). Pinned by a partial oracle,
+`test_cbh_repeated_headers_are_not_data`, which needs no full transcription.
+
+```
+apple p0  31/44  ORACLE 31/31, 0 leaked        capacity 27/32
+apple p1  28/43                                cbh      46/85
+apple p2  29/41                                who      25/30
+stem  p0  36/65  ORACLE 36/57, 0 leaked        bfs      33/43     ons 41/68
+
+9/9 pages, oracle leaks: 0.  Suite 15 datagrid tests, 32 with the gate and vocab tests.
+```
+
+Mutation-checked: disabling the every-measure refutation fails BOTH the stem soundness test and
+the new cbh test.
+
+**Still open.** stem's 21 remaining misses are the placeholder rows (`Blank`, `TBA`, `N/A` typing
+as Text inside Date columns — the same phenomenon `tab:Blank` already handles for `(blank)`)
+and the Total rows, whose two-run shape places into too few columns. G8/G9 remain unwired.
+Nothing is wired into `compile_tables`; no corpus score has moved.
