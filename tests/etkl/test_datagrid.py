@@ -205,8 +205,48 @@ def test_apple_p0_recall_against_the_transcription():
     admitted = set(g.rows)
     recovered = admitted & APPLE_P0_DATA
     missed = sorted(APPLE_P0_DATA - admitted)
-    assert len(recovered) >= 30, (
+    assert len(recovered) == len(APPLE_P0_DATA), (
         f"recall regressed: {len(recovered)}/{len(APPLE_P0_DATA)}; missed {missed}")
+
+
+# --- the second oracle: the reference document ------------------------------------
+STEM = os.path.join(CORPUS, "ag-trade", "graincorp-stem-2026-07-31.pdf")
+stem_only = pytest.mark.skipif(not os.path.exists(STEM), reason="corpus not fetched")
+
+# graincorp-stem-2026-07-31.pdf page 0, transcribed (65 lines). METADATA is the title
+# block, the three-line wrapped header, and the footnote. Every vessel row AND every
+# Total row is data — an aggregate is a row of the grid.
+STEM_P0_METADATA = {
+    0,   # GRAINCORP SHIPPING STEM                      title
+    1,   # GrainCorp Operations Ltd ABN 52003875401     title
+    2,   # SHIPPING STEM                                title
+    3,   # Friday, 31 July 2026                         date caption
+    4,   # Date of Grain                                header block, wrapped line 1
+    5,   # Unique Slot Loading Date Nomination ...      header block, wrapped line 2
+    6,   # GC Fin Year Month Port Reference Number ...  header leaf row
+    64,  # GrainCorp advise that the load dates ...     footnote
+}
+STEM_P0_LINES = 65
+STEM_P0_DATA = set(range(STEM_P0_LINES)) - STEM_P0_METADATA   # 57 rows
+
+
+@stem_only
+def test_stem_p0_admits_no_metadata():
+    """SOUNDNESS on the reference document — the one with an adjudicated 0.95 floor."""
+    g = derive_data_grid(STEM, 0)
+    assert g is not None
+    leaked = sorted(set(g.rows) & STEM_P0_METADATA)
+    assert not leaked, f"metadata admitted as data: lines {leaked}"
+
+
+@stem_only
+def test_stem_p0_recall_against_the_transcription():
+    """Floor, not aspiration. The gap to 57 is the index-column rows (G8/G9 are defined
+    in the ontology and NOT yet implemented here) and is named in the spec."""
+    g = derive_data_grid(STEM, 0)
+    recovered = set(g.rows) & STEM_P0_DATA
+    assert len(recovered) >= 33, (
+        f"recall regressed: {len(recovered)}/{len(STEM_P0_DATA)}")
 
 
 @corpus_only

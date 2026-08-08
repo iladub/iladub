@@ -728,3 +728,61 @@ pages 9/9   data rows 258
 yet excluded — which is why stem reads 17/65 here against the 19/65 the index-exclusion probe
 reached. Nothing is wired into `compile_tables`, and no corpus score has moved. The oracle
 covers one page of nine; the other eight remain unfalsified.
+
+### 8.12 Two oracles, and the homogeneity fix they forced
+
+A second transcription: `graincorp-stem-2026-07-31.pdf` page 0, 65 lines — 8 metadata (four
+title lines, the three-line wrapped header, the footnote) and 57 entry rows, every `Total`
+included. It was chosen because it is the weakest page, the only document with an adjudicated
+verdict (`cor:CompilesAbove`, floor 0.95), and the case where index columns should pay off.
+
+**What the oracle exposed.** Refusal reasons for the 40 missed rows:
+
+```
+unplaceable                x24   '2025/26 Jul 26 Mackay 56817 ...'  — index runs, more runs than columns
+HeterogeneousColumn/col1   x10   'Fisherman Islands Woodchip QCE ...' — Text where the seed had a number
+HeterogeneousColumn/col4    x6   'Blank' / 'TBA' placeholders in a Date column
+```
+
+The `col1` group is the finding. That column is **genuinely mixed** — non-grain cargo carries a
+commodity word where grain carries a slot reference — but typing it from the seed alone
+declared it `Quantity`, manufacturing an agreement the column never had, which then refused ten
+real data rows. **G1 says a column agrees over the ADMITTED rows; typing from the seed is not
+that.**
+
+**The fix, and the failed first attempt.** Re-typing over the addressable rows gave apple p0
+perfect recall and stem 17→33, but destroyed capacity, bfs and ons outright (`NO GRID`): one
+contradicting row emptied the measure set, and with it the grid.
+
+So the second pass is **asymmetric — it may only RELAX a refusal, never redefine what the grid
+is.** The seed establishes the grid's identity (its measures, its key column); the wider
+evidence decides only whether a column is *entitled to refuse* a row. A column the addressable
+rows contradict has no agreed family, and a column with no agreed family refuses nobody. Two
+bounded passes, columns never moving — so §8.5's non-convergence cannot arise.
+
+```
+page        rows/lines   universe     delta   oracle
+apple p0     31 / 44     alignment     +1     31/31 recall, 0 leaked   ← complete
+apple p1     28 / 43     alignment     +1
+apple p2     26 / 41     alignment     +0
+stem  p0     33 / 65     alignment    +16     33/57 recall, 0 leaked
+capacity     28 / 32     decoration    +1
+cbh   p0     55 / 85     decoration    +9
+who   p0     25 / 30     alignment     +0
+bfs   p6     34 / 43     alignment     +2
+ons   p7     42 / 68     alignment    +14
+
+9/9 pages, 302 data rows (was 258), no regressions.  Suite 29 passed.
+```
+
+**apple page 0 is complete: all 31 entry rows, no metadata admitted.** Both oracles are pinned
+as tests — apple at exact equality, stem at a floor of 33 — so a future change cannot silently
+lose them.
+
+**The remaining stem gap is entirely the index columns** (24 `unplaceable` rows carrying year
+and month values that the other rows suppress). G8 `tab:AggregateWitness` and G9
+`tab:Groupability` are defined in the ontology and implemented as functions here, but are **not
+yet wired into the derivation** — that is the next step, and the stem oracle is now in place to
+judge it.
+
+Still true: nothing is wired into `compile_tables`, and no corpus score has moved.

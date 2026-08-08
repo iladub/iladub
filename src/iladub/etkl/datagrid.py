@@ -296,18 +296,46 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
     if not seed_rows:
         return None
 
-    # --- G1 tab:ColumnHomogeneity, typed over the seed.
-    columns = []
-    for k in range(ncols):
-        fams = {family_of(h[k]) for h in seed_rows if k in h and not is_blank(h[k])}
-        core = fams - _ABSTAIN
-        use = core if core else fams
-        fam = next(iter(use)) if len(use) == 1 else None
-        columns.append(GridColumn(bounds[k], bounds[k + 1], fam))
+    def _type(rows_: list[dict]) -> list[GridColumn]:
+        cols = []
+        for k in range(ncols):
+            fams = {family_of(h[k]) for h in rows_ if k in h and not is_blank(h[k])}
+            core = fams - _ABSTAIN
+            use = core if core else fams
+            cols.append(GridColumn(bounds[k], bounds[k + 1],
+                                   next(iter(use)) if len(use) == 1 else None))
+        return cols
+
+    # --- G1 tab:ColumnHomogeneity, in two bounded passes.
+    #
+    # Typing from the seed ALONE manufactures agreement a column does not have: the seed
+    # rows are one signature class, so a column they happen to fill uniformly is declared
+    # homogeneous even when the rest of the table contradicts it. Measured on the stem,
+    # where the slot-reference column is Quantity across the seed but carries a commodity
+    # word on every non-grain row — 10 real data rows refused for disagreeing with a
+    # family the column never actually had.
+    #
+    # G1 says a column agrees over the ADMITTED rows. So: type provisionally from the
+    # seed, take the rows that satisfy addressability under it, then RE-TYPE over those.
+    # A column they contradict has no family, and a column with no family refuses nobody.
+    #
+    # This is two passes, not an iteration: the columns themselves never move, so the
+    # non-convergence of §8.5 cannot arise.
+    # The second pass is ASYMMETRIC: it may only RELAX a refusal, never redefine what the
+    # grid is. Letting it re-derive the measures destroyed capacity, bfs and ons outright
+    # (one contradicting row emptied the measure set, and with it the grid). So the seed
+    # establishes the grid's identity — its measures and its key column — while the wider
+    # evidence decides only whether a column is entitled to REFUSE a row.
+    columns = _type(seed_rows)
     measures = {i for i, c in enumerate(columns) if c.is_measure}
     if not measures:                              # G1b tab:NonDegeneracy
         return None
     key_col = min(k for k in range(ncols) if columns[k].family is not None)
+    addressable = [h for _, h in placed if key_col in h and (measures & set(h))]
+    # A column that the addressable rows contradict has no agreed family, and a column
+    # with no agreed family refuses nobody.
+    refusing = {k: c.family for k, c in enumerate(_type(addressable))} if addressable \
+        else {k: c.family for k, c in enumerate(columns)}
 
     # --- G2 tab:RowAddressability + G1 compatibility.
     rows: list[int] = []
@@ -320,10 +348,10 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
             refusals[i] = "RowAddressability/no-measure"
             continue
         clash = next((k for k, t in h.items()
-                      if not is_blank(t) and columns[k].family
-                      and columns[k].family not in _ABSTAIN
+                      if not is_blank(t) and refusing.get(k)
+                      and refusing[k] not in _ABSTAIN
                       and family_of(t) not in _ABSTAIN
-                      and family_of(t) != columns[k].family), None)
+                      and family_of(t) != refusing[k]), None)
         if clash is not None:
             refusals[i] = f"HeterogeneousColumn/col{clash}"
             continue
