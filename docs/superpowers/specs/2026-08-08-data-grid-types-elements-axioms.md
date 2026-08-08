@@ -441,3 +441,57 @@ cbh are good, while **stem (17/65), capacity (7/32) and ons (28/68) still lose d
 run structure differs from the seed's — a sparse register's rows genuinely vary. Closing that
 is the next refinement, and it must not be closed by relaxing a test until the numbers rise:
 the rows lost are lost for identifiable structural reasons, and those reasons are the evidence.
+
+### 8.7 Two further refinements attempted, both measured WORSE — §8.6 stands
+
+Recall was diagnosed first, by asking which axiom refuted each rejected line — the
+`tab:refutedBy` record the ontology calls for:
+
+```
+stem p0      STRADDLE x34   OUTSIDE x8 (the header row)   TYPE x6 ('Blank' placeholder)
+capacity p0  STRADDLE x21   OUTSIDE x3 (the header row)   TYPE x1
+ons  p7      TYPE x22 (wrapped header text)  STRADDLE x17 (the title)  NOMEASURE x1
+```
+
+ons's refusals are almost entirely genuine metadata, so its 28/68 is much closer to correct
+than the ratio suggests. STRADDLE dominating stem and capacity was a defect in the definition:
+a column's interval was the seed rows' **ink extent**, so any row with a longer vessel name
+overflowed and was refused.
+
+**Attempt A — columns as CUTS (the gaps between seed extents) rather than extents.** A run
+straddles only if it crosses an entire gap; presence test, no midpoint chosen.
+
+```
+apple p2  25 -> 27 rows   improved
+stem  p0  17 -> 13 rows   WORSE   (MULTI x4)
+capacity   7 ->  6 rows   WORSE   (MULTI x18)
+```
+
+Widening columns to the gaps lets two runs fall in one column. STRADDLE fell and MULTI rose:
+the same error swapping ends. **Rejected.**
+
+**Attempt B — the column universe from author-drawn vertical rules**, on the standing principle
+that decoration measures the post-reshape shape and therefore outranks alignment where it
+exists.
+
+```
+pages with an admitted grid: 1/9   (8 pages: "no measure column")
+```
+
+**Catastrophic, and the cause is known:** `extract_rules` conflates area-fill edges with drawn
+rules — apple reports 678 "vertical rules", and WHO yields a 104-column universe. This is the
+same conflation the header-boundary pass recorded (`page.rects` vs `page.lines + page.edges`).
+The principle is not refuted; the available rule extractor cannot supply the universe.
+**Rejected.**
+
+**Conclusion.** §8.6 stands as the best measured definition: 9/9 pages admit a grid, metadata
+excluded by construction, no tuned constant. Recall remains uneven (stem 17/65, capacity 7/32,
+ons 28/68), and two principled attempts to close it both measured worse. The remaining recall
+gap is now attributable to two named causes rather than to mystery:
+
+1. **stem/capacity carry document-specific placeholders** (`Blank`, `TBA`) that type as Text
+   inside Date and Quantity columns. `tab:Blank` covers `(blank)` and a lone `-`; these are the
+   same phenomenon under a different convention.
+2. **A clean rule extractor does not exist.** Closing that — reading `page.rects` so a drawn
+   rule is one object and a fill is not a rule — would let attempt B be retried honestly, and
+   it is the prerequisite for using decoration as the column universe at all.
