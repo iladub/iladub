@@ -19,12 +19,12 @@ François, 2026-08-09:
 > holon at the interface membrane. ET(K)L does 2 things: resolve an agnostic internal state with
 > its own transformations, and also the transformations required by the projection induced by a
 > contract at the membrane.
-
+>
 > The holon does not describe itself with an explicit port attribute for the data grid — the
 > notion of port is **implicit**, which is a problem only for a projection another holon needs
 > where the port name must be part of the data schema.
 
-```
+```text
 DOCUMENT
    │  AGNOSTIC INTERNAL RESOLUTION — runs ONCE, contract-free
    │  de-accommodate · segment · recover grid · absorb unit markers
@@ -129,7 +129,7 @@ is **refused**, not merely unlikely.
 
 ### 3.1 The four panels share one column grid — HOLDS
 
-```
+```text
 panel 0 (lines  9..23): 10 body rows, modal x-signature (50, 108, 179, 224, 275, 310, 385, 461, 501)
 panel 1 (lines 25..46): 16 body rows, modal x-signature (50,  99, 179, 224, 275, 310, 379, 461, 501)
 panel 2 (lines 48..66): 14 body rows, modal x-signature (50, 108, 179, 224, 275, 310, 385, 461, 501)
@@ -141,7 +141,7 @@ columns** whose ink starts where the text starts — not column boundaries.
 
 ### 3.2 Repetition alone is NOT sufficient — the measured false-positive class
 
-```
+```text
 cbh   p0: x4  VNA # Vessel Name Time Nominated Date Nominated ...   reprinted HEADER
 apple p0: x2  Services 30,739 27,423 91,728 80,408                  repeated DATA row
 apple p0: x2  Total net sales $ 109,417 $ 94,036 ...                repeated DATA row
@@ -161,7 +161,7 @@ in the corpus (§3.2's scan), which bounds the blast radius to one document.
 
 ### 3.4 The annotation is centred on the full grid width — HOLDS
 
-```
+```text
 grid extent x 38.2..1151.4, centre 594.8
 GERALDTON / KWINANA / ALBANY / ESPERANCE  centres 595.1-595.3
 ```
