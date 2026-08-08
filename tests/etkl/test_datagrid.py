@@ -513,3 +513,42 @@ def test_fallback_output_passes_full_shacl_through_the_production_path():
 
     rep = compile_tables(ONS_P, 7, validate_shapes=True, datagrid_fallback=True)
     assert sum(r.cells for r in rep.regions) == 276
+
+
+# --- R72: an empty reading must not score perfect ---------------------------------
+
+@corpus_only
+def test_grid_gate_separates_prose_from_table_pages():
+    """The page-level verdict the score consults: 17 of 27 corpus pages carry a table."""
+    from iladub.etkl.datagrid import page_has_table
+
+    assert page_has_table(APPLE, 0)
+    bfs = os.path.join(CORPUS, "gov-stats", "bfs-population-bilan-2023.pdf")
+    if os.path.exists(bfs):
+        assert not page_has_table(bfs, 0), "bfs page 0 is a press release, not a table"
+        assert page_has_table(bfs, 6)
+
+
+@pytest.mark.skipif(not os.path.exists(os.path.join(
+    CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")), reason="corpus not fetched")
+def test_an_unread_table_page_no_longer_scores_perfect():
+    """R72. `score = 1.0 if denom == 0` gave a page that read NOTHING a perfect score,
+    whether it held prose or a table nobody could read — 11 of 27 corpus pages.
+
+    Now the grid gate decides: prose keeps 1.0 (nothing to read), a table that yielded no
+    cells scores 0.0 (failed to read). Which is also what finally makes the data grid's
+    contribution visible as a score."""
+    from iladub.etkl.compile import compile_tables
+
+    p = os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")
+    unread = compile_tables(p, 7, validate_shapes=False, datagrid_fallback=False)
+    assert unread.asserted == 0 and unread.escalated == 0
+    assert unread.score == 0.0, "a table page that read nothing must not score 1.0"
+
+    read = compile_tables(p, 7, validate_shapes=False, datagrid_fallback=True)
+    assert sum(r.cells for r in read.regions) == 276
+    assert read.score == 1.0
+
+    prose = compile_tables(p, 0, validate_shapes=False, datagrid_fallback=False)
+    assert prose.asserted == 0 and prose.escalated == 0
+    assert prose.score == 1.0, "a prose page has nothing to read and is not a failure"

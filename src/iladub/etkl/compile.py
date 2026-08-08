@@ -889,7 +889,19 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                for i, r in enumerate(reports)]
 
     denom = asserted_total + escalated_total
-    score = 1.0 if denom == 0 else asserted_total / denom
+    if denom:
+        score = asserted_total / denom
+    else:
+        # NOTHING was read. Whether that is right depends on whether there was anything
+        # to read, and the page-level grid gate answers exactly that (R72). A page of
+        # prose has nothing to read and scores 1.0; a page carrying a table that yielded
+        # no cells FAILED, and a failure must not score perfect.
+        #
+        # Measured before this change: 11 of 27 corpus pages scored a degenerate 1.0 on
+        # an empty reading — nine of them correctly (prose the gate discards) and two
+        # (ons pages 7 and 8) real tables the reader produced nothing for.
+        from .datagrid import page_has_table
+        score = 0.0 if page_has_table(pdf_path, page_number) else 1.0
 
     if validate_shapes and (
         any(graph.subjects(RDF.type, TAB.RecordTable))

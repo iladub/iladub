@@ -583,3 +583,22 @@ def _place_for_emit(line, grid: "DataGrid") -> dict:
         else:
             hit[k] = (r.text, r.x0, r.x1)
     return hit
+
+
+def page_has_table(pdf_path: str, page_number: int = 0, gap: float = GAP) -> bool:
+    """Does this page carry a table at all? The grid gate, as a page-level verdict.
+
+    Modal ink-run count per text line: more than one run means the lines are laid out in
+    columns, exactly one means prose. Measured across the whole corpus this keeps 17 of
+    27 pages, and the verdict is IDENTICAL for every separator from 3pt to 20pt — `gap`
+    only has to fall between prose word-spacing and column gutters, and the margin is
+    about tenfold (prose collapses to one run at 3pt while tables survive past 33pt).
+
+    Its purpose is to separate *nothing to read* from *failed to read*. Without it a page
+    that yields no cells scores a perfect 1.0 whether it is a page of prose or a table
+    the reader could not handle — measured on 11 of 27 corpus pages (R72)."""
+    lines = [l for l in text_lines(extract_words(pdf_path, page_number)) if l.words]
+    if not lines:
+        return False
+    counts = [len(ink_runs(l, gap)) for l in lines]
+    return Counter(counts).most_common(1)[0][0] > 1

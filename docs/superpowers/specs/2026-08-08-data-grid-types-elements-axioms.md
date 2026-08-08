@@ -1086,6 +1086,51 @@ the gate — which needs the escalation-masking and double-counting problems sol
 argued away — or fixing the degenerate `denom == 0` score so an empty reading stops scoring
 perfect.
 
+### 8.19 R72 fixed — an empty reading stops scoring perfect, and the loop closes
+
+`score = 1.0 if denom == 0 else asserted / denom` gave a page that read NOTHING a perfect
+score. Measured, 11 of 27 corpus pages did exactly that:
+
+```
+bfs p1, p2, p3            ons p0, p1, p2, p3, p5, p6, p7, p8
+```
+
+Nine are correctly empty — prose the grid gate discards. Two are not: **ons pages 7 and 8 are
+real tables the reader produced nothing for, and scored 1.0000 for it.** The metric could not
+tell *nothing to read* from *failed to read*, so no reading improvement on an empty page could
+ever show up as a score.
+
+**The verdict already existed and the score did not consult it.** `page_has_table` is the
+page-level grid gate — modal ink-run count per line, more than one run meaning columns — which
+keeps 17 of 27 pages and is invariant for every separator from 3pt to 20pt. So:
+
+```
+denom == 0 and no table  ->  1.0   nothing to read
+denom == 0 and a table   ->  0.0   failed to read it
+```
+
+**Measured result — and this is the loop closing:**
+
+```
+page                      no fallback   with fallback   cells
+bfs p1-p3, ons p0-p3,5,6       1.0000          1.0000       0    prose, correctly perfect
+ons p7                         0.0000          1.0000     276    a real table, now read
+ons p8                         0.0000          1.0000     276
+```
+
+Pages with `denom > 0` cannot be touched by the change, so the other sixteen are unaffected by
+construction. **stem's document compile returns 0.9654553611484971** — the adjudicated value,
+and the 0.95 floor holds.
+
+**A corpus score moved, on real input, caused by the data grid**: two pages from 0.0000 to
+1.0000, on 552 cells that did not exist before this loop and that cross full SHACL through the
+production path. By the repo's rule the loop has closed.
+
+The honest shape of that win: the score movement is only *visible* because R72 was fixed in the
+same loop, and the fix makes two previously-perfect pages score zero when the fallback is off.
+That is the metric becoming truthful, not the reader regressing — but anyone reading the corpus
+numbers across this commit needs to know which of the two they are looking at.
+
 ### 8.19 The metric cannot see this improvement — 11 of 27 pages score a degenerate 1.0
 
 `score = 1.0 if denom == 0 else asserted / denom`, so a page that asserts nothing AND escalates
@@ -1107,7 +1152,6 @@ the grid: an empty reading should not score perfect. Distinguishing "nothing to 
 "failed to read" needs the grid gate's own page-level verdict — which exists (17 of 27 pages
 carry a table) and is not consulted by the score.
 
-**Residue.** Two ways forward, and both are their own loop: fix the degenerate score so an
-empty reading on a table page is not perfect, or widen the fallback past the nothing-at-all
-gate — which requires first solving escalation-masking and token double-counting, measured in
-§8.18 and not to be argued away.
+**Residue.** R72 is now fixed (§8.19). R73 remains: widening the fallback past the
+nothing-at-all gate requires first solving escalation-masking and token double-counting,
+measured in §8.18 and not to be argued away.
