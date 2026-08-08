@@ -357,3 +357,99 @@ def test_apple_p0_shape():
     assert g.grid_type == "UniformGrid"
     assert len(g.measures) == 4, "the four period columns"
     assert g.universe == "alignment", "apple is borderless: 2 drawn rules, no usable universe"
+
+
+# --- emission: the grid as an asserted object with an auditable admission ----------
+
+@corpus_only
+def test_emitted_grid_answers_why_from_the_graph_alone():
+    """The record François asked for: 'I found the data grid because it conforms to this,
+    this and this, and refuted this, this and this.'
+
+    Answerable by SPARQL over the emitted graph, with no Python in the loop — which is
+    the whole point of the grid being an asserted object rather than a transient."""
+    from rdflib import Graph, URIRef
+    from iladub.etkl.datagrid import emit_data_grid
+
+    lines = [l for l in sorted(text_lines(extract_words(APPLE, 0)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(APPLE, 0)
+    g = Graph()
+    doc = URIRef("urn:test:apple")
+    uri = emit_data_grid(g, grid, lines, doc, 0)
+
+    conformed = {str(r[0]).rsplit("#", 1)[1] for r in g.query(
+        "SELECT ?a WHERE { ?grid <https://w3id.org/iladub/tab#conformsTo> ?a }")}
+    assert "ColumnHomogeneity" in conformed and "RowAddressability" in conformed
+
+    refused = [str(r[0]) for r in g.query("""
+        SELECT ?why WHERE {
+          ?d a <https://w3id.org/iladub/dec#DecisionHolon> ;
+             <https://w3id.org/iladub/dec#chosen> ?grid ;
+             <https://w3id.org/iladub/dec#optionSpace> ?o .
+          ?o <https://w3id.org/iladub/dec#rejectedBecause> ?why }""")]
+    assert len(refused) == len(APPLE_P0_METADATA), (
+        f"every refused line must be carried: {len(refused)} vs {len(APPLE_P0_METADATA)}")
+
+    cells = list(g.query(
+        "SELECT ?c WHERE { ?grid <https://w3id.org/iladub/tab#hasDataCell> ?c }"))
+    assert len(cells) == 31 * 5, f"31 rows x 5 columns of entries, got {len(cells)}"
+
+    kinds = {str(r[0]) for r in g.query(
+        f"SELECT ?t WHERE {{ <{uri}> a ?t }}")}
+    assert "https://w3id.org/iladub/tab#DataGrid" in kinds
+    assert "https://w3id.org/iladub/tab#UniformGrid" in kinds
+
+
+@corpus_only
+def test_emission_carries_every_refused_line_with_its_reason():
+    """§5: context is carried, not discarded. A refused line keeps its provenance."""
+    from rdflib import Graph, URIRef
+    from iladub.etkl.datagrid import emit_data_grid
+
+    lines = [l for l in sorted(text_lines(extract_words(STEM, 0)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(STEM, 0)
+    g = Graph()
+    emit_data_grid(g, grid, lines, URIRef("urn:test:stem"), 0)
+    rows = list(g.query("""
+        SELECT ?o ?why ?src WHERE {
+          ?o a <https://w3id.org/iladub/tab#RefusedRow> ;
+             <https://w3id.org/iladub/dec#rejectedBecause> ?why ;
+             <http://www.w3.org/ns/prov#wasDerivedFrom> ?src }"""))
+    assert len(rows) == len(STEM_P0_METADATA), (
+        f"{len(rows)} refusals carried, expected {len(STEM_P0_METADATA)}")
+    assert all(str(r[2]).startswith("urn:test:stem#p0-line") for r in rows)
+
+
+@corpus_only
+@pytest.mark.parametrize("path,page", [
+    (APPLE, 0),
+    (os.path.join(CORPUS, "ag-trade", "graincorp-stem-2026-07-31.pdf"), 0),
+    (os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf"), 7),
+])
+def test_emitted_graph_crosses_the_membrane(path, page):
+    """The emitted grid must survive the SAME closed-world membrane the pipeline uses.
+
+    This is the gate wiring will face, so it is measured now rather than discovered
+    later: the first emission failed it 155 times, every entry cell lacking the
+    tab:hasBBox that tab:EntryCellPhysicalShape requires."""
+    from rdflib import Graph, URIRef
+    from iladub.etkl import membrane
+    from iladub.etkl.datagrid import emit_data_grid
+
+    if not os.path.exists(path):
+        pytest.skip("corpus not fetched")
+    lines = [l for l in sorted(text_lines(extract_words(path, page)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(path, page)
+    g = Graph()
+    emit_data_grid(g, grid, lines, URIRef("urn:test:doc"), page)
+
+    vocab = os.path.join(os.path.dirname(__file__), "..", "..", "vocab")
+    shapes = Graph()
+    shapes.parse(os.path.join(vocab, "shapes", "tab-shapes.ttl"), format="turtle")
+    shapes.parse(os.path.join(vocab, "shapes", "tab-physical-shapes.ttl"), format="turtle")
+    ont = Graph().parse(os.path.join(vocab, "ontology", "tab.ttl"), format="turtle")
+    ok, report = membrane.validate(g, shapes, ont)
+    assert ok, report[:2000]

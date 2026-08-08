@@ -34,8 +34,14 @@ from collections import Counter
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
+from rdflib import Graph, Namespace, URIRef
+from rdflib.namespace import PROV
+
 from .celltype import _cell_datatype, is_blank
 from .geometry import Line, extract_words, text_lines
+
+TAB = Namespace("https://w3id.org/iladub/tab#")
+DEC = Namespace("https://w3id.org/iladub/dec#")
 
 # The run separator. NOT tuned: the page-level table/prose verdict is identical for
 # every value in [3, 20]pt across the whole corpus (17 of 27 pages, unchanged), because
@@ -468,3 +474,112 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
                   "ColumnAlignment", "SeedFollowsUniverse"),
         refusals=refusals,
     )
+
+
+# ------------------------------------------------------------------------------ EMISSION
+
+
+def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
+                   page: int, grid_uri: "URIRef | None" = None) -> "URIRef":
+    """Emit the grid as `tab:` triples, with a `dec:DecisionHolon` recording its admission.
+
+    The grid becomes an ASSERTED object with identity and provenance — the change from
+    every grid-adjacent class in `tab.ttl`, which are documented "transient ... never
+    asserted into a holon". After this, the question "why is this the data grid?" is
+    answerable from the graph alone rather than from a Python dict:
+
+        ?d a dec:DecisionHolon ; dec:chosen ?grid ; dec:optionSpace ?candidate .
+        ?grid tab:conformsTo tab:ColumnHomogeneity , tab:RowAddressability , ...
+        ?rejected dec:rejectedBecause "HeterogeneousColumn/every-measure" .
+
+    Each refused line is carried, never dropped (§5): it is emitted as a rejected option
+    on the decision, with the axiom that refused it. That is the "refuted this, this and
+    this" half of the record, as triples.
+    """
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import RDF, XSD
+
+    grid_uri = grid_uri or URIRef(f"{doc_uri}#p{page}-datagrid")
+    dec_uri = URIRef(f"{grid_uri}-admission")
+
+    g.add((grid_uri, RDF.type, TAB.DataGrid))
+    g.add((grid_uri, RDF.type, TAB[grid.grid_type]))
+    g.add((grid_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
+    g.add((grid_uri, TAB.universeSource,
+           TAB.DecorationUniverse if grid.universe == "decoration" else TAB.AlignmentUniverse))
+    g.add((grid_uri, PROV.wasDerivedFrom, doc_uri))
+
+    for k, col in enumerate(grid.columns):
+        c_uri = URIRef(f"{grid_uri}-c{k}")
+        g.add((c_uri, RDF.type, TAB.GridColumn))
+        if col.is_measure:
+            g.add((c_uri, RDF.type, TAB.MeasureColumn))
+        g.add((grid_uri, TAB.hasGridColumn, c_uri))
+        g.add((c_uri, TAB.x0, Literal(round(col.x0, 2), datatype=XSD.decimal)))
+        g.add((c_uri, TAB.x1, Literal(round(col.x1, 2), datatype=XSD.decimal)))
+        if col.family:
+            g.add((c_uri, TAB.columnFamily, TAB[col.family]))
+
+    for r_i, line_idx in enumerate(grid.rows):
+        line = lines[line_idx]
+        r_uri = URIRef(f"{grid_uri}-r{r_i}")
+        g.add((r_uri, RDF.type, TAB.LeafRow))
+        g.add((grid_uri, TAB.hasGridRow, r_uri))
+        g.add((r_uri, PROV.wasDerivedFrom,
+               URIRef(f"{doc_uri}#p{page}-line{line_idx}")))
+        placed = _place_for_emit(line, grid)
+        for k, (text, x0, x1) in sorted(placed.items()):
+            e_uri = URIRef(f"{grid_uri}-r{r_i}c{k}")
+            g.add((e_uri, RDF.type, TAB.EntryCell))
+            g.add((grid_uri, TAB.hasDataCell, e_uri))
+            g.add((e_uri, TAB.atRow, r_uri))
+            g.add((e_uri, TAB.atColumn, URIRef(f"{grid_uri}-c{k}")))
+            g.add((e_uri, TAB.cellText, Literal(text)))
+            g.add((e_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
+            # the cell's own ink extent, required by tab:EntryCellPhysicalShape
+            b = URIRef(f"{e_uri}-bbox")
+            g.add((b, RDF.type, TAB.BBox))
+            g.add((b, TAB.x0, Literal(round(x0, 2), datatype=XSD.decimal)))
+            g.add((b, TAB.y0, Literal(round(line.top, 2), datatype=XSD.decimal)))
+            g.add((b, TAB.x1, Literal(round(x1, 2), datatype=XSD.decimal)))
+            g.add((b, TAB.y1, Literal(round(line.bottom, 2), datatype=XSD.decimal)))
+            g.add((e_uri, TAB.hasBBox, b))
+
+    # the admission record: conformance on one side, every refusal on the other
+    g.add((dec_uri, RDF.type, DEC.DecisionHolon))
+    g.add((dec_uri, DEC.chosen, grid_uri))
+    g.add((dec_uri, DEC.optionSpace, grid_uri))
+    g.add((grid_uri, TAB.admittedBy, dec_uri))
+    for axiom in grid.conforms:
+        g.add((grid_uri, TAB.conformsTo, TAB[axiom]))
+    for line_idx, reason in sorted(grid.refusals.items()):
+        if line_idx in grid.rows:
+            continue
+        o_uri = URIRef(f"{grid_uri}-refused{line_idx}")
+        g.add((o_uri, RDF.type, TAB.RefusedRow))
+        g.add((dec_uri, DEC.optionSpace, o_uri))
+        g.add((o_uri, DEC.rejectedBecause, Literal(reason)))
+        g.add((o_uri, PROV.wasDerivedFrom,
+               URIRef(f"{doc_uri}#p{page}-line{line_idx}")))
+    return grid_uri
+
+
+def _place_for_emit(line, grid: "DataGrid") -> dict:
+    """Re-place one admitted line into the grid's columns: {col: (text, x0, x1)}."""
+    bounds = [c.x0 for c in grid.columns] + [grid.columns[-1].x1]
+    measures = set(grid.measures)
+    hit: dict = {}
+    for r in absorb_unit_markers(ink_runs(line)):
+        if r.x1 <= bounds[0] - 0.5 or r.x0 >= bounds[-1] + 0.5:
+            continue
+        centre = (r.x0 + r.x1) / 2
+        k = next((j for j in range(len(grid.columns))
+                  if bounds[j] <= centre < bounds[j + 1]), None)
+        if k is None:
+            continue
+        if k in hit and k not in measures:
+            t, a, _ = hit[k]
+            hit[k] = (f"{t} {r.text}", a, r.x1)      # stub levels share one cell's extent
+        else:
+            hit[k] = (r.text, r.x0, r.x1)
+    return hit

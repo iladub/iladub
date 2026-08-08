@@ -394,3 +394,12 @@ evidence about structure. It is evidence about a checkbox.
 
 See https://support.microsoft.com/en-us/excel/insert-subtotals-in-a-list-of-data-in-a-worksheet
 and https://support.microsoft.com/en-us/office/repeat-item-labels-in-a-pivottable-882bdb55-9cdc-4d8d-b531-8e96e41dea31"""@en .
+
+tab:RefusedRow a owl:Class ; rdfs:label "Refused row"@en ;
+    rdfs:comment """A line that was tested for admission to a data grid and refused, carried
+as a rejected option on the grid's admission decision with the axiom that refused it
+(dec:rejectedBecause).
+
+Carried, never dropped (§5). It is what makes the second half of the record answerable —
+'refuted this, this and this' — and it is the difference between a reading that can be
+audited and one that merely happened."""@en .

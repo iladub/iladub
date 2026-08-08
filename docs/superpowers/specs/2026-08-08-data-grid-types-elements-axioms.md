@@ -984,3 +984,45 @@ are still not evidence: capacity 27/32, cbh 46/85, who 25/30, bfs 32/43, apple p
 p2 29/41. Whether those gaps are honest refusals or silent losses is unknown until transcribed.
 
 Nothing is wired into `compile_tables`; no corpus score has moved.
+
+### 8.17 Emission — the grid becomes an asserted object, and crosses the membrane
+
+`emit_data_grid` turns the derivation into `tab:` triples. The grid is now an ASSERTED object
+with identity and provenance, which is the change from every grid-adjacent class in `tab.ttl`
+(each documented *"transient … never asserted into a holon"*).
+
+The admission record is triples, not a Python dict, so the question is answerable from the
+graph alone:
+
+```sparql
+?d a dec:DecisionHolon ; dec:chosen ?grid ; dec:optionSpace ?candidate .
+?grid tab:conformsTo tab:ColumnHomogeneity , tab:RowAddressability , ...
+?rejected a tab:RefusedRow ; dec:rejectedBecause "HeterogeneousColumn/every-measure" ;
+          prov:wasDerivedFrom <...#p0-line6> .
+```
+
+That is both halves of *"I found the data grid because it conforms to this, this and this, and
+refuted this, this and this"* — and **every refused line is carried with its reason and its
+provenance** (§5: context is carried, never discarded), which is what makes the reading
+auditable rather than merely reproducible. This is also the first producer for the differential
+half of `dec.ttl` (`optionSpace`/`chosen`/`rejectedBecause`), which the loop-decision-record
+spec recorded as never having had one.
+
+**It crosses the closed-world membrane** — the same SHACL gate the pipeline uses, measured now
+rather than discovered at wiring time:
+
+```
+apple p0:  2048 triples   membrane conforms = True
+stem  p0:  7234 triples   membrane conforms = True
+ons   p7:  3587 triples   membrane conforms = True
+```
+
+The first emission failed it **155 times** — every entry cell lacking the `tab:hasBBox` that
+`tab:EntryCellPhysicalShape` requires. Cells now carry their own ink extent, and stub levels
+sharing a cell share that cell's extent.
+
+Suite 21 datagrid tests, 35 with the gate, vocab and ownership tests. New vocabulary:
+`tab:RefusedRow`.
+
+**Remaining for the close:** wiring into `compile_tables` so a corpus score moves, gated on
+stem's 0.95 floor. Nothing is wired yet.
