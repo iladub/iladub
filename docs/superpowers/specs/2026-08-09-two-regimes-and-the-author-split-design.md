@@ -1,6 +1,6 @@
 # ET(K)L's two regimes, and the author-split table — design
 
-**Date:** 2026-08-09 · **Status:** draft, pending adversarial review ·
+**Date:** 2026-08-09 · **Status:** **BLOCKED at adversarial review, 2026-08-09** — see §8 ·
 **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf` page 0, with `apple` page 0 as the
 control · **Builds on:** `2026-08-08-data-grid-types-elements-axioms.md` (the data grid,
 closed) · **Revisits:** `2026-08-07-producer-signature-design.md` (blocked — its
@@ -226,3 +226,115 @@ blocked spec both need this correction; the producer-signature idea itself stays
 - **§0 recover the author's structure.** Rejoining is recovery, not interpretation — which is
   exactly why it must be provable and not merely plausible.
 - **Source ownership.** `tab:` is ours; `hproj:` appears only as an alignment object.
+
+---
+
+## 8. Adversarial review — BLOCKED (2026-08-09)
+
+The review attacked P5 as instructed and took the design apart. Findings re-verified by the
+controller before acceptance.
+
+### 8.1 BLOCKING — the disposal does not exist, and cannot be built the way §2.2 assumes
+
+`oracle.round_trip` compares `{(row_label, col_leaf_label): cellText}` dictionaries built by
+`recipe.grid_values`, which requires `tab:hasCell` and a header tree. **It never touches a
+coordinate, a glyph or a page.** The data grid emits `tab:hasDataCell` and reads no header at
+all, by design. Run on the cbh data grid:
+
+```text
+EntryCells 737 | t hasCell 0 | t hasDataCell 737 | coversColumn 0 | headerLevel 0
+grid_values(datagrid) -> 0 entries | recipe ops () | verdict True | BaseFacts 0
+```
+
+The oracle returns **True on an empty reading** — it would accept any key choice. And the
+ontology has exactly two reshape operations (`UnpivotOp`, `StripAggregationOp`); no split, no
+page-level forward replay exists. `denormalization.denormalize`, the only production wrapper
+around `certify`, has **no caller** and iterates `RecordTable`/`HierarchicalTable`, which a
+`tab:DataGrid` is not.
+
+Worse, the closest shipped analogue — a proposer naming a nameless pivoted dimension, disposed
+by `certify_with_proposals` — is **provably invariant to the name**:
+
+```text
+name='Quarter'                         oracle_ok=True
+name='BERTH MAY BE UNAVAILABLE 2000HRS' oracle_ok=True
+name='Zqxjv'                           oracle_ok=True
+name=''                                oracle_ok=True
+name='Product'                         oracle_ok=False   <- a collision with a stub label, not a semantic check
+```
+
+**And the general argument defeats any implementation**, not just the shipped one: a forward
+replay must be parameterised by panel extents and the annotation text per panel, which are not
+derivable from a rejoined grid and must therefore be stored on the `RejoinSectionsOp`. *If the
+op stores enough to replay exactly, it stores the answer and cannot refute; if it stores less,
+the replay is not exact for the correct choice either.* **A round trip cannot dispose an
+assignment its own recipe records.**
+
+The conservation shape does not rescue it: `tab:HeaderContentConservedShape` targets
+`tab:HeaderSourceCell`, of which cbh page 0 has **zero**, and it accepts text surfacing in any
+`RegionCaption` — so under §7's own "notices are carried as annotations" rule, *both* readings
+conserve. Already on the register as R9 (*conservation shape unreachable*).
+
+### 8.2 BLOCKING — A1–A3 admit a rival key set on the specimen
+
+Re-measured by the controller:
+
+```text
+block 0: PORT MAINTENANCE x1 | GERALDTON     block 3: PORT MAINTENANCE x1 | ESPERANCE
+block 1: PORT MAINTENANCE x1 | KWINANA       block 4: PORT MAINTENANCE x0 | (none)
+block 2: PORT MAINTENANCE x1 | ALBANY
+```
+
+`PORT MAINTENANCE SHUTDOWN AM …` occurs once in four of five blocks — **the same distribution as
+the port names** — all four strings distinct, and centred *tighter* on the grid axis (dev +0.26
+to +0.32 against the ports' +0.37 to +0.47). It satisfies A1–A3 at least as well. The proposal
+is genuinely ambiguous and only world knowledge picks the ports.
+
+The review also found an **off-by-one**: annotations are drawn *above* their header, so under
+§3.1's own panel ranges `GERALDTON` belongs to no panel, panel 0 is labelled `KWINANA`, and
+panel 3 is unlabelled. The bijection §0 claims does not hold.
+
+### 8.3 REFUTED — "only cbh is author-split", by this repo's own closed spec
+
+`2026-08-08-data-grid-types-elements-axioms.md` §3 lists **apple p0 as T4, "three panels sharing
+one boxhead"**, with `Total net sales 109,417/94,036/364,357` appearing three times as the
+evidence. This spec reinterprets that same repetition as a false positive (§3.2) and infers from
+unbroken banding that no author split occurred. **apple p0 has unbroken banding AND three
+author-authored panels.** What it lacks is a *reprinted boxhead*, not a split. The blast-radius
+claim falls, and §6's "the rejection was correct for apple" inherits the defect.
+
+### 8.4 REFUTED — three factual claims
+
+- **§0.1(1) cites a CLAUDE.md §2b that does not exist.** Verified: zero matches for
+  "de-accommodat" or "template coordinate" in CLAUDE.md. The real reference is the 2026-08-04
+  cbh-dimension-split spec's §2b. A Contract-class document was said to commit to something it
+  does not.
+- **§6's "the residue register needs this correction" is false** — there is no `Rejoin` row in
+  `residues.md`. And the producer-signature spec was *not* over-broad: it scoped its own P4 as
+  "not measured — assumption, blast radius: the loop may target apple only". Amending it would
+  also rewrite Evidence, which is immutable after loop close.
+- **§2.2's R54 closure does not match the register.** R54's live residual is
+  `feed.table_records`' `caps[0][0]` picking the positionally-first caption — which a holon-side
+  rejoin never touches — and its recorded closing path is *scheme-membership filtering*, which
+  this spec puts out of scope. The register also asks for a counterexample document first.
+
+### 8.5 The real design tension, which the spec routed around
+
+The one disposal that demonstrably separates `{GERALDTON, KWINANA, ALBANY, ESPERANCE}` from
+`{PORT MAINTENANCE …}` is **whole-set scheme membership** (`splitkey._admitting_fields`) —
+already implemented, already decidable. It is **contract-dependent**.
+
+So the clean holon/projection boundary of §0 puts the only working oracle on the projection side,
+while §2 needs it on the holon side. Decision 0.1(1) — *the holon un-does what it can prove* —
+may be **empty for this operation**, because without the contract there may be nothing provable
+here at all.
+
+The stem control sharpens it: stem *names* `Port` in its own ink, cbh does not. The same
+real-world dimension therefore yields a **named** column in one holon and an **unnamed**
+dimension in the other, inside one corpus. That is the strongest argument for naming at the
+membrane — and it is also why the split itself may not be provable without one.
+
+**What survives:** §1 (fully confirmed — `resolve_split_key_name` is test-only and requires a
+contract; `compile_tables` takes none), §3.2's discriminator (confirmed and strengthened — stem
+p0 also repeats `Mackay Total 5 0,000` as data), §3.4 (confirmed to the decimal, including its
+own refuted centring hypothesis), and P7's stem control.
