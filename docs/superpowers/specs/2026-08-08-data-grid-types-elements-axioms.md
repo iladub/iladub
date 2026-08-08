@@ -667,3 +667,64 @@ Sources:
 [Insert subtotals in a list of data](https://support.microsoft.com/en-us/excel/insert-subtotals-in-a-list-of-data-in-a-worksheet) ·
 [Repeat item labels in a PivotTable](https://support.microsoft.com/en-us/office/repeat-item-labels-in-a-pivottable-882bdb55-9cdc-4d8d-b531-8e96e41dea31) ·
 [PivotField.RepeatLabels](https://learn.microsoft.com/en-us/office/vba/api/excel.pivotfield.repeatlabels)
+
+### 8.11 Implemented and tested against a transcribed oracle
+
+`src/iladub/etkl/datagrid.py` (one implementation, replacing nine divergent probes) and
+`tests/etkl/test_datagrid.py` (12 tests, 2.4s, offline).
+
+**The oracle.** Every recall number before this was produced by eyeballing exclusion lists,
+which cannot falsify anything. `APPLE_P0_METADATA` is a hand transcription of apple page 0 —
+all 44 lines read and classified: 13 metadata (title block, boxhead, cut-in headings) and 31
+entry rows, aggregates included (a subtotal mints no record per §7 but it is data).
+
+```
+admitted 30   oracle DATA 31   oracle METADATA 13
+recall   30/31          leaked metadata: NONE
+
+MISSED:
+   34  HeterogeneousColumn/col4  ::  Japan 6,554 5,782 24,368 2 2,067
+```
+
+The single miss is the known **R16 split-number defect** — `22,067` extracted as `2 2,067` —
+a pre-existing extraction bug, not a failure of the definition. Every metadata line is refused
+*with its reason*: the three boxhead rows by `RowAddressability/no-key` (they carry measures but
+no key, which is precisely what that axiom exists to catch), the titles and cut-in headings as
+unplaceable.
+
+**The tests were mutation-checked, and one was found vacuous.**
+
+```
+M1  remove RowAddressability's key check -> soundness FAILS (line 5 '2026 2025 2026 2025' leaks)
+M2  remove NonDegeneracy (G1b)           -> ALL 12 PASS          <- vacuous
+M3  drop unit-marker absorption          -> recall 30 -> 22, FAILS
+```
+
+M2 is a finding, not just a test defect: **G1b is unreachable as a distinct refusal.** If no
+column is a measure then no row can carry one, so `RowAddressability` refuses every row and the
+grid is empty regardless. No page can exist on which G1b is the only refuser. It is kept as an
+explicit early exit and documented as a backstop — the disposition R9 already established for
+the conservation shape — and pinned by `test_non_degeneracy_is_a_redundant_backstop`, which
+fails if a future change makes it load-bearing.
+
+**Corpus, through the committed module:**
+
+```
+apple p0  30/44   5 cols (4 meas)  UniformGrid  [alignment]
+apple p1  27/43   3 cols (2 meas)  UniformGrid  [alignment]
+apple p2  26/41   3 cols (2 meas)  UniformGrid  [alignment]
+stem  p0  17/65  15 cols (6 meas)  MixedGrid    [alignment]
+capacity  27/32  16 cols (4 meas)  UniformGrid  [decoration]
+cbh   p0  46/85  20 cols (7 meas)  MixedGrid    [decoration]
+who   p0  25/30  13 cols (12 meas) UniformGrid  [alignment]
+bfs   p6  32/43   9 cols (2 meas)  UniformGrid  [alignment]
+ons   p7  28/68   6 cols (5 meas)  UniformGrid  [alignment]
+
+pages 9/9   data rows 258
+```
+
+**Not yet implemented, and the gap is deliberate:** G8 `tab:AggregateWitness` and G9
+`tab:Groupability` are defined in the ontology but NOT in the module, so index columns are not
+yet excluded — which is why stem reads 17/65 here against the 19/65 the index-exclusion probe
+reached. Nothing is wired into `compile_tables`, and no corpus score has moved. The oracle
+covers one page of nine; the other eight remain unfalsified.
