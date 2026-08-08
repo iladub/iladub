@@ -1,6 +1,6 @@
 # The projection names the dimension — design
 
-**Date:** 2026-08-09 · **Status:** draft, pending adversarial review ·
+**Date:** 2026-08-09 · **Status:** **BLOCKED at adversarial review, 2026-08-09** — see §7 ·
 **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf` page 0 with
 `examples/shipping/cbh-{contract,terms,shapes}.ttl` ·
 **Supersedes:** `2026-08-09-two-regimes-and-the-author-split-design.md` (retired — its §0
@@ -117,3 +117,107 @@ whether the mechanism generalises or merely closes on its own fixture.
 - **§1 knowledge-first.** The contract is the knowledge module *passed as an argument* — which
   is precisely why the naming is decidable here and nowhere else.
 - **Source ownership.** `tab:`/`dec:`/`iladub:` are ours; `hproj:` only as an alignment object.
+
+---
+
+## 7. Adversarial review — BLOCKED (2026-08-09)
+
+Four blockers. All re-verified by the controller.
+
+### 7.1 BLOCKING — the selection makes the resolution tautological
+
+§1's *"the contract selects the markers"* is true as a sentence and does not earn the
+verification it appears to. `_admitting_fields(S, …)` is `all(scheme_member(m, F.scheme) for m
+in S)`. If `S := {c : F admits c}` then **F admits S by construction** — S was built from that
+exact predicate:
+
+```text
+select with F=port -> S = [GERALDTON, KWINANA, ALBANY, ESPERANCE]
+whole-set admitting over S -> ['port']
+```
+
+And step 1 has already *named* F, since the trigger is "contract field F is required." So the
+cascade returns its own input, and `ambiguity_score = 1` restates the question rather than
+answering it. On cbh there are only two schemed fields, so the entire discriminating power is
+one bit against one alternative.
+
+The honest description of the slice is weaker than §1's: *the projection names the dimension and
+the contract confirms no other schemed field collides.*
+
+### 7.2 BLOCKING — the empty selected set asserts from nothing
+
+`all()` over an empty sequence is `True`, and the SELECT step is what first makes an empty
+marker set reachable in ordinary operation:
+
+```text
+_admitting_fields([]) -> ['port', 'commodity']
+```
+
+With a single-schemed-field contract that becomes an **assertion of the dimension name from zero
+evidence** — a full `PromotionDecision` + `GroundedNode`, arm `unique-admitting-field`. That is a
+§3 and §7 violation manufactured by this slice's own new step, and §4's third success criterion
+("a holon whose captions the scheme cannot admit yields quarantined") is refuted by it.
+
+It is not an edge case: `tab:SectionCaption` exists on **one of three** ag-trade documents (cbh
+12, stem 0, capacity 0), so the empty path is the majority case.
+
+### 7.3 BLOCKING — P1 measures the fixture's label casing, not a capability
+
+`ground.scheme_member` is **exact, case-sensitive string equality**:
+
+```text
+'GERALDTON' -> …#p-geraldton     'Geraldton' -> None     'geraldton' -> None
+```
+
+And the two sibling term files in the same directory label the same kind of concept in opposite
+conventions, each matching its own specimen's rendering:
+
+```text
+cbh-terms.ttl    ['WA public ports', 'GERALDTON', 'KWINANA', 'ALBANY', 'ESPERANCE', 'BUNBURY', …]
+stem-terms.ttl   ['Export ports', 'Mackay', …]
+```
+
+The cross-contract control is decisive: the **stem contract's port scheme admits none of the CBH
+markers** (`admitting: []`). So "port admits 4 of 12" holds because the fixture author typed the
+labels in ALL CAPS after seeing the page. Under the repo's own sibling convention it is 0 of 12.
+**P1 is not independent of P6; it collapses into it.** `cbh-contract.ttl`'s own comment says it
+declares two schemed fields *"on purpose"* so the cascade can resolve CBH's markers uniquely —
+the fixture is documented as built to make this succeed.
+
+### 7.4 BLOCKING — R54 was misquoted, and the deleted clause is the one that forbids this
+
+R54's actual text: *"a counterexample document … **OR** promoting marker selection from
+'positionally-first caption' to 'the caption(s) that pass scheme-membership filtering' **once
+such a document exists in the corpus**."* §1 quoted the second disjunct and **deleted its
+precondition**. R54's why-deferred is explicit: *"no measured document does this … so fixing
+blind remains the overfitting risk CLAUDE.md's 'No overfitting' rule forbids."*
+
+This spec provides no counterexample document and proposes precisely the blind fix the register
+names as forbidden — while quoting the register in a way that made it look sanctioned. That is
+the most serious finding here, and it is a process failure, not a technical one.
+
+### 7.5 Also — the slice cannot reach R54's live residual
+
+`caps[0][0]` lives in `feed.table_records(graph)`, which takes **no contract**, and the defect is
+**per-table**. This slice's selection is document-wide and yields one name. Naming the dimension
+`port` cannot stop `caps[0][0]` returning a notice on a document that draws its notice first, so
+§4's criterion 5 resolves to "explicitly left" and §1's "closing path" framing is unearned.
+
+### 7.6 The trigger has no premise and no §8 classification
+
+§3 lists no premise for step 1, and §6 calls it "PROCEDURAL glue." Measured on the fixture,
+`id` also fires the trigger and declares **no scheme**, so SELECT returns `[]` and it falls
+straight into §7.2. And `'Other Port/s'` *is* a grid column, so "is F an attribute of the data
+grid" is a label-matching judgement — AXIOM-shaped, not glue.
+
+**What survives:** P4 (splitkey is test-only, contract-requiring; `compile_tables` takes none),
+P5 (12 captions on a live compile), the exactness of the per-caption selection (no substring
+matching — 4 of 12, no other field admits any caption), and §5's scope exclusions.
+
+### 7.7 The pattern, recorded
+
+This is the fourth spec blocked at this gate in three days, and the second today. The common
+shape: a mechanism that works on the specimen, presented as measured, where the measurement is
+of a fixture built from that specimen. The gate is doing its job — but the cost is now visible,
+and the corpus's demo contracts should be treated as **fixtures, not evidence**, wherever a
+premise depends on their content rather than their structure.
