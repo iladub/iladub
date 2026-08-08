@@ -1,6 +1,6 @@
 # Naming an implicit dimension at the membrane — design
 
-**Date:** 2026-08-09 · **Status:** draft, pending adversarial review ·
+**Date:** 2026-08-09 · **Status:** **BLOCKED at adversarial review, 2026-08-09** — see §9 ·
 **Specimen:** `corpus/ag-trade/cbh-stem-2026-08-03.pdf` page 0 ·
 **Third attempt.** Supersedes `2026-08-09-projection-names-the-dimension-design.md` (blocked —
 its selection was circular) and `2026-08-09-two-regimes-and-the-author-split-design.md`
@@ -151,3 +151,86 @@ that is the specific failure the reviews keep catching.
   why the naming is decidable here and nowhere else.
 - **No overfitting.** §5 is the honest statement of where the fixture ends and the world begins.
 - **Source ownership.** `tab:`/`dec:`/`iladub:` are ours.
+
+---
+
+## 9. Adversarial review — BLOCKED (2026-08-09), and the structural diagnosis
+
+The review credited four prior blockers as genuinely fixed (the empty-set guard, the R54
+misquote, the R54-residual disclaimer, and byte-identity → `to_isomorphic`). Two blockers stand,
+both re-verified by the controller.
+
+### 9.1 BLOCKING — the tautology was relocated, not removed
+
+`_admitting_fields(S) = {i : A_i ⊇ S}`, and `S = ⋃ A_i` puts every `A_i ⊆ S`, so it reduces to
+`{i : A_i = S}`. Verified:
+
+```text
+A[port]      = ['GERALDTON','KWINANA','ALBANY','ESPERANCE']
+A[commodity] = []
+S = union    = ['ALBANY','ESPERANCE','GERALDTON','KWINANA']
+S == A[port] exactly: True    -> port admits S BY CONSTRUCTION
+```
+
+§2 says `commodity` *"was free to admit the set and did not."* It was not free: a field admitting
+nothing contributes nothing to the union, which is precisely what makes the survivor's admission
+an identity. With N schemed fields there is **no confirming direction** — a new field either
+leaves the answer unchanged (`A_new ⊊ S`), forces ambiguity 2 (`A_new = S`, where the *proposer's
+ranking* decides the name), or forces ambiguity 0 (`A_new ⊄ S`, quarantine).
+
+The mechanism's true strength is weaker and should be stated as such: **exactly one schemed field
+admits any caption at all, so the contract disambiguates by exclusion.**
+
+### 9.2 BLOCKING — and my fix for 9.1 opened a silent misname
+
+With the port labels title-cased (so `port` matches nothing) and a rival schemed field matching
+the notice captions:
+
+```text
+port admits: []
+contract-WIDE selection S = ['BERTH MAY BE UNAVAILABLE…', 'PORT MAINTENANCE SHUTDOWN…']
+whole-set admitting = ['advisory']   ambiguity = 1   -> asserted, NO LLM
+```
+
+The document's real dimension is *port*; the mechanism names it **`advisory`**, confidently, via
+arm 2. §3/§7 violation. Under the *previous* field-scoped selection a mismatched `port` selected
+nothing and the run ended — **contract-wide selection is what created this path.** §5 therefore
+states the wrong failure mode: it is quarantine when *nothing* matches, and a confident wrong
+name when something *else* does.
+
+### 9.3 The structural diagnosis — one pattern, four attempts
+
+Every attempt on this problem has failed the same way: **proposal and disposal came from the same
+source.**
+
+| attempt | proposer | disposer | why it failed |
+| --- | --- | --- | --- |
+| author-split | structure | the round trip | a round trip cannot dispose what its own recipe records |
+| projection v1 | field F's scheme | field F's scheme | circular by construction |
+| naming v2 (this) | the union of all schemes | the same union | identity, per §9.1 |
+
+Nothing could be *wrong in a detectable way*, which is why each version passed its own test and
+died at review.
+
+### 9.4 The independent disposal, measured
+
+A dimension's values must address the row groups **one-to-one**. That constraint comes from the
+structure, not from the contract, so it can refute a name the contract proposed:
+
+```text
+row groups (one per reprinted header): 4
+
+RESOLVED PORT SET    group 0<-GERALDTON  1<-KWINANA  2<-ALBANY  3<-ESPERANCE
+                     4 values over 4 groups   -> BIJECTIVE      admit
+
+RESOLVED NOTICE SET  group 0<-4 notices  1<-1  2<-2  3<-1
+                     8 values over 4 groups   -> NOT bijective  refuse
+```
+
+It refutes §9.2's misname directly, and it is the first disposal in this line of work that is
+independent of whatever proposed the answer. The association is caption-precedes-its-header — the
+off-by-one an earlier review found, now used rather than tripped over.
+
+**The next attempt must pair a contract proposal with this structural disposal.** Not a reworded
+§2 — a different shape: the contract proposes, the structure disposes, and the two do not share a
+source.
