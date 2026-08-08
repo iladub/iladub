@@ -38,8 +38,16 @@ circular."""@en ;
 #      rows are admitted because the columns agree on their shape,
 #      and the pair is admitted together, or not at all.
 #
-#  This is a closure condition (a maximal rectangle of a relation — the formal-concept
-#  shape), and it is what makes the object DEFINABLE rather than merely detectable.
+#  This is a closure condition, and it is what makes the object DEFINABLE rather than
+#  merely detectable.
+#
+#  NOT YET a formal-concept lattice, and the difference is load-bearing. A Galois
+#  connection needs a FIXED attribute universe; column intervals re-derived from the
+#  admitted rows change identity on every round, so iterating rows->columns->rows is not
+#  a closure operator and was MEASURED not to converge (apple p0 collapsed to 1 row of
+#  44, capacity to 1 of 32, cbh to 3 of 85). Establishing the column universe ONCE, and
+#  selecting maximal sub-rectangles within it, is what would earn the lattice claim.
+#  Until then this vocabulary defines the object; it does not yet supply its closure.
 #
 #  Measured reasons this form is required, each a recorded failure of a one-axis detector:
 #    (a) columns derived from all page ink COLLAPSE — one wide metadata run (a title, a

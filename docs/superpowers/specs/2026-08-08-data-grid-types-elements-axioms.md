@@ -347,3 +347,50 @@ cbh's section key `GERALDTON` and its berth notices, and WHO's `Z-scores (weight
 - **The axioms are declared in the ontology but not yet executable** — no `.rq`, no SHACL, no
   worked example, no negative test. Nothing here is wired into `compile_tables`, and no corpus
   score has moved.
+
+### 8.5 The recall attempt: a negative result, and where the definition is still wrong
+
+Building the second half of the mutual definition — columns re-admitting rows, iterated —
+**failed, and the failure is in the definition, not the code.**
+
+Attempt 1, columns as the **union** of the admitted rows' runs, iterated to a fixed point:
+
+```
+apple p0  29 -> 31 rows   but ADMITTED the year header row '2026 2025 2026 2025'
+                          (extent moved up to y=116.0)
+apple p2  14 -> 22 rows   improved
+capacity  23 -> 25 rows   improved, and now correctly excludes 'Year Elevation Period ...'
+cbh p0    49 ->  3 rows   COLLAPSED
+who p0    25 ->  4 rows   COLLAPSED
+```
+
+The collapse is structural: admitting a row *widens* the column set, which tightens G2
+("cover every data column"), which disqualifies the other rows.
+
+Attempt 2, columns as the **intersection** (only intervals in which every admitted row has
+exactly one run) — the operator the formal-concept form actually requires:
+
+```
+apple p0   1/44 rows      COLLAPSED
+apple p1  24/43 rows      slightly worse than the 25 of the one-shot form
+apple p2  19/41 rows      better than 14, worse than attempt 1's 22
+stem  p0  33/65 rows      stable
+capacity   1/32 rows      COLLAPSED
+cbh  p0    crash (empty row set)
+```
+
+**Diagnosis.** A Galois connection requires a **fixed attribute universe**. Our columns are
+*re-derived geometry* on each round, so the attributes change identity between iterations and
+the pair of operators is not a closure operator at all. The ontology comment claiming "the
+formal-concept shape" was an overclaim and has been corrected in `tab-datagrid.ttl`.
+
+**What this establishes, and it is worth more than the failed iteration:** the column universe
+must be fixed **once**, before any rectangle is selected, and a data grid is then a maximal
+sub-rectangle *within that fixed universe*. Maximality is only well-defined against a stable
+set of candidate columns. That is the next build, and it is a change to the definition, not a
+parameter.
+
+**State of the milestone.** The one-shot two-phase derivation of §8.3 stands as the best
+measured result: one rectangle on every one of 9 pages, metadata excluded by construction, no
+tuned constant. Its known gap remains row recall (§8.4). The iterated closure does not improve
+on it and must not be presented as if it did.
