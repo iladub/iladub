@@ -841,15 +841,26 @@ def test_the_pipeline_escalates_the_page_the_grid_reads_completely():
     assert len(derive_data_grid(APPLE, 1).rows) == 28
 
 
-# --- R73: adoption, and why it is opt-in ------------------------------------------
+# --- R73: adoption, and what it may and may not withdraw ---------------------------
 
 @corpus_only
-def test_adoption_is_off_by_default():
-    """Not timidity — a measured hazard. The document driver compiles each page
-    standalone before re-compiling continuation pages with carried headers, and stem's
-    pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. Both
-    would adopt. Whether that deprives the driver of the signal it waits for is not yet
-    worked out, so the default must leave the driver's world untouched."""
+def test_adoption_is_off_by_default_at_page_scope():
+    """Page scope is not where the decision belongs (spec 2026-08-09 §5.1).
+
+    The register's original reason — 'compile_document compiles each page standalone before
+    re-compiling continuation pages' — is MEASURED FALSE: the driver makes one pass and the
+    carried reading is an INPUT to page p's compile.
+
+    The real reason the page-scope flag stays off is the refusal branch, whose first half is
+    structural: a single-page compile cannot chain AT ALL (`CompilationReport` carries no chain
+    concept), so it would never see the other two pages, whatever it scored. The score
+    corroborates it SAME-PAGE: stem p1 standalone adopts at 811 FLAT cells and scores 0.9588,
+    against 0.9706 for the driver's own reading of that same page 1 (Loop M, recorded at
+    docs/superpowers/residues.md R29) — page scope reads it WORSE. The counts are NOT
+    comparable (R29's 825 is tokens under the driver; 811 is standalone cells); only the scores
+    share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
+    0.9654553611484971. See tests/test_corpus_stem.py's
+    test_page_scope_adoption_would_have_taken_the_page_the_driver_reads."""
     from iladub.etkl.compile import compile_tables
 
     default = compile_tables(APPLE, 1, validate_shapes=False)
@@ -859,18 +870,41 @@ def test_adoption_is_off_by_default():
 
 
 @corpus_only
-def test_adoption_supersedes_an_escalation_exactly():
-    """The escalation is REPLACED, not supplemented: the page's graph is rebuilt from the
-    grid alone, so no token is counted on both sides. That double-count is what made the
-    first wiring's 0.5941 meaningless."""
+def test_adoption_withdraws_only_the_escalation_of_ink_it_READ():
+    """Line-granular, both directions pinned (spec §5.3).
+
+    Not 1.0000: the section labels the grid never admitted keep escalating.
+    Not 0.594: the lines the grid DID read are not counted on both sides."""
     from iladub.etkl.compile import compile_tables
 
     off = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)
     on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=True)
     assert off.asserted == 0 and off.escalated > 0
-    assert on.escalated == 0, "adoption must WITHDRAW the escalation, not add to it"
-    assert on.asserted > 0 and on.score == 1.0
-    assert sum(r.cells for r in on.regions) == 28 * 3, "28 entry rows x 3 columns"
+    assert on.asserted > 0
+    assert 0 < on.escalated < off.escalated, "residue must survive, and must shrink"
+    assert on.score < 1.0, "an adopted page must never score 1.0000 by construction"
+    assert on.score > off.score
+    print(f"\napple p1 adopted: {on.asserted}/{on.escalated} score={on.score:.4f}")
+    grid_cells = sum(r.cells for r in on.regions)
+    assert grid_cells == 28 * 3, "28 entry rows x 3 columns"
+
+
+@corpus_only
+def test_adoption_keeps_the_band_index_contract():
+    """Region report index IS band index (page_bands' pinned enumeration contract). The
+    driver reads it at five sites; adoption used to collapse the tuple to length 1."""
+    from iladub.etkl.compile import compile_tables, page_bands
+
+    bands = page_bands(APPLE, 1)
+    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=True)
+    assert len(on.regions) >= len(bands) + 1
+    assert on.regions[len(bands)].table_uri is not None, "the grid region carries its URI"
+    assert on.asserted == sum(r.tokens_asserted for r in on.regions)
+    assert on.escalated == sum(r.tokens_escalated for r in on.regions)
+    # The rewrite is a RELABEL, not just a zeroing: a band whose ink the grid read no longer
+    # claims to have escalated it. Task 4's driver branches on the verdict string.
+    assert any(r.verdict == "superseded" for r in on.regions[:len(bands)])
+    assert all(r.tokens_escalated == 0 for r in on.regions if r.verdict == "superseded")
 
 
 @corpus_only

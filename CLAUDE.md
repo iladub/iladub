@@ -281,6 +281,60 @@ Enforced by `scripts/context_budget.py`, wired as a `UserPromptSubmit` hook in
 asks for the handoff at 30%, and refuses new design work past 40%. Self-monitoring is the
 thing that fails first, so the harness does it. See R76.
 
+## Plan authoring discipline (enforced, 2026-08-09)
+
+**A plan is a contract, not a draft of the code.** It states *interfaces, invariants and the
+falsifying oracle*. It does **not** contain the function body.
+
+This rule exists because of a measured failure, not a preference. The R73 adoption loop shipped
+a 919-line plan against a 316-line spec, most of it verbatim implementation, and **five defects
+were found in the plan text itself** — none in the implementers' work:
+
+1. A half-applied index guard (`j < len(lines)` with no lower bound; the returned `admitted`
+   never filtered at all).
+2. `build_ledger` called **before** the only site that ever writes `RegionReport.tokens_*`, so
+   an untouched escalated band's ink silently vanished from the denominator — **failing upward,
+   and invisible to the plan's own tests.**
+3. A self-contradictory instruction (declare the field *after* `repaired`, pass it *last*) that
+   would have swapped two `DocumentReport` fields silently.
+4. A `dec:supersedes` wiring that was **dead code for every document** — the plan named
+   `_verdict_decision` when its own spec §5.4 had already named the right subject.
+5. The V7 test the plan supplied **passed with the withdrawal loop deleted entirely.**
+
+Defects 2 and 5 are one failure wearing two faces: *the plan authored both the code and the test
+meant to check it, so the same misunderstanding shaped both, and no independent oracle existed.*
+
+The rules:
+
+1. **No implementation source in a plan.** State the signature, the invariants it must preserve,
+   and the oracle that falsifies it. **Tests may still be given verbatim** — they are the spec's
+   contract with the implementation — but the body that satisfies them is the implementer's to
+   write. An implementer reduced to a transcriber cannot catch a plan defect, and the person at
+   the keyboard is the one who would have found defect 2 in thirty seconds.
+   **The permission to supply a test is conditional on rule 4**: defect 5 above *was* a
+   plan-supplied test, and it passed with its own subject deleted. A verbatim test authored by
+   the plan is a proposition until the implementer falsifies it — so a plan-supplied test that
+   ships without its falsification evidence is a rule-1 violation, not merely a rule-4 one.
+2. **Every load-bearing claim about existing code is MEASURED, and carries its measurement
+   inline** (`file:line`, the command run, its output). A plan that says *"verify X still holds"*
+   is a plan whose author did not. Defects 2 and 4 were both claims made from reading.
+3. **Name the seam the implementer must check, not the answer.** Where a plan depends on an
+   ordering, a call site, or a field being populated, say *which fact must be measured before
+   writing the call* — e.g. *"MEASURE where `tokens_*` are actually written before you call
+   this; do not assume the caller's position."*
+4. **FALSIFICATION IS MANDATORY, per task.** Every task report carries a `## FALSIFICATION`
+   block beside its TDD evidence: remove or invert the thing the new test pins, show the test
+   **failing**, restore, show the suite green. **No falsification evidence ⇒ the task review
+   fails.** A test that passes when its subject is deleted pins nothing, and this is the only
+   proof that it does.
+
+The five defects above were measured against
+`docs/superpowers/plans/2026-08-09-adoption-at-document-scope.md` and its spec — read that plan
+as the worked counter-example of what this section forbids.
+
+**Reviewers enforce all four.** A plan containing a function body, an unmeasured load-bearing
+claim, or a task report without a falsification block is a *review failure* — not a style note.
+
 ## Deferred residues — the register
 
 Every loop that defers something records it in **`docs/superpowers/residues.md`**, which is the

@@ -1,0 +1,24 @@
+# vocab/queries/adoption-candidate.rq
+#
+# THE ADOPTION GATE (spec 2026-08-09-adoption-at-document-scope §5.2, residue R73).
+#
+# Is this page a total reading failure — an escalation on the page's own holon, and not one
+# entry cell anywhere on it? Both variables (?page, ?doc) are supplied by the caller as data;
+# the query text carries no literal.
+#
+# CLOSURE. The NOT EXISTS is query-local and HOLON-SCOPED: it closes the world over ONE page
+# holon, which is the closure boundary (CLAUDE.md §8). The graph stays open — another page's
+# silence says nothing here, and this query never DERIVES a fact, it only answers whether the
+# document's last reader may be asked.
+PREFIX tab:    <https://w3id.org/iladub/tab#>
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+
+ASK {
+  ?candidate a iladub:CandidateConcept ;
+             prov:wasDerivedFrom ?doc .
+  FILTER NOT EXISTS {
+    ?cell a tab:EntryCell ;
+          tab:onPage ?page .
+  }
+}

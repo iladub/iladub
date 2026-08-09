@@ -1,0 +1,108 @@
+"""adoption — the data grid as the DOCUMENT's last reader (spec 2026-08-09, residue R73).
+
+A page's total reading failure is not final at page scope. Adoption is admitted only where
+carriage (loop M), section repair (loop Q) and stitching have all had their turn and the page
+still asserted nothing — and it withdraws the escalation of the ink it actually READ, line by
+line, never the page's whole ledger.
+
+GATE CLASSIFICATION (CLAUDE.md §8).
+  * The candidate GATE is an AXIOM — `vocab/queries/adoption-candidate.rq`, holon-scoped to one
+    page (the holon is the closure boundary, so its query-local NOT EXISTS is legitimate).
+  * The LEDGER below is justified PROCEDURAL: exact counting over line-index sets. It is
+    irreducible to AXIOM or NEURAL because it is arithmetic over indices the grid and the band
+    inventory already decided — it decides nothing about the document, it only refuses to count
+    a line twice. It carries no threshold, no tolerance and no tuned constant.
+
+WHY LINE GRANULARITY IS FORCED (spec §M5). On the specimen page, NO escalated band is fully
+covered by the grid. A band-granular ledger therefore withdraws nothing and scores the page
+142/(142+97) = 0.594 — the double count that made the first wiring's 0.5941 meaningless, since
+the grid's tokens include the very lines those bands escalate. Zeroing the escalation instead
+scores it 1.0000 by construction, whatever the grid missed. Only the line is a unit both sides
+agree on.
+"""
+from dataclasses import dataclass
+from pathlib import Path
+
+from rdflib import Literal, URIRef, XSD
+
+# three dirs up from src/iladub/etkl/adoption.py -> repo root, then vocab/queries/
+_QUERIES = Path(__file__).resolve().parents[3] / "vocab" / "queries"
+ADOPTION_CANDIDATE_RQ = _QUERIES / "adoption-candidate.rq"
+
+
+@dataclass(frozen=True)
+class LineLedger:
+    """One adopted page's accounting. `admitted` and `residue` are DISJOINT by construction."""
+    admitted: tuple[int, ...]
+    residue: tuple[int, ...]
+    touched: frozenset[int]
+    asserted_tokens: int
+    escalated_tokens: int
+
+
+def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
+    """Account for every line of an adopted page exactly once.
+
+    `lines` is the page's own `text_lines(extract_words(...))` sequence, sorted by `top` — the
+    SAME sequence `grid_rows` indexes into, which is what makes the join exact.
+
+    A band is ESCALATED here by what its report BOOKED — `tokens_escalated > 0` — never by the
+    verdict string that report carries. The string is not the authority: `compile.compile_tables`
+    has branches (its ruled-reading and row-role paths) that do
+    `asserted_total += n; escalated_total += max(0, tokens - n)` while hard-coding the verdict to
+    "asserted", and an adopting page is by definition one where `asserted_total == 0`, so any such
+    band reached adoption with `n == 0` and carries real escalated ink under an "asserted" label.
+    Selecting by the string would drop that ink from the residue term AND from the untouched term
+    at once, and the page would score higher than it read. Selecting by the tokens cannot: a band
+    that booked nothing (every "ignored" band) still contributes nothing to either side.
+
+    A band is TOUCHED when the grid admitted at least one line inside it. Touched bands lose
+    their escalation (part of their ink has been read, so their record no longer describes what
+    happened) and contribute their UNREAD lines as residue. Untouched bands keep their own
+    token count verbatim.
+
+    The band↔line join is interval containment on the author's own band bounds — the idiom
+    `page_bands` already uses for hrules — never a coordinate tolerance.
+
+    Indices outside `range(len(lines))` are dropped rather than aliased or phantom-admitted,
+    so a caller whose grid indexes a different line sequence loses that row instead of silently
+    counting the wrong one.
+    """
+    admitted = tuple(sorted(j for j in set(grid_rows) if 0 <= j < len(lines)))
+    admitted_set = set(admitted)
+    escalated_bands = [i for i, r in enumerate(reports) if r.tokens_escalated > 0]
+
+    def _inside(band, line):
+        return band.top <= line.top <= band.bottom
+
+    touched = frozenset(
+        i for i in range(len(bands))
+        if any(_inside(bands[i], lines[j]) for j in admitted)
+    )
+
+    residue = tuple(
+        j for j, ln in enumerate(lines)
+        if j not in admitted_set
+        and any(i in touched and _inside(bands[i], ln) for i in escalated_bands)
+    )
+
+    asserted_tokens = sum(len(lines[j].words) for j in admitted)
+    escalated_tokens = (
+        sum(len(lines[j].words) for j in residue)
+        + sum(reports[i].tokens_escalated for i in escalated_bands if i not in touched)
+    )
+    return LineLedger(admitted, residue, touched, asserted_tokens, escalated_tokens)
+
+
+def is_adoption_candidate(graph, page: int, page_doc) -> bool:
+    """Run the gate AXIOM over ONE page holon of the merged graph.
+
+    `page_doc` is the page's document URI — the subject every escalation on that page was
+    derived from (`holon.escalate_region` stamps `prov:wasDerivedFrom`), which is how the page
+    holon is addressed for candidates that carry no `tab:onPage` of their own.
+    """
+    q = ADOPTION_CANDIDATE_RQ.read_text()
+    return bool(graph.query(q, initBindings={
+        "page": Literal(int(page), datatype=XSD.integer),
+        "doc": URIRef(str(page_doc)),
+    }).askAnswer)

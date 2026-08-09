@@ -326,8 +326,14 @@ def page_bands(pdf_path: str, page_number: int = 0,
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind
-    verdict: str                 # "asserted" | "escalated" | "ignored"
-    cells: int                   # asserted entry-cell count (0 otherwise)
+    # "asserted" | "escalated" | "ignored" | "superseded". The fourth is written only by the
+    # R73 adoption branch below, and only over a band that had booked escalated tokens whose ink
+    # the adopted data grid then read: the band's own record no longer describes what happened to
+    # that ink, so it neither escalates (the grid read it) nor asserts (this band did not read
+    # it). Its tokens move to the grid region and to the DATAGRID_RESIDUE region, which is why a
+    # "superseded" report always carries tokens_escalated == 0.
+    verdict: str
+    cells: int                 # asserted entry-cell count (0 otherwise)
     reason: str | None
     anchor: str | None
     ascii: str
@@ -866,36 +872,6 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     #
     # Found by the suite, not by reasoning: four escalation-path tests failed because a
     # second region appeared on a page they had pinned to exactly one.
-    # --- ADOPTION (R73). A page that read NOTHING and escalated everything is a total
-    # failure of the shipped reader, and where the data grid reads it completely the
-    # escalation is superseded rather than supplemented. Withdrawal is exact: the page's
-    # graph is rebuilt from the grid alone, so no token is ever counted on both sides —
-    # the defect that made the first wiring's 0.5941 meaningless.
-    #
-    # Warranted by an oracle, not by preference: apple page 1 is transcribed at 28 entry
-    # rows and the grid reads 28 of 28 with nothing leaked, while the pipeline asserts
-    # zero cells there.
-    #
-    # OFF by default, and that is not timidity. The document driver compiles each page
-    # standalone before re-compiling continuation pages with carried headers, and stem's
-    # pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. A
-    # page that adopts instead of escalating could silently deprive the driver of the
-    # signal it waits for, and that interaction has not been worked out.
-    if datagrid_adopt and asserted_total == 0 and escalated_total > 0:
-        from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
-        _grid = _dg(pdf_path, page_number)
-        if _grid is not None and _grid.rows:
-            _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
-                             if ln.words], key=lambda ln: ln.top)
-            graph = Graph()                       # exact withdrawal: nothing carried over
-            _emit(graph, _grid, _lines, doc, page_number)
-            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
-            asserted_total = sum(len(_lines[i].words) for i in _grid.rows)
-            escalated_total = 0
-            reports = [RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
-                                    None, str(TAB.DataGrid), "")]
-            band_marks = [(0, 0)]
-
     if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
         from .datagrid import derive_data_grid, emit_data_grid
         _grid = derive_data_grid(pdf_path, page_number)
@@ -918,6 +894,124 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                            tokens_asserted=band_marks[i + 1][0] - band_marks[i][0],
                            tokens_escalated=band_marks[i + 1][1] - band_marks[i][1])
                for i, r in enumerate(reports)]
+
+    # --- ADOPTION (R73). A page that read NOTHING and escalated everything is a total
+    # failure of the shipped reader, and where the data grid reads it completely the
+    # escalation is superseded rather than supplemented. Withdrawal is exact: the page's
+    # graph is rebuilt from the grid alone, so no token is ever counted on both sides —
+    # the defect that made the first wiring's 0.5941 meaningless.
+    #
+    # Warranted by an oracle, not by preference: apple page 1 is transcribed at 28 entry
+    # rows and the grid reads 28 of 28 with nothing leaked, while the pipeline asserts
+    # zero cells there.
+    #
+    # OFF by default at PAGE scope, and the reason is NOT the one this comment used to give.
+    # The old reason — "the driver compiles each page standalone before re-compiling
+    # continuation pages" — is MEASURED FALSE: `document.compile_document` makes ONE pass and
+    # page N-1's carried reading is an INPUT to page N's compile, so forcing adoption on every
+    # page leaves the stem document byte-identical at 0.9654553611484971.
+    #
+    # The real reason is the REFUSAL BRANCH, and its FIRST half is structural, not numeric: a
+    # single-page compile is INCAPABLE OF CHAINING AT ALL — `CompilationReport` carries no chain
+    # concept; chains exist only on the driver's `DocumentReport`. Whatever a page scores
+    # standalone, it can never see the pages it continues onto.
+    #
+    # The score corroborates it, SAME PAGE under both scopes: stem p1 standalone with adoption
+    # scores 0.9588 (measured this loop), against 0.9706 for the driver's own reading of that
+    # same page 1 (Loop M, recorded at docs/superpowers/residues.md R29). Page scope is refused
+    # not because the isolated reading would score deceptively HIGHER, but because it scores
+    # measurably LOWER. NB the two COUNTS are not comparable and are not compared: R29's figure
+    # is 825 TOKENS asserted under the driver, the standalone figure is 811 CELLS — only the two
+    # scores share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
+    # 0.9654553611484971. Pinned by tests/test_corpus_stem.py::
+    #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads
+    # (whose assertion pins the full-precision document floor, not the 4-decimal 0.9706).
+    #
+    # Adoption is therefore the DOCUMENT's last reader (`document.compile_document`), and this
+    # flag stays the explicit page-scope API that measurement needs.
+    #
+    # IT RUNS HERE — AFTER the per-band differencing above and BEFORE the score — and the
+    # position is load-bearing, not cosmetic. `RegionReport.tokens_escalated` defaults to 0
+    # and the differencing block is the ONLY place it is ever set, so a branch placed before
+    # it would hand `build_ledger` a `reports` list in which every band reads 0 escalated
+    # tokens. The ledger's untouched-band term would then contribute nothing and an escalated
+    # band the grid never touched would have its ink vanish from the denominator — the page
+    # scoring higher than it read, the exact failure this loop exists to prevent. Running
+    # afterwards also leaves `band_marks` untouched, so the differencing block's
+    # `len(reports) == len(band_marks) - 1` invariant is not something adoption has to repair.
+    # The move is behaviour-preserving for every other path: this branch's gate
+    # (escalated_total > 0) and the fallback's (escalated_total == 0) are mutually exclusive,
+    # so neither can now observe the other's writes any more than it could before.
+    if datagrid_adopt and asserted_total == 0 and escalated_total > 0:
+        from .adoption import build_ledger
+        from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
+        _grid = _dg(pdf_path, page_number)
+        if _grid is not None and _grid.rows:
+            _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
+                             if ln.words], key=lambda ln: ln.top)
+            _led = build_ledger(_lines, _grid.rows, bands, reports)
+            # WHAT `rep.graph` IS AUTHORITATIVE FOR AT PAGE SCOPE (final review I2). The rebuild
+            # discards every pass-1 escalation candidate on the page, including those of bands
+            # the grid never TOUCHED — whose tokens `build_ledger` still books
+            # (`adoption.py:90-93`, the untouched term). So for an untouched escalated band the
+            # returned report books escalated ink that nothing in this graph escalates: at PAGE
+            # scope `rep.graph` is authoritative for the TOUCHED bands, the grid and the residue,
+            # and the REPORT (`RegionReport.tokens_escalated`, kept verbatim for an untouched
+            # band) is the authority for the rest. `sum(r.tokens_escalated) == escalated_total`
+            # is unaffected — the disagreement is graph-vs-ledger, never ledger-internal.
+            #
+            # NOT REPAIRED HERE, on purpose. Re-escalating the untouched bands into the rebuilt
+            # graph would fix page scope and BREAK document scope: `document.compile_document`
+            # withdraws only the SUPERSEDED bands' candidates and merges this graph wholesale
+            # (document.py:1445-1447), so the driver's own untouched-band candidate would still
+            # be standing under the page doc URI and a re-escalated copy would arrive beside it
+            # under the adoption doc URI — two escalating nodes over one band's ink, against a
+            # ledger that books it once. That is the double count R73 exists to prevent, moved
+            # to the other side. The DOCUMENT path has no gap: it keeps the original page graph.
+            #
+            # MEASURED, so the exposure is stated rather than assumed: on both adopting pages in
+            # the corpus the untouched term is EMPTY. stem p1 (`compile_tables(STEM, 1,
+            # validate_shapes=False, datagrid_adopt=True)`) has exactly one escalated band
+            # (region 1, REGION_TILING_FAILED) and the grid touches it — the other two bands are
+            # `ignored` at 0 escalated tokens — leaving 1025 asserted / 44 escalated at 0.9588,
+            # all 44 of them the grid's OWN residue candidate, which the rebuild does emit.
+            # apple p1 likewise. Registered as residue R83.
+            graph = Graph()                   # withdrawal: the page graph is rebuilt
+            _grid_uri = _emit(graph, _grid, _lines, doc, page_number)
+            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            # THE LEDGER IS LINE-GRANULAR (spec §5.3). Zeroing `escalated_total` would score
+            # the page 1.0000 whatever the grid missed; withdrawing band-by-band would count
+            # the read lines twice (0.594). Only the line is a unit both sides agree on.
+            # PROCEDURAL and justified (CLAUDE.md §8): exact counting over line-index sets,
+            # no threshold and no tolerance — see adoption.build_ledger's classification.
+            asserted_total = _led.asserted_tokens
+            escalated_total = _led.escalated_tokens
+            # Band index IS region index: touched bands are SUPERSEDED in place, untouched
+            # bands keep their report verbatim, and the grid (plus any residue) is appended.
+            # The predicate is `tokens_escalated > 0`, the SAME one `build_ledger` selects its
+            # escalated bands by, and it has to be: the ledger has already turned this band's
+            # unread lines into residue, so leaving its own count standing would book that ink
+            # twice. Keying on the verdict string here while the ledger keys on the tokens would
+            # reopen the invariant sum(r.tokens_escalated) == escalated_total from the other side.
+            reports = [
+                _dc_replace(r, verdict="superseded", tokens_escalated=0)
+                if i in _led.touched and r.tokens_escalated > 0 else r
+                for i, r in enumerate(reports)
+            ]
+            reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                        None, str(TAB.DataGrid), "",
+                                        table_uri=_grid_uri,
+                                        tokens_asserted=_led.asserted_tokens))
+            if _led.residue:
+                _text = "\n".join(" ".join(w.text for w in _lines[j].words)
+                                  for j in _led.residue)
+                _res_uri = URIRef(f"{doc}#p{page_number}-datagrid-residue")
+                escalate_region(graph, _res_uri, doc, _text,
+                                "DATAGRID_RESIDUE", TAB.DataGrid, 0.0)
+                reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
+                                            "DATAGRID_RESIDUE", str(TAB.DataGrid), "",
+                                            tokens_escalated=sum(len(_lines[j].words)
+                                                                 for j in _led.residue)))
 
     denom = asserted_total + escalated_total
     if denom:
