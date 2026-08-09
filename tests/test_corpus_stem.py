@@ -359,8 +359,16 @@ def test_stem_document_is_byte_identical_under_adoption(stem_document):
     assert len(stem_document.chains) == 1 and len(stem_document.chains[0]) == 3
 
 
+@pytest.fixture(scope="module")
+def stem_p1_adopted():
+    """stem page 1 compiled ALONE with page-scope adoption, ONCE per module. Two tests read
+    it (the refusal branch and the untouched-band exposure), and it is one page compile."""
+    from iladub.etkl.compile import compile_tables
+    return compile_tables(str(STEM), 1, validate_shapes=False, datagrid_adopt=True)
+
+
 @needs_stem
-def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
+def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads(stem_p1_adopted):
     """THE REFUSAL BRANCH, on real evidence (spec §M3).
 
     The FIRST half of the refusal is structural, not numeric: a single-page compile is
@@ -383,9 +391,7 @@ def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
     test_stem_document_is_byte_identical_under_adoption / test_stem_document_stitches_three_pages,
     same fixture). This test is the reason adoption is the document's LAST reader and not
     the page's first."""
-    from iladub.etkl.compile import compile_tables
-
-    standalone = compile_tables(str(STEM), 1, validate_shapes=False, datagrid_adopt=True)
+    standalone = stem_p1_adopted
     assert standalone.asserted > 0, "the grid does read this page standalone"
     grid_cells = sum(r.cells for r in standalone.regions)
     # measured regression guard (loop review, not a placeholder): 811 flat cells exactly.
@@ -395,6 +401,40 @@ def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
     assert standalone.score < 0.9654553611484971, standalone.score
     print(f"\nstem p1 standalone adopted: {grid_cells} FLAT cells, "
           f"score={standalone.score:.4f}")
+
+
+@needs_stem
+def test_page_scope_adoption_escalates_in_the_graph_everything_it_books(stem_p1_adopted):
+    """THE UNTOUCHED-BAND EXPOSURE, measured rather than assumed (final review I2, residue R83).
+
+    At page scope `compile.py` REBUILDS the page graph, discarding the pass-1 escalation
+    candidate of every band — including bands the grid never touched, whose tokens
+    `adoption.build_ledger` still books (`adoption.py:90-93`). For such a band the report would
+    claim escalated ink that nothing in `rep.graph` escalates.
+
+    THIS PAGE HAS NO SUCH BAND, and that is the fact this test pins: stem p1 carries exactly one
+    escalated band (region 1, REGION_TILING_FAILED) and the grid touches it, so all 44 escalated
+    tokens are the grid's OWN residue — which the rebuild does emit. The exposure is therefore
+    dormant on the whole corpus, not repaired; the day a page brings an untouched escalated band
+    this assertion is what says so, instead of the report quietly over-claiming.
+
+    The DOCUMENT path is not affected at all: it keeps the driver's page graph and withdraws
+    only the superseded bands (document.py:1445-1447)."""
+    from rdflib import Namespace, RDF
+    ILADUB = Namespace("https://w3id.org/iladub#")
+    rep = stem_p1_adopted
+
+    booked_by_residue = sum(r.tokens_escalated for r in rep.regions
+                            if r.reason == "DATAGRID_RESIDUE")
+    assert booked_by_residue == rep.escalated > 0, (
+        booked_by_residue, rep.escalated,
+        [(r.verdict, r.reason, r.tokens_escalated) for r in rep.regions])
+
+    residue = [s for s in rep.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+               if str(s).endswith("-datagrid-residue")]
+    assert len(residue) == 1, residue
+    text = str(rep.graph.value(residue[0], ILADUB.surfaceText))
+    assert len(text.split()) == booked_by_residue, (len(text.split()), booked_by_residue)
 
 
 @needs_stem

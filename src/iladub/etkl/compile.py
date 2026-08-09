@@ -950,6 +950,32 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
                              if ln.words], key=lambda ln: ln.top)
             _led = build_ledger(_lines, _grid.rows, bands, reports)
+            # WHAT `rep.graph` IS AUTHORITATIVE FOR AT PAGE SCOPE (final review I2). The rebuild
+            # discards every pass-1 escalation candidate on the page, including those of bands
+            # the grid never TOUCHED — whose tokens `build_ledger` still books
+            # (`adoption.py:90-93`, the untouched term). So for an untouched escalated band the
+            # returned report books escalated ink that nothing in this graph escalates: at PAGE
+            # scope `rep.graph` is authoritative for the TOUCHED bands, the grid and the residue,
+            # and the REPORT (`RegionReport.tokens_escalated`, kept verbatim for an untouched
+            # band) is the authority for the rest. `sum(r.tokens_escalated) == escalated_total`
+            # is unaffected — the disagreement is graph-vs-ledger, never ledger-internal.
+            #
+            # NOT REPAIRED HERE, on purpose. Re-escalating the untouched bands into the rebuilt
+            # graph would fix page scope and BREAK document scope: `document.compile_document`
+            # withdraws only the SUPERSEDED bands' candidates and merges this graph wholesale
+            # (document.py:1445-1447), so the driver's own untouched-band candidate would still
+            # be standing under the page doc URI and a re-escalated copy would arrive beside it
+            # under the adoption doc URI — two escalating nodes over one band's ink, against a
+            # ledger that books it once. That is the double count R73 exists to prevent, moved
+            # to the other side. The DOCUMENT path has no gap: it keeps the original page graph.
+            #
+            # MEASURED, so the exposure is stated rather than assumed: on both adopting pages in
+            # the corpus the untouched term is EMPTY. stem p1 (`compile_tables(STEM, 1,
+            # validate_shapes=False, datagrid_adopt=True)`) has exactly one escalated band
+            # (region 1, REGION_TILING_FAILED) and the grid touches it — the other two bands are
+            # `ignored` at 0 escalated tokens — leaving 1025 asserted / 44 escalated at 0.9588,
+            # all 44 of them the grid's OWN residue candidate, which the rebuild does emit.
+            # apple p1 likewise. Registered as residue R83.
             graph = Graph()                   # withdrawal: the page graph is rebuilt
             _grid_uri = _emit(graph, _grid, _lines, doc, page_number)
             _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
