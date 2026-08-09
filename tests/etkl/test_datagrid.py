@@ -217,6 +217,97 @@ def test_worked_example_conforms(tmp_path):
     assert "ColumnHomogeneity" in g.conforms
 
 
+def _aggregating_page(tmp_path, total="1200"):
+    """A register with a measure-only total row: no label anywhere on the line, the value
+    alone under the first quantity column. The rows sum to 1200 and 1240."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    path = str(tmp_path / f"aggregating-{total}.pdf")
+    c = canvas.Canvas(path, pagesize=A4)
+    c.setFont("Helvetica", 10)
+    c.drawString(60, 780, "QUARTERLY REGISTER")            # title -> metadata
+    for i, (name, a, b) in enumerate([("North", "120", "130"), ("South", "240", "250"),
+                                      ("East", "360", "370"), ("West", "480", "490")]):
+        y = 720 - i * 20
+        c.drawString(60, y, name)
+        c.drawString(200, y, a)
+        c.drawString(300, y, b)
+    c.drawString(200, 720 - 4 * 20, total)                 # the measure-only total row
+    c.save()
+    return path
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_worked_example_admits_a_measure_only_aggregate(tmp_path):
+    """The worked example that CONFORMS for G8-as-row-admission: 120+240+360+480 = 1200,
+    exactly, so the label-less row is a row of the grid."""
+    g = derive_data_grid(_aggregating_page(tmp_path, total="1200"), 0)
+    assert g is not None
+    assert len(g.rows) == 5, f"4 data rows + the aggregate, got {g.rows}"
+    assert len(g.aggregates) == 1
+    (line, members), = g.aggregates.items()
+    assert len(members) == 4
+    assert "AggregateWitness" in g.conforms
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_negative_example_refuses_a_total_that_does_not_reconcile(tmp_path):
+    """The negative that MUST fail: one off by a single unit. Exact, never a tolerance."""
+    g = derive_data_grid(_aggregating_page(tmp_path, total="1201"), 0)
+    assert len(g.rows) == 4, f"the non-reconciling row must stay out, got {g.rows}"
+    assert not g.aggregates
+    assert "no-reconciliation" in str(g.refusals.get(5)), g.refusals
+
+
+def _period_header_below_data_page(tmp_path):
+    """FALSIFIER F2 (spec §4). A bare period header REPRINTED BELOW the data rows, so it
+    has a non-empty member run and its position can no longer refuse it. Only the
+    arithmetic can, and it must."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    path = str(tmp_path / "period-header-below.pdf")
+    c = canvas.Canvas(path, pagesize=A4)
+    c.setFont("Helvetica", 10)
+    c.drawString(60, 780, "CONDENSED STATEMENTS OF OPERATIONS")
+    for i, (name, a, b) in enumerate([("Products", "120", "130"), ("Services", "240", "250"),
+                                      ("Total net sales", "360", "380")]):
+        y = 750 - i * 20
+        c.drawString(60, y, name)
+        c.drawString(200, y, a)
+        c.drawString(300, y, b)
+    y = 750 - 3 * 20
+    c.drawString(200, y, "2026")           # the bare period header, BELOW the data
+    c.drawString(300, y, "2025")
+    c.save()
+    return path
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_f2_a_period_header_below_the_data_is_refused_by_the_arithmetic(tmp_path):
+    """FALSIFIER F2. Measured on the real corpus, every bare period header is refused
+    because it sits ABOVE every data row — the arithmetic refuses nothing at all, so its
+    refusal branch would ship unexercised (spec §3.3).
+
+    Here the header has 3 admitted rows above it, so only the sum can refuse it. The
+    assertion is on the REASON, not on absence: absence would pass vacuously even if the
+    witness were never consulted.
+
+    measured-on-fixture: no real corpus document reprints a period header below its data."""
+    path = _period_header_below_data_page(tmp_path)
+    g = derive_data_grid(path, 0)
+    assert g is not None
+    # locate the header by its CONTENT, not by assuming it is the last line
+    lines = [l for l in sorted(text_lines(extract_words(path, 0)), key=lambda l: l.top)
+             if l.words]
+    header_line = next(i for i, l in enumerate(lines)
+                       if [w.text for w in sorted(l.words, key=lambda w: w.x0)] == ["2026", "2025"])
+    assert g.refusals[header_line] == "AggregateWitness/no-reconciliation", g.refusals
+    assert not g.aggregates
+    assert len(g.rows) == 3, f"only the three data rows, got {g.rows}"
+
+
 def _prose_page(tmp_path):
     """Four rows of two aligned TEXT columns: the shape of a grid, none of the substance."""
     from reportlab.lib.pagesizes import A4
