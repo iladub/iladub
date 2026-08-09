@@ -774,17 +774,31 @@ def test_cbh_p0_admits_no_metadata():
 
 
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
-def test_cbh_p0_known_defects_are_pinned_not_hidden():
-    """Two measured defects, pinned so they cannot drift silently.
-
-    LEAK: line 75 belongs to the SECOND table on the page (stock at port) and is
-    admitted into the roster's grid. Recorded in the data-grid spec §8.4 as
+def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
+    """LEAK, still open as R74: line 75 belongs to the SECOND table on the page (stock at
+    port) and is admitted into the roster's grid. Recorded in the data-grid spec §8.4 as
     'cbh's rectangle spans a stacked panel'; tab:StackedGrids is defined and not derived.
 
-    MISS: the four per-panel volume totals carry a measure but no key, so
-    tab:RowAddressability refuses them. They are aggregate rows of the grid and their
-    absence is a real gap, not a correct refusal."""
+    Its measure is in fact table A's exact grand total (374,904 + 737,289 + 660,363 +
+    178,708 = 1,951,264 — spec 2026-08-09 §3.6), so the line carries two tables' ink."""
+    g = derive_data_grid(CBH, 0)
+    assert set(g.rows) & CBH_P0_TABLE_B == {75}, "the table-B leak changed"
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_cbh_p0_admits_the_four_panel_totals_by_arithmetic():
+    """R75 CLOSED. The four per-panel volume totals carry a measure and no key, so the
+    placement floor refused them as unplaceable. G8's aggregate witness admits them: each
+    printed value is the EXACT Decimal sum of the rows it stands over.
+
+    No label text is read — 'Total' is never printed on these lines at all."""
     g = derive_data_grid(CBH, 0)
     admitted = set(g.rows)
-    assert admitted & CBH_P0_TABLE_B == {75}, "the table-B leak changed"
-    assert not (admitted & CBH_P0_PANEL_TOTALS), "panel totals are expected to be missed"
+    missed = sorted(CBH_P0_PANEL_TOTALS - admitted)
+    assert not missed, f"panel totals missed: {missed}"
+    # the member counts are the four panels' vessel-row counts, and they sum to 45
+    assert {k: len(v) for k, v in g.aggregates.items()} == {20: 10, 42: 16, 63: 14, 74: 5}
+    assert sum(len(v) for v in g.aggregates.values()) == len(CBH_P0_VESSEL_ROWS) == 45
+    # every entry row of table A, aggregates included
+    assert CBH_P0_DATA <= admitted, f"missed: {sorted(CBH_P0_DATA - admitted)}"
+    assert len(CBH_P0_DATA) == 49

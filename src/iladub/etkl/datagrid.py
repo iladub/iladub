@@ -113,6 +113,7 @@ class DataGrid:
     universe: str                            # "decoration" | "alignment"
     conforms: tuple[str, ...] = ()           # tab:conformsTo
     refusals: dict = field(default_factory=dict)   # line index -> tab:refutedBy
+    aggregates: dict = field(default_factory=dict)  # line index -> member line indices
 
     @property
     def measures(self) -> tuple[int, ...]:
@@ -367,7 +368,8 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         """Does this row carry ink in the index block — outside the rectangle?"""
         return any(r.x1 <= bounds[0] - 0.5 for r in rs)
 
-    def place_indexed(rs: list[Run], measure_cols: set) -> dict | None:
+    def place_indexed(rs: list[Run], measure_cols: set,
+                      min_cells: int | None = None) -> dict | None:
         """Placement once the measures are known, with the stub read as an ADDRESSING
         AXIS rather than one cell.
 
@@ -382,7 +384,12 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         with year and quarter both inside the key column, and the stem prints
         'Jul 26 Total 1 18,000' with its label out at the month level, left of the grid.
         Both were refused — the first for two runs in a column, the second for having a
-        single cell inside it."""
+        single cell inside it.
+
+        `min_cells` is a PER-CALL override used only by the aggregate-witness pass, which
+        must see single-cell candidates. G2's own call site passes nothing, so no line
+        reaches RowAddressability that does not reach it today — the floor is not lowered,
+        it is by-passed for candidates the arithmetic then has to justify (spec §5.1)."""
         if not rs:
             return None
         outside = index_ink(rs)
@@ -401,7 +408,7 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
                 hit[k] = f"{hit[k]} {r.text}"                   # stub levels, in order
             else:
                 hit[k] = r.text
-        floor = 1 if outside else 2
+        floor = min_cells if min_cells is not None else (1 if outside else 2)
         return hit if len(hit) >= floor else None
 
     placed = [(i, place(runs[i])) for i in range(len(lines))]
@@ -516,6 +523,53 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         rows.append(i)
     if not rows:
         return None
+
+    # --- G8 tab:AggregateWitness, as a ROW-ADMISSION axiom (spec 2026-08-09).
+    #
+    # STRICTLY ADDITIVE, and it runs AFTER the grid is closed: the column universe, the
+    # measure set and key_col are already fixed, so this pass cannot change the grid's
+    # identity and §8.5's non-convergence hazard cannot arise. Members always lie ABOVE
+    # their candidate, so ONE top-down pass suffices — no iteration, no fixed point.
+    #
+    # The proposer is placement geometry and reads no value; the disposer is exact
+    # arithmetic and reads no position. Neither can manufacture the other's evidence.
+    #
+    # Measured over the whole corpus (27 pages): 86 lines proposed, 4 admitted — exactly
+    # cbh page 0's four panel totals, zero false admissions.
+    cells_by_line = {}
+    for i in range(len(lines)):
+        h = place_indexed(runs[i], measures, min_cells=1)
+        if h:
+            cells_by_line[i] = h
+    aggregates: dict = {}
+    admitted = set(rows)
+    for i in range(len(lines)):
+        if i in admitted:
+            continue
+        h = cells_by_line.get(i)
+        # PROPOSER: places into at least one measure column, carries no ink in the key
+        # column and none in the index block outside the rectangle.
+        if not h or key_col in h or index_ink(runs[i]):
+            continue
+        occupied = {k: t for k, t in h.items() if not is_blank(t)}
+        if not (measures & set(occupied)):
+            continue
+        members = aggregate_members(i, admitted, set(aggregates))
+        # DISPOSER: exact arithmetic over the member rows' cells.
+        if confirms_aggregate(occupied, [cells_by_line[m] for m in members
+                                         if m in cells_by_line]):
+            aggregates[i] = members
+            admitted.add(i)
+            rows.append(i)
+            refusals.pop(i, None)
+        elif members and all(_decimal(t) is not None for t in occupied.values()):
+            # The arithmetic actually SPOKE, so the record names the rule that decided.
+            # Every other candidate keeps the reason that already refused it, which is why
+            # apple's boxhead stays 'RowAddressability/no-key' and stem's carried-refusal
+            # count is unchanged.
+            refusals[i] = "AggregateWitness/no-reconciliation"
+    rows.sort()
+
     for i in range(len(lines)):
         refusals.setdefault(i, "unplaceable") if i not in set(rows) else None
 
@@ -524,8 +578,9 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         columns=tuple(columns),
         universe=universe,
         conforms=("ColumnHomogeneity", "NonDegeneracy", "RowAddressability",
-                  "ColumnAlignment", "SeedFollowsUniverse"),
+                  "ColumnAlignment", "SeedFollowsUniverse", "AggregateWitness"),
         refusals=refusals,
+        aggregates=aggregates,
     )
 
 
