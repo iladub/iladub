@@ -363,16 +363,25 @@ def test_stem_document_is_byte_identical_under_adoption(stem_document):
 def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
     """THE REFUSAL BRANCH, on real evidence (spec §M3).
 
-    stem p1 compiled standalone is a total failure, and the grid reads it — flat, 811 cells,
-    no chain, and scoring higher than the correct reading. Under the driver the same page
-    asserts 825 hierarchical cells at 0.9706 as a member of the 3-page chain. This test is
-    the reason adoption is the document's LAST reader and not the page's first."""
+    stem p1 compiled ALONE reads flat — 811 cells, no chain, 0.9588 — and a single-page
+    compile is structurally incapable of chaining (`CompilationReport` carries no chain
+    concept at all; chains exist only on the document driver's report). The driver instead
+    reads all three pages as one chain of 3, 2152 cells, at 0.9654553611484971 (measured in
+    test_stem_document_is_byte_identical_under_adoption / test_stem_document_stitches_three_pages,
+    same fixture). Adoption is refused at page scope not because the isolated reading would
+    score deceptively HIGHER, but because it scores measurably LOWER and cannot see the other
+    two pages at all. This test is the reason adoption is the document's LAST reader and not
+    the page's first."""
     from iladub.etkl.compile import compile_tables
 
     standalone = compile_tables(str(STEM), 1, validate_shapes=False, datagrid_adopt=True)
     assert standalone.asserted > 0, "the grid does read this page standalone"
     grid_cells = sum(r.cells for r in standalone.regions)
-    assert grid_cells > 500, grid_cells
+    # measured regression guard (loop review, not a placeholder): 811 flat cells exactly.
+    assert grid_cells == 811, grid_cells
+    # the invariant the docstring claims, pinned rather than left for a human to notice:
+    # the isolated reading scores LOWER than the document floor, never higher or equal.
+    assert standalone.score < 0.9654553611484971, standalone.score
     print(f"\nstem p1 standalone adopted: {grid_cells} FLAT cells, "
           f"score={standalone.score:.4f}")
 

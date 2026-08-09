@@ -850,8 +850,11 @@ def test_adoption_is_off_by_default_at_page_scope():
     The register's original reason — 'compile_document compiles each page standalone before
     re-compiling continuation pages' — is MEASURED FALSE: the driver makes one pass and the
     carried reading is an INPUT to page p's compile. The real reason the page-scope flag stays
-    off is the refusal branch: stem p1 standalone adopts at 811 FLAT cells and scores 1.0000,
-    against 825 hierarchical chain-joined cells at 0.9706 under the driver."""
+    off is the refusal branch: stem p1 standalone adopts at 811 FLAT cells and scores 0.9588,
+    a single-page compile that structurally cannot chain — against the driver's 2152 cells
+    over the 3-page chain at 0.9654553611484971 (tests/test_corpus_stem.py's
+    test_page_scope_adoption_would_have_taken_the_page_the_driver_reads). Adoption at page
+    scope would not merely score lower; it would never see the other two pages at all."""
     from iladub.etkl.compile import compile_tables
 
     default = compile_tables(APPLE, 1, validate_shapes=False)
