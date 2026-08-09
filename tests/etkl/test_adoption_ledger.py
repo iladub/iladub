@@ -90,3 +90,15 @@ def test_no_line_is_on_both_sides_ever():
     led = build_ledger(lines, (0, 2, 4, 6, 8), bands, reports)
     assert not set(led.admitted) & set(led.residue)
     assert led.asserted_tokens + led.escalated_tokens == 10
+
+
+def test_an_out_of_range_grid_row_is_dropped_not_aliased():
+    """A negative index would alias to the LAST line and count its ink twice; an index
+    past the end has no line at all. Neither may enter the ledger."""
+    lines = [_line(1, 0.0)]
+    bands = [_B(0.0, 10.0)]
+    reports = [_R("escalated", 1)]
+    led = build_ledger(lines, (-1, 0, 5), bands, reports)
+    assert led.admitted == (0,)
+    assert led.asserted_tokens == 1
+    assert led.escalated_tokens == 0

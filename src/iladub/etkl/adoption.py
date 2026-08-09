@@ -46,8 +46,12 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
 
     The band↔line join is interval containment on the author's own band bounds — the idiom
     `page_bands` already uses for hrules — never a coordinate tolerance.
+
+    Indices outside `range(len(lines))` are dropped rather than aliased or phantom-admitted,
+    so a caller whose grid indexes a different line sequence loses that row instead of silently
+    counting the wrong one.
     """
-    admitted = tuple(sorted(set(grid_rows)))
+    admitted = tuple(sorted(j for j in set(grid_rows) if 0 <= j < len(lines)))
     admitted_set = set(admitted)
     escalated_bands = [i for i, r in enumerate(reports) if r.verdict == "escalated"]
 
@@ -56,7 +60,7 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
 
     touched = frozenset(
         i for i in range(len(bands))
-        if any(_inside(bands[i], lines[j]) for j in admitted if j < len(lines))
+        if any(_inside(bands[i], lines[j]) for j in admitted)
     )
 
     residue = tuple(
@@ -65,7 +69,7 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
         and any(i in touched and _inside(bands[i], ln) for i in escalated_bands)
     )
 
-    asserted_tokens = sum(len(lines[j].words) for j in admitted if j < len(lines))
+    asserted_tokens = sum(len(lines[j].words) for j in admitted)
     escalated_tokens = (
         sum(len(lines[j].words) for j in residue)
         + sum(reports[i].tokens_escalated for i in escalated_bands if i not in touched)
