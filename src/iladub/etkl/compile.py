@@ -905,11 +905,24 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # rows and the grid reads 28 of 28 with nothing leaked, while the pipeline asserts
     # zero cells there.
     #
-    # OFF by default, and that is not timidity. The document driver compiles each page
-    # standalone before re-compiling continuation pages with carried headers, and stem's
-    # pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. A
-    # page that adopts instead of escalating could silently deprive the driver of the
-    # signal it waits for, and that interaction has not been worked out.
+    # OFF by default at PAGE scope, and the reason is NOT the one this comment used to give.
+    # The old reason — "the driver compiles each page standalone before re-compiling
+    # continuation pages" — is MEASURED FALSE: `document.compile_document` makes ONE pass and
+    # page N-1's carried reading is an INPUT to page N's compile, so forcing adoption on every
+    # page leaves the stem document byte-identical at 0.9654553611484971.
+    #
+    # The real reason is the REFUSAL BRANCH, and it is the opposite of what was assumed. A
+    # single-page compile is structurally incapable of chaining — `CompilationReport` carries
+    # no chain concept at all; chains exist only on the driver's `DocumentReport`. Compiled
+    # standalone WITH adoption, stem p1 reads FLAT: 811 cells, score 0.9588 (measured). The
+    # driver instead reads all three pages as ONE chain of 3, 2152 cells, at 0.9654553611484971.
+    # Page scope is refused not because the isolated reading would score deceptively HIGHER,
+    # but because it scores measurably LOWER and cannot see the other two pages at all. Pinned
+    # by tests/test_corpus_stem.py::
+    #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads.
+    #
+    # Adoption is therefore the DOCUMENT's last reader (`document.compile_document`), and this
+    # flag stays the explicit page-scope API that measurement needs.
     #
     # IT RUNS HERE — AFTER the per-band differencing above and BEFORE the score — and the
     # position is load-bearing, not cosmetic. `RegionReport.tokens_escalated` defaults to 0

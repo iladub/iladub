@@ -1376,9 +1376,14 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # makes the answer true rather than accidental — and it is why no band-index consumer
     # ever observes a rewritten page (every one of them has already run).
     #
-    # The refusal branch is real and measured: compiled STANDALONE, stem p1 adopts at 811
-    # FLAT cells and scores 1.0000, against the 825 hierarchical chain-joined cells it
-    # asserts here at 0.9706. Page scope would prefer the worse reading. The GATE therefore
+    # The refusal branch is real and measured — and the direction is the OPPOSITE of what the
+    # plan claimed. Compiled STANDALONE with adoption, stem p1 reads FLAT: 811 cells, score
+    # 0.9588 (measured; it is NOT 1.0000). The driver reads all three pages as ONE chain of 3,
+    # 2152 cells, at 0.9654553611484971. Page scope is refused not because the isolated reading
+    # would score deceptively HIGHER, but because it scores measurably LOWER and — a single-page
+    # `CompilationReport` carrying no chain concept at all — could never see the other two pages.
+    # Pinned by tests/test_corpus_stem.py::
+    #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads. The GATE therefore
     # reads the merged graph the driver actually built, and the RE-COMPILE is given back the
     # same carried reading page p was compiled with (`carried_by_page`) — otherwise its
     # untouched-band reports, which `pages[p] = rep_a` installs, would be a context-free

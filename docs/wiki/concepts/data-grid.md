@@ -4,10 +4,14 @@ type: concept
 sources:
   - docs/superpowers/specs/2026-08-08-data-grid-types-elements-axioms.md
   - docs/superpowers/specs/2026-08-09-aggregate-witness-row-admission-design.md
+  - docs/superpowers/specs/2026-08-09-adoption-at-document-scope-design.md
   - vocab/ontology/tab-datagrid.ttl
   - src/iladub/etkl/datagrid.py
+  - src/iladub/etkl/adoption.py
   - tests/etkl/test_datagrid.py
+  - tests/test_corpus_stem.py
   - src/iladub/etkl/compile.py
+  - src/iladub/etkl/document.py
 related: ["[[table-holon-compilation]]", "[[decision-holon]]", "[[corpus-harness]]", "[[assert-propose-promote]]"]
 confidence: high
 updated: 2026-08-09
@@ -130,8 +134,40 @@ Four transcribed oracles, complete and sound — **162 of 162 entry rows, zero m
 | ons p7 | 46/46 | none |
 
 Wired into `compile_tables` as a **fallback** where a page produces nothing at all (ons p7/p8,
-0 → 276 cells each), with **adoption** — exact withdrawal of an escalation — implemented behind
-`datagrid_adopt`, off by default. stem's document compile is unchanged at `0.9654553611484971`.
+0 → 276 cells each).
+
+## Adoption — the document's last reader
+
+**Adoption** is the exact withdrawal of a page's escalation in favour of the grid's reading. It
+belongs to the **document**, not the page: `compile_document` asks only after the driver has had
+its chance — after carriage, after section repair — so a page adopts only where the shipped
+reader, with everything the document could give it, still read nothing at all.
+
+The page-scope flag (`datagrid_adopt`) stays **off by default**, and the reason recorded before
+this loop was wrong. It used to say the driver compiles each page standalone before re-compiling
+continuation pages; measured, the driver makes **one pass** and page N-1's carried reading is an
+*input* to page N's compile, so forcing adoption on every page leaves the stem document
+byte-identical at `0.9654553611484971`. The real reason is the **refusal branch**: a single-page
+compile is structurally incapable of chaining (`CompilationReport` carries no chain concept —
+chains exist only on `DocumentReport`). Compiled standalone with adoption, stem p1 reads *flat*
+at **811 cells, `0.9588`**, while the driver reads all three pages as **one chain of 3, 2152
+cells, at `0.9654553611484971`**. Page scope is refused not because the isolated reading would
+score deceptively higher, but because it scores measurably **lower** and cannot see the other two
+pages at all.
+
+The withdrawal ledger is **line-granular**, and that is what keeps adoption honest: zeroing the
+escalation would score any adopted page a perfect `1.0000` whatever the grid missed, and
+withdrawing band-by-band would count the read lines on both sides. Only the line is a unit the
+grid and the bands agree on — so **an adopted page never scores 1.0000 by construction**. On
+apple p1 the grid asserts 142 tokens and 40 tokens survive as one `DATAGRID_RESIDUE` candidate:
+`0.7802`, not perfection. The bands the grid replaced are rewritten `superseded` in place (the
+band index *is* the region index), and the admission decision carries `dec:supersedes` to the
+verdicts it withdrew, so `effective-chain.rq` returns the live reading rather than the retracted
+one.
+
+Measured movement at document scope: **apple `0.06068601583113457` → `0.35560344827586204`**;
+stem unchanged at `0.9654553611484971`, `adopted == ()` — carriage makes its continuation pages
+assert before the gate can ask.
 
 ## The methodological lesson
 
@@ -147,9 +183,13 @@ stayed wrong; fixing the universe moved four pages at once and cost nothing.
 
 ## Open
 
-- **R73** — adoption is implemented and measured but not enabled: `compile_document` compiles
-  pages standalone before carriage, and stem's continuation pages escalate standalone *by
-  design* (R29) so carriage can happen. Both would adopt.
+- **R73 is closed** (adoption at document scope, 2026-08-09) and its stated mechanism was
+  measured false — see the section above. What it left behind is registered as **R79** (the
+  unread structure is one page-level candidate, not a refusal per line) and **R80** (apple p1's
+  indent hierarchy — 7 group labels among 11 unread lines — is read by nobody).
+- **R81/R82** — the grid's admission decision is now on the accountable-verdict query surface but
+  carries no `dec:decidedBy` and no readable `dec:chosen` label, and `compile._validate` never
+  applies `dec-shapes.ttl`, so SHACL green says nothing about it.
 - Five corpus pages remain untranscribed (cbh, capacity, who, bfs, apple p2), so their numbers
   are not yet evidence.
 - The axioms are Python, not SPARQL. §8 says they belong in `.rq` over the evidence graph; the
