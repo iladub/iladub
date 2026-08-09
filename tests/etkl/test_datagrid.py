@@ -165,6 +165,17 @@ def test_confirms_aggregate_refuses_a_column_with_no_summable_member():
                                   [{1: "100"}, {1: "200"}])
 
 
+def test_confirms_aggregate_drops_an_unparseable_member_cell():
+    """The stated asymmetry, PINNED so it cannot drift silently: a member cell that is
+    present but unparseable (a suppression marker) is dropped from the sum rather than
+    refusing. The failure direction is toward refusal — a suppressed member makes the
+    printed total exceed the computed sum — so this is recorded, not relied on."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    assert confirms_aggregate({1: "300"}, [{1: "100"}, {1: "200"}, {1: ".."}])
+    # the candidate side stays strict: one unparseable occupied cell refuses the row
+    assert not confirms_aggregate({1: ".."}, [{1: "100"}, {1: "200"}])
+
+
 def test_unit_marker_is_absorbed_not_kept_as_a_column():
     runs = ink_runs(_line(("Products", 59, 110, 143), ("$", 305, 311, 143),
                           ("78,678", 329, 363, 143)))
@@ -603,6 +614,9 @@ def test_emitted_aggregate_rows_reuse_the_loop_h_class():
         URIRef("https://w3id.org/iladub/tab#DetectedAggregationRow")))
     assert len(agg) == 4, f"expected the four panel totals, got {len(agg)}"
     for a in agg:
+        assert (a, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                URIRef("https://w3id.org/iladub/tab#AggregationRow")) in g, (
+            "the SUPERTYPE must be a direct triple: feed.py:217 tests it without inference")
         funcs = list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregationFunction")))
         assert [str(f) for f in funcs] == ["sum"], funcs
         ops = list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregates")))

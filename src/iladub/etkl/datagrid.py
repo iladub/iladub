@@ -265,8 +265,17 @@ def confirms_aggregate(cells: dict, member_cells: list) -> bool:
     whose leading column happens to sum.
 
     Two honest refusals, both deliberate: no members at all (a vacuous 0 == 0 never
-    confirms, the same rule `reconciles` makes), and a cell whose column no member
-    populates (a missing member is never read as a zero)."""
+    confirms, the same rule `reconciles` makes), and a column NO member populates (never
+    summed as zero).
+
+    THE ASYMMETRY, stated because it is real: the candidate side is strict — one
+    unparseable occupied cell refuses the whole row — while the member side is not. A
+    member cell that is PRESENT BUT UNPARSEABLE (a suppression marker such as '..' or
+    'n/a', which `is_blank` does not cover) is dropped from the sum, so for that column
+    it is read as zero. The failure direction is toward refusal, not false admission: a
+    suppressed member makes the printed total EXCEED the computed sum. Refusing instead
+    would need an oracle for suppression markers that no transcribed page supplies —
+    registered as a residue rather than tightened unmeasured."""
     if not cells or not member_cells:
         return False
     for k, text in cells.items():
@@ -634,15 +643,23 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         line = lines[line_idx]
         r_uri = row_uri_by_line[line_idx]
         g.add((r_uri, RDF.type, TAB.LeafRow))
-        # G8: an aggregate row is typed with the class the extraction path ALREADY uses
+        # G8: an aggregate row is typed with the classes the extraction path ALREADY uses
         # (tab.ttl:379, loop H) and carries its member rows as operands, so the shipped
         # tab:DetectedAggregationRowShape is satisfied without being edited. No new class
         # is minted for the grid-side case — it is the label-less case of one rule.
-        for m in grid.aggregates.get(line_idx, ()):
+        #
+        # BOTH types, and the supertype is NOT redundant: feed.py:217 and
+        # document.py:915 test `(row, RDF.type, TAB.AggregationRow)` as a DIRECT triple,
+        # with no reasoner in the loop, to keep a subtotal from minting a record (§7).
+        # Emitting only the subclass would let an admitted subtotal be read as data the
+        # moment the grid reaches the feed — which R73's adoption path is aimed at.
+        if line_idx in grid.aggregates:
+            g.add((r_uri, RDF.type, TAB.AggregationRow))
             g.add((r_uri, RDF.type, TAB.DetectedAggregationRow))
             g.add((r_uri, TAB.aggregationFunction, Literal("sum")))
-            if m in row_uri_by_line:
-                g.add((r_uri, TAB.aggregates, row_uri_by_line[m]))
+            for m in grid.aggregates[line_idx]:
+                if m in row_uri_by_line:
+                    g.add((r_uri, TAB.aggregates, row_uri_by_line[m]))
         g.add((grid_uri, TAB.hasGridRow, r_uri))
         g.add((r_uri, PROV.wasDerivedFrom,
                URIRef(f"{doc_uri}#p{page}-line{line_idx}")))
