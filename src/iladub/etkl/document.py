@@ -1159,6 +1159,10 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     refused: list[tuple[int, int]] = []       # recognized, then REFUSED by the licence (loop O)
     links: dict[URIRef, URIRef] = {}          # continuation table -> the table it continues
     prev_bands = None                         # page p-1's band inventory, the licence's evidence
+    # page p -> the carried reading its compile was given, kept so that any LATER pass which
+    # re-compiles page p re-compiles the page the driver actually produced, not a context-free
+    # one (R73: the adoption pass below). `None` for every page that carried nothing.
+    carried_by_page: dict[int, dict | None] = {}
 
     # ONE pass, pages in order: recognize the break BEFORE compiling page p, because the carried
     # reading is an INPUT to that compile (task 3). Recognition itself reads only the bands
@@ -1199,6 +1203,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                     refused.append((p - 1, p))
                     refused_pair = (prev_idx, cur_idx)
         prev_bands = bands
+        carried_by_page[p] = carried
         pages.append(compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                                     span_proposer=span_proposer,
                                     row_role_proposer=row_role_proposer,
@@ -1373,52 +1378,98 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     #
     # The refusal branch is real and measured: compiled STANDALONE, stem p1 adopts at 811
     # FLAT cells and scores 1.0000, against the 825 hierarchical chain-joined cells it
-    # asserts here at 0.9706. Page scope would prefer the worse reading. This pass never
-    # consults a context-free compile — it reads the pages the driver actually produced.
+    # asserts here at 0.9706. Page scope would prefer the worse reading. The GATE therefore
+    # reads the merged graph the driver actually built, and the RE-COMPILE is given back the
+    # same carried reading page p was compiled with (`carried_by_page`) — otherwise its
+    # untouched-band reports, which `pages[p] = rep_a` installs, would be a context-free
+    # reading of a page the driver read in context.
+    #
+    # COST, stated because it is not free: one extra full `compile_tables` per CANDIDATE page,
+    # including pages that then refuse (they pay a whole page compile to produce one `notes`
+    # line), and an adoption sets `section_facts`, which turns on whole-graph SHACL over the
+    # merged document (measured at 41.3 s on the stem — see the docstring above). Both are
+    # linear in candidate pages, not in document pages.
     from .adoption import is_adoption_candidate
     adopted: list[int] = []
     for p in range(n_pages):
         if not is_adoption_candidate(graph, p, page_doc_uri(p)):
             continue
         # The adoption pass compiles under its OWN page-scoped doc URI, exactly as loop Q's
-        # pass 2 does (`r2_doc`). Without it the two verdict judgements would mint the SAME
-        # IRI and `dec:supersedes` would silently link a node to itself.
+        # pass 2 does (`r2_doc`), so nothing it mints can collide with the driver's page graph.
         adopt_doc = URIRef(f"{page_doc_uri(p)}/adopt")
         rep_a = compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
                                span_proposer=span_proposer,
                                row_role_proposer=row_role_proposer,
                                doc_uri=adopt_doc,
+                               carried_header_roles=carried_by_page.get(p),
                                datagrid_adopt=True)
-        if rep_a.asserted == 0:
+        # DID THE ADOPTION BRANCH ACTUALLY FIRE? `rep_a.asserted != 0` does not answer that:
+        # the re-compile can assert through the ordinary band path or through
+        # `datagrid_fallback`, in which case `compile.py`'s adoption gate never ran, no band
+        # was superseded and no grid region exists — and merging that report would silently
+        # add a SECOND whole compile of the page beside the driver's. Ask instead for the two
+        # things adoption itself produces: the appended grid region (at index `len(bands)`,
+        # the band-index contract Task 3 pins) and at least one superseded band.
+        grid_idx = len(pages[p].regions)          # == the page's band count
+        grid_uri = (rep_a.regions[grid_idx].table_uri
+                    if grid_idx < len(rep_a.regions) else None)
+        superseded = [idx for idx in range(grid_idx)
+                      if rep_a.regions[idx].verdict == "superseded"]
+        if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
             notes.append(f"page {p}: adoption refused — the grid read nothing")
+            continue
+        if not superseded:
+            # The grid read, but only ink no band was escalating. Adopting would add its
+            # tokens on top of every escalated band's untouched count — the page scoring
+            # higher than it read, which is the failure this loop exists to prevent (§7).
+            notes.append(f"page {p}: adoption refused — the grid superseded no escalated band")
             continue
         # Withdraw the escalation of every band the grid TOUCHED, then merge the adopted
         # page graph in. The residue candidate rides in with it, so the ledger and the graph
         # agree on what was left unread.
-        superseded = [idx for idx in range(len(pages[p].regions))
-                      if idx < len(rep_a.regions)
-                      and rep_a.regions[idx].verdict == "superseded"]
         for idx in superseded:
             _remove_escalation_record(graph, page_doc_uri(p), idx)
         graph += rep_a.graph
-        # THE SUPERSESSION, made queryable — loop Q's precedent (dec:supersedes joins the two
-        # VERDICT judgements, never the dec:Process containers).
+        # THE SUPERSESSION, made queryable — and it is a CALLER OBLIGATION, not a nicety:
+        # `_remove_escalation_record` leaves the band's pass-1 judgement chain standing on
+        # purpose, and its docstring states that what keeps that non-contradictory is the
+        # caller linking the two verdict decisions. Without the link, MEASURED on apple p1,
+        # `effective-chain.rq` returned the pass-1 chain — `verdict = escalated` — as the
+        # EFFECTIVE reading of a band whose ink the graph now asserts as tab:EntryCell.
         #
-        # MEASURED on apple p1, and it is a NO-OP there: page-scope adoption rebuilds the page
-        # graph from the grid alone (`compile.py`'s `graph = Graph()`), which drops the reading
-        # decision record the `ReadingRecorder` had already written into the pre-rebuild graph.
-        # So `v2` is None on all five superseded bands, zero lineage edges are asserted, and
-        # the pass-1 chain stands alone still saying `escalated` over a band the page now
-        # supersedes — the same record/graph contradiction loop Q's final review C1 named.
-        # The edge is NOT invented to paper over that (§7: an edge the evidence does not carry
-        # is never asserted); the fix is to carry the adoption compile's OWN reading record,
-        # which lives in `compile.py` and is out of this pass's reach. The lookup is kept
-        # rather than deleted because it is correct the moment that record exists.
+        # WHICH NODE SUPERSEDES (spec §5.4). NOT a pass-2 verdict judgement: `ReadingRecorder`
+        # binds its graph at construction (decisionlog.py:78) and page-scope adoption rebinds
+        # the name at compile.py:934, so the adoption compile's reading record is orphaned and
+        # `rep_a.graph` holds no `#region{idx}-d{n}` at all — for any page of any document.
+        # The spec names the node that DOES survive that rebuild: the grid's own admission
+        # decision, minted by `emit_data_grid` as `{grid_uri}-admission` and typed
+        # dec:DecisionHolon, which is the honest superseding judgement anyway ("this band's
+        # reading was replaced by the page's data grid").
+        #
+        # THE FOUR TRIPLES BELOW ARE THE QUERY'S PRECONDITION, not decoration.
+        # effective-chain.rq:19-24 requires every superseding decision to carry dec:regarding,
+        # and then reads the chain OF WHAT IT REGARDS via dec:order/rdfs:label/dec:rationale.
+        # `emit_data_grid` emits none of those four. MEASURED: with dec:supersedes asserted and
+        # these four withheld, effective-chain.rq returns ZERO rows for a superseded region —
+        # a wrong answer turned into no answer (branch A cannot bind ?effective, branch B is
+        # excluded by the NOT EXISTS). That is why they are emitted rather than assumed.
+        # dec:regarding points at the GRID, never at the superseded regions: pointing it at a
+        # superseded region would make that region's own escalated chain the "effective" one.
+        # KNOWN GAP, not papered over: the query's `?chosen` is UNBOUND on the row this record
+        # produces, because `emit_data_grid`'s dec:chosen names the grid itself and the grid
+        # carries no rdfs:label. Labelling a tab: node from the driver to fill a decision-log
+        # hole would be the wrong repair; it belongs with whoever owns emit_data_grid.
+        admission = URIRef(f"{grid_uri}-admission")
+        graph.add((admission, DEC.regarding, grid_uri))
+        graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
+        graph.add((admission, RDFS.label, Literal("verdict")))
+        graph.add((admission, DEC.rationale, Literal(
+            f"the page asserted nothing; the data grid read {len(superseded)} of its bands "
+            f"and its reading was adopted (spec 2026-08-09, R73)")))
         for idx in superseded:
             v1 = _verdict_decision(graph, page_doc_uri(p), idx)
-            v2 = _verdict_decision(rep_a.graph, adopt_doc, idx)
-            if v1 is not None and v2 is not None:
-                graph.add((v2, DEC.supersedes, v1))
+            if v1 is not None:
+                graph.add((admission, DEC.supersedes, v1))
         pages[p] = rep_a
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run
