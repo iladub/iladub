@@ -330,8 +330,24 @@ The three that do not reconcile are recorded rather than hidden: one has its mem
 group boundary and two hit the known split-number defect, where a tonnage is extracted as
 '5 0,000'.
 
+SECOND CONSEQUENCE — ROW ADMISSION (2026-08-09). The same arithmetic admits a ROW: a
+measure-only row (ink in at least one tab:MeasureColumn, none in the key column and none in
+the index block) is an aggregate row of the grid when EVERY occupied cell equals the exact
+Decimal sum of that column over its member rows — the admitted rows above it, back to the
+previous aggregate row, exclusive. One axiom, two uses: totals recognise the key column, and
+totals recognise themselves.
+
+Measured on the CBH shipping stem page 0: the four per-panel volume totals (374,904 / 737,289
+/ 660,363 / 178,708) carry no label at all, so tab:RowAddressability never sees them and the
+placement floor refuses them. The witness admits all four, over 10, 16, 14 and 5 member rows
+respectively. Corpus-wide, 86 rows are proposed and exactly these 4 are admitted.
+
+Such a row is typed tab:DetectedAggregationRow — the class the extraction path already uses —
+never a grid-side twin.
+
 HONEST LIMIT: a grouping level with no totals has no witness under this axiom and stays in the
-grid. The axiom is sound, not complete."""@en .
+grid, and a multi-level total whose members are themselves totals will not reconcile against a
+member run containing both levels, so it is refused. The axiom is sound, not complete."""@en .
 
 tab:IndexAtTotalIndent a owl:Class ; rdfs:label "Index at total indent"@en ;
     rdfs:comment """Corroborating spatial evidence, not a test on its own: in an outline layout

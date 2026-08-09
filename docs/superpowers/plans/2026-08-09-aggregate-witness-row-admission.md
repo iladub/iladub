@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Doc impact:** none for this plan file — the loop's `Doc impact: increment` is declared in the design spec (`2026-08-09-aggregate-witness-row-admission-design.md`).
+
 **Goal:** Admit a measure-only row into the data grid when its printed value equals the exact
 `Decimal` sum of the rows it stands over, closing R75 and moving the cbh oracle from 45/49 to
 49/49 entry rows.

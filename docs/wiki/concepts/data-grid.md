@@ -3,13 +3,14 @@ title: The data grid — defining the data before detecting it
 type: concept
 sources:
   - docs/superpowers/specs/2026-08-08-data-grid-types-elements-axioms.md
+  - docs/superpowers/specs/2026-08-09-aggregate-witness-row-admission-design.md
   - vocab/ontology/tab-datagrid.ttl
   - src/iladub/etkl/datagrid.py
   - tests/etkl/test_datagrid.py
   - src/iladub/etkl/compile.py
 related: ["[[table-holon-compilation]]", "[[decision-holon]]", "[[corpus-harness]]", "[[assert-propose-promote]]"]
 confidence: high
-updated: 2026-08-08
+updated: 2026-08-09
 ---
 
 # The data grid — defining the data before detecting it
@@ -82,8 +83,14 @@ The discriminator is arithmetic, never vocabulary — reading the word "Total" w
 English-specific and is forbidden:
 
 - **G8 `tab:AggregateWitness`** — a column is an index column when rows exist whose measures
-  reconcile **exactly** with the rows sharing a value in it. `Mackay Total` is arithmetic
-  nonsense unless `Mackay` names a group. Measured: 12 of 15 port-level totals reconcile.
+  reconcile exactly with the rows sharing a value in it; and, by the **same arithmetic**, a
+  *measure-only row* is an aggregate row of the grid when every occupied cell equals the exact
+  `Decimal` sum over the rows it stands over (the admitted rows above it, back to the previous
+  aggregate, exclusive). One axiom, two uses. Measured on cbh page 0: the four label-less panel
+  totals (374,904 / 737,289 / 660,363 / 178,708) are admitted over 10, 16, 14 and 5 members;
+  corpus-wide 86 rows are proposed and exactly those 4 admitted. Such a row is typed with loop
+  H's existing `tab:DetectedAggregationRow`, not a grid-side twin. *(confidence: high — five
+  transcribed oracles, mutation-checked.)*
 - **G9 `tab:Groupability`** — equal values are **adjacent**, evaluated *within the parent group*.
   Adjacency not sortedness, so no order relation, collation or date parsing is needed. A global
   test is wrong: stem's ports are contiguous within each month and not across the page.
