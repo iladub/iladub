@@ -51,8 +51,12 @@ def test_the_gate_is_page_scoped_not_document_scoped():
 
 
 def test_the_query_carries_no_numeric_literal():
-    from pathlib import Path
     import re
-    q = Path("vocab/queries/adoption-candidate.rq").read_text()
+    from pathlib import Path
+    # anchored to THIS file, not to the cwd (final review m3): a cwd-relative path makes the
+    # test pass or fail depending on where pytest was invoked from. The house idiom, and the
+    # same root `adoption.ADOPTION_CANDIDATE_RQ` resolves from `__file__`.
+    q = (Path(__file__).resolve().parents[2]
+         / "vocab" / "queries" / "adoption-candidate.rq").read_text()
     body = re.sub(r"#.*", "", q)                       # comments may mention numbers
     assert not re.search(r"\b\d+(\.\d+)?\b", body), body

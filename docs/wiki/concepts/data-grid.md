@@ -200,9 +200,16 @@ stayed wrong; fixing the universe moved four pages at once and cost nothing.
   measured false — see the section above. What it left behind is registered as **R79** (the
   unread structure is one page-level candidate, not a refusal per line) and **R80** (apple p1's
   indent hierarchy — 7 group labels among 11 unread lines — is read by nobody).
-- **R81/R82** — the grid's admission decision is now on the accountable-verdict query surface but
-  carries no `dec:decidedBy` and no readable `dec:chosen` label, and `compile._validate` never
-  applies `dec-shapes.ttl`, so SHACL green says nothing about it.
+- **R81/R82** — the grid's admission decision is on the accountable-verdict query surface. The
+  DOCUMENT driver's copy now carries `dec:decidedBy` (the reading compiler, the same agent that
+  decided the verdicts it supersedes), but `emit_data_grid` itself still emits none, the
+  `dec:chosen` grid still carries no `rdfs:label`, and a refusal-free grid emits only ONE
+  `dec:optionSpace` against the shape's `minCount 2` — and `compile._validate` never applies
+  `dec-shapes.ttl`, so SHACL green says nothing about any of it.
+- **R83/R84** — two dormant accounting exposures on the adopted page, both measured at zero on
+  the whole corpus: at PAGE scope the rebuilt graph escalates nothing for a band the grid never
+  touched though the report books its tokens (the document path is unaffected), and the ledger
+  counts an admitted line's tokens as asserted even if no band was scoring that ink.
 - Five corpus pages remain untranscribed (cbh, capacity, who, bfs, apple p2), so their numbers
   are not yet evidence.
 - The axioms are Python, not SPARQL. §8 says they belong in `.rq` over the evidence graph; the

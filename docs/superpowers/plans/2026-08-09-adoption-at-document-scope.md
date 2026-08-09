@@ -4,6 +4,8 @@
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
+**Doc impact:** none for this plan file — the loop's `Doc impact: increment` is declared in the design spec (`2026-08-09-adoption-at-document-scope-design.md`).
+
 **Goal:** Make data-grid adoption the document's *last* reader — admitted only where carriage,
 section repair and stitching have all failed — with a line-granular ledger so an adopted page
 can never score 1.0000 for ink it did not read.

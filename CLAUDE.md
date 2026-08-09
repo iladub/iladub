@@ -311,6 +311,10 @@ The rules:
    contract with the implementation — but the body that satisfies them is the implementer's to
    write. An implementer reduced to a transcriber cannot catch a plan defect, and the person at
    the keyboard is the one who would have found defect 2 in thirty seconds.
+   **The permission to supply a test is conditional on rule 4**: defect 5 above *was* a
+   plan-supplied test, and it passed with its own subject deleted. A verbatim test authored by
+   the plan is a proposition until the implementer falsifies it — so a plan-supplied test that
+   ships without its falsification evidence is a rule-1 violation, not merely a rule-4 one.
 2. **Every load-bearing claim about existing code is MEASURED, and carries its measurement
    inline** (`file:line`, the command run, its output). A plan that says *"verify X still holds"*
    is a plan whose author did not. Defects 2 and 4 were both claims made from reading.
