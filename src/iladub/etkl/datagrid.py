@@ -628,10 +628,21 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         if col.family:
             g.add((c_uri, TAB.columnFamily, TAB[col.family]))
 
+    row_uri_by_line = {line_idx: URIRef(f"{grid_uri}-r{r_i}")
+                       for r_i, line_idx in enumerate(grid.rows)}
     for r_i, line_idx in enumerate(grid.rows):
         line = lines[line_idx]
-        r_uri = URIRef(f"{grid_uri}-r{r_i}")
+        r_uri = row_uri_by_line[line_idx]
         g.add((r_uri, RDF.type, TAB.LeafRow))
+        # G8: an aggregate row is typed with the class the extraction path ALREADY uses
+        # (tab.ttl:379, loop H) and carries its member rows as operands, so the shipped
+        # tab:DetectedAggregationRowShape is satisfied without being edited. No new class
+        # is minted for the grid-side case — it is the label-less case of one rule.
+        for m in grid.aggregates.get(line_idx, ()):
+            g.add((r_uri, RDF.type, TAB.DetectedAggregationRow))
+            g.add((r_uri, TAB.aggregationFunction, Literal("sum")))
+            if m in row_uri_by_line:
+                g.add((r_uri, TAB.aggregates, row_uri_by_line[m]))
         g.add((grid_uri, TAB.hasGridRow, r_uri))
         g.add((r_uri, PROV.wasDerivedFrom,
                URIRef(f"{doc_uri}#p{page}-line{line_idx}")))

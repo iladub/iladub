@@ -584,6 +584,54 @@ def test_emitted_grid_answers_why_from_the_graph_alone():
     assert "https://w3id.org/iladub/tab#UniformGrid" in kinds
 
 
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_emitted_aggregate_rows_reuse_the_loop_h_class():
+    """No new class is minted: an aggregate row of the grid is typed with the SAME
+    tab:DetectedAggregationRow the extraction path already uses, carrying its operands, so
+    tab:DetectedAggregationRowShape is satisfied as that shape already stands."""
+    from rdflib import Graph, URIRef
+    from iladub.etkl.datagrid import emit_data_grid
+
+    lines = [l for l in sorted(text_lines(extract_words(CBH, 0)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(CBH, 0)
+    g = Graph()
+    uri = emit_data_grid(g, grid, lines, URIRef("urn:test:cbh"), 0)
+
+    agg = set(g.subjects(
+        URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+        URIRef("https://w3id.org/iladub/tab#DetectedAggregationRow")))
+    assert len(agg) == 4, f"expected the four panel totals, got {len(agg)}"
+    for a in agg:
+        funcs = list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregationFunction")))
+        assert [str(f) for f in funcs] == ["sum"], funcs
+        ops = list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregates")))
+        assert len(ops) >= 1, "a detected aggregation row needs at least one operand"
+        # every operand is a row of THIS grid
+        assert all(str(o).startswith(str(uri) + "-r") for o in ops), ops
+    counts = sorted(len(list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregates"))))
+                    for a in agg)
+    assert counts == [5, 10, 14, 16]
+
+
+@pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
+def test_emitted_aggregate_rows_satisfy_their_shape():
+    """The closed-world membrane: pySHACL over the emitted grid, against the shipped
+    tab:DetectedAggregationRowShape — unedited by this loop."""
+    from rdflib import Graph, URIRef
+    from pyshacl import validate
+    from iladub.etkl.datagrid import emit_data_grid
+
+    lines = [l for l in sorted(text_lines(extract_words(CBH, 0)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(CBH, 0)
+    g = Graph()
+    emit_data_grid(g, grid, lines, URIRef("urn:test:cbh"), 0)
+    shapes = Graph().parse("vocab/shapes/tab-shapes.ttl", format="turtle")
+    conforms, _, text = validate(g, shacl_graph=shapes, inference="rdfs", advanced=True)
+    assert conforms, text
+
+
 @corpus_only
 def test_emission_carries_every_refused_line_with_its_reason():
     """§5: context is carried, not discarded. A refused line keeps its provenance."""
