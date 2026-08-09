@@ -397,7 +397,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                    validate_shapes: bool = True, span_proposer=None,
                    row_role_proposer=None, doc_uri: URIRef | None = None,
                    carried_header_roles: dict | None = None,
-                   section_repair_bands: frozenset[int] | None = None) -> CompilationReport:
+                   section_repair_bands: frozenset[int] | None = None,
+                   datagrid_fallback: bool = True,
+                   datagrid_adopt: bool = False) -> CompilationReport:
     """Compile one page. `doc_uri` names the document holon every URI this page mints hangs off;
     it defaults to `_DOC`, so a single-page call is byte-identical to before. Loop M's driver
     passes a PAGE-SCOPED URI (`{_DOC}/p{n}`) because two pages of one document otherwise mint the
@@ -845,6 +847,71 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                 "KIND_NOT_SUPPORTED",
                                                 str(TAB.HierarchicalTable), ascii_view))
 
+    # --- DATA-GRID FALLBACK (spec 2026-08-08-data-grid-types-elements-axioms.md §8.18)
+    #
+    # Only where the shipped path asserts NOTHING. Measured on the corpus, the two paths
+    # segment cells differently — on the stem they share 441 cells with 59 old-only and
+    # 51 new-only, because the ruled path re-extracts by drawn columns while the data
+    # grid reads ink runs. Replacing wholesale would churn the one document with an
+    # adjudicated floor (0.95) for no measured gain, so it does not replace: it fills in
+    # where the page currently yields zero cells (apple page 1, ons page 7, cbh).
+    #
+    # The gate is NOTHING AT ALL — no assertion and no escalation. Not merely "asserted
+    # nothing": a page that ESCALATED has already accounted for its ink, and appending a
+    # reading there does two forbidden things. It masks an honest escalation, which §7
+    # and the fluent-reader invariant require be FIXED rather than papered over. And it
+    # DOUBLE-COUNTS — those lines' tokens are already in escalated_total, so adding them
+    # to asserted_total inflates the ratio. Measured: apple page 1 reported 0.5941 under
+    # the broader gate, a number in which the same tokens sat on both sides.
+    #
+    # Found by the suite, not by reasoning: four escalation-path tests failed because a
+    # second region appeared on a page they had pinned to exactly one.
+    # --- ADOPTION (R73). A page that read NOTHING and escalated everything is a total
+    # failure of the shipped reader, and where the data grid reads it completely the
+    # escalation is superseded rather than supplemented. Withdrawal is exact: the page's
+    # graph is rebuilt from the grid alone, so no token is ever counted on both sides —
+    # the defect that made the first wiring's 0.5941 meaningless.
+    #
+    # Warranted by an oracle, not by preference: apple page 1 is transcribed at 28 entry
+    # rows and the grid reads 28 of 28 with nothing leaked, while the pipeline asserts
+    # zero cells there.
+    #
+    # OFF by default, and that is not timidity. The document driver compiles each page
+    # standalone before re-compiling continuation pages with carried headers, and stem's
+    # pages 1 and 2 escalate standalone BY DESIGN (R29) so that carriage can happen. A
+    # page that adopts instead of escalating could silently deprive the driver of the
+    # signal it waits for, and that interaction has not been worked out.
+    if datagrid_adopt and asserted_total == 0 and escalated_total > 0:
+        from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
+        _grid = _dg(pdf_path, page_number)
+        if _grid is not None and _grid.rows:
+            _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
+                             if ln.words], key=lambda ln: ln.top)
+            graph = Graph()                       # exact withdrawal: nothing carried over
+            _emit(graph, _grid, _lines, doc, page_number)
+            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            asserted_total = sum(len(_lines[i].words) for i in _grid.rows)
+            escalated_total = 0
+            reports = [RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                    None, str(TAB.DataGrid), "")]
+            band_marks = [(0, 0)]
+
+    if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
+        from .datagrid import derive_data_grid, emit_data_grid
+        _grid = derive_data_grid(pdf_path, page_number)
+        if _grid is not None and _grid.rows:
+            _lines = [ln for ln in text_lines(extract_words(pdf_path, page_number))
+                      if ln.words]
+            _lines.sort(key=lambda ln: ln.top)
+            _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            emit_data_grid(graph, _grid, _lines, doc, page_number)
+            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before
+            _tokens = sum(len(_lines[i].words) for i in _grid.rows)
+            asserted_total += _tokens
+            reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                        None, str(TAB.DataGrid), ""))
+            band_marks.append((asserted_total, escalated_total))
+
     band_marks.append((asserted_total, escalated_total))
     from dataclasses import replace as _dc_replace
     reports = [_dc_replace(r,
@@ -853,7 +920,19 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                for i, r in enumerate(reports)]
 
     denom = asserted_total + escalated_total
-    score = 1.0 if denom == 0 else asserted_total / denom
+    if denom:
+        score = asserted_total / denom
+    else:
+        # NOTHING was read. Whether that is right depends on whether there was anything
+        # to read, and the page-level grid gate answers exactly that (R72). A page of
+        # prose has nothing to read and scores 1.0; a page carrying a table that yielded
+        # no cells FAILED, and a failure must not score perfect.
+        #
+        # Measured before this change: 11 of 27 corpus pages scored a degenerate 1.0 on
+        # an empty reading — nine of them correctly (prose the gate discards) and two
+        # (ons pages 7 and 8) real tables the reader produced nothing for.
+        from .datagrid import page_has_table
+        score = 0.0 if page_has_table(pdf_path, page_number) else 1.0
 
     if validate_shapes and (
         any(graph.subjects(RDF.type, TAB.RecordTable))

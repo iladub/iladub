@@ -5,7 +5,7 @@ sources:
   - docs/superpowers/specs/2026-07-31-documentation-governance-design.md
 related: []
 confidence: high
-updated: 2026-08-04
+updated: 2026-08-08
 ---
 
 # iladub wiki — read this first
@@ -21,6 +21,7 @@ documentation-governance spec). Specs are **evidence**, these pages are
 | [assert-propose-promote](concepts/assert-propose-promote.md) — the two-layer epistemics: ground and assert, or quarantine and propose, promoted only by decision | high | 2026-08-01 |
 | [promotion-decision](concepts/promotion-decision.md) — the accountable `dec:DecisionHolon` that is the only door from proposition to assertion | high | 2026-08-01 |
 | [decision-holon](concepts/decision-holon.md) — `dec:DecisionHolon`: deliberation, timeline, events/lineage, and apex escalation, built portable toward HGA | high | 2026-08-01 |
+| [data-grid](concepts/data-grid.md) — the data defined before it is detected: a maximal rectangle admitted rows-and-columns together, its typology decided from the data alone, index columns proven metadata by exact arithmetic | high | 2026-08-08 |
 | [table-holon-compilation](concepts/table-holon-compilation.md) — the verifier-first loop family compiling tables to `tab:` holons: round-trip + tiling SHACL, silent-wrong impossible | high | 2026-08-03 |
 | [corpus-harness](concepts/corpus-harness.md) — the fetch/pin/measure/adjudicate workflow that makes real-document generalization a repeatable battery, never auto-updating its own verdict register | high | 2026-08-04 |
 | [grounding-membrane](concepts/grounding-membrane.md) — the RawDocumentHolon ↔ SemanticHolon grounding portal and the contract membrane; vocabulary shipped, membrane-health computation design-only | medium | 2026-08-01 |

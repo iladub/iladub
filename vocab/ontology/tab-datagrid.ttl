@@ -1,0 +1,421 @@
+@prefix tab:     <https://w3id.org/iladub/tab#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/tab-datagrid> a owl:Ontology ;
+    dcterms:title "tab-datagrid — the data grid, defined before it is detected"@en ;
+    dcterms:description """The DATA of a table, defined as a first-class object, prior to and
+independent of any metadata. Wang's distinction is the whole architecture: ENTRIES are data,
+CATEGORIES (boxhead, stub, spanners, captions, notes) are metadata — data about data. This
+module defines the entries only. Nothing here refers to a header, a stub, an indentation, or
+any drawn decoration: a data grid must be identifiable without them, or the reading is
+circular."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-08"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/iladub/tab> ;
+    vann:preferredNamespacePrefix "tab" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/tab#" .
+
+#################################################################
+#  1. The data grid — a MAXIMAL MUTUAL RECTANGLE
+#################################################################
+#
+#  The fundamental, and the correction to every failed detector that preceded it:
+#  a data rectangle is defined by MUTUAL agreement between its rows and its columns,
+#  never by either alone. Neither axis is derived first.
+#
+#      columns are admitted because the rows agree on their type,
+#      rows are admitted because the columns agree on their shape,
+#      and the pair is admitted together, or not at all.
+#
+#  This is a closure condition, and it is what makes the object DEFINABLE rather than
+#  merely detectable.
+#
+#  THE COLUMNS ARE FIXED ONCE, BY THE SEED, AND NEVER RE-DERIVED. This is not an
+#  implementation note; it is part of the definition, and it was earned by measurement.
+#  Re-deriving column intervals from the growing row set changes the columns' identity on
+#  every round, so the pair of operators is NOT a closure operator (it is not a Galois
+#  connection, whatever the resemblance to formal concept analysis) and it does not
+#  converge: measured, the union form collapsed cbh 49->3 rows and who 25->4, while the
+#  intersection form collapsed apple p0 to 1 row of 44 and capacity to 1 of 32.
+#  Maximality is only well defined against a STABLE candidate column set.
+#
+#  PRECONDITION -- unit markers are absorbed before signatures are taken. A lone currency
+#  glyph is a tab:UnitMarker on its neighbour, not a column; leaving it in splits
+#  otherwise identical rows into different signatures (measured on apple: n=9 with the
+#  '$' present, n=5 without, one table read as two).
+#
+#  Measured reasons this form is required, each a recorded failure of a one-axis detector:
+#    (a) columns derived from all page ink COLLAPSE — one wide metadata run (a title, a
+#        cut-in heading, a wrapped label) overlaps every data column and bridges them:
+#        apple p0 and bfs p6 each yielded ONE column for the whole page;
+#    (b) rows derived from datatype alone OVER-COLLECT — a data row whose value types are
+#        unique (parenthesised negatives; a split number) is indistinguishable from a
+#        header row by type evidence;
+#    (c) rows derived by FREQUENCY pick the wrong structure — wrapped continuation
+#        fragments are the most numerous line shape on a real document, not the data.
+
+tab:DataGrid a owl:Class ; rdfs:label "Data grid"@en ;
+    rdfs:comment """The DATA of a table: a maximal rectangle of entry cells over a set of rows
+and a set of columns, admitted together. Wang's entries; the statistical 'field'. Everything a
+table contains that is NOT in some data grid is metadata, by definition and by construction.
+
+A data grid is an ASSERTED object with identity and provenance — never transient evidence. It
+carries the record of its own admission (tab:conformsTo, tab:admittedBy), so the question
+'why is this the data grid?' is answerable from the graph alone."""@en .
+
+tab:hasDataCell a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:EntryCell ;
+    rdfs:label "has data cell"@en ;
+    rdfs:comment "An entry belonging to this grid. The grid is the set of these; nothing else."@en .
+
+tab:hasGridColumn a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "has grid column"@en ;
+    rdfs:comment "A column admitted to this grid. Admission is mutual with the rows (§1)."@en .
+
+tab:hasGridRow a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "has grid row"@en ;
+    rdfs:comment "A row admitted to this grid. Admission is mutual with the columns (§1)."@en .
+
+tab:columnFamily a owl:ObjectProperty ; rdfs:range tab:CellDatatypeFamily ;
+    rdfs:label "column family"@en ;
+    rdfs:comment """The single datatype family this grid column agreed on, after abstaining
+datatypes (tab:datatypeAbstains) are dropped. Its EXISTENCE is the column's warrant for
+admission: a column with no single family is not a data column."""@en .
+
+#################################################################
+#  2. The typology — data-intrinsic, no metadata consulted
+#################################################################
+#
+#  Type is a property of the DATA's own addressing, so it is decided from the grid and
+#  nothing else. A header is never consulted: on these definitions it cannot be, because
+#  the header is not yet known when the type is decided.
+#
+#  These are PROPERTIES, not a partition. A grid may be several at once — apple page 0 is
+#  aggregating AND stacked — so they are asserted independently and may co-occur.
+
+tab:UniformGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Uniform grid"@en ;
+    rdfs:comment """Every admitted column shares ONE datatype family: the grid carries a single
+measure, so both axes must be categories. The data-intrinsic signature of a matrix /
+cross-tabulation. Decided by counting distinct tab:columnFamily values — one, or more."""@en .
+
+tab:MixedGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Mixed grid"@en ;
+    rdfs:comment """Admitted columns carry DIFFERENT datatype families: each column is a distinct
+attribute, so only one axis is a category and the rows are records. The data-intrinsic
+signature of a record / list table."""@en .
+
+tab:AggregatingGrid a owl:Class ; rdfs:subClassOf tab:DataGrid ;
+    rdfs:label "Aggregating grid"@en ;
+    rdfs:comment """Contains at least one row whose entries reconcile EXACTLY with the entries of
+a subset of its other rows. The row axis therefore carries a hierarchy — a fact about the DATA,
+established by exact arithmetic, not by reading indentation.
+
+This is deliberate: indentation was measured to be an unreliable and INVERTED signal (an
+aggregate sits DEEPER than its own members — 'Total current assets' at x=88.6 above members at
+x=70.6), whereas the arithmetic is decidable. Reuses the shipped exact-Decimal detection."""@en .
+
+tab:StackedGrids a owl:Class ; rdfs:label "Stacked grids"@en ;
+    rdfs:comment """Two or more data grids on one page whose admitted column extents are
+identical. Purely data-defined: no separator, caption or footnote mark is consulted, because
+those are metadata and are not yet known. The panels of a stack are read as distinct grids that
+happen to share an addressing."""@en .
+
+tab:inStack a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:StackedGrids ;
+    rdfs:label "in stack"@en .
+
+#################################################################
+#  3. The axioms — named, so a grid can cite the ones it satisfied
+#################################################################
+#
+#  "I found the data grid because it conforms to this, this and this, and refuted this,
+#  this and this — so there is no doubt that the data grid is this."
+#
+#  Both halves are first-class. A grid cites the conformance axioms it satisfied; a REJECTED
+#  candidate cites the refutation axiom that killed it. Neither is a log message: both are
+#  triples, queryable, and carried in the decision holon.
+
+tab:GridAxiom a owl:Class ; rdfs:label "Grid axiom"@en ;
+    rdfs:comment "A named condition a data-grid candidate must satisfy to be admitted."@en .
+
+tab:GridRefutation a owl:Class ; rdfs:label "Grid refutation"@en ;
+    rdfs:comment "A named condition that DISQUALIFIES a data-grid candidate."@en .
+
+tab:conformsTo a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:GridAxiom ;
+    rdfs:label "conforms to"@en ;
+    rdfs:comment "This grid was tested against, and satisfied, this axiom. Absence is not conformance."@en .
+
+tab:refutedBy a owl:ObjectProperty ; rdfs:range tab:GridRefutation ;
+    rdfs:label "refuted by"@en ;
+    rdfs:comment "This candidate grid was rejected because it tripped this refutation."@en .
+
+tab:admittedBy a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:label "admitted by"@en ;
+    rdfs:comment """The decision that admitted this grid (a dec:DecisionHolon; named in prose
+rather than by rdfs:range so this module stays standalone). Its optionSpace is the candidate
+grids, its chosen is this one, and each loser carries tab:refutedBy."""@en .
+
+# --- conformance axioms ---------------------------------------------------------
+
+tab:ColumnHomogeneity a tab:GridAxiom ; rdfs:label "G1 column homogeneity"@en ;
+    rdfs:comment """Every admitted column agrees on exactly one tab:columnFamily over the
+admitted rows. Abstaining datatypes (tab:datatypeAbstains) are dropped — EXCEPT where they are
+all a column has, in which case they are its family: abstention governs comparison between
+families, it must not erase a column. Measured: erasing them read apple page 2, whose value
+columns are entirely parenthesised negatives, as 'not a table'.
+
+tab:Text IS a legal family. This is the correction that made the definition universal: in a
+record table a text column is DATA (a vessel name is data, not a label). Excluding Text was
+importing an assumption that every table is a matrix of measures."""@en .
+
+tab:MeasureColumn a owl:Class ; rdfs:label "Measure column"@en ;
+    rdfs:comment """An admitted column whose family is not tab:Text — it carries values rather
+than identifiers. Measure-ness TYPES the grid (uniform vs mixed); it never decides admission.
+Conflating the two is what excluded every record table."""@en .
+
+tab:NonDegeneracy a tab:GridAxiom ; rdfs:label "G1b non-degeneracy"@en ;
+    rdfs:comment """At least one admitted column is a tab:MeasureColumn. A rectangle of text
+columns alone is aligned prose, not a data grid."""@en .
+
+tab:RowAddressability a tab:GridAxiom ; rdfs:label "G2 row addressability"@en ;
+    rdfs:comment """An admitted row carries ink in the key column AND in at least one
+tab:MeasureColumn.
+
+This REPLACES an earlier 'row completeness' axiom (ink or a declared blank in EVERY column),
+which was measured to be false of real tables: it is true of dense financial statements and
+false of sparse operational registers, and requiring it cut stem to 17 rows of 65 and capacity
+to 6 of 32. Addressability is what completeness was actually protecting against — it still
+refuses a bare period-header row such as '2026 2025 2026 2025', which carries measures but
+nothing in the key column, and a cut-in heading such as 'Net sales:', which carries a key but
+no measure."""@en .
+
+tab:Rectangularity a tab:GridAxiom ; rdfs:label "G3 rectangularity"@en ;
+    rdfs:comment "The admitted rows x the admitted columns are fully populated. SPATIAL."@en .
+
+tab:ColumnAlignment a tab:GridAxiom ; rdfs:label "G4 column alignment"@en ;
+    rdfs:comment """Every entry lies within its column's x-interval and straddles no boundary.
+SPATIAL, and a presence test: ink is inside the interval or it is not."""@en .
+
+tab:Maximality a tab:GridAxiom ; rdfs:label "G5 maximality"@en ;
+    rdfs:comment """No further row can be admitted without breaking G1, and no further column
+without breaking G1 or G4. This is the CLOSURE that makes the rectangle an object rather than
+an arbitrary sub-block, and it is what makes rows and columns mutually defining."""@en .
+
+tab:Conservation a tab:GridAxiom ; rdfs:label "G6 conservation"@en ;
+    rdfs:comment "No ink inside the grid's bounding box is unaccounted for. SPATIAL."@en .
+
+tab:ArithmeticCoherence a tab:GridAxiom ; rdfs:label "G7 arithmetic coherence"@en ;
+    rdfs:comment "Where aggregate rows exist, they reconcile exactly with the rows they cover."@en .
+
+# --- refutations ----------------------------------------------------------------
+
+tab:HeterogeneousColumn a tab:GridRefutation ; rdfs:label "R1 heterogeneous column"@en ;
+    rdfs:comment "A candidate column carries more than one datatype family over non-abstaining cells."@en .
+
+tab:FullWidthInterruption a tab:GridRefutation ; rdfs:label "R2 full-width interruption"@en ;
+    rdfs:comment """A candidate row spans the rectangle end to end as a single run. It occupies no
+column and is therefore not an entry row — it is metadata lying INSIDE the row extent (a cut-in
+heading). SPATIAL."""@en .
+
+tab:StraddlingEntry a tab:GridRefutation ; rdfs:label "R3 straddling entry"@en ;
+    rdfs:comment "An entry crosses a column boundary, so the column set is wrong. SPATIAL."@en .
+
+tab:NotMaximal a tab:GridRefutation ; rdfs:label "R4 not maximal"@en ;
+    rdfs:comment "The candidate is strictly contained in another candidate that also conforms."@en .
+
+tab:ArithmeticContradiction a tab:GridRefutation ; rdfs:label "R5 arithmetic contradiction"@en ;
+    rdfs:comment "A row presents as an aggregate of rows it does not sum to."@en .
+
+#################################################################
+#  4. The column universe — where the columns come from
+#################################################################
+#
+#  The columns must be fixed once (§1), which raises the question §1 does not answer:
+#  fixed from WHAT. Two sources exist, and the choice between them is ordinal, not tuned.
+
+tab:ColumnUniverse a owl:Class ; rdfs:label "Column universe"@en ;
+    rdfs:comment """The stable set of column boundaries a data grid is selected within.
+Established ONCE, before any row is admitted, because maximality is undefined against a
+moving candidate set."""@en .
+
+tab:DrawnRule a owl:Class ; rdfs:label "Drawn rule"@en ;
+    rdfs:comment """A drawn mark that contains NO glyph centre.
+
+This is the whole definition, and it is a presence test — no thinness ratio, no minimum
+width. A fill contains the text it sits behind; a rule contains nothing. Measured, this
+separates what every prior extractor conflated: apple page 0 reports 678 'vertical rules'
+when fill edges are counted and exactly 2 when they are not, and WHO's column universe
+collapses from 104 spurious columns to 4 emblem strokes. That conflation independently
+broke two earlier lines of work."""@en .
+
+tab:universeSource a owl:ObjectProperty ; rdfs:domain tab:ColumnUniverse ;
+    rdfs:label "universe source"@en .
+
+tab:DecorationUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+    rdfs:label "Decoration universe"@en ;
+    rdfs:comment """Columns bounded by tab:DrawnRule marks, each column ink-witnessed (at least
+two rows place a run inside it). Preferred where available, because decoration is applied to
+dimensions that already exist and so measures the post-reshape shape directly.
+
+Preferred only when it RESOLVES AT LEAST AS FINELY as alignment does — an ordinal comparison
+of column counts, not a threshold. Measured necessity: stem's drawn marks are page borders
+yielding 2 columns where alignment yields 15, and preferring them unconditionally cost that
+page every row."""@en .
+
+tab:AlignmentUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+    rdfs:label "Alignment universe"@en ;
+    rdfs:comment """Columns bounded by the gaps between the seed rows' run extents, used where
+no drawn universe resolves as finely. Carries the whole load on borderless documents — apple,
+ons and WHO have no usable drawn columns at all."""@en .
+
+tab:SeedFollowsUniverse a tab:GridAxiom ; rdfs:label "G0 seed follows the universe"@en ;
+    rdfs:comment """The seed is the modal class in WHATEVER universe supplied the columns:
+occupancy of the drawn columns under a tab:DecorationUniverse, the structural signature class
+under a tab:AlignmentUniverse.
+
+Not a convenience — the seed must be modal in the same space the columns came from, or it types
+the wrong columns. Measured: seeding a decoration universe by signature instead of occupancy
+cost capacity 19 of its 27 rows."""@en .
+
+#################################################################
+#  5. Index columns — the row axis's categories, which are METADATA
+#################################################################
+#
+#  A table's left-hand levels (year, month, port; the statistical STUB) are categories,
+#  not entries. They locate data; they are not data. Excluding them is therefore not a
+#  convenience but a consequence of §0: entries are data, categories are data ABOUT data.
+
+tab:IndexColumn a owl:Class ; rdfs:label "Index column"@en ;
+    rdfs:comment """A level of the row axis's category structure — a stub level. METADATA, and
+so excluded from every tab:DataGrid, however value-like its cells appear."""@en .
+
+tab:IndexLevel a owl:DatatypeProperty ; rdfs:domain tab:IndexColumn ; rdfs:range xsd:integer ;
+    rdfs:label "index level"@en ;
+    rdfs:comment "Depth in the row-axis category tree, outermost = 0."@en .
+
+tab:SuppressedRepeat a owl:Class ; rdfs:label "Suppressed repeat"@en ;
+    rdfs:comment """An index level whose repeated values the author printed only once per group
+(the spreadsheet ditto/outline convention), leaving the rows beneath visually blank.
+
+SUPPRESSION IS COSMETIC, NOT SEMANTIC — and this is the load-bearing claim of this section.
+An author may suppress repeats at one level and print them at another with no change of
+meaning. Measured on the GrainCorp shipping stem, page 0: year (x=18.8) and month (x=57–62)
+are printed once per group and suppressed beneath, while port (x=96.4) is REPRINTED on all 33
+rows. All three are the same kind of thing. A reader who inferred 'repeated therefore data'
+would take the port column for data and the year column for structure, on the strength of a
+typographic choice."""@en .
+
+tab:AggregateWitness a tab:GridAxiom ; rdfs:label "G8 aggregate witness"@en ;
+    rdfs:comment """A column is a tab:IndexColumn when rows exist whose measures reconcile
+EXACTLY with the rows sharing a value in that column. A total over a column is meaningful only
+if that column is a key: 'Mackay Total' is arithmetic nonsense unless 'Mackay' identifies a
+group rather than stating a value.
+
+This is the language-free discriminator, and it is why repetition alone must never be used.
+Measured on the shipping stem page 0: 12 of 15 port-level totals reconcile exactly by Decimal
+arithmetic (e.g. Fisherman Islands Total 76,000 over 3 member rows; Geelong Total 233,000 over
+6). No word is read — not 'Total', which would be English-specific — only the sums.
+
+The three that do not reconcile are recorded rather than hidden: one has its members cut by a
+group boundary and two hit the known split-number defect, where a tonnage is extracted as
+'5 0,000'.
+
+SECOND CONSEQUENCE — ROW ADMISSION (2026-08-09). The same arithmetic admits a ROW: a
+measure-only row (ink in at least one tab:MeasureColumn, none in the key column and none in
+the index block) is an aggregate row of the grid when EVERY occupied cell equals the exact
+Decimal sum of that column over its member rows — the admitted rows above it, back to the
+previous aggregate row, exclusive. One axiom, two uses: totals recognise the key column, and
+totals recognise themselves.
+
+Measured on the CBH shipping stem page 0: the four per-panel volume totals (374,904 / 737,289
+/ 660,363 / 178,708) carry no label at all, so tab:RowAddressability never sees them and the
+placement floor refuses them. The witness admits all four, over 10, 16, 14 and 5 member rows
+respectively. Corpus-wide, 86 rows are proposed and exactly these 4 are admitted.
+
+Such a row is typed tab:DetectedAggregationRow — the class the extraction path already uses —
+never a grid-side twin.
+
+HONEST LIMIT: a grouping level with no totals has no witness under this axiom and stays in the
+grid, and a multi-level total whose members are themselves totals will not reconcile against a
+member run containing both levels, so it is refused. The axiom is sound, not complete."""@en .
+
+tab:IndexAtTotalIndent a owl:Class ; rdfs:label "Index at total indent"@en ;
+    rdfs:comment """Corroborating spatial evidence, not a test on its own: in an outline layout
+each level prints its totals at a slightly shallower indent than its values. Measured on the
+stem: port values x=96.4 with port totals x=91.7; month values x=62 with month totals x=57 — a
+consistent ~4.7pt step at every level.
+
+Corroborating only, because the direction is not universal: on apple the aggregate sits DEEPER
+than its members ('Total current assets' x=88.6 over members at x=70.6). Indentation says a
+boundary is here; it does not say which side is the parent."""@en .
+
+tab:Groupability a tab:GridAxiom ; rdfs:label "G9 groupability"@en ;
+    rdfs:comment """An index level's equal values are ADJACENT within the group its parent
+levels define. Necessary for a tab:IndexColumn; never sufficient on its own.
+
+Adjacency, not sortedness: grouping needs only that equal values sit together, so no order
+relation, collation or type comparison is required. This matters — an order test would need a
+locale for text and a parse for dates, and would still say nothing a contiguity test does not.
+
+CONTIGUITY IS RELATIVE TO THE PARENT, and evaluating it globally is a measurable error.
+Measured on the shipping stem page 0: port values are NOT contiguous across the page (Mackay
+recurs under July, August and September) yet ARE contiguous within each month. Same on the WHO
+z-score table, whose month level recurs under every year. A global test rejects exactly the
+levels it should accept.
+
+The negative case is real: the ONS index-of-services page has left-hand columns that are
+contiguous NEITHER globally NOR within a parent, so it has no index block, and its left columns
+stay data."""@en .
+
+tab:SortedWithoutAggregate a tab:GridRefutation ; rdfs:label "R6 sorted without aggregate"@en ;
+    rdfs:comment """A groupable column with NO aggregate witness is NOT an index column — it is
+sorted DATA, and it stays in the grid.
+
+The reasoning is the authoring chain, not a heuristic: indentation exists to group, one groups
+in order to aggregate, and aggregating requires the equal values to be brought together first.
+So a column that was grouped but never aggregated was never grouped FOR anything — the sort is
+presentational.
+
+This is the conservative direction required by §7: absent proof of grouping, the column stays
+data. It costs recall on real cases — the WHO age index is a genuine category with no totals,
+because z-scores cannot be summed, so it is read as data — and that is the honest price of
+refusing to assert what the source does not support."""@en .
+
+tab:PivotFieldRepeatLabels a owl:Class ; rdfs:subClassOf tab:SuppressedRepeat ;
+    rdfs:label "Pivot field repeat labels"@en ;
+    rdfs:comment """The producer-side explanation of why one index level repeats its values while
+its siblings are left blank, verified against Microsoft's documentation rather than inferred.
+
+Excel's Subtotal command requires the data to be sorted by the grouping column first and then
+outlines the list automatically — so sort, group, aggregate is the native authoring order, and
+the outline indentation is its by-product.
+
+Repeating labels is a PER-FIELD print option (Field Settings > Layout & Print > 'Repeat item
+labels', exposed as PivotField.RepeatLabels), shown only in tabular form. One field can repeat
+while another is suppressed, in one table, with no difference of meaning. That is exactly the
+GrainCorp shipping stem: port repeats, year and month do not.
+
+Recorded so that no future reading treats the presence or absence of repeated labels as
+evidence about structure. It is evidence about a checkbox.
+
+See https://support.microsoft.com/en-us/excel/insert-subtotals-in-a-list-of-data-in-a-worksheet
+and https://support.microsoft.com/en-us/office/repeat-item-labels-in-a-pivottable-882bdb55-9cdc-4d8d-b531-8e96e41dea31"""@en .
+
+tab:RefusedRow a owl:Class ; rdfs:label "Refused row"@en ;
+    rdfs:comment """A line that was tested for admission to a data grid and refused, carried
+as a rejected option on the grid's admission decision with the axiom that refused it
+(dec:rejectedBecause).
+
+Carried, never dropped (§5). It is what makes the second half of the record answerable —
+'refuted this, this and this' — and it is the difference between a reading that can be
+audited and one that merely happened."""@en .

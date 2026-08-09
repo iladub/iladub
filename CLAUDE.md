@@ -261,6 +261,26 @@ muddied authorship provenance.)
 - Keep the work domain-neutral in public examples (healthcare, insurance, etc.) — never
   tied to an employer's domain. Personal time, personal resources, no internal data.
 
+## Loop & context hygiene (enforced, 2026-08-09)
+
+**A loop is a session.** Starting a new loop requires a cleared context — not a continuation.
+
+**Never work past 40% of the context window.** Accuracy degrades well before the window is
+full: in the session that produced this rule, 40% was crossed at turn 222 of 763, and the
+later 71% produced five blocked specs while the early part shipped a loop. The fourth spec of
+that day misquoted this repo's own residue register — a fatigue signature, not a knowledge gap.
+
+**Specs are written in the first third of a session or not at all.** A spec drafted late is a
+draft to re-derive, not work to review.
+
+**The handoff is written at 30%, while still accurate** — never saved for the end.
+
+Enforced by `scripts/context_budget.py`, wired as a `UserPromptSubmit` hook in
+`.claude/settings.json`: it reads the true per-turn figure the API reports
+(`input + cache_read + cache_creation`) from the session transcript, stays silent below 30%,
+asks for the handoff at 30%, and refuses new design work past 40%. Self-monitoring is the
+thing that fails first, so the harness does it. See R76.
+
 ## Deferred residues — the register
 
 Every loop that defers something records it in **`docs/superpowers/residues.md`**, which is the
