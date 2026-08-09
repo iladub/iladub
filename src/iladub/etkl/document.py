@@ -191,8 +191,8 @@ class DocumentReport:
     section repair and stitching had all had their turn AND whose grid then read something. The
     page's `CompilationReport` in `pages` is the adoption compile's, not the original one; the
     page's un-read ink keeps escalating (as a `DATAGRID_RESIDUE` candidate), so an adopted page
-    never scores 1.0 by construction. A refused adoption (the grid read nothing either) leaves
-    the page byte-untouched and lands in `notes`.
+    never scores 1.0 by construction. A refused adoption — when the re-compile produced no data
+    grid region — leaves the page byte-untouched and lands in `notes`.
 
     `notes` carries the repair's and the section-total oracle's REFUSALS as prose — a failed
     pass-2 candidate, a printed section total that does not reconcile — because a refusal
