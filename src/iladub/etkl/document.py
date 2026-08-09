@@ -1420,11 +1420,19 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         grid_idx = len(pages[p].regions)          # == the page's band count
         grid_uri = (rep_a.regions[grid_idx].table_uri
                     if grid_idx < len(rep_a.regions) else None)
+        if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
+            # WHAT IS OBSERVED, not why (final review m4). This branch also fires when
+            # `compile.py:945`'s own gate never opened at all (the re-compile asserted through
+            # the ordinary band path, or through `datagrid_fallback`), in which case no grid was
+            # ever derived and "the grid read nothing" states a cause that was never tested.
+            notes.append(f"page {p}: adoption refused — no data grid region on the re-compile")
+            continue
+        # AFTER the refusal above, never before (final review m2): `rep_a.regions[idx]` over
+        # `range(grid_idx)` is unguarded, and `grid_idx` is the DRIVER's band count — a
+        # re-compile that returned fewer regions would raise IndexError here, which is the very
+        # case the `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
         superseded = [idx for idx in range(grid_idx)
                       if rep_a.regions[idx].verdict == "superseded"]
-        if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
-            notes.append(f"page {p}: adoption refused — the grid read nothing")
-            continue
         if not superseded:
             # The grid read, but only ink no band was escalating. Adopting would add its
             # tokens on top of every escalated band's untouched count — the page scoring
@@ -1453,7 +1461,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # dec:DecisionHolon, which is the honest superseding judgement anyway ("this band's
         # reading was replaced by the page's data grid").
         #
-        # THE FOUR TRIPLES BELOW ARE THE QUERY'S PRECONDITION, not decoration.
+        # THE FOUR QUERY TRIPLES BELOW ARE THE QUERY'S PRECONDITION, not decoration.
         # effective-chain.rq:19-24 requires every superseding decision to carry dec:regarding,
         # and then reads the chain OF WHAT IT REGARDS via dec:order/rdfs:label/dec:rationale.
         # `emit_data_grid` emits none of those four. MEASURED: with dec:supersedes asserted and
@@ -1466,8 +1474,28 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # produces, because `emit_data_grid`'s dec:chosen names the grid itself and the grid
         # carries no rdfs:label. Labelling a tab: node from the driver to fill a decision-log
         # hole would be the wrong repair; it belongs with whoever owns emit_data_grid.
+        #
+        # THE ATTRIBUTION (final review I1). Dressing this holon as the effective VERDICT of the
+        # superseded bands is what obliges it to name an agent: `vocab/shapes/dec-shapes.ttl:21`
+        # requires `dec:decidedBy` minCount 1 and CLAUDE.md §4 requires agent attribution for a
+        # membrane-crossing, and every verdict this one supersedes carries that predicate
+        # (`decisionlog.py:54`). The agent named is `decisionlog._READER_AGENT` — NOT a new one
+        # minted here, because there is no second actor: the pass that adopts the grid is a pass
+        # of the same automated reader that decided each superseded band's verdict, so a distinct
+        # agent IRI would MISSTATE who decided. The node it names is already typed
+        # `prov:SoftwareAgent` and labelled (`decisionlog.py:86-89`, emitted once per
+        # `ReadingRecorder`, constructed unconditionally at `compile.py:440` by every page
+        # compile) in the driver's OWN page graph, merged into `graph` at line 1212 above — so
+        # the reference resolves and no dangling node is created. It is read from `rep_a.graph`
+        # nowhere: the page-scope rebuild at `compile.py:979` discards that graph's copy, which
+        # is exactly why the reference is taken from the driver's side. Pinned by
+        # tests/etkl/test_adoption_document.py::test_the_admission_verdict_names_its_agent.
+        # §8: PROCEDURAL engine glue, the class `decisionlog` itself carries — it records an
+        # attribution already fixed by the call site, decides nothing, and carries no constant.
+        from .decisionlog import _READER_AGENT
         admission = URIRef(f"{grid_uri}-admission")
         graph.add((admission, DEC.regarding, grid_uri))
+        graph.add((admission, DEC.decidedBy, _READER_AGENT))
         graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
         graph.add((admission, RDFS.label, Literal("verdict")))
         graph.add((admission, DEC.rationale, Literal(

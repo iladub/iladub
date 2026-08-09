@@ -5,7 +5,7 @@ repair and stitching have had their turn. The pass therefore runs LAST."""
 import pytest
 from pathlib import Path
 
-from rdflib import Namespace, RDF, URIRef
+from rdflib import Literal, Namespace, RDF, URIRef
 
 REPO = Path(__file__).resolve().parents[2]
 APPLE = REPO / "corpus" / "financial" / "apple-fy2026q3-statements.pdf"
@@ -65,9 +65,14 @@ def test_pages_that_read_something_are_not_adopted(apple_doc):
 
 @corpus_only
 def test_the_document_score_rises(apple_doc):
-    """Measured before this loop: 0.06068601583113457. The new value is RECORDED, not a floor
-    to hit — but it must not be lower."""
+    """Measured before this loop: 0.06068601583113457, and 0.35560344827586204 after.
+
+    BOTH are pinned (final review m1). `> 0.0606…` alone lets the headline measurement regress
+    all the way back to 0.07 and stay green; the second assertion is the floor, recorded in
+    docs/superpowers/residues.md and docs/wiki/concepts/data-grid.md. Never lower it: a drop
+    is a measurement to report, not a number to edit."""
     assert apple_doc.score > 0.06068601583113457
+    assert apple_doc.score >= 0.35560344827586204, apple_doc.score
 
 
 @corpus_only
@@ -139,6 +144,41 @@ def test_the_effective_reading_of_a_superseded_band_is_not_the_escalated_one(app
         # question still learns it was replaced.
         why = _run("why-escalated.rq", apple_doc.graph, region)
         assert why and all("supersededBy" in r for r in why), why
+
+
+@corpus_only
+def test_the_admission_verdict_names_its_agent(apple_doc):
+    """THE ATTRIBUTION, pinned (final review I1).
+
+    The driver dresses the grid's admission holon as the effective VERDICT of every band it
+    superseded. `vocab/shapes/dec-shapes.ttl:21` requires `dec:decidedBy` minCount 1 of any
+    `dec:DecisionHolon` and CLAUDE.md §4 requires agent attribution for a membrane-crossing, so
+    a judgement facade without an agent is a decision nobody made.
+
+    It must also RESOLVE: the agent named is the reading compiler that decided the superseded
+    verdicts themselves, and the node is required to be typed and labelled in the same graph —
+    a bare IRI pointing at nothing attributes nothing."""
+    from rdflib import Namespace, RDFS
+    from iladub.etkl.decisionlog import _READER_AGENT
+    DEC = Namespace("https://w3id.org/iladub/dec#")
+    PROV = Namespace("http://www.w3.org/ns/prov#")
+    g = apple_doc.graph
+    page_doc = _page_doc()
+
+    admissions = [d for d in g.subjects(DEC.regarding, None)
+                  if str(d).startswith(str(page_doc)) and str(d).endswith("-datagrid-admission")]
+    assert len(admissions) == 1, admissions
+    admission = admissions[0]
+    assert (admission, RDFS.label, Literal("verdict")) in g
+
+    agents = list(g.objects(admission, DEC.decidedBy))
+    assert agents == [_READER_AGENT], agents
+    # not a dangling reference: the node is real in THIS graph
+    assert (_READER_AGENT, RDF.type, PROV.SoftwareAgent) in g
+    assert list(g.objects(_READER_AGENT, RDFS.label)), "the agent carries no label"
+    # ...and it is the SAME agent that decided every verdict this admission supersedes
+    for v1 in g.objects(admission, DEC.supersedes):
+        assert list(g.objects(v1, DEC.decidedBy)) == [_READER_AGENT], v1
 
 
 @corpus_only
