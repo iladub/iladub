@@ -350,6 +350,34 @@ def test_stem_record_identity_is_one_kind(stem_document):
 
 
 @needs_stem
+def test_stem_document_is_byte_identical_under_adoption(stem_document):
+    """The adjudicated floor, to the last digit (spec §V1). Adoption must not fire here:
+    carriage makes p1/p2 assert BEFORE the gate can ask. If this number moves, STOP and
+    report it — never lower it."""
+    assert stem_document.score == 0.9654553611484971, stem_document.score
+    assert stem_document.adopted == (), stem_document.adopted
+    assert len(stem_document.chains) == 1 and len(stem_document.chains[0]) == 3
+
+
+@needs_stem
+def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
+    """THE REFUSAL BRANCH, on real evidence (spec §M3).
+
+    stem p1 compiled standalone is a total failure, and the grid reads it — flat, 811 cells,
+    no chain, and scoring higher than the correct reading. Under the driver the same page
+    asserts 825 hierarchical cells at 0.9706 as a member of the 3-page chain. This test is
+    the reason adoption is the document's LAST reader and not the page's first."""
+    from iladub.etkl.compile import compile_tables
+
+    standalone = compile_tables(str(STEM), 1, validate_shapes=False, datagrid_adopt=True)
+    assert standalone.asserted > 0, "the grid does read this page standalone"
+    grid_cells = sum(r.cells for r in standalone.regions)
+    assert grid_cells > 500, grid_cells
+    print(f"\nstem p1 standalone adopted: {grid_cells} FLAT cells, "
+          f"score={standalone.score:.4f}")
+
+
+@needs_stem
 def test_stem_keys_reach_every_page(stem_document):
     """Every record carries the outer fiscal-year key (was: p1 1/51, p2 3/65).
 
