@@ -225,6 +225,59 @@ def reconciles(total, members: list) -> bool:
         return False
 
 
+def _decimal(text) -> Decimal | None:
+    """A cell's value as an exact Decimal, or None when it is not a number.
+
+    Thousands separators are stripped by the SAME convention `_SPACED_NUMBER` encodes
+    (a space inside a digit run is an SI/ISO 31-0 separator), and a leading currency glyph
+    is a tab:UnitMarker rather than part of the value. Exact Decimal, never float, never a
+    tolerance — a tolerance here would be the tuned constant the §8 gate forbids."""
+    if text is None:
+        return None
+    t = str(text).strip().replace(",", "").replace(" ", "").lstrip("$€£¥")
+    try:
+        return Decimal(t)
+    except InvalidOperation:
+        return None
+
+
+def aggregate_members(i: int, admitted: set, aggregates: set) -> tuple[int, ...]:
+    """G8's member rows: the admitted rows above `i`, back to the previous aggregate row,
+    EXCLUSIVE. Ordinal only — it reads no geometry and no value.
+
+    Rule B of spec 2026-08-09 §2.1. Measured INDISTINGUISHABLE from 'the maximal contiguous
+    run of admitted rows above' on the whole corpus (both admit exactly cbh's four panel
+    totals), and chosen because `rows.detect_aggregation_rows` already uses this shape, so
+    the repo carries ONE member rule rather than two. Recorded as a reuse decision because
+    the evidence does not choose between them."""
+    stop = max((a for a in aggregates if a < i), default=-1)
+    return tuple(j for j in range(stop + 1, i) if j in admitted)
+
+
+def confirms_aggregate(cells: dict, member_cells: list) -> bool:
+    """G8 tab:AggregateWitness as a ROW-ADMISSION disposer: EVERY occupied cell is numeric
+    and equals the exact Decimal sum of that column over the member rows.
+
+    Arithmetic only — it reads no position and never reads label text ('Total' is the tuned
+    constant of natural language and is forbidden). The quantifier is UNIVERSAL, not a
+    count: one column reconciling is not a witness, which is what refuses a period header
+    whose leading column happens to sum.
+
+    Two honest refusals, both deliberate: no members at all (a vacuous 0 == 0 never
+    confirms, the same rule `reconciles` makes), and a cell whose column no member
+    populates (a missing member is never read as a zero)."""
+    if not cells or not member_cells:
+        return False
+    for k, text in cells.items():
+        total = _decimal(text)
+        if total is None:
+            return False
+        vals = [v for v in (_decimal(mc.get(k)) for mc in member_cells) if v is not None]
+        if not vals or sum(vals) != total:
+            return False
+    return True
+
+
 def _boundaries_from_alignment(seed_runs: list[list[Run]]) -> list[float]:
     """tab:AlignmentUniverse — the gaps between the seed rows' run extents."""
     n = len(seed_runs[0])

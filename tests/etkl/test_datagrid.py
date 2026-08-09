@@ -12,8 +12,9 @@ import os
 import pytest
 
 from iladub.etkl.datagrid import (
-    DataGrid, GAP, GridColumn, absorb_unit_markers, derive_data_grid, drawn_rules,
-    family_of, ink_runs, is_contiguous, reconciles,
+    DataGrid, GAP, GridColumn, absorb_unit_markers, aggregate_members, confirms_aggregate,
+    derive_data_grid, drawn_rules, family_of, ink_runs, is_contiguous, reconciles,
+    _decimal,
 )
 from iladub.etkl.geometry import Line, Word, extract_words, text_lines
 
@@ -71,6 +72,97 @@ def test_aggregate_witness_is_exact():
     assert reconciles("76000", ["20000", "30000", "26000"])
     assert not reconciles("76001", ["20000", "30000", "26000"])
     assert not reconciles("76000", [])                 # a vacuous 0 == 0 never confirms
+
+
+# --- G8 as a ROW-ADMISSION axiom (spec 2026-08-09) ---------------------------------
+# The member values below are the REAL cbh page-0 column-13 cells, read off the page.
+# Panel 1 is lines 10-19; panel 4 is lines 69-73.
+CBH_PANEL1_MEMBERS = ["30,000", "50,000", "48,904", "50,000", "50,000",
+                      "22,727", "36,000", "27,273", "25,000", "35,000"]
+CBH_PANEL1_TOTAL = "374,904"
+CBH_PANEL4_MEMBERS = ["54,000", "5,850", "36,000", "60,000", "22,858"]
+CBH_PANEL4_TOTAL = "178,708"
+
+
+def test_decimal_reads_thousands_separators_and_unit_markers():
+    from decimal import Decimal
+    from iladub.etkl.datagrid import _decimal
+    assert _decimal("374,904") == Decimal("374904")
+    assert _decimal("8 962 258") == Decimal("8962258")     # SI/ISO 31-0 separator
+    assert _decimal("$ 78,678") == Decimal("78678")
+    assert _decimal("-1,200") == Decimal("-1200")
+    assert _decimal("Mackay") is None
+    assert _decimal("") is None
+    assert _decimal(None) is None
+
+
+def test_aggregate_members_stops_at_the_previous_aggregate():
+    """Rule B of spec 2026-08-09 §2.1: the admitted rows above i, back to the previous
+    aggregate row, EXCLUSIVE. Ordinal only — no geometry and no values."""
+    from iladub.etkl.datagrid import aggregate_members
+    admitted = set(range(10, 20)) | set(range(26, 42))
+    assert aggregate_members(20, admitted, set()) == tuple(range(10, 20))
+    # once line 20 is an aggregate, the next candidate must not re-count panel 1
+    assert aggregate_members(42, admitted | {20}, {20}) == tuple(range(26, 42))
+
+
+def test_aggregate_members_is_empty_at_the_top_of_a_page():
+    """A boxhead has nothing above it, and a vacuous sum never confirms."""
+    from iladub.etkl.datagrid import aggregate_members
+    assert aggregate_members(5, {7, 8, 9}, set()) == ()
+
+
+def test_confirms_aggregate_on_the_real_cbh_panels():
+    """The premise R75 rests on, at the level of the disposer: cbh's printed panel totals
+    equal the exact sum of the real member cells."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    members = [{13: v} for v in CBH_PANEL1_MEMBERS]
+    assert confirms_aggregate({13: CBH_PANEL1_TOTAL}, members)
+    members4 = [{13: v} for v in CBH_PANEL4_MEMBERS]
+    assert confirms_aggregate({13: CBH_PANEL4_TOTAL}, members4)
+
+
+def test_f1_tampering_the_real_total_by_one_refuses_the_row():
+    """FALSIFIER F1 (spec §4). The arithmetic must be LOAD-BEARING for admission, not
+    decorative: the corpus sweep found it refuses nothing on real evidence, so it is
+    exercised here against the real cbh members with the printed total off by exactly one.
+    Same tamper pattern as tests/etkl/fixtures.py:1711."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    members = [{13: v} for v in CBH_PANEL1_MEMBERS]
+    assert not confirms_aggregate({13: "374,905"}, members)
+    assert not confirms_aggregate({13: "374,903"}, members)
+
+
+def test_confirms_aggregate_refuses_a_vacuous_sum():
+    """Zero members is an honest refusal, never a 0 == 0 confirmation — the same rule
+    `reconciles` makes."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    assert not confirms_aggregate({13: "0"}, [])
+    assert not confirms_aggregate({13: "374,904"}, [])
+
+
+def test_confirms_aggregate_refuses_a_non_numeric_cell():
+    """A measure-only row of words is a reprinted boxhead, not an aggregate."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    assert not confirms_aggregate({4: "Accepted", 5: "Accepted"},
+                                  [{4: "Accepted", 5: "Accepted"}])
+
+
+def test_confirms_aggregate_requires_every_occupied_cell_to_reconcile():
+    """A universal quantifier, not a count: one column reconciling is not a witness.
+    This is what refuses a period header whose first column happens to sum."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    members = [{1: "100", 2: "10"}, {1: "200", 2: "20"}]
+    assert confirms_aggregate({1: "300", 2: "30"}, members)
+    assert not confirms_aggregate({1: "300", 2: "31"}, members)
+
+
+def test_confirms_aggregate_refuses_a_column_with_no_summable_member():
+    """A cell whose column no member populates has no witness — refuse, never treat the
+    missing members as zero."""
+    from iladub.etkl.datagrid import confirms_aggregate
+    assert not confirms_aggregate({1: "300", 3: "50"},
+                                  [{1: "100"}, {1: "200"}])
 
 
 def test_unit_marker_is_absorbed_not_kept_as_a_column():
