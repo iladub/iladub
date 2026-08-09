@@ -147,20 +147,33 @@ The page-scope flag (`datagrid_adopt`) stays **off by default**, and the reason 
 this loop was wrong. It used to say the driver compiles each page standalone before re-compiling
 continuation pages; measured, the driver makes **one pass** and page N-1's carried reading is an
 *input* to page N's compile, so forcing adoption on every page leaves the stem document
-byte-identical at `0.9654553611484971`. The real reason is the **refusal branch**: a single-page
-compile is structurally incapable of chaining (`CompilationReport` carries no chain concept —
-chains exist only on `DocumentReport`). Compiled standalone with adoption, stem p1 reads *flat*
-at **811 cells, `0.9588`**, while the driver reads all three pages as **one chain of 3, 2152
-cells, at `0.9654553611484971`**. Page scope is refused not because the isolated reading would
-score deceptively higher, but because it scores measurably **lower** and cannot see the other two
-pages at all.
+byte-identical at `0.9654553611484971`.
+
+The real reason is the **refusal branch**, and its first half is structural, not numeric: a
+single-page compile is **incapable of chaining at all** — `CompilationReport` carries no chain
+concept; chains exist only on `DocumentReport`. Whatever a page scores standalone, it can never
+see the pages it continues onto.
+
+The score corroborates it, **on the same page under both scopes**: stem p1 compiled standalone
+with adoption reads *flat* and scores **`0.9588`**, while the driver's own reading of that same
+page 1 scores **`0.9706`** (measured in Loop M, recorded at `residues.md` R29). Page scope is
+refused not because the isolated reading would score deceptively higher, but because it scores
+measurably **lower**. *(The two cell counts are not comparable and are not being compared: R29's
+figure is 825 **tokens** asserted under the driver, the standalone figure is 811 **cells** —
+only the two scores share a scale.)* At document scope the whole stem is one chain of 3, 2152
+cells, at `0.9654553611484971`.
 
 The withdrawal ledger is **line-granular**, and that is what keeps adoption honest: zeroing the
 escalation would score any adopted page a perfect `1.0000` whatever the grid missed, and
 withdrawing band-by-band would count the read lines on both sides. Only the line is a unit the
-grid and the bands agree on — so **an adopted page never scores 1.0000 by construction**. On
-apple p1 the grid asserts 142 tokens and 40 tokens survive as one `DATAGRID_RESIDUE` candidate:
-`0.7802`, not perfection. The bands the grid replaced are rewritten `superseded` in place (the
+grid and the bands agree on. So an adopted page reaches `1.0000` **only if the grid read every
+escalated line** — where it did not, the residue keeps escalating and the score cannot be
+perfect. That is a property of the ledger's arithmetic, not a guarantee any shape or test
+enforces: `build_ledger` sums residue-line tokens plus untouched escalated bands, and a page
+with neither would score exactly `1.0000`. What is *measured* is apple p1 at `0.7802` and stem
+p1 at `0.9588`; the only shipped pin is `< 1.0` for apple. On apple p1 the grid asserts 142
+tokens and 40 tokens survive as one `DATAGRID_RESIDUE` candidate: `0.7802`, not perfection. The
+bands the grid replaced are rewritten `superseded` in place (the
 band index *is* the region index), and the admission decision carries `dec:supersedes` to the
 verdicts it withdrew, so `effective-chain.rq` returns the live reading rather than the retracted
 one.

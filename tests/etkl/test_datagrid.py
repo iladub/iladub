@@ -849,12 +849,18 @@ def test_adoption_is_off_by_default_at_page_scope():
 
     The register's original reason — 'compile_document compiles each page standalone before
     re-compiling continuation pages' — is MEASURED FALSE: the driver makes one pass and the
-    carried reading is an INPUT to page p's compile. The real reason the page-scope flag stays
-    off is the refusal branch: stem p1 standalone adopts at 811 FLAT cells and scores 0.9588,
-    a single-page compile that structurally cannot chain — against the driver's 2152 cells
-    over the 3-page chain at 0.9654553611484971 (tests/test_corpus_stem.py's
-    test_page_scope_adoption_would_have_taken_the_page_the_driver_reads). Adoption at page
-    scope would not merely score lower; it would never see the other two pages at all."""
+    carried reading is an INPUT to page p's compile.
+
+    The real reason the page-scope flag stays off is the refusal branch, whose first half is
+    structural: a single-page compile cannot chain AT ALL (`CompilationReport` carries no chain
+    concept), so it would never see the other two pages, whatever it scored. The score
+    corroborates it SAME-PAGE: stem p1 standalone adopts at 811 FLAT cells and scores 0.9588,
+    against 0.9706 for the driver's own reading of that same page 1 (Loop M, recorded at
+    docs/superpowers/residues.md R29) — page scope reads it WORSE. The counts are NOT
+    comparable (R29's 825 is tokens under the driver; 811 is standalone cells); only the scores
+    share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
+    0.9654553611484971. See tests/test_corpus_stem.py's
+    test_page_scope_adoption_would_have_taken_the_page_the_driver_reads."""
     from iladub.etkl.compile import compile_tables
 
     default = compile_tables(APPLE, 1, validate_shapes=False)

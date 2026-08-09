@@ -363,14 +363,25 @@ def test_stem_document_is_byte_identical_under_adoption(stem_document):
 def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads():
     """THE REFUSAL BRANCH, on real evidence (spec §M3).
 
-    stem p1 compiled ALONE reads flat — 811 cells, no chain, 0.9588 — and a single-page
-    compile is structurally incapable of chaining (`CompilationReport` carries no chain
-    concept at all; chains exist only on the document driver's report). The driver instead
-    reads all three pages as one chain of 3, 2152 cells, at 0.9654553611484971 (measured in
+    The FIRST half of the refusal is structural, not numeric: a single-page compile is
+    incapable of chaining AT ALL (`CompilationReport` carries no chain concept; chains exist
+    only on the document driver's report), so page scope could never see the pages p1
+    continues onto, whatever it scored. stem p1 compiled ALONE reads flat — 811 cells, no
+    chain.
+
+    The score corroborates it SAME-PAGE, which is the like-for-like comparison: standalone
+    0.9588, against 0.9706 for the driver's own reading of that same page 1 (Loop M, recorded
+    at docs/superpowers/residues.md R29). Page scope reads this page WORSE, not better. The
+    two COUNTS are not comparable and are not compared: R29's 825 is TOKENS asserted under the
+    driver, the standalone 811 is CELLS; only the scores share a scale.
+
+    THE ASSERTION BELOW DELIBERATELY PINS THE DOCUMENT FLOOR, NOT 0.9706. 0.9706 is a
+    4-decimal figure from an earlier loop and no full-precision value for it was measured
+    here; pinning against a rounded number would be exactly the defect this loop closes. The
+    prose cites R29; the assertion stays at the full-precision 0.9654553611484971, which the
+    driver reads over all three pages as one chain of 3, 2152 cells (measured in
     test_stem_document_is_byte_identical_under_adoption / test_stem_document_stitches_three_pages,
-    same fixture). Adoption is refused at page scope not because the isolated reading would
-    score deceptively HIGHER, but because it scores measurably LOWER and cannot see the other
-    two pages at all. This test is the reason adoption is the document's LAST reader and not
+    same fixture). This test is the reason adoption is the document's LAST reader and not
     the page's first."""
     from iladub.etkl.compile import compile_tables
 

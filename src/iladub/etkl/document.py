@@ -1377,12 +1377,14 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # ever observes a rewritten page (every one of them has already run).
     #
     # The refusal branch is real and measured — and the direction is the OPPOSITE of what the
-    # plan claimed. Compiled STANDALONE with adoption, stem p1 reads FLAT: 811 cells, score
-    # 0.9588 (measured; it is NOT 1.0000). The driver reads all three pages as ONE chain of 3,
-    # 2152 cells, at 0.9654553611484971. Page scope is refused not because the isolated reading
-    # would score deceptively HIGHER, but because it scores measurably LOWER and — a single-page
-    # `CompilationReport` carrying no chain concept at all — could never see the other two pages.
-    # Pinned by tests/test_corpus_stem.py::
+    # plan claimed. Its FIRST half is structural: a single-page `CompilationReport` carries no
+    # chain concept at all, so page scope could never see the other two pages, whatever it
+    # scored. The score corroborates it SAME-PAGE: stem p1 standalone with adoption scores
+    # 0.9588 (measured this loop; it is NOT the plan's 1.0000), against 0.9706 for the driver's
+    # own reading of that same page 1 (Loop M, recorded at docs/superpowers/residues.md R29) —
+    # page scope reads that page WORSE, not better. The two COUNTS are not comparable and are
+    # not compared: R29's 825 is TOKENS asserted under the driver, the standalone 811 is CELLS;
+    # only the scores share a scale. Pinned by tests/test_corpus_stem.py::
     #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads. The GATE therefore
     # reads the merged graph the driver actually built, and the RE-COMPILE is given back the
     # same carried reading page p was compiled with (`carried_by_page`) — otherwise its

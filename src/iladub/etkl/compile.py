@@ -911,15 +911,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # page N-1's carried reading is an INPUT to page N's compile, so forcing adoption on every
     # page leaves the stem document byte-identical at 0.9654553611484971.
     #
-    # The real reason is the REFUSAL BRANCH, and it is the opposite of what was assumed. A
-    # single-page compile is structurally incapable of chaining — `CompilationReport` carries
-    # no chain concept at all; chains exist only on the driver's `DocumentReport`. Compiled
-    # standalone WITH adoption, stem p1 reads FLAT: 811 cells, score 0.9588 (measured). The
-    # driver instead reads all three pages as ONE chain of 3, 2152 cells, at 0.9654553611484971.
-    # Page scope is refused not because the isolated reading would score deceptively HIGHER,
-    # but because it scores measurably LOWER and cannot see the other two pages at all. Pinned
-    # by tests/test_corpus_stem.py::
-    #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads.
+    # The real reason is the REFUSAL BRANCH, and its FIRST half is structural, not numeric: a
+    # single-page compile is INCAPABLE OF CHAINING AT ALL — `CompilationReport` carries no chain
+    # concept; chains exist only on the driver's `DocumentReport`. Whatever a page scores
+    # standalone, it can never see the pages it continues onto.
+    #
+    # The score corroborates it, SAME PAGE under both scopes: stem p1 standalone with adoption
+    # scores 0.9588 (measured this loop), against 0.9706 for the driver's own reading of that
+    # same page 1 (Loop M, recorded at docs/superpowers/residues.md R29). Page scope is refused
+    # not because the isolated reading would score deceptively HIGHER, but because it scores
+    # measurably LOWER. NB the two COUNTS are not comparable and are not compared: R29's figure
+    # is 825 TOKENS asserted under the driver, the standalone figure is 811 CELLS — only the two
+    # scores share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
+    # 0.9654553611484971. Pinned by tests/test_corpus_stem.py::
+    #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads
+    # (whose assertion pins the full-precision document floor, not the 4-decimal 0.9706).
     #
     # Adoption is therefore the DOCUMENT's last reader (`document.compile_document`), and this
     # flag stays the explicit page-scope API that measurement needs.
