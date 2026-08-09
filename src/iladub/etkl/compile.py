@@ -326,8 +326,14 @@ def page_bands(pdf_path: str, page_number: int = 0,
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind
-    verdict: str                 # "asserted" | "escalated" | "ignored"
-    cells: int                   # asserted entry-cell count (0 otherwise)
+    # "asserted" | "escalated" | "ignored" | "superseded". The fourth is written only by the
+    # R73 adoption branch below, and only over a band that had booked escalated tokens whose ink
+    # the adopted data grid then read: the band's own record no longer describes what happened to
+    # that ink, so it neither escalates (the grid read it) nor asserts (this band did not read
+    # it). Its tokens move to the grid region and to the DATAGRID_RESIDUE region, which is why a
+    # "superseded" report always carries tokens_escalated == 0.
+    verdict: str
+    cells: int                 # asserted entry-cell count (0 otherwise)
     reason: str | None
     anchor: str | None
     ascii: str
@@ -937,9 +943,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             escalated_total = _led.escalated_tokens
             # Band index IS region index: touched bands are SUPERSEDED in place, untouched
             # bands keep their report verbatim, and the grid (plus any residue) is appended.
+            # The predicate is `tokens_escalated > 0`, the SAME one `build_ledger` selects its
+            # escalated bands by, and it has to be: the ledger has already turned this band's
+            # unread lines into residue, so leaving its own count standing would book that ink
+            # twice. Keying on the verdict string here while the ledger keys on the tokens would
+            # reopen the invariant sum(r.tokens_escalated) == escalated_total from the other side.
             reports = [
                 _dc_replace(r, verdict="superseded", tokens_escalated=0)
-                if i in _led.touched and r.verdict == "escalated" else r
+                if i in _led.touched and r.tokens_escalated > 0 else r
                 for i, r in enumerate(reports)
             ]
             reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,

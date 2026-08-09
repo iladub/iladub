@@ -83,6 +83,34 @@ def test_an_ignored_band_contributes_nothing_to_either_side():
     assert led.asserted_tokens == 3
 
 
+def test_a_band_that_booked_escalated_ink_under_an_asserted_verdict_still_counts():
+    """The verdict STRING is not the authority — the booked tokens are (task 3 review).
+
+    `compile.compile_tables` books `escalated_total += max(0, tokens - n)` while hard-coding the
+    report verdict to "asserted" on its ruled-reading and row-role paths. An adopting page has
+    `asserted_total == 0`, so a band that reached adoption through one of those paths did so with
+    `n == 0` and carries real escalated ink under an "asserted" label. Selecting escalated bands
+    by the string would drop that ink from the residue term AND from the untouched term at once —
+    the page scoring higher than it read."""
+    lines = [_line(2, 10.0), _line(3, 90.0), _line(4, 95.0)]
+    bands = [_B(0.0, 50.0), _B(80.0, 100.0)]
+    # band 1 is TOUCHED (line 1 admitted) and holds one unread line (line 2).
+    asserted_label = build_ledger(lines, (0, 1), bands,
+                                  [_R("escalated", 2), _R("asserted", 4)])
+    escalated_label = build_ledger(lines, (0, 1), bands,
+                                   [_R("escalated", 2), _R("escalated", 4)])
+    assert asserted_label == escalated_label, "the label must not change the accounting"
+    assert asserted_label.touched == frozenset({0, 1})
+    assert asserted_label.residue == (2,)      # the unread line of band 1 survives as residue
+    assert asserted_label.asserted_tokens == 5
+    assert asserted_label.escalated_tokens == 4
+
+    # And untouched: band 1's own booked count carries, exactly as an "escalated" one would.
+    untouched = build_ledger(lines[:2], (0,), bands, [_R("escalated", 2), _R("asserted", 7)])
+    assert untouched.touched == frozenset({0})
+    assert untouched.escalated_tokens == 7
+
+
 def test_no_line_is_on_both_sides_ever():
     lines = [_line(1, float(10 * i)) for i in range(10)]
     bands = [_B(0.0, 100.0)]

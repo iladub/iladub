@@ -46,6 +46,16 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     `lines` is the page's own `text_lines(extract_words(...))` sequence, sorted by `top` — the
     SAME sequence `grid_rows` indexes into, which is what makes the join exact.
 
+    A band is ESCALATED here by what its report BOOKED — `tokens_escalated > 0` — never by the
+    verdict string that report carries. The string is not the authority: `compile.compile_tables`
+    has branches (its ruled-reading and row-role paths) that do
+    `asserted_total += n; escalated_total += max(0, tokens - n)` while hard-coding the verdict to
+    "asserted", and an adopting page is by definition one where `asserted_total == 0`, so any such
+    band reached adoption with `n == 0` and carries real escalated ink under an "asserted" label.
+    Selecting by the string would drop that ink from the residue term AND from the untouched term
+    at once, and the page would score higher than it read. Selecting by the tokens cannot: a band
+    that booked nothing (every "ignored" band) still contributes nothing to either side.
+
     A band is TOUCHED when the grid admitted at least one line inside it. Touched bands lose
     their escalation (part of their ink has been read, so their record no longer describes what
     happened) and contribute their UNREAD lines as residue. Untouched bands keep their own
@@ -60,7 +70,7 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     """
     admitted = tuple(sorted(j for j in set(grid_rows) if 0 <= j < len(lines)))
     admitted_set = set(admitted)
-    escalated_bands = [i for i, r in enumerate(reports) if r.verdict == "escalated"]
+    escalated_bands = [i for i, r in enumerate(reports) if r.tokens_escalated > 0]
 
     def _inside(band, line):
         return band.top <= line.top <= band.bottom

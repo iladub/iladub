@@ -892,6 +892,10 @@ def test_adoption_keeps_the_band_index_contract():
     assert on.regions[len(bands)].table_uri is not None, "the grid region carries its URI"
     assert on.asserted == sum(r.tokens_asserted for r in on.regions)
     assert on.escalated == sum(r.tokens_escalated for r in on.regions)
+    # The rewrite is a RELABEL, not just a zeroing: a band whose ink the grid read no longer
+    # claims to have escalated it. Task 4's driver branches on the verdict string.
+    assert any(r.verdict == "superseded" for r in on.regions[:len(bands)])
+    assert all(r.tokens_escalated == 0 for r in on.regions if r.verdict == "superseded")
 
 
 @corpus_only
