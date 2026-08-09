@@ -186,6 +186,14 @@ class DocumentReport:
     gets a `notes` line, and a page with no recognized intra-page section group never reaches
     the repair at all (the monotonicity the stem shapes pin).
 
+    `adopted` (spec 2026-08-09, R73) holds every page ordinal the DOCUMENT's last reader — the
+    data grid — was allowed to supersede, i.e. a page that asserted nothing after carriage,
+    section repair and stitching had all had their turn AND whose grid then read something. The
+    page's `CompilationReport` in `pages` is the adoption compile's, not the original one; the
+    page's un-read ink keeps escalating (as a `DATAGRID_RESIDUE` candidate), so an adopted page
+    never scores 1.0 by construction. A refused adoption (the grid read nothing either) leaves
+    the page byte-untouched and lands in `notes`.
+
     `notes` carries the repair's and the section-total oracle's REFUSALS as prose — a failed
     pass-2 candidate, a printed section total that does not reconcile — because a refusal
     signal that exists must be recorded (R34's discipline), and neither has a graph node to
@@ -199,6 +207,9 @@ class DocumentReport:
     arithmetic: tuple[ChainArithmetic, ...] = ()
     refused_licences: tuple[tuple[int, int], ...] = ()
     repaired_bands: tuple[tuple[int, int], ...] = ()
+    # Page ordinals where the DOCUMENT's last reader — the data grid — superseded a total
+    # reading failure (spec 2026-08-09, R73). Empty for every document whose pages read.
+    adopted: tuple[int, ...] = ()
     notes: tuple[str, ...] = ()
 
     def to_turtle(self) -> str:
@@ -1353,6 +1364,65 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                 if note:
                     notes.append(f"page {p} band {i}: {note}")
 
+    # ---------------------------------------------------- ADOPTION (spec 2026-08-09, R73)
+    # THE DOCUMENT'S LAST READER. Strictly after carriage, section repair, intra-page
+    # stitching, chain assembly, chain arithmetic and the section-total oracle: a page's
+    # total reading failure is only FINAL at document scope. Placing the pass here is what
+    # makes the answer true rather than accidental — and it is why no band-index consumer
+    # ever observes a rewritten page (every one of them has already run).
+    #
+    # The refusal branch is real and measured: compiled STANDALONE, stem p1 adopts at 811
+    # FLAT cells and scores 1.0000, against the 825 hierarchical chain-joined cells it
+    # asserts here at 0.9706. Page scope would prefer the worse reading. This pass never
+    # consults a context-free compile — it reads the pages the driver actually produced.
+    from .adoption import is_adoption_candidate
+    adopted: list[int] = []
+    for p in range(n_pages):
+        if not is_adoption_candidate(graph, p, page_doc_uri(p)):
+            continue
+        # The adoption pass compiles under its OWN page-scoped doc URI, exactly as loop Q's
+        # pass 2 does (`r2_doc`). Without it the two verdict judgements would mint the SAME
+        # IRI and `dec:supersedes` would silently link a node to itself.
+        adopt_doc = URIRef(f"{page_doc_uri(p)}/adopt")
+        rep_a = compile_tables(pdf_path, page_number=p, validate_shapes=validate_shapes,
+                               span_proposer=span_proposer,
+                               row_role_proposer=row_role_proposer,
+                               doc_uri=adopt_doc,
+                               datagrid_adopt=True)
+        if rep_a.asserted == 0:
+            notes.append(f"page {p}: adoption refused — the grid read nothing")
+            continue
+        # Withdraw the escalation of every band the grid TOUCHED, then merge the adopted
+        # page graph in. The residue candidate rides in with it, so the ledger and the graph
+        # agree on what was left unread.
+        superseded = [idx for idx in range(len(pages[p].regions))
+                      if idx < len(rep_a.regions)
+                      and rep_a.regions[idx].verdict == "superseded"]
+        for idx in superseded:
+            _remove_escalation_record(graph, page_doc_uri(p), idx)
+        graph += rep_a.graph
+        # THE SUPERSESSION, made queryable — loop Q's precedent (dec:supersedes joins the two
+        # VERDICT judgements, never the dec:Process containers).
+        #
+        # MEASURED on apple p1, and it is a NO-OP there: page-scope adoption rebuilds the page
+        # graph from the grid alone (`compile.py`'s `graph = Graph()`), which drops the reading
+        # decision record the `ReadingRecorder` had already written into the pre-rebuild graph.
+        # So `v2` is None on all five superseded bands, zero lineage edges are asserted, and
+        # the pass-1 chain stands alone still saying `escalated` over a band the page now
+        # supersedes — the same record/graph contradiction loop Q's final review C1 named.
+        # The edge is NOT invented to paper over that (§7: an edge the evidence does not carry
+        # is never asserted); the fix is to carry the adoption compile's OWN reading record,
+        # which lives in `compile.py` and is out of this pass's reach. The lookup is kept
+        # rather than deleted because it is correct the moment that record exists.
+        for idx in superseded:
+            v1 = _verdict_decision(graph, page_doc_uri(p), idx)
+            v2 = _verdict_decision(rep_a.graph, adopt_doc, idx)
+            if v1 is not None and v2 is not None:
+                graph.add((v2, DEC.supersedes, v1))
+        pages[p] = rep_a
+        adopted.append(p)
+        section_facts = True          # document-level facts changed: validation must run
+
     # WHOLE-GRAPH VALIDATION (task 4; see the docstring above for why the gate is `recognized`
     # rather than always-on — and, since loop Q, `section_facts` for exactly the same reason:
     # an adoption, an intra-page stitch or a section total puts document-level facts into the
@@ -1369,5 +1439,11 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     escalated = sum(rep.escalated for rep in pages)
     denom = asserted + escalated
     score = 1.0 if denom == 0 else asserted / denom
-    return DocumentReport(score, tuple(pages), tuple(chains), graph, tuple(recognized),
-                          arithmetic, tuple(refused), tuple(repaired), tuple(notes))
+    # KEYWORDS, not position (spec 2026-08-09, R73). `DocumentReport` now carries ten fields,
+    # and `adopted` had to sit next to `repaired_bands` it belongs with — which, positionally,
+    # would have silently swapped `notes` and `adopted` past any type check. Naming them here
+    # makes the declaration order and the call site independent, permanently.
+    return DocumentReport(score=score, pages=tuple(pages), chains=tuple(chains), graph=graph,
+                          recognized=tuple(recognized), arithmetic=arithmetic,
+                          refused_licences=tuple(refused), repaired_bands=tuple(repaired),
+                          adopted=tuple(adopted), notes=tuple(notes))
