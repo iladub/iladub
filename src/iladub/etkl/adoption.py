@@ -21,6 +21,13 @@ scores it 1.0000 by construction, whatever the grid missed. Only the line is a u
 agree on.
 """
 from dataclasses import dataclass
+from pathlib import Path
+
+from rdflib import Literal, URIRef, XSD
+
+# three dirs up from src/iladub/etkl/adoption.py -> repo root, then vocab/queries/
+_QUERIES = Path(__file__).resolve().parents[3] / "vocab" / "queries"
+ADOPTION_CANDIDATE_RQ = _QUERIES / "adoption-candidate.rq"
 
 
 @dataclass(frozen=True)
@@ -75,3 +82,17 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
         + sum(reports[i].tokens_escalated for i in escalated_bands if i not in touched)
     )
     return LineLedger(admitted, residue, touched, asserted_tokens, escalated_tokens)
+
+
+def is_adoption_candidate(graph, page: int, page_doc) -> bool:
+    """Run the gate AXIOM over ONE page holon of the merged graph.
+
+    `page_doc` is the page's document URI — the subject every escalation on that page was
+    derived from (`holon.escalate_region` stamps `prov:wasDerivedFrom`), which is how the page
+    holon is addressed for candidates that carry no `tab:onPage` of their own.
+    """
+    q = ADOPTION_CANDIDATE_RQ.read_text()
+    return bool(graph.query(q, initBindings={
+        "page": Literal(int(page), datatype=XSD.integer),
+        "doc": URIRef(str(page_doc)),
+    }).askAnswer)
