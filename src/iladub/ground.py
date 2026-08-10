@@ -104,26 +104,44 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
 
 
 def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class):
-    """The grounding TARGET for iladub:groundsTo, or None if REJECTED (→ quarantine).
+    """`(target, admitted_because)` — the grounding TARGET for iladub:groundsTo and the ORACLE
+    that admitted it, or `(None, None)` if REJECTED (→ quarantine).
 
     Scheme-bound field: the SKOS concept whose prefLabel == value (membership is the oracle).
     Non-scheme field that declares a value constraint: the SHACL value membrane is the oracle — the
     value MUST conform, whether the field was identified by exact label match OR by a model proposal
     (legality gates admission uniformly). Non-scheme field WITHOUT a value constraint: an exact label
-    match grounds (field-identity is the oracle); a bare proposal has no oracle → None (quarantine)."""
+    match grounds (field-identity is the oracle); a bare proposal has no oracle → None (quarantine).
+
+    WHY THE ORACLE IS RETURNED FROM HERE (spec 2026-08-10 §5.3): `_emit_grounded` records the
+    quarantine branch as the option NOT taken, and `dec:rejectedBecause` must name *which* of the
+    three refusal paths above would have applied. Deriving that at the call site would duplicate
+    this function's branch and let the two drift; the branch that decides is the only place that
+    can name its own refusal without re-deciding it."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
-        return URIRef(term) if term else None
+        if not term:
+            return None, None
+        return URIRef(term), (
+            f"{concept.value!r} is a member of the admissible scheme {field.scheme}; quarantine "
+            f"is the branch for a value no concept in that scheme carries as a prefLabel")
     ps = _property_shape(contract_shapes, field.fills_property)
     if ps is not None and _has_value_constraint(contract_shapes, ps):
-        return (URIRef(field.fills_property)
-                if _value_conforms(offer_uri, target_class, field.fills_property, concept.value,
-                                   contract_shapes)
-                else None)
-    return URIRef(field.fills_property) if is_exact else None
+        if not _value_conforms(offer_uri, target_class, field.fills_property, concept.value,
+                               contract_shapes):
+            return None, None
+        return URIRef(field.fills_property), (
+            f"{concept.value!r} conforms to the contract's SHACL value constraint on "
+            f"{field.fills_property}; quarantine is the branch for a value the membrane refuses")
+    if not is_exact:
+        return None, None
+    return URIRef(field.fills_property), (
+        f"the concept's label exactly identifies contract field {field.fills_property}, which "
+        f"declares no value constraint, so field identity is the oracle; quarantine is the "
+        f"branch for a field that was proposed rather than exactly matched")
 
 
-def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None):
+def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None, admitted_because=None):
     pd = BNode()
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
     g.add((pd, ILADUB.reviews, cand))
@@ -131,6 +149,28 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
     g.add((pd, DEC.consideredEvidence, cand))
     g.add((pd, DEC.confidence, Literal(Decimal(str(round(confidence, 6))))))
     g.add((pd, DEC.rationale, Literal(rationale)))
+    # THE DELIBERATION (spec 2026-08-10 §5.3). Read off the branch `ground_concept` already
+    # takes — it branches on `field is None`, then on `grounds_to is None`, and its two
+    # outcomes are "grounded" and "proposed". Naming those two invents nothing; the option
+    # space is exact, not thin. §8: PROCEDURAL — it records a decision already made.
+    #
+    # BOTH OPTIONS ARE BNodes, and that is deliberate. `pd`, `cand` and `gn` are all BNodes
+    # here (unlike promote.py, where the decision is a URIRef): the whole grounding record is
+    # traversal-addressed from `offer_uri`. A URIRef option would be the ONLY named node in a
+    # record whose decision, candidate and grounded node are all anonymous — a name that
+    # cannot be dereferenced to its own context — and there is no stable identity to mint it
+    # from, since one offer may ground several concepts to one field.
+    opt_ground = BNode()
+    g.add((opt_ground, RDF.type, DEC.Option))
+    g.add((opt_ground, RDFS.label, Literal(f"ground to {grounds_to}")))
+    g.add((pd, DEC.optionSpace, opt_ground))
+    g.add((pd, DEC.chosen, opt_ground))
+    opt_quarantine = BNode()
+    g.add((opt_quarantine, RDF.type, DEC.Option))
+    g.add((opt_quarantine, RDFS.label, Literal("quarantine as a proposition")))
+    g.add((pd, DEC.optionSpace, opt_quarantine))
+    if admitted_because:
+        g.add((opt_quarantine, DEC.rejectedBecause, Literal(admitted_because)))
     gn = BNode()
     g.add((gn, RDF.type, ILADUB.GroundedNode))
     g.add((gn, ILADUB.wasPromotedBy, pd))
@@ -157,7 +197,8 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
     if field is None:                                       # novel → quarantined proposition
         return "proposed"
-    grounds_to = _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class)
+    grounds_to, admitted_because = _grounds_to(concept, field, terms, is_exact, contract_shapes,
+                                               offer_uri, contract.target_class)
     if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
     ps = _property_shape(contract_shapes, field.fills_property)
@@ -166,7 +207,7 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
         rationale = ("%s [grounded via SHACL value-constraint admissibility, weaker than "
                      "scheme-identity]" % rationale)
     _emit_grounded(g, concept, offer_uri, contract.target_class, field, grounds_to,
-                   cand, agent, confidence, rationale, datatype)
+                   cand, agent, confidence, rationale, datatype, admitted_because)
     return "grounded"
 
 
