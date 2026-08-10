@@ -1,7 +1,7 @@
 import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
-from rdflib import Graph
+from rdflib import Graph, RDFS
 from tests.etkl.fixtures import simple_table_pdf, pivoted_table_pdf
 from iladub.etkl import compile_tables, RegionKind
 from iladub.etkl.holon import TAB
@@ -106,7 +106,11 @@ def test_false_positive_transpose_escalates(tmp_path):
     report = compile_tables(str(p))
     assert (None, None, TAB.RecordTable) not in report.graph
     cand = next(report.graph.subjects(RDF.type, ILADUB.CandidateConcept))
-    assert str(next(report.graph.objects(cand, DEC.rationale))) == "TRANSPOSED"
+    # R69: the reason rides rdfs:label (human) + iladub:suggestedBy (the join), never dec:.
+    assert str(next(report.graph.objects(cand, RDFS.label))) == "TRANSPOSED"
+    assert str(next(report.graph.objects(cand, ILADUB.suggestedBy))) == \
+        "urn:iladub:suggester/transposed-rule"
+    assert not list(report.graph.objects(cand, DEC.rationale))
 
 
 def test_transposed_provenance_survives_flip(tmp_path):
@@ -152,8 +156,8 @@ def test_all_text_record_not_flagged_transposed(tmp_path):
     assert (None, None, TAB.RecordTable) in report.graph, "all-text table must still be a RecordTable"
     # No TRANSPOSED escalation
     for cand in report.graph.subjects(RDF.type, ILADUB.CandidateConcept):
-        rationale = str(next(report.graph.objects(cand, DEC.rationale), ""))
-        assert rationale != "TRANSPOSED", "all-text table must NOT be flagged TRANSPOSED"
+        reason = str(next(report.graph.objects(cand, RDFS.label), ""))
+        assert reason != "TRANSPOSED", "all-text table must NOT be flagged TRANSPOSED"
 
 
 def test_row_grouped_compiles(tmp_path):
@@ -232,9 +236,13 @@ def test_multi_table_ambiguous_escalates(tmp_path):
     from rdflib import RDF
     p = tmp_path / "amb.pdf"; record_plus_stub_hier_pdf(str(p))
     report = compile_tables(str(p))
-    rationales = {str(o) for s in report.graph.subjects(RDF.type, ILADUB.CandidateConcept)
-                  for o in report.graph.objects(s, DEC.rationale)}
-    assert "MULTI_TABLE_AMBIGUOUS" in rationales
+    reasons = {str(o) for s in report.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+               for o in report.graph.objects(s, RDFS.label)}
+    assert "MULTI_TABLE_AMBIGUOUS" in reasons
+    # and as a JOIN, not a string match (spec §5.1)
+    suggesters = {str(o) for s in report.graph.subjects(RDF.type, ILADUB.CandidateConcept)
+                  for o in report.graph.objects(s, ILADUB.suggestedBy)}
+    assert "urn:iladub:suggester/multi-table-ambiguous-rule" in suggesters
 
 
 def test_crosstab_still_single_table(tmp_path):

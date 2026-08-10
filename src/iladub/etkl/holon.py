@@ -7,7 +7,9 @@ Propose: an iladub:CandidateConcept for regions the loop cannot validate.
 """
 from __future__ import annotations
 
-from rdflib import Graph, Namespace, Literal, BNode, URIRef, RDF
+from decimal import Decimal
+
+from rdflib import Graph, Namespace, Literal, BNode, URIRef, RDF, RDFS
 from rdflib.namespace import XSD
 
 from .regions import ClassifiedRegion
@@ -53,14 +55,51 @@ def _emit_entry_cell(g: Graph, table_uri: URIRef, doc_uri: URIRef, page: int,
 def _emit_roundtrip_fail_cell(g: Graph, doc_uri: URIRef, page: int,
                               cc_uri: URIRef, cell) -> None:
     """Emit a ROUND_TRIP_FAIL proposition for a data cell whose ink crosses a
-    gutter — never silently dropped. Shared by both makers."""
+    gutter — never silently dropped. Shared by both makers.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL, as `escalate_region` — it records a
+    refusal the round-trip oracle has already made.
+
+    THE SECOND R69 SITE, and R19's root cause. This emitter wrote `dec:rationale` on a
+    proposition (R69's mechanism: `dec:rationale rdfs:domain dec:DecisionHolon`,
+    dec.ttl:76-77) AND `tab:onPage` + `tab:hasBBox` on it (R19's mechanism: both declare
+    `rdfs:domain tab:Cell`, tab.ttl:103-107, so the proposition became a `tab:Cell` and was
+    handed to every cell shape). Spec 2026-08-06 stopped the SHIPPED closure materialising
+    domain typing, which stopped R19 crashing compiles — but the cell vocabulary is still IN
+    the published graph, so it still fires for any consumer applying our axioms. Dropping the
+    vocabulary closes it at the source rather than at the closure.
+
+    THE BBOX IS NOT CARRIED, and that is a measured loss, not an oversight. `tab:hasBBox`
+    cannot hang off a proposition without retyping it (above), and there is no owned property
+    for geometry on an `iladub:SourceRegion`. `prov:wasDerivedFrom` still pins the cell's
+    origin (its IRI encodes x0/top), and the loss is registered rather than papered over with
+    an invented term.
+    """
     x0, top, _, _ = cell.bbox
+    region_uri = URIRef(f"{cc_uri}-source")
+    agent = _suggester_uri("ROUND_TRIP_FAIL")
+
     g.add((cc_uri, RDF.type, ILADUB.CandidateConcept))
     g.add((cc_uri, ILADUB.surfaceText, Literal(cell.text)))
-    g.add((cc_uri, DEC.rationale, Literal("ROUND_TRIP_FAIL")))
-    g.add((cc_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
-    g.add((cc_uri, TAB.hasBBox, _bbox_node(g, cell)))
+    # The anchor is the reading the maker ATTEMPTED and the oracle refused — not a guess:
+    # this branch is reached only from the entry-cell path.
+    g.add((cc_uri, ILADUB.suggestedAnchor, TAB.EntryCell))
+    g.add((agent, RDF.type, ILADUB.Suggester))
+    g.add((cc_uri, ILADUB.suggestedBy, agent))
+    # 0.0 because the round-trip oracle REFUTED this reading — no confidence is claimed, and
+    # none is invented. Shipped precedent for the same epistemic situation: compile.py's
+    # DATAGRID_RESIDUE escalation, also 0.0. Not a tuned constant: it is the "none" boundary.
+    g.add((cc_uri, ILADUB.confidence, Literal(Decimal("0.0"))))
+    g.add((cc_uri, RDFS.label, Literal("ROUND_TRIP_FAIL")))
+    g.add((cc_uri, ILADUB.status, ILADUB.proposed))
+    g.add((cc_uri, ILADUB.fromRegion, region_uri))
+    # UNCHANGED: adoption-candidate.rq binds ?doc from this edge — do not repoint it.
     g.add((cc_uri, PROV.wasDerivedFrom,
+           URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
+
+    g.add((region_uri, RDF.type, ILADUB.SourceRegion))
+    g.add((region_uri, ILADUB.onPage, Literal(int(page), datatype=XSD.integer)))
+    g.add((region_uri, PROV.wasDerivedFrom,
            URIRef(f"{doc_uri}#p{page}-{int(x0)}-{int(top)}")))
 
 
@@ -367,14 +406,69 @@ def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
     return asserted
 
 
+def _suggester_uri(reason: str) -> URIRef:
+    """One suggester IRI per escalation reason, derived MECHANICALLY from the reason string.
+
+    Derivation, not a lookup table: a hand-maintained table drifts from the call sites the
+    moment a new reason string is introduced, and the drift is silent. Precedent for the
+    shape of the IRI: `ground.py:22 _EXACT_RULE = "urn:iladub:suggester/exact-match-rule"`.
+
+    This is where the reason GOES (spec §5.1). A per-reason suggester makes "which rule
+    proposed this" a join (`?c iladub:suggestedBy <…/matrix-ambiguous-rule>`) instead of a
+    `FILTER regex` over a rationale string.
+    """
+    slug = reason.strip().lower().replace("_", "-")
+    return URIRef(f"urn:iladub:suggester/{slug}-rule")
+
+
 def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str,
-                    reason: str, anchor: URIRef, confidence: float) -> None:
+                    reason: str, anchor: URIRef, confidence: float, page: int) -> None:
+    """Emit an escalated region as a PROPOSITION — never as a decision (R69).
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL. It records, in RDF, a decision the
+    caller has ALREADY made (this region cannot be asserted, for this reason). It introduces
+    no judgement of its own: every value written is either passed in or derived mechanically
+    from one that was. Irreducible: writing triples is engine glue.
+
+    THE EPISTEMICS (CLAUDE.md §3). A candidate is a proposition, so it carries the
+    PROPOSITION vocabulary and no `dec:` property at all. Before this, it carried
+    `dec:confidence` and `dec:rationale`; because `dec:confidence` declares
+    `rdfs:domain dec:DecisionHolon` (dec.ttl:80-82), any consumer applying our published
+    axioms entailed that every escalated region IS a decision holon — and then failed it
+    against `dec:DecisionHolonShape` for having no option space, no chosen option and no
+    agent. That is R69, and it is a PUBLICATION defect: the shipped subclass-only closure
+    (spec 2026-08-06) never materialised domain typing, so it never fired in-house. With no
+    `dec:` property on the node, no domain entailment can reach it under any reasoner.
+
+    `page` is REQUIRED, not defaulted: `iladub:CandidateConceptShape` does not demand it, so
+    an optional page would be dropped silently by any future call site and the SourceRegion
+    would decay into the typed-but-empty stub that provenance-to-the-page (§6) exists to
+    prevent. All twelve call sites have it in scope (measured 2026-08-10).
+    """
+    region_uri = URIRef(f"{cand_uri}-source")
+
     g.add((cand_uri, RDF.type, ILADUB.CandidateConcept))
     g.add((cand_uri, ILADUB.surfaceText, Literal(ascii_text)))
     g.add((cand_uri, ILADUB.suggestedAnchor, anchor))
-    g.add((cand_uri, DEC.confidence, Literal(round(confidence, 2), datatype=XSD.decimal)))
-    g.add((cand_uri, DEC.rationale, Literal(reason)))
+    # xsd:decimal via Decimal, NOT via a float: Literal(round(x, 2), datatype=XSD.decimal)
+    # builds a literal whose Python value is a float, which pySHACL reads as ill-typed
+    # against sh:datatype xsd:decimal (measured 2026-08-10, loop Task 1).
+    g.add((cand_uri, ILADUB.confidence, Literal(Decimal(str(round(confidence, 6))))))
+    agent = _suggester_uri(reason)
+    g.add((agent, RDF.type, ILADUB.Suggester))
+    g.add((cand_uri, ILADUB.suggestedBy, agent))
+    g.add((cand_uri, RDFS.label, Literal(reason)))      # the human-readable reason, as ground.py:91
+    g.add((cand_uri, ILADUB.status, ILADUB.proposed))
+    g.add((cand_uri, ILADUB.fromRegion, region_uri))
     g.add((cand_uri, PROV.wasDerivedFrom, doc_uri))
+
+    # The source region is a node DISTINCT from the candidate: `cand_uri` is the candidate,
+    # and pointing iladub:fromRegion at it would satisfy the shape while asserting nothing.
+    # It carries the page as a typed integer — see iladub:onPage's comment for why not
+    # tab:onPage, and why not the page-scoped document IRI.
+    g.add((region_uri, RDF.type, ILADUB.SourceRegion))
+    g.add((region_uri, ILADUB.onPage, Literal(int(page), datatype=XSD.integer)))
+    g.add((region_uri, PROV.wasDerivedFrom, doc_uri))
 
 
 def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
@@ -397,7 +491,7 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
     if not region_round_trips(region, band):
         rt_uri = URIRef(f"{table_uri}-rt")
         escalate_region(g, rt_uri, doc_uri, render_region_ascii(region),
-                        "ROUND_TRIP_FAIL", TAB.HierarchicalTable, 0.3)
+                        "ROUND_TRIP_FAIL", TAB.HierarchicalTable, 0.3, page)
         return 0
 
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))

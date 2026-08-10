@@ -458,7 +458,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         if multi_table:
             cand_uri = URIRef(f"{doc}#region{idx}")
             escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
-                            TAB.HierarchicalTable, 0.4)
+                            TAB.HierarchicalTable, 0.4, page_number)
             if getattr(band, "unit_markers", ()):
                 _emit_unit_markers(graph, cand_uri, band, None)
                 escalated_total += _marker_word_count(band)
@@ -518,7 +518,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
-                                        "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                                        "REGION_TILING_FAILED", TAB.RecordTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
                             escalated_total += _marker_word_count(band)
@@ -550,7 +550,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # detected but not confidently compilable — escalate (Loop 3 behaviour)
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view, "TRANSPOSED",
-                                    TAB.TransposedTable, 0.4)
+                                    TAB.TransposedTable, 0.4, page_number)
                     if getattr(band, "unit_markers", ()):
                         _emit_unit_markers(graph, cand_uri, band, None)
                         escalated_total += _marker_word_count(band)
@@ -601,7 +601,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     else:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view, "ROW_GROUP_AMBIGUOUS",
-                                        TAB.HierarchicalTable, 0.4)
+                                        TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
                             escalated_total += _marker_word_count(band)
@@ -625,7 +625,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
-                                        "REGION_TILING_FAILED", TAB.RecordTable, 0.4)
+                                        "REGION_TILING_FAILED", TAB.RecordTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
                             escalated_total += _marker_word_count(band)
@@ -692,7 +692,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 else:
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view, "MATRIX_AMBIGUOUS",
-                                    TAB.HierarchicalTable, 0.4)
+                                    TAB.HierarchicalTable, 0.4, page_number)
                     if getattr(band, "unit_markers", ()):
                         _emit_unit_markers(graph, cand_uri, band, None)
                         escalated_total += _marker_word_count(band)
@@ -773,7 +773,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     else:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view, "MERGE_AMBIGUOUS",
-                                        TAB.HierarchicalTable, 0.4)
+                                        TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
                             escalated_total += _marker_word_count(band)
@@ -801,7 +801,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
                         escalate_region(graph, cand_uri, doc, ascii_view,
-                                        "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4)
+                                        "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
                             escalated_total += _marker_word_count(band)
@@ -841,7 +841,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     cand_uri = URIRef(f"{doc}#region{idx}")
                     escalate_region(graph, cand_uri, doc, ascii_view,
                                     reason="KIND_NOT_SUPPORTED",
-                                    anchor=TAB.HierarchicalTable, confidence=0.4)
+                                    anchor=TAB.HierarchicalTable, confidence=0.4, page=page_number)
                     if getattr(band, "unit_markers", ()):
                         _emit_unit_markers(graph, cand_uri, band, None)
                         escalated_total += _marker_word_count(band)
@@ -1007,7 +1007,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                   for j in _led.residue)
                 _res_uri = URIRef(f"{doc}#p{page_number}-datagrid-residue")
                 escalate_region(graph, _res_uri, doc, _text,
-                                "DATAGRID_RESIDUE", TAB.DataGrid, 0.0)
+                                "DATAGRID_RESIDUE", TAB.DataGrid, 0.0, page_number)
                 reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
                                             "DATAGRID_RESIDUE", str(TAB.DataGrid), "",
                                             tokens_escalated=sum(len(_lines[j].words)

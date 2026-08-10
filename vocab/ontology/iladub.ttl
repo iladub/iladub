@@ -102,6 +102,24 @@ iladub:fromRegion a owl:ObjectProperty ;
     rdfs:label "from region"@en ; rdfs:range iladub:SourceRegion ;
     rdfs:comment "The source-document region this node came from."@en .
 
+iladub:onPage a owl:DatatypeProperty ;
+    rdfs:label "on page"@en ; rdfs:domain iladub:SourceRegion ; rdfs:range xsd:integer ;
+    rdfs:comment """Zero-based index of the source-document page the region was measured on
+— provenance to the page (CLAUDE.md §6) for the PROPOSITION side of the epistemics.
+
+Why this term exists rather than reusing tab:onPage: tab:onPage carries
+`rdfs:domain tab:Cell` (tab.ttl:103-105), so putting it on an iladub:SourceRegion entails
+the region IS a tab:Cell under any consumer's RDFS reasoner — MEASURED 2026-08-10, the
+closure yields {rdfs:Resource, prov:Entity, iladub:SourceRegion, tab:Cell}. That is R69's
+exact mechanism (a property's domain retyping the node that carries it) recreated one level
+down, and invisible to the shipped subclass-only closure. The domain here is deliberately
+narrowed to iladub:SourceRegion so this property can never retype anything else.
+
+The page is carried as a typed integer rather than left implicit in the page-scoped document
+IRI because that IRI is never a subject in a compiled graph (MEASURED: 0 outgoing triples on
+`<doc>/p0` across the corpus) — reading the page off it would be string-parsing, not a
+join."""@en .
+
 #################################################################
 #  Properties — promotion / grounding side
 #################################################################

@@ -2,7 +2,7 @@
 import os
 import tempfile
 
-from rdflib import RDF
+from rdflib import RDF, RDFS
 
 from iladub.etkl import compile_tables
 from iladub.etkl.grid import LeafGrid
@@ -85,7 +85,7 @@ def test_offcenter_merge_escalates():
     rather than fabricate a tiling."""
     rep = _compile(fixtures.offcenter_merge_report_pdf)
     reasons = {str(o) for s in rep.graph.subjects(RDF.type, ILADUB.CandidateConcept)
-               for o in rep.graph.objects(s, DEC.rationale)}
+               for o in rep.graph.objects(s, RDFS.label)}
     assert any("MERGE_AMBIGUOUS" in r for r in reasons), f"expected MERGE_AMBIGUOUS, got {reasons}"
     assert not any(True for _ in rep.graph.subjects(RDF.type, TAB.HierarchicalTable)), \
         "an ambiguous merge must escalate, not assert a HierarchicalTable"
