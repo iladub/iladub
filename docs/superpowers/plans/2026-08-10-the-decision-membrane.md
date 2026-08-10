@@ -7,6 +7,12 @@
 **Spec:** `docs/superpowers/specs/2026-08-10-the-decision-membrane-design.md` (read it first —
 this plan implements it and does not restate its argument).
 
+**Doc impact:** contradiction — inherited from the spec, and resolved by Task 8 Step 3.
+`docs/wiki/concepts/promotion-decision.md:48-49` and `docs/wiki/concepts/decision-holon.md:26`
+each assert that the membrane enforces the promotion invariant today; the spec §3 measures both
+false. This plan's Task 7 makes them true and Task 8 edits them to name where enforcement
+happens.
+
 **Goal:** Make iladub's differentiator claim — every grounded node is the product of an
 accountable `iladub:PromotionDecision` — an *enforced* fact about compiled and grounded
 documents, by fixing the three producers that violate the shipped shapes and then applying those

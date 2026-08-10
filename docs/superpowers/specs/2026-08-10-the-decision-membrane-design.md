@@ -8,7 +8,7 @@ grounded through `ground_document` · **Builds on:** `2026-08-06-subclass-only-c
 well-formed producer), `2026-08-09-adoption-at-document-scope-design.md` (which put the data
 grid's admission holon on the verdict query surface and registered R81/R82)
 
-**Doc impact:** **contradiction.** `docs/wiki/concepts/promotion-decision.md:48-49` asserts
+**Doc impact:** contradiction. `docs/wiki/concepts/promotion-decision.md:48-49` asserts
 "iladub's SHACL membrane hard-fails any grounded node lacking `wasPromotedBy`";
 `docs/wiki/concepts/decision-holon.md:26` asserts "the core deliberation shape is enforced, not
 just declared." §3 measures both false for every compiled and grounded document — the shapes are
