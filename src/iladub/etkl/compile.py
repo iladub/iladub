@@ -382,21 +382,66 @@ def _repo_vocab():
     raise FileNotFoundError("vocab/ not found (needed for SHACL validation)")
 
 
-_FULL_SHAPES = None
+_TAB_SHAPES = None
+_DEC_SHAPES = None
 _FULL_ONT = None
+
+# The membrane's shape set, split by which ENGINE may evaluate it (spec 2026-08-10 §5.4).
+# `_DEC_SHAPES` is pinned to pySHACL: both files carry an `sh:sparql` constraint and the
+# promotion emitters mint blank-node subjects, which rudof provably cannot evaluate — see
+# `membrane.validate`'s docstring for the measurement. The split is per shape SET, never per
+# graph: no verdict depends on what happens to be in the data.
+_TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
+_DEC_SHAPE_FILES = ("dec-shapes.ttl", "iladub-shapes.ttl")
+_DEC_ENGINE = "pyshacl"
+
+
+def _build_membrane():
+    global _TAB_SHAPES, _DEC_SHAPES, _FULL_ONT
+    v = _repo_vocab()
+
+    def _shapes(names):
+        g = Graph()
+        for n in names:
+            g.parse(os.path.join(v, "shapes", n), format="turtle")
+        return g
+
+    _TAB_SHAPES = _shapes(_TAB_SHAPE_FILES)
+    # R82: the membrane validates the DECISION graph too, not only the tab graph. A page
+    # carrying an iladub:PromotionDecision with no deliberated option space used to cross
+    # here unchallenged, which made "every grounded node is produced by an accountable
+    # promotion decision" a claim rather than an enforced fact.
+    _DEC_SHAPES = _shapes(_DEC_SHAPE_FILES)
+    o = Graph()
+    o.parse(os.path.join(v, "ontology", "tab.ttl"), format="turtle")
+    # LOAD-BEARING, not decoration: the promotion shapes target dec:DecisionHolon, and only
+    # `iladub:PromotionDecision rdfs:subClassOf dec:DecisionHolon` (iladub.ttl) puts an
+    # emitted promotion under that target once the subclass closure runs. Without these two
+    # files the dec shapes are parsed and target nothing at all.
+    #
+    # MEASURED (2026-08-10), because enlarging the ontology also enlarges the closure the TAB
+    # shapes see: all 7 corpus documents were compiled once and validated twice against the
+    # tab shapes alone — with tab.ttl, then with tab.ttl+dec.ttl+iladub.ttl. Every verdict was
+    # (conforms=True, 0 refusing focus nodes, 0 results) both times. No tab verdict moves,
+    # which is why ONE ontology graph serves both legs.
+    o.parse(os.path.join(v, "ontology", "dec.ttl"), format="turtle")
+    o.parse(os.path.join(v, "ontology", "iladub.ttl"), format="turtle")
+    _FULL_ONT = o
 
 
 def _validate(graph: Graph) -> tuple[bool, str]:
-    global _FULL_SHAPES, _FULL_ONT
-    if _FULL_SHAPES is None:
-        v = _repo_vocab()
-        s = Graph()
-        s.parse(os.path.join(v, "shapes", "tab-shapes.ttl"), format="turtle")
-        s.parse(os.path.join(v, "shapes", "tab-physical-shapes.ttl"), format="turtle")
-        _FULL_SHAPES = s
-        _FULL_ONT = Graph().parse(os.path.join(v, "ontology", "tab.ttl"), format="turtle")
+    if _TAB_SHAPES is None:
+        _build_membrane()
     from . import membrane
-    return membrane.validate(graph, _FULL_SHAPES, _FULL_ONT)
+    # BOTH legs always run, even when the first refuses: a membrane that reported only the
+    # first failing shape set would make a page look like a tab defect when it is also a
+    # promotion defect, and the caller raises on the combined verdict either way.
+    tab_ok, tab_report = membrane.validate(graph, _TAB_SHAPES, _FULL_ONT)
+    dec_ok, dec_report = membrane.validate(graph, _DEC_SHAPES, _FULL_ONT, engine=_DEC_ENGINE)
+    if tab_ok and dec_ok:
+        return True, tab_report
+    return False, "\n".join(r for ok, r in ((tab_ok, tab_report), (dec_ok, dec_report))
+                            if not ok)
 
 
 def compile_tables(pdf_path: str, page_number: int = 0,
