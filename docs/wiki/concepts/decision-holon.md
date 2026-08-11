@@ -8,7 +8,7 @@ sources:
   - docs/superpowers/specs/2026-06-29-apex-escalation-design.md
 related: ["[[promotion-decision]]"]
 confidence: high
-updated: 2026-08-01
+updated: 2026-08-11
 promoted_to: docs/dec.md
 ---
 
@@ -23,7 +23,14 @@ what most data models (its example is FHIR) structurally cannot — the
 rejected option and why, situated meaning, a holarchy of authority, a deontic
 layer, and decision lineage.
 
-**How it works.** The core deliberation shape is enforced, not just declared:
+**How it works.** The core deliberation shape is enforced, not just declared —
+enforced at `compile._validate` (`src/iladub/etkl/compile.py`) and at
+`feed.ground_document`'s gate (`src/iladub/feed.py`), which is where "enforced"
+stops being a property of the shape file and starts being a property of the
+pipeline. Until 2026-08-10 it *was* just declared: `dec-shapes.ttl` was in no
+membrane, and every promotion decision iladub emitted failed it — 26 focus
+nodes at compile scope and 719 at grounding scope, under both closures. Name
+the call site whenever you write "enforced," or the word does no work:
 `vocab/shapes/dec-shapes.ttl`'s `DecisionHolonShape` requires `dec:optionSpace`
 with `sh:minCount 2` (the ontology notes the no-change option counts toward
 that two), exactly one `dec:chosen` option, a `dec:decidedBy` agent, and a

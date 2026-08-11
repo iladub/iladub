@@ -1,6 +1,6 @@
 # The decision membrane — validating what iladub decides (R69, R81, R82) — design
 
-**Date:** 2026-08-10 · **Status:** design, awaiting review · **Residues closed:** R69, R81, R82
+**Date:** 2026-08-10 · **Status:** design, implemented (2026-08-11, branch `loop-decision-membrane`) · **Residues closed:** R69, R81, R82
 (+ one unregistered defect this spec names in §3.3) · **Specimen:** the whole corpus — all 7
 documents in `corpus/`, compiled through `compile_document`, plus the two contracted documents
 grounded through `ground_document` · **Builds on:** `2026-08-06-subclass-only-closure-design.md`
@@ -15,6 +15,15 @@ just declared." §3 measures both false for every compiled and grounded document
 applied only in unit tests against fixtures. The contradiction is **resolved by this loop**: the
 membrane is turned on and the producers are fixed, after which both sentences become true. Both
 pages (and `assert-propose-promote.md`) take an increment recording *where* enforcement happens.
+
+**Doc impact — RESOLVED 2026-08-11, in this loop.** Both sentences are now true, and all three
+wiki pages carry the increment naming the call sites: `compile._validate`
+(`src/iladub/etkl/compile.py`) and `ground_document(..., validate_shapes=True)`
+(`src/iladub/feed.py`). `promotion-decision.md` also carries the lesson the contradiction
+taught — *a claim about enforcement that does not name its call site is how this one survived*
+— and `assert-propose-promote.md` records the measured before-state (all 24 emitted
+`iladub:CandidateConcept` nodes refused by their own shape). No contradiction remains, so the
+release gate (`scripts/release_gate.py`) is unblocked by this spec.
 
 ---
 

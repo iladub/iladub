@@ -4,11 +4,12 @@ type: concept
 sources:
   - vocab/ontology/iladub.ttl
   - vocab/shapes/iladub-shapes.ttl
+  - docs/loops/2026-08-10-decision-membrane-baseline.md
   - docs/superpowers/specs/2026-07-30-r17-direct-assert-gate-design.md
   - docs/superpowers/specs/2026-07-30-graincorp-grounding-design.md
 related: ["[[promotion-decision]]", "[[decision-holon]]"]
 confidence: high
-updated: 2026-08-01
+updated: 2026-08-11
 promoted_to: docs/assertion-proposition.md
 ---
 
@@ -52,6 +53,24 @@ quarantined**. The quarantine is not failure: unconstrained fields (vessels,
 exporters, dates, times) quarantine by design because the contract cannot
 verify them, and the grain-commodity scheme correctly *refused* non-grain
 cargo (`Woodchip` ×6, `Cement` ×3) rather than grounding it loosely.
+
+**The proposition half was malformed on every real document until 2026-08-10,
+and nothing noticed — because nothing was looking.** `iladub-shapes.ttl` was in
+no membrane, so `CandidateConceptShape` only ever ran in unit tests against
+synthetic graphs. Measured at the start of loop `loop-decision-membrane`
+(`docs/loops/2026-08-10-decision-membrane-baseline.md`), over the seven-document
+corpus: **every one of the 24 `iladub:CandidateConcept` nodes a compile emitted
+was refused by its own shape** — apple 11, bfs 10, who-wfa 3, each refusing
+under both closures (apple 11 foci / 44 results, bfs 10 / 40). The other four
+documents emitted no candidate at all, which is why the total is 24 and not
+larger. Cause: `escalate_region` wrote `dec:confidence` on the region, whose
+`rdfs:domain` entailed the region was a `dec:DecisionHolon` (R69).
+
+That is the honest shape of the lesson: **the epistemics were sound in the
+vocabulary and broken in the emission**, and the gap survived because the
+enforcement claim in the docs named a shape file rather than a call site. Both
+halves are now checked where the nodes are made — see [[promotion-decision]]
+for the two membranes and their `file:function` sites.
 
 **Settled vs open.** The assert/propose split and its SHACL enforcement are
 settled and shipped. What stays open is coverage, not the mechanism: R20
