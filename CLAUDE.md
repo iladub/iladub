@@ -281,7 +281,7 @@ Enforced by `scripts/context_budget.py`, wired as a `UserPromptSubmit` hook in
 asks for the handoff at 30%, and refuses new design work past 40%. Self-monitoring is the
 thing that fails first, so the harness does it. See R76.
 
-## Plan authoring discipline (enforced, 2026-08-09)
+## Plan authoring discipline (enforced, 2026-08-09; rule 5 added 2026-08-11)
 
 **A plan is a contract, not a draft of the code.** It states *interfaces, invariants and the
 falsifying oracle*. It does **not** contain the function body.
@@ -332,8 +332,45 @@ The five defects above were measured against
 `docs/superpowers/plans/2026-08-09-adoption-at-document-scope.md` and its spec — read that plan
 as the worked counter-example of what this section forbids.
 
-**Reviewers enforce all four.** A plan containing a function body, an unmeasured load-bearing
-claim, or a task report without a falsification block is a *review failure* — not a style note.
+**A sixth defect, from a different plan, in the very next loop (2026-08-10).** The rules above
+did not prevent it, which is why it is recorded here rather than only in that loop's evidence.
+
+`docs/superpowers/plans/2026-08-10-the-decision-membrane.md`, Task 4 Step 1, assertion 4 asked
+the implementer to *"ground two concepts that refuse for different reasons … and assert their
+rejected options' `dec:rejectedBecause` differ."* **That test cannot be written.** A refusing
+concept mints no decision holon at all — `ground_concept` returns `"proposed"`
+(`src/iladub/ground.py:199,203`) *before* any `pd` is constructed, and `_emit_grounded` is the
+only site that mints one — so a refusal has no options, and therefore no `dec:rejectedBecause`
+to compare. The plan's own spec had already said so, in §7's first bullet: *"the 1265 + 775
+quarantined concepts get no decision holon."* The plan contradicted the spec it was written
+from, one section away.
+
+This is **not** defect 5 again. Defect 5 was a plan-supplied test that passed with its subject
+deleted — a test that pinned nothing. This one could never have passed at all, because the plan
+asserted a behaviour its own spec had explicitly ruled out. Same permission (rule 1's "tests may
+still be given verbatim"), opposite failure: there, an assertion too weak to fail; here, a
+*setup* that cannot exist. Both come from authoring a test without measuring the code path it
+needs.
+
+The implementer substituted the satisfiable form carrying the same force — three concepts that
+**ground** through the three different oracles of `_grounds_to` must carry three **different**
+rejection reasons on the option not taken — and that is the correct response: a plan-supplied
+test is a proposition, and an implementer who cannot make it pass has found a plan defect, not
+a personal failure. **Say so in the task report and substitute; never weaken the assertion to
+make a broken contract go green.**
+
+The rule this adds:
+
+5. **A plan-supplied test must be reconciled against its own spec's "what is NOT done" section
+   before it ships.** A plan states what the loop builds; the spec states what it deliberately
+   leaves unbuilt. A test asserting behaviour the spec has scoped *out* is a contradiction the
+   plan author is uniquely placed to catch, and uniquely unlikely to — having just written both.
+   Rule 2's "measure the load-bearing claim" extends to the test's **setup**, not only its
+   assertion: *can the state this test needs actually be constructed by the code as it stands?*
+
+**Reviewers enforce all five.** A plan containing a function body, an unmeasured load-bearing
+claim, a test that contradicts its own spec's §"what is not done", or a task report without a
+falsification block is a *review failure* — not a style note.
 
 ## Deferred residues — the register
 
