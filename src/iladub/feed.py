@@ -22,6 +22,7 @@ parsed out of an IRI.
 """
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 
@@ -574,10 +575,57 @@ class FeedResult:
     proposed: int
 
 
-def ground_document(graph, contract, proposer, terms, shapes, g) -> FeedResult:
+_GROUND_SHAPES = None
+_GROUND_ONT = None
+
+# The grounding membrane's shape set (spec 2026-08-10 §5.4). `iladub:GroundedNodeShape` is the
+# differentiator itself — "every grounded node must be produced by a promotion decision" — and
+# `dec-shapes.ttl` is what makes that decision accountable rather than a bare link. The
+# ontology carries `iladub:PromotionDecision rdfs:subClassOf dec:DecisionHolon`, without which
+# the dec shapes target nothing.
+_GROUND_SHAPE_FILES = ("iladub-shapes.ttl", "dec-shapes.ttl")
+_GROUND_ONT_FILES = ("iladub.ttl", "dec.ttl")
+
+
+def _build_ground_membrane():
+    global _GROUND_SHAPES, _GROUND_ONT
+    from rdflib import Graph
+    from .etkl.compile import _repo_vocab       # the walk-up locator, not a relative path
+
+    v = _repo_vocab()
+    s = Graph()
+    for f in _GROUND_SHAPE_FILES:
+        s.parse(os.path.join(v, "shapes", f), format="turtle")
+    o = Graph()
+    for f in _GROUND_ONT_FILES:
+        o.parse(os.path.join(v, "ontology", f), format="turtle")
+    _GROUND_SHAPES, _GROUND_ONT = s, o
+
+
+def _validate_grounding(g) -> tuple[bool, str]:
+    if _GROUND_SHAPES is None:
+        _build_ground_membrane()
+    from .etkl import compile as _compile
+    from .etkl import membrane
+    # The engine pin is read from `compile` at call time rather than restated here: it encodes
+    # ONE measured incapacity (rudof raises on an sh:sparql constraint with a blank-node focus,
+    # see membrane.validate), and two copies of it could drift apart. This membrane needs it
+    # even more than the compile one — `ground._emit_grounded` mints BOTH the candidate and the
+    # decision as blank nodes (ground.py:90,145), so EVERY promotion here is a blank-node focus.
+    return membrane.validate(g, _GROUND_SHAPES, _GROUND_ONT, engine=_compile._DEC_ENGINE)
+
+
+def ground_document(graph, contract, proposer, terms, shapes, g,
+                    validate_shapes: bool = False) -> FeedResult:
     """Ground a compiled document's record tables against a contract: one subject per row, each
     cell grounded via the shipped ground_concept oracle (unchanged). Populates `g` with grounded
-    nodes + promotion decisions + propositions; returns the grounded/proposed tally."""
+    nodes + promotion decisions + propositions; returns the grounded/proposed tally.
+
+    `validate_shapes=True` puts `g` through the grounding membrane before returning, raising
+    `AssertionError` with the report rather than handing back a graph that violates the
+    promotion invariant. It defaults to False so every existing positional call site is
+    unchanged; the corpus battery and the contracted paths pass it explicitly.
+    """
     from .ground import ground_concept
 
     records = table_records(graph)
@@ -590,4 +638,7 @@ def ground_document(graph, contract, proposer, terms, shapes, g) -> FeedResult:
                 grounded += 1
             else:
                 proposed += 1
+    if validate_shapes:
+        conforms, report = _validate_grounding(g)
+        assert conforms, f"grounded graph violates the promotion membrane:\n{report}"
     return FeedResult(len(records), grounded, proposed)

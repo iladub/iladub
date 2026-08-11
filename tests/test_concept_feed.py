@@ -321,3 +321,52 @@ def test_pattern_enum_columns_ground_end_to_end():
     # row 2 quarantined: non-matching value / non-member -> no property emitted
     assert Literal("big") not in set(g.objects(None, TX.sizeMetric))
     assert Literal("unknown") not in set(g.objects(None, TX.serology))
+
+
+# --- The grounding membrane (R82 / spec 2026-08-10 §5.4) ----------------------------------
+#
+# WHY THE GATE EXISTS AT ALL: every COMPILED graph has grounded=0, promotions=0 —
+# iladub:GroundedNode and iladub:PromotionDecision are minted by ground.py/splitkey.py, never
+# by compile. So `iladub:GroundedNodeShape` — the shape that IS iladub's differentiator, "every
+# grounded node must be produced by a promotion decision" — stays vacuous no matter what the
+# COMPILE membrane validates. This is the membrane where that sentence becomes true or stays a
+# claim.
+
+def _bare_grounded_node(g):
+    """One iladub:GroundedNode with NO iladub:wasPromotedBy — a grounded node that no promotion
+    decision produced, i.e. exactly the leak the shape exists to stop."""
+    n = URIRef("urn:test:ungrounded-assertion")
+    g.add((n, RDF.type, ILA.GroundedNode))
+    g.add((n, ILA.status, ILA.asserted))
+    g.add((n, ILA.groundsTo, URIRef("https://example.org/transplant#Category")))
+    return g
+
+
+def test_grounding_membrane_refuses_a_node_no_promotion_produced():
+    graph = _compiled_offer_graph()
+    c, terms, shapes, proposer = _offer_deps()
+    g = _bare_grounded_node(Graph())
+    with pytest.raises(AssertionError) as exc:
+        ground_document(graph, c, proposer, terms, shapes, g, validate_shapes=True)
+    assert "wasPromotedBy" in str(exc.value) or "promotion" in str(exc.value).lower(), exc.value
+
+
+def test_grounding_membrane_can_be_turned_off():
+    """The pair is what pins the flag: either test alone would pass with the gate hard-wired
+    on or hard-wired off."""
+    graph = _compiled_offer_graph()
+    c, terms, shapes, proposer = _offer_deps()
+    g = _bare_grounded_node(Graph())
+    res = ground_document(graph, c, proposer, terms, shapes, g, validate_shapes=False)
+    assert res.grounded == 6, "the ungated call must still do its real work"
+
+
+def test_grounding_membrane_admits_what_the_emitters_actually_produce():
+    """The positive leg. Without it, a gate that refused EVERYTHING would pass the test above
+    — and this is also the standing check that Tasks 2-5's producers really do satisfy the
+    shapes at the membrane, not merely under the oracle script."""
+    graph = _compiled_offer_graph()
+    c, terms, shapes, proposer = _offer_deps()
+    g = Graph()
+    res = ground_document(graph, c, proposer, terms, shapes, g, validate_shapes=True)
+    assert res == FeedResult(records=2, grounded=6, proposed=2)

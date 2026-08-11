@@ -160,13 +160,20 @@ def test_grounding_where_contracted(entry):
         None, "https://example.org/shipping#x", 0.1, "n/a",
         "urn:iladub:suggester/fake"))
     g = Graph()
-    result = ground_document(rep.graph, contract, abstain, terms, shapes, g)
+    # validate_shapes=True IS the promotion-invariant check. The hand-rolled Python loop that
+    # used to stand here — `for n in grounded: assert len(list(g.objects(n,
+    # ILADUB.wasPromotedBy))) == 1` — was a re-implementation of iladub:GroundedNodeShape
+    # (vocab/shapes/iladub-shapes.ttl:37-44). Under CLAUDE.md §8 the shape is the decision and
+    # the Python restating it is the defect, so the membrane verdict replaces it: the shape
+    # also checks groundsTo and status, which the loop never did.
+    result = ground_document(rep.graph, contract, abstain, terms, shapes, g,
+                             validate_shapes=True)
     grounded = list(g.subjects(RDF.type, ILADUB.GroundedNode))
     print(f"\n{entry['file']}: records={result.records} grounded={len(grounded)} "
           f"still-quarantined={result.proposed}")
+    # A DIFFERENT claim, and it stays: non-vacuity. A membrane cannot tell you the document
+    # grounded anything at all — an empty graph conforms.
     assert grounded, "a contracted document must ground SOMETHING"
-    for n in grounded:
-        assert len(list(g.objects(n, ILADUB.wasPromotedBy))) == 1
 
 
 def test_corpus_coverage_report():
