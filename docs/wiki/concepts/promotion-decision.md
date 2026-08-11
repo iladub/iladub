@@ -5,10 +5,13 @@ sources:
   - vocab/ontology/iladub.ttl
   - vocab/ontology/dec.ttl
   - vocab/shapes/iladub-shapes.ttl
+  - src/iladub/etkl/compile.py
+  - src/iladub/feed.py
+  - docs/superpowers/specs/2026-08-10-the-decision-membrane-design.md
   - docs/superpowers/specs/2026-07-19-knowledge-first-grounding-design.md
 related: ["[[assert-propose-promote]]", "[[decision-holon]]"]
 confidence: high
-updated: 2026-08-01
+updated: 2026-08-11
 promoted_to: docs/assertion-proposition.md
 ---
 
@@ -46,8 +49,31 @@ This makes promotion *stronger* than a bare confidence threshold: CLAUDE.md's
 holonic-interaction-model section frames the comparison explicitly — HGA's
 grounding lifecycle routes low-confidence content to a `CandidateStatus` but
 does not require an accountable decision to leave it, whereas iladub's SHACL
-membrane hard-fails any grounded node lacking `wasPromotedBy`. The same
-shape shows up one layer up, in prose: this wiki's own `promoted_to`
+membrane hard-fails any grounded node lacking `wasPromotedBy`.
+
+**Where that enforcement actually happens** — and this sentence is the lesson,
+not a footnote. When the paragraph above was first written it was *false for
+every real document*: `iladub-shapes.ttl` was in no membrane, so nothing
+checked it outside unit tests against synthetic graphs. It became true on
+2026-08-10 (loop `loop-decision-membrane`), at two named call sites:
+
+- `src/iladub/etkl/compile.py`'s `_validate` — the compile membrane, which now
+  carries `dec-shapes.ttl` + `iladub-shapes.ttl` beside the tab shapes.
+- `src/iladub/feed.py`'s `ground_document(..., validate_shapes=True)` — the
+  grounding membrane, and **the one that matters for this claim**: a compiled
+  graph has zero `iladub:GroundedNode`, so `GroundedNodeShape` is vacuous there
+  no matter what the compile membrane validates. The nodes exist only after
+  grounding.
+
+Falsified on real evidence, not fixtures: remove one `iladub:wasPromotedBy`
+from cbh-stem's 134 grounded nodes and the membrane flips to non-conforming,
+reporting *"INVARIANT: every grounded node must be produced by a promotion
+decision."*
+
+**A claim about enforcement that does not name its call site is how this one
+survived.** Prefer "enforced at `<file>`'s `<function>`" to "enforced by SHACL."
+
+The same shape shows up one layer up, in prose: this wiki's own `promoted_to`
 frontmatter field is the documentation-governance analogue of `iladub:wasPromotedBy`
 — a wiki proposition becomes site assertion only when a release records the
 promotion, never silently.

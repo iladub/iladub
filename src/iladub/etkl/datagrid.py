@@ -614,7 +614,7 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
     this" half of the record, as triples.
     """
     from rdflib import Literal, URIRef
-    from rdflib.namespace import RDF, XSD
+    from rdflib.namespace import RDF, RDFS, XSD
 
     grid_uri = grid_uri or URIRef(f"{doc_uri}#p{page}-datagrid")
     dec_uri = URIRef(f"{grid_uri}-admission")
@@ -682,9 +682,38 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
             g.add((e_uri, TAB.hasBBox, b))
 
     # the admission record: conformance on one side, every refusal on the other
+    #
+    # R81, all three faces. §8 classification: PROCEDURAL engine glue — the class
+    # `decisionlog` carries verbatim and this inherits on the same grounds. It records, in
+    # RDF, a decision the surrounding code has ALREADY made (this grid, over these rows, on
+    # this page); it decides nothing, invents no option the code could not have taken, and
+    # carries no constant, tolerance or threshold. MEASURED before-state:
+    # docs/loops/2026-08-10-decision-membrane-baseline.md — `<ons>/p7#p7-datagrid-admission`
+    # and `…p8…` were the ONLY corpus focus nodes `dec-shapes.ttl` refused at compile scope,
+    # both on `dec:decidedBy` minCount, under BOTH closures.
+    from .decisionlog import _READER_AGENT
     g.add((dec_uri, RDF.type, DEC.DecisionHolon))
     g.add((dec_uri, DEC.chosen, grid_uri))
     g.add((dec_uri, DEC.optionSpace, grid_uri))
+    # (a') THE AGENT. Not a new actor: the pass that admits the grid is a pass of the same
+    # automated reader that decided every band verdict this admission supersedes
+    # (document.py:1478-1494), so a distinct agent IRI would MISSTATE who decided. Emitted
+    # here rather than only in the document driver so that EVERY path minting an admission
+    # holon carries it — the corpus refusal is on the `datagrid_fallback` path, which the
+    # driver never touches. The type triple is `ReadingRecorder`'s own (decisionlog.py:86),
+    # re-asserted so the attribution resolves even in the graph `compile.py:979` rebuilds
+    # from empty; set semantics make it a no-op wherever the recorder already ran.
+    g.add((dec_uri, DEC.decidedBy, _READER_AGENT))
+    g.add((_READER_AGENT, RDF.type, PROV.SoftwareAgent))
+    # (b) WHAT WAS CHOSEN, readable. `vocab/queries/effective-chain.rq` binds the effective
+    # reading through `?d dec:chosen/rdfs:label ?chosen`, and document.py:1473-1476 records
+    # the consequence as a known gap owned by this function: without a label the consumer
+    # learns that something replaced the superseded band, but not what. The label states what
+    # the grid IS — its type, its page and its shape — so it moves with the grid; a constant
+    # would bind `?chosen` and say just as little.
+    g.add((grid_uri, RDFS.label, Literal(
+        f"{grid.grid_type} on page {page}: {len(grid.rows)} rows x "
+        f"{len(grid.columns)} columns")))
     g.add((grid_uri, TAB.admittedBy, dec_uri))
     for axiom in grid.conforms:
         g.add((grid_uri, TAB.conformsTo, TAB[axiom]))
@@ -697,6 +726,27 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         g.add((o_uri, DEC.rejectedBecause, Literal(reason)))
         g.add((o_uri, PROV.wasDerivedFrom,
                URIRef(f"{doc_uri}#p{page}-line{line_idx}")))
+    # (c) THE NO-CHANGE OPTION, UNCONDITIONALLY. Refusing the page was available whatever
+    # the grid found, so it belongs in the space whether or not any row was refused —
+    # emitting it only when `grid.refusals` is empty would make the option space a function
+    # of the outcome, which is backwards. It is the branch the caller genuinely could have
+    # taken: `compile.py:878` and `:949` both admit the grid only `if _grid is not None and
+    # _grid.rows`, and the page falls through unread otherwise.
+    #
+    # Its rejection reason is the ink that refusal would have discarded, in the SAME unit the
+    # page ledger books it in (`compile.py:885`, `sum(len(_lines[i].words) for i in
+    # _grid.rows)`) — so the option and the score can be read against each other. Counts of
+    # what was read, not a threshold.
+    read_tokens = sum(len(lines[i].words) for i in grid.rows)
+    page_tokens = sum(len(ln.words) for ln in lines)
+    no_change = URIRef(f"{grid_uri}-refuse-page")
+    g.add((no_change, RDF.type, DEC.Option))
+    g.add((no_change, RDFS.label, Literal(f"refuse page {page}")))
+    g.add((dec_uri, DEC.optionSpace, no_change))
+    g.add((no_change, DEC.rejectedBecause, Literal(
+        f"refusing the page would have discarded the {read_tokens} of {page_tokens} tokens "
+        f"the grid read, on {len(grid.rows)} of its {len(lines)} lines")))
+    g.add((no_change, PROV.wasDerivedFrom, doc_uri))
     return grid_uri
 
 

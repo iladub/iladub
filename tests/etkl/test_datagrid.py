@@ -576,12 +576,18 @@ def test_emitted_grid_answers_why_from_the_graph_alone():
         "SELECT ?a WHERE { ?grid <https://w3id.org/iladub/tab#conformsTo> ?a }")}
     assert "ColumnHomogeneity" in conformed and "RowAddressability" in conformed
 
+    # `?o a tab:RefusedRow` is load-bearing, not decoration (R81 face (c)): the option space
+    # also carries the no-change option — "refuse the page", which was available whatever the
+    # grid found and is rejected for reading ink, not for being an unreadable line. Counting
+    # every rejected OPTION would count it as a refused LINE, which is not what this
+    # assertion claims. The sibling test below binds the same type for the same reason.
     refused = [str(r[0]) for r in g.query("""
         SELECT ?why WHERE {
           ?d a <https://w3id.org/iladub/dec#DecisionHolon> ;
              <https://w3id.org/iladub/dec#chosen> ?grid ;
              <https://w3id.org/iladub/dec#optionSpace> ?o .
-          ?o <https://w3id.org/iladub/dec#rejectedBecause> ?why }""")]
+          ?o a <https://w3id.org/iladub/tab#RefusedRow> ;
+             <https://w3id.org/iladub/dec#rejectedBecause> ?why }""")]
     assert len(refused) == len(APPLE_P0_METADATA), (
         f"every refused line must be carried: {len(refused)} vs {len(APPLE_P0_METADATA)}")
 
@@ -698,6 +704,160 @@ def test_emitted_graph_crosses_the_membrane(path, page):
     ont = Graph().parse(os.path.join(vocab, "ontology", "tab.ttl"), format="turtle")
     ok, report = membrane.validate(g, shapes, ont)
     assert ok, report[:2000]
+
+
+# --- the admission holon is a real decision (R81) ---------------------------------
+#
+# The oracle here is `vocab/shapes/dec-shapes.ttl`, which this loop may not edit: it was
+# authored by a different act than the emitter it judges, and that is the only reason its
+# verdict means anything. Measured before-state (docs/loops/2026-08-10-decision-membrane-
+# baseline.md): `<ons>/p7#p7-datagrid-admission` and `…p8…` refuse `dec:decidedBy` under
+# BOTH closures — the only corpus refusal `dec-shapes.ttl` produced at compile scope.
+
+VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "vocab")
+
+
+def _synthetic_grid(n_rows, n_cols, refused=0):
+    """A grid built by hand — because the refusal-FREE case cannot come off the corpus.
+
+    `derive_data_grid` records a refusal for every page line it did not admit
+    (datagrid.py:582-583), so every derived grid refuses something and R81(c) — the
+    unconditional no-change option — stays invisible on real documents. The spec records it
+    as unobserved for exactly this reason; this fixture is its only evidence."""
+    cols = tuple(GridColumn(10.0 + 40 * k, 50.0 + 40 * k, "Numeric") for k in range(n_cols))
+    lines = [_line(*[(f"r{r}c{k}", 15.0 + 40 * k, 45.0 + 40 * k, 100.0 + 20 * r)
+                     for k in range(n_cols)])
+             for r in range(n_rows + refused)]
+    grid = DataGrid(rows=tuple(range(n_rows)), columns=cols, universe="alignment",
+                    conforms=("ColumnHomogeneity", "RowAddressability"),
+                    refusals={n_rows + i: "unplaceable" for i in range(refused)})
+    return grid, lines
+
+
+def _emit_synthetic(n_rows, n_cols, refused=0, page=0):
+    """(graph, grid_uri, admission_uri) for a synthetic grid."""
+    from rdflib import Graph, URIRef
+    from iladub.etkl.datagrid import emit_data_grid
+
+    grid, lines = _synthetic_grid(n_rows, n_cols, refused)
+    g = Graph()
+    uri = emit_data_grid(g, grid, lines, URIRef("urn:test:doc"), page)
+    return g, uri, URIRef(f"{uri}-admission")
+
+
+def _dec_membrane(g):
+    """(conforms, text) against the SHIPPED closure — `membrane._validate_pyshacl` exactly."""
+    from rdflib import Graph
+    from pyshacl import validate
+    from iladub.etkl import membrane
+
+    ont = Graph()
+    for f in ("dec.ttl", "iladub.ttl", "etkl.ttl", "tab.ttl"):
+        ont.parse(os.path.join(VOCAB, "ontology", f), format="turtle")
+    shapes = Graph().parse(os.path.join(VOCAB, "shapes", "dec-shapes.ttl"), format="turtle")
+    conforms, _, text = validate(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+                                 inference="none", advanced=True)
+    return bool(conforms), text
+
+
+@pytest.mark.parametrize("refused,case", [(0, "refusal-free"), (2, "refusing")])
+def test_the_admission_holon_is_a_real_decision(refused, case):
+    """R81 (a′) and (c). Every admission holon — from EVERY path that mints one — must be a
+    decision `dec:DecisionHolonShape` recognises: >= 2 deliberated options, exactly one
+    chosen and in the space, and an accountable agent.
+
+    The two cases are not redundant. A grid that refused rows already clears `minCount 2` on
+    its refused rows alone; only the refusal-free grid can show that the no-change option is
+    emitted UNCONDITIONALLY rather than as a function of the outcome."""
+    from rdflib import Namespace
+    from iladub.etkl.decisionlog import _READER_AGENT
+    DEC = Namespace("https://w3id.org/iladub/dec#")
+
+    g, uri, dec_uri = _emit_synthetic(3, 2, refused=refused)
+
+    conforms, text = _dec_membrane(g)
+    assert conforms, f"[{case}] {text}"
+
+    options = list(g.objects(dec_uri, DEC.optionSpace))
+    assert len(options) >= 2, f"[{case}] a real decision deliberates >= 2 options: {options}"
+    assert list(g.objects(dec_uri, DEC.chosen)) == [uri], f"[{case}] chosen is the grid"
+    assert uri in options, f"[{case}] the chosen option must be in the option space"
+    assert list(g.objects(dec_uri, DEC.decidedBy)) == [_READER_AGENT], (
+        f"[{case}] the admission names the same automated reader that decided every verdict "
+        f"it supersedes")
+
+
+def test_the_no_change_option_names_the_ink_the_grid_read():
+    """R81 (c), the anti-decoration half. "Refuse the page" was available whatever the grid
+    found, so it belongs in the space in both cases — but an option whose
+    `dec:rejectedBecause` says the same thing every time is decoration, not deliberation
+    (Global Constraint 4). The oracle: two grids that read DIFFERENT amounts of ink must
+    reject it for different reasons."""
+    from rdflib import Namespace
+    DEC = Namespace("https://w3id.org/iladub/dec#")
+
+    def _no_change(n_rows, n_cols, refused):
+        g, uri, dec_uri = _emit_synthetic(n_rows, n_cols, refused=refused)
+        opts = [o for o in g.objects(dec_uri, DEC.optionSpace)
+                if o != uri and not str(o).startswith(f"{uri}-refused")]
+        assert len(opts) == 1, f"exactly one no-change option, got {opts}"
+        why = list(g.objects(opts[0], DEC.rejectedBecause))
+        assert len(why) == 1, f"the no-change option must say why it was rejected: {why}"
+        return str(why[0])
+
+    small = _no_change(2, 2, 0)          # 2 rows x 2 columns admitted
+    large = _no_change(5, 3, 1)          # 5 rows x 3 columns admitted
+    assert small != large, (
+        f"the no-change option says the same thing whatever the grid read: {small!r}")
+
+
+def test_the_grid_label_states_what_the_grid_is():
+    """R81 (b). `effective-chain.rq` reads `?d dec:chosen/rdfs:label ?chosen`, so an
+    unlabelled grid leaves a consumer knowing that something replaced the superseded band
+    but not what. A CONSTANT label binds `?chosen` and tells them just as little — so the
+    oracle is that the label MOVES with what the grid is: its shape and its page."""
+    from rdflib.namespace import RDFS
+
+    def _label(n_rows, n_cols, page):
+        g, uri, _ = _emit_synthetic(n_rows, n_cols, page=page)
+        lab = g.value(uri, RDFS.label)
+        assert lab is not None, "the grid carries no rdfs:label"
+        return str(lab)
+
+    base = _label(3, 2, 0)
+    other_shape = _label(2, 3, 0)
+    other_page = _label(3, 2, 4)
+    assert len({base, other_shape, other_page}) == 3, (
+        f"the label does not state both shape and page: {base!r} / {other_shape!r} / "
+        f"{other_page!r}")
+
+
+def test_effective_chain_binds_chosen_for_the_admission_verdict():
+    """The gap `document.py:1473-1476` names and hands over: "the query's `?chosen` is
+    UNBOUND on the row this record produces, because `emit_data_grid`'s dec:chosen names the
+    grid itself and the grid carries no rdfs:label … it belongs with whoever owns
+    emit_data_grid."
+
+    The four triples added below are the DRIVER's (document.py:1497-1503), reproduced so the
+    query's precondition holds off-corpus; this test owns none of them. The only thing under
+    test is the label on the grid."""
+    from rdflib import Literal, Namespace
+    from rdflib.namespace import RDFS, XSD
+    DEC = Namespace("https://w3id.org/iladub/dec#")
+
+    g, uri, admission = _emit_synthetic(3, 2)
+    g.add((admission, DEC.regarding, uri))
+    g.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
+    g.add((admission, RDFS.label, Literal("verdict")))
+    g.add((admission, DEC.rationale, Literal("the data grid's reading was adopted")))
+
+    q = open(os.path.join(VOCAB, "queries", "effective-chain.rq"), encoding="utf-8").read()
+    rows = [r.asdict() for r in g.query(q, initBindings={"region": uri})]
+    assert rows, "effective-chain.rq returned nothing for the admission verdict"
+    assert all(r.get("chosen") is not None for r in rows), (
+        f"?chosen is UNBOUND — the consumer learns that something replaced the band, not "
+        f"what: {rows}")
+    assert str(rows[0]["chosen"]) == str(g.value(uri, RDFS.label))
 
 
 # --- wiring: the fallback, and what it must NOT touch -----------------------------

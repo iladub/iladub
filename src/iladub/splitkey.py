@@ -138,11 +138,47 @@ def _emit_candidate(g, name, markers, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _emit_assertion(g, name, markers, grounds_to, suggester_iri, confidence, rationale, anchor_iri):
+def _deliberate(g, pd, chosen_label, alternatives):
+    """Record the option space of a naming promotion: `chosen_label`, plus every
+    `alternatives` entry (label -> why it lost). Emits `dec:optionSpace` per option,
+    `dec:chosen` on one and `dec:rejectedBecause` on the rest, satisfying
+    `dec:DecisionHolonShape` (spec 2026-08-10 §5.3).
+
+    §8: PROCEDURAL — it records a decision `resolve_split_key_name` has ALREADY made; it
+    decides nothing, ranks nothing and carries no constant. THE OPTIONS ARE NOT INVENTED
+    (Global Constraint 3): each arm passes the branches its OWN code enumerates — arm 1's
+    quarantine-as-`explicit-unverified` (the `if field is not None` it just took), arm 2's
+    abstention to arm 3 when `len(admitting) != 1`, and arm 3's `admitting` list itself,
+    which the NEURAL step only narrows.
+
+    Option nodes are BNodes, following `ground._emit_grounded` rather than
+    `promote._deliberate`: `pd`, `cand` and `gn` are all BNodes here, so a URIRef option
+    would be the only named node in an otherwise anonymous record, with no stable identity
+    to mint it from. The convention travels; the node type follows its decision.
+    """
+    chosen = BNode()
+    g.add((chosen, RDF.type, DEC.Option))
+    g.add((chosen, RDFS.label, Literal(chosen_label)))
+    g.add((pd, DEC.optionSpace, chosen))
+    g.add((pd, DEC.chosen, chosen))
+    for label, why in alternatives:
+        o = BNode()
+        g.add((o, RDF.type, DEC.Option))
+        g.add((o, RDFS.label, Literal(label)))
+        g.add((o, DEC.rejectedBecause, Literal(why)))
+        g.add((pd, DEC.optionSpace, o))
+
+
+def _emit_assertion(g, name, markers, grounds_to, suggester_iri, confidence, rationale,
+                    anchor_iri, chosen_label, alternatives):
     """Mints exactly one CandidateConcept + one PromotionDecision + one GroundedNode —
     the same shape ground.py's `ground_concept` uses for a value, applied here to a
     dimension NAME. Every call site is an assertion; the invariant "every grounded node
-    has exactly one wasPromotedBy" holds by construction (one pd, one gn, always paired)."""
+    has exactly one wasPromotedBy" holds by construction (one pd, one gn, always paired).
+
+    `chosen_label` + `alternatives` are the DELIBERATION the arm performed: a promotion
+    that cannot name what it weighed is not an accountable decision, and
+    `dec:DecisionHolonShape` refuses it."""
     cand, agent = _emit_candidate(g, name, markers, anchor_iri, suggester_iri, confidence)
     pd = BNode()
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
@@ -151,6 +187,7 @@ def _emit_assertion(g, name, markers, grounds_to, suggester_iri, confidence, rat
     g.add((pd, DEC.consideredEvidence, cand))
     g.add((pd, DEC.confidence, Literal(Decimal(str(round(confidence, 6))))))
     g.add((pd, DEC.rationale, Literal(rationale)))
+    _deliberate(g, pd, chosen_label, alternatives)
     gn = BNode()
     g.add((gn, RDF.type, ILADUB.GroundedNode))
     g.add((gn, ILADUB.wasPromotedBy, pd))
@@ -176,7 +213,15 @@ def resolve_split_key_name(markers, contract: Contract, terms: Graph, proposer, 
                 "Explicit '%s: <value>' marker form, shared by every marker, recovers the "
                 "dimension name directly from the source document AND matches contract "
                 "field '%s' (no scheme lookup needed)." % (explicit, _field_local_name(field)),
-                _GIST_CATEGORY)
+                _GIST_CATEGORY,
+                "name the split key '%s', grounded to contract field '%s'"
+                % (explicit, _field_local_name(field)),
+                [("quarantine '%s' as an unverified proposition" % explicit,
+                  "the explicit marker form is real source evidence AND `exact_field` matched "
+                  "contract field '%s'; quarantine is the branch this same arm takes when the "
+                  "recovered key matches NO contract field, since asserting it would fabricate "
+                  "a groundsTo target the membrane cannot verify"
+                  % _field_local_name(field))])
             return KeyNameResolution("asserted", explicit, "explicit-naming", None, field, gn)
         # §3: the explicit form IS real §0 evidence (recovered exactly from the source),
         # but it names NO contract field — nothing to ground it against. Assert only what
@@ -197,7 +242,12 @@ def resolve_split_key_name(markers, contract: Contract, terms: Graph, proposer, 
             "Contract field '%s' is the UNIQUE field whose scheme (%s) admits every "
             "marker %r (whole-set membership; ambiguity score = 1)."
             % (name, field.scheme, markers),
-            _GIST_CATEGORY)
+            _GIST_CATEGORY,
+            "name the split key '%s', the unique admitting contract field" % name,
+            [("abstain to the NEURAL arm and quarantine the top proposal",
+              "exactly ONE contract field's scheme admits every marker (ambiguity score 1), so "
+              "membership decides the name outright; abstention is the branch this arm takes "
+              "when `admitting` holds 0 or >= 2 fields and nothing but a proposer can narrow it")])
         return KeyNameResolution("asserted", name, "unique-admitting-field", 1, field, gn)
 
     # --- Arm 3: NEURAL, BAML scored proposal (0 or >=2 admitting) ---
@@ -217,7 +267,28 @@ def resolve_split_key_name(markers, contract: Contract, terms: Graph, proposer, 
                     "(ambiguity score = %d; membership was decided BEFORE the proposer "
                     "spoke — the NEURAL step only narrows): %s"
                     % (name, len(admitting), score, cand.rationale),
-                    cand.anchor_iri)
+                    cand.anchor_iri,
+                    "name the split key '%s', the verified admitting field the proposer "
+                    "ranked highest (score %s)" % (name, cand.score),
+                    # THE OPTION SPACE IS `admitting` ITSELF (Global Constraint 3): every
+                    # field in it passed the whole-set membership oracle, so each is a name
+                    # this arm could have asserted. They lost to the NEURAL narrowing, not
+                    # to the membership oracle — and each says so BY NAME, so a reader can
+                    # see which verified reading was set aside.
+                    [("name the split key '%s'" % _field_local_name(other),
+                      "'%s' is a VERIFIED admitting field — its scheme (%s) admits every "
+                      "marker exactly as the chosen one does — but the proposer's ranked "
+                      "candidates named '%s' at score %s and nothing above it named '%s'; "
+                      "membership could not discriminate the two, so only the NEURAL step "
+                      "could"
+                      % (_field_local_name(other), other.scheme, name, cand.score,
+                         _field_local_name(other)))
+                     for other in admitting if other is not field]
+                    + [("quarantine the top proposal, naming nothing",
+                        "a ranked proposal DID name a verified admitting field, so refusing "
+                        "to name would discard a reading both the membership oracle and the "
+                        "proposer admit; quarantine is the branch taken when no candidate "
+                        "names any verified field")])
                 return KeyNameResolution("asserted", name, "proposer-pick-among-verified",
                                          score, field, gn)
         # no proposed candidate names any verified field -> honest refusal (never fabricate

@@ -41,7 +41,8 @@ def engine_name() -> str:
     return "rudof" if rudof_available() else "pyshacl"
 
 
-def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[bool, str]:
+def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph,
+             engine: str | None = None) -> tuple[bool, str]:
     """(conforms, report_text) for `data_graph` against `shapes_graph`.
 
     Both engines now validate the SAME subclass-only-closed graph (spec
@@ -51,8 +52,35 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph) -> tuple[
     than also swapping the inference semantics underneath it. SHACL advanced features on.
     Callers must not depend on the report's exact wording — it differs by engine; only its
     content (shape names, focus nodes) is stable.
+
+    `engine` is a CAPABILITY PIN, not a preference, and it is the one thing that outranks
+    `ILADUB_MEMBRANE`. MEASURED 2026-08-10: rudof cannot evaluate an `sh:sparql` constraint
+    whose focus node is a blank node — it binds `$this` through `VALUES $this { _:b… }`,
+    which is illegal SPARQL, and raises `ValueError: … expected UNDEF` instead of returning
+    a verdict. Core constraints are unaffected on blank nodes; both
+    `ShaclValidationMode.Native` and `.Sparql` raise it. `dec-shapes.ttl:23` and
+    `iladub-shapes.ttl:67` are exactly such constraints, and the promotion emitters mint
+    blank-node subjects (`ground.py:90,145`, `promote.py:67,114,158`, `splitkey.py:125`), so
+    a caller validating those shapes MUST pin pySHACL or the membrane throws.
+
+    The env var still selects among engines that CAN evaluate a shape set; it cannot conjure
+    a capability rudof lacks. Forcing `rudof` at a pinned call therefore RAISES rather than
+    quietly running pySHACL — an operator who thinks they forced the new engine must never
+    be handed the old one's verdict unannounced (the same rule `engine_name` already keeps).
     """
-    if engine_name() == "rudof":
+    if engine is None:
+        engine = engine_name()
+    else:
+        if engine not in ("pyshacl", "rudof"):
+            raise ValueError(
+                f"engine={engine!r} is not a known engine (expected 'pyshacl' or 'rudof')")
+        forced = os.environ.get("ILADUB_MEMBRANE")
+        if forced and forced != engine:
+            raise ValueError(
+                f"ILADUB_MEMBRANE={forced!r} conflicts with a capability pin of {engine!r} on "
+                f"this shape set. The pin is not a preference: see this function's docstring "
+                f"for the measured incapacity it works around.")
+    if engine == "rudof":
         return _validate_rudof(data_graph, shapes_graph, ont_graph)
     return _validate_pyshacl(data_graph, shapes_graph, ont_graph)
 

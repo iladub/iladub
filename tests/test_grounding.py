@@ -177,3 +177,127 @@ def test_neg_wrong_mapping_asserted_fails_contract():
     contract_know = Graph().parse(CONTRACT, format="turtle"); contract_know += _terms()
     r = validate(g, _shapes(), contract_know)
     assert not r.conforms
+
+
+# --- the promotion decision deliberates (spec 2026-08-10 §5.3) ---------------------
+#
+# MEASURED before-state (docs/loops/2026-08-10-decision-membrane-baseline.md): every
+# iladub:PromotionDecision iladub has ever produced on a real document fails
+# dec:DecisionHolonShape — graincorp-stem 585, cbh-stem 134, all refusing BOTH
+# dec:optionSpace (minCount 2) and dec:chosen (minCount 1), under both closures.
+# The oracle is vocab/shapes/dec-shapes.ttl, which this loop may not edit.
+
+DECNS = Namespace("https://w3id.org/iladub/dec#")
+
+
+def _dec_conforms(g):
+    """(conforms, text) against the SHIPPED closure — membrane._validate_pyshacl exactly."""
+    from pyshacl import validate as _v
+    from iladub.etkl import membrane
+    ont = Graph()
+    for f in ("dec.ttl", "iladub.ttl", "etkl.ttl", "tab.ttl"):
+        ont.parse(f"vocab/ontology/{f}", format="turtle")
+    shapes = Graph().parse("vocab/shapes/dec-shapes.ttl", format="turtle")
+    conforms, _, text = _v(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+                           inference="none", advanced=True)
+    return bool(conforms), text
+
+
+def _ground_via_scheme():
+    """Oracle 1: SKOS scheme membership (aboGroup is scheme-bound)."""
+    c = load_contract(CONTRACT); g = Graph()
+    out = ground_concept(SurfaceConcept("ABO group", "A", "r1"), c, OFFER,
+                         _noop_proposer(), _terms(), _shapes(), g)
+    return out, g
+
+
+def _ground_via_value_membrane():
+    """Oracle 2: the SHACL value membrane (EF is proposed, not exact, and constrained)."""
+    from iladub.propose_ground import GroundingProposal, FakeGroundingProposer
+    c = load_contract(CONTRACT)
+    ef = next(f for f in c.fields if f.fills_property.endswith("ejectionFraction"))
+    p = FakeGroundingProposer(GroundingProposal(ef.iri, str(TX) + "Magnitude", 0.9,
+                                                "cardiac EF", "urn:iladub:suggester/fake"))
+    g = Graph()
+    out = ground_concept(SurfaceConcept("EF", "55", "r2"), c, OFFER, p, _terms(), _shapes(), g)
+    return out, g
+
+
+def _ground_via_field_identity():
+    """Oracle 3: field identity (causeOfDeath declares no value constraint at all)."""
+    c = load_contract(CONTRACT); g = Graph()
+    out = ground_concept(SurfaceConcept("causeOfDeath", "anoxia", "r0"), c, OFFER,
+                         _noop_proposer(), _terms(), _shapes(), g)
+    return out, g
+
+
+def _the_decision(g):
+    pds = list(g.subjects(RDF.type, ILA.PromotionDecision))
+    assert len(pds) == 1, pds
+    return pds[0]
+
+
+def test_a_quarantined_concept_mints_no_promotion_decision():
+    """MEASURED, and it is why this module's O3 test is shaped as it is: a concept that
+    REFUSES returns "proposed" at ground.py:158/161 with no decision emitted at all, so a
+    rejected option cannot be read off a refusing concept. Corroborated by the baseline's
+    own arithmetic: cbh-stem 909 candidates = 134 grounded + 775 quarantined, with
+    PromotionDecision = 134."""
+    c = load_contract(CONTRACT); g = Graph()
+    out = ground_concept(SurfaceConcept("smoking pack-years", "20", "r4"), c, OFFER,
+                         _noop_proposer(), _terms(), _shapes(), g)
+    assert out == "proposed"
+    assert not list(g.subjects(RDF.type, ILA.PromotionDecision))
+
+
+def test_a_promotion_decision_names_the_options_it_deliberated():
+    """§5.3: the option space is READ OFF the branch ground_concept already takes — it
+    branches on `field is None` and then on `grounds_to is None`, and the two outcomes are
+    "grounded" and "proposed". Naming them invents nothing."""
+    for name, (out, g) in [("scheme", _ground_via_scheme()),
+                           ("value-membrane", _ground_via_value_membrane()),
+                           ("field-identity", _ground_via_field_identity())]:
+        assert out == "grounded", name
+        conforms, text = _dec_conforms(g)
+        assert conforms, f"[{name}] {text}"
+
+        pd = _the_decision(g)
+        options = list(g.objects(pd, DECNS.optionSpace))
+        assert len(options) >= 2, f"[{name}] a real decision deliberates >= 2 options"
+        chosen = list(g.objects(pd, DECNS.chosen))
+        assert len(chosen) == 1, f"[{name}] exactly one chosen option: {chosen}"
+        assert chosen[0] in options, f"[{name}] the chosen option must be in the space"
+        # the chosen option is the ground-to-field one: it names where the concept landed
+        from rdflib.namespace import RDFS
+        label = g.value(chosen[0], RDFS.label)
+        assert label is not None, f"[{name}] the chosen option is unlabelled"
+        target = g.value(list(g.subjects(RDF.type, ILA.GroundedNode))[0], ILA.groundsTo)
+        assert str(target) in str(label), (
+            f"[{name}] the chosen option must name the grounding target {target}: {label}")
+        # the OTHER option is the branch not taken, and it says why it lost
+        rejected = [o for o in options if o != chosen[0]]
+        assert len(rejected) == 1, f"[{name}] {rejected}"
+        assert list(g.objects(rejected[0], DECNS.rejectedBecause)), (
+            f"[{name}] the rejected option must say why")
+
+
+def test_the_rejected_option_names_the_oracle_that_actually_applied():
+    """THE O3 ANTI-DECORATION ASSERTION. A single hard-coded rejection string passes every
+    assertion above and fails this one.
+
+    NOTE ON SHAPE (a plan defect found by measurement, see the task report): the plan asked
+    for two concepts that REFUSE for different reasons. A refusing concept mints no decision
+    (pinned by test_a_quarantined_concept_mints_no_promotion_decision), so it has no options
+    to compare. The satisfiable form with the same force: three concepts that GROUND through
+    the three DIFFERENT oracles of `_grounds_to` must carry three DIFFERENT
+    dec:rejectedBecause, because the refusal path quarantine would have taken differs."""
+    reasons = {}
+    for name, (out, g) in [("scheme", _ground_via_scheme()),
+                           ("value-membrane", _ground_via_value_membrane()),
+                           ("field-identity", _ground_via_field_identity())]:
+        pd = _the_decision(g)
+        chosen = next(iter(g.objects(pd, DECNS.chosen)))
+        rejected = [o for o in g.objects(pd, DECNS.optionSpace) if o != chosen][0]
+        reasons[name] = str(next(iter(g.objects(rejected, DECNS.rejectedBecause))))
+    assert len(set(reasons.values())) == 3, (
+        f"the rejected option says the same thing whatever oracle applied: {reasons}")

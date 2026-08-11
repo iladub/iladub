@@ -309,3 +309,131 @@ def test_asserted_shapes_conform_to_epistemics_shacl():
                            )), g)
     r = validate(g, _shapes(), _knowledge())
     assert r.conforms, r.report_text
+
+
+# --- the split-key naming promotions deliberate (spec 2026-08-10 §5.3) --------------
+#
+# PREMISE TYPE: **FIXTURE**, not evidence. MEASURED: `resolve_split_key_name` has no
+# production call site (`grep -rn resolve_split_key_name src tests scripts` names only
+# tests/test_split_key_naming.py and tests/test_cbh_e2e.py), so this emitter contributes
+# ZERO to the corpus and cannot move the O1/O4 oracle. Unit tests are its only disposal.
+#
+# `_emit_assertion` is the FIFTH producer with the defect Task 4 fixed in `ground.py`: it
+# minted a dec:DecisionHolon with no dec:optionSpace and no dec:chosen, while its docstring
+# claimed "the same shape ground.py's `ground_concept` uses". The oracle is
+# vocab/shapes/dec-shapes.ttl, which this loop may not edit.
+
+from pathlib import Path
+
+from pyshacl import validate as _pyshacl_validate
+
+DEC = Namespace("https://w3id.org/iladub/dec#")
+_ONT_DIR = Path(__file__).parents[1] / "vocab" / "ontology"
+_DEC_SHAPES = Path(__file__).parents[1] / "vocab" / "shapes" / "dec-shapes.ttl"
+
+
+def _dec_conforms(g):
+    """(conforms, text) against the SHIPPED closure — membrane._validate_pyshacl exactly."""
+    from iladub.etkl import membrane
+    ont = Graph()
+    for f in ("dec.ttl", "iladub.ttl"):
+        ont.parse(str(_ONT_DIR / f), format="turtle")
+    shapes = Graph().parse(str(_DEC_SHAPES), format="turtle")
+    conforms, _, text = _pyshacl_validate(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+                                          inference="none", advanced=True)
+    return bool(conforms), text
+
+
+def _assert_deliberated(g, label):
+    """The assertions every promotion decision owes dec:DecisionHolonShape. Returns the
+    set of dec:rejectedBecause strings on the options that lost."""
+    conforms, text = _dec_conforms(g)
+    assert conforms, f"[{label}] {text}"
+    pds = _promotion_decisions(g)
+    assert len(pds) == 1, f"[{label}] expected exactly one PromotionDecision, got {pds}"
+    pd = pds[0]
+    options = list(g.objects(pd, DEC.optionSpace))
+    assert len(options) >= 2, f"[{label}] a real decision deliberates >= 2 options: {options}"
+    chosen = list(g.objects(pd, DEC.chosen))
+    assert len(chosen) == 1, f"[{label}] exactly one chosen option: {chosen}"
+    assert chosen[0] in options, f"[{label}] the chosen option must be in the option space"
+    rejected = set()
+    for o in options:
+        assert g.value(o, RDFS.label) is not None, f"[{label}] an unlabelled option: {o}"
+        if o != chosen[0]:
+            why = g.value(o, DEC.rejectedBecause)
+            assert why is not None, f"[{label}] the rejected option {o} does not say why it lost"
+            rejected.add(str(why))
+    return options, chosen[0], rejected
+
+
+def _arm1_explicit(g):
+    return resolve_split_key_name(["Port: GERALDTON", "Port: KWINANA"], _contract(), Graph(),
+                                  _RaisingProposer(), g)
+
+
+def _arm2_unique(g):
+    return resolve_split_key_name(WA_PORTS, _contract(), _terms(), _RaisingProposer(), g)
+
+
+def _arm3_pick_among_verified(g):
+    proposer = FakeSplitKeyNameProposer((
+        ScoredKeyCandidate("port", GIST_CATEGORY, 0.91, "geography vocabulary"),
+        ScoredKeyCandidate("commodity", GIST_CATEGORY, 0.40, "less likely"),
+    ))
+    return resolve_split_key_name(WA_PORTS, _contract(), _doctored_terms_two_admitting(),
+                                  proposer, g)
+
+
+def test_explicit_naming_promotion_deliberates():
+    """Arm 1. The alternative is the branch the SAME arm takes three lines down when
+    `exact_field` returns None: quarantine as `explicit-unverified`. Naming it invents
+    nothing (Global Constraint 3)."""
+    g = Graph()
+    res = _arm1_explicit(g)
+    assert res.arm == "explicit-naming", "setup: arm 1 must assert"
+    _, chosen, _ = _assert_deliberated(g, "explicit-naming")
+    assert "Port" in str(g.value(chosen, RDFS.label)), (
+        "the chosen option must name the dimension it promoted")
+
+
+def test_unique_admitting_promotion_deliberates():
+    """Arm 2. The alternative is the abstention the code itself takes when `len(admitting)`
+    is not 1 — it falls through to arm 3's quarantine."""
+    g = Graph()
+    res = _arm2_unique(g)
+    assert res.arm == "unique-admitting-field", "setup: arm 2 must assert"
+    _assert_deliberated(g, "unique-admitting-field")
+
+
+def test_proposer_pick_among_verified_deliberates_the_fields_it_did_not_pick():
+    """Arm 3. The option space is NOT invented: `admitting` is the list the code itself
+    enumerates, and the proposer picks one of its members. Every OTHER admitting field is
+    an option the code could have taken, so each must appear and say why it lost."""
+    g = Graph()
+    res = _arm3_pick_among_verified(g)
+    assert res.arm == "proposer-pick-among-verified", "setup: arm 3 must assert"
+    options, chosen, rejected = _assert_deliberated(g, "proposer-pick-among-verified")
+    labels = {str(g.value(o, RDFS.label)) for o in options}
+    assert any("commodity" in l for l in labels), (
+        f"the VERIFIED field the proposer ranked lower must be a deliberated option: {labels}")
+    assert any("commodity" in r for r in rejected), (
+        f"the losing admitting field must say why IT lost, by name: {rejected}")
+
+
+def test_the_three_arms_reject_for_three_different_reasons():
+    """THE ANTI-DECORATION ORACLE (Global Constraint 4). Three arms assert through three
+    different oracles — an explicit source form, whole-set scheme membership, and a NEURAL
+    narrowing of an already-verified set. A single hard-coded rejection string passes every
+    assertion above and fails this one."""
+    reasons = []
+    for label, arm in (("explicit-naming", _arm1_explicit),
+                       ("unique-admitting-field", _arm2_unique),
+                       ("proposer-pick-among-verified", _arm3_pick_among_verified)):
+        g = Graph()
+        arm(g)
+        _, _, rejected = _assert_deliberated(g, label)
+        reasons.append(frozenset(rejected))
+    assert len(set(reasons)) == 3, (
+        f"the three arms must not share a rejection reason — decoration, not deliberation: "
+        f"{reasons}")

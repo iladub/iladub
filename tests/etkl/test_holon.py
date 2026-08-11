@@ -2,10 +2,11 @@ import os
 import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
-from rdflib import Graph, URIRef, RDF
+from rdflib import Graph, URIRef, RDF, RDFS
 from pyshacl import validate
 from tests.etkl.fixtures import simple_table_pdf
 from iladub.etkl import extract_words, text_lines, detect_bands
+from iladub.etkl import membrane
 from iladub.etkl.regions import classify
 from iladub.etkl.holon import (assert_record_region, escalate_region,
                                TAB, ILADUB, PROV, DEC)
@@ -55,14 +56,49 @@ def test_escalate_produces_candidate():
     escalate_region(g, URIRef("urn:reg"), URIRef("urn:doc"),
                     ascii_text="Current Visit  Prior Visit",
                     reason="KIND_NOT_SUPPORTED", anchor=TAB.HierarchicalTable,
-                    confidence=0.4)
+                    confidence=0.4, page=0)
     assert (URIRef("urn:reg"), RDF.type, ILADUB.CandidateConcept) in g
     assert any(True for _ in g.triples((None, ILADUB.surfaceText, None)))
     assert any(g.triples((URIRef("urn:reg"), ILADUB.suggestedAnchor, None)))
-    from iladub.etkl.holon import DEC
-    assert any(g.triples((URIRef("urn:reg"), DEC.confidence, None)))
-    assert any(g.triples((URIRef("urn:reg"), DEC.rationale, None)))
+    # R69: the confidence and the reason ride the PROPOSITION vocabulary, never dec:.
+    assert any(g.triples((URIRef("urn:reg"), ILADUB.confidence, None)))
+    assert str(g.value(URIRef("urn:reg"), RDFS.label)) == "KIND_NOT_SUPPORTED"
+    assert any(g.triples((URIRef("urn:reg"), ILADUB.suggestedBy, None)))
     assert any(g.triples((URIRef("urn:reg"), PROV.wasDerivedFrom, None)))
+
+
+def test_escalated_candidate_conforms_to_candidate_concept_shape():
+    """R69: an escalated region is a PROPOSITION (§3), not a decision. It must satisfy
+    iladub:CandidateConceptShape, and must carry NO dec: property — dec:confidence's
+    rdfs:domain would otherwise entail it is a dec:DecisionHolon for any consumer."""
+    g = Graph()
+    doc = URIRef("https://example.org/etkl/doc")
+    cand = URIRef(f"{doc}#region0")
+    escalate_region(g, cand, doc, "a b c", "ROUND_TRIP_FAIL", TAB.HierarchicalTable, 0.3, 0)
+
+    # (a) no dec: property survives on the candidate
+    assert not [p for p in g.predicates(cand, None) if str(p).startswith(str(DEC))], \
+        "a proposition must carry no decision vocabulary"
+
+    # (b) the candidate conforms to its own shape, under the SHIPPED closure
+    ont = Graph()
+    for f in ("dec.ttl", "iladub.ttl", "etkl.ttl", "tab.ttl"):
+        ont.parse(os.path.join(ROOT, "vocab", "ontology", f), format="turtle")
+    shapes = Graph().parse(os.path.join(SH, "iladub-shapes.ttl"), format="turtle")
+    conforms, _, text = validate(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+                                 inference="none", advanced=True)
+    assert conforms, text
+
+    # (c) the reason is recoverable, and as a JOIN not a string match
+    suggester = g.value(cand, ILADUB.suggestedBy)
+    assert suggester is not None and (suggester, RDF.type, ILADUB.Suggester) in g
+    assert "round-trip" in str(suggester).lower() or "round_trip" in str(suggester).lower()
+
+    # (d) the source region is a DISTINCT node — a self-reference satisfies the shape
+    #     while asserting nothing (Global Constraint 4)
+    region = g.value(cand, ILADUB.fromRegion)
+    assert region is not None and region != cand
+    assert (region, RDF.type, ILADUB.SourceRegion) in g
 
 
 def test_header_labels_are_carried(tmp_path):
@@ -121,10 +157,14 @@ def test_straddling_cell_is_proposed_not_asserted():
         g, region, URIRef("urn:straddle-t"), URIRef("urn:doc"), page=1
     )
 
-    # the straddling data cell is proposed, not asserted
+    # the straddling data cell is proposed, not asserted — and as a PROPOSITION (R69):
+    # the reason rides rdfs:label, never dec:rationale, whose rdfs:domain would entail
+    # the candidate is a dec:DecisionHolon for any consumer.
     assert (None, RDF.type, ILADUB.CandidateConcept) in g
-    rationales = {str(o) for o in g.objects(None, DEC.rationale)}
-    assert "ROUND_TRIP_FAIL" in rationales
+    assert not list(g.objects(None, DEC.rationale)), "a proposition carries no dec: property"
+    reasons = {str(o) for s in g.subjects(RDF.type, ILADUB.CandidateConcept)
+               for o in g.objects(s, RDFS.label)}
+    assert "ROUND_TRIP_FAIL" in reasons
 
     # and it is NOT emitted as an EntryCell fact
     entry_texts = {str(o) for s in g.subjects(RDF.type, TAB.EntryCell)
@@ -208,9 +248,10 @@ def test_transposed_straddle_escalates_that_cell():
                                  URIRef("https://example.org/doc"), 0)
     # the straddling value cell is NOT asserted; it becomes a ROUND_TRIP_FAIL proposition
     assert n == 5
-    rationales = {str(o) for s in g.subjects(RDF.type, ILADUB.CandidateConcept)
-                  for o in g.objects(s, DEC.rationale)}
-    assert "ROUND_TRIP_FAIL" in rationales
+    assert not list(g.objects(None, DEC.rationale)), "a proposition carries no dec: property"
+    reasons = {str(o) for s in g.subjects(RDF.type, ILADUB.CandidateConcept)
+               for o in g.objects(s, RDFS.label)}
+    assert "ROUND_TRIP_FAIL" in reasons
 
 
 def test_row_hier_maker_builds_row_tree(tmp_path):
@@ -249,7 +290,7 @@ def test_row_hier_provenance_is_physical(tmp_path):
     from iladub.etkl import extract_words, text_lines, detect_bands
     from iladub.etkl.rowheaders import classify_row_hier
     from iladub.etkl.holon import assert_row_hier_region, TAB
-    from rdflib import Graph, URIRef, RDF
+    from rdflib import Graph, URIRef, RDF, RDFS
 
     p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
     words = extract_words(str(p))
@@ -275,7 +316,7 @@ def test_column_header_label_cell_has_provenance(tmp_path):
     from iladub.etkl import extract_words, text_lines, detect_bands
     from iladub.etkl.rowheaders import classify_row_hier
     from iladub.etkl.holon import assert_row_hier_region, TAB
-    from rdflib import Graph, URIRef, RDF
+    from rdflib import Graph, URIRef, RDF, RDFS
 
     p = tmp_path / "rg.pdf"; row_grouped_table_pdf(str(p))
     words = extract_words(str(p))
@@ -309,7 +350,7 @@ def test_matrix_maker_builds_both_axes(tmp_path):
     from iladub.etkl import extract_words, text_lines, detect_bands
     from iladub.etkl.matrix import classify_matrix
     from iladub.etkl.holon import assert_matrix_region, TAB
-    from rdflib import Graph, URIRef, RDF
+    from rdflib import Graph, URIRef, RDF, RDFS
 
     p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
     band = detect_bands(text_lines(extract_words(str(p))))[-1]
@@ -337,7 +378,7 @@ def test_matrix_provenance_is_physical(tmp_path):
     from iladub.etkl import extract_words, text_lines, detect_bands
     from iladub.etkl.matrix import classify_matrix
     from iladub.etkl.holon import assert_matrix_region, TAB
-    from rdflib import Graph, URIRef, RDF
+    from rdflib import Graph, URIRef, RDF, RDFS
 
     p = tmp_path / "ct.pdf"; crosstab_table_pdf(str(p))
     words = extract_words(str(p))
