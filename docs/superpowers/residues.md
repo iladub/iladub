@@ -137,7 +137,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R88 | open | rudof cannot evaluate an `sh:sparql` constraint whose focus node is a blank node — it RAISES instead of returning a verdict — so the decision shape… |
 | R89 | open | `BandRecorder.record`'s Python guard now duplicates two constraints the membrane enforces |
 | R90 | open | The bbox is dropped from every `ROUND_TRIP_FAIL` proposition |
-| R91 | open | `document.py:1498` and `datagrid.emit_data_grid` now both emit `dec:decidedBy` on the same admission holon |
+| R91 | closed | `document.py:1498` and `datagrid.emit_data_grid` now both emit `dec:decidedBy` on the same admission holon |
 | R92 | closed | CLOSED 2026-08-12 — the 39 float-valued `xsd:decimal` emitters are converted, and a tripwire prevents the 40th |
 | R93 | closed | CLOSED 2026-08-12 with R92 |
 | R94 | open | The two membrane legs are not fed the same artifact, so `membrane.validate`'s "the engine is the only variable" is FALSE — and the whole two-engine… |
