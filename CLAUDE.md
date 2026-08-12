@@ -374,10 +374,21 @@ falsification block is a *review failure* — not a style note.
 
 ## Deferred residues — the register
 
-Every loop that defers something records it in **`docs/superpowers/residues.md`**, which is the
-**canonical** list of open residues. Each row carries what the residue is, where it was *measured*
-(never assumed), why it was deferred, and what would close it. Loops append rows. Specs may describe
-a residue in prose, but do not rely on a spec §7 to remember it — check the register.
+Every loop that defers something records it in the **canonical** register, which is split
+three ways (2026-08-12) because it had grown to ~36.7k tokens — past the point where "check the
+register" fit inside the 40% context rule at all, so nobody did it and stale rows (R87, R88) got
+consumed as fact:
+
+- **`docs/superpowers/residues.md` — the INDEX.** One line per residue. Read this one in full
+  (~2.8k tokens); it is the only file you are expected to read entirely.
+- **`docs/superpowers/residues-open.md`** / **`residues-closed.md`** — the full rows. Open only
+  the ones the index sends you to.
+
+Each row carries what the residue is, where it was *measured* (never assumed), why it was
+deferred, and what would close it. Loops append rows. **An index line is a pointer, not the
+residue: never plan against it, quote it in a spec, or act on it without opening the full row.**
+Specs may describe a residue in prose, but do not rely on a spec §7 to remember it — check the
+register.
 
 **Count what you close, not only what you open (2026-08-12).** A register that only counts openings
 reads as pure degradation — "R92" sounds like ninety-two defects and nothing repaired, which is
