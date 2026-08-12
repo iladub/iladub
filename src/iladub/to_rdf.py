@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field as dc_field
 
+from decimal import Decimal
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, SKOS
 
@@ -76,7 +77,7 @@ def ground_typed(typed_obj, contract_graph: Graph, contract_node: URIRef,
             cand = ILADUB[f"candidate-{n}"]
             region = BNode()
             eg.propositions.add((cand, RDF.type, ILADUB.CandidateConcept))
-            eg.propositions.add((cand, ILADUB.confidence, Literal(cc.confidence, datatype=XSD.decimal)))
+            eg.propositions.add((cand, ILADUB.confidence, Literal(Decimal(str(round(cc.confidence, 6))))))
             eg.propositions.add((cand, ILADUB.fromRegion, region))
             eg.propositions.add((region, RDF.type, ILADUB.SourceRegion))
             eg.propositions.add((region, ILADUB.surfaceText, Literal(cc.source_quote)))
@@ -109,7 +110,7 @@ def to_rdf(extraction, terms: Graph, shapes: Graph | None = None) -> ExtractionG
             cand = ILADUB[f"candidate-{n}"]
             region = BNode()
             eg.propositions.add((cand, RDF.type, ILADUB.CandidateConcept))
-            eg.propositions.add((cand, ILADUB.confidence, Literal(cc.confidence, datatype=XSD.decimal)))
+            eg.propositions.add((cand, ILADUB.confidence, Literal(Decimal(str(round(cc.confidence, 6))))))
             eg.propositions.add((cand, ILADUB.fromRegion, region))
             eg.propositions.add((region, RDF.type, ILADUB.SourceRegion))
             eg.propositions.add((region, ILADUB.surfaceText, Literal(cc.source_quote)))

@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+from decimal import Decimal
 from rdflib import Graph, URIRef, RDF
 
 from .geometry import extract_words, text_lines
@@ -238,7 +239,6 @@ def _emit_unit_markers(graph, table_uri, band, boundaries):
     Unmeasured shape: no document seen so far exhibits a marker column in a transposed
     table."""
     from rdflib import Literal, RDF, URIRef
-    from rdflib.namespace import XSD
     for k, (sym, neighbor_x, regions) in enumerate(getattr(band, "unit_markers", ()) or ()):
         um = URIRef("%s-um%d" % (table_uri, k))
         graph.add((um, RDF.type, TAB.UnitMarker))
@@ -246,10 +246,10 @@ def _emit_unit_markers(graph, table_uri, band, boundaries):
         for j, (x0, top, x1, bottom) in enumerate(regions):
             bb = URIRef("%s-um%d-r%d" % (table_uri, k, j))
             graph.add((bb, RDF.type, TAB.BBox))
-            graph.add((bb, TAB.x0, Literal(float(x0), datatype=XSD.decimal)))
-            graph.add((bb, TAB.y0, Literal(float(top), datatype=XSD.decimal)))
-            graph.add((bb, TAB.x1, Literal(float(x1), datatype=XSD.decimal)))
-            graph.add((bb, TAB.y1, Literal(float(bottom), datatype=XSD.decimal)))
+            graph.add((bb, TAB.x0, Literal(Decimal(str(round(x0, 2))))))
+            graph.add((bb, TAB.y0, Literal(Decimal(str(round(top, 2))))))
+            graph.add((bb, TAB.x1, Literal(Decimal(str(round(x1, 2))))))
+            graph.add((bb, TAB.y1, Literal(Decimal(str(round(bottom, 2))))))
             graph.add((um, TAB.markerRegion, bb))
         if boundaries is None:
             graph.add((table_uri, TAB.hasUnitMarker, um))

@@ -25,10 +25,10 @@ def _bbox_node(g: Graph, cell) -> BNode:
     x0, y0, x1, y1 = cell.bbox
     n = BNode()
     g.add((n, RDF.type, TAB.BBox))
-    g.add((n, TAB.x0, Literal(round(x0, 2), datatype=XSD.decimal)))
-    g.add((n, TAB.y0, Literal(round(y0, 2), datatype=XSD.decimal)))
-    g.add((n, TAB.x1, Literal(round(x1, 2), datatype=XSD.decimal)))
-    g.add((n, TAB.y1, Literal(round(y1, 2), datatype=XSD.decimal)))
+    g.add((n, TAB.x0, Literal(Decimal(str(round(x0, 2))))))
+    g.add((n, TAB.y0, Literal(Decimal(str(round(y0, 2))))))
+    g.add((n, TAB.x1, Literal(Decimal(str(round(x1, 2))))))
+    g.add((n, TAB.y1, Literal(Decimal(str(round(y1, 2))))))
     return n
 
 
@@ -249,10 +249,10 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
             g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
-            g.add((bb, TAB.x0, Literal(round(hw.x0, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.y0, Literal(round(hw.top, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.x1, Literal(round(hw.x1, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.y1, Literal(round(hw.bottom, 2), datatype=XSD.decimal)))
+            g.add((bb, TAB.x0, Literal(Decimal(str(round(hw.x0, 2))))))
+            g.add((bb, TAB.y0, Literal(Decimal(str(round(hw.top, 2))))))
+            g.add((bb, TAB.x1, Literal(Decimal(str(round(hw.x1, 2))))))
+            g.add((bb, TAB.y1, Literal(Decimal(str(round(hw.bottom, 2))))))
             g.add((lc, TAB.hasBBox, bb))
             g.add((h, TAB.hasLabel, lc))
 
@@ -281,10 +281,10 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
         g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
         bb = BNode()
         g.add((bb, RDF.type, TAB.BBox))
-        g.add((bb, TAB.x0, Literal(round(nd.x0, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y0, Literal(round(nd.top, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.x1, Literal(round(nd.x1, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y1, Literal(round(nd.bottom, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.x0, Literal(Decimal(str(round(nd.x0, 2))))))
+        g.add((bb, TAB.y0, Literal(Decimal(str(round(nd.top, 2))))))
+        g.add((bb, TAB.x1, Literal(Decimal(str(round(nd.x1, 2))))))
+        g.add((bb, TAB.y1, Literal(Decimal(str(round(nd.bottom, 2))))))
         g.add((lc, TAB.hasBBox, bb))
         g.add((h, TAB.hasLabel, lc))
     for idx, nd in enumerate(rreg.tree):
@@ -333,10 +333,10 @@ def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
         g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
         bb = BNode()
         g.add((bb, RDF.type, TAB.BBox))
-        g.add((bb, TAB.x0, Literal(round(x0, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y0, Literal(round(top, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.x1, Literal(round(x1, 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y1, Literal(round(bottom, 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.x0, Literal(Decimal(str(round(x0, 2))))))
+        g.add((bb, TAB.y0, Literal(Decimal(str(round(top, 2))))))
+        g.add((bb, TAB.x1, Literal(Decimal(str(round(x1, 2))))))
+        g.add((bb, TAB.y1, Literal(Decimal(str(round(bottom, 2))))))
         g.add((lc, TAB.hasBBox, bb))
         return lc
 
@@ -450,7 +450,7 @@ def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str
     g.add((cand_uri, RDF.type, ILADUB.CandidateConcept))
     g.add((cand_uri, ILADUB.surfaceText, Literal(ascii_text)))
     g.add((cand_uri, ILADUB.suggestedAnchor, anchor))
-    # xsd:decimal via Decimal, NOT via a float: Literal(round(x, 2), datatype=XSD.decimal)
+    # xsd:decimal via Decimal, NOT via a float: Literal(Decimal(str(round(x, 2))))
     # builds a literal whose Python value is a float, which pySHACL reads as ill-typed
     # against sh:datatype xsd:decimal (measured 2026-08-10, loop Task 1).
     g.add((cand_uri, ILADUB.confidence, Literal(Decimal(str(round(confidence, 6))))))
@@ -566,10 +566,10 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
             g.add((e, TAB.onPage, Literal(page, datatype=XSD.integer)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
-            g.add((bb, TAB.x0, Literal(round(cell.x0, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.y0, Literal(round(cell.top, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.x1, Literal(round(cell.x1, 2), datatype=XSD.decimal)))
-            g.add((bb, TAB.y1, Literal(round(cell.bottom, 2), datatype=XSD.decimal)))
+            g.add((bb, TAB.x0, Literal(Decimal(str(round(cell.x0, 2))))))
+            g.add((bb, TAB.y0, Literal(Decimal(str(round(cell.top, 2))))))
+            g.add((bb, TAB.x1, Literal(Decimal(str(round(cell.x1, 2))))))
+            g.add((bb, TAB.y1, Literal(Decimal(str(round(cell.bottom, 2))))))
             g.add((e, TAB.hasBBox, bb))
             g.add((e, PROV.wasDerivedFrom,
                    URIRef(f"{doc_uri}#p{page}-{int(cell.x0)}-{int(cell.top)}")))

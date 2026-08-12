@@ -376,9 +376,19 @@ falsification block is a *review failure* — not a style note.
 
 Every loop that defers something records it in **`docs/superpowers/residues.md`**, which is the
 **canonical** list of open residues. Each row carries what the residue is, where it was *measured*
-(never assumed), why it was deferred, and what would close it. Loops append rows; a loop that closes
-a residue deletes its row in the same change. Specs may describe a residue in prose, but do not rely
-on a spec §7 to remember it — check the register.
+(never assumed), why it was deferred, and what would close it. Loops append rows. Specs may describe
+a residue in prose, but do not rely on a spec §7 to remember it — check the register.
+
+**Count what you close, not only what you open (2026-08-12).** A register that only counts openings
+reads as pure degradation — "R92" sounds like ninety-two defects and nothing repaired, which is
+false. So:
+
+- **Every new row records the tally at the moment it was raised**, in parentheses after its number:
+  `| R95 (14/85 closed) |`. It is a **snapshot, never updated** — read down the column and the
+  closed-fraction is a trend line. That trend, not the highest number, is the register's health.
+- **A closing change strikes the row's number (`~~R92~~`) and records the closure evidence in
+  place. It does NOT delete the row** (this reverses the earlier "deletes its row" rule): a deleted
+  row erases the proof of repair and silently shrinks the denominator.
 
 ## Documentation governance (spec 2026-07-31; lint-enforced)
 

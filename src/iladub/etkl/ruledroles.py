@@ -93,6 +93,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from decimal import Decimal
 from rdflib import BNode, Graph, Literal, Namespace, RDF, URIRef
 from rdflib.namespace import XSD
 
@@ -473,10 +474,10 @@ def emit_repeated_headers(g, table_uri, header_rows, matched, page):
         g.add((u, TAB.onPage, Literal(int(page), datatype=XSD.integer)))
         bb = BNode()
         g.add((bb, RDF.type, TAB.BBox))
-        g.add((bb, TAB.x0, Literal(round(min(c.x0 for c in row), 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y0, Literal(round(min(c.top for c in row), 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.x1, Literal(round(max(c.x1 for c in row), 2), datatype=XSD.decimal)))
-        g.add((bb, TAB.y1, Literal(round(max(c.bottom for c in row), 2), datatype=XSD.decimal)))
+        g.add((bb, TAB.x0, Literal(Decimal(str(round(min(c.x0 for c in row), 2))))))
+        g.add((bb, TAB.y0, Literal(Decimal(str(round(min(c.top for c in row), 2))))))
+        g.add((bb, TAB.x1, Literal(Decimal(str(round(max(c.x1 for c in row), 2))))))
+        g.add((bb, TAB.y1, Literal(Decimal(str(round(max(c.bottom for c in row), 2))))))
         g.add((u, TAB.hasBBox, bb))
         for s in crow.source:
             g.add((u, PROV.wasDerivedFrom, s))
