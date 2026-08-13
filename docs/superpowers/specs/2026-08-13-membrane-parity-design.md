@@ -96,6 +96,7 @@ The guard (§4) was installed over `membrane.subclass_closure` and the suites ru
 | --- | --- | --- |
 | fast suite (`-m "not corpus"`) | 1141 passed, 7 skipped, 1 xfailed, exit 0, 17:00 | **17 TYPE, 0 LEXICAL** |
 | corpus battery (`tests/test_corpus.py -m corpus`) | 10 passed, 0 skipped, 5:42 | **0 violations** |
+| **every** corpus-marked test (`tests/ -m corpus`) | 36 passed, 1149 deselected, 10:30 | **0 violations** |
 
 All 17 fast-suite hits are **test fixtures**, attributed by `PYTEST_CURRENT_TEST`:
 
@@ -121,10 +122,8 @@ story, not performance**, and the spec makes no performance claim.
 
 ### Premises deliberately NOT measured here
 
-- Whether the guard fires on the 26 corpus-marked tests **outside** `tests/test_corpus.py`
-  (`test_corpus_stem.py` and others). A run is in flight; **the plan must read its result before
-  Task 1 lands.** Blast radius if it fires: the guard ships report-only and §4's failure mode flips.
 - The IRI shape `Graph.skolemize(authority=…)` produces. *read-not-run.* Named as a seam in §6.
+- The extra parse's cost on a real 8.6k-triple page (P6). *not-measured.* Named as a seam in §7.
 
 ---
 
@@ -191,11 +190,9 @@ Two invariants, in the same place and idiom as `subclass_closure`'s existing lit
 **Failure mode: raise.** Licensed by P5 — zero `src/` emitters violate, on the corpus battery and
 the fast suite alike. It is a guard, never a repair: it must not rewrite a literal.
 
-**This decision is conditional and the implementer must confirm it, not inherit it.** P5's licence
-covers `tests/test_corpus.py` only; the 26 corpus-marked tests elsewhere were still running when
-this spec was written (§2, "premises deliberately NOT measured"). **Read that run's result before
-Task 1 lands.** If it fires on a `src/` emitter, the guard ships **report-only**, the emitter gets
-its own residue row, and §7's "no production-emitter fixes" holds — scope does not grow here.
+The licence is complete: **every** corpus-marked test in the repo (36, on real documents through
+the public `compile_document` API) ran with the guard installed and produced **zero** violations,
+alongside the 1141-test fast suite. The only hits anywhere are the two fixture files named above.
 
 Two fixture files need conversion, and they are not the same case:
 
@@ -275,8 +272,8 @@ taken against a moving target.
 rule 5):
 
 - **No SHACL shape changes.** `vocab/shapes/` is untouched.
-- **No production-emitter fixes.** P5 measured them clean; if the in-flight corpus run contradicts
-  that, a residue is raised and the emitters become their own loop.
+- **No production-emitter fixes.** P5 measured them clean across the fast suite and every
+  corpus-marked test. Only two fixture files change (§4.2), and neither is an emitter.
 - **No attempt to make the engines agree on P2's lexical-form class.** The disagreement is preserved
   deliberately. A test asserting the two engines agree on an ill-typed lexical form contradicts this
   section and must not be written.
@@ -311,8 +308,9 @@ where rudof is right. Any design premised on post-parity agreement is refuted be
 and says nothing about an 8.6k-triple page. It is flagged as insufficient in place rather than
 carried as fact.
 
-**The claim I could not measure.** Whether the guard fires on the 26 corpus-marked tests outside
-`tests/test_corpus.py`. Declared an assumption with a named blast radius (§2), not stated as fact.
+**The claim I could not measure.** The extra parse's cost on a real page, and the IRI shape
+`Graph.skolemize(authority=…)` produces. Both are declared assumptions with named blast radii
+(§2, §6, §7), never stated as fact. Everything else in §2 was run.
 
 **Where an implementer is most likely to go wrong.** Deleting leg 5's tripwire because its own
 comment says failing is good news (§6). The comment was true when written and is false after Task 2.
