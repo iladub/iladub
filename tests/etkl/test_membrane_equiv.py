@@ -359,3 +359,44 @@ def test_the_capability_pin_refuses_a_conflicting_forced_engine():
                               engine="pyshacl")
     finally:
         del os.environ["ILADUB_MEMBRANE"]
+
+
+# ---------- leg 6: the TRANSPORT does not canonicalise (spec 2026-08-13 §5, oracle 1) --------
+#
+# Parity (Task 1) makes both engines consume the SAME N-Triples document instead of two
+# different inputs — but each engine still parses that document with its OWN parser. This test
+# pins that the transport carries the lexical form as WRITTEN, so parity can never be bought by
+# canonicalising the payload (which would blind both engines to ill-typed literals alike).
+
+def test_the_transport_does_not_canonicalise_lexical_forms():
+    """THE ORACLE (spec §5). Both legs now receive the SAME N-Triples document, but each
+    parses it with its own parser — and rdflib's parser silently rewrites "5e-05" into
+    "0.00005" while rudof judges the bytes as written. rudof is spec-correct: exponential
+    notation is outside xsd:decimal's lexical space.
+
+    THIS TEST FAILING BECAUSE THE ENGINES NOW AGREE IS BAD NEWS, NOT GOOD. It means someone
+    canonicalised the payload — value-parity — buying agreement by making both engines blind
+    to ill-typed literals. That is the failure mode this loop exists to prevent.
+    """
+    from iladub.etkl import membrane
+    shapes = Graph().parse(data="""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix ex: <urn:parity:> .
+        ex:S a sh:NodeShape ; sh:targetClass ex:Box ;
+          sh:property [ sh:path ex:x0 ; sh:datatype xsd:decimal ; sh:minCount 1 ] .
+    """, format="turtle")
+    EX = Namespace("urn:parity:")
+    g = Graph()
+    g.add((EX.b1, RDF.type, EX.Box))
+    g.add((EX.b1, EX.x0, Literal(float(5e-05), datatype=XSD.decimal)))
+
+    graph_payload, nt_payload = membrane._payload(g, Graph())
+    assert '"5e-05"' in nt_payload, (
+        "the transport must carry the lexical form as written; if this fails, the payload "
+        "builder is canonicalising and the oracle below is meaningless")
+
+    p, _ = membrane._validate_pyshacl(g, shapes, Graph())
+    r, _ = membrane._validate_rudof(g, shapes, Graph())
+    assert p is True, "rdflib's parser repairs the lexical form before pySHACL judges it"
+    assert r is False, "rudof judges the bytes as written, and is spec-correct"

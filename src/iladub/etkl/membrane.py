@@ -45,13 +45,16 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph,
              engine: str | None = None) -> tuple[bool, str]:
     """(conforms, report_text) for `data_graph` against `shapes_graph`.
 
-    Both engines now validate the SAME subclass-only-closed graph (spec
-    2026-08-06-subclass-only-closure-design.md): the seam expands `data_graph` with
-    `subclass_closure` and hands each engine its own inference turned OFF, so the engine is
-    the only variable — `ILADUB_MEMBRANE=pyshacl` isolates the engine, as intended, rather
-    than also swapping the inference semantics underneath it. SHACL advanced features on.
-    Callers must not depend on the report's exact wording — it differs by engine; only its
-    content (shape names, focus nodes) is stable.
+    Both engines now validate the SAME subclass-only-closed artifact (spec
+    2026-08-06-subclass-only-closure-design.md, spec 2026-08-13-membrane-parity-design.md §3):
+    the seam expands `data_graph` with `subclass_closure`, serializes it to N-Triples ONCE via
+    `_payload`, and hands each engine its own inference turned OFF — with each engine parsing
+    that one shared document through its own parser. **Both engines receive the same N-Triples
+    document; each parses it with its own parser; parser differences are engine differences** —
+    that is the parity contract, and `ILADUB_MEMBRANE=pyshacl` isolates the engine (plus its
+    parser) as intended, rather than also swapping the inference semantics underneath it. SHACL
+    advanced features on. Callers must not depend on the report's exact wording — it differs by
+    engine; only its content (shape names, focus nodes) is stable.
 
     `engine` is a CAPABILITY PIN, not a preference, and it is the one thing that outranks
     `ILADUB_MEMBRANE`. MEASURED 2026-08-10: rudof cannot evaluate an `sh:sparql` constraint
@@ -91,10 +94,15 @@ def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     longer materialises domain/range typing either (R19's mechanism — see
     `subclass_closure`'s docstring). Before this, `_validate_pyshacl` was the ONLY path that
     still ran full RDFS inference (`inference="rdfs"`), so any install without `pyrudof` (core
-    and `[etkl]` installs both lack it) kept R19 alive under a different name."""
+    and `[etkl]` installs both lack it) kept R19 alive under a different name.
+
+    Takes `_payload`'s re-parsed Graph — not `subclass_closure`'s output directly (spec
+    2026-08-13 §3): the two engines must be handed the SAME artifact, and the artifact is the
+    N-Triples document, not the in-memory graph that produced it."""
     from pyshacl import validate as _v
-    expanded = subclass_closure(data_graph, ont_graph)
-    conforms, _, text = _v(expanded, shacl_graph=shapes_graph, inference="none", advanced=True)
+    graph_payload, _ = _payload(data_graph, ont_graph)
+    conforms, _, text = _v(
+        graph_payload, shacl_graph=shapes_graph, inference="none", advanced=True)
     return bool(conforms), text
 
 
@@ -150,16 +158,47 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     """rudof does NO inference of its own — the seam now supplies a SUBCLASS-ONLY closure
     (spec 2026-08-06-subclass-only-closure-design.md), not the old full RDFS closure:
     domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
-    is what makes the payload parseable by rudof's strict reader."""
+    is what makes the payload parseable by rudof's strict reader.
+
+    Takes `_payload`'s N-Triples string — bit-identical to what this leg has always been handed
+    (spec 2026-08-13 §3: only pySHACL's input changes here)."""
     import pyrudof
-    expanded = subclass_closure(data_graph, ont_graph)
+    _, nt_payload = _payload(data_graph, ont_graph)
     r = _rudof_instance(shapes_graph)
     r.reset_data()
-    r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
+    r.read_data(nt_payload, format=pyrudof.RDFFormat.NTriples)
     r.validate_shacl(mode=pyrudof.ShaclValidationMode.Native)
     report = str(r.serialize_shacl_validation_results(
         pyrudof.ResultShaclValidationFormat.Turtle))
     return _conforms_from_report(report), report
+
+
+def _payload(data_graph: Graph, ont_graph: Graph) -> tuple[Graph, str]:
+    """The ONE artifact both engines validate (spec 2026-08-13 §3, closing R94's asymmetry).
+
+    `pyrudof.read_data` takes a string; rudof can never be handed a live rdflib `Graph` — so
+    "hand rudof a live-equivalent graph" is not an option, and the only shape parity can take is
+    a single shared serialization that each engine then parses with its OWN parser. **Both
+    engines receive the same N-Triples document; each parses it with its own parser; parser
+    differences are engine differences** — that is the whole contract, and it replaces the
+    previous, false claim that the two legs already shared a graph.
+
+    Before this, `_validate_pyshacl` validated `subclass_closure`'s live Graph directly while
+    `_validate_rudof` validated `expanded.serialize(format="nt")` — two DIFFERENT artifacts
+    built from the same closure call, so a divergence between the legs could be an artifact
+    difference wearing an engine's name. This function removes that class of confound: it
+    closes, serializes to N-Triples exactly ONCE, and re-parses that one string back into the
+    Graph pySHACL validates — so pySHACL's input is now, byte-for-byte, the same document
+    rudof's input has always been.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue. A validator must be handed
+    bytes from somewhere, and deciding how those bytes are produced and shared carries no
+    domain decision — nothing here inspects a value, a shape, or a threshold. No tuned
+    constant or tolerance appears.
+    """
+    expanded = subclass_closure(data_graph, ont_graph)
+    nt_payload = expanded.serialize(format="nt")
+    return Graph().parse(data=nt_payload, format="nt"), nt_payload
 
 
 def rdfs_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
