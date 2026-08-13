@@ -4,7 +4,7 @@
 **Closes:** R94 (the two membrane legs are fed different artifacts), R88 (the pySHACL capability pin)
 **Branch base:** `fix/r92-decimal-typing` (PR #103, green and mergeable) — this loop depends on
 R92's emitter conversion being in the tree.
-**Doc impact:** `increment`
+**Doc impact:** increment
 
 ---
 
