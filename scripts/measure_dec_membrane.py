@@ -27,10 +27,17 @@ string-matching the report text. `membrane._conforms_from_report` documents why:
 test once flipped a violating graph to "conforming" because the engine echoes offending
 literals into `sh:value`.
 
-ENGINE.  pySHACL with `inference="none"`, `advanced=True`, over the closure-expanded graph —
-matching `membrane._validate_pyshacl` exactly. This script deliberately does NOT go through
-`membrane.validate`: that seam dispatches to rudof where installed and always uses the shipped
-closure, and this oracle must pin one engine and run both closures.
+ENGINE.  pySHACL with `inference="none"`, `advanced=True`, over the closure-expanded graph
+DIRECTLY — the pre-parity `_validate_pyshacl` leg (spec 2026-08-13-membrane-parity-design.md
+§3), not today's `_validate_pyshacl`, which since parity validates `membrane._payload`'s
+re-parsed graph instead. That is a DELIBERATE, NOT a stale, divergence: this script validates
+the SAME `_closed(data, ont, closure)` output for both SHIPPED and RDFS, and `_payload`'s
+serialize-then-reparse round-trip is exactly the transform the note below measures as NOT
+verdict-neutral — routing only one of the two closures through it here would conflate the
+closure-choice variable this script exists to isolate with a second, unrelated variable. This
+script deliberately does NOT go through `membrane.validate` either: that seam dispatches to
+rudof where installed and always uses the shipped closure, and this oracle must pin one engine
+and run both closures.
 
 Gate classification (CLAUDE.md §8): PROCEDURAL measurement harness. It makes no domain
 decision — the decisions are the SHACL shapes, which this script only applies and counts.
@@ -58,6 +65,17 @@ dropped **24 real refusals** from the compile-scope RDFS total (194 -> 170) — 
 escalated candidate — while every other number stayed identical, which is precisely the
 regression-hiding failure a cache is supposed to be worth risking. Compile time is the
 honest price. Do not re-add a cache without re-measuring this differential.
+
+MITIGATED, NOT CLOSED, as of spec 2026-08-13-membrane-parity-design.md. Production's
+`_validate_pyshacl` now performs exactly this round-trip on every call (`membrane._payload`),
+deliberately — R92's emitter conversion (this branch) already mints `Decimal`-valued, not
+`float`-valued, `xsd:decimal` literals at every `src/` site the lint at
+`tests/etkl/test_decimal_typing.py` covers, so the `.value` half of the flip above no longer
+happens on real data; Task 2's `audit_literals` guard closes the lexical-form half. This
+script's own concern was never about `_payload`'s round-trip per se — it is about mixing two
+different treatments (cached-and-round-tripped vs. fresh) inside one comparison. That hazard
+is orthogonal to whether the round-trip runs at all, so this script's engine choice (see ENGINE
+above) is unaffected by production's parity fix.
 """
 from __future__ import annotations
 

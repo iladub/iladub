@@ -117,7 +117,11 @@ def test_the_split_moved_from_the_membrane_to_the_transport():
     THIS TEST FAILING IS GOOD NEWS in one direction — it would mean pySHACL stopped inspecting
     the in-memory float (`p_live is False` failing), or that `_payload` stopped repairing the
     round-tripped lexical form (`p_payload is True` failing) — either way, R92's hazard would be
-    gone or `_payload` would no longer be doing what parity requires of it."""
+    gone or `_payload` would no longer be doing what parity requires of it. The `r is True`
+    assertion is the ORIGINAL vacuity guard for rudof's half, carried over unchanged: rudof
+    judges `"307.47"` (a valid decimal lexical form) as-written and always admitted it, before
+    and after parity — dropping this assertion would let rudof stop enforcing `sh:datatype`
+    altogether without anything in the repo noticing."""
     from pyshacl import validate as _v
 
     g = Graph()
@@ -137,6 +141,9 @@ def test_the_split_moved_from_the_membrane_to_the_transport():
         "pySHACL refused the SAME source triples once handed _payload's re-parsed document — "
         "parity should have repaired the lexical form via rdflib's own parser, moving the split "
         "to the transport")
+
+    r, _ = membrane._validate_rudof(g, shapes, ont)
+    assert r is True, "rudof refused a well-formed decimal — re-read R92 before changing this"
 
 
 # ---------- the invariant, on a real compiled page ----------

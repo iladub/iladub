@@ -191,14 +191,21 @@ DECNS = Namespace("https://w3id.org/iladub/dec#")
 
 
 def _dec_conforms(g):
-    """(conforms, text) against the SHIPPED closure — membrane._validate_pyshacl exactly."""
+    """(conforms, text) against the SHIPPED closure, through `membrane._payload` — matching
+    `membrane._validate_pyshacl` exactly (spec 2026-08-13-membrane-parity-design.md §3: since
+    parity, that function validates `_payload`'s re-parsed graph, not `subclass_closure`'s
+    live one, and this helper must track it or the claim is false). Called directly rather
+    than through `membrane.validate` because these fixtures mint blank-node PromotionDecisions
+    (ground.py:90,145) and rudof cannot evaluate dec-shapes.ttl's sh:sparql constraint on a
+    blank-node focus (membrane.validate's own docstring)."""
     from pyshacl import validate as _v
     from iladub.etkl import membrane
     ont = Graph()
     for f in ("dec.ttl", "iladub.ttl", "etkl.ttl", "tab.ttl"):
         ont.parse(f"vocab/ontology/{f}", format="turtle")
     shapes = Graph().parse("vocab/shapes/dec-shapes.ttl", format="turtle")
-    conforms, _, text = _v(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+    expanded, _ = membrane._payload(g, ont)
+    conforms, _, text = _v(expanded, shacl_graph=shapes,
                            inference="none", advanced=True)
     return bool(conforms), text
 

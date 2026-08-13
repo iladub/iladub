@@ -746,7 +746,13 @@ def _emit_synthetic(n_rows, n_cols, refused=0, page=0):
 
 
 def _dec_membrane(g):
-    """(conforms, text) against the SHIPPED closure — `membrane._validate_pyshacl` exactly."""
+    """(conforms, text) against the SHIPPED closure, through `membrane._payload` — matching
+    `membrane._validate_pyshacl` exactly (spec 2026-08-13-membrane-parity-design.md §3: since
+    parity, that function validates `_payload`'s re-parsed graph, not `subclass_closure`'s
+    live one, and this helper must track it or the claim is false). Called directly rather
+    than through `membrane.validate` because these fixtures mint blank-node decision holons
+    and rudof cannot evaluate dec-shapes.ttl's sh:sparql constraint on a blank-node focus
+    (membrane.validate's own docstring)."""
     from rdflib import Graph
     from pyshacl import validate
     from iladub.etkl import membrane
@@ -755,7 +761,8 @@ def _dec_membrane(g):
     for f in ("dec.ttl", "iladub.ttl", "etkl.ttl", "tab.ttl"):
         ont.parse(os.path.join(VOCAB, "ontology", f), format="turtle")
     shapes = Graph().parse(os.path.join(VOCAB, "shapes", "dec-shapes.ttl"), format="turtle")
-    conforms, _, text = validate(membrane.subclass_closure(g, ont), shacl_graph=shapes,
+    expanded, _ = membrane._payload(g, ont)
+    conforms, _, text = validate(expanded, shacl_graph=shapes,
                                  inference="none", advanced=True)
     return bool(conforms), text
 

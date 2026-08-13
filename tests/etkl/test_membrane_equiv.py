@@ -46,10 +46,12 @@ def _focus_node_sets(g):
     blank nodes with engine-specific labels (each engine mints its own), so they are NOT
     compared here — see spec 2026-08-06 §8's blank-node-label risk.
 
-    Both engines validate the SAME subclass-only-closed graph (`membrane.subclass_closure`),
-    with each engine's own inference turned off — matching what `membrane.validate` now does
-    in production, so this comparison is a genuine engine differential and not also a closure
-    differential (that comparison lives in tests/etkl/test_closure_equiv.py).
+    Both engines validate the SAME `_payload` artifact (spec 2026-08-13-membrane-parity-design.md
+    §3: one N-Triples document, re-parsed once for pySHACL, handed as-is to rudof), with each
+    engine's own inference turned off — matching what `membrane.validate` now does in production,
+    so this comparison is a genuine engine differential and not also a transport-artifact
+    differential (that split was R94's own asymmetry, and is exactly what parity closes; the
+    closure-only differential lives in tests/etkl/test_closure_equiv.py).
 
     pySHACL's own `(bool, str)` contract in membrane.py is left unchanged for this: the
     battery calls `pyshacl.validate` directly to get the results Graph, rather than having
@@ -58,7 +60,7 @@ def _focus_node_sets(g):
     from iladub.etkl import membrane
     s, o = _shapes(), _ont()
 
-    expanded = membrane.subclass_closure(g, o)
+    expanded, _ = membrane._payload(g, o)
     _, results_graph, _ = pyshacl.validate(
         expanded, shacl_graph=s, inference="none", advanced=True)
     p_nodes = {n for n in results_graph.objects(None, SH.focusNode) if isinstance(n, URIRef)}
