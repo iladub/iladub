@@ -49,7 +49,7 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph,
     Both engines now validate the SAME subclass-only-closed artifact (spec
     2026-08-06-subclass-only-closure-design.md, spec 2026-08-13-membrane-parity-design.md §3):
     the seam expands `data_graph` with `subclass_closure`, serializes it to N-Triples ONCE via
-    `_payload`, and hands each engine its own inference turned OFF — with each engine parsing
+    `_payload_nt`, and hands each engine its own inference turned OFF — with each engine parsing
     that one shared document through its own parser. **Both engines receive the same N-Triples
     document; each parses it with its own parser; parser differences are engine differences** —
     that is the parity contract, and `ILADUB_MEMBRANE=pyshacl` isolates the engine (plus its
