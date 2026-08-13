@@ -159,11 +159,12 @@ def _rudof_on_payload(nt_payload: str, shapes_graph) -> tuple[bool, str]:
     below except the payload construction.
 
     It exists as its own seam because two tests must reach rudof with a payload the membrane's
-    literal-hygiene guard forbids (`_payload(..., audit=False)` — see `_payload`'s docstring),
-    and the alternative shapes are both worse: adding an `audit` parameter to `_validate_rudof`
-    would put a guard-disarming switch on a PRODUCTION entry point, and copying these six lines
-    into the tests would let this leg's engine settings (`ShaclValidationMode.Native`, the
-    Turtle result format) drift out of step with the tests that claim to reproduce them.
+    literal-hygiene guard forbids (`_payload` called with the guard disabled — see `_payload`'s
+    docstring), and the alternative shapes are both worse: adding an `audit` parameter to
+    `_validate_rudof` would put a guard-disarming switch on a PRODUCTION entry point, and
+    copying these six lines into the tests would let this leg's engine settings
+    (`ShaclValidationMode.Native`, the Turtle result format) drift out of step with the tests
+    that claim to reproduce them.
     Splitting the seam keeps one definition of "how this repo drives rudof" and leaves the
     production entry point with no way to turn the guard off.
 
