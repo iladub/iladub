@@ -16,6 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Sequence
 
+from decimal import Decimal
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
@@ -51,13 +52,13 @@ def grid_evidence(band: Band, rules: Sequence[Rule]) -> Graph:
         g.add((u, RDF.type, TAB.BandLine))
         g.add((u, TAB.lineIndex, Literal(i, datatype=XSD.integer)))
         cy = (ln.top + ln.bottom) / 2.0
-        g.add((u, TAB.lineCenterY, Literal(round(cy, 2), datatype=XSD.decimal)))
+        g.add((u, TAB.lineCenterY, Literal(Decimal(str(round(cy, 2))))))
     for k, r in enumerate(rules):
         u = _EV["rule-%d" % k]
         g.add((u, RDF.type, TAB.RuleSpan))
-        g.add((u, TAB.ruleX, Literal(round(r.x, 2), datatype=XSD.decimal)))
-        g.add((u, TAB.ruleTop, Literal(round(r.top, 2), datatype=XSD.decimal)))
-        g.add((u, TAB.ruleBottom, Literal(round(r.bottom, 2), datatype=XSD.decimal)))
+        g.add((u, TAB.ruleX, Literal(Decimal(str(round(r.x, 2))))))
+        g.add((u, TAB.ruleTop, Literal(Decimal(str(round(r.top, 2))))))
+        g.add((u, TAB.ruleBottom, Literal(Decimal(str(round(r.bottom, 2))))))
         has_left = any(cx < r.x - COORD_EPS for cx in centers)
         has_right = any(cx > r.x + COORD_EPS for cx in centers)
         g.add((u, TAB.hasInkLeft, Literal(has_left, datatype=XSD.boolean)))

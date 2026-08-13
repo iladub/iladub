@@ -632,8 +632,8 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         if col.is_measure:
             g.add((c_uri, RDF.type, TAB.MeasureColumn))
         g.add((grid_uri, TAB.hasGridColumn, c_uri))
-        g.add((c_uri, TAB.x0, Literal(round(col.x0, 2), datatype=XSD.decimal)))
-        g.add((c_uri, TAB.x1, Literal(round(col.x1, 2), datatype=XSD.decimal)))
+        g.add((c_uri, TAB.x0, Literal(Decimal(str(round(col.x0, 2))))))
+        g.add((c_uri, TAB.x1, Literal(Decimal(str(round(col.x1, 2))))))
         if col.family:
             g.add((c_uri, TAB.columnFamily, TAB[col.family]))
 
@@ -675,10 +675,10 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
             # the cell's own ink extent, required by tab:EntryCellPhysicalShape
             b = URIRef(f"{e_uri}-bbox")
             g.add((b, RDF.type, TAB.BBox))
-            g.add((b, TAB.x0, Literal(round(x0, 2), datatype=XSD.decimal)))
-            g.add((b, TAB.y0, Literal(round(line.top, 2), datatype=XSD.decimal)))
-            g.add((b, TAB.x1, Literal(round(x1, 2), datatype=XSD.decimal)))
-            g.add((b, TAB.y1, Literal(round(line.bottom, 2), datatype=XSD.decimal)))
+            g.add((b, TAB.x0, Literal(Decimal(str(round(x0, 2))))))
+            g.add((b, TAB.y0, Literal(Decimal(str(round(line.top, 2))))))
+            g.add((b, TAB.x1, Literal(Decimal(str(round(x1, 2))))))
+            g.add((b, TAB.y1, Literal(Decimal(str(round(line.bottom, 2))))))
             g.add((e_uri, TAB.hasBBox, b))
 
     # the admission record: conformance on one side, every refusal on the other

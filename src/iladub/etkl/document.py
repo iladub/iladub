@@ -1475,27 +1475,23 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # carries no rdfs:label. Labelling a tab: node from the driver to fill a decision-log
         # hole would be the wrong repair; it belongs with whoever owns emit_data_grid.
         #
-        # THE ATTRIBUTION (final review I1). Dressing this holon as the effective VERDICT of the
-        # superseded bands is what obliges it to name an agent: `vocab/shapes/dec-shapes.ttl:21`
-        # requires `dec:decidedBy` minCount 1 and CLAUDE.md §4 requires agent attribution for a
-        # membrane-crossing, and every verdict this one supersedes carries that predicate
-        # (`decisionlog.py:54`). The agent named is `decisionlog._READER_AGENT` — NOT a new one
-        # minted here, because there is no second actor: the pass that adopts the grid is a pass
-        # of the same automated reader that decided each superseded band's verdict, so a distinct
-        # agent IRI would MISSTATE who decided. The node it names is already typed
-        # `prov:SoftwareAgent` and labelled (`decisionlog.py:86-89`, emitted once per
-        # `ReadingRecorder`, constructed unconditionally at `compile.py:440` by every page
-        # compile) in the driver's OWN page graph, merged into `graph` at line 1212 above — so
-        # the reference resolves and no dangling node is created. It is read from `rep_a.graph`
-        # nowhere: the page-scope rebuild at `compile.py:979` discards that graph's copy, which
-        # is exactly why the reference is taken from the driver's side. Pinned by
-        # tests/etkl/test_adoption_document.py::test_the_admission_verdict_names_its_agent.
-        # §8: PROCEDURAL engine glue, the class `decisionlog` itself carries — it records an
-        # attribution already fixed by the call site, decides nothing, and carries no constant.
-        from .decisionlog import _READER_AGENT
+        # THE ATTRIBUTION (final review I1) LIVES IN `emit_data_grid`, NOT HERE — R91, closed
+        # 2026-08-12. Dressing this holon as the effective VERDICT of the superseded bands is
+        # what obliges it to name an agent (`vocab/shapes/dec-shapes.ttl:21` requires
+        # `dec:decidedBy` minCount 1; CLAUDE.md §4 requires agent attribution for a
+        # membrane-crossing), and `datagrid.py:706` emits exactly that on exactly this subject:
+        # `datagrid.py:620` mints the same `{grid_uri}-admission` URI. It belongs there and not
+        # here because it must also cover the `datagrid_fallback` path, which this driver never
+        # reaches. The agent is `decisionlog._READER_AGENT` — not a new actor, since the pass
+        # that adopts the grid is a pass of the same automated reader that decided each
+        # superseded band's verdict, so a distinct agent IRI would MISSTATE who decided.
+        #
+        # WHY THE DUPLICATE WAS WORTH DELETING even though RDF set semantics made it invisible:
+        # it MASKED the real emitter. With both lines present, deleting `datagrid.py:706` broke
+        # no test — measured. With only one, `test_the_admission_verdict_names_its_agent` fails
+        # the moment the real emitter goes, which is the whole point of having the test.
         admission = URIRef(f"{grid_uri}-admission")
         graph.add((admission, DEC.regarding, grid_uri))
-        graph.add((admission, DEC.decidedBy, _READER_AGENT))
         graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
         graph.add((admission, RDFS.label, Literal("verdict")))
         graph.add((admission, DEC.rationale, Literal(
