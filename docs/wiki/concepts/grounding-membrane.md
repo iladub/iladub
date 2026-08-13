@@ -64,3 +64,53 @@ settled and shipped. Whether a document actually computes and reports its
 `membraneHealth`, and whether a raw→portal→clean traversal exists as more
 than a design diagram, remain open per `docs/holonic-interaction.md` — hence
 `confidence: medium` rather than `high`.
+
+## The membrane runs on two SHACL engines, one artifact (confidence: high)
+
+Every crossing described above — a proposition being disposed at the portal, a
+`PromotionDecision` being validated at the contract membrane — is, mechanically,
+one SHACL validation call in `src/iladub/etkl/membrane.py`. That call runs on
+**two different engines**: rudof (Rust, the default wherever `pyrudof` is
+installed) and pySHACL (Python, the reference/fallback, forced with
+`ILADUB_MEMBRANE=pyshacl`). The membrane's whole credibility as *one* governance
+point rests on those two engines agreeing — otherwise "the membrane refused it"
+is really "one of two engines refused it," which is a materially weaker claim.
+
+As of loop-membrane-parity (2026-08-13, spec `2026-08-13-membrane-parity-design.md`),
+both legs are built from **one** artifact: `membrane._payload` serializes the
+subclass-closed data graph to N-Triples exactly once, and both engines validate
+that same document — each through its own parser. Before this loop that was not
+true (pySHACL saw the live in-memory rdflib graph; rudof saw a separately
+serialized string), which is what residue R94 tracked and what its closure
+evidence in `docs/superpowers/residues-closed.md` measures directly.
+
+**The interesting part, stated plainly rather than smoothed over: giving both
+engines the same bytes does not make them agree on every input, and it cannot.**
+rdflib's own N-Triples parser rewrites a non-canonical `xsd:decimal` lexical form
+(`"5e-05"`, exponential notation, which is outside `xsd:decimal`'s lexical
+space) to `"0.00005"` on the way back in. pySHACL only ever sees the *parsed*
+value, so it judges such a literal repaired (`True`); rudof reads the lexical
+bytes as written and correctly judges it non-conformant (`False`).
+**Rudof is right; pySHACL's own parser is what quietly launders the defect.**
+So "the engine is the only variable" is not fully achievable — the parser sits
+inside the engine boundary, not outside it.
+
+What makes the one-engine story hold in *practice* is a guard, not a fix to that
+disagreement: `membrane.audit_literals` raises before either engine is ever
+handed a literal in either of the two forms that expose this seam —
+
+- **LEXICAL** — a literal whose lexical form does not round-trip through
+  rdflib's own parser unchanged (the `5e-05` class above).
+- **TYPE** — a literal whose Python `.value` type does not match its declared
+  `xsd:datatype` (a `float`-valued `xsd:decimal`, the class residue R92 closed).
+
+The guard makes the disagreement *unreachable* in production rather than
+resolving it — a fenced blind spot, not a proven equivalence. This is a
+proposition, not a settled fact about every possible RDF graph: it holds because
+every emitter in `src/` was measured to produce only well-typed literals
+(residue R92's closure) and the guard now raises loudly if that ever regresses.
+
+Sources: `src/iladub/etkl/membrane.py` (`_payload`, `_payload_nt`,
+`audit_literals`, `validate`'s docstring); `docs/superpowers/specs/
+2026-08-13-membrane-parity-design.md`; the closure evidence for residues R88 and
+R94 in `docs/superpowers/residues-closed.md`.
