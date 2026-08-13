@@ -605,14 +605,14 @@ def _build_ground_membrane():
 def _validate_grounding(g) -> tuple[bool, str]:
     if _GROUND_SHAPES is None:
         _build_ground_membrane()
-    from .etkl import compile as _compile
     from .etkl import membrane
-    # The engine pin is read from `compile` at call time rather than restated here: it encodes
-    # ONE measured incapacity (rudof raises on an sh:sparql constraint with a blank-node focus,
-    # see membrane.validate), and two copies of it could drift apart. This membrane needs it
-    # even more than the compile one — `ground._emit_grounded` mints BOTH the candidate and the
-    # decision as blank nodes (ground.py:90,145), so EVERY promotion here is a blank-node focus.
-    return membrane.validate(g, _GROUND_SHAPES, _GROUND_ONT, engine=_compile._DEC_ENGINE)
+    # No engine pin (spec 2026-08-13-membrane-parity-design.md §4.3, closing R88). This call
+    # used to borrow `compile._DEC_ENGINE` because `ground._emit_grounded` mints BOTH the
+    # candidate and the decision as blank nodes (ground.py:90,145) — so EVERY promotion here is
+    # a blank-node focus, the one thing rudof raised on. `membrane._payload` now skolemizes, so
+    # there is no blank-node focus node left to protect against and this membrane runs on
+    # whichever engine the process selected, like every other.
+    return membrane.validate(g, _GROUND_SHAPES, _GROUND_ONT)
 
 
 def ground_document(graph, contract, proposer, terms, shapes, g,

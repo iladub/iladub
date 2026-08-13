@@ -14,7 +14,7 @@ ledger.
 **Raising a residue is visible; closing one is not.** A register that only counts what it opens
 reads as pure degradation — R92 sounds like ninety-two defects and nothing repaired. So every new
 row records, in parentheses after its number, **the state of the register at the moment it was
-raised**: `| R95 (14/85 closed) |` means that when R95 went in, 14 of the 85 rows then present
+raised**: `| R97 (17/87 closed) |` means that when R97 went in, 17 of the 87 rows then present
 were closed.
 
 The parenthetical is a **snapshot and is never updated afterwards**. That is the point — read
@@ -29,7 +29,7 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-12: 84 rows, 14 closed.** (Ten numbers between R1 and R94 were never issued as
+**As of 2026-08-13: 86 rows, 17 closed.** (Ten numbers between R1 and R96 were never issued as
 rows; the denominator is rows that exist, not the highest number.)
 
 | # | Residue | Measured | Why deferred | What would close it |
@@ -134,10 +134,12 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R85 | open | `transpose-coherent.rq` is quadratic in row count |
 | R86 | open | A quarantined concept mints NO decision holon, so the proposition half of the epistemics is unattributed |
 | R87 | open | `escalation-shapes.ttl` is in NO membrane |
-| R88 | open | rudof cannot evaluate an `sh:sparql` constraint whose focus node is a blank node — it RAISES instead of returning a verdict — so the decision shape… |
+| R88 | closed | CLOSED 2026-08-13 — skolemized at the payload seam; `compile._DEC_ENGINE` deleted |
 | R89 | open | `BandRecorder.record`'s Python guard now duplicates two constraints the membrane enforces |
 | R90 | open | The bbox is dropped from every `ROUND_TRIP_FAIL` proposition |
 | R91 | closed | `document.py:1498` and `datagrid.emit_data_grid` now both emit `dec:decidedBy` on the same admission holon |
 | R92 | closed | CLOSED 2026-08-12 — the 39 float-valued `xsd:decimal` emitters are converted, and a tripwire prevents the 40th |
 | R93 | closed | CLOSED 2026-08-12 with R92 |
-| R94 | open | The two membrane legs are not fed the same artifact, so `membrane.validate`'s "the engine is the only variable" is FALSE — and the whole two-engine… |
+| R94 | closed | CLOSED 2026-08-13 — one N-Triples artifact, both legs; own prescribed remedy REFUTED (parser is inside the engine boundary) |
+| R95 | open | `_payload`/`_payload_nt`'s `audit=False` escape hatch is a standing hazard, fenced by a substring-scan test |
+| R96 | open | `audit_literals`'s LEXICAL half is a silent no-op if rdflib's `NORMALIZE_LITERALS` global is ever `False` |

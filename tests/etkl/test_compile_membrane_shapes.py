@@ -41,12 +41,18 @@ def _declared_node_shapes(f):
                .subjects(RDF.type, SH.NodeShape))
 
 
-def test_the_membrane_carries_every_shape_file_in_its_engine_leg():
+def test_the_membrane_carries_every_shape_file_in_its_leg():
     """(a) The membrane's shape set is pinned by the FILES, not by a comment — and so is the
-    engine leg each file lands in. The split is not cosmetic: `dec-shapes.ttl` and
-    `iladub-shapes.ttl` each carry an sh:sparql constraint, and rudof cannot evaluate one
-    whose focus node is a blank node (see `membrane.validate`). A file that drifted into the
-    unpinned leg would make the compile membrane throw on any page carrying a promotion."""
+    leg each file lands in. The split is not cosmetic: the two legs are two different
+    closed-world membranes (the tab graph and the decision graph), and a shape file that
+    silently dropped out of its leg would stop being applied to anything at all.
+
+    The legs are no longer split by ENGINE. `_DEC_ENGINE = "pyshacl"` used to live beside
+    `_DEC_SHAPE_FILES` and was asserted here, because rudof raises on the sh:sparql
+    constraints these two files carry when the focus node is a blank node. `membrane._payload`
+    now skolemizes, so no blank-node focus node reaches an engine and the constant is gone
+    (spec 2026-08-13-membrane-parity-design.md §4.3). The upstream rudof incapacity is still
+    pinned — directly against `pyrudof`, in tests/etkl/test_membrane_equiv.py."""
     m = _built_membrane()
     for leg, files in ((m._TAB_SHAPES, m._TAB_SHAPE_FILES),
                        (m._DEC_SHAPES, m._DEC_SHAPE_FILES)):
@@ -56,15 +62,16 @@ def test_the_membrane_carries_every_shape_file_in_its_engine_leg():
             assert declared, f"fixture precondition: {f} declares no sh:NodeShape"
             assert not declared - present, f"{f} is not in its membrane leg"
     assert m._DEC_SHAPE_FILES == ("dec-shapes.ttl", "iladub-shapes.ttl")
-    assert m._DEC_ENGINE == "pyshacl", (
-        "the sh:sparql-carrying shapes must stay pinned to pySHACL — rudof raises on a "
-        "blank-node focus node rather than returning a verdict")
+    assert not hasattr(m, "_DEC_ENGINE"), (
+        "the capability pin is gone (R88): the decision leg must run on the process engine, "
+        "not on a hard-coded one")
 
 
-def test_the_pinned_leg_is_load_bearing_for_a_blank_node_promotion():
-    """The pin is not paperwork. A promotion decision whose subject is a BLANK NODE — which
-    is what `ground.py`, `promote.py` and `splitkey.py` actually mint — must cross the
-    membrane without the engine throwing."""
+def test_the_decision_leg_is_load_bearing_for_a_blank_node_promotion():
+    """Not paperwork. A promotion decision whose subject is a BLANK NODE — which is what
+    `ground.py`, `promote.py` and `splitkey.py` actually mint — must cross the membrane
+    without the engine throwing, on WHICHEVER engine this process selected. Before the
+    skolemize step this passed only because the leg was pinned to pySHACL."""
     from iladub.etkl import compile as compile_mod
     from rdflib import BNode
     g = Graph()

@@ -7,7 +7,7 @@ import glob
 import os
 import random
 import pytest
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, SH, XSD
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -46,10 +46,12 @@ def _focus_node_sets(g):
     blank nodes with engine-specific labels (each engine mints its own), so they are NOT
     compared here — see spec 2026-08-06 §8's blank-node-label risk.
 
-    Both engines validate the SAME subclass-only-closed graph (`membrane.subclass_closure`),
-    with each engine's own inference turned off — matching what `membrane.validate` now does
-    in production, so this comparison is a genuine engine differential and not also a closure
-    differential (that comparison lives in tests/etkl/test_closure_equiv.py).
+    Both engines validate the SAME `_payload` artifact (spec 2026-08-13-membrane-parity-design.md
+    §3: one N-Triples document, re-parsed once for pySHACL, handed as-is to rudof), with each
+    engine's own inference turned off — matching what `membrane.validate` now does in production,
+    so this comparison is a genuine engine differential and not also a transport-artifact
+    differential (that split was R94's own asymmetry, and is exactly what parity closes; the
+    closure-only differential lives in tests/etkl/test_closure_equiv.py).
 
     pySHACL's own `(bool, str)` contract in membrane.py is left unchanged for this: the
     battery calls `pyshacl.validate` directly to get the results Graph, rather than having
@@ -58,7 +60,7 @@ def _focus_node_sets(g):
     from iladub.etkl import membrane
     s, o = _shapes(), _ont()
 
-    expanded = membrane.subclass_closure(g, o)
+    expanded, _ = membrane._payload(g, o)
     _, results_graph, _ = pyshacl.validate(
         expanded, shacl_graph=s, inference="none", advanced=True)
     p_nodes = {n for n in results_graph.objects(None, SH.focusNode) if isinstance(n, URIRef)}
@@ -285,7 +287,7 @@ def test_the_decision_mutation_battery_covers_both_sparql_constraints():
         f"both sh:sparql constraints must be exercised, got {sorted(kinds)}")
 
 
-# ---------- leg 5: the BLANK-NODE focus, where the engines are NOT equivalent -------------
+# ---------- leg 5: the BLANK-NODE focus, and why the membrane skolemizes ------------------
 #
 # THE GAP THAT COST THIS LOOP A TASK: legs 1-4 use IRI subjects, and every one of them passes
 # under both engines. But the promotion emitters mint BLANK NODES — ground.py:90,145,
@@ -295,10 +297,16 @@ def test_the_decision_mutation_battery_covers_both_sparql_constraints():
 #
 # MEASURED 2026-08-10: core constraints are unaffected on blank nodes (rudof returns correct
 # True/False once the sh:sparql shapes are removed), and BOTH ShaclValidationMode.Native and
-# .Sparql raise. That is why compile._validate pins the dec/iladub shapes to pySHACL.
+# .Sparql raise. That was why compile._validate pinned the dec/iladub shapes to pySHACL.
 #
-# THIS TEST FAILING IS GOOD NEWS. It means rudof learned to evaluate sh:sparql on blank-node
-# focus nodes, and `compile._DEC_ENGINE` can stop being pinned.
+# WHAT CHANGED 2026-08-13 (spec 2026-08-13-membrane-parity-design.md §4.3, R88): `membrane.
+# _payload` SKOLEMIZES, so the membrane cannot hand any engine a blank-node focus node, and the
+# pin is gone. **rudof did not gain the capability — we routed around it.**
+#
+# THAT DISTINCTION IS THIS LEG'S WHOLE JOB, so the two tests that pin the incapacity drive
+# `pyrudof` DIRECTLY, on their own un-skolemized serialization. Their subject is rudof, not our
+# membrane; routing them through `membrane._validate_rudof` would make them pass for the wrong
+# reason and destroy the standing justification for skolemizing at all.
 
 def _bnode_promotion():
     from rdflib import BNode
@@ -316,46 +324,210 @@ def _bnode_promotion():
     return g
 
 
-def test_pyshacl_evaluates_sparql_constraints_on_a_blank_node_focus():
+def _rudof_direct(data_graph, shapes_graph):
+    """Drive `pyrudof` on an UN-SKOLEMIZED serialization, outside the membrane entirely — a
+    fresh instance, not `membrane._rudof_instance`'s cache, so these probes cannot disturb a
+    production leg's cached shapes.
+
+    Every test below that measures RUDOF'S OWN capability must come through here rather than
+    through `membrane._validate_rudof`: since 2026-08-13 the membrane skolemizes, so a test
+    routed through it would be measuring our transport and would report a capability rudof
+    does not have."""
+    import pyrudof
     from iladub.etkl import membrane
-    conforms, _ = membrane._validate_pyshacl(_bnode_promotion(), _dec_shapes(), _dec_ont())
+    expanded = membrane.subclass_closure(data_graph, _dec_ont())
+    r = pyrudof.Rudof(pyrudof.RudofConfig())
+    r.read_shacl(shapes_graph.serialize(format="turtle"), format=pyrudof.ShaclFormat.Turtle)
+    r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
+    r.validate_shacl(mode=pyrudof.ShaclValidationMode.Native)
+    report = str(r.serialize_shacl_validation_results(
+        pyrudof.ResultShaclValidationFormat.Turtle))
+    return membrane._conforms_from_report(report), report
+
+
+def test_pyshacl_itself_evaluates_sparql_constraints_on_a_blank_node_focus():
+    """THE CONTROL for the test below: the same graph and shapes, UN-SKOLEMIZED, driven
+    directly. pySHACL returns a verdict where rudof raises, and that asymmetry — not any
+    property of our code — is what the membrane's skolemize step exists to erase.
+
+    Driven through `pyshacl.validate` rather than `membrane._validate_pyshacl` for the same
+    reason its rudof twin is: after skolemization the membrane path has no blank node left in
+    it, so it could no longer be about a blank-node focus at all."""
+    import pyshacl
+    from iladub.etkl import membrane
+    expanded = membrane.subclass_closure(_bnode_promotion(), _dec_ont())
+    conforms, _, _ = pyshacl.validate(
+        expanded, shacl_graph=_dec_shapes(), inference="none", advanced=True)
     assert conforms is True, "pySHACL must return a VERDICT for a blank-node promotion"
 
 
-def test_rudof_still_cannot_evaluate_sparql_constraints_on_a_blank_node_focus():
+def test_rudof_itself_still_cannot_evaluate_sparql_on_a_blank_node_focus():
+    """THE STANDING JUSTIFICATION FOR SKOLEMIZING. This drives pyrudof DIRECTLY on an
+    un-skolemized serialization — its subject is rudof, not our membrane.
+
+    THIS TEST FAILING IS GOOD NEWS: rudof gained the capability and the skolemize step in
+    _payload can be reconsidered. It must NOT be read as good news that _validate_rudof
+    stopped raising — that happens because we route around the incapacity.
+    """
+    import pyrudof
     from iladub.etkl import membrane
+    expanded = membrane.subclass_closure(_bnode_promotion(), _dec_ont())
+    r = pyrudof.Rudof(pyrudof.RudofConfig())
+    r.read_shacl(_dec_shapes().serialize(format="turtle"), format=pyrudof.ShaclFormat.Turtle)
+    r.read_data(expanded.serialize(format="nt"), format=pyrudof.RDFFormat.NTriples)
     with pytest.raises(ValueError) as exc:
-        membrane._validate_rudof(_bnode_promotion(), _dec_shapes(), _dec_ont())
+        r.validate_shacl(mode=pyrudof.ShaclValidationMode.Native)
     assert "SHACL" in str(exc.value), str(exc.value)
 
 
-def test_rudof_handles_a_blank_node_focus_once_the_sparql_shapes_are_gone():
-    """Isolates the incapacity to sh:sparql specifically, so the pin cannot be blamed on
-    blank nodes in general — core constraints judge a blank-node focus correctly."""
-    from iladub.etkl import membrane
+def test_rudof_itself_handles_a_blank_node_focus_once_the_sparql_shapes_are_gone():
+    """Isolates the incapacity to sh:sparql SPECIFICALLY, so it can never be restated as
+    "rudof cannot do blank nodes" — core constraints judge a blank-node focus correctly.
+
+    Driven directly against pyrudof (`_rudof_direct`), NOT through `membrane._validate_rudof`:
+    since the membrane skolemizes, the membrane path carries no blank node and this test would
+    be vacuous — it would pass without rudof ever meeting the thing it is named after."""
     core = _dec_shapes()
     for s, p, o in list(core.triples((None, SH.sparql, None))):
         core.remove((s, p, o))
         for t in list(core.triples((o, None, None))):
             core.remove(t)
-    good, _ = membrane._validate_rudof(_bnode_promotion(), core, _dec_ont())
-    assert good is True
+    good, report = _rudof_direct(_bnode_promotion(), core)
+    assert good is True, report
     bad_graph = _bnode_promotion()
     pd = next(bad_graph.subjects(RDF.type, ILADUB.PromotionDecision))
     for o in list(bad_graph.objects(pd, DEC.optionSpace)):
         bad_graph.remove((pd, DEC.optionSpace, o))
-    bad, _ = membrane._validate_rudof(bad_graph, core, _dec_ont())
+    bad, _ = _rudof_direct(bad_graph, core)
     assert bad is False, "rudof must still REFUSE an under-furnished blank-node decision"
 
 
-def test_the_capability_pin_refuses_a_conflicting_forced_engine():
-    """The pin outranks ILADUB_MEMBRANE and says so LOUDLY — an operator who forced rudof
-    must never be handed pySHACL's verdict unannounced."""
+def test_the_payload_contains_no_blank_nodes():
+    """The one-line structural invariant that makes the unpin safe: rudof can never be
+    handed a blank-node focus node, because the membrane never produces one."""
     from iladub.etkl import membrane
-    os.environ["ILADUB_MEMBRANE"] = "rudof"
-    try:
-        with pytest.raises(ValueError, match="capability pin"):
-            membrane.validate(_conformant_promotion(), _dec_shapes(), _dec_ont(),
-                              engine="pyshacl")
-    finally:
-        del os.environ["ILADUB_MEMBRANE"]
+    graph_payload, nt_payload = membrane._payload(_bnode_promotion(), _dec_ont())
+    bnodes = {t for t in graph_payload.all_nodes() if isinstance(t, BNode)}
+    assert bnodes == set(), f"the payload must be blank-node free, found {len(bnodes)}"
+    assert "_:" not in nt_payload
+
+
+def test_both_engines_agree_on_a_blank_node_promotion_through_validate(monkeypatch):
+    """The one-engine story, asserted through the PUBLIC seam. This could not be written
+    while _DEC_ENGINE pinned pySHACL — validate() raised on a forced rudof.
+
+    `ILADUB_MEMBRANE` is cleared for the duration because this test names BOTH engines
+    explicitly, and `validate` refuses (correctly, and deliberately kept) to resolve a
+    conflict between an operator's forced engine and an explicit `engine=`. Clearing it
+    weakens nothing: both legs still run, through the public seam, on the same graph."""
+    from iladub.etkl import membrane
+    monkeypatch.delenv("ILADUB_MEMBRANE", raising=False)
+    g = _bnode_promotion()
+    p, _ = membrane.validate(g, _dec_shapes(), _dec_ont(), engine="pyshacl")
+    r, _ = membrane.validate(g, _dec_shapes(), _dec_ont(), engine="rudof")
+    assert p is True and r is True
+
+    bad = _bnode_promotion()
+    pd = next(bad.subjects(RDF.type, ILADUB.PromotionDecision))
+    for o in list(bad.objects(pd, DEC.optionSpace)):
+        bad.remove((pd, DEC.optionSpace, o))
+    pb, _ = membrane.validate(bad, _dec_shapes(), _dec_ont(), engine="pyshacl")
+    rb, _ = membrane.validate(bad, _dec_shapes(), _dec_ont(), engine="rudof")
+    assert pb is False and rb is False, "both must still REFUSE an under-furnished decision"
+
+
+def test_the_report_does_not_leak_skolem_iris(monkeypatch):
+    """A human reads validation reports. Skolem IRIs are an implementation detail of the
+    transport and must not appear in one.
+
+    `ILADUB_MEMBRANE` is cleared for the same reason as the test above: this one names both
+    engines explicitly, and an operator's forced engine must never be silently overridden."""
+    from iladub.etkl import membrane
+    monkeypatch.delenv("ILADUB_MEMBRANE", raising=False)
+    bad = _bnode_promotion()
+    pd = next(bad.subjects(RDF.type, ILADUB.PromotionDecision))
+    for o in list(bad.objects(pd, DEC.optionSpace)):
+        bad.remove((pd, DEC.optionSpace, o))
+    for engine in ("pyshacl", "rudof"):
+        conforms, report = membrane.validate(bad, _dec_shapes(), _dec_ont(), engine=engine)
+        assert conforms is False
+        assert "genid" not in report, f"{engine} report leaks a skolem IRI:\n{report}"
+
+
+def test_an_engine_conflict_still_raises_rather_than_resolving_silently(monkeypatch):
+    """THE SURVIVING INTENT of the deleted `test_the_capability_pin_refuses_a_conflicting_
+    forced_engine`. There is no capability pin any more (R88), and no `src/` caller passes
+    `engine=` — but the LOUDNESS rule is unchanged and is not about capabilities: an operator
+    who forced one engine through ILADUB_MEMBRANE must never be handed the other engine's
+    verdict unannounced. Silently preferring either side would make a differential run report
+    a verdict the operator did not ask for.
+
+    Uses `monkeypatch.setenv`, not a bare `os.environ[...] = ...` with a `del` in a `finally`:
+    the previous form DELETED the variable on teardown, so a run under `ILADUB_MEMBRANE=rudof`
+    silently lost its forced engine for every test scheduled after this one."""
+    from iladub.etkl import membrane
+    monkeypatch.setenv("ILADUB_MEMBRANE", "rudof")
+    with pytest.raises(ValueError, match="conflicts with an explicit engine"):
+        membrane.validate(_conformant_promotion(), _dec_shapes(), _dec_ont(),
+                          engine="pyshacl")
+
+
+# ---------- leg 6: the TRANSPORT does not canonicalise (spec 2026-08-13 §5, oracle 1) --------
+#
+# Parity (Task 1) makes both engines consume the SAME N-Triples document instead of two
+# different inputs — but each engine still parses that document with its OWN parser. This test
+# pins that the transport carries the lexical form as WRITTEN, so parity can never be bought by
+# canonicalising the payload (which would blind both engines to ill-typed literals alike).
+
+def test_the_transport_does_not_canonicalise_lexical_forms():
+    """THE ORACLE (spec §5). Both legs now receive the SAME N-Triples document, but each
+    parses it with its own parser — and rdflib's parser silently rewrites "5e-05" into
+    "0.00005" while rudof judges the bytes as written. rudof is spec-correct: exponential
+    notation is outside xsd:decimal's lexical space.
+
+    THIS TEST FAILING BECAUSE THE ENGINES NOW AGREE IS BAD NEWS, NOT GOOD. It means someone
+    canonicalised the payload — value-parity — buying agreement by making both engines blind
+    to ill-typed literals. That is the failure mode this loop exists to prevent.
+
+    THE GUARD SEAM (Task 2, spec §4.2). The literal this oracle builds — `5e-05` typed
+    `xsd:decimal` — is exactly the LEXICAL form `membrane.audit_literals` now refuses, so once
+    the guard is wired into `_payload`, `_payload(g, ...)` and the (guarded) leg functions
+    `_validate_pyshacl` / `_validate_rudof` all RAISE on it in production. That is correct: this
+    oracle is not about production behaviour, it is about what the bare transport (serialize,
+    re-parse) does to a lexical form — the mechanism the guard exists to make unreachable. So it
+    reaches `_payload` with the guard off (`audit=False`, fenced to exactly this test and one
+    other by `test_the_audit_escape_hatch_is_not_used_in_production`,
+    tests/etkl/test_decimal_typing.py) and then drives each engine on that pre-built artifact
+    directly — `pyshacl.validate` for pySHACL, `membrane._rudof_on_payload` (the body of
+    `_validate_rudof` minus its payload construction) for rudof — rather than through the
+    guarded leg functions. No `audit` parameter is added to `_validate_pyshacl` /
+    `_validate_rudof` themselves: a production entry point that can disarm the membrane is a
+    hazard, not a convenience.
+
+    Converting the literal is NOT an option: the non-canonical lexical form IS this oracle's
+    subject.
+    """
+    import pyshacl
+    from iladub.etkl import membrane
+    shapes = Graph().parse(data="""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix ex: <urn:parity:> .
+        ex:S a sh:NodeShape ; sh:targetClass ex:Box ;
+          sh:property [ sh:path ex:x0 ; sh:datatype xsd:decimal ; sh:minCount 1 ] .
+    """, format="turtle")
+    EX = Namespace("urn:parity:")
+    g = Graph()
+    g.add((EX.b1, RDF.type, EX.Box))
+    g.add((EX.b1, EX.x0, Literal(float(5e-05), datatype=XSD.decimal)))
+
+    graph_payload, nt_payload = membrane._payload(g, Graph(), audit=False)
+    assert '"5e-05"' in nt_payload, (
+        "the transport must carry the lexical form as written; if this fails, the payload "
+        "builder is canonicalising and the oracle below is meaningless")
+
+    p, _, _ = pyshacl.validate(graph_payload, shacl_graph=shapes, inference="none", advanced=True)
+    assert p is True, "rdflib's parser repairs the lexical form before pySHACL judges it"
+
+    r, _ = membrane._rudof_on_payload(nt_payload, shapes)
+    assert r is False, "rudof judges the bytes as written, and is spec-correct"

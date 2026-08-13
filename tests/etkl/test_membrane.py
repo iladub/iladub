@@ -294,6 +294,42 @@ def test_conforms_parse_is_not_fooled_by_a_literal_containing_the_token():
     assert ok_r is False, "rudof's report was fooled by the echoed literal — substring bug"
 
 
+# ---------------------------------------------------------------- the parity invariant
+
+def test_both_legs_are_built_from_the_very_same_document():
+    """THE INVARIANT THE WHOLE PARITY LOOP EXISTS TO GUARANTEE, pinned as an oracle rather
+    than left to hold by construction (spec 2026-08-13-membrane-parity-design.md §3).
+
+    Since 2026-08-13 the two production legs no longer call the same function: `_validate_rudof`
+    takes `_payload_nt`'s string (pyrudof.read_data takes a string, so re-parsing it into a
+    Graph only to discard it was 148 ms of waste per call on a real page), while
+    `_validate_pyshacl` takes `_payload`'s re-parsed Graph. That split is safe ONLY while
+    `_payload` is a pure delegate to `_payload_nt` — and nothing else asserted it.
+
+    Insert any step into `_payload` after the delegation (a repair, a normalisation, a second
+    closure pass) and the two engines silently start judging different documents again, which
+    is precisely R94, the thing this loop closed. Byte equality is the cheapest possible
+    detector for that, and it costs one line.
+
+    Deliberately NOT in tests/etkl/test_membrane_equiv.py: that whole module is skipped where
+    `pyrudof` is absent, and this invariant governs the pySHACL-only install too.
+    """
+    from iladub.etkl import membrane
+    from rdflib import BNode
+    g = Graph()
+    cell, bb = URIRef("urn:m:pcell"), BNode()      # a blank node, so skolemization is exercised
+    g.add((cell, RDF.type, TAB.EntryCell))
+    g.add((cell, TAB.cellText, Literal("Americas")))
+    g.add((cell, TAB.hasBBox, bb))
+    g.add((bb, RDF.type, TAB.BBox))
+    graph_payload, nt_payload = membrane._payload(g, _ont())
+    assert nt_payload == membrane._payload_nt(g, _ont()), (
+        "the two production legs are being handed DIFFERENT documents — `_payload` has grown "
+        "a step `_payload_nt` does not have, and R94's asymmetry is back")
+    # ...and the Graph the pySHACL leg gets is that same document, not some other artifact.
+    assert len(graph_payload) == len(Graph().parse(data=nt_payload, format="nt"))
+
+
 # ---------------------------------------------------------------- subclass-only closure
 
 def test_subclass_closure_materializes_supertypes():

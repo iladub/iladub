@@ -386,14 +386,17 @@ _TAB_SHAPES = None
 _DEC_SHAPES = None
 _FULL_ONT = None
 
-# The membrane's shape set, split by which ENGINE may evaluate it (spec 2026-08-10 §5.4).
-# `_DEC_SHAPES` is pinned to pySHACL: both files carry an `sh:sparql` constraint and the
-# promotion emitters mint blank-node subjects, which rudof provably cannot evaluate — see
-# `membrane.validate`'s docstring for the measurement. The split is per shape SET, never per
-# graph: no verdict depends on what happens to be in the data.
+# The membrane's shape set, split by WHAT IT VALIDATES — the tab graph and the decision graph
+# are two different closed-world membranes (spec 2026-08-10 §5.4) — and no longer by engine.
+#
+# Until 2026-08-13 `_DEC_SHAPES` also carried `_DEC_ENGINE = "pyshacl"`, because both files
+# carry an `sh:sparql` constraint, the promotion emitters mint blank-node subjects, and rudof
+# raises rather than answering on that combination. `membrane._payload` now skolemizes, so the
+# membrane cannot produce a blank-node focus node at all and both legs run on whichever engine
+# the process selected (spec 2026-08-13-membrane-parity-design.md §4.3, closing R88). The split
+# is still per shape SET, never per graph: no verdict depends on what happens to be in the data.
 _TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 _DEC_SHAPE_FILES = ("dec-shapes.ttl", "iladub-shapes.ttl")
-_DEC_ENGINE = "pyshacl"
 
 
 def _build_membrane():
@@ -437,7 +440,7 @@ def _validate(graph: Graph) -> tuple[bool, str]:
     # first failing shape set would make a page look like a tab defect when it is also a
     # promotion defect, and the caller raises on the combined verdict either way.
     tab_ok, tab_report = membrane.validate(graph, _TAB_SHAPES, _FULL_ONT)
-    dec_ok, dec_report = membrane.validate(graph, _DEC_SHAPES, _FULL_ONT, engine=_DEC_ENGINE)
+    dec_ok, dec_report = membrane.validate(graph, _DEC_SHAPES, _FULL_ONT)
     if tab_ok and dec_ok:
         return True, tab_report
     return False, "\n".join(r for ok, r in ((tab_ok, tab_report), (dec_ok, dec_report))

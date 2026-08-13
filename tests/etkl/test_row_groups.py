@@ -7,6 +7,8 @@ Nesting = strict member-set containment. Keys are read positionally — label te
 aggregation row itself is NEVER parsed (no language).
 See docs/superpowers/specs/2026-07-30-row-groups-design.md.
 """
+from decimal import Decimal
+
 from rdflib import BNode, Graph, Literal, Namespace, RDF, URIRef
 from rdflib.namespace import XSD
 
@@ -37,7 +39,10 @@ def _emit(g, rows, aggs, table=T):
             g.add((e, TAB.onPage, Literal(0, datatype=XSD.integer)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
-            g.add((bb, TAB.y0, Literal(10.0 * r, datatype=XSD.decimal)))
+            # Decimal(str(...)), not a bare float — a float-valued xsd:decimal trips the
+            # membrane's literal-hygiene guard (membrane.audit_literals, R92's class); this
+            # fixture's y0 value carries no meaning beyond "a valid decimal coordinate".
+            g.add((bb, TAB.y0, Literal(Decimal(str(10.0 * r)))))
             g.add((e, TAB.hasBBox, bb))
     for a, members in aggs.items():
         au = URIRef(f"{table}-r{a}")
