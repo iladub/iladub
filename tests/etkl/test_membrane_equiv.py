@@ -379,7 +379,26 @@ def test_the_transport_does_not_canonicalise_lexical_forms():
     THIS TEST FAILING BECAUSE THE ENGINES NOW AGREE IS BAD NEWS, NOT GOOD. It means someone
     canonicalised the payload — value-parity — buying agreement by making both engines blind
     to ill-typed literals. That is the failure mode this loop exists to prevent.
+
+    THE GUARD SEAM (Task 2, spec §4.2). The literal this oracle builds — `5e-05` typed
+    `xsd:decimal` — is exactly the LEXICAL form `membrane.audit_literals` now refuses, so once
+    the guard is wired into `_payload`, `_payload(g, ...)` and the (guarded) leg functions
+    `_validate_pyshacl` / `_validate_rudof` all RAISE on it in production. That is correct: this
+    oracle is not about production behaviour, it is about what the bare transport (serialize,
+    re-parse) does to a lexical form — the mechanism the guard exists to make unreachable. So it
+    reaches `_payload` with the guard off (`audit=False`, fenced to exactly this test and one
+    other by `test_the_audit_escape_hatch_is_not_used_in_production`,
+    tests/etkl/test_decimal_typing.py) and then drives each engine on that pre-built artifact
+    directly — `pyshacl.validate` for pySHACL, `membrane._rudof_on_payload` (the body of
+    `_validate_rudof` minus its payload construction) for rudof — rather than through the
+    guarded leg functions. No `audit` parameter is added to `_validate_pyshacl` /
+    `_validate_rudof` themselves: a production entry point that can disarm the membrane is a
+    hazard, not a convenience.
+
+    Converting the literal is NOT an option: the non-canonical lexical form IS this oracle's
+    subject.
     """
+    import pyshacl
     from iladub.etkl import membrane
     shapes = Graph().parse(data="""
         @prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -393,12 +412,13 @@ def test_the_transport_does_not_canonicalise_lexical_forms():
     g.add((EX.b1, RDF.type, EX.Box))
     g.add((EX.b1, EX.x0, Literal(float(5e-05), datatype=XSD.decimal)))
 
-    graph_payload, nt_payload = membrane._payload(g, Graph())
+    graph_payload, nt_payload = membrane._payload(g, Graph(), audit=False)
     assert '"5e-05"' in nt_payload, (
         "the transport must carry the lexical form as written; if this fails, the payload "
         "builder is canonicalising and the oracle below is meaningless")
 
-    p, _ = membrane._validate_pyshacl(g, shapes, Graph())
-    r, _ = membrane._validate_rudof(g, shapes, Graph())
+    p, _, _ = pyshacl.validate(graph_payload, shacl_graph=shapes, inference="none", advanced=True)
     assert p is True, "rdflib's parser repairs the lexical form before pySHACL judges it"
+
+    r, _ = membrane._rudof_on_payload(nt_payload, shapes)
     assert r is False, "rudof judges the bytes as written, and is spec-correct"

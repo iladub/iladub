@@ -121,7 +121,23 @@ def test_the_split_moved_from_the_membrane_to_the_transport():
     assertion is the ORIGINAL vacuity guard for rudof's half, carried over unchanged: rudof
     judges `"307.47"` (a valid decimal lexical form) as-written and always admitted it, before
     and after parity — dropping this assertion would let rudof stop enforcing `sh:datatype`
-    altogether without anything in the repo noticing."""
+    altogether without anything in the repo noticing.
+
+    THE GUARD SEAM (Task 2, spec §4.2). Once `audit_literals` is wired into `_payload`, the
+    forbidden literal this test deliberately builds makes `_payload` RAISE — and `_validate_pyshacl`
+    / `_validate_rudof` call `_payload` internally with no way to turn the guard off (that
+    parameter is deliberately NOT added to those two production leg functions — an entry point
+    that can disarm the membrane is a hazard, not a convenience;
+    `test_the_production_legs_refuse_the_forbidden_form` below asserts that refusal directly).
+    So this test reaches `_payload` with the guard off (`audit=False`, fenced to exactly this
+    test and one other by `test_the_audit_escape_hatch_is_not_used_in_production`) and then
+    drives each engine on that pre-built artifact through the SAME seams the (guarded) leg
+    functions use internally — `pyshacl.validate` for the pySHACL half, `membrane._rudof_on_payload`
+    for the rudof half. Neither is a new production surface, and `_rudof_on_payload` is the
+    literal body of `_validate_rudof` minus its payload construction, so this test cannot drift
+    out of step with how the repo actually drives rudof.
+
+    Converting the literal is NOT an option: the forbidden form IS this test's subject."""
     from pyshacl import validate as _v
 
     g = Graph()
@@ -136,14 +152,35 @@ def test_the_split_moved_from_the_membrane_to_the_transport():
         "pySHACL admitted a float-valued xsd:decimal on the LIVE (un-transported) graph — the "
         "constraint is vacuous")
 
-    p_payload, _ = membrane._validate_pyshacl(g, shapes, ont)
+    graph_payload, nt_payload = membrane._payload(g, ont, audit=False)
+    p_payload, _, _ = _v(graph_payload, shacl_graph=shapes, inference="none", advanced=True)
     assert p_payload is True, (
         "pySHACL refused the SAME source triples once handed _payload's re-parsed document — "
         "parity should have repaired the lexical form via rdflib's own parser, moving the split "
         "to the transport")
 
-    r, _ = membrane._validate_rudof(g, shapes, ont)
+    r, _ = membrane._rudof_on_payload(nt_payload, shapes)
     assert r is True, "rudof refused a well-formed decimal — re-read R92 before changing this"
+
+
+def test_the_production_legs_refuse_the_forbidden_form():
+    """The membrane's ANSWER to R92 is now refusal, not divergence.
+
+    The test above pins what the bare TRANSPORT does to the forbidden literal, with the guard
+    deliberately off. This one pins what PRODUCTION does with the guard on: neither leg has an
+    `audit` parameter, both build their payload through `_payload`, and so both refuse outright
+    rather than returning a verdict that depends on which engine is installed. That is a
+    strictly stronger property than the old accidental split, and it is the one a caller gets."""
+    g = Graph()
+    n = BNode()
+    g.add((n, RDF.type, TAB.BBox))
+    g.add((n, TAB.x0, Literal(round(307.474, 2), datatype=XSD.decimal)))   # the forbidden form
+    shapes, ont = _typed_coord_shapes(), Graph()
+
+    with pytest.raises(ValueError, match="xsd:decimal"):
+        membrane._validate_pyshacl(g, shapes, ont)
+    with pytest.raises(ValueError, match="xsd:decimal"):
+        membrane._validate_rudof(g, shapes, ont)
 
 
 # ---------- the invariant, on a real compiled page ----------
@@ -210,3 +247,51 @@ def test_no_source_file_builds_an_xsd_decimal_from_a_float():
                 offenders.append(f"{os.path.relpath(path, ROOT)}:{i}: {line.strip()}")
     assert not offenders, (
         "xsd:decimal built from a Python float (R92) at:\n  " + "\n  ".join(offenders))
+
+
+# ---------- the guard: audit_literals (spec 2026-08-13-membrane-parity-design.md §4.2) --------
+
+
+def test_the_guard_refuses_a_float_valued_decimal():
+    """R92's class. `Literal(round(x, 2), datatype=XSD.decimal)` keeps a Python float as
+    .value while the lexical form is a valid xsd:decimal — pySHACL's datatype check is
+    isinstance(value, Decimal), so it refuses; rudof only ever sees the lexical form and
+    admits. Byte-parity hides this from the membrane, so the guard must catch it instead."""
+    g = Graph()
+    g.add((BNode(), TAB.x0, Literal(round(307.474, 2), datatype=XSD.decimal)))
+    with pytest.raises(ValueError, match="xsd:decimal"):
+        membrane.audit_literals(g)
+
+
+def test_the_membrane_itself_refuses_the_forbidden_form():
+    """The guard must be WIRED, not merely present. This is the assertion that fails if
+    _payload stops calling audit_literals — the direct-call test above would not notice."""
+    g = Graph()
+    g.add((BNode(), TAB.x0, Literal(round(307.474, 2), datatype=XSD.decimal)))
+    with pytest.raises(ValueError, match="xsd:decimal"):
+        membrane._payload(g, Graph())
+
+
+def test_the_guard_refuses_a_non_canonical_lexical_form():
+    """The 5e-05 class. Exponential notation is outside xsd:decimal's lexical space, so
+    rudof refuses it while rdflib's parser silently rewrites it to 0.00005 for pySHACL."""
+    g = Graph()
+    g.add((BNode(), TAB.x0, Literal(float(5e-05), datatype=XSD.decimal)))
+    with pytest.raises(ValueError, match="lexical"):
+        membrane.audit_literals(g)
+
+
+def test_the_guard_admits_a_well_formed_decimal():
+    """The converted emitter form must pass untouched — the guard is not a repair."""
+    g = Graph()
+    g.add((BNode(), TAB.x0, Literal(Decimal(str(round(307.474, 2))))))
+    membrane.audit_literals(g)          # must not raise
+
+
+def test_the_audit_escape_hatch_is_not_used_in_production():
+    """`audit=False` disables the guard. It exists for the two falsification tests and
+    nothing else; a src/ call site passing it would silently disarm the membrane."""
+    import pathlib
+    src = pathlib.Path(__file__).resolve().parents[2] / "src"
+    offenders = [p for p in src.rglob("*.py") if "audit=False" in p.read_text()]
+    assert offenders == [], f"audit=False must never appear under src/: {offenders}"

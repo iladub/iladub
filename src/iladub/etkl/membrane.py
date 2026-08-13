@@ -154,16 +154,21 @@ def _conforms_from_report(report: str) -> bool:
     return len(vals) == 1 and vals[0] == _Literal(True)
 
 
-def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
-    """rudof does NO inference of its own — the seam now supplies a SUBCLASS-ONLY closure
-    (spec 2026-08-06-subclass-only-closure-design.md), not the old full RDFS closure:
-    domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
-    is what makes the payload parseable by rudof's strict reader.
+def _rudof_on_payload(nt_payload: str, shapes_graph) -> tuple[bool, str]:
+    """Drive rudof over an ALREADY-BUILT N-Triples payload. The whole of `_validate_rudof`
+    below except the payload construction.
 
-    Takes `_payload`'s N-Triples string — bit-identical to what this leg has always been handed
-    (spec 2026-08-13 §3: only pySHACL's input changes here)."""
+    It exists as its own seam because two tests must reach rudof with a payload the membrane's
+    literal-hygiene guard forbids (`_payload(..., audit=False)` — see `_payload`'s docstring),
+    and the alternative shapes are both worse: adding an `audit` parameter to `_validate_rudof`
+    would put a guard-disarming switch on a PRODUCTION entry point, and copying these six lines
+    into the tests would let this leg's engine settings (`ShaclValidationMode.Native`, the
+    Turtle result format) drift out of step with the tests that claim to reproduce them.
+    Splitting the seam keeps one definition of "how this repo drives rudof" and leaves the
+    production entry point with no way to turn the guard off.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue — an invocation, no decision."""
     import pyrudof
-    _, nt_payload = _payload(data_graph, ont_graph)
     r = _rudof_instance(shapes_graph)
     r.reset_data()
     r.read_data(nt_payload, format=pyrudof.RDFFormat.NTriples)
@@ -173,7 +178,82 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     return _conforms_from_report(report), report
 
 
-def _payload(data_graph: Graph, ont_graph: Graph) -> tuple[Graph, str]:
+def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
+    """rudof does NO inference of its own — the seam now supplies a SUBCLASS-ONLY closure
+    (spec 2026-08-06-subclass-only-closure-design.md), not the old full RDFS closure:
+    domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
+    is what makes the payload parseable by rudof's strict reader.
+
+    Takes `_payload`'s N-Triples string — bit-identical to what this leg has always been handed
+    (spec 2026-08-13 §3: only pySHACL's input changes here). `_payload` is called with its
+    `audit` default, so this leg RAISES on a literal the guard forbids; there is deliberately
+    no parameter here that can turn that off."""
+    _, nt_payload = _payload(data_graph, ont_graph)
+    return _rudof_on_payload(nt_payload, shapes_graph)
+
+
+def audit_literals(graph: Graph) -> None:
+    """INVARIANT GUARD, not a repair — same idiom as `subclass_closure`'s literal-subject
+    filter ("an INVARIANT GUARD here, not a repair", in that function's own docstring further
+    down this file). Raises `ValueError` on the first violation and otherwise
+    does nothing; it never rewrites, coerces, or normalises a literal — a repair belongs to the
+    emitter, never to engine glue (CLAUDE.md §2).
+
+    Two invariants, licensed by spec 2026-08-13-membrane-parity-design.md §4.2 / P5 (measured:
+    17 TYPE, 0 LEXICAL hits across the 1141-test fast suite, every one in a test fixture, none
+    in a `src/` emitter; 0 violations on every corpus-marked test, 36, on real documents):
+
+    - LEXICAL — a literal's lexical form must equal what rdflib's OWN parser produces for that
+      same string under the same datatype. Catches the `5e-05` class (spec P2): exponential
+      notation is outside `xsd:decimal`'s lexical space, so rdflib's N-Triples parser silently
+      rewrites it to `0.00005` on the way back in — the guard makes that silent rewrite
+      unreachable instead of letting `_payload`'s round trip launder it.
+    - TYPE — a literal's `.value` Python type must equal the type that same reparse produces.
+      Catches R92's class: minting an `xsd:decimal` literal from a bare Python `round()` (rather
+      than `Decimal(str(round(...)))`) keeps a Python `float` as `.value` while its lexical
+      form is a valid `xsd:decimal`, so pySHACL's own `isinstance(value, Decimal)` datatype
+      check refuses it while rudof — which only ever reads the lexical form — admits it.
+
+    Both invariants are measured by actually reparsing the literal's own lexical form
+    (`Literal(str(o), datatype=o.datatype)`) rather than consulting rdflib's private datatype
+    table by IRI: the guard is then exactly as strict as `_payload`'s own N-Triples round trip
+    (`_validate_pyshacl`'s docstring), and can never drift out of step with it.
+
+    LEXICAL is checked FIRST: a lexical defect also produces a spurious type mismatch on
+    reparse (the `5e-05` literal above is float-valued too), so checking TYPE first would
+    misreport a lexical defect as a type one and hide the actual defect class from the raised
+    message.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue. A representation-invariant
+    check against rdflib's own parser — it inspects no business value, shape, or domain
+    decision, and the comparison is exact equality, never a tuned constant or tolerance.
+    """
+    from rdflib import Literal as _Literal
+
+    for s, p, o in graph:
+        if not isinstance(o, _Literal) or o.datatype is None:
+            continue
+        lexical = str(o)
+        reparsed = _Literal(lexical, datatype=o.datatype)
+        qname = graph.namespace_manager.qname(o.datatype)
+        if str(reparsed) != lexical:
+            raise ValueError(
+                f"non-canonical lexical form on {p} at {s!r}: {lexical!r} is typed {qname} but "
+                f"rdflib's own parser round-trips it to {str(reparsed)!r} — the transport would "
+                f"silently rewrite this literal (spec 2026-08-13-membrane-parity-design.md "
+                f"§4.2, LEXICAL)")
+        if type(o.value) is not type(reparsed.value):
+            raise ValueError(
+                f"float-valued {qname} on {p} at {s!r}: .value is a Python "
+                f"{type(o.value).__name__}, not a {type(reparsed.value).__name__} — a validator "
+                f"whose datatype check is isinstance(value, {type(reparsed.value).__name__}) "
+                f"refuses this literal while one reading only the lexical form admits it (R92, "
+                f"spec 2026-08-13-membrane-parity-design.md §4.2, TYPE). Use "
+                f"Decimal(str(round(x, n))) rather than round(x, n) when minting an {qname} "
+                f"literal.")
+
+
+def _payload(data_graph: Graph, ont_graph: Graph, *, audit: bool = True) -> tuple[Graph, str]:
     """The ONE artifact both engines validate (spec 2026-08-13 §3, closing R94's asymmetry).
 
     `pyrudof.read_data` takes a string; rudof can never be handed a live rdflib `Graph` — so
@@ -191,12 +271,23 @@ def _payload(data_graph: Graph, ont_graph: Graph) -> tuple[Graph, str]:
     Graph pySHACL validates — so pySHACL's input is now, byte-for-byte, the same document
     rudof's input has always been.
 
+    `audit` runs `audit_literals` (spec §4.2) over the closure before serializing — the literal-
+    hygiene guard that parity itself blinded (byte-parity makes both legs consume the SAME
+    repaired document, so the old accidental pySHACL-vs-rudof split on a float-valued
+    `xsd:decimal` disappeared along with the divergence it happened to catch). Defaults to ON;
+    turning `audit` off is a HAZARD, not a preference, and is fenced by
+    `test_the_audit_escape_hatch_is_not_used_in_production` (tests/etkl/test_decimal_typing.py)
+    to exactly the two tests that must construct the forbidden form on purpose to falsify the
+    guard or pin the transport it guards against — never a `src/` call site.
+
     Gate classification (CLAUDE.md §8): PROCEDURAL engine glue. A validator must be handed
     bytes from somewhere, and deciding how those bytes are produced and shared carries no
     domain decision — nothing here inspects a value, a shape, or a threshold. No tuned
     constant or tolerance appears.
     """
     expanded = subclass_closure(data_graph, ont_graph)
+    if audit:
+        audit_literals(expanded)
     nt_payload = expanded.serialize(format="nt")
     return Graph().parse(data=nt_payload, format="nt"), nt_payload
 
