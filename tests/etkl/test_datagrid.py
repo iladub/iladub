@@ -750,9 +750,13 @@ def _dec_membrane(g):
     `membrane._validate_pyshacl` exactly (spec 2026-08-13-membrane-parity-design.md §3: since
     parity, that function validates `_payload`'s re-parsed graph, not `subclass_closure`'s
     live one, and this helper must track it or the claim is false). Called directly rather
-    than through `membrane.validate` because these fixtures mint blank-node decision holons
-    and rudof cannot evaluate dec-shapes.ttl's sh:sparql constraint on a blank-node focus
-    (membrane.validate's own docstring)."""
+    than through `membrane.validate` because this helper pins pySHACL's verdict on a shape
+    SUBSET (dec-shapes.ttl alone), not the process engine's verdict on the membrane's full set.
+
+    That bypass used to be FORCED: these fixtures mint blank-node decision holons and rudof
+    raised rather than answering on dec-shapes.ttl's sh:sparql constraint with a blank-node
+    focus. It no longer is — `membrane._payload` skolemizes (spec
+    2026-08-13-membrane-parity-design.md §4.3, closing R88) — so the bypass is now a choice."""
     from rdflib import Graph
     from pyshacl import validate
     from iladub.etkl import membrane

@@ -11,6 +11,7 @@ and the invocation carries no domain decision.
 from __future__ import annotations
 
 import os
+import re
 
 from rdflib import Graph, RDF
 
@@ -56,20 +57,37 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph,
     advanced features on. Callers must not depend on the report's exact wording — it differs by
     engine; only its content (shape names, focus nodes) is stable.
 
-    `engine` is a CAPABILITY PIN, not a preference, and it is the one thing that outranks
-    `ILADUB_MEMBRANE`. MEASURED 2026-08-10: rudof cannot evaluate an `sh:sparql` constraint
-    whose focus node is a blank node — it binds `$this` through `VALUES $this { _:b… }`,
-    which is illegal SPARQL, and raises `ValueError: … expected UNDEF` instead of returning
-    a verdict. Core constraints are unaffected on blank nodes; both
-    `ShaclValidationMode.Native` and `.Sparql` raise it. `dec-shapes.ttl:23` and
-    `iladub-shapes.ttl:67` are exactly such constraints, and the promotion emitters mint
-    blank-node subjects (`ground.py:90,145`, `promote.py:67,114,158`, `splitkey.py:125`), so
-    a caller validating those shapes MUST pin pySHACL or the membrane throws.
+    `engine` NAMES THE ENGINE THIS CALL SITE WANTS, and it outranks `ILADUB_MEMBRANE`.
+    Its reason changed on 2026-08-13 and the difference matters to anyone reading this:
 
-    The env var still selects among engines that CAN evaluate a shape set; it cannot conjure
-    a capability rudof lacks. Forcing `rudof` at a pinned call therefore RAISES rather than
-    quietly running pySHACL — an operator who thinks they forced the new engine must never
-    be handed the old one's verdict unannounced (the same rule `engine_name` already keeps).
+    HISTORY, no longer justification. Until this date `engine` was a CAPABILITY PIN, and
+    `compile._DEC_ENGINE = "pyshacl"` used it. MEASURED 2026-08-10: rudof cannot evaluate an
+    `sh:sparql` constraint whose focus node is a blank node — it binds `$this` through
+    `VALUES $this { _:b… }`, which is illegal SPARQL, and raises `ValueError: … expected
+    UNDEF` instead of returning a verdict. `dec-shapes.ttl:23` and `iladub-shapes.ttl:67`
+    are exactly such constraints, and the promotion emitters mint blank-node subjects
+    (`ground.py:90,145`, `promote.py:67,114,158`, `splitkey.py:125`). `_payload` now
+    SKOLEMIZES, so the membrane can no longer hand rudof a blank-node focus node at all and
+    the pin is gone (spec 2026-08-13-membrane-parity-design.md §4.3, closing R88).
+
+    **rudof did NOT gain the capability — we routed around it.** That upstream incapacity is
+    still pinned, directly against `pyrudof` on an un-skolemized serialization, by
+    `tests/etkl/test_membrane_equiv.py::test_rudof_itself_still_cannot_evaluate_sparql_on_a_blank_node_focus`.
+    It is the standing justification for the skolemize step; when it starts failing, the step
+    can be reconsidered.
+
+    What survives is the LOUDNESS rule, and it is unchanged: an `ILADUB_MEMBRANE` that
+    conflicts with an explicit `engine=` RAISES rather than quietly running the other engine.
+    An operator who thinks they forced one engine must never be handed the other's verdict
+    unannounced (the same rule `engine_name` already keeps). No caller in `src/` passes
+    `engine` any more; it remains for tests and for an operator's one-off differential.
+
+    The report text is DE-SKOLEMIZED here, at the public seam, and deliberately NOT inside
+    the leg functions: a skolem IRI is an artifact of this module's transport and must never
+    reach the human who reads a refusal, but `tests/etkl/test_membrane_equiv.py`'s differential
+    compares one engine's raw results graph against the other's raw report, and cleaning only
+    the side that goes through a leg function would manufacture a difference that is ours, not
+    the engines'.
     """
     if engine is None:
         engine = engine_name()
@@ -80,12 +98,14 @@ def validate(data_graph: Graph, shapes_graph: Graph, ont_graph: Graph,
         forced = os.environ.get("ILADUB_MEMBRANE")
         if forced and forced != engine:
             raise ValueError(
-                f"ILADUB_MEMBRANE={forced!r} conflicts with a capability pin of {engine!r} on "
-                f"this shape set. The pin is not a preference: see this function's docstring "
-                f"for the measured incapacity it works around.")
+                f"ILADUB_MEMBRANE={forced!r} conflicts with an explicit engine={engine!r} at "
+                f"this call site. Resolving it silently would hand an operator who forced one "
+                f"engine the other engine's verdict unannounced.")
     if engine == "rudof":
-        return _validate_rudof(data_graph, shapes_graph, ont_graph)
-    return _validate_pyshacl(data_graph, shapes_graph, ont_graph)
+        conforms, report = _validate_rudof(data_graph, shapes_graph, ont_graph)
+    else:
+        conforms, report = _validate_pyshacl(data_graph, shapes_graph, ont_graph)
+    return conforms, _deskolemize(report)
 
 
 def _validate_pyshacl(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
@@ -185,11 +205,11 @@ def _validate_rudof(data_graph, shapes_graph, ont_graph) -> tuple[bool, str]:
     domain/range typing is gone by design (the R19 mechanism), and its literal-subject filter
     is what makes the payload parseable by rudof's strict reader.
 
-    Takes `_payload`'s N-Triples string — bit-identical to what this leg has always been handed
-    (spec 2026-08-13 §3: only pySHACL's input changes here). `_payload` is called with its
-    `audit` default, so this leg RAISES on a literal the guard forbids; there is deliberately
-    no parameter here that can turn that off."""
-    _, nt_payload = _payload(data_graph, ont_graph)
+    Takes `_payload_nt`'s N-Triples string — the same document `_payload` hands pySHACL, minus
+    the re-parse into a `Graph` this leg has no use for (`pyrudof.read_data` takes a string).
+    `_payload_nt` is called with its `audit` default, so this leg RAISES on a literal the guard
+    forbids; there is deliberately no parameter here that can turn that off."""
+    nt_payload = _payload_nt(data_graph, ont_graph)
     return _rudof_on_payload(nt_payload, shapes_graph)
 
 
@@ -254,6 +274,80 @@ def audit_literals(graph: Graph) -> None:
                 f"literal.")
 
 
+# The skolem IRI space this module mints, and the ONLY definition of it: `_payload_nt` builds
+# skolem IRIs from these two strings and `_deskolemize` strips exactly the same prefix, so the
+# two can never drift apart. They are passed EXPLICITLY rather than taking rdflib's defaults
+# (`https://rdflib.github.io/.well-known/genid/rdflib/N…`, MEASURED on rdflib 7.6.0) because a
+# de-skolemizer keyed on another library's private default silently stops matching the day that
+# default moves — and a silent miss here leaks a skolem IRI into a human-read refusal.
+#
+# `.well-known/genid/` is RDF 1.1 §3.5's skolemization form; the authority is the iladub
+# namespace root because these IRIs are ours. Gate note (CLAUDE.md §8): an IRI namespace, not a
+# tuned constant — no verdict, threshold or tolerance depends on its value.
+_SKOLEM_AUTHORITY = "https://w3id.org/iladub/"
+_SKOLEM_BASEPATH = ".well-known/genid/membrane/"
+_SKOLEM_PREFIX = _SKOLEM_AUTHORITY + _SKOLEM_BASEPATH
+
+# The label class is whatever an N-Triples/Turtle IRI may carry: everything except the
+# delimiters RDF 1.1 excludes from IRIREF. The optional angle brackets let one substitution
+# handle rudof's Turtle report (`<…>`) and pySHACL's prose report alike.
+_SKOLEM_IRI = re.compile("<?" + re.escape(_SKOLEM_PREFIX) + r'([^\s<>"{}|\\^`]+)>?')
+
+
+def _deskolemize(report: str) -> str:
+    """Put the blank-node labels back into REPORT TEXT. Never applied to data.
+
+    Skolemization (see `_payload_nt`) is a transport mechanism: it exists so rudof is never handed
+    a blank-node focus node. A human reading a refusal must not have to know that. MEASURED
+    (spec §2 P3): before this, `Focus Node: <https://rdflib.github.io/.well-known/genid/rdflib/
+    Nbb35…>` is what a reader got.
+
+    It runs on the report STRING, not on a parsed results graph, because the two engines' reports
+    are different kinds of document — rudof's is Turtle, pySHACL's is prose — and only the text
+    is common to both. It runs AFTER `_conforms_from_report` has read the verdict, never before:
+    a de-skolemized label is a blank-node label again, and an unusual label could make the Turtle
+    unparseable, which `_conforms_from_report` reads (correctly, for its own purpose) as
+    non-conformance. The verdict must never depend on presentation.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL engine glue — the inverse of a serialization
+    step this module performs itself, over its own IRI space. No domain decision, no tolerance.
+    """
+    return _SKOLEM_IRI.sub(lambda m: "_:" + m.group(1), report)
+
+
+def _payload_nt(data_graph: Graph, ont_graph: Graph, *, audit: bool = True) -> str:
+    """THE artifact — the N-Triples document both engines validate. See `_payload`.
+
+    Split out from `_payload` so the rudof leg can stop paying for a `Graph` it never uses:
+    `pyrudof.read_data` takes this string, and re-parsing it into an rdflib `Graph` only to
+    discard it is pure waste. MEASURED 2026-08-13 on the real 8.6k-triple stem page
+    (corpus/ag-trade/graincorp-stem-2026-07-31.pdf page 0, 9,286-triple closure, 1.34 MB of
+    N-Triples): the re-parse alone is 170 ms, and end to end `_payload` is 339 ms against this
+    function's 192 ms — 148 ms per call the rudof leg no longer pays, against a 761 ms leg.
+    rudof is the DEFAULT engine wherever `pyrudof` is installed and `tiling.region_tiles` calls
+    the membrane once per candidate region, so that was the most-exercised path in the repo
+    paying for nothing.
+    """
+    expanded = subclass_closure(data_graph, ont_graph)
+    if audit:
+        audit_literals(expanded)
+    # SKOLEMIZE — the unpin (spec 2026-08-13 §4.3, closing R88). AFTER `audit_literals`, so the
+    # guard still sees the graph exactly as the emitters built it, and BEFORE serialization,
+    # because the point is that no `_:b` label ever reaches an engine.
+    #
+    # WHY: rudof raises rather than answering on an `sh:sparql` constraint whose focus node is a
+    # blank node (it emits `VALUES $this { _:b… }`, which is illegal SPARQL). Skolemization
+    # removes every blank node, so the question cannot arise. MEASURED verdict-neutral for
+    # pySHACL in both directions and unblocking for rudof in both (spec §2 P3, four independent
+    # confirmations), and no shape can tell the difference: no shape file uses `sh:nodeKind` and
+    # no `sh:sparql` body tests `isBlank`/`isIRI`/`isURI`/`BNODE` (spec §2 P4).
+    #
+    # It is a transport concern only. The skolemized graph is a copy that dies with this call,
+    # and `_deskolemize` takes the labels back out of the report text at the public seam.
+    return expanded.skolemize(
+        authority=_SKOLEM_AUTHORITY, basepath=_SKOLEM_BASEPATH).serialize(format="nt")
+
+
 def _payload(data_graph: Graph, ont_graph: Graph, *, audit: bool = True) -> tuple[Graph, str]:
     """The ONE artifact both engines validate (spec 2026-08-13 §3, closing R94's asymmetry).
 
@@ -281,15 +375,17 @@ def _payload(data_graph: Graph, ont_graph: Graph, *, audit: bool = True) -> tupl
     to exactly the two tests that must construct the forbidden form on purpose to falsify the
     guard or pin the transport it guards against — never a `src/` call site.
 
+    The document itself is built by `_payload_nt`; this function adds the re-parse pySHACL needs
+    (it takes a `Graph`, never a string). The rudof leg calls `_payload_nt` directly — same
+    bytes, no wasted parse. **Both engines still receive the same document**; only pySHACL pays
+    to turn it back into a graph, because only pySHACL can be handed one.
+
     Gate classification (CLAUDE.md §8): PROCEDURAL engine glue. A validator must be handed
     bytes from somewhere, and deciding how those bytes are produced and shared carries no
     domain decision — nothing here inspects a value, a shape, or a threshold. No tuned
     constant or tolerance appears.
     """
-    expanded = subclass_closure(data_graph, ont_graph)
-    if audit:
-        audit_literals(expanded)
-    nt_payload = expanded.serialize(format="nt")
+    nt_payload = _payload_nt(data_graph, ont_graph, audit=audit)
     return Graph().parse(data=nt_payload, format="nt"), nt_payload
 
 
