@@ -14,7 +14,7 @@ ledger.
 **Raising a residue is visible; closing one is not.** A register that only counts what it opens
 reads as pure degradation — R92 sounds like ninety-two defects and nothing repaired. So every new
 row records, in parentheses after its number, **the state of the register at the moment it was
-raised**: `| R95 (14/85 closed) |` means that when R95 went in, 14 of the 85 rows then present
+raised**: `| R97 (17/87 closed) |` means that when R97 went in, 17 of the 87 rows then present
 were closed.
 
 The parenthetical is a **snapshot and is never updated afterwards**. That is the point — read
