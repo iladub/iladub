@@ -42,3 +42,10 @@ internal/
 
 # Real third-party document corpus — fetched by scripts/fetch_corpus.py, never committed
 corpus/
+
+# Third-party agent skills — installed at USER scope (~/.claude/skills), never vendored here.
+# `npx skills add` defaults to project scope and drops all three of these into the repo;
+# .claude/skills/baml-core and .agents/skills/baml-core are ours and stay tracked.
+.agents/skills/show-me/
+.claude/skills/show-me
+skills-lock.json
