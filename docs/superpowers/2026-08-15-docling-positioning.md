@@ -135,6 +135,40 @@ State it now, while it is cheap:
   so their attribution reasoning is not infallible.
 - **The market judgement in §6 is opinion.** It carries no evidence at all.
 
+## 7b. MEASURED 2026-08-15, same day — §5(a) was run, and it refutes the premise
+
+`docling 2.120.1` / `docling-core 2.91.0`, `TableFormerMode.ACCURATE`, installed in a scratch venv.
+Documents chosen by measuring iladub's own output first: **only `graincorp-stem` produces any
+`tab:parentHeader` at all (55 triples), and that tree is a row-group tree, not a column-header tree.
+Every other corpus document, including the two with visible merged column headers, yields ZERO.**
+
+| case | docling | iladub |
+| --- | --- | --- |
+| apple p1 merged headers | **correct** — `col_span=2` on both parents, correct sub-offsets, `row_section` | page score **0.117**, 151/171 tokens escalated, 0 `parentHeader` |
+| bfs p6 T1 spans | **correct** 8-wide + 3-wide (labels contaminated) | page score **0.019**, 0 `parentHeader` |
+| bfs p6 T2 | **structurally invalid** — 3 slots claimed twice, silently | would refuse via `tab:NoOverlapShape` |
+| graincorp ruled 17-col | 3 unlinked tables, **16/22/18** cols, 59 cells fusing two rows | **0.9655**, 17/17 labels, one 3-page chain |
+| cross-page continuation | none — no linkage of any kind | 2 `continuesTable`, 34 `continuesColumn` |
+| header tree | none — booleans + offsets only, no API | the tree, where it builds one |
+
+**`docs/loops/2026-07-05-table-holon-loop.md:5` is FALSE for merged cells and the direction is
+reversed.** On the two documents that actually contain merged column headers, docling recovered the
+spans and iladub asserted no hierarchy at all. It survives for cross-page continuation, cleanly.
+
+**§7's line "`TableCell` turns out not to carry what layer 1 needs" is REFUTED for that case.**
+`TableCell` carries what layer 1 needs on merged cells and header geometry. What it does not carry
+is the **tree** (~15 lines of interval containment; `headers.py:458` already is it), the
+**continuation**, and any **refusal** — no confidence field, and it shipped an overlapping grid
+without complaint.
+
+**Revised call: hybrid, not replacement.** docling as the default grid; iladub's `_rule_boundaries`
+(`grid.py:39`) as an override where the author drew rules; and a **grid admission gate** replacing
+the round-trip oracle, because docling will hand over a wrong grid silently. ~1,000 of the etkl
+layer's 10,611 LOC is duplicated — and currently worse than IBM's on unruled tables, better on ruled.
+
+**What this does NOT change:** §5(b), (c), (d) stand. Layers 3–4 are untouched by any of it, and the
+BFS-T2 invalid grid is the strongest argument yet for admission control.
+
 ## 8. The next concrete action
 
 Run §5(a): take three corpus documents that exercise the hard cases — merged cells, hierarchical
