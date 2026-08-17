@@ -29,7 +29,7 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-17: 91 rows, 18 closed.** (Ten numbers between R1 and R96 were never issued as
+**As of 2026-08-17: 94 rows, 18 closed.** (Ten numbers between R1 and R96 were never issued as
 rows; the denominator is rows that exist, not the highest number.)
 
 | # | Residue | Measured | Why deferred | What would close it |
@@ -148,3 +148,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R99 | open | `iladub:NoLeakShape` can never fire at compile — 11 focus nodes, unreachable term |
 | R100 | open | `dec:EscalationShape` live at document scope, idle at page scope; registry cannot say so |
 | R101 | open | A green CI tick can cover less than it looks — a module-level skip guard hides a whole module behind one skip line |
+| R102 | open | 316 of 769 decision holons are never validated — both `_validate` call sites are gated on tab-facts |
+| R103 | open | `tab-datagrid.ttl` is in no membrane and no probe; its domain/range rules are unchecked |
+| R104 | open | A `dec`-leg SHACL refusal is reported as *"failed tab: SHACL"* |
