@@ -361,3 +361,58 @@ def denormalized_report_pdf(path: str) -> dict:
             c.drawCentredString(x, y, v)
     c.save()
     return {"pivot": "Region", "stub": "Year", "n_base_facts": 8}
+
+
+def report_between_prose_pdf(path: str) -> dict:
+    """A denormalized report sandwiched between two prose sections — the everyday shape of a
+    'so-called unstructured' document. Prose intro, then a report with 'Region' pivoted into the
+    header (North/South/East/West) over a 'Year' stub, then a prose closing. ET(K)L segments the
+    report out of the prose, recovers the pivoted Region dimension, and inverts to tidy
+    (Year, Region, value) 1NF base facts."""
+    leaves = [150.0, 250.0, 350.0, 450.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+
+    # --- prose intro (a NON_TABLE band) ---
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(60.0, PAGE_H - 60.0, "Q4 Regional Performance Memo")
+    c.setFont("Helvetica", 10)
+    for i, line in enumerate([
+        "Prepared for the review committee. The figures below summarise net sales by",
+        "region for the two most recent fiscal years. Commentary follows the table.",
+    ]):
+        c.drawString(60.0, PAGE_H - 82.0 - i * 14.0, line)
+
+    # --- the denormalized report (a big vertical gap above it makes it its own band) ---
+    top = PAGE_H - 150.0
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString((leaves[0] + leaves[3]) / 2.0, top, "Region")
+    for x, n in zip(leaves, ["North", "South", "East", "West"]):
+        c.drawCentredString(x, top - 14.0, n)
+    c.drawString(60.0, top - 14.0, "Year")
+    c.setFont("Courier", 10)
+    for i, (yr, vals) in enumerate([("2023", ["10", "20", "30", "40"]),
+                                    ("2024", ["12", "22", "33", "44"])]):
+        y = top - 32.0 - i * 16.0
+        c.drawString(60.0, y, yr)
+        for x, v in zip(leaves, vals):
+            c.drawCentredString(x, y, v)
+
+    # --- prose closing (another NON_TABLE band, separated by a big gap) ---
+    c.setFont("Helvetica", 10)
+    for i, line in enumerate([
+        "Growth was broad-based year over year, led by the West region. No one-off items",
+        "affected the period. Full detail is retained in the source ledger.",
+    ]):
+        c.drawString(60.0, top - 110.0 - i * 14.0, line)
+    c.save()
+    return {"pivot": "Region", "stub": "Year", "n_base_facts": 8,
+            "prose_bands": 2, "expected_1nf": [
+                {"Year": "2023", "Region": "North", "value": 10.0},
+                {"Year": "2023", "Region": "South", "value": 20.0},
+                {"Year": "2023", "Region": "East", "value": 30.0},
+                {"Year": "2023", "Region": "West", "value": 40.0},
+                {"Year": "2024", "Region": "North", "value": 12.0},
+                {"Year": "2024", "Region": "South", "value": 22.0},
+                {"Year": "2024", "Region": "East", "value": 33.0},
+                {"Year": "2024", "Region": "West", "value": 44.0},
+            ]}
