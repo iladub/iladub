@@ -1,4 +1,6 @@
 @prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix risk:   <https://w3id.org/iladub/risk#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
@@ -26,7 +28,7 @@ every extraction applies a contract; every source declares its format."""@en ;
     owl:versionInfo "0.2.0" ;
     vann:preferredNamespacePrefix "etkl" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/etkl#" ;
-    rdfs:seeAlso <https://w3id.org/iladub/dec> , <https://w3id.org/iladub> .
+    rdfs:seeAlso <https://w3id.org/iladub/dec> , <https://w3id.org/iladub/risk> , <https://w3id.org/iladub> .
 
 #################################################################
 #  Core classes
@@ -159,3 +161,12 @@ etkl:triggerConcept a owl:ObjectProperty ;
 etkl:bindsElement a owl:ObjectProperty ;
     rdfs:label "binds element"@en ; rdfs:domain etkl:ResourceRule ;
     rdfs:comment "The element/property on the output resource that carries the trigger concept's code."@en .
+
+#################################################################
+#  Reading autonomy — the scope every region escalation exceeds
+#################################################################
+
+etkl:readerScope a dec:Scope ;
+    rdfs:label "reader scope"@en ;
+    dec:maxSeverity risk:Watch ;
+    rdfs:comment "The autonomy scope of the reader: what a compiler reading a document may resolve on its own. Its ceiling is risk:Watch — a reader may note, never adjudicate — so every region it could not read realizes a severity above its own autonomy and must be escalated to a human. ONE severity for every region escalation: 'beyond local autonomy' is what escalation means, so there is no per-case judgement and no tuned constant here. Per-reason severity stays addable later as pure vocabulary data. The ordinal scale itself is risk.ttl's to own and is never restated here."@en .
