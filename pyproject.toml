@@ -46,16 +46,20 @@ baml = [
 etkl = [
     "pdfplumber>=0.11",
     "numpy>=1.26",
+    # The L of ET(K)L. Export is part of the pipeline, not showcase decoration, so it
+    # lives here and not in `demo` — CI installs `etkl` and would otherwise skip
+    # tests/test_zero_etl_export.py on importorskip while still reporting green.
+    "pandas>=2.0",      # the zero-ETL export leg: 1NF base facts -> dataframe
+    "pyarrow>=15",      # ... -> parquet, round-tripped in tests/test_zero_etl_export.py
 ]
 demo = [
-    # ET(K)L showcase notebook (no LLM/baml dependency)
+    # ET(K)L showcase notebook (no LLM/baml dependency). Assumes `etkl` alongside it —
+    # the notebook already reads PDFs through pdfplumber.
     "matplotlib>=3.8",
     "pypdfium2>=4",
     "reportlab>=4.0",   # generate the synthetic demo PDFs live
     "ipykernel>=6",
     "jupyterlab>=4",
-    "pandas>=2.0",      # the zero-ETL export leg: 1NF base facts -> dataframe
-    "pyarrow>=15",      # ... -> parquet, round-tripped in tests/test_zero_etl_export.py
 ]
 ocr = [
     "rapidocr>=1.4",
