@@ -1,5 +1,7 @@
 # Handoff — R87, the routing is ruled; the plan is not written
 
+**SUPERSEDED 2026-08-17 by `540e608` (PR #105)** — the plan this file asks for was written (`docs/superpowers/plans/2026-08-15-escalation-is-a-decision.md`) and all six of its tasks are merged; the §3 rulings are now recorded in the task commits. Kept as the record of what was known on 2026-08-15.
+
 **Written:** 2026-08-15 by the session asked to rule on §3.2b and then write the plan.
 **Branch:** `loop-escalation-is-a-decision`, HEAD `b5606d4`, tree clean.
 **Supersedes:** `2026-08-15-r87-handoff.md` §3.2b's *"nobody has ruled on this"* and its §5 next action.

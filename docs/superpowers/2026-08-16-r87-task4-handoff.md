@@ -1,5 +1,7 @@
 # R87 — handoff into Task 4
 
+**SUPERSEDED 2026-08-17 by `540e608` (PR #105)** — Tasks 4–6 are finished and merged; the work this file hands off is done. Kept as the record of what was known on 2026-08-16.
+
 **Date:** 2026-08-16
 **Branch:** `loop-escalation-is-a-decision`, HEAD `262dd2e`, tree clean
 

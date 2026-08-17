@@ -1,5 +1,7 @@
 # R87 — handoff into Task 5
 
+**SUPERSEDED 2026-08-17 by `540e608` (PR #105)** — Tasks 5 and 6 are finished and merged (`3c28458`, `c7c08ec`); criterion 2 shipped as TERM REACHABILITY, not as this file's reading of the plan. Kept as the record of what was known on 2026-08-16.
+
 **Date:** 2026-08-16
 **Branch:** `loop-escalation-is-a-decision`, HEAD `0074144`, tree clean
 

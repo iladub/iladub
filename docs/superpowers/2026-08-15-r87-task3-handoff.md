@@ -1,5 +1,7 @@
 # R87 — handoff into Task 3
 
+**SUPERSEDED 2026-08-17 by `540e608` (PR #105)** — Tasks 3–6 all shipped; Task 3's batteries, which this file says have not run, ran at `262dd2e`. Kept as the record of what was known on 2026-08-15.
+
 **Date:** 2026-08-15
 **Branch:** `loop-escalation-is-a-decision`, HEAD `d2c9b74`, tree clean
 
