@@ -1,5 +1,19 @@
 # Coverage is not liveness — the R97–R104 loop
 
+> **SUPERSEDED IN SCOPE, 2026-08-17 — do not write a plan from this file.**
+> An adversarial review returned 16 findings, 6 blocking, and the verdict *not fit to write a
+> plan from*. The maintainer took the split. **Read
+> [`../2026-08-17-loop-split-decision.md`](../2026-08-17-loop-split-decision.md) first**: it
+> assigns every finding to one of three loops and lists the corrections this file needs before
+> any of its text is reused.
+>
+> What still stands: the measurements (§1.1), the §4.1 named seam (reviewer-confirmed), oracles
+> O3 and O4, and the §5 R101 findings. What is **wrong**: §4.1's cost premise (the 316 are ons
+> and bfs, which *do* open the page gate), §4.3's "both membranes" promise (§7.9 excludes the
+> grounding leg), §3.3's dangling "§4.1's oracle checks the reason" (no such oracle exists), and
+> §7.1's overstated claim that the phase reason cannot be pinned (it can — see the split
+> decision's O6).
+
 **Date:** 2026-08-17 · **Tree:** `main` @ `ddc45b6` · **Rows:** R97, R98, R99, R100, R101,
 R102, R103, R104
 
