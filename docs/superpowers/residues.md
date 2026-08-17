@@ -29,7 +29,7 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-13: 86 rows, 17 closed.** (Ten numbers between R1 and R96 were never issued as
+**As of 2026-08-16: 90 rows, 18 closed.** (Ten numbers between R1 and R96 were never issued as
 rows; the denominator is rows that exist, not the highest number.)
 
 | # | Residue | Measured | Why deferred | What would close it |
@@ -133,7 +133,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R84 | open | `adoption.build_ledger` counts every admitted line's tokens as asserted, whether or not any band was scoring that ink |
 | R85 | open | `transpose-coherent.rq` is quadratic in row count |
 | R86 | open | A quarantined concept mints NO decision holon, so the proposition half of the epistemics is unattributed |
-| R87 | open | `escalation-shapes.ttl` is in NO membrane |
+| R87 | closed | CLOSED 2026-08-16 — wired into `compile._DEC_SHAPE_FILES` AND furnished by `escalation-furnish.rq`; the wiring alone was measured insufficient |
 | R88 | closed | CLOSED 2026-08-13 — skolemized at the payload seam; `compile._DEC_ENGINE` deleted |
 | R89 | open | `BandRecorder.record`'s Python guard now duplicates two constraints the membrane enforces |
 | R90 | open | The bbox is dropped from every `ROUND_TRIP_FAIL` proposition |
@@ -143,3 +143,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R94 | closed | CLOSED 2026-08-13 — one N-Triples artifact, both legs; own prescribed remedy REFUTED (parser is inside the engine boundary) |
 | R95 | open | `_payload`/`_payload_nt`'s `audit=False` escape hatch is a standing hazard, fenced by a substring-scan test |
 | R96 | open | `audit_literals`'s LEXICAL half is a silent no-op if rdflib's `NORMALIZE_LITERALS` global is ever `False` |
+| R97 | open | Four wired `tab:` shapes the corpus does not exercise — 0 focus nodes each |
+| R98 | open | `tab:LicenceRefusalShape` is idle BY DESIGN; spec §3's reason for it is wrong |
+| R99 | open | `iladub:NoLeakShape` can never fire at compile — 11 focus nodes, unreachable term |
+| R100 | open | `dec:EscalationShape` live at document scope, idle at page scope; registry cannot say so |
