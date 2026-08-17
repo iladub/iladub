@@ -91,13 +91,32 @@ The DEC shape set is now 132 triples (was 120) and contains: `CandidateConceptSh
 
 ## Unverified or assumed
 
-* **No battery has completed against `0074144`.** A corpus run followed by a fast run was
-  started and was ~22 tests into the corpus leg when this was written. Both were green
-  against the PREVIOUS commit `262dd2e` (corpus 39 passed, 12m25s; fast 1169 passed / 7
-  skipped / 1 xfailed, 18m30s). `0074144` changes what EVERY validation evaluates,
-  including the page-scope one where the shape is idle by design. **Check
-  `scratchpad/corpus2.log` and `fast2.log` before starting Task 5**; if either is red that
-  is Task 4's defect and comes first.
+* **The batteries against `0074144` have RUN, and one was red. Superseding this document's
+  first version.**
+
+  | battery | commit | result |
+  | --- | --- | --- |
+  | corpus | `0074144` | **39 passed**, 12m10s (`scratchpad/corpus2.log`) |
+  | fast | `0074144` | **1 failed**, 1168 passed / 7 skipped / 1 xfailed, 18m16s (`scratchpad/fast2.log`) |
+
+  The failure was `tests/etkl/test_compile_membrane_shapes.py::test_the_membrane_carries_-
+  every_shape_file_in_its_leg`, which pins `_DEC_SHAPE_FILES` by EXACT equality so that no
+  shape file can enter or leave a membrane silently. Task 4 added one and did not update
+  the pin. **The test was right and Task 4 was incomplete.** Fixed at `d278a6f`, where the
+  update is itself falsified (remove the file from the membrane again and the test fails at
+  the same line, so the pin was not widened into a rubber stamp). The file's own four tests
+  pass.
+
+  **Why the miss is worth knowing about:** Task 4 was committed BEFORE its fast suite
+  finished. The corpus battery and the O1/O3 oracles were all green, but those answer *"does
+  the shape work"* — a different question from *"did anything else depend on the shape
+  set"*. Only the fast suite asks the second one, and only it had an answer.
+
+* **NO COMPLETE FAST-SUITE RUN EXISTS AGAINST `d278a6f`.** A re-run was started and killed
+  at ~58% with no failures up to that point (`scratchpad/fast3.log`). The one test that was
+  red has been run directly and passes (4 passed), but that is not the same claim as a green
+  suite. **Re-run `python3 -m pytest -m "not corpus" -q` first.** The corpus battery does
+  not need re-running: `d278a6f` touches one test file and no source.
 * **The O3 evidence lives only in the session scratchpad** (`o3-before.md`,
   `o3-before-snapshot.json`, `o3-after.json`, `o3_probe.py`, `o1_oracle.py`). It is
   referenced by the Task 4 commit message but not committed. If Task 6 needs to reproduce
@@ -120,8 +139,14 @@ The DEC shape set is now 132 triples (was 120) and contains: `CandidateConceptSh
 
 ## The next concrete action
 
-Read `scratchpad/corpus2.log` and `scratchpad/fast2.log`. If both are green, begin Task 5
-by writing criterion 2 and MEASURING it against the numbers in decision 3 above — a
-criterion that reports `dec:EscalationShape` idle is wrong. Then decide the page-leg /
-document-leg question in decision 2 before seeding a single row, because it determines
-whether a registry row is keyed by shape or by (shape, leg).
+Run the fast suite to completion against `d278a6f`:
+
+```
+./.venv/bin/python -m pytest -m "not corpus" -q
+```
+
+Expect 1169 passed / 7 skipped / 1 xfailed (the count at `262dd2e`; `d278a6f` adds no
+test). If it is green, begin Task 5 by writing criterion 2 and MEASURING it against the
+numbers in decision 3 above — a criterion that reports `dec:EscalationShape` idle is wrong.
+Then decide the page-leg / document-leg question in decision 2 **before seeding a single
+row**, because it determines whether a registry row is keyed by shape or by (shape, leg).
