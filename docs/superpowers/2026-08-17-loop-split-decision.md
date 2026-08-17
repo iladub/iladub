@@ -59,6 +59,26 @@ the loop that owns it, below.
 - **D16.** O1's falsification may *error* rather than *fail* — a task report must distinguish
   "guard failed" from "compile raised."
 
+**Amendments from the empirical review (2026-08-17), all Loop 1 material:**
+
+- **E1 — `16 of 27 pages` is WRONG, in R102's row itself.** Measured: **14** pages have the page
+  gate FALSE, and only **13** carry holons no membrane sees — apple p1's 37 *are* validated at
+  the document leg. The claim also encodes a false inference (*gate FALSE ⇒ unseen*) that its own
+  example refutes. **The canonical register carries this error; fix the row and the spec
+  together.** The 316 headline is unaffected and cross-checks exactly (113 + 203).
+- **E2 — D11 above is itself incomplete, and its risk is measured away.** **Three** documents
+  never open the document gate, not two (`graincorp-capacity` too). And **which gate is ungated
+  is load-bearing and unstated**: ungating the *document* gate alone covers all 316; ungating the
+  *page* gate adds 14 more page-leg validations. Loop 1's spec must say which.
+  **The "missing branch" is no longer unplanned** — measured at HEAD, both legs conform on all
+  three never-gated documents at ~1.4 s each (~4 s total). Ungating does **not** turn the corpus
+  red. The seam stays a design requirement; it is no longer an unquantified risk.
+- **E3 — R104 is six sites, not two.** Also `tests/etkl/test_compile_membrane_shapes.py:35,94,122,143`
+  (three unpack a 2-tuple) and `tests/etkl/test_membrane.py:92`, which pins
+  `inspect.getsource(C._validate)`. Re-scope the "~1 hour".
+- **E4 — for the register-honesty pass:** `residues.md:6` still says a closing loop *"deletes its
+  row"*, which CLAUDE.md explicitly reverses.
+
 **What survives review untouched and should be reused verbatim:** the spec's §4.1 named seam
 (*MEASURE which shape sets each gate actually guards at `compile.py:453-465`; the comment at
 `:457-459` argues for the combined report and that argument must be answered, not bypassed*).
@@ -128,22 +148,23 @@ Prohibitions carried unchanged from R101's row: do **not** add `demo` to the CI 
   and R103 were owed the same candour the superseded §4.6 gave R104.
 - **Tier 0 as a separate action.** Superseded by this decision; it is Loop 3's opening fact.
 - **R61.** Still deferred by maintainer decision until R103's count exists (Loop 1).
-- **The empirical review NEVER RAN.** A second reviewer was dispatched to check every `file:line`
-  citation and every number; it **died on a transient API error (529) before producing any
-  report**, having got as far as starting to reproduce M-A. There is nothing to recover — **it
-  must be re-run from scratch.** This is not a nicety: D11 was a factual error found *incidentally*
-  by the design reviewer, which is weak evidence that more of that class exist, and **every
-  citation in this repo's specs is exactly what CLAUDE.md plan-rule 2 exists to protect.** Re-run
-  it before planning Loop 1 — Loop 1 is the one whose citations it was checking.
+- ~~**The empirical review NEVER RAN.**~~ **DONE 2026-08-17.** The first attempt died on a
+  transient 529; the re-run completed and its findings are at
+  [`2026-08-17-empirical-review-findings.md`](2026-08-17-empirical-review-findings.md).
+  **Every measurement reproduced; ten defects were found, all in prose written from a
+  measurement.** Three change Loop 1 — see the amendments in Loop 1's section above.
 - **The pySHACL leg.** Standing since R87, still unrun.
 
 ## Next concrete action
 
-**Re-run the empirical review** (it never ran — see above), apply its findings to Loop 1's inputs,
-then write Loop 1's spec in a fresh session. Loop 1 is small enough that its spec should be
+**Write Loop 1's spec in a fresh session.** Both reviews are complete and their findings are
+assigned above; nothing needs re-measuring first. Loop 1 is small enough that its spec should be
 short — a membrane gate, an error label, a contract paragraph and a register pass.
 
-Its brief: verify every `file:line` citation and every number in
-`specs/2026-08-17-coverage-is-not-liveness-design.md` against the code itself, treating the three
-`2026-08-17-m-*` measurement documents as **under review rather than as authority** — they share
-an author with the spec.
+Take these as its inputs: this file's Loop 1 section (including amendments E1–E4), the
+[empirical findings](2026-08-17-empirical-review-findings.md), and the superseded spec's §4.1
+seam and oracles O3/O4, which both reviewers confirmed.
+
+**Fix E1 in `residues-open.md:82` as part of that work** — a wrong number in the canonical
+register is the failure the register split was built to prevent, and it should not wait for the
+loop it belongs to.
