@@ -61,7 +61,13 @@ def test_the_membrane_carries_every_shape_file_in_its_leg():
             declared = _declared_node_shapes(f)
             assert declared, f"fixture precondition: {f} declares no sh:NodeShape"
             assert not declared - present, f"{f} is not in its membrane leg"
-    assert m._DEC_SHAPE_FILES == ("dec-shapes.ttl", "iladub-shapes.ttl")
+    # `escalation-shapes.ttl` joined the DEC leg in R87 Task 4 (`0074144`). Updating this
+    # tuple is the ONLY way a shape file may enter or leave a membrane — that is what the
+    # exact-equality pin is for, and it caught this change on the fast suite before anything
+    # else did. The loop above independently confirms the file's shapes are actually IN the
+    # leg, so this line records a deliberate membrane change rather than admitting one.
+    assert m._DEC_SHAPE_FILES == ("dec-shapes.ttl", "iladub-shapes.ttl",
+                                  "escalation-shapes.ttl")
     assert not hasattr(m, "_DEC_ENGINE"), (
         "the capability pin is gone (R88): the decision leg must run on the process engine, "
         "not on a hard-coded one")

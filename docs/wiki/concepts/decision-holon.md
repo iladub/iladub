@@ -5,10 +5,12 @@ sources:
   - vocab/ontology/dec.ttl
   - vocab/shapes/dec-shapes.ttl
   - vocab/shapes/escalation-shapes.ttl
+  - vocab/queries/escalation-furnish.rq
+  - tests/etkl/test_vacuity_registry.py
   - docs/superpowers/specs/2026-06-29-apex-escalation-design.md
 related: ["[[promotion-decision]]"]
 confidence: high
-updated: 2026-08-11
+updated: 2026-08-16
 promoted_to: docs/dec.md
 ---
 
@@ -55,17 +57,56 @@ if a decision's realized severity (via `dec:constrainedBy`, ordered by
 carry `dec:escalatedTo` a higher-authority decision, unless it is itself the
 apex (whose own ceiling covers the severity, so the filter never fires).
 
+**A READING REFUSAL IS THE SAME KIND OF ACT** (R87, closed 2026-08-16). Until
+this loop, apex escalation described only the transplant/M4 track, and
+`EscalationShape` was wired into no membrane at all: it would have received
+769 focus nodes corpus-wide and bound **zero** rows, because nothing in the
+pipeline ever wrote the predicates its body joins on. It now covers the
+compiler's own reading. A region the compiler could not read is already
+recorded as a decision whose chosen option is labelled `"escalated"`;
+`vocab/queries/escalation-furnish.rq` states that decision's consequence in
+RDF — the severity it realized (`dec:constrainedBy risk:Breach`), the autonomy
+scope it exceeded (`dec:withinScope etkl:readerScope`, ceilinged at
+`risk:Watch`), and the human-addressed `dec:ExpansionRequest` it escalates to —
+and the compile membrane REFUSES the document if that consequence is missing
+or malformed. So *"I could not read this"* is no longer a log line: it is a
+decision with a severity, a scope it exceeded, and a named request addressed
+to a person.
+
+Two constraints on that, both measured rather than argued:
+
+- The derivation runs at DOCUMENT scope, never per page, because a pass-1
+  escalation can be WITHDRAWN by a later reading (`dec:supersedes`, written by
+  section repair and by datagrid adoption) and no page graph ever carries such
+  an edge. Furnishing per page raises expansion requests for matters a later
+  reading has already resolved — 4 of them on one corpus document, 5 on another.
+- The ordinals are BOUND from `risk.ttl` as query input, never restated, and
+  exactly three vocabulary triples are carried into the data graph: the closure
+  of what the shape's body reads from the terms the query itself names.
+
+`tests/etkl/test_vacuity_registry.py` is what keeps this honest, and it is the
+generalizable part. Every wired shape is measured on the corpus by two
+criteria — its focus-node count, and whether its body names a term that appears
+in no graph — and a shape idle by either must carry a registry row with a
+measured reason. **A shape that cannot refuse anything is the failure mode the
+invariants on this page are otherwise silent about**, and counting focus nodes
+alone does not see it.
+
 `dec` is deliberately built to be **portable, not permanent**: it is scoped
 as an HGA extension, authored now because — per CLAUDE.md's project-family
 description — HGA is not yet ready for strict decidability, and designed to
 be upstreamed to or replaced by an HGA equivalent later. That portability
 claim is not itself asserted inside `dec.ttl`'s own text; it is architectural
 framing carried by CLAUDE.md and repeated on the promoted site page, not a
-property this page's three cited sources encode directly.
+property this page's cited sources encode directly.
 
 **Settled vs open.** The deliberation core, timeline/process layer, events/
-lineage, and apex escalation are all shipped and SHACL-enforced by the three
-sources here. What's not evidenced by these files: `dec`'s own comment that
+lineage, and apex escalation are all shipped and SHACL-enforced by the
+sources here — apex escalation only since 2026-08-16, and only on the COMPILE
+membrane: the grounding membrane does not carry `escalation-shapes.ttl`,
+because a grounding decision's chosen option is never `"escalated"`.
+`MilestoneShape` remains idle by measurement (0 focus nodes corpus-wide) and
+is registered as such. What's not evidenced by these files: `dec`'s own comment that
 "the tool that reads decisions out of documents governs its own reading with
 the same decision model" is a design intent realized concretely by
 `iladub:PromotionDecision` (see `[[promotion-decision]]`) — the mechanism

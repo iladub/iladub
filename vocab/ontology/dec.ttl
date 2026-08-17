@@ -210,8 +210,9 @@ dec:regarding a owl:ObjectProperty ;
 #################################################################
 
 dec:escalatedTo a owl:ObjectProperty ;
-    rdfs:label "escalated to"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range dec:DecisionHolon ;
-    rdfs:comment "This decision escalated the matter to a higher-authority decision because the local decision's autonomy scope was insufficient to resolve it (authority-holarchy lineage; the vertical analog of dec:supersedes)."@en .
+    rdfs:label "escalated to"@en ; rdfs:domain dec:DecisionHolon ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( dec:DecisionHolon dec:ExpansionRequest ) ] ;
+    rdfs:comment "This decision escalated the matter to a higher authority because the local decision's autonomy scope was insufficient to resolve it (authority-holarchy lineage; the vertical analog of dec:supersedes). The higher authority is EITHER an accountable decision that already resolved it, OR — where no such decision exists yet — a dec:ExpansionRequest addressed to one, which is the form a reading refusal takes: the matter is named and handed up, not resolved. Widened on the precedent of dec:regarding's domain above."@en .
 
 dec:maxSeverity a owl:ObjectProperty ;
     rdfs:label "max severity"@en ; rdfs:domain dec:Scope ;

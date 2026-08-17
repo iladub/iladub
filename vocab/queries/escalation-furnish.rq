@@ -1,0 +1,96 @@
+# escalation-furnish.rq — a region the reader could not read, stated as the decision it is.
+#
+# why-escalated.rq answers "why was this region escalated?"; this answers the other half —
+# what that escalation OBLIGES. A recorded escalation verdict becomes the three predicates
+# dec:EscalationShape reads (dec:constrainedBy, dec:withinScope, dec:escalatedTo) plus the
+# human-addressed dec:ExpansionRequest it escalates to. Without this the shape has 769 focus
+# nodes and binds zero rows: it targets dec:DecisionHolon but nothing in the pipeline ever
+# wrote the severity/scope pair its body joins on (residue R87).
+#
+# GATE (CLAUDE.md §8): AXIOM, derivation form. Open world, evidence-positive, idempotent. It
+# decides nothing — the reading judgement was already made and recorded at the call site; this
+# states its consequence.
+#
+# ---------------------------------------------------------------------------------------
+# LICENCE — why a derivation may carry VOCABULARY triples into a document's data graph.
+#
+# dec:EscalationShape's sh:sparql body reads five triples, of which three are vocabulary:
+# `?scope dec:maxSeverity ?ceil`, `?sev risk:order ?so`, `?ceil risk:order ?co`. A SHACL
+# data graph that lacks them cannot satisfy the shape, so the derivation carries exactly
+# those three out with the data it furnishes.
+#
+# The licence is BOUNDED, and the boundary is what makes it a licence rather than a merge:
+#   * bounded to the triples that shape's body reads FROM THE TERMS THIS QUERY NAMES —
+#     not "the vocabulary", not risk.ttl, not every risk:Severity's ordinal;
+#   * carried inside the CONSTRUCT template, so CONSTRUCT semantics enforce the boundary for
+#     free: no escalation matched => empty output => ZERO vocabulary triples in the document.
+#
+# What this licence is NOT: permission to merge risk.ttl into a data graph (that asserts the
+# whole file unconditionally on every document, escalating or not), and not a precedent for
+# any shape that would merely find a vocabulary triple convenient. Pinned by the tests at
+# tests/etkl/test_escalation_furnish.py — T2.4 fails if the carry grows OR shrinks.
+#
+# The ordinals are BOUND from risk.ttl below, never written as literals here. That is the
+# whole difference from restating the scale in this file, and T2.3 is the property that
+# proves it: retune risk:Breach's ordinal in the vocabulary graph and the carried triple
+# follows it.
+# ---------------------------------------------------------------------------------------
+#
+# SUPERSESSION GUARD. Section repair adopts a pass-2 re-read of a band and links the two
+# verdict decisions with dec:supersedes, so a pass-1 verdict that chose "escalated" can be a
+# WITHDRAWN reading. Furnishing it would escalate to a human a matter a later reading already
+# resolved. MEASURED 2026-08-15: all 4 of cbh-stem-2026-08-03's decisions that chose
+# "escalated" carry an incoming dec:supersedes edge, which is why that document's region
+# verdicts show zero escalated. The FILTER NOT EXISTS is a HOLON-SCOPED closed-world guard
+# (?d is bound by the pattern above it, so the negation is scoped to that one decision) —
+# it selects between two PRESENT readings and never derives a fact from absence. Same
+# construct and same classification as effective-chain.rq, whose header states the rule.
+#   SITE CONSTRAINT this places on the caller: run the derivation AFTER section repair has
+#   linked its dec:supersedes edges. Run before, and the guard is vacuous.
+#   SINGLE-HOP, as in effective-chain.rq: one dec:supersedes edge is enough to withdraw a
+#   reading, so no transitive walk is needed here — a chain's every non-final link carries an
+#   incoming edge and is excluded on its own account.
+#
+# ?req is a FUNCTION of ?d (not a blank node, not minted fresh), so the derivation is a pure
+# function of the graph and running it twice adds nothing: idempotence is structural rather
+# than asserted. A blank node would also be safe against the membrane (it skolemizes the
+# payload, membrane.py:318) but dec:EscalationShape carries sh:sparql and R88's pin history
+# is about exactly that; a stable IRI needs no engine caveat.
+PREFIX dec:  <https://w3id.org/iladub/dec#>
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+PREFIX risk: <https://w3id.org/iladub/risk#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+  ?d   dec:constrainedBy risk:Breach ;
+       dec:withinScope   etkl:readerScope ;
+       dec:escalatedTo   ?req .
+  ?req rdf:type          dec:ExpansionRequest ;
+       dec:regarding     ?r ;
+       dec:condition     ?why .
+  # the three carried vocabulary triples — see LICENCE above
+  etkl:readerScope dec:maxSeverity ?ceil .
+  risk:Breach      risk:order      ?so .
+  ?ceil            risk:order      ?co .
+}
+WHERE {
+  ?d a dec:DecisionHolon ;
+     dec:chosen ?o ;
+     dec:rationale ?why .
+  # THE LABEL, never the option URI's suffix: `{d}-opt-{slug}` is decisionlog.py's private
+  # spelling (:59) and no query may depend on it. Nor the call site — 17 sites record a
+  # verdict and not all of them can choose "escalated"; the chosen option is the evidence.
+  ?o rdfs:label "escalated" .
+  # REQUIRED, never OPTIONAL: this join is invariant 5's guard. A decision carrying no
+  # dec:regarding derives NOTHING AT ALL, rather than a request with no subject matter.
+  # Live rather than vacuous — datagrid.py mints decision holons and emits no dec:regarding.
+  ?d dec:regarding ?r .
+  # withdrawn readings — see SUPERSESSION GUARD above
+  FILTER NOT EXISTS { ?later dec:supersedes ?d }
+  # bound from the vocabulary graph, never written
+  risk:Breach risk:order ?so .
+  etkl:readerScope dec:maxSeverity ?ceil .
+  ?ceil risk:order ?co .
+  FILTER (?so > ?co)
+  BIND(IRI(CONCAT(STR(?d), "-expansion")) AS ?req)
+}

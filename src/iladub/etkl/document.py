@@ -106,6 +106,7 @@ from pathlib import Path
 from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
 from rdflib.namespace import XSD
 
+from . import interpret
 from .compile import CompilationReport, compile_tables, page_bands, _DOC, _validate
 from .decisionlog import DEC
 from .geometry import COORD_EPS
@@ -118,6 +119,38 @@ _LIC = Namespace("urn:iladub:licence:")       # transient per-pair licence-evide
 _QUERIES = Path(__file__).resolve().parents[3] / "vocab" / "queries"
 CONTINUATION_OF_RQ = _QUERIES / "continuation-of.rq"
 CONTINUATION_LICENCE_RQ = _QUERIES / "continuation-licence.rq"
+
+# ESCALATION FURNISHING (R87, plan 2026-08-15 Task 3). The derivation that turns a recorded
+# escalation verdict into the three predicates `dec:EscalationShape` reads, plus the
+# expansion request it escalates to. The vocabulary file set is NAMED here rather than
+# inlined at the call site: what a derivation carries into a data graph is the whole
+# substance of G3's licence, and a reader of the membrane has to be able to see which files
+# that is. (Precedent: `feed.py:586-587`'s `_GROUND_ONT_FILES`.)
+ESCALATION_FURNISH_RQ = _QUERIES / "escalation-furnish.rq"
+_ONTOLOGY = _QUERIES.parent / "ontology"
+_ESCALATION_VOCAB_FILES = ("risk.ttl", "etkl.ttl")
+_ESCALATION_VOCAB = None
+
+
+def _escalation_vocab() -> Graph:
+    """`risk.ttl` u `etkl.ttl` — the graph the derivation BINDS its ordinals from.
+
+    Parsed once per process, on `compile._build_membrane`'s precedent (`compile.py:402`):
+    the files cannot change under a run, and parsing them per page would pay for them on
+    every page of every document to get the same graph each time.
+
+    Not merged into anything. `interpret.run` unions its arguments into a scratch graph and
+    returns only what the CONSTRUCT template emits, so the sole route from these files into
+    a document is the three triples that template names — see `escalation-furnish.rq`'s
+    LICENCE note, and T2.4, which fails if the carry grows OR shrinks.
+    """
+    global _ESCALATION_VOCAB
+    if _ESCALATION_VOCAB is None:
+        g = Graph()
+        for name in _ESCALATION_VOCAB_FILES:
+            g.parse(str(_ONTOLOGY / name), format="turtle")
+        _ESCALATION_VOCAB = g
+    return _ESCALATION_VOCAB
 
 
 @dataclass(frozen=True)
@@ -1504,6 +1537,42 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         pages[p] = rep_a
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run
+
+    # ESCALATION FURNISHING (R87, plan 2026-08-15 Task 3 — the S1 seam, answered by
+    # measurement in docs/superpowers/2026-08-15-r87-task3-measurement.md).
+    #
+    # A region the reader could not read is a DECISION, and that decision is already
+    # recorded; `escalation-furnish.rq` states its consequence — the severity it realized,
+    # the autonomy scope it exceeded, and the human-addressed `dec:ExpansionRequest` it
+    # escalates to. AXIOM in derivation form (CLAUDE.md §8): the line below is engine glue
+    # and decides nothing.
+    #
+    # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
+    # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
+    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges —
+    # `:1332` (section repair) and `:1536` (datagrid adoption), which `grep -n
+    # "DEC.supersedes"` on this file shows are the only two — write into THIS graph and
+    # into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
+    # A page-scope site is therefore not merely early, it is permanently blind:
+    # `compile_tables` returns before the driver has anything to link, and the link is then
+    # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
+    # expansion requests on cbh-stem and 5 on apple — each one a matter a later reading had
+    # already resolved, raised to a human anyway.
+    #
+    # AND BEFORE the validation below, not after. `dec:ExpansionRequest` is an
+    # `rdfs:subClassOf dec:Event` (`dec.ttl:197-198`), so
+    # under the subclass closure every request minted here is a focus node of
+    # `dec:EventShape` and `dec:ExpansionRequestShape` — both already in `_DEC_SHAPE_FILES`
+    # and both idle until this commit. Furnishing after the validation would put
+    # unvalidated decision records into the returned graph; the membrane has to be able to
+    # REFUSE what this line writes, and `test_escalation_wiring.py`'s T3.2 shows it doing so.
+    #
+    # UNCONDITIONAL, unlike the validation below. The furnished triples are part of the
+    # document's record, not validation fodder: on a document that opens neither arm of
+    # the gate below they are still written and simply cross no membrane. The PAGE leg is
+    # deliberately left unfurnished — furnishing it is unguardable, as measured above — so
+    # `dec:EscalationShape` stays idle there; that is a Task 6 residue, not a defect.
+    graph += interpret.run(ESCALATION_FURNISH_RQ, graph, _escalation_vocab())
 
     # WHOLE-GRAPH VALIDATION (task 4; see the docstring above for why the gate is `recognized`
     # rather than always-on — and, since loop Q, `section_facts` for exactly the same reason:

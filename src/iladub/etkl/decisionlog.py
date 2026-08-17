@@ -89,8 +89,8 @@ class ReadingRecorder:
             graph.add((self._agent, RDFS.label, Literal("iladub reading compiler", lang="en")))
 
         # Page is a dec:Process, not a decision. NO dec:regarding here (final-review I5):
-        # dec:regarding's rdfs:domain is dec:DecisionHolon (widened on this branch only to
-        # unionOf(dec:DecisionHolon, dec:ExpansionRequest)), and a dec:Process is neither —
+        # dec:regarding's rdfs:domain is unionOf(dec:DecisionHolon, dec:ExpansionRequest)
+        # (dec.ttl:204 — the widening shipped), and a dec:Process is neither —
         # emitting it on a container asserted a term outside its own declared domain. The
         # structure the containers carry is dcterms:isPartOf; the JUDGEMENTS keep their own
         # dec:regarding, which is the only thing the committed queries read (all three bind

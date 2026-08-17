@@ -1883,3 +1883,66 @@ def currency_marker_escalating_pdf(path: str) -> dict:
                 c.drawString(x, y, t)
     c.save()
     return {"cols": xs, "n_rows": len(rows)}
+
+
+def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
+    """R87 TASK 3 FIXTURE — the only synthetic shape that both ESCALATES and opens
+    `document.py:1515`'s validation gate.
+
+    That gate is `recognized or section_facts`, so a document has to carry a recognized
+    continuation pair (or a repair/adoption) before any document-level membrane sees the
+    merged graph at all. MEASURED 2026-08-15 while writing Task 3: a page that escalates
+    is never recognized — recognition reads a CONFIRMED leaf header block and an escalated
+    region produces none — so `false_transposed_pdf` drawn on two identical pages gives
+    `recognized=()` and the gate stays shut. The two roles therefore have to be played by
+    DIFFERENT pages, which is what this fixture does:
+
+      * pages 0-1 — `bare_identical_two_page_pdf`'s template, verbatim. They assert and
+        the continuation law recognizes the pair: `recognized=((0, 1),)`.
+      * page 2 — `false_transposed_pdf`'s table. `looks_transposed` fires while
+        `transpose_is_coherent` is False, so the region ESCALATES rather than compiling an
+        inverted RecordTable.
+
+    Measured on this fixture: `recognized=((0, 1),)`, `adopted=()`, `repaired_bands=()`,
+    region verdicts `[asserted], [asserted], [escalated]`, one decision holon whose chosen
+    option is labelled "escalated", carrying `dec:regarding` and NO incoming
+    `dec:supersedes` — so `escalation-furnish.rq` furnishes exactly one expansion request
+    into a graph the membrane then validates. ~6 s.
+    """
+    cols = [(60.0, 160.0), (170.0, 260.0), (270.0, 360.0)]
+
+    def _clean(c, rows, top):
+        c.setFont("Courier-Bold", 10)
+        for (l, _r), h in zip(cols, ["Store", "Item", "Qty"]):
+            c.drawString(l, top, h)
+        c.setFont("Courier", 10)
+        for i, row in enumerate(rows):
+            y = top - (i + 1) * 18.0
+            for (l, _r), cell in zip(cols, row):
+                c.drawString(l, y, cell)
+        c.setLineWidth(0.7)
+        bottom = top - (len(rows) + 1) * 18.0
+        for (l, _r) in cols:
+            c.line(l - 4, top + 12, l - 4, bottom)
+        c.line(cols[-1][1] + 4, top + 12, cols[-1][1] + 4, bottom)
+
+    def _escalating(c):
+        xs = [72.0, 240.0, 400.0]
+        rows = [("Item", "A", "B"), ("Count", "10", "20"),
+                ("Note", "hi", "bye"), ("Mix", "5", "ok")]
+        c.setFont("Courier", 10)
+        y0 = PAGE_H - 130.0
+        for i, row in enumerate(rows):
+            y = y0 - i * 18.0
+            for x, cell in zip(xs, row):
+                c.drawString(x, y, cell)
+
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    _clean(c, [("Alpha", "Bolt", "10"), ("Beta", "Nut", "20")], top)
+    c.showPage()
+    _clean(c, [("Gamma", "Screw", "30"), ("Delta", "Nail", "40")], top)
+    c.showPage()
+    _escalating(c)
+    c.save()
+    return {"cols": cols, "recognized_pages": (0, 1), "escalating_page": 2}
