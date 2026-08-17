@@ -3,8 +3,16 @@
 Deferred items from the ET(K)L loops, in one tracked place. Each row records what the residue is,
 where it was **measured** (never assumed), why it was deferred, and what would close it.
 
-**This register is canonical.** Loops append rows here; a loop that closes a residue deletes its row
-in the same change. Specs may describe a residue in prose, but the list of open residues lives here.
+**This register is canonical.** Loops append rows here; a loop that closes a residue **strikes** its
+number (`~~R92~~`), records the closure evidence in place, and moves the full row from
+[`residues-open.md`](residues-open.md) to [`residues-closed.md`](residues-closed.md) — **it does not
+delete the row.** Specs may describe a residue in prose, but the list of open residues lives here.
+
+> ⚠️ **CORRECTED 2026-08-17** (E4, plan `plans/2026-08-17-the-gate-and-the-label.md` Task 3): this
+> paragraph used to say a closing loop *"deletes its row in the same change."* CLAUDE.md § Deferred
+> residues reverses that, and for a stated reason — a deleted row erases the proof of repair and
+> silently shrinks the tally's denominator, which is the one number that shows the register is not
+> pure degradation. The reversal was recorded in CLAUDE.md on 2026-08-12 and never propagated here.
 
 Started 2026-07-29 (Loop D), collecting items previously scattered across four specs and the SDD
 ledger.
@@ -29,8 +37,11 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-17: 94 rows, 18 closed.** (Ten numbers between R1 and R96 were never issued as
-rows; the denominator is rows that exist, not the highest number.)
+**As of 2026-08-17: 94 rows, 20 closed.** (Ten numbers between R1 and R96 were never issued as
+rows; the denominator is rows that exist, not the highest number.) Was 18 closed at `e3f447a`; loop
+`the-gate-and-the-label` closed ~~R102~~ and ~~R104~~, raising no new row. Verified, not asserted:
+`awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c` → `20 closed`,
+`74 open`.
 
 | # | Residue | Measured | Why deferred | What would close it |
 | --- | --- | --- | --- | --- |
@@ -135,7 +146,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R86 | open | A quarantined concept mints NO decision holon, so the proposition half of the epistemics is unattributed |
 | R87 | closed | CLOSED 2026-08-16 — wired into `compile._DEC_SHAPE_FILES` AND furnished by `escalation-furnish.rq`; the wiring alone was measured insufficient |
 | R88 | closed | CLOSED 2026-08-13 — skolemized at the payload seam; `compile._DEC_ENGINE` deleted |
-| R89 | open | `BandRecorder.record`'s Python guard now duplicates two constraints the membrane enforces |
+| R89 | open | `BandRecorder.record`'s Python guard now duplicates two constraints the membrane enforces — **rule adopted 2026-08-17 (in CLAUDE.md); application to that guard still open** |
 | R90 | open | The bbox is dropped from every `ROUND_TRIP_FAIL` proposition |
 | R91 | closed | `document.py:1498` and `datagrid.emit_data_grid` now both emit `dec:decidedBy` on the same admission holon |
 | R92 | closed | CLOSED 2026-08-12 — the 39 float-valued `xsd:decimal` emitters are converted, and a tripwire prevents the 40th |
@@ -148,6 +159,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R99 | open | `iladub:NoLeakShape` can never fire at compile — 11 focus nodes, unreachable term |
 | R100 | open | `dec:EscalationShape` live at document scope, idle at page scope; registry cannot say so |
 | R101 | open | A green CI tick can cover less than it looks — a module-level skip guard hides a whole module behind one skip line |
-| R102 | open | 316 of 769 decision holons are never validated — both `_validate` call sites are gated on tab-facts |
+| R102 | closed | CLOSED 2026-08-17 (`b09dbd1`) — the `dec` leg is unconditional at document scope; re-measured 769/769, 0 never (was 316) |
 | R103 | open | `tab-datagrid.ttl` is in no membrane and no probe; its domain/range rules are unchecked |
-| R104 | open | A `dec`-leg SHACL refusal is reported as *"failed tab: SHACL"* |
+| R104 | closed | CLOSED 2026-08-17 (`742e862`) — `_validate` returns the refusing legs; `_refusal_message` names them |
