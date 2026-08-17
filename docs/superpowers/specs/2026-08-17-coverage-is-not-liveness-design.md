@@ -9,7 +9,9 @@
 >
 > What still stands: the measurements (§1.1), the §4.1 named seam (reviewer-confirmed), oracles
 > O3 and O4, and the §5 R101 findings. What is **wrong**: §4.1's cost premise (the 316 are ons
-> and bfs, which *do* open the page gate), §4.3's "both membranes" promise (§7.9 excludes the
+> and bfs, which *do* open the page gate), §4.1's *"16 of 27 corpus pages"* (it is **14** with the
+> page gate FALSE and **13** genuinely unseen — empirical review E1; the corrected text is in
+> `residues-open.md:82`), §4.3's "both membranes" promise (§7.9 excludes the
 > grounding leg), §3.3's dangling "§4.1's oracle checks the reason" (no such oracle exists), and
 > §7.1's overstated claim that the phase reason cannot be pinned (it can — see the split
 > decision's O6).
