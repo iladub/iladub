@@ -128,14 +128,22 @@ Prohibitions carried unchanged from R101's row: do **not** add `demo` to the CI 
   and R103 were owed the same candour the superseded §4.6 gave R104.
 - **Tier 0 as a separate action.** Superseded by this decision; it is Loop 3's opening fact.
 - **R61.** Still deferred by maintainer decision until R103's count exists (Loop 1).
-- **The empirical review.** A second reviewer was checking every `file:line` citation and every
-  number when this was written; **its report is not incorporated.** D11 was a factual error found
-  by the *design* reviewer, which suggests more of that class exist. **Read it before planning
-  Loop 1** — Loop 1 is the one whose citations it was checking.
+- **The empirical review NEVER RAN.** A second reviewer was dispatched to check every `file:line`
+  citation and every number; it **died on a transient API error (529) before producing any
+  report**, having got as far as starting to reproduce M-A. There is nothing to recover — **it
+  must be re-run from scratch.** This is not a nicety: D11 was a factual error found *incidentally*
+  by the design reviewer, which is weak evidence that more of that class exist, and **every
+  citation in this repo's specs is exactly what CLAUDE.md plan-rule 2 exists to protect.** Re-run
+  it before planning Loop 1 — Loop 1 is the one whose citations it was checking.
 - **The pySHACL leg.** Standing since R87, still unrun.
 
 ## Next concrete action
 
-**Recover the empirical reviewer's report**, apply its findings to Loop 1's inputs, then write
-Loop 1's spec in a fresh session. Loop 1 is small enough that its spec should be short — a
-membrane gate, an error label, a contract paragraph and a register pass.
+**Re-run the empirical review** (it never ran — see above), apply its findings to Loop 1's inputs,
+then write Loop 1's spec in a fresh session. Loop 1 is small enough that its spec should be
+short — a membrane gate, an error label, a contract paragraph and a register pass.
+
+Its brief: verify every `file:line` citation and every number in
+`specs/2026-08-17-coverage-is-not-liveness-design.md` against the code itself, treating the three
+`2026-08-17-m-*` measurement documents as **under review rather than as authority** — they share
+an author with the spec.
