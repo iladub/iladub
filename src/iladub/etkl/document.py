@@ -107,7 +107,8 @@ from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
 from rdflib.namespace import XSD
 
 from . import interpret
-from .compile import CompilationReport, compile_tables, page_bands, _DOC, _validate
+from .compile import (CompilationReport, compile_tables, page_bands, _DOC, _validate,
+                      _refusal_message)
 from .decisionlog import DEC
 from .geometry import COORD_EPS
 from .holon import TAB
@@ -1582,9 +1583,9 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # inLogicalColumn, the arithmetic pass retyped aggregations and rebuilt row groups over the
     # logical table, and the section pass added its adoptions, links and totals.
     if validate_shapes and (recognized or section_facts):
-        conforms, text = _validate(graph)
+        conforms, text, legs = _validate(graph)
         if not conforms:
-            raise AssertionError(f"document-level facts failed tab: SHACL:\n{text}")
+            raise AssertionError(_refusal_message("document-level facts", legs, text))
 
     asserted = sum(rep.asserted for rep in pages)
     escalated = sum(rep.escalated for rep in pages)
