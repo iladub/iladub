@@ -396,7 +396,25 @@ _FULL_ONT = None
 # the process selected (spec 2026-08-13-membrane-parity-design.md §4.3, closing R88). The split
 # is still per shape SET, never per graph: no verdict depends on what happens to be in the data.
 _TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
-_DEC_SHAPE_FILES = ("dec-shapes.ttl", "iladub-shapes.ttl")
+# `escalation-shapes.ttl` joins the DEC set here (R87 Task 4). Until this line it was wired
+# into no membrane at all and could refuse nothing — the whole of R87.
+#
+# COMPILE LEG ONLY; the GROUNDING membrane (`feed.py:586`'s `_GROUND_SHAPE_FILES`) is
+# deliberately untouched (G4, spec §4.3). Grounding decisions are `iladub:PromotionDecision`s
+# whose chosen option is never "escalated", so the derivation furnishes nothing there and
+# wiring the shape into that leg would re-create exactly the vacuity this loop repairs.
+#
+# THE SHAPE IS LIVE ON ONE LEG AND IDLE ON THE OTHER, and that is a property of this set,
+# not of the shape. `_validate` is called at page scope (`:1083`) and at document scope
+# (`document.py`), with this one shape set both times, while the furnishing runs at document
+# scope only — measured: page-scope furnishing raises 4 spurious expansion requests on
+# cbh-stem and 5 on apple, because no page graph ever carries a `dec:supersedes` edge.
+# So `dec:EscalationShape` binds rows on the document leg and none on the page leg. Task 5's
+# vacuity registry has to be able to say that; a registry keyed on shape name alone cannot.
+#
+# The file is self-sufficient: it declares its own `dec:escPrefixes` (`escalation-shapes.ttl:12`)
+# for the `sh:sparql` body, so it needs no companion edit here.
+_DEC_SHAPE_FILES = ("dec-shapes.ttl", "iladub-shapes.ttl", "escalation-shapes.ttl")
 
 
 def _build_membrane():
