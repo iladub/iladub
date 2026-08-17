@@ -49,10 +49,10 @@ what Loop 2 starts from. It is a **set of pointers** — it does not restate the
 
 ## UNVERIFIED or ASSUMED
 
-- **The full `pytest -q` has NOT been run at `a0e7ee1`.** Task 4 touched only
-  `scripts/probe_emitter_typing.py` (invoked by no test and no CI job — verified by grep over
-  `tests/` and `.github/`) and one register row, so the 43 deselected corpus tests were reasoned
-  unaffected rather than run. **Run it before merging.**
+- ~~**The full `pytest -q` has NOT been run at `a0e7ee1`.**~~ **RESOLVED 2026-08-17 at `4bb023b`:
+  `pytest -q` → 1228 passed, 7 skipped, 1 xfailed (38:04). The reasoning this replaces — that Task
+  4 touched only `scripts/probe_emitter_typing.py` (invoked by no test and no CI job) and one
+  register row — held, but it was reasoning and this is the run.**
 - **The `xpassed` → `xfailed` flip** between the two full runs is `test_derivation_perf.py:146`,
   `strict=False`, whose own marker documents a ~10% margin at the affordable N. Read as documented
   flakiness, **not** re-measured as such in this session.
@@ -67,7 +67,6 @@ what Loop 2 starts from. It is a **set of pointers** — it does not restate the
 
 ## The next concrete action
 
-Open a fresh session, run the full `pytest -q` at `a0e7ee1`, and if green open the PR for
-`loop1-gate-and-label`. **Loop 2 (the coverage ledger — spec §5's D8(a), whether the `tab` leg's
-gate condition is AXIOM/NEURAL/PROCEDURAL) has neither spec nor plan and must start in its own
-session**, per CLAUDE.md § Loop & context hygiene.
+Review and merge the PR for `loop1-gate-and-label`. **Loop 2 (the coverage ledger — spec §5's
+D8(a), whether the `tab` leg's gate condition is AXIOM/NEURAL/PROCEDURAL) has neither spec nor plan
+and must start in its own session**, per CLAUDE.md § Loop & context hygiene.
