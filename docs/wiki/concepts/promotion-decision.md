@@ -7,11 +7,13 @@ sources:
   - vocab/shapes/iladub-shapes.ttl
   - src/iladub/etkl/compile.py
   - src/iladub/feed.py
+  - src/iladub/etkl/document.py
   - docs/superpowers/specs/2026-08-10-the-decision-membrane-design.md
   - docs/superpowers/specs/2026-07-19-knowledge-first-grounding-design.md
+  - docs/superpowers/specs/2026-08-17-the-gate-and-the-label-design.md
 related: ["[[assert-propose-promote]]", "[[decision-holon]]"]
 confidence: high
-updated: 2026-08-11
+updated: 2026-08-17
 promoted_to: docs/assertion-proposition.md
 ---
 
@@ -72,6 +74,19 @@ decision."*
 
 **A claim about enforcement that does not name its call site is how this one
 survived.** Prefer "enforced at `<file>`'s `<function>`" to "enforced by SHACL."
+
+**And naming the call site is still not enough — ask whether it RUNS** (2026-08-17,
+R102). Both bullets above were true and still described a membrane most of the
+corpus never reached: `_validate` was called behind a gate asking a question about
+*tabular* facts, so a document with no document-level table fact validated no
+decision holon at all. Measured across the 7-document corpus: **769 decision holons
+minted, 453 ever validated, 316 never** — bfs 113 and ons 203, whose promotion
+epistemics were enforced by nothing but a producer-side guard in
+`decisionlog.BandRecorder.record`. The `dec` leg is now **unconditional at document
+scope** (`document._legs_for_document`), re-measured at 769 minted / 0 never; the
+`tab` leg keeps its condition and the page gate is unchanged, so a caller running
+`compile_tables` alone still validates no decision holon. Prefer "enforced at
+`<file>`'s `<function>`, **which runs on every `<unit>`**" — and say which unit.
 
 The same shape shows up one layer up, in prose: this wiki's own `promoted_to`
 frontmatter field is the documentation-governance analogue of `iladub:wasPromotedBy`

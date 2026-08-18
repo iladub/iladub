@@ -2,7 +2,7 @@
 """probe_emitter_typing — the R61 oracle: is emitter-typing actually holding?
 
 WHY THIS EXISTS. 2026-08-06's subclass-only closure made every `rdfs:domain`/`rdfs:range`
-rule in `vocab/ontology/tab.ttl` inert *for typing purposes*. Each of those rules used to be a
+rule in the tab ontology (`ONT_FILES` below) inert *for typing purposes*. Each of those rules used to be a
 path by which a node entered a shape's target set without an explicit `rdf:type`. Since then,
 every shape's reach depends entirely on emitters typing every node explicitly — and nothing
 enforced that invariant. This probe is the enforcement.
@@ -12,7 +12,7 @@ The region it would have refused is then admitted, so the failure appears as a r
 escalated -> asserted: a score **improvement**. The corpus score gate cannot distinguish that
 from a real fix. Only this probe can.
 
-WHAT IT ASSERTS. For every `P rdfs:domain C` in tab.ttl, every subject of `P` in a compiled
+WHAT IT ASSERTS. For every `P rdfs:domain C` in `ONT_FILES`, every subject of `P` in a compiled
 page carries type `C` (explicitly, or via `rdfs:subClassOf` — the closure the membrane really
 applies). Likewise every non-literal object of a `P rdfs:range C`.
 
@@ -47,6 +47,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 XSD_PREFIX = "http://www.w3.org/2001/XMLSchema#"
 SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 
+# R103, 2026-08-17: was `tab.ttl` alone, so every domain/range rule the DATA-GRID vocabulary
+# declares was outside the probe's reach entirely — the emitter-typing invariant was unmeasured
+# for that whole file. `SHAPE_FILES` above needs no matching widening and that is not an
+# oversight: it is exactly the membrane's own `compile._TAB_SHAPE_FILES` (`compile.py:398`), and
+# there is no `tab-datagrid-shapes.ttl`. So a data-grid class is a LIVE hazard only when one of
+# these two files targets it, which is the question the split below actually asks.
+ONT_FILES = ("tab.ttl", "tab-datagrid.ttl")
+
 
 def typing_rules(ont: Graph):
     """(property, class) pairs that USED to type a node. Literal ranges cannot type, so drop."""
@@ -54,6 +62,34 @@ def typing_rules(ont: Graph):
     ranges = [(p, c) for p, c in ont.subject_objects(RDFS.range)
               if not str(c).startswith(XSD_PREFIX)]
     return domains, ranges
+
+
+def _key(kind: str, p, c) -> str:
+    """The rule's report key. ONE definition, called by both `probe` and `rules_by_file` — a
+    second copy of this format string would let attribution and counting drift apart silently,
+    which is the R13-attempt-1 lesson (a checker that replicates the code instead of calling it
+    checks nothing). Padding `kind` to 6 keeps the pre-widening key text byte-identical, so a
+    `--json` tally from before this change is still comparable."""
+    return f"{kind:6} {p.split('#')[-1]} -> {c.split('#')[-1]}"
+
+
+def rules_by_file(vocab: str):
+    """(merged ontology, {rule_key: the ONT_FILES entry that declares it}).
+
+    The merge is what the closure and the probe run against — `tab-datagrid.ttl`'s own
+    `rdfs:subClassOf` axioms have to be visible to `types_of`, or a node typed with a data-grid
+    subclass would read as untyped and the probe would invent violations. The attribution map is
+    what lets the summary answer R103's actual question: how many violations are attributable to
+    `tab-datagrid.ttl`. A rule declared in both files is attributed to the first in ONT_FILES."""
+    ont, src = Graph(), {}
+    for f in ONT_FILES:
+        g = Graph().parse(os.path.join(vocab, "ontology", f), format="turtle")
+        domains, ranges = typing_rules(g)
+        for kind, pairs in (("domain", domains), ("range", ranges)):
+            for p, c in pairs:
+                src.setdefault(_key(kind, p, c), f)
+        ont += g
+    return ont, src
 
 
 def shape_targets(vocab: str):
@@ -92,11 +128,11 @@ def probe(graph: Graph, domains, ranges, sup):
     for p, c in domains:
         for s in set(graph.subjects(p, None)):
             if c not in types_of(graph, s, sup):
-                yield f"domain {p.split('#')[-1]} -> {c.split('#')[-1]}", c, s
+                yield _key("domain", p, c), c, s
     for p, c in ranges:
         for o in set(graph.objects(None, p)):
             if not isinstance(o, Literal) and c not in types_of(graph, o, sup):
-                yield f"range  {p.split('#')[-1]} -> {c.split('#')[-1]}", c, o
+                yield _key("range", p, c), c, o
 
 
 def main() -> int:
@@ -108,11 +144,13 @@ def main() -> int:
     from iladub.etkl import compile_tables
 
     vocab = os.path.join(ROOT, "vocab")
-    ont = Graph().parse(os.path.join(vocab, "ontology", "tab.ttl"), format="turtle")
+    ont, rule_src = rules_by_file(vocab)
     domains, ranges = typing_rules(ont)
     targets, sparql = shape_targets(vocab)
     sup = _closure(ont)
-    print(f"tab.ttl: {len(domains)} domain rules, {len(ranges)} non-literal range rules; "
+    per_file = collections.Counter(rule_src.values())
+    print(f"{' + '.join(ONT_FILES)}: {len(domains)} domain rules, {len(ranges)} non-literal "
+          f"range rules ({', '.join(f'{n} from {f}' for f, n in sorted(per_file.items()))}); "
           f"{len(targets)} shape-targeted classes ({len(sparql)} of them sh:sparql)")
 
     counts, example, cls_of, pages = collections.Counter(), {}, {}, 0
@@ -131,18 +169,29 @@ def main() -> int:
     live = sum(n for k, n in counts.items() if cls_of[k] in targets)
     live_sparql = sum(n for k, n in counts.items() if cls_of[k] in sparql)
     print(f"\npages probed: {pages}")
-    print(f"{'rule':40} {'nodes':>6}  targeted  sh:sparql")
+    print(f"{'rule':40} {'nodes':>6}  targeted  sh:sparql  declared in")
     for key, n in counts.most_common():
         print(f"{key:40} {n:6}  {'YES' if cls_of[key] in targets else 'no ':8}  "
-              f"{'YES' if cls_of[key] in sparql else 'no'}\n{'':6}e.g. {example[key]}")
+              f"{'YES' if cls_of[key] in sparql else 'no ':9}  {rule_src.get(key, '?')}"
+              f"\n{'':6}e.g. {example[key]}")
     print(f"\ntotal violating nodes: {sum(counts.values())}")
     print(f"  on a shape-targeted class            : {live}")
     print(f"  on a class an sh:sparql shape targets: {live_sparql}   <-- the live hazard")
 
+    # R103: the same split, per ontology file. Widening the probe is only worth anything if the
+    # report can say what the widening FOUND, separately from what tab.ttl was already finding.
+    print("\nby declaring ontology file (R103):")
+    for f in ONT_FILES:
+        ks = [k for k in counts if rule_src.get(k) == f]
+        print(f"  {f:20} rules violated: {len(ks):3}  nodes: {sum(counts[k] for k in ks):6}"
+              f"  live (shape-targeted): {sum(counts[k] for k in ks if cls_of[k] in targets):6}"
+              f"  sh:sparql: {sum(counts[k] for k in ks if cls_of[k] in sparql):6}")
+
     if args.json:
         json.dump({k: {"nodes": n, "class": str(cls_of[k]), "example": example[k],
                        "shape_targeted": cls_of[k] in targets,
-                       "sparql_targeted": cls_of[k] in sparql}
+                       "sparql_targeted": cls_of[k] in sparql,
+                       "declared_in": rule_src.get(k)}
                    for k, n in counts.items()}, open(args.json, "w"), indent=1, sort_keys=True)
     return 0 if live == 0 else 1
 

@@ -17,6 +17,7 @@ from rdflib.namespace import RDF, RDFS, SH
 
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
+TAB = Namespace("https://w3id.org/iladub/tab#")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHAPES_DIR = os.path.join(ROOT, "vocab", "shapes")
@@ -91,7 +92,7 @@ def test_the_decision_leg_is_load_bearing_for_a_blank_node_promotion():
         g.add((pd, DEC.optionSpace, o))
     g.add((pd, DEC.chosen, opts[0]))
     g.add((opts[1], DEC.rejectedBecause, Literal("the scheme admits the value")))
-    conforms, report = compile_mod._validate(g)     # must not raise
+    conforms, report, legs = compile_mod._validate(g)     # must not raise
     assert conforms is True, report
 
 
@@ -119,10 +120,59 @@ def test_the_membrane_refuses_an_undeliberated_promotion():
     """(b) THE ASSERTION THAT MATTERS. A promotion decision with no deliberated option space
     is not an accountable decision, and the compile membrane must refuse it."""
     from iladub.etkl import compile as compile_mod
-    conforms, report = compile_mod._validate(_under_furnished_promotion())
+    conforms, report, legs = compile_mod._validate(_under_furnished_promotion())
     assert conforms is False, (
         "the compile membrane ADMITTED a promotion decision with no dec:optionSpace and no "
         "dec:chosen — the promotion-epistemics claim is unenforced at this membrane\n" + report)
+
+
+def test_a_dec_leg_refusal_names_dec_and_not_tab():
+    """O4. The message a diagnosing reader sees must send them to the vocabulary that actually
+    refused. Asserting the ABSENCE of `tab` is the half that matters: a test checking only that
+    `dec` is named passes when the message names both."""
+    from iladub.etkl import compile as compile_mod
+    conforms, report, legs = compile_mod._validate(_under_furnished_promotion())
+    assert conforms is False, report
+    assert legs == ("dec",), f"the refusing leg was mislabelled: {legs}"
+    assert "tab" not in legs
+
+
+def _bad_unit_marker():
+    """A `tab:UnitMarker` with no `tab:markerRegion` — violates `UnitMarkerShape`'s MinCount(1)
+    and NOTHING else (no other tab shape targets a bare UnitMarker with only `markerSymbol`).
+    Confirmed by direct call: `compile_mod._validate` on this graph alone returns
+    `(False, ..., ("tab",))` — the identical fixture `test_membrane.py`'s
+    `test_membrane_catches_a_core_violation` already uses against `membrane.validate` directly,
+    reused here against the compile-level `_validate` instead."""
+    g = Graph()
+    um = URIRef("urn:t:um")
+    g.add((um, RDF.type, TAB.UnitMarker))
+    g.add((um, TAB.markerSymbol, Literal("$")))
+    return g
+
+
+def test_a_both_legs_refusal_names_both():
+    """I-D's other direction: a graph that violates BOTH legs must name both, so the label fix
+    cannot become a mislabel the other way (a message that always said "dec" would pass T1a's
+    negative half by accident if it also always omitted "tab").
+
+    Setup NOT verified reusable as a single cross-file import: `test_closure_equiv.py`'s
+    `_bad_bbox_graph()` does refuse through `compile._validate` on the tab leg alone (checked
+    directly), but importing one test module from another in this tree fails under the
+    project's default pytest invocation (`tests/etkl` carries no `__init__.py` and is not on
+    `sys.path` — MEASURED: `from test_closure_equiv import _bad_bbox_graph` raises
+    `ModuleNotFoundError` when run via `pytest tests/etkl/...`, even in isolation). So the tab
+    half is constructed fresh here instead, minimal and local: `_bad_unit_marker()` above fails
+    `UnitMarkerShape`'s MinCount(1) on `tab:markerRegion` — confirmed refusing through
+    `compile._validate` with `legs == ("tab",)` alone. The dec half reuses
+    `_under_furnished_promotion()`, already used by the two tests above. Their union violates
+    both legs independently."""
+    from iladub.etkl import compile as compile_mod
+    g = _bad_unit_marker() + _under_furnished_promotion()
+    conforms, report, legs = compile_mod._validate(g)
+    assert conforms is False, report
+    assert legs == ("tab", "dec"), f"expected both legs to refuse, got: {legs}"
+    assert "tab" in report and "dec" in report
 
 
 def test_the_membrane_admits_a_well_furnished_promotion():
@@ -140,5 +190,47 @@ def test_the_membrane_admits_a_well_furnished_promotion():
             g.add((pd, DEC.chosen, o))
         else:
             g.add((o, DEC.rejectedBecause, Literal("the scheme admits the value")))
-    conforms, report = compile_mod._validate(g)
+    conforms, report, legs = compile_mod._validate(g)
     assert conforms is True, report
+
+
+def test_refusal_message_names_exactly_the_failing_legs():
+    """I-D, pure-function form (no PDF, no corpus — see the module docstring's rationale for
+    why the raise message is tested through a helper rather than end-to-end). For each leg
+    combination the message must name every failing leg and no other, and must keep the
+    caller's own subject noun so a future refactor cannot quietly drop it."""
+    from iladub.etkl.compile import _refusal_message
+    msg = _refusal_message("asserted holon", ("dec",), "…")
+    assert "asserted holon" in msg
+    assert "dec" in msg
+    assert "tab" not in msg
+
+    msg = _refusal_message("asserted holon", ("tab",), "…")
+    assert "asserted holon" in msg
+    assert "tab" in msg
+    assert "dec" not in msg
+
+    msg = _refusal_message("document-level facts", ("tab", "dec"), "…")
+    assert "document-level facts" in msg
+    assert "tab" in msg
+    assert "dec" in msg
+
+
+def test_neither_raise_site_hardcodes_a_leg_name():
+    """Structural pin, in the style of `test_membrane.py`'s `test_call_sites_use_the_seam`:
+    the two functions that raise on a membrane refusal — `compile.compile_tables` (raises at
+    `compile.py:1103`) and `document.compile_document` (raises at `document.py:1587`) — must
+    build their raise message from `_validate`'s own reported legs, not from the literal
+    string that named the tab leg before this change.
+
+    Pinned as the exact old f-string fragment (`"failed tab: SHACL:"`), not the bare substring
+    `"tab: SHACL"`: `document.py:1299` carries an unrelated EXPLANATORY COMMENT — "fails the
+    tab: SHACL membrane" — that legitimately survives this change (it is prose about the
+    membrane, not a hardcoded raise message) and would false-positive a broader substring
+    check. MEASURED: `grep -n "tab: SHACL" src/iladub/etkl/document.py` returns exactly that
+    one comment line once the raise site itself is fixed."""
+    import inspect
+    from iladub.etkl import compile as compile_mod
+    from iladub.etkl import document as document_mod
+    assert "failed tab: SHACL:" not in inspect.getsource(compile_mod.compile_tables)
+    assert "failed tab: SHACL:" not in inspect.getsource(document_mod.compile_document)

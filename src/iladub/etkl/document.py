@@ -107,7 +107,8 @@ from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
 from rdflib.namespace import XSD
 
 from . import interpret
-from .compile import CompilationReport, compile_tables, page_bands, _DOC, _validate
+from .compile import (CompilationReport, compile_tables, page_bands, _DOC, _validate,
+                      _refusal_message)
 from .decisionlog import DEC
 from .geometry import COORD_EPS
 from .holon import TAB
@@ -1138,6 +1139,29 @@ def _confirm_section_total(graph: Graph, table_uri: URIRef, band) -> tuple[bool,
     return False, None                # no total candidate printed — nothing to confirm
 
 
+def _legs_for_document(recognized, section_facts) -> tuple[str, ...]:
+    """Which legs of the compile membrane the DOCUMENT gate runs (R102).
+
+    `dec` is UNCONDITIONAL. That is the whole of R102: 316 of 769 decision holons minted across
+    the corpus never crossed a membrane, because the dec leg rode a condition that asks about
+    TAB facts. ons, bfs and graincorp-capacity never open that condition, so their promotion
+    decisions were enforced by nothing but a producer-side guard. Every merged document graph
+    accumulates every page graph, so running the dec leg here reaches all 316.
+
+    `tab` keeps its condition bit-for-bit (`recognized or section_facts`): the condition IS the
+    claim "this document carries document-level tab facts", and running the tab shapes where
+    that claim is false is what the spec's §4.1 seam warns against — and redundant with the page
+    leg besides.
+
+    PROCEDURAL, and it introduces NO NEW DECISION (CLAUDE.md's neurosymbolic gate): it gives a
+    name to the predicate that was already inline at the gate below and removes it for the dec
+    leg. Removing a procedural predicate from the path that decides whether a closed-world
+    membrane runs is the §8-preferred direction of travel — the constraint itself stays in
+    `dec-shapes.ttl`. **The `tab` half's classification is NOT settled by naming it here**: that
+    is Loop 2's D8(a). Do not read this helper as an adjudication of it."""
+    return ("tab", "dec") if (recognized or section_facts) else ("dec",)
+
+
 def compile_document(pdf_path: str, validate_shapes: bool = True,
                      span_proposer=None, row_role_proposer=None) -> DocumentReport:
     """Compile a whole document: every page under its own page-scoped document URI, merged into
@@ -1173,15 +1197,25 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     `tab:aggregates`/`tab:coversRow` edges) are all asserted AFTER that, onto the MERGED graph,
     and never met a SHACL membrane until this pass. Measured on the stem (29,377 triples):
     validation costs 41.3 s on top of the ~179 s compile — real, not absorbed silently.
-    THE GATE IS `recognized`, i.e. it runs whenever the RECOGNITION law fired, licensed or not —
-    deliberately unchanged by loop O, and the reason is now stronger than it was: a document with
-    a refused pair carries `tab:licenceRefused` in its merged graph, so it is no longer the plain
-    disjoint union of already-validated page graphs and `tab:LicenceRefusalShape` has something
-    to check. Gating on the LICENCE instead would leave exactly the new fact unvalidated. With no
-    recognition at all the merged graph IS that disjoint union and no document-level triple
-    exists for any shape to see, so re-validating would spend the same 41 s proving nothing (a
-    single-page or unchained document is exactly this case, always). The logical table is the
-    closure holon (spec §2b/§8), and this is where its closure gets checked.
+    THE TAB LEG'S GATE IS `recognized`, i.e. it runs whenever the RECOGNITION law fired, licensed
+    or not — deliberately unchanged by loop O, and the reason is now stronger than it was: a
+    document with a refused pair carries `tab:licenceRefused` in its merged graph, so it is no
+    longer the plain disjoint union of already-validated page graphs and `tab:LicenceRefusalShape`
+    has something to check. Gating on the LICENCE instead would leave exactly the new fact
+    unvalidated. With no recognition at all the merged graph IS that disjoint union and no
+    document-level triple exists for any shape to see, so re-validating would spend the same 41 s
+    proving nothing (a single-page or unchained document is exactly this case, always). The
+    logical table is the closure holon (spec §2b/§8), and this is where its closure gets checked.
+    THE DEC LEG IS NOT GATED (R102, `_legs_for_document`). That argument above is about TAB facts
+    and does not transfer: decision holons are minted on every page of every document, and a
+    document with no document-level tab fact is not a document with no promotion decision. The
+    reasoning that made the tab gate safe — "the merged graph is the disjoint union of graphs the
+    page membrane already validated" — is false for the dec leg, because the PAGE gate is a
+    tab-fact condition too and so validates only the pages that carry tab facts: ons and bfs open
+    it on some of their pages (1 and 2 page-calls) and left 203 of 218 and 113 of 232 of their
+    decision holons unseen. 316 of the corpus's 769 met no membrane at all (graincorp-capacity
+    also never opens this gate, but its 18 were all seen at page scope, so it contributes 0 of the
+    316 and only cost). `validate_shapes` still gates both legs.
     """
     n_pages = page_count(pdf_path)
     pages: list[CompilationReport] = []
@@ -1581,10 +1615,15 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     # by this point: the pairing loop above added continuesTable/continuesColumn/
     # inLogicalColumn, the arithmetic pass retyped aggregations and rebuilt row groups over the
     # logical table, and the section pass added its adoptions, links and totals.
-    if validate_shapes and (recognized or section_facts):
-        conforms, text = _validate(graph)
+    #
+    # THE GATE IS PER-LEG SINCE R102 (`_legs_for_document`, above): `recognized or
+    # section_facts` still gates the TAB leg, and the DEC leg runs whenever `validate_shapes`
+    # does. `validate_shapes` itself is unchanged and stays a separate condition — a caller that
+    # asks for no membrane still gets none.
+    if validate_shapes:
+        conforms, text, legs = _validate(graph, _legs_for_document(recognized, section_facts))
         if not conforms:
-            raise AssertionError(f"document-level facts failed tab: SHACL:\n{text}")
+            raise AssertionError(_refusal_message("document-level facts", legs, text))
 
     asserted = sum(rep.asserted for rep in pages)
     escalated = sum(rep.escalated for rep in pages)

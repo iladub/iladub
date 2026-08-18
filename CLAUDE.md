@@ -140,6 +140,17 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    justified PROCEDURAL step. Exemplars already shipped: see `docs/wiki/concepts/neurosymbolic-exemplars.md`
    (the loop-by-loop catalog of compliant AXIOM/NEURAL/PROCEDURAL code, with file paths).
 
+### Producer-side guards vs the membrane (adopted 2026-08-17, R89)
+
+*Delete a producer-side guard only when the membrane provably validates **every** product of that
+producer.* A producer-side guard that a membrane also enforces is not automatically a duplicate: it
+fails fast at the call site that built the bad value, with that call site on the stack, where the
+membrane refuses thousands of triples later. The duplicate-deletion argument that applies to a
+*test* asserting something about a finished graph does not transfer to a producer-side raise. The
+condition is **provable total coverage of that producer's output** — and R102 is the case that shows
+why: `BandRecorder.record`'s two guards were the sole enforcement for 316 of 769 decision holons,
+while looking like duplicates of `dec:DecisionHolonShape`.
+
 ## Holonic interaction model (align, don't reinvent — esp. with the W3C Holon CG)
 
 iladub is modeled as **interacting holons**, not just isolated definitions — *how

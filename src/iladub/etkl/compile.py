@@ -405,7 +405,11 @@ _TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 # wiring the shape into that leg would re-create exactly the vacuity this loop repairs.
 #
 # THE SHAPE IS LIVE ON ONE LEG AND IDLE ON THE OTHER, and that is a property of this set,
-# not of the shape. `_validate` is called at page scope (`:1083`) and at document scope
+# not of the shape. `_validate` is called at page scope (`:1124`; this comment cited `:1083`
+# until 2026-08-17, by which time that line had drifted to `denom = asserted_total +
+# escalated_total` — a line citation in a comment two hundred lines above its subject rots, and
+# the grep that finds the call is `grep -n 'conforms, text, legs = _validate'`) and at document
+# scope
 # (`document.py`), with this one shape set both times, while the furnishing runs at document
 # scope only — measured: page-scope furnishing raises 4 spurious expansion requests on
 # cbh-stem and 5 on apple, because no page graph ever carries a `dec:supersedes` edge.
@@ -450,19 +454,38 @@ def _build_membrane():
     _FULL_ONT = o
 
 
-def _validate(graph: Graph) -> tuple[bool, str]:
+def _validate(graph: Graph,
+              legs: tuple[str, ...] = ("tab", "dec")) -> tuple[bool, str, tuple[str, ...]]:
+    """R104: the third element carries the LEG IDENTITY of every leg in `legs` that refused, in
+    `legs`' own order — so a caller building a diagnostic message can name the vocabulary that
+    actually refused instead of a hardcoded one (see `_refusal_message`)."""
     if _TAB_SHAPES is None:
         _build_membrane()
     from . import membrane
-    # BOTH legs always run, even when the first refuses: a membrane that reported only the
-    # first failing shape set would make a page look like a tab defect when it is also a
-    # promotion defect, and the caller raises on the combined verdict either way.
-    tab_ok, tab_report = membrane.validate(graph, _TAB_SHAPES, _FULL_ONT)
-    dec_ok, dec_report = membrane.validate(graph, _DEC_SHAPES, _FULL_ONT)
-    if tab_ok and dec_ok:
-        return True, tab_report
-    return False, "\n".join(r for ok, r in ((tab_ok, tab_report), (dec_ok, dec_report))
-                            if not ok)
+    # I-B: every leg named in `legs` always runs, even after an earlier one refuses. A
+    # membrane that reported only the first failing shape set would make a page look like a
+    # tab defect when it is also a promotion defect, and the caller raises on the combined
+    # verdict either way.
+    _shapes_for = {"tab": _TAB_SHAPES, "dec": _DEC_SHAPES}
+    verdicts = {leg: membrane.validate(graph, _shapes_for[leg], _FULL_ONT) for leg in legs}
+    refusing = tuple(leg for leg in legs if not verdicts[leg][0])
+    if not refusing:
+        # I-E (spec §3.2's `:463` ruling — out of scope to "fix" here): the conforming path's
+        # returned text stays the TAB leg's report, even though the dec leg ran too and its
+        # own (also-conforming) report is discarded.
+        text = verdicts["tab"][1] if "tab" in verdicts else verdicts[legs[0]][1]
+        return True, text, ()
+    return False, "\n".join(verdicts[leg][1] for leg in refusing), refusing
+
+
+def _refusal_message(subject: str, legs: tuple[str, ...], text: str) -> str:
+    """PROCEDURAL, not AXIOM/NEURAL (CLAUDE.md's neurosymbolic gate): this is diagnostic string
+    formatting over facts `_validate` has ALREADY decided — it makes no judgment of its own (no
+    leg selection, no verdict, no tuned constant or tolerance), so there is nothing here to
+    express declaratively or perceptually. It is irreducible to AXIOM because it produces
+    human-readable text, not a graph fact; irreducible to NEURAL because nothing in it is
+    underdetermined."""
+    return f"{subject} failed {', '.join(legs)}: SHACL:\n{text}"
 
 
 def compile_tables(pdf_path: str, page_number: int = 0,
@@ -1098,8 +1121,8 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         any(graph.subjects(RDF.type, TAB.RecordTable))
         or any(graph.subjects(RDF.type, TAB.HierarchicalTable))
     ):
-        conforms, text = _validate(graph)
+        conforms, text, legs = _validate(graph)
         if not conforms:
-            raise AssertionError(f"asserted holon failed tab: SHACL:\n{text}")
+            raise AssertionError(_refusal_message("asserted holon", legs, text))
 
     return CompilationReport(score, tuple(reports), graph, asserted_total, escalated_total)
