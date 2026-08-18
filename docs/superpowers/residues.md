@@ -124,7 +124,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R58 | closed | CLOSED (loop-subclass, 2026-08-06) |
 | R59 | open | Real-document agreement is necessary but NOT sufficient evidence for an engine swap |
 | R60 | open | rudof's n-triples parse is now the membrane's dominant cost |
-| R61 | open | Emitter-typing is now an unenforced invariant |
+| R61 | open | Emitter-typing is now an unenforced invariant — **0 instances measured 2026-08-18; the 14 live are emitter/ontology disagreement, and the probe is renamed** |
 | R62 | open | Apple page 0 is unlocked by one band, not compiled |
 | R63 | open | `unit-marker-column.rq`'s OWN-COLUMN purity check treats only `tab:Blank` as a wildcard, not `tab:ParenthesizedNumber` |
 | R64 | open | Abstention (`tab:ParenthesizedNumber`/`tab:datatypeAbstains`) weakens the header-boundary scan |
