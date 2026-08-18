@@ -3,6 +3,13 @@
 **Date:** 2026-08-18 · **Branch:** `loop1-gate-and-label` · **PR:** #106 (open, CI green)
 · **Shape: originating** — it changes an oracle's semantics. Not started; see § Why.
 
+> **START WITH `superpowers:brainstorming`, before reading the options below.** Decided
+> 2026-08-18 with the maintainer. The question to open with is **not** "which of the two designs" —
+> it is *what invariant is this probe an oracle for?* R61's premise is "emitters must type every
+> node explicitly", but `tab:AggregateWitness` was never emitter output; it is a vocabulary constant
+> an emitter *referenced*. The probe may be conflating two different invariants that share one
+> mechanism — in which case the fix is to split the check, and neither option below is right.
+
 ## Goal
 
 `scripts/probe_emitter_typing.py` reports a violation whenever a `rdfs:range`'s object is a
@@ -25,7 +32,12 @@
 - The artifacts are objects like `tab:AggregateWitness` (`a tab:GridAxiom`, `tab-datagrid.ttl:318`)
   and `tab:Quantity` (`a tab:CellDatatypeFamily`, `tab.ttl:227`).
 
-## The two candidate designs, and the trap
+## Two candidate designs — PROPOSITIONS TO ATTACK, not a shortlist
+
+**Provenance, stated so they are weighted correctly:** both were generated while writing this
+handoff, at 222k context, by the session that had just made the measurement. They are the least
+trustworthy part of this file. The measured facts above are the solid part. A fresh session that
+discards both and reframes the problem is doing this right, not going off-brief.
 
 1. **Let `types_of` consult the merged ontology as well as the page graph.** Mirrors what the
    membrane actually does, so the probe stops disagreeing with the thing it models.
