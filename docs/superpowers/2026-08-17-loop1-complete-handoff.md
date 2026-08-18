@@ -1,7 +1,7 @@
 # Handoff — Loop 1 (the gate and the label) is COMPLETE; Loop 2 needs a fresh session
 
 **Date:** 2026-08-17 · **Branch:** `loop1-gate-and-label` · **Head:** `a0e7ee1` · **Tree:** clean
-· **Not merged to `main`.**
+· **PR #106 open, CI green, not merged.**
 
 ## Goal
 
@@ -56,14 +56,18 @@ what Loop 2 starts from. It is a **set of pointers** — it does not restate the
 - **The `xpassed` → `xfailed` flip** between the two full runs is `test_derivation_perf.py:146`,
   `strict=False`, whose own marker documents a ~10% margin at the affordable N. Read as documented
   flakiness, **not** re-measured as such in this session.
-- **The 16 probe artifacts are a NEW finding, made late**, and nothing downstream has been re-read
-  in their light. In particular, `tab.ttl`'s pre-existing 5 violated rules have **not** been
-  re-examined for the same false-positive class. See R103's row.
+- ~~**The 16 probe artifacts are a NEW finding, made late**, and nothing downstream has been
+  re-read in their light.~~ **MEASURED 2026-08-18 and the figure was wrong: it is 14, not 16.**
+  `tab.ttl` is **clean — 0 of its 56 are artifacts**, so its live figure of 14 stands. The class is
+  confined to `tab-datagrid.ttl`. A third finding fell out of the corrected split (`tab:Text` is
+  declared `a tab:CellDatatype`, never `a tab:CellDatatypeFamily`, while the prose and the emitter
+  both treat it as a family). See R103's row, and `2026-08-18-probe-artifact-handoff.md` — **the
+  probe itself is still not fixed.**
 - **Every figure here is the rudof leg.** The pySHACL leg stays unrun — standing since R87.
 - **`compile_tables` is publicly exported**, so the document-scope coverage R102 achieved can be
   bypassed by an external caller. Recorded in ~~R102~~'s row; judged the same shape as R34's
   already-registered bypass, and **not** raised as a new row. That judgement is reversible.
-- **Nothing was merged.** The branch is `loop1-gate-and-label`; no PR opened.
+- **Nothing was merged.** The branch is `loop1-gate-and-label`; **PR #106 is open and CI is green** (opened 2026-08-17, after this file was first written).
 
 ## The next concrete action
 
