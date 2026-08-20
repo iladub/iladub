@@ -242,9 +242,39 @@ run 2026-08-20), but the individual bullets and entries landed later.
 ### §7.1 `etkl` — 1 of 7
 
 Source: `tests/corpus-manifest.ttl` (115 lines), which declared the denominator on 2026-08-02 and
-has been untouched for 16 days. **One criterion per corpus document**: *this document compiles via
-`compile_document` to an adjudicated verdict, with a pinned `cor:scoreFloor` the corpus battery
-holds.*
+has been untouched for 16 days. **One criterion per corpus document:**
+
+> *this document compiles via `compile_document` to `cor:CompilesAbove` with a pinned
+> `cor:scoreFloor`, under a `cor:adjudication` whose rationale **accepts** that score — not one that
+> holds it.*
+
+**CORRECTED 2026-08-20, on the maintainer's challenge, and the earlier wording is kept here because
+the defect is instructive.** It read *"an adjudicated verdict, with a pinned `cor:scoreFloor` the
+corpus battery holds"* — which is **gameable, and in the worst direction**. A floor is a regression
+guard, so nothing stops it being pinned at whatever the document scores today: `bfs` at 0.3438,
+`ons` at 0.4419. Six such lines would take this rung from 1/7 to **7/7 without a single reading
+improving**. That is not fraud, it is worse — it is a criterion that rewards *writing the number
+down*, and `[[no-overfitting-general-fixes]]`'s standing rule (never lower a bar to meet it; honest
+failure beats fake success) is aimed at exactly this shape.
+
+**The distinction is already in the `cor:` vocabulary and costs nothing to adopt.** From the
+manifest's own header (`tests/corpus-manifest.ttl:16-20`): *"There is no separate `cor:Hold` term: a
+HOLD is encoded AS `cor:Unadjudicated` plus a `cor:adjudication` node carrying the reviewer's
+rationale — the hold state is 'unadjudicated, with a recorded reason,' not a fourth verdict value."*
+
+So the manifest can already say three different things, and the rung must count only the first:
+
+| manifest state | meaning | counts as met |
+| --- | --- | --- |
+| `cor:CompilesAbove` + `cor:scoreFloor` + an accepting `cor:adjudication` | the reading is good enough, and someone said so and why | **yes** |
+| `cor:Unadjudicated` + a `cor:adjudication` | **recorded HOLD** — measured, reasoned, and explicitly not accepted | no |
+| `cor:Unadjudicated`, bare | nobody has looked | no |
+
+Rows 2 and 3 both score zero, and **that is not the same as being indistinguishable**: today all six
+non-stem documents are in row 3, and after the plan's adjudication pass they should all be in row 2.
+The fraction will not move, and the register of what is *known* about this rung will have moved a
+long way. **Whether the strip should show that difference is a render question the plan may raise;
+the manifest must record it either way.**
 
 Measured 2026-08-20: **7 `cor:Document` entries; 1 carries a `cor:scoreFloor` and an adjudicated
 verdict** (`graincorp-stem-2026-07-31`, floor `0.95`, achieved 0.9655). The other **6 are
@@ -252,7 +282,9 @@ verdict** (`graincorp-stem-2026-07-31`, floor `0.95`, achieved 0.9655). The othe
 
 `graincorp-stem` is the model's proof case and is **`retrospective false`**: declared into the
 manifest 2026-08-02, adjudicated (HOLD lifted) 2026-08-03 — `declaredOn < metOn`, with the
-intervening HOLD recorded in `cor:adjudication`. The denominator moved before the numerator did.
+intervening HOLD recorded in `cor:adjudication`. The denominator moved before the numerator did, and
+it moved *through* row 2 of the table above, which is the corrected criterion's whole point: the one
+met document is met because a HOLD was **lifted**, not because a number was written down.
 
 **This denominator grows with ambition, and that is correct.** Adding a document to the corpus
 lowers the fraction. A gauge that can only be lowered by aiming higher is measuring the right thing.
@@ -467,6 +499,10 @@ criterion may name a path that is absent). M5 bites only on `met true`.
 - Point a criterion at an artifact that does not exist → **refuse** (M5).
 - Point `prog:blockedBy` at a residue that is not in the register → **refuse** (M7).
 - Declare a criterion met on the day it was declared, without `retrospective` → **refuse** (M4).
+- Pin a `cor:scoreFloor` at a document's currently-measured score and assert the `etkl` criterion met
+  → **must not count** (§7.1's corrected criterion; the adjudication has to accept the score, and a
+  recorded HOLD scores zero). This is the falsifier for the gameability defect and the plan must
+  supply a test for it.
 - Point a `prog:oracleArtifact` at `battery-run-final.log` (cited by three live register rows, absent
   from the repo and from git history) → **refuse** (M5). This is a real string from the register, not
   a hypothetical.
@@ -513,10 +549,22 @@ and make the index's stated figure carry the command that produced it.
 Named per CLAUDE.md § Plan authoring rule 3 — these are the facts to establish, **not** the answers.
 The first is on the critical path; a plan that defers it will author a fabricated numerator.
 
-1. **The `tab` numerator.** Which of the eight escalation reasons fire on the 7-document corpus, and
-   how often. `corpus_graphs` is ~5.5 min (`tests/etkl/test_vacuity_registry.py:298`); the ons and
-   bfs single-document nodes are 9- and 7-page compiles under `BUDGET_S = 320`. **Run under
-   `./.venv/bin/python`** (§7.2.2).
+1. **The `tab` numerator, and the `etkl` adjudication — one corpus run, both jobs.** Which of the
+   eight escalation reasons fire on the 7-document corpus, and how often. `corpus_graphs` is ~5.5 min
+   (`tests/etkl/test_vacuity_registry.py:298`); the ons and bfs single-document nodes are 9- and
+   7-page compiles under `BUDGET_S = 320`. **Run under `./.venv/bin/python`** (§7.2.2).
+
+   **The same run carries the six unadjudicated corpus documents (maintainer's call, 2026-08-20).**
+   The per-document escalation-reason census IS the evidence an adjudication needs, so adjudicating
+   on it costs one loop rather than six. **The expected outcome is mostly recorded HOLDs, and that is
+   a success, not a failure of the pass:** R43, R44, R45 and R62 each name their closure as *"its own
+   reading loop"*, so a document whose escalations are triaged and reasoned into a
+   `cor:Unadjudicated` + `cor:adjudication` HOLD has been honestly disposed. **Do NOT pin a floor at a
+   document's measured score to make the fraction move** — §7.1's corrected criterion refuses that,
+   and §8 names the falsifier the plan must supply a test for.
+
+   Expect `etkl` to stay near 1/7 after this pass. **The rung's fraction is not the deliverable; the
+   six documents moving from "nobody has looked" to "measured, reasoned, held" is.**
 2. **The eight reason literals themselves** — re-grep from `src/iladub/etkl/*.py`. They are string
    literals, not a declared enum; if the grep and §7.4's list disagree, §7.4 is wrong.
 3. **`prog:declaredOn` per criterion** — `git log -L` / `git blame` on the declaring line of prose,

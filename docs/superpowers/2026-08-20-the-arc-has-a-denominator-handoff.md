@@ -99,6 +99,20 @@ In a **fresh session**: write the plan from
 `docs/superpowers/specs/2026-08-20-the-arc-has-a-denominator-design.md`, starting with §11 seam 1
 (the corpus measurement) because everything about the `tab` rung waits on it.
 
+**Folded into that seam on the maintainer's call, 2026-08-20 (recorded here and in spec §11 only):**
+the six unadjudicated corpus documents are adjudicated **in the plan session, on the same corpus
+run**, not as a separate loop ahead of it. The reasoning: the per-document escalation-reason census
+the `tab` rung needs is exactly the evidence an adjudication requires, so it is one loop rather than
+six — and the register has already priced the alternative at *"its own reading loop"* per document
+(R43, R44, R45, R62).
+
+**Expect the fraction not to move, and do not make it move.** The likely outcome is five or six
+recorded HOLDs (`cor:Unadjudicated` + a `cor:adjudication` carrying the reasoning — the manifest's
+own encoding, `tests/corpus-manifest.ttl:16-20`). That is the success condition. Pinning a
+`cor:scoreFloor` at a document's current score would take the rung to 7/7 with no reading improved;
+**spec §7.1 was corrected on 2026-08-20 to refuse exactly that**, and §8 names the falsifying test
+the plan must supply.
+
 CLAUDE.md § Plan authoring is in force and this spec was written to make it cheap: every load-bearing
 claim carries its command and output inline, §9 states what is deliberately NOT built, and §11 names
 the seams to measure rather than the answers. **A plan containing a function body, an unmeasured
