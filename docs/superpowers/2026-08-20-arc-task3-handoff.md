@@ -73,10 +73,13 @@ is actually being executed before trusting a worktree green.
 
 ## Unverified or assumed
 
-- **No full-suite leg has run against `001014e`.** The two legs started against `93234cb` were still
-  going at the controller's stop (~64% through the non-corpus leg), and they do not cover the fix
-  commit. **Re-run both in the worktree at the head you inherit rather than trusting those.** Task 3's
-  own focused run is 15 passed, and its fix diff touched only `tests/arc-shapes.ttl` and fixtures.
+- **No full-suite leg has run against `001014e`.** Both legs finished GREEN at `93234cb` — corpus
+  43 passed (18m32s), non-corpus 1215 passed / 7 skipped / 1 xfailed / **10 warnings** (19m22s),
+  figures identical to Task 1's — but neither covers the fix commit, whose diff touched
+  `tests/arc-shapes.ttl` and 12 fixtures. **Re-run both in the worktree at the head you inherit.**
+  Task 3's own focused run at `001014e` is 15 passed. The 10 warnings are unexplained: Task 1's
+  report gave its figures without mentioning them, so whether they pre-date this branch is
+  unestablished.
 - **The `prog:source` clause is enforced but its VALUE is unverified** — nothing checks the path
   exists or the line range is real, unlike M5's filesystem check on `prog:oracleArtifact`. Both the
   implementer and the re-reviewer named this as candidate **M10**, out of scope for Task 3.
