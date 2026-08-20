@@ -29,7 +29,8 @@ def test_the_arc_gauge_reports_unknown_and_must_not_guess():
         f"the arc gauge now claims position {pos}. If an objectives artifact gained state, update "
         "this test and say which artifact supplies it. If it did not, this is a fabricated figure")
     assert stages >= 1
-    assert "arc ?/" in _strip(cockpit.render(color=False))
+    assert "stage ?/" in _strip(cockpit.render(color=False)), (
+        "the gauge is labelled `stage N/4 of the arc`; if the label changed, keep the `?`")
 
 
 def test_the_strip_never_raises_when_its_sources_are_missing(monkeypatch, tmp_path):
@@ -129,3 +130,24 @@ def test_the_raised_at_wording_is_read_too(tmp_path, monkeypatch):
               closed="| ~~R103~~ (raised at 18/93 closed) | closed | x |\n")
     _c, _t, delta = cockpit.residues()
     assert delta == pytest.approx(50.0 - 18 / 93 * 100, abs=0.01)
+
+
+def test_the_work_line_names_no_topic_the_repo_cannot_prove(monkeypatch, tmp_path):
+    """The maintainer asked for `topic · subtopic`, e.g. `etkl · table-reading`. That taxonomy does
+    not exist yet — nothing in the repo binds a piece of work to a topic — so `work()` reports the
+    two things git and the filesystem can prove: the newest handoff/brief, and the branch. A curated
+    topic would have to be maintained by hand, and a hand-maintained label on a dashboard is the
+    exact failure this strip refuses elsewhere (see the `arc`/`stage` gauge). When the objectives
+    artifact lands, this test is the place to say which artifact supplies the topic."""
+    monkeypatch.setattr(cockpit, "entry_point", lambda: "some-loop")
+    monkeypatch.setattr(cockpit, "_run", lambda *a: "a-branch\n")
+    assert cockpit.work() == "some-loop \u00b7 a-branch"
+
+
+def test_the_work_line_degrades_on_a_detached_head(monkeypatch):
+    """A rebase or a bisect leaves HEAD detached. The subject still holds; the branch half drops."""
+    monkeypatch.setattr(cockpit, "entry_point", lambda: "some-loop")
+    monkeypatch.setattr(cockpit, "_run", lambda *a: "HEAD\n")
+    assert cockpit.work() == "some-loop"
+    monkeypatch.setattr(cockpit, "_run", lambda *a: "")
+    assert cockpit.work() == "some-loop"

@@ -153,6 +153,26 @@ def entry_point() -> str:
     return re.sub(r"^\d{4}-\d{2}-\d{2}-|\.md$|-handoff$|-brief$", "", newest)[:28]
 
 
+def work() -> str:
+    """WHAT WE ARE WORKING ON — the maintainer's first ask of this strip, and the one gauge whose
+    sources are chosen to make staleness impossible rather than merely unlikely.
+
+    Both halves are read from live state, never from a field anyone maintains: the **subject** is
+    the newest handoff/brief on disk (what a fresh session would open) and the **branch** is what
+    git says HEAD is. A hand-written "current topic" marker would be the failure mode this whole
+    strip exists against — a dashboard asserting a fact nobody re-checked.
+
+    It is NOT the curated `topic — subtopic` taxonomy (`etkl · table-reading`) that was asked for.
+    That needs an artifact naming the topics and binding work to them, which is the objectives
+    artifact `docs/superpowers/2026-08-20-strategy-instrument-handoff.md` designs and does not yet
+    exist. Until it does, this reports the two things the repo can actually prove."""
+    branch = _run("git", "rev-parse", "--abbrev-ref", "HEAD").strip()
+    subject = entry_point()
+    if branch in ("", "HEAD"):
+        return subject
+    return f"{subject} {chr(183)} {branch[:24]}"
+
+
 def bar(frac: float, width: int = 8) -> str:
     filled = int(round(frac * width))
     return "▰" * filled + "▱" * (width - filled)
@@ -179,12 +199,14 @@ def render(color: bool = True) -> str:
 
     sep = f" {c('dim')}│{c('off')} "
     return sep.join([
-        f"{c('dim')}res{c('off')} {c(tone)}{bar(frac)}{c('off')} "
-        f"{c('bold')}{closed}/{total}{c('off')} {trend}",
-        f"{c('dim')}7d{c('off')} {c(vtone)}⊕{raised} ⊖{closed_7d}{c('off')}",
-        f"{c('dim')}idle{c('off')} {c(itone)}{'?' if idle is None else str(idle) + 'd'}{c('off')}",
-        f"{c('dim')}arc{c('off')} {c('warn')}{'?' if pos is None else pos}/{stages}{c('off')}",
-        f"{c('cool')}▸ {entry_point()}{c('off')}",
+        f"{c('cool')}{work()}{c('off')}",
+        f"{c('dim')}residues{c('off')} {c(tone)}{bar(frac)}{c('off')} "
+        f"{c('bold')}{closed}/{total}{c('off')} {c('dim')}closed{c('off')} {trend}",
+        f"{c('dim')}7d{c('off')} {c(vtone)}{raised} raised {closed_7d} closed{c('off')}",
+        f"{c('dim')}last close{c('off')} {c(itone)}"
+        f"{'?' if idle is None else str(idle) + 'd ago'}{c('off')}",
+        f"{c('dim')}stage{c('off')} {c('warn')}{'?' if pos is None else pos}/{stages}"
+        f"{c('off')} {c('dim')}of the arc{c('off')}",
     ])
 
 
