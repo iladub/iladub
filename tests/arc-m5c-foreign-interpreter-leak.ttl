@@ -1,0 +1,14 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M5c: a manifest recording a runner that is not the one reading it. 7.1.4 is what
+# the system python3 carries (spec §7.2.2); under it the corpus battery reports false
+# reds and pyrudof is absent, so criteria would silently un-meet for an ENVIRONMENT
+# reason. SHACL-clean by design: only sys/rdflib can refuse this.
+prog:manifest a prog:Manifest ;
+    rdfs:label "the arc's denominator" ;
+    prog:interpreter ".venv/bin/python" ;
+    prog:pythonVersion "3.12" ;
+    prog:rdflibVersion "7.1.4" .

@@ -1,0 +1,14 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M2b, the inverse leak: prog:met false while a prog:metOn is left behind — a
+# date that survived the un-meeting of the criterion it dated.
+prog:criterion:dec:pairing-confidence a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "dec:ConfidenceShape ships a negative fixture that trips it." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:metOn "2026-08-15"^^xsd:date ;
+    prog:retrospective false .

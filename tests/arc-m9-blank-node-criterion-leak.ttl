@@ -1,0 +1,14 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M9: a criterion authored as a blank node. Everything else about it is valid.
+# scripts/cockpit.py must read this manifest WITHOUT rdflib (cockpit.py:34-38), and a
+# regex read is safe only where every criterion is a top-level IRI subject.
+[] a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MERGE_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false .

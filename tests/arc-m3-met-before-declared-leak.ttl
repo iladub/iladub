@@ -1,0 +1,13 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M3: prog:metOn earlier than prog:declaredOn — met before it was defined.
+prog:criterion:holon:membrane-health a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "A membrane-health check computes etkl:membraneHealth from validation results." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-07-01"^^xsd:date ;
+    prog:retrospective true .

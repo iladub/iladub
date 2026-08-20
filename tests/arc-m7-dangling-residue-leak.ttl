@@ -1,0 +1,15 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M7: a prog:blockedBy naming a residue row that is not in the register index. A
+# dangling edge is worse than no edge — it reads as strategy and points at nothing.
+# SHACL-clean by design: the register is a markdown file the graph cannot see.
+prog:criterion:tab:matrix-ambiguous a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MATRIX_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R999" .

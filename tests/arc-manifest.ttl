@@ -1,0 +1,71 @@
+# tests/arc-manifest.ttl — the arc's denominator (spec 2026-08-20 §3), hand-authored.
+#
+# SEED STATE: the five settled rungs and ZERO criteria. Every rung therefore renders
+# `?` on the cockpit strip — unknown is NOT zero (spec §4, decision 6), and a rung with
+# no criteria is deliberately not a refusal. The ~42 criteria are authored by later
+# tasks of this loop.
+#
+# `prog:` (https://w3id.org/iladub/progress#) is repo-internal and unpublished, exactly
+# as `cor:` and `dg:` are: it is not w3id-registered and never appears in vocab/ontology/.
+#
+# Two rules this file lives under:
+#   - CODE NEVER WRITES THIS FILE (spec §9; the cor: precedent). It is validated, by
+#     tests/arc-shapes.ttl + tests/test_arc_manifest.py, and hand-edited in reviewed
+#     commits — never auto-flipped to met.
+#   - RUNGS ARE UNORDERED (decision 8). There is no prog:precedes and no index property:
+#     `tab` is depth inside `etkl`, not a stage after `substrate`, so the repo does not
+#     assert an ordering that is false for one of the five.
+#
+# Criterion IRIs are `prog:criterion:<rungKey>:<slug>` and must agree with prog:ofRung
+# (M9/M9b). That is not tidiness: scripts/cockpit.py must read this file WITHOUT rdflib
+# (its performance contract, cockpit.py:34-38), and a regex read is safe only over a
+# file where every criterion is a top-level IRI subject encoding its own rung.
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# The runner these assertions were validated against — M5's third arm (spec §7.2.2).
+# "If CI is green, every oracle is green" is true only RELATIVE TO A RUNNER: under the
+# system python3 the corpus battery reports false reds and pyrudof is simply absent.
+#
+# MEASURED 2026-08-20 on this tree:
+#   $ ./.venv/bin/python -c "import sys,rdflib;print(sys.executable, sys.version.split()[0], rdflib.__version__)"
+#   /Volumes/WD Green/dev/git/iladub/.venv/bin/python 3.12.0 7.6.0
+#
+# Recorded to the precision that is an assertion rather than an accident:
+#   - prog:interpreter is the repo-relative runner named by tests/test_corpus.py:7, not
+#     the absolute path, which is this machine's and not this repo's.
+#   - prog:pythonVersion is the FEATURE version. .github/workflows/ci.yml pins
+#     python-version "3.12" and floats the patch, so "3.12.0" would be a fact about this
+#     laptop. The check is dotted-prefix equality, so the recorded precision IS the
+#     assertion: record more digits and more is refused.
+#   - prog:rdflibVersion is recorded in full, so the check on it is exact. 7.1.4 (the
+#     system python3) is what §7.2.2 measured as producing false reds.
+prog:manifest a prog:Manifest ;
+    rdfs:label "the arc's denominator" ;
+    prog:interpreter ".venv/bin/python" ;
+    prog:pythonVersion "3.12" ;
+    prog:rdflibVersion "7.6.0" .
+
+# The five settled rungs (decision 8), named and never numbered. Labels are the section
+# headings of docs/narrative/scope-evolution.md.
+
+prog:rung:etkl a prog:Rung ;
+    prog:rungKey "etkl" ;
+    rdfs:label "the document compiler" .
+
+prog:rung:tab a prog:Rung ;
+    prog:rungKey "tab" ;
+    rdfs:label "reading depth, inside the compiler" .
+
+prog:rung:dec a prog:Rung ;
+    prog:rungKey "dec" ;
+    rdfs:label "decidability, the context graph" .
+
+prog:rung:holon a prog:Rung ;
+    prog:rungKey "holon" ;
+    rdfs:label "the reframe, from record to active holon" .
+
+prog:rung:substrate a prog:Rung ;
+    prog:rungKey "substrate" ;
+    rdfs:label "the membrane enforced at runtime" .

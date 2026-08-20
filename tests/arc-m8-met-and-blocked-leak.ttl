@@ -1,0 +1,15 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M8: prog:met true carrying a prog:blockedBy. A met criterion is not blocked —
+# this catches the stalest kind of row, where the work landed and the edge did not.
+prog:criterion:tab:merge-ambiguous a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MERGE_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-15"^^xsd:date ;
+    prog:retrospective false ;
+    prog:blockedBy "R43" .

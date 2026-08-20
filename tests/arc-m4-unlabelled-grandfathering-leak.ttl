@@ -1,0 +1,15 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M4: prog:metOn EQUALS prog:declaredOn while prog:retrospective is false — the
+# criterion was written against evidence that already existed, and says otherwise.
+# Grandfathering is labelled, never hidden (spec §3.2).
+prog:criterion:holon:hga-align a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/iladub-hga-align.ttl aligns without importing." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-01"^^xsd:date ;
+    prog:retrospective false .

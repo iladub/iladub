@@ -1,0 +1,12 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M1: no prog:declaredOn. A criterion with no declaration date cannot
+# participate in the retrospectivity clause (spec §3.2) at all.
+prog:criterion:dec:pairing-confidence a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "dec:ConfidenceShape ships a negative fixture that trips it." ;
+    prog:met false ;
+    prog:retrospective false .

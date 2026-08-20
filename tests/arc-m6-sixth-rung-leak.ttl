@@ -1,0 +1,10 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M6: a sixth rung. The five names are settled (decision 8); a sixth is a
+# decision the maintainer makes, not an edit a loop slips in.
+prog:rung:governance a prog:Rung ;
+    prog:rungKey "governance" ;
+    rdfs:label "information governance" .

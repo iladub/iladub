@@ -1,0 +1,13 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M9b: the IRI says `tab`, prog:ofRung says `dec`. The two encodings must agree or
+# the fast regex reader and rdflib disagree about which rung this criterion counts for.
+prog:criterion:tab:merge-ambiguous a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "MERGE_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false .

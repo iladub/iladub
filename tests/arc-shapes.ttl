@@ -1,0 +1,155 @@
+# tests/arc-shapes.ttl — the membrane over the arc manifest (spec 2026-08-20 §4).
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / constraint, closed world.** This file is a
+# membrane and nothing else. It validates what may cross into `tests/arc-manifest.ttl`; it
+# DERIVES NOTHING, and it COMPUTES NO FRACTION — the per-rung (met, declared) counts are an
+# open-world SPARQL derivation (spec §5, `vocab/queries/arc-*.rq`) and never a SHACL rule.
+# Inferring by absence in a derivation is what CLAUDE.md §8 forbids; closing over the
+# manifest, which is one hand-authored file, is what a membrane is for.
+#
+# It carries SEVEN of the nine refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b).
+# M5, M5b, M5c and M7 are NOT here and cannot be: they ask about the filesystem, a pytest
+# collection and `sys.version`, none of which are triples. They live in
+# tests/test_arc_manifest.py, which states why that split is irreducible.
+#
+# `prog:` (https://w3id.org/iladub/progress#) is repo-internal and unpublished, exactly as
+# `cor:` and `dg:` are: not w3id-registered, never in vocab/ontology/. No HGA IRI appears
+# in this file (CLAUDE.md § Source ownership; tests/test_source_ownership.py enforces it).
+#
+# Every sh:message opens with its refusal number, and tests/test_arc_manifest.py asserts
+# that a fixture trips EXACTLY ONE of them. That is what makes each fixture evidence about
+# the constraint it was written for rather than about the membrane in general.
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+prog:prefixes sh:declare [ sh:prefix "prog" ;
+    sh:namespace "https://w3id.org/iladub/progress#"^^xsd:anyURI ] .
+
+
+# ---------------------------------------------------------------------------- the rung
+
+prog:RungShape a sh:NodeShape ;
+    sh:targetClass prog:Rung ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path prog:rungKey ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ("etkl" "dec" "holon" "tab" "substrate") ;
+                  sh:message "M6: a rung key must be one of the five settled names — etkl, dec, holon, tab, substrate. A sixth rung is a decision, not an edit." ] ;
+    sh:property [ sh:path rdfs:label ;
+                  sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "M1: a rung carries exactly one rdfs:label — the strip prints a name, never a number." ] .
+
+# NOTE, and it is deliberate: there is no prog:precedes and no index property anywhere in
+# this file. Rungs are UNORDERED (decision 8) — `tab` is depth inside `etkl`, not a stage
+# after `substrate` — so the membrane has no ordering to validate because the model asserts
+# none. Adding one here would be adding the claim.
+
+
+# ------------------------------------------------------------------------ the criterion
+
+# M9 — the clause scripts/cockpit.py's performance contract (cockpit.py:34-38) rests on.
+# The strip must read this manifest WITHOUT rdflib. A regex read of arbitrary Turtle is
+# unsafe; a regex read of a file where every criterion is a top-level IRI subject encoding
+# its own rung is safe. This shape is what buys that.
+#
+# It is a node shape of its OWN, and that is not cosmetic: a node-level sh:message is
+# attached by pySHACL to every result the shape reports, so folding M9 into
+# prog:CriterionShape below stamps "M9" onto M2, M3, M4, M8 and M9b violations too —
+# measured, and it is what the first green run of this file caught.
+prog:CriterionIsIriShape a sh:NodeShape ;
+    sh:targetClass prog:Criterion ;
+    sh:nodeKind sh:IRI ;
+    sh:message "M9: a criterion must be an IRI subject, never a blank node — the cockpit reads this file with a regex and cannot see inside one." .
+
+prog:CriterionShape a sh:NodeShape ;
+    sh:targetClass prog:Criterion ;
+
+    # M1 — the four fields without which a criterion cannot participate in §3.2 at all,
+    # plus prog:ofRung, which M9b needs in order to have something to disagree with.
+    sh:property [ sh:path prog:ofRung ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ("etkl" "dec" "holon" "tab" "substrate") ;
+                  sh:message "M1: a criterion belongs to exactly one of the five rungs, by key." ] ;
+    sh:property [ sh:path prog:statement ;
+                  sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "M1: a criterion states, in prose, the one countable thing that would have to be true." ] ;
+    sh:property [ sh:path prog:declaredOn ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ;
+                  sh:message "M1: a criterion carries exactly one prog:declaredOn — you must say what done means before you may claim it." ] ;
+    sh:property [ sh:path prog:met ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "M1: exactly one prog:met. The cockpit cannot derive met-ness at render time (cockpit.py:34-38), so it reads an assertion — and an assertion that is sometimes absent is a guess." ] ;
+    sh:property [ sh:path prog:retrospective ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "M1: prog:retrospective is required on every criterion — an adjudication and a measurement must be told apart." ] ;
+    sh:property [ sh:path prog:metOn ;
+                  sh:maxCount 1 ; sh:datatype xsd:date ;
+                  sh:message "M1: at most one prog:metOn." ] ;
+
+    sh:sparql [
+        sh:message "M2: prog:met true requires a prog:metOn — a claim with no date is not auditable." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:met true .
+            FILTER NOT EXISTS { $this prog:metOn ?d } }""" ] ;
+
+    sh:sparql [
+        sh:message "M2b: prog:met false may not carry a prog:metOn — the fill can go down, and the date goes with it." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:met false .
+            $this prog:metOn ?d }""" ] ;
+
+    sh:sparql [
+        sh:message "M3: prog:metOn is earlier than prog:declaredOn — met before it was defined." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:metOn ?m ; prog:declaredOn ?d .
+            FILTER(?m < ?d) }""" ] ;
+
+    sh:sparql [
+        sh:message "M4: prog:metOn equals prog:declaredOn, so this criterion was written against evidence that already existed — it must be prog:retrospective true. Grandfathering is labelled, never hidden." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:metOn ?m ; prog:declaredOn ?d ; prog:retrospective false .
+            FILTER(?m = ?d) }""" ] ;
+
+    sh:sparql [
+        sh:message "M8: a met criterion may not be prog:blockedBy anything — the work landed and the edge did not." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:met true ; prog:blockedBy ?r }""" ] ;
+
+    # ?k is interpolated into a regex, which is safe here and only here: the prog:ofRung
+    # property shape above pins it to one of five literal keys, none of which carries a
+    # regex metacharacter, and both constraints target the same focus node.
+    sh:sparql [
+        sh:message "M9b: a criterion IRI must read prog:criterion:<rungKey>:<slug> and agree with its prog:ofRung — the regex reader and rdflib must count it for the same rung." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:ofRung ?k .
+            FILTER(!isBlank($this))
+            FILTER(!REGEX(STR($this),
+              CONCAT("^https://w3id[.]org/iladub/progress#criterion:", ?k, ":[a-z0-9][a-z0-9-]*$"))) }""" ] .
+
+
+# ------------------------------------------------------------------------- the manifest
+
+# The runner record M5's third arm reads (spec §7.2.2). The membrane owns only its
+# PRESENCE and shape; whether it matches the interpreter now reading it is not a fact about
+# the graph, and tests/test_arc_manifest.py owns that half.
+prog:ManifestShape a sh:NodeShape ;
+    sh:targetClass prog:Manifest ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path prog:interpreter ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "M1: the manifest names the runner its assertions were validated against." ] ;
+    sh:property [ sh:path prog:pythonVersion ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "M1: the manifest records the Python version it was validated under." ] ;
+    sh:property [ sh:path prog:rdflibVersion ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "M1: the manifest records the rdflib version it was validated under." ] .

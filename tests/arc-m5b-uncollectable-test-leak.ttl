@@ -1,0 +1,17 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M5b: a met criterion whose oracle test does not collect. The literal node id is
+# real: R74's closure names test_cbh_p0_known_defects_are_pinned_not_hidden and no such
+# function exists (the real pin is ::test_cbh_p0_table_b_leak_is_pinned_not_hidden).
+# SHACL-clean by design: only a pytest collection can refuse this.
+prog:criterion:tab:row-group-ambiguous a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "ROW_GROUP_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-15"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/etkl/test_datagrid.py::test_cbh_p0_known_defects_are_pinned_not_hidden" .

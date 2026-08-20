@@ -1,0 +1,19 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M5: a met criterion whose oracle artifact does not exist. The literal string is
+# real: `battery-run-final.log` is cited as the measurement evidence by R43, R44 AND
+# R45, and is absent from the repo AND from git history
+# (`git log --all -- "*battery-run-final*"` -> empty). Three live register rows rest
+# their measurement on a file nobody can open. This fixture is SHACL-clean by design:
+# the graph cannot see the filesystem, so only the pytest leg can refuse it.
+prog:criterion:tab:region-tiling-failed a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "REGION_TILING_FAILED either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-15"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "battery-run-final.log" .
