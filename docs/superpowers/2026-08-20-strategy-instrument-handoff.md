@@ -56,6 +56,25 @@ the spec finds them awkward.
    criteria declared renders `?`, never an empty bar), and **the fill can go DOWN** — if a test a
    criterion points at goes red, the criterion un-meets. A gauge that only ratchets upward is
    measuring authorship, not state.
+7. **Table-reading becomes a fifth rung.** The maintainer's call, answering the question the
+   inventory raised: 64/82/72% of the repo was doing work the arc did not name.
+8. **The rungs are NAMED, never numbered** — same call, and it is not cosmetic. *"Rung 5"* would
+   place table-reading after *the active substrate*, which is false: it is not a later stage, it is
+   capability inside the compiler's own territory. **A number is an ordering claim.** Numbering was
+   already refuted once for the position (decision 5); this is the same error one level down, and
+   naming is what lets a rung sit where it belongs without asserting a sequence that does not exist.
+
+   Candidate labels, a PROPOSAL and the maintainer's to overrule — the project's own words, four of
+   the five being namespaces it owns:
+
+   ```
+   arc  etkl ▰▰▰▱  dec ▰▰▰▰  holon ▰▰▱▱  tab ▰▱▱▱  substrate ▱▱▱▱
+   ```
+
+   That `substrate` alone has no namespace is informative rather than untidy: nothing is built there.
+   **Measured constraint on the render:** five named bars run ~70 characters before the other three
+   gauges. The status line is already composed of two lines (plimslop's context gauge above the
+   strip — see `.claude/settings.local.json`); the arc may need a line of its own. Untested.
 
 ### The design as it stood at the end of the session
 
@@ -190,8 +209,15 @@ authoring risk the design worried about is much smaller than assumed.
 In a **fresh session** — the previous "test whether rung 3/4 criteria can be written" is done, and
 the answer was yes. What replaces it is a decision, not a measurement:
 
-**Does table-reading become a fifth rung, or is the arc re-cut?** Two-thirds of the repo is not on
-the map, and every fraction the gauge renders is measured against that map. Decide this before
-writing the spec — the criteria, the shapes and the bars all inherit from it. Then lift the three
-existing prose denominators (corpus manifest, holonic-interaction's two items, scope-evolution §4's
-three requirements) into countable form, and write rung 2's, which nobody has ever written.
+~~Does table-reading become a fifth rung, or is the arc re-cut?~~ **DECIDED: it becomes a fifth
+rung, and the rungs are named rather than numbered** (decisions 7 and 8). So:
+
+1. **Name the five rungs**, and put the fifth into `docs/narrative/scope-evolution.md`. That file is
+   **Assertion class** — published, in the mkdocs nav — so this is a `Doc impact: increment` and the
+   arc's mermaid diagram changes shape too: a fifth node appended to `E → DEC → HOL → SUB` would
+   re-assert the very ordering the naming decision exists to avoid.
+2. **Lift the three existing prose denominators into countable form** — `corpus-manifest` (1/7),
+   `holonic-interaction.md` § Planned work (0/2), `scope-evolution.md` §4's three requirements (0/3).
+3. **Write the two that do not exist**: `dec`'s, and the new `tab` rung's. For `tab` the register is
+   the obvious source — R43/R44/R97–R100 are all criteria in prose already.
+4. Only then the spec.
