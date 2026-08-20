@@ -132,22 +132,46 @@ def test_the_raised_at_wording_is_read_too(tmp_path, monkeypatch):
     assert delta == pytest.approx(50.0 - 18 / 93 * 100, abs=0.01)
 
 
-def test_the_work_line_names_no_topic_the_repo_cannot_prove(monkeypatch, tmp_path):
-    """The maintainer asked for `topic · subtopic`, e.g. `etkl · table-reading`. That taxonomy does
-    not exist yet — nothing in the repo binds a piece of work to a topic — so `work()` reports the
-    two things git and the filesystem can prove: the newest handoff/brief, and the branch. A curated
-    topic would have to be maintained by hand, and a hand-maintained label on a dashboard is the
-    exact failure this strip refuses elsewhere (see the `arc`/`stage` gauge). When the objectives
-    artifact lands, this test is the place to say which artifact supplies the topic."""
-    monkeypatch.setattr(cockpit, "entry_point", lambda: "some-loop")
+def test_the_work_line_renders_the_declared_topic(monkeypatch, tmp_path):
+    """`topic · subject · branch` — the maintainer's ask. The topic is read from the newest
+    brief/handoff's `**Topic:**` field, so it travels with the dated document that a new loop
+    replaces, rather than living in a config nobody revisits."""
+    doc = tmp_path / "2026-08-20-a-loop-handoff.md"
+    doc.write_text("# t\n\n**Topic:** etkl · **Date:** 2026-08-20 ·\n", encoding="utf-8")
+    monkeypatch.setattr(cockpit, "_newest_loop_doc", lambda: str(doc))
     monkeypatch.setattr(cockpit, "_run", lambda *a: "a-branch\n")
-    assert cockpit.work() == "some-loop \u00b7 a-branch"
+    assert cockpit.topic() == "etkl"
+    assert cockpit.work() == "etkl \u00b7 a-loop \u00b7 a-branch"
+
+
+def test_a_document_that_declares_no_topic_gets_no_topic_invented(monkeypatch, tmp_path):
+    """The topic is the one AUTHORED figure on the strip and therefore the only one that could be
+    wrong without anything noticing. The compensating rule is that silence stays silent: a handoff
+    with no `**Topic:**` drops the segment rather than reusing a previous loop's topic or falling
+    back to a default. A stale topic would be worse than none — it is the failure the `stage` gauge
+    two segments over exists to refuse."""
+    doc = tmp_path / "2026-08-20-a-loop-brief.md"
+    doc.write_text("# t\n\n**Date:** 2026-08-20 · **Shape: originating** ·\n", encoding="utf-8")
+    monkeypatch.setattr(cockpit, "_newest_loop_doc", lambda: str(doc))
+    monkeypatch.setattr(cockpit, "_run", lambda *a: "a-branch\n")
+    assert cockpit.topic() is None
+    assert cockpit.work() == "a-loop \u00b7 a-branch"
 
 
 def test_the_work_line_degrades_on_a_detached_head(monkeypatch):
     """A rebase or a bisect leaves HEAD detached. The subject still holds; the branch half drops."""
+    monkeypatch.setattr(cockpit, "topic", lambda: None)
     monkeypatch.setattr(cockpit, "entry_point", lambda: "some-loop")
     monkeypatch.setattr(cockpit, "_run", lambda *a: "HEAD\n")
     assert cockpit.work() == "some-loop"
     monkeypatch.setattr(cockpit, "_run", lambda *a: "")
     assert cockpit.work() == "some-loop"
+
+
+def test_the_live_newest_handoff_declares_a_topic():
+    """The convention only works if loop documents actually carry the field. This is the live-repo
+    half: whatever a fresh session would open right now must say what topic it belongs to."""
+    path = cockpit._newest_loop_doc()
+    assert path is not None, "no dated brief/handoff on disk"
+    assert cockpit.topic() is not None, (
+        f"{path} declares no `**Topic:**`, so the strip cannot say what we are working on")

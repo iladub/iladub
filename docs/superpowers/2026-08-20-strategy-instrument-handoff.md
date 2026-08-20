@@ -1,6 +1,7 @@
 # Handoff — the strategy instrument: the map, and the graph that makes selection strategic
 
-**Date:** 2026-08-20 · **Branch:** none yet (start from `main`) · **Shape: originating** ·
+**Topic:** process · **Date:** 2026-08-20 · **Branch:** none yet (start from `main`) ·
+**Shape: originating** ·
 **Status: design decided in conversation, SPEC NOT WRITTEN.**
 
 > Written at 95,341 tokens — 1.9× the originating floor — which is why this is a handoff and the

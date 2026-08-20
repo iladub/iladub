@@ -139,38 +139,64 @@ def arc() -> tuple[int | None, int]:
     return None, stages
 
 
-def entry_point() -> str:
-    """The newest brief/handoff on disk — the thing a fresh session would open."""
+def _newest_loop_doc() -> str | None:
+    """The newest brief/handoff on disk — the thing a fresh session would open. Filenames are
+    ISO-dated, so `max()` on the name is `max()` on the date."""
     d = os.path.join(ROOT, "docs", "superpowers")
     try:
         names = [f for f in os.listdir(d) if re.match(r"\d{4}-\d{2}-\d{2}-.*\.md$", f)
                  and ("handoff" in f or "brief" in f)]
     except OSError:
+        return None
+    return os.path.join(d, max(names)) if names else None
+
+
+def entry_point() -> str:
+    path = _newest_loop_doc()
+    if path is None:
         return "?"
-    if not names:
-        return "?"
-    newest = max(names)
-    return re.sub(r"^\d{4}-\d{2}-\d{2}-|\.md$|-handoff$|-brief$", "", newest)[:28]
+    # the suffix alternatives must carry `.md` with them: anchored at `$`, `-handoff$` can never
+    # match while the extension is still there. The original pattern listed them separately and so
+    # stripped neither — the strip read `strategy-instrument-handoff` for as long as it existed.
+    return re.sub(r"^\d{4}-\d{2}-\d{2}-|(?:-handoff|-brief)?\.md$", "",
+                  os.path.basename(path))[:28]
+
+
+def topic() -> str | None:
+    """The `**Topic:**` field of the newest brief/handoff, or None if it does not declare one.
+
+    **This is the one AUTHORED figure on the strip, and it is the weakest.** Everything else here
+    is counted or read from git. A topic is prose: whoever writes the handoff can write anything,
+    and nothing checks it against the work. It was chosen with that known — the alternatives were a
+    hand-tuned path→topic table (a tuned constant by another name) or waiting for the objectives
+    artifact — and it is bounded by the one property that saves it: it lives in a DATED file that a
+    new loop replaces, so it cannot outlive the work the way a marker in `settings.json` would.
+
+    What would strengthen it: doc-governance already lints tracked markdown, so a rule requiring
+    every dated brief/handoff to declare a topic drawn from a named set would make this checked
+    rather than merely conventional. Not built."""
+    path = _newest_loop_doc()
+    if path is None:
+        return None
+    m = re.search(r"^\*\*Topic:\*\*\s*(.+?)\s*(?:·|$)", _read(path)[:4000], re.M)
+    return m.group(1)[:18] if m else None
 
 
 def work() -> str:
-    """WHAT WE ARE WORKING ON — the maintainer's first ask of this strip, and the one gauge whose
-    sources are chosen to make staleness impossible rather than merely unlikely.
+    """WHAT WE ARE WORKING ON — the maintainer's first ask of this strip: `topic · subtopic`.
 
-    Both halves are read from live state, never from a field anyone maintains: the **subject** is
-    the newest handoff/brief on disk (what a fresh session would open) and the **branch** is what
-    git says HEAD is. A hand-written "current topic" marker would be the failure mode this whole
-    strip exists against — a dashboard asserting a fact nobody re-checked.
+    Rendered as `topic · subject · branch`, each part dropped when its source is silent. The
+    **subject** is the newest handoff/brief on disk (what a fresh session would open) and the
+    **branch** is what git says HEAD is; neither can go stale, because neither is maintained.
 
-    It is NOT the curated `topic — subtopic` taxonomy (`etkl · table-reading`) that was asked for.
-    That needs an artifact naming the topics and binding work to them, which is the objectives
-    artifact `docs/superpowers/2026-08-20-strategy-instrument-handoff.md` designs and does not yet
-    exist. Until it does, this reports the two things the repo can actually prove."""
+    The **topic** half is the exception and is declared, not proven — see `topic()` for why that
+    was chosen and what would check it. A doc that declares no topic simply drops that part; the
+    strip never invents one."""
     branch = _run("git", "rev-parse", "--abbrev-ref", "HEAD").strip()
-    subject = entry_point()
-    if branch in ("", "HEAD"):
-        return subject
-    return f"{subject} {chr(183)} {branch[:24]}"
+    parts = [p for p in (topic(), entry_point()) if p and p != "?"]
+    if branch not in ("", "HEAD"):
+        parts.append(branch[:24])
+    return f" {chr(183)} ".join(parts) or "?"
 
 
 def bar(frac: float, width: int = 8) -> str:
