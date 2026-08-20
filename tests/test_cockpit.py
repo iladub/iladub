@@ -85,3 +85,47 @@ def test_no_stuck_verdict_is_computed_anywhere():
     out = _strip(cockpit.render(color=False)).lower()
     assert not (verdicts & set(re.findall(r"[a-z]+", out))), (
         f"a verdict word reached the rendered strip: {out}")
+
+
+def _register(tmp_path, monkeypatch, *, index: str, closed: str = "", open_: str = ""):
+    """Point the strip at a synthetic register. The three files are the gauge's only inputs."""
+    paths = {"INDEX": index, "CLOSED": closed, "OPEN": open_}
+    for attr, text in paths.items():
+        f = tmp_path / f"{attr.lower()}.md"
+        f.write_text(text, encoding="utf-8")
+        monkeypatch.setattr(cockpit, attr, str(f))
+
+
+_INDEX_4 = ("| R1 | closed | x |\n| R2 | closed | x |\n"
+            "| R3 | open | x |\n| R4 | open | x |\n")
+
+
+def test_a_struck_row_still_counts_as_a_tally_snapshot(tmp_path, monkeypatch):
+    """A residue's snapshot is recorded at RAISE time and never updated; closing the row strikes
+    its number to `~~R104~~` but does NOT invalidate the measurement in the same cell. A reader
+    that only sees unstruck rows goes blind to every snapshot the moment its row closes — which
+    is most of them, since the register's convention is to close rows, not delete them."""
+    _register(tmp_path, monkeypatch, index=_INDEX_4,
+              closed="| ~~R104~~ (18/94 closed) | closed | x |\n")
+    _c, _t, delta = cockpit.residues()
+    assert delta is not None, "the only snapshot in the register was struck, and was not read"
+
+
+def test_the_newest_snapshot_wins_even_when_it_is_the_struck_one(tmp_path, monkeypatch):
+    """The trend is measured against the NEWEST snapshot, wherever it lives. R104 sits in the
+    closed file and R101 in the open one; reading only the open file silently measures the trend
+    against a staler baseline and reports a smaller movement than the register supports."""
+    _register(tmp_path, monkeypatch, index=_INDEX_4,
+              closed="| ~~R104~~ (18/94 closed) | closed | x |\n",
+              open_="| R101 (18/91 closed) | open | x |\n")
+    _c, _t, delta = cockpit.residues()
+    assert delta == pytest.approx(50.0 - 18 / 94 * 100, abs=0.01), (
+        "the trend was measured against R101 (18/91), not the newer R104 (18/94)")
+
+
+def test_the_raised_at_wording_is_read_too(tmp_path, monkeypatch):
+    """Both wordings are in the register: `(18/94 closed)` and `(raised at 18/93 closed)`."""
+    _register(tmp_path, monkeypatch, index=_INDEX_4,
+              closed="| ~~R103~~ (raised at 18/93 closed) | closed | x |\n")
+    _c, _t, delta = cockpit.residues()
+    assert delta == pytest.approx(50.0 - 18 / 93 * 100, abs=0.01)

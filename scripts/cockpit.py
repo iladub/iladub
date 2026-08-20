@@ -54,6 +54,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX = os.path.join(ROOT, "docs", "superpowers", "residues.md")
 CLOSED = os.path.join(ROOT, "docs", "superpowers", "residues-closed.md")
+OPEN = os.path.join(ROOT, "docs", "superpowers", "residues-open.md")
 ARC = os.path.join(ROOT, "docs", "narrative", "scope-evolution.md")
 CACHE = os.path.join(ROOT, ".git", "cockpit-cache.json")   # inside .git: never tracked
 _TTL = 180
@@ -86,14 +87,19 @@ def _read(path: str) -> str:
 
 def residues() -> tuple[int, int, float | None]:
     """(closed, total, delta-in-points-vs-the-last-snapshot). The snapshots are the register's
-    own convention — `R97 (17/87 closed)` — recorded at raise time and never updated, so reading
-    the newest one gives the trend without this script storing any state of its own."""
+    own convention — `R97 (18/87 closed)` — recorded at raise time and never updated, so reading
+    the newest one gives the trend without this script storing any state of its own.
+
+    The `~*` is load-bearing: closing a row STRIKES its number (`~~R104~~ (18/94 closed)`) without
+    touching the measurement in the same cell. The first version of this pattern required the digits
+    to be followed by a space, so every snapshot went invisible the moment its row closed — which is
+    most of them, the register being a record of closures. Measured 2026-08-20: 6 of 13 snapshots
+    lost, and the trend reported ▲2.6 against R101 where R104 gives ▲3.19."""
     idx = _read(INDEX)
     total = len(re.findall(r"^\| R\d+ \|", idx, re.M))
     closed = len(re.findall(r"^\| R\d+ \| closed \|", idx, re.M))
-    snaps = re.findall(r"R(\d+) \((?:raised at )?(\d+)/(\d+) closed\)",
-                       _read(CLOSED) + _read(os.path.join(
-                           ROOT, "docs", "superpowers", "residues-open.md")))
+    snaps = re.findall(r"R(\d+)~*\s+\((?:raised at )?(\d+)/(\d+) closed\)",
+                       _read(CLOSED) + _read(OPEN))
     delta = None
     if snaps and total:
         _r, c, t = max(snaps, key=lambda s: int(s[0]))
