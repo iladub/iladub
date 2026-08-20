@@ -225,6 +225,25 @@ def test_m1_a_criterion_without_its_required_fields_is_refused():
     _refused_by_shacl("arc-m1-missing-field-leak.ttl", "M1")
 
 
+def test_m1_a_criterion_that_does_not_say_where_it_was_declared_is_refused():
+    """prog:declaredOn is only auditable through prog:source.
+
+    The dating rule (spec §3.2) is that the date is the commit date of the LINE OF PROSE
+    that declares the criterion — which is checkable by exactly one move, `git blame` on
+    that line. A criterion with no prog:source names no line, so its date cannot be
+    checked by anyone, and it degrades from a measurement into an assertion.
+
+    The second assertion is what makes this fixture evidence about THIS clause rather than
+    about M1 in general: `arc-m1-missing-field-leak.ttl` also earns exactly {M1}, so the
+    refusal number alone cannot tell the two apart. The result PATH can.
+    """
+    _refused_by_shacl("arc-m1-missing-source-leak.ttl", "M1")
+    _, report = validate_manifest(REPO / "tests" / "arc-m1-missing-source-leak.ttl")
+    assert "Result Path: prog:source" in report, (
+        "the refusal must be about prog:source itself, not some other M1 field:\n"
+        f"{report}")
+
+
 def test_m2_a_met_criterion_without_a_date_is_refused():
     """A claim with no date is not auditable — nobody can ask what changed when."""
     _refused_by_shacl("arc-m2-met-without-date-leak.ttl", "M2")

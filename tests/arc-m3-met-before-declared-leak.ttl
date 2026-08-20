@@ -7,6 +7,7 @@
 prog:criterion:holon:membrane-health a prog:Criterion ;
     prog:ofRung "holon" ;
     prog:statement "A membrane-health check computes etkl:membraneHealth from validation results." ;
+    prog:source "docs/holonic-interaction.md:160-161" ;
     prog:declaredOn "2026-08-01"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-07-01"^^xsd:date ;

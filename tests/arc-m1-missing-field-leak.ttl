@@ -8,5 +8,6 @@
 prog:criterion:dec:pairing-confidence a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "dec:ConfidenceShape ships a negative fixture that trips it." ;
+    prog:source "CLAUDE.md:252-253" ;
     prog:met false ;
     prog:retrospective false .

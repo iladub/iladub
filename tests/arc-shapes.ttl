@@ -79,6 +79,15 @@ prog:CriterionShape a sh:NodeShape ;
     sh:property [ sh:path prog:declaredOn ;
                   sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ;
                   sh:message "M1: a criterion carries exactly one prog:declaredOn — you must say what done means before you may claim it." ] ;
+    # prog:declaredOn's auditability clause, and it is the reason prog:source is required
+    # rather than merely conventional: a declaration date is a claim about a line of prose
+    # in this repo's history, and without the pointer nobody can run the `git blame` that
+    # checks it. `xsd:string` is right here and would be WRONG on prog:statement — this is
+    # a "file:line" locator, not prose, so it is never language-tagged (CLAUDE.md
+    # § Serialization: do not constrain a literal that may carry a lang tag).
+    sh:property [ sh:path prog:source ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "M1: a criterion carries exactly one prog:source — the file:line where the prose that declares it lives. Without it prog:declaredOn is a date with nothing to audit it against." ] ;
     sh:property [ sh:path prog:met ;
                   sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
                   sh:message "M1: exactly one prog:met. The cockpit cannot derive met-ness at render time (cockpit.py:34-38), so it reads an assertion — and an assertion that is sometimes absent is a guess." ] ;

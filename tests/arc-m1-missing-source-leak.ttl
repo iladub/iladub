@@ -1,0 +1,21 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M1: no prog:source. EVERY other required field is present and internally consistent —
+# the rung agrees with the IRI, the dates are ordered, the flag matches them — so the ONLY
+# thing this graph is missing is the pointer at the prose that declares it.
+#
+# Why that is a refusal and not a nicety: prog:declaredOn "2026-08-01" is a claim about a
+# line in this repo's history, and the whole dating rule (spec §3.2 — the date is the commit
+# date of the DECLARING LINE, not of the loop that wrote the row down) is auditable only by
+# running `git blame` on that line. With no prog:source there is no line to blame, and the
+# date degrades from a measurement into an assertion nobody can check. This fixture is the
+# one that proves the membrane asks.
+prog:criterion:tab:kind-not-supported a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "KIND_NOT_SUPPORTED either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false .

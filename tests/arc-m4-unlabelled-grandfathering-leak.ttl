@@ -9,6 +9,7 @@
 prog:criterion:holon:hga-align a prog:Criterion ;
     prog:ofRung "holon" ;
     prog:statement "vocab/ontology/iladub-hga-align.ttl aligns without importing." ;
+    prog:source "docs/holonic-interaction.md:149-150" ;
     prog:declaredOn "2026-08-01"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-01"^^xsd:date ;

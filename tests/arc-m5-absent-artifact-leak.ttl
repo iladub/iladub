@@ -12,6 +12,7 @@
 prog:criterion:tab:region-tiling-failed a prog:Criterion ;
     prog:ofRung "tab" ;
     prog:statement "REGION_TILING_FAILED either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:source "docs/superpowers/specs/2026-08-20-the-arc-has-a-denominator-design.md:423-424" ;
     prog:declaredOn "2026-08-01"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-15"^^xsd:date ;
