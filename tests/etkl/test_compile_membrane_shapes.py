@@ -234,3 +234,52 @@ def test_neither_raise_site_hardcodes_a_leg_name():
     from iladub.etkl import document as document_mod
     assert "failed tab: SHACL:" not in inspect.getsource(compile_mod.compile_tables)
     assert "failed tab: SHACL:" not in inspect.getsource(document_mod.compile_document)
+
+
+# --------------------------------------------------------------------------------------
+# R103, decided 2026-08-20: `tab-datagrid.ttl` stays OUT of `_FULL_ONT`.
+#
+# The decision rests on a condition that can rot, so it is pinned here rather than left in a
+# comment. `subclass_closure` (membrane.py:448) reads ONLY `rdfs:subClassOf` from the ontology
+# graph, so adding a file to `_FULL_ONT` can affect a verdict by exactly one mechanism: an
+# axiom `Sub ⊑ Super` materialising `Super` on a node typed `Sub`, where some shape can reach
+# `Super`. `tab-datagrid.ttl` introduces three such superclasses and NO shape reaches any of
+# them, which is why admitting the file is a provable no-op (MEASURED: 27 corpus pages, closure
+# delta 0 triples, every verdict identical — see the R103 row).
+#
+# If a shape ever targets `tab:DataGrid`, `tab:ColumnUniverse` or `tab:SuppressedRepeat`, the
+# no-op argument dies and R103 has to be reopened. That is what this test says out loud.
+# --------------------------------------------------------------------------------------
+
+def _shape_reachable_classes():
+    """Every class a membrane shape can reach: `sh:targetClass` plus `sh:class` value-type
+    constraints, over BOTH shape sets the compile membrane actually builds."""
+    compile_mod = _built_membrane()
+    reached = set()
+    for g in (compile_mod._TAB_SHAPES, compile_mod._DEC_SHAPES):
+        reached |= set(g.objects(None, SH.targetClass))
+        reached |= set(g.objects(None, SH["class"]))
+    return reached
+
+
+def test_tab_datagrid_axioms_are_unreachable_by_every_membrane_shape():
+    """R103's decision condition. Read the ADDED superclasses out of the file itself — never
+    from a hardcoded list here, or the test pins its own copy of the vocabulary instead of the
+    vocabulary (the `_built_membrane` lesson, above)."""
+    ont_dir = os.path.join(ROOT, "vocab", "ontology")
+    dg = Graph().parse(os.path.join(ont_dir, "tab-datagrid.ttl"), format="turtle")
+    base = Graph()
+    for f in ("tab.ttl", "dec.ttl", "iladub.ttl"):
+        base.parse(os.path.join(ont_dir, f), format="turtle")
+
+    added = set(dg.triples((None, RDFS.subClassOf, None))) - set(
+        base.triples((None, RDFS.subClassOf, None)))
+    assert added, "tab-datagrid.ttl declares no subClassOf axioms — the premise changed"
+
+    supers = {sup for _sub, _p, sup in added}
+    reachable = _shape_reachable_classes()
+    collide = supers & reachable
+    assert not collide, (
+        "a membrane shape now reaches a superclass tab-datagrid.ttl introduces "
+        f"({sorted(str(c) for c in collide)}) — admitting the file is no longer a no-op. "
+        "REOPEN R103 and re-run the 27-page closure-delta measurement.")

@@ -122,6 +122,30 @@ Every refused line is carried with its reason and provenance (§5). This is the 
 producer** for the differential half of `dec.ttl` — `optionSpace`/`chosen`/`rejectedBecause`
 had never had one. The emitted graph crosses the closed-world membrane unchanged.
 
+### The membrane does not validate against this module — decided, not overlooked
+
+`compile._FULL_ONT` is built from `tab.ttl` + `dec.ttl` + `iladub.ttl`. **`tab-datagrid.ttl` is
+deliberately absent** (R103, decided 2026-08-20), and it is worth knowing why, because the
+absence looks like a gap and is not one.
+
+`membrane.subclass_closure` reads *only* `rdfs:subClassOf` out of the ontology graph and never
+mixes the ontology into the validated payload — the graph an engine sees is the page data plus
+its own type closure, and **no ontology subject ever reaches an engine**. So adding a file to
+that list can move a verdict by exactly one mechanism: an axiom `Sub ⊑ Super` materialising
+`Super` on a node typed `Sub`, where a shape can reach `Super`. This module contributes six such
+axioms and every one is inert — `datagrid.py` already emits `tab:DataGrid` *and* the grid's
+subtype explicitly on the same node, two of the classes are emitted nowhere, and the universe
+classes appear only as the object of `tab:universeSource`, never as an `rdf:type`.
+
+Measured over all 7 corpus documents (27 pages): admitting the file produces a **closure delta of
+0 triples** and leaves every verdict identical. Confidence: high — this is a measurement, and the
+condition that would reverse it is pinned by
+`test_tab_datagrid_axioms_are_unreachable_by_every_membrane_shape`.
+
+The consequence to carry: this module's `rdfs:domain`/`rdfs:range` declarations are **documentation
+of the emitter's contract, not constraints the membrane enforces**. Where the emitter and this
+vocabulary disagree, only `scripts/probe_domain_range_agreement.py` can say so (see R61).
+
 ## Measured state
 
 Four transcribed oracles, complete and sound — **162 of 162 entry rows, zero metadata admitted**:
