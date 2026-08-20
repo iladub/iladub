@@ -1,0 +1,16 @@
+# POSITIVE FIXTURE — this file MUST conform, on BOTH legs. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# Decision 6: UNKNOWN IS NOT ZERO. A rung that declares no criteria renders `?` on the
+# strip — never an empty bar, never 0/0 — and it is deliberately NOT a refusal.
+#
+# This claim used to be asserted of the live tests/arc-manifest.ttl while that file was a
+# seed with five rungs and no criteria. It stopped being assertable there the moment the
+# loop started authoring criteria, and it will be unassertable there for good once all five
+# rungs are populated. So the claim moved here, where it is permanent and independent of how
+# full the real manifest is (CLAUDE.md § Serialization: every shape ships with a worked
+# example that conforms).
+prog:rung:dec a prog:Rung ;
+    prog:rungKey "dec" ;
+    rdfs:label "decidability, the context graph" .

@@ -307,20 +307,35 @@ def test_m7_a_blocking_edge_to_a_nonexistent_residue_is_refused():
 
 # ------------------------------------------------------------------------ the one positive
 
-def test_a_rung_with_no_criteria_conforms_and_is_not_a_refusal():
-    """The seed state, and decision 6 doing its work: UNKNOWN IS NOT ZERO.
+ZERO_CRITERIA = REPO / "tests" / "arc-zero-criteria-rung.ttl"
 
-    Five rungs, zero criteria. Every rung renders `?` — never an empty bar, never 0/0. This
-    is the one test in the file that asserts conformance, and it asserts it of the LIVE
-    tracked manifest against BOTH legs of the membrane, not of a fixture.
+
+def test_a_rung_with_no_criteria_conforms_and_is_not_a_refusal():
+    """Decision 6 doing its work: UNKNOWN IS NOT ZERO.
+
+    A rung that declares no criteria renders `?` — never an empty bar, never 0/0 — and is
+    deliberately not a refusal. This is the one test in the file that asserts CONFORMANCE,
+    and it asserts it of two graphs, both of which matter:
+
+      * the LIVE tracked manifest, against BOTH legs of the membrane. It is this membrane's
+        worked example (CLAUDE.md § Serialization), and the only assertion here that goes
+        red when a hand-authored criterion is wrong.
+      * `arc-zero-criteria-rung.ttl`, which is where the zero-criteria claim itself lives.
+        It lived on the live manifest while that file was a seed; the moment this loop
+        authored the first criteria the live file stopped being able to carry it, and once
+        all five rungs are populated it could not carry it at all. A claim that expires as
+        the repo fills was never pinned to the right graph.
     """
-    ok, report = validate_manifest(MANIFEST)
-    assert ok, report
+    for path in (MANIFEST, ZERO_CRITERIA):
+        ok, report = validate_manifest(path)
+        assert ok, report
+        assert environment_refusals(Graph().parse(path, format="turtle")) == []
 
     g = Graph().parse(MANIFEST, format="turtle")
-    assert environment_refusals(g) == []
-
     assert len(set(g.subjects(RDF.type, PROG.Manifest))) == 1
     assert {str(g.value(r, PROG.rungKey)) for r in g.subjects(RDF.type, PROG.Rung)} == {
         "etkl", "dec", "holon", "tab", "substrate"}
-    assert list(oracle_rows(g)) == [], "the seed manifest declares no criteria yet"
+
+    z = Graph().parse(ZERO_CRITERIA, format="turtle")
+    assert set(z.subjects(RDF.type, PROG.Rung)), "the fixture must declare a rung"
+    assert list(oracle_rows(z)) == [], "…and that rung must declare no criteria"

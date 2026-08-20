@@ -1,9 +1,13 @@
 # tests/arc-manifest.ttl — the arc's denominator (spec 2026-08-20 §3), hand-authored.
 #
-# SEED STATE: the five settled rungs and ZERO criteria. Every rung therefore renders
-# `?` on the cockpit strip — unknown is NOT zero (spec §4, decision 6), and a rung with
-# no criteria is deliberately not a refusal. The ~42 criteria are authored by later
-# tasks of this loop.
+# The five settled rungs and their criteria. A rung whose criteria have not been authored
+# yet renders `?` on the cockpit strip — unknown is NOT zero (spec §4, decision 6), and a
+# rung with no criteria is deliberately not a refusal.
+#
+# Authored so far: `etkl` (7), `holon` (6), `substrate` (3) — task 3 of the 2026-08-20 loop.
+# Still `?`: `dec` (16, task 4) and `tab` (10, task 6), which APPEND their own sections
+# below without touching these. Every criterion is a top-level IRI subject; nothing here
+# nests, so appending a section is the whole edit.
 #
 # `prog:` (https://w3id.org/iladub/progress#) is repo-internal and unpublished, exactly
 # as `cor:` and `dg:` are: it is not w3id-registered and never appears in vocab/ontology/.
@@ -20,8 +24,15 @@
 # (M9/M9b). That is not tidiness: scripts/cockpit.py must read this file WITHOUT rdflib
 # (its performance contract, cockpit.py:34-38), and a regex read is safe only over a
 # file where every criterion is a top-level IRI subject encoding its own rung.
+#
+# The slug is a ZERO-PADDED ORDINAL — `prog:criterion:etkl:01`. Tasks 4 and 6 continue it
+# (`dec:01..16`, `tab:01..10`). It is an ordinal WITHIN a rung and carries no ordering
+# BETWEEN rungs; the plan and the spec cross-reference criteria by that number, and a
+# descriptive slug would leave "holon:05" with nothing to point at. Each criterion's
+# human-readable identity is its prog:statement and the comment above it.
 
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix prog: <https://w3id.org/iladub/progress#> .
 
 # The runner these assertions were validated against — M5's third arm (spec §7.2.2).
@@ -39,13 +50,19 @@
 #     python-version "3.12" and floats the patch, so "3.12.0" would be a fact about this
 #     laptop. The check is dotted-prefix equality, so the recorded precision IS the
 #     assertion: record more digits and more is refused.
-#   - prog:rdflibVersion is recorded in full, so the check on it is exact. 7.1.4 (the
-#     system python3) is what §7.2.2 measured as producing false reds.
+#   - prog:rdflibVersion is recorded to the MINOR version, and that precision is the
+#     assertion too. The failure §7.2.2 measured is 7.1.4 (the system python3, false reds)
+#     against 7.6.0, a MINOR-version difference — so "7.6" still refuses exactly the
+#     mismatch this arm exists to catch, while "7" would admit it. It is not pinned to the
+#     patch because .github/workflows/ci.yml:21 installs against pyproject.toml:26's
+#     `rdflib>=7.0` with NO lockfile: an exact pin turns CI red on an unrelated PR the day
+#     rdflib ships a patch. A MINOR bump is precisely the change that should be re-validated
+#     in a reviewed commit, and this is what makes it one.
 prog:manifest a prog:Manifest ;
     rdfs:label "the arc's denominator" ;
     prog:interpreter ".venv/bin/python" ;
     prog:pythonVersion "3.12" ;
-    prog:rdflibVersion "7.6.0" .
+    prog:rdflibVersion "7.6" .
 
 # The five settled rungs (decision 8), named and never numbered. Labels are the section
 # headings of docs/narrative/scope-evolution.md.
@@ -69,3 +86,350 @@ prog:rung:holon a prog:Rung ;
 prog:rung:substrate a prog:Rung ;
     prog:rungKey "substrate" ;
     rdfs:label "the membrane enforced at runtime" .
+
+
+# ======================================================================== etkl — 7 criteria
+#
+# One criterion per cor:Document in tests/corpus-manifest.ttl (7 entries, measured below).
+# The statement is spec §7.1's, as CORRECTED at 820ab24 on the maintainer's challenge, and
+# the correction is the point: the earlier wording ("a pinned cor:scoreFloor the corpus
+# battery holds") was gameable in the worst direction — a floor is a REGRESSION GUARD, so
+# nothing stops it being pinned at whatever a document scores today, and six such lines
+# would take this rung from 1/7 to 7/7 without a single reading improving. So a recorded
+# HOLD does not count. The manifest's own header (corpus-manifest.ttl:16-20) already draws
+# the distinction this rung needs:
+#   cor:CompilesAbove + cor:scoreFloor + an ACCEPTING cor:adjudication   -> met
+#   cor:Unadjudicated + a cor:adjudication (a measured, reasoned HOLD)   -> not met
+#   cor:Unadjudicated, bare (nobody has looked)                          -> not met
+#
+# MEASURED 2026-08-20, ./.venv/bin/python + rdflib over tests/corpus-manifest.ttl:
+#   ag-trade/cbh-stem-2026-08-03.pdf             Unadjudicated  floor=None  adjudications=0
+#   ag-trade/graincorp-capacity-2026-08-04.pdf   Unadjudicated  floor=None  adjudications=0
+#   ag-trade/graincorp-stem-2026-07-31.pdf       CompilesAbove  floor=0.95  adjudications=3
+#   financial/apple-fy2026q3-statements.pdf      Unadjudicated  floor=None  adjudications=0
+#   gov-stats/bfs-population-bilan-2023.pdf      Unadjudicated  floor=None  adjudications=0
+#   gov-stats/ons-index-of-services-2026-02.pdf  Unadjudicated  floor=None  adjudications=0
+#   health/who-wfa-boys-zscore-0-5.pdf           Unadjudicated  floor=None  adjudications=0
+# 1 met, 6 unmet — and all six are BARE Unadjudicated, not recorded HOLDs. Rows 2 and 3
+# score the same and are not the same thing; the manifest records which is which.
+#
+# THE DENOMINATOR GROWS WITH AMBITION, and that is correct: adding a document to the corpus
+# lowers the fraction. A gauge that can only be raised by aiming higher measures the right
+# thing (spec §7.1).
+
+prog:rung:etkl prog:criterion
+    prog:criterion:etkl:01 , prog:criterion:etkl:02 , prog:criterion:etkl:03 ,
+    prog:criterion:etkl:04 , prog:criterion:etkl:05 , prog:criterion:etkl:06 ,
+    prog:criterion:etkl:07 .
+
+# graincorp-stem — the model's proof case, and the ONE met document on this rung.
+# MEASURED, not asserted, and the two dates are on separate commits:
+#   $ git blame -L 24,24 --date=short -- tests/corpus-manifest.ttl
+#     a22733e4 (2026-08-02 24) <urn:iladub:corpus:graincorp-stem-2026-07-31> a cor:Document ;
+#   $ git blame -L 32,33 --date=short -- tests/corpus-manifest.ttl
+#     8fd217a1 (2026-08-03 32)     cor:expectedVerdict cor:CompilesAbove ;
+#     8fd217a1 (2026-08-03 33)     cor:scoreFloor "0.95"^^xsd:decimal ;
+# declaredOn 2026-08-02 < metOn 2026-08-03, so prog:retrospective is FALSE and it is true:
+# the denominator moved BEFORE the numerator, and it moved THROUGH a recorded HOLD (the
+# 2026-08-02 adjudication holds; the 2026-08-03 one lifts it). Met because a HOLD was
+# lifted, never because a number was written down.
+# The met-value is measured by RUNNING the oracle, 2026-08-20:
+#   $ ./.venv/bin/python -m pytest "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" -q -s
+#     ag-trade/graincorp-stem-2026-07-31.pdf: score=0.9655 pages=3 chains=[3] wall=160s
+#     1 passed in 160.45s
+prog:criterion:etkl:01 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "ag-trade/graincorp-stem-2026-07-31.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:24" ;
+    prog:declaredOn "2026-08-02"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-03"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" .
+
+# The other six. Each was DECLARED into the corpus manifest on 2026-08-04 and none has been
+# adjudicated since; `met false` is measured from the manifest rows tabulated above, not
+# read off the prose. Declaring commits, measured 2026-08-20 by
+# `git blame -L <line>,<line> --date=short -- tests/corpus-manifest.ttl`:
+#   :44 e121c42f 2026-08-04   :55 e121c42f 2026-08-04   :69 2855b52b 2026-08-04
+#   :84 2855b52b 2026-08-04   :95 06c6b399 2026-08-04   :106 cab08ec6 2026-08-04
+# Their oracles EXIST and collect (verified 2026-08-20,
+# `./.venv/bin/python -m pytest tests/test_corpus.py --collect-only -q` -> all seven ids
+# present) — these are unmet for an evidential reason, not for want of an instrument.
+
+prog:criterion:etkl:02 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:44" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-capacity-2026-08-04.pdf]" .
+
+prog:criterion:etkl:03 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "ag-trade/cbh-stem-2026-08-03.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:55" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/cbh-stem-2026-08-03.pdf]" .
+
+prog:criterion:etkl:04 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:69" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[gov-stats/ons-index-of-services-2026-02.pdf]" .
+
+prog:criterion:etkl:05 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "gov-stats/bfs-population-bilan-2023.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:84" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[gov-stats/bfs-population-bilan-2023.pdf]" .
+
+prog:criterion:etkl:06 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "financial/apple-fy2026q3-statements.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:95" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[financial/apple-fy2026q3-statements.pdf]" .
+
+prog:criterion:etkl:07 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:106" ;
+    prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[health/who-wfa-boys-zscore-0-5.pdf]" .
+
+
+# ======================================================================= holon — 6 criteria
+#
+# Read off docs/holonic-interaction.md, which states BOTH halves — § "What is built"
+# (4 bullets, :147-156) and § "Planned work (not done yet)" (2 bullets, :160-163). A page
+# that says what it has NOT done is a denominator; a page that lists only what shipped is a
+# changelog. Line numbers re-verified 2026-08-20:
+#   $ grep -n -e "What is built" -e "Planned work" docs/holonic-interaction.md
+#     145:## What is built
+#     158:## Planned work (not done yet)
+#
+# ALL SIX carry prog:declaredOn "2026-06-23" — 781527f, `feat(holons): align iladub to W3C
+# Holon CG / HGA + grounding governance`. MEASURED 2026-08-20:
+#   $ git blame -L 147,156 --date=short -- docs/holonic-interaction.md
+#     781527ff 2026-06-23 for :149-156 ; d0b3e557 2026-07-01 for :147-148
+#   $ git blame -L 160,163 --date=short -- docs/holonic-interaction.md
+#     781527ff 2026-06-23 for :160, :162-163 ; d0b3e557 2026-07-01 for :161
+# The 2026-07-01 touches are the `iladub:`->`etkl:` namespace RENAME and nothing else
+# (`git show 781527f:docs/holonic-interaction.md` has the same bullet naming
+# `vocab/ontology/iladub-holons.ttl`), and a rename is not a re-declaration — the same rule
+# the plan applies to dec:16. Going back further, `git show 0597988:docs/holonic-interaction.md`
+# (2026-06-02, the file-creating commit) has NO "What is built" section at all and a
+# DIFFERENT "Planned work" list, so the section content was fully replaced at 781527f.
+#
+# The four met ones are prog:retrospective TRUE, and that is a MEASUREMENT rather than a
+# convention: `git log --diff-filter=A` puts iladub-hga-align.ttl, iladub-hga-shapes.ttl,
+# holon-grounding-conformant.ttl, holon-grounding-leak.ttl and test_hga_alignment.py ALL at
+# 781527f — the bullets and the artifacts they describe landed in the SAME commit, so
+# metOn == declaredOn and M4 refuses `retrospective false` outright. The clause fires on
+# real data here, not on a fixture.
+# (etkl-holons.ttl's own --diff-filter=A is 3433fd0 2026-07-01, which is the file MOVE that
+# renamed iladub-holons.ttl; the content it describes landed at 781527f with the rest.)
+#
+# The two unmet ones are prog:retrospective FALSE — declared ahead of the evidence — so
+# flipping either is a real measurement and not an adjudication. Their oracles are TARGETS
+# that do not exist yet, which is permitted (spec §3): M5/M5b bite only on `met true`.
+#
+# Note what this rung's fraction refutes: CLAUDE.md § Open items still says this work is
+# "not yet started". The rung reads 4/6. The instrument's first act is to contradict the
+# Contract file — which is the instrument working (spec §7.3).
+
+prog:rung:holon prog:criterion
+    prog:criterion:holon:01 , prog:criterion:holon:02 , prog:criterion:holon:03 ,
+    prog:criterion:holon:04 , prog:criterion:holon:05 , prog:criterion:holon:06 .
+
+# MEASURED 2026-08-20 for criteria 01-04:
+#   $ ./.venv/bin/python -m pytest tests/test_hga_alignment.py -q
+#     ......                                                              [100%]
+#     6 passed in 0.32s
+# and every named artifact is on disk (`ls -la` on the five paths, all present).
+
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" .
+
+# The second oracle is deliberate: test_alignment_axioms_present pins that the alignment
+# axioms ARE there, and test_alignment_modules_only_point_outward pins the other half of
+# "alignment-not-import" — every subject in the module is a term we own (CLAUDE.md
+# § Source ownership). One test alone would leave half the statement unpinned.
+prog:criterion:holon:02 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/iladub-hga-align.ttl — the optional HGA alignment (alignment-not-import): rdfs:subClassOf axioms only, pointing our document holons and grounding portal outward at the HGA substrate classes and never importing them." ;
+    prog:source "docs/holonic-interaction.md:149-150" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/iladub-hga-align.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_alignment_axioms_present" ;
+    prog:oracleTest "tests/test_source_ownership.py::test_alignment_modules_only_point_outward" .
+
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: an HGA GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision (iladub's invariant layered onto HGA's bare confidence gate)." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
+
+prog:criterion:holon:04 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "examples/holon-grounding-conformant.ttl + tests/holon-grounding-leak.ttl — a conforming governed-grounding traversal and a negative case; exercised by tests/test_hga_alignment.py." ;
+    prog:source "docs/holonic-interaction.md:154-156" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "examples/holon-grounding-conformant.ttl" ;
+    prog:oracleArtifact "tests/holon-grounding-leak.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
+
+# `met false` MEASURED 2026-08-20, not read off the "not done yet" heading:
+#   $ grep -rn "membraneHealth\|MembraneHealth" src/ --include='*.py' | grep -v __pycache__
+#     (no output — nothing in the compiler computes it)
+#   $ grep -rln "membraneHealth" --include='*.ttl' --include='*.py' --include='*.rq' .
+#     tests/arc-m3-met-before-declared-leak.ttl        (a task-1 negative fixture)
+#     vocab/ontology/etkl-holons.ttl                   (the VOCABULARY declaring the term)
+# The term is declared and nothing derives it. prog:oracleTest below is a TARGET.
+prog:criterion:holon:05 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "A membrane-health check that computes and reports a compiled document's cleanliness (etkl:membraneHealth → Intact / Weakened / Compromised) from validation results." ;
+    prog:source "docs/holonic-interaction.md:160-161" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health" .
+
+# `met false` MEASURED 2026-08-20:
+#   $ grep -rln "CleanDocumentHolon" examples/
+#     (no output — no example carries one at all)
+#   $ grep -rln "RawDocumentHolon" examples/ tests/ vocab/
+#     examples/transplant/offer.databook.md  (one line of PROSE, not a traversal)
+#     tests/test_hga_alignment.py , vocab/ontology/iladub-hga-align.ttl , vocab/ontology/etkl-holons.ttl
+# The shipped example (holon-grounding-conformant.ttl) types a CandidateConcept, a
+# PromotionDecision, a GroundingRecord, a Suggester and a SourceRegion — the
+# grounding-governance crossing only, exactly as the bullet says. prog:oracleTest is a TARGET.
+prog:criterion:holon:06 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only)." ;
+    prog:source "docs/holonic-interaction.md:162-163" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_raw_to_clean_traversal_conformant" .
+
+
+# =================================================================== substrate — 3 criteria
+#
+# THE ONE HONEST ZERO ON THE STRIP, and it must stay earned. All three are `met false` and
+# all three are prog:retrospective FALSE — declared 2026-07-03, ahead of any evidence.
+#
+# ONE SENTENCE, THREE REQUIREMENTS. docs/narrative/scope-evolution.md:99-101 reads:
+#   "A holon is only *active* if something **enforces its membrane at runtime**. That
+#    requires an immutable **event ledger** (memory), **validation-at-write** (sensory), and
+#    **in-engine policy** (motor)."
+# All three criteria therefore carry the SAME prog:source and the SAME prog:declaredOn.
+# Fabricating three distinct declaring lines would make them look independently declared,
+# and they were not (spec §11 seam 3).
+#
+# MEASURED 2026-08-20:
+#   $ git blame -L 97,102 --date=short -- docs/narrative/scope-evolution.md
+#     3b366094 2026-08-20  97) ### `substrate` — the membrane enforced at runtime
+#     20c3be43 2026-07-03  99) A holon is only *active* if something **enforces its ...
+#     20c3be43 2026-07-03 100) immutable **event ledger** (memory), **validation-at-write** ...
+#     20c3be43 2026-07-03 101) (motor). The chosen substrate provides all three natively, ...
+#   The HEADING at :97 was reworded 2026-08-20; the SENTENCE was not. declaredOn is the
+#   sentence's date, 2026-07-03.
+#
+# `met false` RE-MEASURED 2026-08-20 rather than inherited from the handoff — an unmet
+# criterion is still an assertion:
+#   $ find src/iladub/fluree -type f | sort | xargs wc -l
+#          3 src/iladub/fluree/__init__.py
+#         16 src/iladub/fluree/f-modify-policy-template.jsonld
+#         15 src/iladub/fluree/f-policy-template.jsonld
+#         34 total                       <- two JSON-LD policy TEMPLATES and an __init__
+#   $ wc -l src/iladub/etkl/writegate.py
+#         70 src/iladub/etkl/writegate.py
+#   $ grep -rn "requests\.\|httpx\|urllib.request\|aiohttp\|http://localhost" src/ --include='*.py'
+#     (no output — ZERO server/runtime client code anywhere in src/)
+#   $ grep -rn "ledger" src/ --include='*.py' | grep -v __pycache__
+#     only adoption.build_ledger and its call sites in compile.py — that is the ADOPTION
+#     TOKEN ledger (a coverage accounting over a page), NOT an immutable event ledger.
+#   $ grep -rn "from .membrane import\|from . import membrane" src/ --include='*.py'
+#     src/iladub/feed.py:608 , src/iladub/etkl/compile.py:511 , src/iladub/etkl/tiling.py:69
+#     — every membrane.validate call runs IN THE COMPILER PROCESS, on an in-memory Graph.
+#   $ grep -rn "f-policy-template\|f-modify-policy-template" --include='*.py' .
+#     src/iladub/etkl/federate.py:26 and two tests — the templates are PARSED by rdflib for
+#     structural checks; nothing deploys them to an engine, and there is no engine.
+#
+# So: no ledger, no write endpoint, no engine. Three zeroes, each measured. The
+# prog:oracleTest on each is a TARGET that does not exist yet (permitted, spec §3; M5b
+# bites only on `met true`) — it names where the proof would have to live.
+
+prog:rung:substrate prog:criterion
+    prog:criterion:substrate:01 , prog:criterion:substrate:02 ,
+    prog:criterion:substrate:03 .
+
+prog:criterion:substrate:01 a prog:Criterion ;
+    prog:ofRung "substrate" ;
+    prog:statement "The membrane is enforced at runtime by an immutable event ledger (memory): the holon's history is kept by the substrate itself, not reconstructed by the compiler process." ;
+    prog:source "docs/narrative/scope-evolution.md:99-101" ;
+    prog:declaredOn "2026-07-03"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/substrate/test_event_ledger.py::test_committed_events_are_immutable" .
+
+prog:criterion:substrate:02 a prog:Criterion ;
+    prog:ofRung "substrate" ;
+    prog:statement "The membrane is enforced at runtime by validation-at-write (sensory): a non-conforming write is refused AT THE WRITE ENDPOINT, not inside the process that produced it." ;
+    prog:source "docs/narrative/scope-evolution.md:99-101" ;
+    prog:declaredOn "2026-07-03"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/substrate/test_write_gate.py::test_engine_refuses_an_ungoverned_commit" .
+
+prog:criterion:substrate:03 a prog:Criterion ;
+    prog:ofRung "substrate" ;
+    prog:statement "The membrane is enforced at runtime by in-engine policy (motor): access policy is evaluated by the engine on every read and write, not held in a template this repo only parses." ;
+    prog:source "docs/narrative/scope-evolution.md:99-101" ;
+    prog:declaredOn "2026-07-03"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/substrate/test_in_engine_policy.py::test_engine_enforces_ai_inherits_user" .
