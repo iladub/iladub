@@ -64,8 +64,8 @@ the spec finds them awkward.
    already refuted once for the position (decision 5); this is the same error one level down, and
    naming is what lets a rung sit where it belongs without asserting a sequence that does not exist.
 
-   Candidate labels, a PROPOSAL and the maintainer's to overrule — the project's own words, four of
-   the five being namespaces it owns:
+   **The labels are SETTLED** (maintainer, same session, on the proposal below): `etkl`, `dec`,
+   `holon`, `tab`, `substrate` — the project's own words, four of the five being namespaces it owns:
 
    ```
    arc  etkl ▰▰▰▱  dec ▰▰▰▰  holon ▰▰▱▱  tab ▰▱▱▱  substrate ▱▱▱▱
@@ -212,7 +212,8 @@ the answer was yes. What replaces it is a decision, not a measurement:
 ~~Does table-reading become a fifth rung, or is the arc re-cut?~~ **DECIDED: it becomes a fifth
 rung, and the rungs are named rather than numbered** (decisions 7 and 8). So:
 
-1. **Name the five rungs**, and put the fifth into `docs/narrative/scope-evolution.md`. That file is
+1. ~~Name the five rungs~~ — **done, see decision 8.** Put the fifth into
+   `docs/narrative/scope-evolution.md`. That file is
    **Assertion class** — published, in the mkdocs nav — so this is a `Doc impact: increment` and the
    arc's mermaid diagram changes shape too: a fifth node appended to `E → DEC → HOL → SUB` would
    re-assert the very ordering the naming decision exists to avoid.
