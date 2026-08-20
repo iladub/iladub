@@ -451,6 +451,53 @@ def _build_membrane():
     # which is why ONE ontology graph serves both legs.
     o.parse(os.path.join(v, "ontology", "dec.ttl"), format="turtle")
     o.parse(os.path.join(v, "ontology", "iladub.ttl"), format="turtle")
+    #
+    # `tab-datagrid.ttl` IS DELIBERATELY ABSENT — R103, DECIDED 2026-08-20, and this is the
+    # record of that decision. It was the open half of R103 since 2026-08-17; do not re-add
+    # the file without reading this and re-running the measurement below.
+    #
+    # WHY IT LOOKED LIKE A GAP: `datagrid.py` emits a vocabulary the membrane cannot see, and
+    # `scripts/probe_domain_range_agreement.py` reports 12 nodes as OUTSIDE-MEMBRANE for
+    # exactly that reason (the six `tab:GridAxiom` individuals). The obvious repair is to load
+    # the file here.
+    #
+    # WHY THAT REPAIR IS A NO-OP, WHICH IS THE ACTUAL FINDING: `membrane.subclass_closure`
+    # (`membrane.py:448`) reads ONLY `rdfs:subClassOf` out of this graph and NEVER mixes the
+    # ontology into the validated payload — pinned by
+    # `test_subclass_closure_injects_no_ontology_triples`. So of the 160 triples the file
+    # would add, the membrane consults 6 axioms, and every one of them is inert:
+    #   UniformGrid/MixedGrid <= DataGrid   already explicit — `datagrid.py:622-623` emits
+    #                                       `tab:DataGrid` AND `TAB[grid.grid_type]` on the
+    #                                       same node, so the closure would re-derive a
+    #                                       triple that is already there
+    #   AggregatingGrid <= DataGrid         `tab:AggregatingGrid` is emitted nowhere in src/
+    #   Decoration/AlignmentUniverse
+    #                   <= ColumnUniverse   emitted as the OBJECT of `tab:universeSource`
+    #                                       (`datagrid.py:626`), never as an `rdf:type`, and
+    #                                       the closure fires on `rdf:type` triples only
+    #   PivotFieldRepeatLabels
+    #                   <= SuppressedRepeat emitted nowhere in src/
+    #
+    # MEASURED (2026-08-20), by the same protocol the 2026-08-10 note above records, widened
+    # to answer what the change BUYS rather than only whether it breaks something: all 7
+    # corpus documents compiled once, 27 pages, each closed TWICE — against this graph, then
+    # against this graph + `tab-datagrid.ttl` — and validated on BOTH legs each time.
+    # **Closure delta: 0 triples on every one of the 27 pages.** Every verdict identical,
+    # (conforms=True, 0 results), tab and dec. Not "no verdict moved" — nothing moved at all,
+    # so there is no ambiguity about whether the change was merely harmless.
+    #
+    # AND THE 12 OUTSIDE-MEMBRANE NODES ARE NOT REPAIRED BY LOADING IT. Their types are
+    # `rdf:type` triples on ONTOLOGY subjects, and no ontology subject ever reaches an engine
+    # (measured: 0 tab-namespace subjects in the 4,773-triple closure of ons p7). Loading the
+    # file here cannot make the membrane see `tab:NonDegeneracy a tab:GridAxiom` any more than
+    # `tab.ttl` makes it see `tab:Quantity a tab:CellDatatypeFamily` — which it does not.
+    # The emitter/vocabulary disagreements those nodes represent are real (see R103's row),
+    # but the membrane ontology list is not where they are fixed.
+    #
+    # THE CONDITION THAT WOULD REVERSE THIS is pinned, not left to this comment:
+    # `test_tab_datagrid_axioms_are_unreachable_by_every_membrane_shape` fails the moment any
+    # membrane shape targets or `sh:class`-constrains `tab:DataGrid`, `tab:ColumnUniverse` or
+    # `tab:SuppressedRepeat`. That test failing means REOPEN R103.
     _FULL_ONT = o
 
 

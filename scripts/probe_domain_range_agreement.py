@@ -17,19 +17,38 @@ so the probe reports four classes and only two of them may gate:
   DISAGREE         the node IS typed — just not as the domain/range rule says. The emitter and
                    the vocabulary contradict each other, which is a MODELLING decision, not a
                    forgotten `rdf:type`. Currently 60 of 74, 14 of them on a shape-targeted class.
-  ONT_VISIBLE      the type is supplied by the membrane's own ontology (`MEMBRANE_ONT_FILES`,
-                   mirroring `compile._FULL_ONT`). The membrane validates page graph + that
-                   ontology, so it sees the type and there is no hazard. A false positive of the
-                   page-graph-only reading. Currently 2 of 74.
-  OUTSIDE_MEMBRANE the type is supplied ONLY by a vocabulary file the membrane never loads.
+  ONT_VISIBLE      the type is declared in a file the membrane loads (`MEMBRANE_ONT_FILES`,
+                   mirroring `compile._FULL_ONT`). Currently 2 of 74 — `tab:Quantity`,
+                   declared in `tab.ttl:227`.
+  OUTSIDE_MEMBRANE the type is declared ONLY in a vocabulary file the membrane never loads.
                    Currently 12 of 74 — the six `tab:GridAxiom` individuals, declared in
-                   `tab-datagrid.ttl`, which `compile._FULL_ONT` does not parse. NOT a false
-                   positive: it is evidence for R103's open membrane question. Reported, does
-                   not gate (no shape targets those classes today).
+                   `tab-datagrid.ttl`, which `compile._FULL_ONT` does not parse.
 
-The distinction between the last two is why `types_of` still reads the PAGE GRAPH ONLY and the
-ontology is consulted separately, by name. Folding the ontology into `types_of` would collapse
-ONT_VISIBLE and OUTSIDE_MEMBRANE into one silent "fine", discarding the R103 evidence.
+BOTH OF THOSE ARE THE SAME SITUATION AT THE MEMBRANE, and the wording above used to deny it.
+Until 2026-08-20 this docstring said ONT_VISIBLE meant the membrane "sees the type and there is
+no hazard", and that the OUTSIDE_MEMBRANE 12 were "evidence for R103's open membrane question"
+— i.e. that loading the file would resolve them. **Both claims were false, and R103's closing
+measurement is what falsified them.** `membrane.subclass_closure` (`membrane.py:448`) reads only
+`rdfs:subClassOf` from the ontology and never mixes it into the validated payload, so NO
+ontology subject ever reaches an engine (measured 2026-08-20: 0 tab-namespace subjects in the
+4,773-triple closure of ons-index-of-services p7). The membrane cannot see
+`tab:Quantity a tab:CellDatatypeFamily` any more than it can see
+`tab:NonDegeneracy a tab:GridAxiom`. Which ontology files `compile._FULL_ONT` loads makes NO
+difference to either class — R103 measured a closure delta of 0 triples across all 27 pages.
+
+So what the split still reports is WHICH FILE DECLARES THE TYPE, which is a fact about the
+vocabulary, not about the membrane's reach. Kept split, and kept named as they are, because
+that fact is what attributes an emitter/vocabulary disagreement to the module that has to fix
+it. Do not read either class as "the membrane handles this."
+
+Neither gates, and the reason is NOT "the membrane sees it" — it is that no shape in
+`SHAPE_FILES` targets `tab:GridAxiom` or `tab:CellDatatypeFamily`, so nothing is out of reach
+that was ever in reach. If a shape ever does target one, these stop being reportable-only, and
+`tests/etkl/test_compile_membrane_shapes.py` carries the matching guard on the membrane side.
+
+The distinction is why `types_of` still reads the PAGE GRAPH ONLY and the ontology is consulted
+separately, by name. Folding the ontology into `types_of` would collapse both classes into one
+silent "fine", discarding the attribution.
 
 WHY THE SCORE GATE CANNOT SUBSTITUTE FOR THIS. A lost or disagreeing type means a shape stops
 seeing a node. The region it would have refused is then admitted, so the failure appears as a
@@ -75,10 +94,15 @@ SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 # these two files targets it, which is the question the split below actually asks.
 ONT_FILES = ("tab.ttl", "tab-datagrid.ttl")
 
-# The ontology the MEMBRANE validates against — `compile.py:441-454` builds `_FULL_ONT` from
-# exactly these three and nothing else. It is deliberately NOT `ONT_FILES`: the difference
-# between the two lists is what separates ONT_VISIBLE from OUTSIDE_MEMBRANE, so a drift here
-# would silently reclassify. `tests/test_probe_domain_range_agreement.py` pins the mirroring.
+# The ontology the MEMBRANE LOADS — `compile._build_membrane` parses `_FULL_ONT` from exactly
+# these three and nothing else (R103, decided 2026-08-20: `tab-datagrid.ttl` stays out, and
+# that decision's full reasoning is recorded at its absence in `compile.py`). It is
+# deliberately NOT `ONT_FILES`: the difference between the two lists is what separates
+# ONT_VISIBLE from OUTSIDE_MEMBRANE, so a drift here would silently reclassify.
+# `tests/test_probe_domain_range_agreement.py` pins the mirroring.
+#
+# "LOADS", not "validates against" — the distinction the docstring above is about. The membrane
+# reads `rdfs:subClassOf` out of these files; it does not validate their contents.
 MEMBRANE_ONT_FILES = ("tab.ttl", "dec.ttl", "iladub.ttl")
 
 UNTYPED = "UNTYPED"
@@ -186,7 +210,9 @@ def classify(cls, page_types, membrane_types, wider_types) -> str:
     """Which of the four findings this violation is. Total and mutually exclusive over CLASSES.
 
     `wider_types` is a superset of `membrane_types` (see `lookup_graphs`), so the first two tests
-    are ordered deliberately: a type the membrane can see is never reported as outside it."""
+    are ordered deliberately: a type declared in a file the membrane LOADS is never reported as
+    outside it. That is a statement about which file declares the type — not about what the
+    membrane can see, which is neither (R103; see this module's docstring)."""
     if cls in membrane_types:
         return ONT_VISIBLE
     if cls in wider_types:
