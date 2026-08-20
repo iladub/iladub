@@ -1,8 +1,8 @@
 # Handoff — Tasks 1-3 shipped; Tasks 4-8 unstarted
 
 **Topic:** process · **Date:** 2026-08-20 · **Branch:** `arc-denominator` @ `001014e` (from `main` @
-`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1, 2 COMPLETE AND SIGNED OFF. TASK 3
-COMPLETE PENDING ITS FIX-ROUND RE-REVIEW. TASKS 4-8 NOT STARTED.**
+`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1, 2, 3 COMPLETE AND SIGNED
+OFF. TASKS 4-8 NOT STARTED.**
 
 > Written at ~136k tokens, under the 150k executing floor, while still accurate. The controller seat
 > is what needs the fresh session; implementer and reviewer seats are already fresh subagents.
@@ -73,11 +73,13 @@ is actually being executed before trusting a worktree green.
 
 ## Unverified or assumed
 
-- **The Task 3 fix-round re-review had not returned when this was written.** Task 3 is not signed off
-  until it does. `001014e` is committed and its focused run is 15 passed.
-- **Both suite legs against `93234cb` were still running when this was written** — started ~19:47,
-  results in `…/scratchpad/leg-notcorpus.txt` and `leg-corpus.txt`. **They do not cover `001014e`.**
-  Nothing has yet run the full suite against the fix commit.
+- **No full-suite leg has run against `001014e`.** The two legs started against `93234cb` were still
+  going at the controller's stop (~64% through the non-corpus leg), and they do not cover the fix
+  commit. **Re-run both in the worktree at the head you inherit rather than trusting those.** Task 3's
+  own focused run is 15 passed, and its fix diff touched only `tests/arc-shapes.ttl` and fixtures.
+- **The `prog:source` clause is enforced but its VALUE is unverified** — nothing checks the path
+  exists or the line range is real, unlike M5's filesystem check on `prog:oracleArtifact`. Both the
+  implementer and the re-reviewer named this as candidate **M10**, out of scope for Task 3.
 - **The pre-flight conflict scan is still not independent** — the plan's author scanned it. The task
   review loop remains the only compensating check, and it has now caught two dead plan claims
   (Ruling 9, Ruling 11), which is evidence the scan missed things rather than that it was clean.
@@ -88,6 +90,9 @@ is actually being executed before trusting a worktree green.
 
 ## The next concrete action
 
-In a **fresh session**: read the ledger, confirm the Task 3 fix-round re-review returned clean (and
-run the fix round to completion if it did not), then **dispatch Task 4** (the `dec` rung, 16 criteria)
-carrying **Ruling 11's IRI scheme** and the "your run wins" clause.
+In a **fresh session**: read the ledger, then **dispatch Task 4** (the `dec` rung, 16 criteria) — its
+brief is already extracted at `.superpowers/sdd/.../task-4-brief.md`. Carry into the dispatch:
+**Ruling 11's IRI scheme** (the brief still names the dead `urn:` form), the "your run wins" clause,
+the `prog:source` field the membrane now requires on every criterion, and the brief's own step 4 —
+**D3 says author no liveness criterion on this rung**; if the implementer thinks D3 is wrong it must
+say so and stop, not settle it itself.
