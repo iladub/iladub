@@ -22,8 +22,9 @@ ledger.
 **Raising a residue is visible; closing one is not.** A register that only counts what it opens
 reads as pure degradation — R92 sounds like ninety-two defects and nothing repaired. So every new
 row records, in parentheses after its number, **the state of the register at the moment it was
-raised**: `| R97 (17/87 closed) |` means that when R97 went in, 17 of the 87 rows then present
-were closed.
+raised**: `| R97 (18/87 closed) |` means that when R97 went in, 18 of the 87 rows then present
+were closed. (Corrected 2026-08-20: this example read `17/87` while the row it quotes —
+`residues-open.md:77` — reads `18/87`. The example is quoted from a real row and must match it.)
 
 The parenthetical is a **snapshot and is never updated afterwards**. That is the point — read
 down the column and the ratio is a trend line: a register whose closed-fraction climbs is a
@@ -37,11 +38,24 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-17: 94 rows, 20 closed.** (Ten numbers between R1 and R96 were never issued as
-rows; the denominator is rows that exist, not the highest number.) Was 18 closed at `e3f447a`; loop
-`the-gate-and-the-label` closed ~~R102~~ and ~~R104~~, raising no new row. Verified, not asserted:
-`awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c` → `20 closed`,
-`74 open`.
+**As of 2026-08-20: 94 rows, 21 closed, 73 open.** (Ten numbers between R1 and R96 were never
+issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
+`e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
+split closed ~~R103~~, none raising a new row.
+
+**Verified, not asserted — and re-run whenever this line is edited:**
+
+```
+$ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
+  21  closed
+  73  open
+```
+
+> ⚠️ **CORRECTED 2026-08-20** (loop `the-arc-has-a-denominator`). This line said *"As of 2026-08-17:
+> 94 rows, 20 closed"* and had been stale by one since ~~R103~~ closed. The staleness was found by
+> `scripts/cockpit.py`, which reads the rows rather than this sentence and had been printing 21/94
+> while the prose said 20 — the gauge caught the register. **A figure in prose beside a figure that
+> is counted will drift; the command above is the authority, this sentence is a convenience.**
 
 | # | Residue | Measured | Why deferred | What would close it |
 | --- | --- | --- | --- | --- |

@@ -20,25 +20,35 @@ That epistemic invariant *is* the thin `iladub:` core (`CandidateConcept`, `Grou
 
 ## The arc
 
+**The rungs are named, not numbered — because a number is an ordering claim.** Four of the five
+are entitled to one: `dec` presupposes `etkl`, `holon` reframes what `dec` governs, `substrate`
+enforces at runtime what `holon` only describes. The fifth, `tab`, is not next in that line. It is
+depth *inside* the compiler, built largely while `dec` and `holon` were being built, and numbering
+it would place it after the substrate — which is false.
+
 ```mermaid
 flowchart LR
   subgraph CORE["invariant core · assert / propose · every grounded node ← a promotion decision"]
     direction LR
-    E["1 · etkl<br/>document compiler<br/>recover + ground"]
-    DEC["2 · decidability (dec)<br/>context graph<br/>+ accountable decisions"]
-    HOL["3 · holon reframe<br/>record → interacting holon"]
-    SUB["4 · active substrate<br/>membrane enforced at runtime"]
+    E["etkl<br/>document compiler<br/>recover + ground"]
+    DEC["dec · decidability<br/>context graph<br/>+ accountable decisions"]
+    HOL["holon · the reframe<br/>record → interacting holon"]
+    SUB["substrate<br/>membrane enforced at runtime"]
+    TAB["tab · reading depth<br/>inside etkl, not after it"]
     E --> DEC --> HOL --> SUB
+    E ---|"depth, not sequence"| TAB
   end
   SUB ==> OUT(("active, governed holon<br/>semantic + access boundary"))
 ```
 
 <figure markdown="span">
-  <figcaption>Each phase adds a layer, on the same invariant core — and the output changes
-  category: from a static record to an active, governed holon.</figcaption>
+  <figcaption>Four phases, each adding a layer on the same invariant core — and the output changes
+  category: from a static record to an active, governed holon. <code>tab</code> hangs off the chain
+  deliberately: it deepens the first rung rather than following the last, and the link carries no
+  arrow because it asserts no order.</figcaption>
 </figure>
 
-### 1. `etkl` — the document compiler
+### `etkl` — the document compiler
 
 **Extract, Transform-with-(K)nowledge, Load.** Traditional ETL maps fields *structurally*;
 `etkl` grounds *meaning* against a **contract-as-ontology**, with a knowledge module passed as
@@ -46,7 +56,25 @@ an *argument* to the transform. Knowledge — not mappings — is the shape-chan
 **human-addressed document, in any format** → a grounded artifact conformed to a destination
 contract. (There is no "unstructured" input — only [structure addressed to a human](../manifesto.md).)
 
-### 2. Decidability — the context graph
+### `tab` — reading depth, inside the compiler
+
+Not a stage after `etkl`: the inside of it. `etkl` promises *any* human-addressed document, and
+that promise is only as true as the hardest modality it meets — the **table**, where the author's
+structure is most present and least machine-addressed. A header that spans three columns, a stub
+that groups six rows, a footnote that re-scopes a unit: a human reads these at a glance, and
+recovering them is the work that makes "recover the author's structure" more than a slogan.
+
+It belongs to the same invariant core rather than to geometry. *Which columns does this header
+span?* is a perceptual, underdetermined judgment, so it is **proposed** — never computed by a tuned
+tolerance — and **disposed by a semantic oracle** (tiling constraints, a reshape round-trip). That
+is the assert/propose/promote signature applied to perception, and it is why the reading work is a
+rung of this arc and not an implementation detail beneath it.
+
+Its size is the reason it is named here at all: measured 2026-08-20, the table-reading work is the
+**majority** of the compiler's Python, of its vocabulary and shapes, and of its tests. An arc that
+did not name it was a map missing most of its own territory.
+
+### `dec` — decidability, the context graph
 
 `dec` added the decisions that *change state* — both decisions found in document **content**
 and the compiler's own **promotion** decisions — as accountable, traceable holons
@@ -54,7 +82,7 @@ and the compiler's own **promotion** decisions — as accountable, traceable hol
 decidability measure. At this stage the graph *annotated* data with decision + provenance +
 risk: the **context around** assertions.
 
-### 3. The holon reframe — from record to active holon
+### `holon` — the reframe, from record to active holon
 
 The pivot: what `etkl` produces and `dec` governs are not annotated records but
 **interacting holons**. A holon = data **+** its context **+** its boundary **+** its
@@ -66,7 +94,7 @@ escalation) and **lifecycle** (events, state changes). iladub adopts Cagle's **H
 never cloned** — and contributes the two gaps HGA leaves open: accountable **decidability** and
 **contextual risk** (both designed to be portable/upstreamable, not a fork).
 
-### 4. The active substrate
+### `substrate` — the membrane enforced at runtime
 
 A holon is only *active* if something **enforces its membrane at runtime**. That requires an
 immutable **event ledger** (memory), **validation-at-write** (sensory), and **in-engine policy**
@@ -135,7 +163,9 @@ primitive. A single semaphore need not represent every facet; a family of them c
 > can ground, propose the rest, and never let a
 > proposition pass as an assertion. It then absorbed **decidability** (`dec`): the decisions that
 > change state — in document *content* and in the compiler's own promotions — became accountable,
-> traceable holons. The pivot was recognizing that what `etkl` produces and governs are
+> traceable holons — while the compiler itself went **deep** rather than forward, into `tab`, the
+> recovery of an author's structure from the table, where that structure is most present and least
+> machine-addressed. The pivot was recognizing that what `etkl` produces and governs are
 > **interacting holons**: the output stopped being a static record and became an **active, governed
 > holon** whose semantic boundary is *also* its access boundary. iladub consumes Cagle's HGA as the
 > holon substrate (aligned, never cloned) and adds the two gaps HGA lacks — accountable decidability
