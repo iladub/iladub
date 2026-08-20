@@ -1,7 +1,7 @@
 # Handoff — Task 1 of 8 shipped; the controller seat needs a fresh session
 
 **Topic:** process · **Date:** 2026-08-20 · **Branch:** `arc-denominator` @ `c86c39a` (from `main` @
-`f436a8c`, pushed) · **Shape: executing** · **Status: TASK 1 COMMITTED, ITS REVIEW IN FLIGHT.
+`f436a8c`, pushed) · **Shape: executing** · **Status: TASK 1 COMPLETE AND SIGNED OFF.
 TASKS 2-8 NOT STARTED.**
 
 > Written at ~227k tokens — 1.5× the executing floor. The controller seat (dispatch → review →
@@ -61,20 +61,24 @@ is ~2 s. **Never `python3`** — rdflib 7.1.4 there, and under it `tests/test_ar
 
 ## Unverified or assumed
 
-- **Task 1's review has not returned.** A reviewer was dispatched against `f436a8c..c86c39a` with the
-  package at `.superpowers/sdd/.../review-f436a8c..c86c39a.diff`. **Its verdict is unread, so Task 1
-  is committed but NOT signed off**, and the ledger carries no `Task 1: complete` line yet. Adjudicate
-  its findings before dispatching Task 2.
 - **The pre-flight conflict scan is not independent** — the same session authored the plan and scanned
-  it. The task review loop is the only compensating check.
-- **Rulings 4-6 were made on the implementer's own account of its diff**, before the reviewer had
-  looked. If the review contradicts any of them, the review wins.
+  it. The task review loop is the only compensating check, and for Task 1 it has now run.
+- **The suite legs are the one thing the reviewer could not verify** (⚠️ in its report): it was
+  instructed not to re-run them, since neither leg fits in a tool call. The `1215 + 7 skipped + 1
+  xfailed` / `43 passed` figures rest on the implementer's report, corroborated only by the partition
+  arithmetic closing at 1266 = 1252 + 14.
 - **Tasks 2-8 are entirely unstarted.** No file outside Task 1's 16 has been touched.
 - Nothing on this branch is pushed. `main` is pushed at `f436a8c`.
 
 ## The next concrete action
 
-In a **fresh session**: read the ledger, then read the Task 1 review verdict and adjudicate it — fix
-loop if it found Critical/Important, ledger `Task 1: complete` if clean. **Then dispatch Task 2**
-(the register repairs), which is short and has no dependencies, and carry Ruling 2 forward until
-Task 8 consumes it.
+In a **fresh session**: read the ledger, then **dispatch Task 2** (the register repairs) — short, no
+dependencies, and it is the prerequisite for M7's live-row lookups and for Task 6's R74 oracle.
+
+**Task 1 needs nothing further.** Its review returned Spec ✅ / quality Approved with 0 Critical and
+0 Important; five Minors are deferred in the ledger and pointed at the final whole-branch review.
+Two of them are already assigned: **Ruling 8** (narrow `prog:rdflibVersion` to `"7.6"`, one token at
+`arc-manifest.ttl:48`) folds into **Task 3's** dispatch, and the zero-focus-node
+`prog:CriterionShape` closes itself when **Task 3** authors real criteria.
+
+**Carry Ruling 2 forward until Task 8 consumes it** — it is the one unapplied ruling on the board.
