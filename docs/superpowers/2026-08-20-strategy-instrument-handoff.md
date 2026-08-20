@@ -41,6 +41,21 @@ the spec finds them awkward.
    is half the original complaint).
 4. **Slice 1 = map + dependency edges.** The persisted tally history was explicitly deferred (it
    accrues only over future loops and shows nothing today).
+5. **The position is FOUR FRACTIONS, not one integer** (decided after the measurement below). A
+   single `stage N/4` asserts that every rung below N is finished, and measured, none of them is:
+   the compiler is still under repair while stage-3 vocabulary already exists. `stage 3/4` would
+   have to be wrong about three rungs to be right about one. Each rung carries its own
+   met/declared count instead, and no "current position" needs to exist at all — which removes the
+   question that had no honest answer.
+6. **Rendered as BARS** — the maintainer's call, made after the case against them was put: a bar
+   reads as a percentage, and met/declared criteria is a *checklist*, not a percentage; rung 2's
+   five criteria and rung 3's six are not commensurable. Recorded, not re-litigated. Whether a
+   fraction sits beside each bar to keep it legible as a count is the next session's call.
+
+   Two rules the bars must keep, both from the design above: **unknown ≠ zero** (a rung with no
+   criteria declared renders `?`, never an empty bar), and **the fill can go DOWN** — if a test a
+   criterion points at goes red, the criterion un-meets. A gauge that only ratchets upward is
+   measuring authorship, not state.
 
 ### The design as it stood at the end of the session
 
@@ -105,20 +120,64 @@ Two survey agents; every figure below is from a command, not from reading.
    `2026-08-11-…-close.md` are a hand-written **two-point** before/after and the only pair anyone
    ever wrote.
 
+## MEASURED after the design — what is actually on each rung
+
+Delegated inventory, 2026-08-20, same session. Every figure from a command.
+
+| rung | measured | reading |
+| --- | --- | --- |
+| **1 · `etkl` compiler** | `src/iladub/etkl/` 10,807 LOC over 43 modules; `tests/etkl/` 18,073 LOC. Corpus = **7** documents, of which **1** carries a `cor:scoreFloor` and an adjudicated verdict (graincorp-stem, floor 0.95, achieved 0.9655 — recorded in `cor:rationale` PROSE, not as machine-readable data). The other 6 are `cor:Unadjudicated` | built at scale, **proven on one document of seven** |
+| **2 · decidability** | `dec.ttl` 219 LOC / 7 named classes / 18 obj props; `risk.ttl` 112 / 4; 11 `sh:NodeShape` across dec-, risk-, governance-, escalation-shapes; ~1,194 LOC of worked examples with negatives. The core invariant IS enforced — `iladub:GroundedNodeShape` (`vocab/shapes/iladub-shapes.ttl:38`), wired at `compile.py:421` | **the most complete rung.** Caveat: R99 — `NoLeakShape` can never fire where it is wired |
+| **3 · holon reframe** | `vocab/ontology/etkl-holons.ttl` **exists**, 103 LOC, 7 classes (`RawDocumentHolon`, `CleanDocumentHolon`, `SemanticHolon`, `AlignmentHolon`, `GroundingPortal`, `MembraneHealth`, `DocumentHolon`) + `throughPortal`/`reconciles`; 4 `*-hga-align.ttl` = 198 LOC; `iladub-hga-shapes.ttl` 40; `tests/test_hga_alignment.py` 76, asserting `"w3id.org/holon" not in text` | **341 LOC of holon fabric**, far past "not started" |
+| **4 · active substrate** | 34 LOC in `src/iladub/fluree/` (two JSON-LD policy templates) + `writegate.py` 70, tested by 229. **Zero** server/runtime code (no fastapi/flask/uvicorn/asgi/Dockerfile anywhere), **zero** event-ledger implementation — the two files matching "event ledger" are both prose. `membrane.py` runs **inside the compiler process**, not at a write endpoint | **not started.** The one honest `0` |
+
+### Two findings that outrank the position
+
+1. **`CLAUDE.md:452-456` is STALE.** It says the holonic ontology work is *"not yet started"*.
+   Measured: 341 LOC exist and `docs/holonic-interaction.md` calls itself *"partially shipped"*,
+   naming exactly **two** remaining items. **A Contract-class file asserting a blank where the disk
+   has content.** Fixing it is not this loop's job but somebody's.
+2. **THE ARC OMITS MOST OF THE REPO.** The `tab:` table-reading work measures **28,554 LOC** —
+   **64%** of all `src/` Python, **82%** of all `vocab/ontology` + `vocab/shapes` lines, **72%** of
+   all test LOC. The four stages do not name it. So `stage ?/4` was not only missing state, it was
+   measuring against a map that omits two-thirds of the territory. **This is the likeliest single
+   cause of "I have no notion how complete the epic is": the epic actually being worked is not on
+   the map.** Whether table-reading becomes a fifth rung, or the arc is re-cut, is a decision about
+   what iladub *is* — deliberately left to the maintainer in a fresh session.
+
+### The denominators mostly already exist, in prose
+
+This retires the loop's biggest unknown. Three of four rungs already carry a countable criterion
+set that **predates any claim about it** — which is the independence `prog:declaredOn <
+prog:reachedOn` was invented to manufacture, obtained for free:
+
+- **rung 1** — `tests/corpus-manifest.ttl`: documents with a pinned floor and an adjudicated
+  verdict. **1/7.**
+- **rung 3** — `docs/holonic-interaction.md` § *Planned work (not done yet)*: exactly two items
+  (a membrane-health check computing `etkl:membraneHealth`; a full raw→clean traversal example).
+  **0/2 remaining.**
+- **rung 4** — `docs/narrative/scope-evolution.md` §4 names its own three requirements: immutable
+  event ledger, validation-at-write, in-engine policy. **0/3.**
+- **rung 2** has no declared denominator anywhere. The most complete rung is the one that cannot
+  yet say so.
+
+So the work is **lifting existing prose into a countable form**, not inventing criteria. The
+authoring risk the design worried about is much smaller than assumed.
+
 ## Unverified or assumed
 
-- **That the four rungs can be given honest criteria at all.** Rungs 1–2 plausibly (corpus scores,
-  membrane conformance, worked examples); **3–4 are vocabulary and standards-alignment work with no
-  crisp oracle**, and if criteria there are unwritable the "assert + membrane" decision degrades to
-  "adjudicated only" for half the arc. Nobody has tried. **Test this before writing the spec.**
+- ~~**That the four rungs can be given honest criteria at all.**~~ **LARGELY ANSWERED** by the
+  inventory above: three of four rungs already carry a countable criterion set in prose. **Rung 2
+  remains open** — it has no declared denominator anywhere, and it is the rung whose completeness is
+  least in doubt, so nobody ever wrote down what would count.
 - **That `prog:declaredOn < prog:reachedOn` is satisfiable retroactively.** Every rung already
   reached was reached before any criterion was declared, so the clause either needs a grandfathering
   rule or the early rungs are adjudicated rather than derived. Not thought through.
 - **That the cockpit can compute the frontier cheaply enough.** Asserted from the shape of the data
   (a few file reads and regexes), never timed. The 180s cache and the 30ms contract are the budget.
-- **That the arc's four stages are the right denominator.** The capability ladder in the same file
-  has two rungs and does not mention the `tab:` table-compilation work that R97–R101 concern — so
-  the arc may not cover where the work actually is.
+- ~~**That the arc's four stages are the right denominator.**~~ **REFUTED, measured:** they are not.
+  See finding 2 above — 64/82/72% of the repo sits in work the arc does not name. What replaces or
+  extends the arc is undecided and is the maintainer's call.
 - **The register economics.** This loop closes **no** existing residue row. It repairs the two
   defects in §Measured (1) and (2), which is a real but small offset against a rate measured today
   at 21/94 closed and 73 open.
@@ -128,6 +187,11 @@ Two survey agents; every figure below is from a command, not from reading.
 
 ## The next concrete action
 
-In a **fresh session**: test the first unverified item — **try to write criteria for rungs 3 and 4**
-before anything else. If they cannot be written honestly, the design above changes shape, and it is
-far cheaper to learn that in an hour than in a spec.
+In a **fresh session** — the previous "test whether rung 3/4 criteria can be written" is done, and
+the answer was yes. What replaces it is a decision, not a measurement:
+
+**Does table-reading become a fifth rung, or is the arc re-cut?** Two-thirds of the repo is not on
+the map, and every fraction the gauge renders is measured against that map. Decide this before
+writing the spec — the criteria, the shapes and the bars all inherit from it. Then lift the three
+existing prose denominators (corpus manifest, holonic-interaction's two items, scope-evolution §4's
+three requirements) into countable form, and write rung 2's, which nobody has ever written.
