@@ -21,24 +21,32 @@ Alongside the residue register, maintain:
 The success criterion in the maintainer's own terms: **"tell us where we are on the map and if we
 are converging to objectives."**
 
-## The finding that resizes the whole job
+## CORRECTION (2026-08-20, same day): the first draft of this section was WRONG
 
-**There is no objectives artifact in this repo.** Measured: `docs/*.md` is fifteen files, all
-conceptual or assertion-class (`manifesto`, `architecture`, `story`, `four-groundings`,
-`use-case-*`, …). No roadmap, no epic, no milestone, no objective register. `docs/superpowers/
-plans/*` are per-loop plans; there is no program-level plan above them.
+It said flatly *"there is no objectives artifact in this repo."* **That claim was measured badly**
+— it listed `docs/*.md` (top level) only and never looked in subdirectories. A survey run the same
+hour found the artifact it denied. Recorded here rather than silently edited, because the
+corrected version is weaker and more useful than the original.
 
-**A velocity index has no denominator without objectives, and "converging" has no target.** This
-is the same defect the residue register had before 2026-08-12, when it counted only openings and
-therefore read as pure degradation: *a metric that cannot say what it is a fraction OF is a number,
-not a position on a map.*
+## What actually exists, and the sharper problem
 
-So the first question of this work is **not** "which dashboard" — it is:
+Program-level intent **does** exist, spread across four artifacts, none of which is a roadmap:
 
-> **What are iladub's objectives, written down, at a grain something can be a fraction of?**
+| where | what it gives | what it does not |
+| --- | --- | --- |
+| `docs/narrative/scope-evolution.md` | **the closest thing to an objectives doc** — "The arc" (4 stages: etkl compiler → decidability → holon reframe → active substrate) and a "capability ladder" of worked semaphores. In the mkdocs nav as *Scope & vision* | no state, no completion, nothing is a fraction of it |
+| `CLAUDE.md` § *Open items* (line 442) | a checkbox list of program commitments | 3 checked, 2 open, no grain below the checkbox |
+| `docs/superpowers/2026-08-17-loop-split-decision.md` | the only multi-loop **forward** plan — Loops 1/2/3 with the residues each carries | Loop-scoped; expires when the three are done |
+| `docs/loops/README.md` | methodology: loop engineering, trust tiers L1/L2/L3, definition of done | how to run a loop, not which loops remain |
 
-Until that exists, monitors 1, 3 and 4 above measure activity rather than progress, and would
-reproduce exactly the blindness they are meant to cure.
+**So the real defect is not "no objectives" — it is that the objectives that exist have no state.**
+`scope-evolution.md` names four stages and a ladder; **nothing anywhere says which rung we are on,
+what remains on it, or what "done" would look like.** That is a much better-posed problem than the
+first draft's, and a much smaller one: *the map exists and has no "you are here" marker.*
+
+Note also that a **loop tracker lives in agent memory** (`next-loop-r97-r101.md`), not in the repo
+— which is why the maintainer cannot see it. That alone may account for a large share of the
+reported blindness, and it is cheap to fix.
 
 ## The second finding: dependencies exist only as prose
 
@@ -48,33 +56,53 @@ index) contains not one occurrence of "blocks", "unblocked", "blocked by", "wait
 "waits for R103's count" was recorded in a memory file, and R103's close unblocked it by a
 sentence in a table cell.
 
-This is precisely the maintainer's *"not only linked strings"*. The dependency graph is not an
-enhancement of the register; **it is data that has never been captured**.
+Refined by the survey: **~8 lines in the whole register** use dependency language (5 in
+`residues-open.md`, 3 in `residues-closed.md`) — e.g. R14 *"Depends on R10"*, R102 *"R89's answer
+depends on this row"*, R4 *"now unblocked"*. So the data is not absent; it is **prose, uncounted,
+and unqueryable**. There is no predicate, no field, no graph for it.
 
-## The hypothesis to test FIRST (cheap, and it decides the loop's size)
+This is precisely the maintainer's *"not only linked strings"*.
 
-**Most of the four C's are probably already measured, and merely never aggregated, never
-persisted, and never trended.** Candidate existing instruments to check before building anything:
+## The hypothesis HELD — measured, not assumed
 
-| C | plausibly already covered by | to establish |
+The four C's **are** largely already measured. What is missing is aggregation, a trend, and a
+denominator. Survey result:
+
+| instrument | measures | persists over time? |
 | --- | --- | --- |
-| correctness | the test suite; membrane conformance; the corpus score gate | does anything persist a figure across runs, or only report *now*? |
-| completeness | the corpus coverage work; the R97–R100 "coverage ledger" loop (**which is literally about this and is still open**) | is the coverage ledger the completeness monitor under another name? |
-| currency | doc governance's SPARQL **staleness** checks (CLAUDE.md § Documentation governance) | what does it consider stale, and does it trend? |
-| consistency | `tests/test_source_ownership.py`; `scripts/probe_domain_range_agreement.py`; doc governance's contradiction class | these are consistency checks with no shared reporting surface |
+| `scripts/release_gate.py` + `vocab/queries/docgov-release-gate.rq` | doc-governance contradictions/staleness; **rule in SPARQL**, script only maps to exit code | no |
+| `scripts/measure_dec_membrane.py` | per-document SHACL conformance under two closures | no |
+| `scripts/probe_domain_range_agreement.py` | 4-class emitter-vs-ontology disagreement, 27 pages | `--json` snapshot; **no time series** |
+| `tests/etkl/test_vacuity_registry.py` | per-shape focus-node count + term reachability — *can this shape refuse at all* | no; **skips entirely without the gitignored `corpus/`** |
+| `tests/corpus-manifest.ttl` + `tests/corpus-shapes.ttl` | per-document `cor:scoreFloor`, `cor:expectedVerdict`, dated `cor:adjudication` by reviewer | **YES — adjudication history accumulates in the TTL** |
+| `docs/superpowers/residues.md` tally | closed/open ratio snapshot per row at raise time | **YES, by convention** |
+| `scripts/context_budget.py` | per-turn context %, thresholds 30/40 | no |
+| `tests/etkl/test_adoption_ledger.py` | line-adoption ledger / page score | no |
 
-**If the hypothesis holds, the work is aggregation + persistence + objectives — one loop — rather
-than four new monitors.** If it fails, that is a finding worth having before designing.
-
-*A survey of these was dispatched to a subagent as this brief was written; its findings are not
-folded in here, and the fresh session should simply re-run the survey rather than trust this
-table. Every row above is a CANDIDATE, not a measurement.*
+**Two already persist.** The completeness monitor (Loop 2's "coverage ledger") is **designed but
+not built** — a brief, not code — which is why framing this work to *close* R97–R100 is live.
 
 ## The design question this loop must answer before designing (do not skip)
 
 **Should the strategy instrument BE an iladub holon graph, or a reporting script?**
 
-The arguments for the graph are not aesthetic:
+**The survey settles most of this: the repo ALREADY dogfoods RDF on its own process, in two
+places.** This is not a greenfield choice — there is a working pattern to copy:
+
+- **Documentation governance** — `vocab/shapes/doc-governance-shapes.ttl` (a `dg:` repo-internal,
+  unpublished vocabulary), `tests/docgov_extract.py` (a PROCEDURAL extractor emitting typed RDF
+  from tracked markdown, mkdocs config and git commit dates), four SPARQL derivations in
+  `vocab/queries/docgov-*.rq`, and four test modules. Spec:
+  `docs/superpowers/specs/2026-07-31-documentation-governance-design.md`.
+- **The corpus** — `tests/corpus-manifest.ttl` + `tests/corpus-shapes.ttl`, the `cor:` vocabulary
+  modeling pins, verdicts and human adjudications as a graph.
+
+**NOT modeled as RDF: residues, loops, plans, dependencies, metrics history** — precisely the five
+things this brief is about. The gap is exact, and the precedent for closing it is
+`docgov`: an internal unpublished vocabulary + a procedural extractor + SPARQL derivations + a
+SHACL membrane. **Read that spec before designing anything.**
+
+The remaining arguments for the graph are not aesthetic:
 
 - **CLAUDE.md §8 forbids the script version by default.** A Python module computing health
   figures and a stuck/not-stuck verdict from tuned thresholds is *prima facie* a gate defect. A
