@@ -99,8 +99,8 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
 ## The next concrete action
 
 In a **fresh session**: read the ledger, confirm Task 4's re-review verdict, then **dispatch Task 5**
-(the corpus adjudication pass — six documents, six recorded HOLDs). Its brief is not yet extracted; run
-`scripts/task-brief <plan> 5`. Carry into the dispatch: the **"your run wins"** clause; the pre-flight
+(the corpus adjudication pass — six documents, six recorded HOLDs). **Its brief is already extracted at
+`.superpowers/sdd/.../task-5-brief.md`** (76 lines). Carry into the dispatch: the **"your run wins"** clause; the pre-flight
 scan's row that **T5 must re-verify T3's asserted `etkl` booleans** equal the ones it computes from
 `corpus-manifest.ttl`; the **`prog:source` staleness hazard** above; Global Constraint 7 (*never lower a
 bar to meet it* — this is the task where a `cor:scoreFloor` could be pinned at a currently-measured
