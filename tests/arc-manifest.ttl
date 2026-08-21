@@ -4,8 +4,8 @@
 # yet renders `?` on the cockpit strip — unknown is NOT zero (spec §4, decision 6), and a
 # rung with no criteria is deliberately not a refusal.
 #
-# Authored so far: `etkl` (7), `holon` (6), `substrate` (3) — task 3 of the 2026-08-20 loop.
-# Still `?`: `dec` (16, task 4) and `tab` (10, task 6), which APPEND their own sections
+# Authored so far: `etkl` (7), `holon` (6), `substrate` (3) — task 3 of the 2026-08-20 loop;
+# `dec` (16) — task 4. Still `?`: `tab` (10, task 6), which APPENDS its own section
 # below without touching these. Every criterion is a top-level IRI subject; nothing here
 # nests, so appending a section is the whole edit.
 #
@@ -433,3 +433,390 @@ prog:criterion:substrate:03 a prog:Criterion ;
     prog:met false ;
     prog:retrospective false ;
     prog:oracleTest "tests/substrate/test_in_engine_policy.py::test_engine_enforces_ai_inherits_user" .
+
+
+# ========================================================================= dec — 16 criteria
+#
+# THE DENOMINATOR WAS ALREADY WRITTEN DOWN, in this repo's Contract file. CLAUDE.md:252:
+#   "Every vocabulary/shape ships with a worked example that conforms **and** a negative
+#    test that must fail."
+# That is a countable rule, and it has exactly ONE commit in its history — it has never been
+# reworded since the day it was written. MEASURED 2026-08-21:
+#   $ git log -L 252,252:CLAUDE.md --date=short --format='%h %ad %s'
+#     ee221de 2026-05-31 Add CLAUDE.md and reference docs; wire up MkDocs nav
+#     (one commit, the file-creating one; no later touch)
+# So all fifteen pairing criteria carry prog:declaredOn "2026-05-31" and prog:source
+# "CLAUDE.md:252".
+#
+# THE SHAPE CENSUS — the denominator, measured rather than inherited. Every sh:NodeShape in
+# the four namespaces this rung governs (dec: / risk: / iladub: / gsh:), found by parsing
+# every tracked .ttl with rdflib (not by grep — a shape declared across two lines would hide
+# from grep), 2026-08-21:
+#   vocab/shapes/dec-shapes.ttl         dec:DecisionHolonShape:15 dec:ConfidenceShape:38
+#                                       dec:MilestoneShape:48 dec:EventShape:60
+#                                       dec:ExpansionRequestShape:71
+#   vocab/shapes/escalation-shapes.ttl  dec:EscalationShape:16
+#   vocab/shapes/iladub-shapes.ttl      iladub:CandidateConceptShape:16
+#                                       iladub:GroundedNodeShape:37
+#                                       iladub:PromotionDecisionShape:53
+#                                       iladub:NoLeakShape:65
+#   vocab/shapes/risk-shapes.ttl        risk:NoEmpiricRiskShape:17
+#                                       risk:RiskAssessmentShape:35 risk:SensitivityShape:49
+#   vocab/shapes/governance-shapes.ttl  gsh:AiInheritsUserShape:27 gsh:PermissionShape:45
+#   vocab/shapes/iladub-hga-shapes.ttl  iladub:HgaGroundingGovernanceShape:27
+# That is SIXTEEN node shapes, not the fifteen the spec §7.2 counted. The sixteenth is
+# iladub:HgaGroundingGovernanceShape, and it is NOT authored here because it is ALREADY a
+# criterion: prog:criterion:holon:03 above states exactly CLAUDE.md:252's pairing for it
+# (examples/holon-grounding-conformant.ttl + tests/holon-grounding-leak.ttl, both oracles
+# named). Counting one shape on two rungs would let a single artifact move two fractions,
+# which is the one thing a denominator may not do. So: 16 shapes, 15 here + 1 on `holon`,
+# each counted once, and the two rungs jointly cover the census exactly.
+#
+# THE PAIRINGS ARE MEASURED, NOT ASSUMED — this is the step the brief warned about, since a
+# `*-leak.ttl` fixture need not belong to the shape whose name it resembles. Every negative
+# fixture in the repo was validated against the UNION of the five shape files and the firing
+# sh:sourceShape read out of the report graph (blank property shapes resolved to their owning
+# node shape). MEASURED 2026-08-21, ./.venv/bin/python + pyshacl, inference="rdfs",
+# advanced=True:
+#   tests/dec-bad.ttl                             -> dec:DecisionHolonShape
+#   examples/transplant/heart-timeline-leak.ttl   -> dec:MilestoneShape
+#   examples/transplant/event-leak.ttl            -> dec:EventShape
+#   tests/expansion-request-leak.ttl              -> dec:ExpansionRequestShape
+#   examples/transplant/transplant-escalation-leak.ttl -> dec:EscalationShape
+#   tests/risk-leak.ttl                           -> risk:NoEmpiricRiskShape
+#   tests/transplant-governance-leak.ttl          -> gsh:AiInheritsUserShape
+#   tests/leak-attempt.ttl                        -> iladub:CandidateConceptShape
+#                                                    + iladub:NoLeakShape
+#   tests/federation-projection-leak.ttl          -> iladub:PromotionDecisionShape
+#                                                    + dec:DecisionHolonShape
+# and the two negative graphs built IN CODE by tests/test_grounding.py:
+#   ::test_neg_grounded_without_promotion_fails   -> iladub:GroundedNodeShape (alone)
+#   ::test_neg_proposition_asserted_fails         -> iladub:CandidateConceptShape
+#                                                    + iladub:NoLeakShape
+#
+# THE ONE PAIRING THAT LOOKS LIKE A MATCH AND IS NOT. tests/federation-projection-leak.ttl
+# trips iladub:PromotionDecisionShape in that union sweep — a bare tx:leaked-decision typed
+# iladub:PromotionDecision with neither iladub:reviews nor dec:decidedBy. But no test
+# validates that fixture against iladub-shapes.ttl: tests/test_federation.py:45-60 loads
+# vocab/shapes/etkl-shapes.ttl alone, and the assertion is about etkl:DocumentProjectionShape
+# refusing an interior leak. Nothing SHIPS that refusal as PromotionDecisionShape's negative
+# test, so criterion 09 is unmet. This is precisely the trap the brief named, and the answer
+# came from reading the caller, not the fixture name.
+#
+# NOT ALL FIFTEEN ARE prog:retrospective FALSE — the brief's claim, re-measured and refuted.
+# The rule predates most of the shapes it governs, but two pairings landed on the SAME DAY as
+# the rule itself. MEASURED 2026-08-21, `git log --diff-filter=A --follow --date=short`:
+#   examples/proposal.ttl  examples/promotion.ttl  tests/leak-attempt.ttl
+#   vocab/shapes/iladub-shapes.ttl                  -> all e48ebf2 2026-05-31
+#   $ git log -S"def test_leak_rejected" --date=short --format='%h %ad' -- .  | tail -1
+#     e48ebf2 2026-05-31
+# so for iladub:CandidateConceptShape (07) and iladub:NoLeakShape (10),
+# metOn == declaredOn == 2026-05-31 and M4 refuses `retrospective false` outright: the
+# criterion was written against evidence that already existed. They are labelled TRUE, and
+# labelling them is the whole point of M4. The other eight met criteria are FALSE on measured
+# dates, listed on each row below.
+#
+# NO LIVENESS CRITERION IS AUTHORED HERE (decision D3 of the plan). R99 (iladub:NoLeakShape
+# has focus nodes but its body names iladub:asserted, which no compiled graph carries) and
+# R100 (dec:EscalationShape live at document scope, idle at page scope) are about whether a
+# shape ever FIRES where it is wired — a different question from CLAUDE.md:252's, which asks
+# only whether the pairing exists. Both attach to `tab` criterion 10 in task 6. Neither
+# un-meets a pairing criterion here, and no prog:blockedBy edge is authored on this rung.
+#
+# EVERY MET ROW'S ORACLES WERE RUN, not read, 2026-08-21:
+#   $ ./.venv/bin/python -m pytest tests/test_vocab_shapes.py tests/test_timeline_shacl.py \
+#       tests/test_event_shacl.py tests/test_expansion_request.py \
+#       tests/test_escalation_shacl.py tests/test_risk.py tests/test_governance.py \
+#       tests/test_boundary.py tests/test_grounding.py -q
+#     ............................................                            [100%]
+#     44 passed in 1.55s
+#
+# NON-VACUITY OF THE POSITIVE HALF. "Ships a worked example that conforms" is vacuously true
+# of an example with no focus node for the shape, so the focus nodes were counted (target
+# class closed under rdfs:subClassOf from the ontology; targetObjectsOf/targetSubjectsOf
+# counted directly), 2026-08-21 — every one of the fifteen has at least one:
+#   DecisionHolon 1 · Confidence 1 · Milestone 1 · Event 1 · ExpansionRequest 1 ·
+#   Escalation 2 · NoEmpiricRisk 5 · RiskAssessment 2 · Sensitivity 3 · AiInheritsUser 4 ·
+#   Permission 7 · CandidateConcept 1 · GroundedNode 1 · PromotionDecision 1 · NoLeak 1
+
+prog:rung:dec prog:criterion
+    prog:criterion:dec:01 , prog:criterion:dec:02 , prog:criterion:dec:03 ,
+    prog:criterion:dec:04 , prog:criterion:dec:05 , prog:criterion:dec:06 ,
+    prog:criterion:dec:07 , prog:criterion:dec:08 , prog:criterion:dec:09 ,
+    prog:criterion:dec:10 , prog:criterion:dec:11 , prog:criterion:dec:12 ,
+    prog:criterion:dec:13 , prog:criterion:dec:14 , prog:criterion:dec:15 ,
+    prog:criterion:dec:16 .
+
+# --- vocab/shapes/dec-shapes.ttl ------------------------------------------------------
+
+# metOn 2026-06-02: the shape and the conformant example landed at e48ebf2 2026-05-31, the
+# negative half two days later — `git log --diff-filter=A -- tests/dec-bad.ttl` -> 6e4aa75
+# 2026-06-02. Declared 05-31, met 06-02: the denominator moved first.
+prog:criterion:dec:01 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:15 — dec:DecisionHolonShape ships a worked example that conforms and a negative test that must fail (measured: tests/dec-bad.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-02"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:15" ;
+    prog:oracleArtifact "examples/promotion.ttl" ;
+    prog:oracleArtifact "tests/dec-bad.ttl" ;
+    prog:oracleTest "tests/test_vocab_shapes.py::test_hol_decision_conformant" ;
+    prog:oracleTest "tests/test_vocab_shapes.py::test_hol_rubber_stamp_rejected" .
+
+# UNMET. The positive half exists (examples/promotion.ttl carries one dec:DecisionHolon, and
+# dec:ConfidenceShape targets that class), but NO fixture anywhere in the repo trips it: the
+# union sweep above never names it. A dec:confidence of "1.5"^^xsd:decimal, or two of them,
+# would — and nothing writes one. prog:oracleTest is a TARGET.
+prog:criterion:dec:02 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:38 — dec:ConfidenceShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an out-of-range or duplicated dec:confidence)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_vocab_shapes.py::test_confidence_out_of_range_rejected" .
+
+# metOn 2026-06-18: shape (bda4151), example and leak (a488934) all that day.
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/heart-timeline-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" .
+
+# metOn 2026-06-18: shape (780e126), example and leak (a488934) all that day.
+prog:criterion:dec:04 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:60 — dec:EventShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/event-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:60" ;
+    prog:oracleArtifact "examples/transplant/event-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/event-leak.ttl" ;
+    prog:oracleTest "tests/test_event_shacl.py::test_event_with_condition_conforms" ;
+    prog:oracleTest "tests/test_event_shacl.py::test_event_without_condition_fails" .
+
+# metOn 2026-07-24: shape, example, leak and test all at b304511 that day.
+prog:criterion:dec:05 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:71 — dec:ExpansionRequestShape ships a worked example that conforms and a negative test that must fail (measured: tests/expansion-request-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-07-24"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:71" ;
+    prog:oracleArtifact "examples/expansion-request.ttl" ;
+    prog:oracleArtifact "tests/expansion-request-leak.ttl" ;
+    prog:oracleTest "tests/test_expansion_request.py::test_expansion_request_conforms" ;
+    prog:oracleTest "tests/test_expansion_request.py::test_expansion_request_without_regarding_fails" .
+
+# --- vocab/shapes/escalation-shapes.ttl -----------------------------------------------
+
+# metOn 2026-06-30: shape, example, leak and test all at f0ddc9e that day.
+prog:criterion:dec:06 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/escalation-shapes.ttl:16 — dec:EscalationShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/transplant-escalation-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-30"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/escalation-shapes.ttl:16" ;
+    prog:oracleArtifact "examples/transplant/transplant-escalation.ttl" ;
+    prog:oracleArtifact "examples/transplant/transplant-escalation-leak.ttl" ;
+    prog:oracleTest "tests/test_escalation_shacl.py::test_escalation_conformant_passes" ;
+    prog:oracleTest "tests/test_escalation_shacl.py::test_escalation_leak_fails" .
+
+# --- vocab/shapes/iladub-shapes.ttl ---------------------------------------------------
+
+# prog:retrospective TRUE, and MEASURED so: shape, example and negative fixture all landed at
+# e48ebf2 2026-05-31, the same day CLAUDE.md:252 was written at ee221de. metOn == declaredOn,
+# so M4 refuses `false` — this row is an adjudication of evidence that already existed, and it
+# says so. tests/leak-attempt.ttl trips this shape AND iladub:NoLeakShape (criterion 10); one
+# fixture serving two shapes is fine, since each of the two is measured to fire on it.
+prog:criterion:dec:07 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/iladub-shapes.ttl:16 — iladub:CandidateConceptShape ships a worked example that conforms and a negative test that must fail (measured: tests/leak-attempt.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-05-31"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:16" ;
+    prog:oracleArtifact "examples/proposal.ttl" ;
+    prog:oracleArtifact "tests/leak-attempt.ttl" ;
+    prog:oracleTest "tests/test_boundary.py::test_proposal_wellformed" ;
+    prog:oracleTest "tests/test_boundary.py::test_leak_rejected" .
+
+# metOn 2026-07-20, and this one's negative half is NOT a .ttl fixture: no file in the repo
+# trips iladub:GroundedNodeShape. The negative test builds its graph in code — a GroundedNode
+# with iladub:status asserted and no iladub:wasPromotedBy — and it fires this shape ALONE
+# (measured). `git log -S"def test_neg_grounded_without_promotion_fails"` -> d9bac0b
+# 2026-07-20; the conformant half is examples/promotion.ttl at e48ebf2 2026-05-31.
+prog:criterion:dec:08 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/iladub-shapes.ttl:37 — iladub:GroundedNodeShape ships a worked example that conforms and a negative test that must fail (measured: the in-code graph built by tests/test_grounding.py::test_neg_grounded_without_promotion_fails trips this shape, and only this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-07-20"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:37" ;
+    prog:oracleArtifact "examples/proposal.ttl" ;
+    prog:oracleArtifact "examples/promotion.ttl" ;
+    prog:oracleTest "tests/test_boundary.py::test_promotion_grounds" ;
+    prog:oracleTest "tests/test_grounding.py::test_neg_grounded_without_promotion_fails" .
+
+# UNMET, and it is the near miss documented in this section's header:
+# tests/federation-projection-leak.ttl WOULD trip this shape, but tests/test_federation.py:45-60
+# validates that fixture against vocab/shapes/etkl-shapes.ttl only, asserting
+# etkl:DocumentProjectionShape's refusal. No shipped test puts a malformed
+# iladub:PromotionDecision in front of iladub-shapes.ttl. prog:oracleTest is a TARGET.
+prog:criterion:dec:09 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/iladub-shapes.ttl:53 — iladub:PromotionDecisionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no test validates a promotion decision lacking iladub:reviews or dec:decidedBy against these shapes)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_boundary.py::test_unaccountable_promotion_rejected" .
+
+# prog:retrospective TRUE for the same measured reason as criterion 07: shape, example and
+# fixture all at e48ebf2 2026-05-31, metOn == declaredOn.
+prog:criterion:dec:10 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/iladub-shapes.ttl:65 — iladub:NoLeakShape ships a worked example that conforms and a negative test that must fail (measured: tests/leak-attempt.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-05-31"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:65" ;
+    prog:oracleArtifact "examples/promotion.ttl" ;
+    prog:oracleArtifact "tests/leak-attempt.ttl" ;
+    prog:oracleTest "tests/test_boundary.py::test_promotion_grounds" ;
+    prog:oracleTest "tests/test_boundary.py::test_leak_rejected" .
+
+# --- vocab/shapes/risk-shapes.ttl -----------------------------------------------------
+
+# metOn 2026-06-26: shape, example, leak and test all at 965565b that day.
+prog:criterion:dec:11 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/risk-shapes.ttl:17 — risk:NoEmpiricRiskShape ships a worked example that conforms and a negative test that must fail (measured: tests/risk-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-26"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/risk-shapes.ttl:17" ;
+    prog:oracleArtifact "examples/transplant/transplant-risk.ttl" ;
+    prog:oracleArtifact "tests/risk-leak.ttl" ;
+    prog:oracleTest "tests/test_risk.py::test_transplant_contextual_risk_conformant" ;
+    prog:oracleTest "tests/test_risk.py::test_empiric_risk_stamp_rejected" .
+
+# UNMET. tests/risk-leak.ttl trips risk:NoEmpiricRiskShape and nothing else (measured); a
+# risk:RiskAssessment missing risk:ofSubject / risk:inContext / risk:severity exists nowhere.
+prog:criterion:dec:12 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/risk-shapes.ttl:35 — risk:RiskAssessmentShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an assessment without its subject, context or severity)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_risk.py::test_contextless_assessment_rejected" .
+
+# UNMET, same measurement: no fixture carries a risk:Sensitivity without its severity or
+# without the condition(s) it reads.
+prog:criterion:dec:13 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/risk-shapes.ttl:49 — risk:SensitivityShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a sensitivity without its severity or its risk:reads conditions)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_risk.py::test_sensitivity_without_reads_rejected" .
+
+# --- vocab/shapes/governance-shapes.ttl -----------------------------------------------
+
+# metOn 2026-06-26: shape, example, leak and test all at b1bb3c7 that day.
+prog:criterion:dec:14 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/governance-shapes.ttl:27 — gsh:AiInheritsUserShape ships a worked example that conforms and a negative test that must fail (measured: tests/transplant-governance-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-26"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/governance-shapes.ttl:27" ;
+    prog:oracleArtifact "examples/transplant/transplant-governance.ttl" ;
+    prog:oracleArtifact "tests/transplant-governance-leak.ttl" ;
+    prog:oracleTest "tests/test_governance.py::test_governance_example_conformant" ;
+    prog:oracleTest "tests/test_governance.py::test_direct_ai_grant_rejected" .
+
+# UNMET. The governance leak fixture trips gsh:AiInheritsUserShape alone (measured); a
+# permission with no odrl:action or no odrl:assignee is written nowhere. Note the positive
+# half is the strongest on this rung — 7 focus nodes — which is exactly how a shape ends up
+# well exercised and never falsified.
+prog:criterion:dec:15 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/governance-shapes.ttl:45 — gsh:PermissionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a permission without an odrl:action or an odrl:assignee)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_governance.py::test_permission_without_action_rejected" .
+
+# --- the sixteenth: a rule in the Contract that no test asserts --------------------------
+#
+# CLAUDE.md:249-251 is a different rule from :252 and gets its own prog:source:
+#   "- Decision/provenance reuse standards: `dec:DecisionHolon ⊑ prov:Activity`;
+#      evidence via `prov:used`, agency via `prov:wasAssociatedWith`, products via
+#      `prov:generated`. Don't reinvent provenance."
+# All four axioms ARE on disk. MEASURED 2026-08-21, `sed -n '38p;55p;72p;85p' vocab/ontology/dec.ttl`:
+#     rdfs:subClassOf prov:Activity ;
+#     rdfs:subPropertyOf prov:used ;
+#     rdfs:subPropertyOf prov:wasAssociatedWith ;
+#     rdfs:subPropertyOf prov:generated ;
+# And NO test asserts any of them. MEASURED 2026-08-21:
+#   $ grep -rn "Activity" tests --include="*.py"
+#     (no output; exit 1 — zero hits)
+#   tests/test_hga_alignment.py:69-70 pins dec:partOf and dec:Event against HGA, and nothing
+#   else in tests/ mentions prov:used, prov:generated or prov:wasAssociatedWith as an axiom.
+# A rule declared in the Contract class and enforced by nothing is a hole, and this is the
+# instrument's job: to make it countable rather than remembered.
+#
+# prog:declaredOn "2026-05-31". The `git log -L 249,251:CLAUDE.md` range reports FOUR commits
+# (ee221de 2026-05-31, 965565b 2026-06-26, 0145138 2026-07-01, 84110a2 2026-07-01), but three
+# of those are not touches to this rule — the range tracks line POSITIONS, and 965565b and
+# 0145138 both edit the adjacent namespaces bullet while these three lines appear as unchanged
+# context. The only edit to the rule itself is at 84110a2, which changes `hol:DecisionHolon`
+# to `dec:DecisionHolon` and nothing else. A namespace rename is not a re-declaration (the
+# same rule this manifest applies to the `holon` rung above), so the declaration is ee221de,
+# 2026-05-31 — the day the Contract was written.
+#
+# NO prog:oracleArtifact here, deliberately. vocab/ontology/dec.ttl exists, so naming it would
+# make M5 report green on a claim that is false: the artifact half of this criterion is
+# satisfied and the TEST half is not. That is what makes M5b, not M5, the arm that defends
+# this row — see the FALSIFICATION block of task 4's report.
+prog:criterion:dec:16 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "The four provenance-reuse axioms declared in the Contract — dec:DecisionHolon ⊑ prov:Activity, dec:consideredEvidence ⊑ prov:used, dec:decidedBy ⊑ prov:wasAssociatedWith, dec:produced ⊑ prov:generated (vocab/ontology/dec.ttl:38,55,72,85) — are asserted by a test. They are declared and enforced by nothing." ;
+    prog:source "CLAUDE.md:249-251" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_dec_provenance_axioms_present" .
