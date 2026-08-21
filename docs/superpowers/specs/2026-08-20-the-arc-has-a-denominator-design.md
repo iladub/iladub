@@ -289,6 +289,21 @@ met document is met because a HOLD was **lifted**, not because a number was writ
 **This denominator grows with ambition, and that is correct.** Adding a document to the corpus
 lowers the fraction. A gauge that can only be lowered by aiming higher is measuring the right thing.
 
+> **ERRATA 2026-08-21 (task 5, RULING 16) — the `ons` figure at `:255` is wrong.** The sentence
+> *"nothing stops it being pinned at whatever the document scores today: `bfs` at 0.3438, `ons` at
+> 0.4419"* is correct about `bfs` and wrong about `ons`. **`ons` measures 0.9720**, not 0.4419;
+> 0.4419 appears nowhere in the measurement. Measured: `docs/superpowers/2026-08-20-escalation-
+> reason-census.md` § *Seam 1 — the census* (row `ons`, HEAD `820ab24`), corroborated in the same
+> file's § *Token accounting for the same run* (590 asserted / 17 escalated). The section's
+> **argument is unaffected** — it is illustrating that a floor can be pinned at *any* measured
+> score, and 0.9720 illustrates it as well as 0.4419 would have; only the figure is bad, and it
+> would be quoted as fact by anyone reading §7.1 for numbers.
+>
+> **`:255` is deliberately NOT edited in place.** The same append-only discipline this loop just
+> applied to `cor:adjudication` — the historical note stands and a dated note supersedes it —
+> applies to the spec that asked for it. Editing our own record in place while requiring an
+> append-only record of the corpus would be the tell.
+
 ### §7.2 `dec` — 10 of 16, and the denominator was there all along
 
 **The handoff is corrected here.** It says (§ *The denominators mostly already exist*) that *"rung 2

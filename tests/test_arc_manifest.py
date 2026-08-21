@@ -169,6 +169,10 @@ def collectable_node_ids():
         $ ./.venv/bin/python -m pytest --collect-only -q
         1252 tests collected in 3.86s      # before this module (0 errors, 0 skips)
         1266 tests collected in 1.16s      # after it; 1.2-3.9 s depending on cache warmth
+    RE-MEASURED 2026-08-21, same command, after task 5 added three tests to this module:
+        1270 tests collected in 1.51s
+    A count in a docstring goes stale on any commit that adds a test, and nothing checks it
+    — so it is re-measured whenever this module is edited rather than carried forward.
 
     That is the entire cost of M5b, once per session, no matter how many criteria name an
     oracle. A `--collect-only` per criterion would pay seconds EACH and be unusable at the
@@ -494,7 +498,7 @@ def test_etkl_criterion_sources_point_at_the_document_they_name():
                   for d in corpus.subjects(RDF.type, COR.Document)}
     lines = CORPUS_MANIFEST.read_text(encoding="utf-8").splitlines()
 
-    for f, (iri, _, source) in sorted(etkl_criteria(Graph().parse(MANIFEST, "turtle")).items()):
+    for f, (iri, _, source) in sorted(etkl_criteria(Graph().parse(MANIFEST, format="turtle")).items()):
         path, _, lineno = source.rpartition(":")
         assert path == "tests/corpus-manifest.ttl", f"{iri}: unexpected prog:source {source!r}"
         assert lines[int(lineno) - 1].startswith(f"<{subject_of[f]}>"), (

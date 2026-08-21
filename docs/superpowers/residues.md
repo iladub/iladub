@@ -176,3 +176,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R102 | closed | CLOSED 2026-08-17 (`b09dbd1`) — the `dec` leg is unconditional at document scope; re-measured 769/769, 0 never (was 316) |
 | R103 | closed | CLOSED 2026-08-20 — NO: admitting `tab-datagrid.ttl` to `_FULL_ONT` is a provable no-op (27 pages, closure delta **0**); no ontology subject reaches an engine, so `ONT_VISIBLE` and `OUTSIDE_MEMBRANE` were the same case all along |
 | R104 | closed | CLOSED 2026-08-17 (`742e862`) — `_validate` returns the refusing legs; `_refusal_message` names them |
+| R105 | open | `prog:source` line pointers are checked for PRESENCE only — the `etkl` seven are now guarded by a test, the other 26 (+10 coming) are not |
