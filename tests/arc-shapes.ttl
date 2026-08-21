@@ -7,10 +7,11 @@
 # Inferring by absence in a derivation is what CLAUDE.md §8 forbids; closing over the
 # manifest, which is one hand-authored file, is what a membrane is for.
 #
-# It carries SEVEN of the nine refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b).
-# M5, M5b, M5c and M7 are NOT here and cannot be: they ask about the filesystem, a pytest
-# collection and `sys.version`, none of which are triples. They live in
+# It carries SEVEN of the TEN refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b).
+# M5, M5b, M5c, M7 and M10 are NOT here and cannot be: they ask about the filesystem, a
+# pytest collection and `sys.version`, none of which are triples. They live in
 # tests/test_arc_manifest.py, which states why that split is irreducible.
+# (M10 — does prog:source's <path>:<line> resolve — was added 2026-08-21, Ruling 18, R105.)
 #
 # `prog:` (https://w3id.org/iladub/progress#) is repo-internal and unpublished, exactly as
 # `cor:` and `dg:` are: not w3id-registered, never in vocab/ontology/. No HGA IRI appears

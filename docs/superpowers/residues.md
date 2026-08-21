@@ -38,18 +38,24 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-20: 94 rows, 21 closed, 73 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-21: 96 rows, 22 closed, 74 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
-split closed ~~R103~~, none raising a new row.
+split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105 and
+R106 and closed ~~R105~~ in task 6.
 
 **Verified, not asserted — and re-run whenever this line is edited:**
 
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
-  21  closed
-  73  open
+  22  closed
+  74  open
 ```
+
+> ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
+> open"* and was stale by two rows: R105 and R106 were appended on 2026-08-21 without it being
+> re-run, so the register under-reported its own size the day after the note above was written.
+> Third recurrence of the same drift. The command is the authority; this sentence is a convenience.
 
 > ⚠️ **CORRECTED 2026-08-20** (loop `the-arc-has-a-denominator`). This line said *"As of 2026-08-17:
 > 94 rows, 20 closed"* and had been stale by one since ~~R103~~ closed. The staleness was found by
@@ -176,5 +182,5 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R102 | closed | CLOSED 2026-08-17 (`b09dbd1`) — the `dec` leg is unconditional at document scope; re-measured 769/769, 0 never (was 316) |
 | R103 | closed | CLOSED 2026-08-20 — NO: admitting `tab-datagrid.ttl` to `_FULL_ONT` is a provable no-op (27 pages, closure delta **0**); no ontology subject reaches an engine, so `ONT_VISIBLE` and `OUTSIDE_MEMBRANE` were the same case all along |
 | R104 | closed | CLOSED 2026-08-17 (`742e862`) — `_validate` returns the refusing legs; `_refusal_message` names them |
-| R105 | open | `prog:source` line pointers are checked for PRESENCE only — the `etkl` seven are now guarded by a test, the other 26 (+10 coming) are not |
+| R105 | closed | CLOSED 2026-08-21 (task 6, Ruling 18) — **M10**: every criterion's `prog:source` path must exist and its line be in range; the `etkl` join is kept beside it, not replaced |
 | R106 | open | A `prog:met true` arc criterion can cite evidence containing ZERO focus nodes for the shape it claims — the membrane says `shacl_ok=True` either way; the rule that catches it is prose |

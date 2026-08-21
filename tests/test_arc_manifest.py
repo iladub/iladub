@@ -1,9 +1,9 @@
-"""The arc manifest's membrane (spec 2026-08-20 §4) — nine refusals over prog:.
+"""The arc manifest's membrane (spec 2026-08-20 §4) — ten refusals over prog:.
 
 **Gate classification (CLAUDE.md §8): PROCEDURAL, and here is why it is irreducible.**
-Seven of the nine refusals are NOT here: M1, M2 (+M2b), M3, M4, M6, M8 and M9 (+M9b) are
+Seven of the ten refusals are NOT here: M1, M2 (+M2b), M3, M4, M6, M8 and M9 (+M9b) are
 declarative over the manifest graph and live in `tests/arc-shapes.ttl` as SHACL — AXIOM /
-constraint, closed world, the membrane. This module owns only the four questions **no SHACL
+constraint, closed world, the membrane. This module owns only the five questions **no SHACL
 engine can see, because they are facts about the environment rather than about the graph**:
 
   * **M5**  — does the file named by `prog:oracleArtifact` exist in the working tree?
@@ -11,12 +11,23 @@ engine can see, because they are facts about the environment rather than about t
   * **M5c** — is the interpreter reading this manifest the one it was validated against?
   * **M7**  — is the row named by `prog:blockedBy` present in the residue register,
               a markdown file that is not part of the graph at all?
+  * **M10** — does the `<path>:<line>` named by `prog:source` RESOLVE: does the path exist,
+              and is the line in range? (R105, closed 2026-08-21 by Ruling 18.)
 
 A closed-world SHACL constraint can only close over triples. The filesystem, a pytest
 collection and `sys.version` are none of those, and inventing triples that mirror them would
 be deriving-by-absence — the thing CLAUDE.md §8 forbids the membrane to do. So the split is
 not a convenience: the graph half stays in SHACL and the environment half is procedural code,
-and neither leg may drift into the other's world.
+and neither leg may drift into the other's world. M10 needs no new gate argument: a line
+count of a file on disk is the same class of fact as M5's existence check, one file away.
+
+**M10 is the WEAK guard, and the `etkl` pointer test below is the STRONG one. Both are
+kept.** `test_etkl_criterion_sources_point_at_the_document_they_name` resolves a pointer by
+JOINING the criterion to the corpus row it names — it can say the line is the *wrong* line.
+Only `etkl` has a second graph to join against; `dec`, `holon`, `substrate` and `tab` cite
+prose files, and there is nothing to join. So M10 is universal and weak (the pointer resolves
+to *some* line of *some* real file) and the join stays narrow and strong. Neither subsumes
+the other, and M10 must never grow into a claim about what the cited line says.
 
 This module derives nothing and computes no fraction. It NEVER writes the manifest (spec §9,
 the `cor:` precedent): a criterion is flipped to met by a hand in a reviewed commit or not at
@@ -79,6 +90,19 @@ def oracle_rows(graph):
                None if met is None else met.toPython(),
                tuple(sorted(str(o) for o in graph.objects(c, PROG.oracleArtifact))),
                tuple(sorted(str(o) for o in graph.objects(c, PROG.oracleTest))))
+
+
+def source_rows(graph):
+    """Yield (criterion_iri, prog:source) — one row per criterion, met or not.
+
+    Unlike M5, this is NOT restricted to `met true`. prog:source is what makes
+    prog:declaredOn auditable (arc-shapes.ttl:82-90), and a criterion asserts its
+    declaration date whether or not it claims to be met — so an unmet row's pointer is
+    exactly as load-bearing as a met one's.
+    """
+    for c in sorted(graph.subjects(RDF.type, PROG.Criterion), key=str):
+        for s in sorted(graph.objects(c, PROG.source), key=str):
+            yield str(c), str(s)
 
 
 def blocked_rows(graph):
@@ -210,6 +234,40 @@ def register_rows():
                                 re.M))
 
 
+_SOURCE_LOC = re.compile(r"^(\d+)(?:-(\d+))?$")
+
+
+def _source_refusal(iri, source):
+    """The M10 message this prog:source earns, or None. Path existence + line range ONLY.
+
+    Deliberately NOT a check that the cited line SAYS anything in particular — that is a
+    different question and a different residue, and smuggling it in here would make one
+    refusal answer two.
+
+    The pointer form is `<path>:<line>` or `<path>:<start>-<end>`, both already in the
+    manifest (`CLAUDE.md:252`, `docs/holonic-interaction.md:147-148`). A value with no
+    line suffix is a bare path and is checked for existence alone — the membrane requires
+    prog:source to exist, not to carry a line.
+    """
+    path, _, loc = source.rpartition(":")
+    m = _SOURCE_LOC.match(loc)
+    if not m:
+        path, m = source, None
+    target = REPO / path
+    if not target.exists():
+        return (f"M10: {iri} declares itself at prog:source {source!r}, whose path does not "
+                f"exist in the working tree")
+    if m is None:
+        return None
+    start, end = int(m.group(1)), int(m.group(2) or m.group(1))
+    n = len(target.read_text(encoding="utf-8").splitlines())
+    if not 1 <= start <= end <= n:
+        return (f"M10: {iri} declares itself at prog:source {source!r}, but {path} has {n} "
+                f"lines — the pointer resolves to nothing, so prog:declaredOn cannot be "
+                f"audited by `git blame` on the line it names")
+    return None
+
+
 def _recorded_version_holds(recorded, running):
     """Dotted-prefix equality: the RECORDED PRECISION IS THE ASSERTION.
 
@@ -221,10 +279,10 @@ def _recorded_version_holds(recorded, running):
     return running.split(".")[:len(want)] == want
 
 
-# ------------------------------------------------------------------- the four refusals
+# ------------------------------------------------------------------- the five refusals
 
 def environment_refusals(graph):
-    """Every M5 / M5b / M5c / M7 refusal this graph earns, as messages. Empty == admitted."""
+    """Every M5 / M5b / M5c / M7 / M10 refusal this graph earns. Empty == admitted."""
     out = []
 
     for iri, met, artifacts, tests in oracle_rows(graph):
@@ -253,6 +311,11 @@ def environment_refusals(graph):
                     f"M5c: validated against {what} {str(recorded)!r}, read under "
                     f"{running!r} — re-validate under the recorded runner, or pin the new "
                     f"one in a reviewed commit (the cor:sha256 precedent)")
+
+    for iri, source in source_rows(graph):
+        refusal = _source_refusal(iri, source)
+        if refusal is not None:
+            out.append(refusal)
 
     known = register_rows()
     for iri, residue in blocked_rows(graph):
@@ -400,6 +463,26 @@ def test_m7_a_blocking_edge_to_a_nonexistent_residue_is_refused():
     """A dangling edge is worse than no edge: it reads as strategy and points at nothing.
     R999 is not a row in the register index."""
     _refused_by_environment("arc-m7-dangling-residue-leak.ttl", "M7")
+
+
+def test_m10_a_source_pointer_that_resolves_to_nothing_is_refused():
+    """R105, closed. `prog:source` is the ONLY thing that makes `prog:declaredOn` auditable
+    (arc-shapes.ttl:82-90), and the membrane checks only that it is present and a string.
+
+    Both arms are asserted, because M10 has two and the refusal number alone cannot tell
+    them apart: a path that does not exist, and a line beyond the end of a path that does.
+    This is the WEAK-BUT-UNIVERSAL guard. It deliberately does NOT subsume
+    test_etkl_criterion_sources_point_at_the_document_they_name, which resolves a pointer by
+    JOINING the criterion to the document it names — only `etkl` has a second graph to join
+    against, so that one stays the strong guard for the one rung that supports it. Two
+    instruments, both kept.
+    """
+    _refused_by_environment("arc-m10-stale-source-pointer-leak.ttl", "M10")
+    reasons = environment_refusals(Graph().parse(
+        REPO / "tests" / "arc-m10-stale-source-pointer-leak.ttl", format="turtle"))
+    assert len(reasons) == 2, reasons
+    assert any("does not exist" in r and "battery-run-final" in r for r in reasons), reasons
+    assert any("has 1" in r or "line" in r for r in reasons if "CLAUDE.md" in r), reasons
 
 
 # -------------------------------------------- the etkl rung: computed, pinned, ungameable

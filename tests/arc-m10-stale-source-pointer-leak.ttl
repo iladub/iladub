@@ -1,0 +1,34 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M10: prog:source is a file:line pointer into a tree that keeps moving, and the SHACL
+# membrane checks only that it is PRESENT and a string (M1). Both rows below are
+# SHACL-clean by design — the filesystem is not a triple, so only the environment leg can
+# see them. Both arms are here because M10 has two, and a fixture that carried one would
+# be evidence about half a refusal.
+
+# Arm 1 — THE PATH IS GONE. `battery-run-final.log` is not hypothetical: R43, R44 and R45
+# all rest their measurement on it and it is absent from the repo AND from git history
+# (spec §7.4). A criterion whose declaring prose lives in a file nobody can open has a
+# prog:declaredOn nothing can audit.
+prog:criterion:tab:vanished-file a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "A criterion whose declaring prose is cited from a file that does not exist." ;
+    prog:source "docs/superpowers/battery-run-final.log:12" ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false .
+
+# Arm 2 — THE PATH EXISTS AND THE LINE DOES NOT. This is the failure mode Ruling 13 paid
+# by hand: an insert above a cited line silently re-points it, and a pointer past the end
+# of the file is the same defect made visible. CLAUDE.md is real and is nowhere near
+# 999999 lines long.
+prog:criterion:tab:line-past-the-end a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "A criterion citing a line beyond the end of a file that does exist." ;
+    prog:source "CLAUDE.md:999999" ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false .

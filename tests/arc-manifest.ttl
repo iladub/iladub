@@ -903,3 +903,326 @@ prog:criterion:dec:17 a prog:Criterion ;
     prog:met false ;
     prog:retrospective false ;
     prog:oracleTest "tests/test_hga_alignment.py::test_dec_provenance_axioms_present" .
+
+
+# ========================================================================= tab — 10 criteria
+#
+# THE DENOMINATOR IS THE READING'S OWN VOCABULARY, not the residue register. Spec §7.4 states
+# the trap first and it is worth restating: making each open `tab:` residue a criterion would
+# put the numerator near zero on the rung carrying the majority of the repo's code, and would
+# be measuring the register rather than the reading. So the nine criteria below are the nine
+# reasons the compiler may refuse to read a region, plus a tenth for the compile membrane's
+# own honesty (D3).
+#
+# THE REASON LIST IS A COPY OF A GREP, AND HERE IS THE GREP. There is no enum and no registry
+# — the reasons exist only as string literals at `escalate_region(` call sites, deliberately:
+# `_suggester_uri` (holon.py:409-421) slugifies the string rather than looking it up, its
+# docstring giving the reason ("a hand-maintained table drifts from the call sites … and the
+# drift is silent"). So this list can drift, and a manifest that carried it without its grep
+# would be the hand-maintained table that docstring refuses to keep.
+# RE-MEASURED 2026-08-21, this tree:
+#   $ grep -rn "escalate_region(" src/ --include='*.py' | grep -v __pycache__
+#     MULTI_TABLE_AMBIGUOUS  compile.py:596
+#     REGION_TILING_FAILED   compile.py:656, :763, :939
+#     TRANSPOSED             compile.py:688
+#     ROW_GROUP_AMBIGUOUS    compile.py:739
+#     MATRIX_AMBIGUOUS       compile.py:830
+#     MERGE_AMBIGUOUS        compile.py:911
+#     KIND_NOT_SUPPORTED     compile.py:978
+#     DATAGRID_RESIDUE       compile.py:1145
+#     ROUND_TRIP_FAIL        holon.py:493
+# NINE, and the grep agrees exactly with the census (2026-08-20, HEAD 820ab24) — including
+# that spec §7.4's EIGHT is wrong: it misfiles `TRANSPOSED` as a kind, and `RegionKind`
+# (regions.py:27-30) has exactly three members, none of them TRANSPOSED. The tenth criterion
+# is D3's, not a reason. (compile.py:961 carries a tenth *comment* mentioning the function and
+# is not a call site — it states that ROUND_TRIP_FAIL never reaches escalate_region on that
+# path. Counted as prose, not as a firing.)
+#
+# THE FIRING COUNTS ARE THE CENSUS'S, AND THE CENSUS IS STILL CURRENT. It ran at HEAD 820ab24
+# and this manifest asserts against it rather than re-running a ~315 s corpus compile.
+# That inheritance is checked, not assumed — MEASURED 2026-08-21:
+#   $ git diff --stat 820ab24..HEAD -- src/ corpus/
+#     (no output — src/ and corpus/ are byte-identical to the census HEAD)
+# Per-reason, graph-side, over the 7-document corpus (census § Seam 1):
+#   REGION_TILING_FAILED 10 · MATRIX_AMBIGUOUS 5 · ROUND_TRIP_FAIL 5 · KIND_NOT_SUPPORTED 3 ·
+#   DATAGRID_RESIDUE 1 · MERGE_AMBIGUOUS 0 · MULTI_TABLE_AMBIGUOUS 0 · ROW_GROUP_AMBIGUOUS 0 ·
+#   TRANSPOSED 0        — 24 records on 3 documents (apple 11, bfs 10, who-wfa 3).
+#
+# D2 — GRAPH-SIDE 24, REPORT-SIDE 29, AND THE DIFFERENCE IS ONE PAGE. Recorded here and not
+# only in the plan, so a future re-measurement reading 29 recognises a known difference rather
+# than drift. The delta is entirely apple page 1, the adopted page: 5 escalations are
+# WITHDRAWN from the graph when the data grid supersedes them (document.py:1512-1513 ->
+# `_remove_escalation_record`) while the RegionReport keeps its original reason
+# (compile.py:1132-1136 rewrites only `verdict` and `tokens_escalated`). Withdrawn:
+# REGION_TILING_FAILED x3, KIND_NOT_SUPPORTED x1, ROUND_TRIP_FAIL x1, replaced by one
+# DATAGRID_RESIDUE. THIS MANIFEST COUNTS GRAPH-SIDE — a SHACL membrane over a compiled graph
+# can only ever see the 24, and a criterion counting the other side would be uncheckable by
+# the membrane that governs everything else here.
+#
+# ROUND_TRIP_FAIL IS TWO MECHANISMS UNDER ONE LABEL, and criterion 09 counts the label.
+# Region-level (holon.py:493) accounts for all 5 corpus firings; cell-level
+# (`_emit_roundtrip_fail_cell`, holon.py:55, called from :143, :210, :310, :405) is
+# corpus-dead. A count keyed on the label alone cannot tell them apart, and one document
+# hitting the cell-level path could inflate it by hundreds. WHETHER THE MANIFEST SHOULD SPLIT
+# THEM INTO TWO CRITERIA IS DELIBERATELY LEFT OPEN — it is a real question about the shape of
+# this denominator and it is not decided here rather than decided silently. What is asserted:
+# criterion 09's `met false` does not depend on the answer, since the region-level half alone
+# fires 5 times unadjudicated.
+#
+# D1 IS WHY THE FOUR CORPUS-DEAD REASONS ARE NOT AUTOMATICALLY MET (plan :91-97, which is
+# every criterion 01-09's prog:source). Spec §7.4's one-armed wording would read all four as
+# met for a reason that measures THE CORPUS, NOT THE READING — the same gameability defect as
+# the `etkl` floor, from the other side. Under D1 a corpus-dead reason is disposed only if it
+# names a COLLECTABLE oracle that drives the path AND a recorded reason distinguishing corpus
+# gap from dead path. That is the VACUITY_REGISTRY form (test_vacuity_registry.py:87), which
+# is the precedent already in this repo.
+#
+# WHAT A prog:blockedBy MEANS ON THIS RUNG, stated because it decided two rows: an edge names
+# a register row WHOSE CLOSURE WOULD ADVANCE THIS CRITERION. It is not "a row that mentions
+# this reason". R15 mentions MERGE_AMBIGUOUS and R68 is entirely about TRANSPOSED, yet neither
+# is an edge below — both are the RECORDED REASON D1 arm (b) asks for, and closing them would
+# not dispose of anything. All edges below re-verified OPEN 2026-08-21:
+#   $ grep -nE "^\| *~?~?R(43|44|45|62|71|74|77|79|80|83|84|97|98|99|100)~?~? *\|" \
+#         docs/superpowers/residues.md
+#     all fifteen present, all `| open |`, none struck.
+#
+# ONE STALE REGISTER ROW FOUND AND NOT FIXED HERE. R43 reads "ONS gov-stats document: 1x
+# REGION_TILING_FAILED plus an unnamed oddity", and the census measures ons at ZERO escalation
+# records of any reason (§ Seam 1). The row is open, so M7 admits the edge and criterion 02
+# keeps it; but the occurrence it describes does not survive at HEAD, exactly as
+# graincorp-stem's 2026-08-02 adjudication did not (task 5 superseded that one in
+# tests/corpus-manifest.ttl:43-44). Re-adjudicating R43 is register work, not manifest work,
+# and inventing a closure for it here would be this loop marking its own homework.
+#
+# ALL TEN CARRY prog:declaredOn "2026-08-20" — f436a8c, the commit that authored the plan.
+# MEASURED 2026-08-21:
+#   $ git blame -L 91,97 --date=short -- docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md
+#     f436a8c3 (2026-08-20) for every line of D1's decision block
+#   $ git blame -L 129,131 --date=short -- <same file>
+#     f436a8c3 (2026-08-20) for every line of D3's decision block
+# This is the one rung §7 says had to be CONSTRUCTED rather than read off prose that predates
+# it, so its declaring prose is this loop's own plan and its date is that plan's commit — not
+# today's. The distinction is not cosmetic: writing today's date would make every row look
+# declared after the evidence was already in hand.
+#
+# NON-VACUITY OF EVERY NAMED ORACLE, checked BY HAND (the rule at :561-571 generalises to this
+# rung, and nothing enforces it — R106). Each of the four corpus-dead reasons' oracles was RUN
+# and READ, 2026-08-21:
+#   $ ./.venv/bin/python -m pytest \
+#       "tests/etkl/test_merge_resolution.py::test_offcenter_merge_escalates" \
+#       "tests/etkl/test_closing_slice.py::test_multi_table_ambiguous_escalates" \
+#       "tests/etkl/test_closing_slice.py::test_false_positive_transpose_escalates" \
+#       "tests/etkl/test_tiling_gate.py::test_gate_reject_escalates_gracefully" -q
+#     4 passed in 4.67s
+# Three of the four assert GRAPH-SIDE — over `iladub:CandidateConcept` subjects carrying
+# `rdfs:label = <reason>`, which only `escalate_region` writes (holon.py:450-463) — so an
+# empty escalation set fails the assertion rather than satisfying it vacuously. The fourth
+# (ROW_GROUP_AMBIGUOUS) asserts report-side on `r.verdict == "escalated" and r.reason ==
+# "ROW_GROUP_AMBIGUOUS"`, which is equally falsifiable by absence. The one MET row's oracle was
+# falsified for real: inverting the reason literal at compile.py:911 makes
+# test_offcenter_merge_escalates FAIL (task 6 report, FALSIFICATION arm B).
+
+prog:rung:tab prog:criterion
+    prog:criterion:tab:01 , prog:criterion:tab:02 , prog:criterion:tab:03 ,
+    prog:criterion:tab:04 , prog:criterion:tab:05 , prog:criterion:tab:06 ,
+    prog:criterion:tab:07 , prog:criterion:tab:08 , prog:criterion:tab:09 ,
+    prog:criterion:tab:10 .
+
+# --- the nine escalation reasons, in call-site order ------------------------------------
+#
+# The five FIRING reasons (01 is not one of them) share a shape: arm (a) applies, every firing
+# document's task-5 adjudication NAMES the reason, and every one of those adjudications is a
+# recorded HOLD rather than a disposition. Naming is not disposing, so all five read
+# `met false` — and each also carries open blocking edges, which M8 makes binding.
+# Their prog:oracleTest is a TARGET on every one of the five, and the same target, deliberately:
+# `cor:` has NO per-reason disposal term today, so "this reason is disposed on this document"
+# is not a structural fact any test can read — it lives in a rationale string, and the `etkl`
+# leg's own lesson (tests/test_arc_manifest.py::etkl_met_by_document's docstring) is that a predicate must never read a
+# rationale. WHETHER `cor:` SHOULD GAIN SUCH A TERM IS LEFT OPEN, and is named here rather
+# than decided silently. Until it does, the target names where the proof would have to live.
+
+# CORPUS-DEAD (0 firings). BLOCKED: R74 measures the cbh data grid leaking one row from a
+# SECOND table on the same page — which is this reason's exact subject matter, and therefore
+# a corpus place where its silence may be FALSE silence rather than absence. Closing R74 is
+# what would let arm (b) speak.
+prog:criterion:tab:01 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MULTI_TABLE_AMBIGUOUS (compile.py:596): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R74" ;
+    prog:oracleTest "tests/etkl/test_closing_slice.py::test_multi_table_ambiguous_escalates" .
+
+# FIRES 10 — apple x8 (p0 x4, p2 x4), bfs x2 (p4, p5). Both documents' 2026-08-20 adjudications
+# name it; both HOLD. R43 is the stale row noted in this section's header.
+prog:criterion:tab:02 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "REGION_TILING_FAILED (compile.py:656, :763, :939): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R43" , "R44" , "R62" ;
+    prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
+
+# CORPUS-DEAD (0 firings) AND THE SILENCE IS SUPPRESSED, WHICH IS A THIRD STATE. The brief said
+# spec §7.4's table gives this reason no blocking row and told this task to MEASURE whether one
+# exists. Two do, and they are different in kind:
+#   * R68 — "no real corpus document exercises the transposed path … proven only on synthetic
+#     fixtures". That is D1 arm (b)'s RECORDED REASON, corpus gap, not a blocker. Closing it
+#     (a genuinely transposing document entering the corpus) would move this row to arm (a),
+#     not meet it.
+#   * R71 — "the kind gate is load-bearing: suppressing `looks_transposed` on an
+#     UNSUPPORTED_TABLE band is currently the only thing protecting two stem regions from a
+#     false-positive transposition reading", and the row measures that un-gating routes both
+#     bands to the incoherent branch, WHICH ESCALATES AT 0 CELLS. So this reason's corpus zero
+#     is not "the reading never meets a transposed table" — it is "the reading meets two bands
+#     it would call transposed, and a gate the register flags as an unresolved defect
+#     suppresses that reading." Neither corpus gap nor dead path. BLOCKED on R71.
+prog:criterion:tab:03 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "TRANSPOSED (compile.py:688): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R71" ;
+    prog:oracleTest "tests/etkl/test_closing_slice.py::test_false_positive_transpose_escalates" .
+
+# CORPUS-DEAD (0 firings). BLOCKED: R80 (apple p1's indent hierarchy is read by nobody), R74
+# (the cbh leaked row), R77 (cbh's four panel totals missed for the no-label reason) — three
+# corpus places where row-group structure goes unread WITHOUT this reason firing. Its oracle
+# reaches the path only by monkeypatching `tiling.region_tiles` to reject, which is honest and
+# is stated here: no fixture drives ROW_GROUP_AMBIGUOUS through the live oracle.
+prog:criterion:tab:04 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "ROW_GROUP_AMBIGUOUS (compile.py:739): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R74" , "R77" , "R80" ;
+    prog:oracleTest "tests/etkl/test_tiling_gate.py::test_gate_reject_escalates_gracefully" .
+
+# FIRES 5 — who-wfa x3 (one z-score header block, once per page) and apple x2 (p0, p2, the
+# "Three Months Ended … Nine Months Ended" double header). Both adjudications name it; both HOLD.
+prog:criterion:tab:05 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MATRIX_AMBIGUOUS (compile.py:830): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R45" , "R62" ;
+    prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
+
+# THE ONE MET ROW ON THIS RUNG, and it is met on arm (b), never on silence.
+#   * fires nowhere: census § Seam 1, 0 on all 7 documents;
+#   * names a collectable oracle that DRIVES the path: test_offcenter_merge_escalates compiles
+#     `fixtures.offcenter_merge_report_pdf` and asserts, graph-side, that a CandidateConcept
+#     carries rdfs:label "MERGE_AMBIGUOUS" — a label only escalate_region writes — AND that no
+#     tab:HierarchicalTable was asserted. Run 2026-08-21, passed; falsified by inverting the
+#     reason literal at compile.py:911 (task 6 report);
+#   * recorded reason distinguishing corpus gap from dead path: R15, open — "still escalates
+#     honestly MERGE_AMBIGUOUS" (the path is LIVE) and "No measured document needs it" / "if a
+#     real document ever requires it" (the gap is the CORPUS). Both halves in one row.
+# NO BLOCKING EDGE, and that is measured rather than assumed. R6 (centre-only merge candidate)
+# and R8 (ProposeHeaderSpan missing from baml_src/) both touch merge reading; neither records a
+# corpus place where this reason's silence is false. R6's own "where measured" column says
+# "needs a live run to judge" — an unmeasured row is not evidence of false silence — and R8 is
+# about the NEURAL proposer that would RESOLVE an ambiguity, not about one going unseen.
+# prog:retrospective TRUE, and M4 refuses `false` outright: the oracle and R15 both predate
+# 2026-08-20, so this criterion was written against evidence that already existed and was met
+# the moment it was declared. metOn == declaredOn. Grandfathering is labelled, never hidden —
+# and back-dating declaredOn or forward-dating metOn to dodge that label is the move M4 exists
+# to catch.
+prog:criterion:tab:06 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MERGE_AMBIGUOUS (compile.py:911): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-20"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "tests/etkl/fixtures.py:726" ;
+    prog:oracleTest "tests/etkl/test_merge_resolution.py::test_offcenter_merge_escalates" .
+
+# FIRES 3 — bfs only (p0 the press-release masthead, p6 x2). Its adjudication names it and
+# HOLDs. R71 rides here as well as on criterion 03: the kind gate decides which bands reach
+# this reason at all, so the same unresolved defect blocks both, from opposite sides.
+prog:criterion:tab:07 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "KIND_NOT_SUPPORTED (compile.py:978): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R44" , "R71" ;
+    prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
+
+# FIRES 1 — apple p1, under the adoption doc URI (document.py:1473), the residue the data grid
+# leaves behind when it supersedes the page's other escalations. One firing, three open rows.
+prog:criterion:tab:08 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "DATAGRID_RESIDUE (compile.py:1145): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R79" , "R83" , "R84" ;
+    prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
+
+# FIRES 5 — bfs p5, all region-level `#htable{n}-rt` URIs. See this section's header for the
+# two-mechanisms-one-label finding: this 5 is evidence about holon.py:493 ONLY and says
+# nothing about the cell-level emitter, which the corpus never reaches.
+prog:criterion:tab:09 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "ROUND_TRIP_FAIL (holon.py:493, region-level; the cell-level emitter at holon.py:55 shares the label and is corpus-dead): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R44" ;
+    prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
+
+# --- the tenth: the compile membrane's own honesty (D3, plan :129-131) --------------------
+#
+# WIDENED BEYOND `tab:` BY D3, and the widening is what makes it one criterion instead of two
+# that can disagree about one registry: VACUITY_REGISTRY is a single artifact spanning four
+# namespaces (measured 9 rows — 5 `tab:`, 3 `iladub:`, 1 `dec:`), so the criterion ranges over
+# every shape wired into the compile membrane.
+#
+# HALF-MET, AND THE HALF IS RECORDED. The instrument EXISTS and BOTH ARMS ARE GREEN — an idle
+# shape must be registered, and a registered shape that has gone live FAILS the guard until its
+# row is deleted, which is what stops the registry rotting into a rubber stamp. VERIFIED
+# 2026-08-21:
+#   $ ./.venv/bin/python -m pytest tests/etkl/test_vacuity_registry.py --collect-only -q
+#     8 tests collected — including ::test_every_idle_shape_is_registered and
+#     ::test_no_registered_shape_has_gone_live
+# What is UNMET is the adjudication, not the instrument. Four registry rows read verbatim
+# "RESIDUE: corpus gap or dead shape, not adjudicated here" — tab:AggregationCellShape (:105),
+# tab:BaseFactShape (:108), tab:PivotedDimensionShape (:121), tab:SectionTotalShape (:124),
+# re-read at those lines 2026-08-21 — and a fifth, tab:LicenceRefusalShape (:111-120), carries a
+# real adjudication and is NOT one of the four. R97 covers the four; R98 records that spec §3's
+# stated reason for LicenceRefusal is wrong; R99 (iladub:NoLeakShape has 11 focus nodes and
+# still cannot fire, because `iladub:asserted` appears in no compiled graph) and R100
+# (dec:EscalationShape live at document scope, idle at page scope, and the registry cannot say
+# so) are the two D3 moved here from `dec`.
+#
+# THE FLIP IS NOT A GREEN TEST. Both named oracles PASS today and the criterion is still unmet:
+# what is missing is four adjudications in a markdown register, which neither M5 nor M5b can
+# see. M8 is what holds this row honest — while any of R97-R100 is open, `met true` is refused
+# outright. That is the guard doing the work the oracles cannot.
+prog:criterion:tab:10 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "Every shape wired into the compile membrane is live, or registered idle with an adjudicated reason distinguishing corpus gap from dead shape; four VACUITY_REGISTRY rows still read 'corpus gap or dead shape, not adjudicated here'." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:129-131" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R97" , "R98" , "R99" , "R100" ;
+    prog:oracleArtifact "tests/etkl/test_vacuity_registry.py:87" ;
+    prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_every_idle_shape_is_registered" ;
+    prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_no_registered_shape_has_gone_live" .
