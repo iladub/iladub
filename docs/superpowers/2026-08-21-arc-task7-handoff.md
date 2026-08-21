@@ -2,13 +2,15 @@
 
 **Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `e36b79a` (from `main` @
 `f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-6 COMPLETE AND SIGNED OFF. TASK 7 BUILT,
-REVIEWED (Spec ✅, Approved, 0 Critical, 1 Important, 5 Minors), FIXED (`111645f`) AND ITS SCOPED
-RE-REVIEW IS IN FLIGHT AND UNADJUDICATED — Task 7 has NO completion line.** **TASK 8 NOT STARTED.**
+**TASKS 1-7 COMPLETE AND SIGNED OFF** — Task 7 through one fix round, re-review clean (all findings
+addressed, 0 Critical, 0 Important, no new breakage). **TASK 8 IS THE ONLY TASK LEFT**, then the
+whole-branch review.**
 
-> This seat crossed the 150k executing floor when Task 7's report landed (151.6k), was at 166k when the
-> review landed, and 184k when the fix landed. It dispatched the fix round and the scoped re-review
-> because sending verbatim findings is mechanical; it stopped before adjudicating the re-review,
-> because that is judgment — the thing that degrades. **Adjudicating it is the next seat's first act.**
+> This seat ran from 74k to 195k, crossing the 150k executing floor at Task 7's report. Past the floor
+> it did only mechanical work — dispatch verbatim findings, ledger outcomes, launch a suite leg — and
+> authored nothing. The re-review came back clean before the seat closed, so **Task 7's completion
+> line IS written and the next session does NOT re-adjudicate it**; read
+> `.superpowers/sdd/.../task-7-rereview-round1.md` only if you want the evidence.
 
 ## Goal
 
@@ -36,10 +38,13 @@ into `scripts/cockpit.py` and is the last task.
 Task 7's review is **clean enough to trust and not yet closed**: it re-derived all four live result
 sets from scratch and reports *"not one figure in the report is off"*, recomputed all five fixture
 answers **by hand** and confirmed them, and verdicted **all five implementer concerns as standing**.
-One Important finding (**I1**) went through fix round 1/5; the implementer reports **DONE** at
-`111645f` (36 passed) and the **scoped re-review is dispatched and unadjudicated**. Read
-`.superpowers/sdd/.../task-7-rereview-round1.md`, adjudicate it, write Task 7's completion line, raise
-the M7-state residue below, then Task 8.
+Task 7 is **closed** at `111645f` after one fix round. Its re-review verified everything against
+**its own** fixtures rather than the implementer's, and strengthened three things in the process: it
+re-derived I1 on a **three**-rung-node graph, so duplicate-immunity is shown **linear, not merely
+two-immune**; it re-ran falsification Arm A **one leg at a time** (the report reverted all three at
+once, *"which assertion order would let hide two"*) and each leg bit individually; and it reproduced
+`17/43` by **an independent rdflib walk sharing no query text** with the `.rq` files. **The next seat's
+first act is Task 8**, not re-adjudication.
 
 **What the re-review was told to judge, because the fix dispatch deliberately left it open:** the
 implementer says it took **both** halves of I1 — counts are now duplicate-safe (`COUNT(DISTINCT ?c)` /
@@ -124,6 +129,20 @@ graph. The gate is really enforced by a different test. This shipped **four comm
 raised for exactly that class**, which is the strongest available evidence that R106 is a live defect
 shape and not a historical one. Carried into the fix round as *optional*; Minors never enter the loop.
 
+## Two loop-close obligations, neither of them Task 8's
+
+Both are residues that exist **only in prose on this branch**, which is precisely the condition R106
+was raised to stop — a defect class recorded in a handoff disappears when the branch merges.
+
+1. **The duplicate-key-rung gap.** pySHACL over `tests/arc-shapes.ttl` returns `Conforms: True` on a
+   graph with two `prog:Rung` nodes sharing one `rungKey`; `prog:RungShape` (`:34-43`) constrains the
+   value per node and nothing counts nodes. The queries are now immune, so this is no longer a wrong
+   number — it is an unguarded membrane. The re-review confirmed the decline to fix it inside Task 7
+   was **sound scoping**: `_refused_by_shacl` (`test_arc_manifest.py:333-342`) asserts an **exact set**
+   of refusal numbers, so an eleventh refusal moves a contract owned by Tasks 2 and 6.
+2. **The M7-state gap.** A `prog:blockedBy` naming a **closed** row is admitted — M7 checks presence in
+   the register, not state. **R105 is now exactly such a row**, so this is live.
+
 ## The plan's dead claims — now seven, and three are in the spec
 
 1. Task 2's register repairs were already done (Ruling 9).
@@ -147,9 +166,14 @@ shape and not a historical one. Carried into the fix round as *optional*; Minors
 
 ## Unverified or assumed
 
-- **Task 7's fix round 1 is IN FLIGHT; its outcome is unknown and nobody has re-reviewed it.** The
-  implementer was resumed with I1 verbatim. **The re-review is not dispatched.** Do not write Task 7's
-  completion line from the review alone — that review saw `e36b79a`, not the fix.
+- **A suite leg was launched at `111645f` and this seat did not see it finish.** Worktree
+  `…/f436ba37-…/scratchpad/suite-111645f`, log `leg-noncorpus.log`. **Read it before trusting the
+  branch.** The corpus leg was deliberately not launched: Task 7 touches no `src/`, and the last corpus
+  green at `170be91` covers the same `src/`. The whole-branch review still owes **both** legs at the
+  final head, and no leg has yet covered `0d50518` or `111645f` together.
+- **The three `.rq` files have no consumer yet** — the re-review grepped `scripts/` and `src/` and
+  found none. Task 8 is what makes them load-bearing, so Task 8 is the first time a mistake in them
+  can reach a reader.
 - **The `arc-unblocked` / `arc-frontier` register-vs-graph seam coincides only TODAY.** Both queries
   implement the graph's half of a two-half question (*"every blocker now CLOSED"*, *"the OPEN
   residues"* are register facts). All 15 blocking residues are open right now, so the readings agree.
@@ -180,10 +204,8 @@ shape and not a historical one. Carried into the fix round as *optional*; Minors
 
 ## The next concrete action
 
-In a **fresh session**: read the ledger, then **collect Task 7's fix report** (appended to
-`.superpowers/sdd/.../task-7-report.md`), **dispatch the scoped re-review** over `e36b79a..HEAD` with
-`re-review-prompt.md`, adjudicate it, write Task 7's completion line, and only then **dispatch Task
-8**. Task 8's brief is not pre-extracted; use
+In a **fresh session**: read the ledger, then **dispatch Task 8** — it is the last task. Its brief is
+not pre-extracted; use
 `scripts/task-brief docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md 8`.
 
 Before the loop closes, **raise the M7-state residue** (a `prog:blockedBy` naming a closed row is
