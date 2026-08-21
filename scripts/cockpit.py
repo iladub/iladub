@@ -13,29 +13,71 @@ WHAT IT SHOWS, and every figure is computed from a committed source, never store
     7d   ⊕9 ⊖9             raised / closed over the trailing 7 days — the velocity, as two numbers
                            rather than one index, DELIBERATELY (see § the tuned-constant trap)
     idle 0d                days since the last close. The stuck signal, unthresholded
-    arc  ?/4               position on `docs/narrative/scope-evolution.md`'s four-stage arc.
-                           **`?` is the honest answer and the point of the gauge**: the arc exists
-                           and carries no state, so nothing can say which rung we are on. It reads
-                           amber until something can. Do NOT make this render a number by guessing
     ▸    <loop>            the current entry point, read from the newest handoff/brief on disk
+
+and, on a SECOND LINE, the arc — the thing this strip could not say until the manifest existed:
+
+    arc  etkl ▰▱▱▱ 1/7 …   one fraction per rung of the strategy arc, counted from
+                           `tests/arc-manifest.ttl`: criteria asserted met over criteria declared.
+                           **The fraction sits beside every bar** because a bar reads as a
+                           percentage and these are checklists — 1/7 and 14/98 are not the same
+                           news. A rung with NO criteria renders `?`, never an empty bar and never
+                           `0`: unknown is not zero, and that refusal is the whole point
+    frontier 15 ready 17   register rows that block an unmet criterion (how much of the arc is
+                           waiting on the register), and unmet criteria that name NO blocker —
+                           *work that is ready and is not being done*. Two counts, never a ranking
+
+THE `?/4` THIS REPLACES was the honest answer for as long as it was true: `scope-evolution.md`
+named the stages and recorded no state, so nothing in the repo could say which rung we were on,
+and the gauge refused to guess. It is a number now for one reason only — a hand-authored,
+membrane-validated denominator was written (`tests/arc-manifest.ttl`, spec 2026-08-20). The
+refusal has NOT been relaxed: point this at a manifest that is not there and every rung reads `?`
+again. Do not make any rung render a number that no criterion in that file supports.
+
+§ TWO READERS OF ONE FACT, and the test that makes that safe. The reader of RECORD for the arc is
+`vocab/queries/arc-position.rq` (AXIOM / derivation, open world). This file cannot run it — the
+performance contract below forbids rdflib — so it reads the same manifest with a regex, which is
+a second reader and therefore a defect generator. What licenses it is M9/M9b in
+`tests/arc-shapes.ttl`: the membrane REFUSES a criterion that is not a top-level IRI subject, and
+refuses one whose IRI and `prog:ofRung` disagree, so the fast reader and the query are reading the
+same fact by the same key. What PROVES it is
+`tests/test_cockpit.py::test_the_strips_reading_equals_rdflibs_reading_of_the_same_file`, which
+runs both and demands they agree exactly. If they ever diverge, rdflib is right.
 
 § THE TUNED-CONSTANT TRAP, and why there is no "velocity index" here. CLAUDE.md §8 forbids a
 procedural decision with a tuned constant. "Are we stuck?" is exactly such a judgment, and
 `if velocity < 0.3: return "STUCK"` would be the defect the gate exists to catch. So this strip
 reports the two raw counts and the idle days and refuses to collapse them into a verdict — the
-reader disposes. The only colour thresholds are on `res` (the register's own published tally
-convention) and they colour, they do not decide.
+reader disposes. The arc line is held to the same rule: `frontier` and `ready` are two counts and
+never a ranking of which residue to close, because that is a judgment.
+
+Colour thresholds exist — on `res` (the register's own published tally convention) and on each
+arc fraction, at the same two cut points — and they COLOUR, they do not decide. The test of that
+is direct: run with `--no-color` and not one figure changes, because every number the colour
+comments on is printed in full beside it. A threshold that replaced `1/7` with a word would be
+the defect; one that tints `1/7` red is a reading aid.
 
 Gate classification (CLAUDE.md §8): PROCEDURAL reporting harness, and irreducible for the usual
 reason — it is string formatting and date arithmetic over files, making no domain decision. It
 derives nothing about the graph and validates nothing. The one judgment it might have made
 (stuck / not stuck) is the one it deliberately declines to make.
 
+That classification carries over to `arc()` and `frontier_counts()` unchanged, and the reason is
+worth stating because they read a graph: they DECIDE nothing about it. `prog:met` is hand-asserted
+in a reviewed commit and validated by a closed-world membrane; these functions read that boolean
+and TALLY it. They never write the manifest (spec §9), never infer a criterion's met-ness from
+anything, and never rank, order or score a rung — the `frontier` and `ready` figures are two
+counts precisely so that "what should we do next" stays the reader's judgment. The only decision
+in the neighbourhood — *is this criterion met* — is made by a human and refused by SHACL, which
+is where the gate says it belongs. The display order of the rungs is a DISPLAY order and no claim
+of sequence: the manifest asserts no `prog:precedes` and `tab` is depth inside `etkl`, not a stage
+after `substrate`.
+
 PERFORMANCE CONTRACT. The status line re-renders constantly, so this must never be slow and must
-never touch the network, rdflib, pytest or the corpus. It reads three small markdown files and
-runs at most two `git log` calls, then caches the rendered line for `_TTL` seconds. A cache miss
-is a few milliseconds; a hit is a single file read. If it ever raises, it prints nothing rather
-than breaking the status line.
+never touch the network, rdflib, pytest or the corpus. It reads four small text files and runs at
+most two `git log` calls, then caches the rendered strip for `_TTL` seconds. A cache miss is a few
+milliseconds; a hit is a single file read. If it ever raises, it prints nothing rather than
+breaking the status line.
 
 Usage:  cockpit.py            # print the strip
         cockpit.py --no-color # plain text, for piping or tests
@@ -55,10 +97,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX = os.path.join(ROOT, "docs", "superpowers", "residues.md")
 CLOSED = os.path.join(ROOT, "docs", "superpowers", "residues-closed.md")
 OPEN = os.path.join(ROOT, "docs", "superpowers", "residues-open.md")
-ARC = os.path.join(ROOT, "docs", "narrative", "scope-evolution.md")
+ARC_MANIFEST = os.path.join(ROOT, "tests", "arc-manifest.ttl")
 CACHE = os.path.join(ROOT, ".git", "cockpit-cache.json")   # inside .git: never tracked
 _TTL = 180
 _WINDOW = 7
+
+# DISPLAY order, and nothing more. The manifest deliberately asserts no ordering between rungs
+# (no `prog:precedes`, no index property) because there is none: `tab` is depth inside `etkl`,
+# not a stage after `substrate`. This tuple decides what the eye reads left-to-right and is not
+# evidence of a sequence. It is also the closed list M6 admits — a sixth rung is a spec change
+# (§9), and the agreement test fails loudly if the manifest grows one behind this file's back.
+RUNGS = ("etkl", "dec", "holon", "tab", "substrate")
 
 C = dict(dim="\033[2m", off="\033[0m", bold="\033[1m",
          good="\033[38;5;71m", warn="\033[38;5;179m", bad="\033[38;5;167m",
@@ -131,12 +180,104 @@ def velocity() -> tuple[int, int, int | None]:
     return raised, closed, idle
 
 
-def arc() -> tuple[int | None, int]:
-    """(position, stages). Position is ALWAYS None today and that is the finding, not a bug:
-    `scope-evolution.md` names the stages and records no state, so nothing in the repo can say
-    which one is current. When an objectives artifact gains state, teach this to read it."""
-    stages = len(re.findall(r"^### ", _read(ARC), re.M)) or 4
-    return None, stages
+# A criterion block, as the membrane guarantees it. M9 (`tests/arc-shapes.ttl:63-66`) refuses a
+# criterion that is not a top-level IRI subject and M9b (:139-146) refuses one whose IRI and
+# `prog:ofRung` disagree, so the rung key is readable off the SUBJECT LINE and a regex is a sound
+# reader of this file. Anchored at column 0: the rung's own `prog:criterion` index lists the same
+# IRIs indented, and matching those would double every count.
+_CRITERION = re.compile(r"^prog:criterion:([A-Za-z0-9_-]+):[A-Za-z0-9_.-]+\s+a\s+prog:Criterion\b")
+# `\s+` after `prog:met` is what keeps `prog:metOn` out: 17 of the manifest's 60 `prog:met`
+# occurrences are that longer predicate, and a prefix match would read a date as a boolean.
+_MET = re.compile(r"^\s+prog:met\s+(true|false)\s*[;.]\s*$")
+_BLOCKING = re.compile(r"^\s+prog:blockedBy\s")
+_LITERAL = re.compile(r'"([^"]*)"')
+
+
+def _criteria() -> list[tuple[str, bool, tuple[str, ...]]]:
+    """Every criterion in the manifest as `(rungKey, met, blocking-register-rows)`.
+
+    A block runs from its top-level subject line to the first line ending in `.` — Turtle's own
+    statement terminator, which is a STRUCTURAL boundary rather than a guess about the file's
+    layout: every predicate line inside a block ends in `;`, and the manifest carries no
+    triple-quoted literal (measured 2026-08-21: 0 occurrences of `\"\"\"`), so no `.` can end a
+    line from inside a string. That terminator is why a comment block between two criteria —
+    and this file has many, several of them quoting `prog:met` in prose — cannot leak into a
+    count: it falls outside every block.
+
+    Returns `[]` when the manifest is absent, which is how a missing source becomes `?` rather
+    than a zero."""
+    out: list[tuple[str, bool, tuple[str, ...]]] = []
+    rung: str | None = None
+    met: bool | None = None
+    rows: list[str] = []
+    for line in _read(ARC_MANIFEST).splitlines():
+        head = _CRITERION.match(line)
+        if head:
+            rung, met, rows = head.group(1), None, []
+        elif rung is None:
+            continue
+        m = _MET.match(line)
+        if m:
+            met = m.group(1) == "true"
+        elif _BLOCKING.match(line):
+            rows.extend(_LITERAL.findall(line))
+        if line.rstrip().endswith("."):
+            if met is not None:          # a criterion with no asserted prog:met is counted in
+                out.append((rung, met, tuple(rows)))   # NEITHER column, as arc-position.rq does
+            rung = None
+    return out
+
+
+def arc() -> list[tuple[str, int | None, int | None]]:
+    """`(rungKey, met, declared)` per rung, in `RUNGS` display order.
+
+    **`(None, None)` for a rung with no criteria, and that is not a zero.** It is decision 6 and
+    the same reading `vocab/queries/arc-position.rq` gives by inner-joining the criterion: a rung
+    nobody has authored criteria for produces no row there and prints `?` here. A rung with no
+    criteria is not a refusal, it is an unanswered question, and rendering it `0/0` — or worse,
+    `0` — would be a fabricated fact on a dashboard."""
+    tally: dict[str, list[int]] = {}
+    for rung, met, _rows in _criteria():
+        cell = tally.setdefault(rung, [0, 0])
+        cell[0] += 1
+        cell[1] += 1 if met else 0
+    return [(key, tally[key][1], tally[key][0]) if key in tally else (key, None, None)
+            for key in RUNGS]
+
+
+def frontier_counts() -> tuple[int | None, int | None]:
+    """`(frontier, ready)` — the two counts that say where the work is, and neither is a verdict.
+
+    **`(None, None)` when the manifest is not readable**, for the same reason `arc()` returns
+    `(None, None)` per rung: `frontier 0 · ready 0` off an absent file asserts *nothing blocks the
+    arc and no work is waiting*, which is the most flattering sentence on the strip and would be
+    made up. The plan specified `tuple[int, int]` here; that signature cannot express the honest
+    answer, so it is widened — the refusal outranks the type.
+
+    **frontier** is the number of DISTINCT register rows named by a `prog:blockedBy` on an unmet
+    criterion: how much of the arc is waiting on the residue register. It is a set, not a bag —
+    naming R44 from three criteria is one row to close, not three.
+
+    **ready** is the number of unmet criteria that name NO blocker at all: *work that is ready and
+    is not being done*, which is `vocab/queries/arc-unblocked.rq`'s question and the one the
+    maintainer's original complaint most directly asks.
+
+    They are reported as two numbers and never combined, ranked or ordered — deciding which
+    residue to close next is a judgment, and this strip does not make judgments (see § the
+    tuned-constant trap)."""
+    criteria = _criteria()
+    if not criteria:
+        return None, None
+    waiting: set[str] = set()
+    ready = 0
+    for rung, met, rows in criteria:
+        if met or rung not in RUNGS:
+            continue
+        if rows:
+            waiting.update(rows)
+        else:
+            ready += 1
+    return len(waiting), ready
 
 
 def _newest_loop_doc() -> str | None:
@@ -204,11 +345,40 @@ def bar(frac: float, width: int = 8) -> str:
     return "▰" * filled + "▱" * (width - filled)
 
 
+def _arc_line(c) -> str:
+    """The second line: five defensible fractions, then the two counts.
+
+    **A rung with no criteria renders `?` and nothing else** — no bar, no zero. An empty bar
+    beside a `?` would read as "none of it is done"; the truth is that nobody has said how much
+    there is to do."""
+    segments = []
+    for key, met, declared in arc():
+        if met is None or declared is None:
+            segments.append(f"{c('dim')}{key}{c('off')} {c('warn')}?{c('off')}")
+            continue
+        frac = met / declared if declared else 0.0
+        tone = "good" if frac >= 0.40 else "warn" if frac >= 0.20 else "bad"
+        segments.append(f"{c('dim')}{key}{c('off')} {c(tone)}{bar(frac, 4)}{c('off')} "
+                        f"{c('bold')}{met}/{declared}{c('off')}")
+    waiting, ready = frontier_counts()
+    segments.append(f"{c('dim')}frontier{c('off')} "
+                    f"{c('warn') if waiting is None else c('mute')}"
+                    f"{'?' if waiting is None else waiting}{c('off')}")
+    segments.append(f"{c('dim')}ready{c('off')} "
+                    f"{c('warn') if ready is None else c('cool')}"
+                    f"{'?' if ready is None else ready}{c('off')}")
+    return f"{c('dim')}arc{c('off')}  " + "  ".join(segments)
+
+
 def render(color: bool = True) -> str:
+    """Two lines. Line 1 is the register and the loop; line 2 is the arc.
+
+    The second line exists because the arc needs five fractions and a one-line strip cannot carry
+    them beside the register without abbreviating the rung names, which would trade a figure a
+    reader can act on for one they have to decode."""
     c = (lambda k: C[k]) if color else _plain
     closed, total, delta = residues()
     raised, closed_7d, idle = velocity()
-    pos, stages = arc()
     frac = closed / total if total else 0.0
 
     tone = "good" if frac >= 0.40 else "warn" if frac >= 0.20 else "bad"
@@ -231,9 +401,7 @@ def render(color: bool = True) -> str:
         f"{c('dim')}7d{c('off')} {c(vtone)}{raised} raised {closed_7d} closed{c('off')}",
         f"{c('dim')}last close{c('off')} {c(itone)}"
         f"{'?' if idle is None else str(idle) + 'd ago'}{c('off')}",
-        f"{c('dim')}stage{c('off')} {c('warn')}{'?' if pos is None else pos}/{stages}"
-        f"{c('off')} {c('dim')}of the arc{c('off')}",
-    ])
+    ]) + "\n" + _arc_line(c)
 
 
 def main() -> int:
