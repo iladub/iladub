@@ -2,13 +2,13 @@
 
 **Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `e36b79a` (from `main` @
 `f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-6 COMPLETE AND SIGNED OFF. TASK 7 BUILT,
-REVIEWED (Spec ✅, Approved, 0 Critical, 1 Important, 5 Minors) AND IN FIX ROUND 1/5 — the re-review is
-NOT dispatched and Task 7 has NO completion line.** **TASK 8 NOT STARTED.**
+REVIEWED (Spec ✅, Approved, 0 Critical, 1 Important, 5 Minors), FIXED (`111645f`) AND ITS SCOPED
+RE-REVIEW IS IN FLIGHT AND UNADJUDICATED — Task 7 has NO completion line.** **TASK 8 NOT STARTED.**
 
-> This seat crossed the 150k executing floor when Task 7's report landed (151.6k) and was at 166k when
-> the review landed. It dispatched fix round 1 because sending a verbatim Important finding is
-> mechanical, and stopped before the re-review because adjudicating one is judgment — which is the
-> thing that degrades. Everything below the fix-round line is the next seat's.
+> This seat crossed the 150k executing floor when Task 7's report landed (151.6k), was at 166k when the
+> review landed, and 184k when the fix landed. It dispatched the fix round and the scoped re-review
+> because sending verbatim findings is mechanical; it stopped before adjudicating the re-review,
+> because that is judgment — the thing that degrades. **Adjudicating it is the next seat's first act.**
 
 ## Goal
 
@@ -36,9 +36,22 @@ into `scripts/cockpit.py` and is the last task.
 Task 7's review is **clean enough to trust and not yet closed**: it re-derived all four live result
 sets from scratch and reports *"not one figure in the report is off"*, recomputed all five fixture
 answers **by hand** and confirmed them, and verdicted **all five implementer concerns as standing**.
-One Important finding (**I1**) is in fix round 1/5 with the implementer resumed. **When its fix report
-lands: dispatch a scoped re-review** (`scripts/review-package PLAN FIX_BASE HEAD` where FIX_BASE is
-`e36b79a`, then `re-review-prompt.md`), adjudicate it, write Task 7's completion line, then Task 8.
+One Important finding (**I1**) went through fix round 1/5; the implementer reports **DONE** at
+`111645f` (36 passed) and the **scoped re-review is dispatched and unadjudicated**. Read
+`.superpowers/sdd/.../task-7-rereview-round1.md`, adjudicate it, write Task 7's completion line, raise
+the M7-state residue below, then Task 8.
+
+**What the re-review was told to judge, because the fix dispatch deliberately left it open:** the
+implementer says it took **both** halves of I1 — counts are now duplicate-safe (`COUNT(DISTINCT ?c)` /
+`COUNT(DISTINCT ?metC)`, `SELECT DISTINCT` on frontier and unblocked) and the header carries the
+measurement rather than the claim — and that it **declined a third thing**, an eleventh membrane
+refusal for duplicate-key rungs, as *"a task not a fix round"*, raising it as a candidate residue
+instead. The re-review must verdict that decline as sound scoping or *"the easy half wearing an
+argument."* **The claim most worth checking is the gate one:** that the numerator stays *positive*
+because `prog:met ?m` is still required, so a criterion with no `prog:met` triple lands in **neither**
+column rather than being read as unmet-by-absence. A `DISTINCT`-shaped fix is exactly where
+Global Constraint 2 could have been lost. It also reports taking **M1** — the R106-genre unfalsifiable
+assertions — replacing both with assertions it proved bite.
 
 ## What this session did
 
