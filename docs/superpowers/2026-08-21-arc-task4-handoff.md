@@ -1,8 +1,8 @@
 # Handoff — Task 4 complete pending re-review; Tasks 5-8 unstarted
 
 **Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `fabfa0e` (from `main` @
-`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-4 SHIPPED, Task 4 through TWO fix
-rounds; round 2's scoped re-review was in flight when this was written. TASKS 5-8 NOT STARTED.**
+`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1, 2, 3, 4 COMPLETE AND SIGNED
+OFF** (Task 4 after two fix rounds). **TASKS 5-8 NOT STARTED.**
 
 > Written at ~123k tokens, under the 150k executing floor, while still accurate. The controller seat is
 > what needs the fresh session; implementer and reviewer seats are already fresh subagents.
@@ -57,12 +57,16 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
 
 ## Unverified or assumed
 
-- **Task 4's fix-round-2 re-review had not returned.** Round 1's re-review verified Ruling 12 (a)-(d)
-  independently and addressed findings 2-5, but found part (e) incomplete: **fix round 1's own diff
-  falsified three counts in the manifest's prose** (`:518`, `:528`, `:549`), which were true at
-  `5367dcf`. Round 2 (`fabfa0e`) is prose-only, no triple changed, and its re-review is in flight.
-  **Read that verdict before starting Task 5**; if it is clean, Task 4 is complete at
-  `6f11d13..fabfa0e` after two fix rounds.
+- **Task 4 is closed clean at `6f11d13..fabfa0e`, after two fix rounds.** Round 1's re-review verified
+  Ruling 12 (a)-(d) independently but found part (e) incomplete: **fix round 1's own diff falsified
+  three counts in the manifest's prose** (`:518`, `:528`, `:549`), which were true at `5367dcf`. Round
+  2 fixed them, prose-only — proved by `git diff … | grep '^[+-]' | grep -v '^[+-]#'` returning empty.
+  **Ruling 12's premise was independently re-derived at that last gate**: the re-reviewer parsed
+  `vocab/shapes/*.ttl` itself and counted **16** `sh:NodeShape` subjects across the four namespaces.
+  The spec's 15 was wrong; three independent measurements now agree on 16.
+- **No suite leg covers Task 4's commits** (`5367dcf`, `674d16f`, `fabfa0e`). Task 4 touched only
+  `tests/arc-manifest.ttl`, and round 2 only comments within it — but re-run both legs at the head you
+  inherit before the whole-branch review.
 - **Both suite legs are GREEN at `6f11d13`** — non-corpus **1216 passed, 7 skipped, 1 xfailed, 10
   warnings (18m02s)**, exactly +1 on `93234cb`; corpus **43 passed (17m25s)**, matching Tasks 1 and 3
   exactly. This is the first full-suite coverage of the Task 3 fix commit `001014e`. **No leg covers
@@ -88,7 +92,7 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
   as new scope. Task 5's `corpus-manifest.ttl` inserts can silently stale `etkl:02-07`'s pointers.
 - **The pre-flight conflict scan is still not independent** — the plan's author scanned it. It has now
   missed four dead claims.
-- **Thirteen deferred Minors from Tasks 1, 3 and 4** are in the ledger, untouched, pointed at the final
+- **Fourteen deferred Minors from Tasks 1, 3 and 4** are in the ledger, untouched, pointed at the final
   whole-branch review.
 - **Nothing on this branch is pushed.** `main` is pushed at `f436a8c`.
 
