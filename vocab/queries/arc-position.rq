@@ -1,0 +1,61 @@
+# arc-position.rq (loop the-arc-has-a-denominator, 2026-08-21) — WHERE THE ARC STANDS.
+#
+# Per rung, the pair the cockpit strip prints: (met, declared). The denominator that was
+# missing (spec 2026-08-20 §5, first bullet).
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# Every row is GROWN from triples that are PRESENT — a prog:Rung node, its prog:rungKey, and
+# the prog:Criterion nodes that name that key. Nothing is inferred from absence. The query
+# writes nothing, constructs nothing, and never touches prog:met: it READS the hand-asserted
+# boolean (spec §3.1, §9 — code validates the manifest and never writes it) and counts.
+#
+# THE CLOSURE IS HOLON-SCOPED, and it is the COUNT itself. `COUNT`/`SUM` are closed-world
+# operators: they answer "how many, of all there are". Here GROUP BY ?rungKey makes the
+# aggregate close over ONE RUNG — the rung is the closure boundary (CLAUDE.md §8's holon-
+# scoped closure) — while the graph stays open: another rung's silence says nothing about
+# this one, and a rung nobody has authored yields no row at all rather than a zero.
+#
+# DECISION 6 — UNKNOWN IS NOT ZERO, and it is the join that enforces it. `?c` is an INNER
+# join: a prog:Rung with no criterion produces NO SOLUTION, so it is simply ABSENT from the
+# result. It does NOT come back as `0/0`, and a consumer that renders an absent rung as `0`
+# is reading the spec backwards — §6 requires `?`. (This was the whole point of decision 6:
+# a rung with no criteria is not a refusal, and it is not an empty bar either.)
+#
+# WHY THE JOIN KEY IS prog:ofRung AND NOT THE prog:criterion EDGE. The manifest carries both:
+# a rung lists its criteria (`prog:rung:etkl prog:criterion prog:criterion:etkl:01, …`) and
+# each criterion names its rung by key. Only the key is pinned to the criterion's own IRI —
+# by M9b (`tests/arc-shapes.ttl:139-146`), which refuses a criterion whose IRI and prog:ofRung
+# disagree — and the criterion IRI is what scripts/cockpit.py's regex reader parses without
+# rdflib (its performance contract, cockpit.py:34-38). So counting by prog:ofRung is counting
+# by the same fact the fast reader counts by, which is what makes the two readings comparable
+# at all. The prog:criterion edge is a convenience index; MEASURED 2026-08-21 on this tree,
+# the two readings agree exactly (43 criteria typed, 43 linked, no row in either difference),
+# but if they ever diverge the KEY is the authority and the edge is the stale one.
+#
+# NO TUNED CONSTANT. The only literals in the executable text are the integers 1 and 0 fed to
+# SUM — a tally, not a threshold. Nothing here decides anything; it counts what a hand
+# asserted and a membrane admitted.
+#
+# MEASURED against tests/arc-manifest.ttl, 2026-08-21, ./.venv/bin/python + rdflib 7.6.0:
+#   dec 11/17 · etkl 1/7 · holon 4/6 · substrate 0/3 · tab 1/10   (17 of 43)
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT ?rungKey (SUM(?one) AS ?met) (COUNT(?c) AS ?declared) WHERE {
+  # POSITIVE SUPPORT, first: the rung must be a declared prog:Rung carrying its key. A count
+  # grouped on a bare prog:ofRung literal would invent a rung out of a typo; here a key with
+  # no Rung node behind it counts for nothing. (M1 + M6 already pin both sides to the five
+  # settled names, so on an admitted manifest the two are the same set — this join is what
+  # keeps that true of an UNVALIDATED graph as well, which is the graph a derivation must
+  # survive.)
+  ?rung a prog:Rung ;
+        prog:rungKey ?rungKey .
+  ?c a prog:Criterion ;
+     prog:ofRung ?rungKey ;
+     prog:met ?m .
+  # The numerator, as a per-criterion tally rather than a second pass over the graph: one
+  # solution per criterion, contributing 1 when the manifest ASSERTS met and 0 otherwise.
+  # `?m` is an xsd:boolean (M1 pins the datatype), so IF reads it directly.
+  BIND(IF(?m, 1, 0) AS ?one)
+}
+GROUP BY ?rungKey
+ORDER BY ?rungKey

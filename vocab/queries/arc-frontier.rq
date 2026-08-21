@@ -1,0 +1,55 @@
+# arc-frontier.rq (loop the-arc-has-a-denominator, 2026-08-21) — WHAT TO DO NEXT, AND WHY.
+#
+# The residues that block an UNMET criterion, each with the rung and the criterion it blocks
+# (spec 2026-08-20 §5, second bullet). This is the query that turns adjacency into strategy:
+# §3.3's load-bearing edge is residue -> criterion -> rung, so a row here reads *closing R99
+# matters because it unblocks a criterion of the `tab` rung* — not "R99 is old".
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# Every row is grown from four triples that are all PRESENT: the rung, the criterion's rung
+# key, its asserted prog:met, and the prog:blockedBy edge. There is NO negation in this query
+# at all — not even a query-local one. It cannot infer anything from absence because it never
+# looks at an absence: a criterion with no blocking edge simply contributes no row, which is
+# the correct open-world reading (nobody has NAMED a blocker, which is not the same claim as
+# "nothing blocks it"). The complementary question — *is this criterion ready to be worked?*
+# — is arc-unblocked.rq's, and it is where the query-local closure lives.
+#
+# `prog:met false` IS LOAD-BEARING AND IS NOT A DUPLICATE OF M8. The membrane already refuses
+# a met criterion that carries prog:blockedBy (M8, tests/arc-shapes.ttl:130-134), so on an
+# ADMITTED manifest this binding changes nothing. It is kept for the reason CLAUDE.md
+# § Producer-side guards states: a derivation must be correct over the graph it is HANDED,
+# and a query is handed graphs the membrane never saw — a fixture, a work-in-progress edit,
+# a future manifest whose stale edge has not yet been caught. Delete the binding and a MET
+# criterion's blocker appears on the frontier: the strip would then name work that is already
+# done as the next thing to do, which is precisely the failure this query exists to avoid.
+# (That deletion is this file's falsification arm; see the task-7 report.)
+#
+# "OPEN" IS A REGISTER FACT, AND IT IS NOT IN THIS GRAPH — stated plainly because spec §5
+# words this query as *"the OPEN residues that block an unmet criterion"*. prog:blockedBy's
+# values are PLAIN STRING LITERALS ("R43"), and the residue register is a markdown file that
+# is not part of the graph at all — which is exactly why M7 reads it in procedural code
+# (tests/test_arc_manifest.py, module docstring). So this query answers the graph half —
+# *which residues block unmet criteria* — and open/closed is a caller-side qualifier a
+# register-reading consumer may apply on top. M7 already guarantees every value here NAMES a
+# real register row. MEASURED 2026-08-21: all 15 distinct residues reachable from
+# prog:blockedBy are `open` in docs/superpowers/residues.md, so the two readings coincide
+# exactly on today's manifest; the day one of them closes, its edge is stale and
+# arc-unblocked.rq is the query that should have surfaced it.
+#
+# MEASURED against tests/arc-manifest.ttl, 2026-08-21: 20 rows, every one on the `tab` rung —
+# and that is the honest answer, not a narrow query. prog:blockedBy is authored on `tab`
+# alone (tests/arc-manifest.ttl:551 says so in the `dec` rung's own text); the other four
+# rungs' unmet criteria are unblocked work, and they show up in arc-unblocked.rq instead.
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT ?residue ?rungKey ?criterion WHERE {
+  # The rung, positively — same reason as arc-position.rq: a criterion naming a key no
+  # prog:Rung declares is not evidence about any rung of the arc.
+  ?rung a prog:Rung ;
+        prog:rungKey ?rungKey .
+  ?criterion a prog:Criterion ;
+             prog:ofRung ?rungKey ;
+             prog:met false ;
+             prog:blockedBy ?residue .
+}
+ORDER BY ?residue ?rungKey ?criterion

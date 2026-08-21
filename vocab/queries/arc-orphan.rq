@@ -1,0 +1,77 @@
+# arc-orphan.rq (loop the-arc-has-a-denominator, 2026-08-21) — A ROW SERVING NO RUNG.
+#
+# Does this residue block ANY criterion of ANY rung of the arc? If not, the row is either
+# mis-filed or is work no stated goal requires, and either answer is worth having (spec
+# 2026-08-20 §5, fourth bullet; §7.4 measured R101 as the first instance and called it *a
+# finding, not a gap*).
+#
+# ---------------------------------------------------------------------------------------
+# THE SEAM, AND WHY THIS QUERY TAKES ITS SUBJECT FROM THE CALLER. Read this before changing
+# the shape; it is the one thing about this file that is not obvious.
+#
+# prog:blockedBy's values are PLAIN STRING LITERALS ("R43", tests/arc-manifest.ttl:1055), and
+# the residue register is a MARKDOWN FILE that is not part of the graph at all — which is why
+# M7 reads it in procedural code (tests/test_arc_manifest.py, module docstring lines 12-13).
+# So a residue that blocks nothing HAS NO NODE IN THIS GRAPH TO SELECT: the manifest mentions
+# exactly the 15 residues that DO block something, and R101 — the row this query exists to
+# find — appears nowhere in it. A self-contained `SELECT ?residue` over the manifest alone
+# cannot return R101, and no amount of query writing changes that. (Reported as a plan defect
+# in the task-7 report; the shape below is the satisfiable form carrying the same force.)
+#
+# The two ways out, and why this is the one taken:
+#
+#   REJECTED — mirror the register into triples so the query has something to range over.
+#   That invents a second, hand-maintained copy of a file whose whole authority is that it
+#   is the register; it goes stale exactly as CLAUDE.md's own § Deferred residues warns
+#   (stale rows R87/R88 "got consumed as fact"), and a query that then reported an orphan
+#   would be reporting the mirror's gaps, not the arc's.
+#
+#   TAKEN — the CALLER SUPPLIES ?residue AS DATA, one register row at a time, and the query
+#   answers only about the graph: *no criterion of any rung names this residue.* This is the
+#   established idiom in this directory — see adoption-candidate.rq's header, whose variables
+#   are likewise "supplied by the caller as data; the query text carries no literal". The
+#   caller is the procedural leg that already owns register reading (M7's), so the register
+#   is read ONCE, from the register, and never duplicated. Under rdflib that is
+#   `g.query(text, initBindings={"residue": Literal("R101")})`; MEASURED 2026-08-21 to honour
+#   the binding inside FILTER NOT EXISTS — bound "R101" -> one row, bound "R44" -> no row.
+#
+# UNBOUND, IT RETURNS NOTHING, and that is the fail-safe rather than an accident: with
+# ?residue unbound the inner pattern matches the manifest's existing prog:blockedBy triples,
+# EXISTS is true, and the filter rejects. A caller that forgets to supply a residue gets an
+# empty answer — never "every residue is an orphan".
+# ---------------------------------------------------------------------------------------
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD.** The output is a
+# SELECTION — this row, passed back — and never a derived fact about the residue. Nothing
+# here says R101 is unimportant, mis-filed, closeable or low priority; §7.4 is explicit that
+# which of those it is remains a judgement for a human. The query writes nothing, constructs
+# nothing, and adds no triple to the graph it reads.
+#
+# THE CLOSURE IS HOLON-SCOPED. `FILTER NOT EXISTS` closes over ONE RESIDUE — the caller's —
+# asking whether the arc, as authored, names it. It closes nothing about the register (a row
+# absent from the register is simply a row this query is never asked about) and nothing about
+# any other residue. `?rung a prog:Rung` is the POSITIVE SUPPORT that keeps the closure
+# honest: the claim "blocks no criterion of any rung" presupposes that there are rungs, so if
+# the manifest is empty or missing the query returns nothing rather than declaring every
+# residue in the register an orphan. That is the same discipline the cockpit's own honesty
+# test holds (`tests/test_cockpit.py:22` — delete the source and the gauge reads `?`, never a
+# number).
+#
+# MEASURED 2026-08-21, this query run over tests/arc-manifest.ttl once per `open` row of
+# docs/superpowers/residues.md (74 open of 96 rows): 59 orphans of 74, including R101. The
+# fraction is itself the finding — the arc's 43 criteria name 15 residues, so most of the
+# open register is not yet attached to any stated goal. §7.4 anticipated one instance; the
+# measurement says the class is large, and sizing it is a later loop's job, not this file's.
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT DISTINCT ?residue WHERE {
+  # POSITIVE SUPPORT — there is an arc to be orphaned from. DISTINCT collapses the one row
+  # per rung this join produces; without the join the query would answer "orphan" over an
+  # empty graph, which is the deriving-by-absence CLAUDE.md §8 forbids.
+  ?rung a prog:Rung .
+  # The holon-scoped closure, over the caller's one residue.
+  FILTER NOT EXISTS {
+    ?c a prog:Criterion ;
+       prog:blockedBy ?residue .
+  }
+}

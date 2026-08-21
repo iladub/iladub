@@ -1,0 +1,64 @@
+# arc-unblocked.rq (loop the-arc-has-a-denominator, 2026-08-21) — WORK THAT IS READY AND IS
+# NOT BEING DONE.
+#
+# The unmet criteria that NO register row is named as blocking (spec 2026-08-20 §5, third
+# bullet: *"a criterion that nothing blocks any more, and is still unmet, is work that is
+# ready and is not being done"*). This is the query the maintainer's original complaint most
+# directly asks for: not "what is left" — arc-position.rq counts that — but "what is left
+# that has no excuse".
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# The row is grown from present triples — the rung, the criterion's key, its asserted
+# prog:met false, its prog:statement. The output is a SELECTION of criteria, never a derived
+# fact ABOUT one: nothing here says a criterion is met, ready, easy, or next. It writes
+# nothing and constructs nothing (spec §9 — code validates the hand-authored graph and never
+# writes it).
+#
+# THE ONE NEGATION, AND ITS SCOPE. `FILTER NOT EXISTS { ?criterion prog:blockedBy ?r }` is
+# query-local and HOLON-SCOPED in the strict sense: it closes over ONE CRITERION — the same
+# node the surrounding pattern already bound — and asks whether THAT node carries an edge.
+# It closes nothing about the rung, the register, or the graph. Another criterion's edges are
+# invisible to it, and a residue's silence is never read as a fact. That is exactly the
+# closure CLAUDE.md §8 permits ("query-local NOT EXISTS closes WITHIN the one holon while the
+# graph stays open") and exactly the closure it forbids elsewhere: this query never concludes
+# `met` from an absence — met is read, never derived.
+#
+# THE HALF OF THE SPEC'S SENTENCE THIS QUERY CANNOT SEE, stated rather than quietly dropped.
+# §5 says *"criteria whose every prog:blockedBy row is now CLOSED"*. Closure is a fact about
+# docs/superpowers/residues.md — a markdown file that is not in the graph at all, which is
+# why M7 reads it in procedural code (tests/test_arc_manifest.py, module docstring). So this
+# query implements the reading the graph can support: *unmet, and nothing is named as
+# blocking it*. The two readings are related by measurement, not by assumption:
+#
+#   MEASURED 2026-08-21 on tests/arc-manifest.ttl x docs/superpowers/residues.md — all 15
+#   distinct residues reachable from prog:blockedBy are `open`. So the set "criteria all of
+#   whose blockers have since closed" is EMPTY today, and this query's 17 rows are the whole
+#   honest answer to "what is ready".
+#
+# The residual case is worth naming because it is the one direction this query errs in: when
+# a residue closes and its edge is left in place, the criterion it named stops appearing here
+# until a hand removes the stale edge. The error is towards UNDER-reporting readiness — it
+# never claims work is ready when it is not — and it is visible from the other side, because
+# arc-frontier.rq goes on listing a closed residue as a frontier. Nothing in the membrane
+# refuses a prog:blockedBy naming a CLOSED row today (M7 checks presence in the index, not
+# state); that refusal is a candidate for a later loop, not a silent assumption here.
+#
+# MEASURED against tests/arc-manifest.ttl, 2026-08-21: 17 rows — dec 6, etkl 6, holon 2,
+# substrate 3, tab 0. Read it beside arc-position.rq's 26 unmet (43 declared - 17 met): 17 of those unmet criteria
+# have nothing named as blocking them, and every one of the 9 that does is on `tab`.
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT ?rungKey ?criterion ?statement WHERE {
+  # The rung, positively — same reason as arc-position.rq.
+  ?rung a prog:Rung ;
+        prog:rungKey ?rungKey .
+  ?criterion a prog:Criterion ;
+             prog:ofRung ?rungKey ;
+             prog:met false ;
+             prog:statement ?statement .
+  # Holon-scoped closure over this one criterion (see the header). ?r is existentially
+  # quantified inside the NOT EXISTS and is deliberately not projected: the question is
+  # whether ANY blocking edge is named, and naming which one is arc-frontier.rq's job.
+  FILTER NOT EXISTS { ?criterion prog:blockedBy ?r }
+}
+ORDER BY ?rungKey ?criterion
