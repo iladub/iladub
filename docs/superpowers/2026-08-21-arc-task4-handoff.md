@@ -1,8 +1,8 @@
 # Handoff — Task 4 complete pending re-review; Tasks 5-8 unstarted
 
-**Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `674d16f` (from `main` @
-`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-4 SHIPPED. Task 4's scoped re-review was
-in flight when this was written. TASKS 5-8 NOT STARTED.**
+**Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `fabfa0e` (from `main` @
+`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-4 SHIPPED, Task 4 through TWO fix
+rounds; round 2's scoped re-review was in flight when this was written. TASKS 5-8 NOT STARTED.**
 
 > Written at ~123k tokens, under the 150k executing floor, while still accurate. The controller seat is
 > what needs the fresh session; implementer and reviewer seats are already fresh subagents.
@@ -12,7 +12,7 @@ in flight when this was written. TASKS 5-8 NOT STARTED.**
 Unchanged: the strategy instrument, slice 1 — give each named rung of the arc a countable denominator
 and a dependency edge to the register, so the cockpit stops printing `stage ?/5`.
 
-**As of `674d16f` the strip reads `etkl 1/7  dec 11/17  holon 4/6  substrate 0/3  tab ?`.** Task 6
+**As of `fabfa0e` the strip reads `etkl 1/7  dec 11/17  holon 4/6  substrate 0/3  tab ?`.** Task 6
 replaces the last `?`.
 
 ## Where the primaries are
@@ -57,9 +57,12 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
 
 ## Unverified or assumed
 
-- **Task 4's re-review had not returned.** It was dispatched at `5367dcf..674d16f` to verify Ruling 12's
-  new `met true`, and to spot-check two untouched rows for finding 4's bug class. **Read its verdict
-  before starting Task 5.**
+- **Task 4's fix-round-2 re-review had not returned.** Round 1's re-review verified Ruling 12 (a)-(d)
+  independently and addressed findings 2-5, but found part (e) incomplete: **fix round 1's own diff
+  falsified three counts in the manifest's prose** (`:518`, `:528`, `:549`), which were true at
+  `5367dcf`. Round 2 (`fabfa0e`) is prose-only, no triple changed, and its re-review is in flight.
+  **Read that verdict before starting Task 5**; if it is clean, Task 4 is complete at
+  `6f11d13..fabfa0e` after two fix rounds.
 - **Both suite legs are GREEN at `6f11d13`** — non-corpus **1216 passed, 7 skipped, 1 xfailed, 10
   warnings (18m02s)**, exactly +1 on `93234cb`; corpus **43 passed (17m25s)**, matching Tasks 1 and 3
   exactly. This is the first full-suite coverage of the Task 3 fix commit `001014e`. **No leg covers
@@ -70,18 +73,22 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
   `ConjunctiveGraph is deprecated` warning raised from `tests/test_fluree_policy.py` and
   `tests/test_writegate.py`, two from a docgov serialization. No `arc_*` test appears in the summary.
   Capture note: `tail -20` truncates the warnings block; use `tail -40`.
-- **A bug class, not just a fixed row.** Task 4's criterion 10 shipped a **vacuous positive** at
-  `5367dcf` — it cited a graph with zero focus nodes for the shape it claimed — and the implementer's
-  own non-vacuity check missed it *by counting over a wider file set than the row cited*. The fix
-  generalises the rule to "counts are taken over exactly the files each criterion cites." **Tasks 5 and
-  6 author more rows; hold them to that rule, and the whole-branch review should sweep every rung for
-  it.** This is the closest thing this loop has produced to a false `met true`.
+- **A bug class, and the rule that catches it has no oracle.** Task 4's criterion 10 shipped a
+  **vacuous positive** at `5367dcf` — it cited a graph with zero focus nodes for the shape it claimed —
+  and the implementer's own non-vacuity check missed it *by counting over a wider file set than the row
+  cited*. The fix generalises the rule to "counts are taken over exactly the files each criterion
+  cites", and the re-reviewer then ran that rule over **all ten** other met-true `dec` rows: every one
+  is >= 1, so **the bug class is confined to that single row**. **But the rule is prose enforced by
+  nothing** — reverting criterion 10 to the vacuous citation still yields `shacl_ok=True`, so the
+  membrane admits a vacuous positive silently. This is the closest thing this loop has produced to a
+  false `met true`, and it is unguarded. **Strong candidate for a new refusal (M11) or a residue row —
+  whole-branch review owns it.** Tasks 5 and 6 author more rows: hold them to the rule by hand.
 - **The `prog:source` VALUE is still unverified by anything** — the membrane requires the field but
   checks neither that the path exists nor that the line is in range. Candidate **M10**, declined twice
   as new scope. Task 5's `corpus-manifest.ttl` inserts can silently stale `etkl:02-07`'s pointers.
 - **The pre-flight conflict scan is still not independent** — the plan's author scanned it. It has now
   missed four dead claims.
-- **Nine deferred Minors from Tasks 1, 3 and 4** are in the ledger, untouched, pointed at the final
+- **Thirteen deferred Minors from Tasks 1, 3 and 4** are in the ledger, untouched, pointed at the final
   whole-branch review.
 - **Nothing on this branch is pushed.** `main` is pushed at `f436a8c`.
 
