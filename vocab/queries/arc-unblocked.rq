@@ -48,8 +48,12 @@
 # have nothing named as blocking them, and every one of the 9 that does is on `tab`.
 PREFIX prog: <https://w3id.org/iladub/progress#>
 
-SELECT ?rungKey ?criterion ?statement WHERE {
-  # The rung, positively — same reason as arc-position.rq.
+SELECT DISTINCT ?rungKey ?criterion ?statement WHERE {
+  # The rung, positively — same reason as arc-position.rq; and DISTINCT for the same reason
+  # as arc-frontier.rq's, which is that the join is what a duplicated prog:Rung node doubles.
+  # The membrane admits two rung nodes sharing one prog:rungKey (M6 constrains the value, not
+  # the number of nodes carrying it — measured, `Conforms: True`), so a derivation handed an
+  # unvalidated graph must not report one ready criterion as two pieces of work.
   ?rung a prog:Rung ;
         prog:rungKey ?rungKey .
   ?criterion a prog:Criterion ;

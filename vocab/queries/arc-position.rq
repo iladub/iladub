@@ -40,22 +40,45 @@
 #   dec 11/17 · etkl 1/7 · holon 4/6 · substrate 0/3 · tab 1/10   (17 of 43)
 PREFIX prog: <https://w3id.org/iladub/progress#>
 
-SELECT ?rungKey (SUM(?one) AS ?met) (COUNT(?c) AS ?declared) WHERE {
+SELECT ?rungKey (COUNT(DISTINCT ?metC) AS ?met) (COUNT(DISTINCT ?c) AS ?declared) WHERE {
   # POSITIVE SUPPORT, first: the rung must be a declared prog:Rung carrying its key. A count
   # grouped on a bare prog:ofRung literal would invent a rung out of a typo; here a key with
-  # no Rung node behind it counts for nothing. (M1 + M6 already pin both sides to the five
-  # settled names, so on an admitted manifest the two are the same set — this join is what
-  # keeps that true of an UNVALIDATED graph as well, which is the graph a derivation must
-  # survive.)
+  # no Rung node behind it counts for nothing.
+  #
+  # WHAT THIS JOIN COSTS, stated because the first version of this header got it backwards.
+  # The join is what makes the query VULNERABLE to a duplicated rung, not what protects it:
+  # `COUNT` and `SUM` count SOLUTIONS, so two prog:Rung nodes carrying prog:rungKey "etkl"
+  # multiply every criterion of that rung by two and the strip prints a doubled fraction.
+  # MEASURED 2026-08-21 on a two-Rung graph with one met and one unmet criterion: the earlier
+  # `SUM(?one)` / `COUNT(?c)` form returned `('etkl', '2', '4')` for a true 1/2. The COUNT
+  # DISTINCTs below fix it — they count CRITERIA, which is what the fraction is a fraction of,
+  # and a criterion counted twice is still one criterion. Live impact was nil (the manifest
+  # has five Rung nodes for five keys) and the guard is kept anyway, because a derivation is
+  # handed graphs the membrane never saw (CLAUDE.md § Producer-side guards vs the membrane).
+  #
+  # AND THE MEMBRANE GAP IS REAL AND IS NOT THIS FILE'S TO CLOSE. M6 (tests/arc-shapes.ttl:38-41)
+  # constrains the VALUE of prog:rungKey per rung node; nothing refuses a SECOND prog:Rung node
+  # carrying a key already in use, so a duplicate-key manifest CONFORMS — measured, pySHACL
+  # over tests/arc-shapes.ttl, `Conforms: True`. That refusal belongs on prog:RungShape as an
+  # eleventh membrane clause, not in a query: a derivation reports, it never refuses. Raised
+  # in the task-7 fix report as a candidate residue. (Criteria need no such clause — M9b at
+  # :139-146 pins each criterion IRI to its own key, so a criterion cannot be double-counted
+  # into two rungs.)
   ?rung a prog:Rung ;
         prog:rungKey ?rungKey .
   ?c a prog:Criterion ;
      prog:ofRung ?rungKey ;
      prog:met ?m .
-  # The numerator, as a per-criterion tally rather than a second pass over the graph: one
-  # solution per criterion, contributing 1 when the manifest ASSERTS met and 0 otherwise.
-  # `?m` is an xsd:boolean (M1 pins the datatype), so IF reads it directly.
-  BIND(IF(?m, 1, 0) AS ?one)
+  # THE NUMERATOR IS POSITIVE, and the OPTIONAL is what keeps it so while staying
+  # duplicate-safe. ?metC binds to the criterion ITSELF exactly when `prog:met true` is
+  # PRESENT — never when something is absent. An unmet criterion leaves ?metC unbound and
+  # COUNT skips it, which is the arithmetic of a tally and not an inference: `prog:met` is
+  # required in the pattern above, so a criterion whose met-ness is unstated is counted in
+  # NEITHER column rather than silently counted as unmet.
+  OPTIONAL {
+    ?c prog:met true .
+    BIND(?c AS ?metC)
+  }
 }
 GROUP BY ?rungKey
 ORDER BY ?rungKey

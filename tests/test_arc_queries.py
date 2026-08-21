@@ -173,17 +173,92 @@ def test_arc_orphan_derives_nothing_about_the_residue_itself(fixture_graph):
     """The `NOT EXISTS` is holon-scoped (CLAUDE.md §8): it closes inside the query and states
     nothing about the row it selected.
 
-    Two things are checked, and they are different. (1) The graph is BYTE-FOR-BYTE the same
-    set of triples after the query as before — a selection adds nothing, and no `prog:met`,
-    `prog:orphan` or any other fact about R903 appears. (2) The residue is not made a SUBJECT
-    of anything: after the run there is still no node in the graph for it, which is the
-    literal statement of the seam this query is built around."""
+    **Rewritten in fix round 1, and the reason is worth keeping.** The first version asserted
+    that `Literal("R903")` was not a subject of the graph and had no predicate-objects. Both
+    are STRUCTURALLY UNFALSIFIABLE: rdflib never yields a Literal as a subject, so they pass
+    over every graph, including one that flagrantly violated the property they claimed to
+    check. That is R106's genre exactly — *a check that is wired but says nothing, reported
+    as health* — shipped inside the very loop that raised R106, which is how cheap the mistake
+    is to make.
+
+    What replaces them BITES, and the fix report shows it biting:
+
+    1. **The answer is the caller's own term, echoed back.** Not a node minted for it, not a
+       derived value about it — the identical `rdflib.Literal`. A query rewritten to return
+       `IRI(CONCAT(prog:residue, ?residue))`, or a label, or a boolean verdict, fails here;
+       the result-shape test would not notice, because the shape is still one column called
+       `?residue`. This is the assertion that carries "derives nothing ABOUT the residue".
+    2. **The graph never mentions the residue at all** — before or after. The row was selected
+       while no triple in the graph names it, which is the literal statement of the seam this
+       query is built around, and it fails the moment anyone "fixes" the seam by mirroring
+       register rows into the graph.
+
+    The mutation guard (`set(graph) == before`) is kept as the third assertion and is labelled
+    for what it is: cheap insurance against a future rewrite, not a live check — `Graph.query`
+    cannot write, so nothing available today falsifies it. The gate it was reaching for is
+    enforced by `test_no_query_infers_a_fact_from_absence_of_evidence`, over the source."""
     before = set(fixture_graph)
-    assert rows(fixture_graph, "arc-orphan.rq", residue="R903") == [("R903",)]
+
+    # Stated BEFORE the run, so it is falsifiable on its own: nothing in the graph names this
+    # residue, in any position. That is the seam — the row about to come back is selected
+    # while the graph holds no triple about it — and it fails the moment anyone "fixes" the
+    # seam by mirroring register rows into the graph, which is the rejected design.
+    assert not any(Literal("R903") in triple for triple in fixture_graph), (
+        "arc-orphan answers about a residue the graph does not mention anywhere")
+
+    got = [tuple(r) for r in fixture_graph.query(
+        q("arc-orphan.rq"), initBindings={"residue": Literal("R903")})]
+
+    assert got == [(Literal("R903"),)], (
+        "arc-orphan must echo the caller's own term — a minted node or a derived value about "
+        f"the residue is a fact this query may not assert; got {got!r}")
+    assert isinstance(got[0][0], Literal)
+
     assert set(fixture_graph) == before, "a derivation must not write into the graph it reads"
-    assert Literal("R903") not in set(fixture_graph.subjects()), (
-        "arc-orphan must not mint a node for the residue it selected")
-    assert set(fixture_graph.predicate_objects(Literal("R903"))) == set()
+
+
+# A SECOND prog:Rung node carrying a key that is already in use. `tests/arc-shapes.ttl`
+# ADMITS this — M6 (`:38-41`) constrains the VALUE of prog:rungKey on each rung node and
+# nothing counts the nodes, so a duplicate-key manifest validates clean (measured with
+# pySHACL: `Conforms: True`). It is the membrane's gap, and closing it belongs on
+# prog:RungShape as an eleventh refusal, not in a query — a derivation reports, it never
+# refuses. Until that lands, the queries must survive the graph as it can actually arrive.
+DUPLICATE_RUNG = """
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+prog:rung:etkl  a prog:Rung ; prog:rungKey "etkl" ; rdfs:label "the document compiler" .
+prog:rung:etkl2 a prog:Rung ; prog:rungKey "etkl" ; rdfs:label "the same rung, again" .
+
+prog:criterion:etkl:01 a prog:Criterion ;
+    prog:ofRung "etkl" ; prog:statement "E1" ; prog:met true .
+prog:criterion:etkl:02 a prog:Criterion ;
+    prog:ofRung "etkl" ; prog:statement "E2" ; prog:met false .
+prog:criterion:etkl:03 a prog:Criterion ;
+    prog:ofRung "etkl" ; prog:statement "E3" ; prog:met false ; prog:blockedBy "R900" .
+"""
+
+
+def test_a_duplicated_rung_node_does_not_double_any_count_or_row():
+    """The join on `?rung a prog:Rung` is what a duplicate rung node doubles, because `COUNT`
+    and `SUM` count SOLUTIONS and not criteria.
+
+    Hand-computed over DUPLICATE_RUNG, which carries the SAME three criteria seen through TWO
+    rung nodes: etkl is 1 met of 3 declared; etkl:02 is the one unmet criterion nothing
+    blocks; R900 blocks etkl:03, once. Every answer below is a fact about criteria, so none of
+    them may move when a second rung node appears.
+
+    Before the fix this test measured `('etkl', '2', '6')` from arc-position and two identical
+    rows from each of arc-frontier and arc-unblocked. arc-orphan was already immune (it has
+    carried DISTINCT since it was written, for exactly this reason)."""
+    g = Graph()
+    g.parse(data=DUPLICATE_RUNG, format="turtle")
+
+    assert rows(g, "arc-position.rq") == [("etkl", "1", "3")], (
+        "a second prog:Rung node must not change the fraction — the fraction counts CRITERIA")
+    assert rows(g, "arc-frontier.rq") == [("R900", "etkl", crit("etkl", "03"))]
+    assert rows(g, "arc-unblocked.rq") == [("etkl", crit("etkl", "02"), "E2")]
+    assert rows(g, "arc-orphan.rq", residue="R901") == [("R901",)]
 
 
 def test_arc_orphan_returns_nothing_when_there_is_no_arc():

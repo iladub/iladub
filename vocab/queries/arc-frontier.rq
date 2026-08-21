@@ -42,9 +42,16 @@
 # rungs' unmet criteria are unblocked work, and they show up in arc-unblocked.rq instead.
 PREFIX prog: <https://w3id.org/iladub/progress#>
 
-SELECT ?residue ?rungKey ?criterion WHERE {
+SELECT DISTINCT ?residue ?rungKey ?criterion WHERE {
   # The rung, positively — same reason as arc-position.rq: a criterion naming a key no
   # prog:Rung declares is not evidence about any rung of the arc.
+  #
+  # DISTINCT is what that join costs, and it is not decoration: two prog:Rung nodes sharing
+  # one prog:rungKey emit every row of that rung TWICE, and the membrane does not refuse a
+  # duplicate key (M6 constrains the value, not the number of nodes carrying it — measured,
+  # `Conforms: True`; see arc-position.rq's body comment and the task-7 fix report). A
+  # (residue, rung, criterion) row is a SET member, never a bag member: naming the same
+  # blocker twice is not more evidence that it blocks.
   ?rung a prog:Rung ;
         prog:rungKey ?rungKey .
   ?criterion a prog:Criterion ;
