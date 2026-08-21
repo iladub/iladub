@@ -1,12 +1,14 @@
 # Handoff — Task 7 built and under review, unadjudicated; Task 8 unstarted
 
 **Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `e36b79a` (from `main` @
-`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-6 COMPLETE AND SIGNED OFF. TASK 7 BUILT
-AND COMMITTED; ITS REVIEW IS IN FLIGHT AND UNADJUDICATED.** **TASK 8 NOT STARTED.**
+`f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-6 COMPLETE AND SIGNED OFF. TASK 7 BUILT,
+REVIEWED (Spec ✅, Approved, 0 Critical, 1 Important, 5 Minors) AND IN FIX ROUND 1/5 — the re-review is
+NOT dispatched and Task 7 has NO completion line.** **TASK 8 NOT STARTED.**
 
-> This seat crossed the 150k executing floor when Task 7's report landed (151.6k). Task 7's review was
-> therefore dispatched **to a file** rather than adjudicated here — the same move Task 5's seat made
-> for the same reason. Adjudicating a review report is judgment work, and judgment is what degrades.
+> This seat crossed the 150k executing floor when Task 7's report landed (151.6k) and was at 166k when
+> the review landed. It dispatched fix round 1 because sending a verbatim Important finding is
+> mechanical, and stopped before the re-review because adjudicating one is judgment — which is the
+> thing that degrades. Everything below the fix-round line is the next seat's.
 
 ## Goal
 
@@ -28,6 +30,15 @@ into `scripts/cockpit.py` and is the last task.
 | `docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md` | the plan, 8 tasks. **Seven load-bearing claims are now known dead** |
 | `docs/superpowers/2026-08-21-arc-task6-handoff.md` | the previous handoff. Still current on Rulings 13-18, M10, and the `prog:blockedBy` rule |
 | `docs/superpowers/2026-08-20-arc-task3-handoff.md` | the worktree suite recipe, still correct |
+
+## The immediate state, in one paragraph
+
+Task 7's review is **clean enough to trust and not yet closed**: it re-derived all four live result
+sets from scratch and reports *"not one figure in the report is off"*, recomputed all five fixture
+answers **by hand** and confirmed them, and verdicted **all five implementer concerns as standing**.
+One Important finding (**I1**) is in fix round 1/5 with the implementer resumed. **When its fix report
+lands: dispatch a scoped re-review** (`scripts/review-package PLAN FIX_BASE HEAD` where FIX_BASE is
+`e36b79a`, then `re-review-prompt.md`), adjudicate it, write Task 7's completion line, then Task 8.
 
 ## What this session did
 
@@ -64,6 +75,42 @@ and Task 8 is the only consumer.
 
 **No other ruling was made.** Every other judgment call was carried to a reviewer as a claim to judge.
 
+## What the review established, and the one thing it did not close
+
+**I1, the only Important finding, now in fix round 1/5.** `vocab/queries/arc-position.rq:46-49`'s
+header claims the join *"keeps that true of an UNVALIDATED graph as well."* The reviewer measured that
+**two `prog:Rung` nodes sharing one `rungKey` silently double every count** — `COUNT`/`SUM` count
+*solutions*, so a duplicate-key rung yields `('etkl','2','4')` where the truth is 1/2, and
+`arc-unblocked` returns the same criterion twice. **The membrane does not refuse this**: M6
+(`arc-shapes.ttl:38-41`) constrains the *value* of `rungKey` per rung node and nothing refuses a second
+node reusing a key. **Live impact today is none** — 5 rung nodes for 5 keys, verified.
+
+**The fix dispatch deliberately did not choose between the two halves** (soften the comment vs make the
+counts duplicate-safe). It required the choice be made explicitly and justified, said *"do not silently
+do only the easy half"*, named the four result shapes as Task 8's unchangeable contract, and named
+`17/43` as the figure that must still reproduce. **Judge the choice, don't assume it.**
+
+**A controller error is in the record and should stay there.** This seat's Task 7 dispatch named
+`tests/test_source_ownership.py` as the policeman of `vocab/queries/`. It is not — it globs
+`vocab/ontology/`, `vocab/shapes/`, `examples/` and `tests/*.ttl` and never mentions `.rq`. **And the
+error contained a second error:** the real policeman is
+`tests/etkl/test_transform_gate.py::test_no_tuned_constant_in_rq_files`, and `tests/test_transform_gate.py`
+— the path the dispatch wrote — does not exist. That is CLAUDE.md plan-rule 2 in the small: a
+load-bearing claim made from reading rather than measurement. First controller error on this branch;
+recorded on the same footing as a plan defect, which is what it is.
+
+**A residue the reviewer says to register before the loop closes:** nothing in the membrane refuses a
+`prog:blockedBy` naming a **CLOSED** row. M7 (`test_arc_manifest.py:323`) checks *presence in the
+register*, not *state*, and `arc-shapes.ttl` has no `blockedBy` constraint beyond M8. **R105 is now
+exactly such a closed row**, so this is live, not hypothetical. Not yet raised.
+
+**The R106 genre recurred inside this loop's own new test.** Minor M1: two of four assertions in
+`test_arc_orphan_derives_nothing_about_the_residue_itself` (`tests/test_arc_queries.py:184,186`) are
+**structurally unfalsifiable** — rdflib never yields a `Literal` as a subject, so both pass on any
+graph. The gate is really enforced by a different test. This shipped **four commits after R106 was
+raised for exactly that class**, which is the strongest available evidence that R106 is a live defect
+shape and not a historical one. Carried into the fix round as *optional*; Minors never enter the loop.
+
 ## The plan's dead claims — now seven, and three are in the spec
 
 1. Task 2's register repairs were already done (Ruling 9).
@@ -76,25 +123,25 @@ and Task 8 is the only consumer.
 5. **Spec §7.1 (`:255`): `ons` at 0.4419; the census measures 0.9720** (Task 5; errata appended).
 6. **Spec §7.4: `tab` is 9 criteria over eight reasons. It is 10 over nine** (Task 6) — `TRANSPOSED`
    is misfiled there as a *kind*, and §7.4's blocker table gives it no row when **two** exist.
-7. **NEW — spec §7.4 calls R101 "the first instance" of a residue that blocks no criterion. Task 7
-   measures 59 of 74 open rows blocking nothing.** Unverified pending the review, and **it is the
-   figure most likely to be quoted out of this loop**: if it holds, 80% of the open register serves no
-   stated goal. Do not repeat it without opening the review's verdict on concern 4.
+7. **NEW, and now CONFIRMED — spec §7.4 calls R101 "the first instance" of a residue that blocks no
+   criterion. The measurement is 59 of 74 open rows blocking nothing**, re-derived independently by
+   the reviewer and matching element for element: 96 rows, 74 open, 22 closed; the 15 that *do* block
+   are `R43 R44 R45 R62 R71 R74 R77 R79 R80 R83 R84 R97 R98 R99 R100`. **80% of the open register
+   serves no stated goal.** The reviewer's words: *"§7.4's 'first instance' framing is measurably an
+   understatement … the figure is safe to quote."* This is the most consequential thing this loop
+   measured about the project, and it is not a criticism of the register — it is the first time
+   anything could count it.
 
 ## Unverified or assumed
 
-- **Task 7's review is IN FLIGHT and its verdict is unknown.** Read
-  `.superpowers/sdd/.../task-7-review.md`. It carries five concerns to judge, none pre-judged: the
-  `arc-orphan` resolution; the same seam in two further spec wordings (`arc-unblocked`'s *"every
-  blocker now CLOSED"* and `arc-frontier`'s *"the OPEN residues"* are **register facts, not graph
-  facts** — the graph's half was implemented and the two readings coincide only *today*); that
-  **nothing in the membrane refuses a `prog:blockedBy` naming a CLOSED row** (M7 checks presence, not
-  state — and R105 is now exactly such a row); the 59/74 figure; and a **controller error**.
-- **A controller error is in the record, and it should stay there.** This seat's dispatch named
-  `tests/test_source_ownership.py` as the policeman of `vocab/queries/`. The implementer measures that
-  it never opens a `.rq`, and that `tests/test_transform_gate.py::test_no_tuned_constant_in_rq_files`
-  is what actually polices them. It ran both. Pending the reviewer's confirmation — a controller error
-  belongs in the record exactly as a plan defect does, and this is the first on this branch.
+- **Task 7's fix round 1 is IN FLIGHT; its outcome is unknown and nobody has re-reviewed it.** The
+  implementer was resumed with I1 verbatim. **The re-review is not dispatched.** Do not write Task 7's
+  completion line from the review alone — that review saw `e36b79a`, not the fix.
+- **The `arc-unblocked` / `arc-frontier` register-vs-graph seam coincides only TODAY.** Both queries
+  implement the graph's half of a two-half question (*"every blocker now CLOSED"*, *"the OPEN
+  residues"* are register facts). All 15 blocking residues are open right now, so the readings agree.
+  The residual error direction is the **safe** one — a stale edge on a closed residue *under*-reports
+  readiness — but this stops being true the moment one of the 15 closes.
 - **Task 8's dependency, stated by Task 7 and not yet verified by anyone:** `arc-orphan` must be
   called with **`initBindings`, once per register row** — it does not range over residues by itself.
   If Task 8 assumes a self-contained query it will get an empty result and no error.
@@ -120,13 +167,20 @@ and Task 8 is the only consumer.
 
 ## The next concrete action
 
-In a **fresh session**: read the ledger, then **read `.superpowers/sdd/.../task-7-review.md` and
-adjudicate it** — run any fix loop it warrants, write Task 7's completion line, and only then
-**dispatch Task 8**. Task 8's brief is not pre-extracted; use
+In a **fresh session**: read the ledger, then **collect Task 7's fix report** (appended to
+`.superpowers/sdd/.../task-7-report.md`), **dispatch the scoped re-review** over `e36b79a..HEAD` with
+`re-review-prompt.md`, adjudicate it, write Task 7's completion line, and only then **dispatch Task
+8**. Task 8's brief is not pre-extracted; use
 `scripts/task-brief docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md 8`.
 
+Before the loop closes, **raise the M7-state residue** (a `prog:blockedBy` naming a closed row is
+admitted) — the reviewer recommends it explicitly and R105 makes it live.
+
 Carry into Task 8's dispatch: **"your run wins"** with the seven dead claims; the live IRI scheme;
-**`arc-orphan` needs `initBindings` per register row**; the four result shapes Task 7 fixed
+**`arc-orphan` needs `initBindings` per register row** — it cannot be called parameterless like the
+other three, and a forgotten binding returns `[]` rather than erroring; **M3 — `arc-frontier`'s
+`ORDER BY ?residue` is lexicographic**, so the frontier reads `R100, R43, R44 …` and Task 8 must sort
+numerically if it renders the list; the four result shapes Task 7 fixed
 (`arc-position → (?rungKey ?met ?declared)`, `arc-frontier → (?residue ?rungKey ?criterion)`,
 `arc-unblocked → (?rungKey ?criterion ?statement)`, `arc-orphan → (?residue)`); **spec §9 forbids a
 rung with no criteria rendering as `0`** — absent or null, never zero; the editable-install caveat as
