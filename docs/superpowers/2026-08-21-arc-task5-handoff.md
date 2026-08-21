@@ -1,9 +1,9 @@
-# Handoff — Task 5 awaiting re-review adjudication; Tasks 6-8 unstarted
+# Handoff — Tasks 1-5 complete and signed off; Tasks 6-8 unstarted
 
 **Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `6f02058` (from `main` @
 `f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-4 COMPLETE AND SIGNED OFF. TASK 5
-reviewed Spec ✅ / quality Approved; fix round 1 DONE at `6f02058`; **its scoped re-review is
-written to a file and NOT yet adjudicated — Task 5 has no completion line.** TASKS 6-8 NOT STARTED.**
+COMPLETE AND SIGNED OFF** after one fix round (re-review clean: all five findings ADDRESSED, no
+blocking issues). **TASKS 6-8 NOT STARTED.**
 
 > Started at ~122k, finished at ~152k — **over** the 150k executing floor, which is why the
 > re-review was delegated to a file rather than adjudicated here. The controller seat
@@ -77,21 +77,15 @@ three were independently confirmed by the reviewer.
 
 ## Unverified or assumed
 
-- **THE ONE THING BLOCKING TASK 5's COMPLETION LINE.** Fix round 1 is DONE at `6f02058` (all five
-  addressed, no substitutions; focused run 25 passed, `test_doc_governance.py` 4 passed, collect
-  1270). Its scoped re-review was dispatched and told to **write its verdict to
-  `.superpowers/sdd/2026-08-20-the-arc-has-a-denominator/task-5-rereview-round1.md`** rather than
-  return it, because this controller was over its floor. **Read that file first, adjudicate it, and
-  only then write `Task 5: complete`.** If the file is absent the re-review never landed — re-dispatch
-  it from the ledger's dispatch note; do NOT skip the gate.
-- **Two claims in the fix round that the re-review was asked to check and you should not take on
-  faith.** (a) `tests/corpus-manifest.ttl`'s line count is unchanged at 129, so no `prog:source`
-  pointer moved — if that is wrong, six criteria cite the wrong rows and nothing else catches it.
-  (b) R105's tally snapshot is `21/95 closed`, where the denominator **includes the new row**; the
-  implementer wrote `21/94` first and corrected it after measuring R95→85 … R101→91. The register's
-  own prose states this convention ambiguously, so it is worth confirming once and then recording the
-  answer where the next loop will find it.
-- **BOTH suite legs are GREEN at `4299cd8`** — non-corpus **1216 passed, 7 skipped, 1 xfailed, 10 warnings (19m39s)**, identical to `6f11d13` on every count; corpus **43 passed, 1224 deselected (18m47s)**, matching Tasks 1, 3 and 4 exactly. **These are the first legs to cover Task 4's `5367dcf`, `674d16f`, `fabfa0e` — that gap is CLOSED.** Neither leg covers Task 5's `1a93451` or the fix round.
+- **Task 5's re-review is CLEAN and already adjudicated — do not redo it.** Fix round 1 at `6f02058`
+  had all five findings verdicted ADDRESSED with no blocking issues, each re-derived independently
+  rather than read off the report. Evidence, if you want it:
+  `.superpowers/sdd/2026-08-20-the-arc-has-a-denominator/task-5-rereview-round1.md`. Two claims it
+  checked that would otherwise have been load-bearing assumptions: **no `prog:source` pointer moved**
+  (all seven joins re-verified), and **R105's tally snapshot is `21/95`**, where the denominator
+  includes the new row — a convention the register's own prose states ambiguously and which was
+  re-derived from the R95→R101 progression. Record that convention somewhere durable if a later loop
+  raises another row.
 - **The whole-branch review still owes a full run at the final head.** Worktree recipe in the Task 3
   handoff: detached worktree, `baml_client` + `corpus` **symlinked in** or six modules fail to collect
   and the run is a FALSE RED. Collection at `4299cd8` was 1267 and reconciles exactly with `6f11d13`'s
