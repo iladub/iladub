@@ -515,7 +515,8 @@ prog:criterion:substrate:03 a prog:Criterion ;
 # test, so criterion 09 is unmet. This is precisely the trap the brief named, and the answer
 # came from reading the caller, not the fixture name.
 #
-# NOT ALL FIFTEEN ARE prog:retrospective FALSE — the brief's claim, re-measured and refuted.
+# NOT ALL SIXTEEN ARE prog:retrospective FALSE — the brief's claim (made of fifteen), re-
+# measured and refuted.
 # The rule predates most of the shapes it governs, but two pairings landed on the SAME DAY as
 # the rule itself. MEASURED 2026-08-21, `git log --diff-filter=A --follow --date=short`:
 #   examples/proposal.ttl  examples/promotion.ttl  tests/leak-attempt.ttl
@@ -525,8 +526,10 @@ prog:criterion:substrate:03 a prog:Criterion ;
 # so for iladub:CandidateConceptShape (07) and iladub:NoLeakShape (10),
 # metOn == declaredOn == 2026-05-31 and M4 refuses `retrospective false` outright: the
 # criterion was written against evidence that already existed. They are labelled TRUE, and
-# labelling them is the whole point of M4. The other eight met criteria are FALSE on measured
-# dates, listed on each row below.
+# labelling them is the whole point of M4. The other NINE met criteria are FALSE on measured
+# dates, listed on each row below. RE-DERIVED 2026-08-21 from the committed file with rdflib,
+# not counted by hand: of 11 `met true` dec criteria, 2 are retrospective TRUE (07, 10) and 9
+# FALSE (01, 03, 04, 05, 06, 08, 11, 14, 16) — criterion 16 is the ninth, added under Ruling 12.
 #
 # NO LIVENESS CRITERION IS AUTHORED HERE (decision D3 of the plan). R99 (iladub:NoLeakShape
 # has focus nodes but its body names iladub:asserted, which no compiled graph carries) and
@@ -546,7 +549,7 @@ prog:criterion:substrate:03 a prog:Criterion ;
 # NON-VACUITY OF THE POSITIVE HALF. "Ships a worked example that conforms" is vacuously true
 # of an example with no focus node for the shape, so the focus nodes were counted (target
 # class closed under rdfs:subClassOf from the ontology; targetObjectsOf/targetSubjectsOf
-# counted directly), 2026-08-21 — every one of the fifteen has at least one:
+# counted directly), 2026-08-21 — every one of the sixteen has at least one:
 #   DecisionHolon 1 · Confidence 1 · Milestone 1 · Event 1 · ExpansionRequest 1 ·
 #   Escalation 2 · NoEmpiricRisk 5 · RiskAssessment 2 · Sensitivity 3 · AiInheritsUser 4 ·
 #   Permission 7 · CandidateConcept 1 · GroundedNode 1 · PromotionDecision 1 · NoLeak 1 ·
