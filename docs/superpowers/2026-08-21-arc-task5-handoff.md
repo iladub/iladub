@@ -1,10 +1,12 @@
-# Handoff — Task 5 complete pending fix round 1; Tasks 6-8 unstarted
+# Handoff — Task 5 awaiting re-review adjudication; Tasks 6-8 unstarted
 
-**Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `1a93451` (from `main` @
+**Topic:** process · **Date:** 2026-08-21 · **Branch:** `arc-denominator` @ `6f02058` (from `main` @
 `f436a8c`, pushed) · **Shape: executing** · **Status: TASKS 1-4 COMPLETE AND SIGNED OFF. TASK 5
-reviewed Spec ✅ / quality Approved, one fix round in flight. TASKS 6-8 NOT STARTED.**
+reviewed Spec ✅ / quality Approved; fix round 1 DONE at `6f02058`; **its scoped re-review is
+written to a file and NOT yet adjudicated — Task 5 has no completion line.** TASKS 6-8 NOT STARTED.**
 
-> Written at ~122k tokens, under the 150k executing floor, while still accurate. The controller seat
+> Started at ~122k, finished at ~152k — **over** the 150k executing floor, which is why the
+> re-review was delegated to a file rather than adjudicated here. The controller seat
 > is what needs the fresh session; implementer and reviewer seats are already fresh subagents.
 
 ## Goal
@@ -12,7 +14,7 @@ reviewed Spec ✅ / quality Approved, one fix round in flight. TASKS 6-8 NOT STA
 Unchanged: the strategy instrument, slice 1 — give each named rung of the arc a countable denominator
 and a dependency edge to the register, so the cockpit stops printing `stage ?/5`.
 
-**As of `1a93451` the strip reads `etkl 1/7  dec 11/17  holon 4/6  substrate 0/3  tab ?`.**
+**As of `6f02058` the strip reads `etkl 1/7  dec 11/17  holon 4/6  substrate 0/3  tab ?`.**
 Task 6 replaces the last `?`. **`etkl` staying at 1/7 is Task 5 succeeding, not failing** — its
 deliverable was six documents moving from "nobody has looked" to "measured, reasoned, held."
 
@@ -75,10 +77,20 @@ three were independently confirmed by the reviewer.
 
 ## Unverified or assumed
 
-- **Fix round 1 for Task 5 was in flight when this was written.** It carries Rulings 15, 16, 17 plus
-  two free Minors (M1 rdflib `publicID` misuse at `test_arc_manifest.py:496`; M5 stale collect count
-  at `:170` — 1266 claimed, 1270 measured). **A scoped re-review at `1a93451..<fix head>` is owed
-  before Task 5 gets its completion line.** Do not mark Task 5 complete without it.
+- **THE ONE THING BLOCKING TASK 5's COMPLETION LINE.** Fix round 1 is DONE at `6f02058` (all five
+  addressed, no substitutions; focused run 25 passed, `test_doc_governance.py` 4 passed, collect
+  1270). Its scoped re-review was dispatched and told to **write its verdict to
+  `.superpowers/sdd/2026-08-20-the-arc-has-a-denominator/task-5-rereview-round1.md`** rather than
+  return it, because this controller was over its floor. **Read that file first, adjudicate it, and
+  only then write `Task 5: complete`.** If the file is absent the re-review never landed — re-dispatch
+  it from the ledger's dispatch note; do NOT skip the gate.
+- **Two claims in the fix round that the re-review was asked to check and you should not take on
+  faith.** (a) `tests/corpus-manifest.ttl`'s line count is unchanged at 129, so no `prog:source`
+  pointer moved — if that is wrong, six criteria cite the wrong rows and nothing else catches it.
+  (b) R105's tally snapshot is `21/95 closed`, where the denominator **includes the new row**; the
+  implementer wrote `21/94` first and corrected it after measuring R95→85 … R101→91. The register's
+  own prose states this convention ambiguously, so it is worth confirming once and then recording the
+  answer where the next loop will find it.
 - **BOTH suite legs are GREEN at `4299cd8`** — non-corpus **1216 passed, 7 skipped, 1 xfailed, 10 warnings (19m39s)**, identical to `6f11d13` on every count; corpus **43 passed, 1224 deselected (18m47s)**, matching Tasks 1, 3 and 4 exactly. **These are the first legs to cover Task 4's `5367dcf`, `674d16f`, `fabfa0e` — that gap is CLOSED.** Neither leg covers Task 5's `1a93451` or the fix round.
 - **The whole-branch review still owes a full run at the final head.** Worktree recipe in the Task 3
   handoff: detached worktree, `baml_client` + `corpus` **symlinked in** or six modules fail to collect
@@ -107,8 +119,9 @@ three were independently confirmed by the reviewer.
 
 ## The next concrete action
 
-In a **fresh session**: read the ledger, **read the fix round's report and dispatch the scoped
-re-review at `1a93451..<fix head>`**, close Task 5, then **dispatch Task 6** (the `tab` rung, 10
+In a **fresh session**: read the ledger, **read
+`.superpowers/sdd/.../task-5-rereview-round1.md` and adjudicate it**, close Task 5, then
+**dispatch Task 6** (the `tab` rung, 10
 criteria = 9 escalation reasons + 1 registry — it replaces the strip's last `?`). Its brief is already
 extracted at `.superpowers/sdd/.../task-6-brief.md` (86 lines). Carry into the dispatch: **"your run
 wins"**; the live IRI scheme **`prog:criterion:<rung>:<nn>`**; **dead claim 5 — §7.1's ons score, which
