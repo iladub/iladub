@@ -166,11 +166,12 @@ was raised to stop — a defect class recorded in a handoff disappears when the 
 
 ## Unverified or assumed
 
-- **A suite leg was launched at `111645f` and this seat did not see it finish.** Worktree
-  `…/f436ba37-…/scratchpad/suite-111645f`, log `leg-noncorpus.log`. **Read it before trusting the
-  branch.** The corpus leg was deliberately not launched: Task 7 touches no `src/`, and the last corpus
-  green at `170be91` covers the same `src/`. The whole-branch review still owes **both** legs at the
-  final head, and no leg has yet covered `0d50518` or `111645f` together.
+- **The non-corpus leg at `111645f` is GREEN — 1233 passed, 7 skipped, 1 xfailed, 10 warnings** —
+  and it is the first run covering **both** `0d50518` and `111645f`. It reconciles exactly against
+  `170be91`'s 1219: +1 for Task 6's M10 leg, +13 for Task 7's query tests. The corpus leg was
+  deliberately not re-run (Tasks 6 and 7 touch no `src/`, so `170be91`'s corpus green covers the same
+  code). **The whole-branch review still owes both legs at the final head** — and Task 8 touches
+  `scripts/cockpit.py`, where the editable-install caveat below makes a worktree green untrustworthy.
 - **The three `.rq` files have no consumer yet** — the re-review grepped `scripts/` and `src/` and
   found none. Task 8 is what makes them load-bearing, so Task 8 is the first time a mistake in them
   can reach a reader.
