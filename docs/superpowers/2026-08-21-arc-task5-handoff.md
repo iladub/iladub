@@ -122,6 +122,38 @@ wins"**; the live IRI scheme **`prog:criterion:<rung>:<nn>`**; **dead claim 5 �
 Task 6 reads**; **D1** (a corpus-dead escalation reason is NOT met by being dead) and **Ruling 12's
 generalisation** (*a criterion is counted where its declaring prose lives; two rungs measuring one
 artifact under two rules is the design, not double-counting* — Task 6 should apply it without
-re-litigating); **R105 / the `prog:source` hole**, since Task 6 adds ten more pointers and should
-consider guarding them the way Task 5 guarded `etkl`'s; the non-vacuity rule as a by-hand obligation;
+re-litigating); **Ruling 18 — M10 SHIPS IN TASK 6** (see below, decided by François 2026-08-21; it is no
+longer optional and no longer the whole-branch review's); the non-vacuity rule as a by-hand obligation;
 and the suite do-not-run with the worktree recipe as the reason.
+
+
+## Ruling 18 — M10 ships in Task 6 (decided by François, 2026-08-21)
+
+**This reverses two prior deferrals deliberately.** M10 was named and declined as "new scope" by
+Task 3's implementer, then paid **by hand** by Ruling 13 (seven `prog:source` pointers re-pointed
+manually, because nothing catches a stale one). Task 6 adds **ten more pointers**, so deferring again
+means a third hand-payment plus ten new unguarded rows. Full text and cost-if-wrong in the ledger.
+
+**What M10 is:** an **environment-leg check** — for every criterion's `prog:source "<path>:<line>"`,
+does the path exist and is the line in range? **PROCEDURAL**, already covered by Global Constraint 2's
+existing justification (filesystem facts no SHACL engine can see), sited beside the existing M5/M7
+legs in `tests/test_arc_manifest.py`. No new gate argument needed.
+
+**The constraint that stops Task 6 building the wrong thing — carry this verbatim.** M10 is **NOT the
+`etkl` pointer test generalised.** That test resolves a pointer by *joining the criterion to the
+document it names*, and **only `etkl` has a second graph to join against** — `dec`, `holon`,
+`substrate` and `tab` cite prose files, so there is nothing to semantically join. R105's own row
+records this as the R101 lesson. M10 is the weak-but-universal guard (path + line range, every
+criterion); the `etkl` join stays the strong guard for the one rung that supports it. **Two
+instruments, both kept.**
+
+**Scope fence:** path existence and line range only. M10 does **not** check that the cited line says
+anything in particular — different residue, must not be smuggled in.
+
+**On landing:** strike R105 (`~~R105~~`) and record the closure evidence **in place**. Do not delete
+the row — CLAUDE.md's 2026-08-12 reversal: a deleted row erases the proof of repair and silently
+shrinks the denominator.
+
+**If the implementer reports M10 blocked**, that is a finding about the register's oldest declined
+item — not a Task 6 failure. Fall back to Ruling 13's hand-payment and record a third payment against
+R105, which stays open.
