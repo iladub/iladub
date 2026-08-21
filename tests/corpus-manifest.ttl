@@ -39,7 +39,9 @@
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
         cor:rationale "HOLD lifted: full document compiles via compile_document — one chain of 3 pages, 0.9655/2152 cells; grounds 154 records / 567 promoted / 1194 quarantined. Floor 0.95 chosen as the tighter regression guard. R35 (page-cut key/subtotal degradation) registered with its closure named." ] ;
     cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-03"^^xsd:date ;
-        cor:rationale "Loop N (R35 closed): document-level arithmetic — p2 confirms 21 subtotals with cross-page operands; every record carries its group keys (missing-year-key 0); records 133 / grounded 585 / quarantined 1265; score 0.9655; floor 0.95 re-verified and unchanged." ] .
+        cor:rationale "Loop N (R35 closed): document-level arithmetic — p2 confirms 21 subtotals with cross-page operands; every record carries its group keys (missing-year-key 0); records 133 / grounded 585 / quarantined 1265; score 0.9655; floor 0.95 re-verified and unchanged." ] ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "SUPERSEDES the 2026-08-02 note above; that note is NOT repaired in place, because this register is an append-only record and a rationale silently rewritten is a rationale nobody can audit. What is superseded: the 2026-08-02 note holds this document on pages 1-2 REGION_TILING_FAILED escalations. Those do not survive at HEAD. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: graincorp-stem emits ZERO escalation records, on any page, on any of the nine reasons. § Token accounting for the same run reads 2152 asserted / 77 escalated tokens, and the census states those 77 sit inside asserted regions and mint no record — compile.py:960 accrues escalated_total on a path that makes no escalate_region call — so the page-1/2 reading the 2026-08-02 note describes is now unreproducible from the graph rather than merely repaired. The 2026-08-03 notes stand unchanged and are current: score 0.9655 reproduced in the same census run, clearing cor:scoreFloor 0.95. cor:expectedVerdict stays cor:CompilesAbove; this note retires a stale rationale and does not re-adjudicate the document." ] .
 
 <urn:iladub:corpus:graincorp-capacity-2026-08-04> a cor:Document ;
     cor:file "ag-trade/graincorp-capacity-2026-08-04.pdf" ;
@@ -50,7 +52,9 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "ac66b478e20e82d4adede719c04a85f2071d5d5f005876b04851b94a76da2021" ;
     cor:pages 1 ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 1.0000, 1 page, ZERO escalation records on any of the nine reasons. § Token accounting for the same run reads 390 asserted / 0 escalated tokens — the only document in the corpus whose token ledger is clean. A SCORE IS NOT AN ACCEPTANCE: 1.0000 says nothing escalated, not that what was carried is what the page says, and no one has read this compile against the PDF. This is the corpus document nearest to acceptable, so the path to accepting it is named here rather than left implicit, and the rung has a route off 1/7: (1) author a cor:contract / cor:terms / cor:shapes triple for it — it carries none today, so tests/test_corpus.py::test_grounding_where_contracted does not parametrize this document at all and its grounding leg is entirely unexercised; (2) that test passing, so every grounded node stands behind exactly one accountable promotion; (3) a reviewer reading the carried grid against the source page and saying so in a dated note. Until all three, held." ] .
 
 <urn:iladub:corpus:cbh-stem-2026-08-03> a cor:Document ;
     cor:file "ag-trade/cbh-stem-2026-08-03.pdf" ;
@@ -64,7 +68,9 @@
     cor:contract "examples/shipping/cbh-contract.ttl" ;
     cor:terms "examples/shipping/cbh-terms.ttl" ;
     cor:shapes "examples/shipping/cbh-shapes.ttl" ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.9047, 1 page, ZERO escalation records on any of the nine reasons. The record count is the WRONG INSTRUMENT for this document, and that is the substance of the hold: § Token accounting for the same run reads 816 asserted / 86 escalated tokens, and the census states those 86 sit inside asserted regions and mint no record (compile.py:960 accrues escalated_total on a path that makes no escalate_region call). So cbh-stem has a real escalation surface of 86 tokens that is INVISIBLE to any count over escalation records, and the 0.9047 score is the only place it shows. Unlike graincorp-capacity this document does carry cor:contract / cor:terms / cor:shapes, so its grounding leg is exercised; what is missing is a reading of WHERE those 86 tokens went and whether losing them loses anything the page asserts. Held until that is measured, not until the score moves." ] .
 
 <urn:iladub:corpus:ons-index-of-services-2026-02> a cor:Document ;
     # ABS release table substitution (spec §5): modern abs.gov.au releases are xlsx/web-only
@@ -79,7 +85,9 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "c90a6ae01cd6cad6deef61ef1a2916f975ec3599b6c83a279a08f2471f633018" ;
     cor:pages 9 ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.9720, 9 pages, ZERO escalation records on any of the nine reasons. § Token accounting for the same run reads 590 asserted / 17 escalated tokens. This document is the one the census names in its stated trap, § Method: RegionReport.reason is not reason-typed, and on ignored bands it carries the free-text CLASSIFICATION reason from regions._reason (strings such as fewer than 2 lines, fewer than 2 columns). ons books 70 of those and zero escalations. So a naive reason-count reads 70 problems here and a naive record-count reads a spotless document, and BOTH are wrong: neither number is about the reading. Nine pages of a statistical release with hierarchical SIC2007 section headers and a Total aggregate column have not been read against the compile by anyone, and this document carries no cor:contract / cor:terms / cor:shapes, so no membrane has ever seen its output. A score of 0.9720 on an unread nine-page document is precisely the shape of evidence this register exists to refuse to accept. Held." ] .
 
 <urn:iladub:corpus:bfs-population-bilan-2023> a cor:Document ;
     cor:file "gov-stats/bfs-population-bilan-2023.pdf" ;
@@ -90,7 +98,9 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "4d1796d1ba90788f01c163ad636d5ac57a4461bb46dbbbbbc3327db11e113fb0" ;
     cor:pages 7 ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and NO cor:scoreFloor is pinned, deliberately: see the last sentence. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.3438, 7 pages, 10 escalation records. § Token accounting for the same run reads 229 asserted / 437 escalated tokens — bfs escalates almost twice what it asserts. Census § Where the escalations actually are: ROUND_TRIP_FAIL x5, ALL on p5 and ALL region-level #htable{n}-rt URIs (holon.py:493); KIND_NOT_SUPPORTED x3 (p0 the press-release masthead, p6 x2); REGION_TILING_FAILED x2 (p4 and p5, chart captions with mangled glyph runs). Read as DEFECTS rather than as firings the surface is small and legible: one round-trip mechanism failing on one page, one region kind the reader declines to support, one glyph-run problem confined to chart captions. Two cautions this note records so a later reader does not overread the counts. First, the census warns that ROUND_TRIP_FAIL is two mechanisms under one label — region-level (holon.py:493) and cell-level (holon.py:55) — and all 5 firings here are region-level, so this 5 is no evidence at all about the cell-level emitter, which the corpus never exercises. Second, and this is the reason the hold is recorded rather than the floor pinned: cor:scoreFloor is a regression guard, so nothing in the vocabulary stops a floor being pinned at 0.3438 and this document being called met without one glyph of it being read correctly. That is refused here explicitly, on the standing rule that a bar is never lowered to meet it. Held." ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements> a cor:Document ;
     cor:file "financial/apple-fy2026q3-statements.pdf" ;
@@ -101,7 +111,9 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5" ;
     cor:pages 3 ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned; 0.3556 is a measurement, and pinning it would move this rung without improving one reading. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.3556, 3 pages, 11 escalation records GRAPH-SIDE. § Token accounting for the same run reads 165 asserted / 299 escalated tokens. Census § Where the escalations actually are: REGION_TILING_FAILED x4 on p0 and x4 on p2 (the cash-flow and income statements), MATRIX_AMBIGUOUS x1 on p0 and x1 on p2 (the Three Months Ended … Nine Months Ended double header), DATAGRID_RESIDUE x1 on p1 under the adoption doc URI (document.py:1473). TWO DEFECTS ACCOUNT FOR TEN OF THE ELEVEN: one tiling failure repeated across the two statement pages, and one double header the matrix reader cannot resolve, firing once on each page it appears on. The eleventh is the adopted page leaving residue. Eleven investigations would be nine too many. This document is also the corpus's ONLY graph-side / report-side divergence, census § Graph-side vs report-side: on p1 five escalations are WITHDRAWN from the graph when the data grid supersedes them, while the RegionReport keeps its original reason — so report-side reads 16 reason-bearing reports on apple and the graph keeps 11, and the withdrawn set is REGION_TILING_FAILED x3, KIND_NOT_SUPPORTED x1, ROUND_TRIP_FAIL x1, replaced by the one DATAGRID_RESIDUE. Any later criterion that counts this document must say which side it counts; a SHACL membrane over the compiled graph can only ever see the 11. Held." ] .
 
 <urn:iladub:corpus:who-wfa-boys-zscore-0-5> a cor:Document ;
     cor:file "health/who-wfa-boys-zscore-0-5.pdf" ;
@@ -112,4 +124,6 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "ca6437e29134dee2951736f25905b8d60a07255c987b28fce7a6a639fca24ab8" ;
     cor:pages 3 ;
-    cor:expectedVerdict cor:Unadjudicated .
+    cor:expectedVerdict cor:Unadjudicated ;
+    cor:adjudication [ cor:by "François Rosselet" ; cor:on "2026-08-20"^^xsd:date ;
+        cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.5597, 3 pages, 3 escalation records, all MATRIX_AMBIGUOUS. § Token accounting for the same run reads 445 asserted / 350 escalated tokens. Census § Where the escalations actually are: MATRIX_AMBIGUOUS x1 per page, on the IDENTICAL z-score header block (Z-scores … Year: Month L M S), on all three pages. ONE DEFECT, THREE FIRINGS — and recording that is the whole reason this adjudication exists. A bare count of 3 invites three investigations where there is one header block to teach the matrix reader; worse, a per-record denominator would weight a single reading gap three times purely because the document repeats its header on every page, which measures the document's pagination and not the reading. The magnitude that matters here is the 350 escalated tokens, not the 3 records: the reader is losing nearly half this document's ink to one unresolved header. Held until that header block is read." ] .

@@ -152,16 +152,28 @@ prog:criterion:etkl:01 a prog:Criterion ;
 # adjudicated since; `met false` is measured from the manifest rows tabulated above, not
 # read off the prose. Declaring commits, measured 2026-08-20 by
 # `git blame -L <line>,<line> --date=short -- tests/corpus-manifest.ttl`:
-#   :44 e121c42f 2026-08-04   :55 e121c42f 2026-08-04   :69 2855b52b 2026-08-04
-#   :84 2855b52b 2026-08-04   :95 06c6b399 2026-08-04   :106 cab08ec6 2026-08-04
+#   :46 e121c42f 2026-08-04   :59 e121c42f 2026-08-04   :75 2855b52b 2026-08-04
+#   :92 2855b52b 2026-08-04   :105 06c6b399 2026-08-04   :118 cab08ec6 2026-08-04
+# (Line numbers RE-POINTED 2026-08-20 when the adjudication pass added a cor:adjudication
+# block to each of the six: the declaring commits and dates are unchanged — re-measured by
+# the same `git blame -L <line>,<line>` at the new lines. Nothing in the membrane checks a
+# prog:source line, so this is a hand obligation on every commit that edits the manifest.)
 # Their oracles EXIST and collect (verified 2026-08-20,
 # `./.venv/bin/python -m pytest tests/test_corpus.py --collect-only -q` -> all seven ids
 # present) — these are unmet for an evidential reason, not for want of an instrument.
+# But the named oracle is NOT YET DECISIVE for these six, and that is deliberate rather
+# than a gap: test_expected_verdict asserts nothing about a bare cor:Unadjudicated row
+# (tests/test_corpus.py:119-121 — compiling at all is the whole gate), so it PASSES today
+# while the criterion reads `met false`. It becomes decisive at the moment the manifest row
+# is adjudicated to cor:CompilesAbove with a floor, which is the same moment `met` may flip.
+# What actually pins `met false` today is tests/test_arc_manifest.py::test_etkl_criteria_
+# agree_with_the_corpus_manifest, which recomputes all seven from tests/corpus-manifest.ttl.
+# (Closes the task-3 ledger's deferred minor on this region, task 5, 2026-08-20.)
 
 prog:criterion:etkl:02 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:44" ;
+    prog:source "tests/corpus-manifest.ttl:46" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -171,7 +183,7 @@ prog:criterion:etkl:02 a prog:Criterion ;
 prog:criterion:etkl:03 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "ag-trade/cbh-stem-2026-08-03.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:55" ;
+    prog:source "tests/corpus-manifest.ttl:59" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -181,7 +193,7 @@ prog:criterion:etkl:03 a prog:Criterion ;
 prog:criterion:etkl:04 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:69" ;
+    prog:source "tests/corpus-manifest.ttl:75" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -191,7 +203,7 @@ prog:criterion:etkl:04 a prog:Criterion ;
 prog:criterion:etkl:05 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/bfs-population-bilan-2023.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:84" ;
+    prog:source "tests/corpus-manifest.ttl:92" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -201,7 +213,7 @@ prog:criterion:etkl:05 a prog:Criterion ;
 prog:criterion:etkl:06 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "financial/apple-fy2026q3-statements.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:95" ;
+    prog:source "tests/corpus-manifest.ttl:105" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -211,7 +223,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:106" ;
+    prog:source "tests/corpus-manifest.ttl:118" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;

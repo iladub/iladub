@@ -44,6 +44,9 @@ MANIFEST = REPO / "tests" / "arc-manifest.ttl"
 SHAPES = REPO / "tests" / "arc-shapes.ttl"
 REGISTER = REPO / "docs" / "superpowers" / "residues.md"
 
+COR = Namespace("https://w3id.org/iladub/corpus#")
+CORPUS_MANIFEST = REPO / "tests" / "corpus-manifest.ttl"
+
 # `vocab/shapes/iladub-shapes.ttl:39` is the citation form spec §7.2.1 corrected the handoff
 # to; the line number is a pointer INTO the artifact, not part of its path.
 _LINE_SUFFIX = re.compile(r":\d+$")
@@ -83,6 +86,77 @@ def blocked_rows(graph):
     for c in sorted(graph.subjects(RDF.type, PROG.Criterion), key=str):
         for r in sorted(graph.objects(c, PROG.blockedBy), key=str):
             yield (str(c), str(r))
+
+
+# ------------------------------------- the etkl rung, RECOMPUTED from the corpus register
+#
+# Why this leg lives here and not in tests/arc-shapes.ttl. The arc membrane closes over the
+# arc manifest, and `tests/corpus-manifest.ttl` is a DIFFERENT GRAPH in a different file that
+# the membrane's data graph does not contain. Joining the two at validation time would make
+# the closed-world membrane derive from a world it does not close over — the move CLAUDE.md
+# §8 forbids. So this is the same shape of question as M5 and M7: a fact about another
+# artifact on disk, which is why it is procedural code beside them rather than SHACL.
+#
+# It derives nothing INTO either manifest. `prog:met` stays hand-asserted in a reviewed
+# commit (spec §9); this leg only refuses an assertion the corpus register does not support.
+
+def etkl_met_by_document(corpus_graph):
+    """{cor:file -> bool}: the `etkl` rung's numerator, COMPUTED from the corpus register.
+
+    Spec §7.1 states the criterion in prose — *"under a `cor:adjudication` whose rationale
+    **accepts** that score — not one that holds it"* — and prose is not a predicate. The
+    distinction is STRUCTURAL, and the corpus manifest's own header states where it lives
+    (`tests/corpus-manifest.ttl:16-20`): *"There is no separate cor:Hold term: a HOLD is
+    encoded AS cor:Unadjudicated plus a cor:adjudication node carrying the reviewer's
+    rationale."* So the acceptance is carried by **cor:expectedVerdict**, and the
+    adjudication carries the reason for whichever state the verdict names.
+
+    The predicate, in one line:
+        met  <=>  cor:expectedVerdict == cor:CompilesAbove
+                  AND some cor:scoreFloor  AND some cor:adjudication
+
+    Two consequences worth stating, because both are choices.
+
+    * It is EXISTENTIAL over adjudications, not universal. `cor:adjudication` is an
+      append-only history: graincorp-stem's own 2026-08-02 note is a HOLD and always will
+      be, and its 2026-08-20 note supersedes that one. A universal reading (*every*
+      adjudication must accept) would un-meet the one met document the moment its history
+      was written down honestly — it would punish keeping the record. The verdict is the
+      current state; the notes are how it got there.
+    * It cannot be gamed by a rationale, because it never reads one. It CAN still be moved
+      by a hand flipping cor:expectedVerdict to cor:CompilesAbove with a floor at today's
+      score — that is spec §7.1's row 1 and it counts, by design: it is a dated, accountable
+      act in a reviewed commit, and the corpus membrane makes it cost a cor:sha256 and a
+      cor:adjudication. What is refused is the cheap version — writing a number down while
+      the record still says the reading is held.
+    """
+    out = {}
+    for doc in corpus_graph.subjects(RDF.type, COR.Document):
+        f = str(corpus_graph.value(doc, COR.file))
+        assert f not in out, f"two cor:Document entries claim {f!r}"
+        out[f] = (corpus_graph.value(doc, COR.expectedVerdict) == COR.CompilesAbove
+                  and corpus_graph.value(doc, COR.scoreFloor) is not None
+                  and corpus_graph.value(doc, COR.adjudication) is not None)
+    return out
+
+
+def etkl_criteria(arc_graph):
+    """{cor:file -> (criterion_iri, asserted_met, prog:source)} for the `etkl` rung.
+
+    The document a criterion is about is the head of its `prog:statement`, up to the first
+    ": " — the form task 3 authored all seven in. No corpus file path contains that
+    separator, so the split is total.
+    """
+    out = {}
+    for c in sorted(arc_graph.subjects(RDF.type, PROG.Criterion), key=str):
+        if str(arc_graph.value(c, PROG.ofRung)) != "etkl":
+            continue
+        f = str(arc_graph.value(c, PROG.statement)).split(": ", 1)[0]
+        assert f not in out, f"two etkl criteria claim {f!r}"
+        out[f] = (str(c),
+                  arc_graph.value(c, PROG.met).toPython(),
+                  str(arc_graph.value(c, PROG.source)))
+    return out
 
 
 # ------------------------------------------------------- the environment, measured not read
@@ -322,6 +396,110 @@ def test_m7_a_blocking_edge_to_a_nonexistent_residue_is_refused():
     """A dangling edge is worse than no edge: it reads as strategy and points at nothing.
     R999 is not a row in the register index."""
     _refused_by_environment("arc-m7-dangling-residue-leak.ttl", "M7")
+
+
+# -------------------------------------------- the etkl rung: computed, pinned, ungameable
+
+_HOLD = ('cor:expectedVerdict cor:Unadjudicated ; '
+         'cor:adjudication [ cor:by "F" ; cor:on "2026-08-20"^^xsd:date ; cor:rationale '
+         '"HOLD: 0.3438 is a measurement, nobody has read this compile against the PDF." ]')
+_ACCEPT = ('cor:expectedVerdict cor:CompilesAbove ; '
+           'cor:adjudication [ cor:by "F" ; cor:on "2026-08-20"^^xsd:date ; cor:rationale '
+           '"ACCEPTED: read against the source; 0.3438 is what this document supports." ]')
+
+
+def _synthetic(body):
+    return Graph().parse(data="""@prefix cor: <https://w3id.org/iladub/corpus#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<urn:iladub:corpus:synthetic> a cor:Document ;
+    cor:file "gov-stats/bfs-population-bilan-2023.pdf" ;
+    cor:url "https://example.org/f" ; cor:family "gov-stats" ; cor:series "s" ;
+    cor:sha256 "%s" ; %s .
+""" % ("0" * 64, body), format="turtle")
+
+
+_FILE = "gov-stats/bfs-population-bilan-2023.pdf"
+# bfs's measured score, census § Seam 1 (2026-08-20, HEAD 820ab24). It is here as the
+# WORST CASE for the gameability defect and is never compared against anything: pinning a
+# floor AT the measured score is the move under test, so the number's only job is to be the
+# one a floor would be pinned at. Not a threshold, nothing is tuned to it.
+_MEASURED = '0.3438'
+
+
+def test_a_hold_with_a_floor_pinned_at_its_measured_score_is_not_met():
+    """Spec §8's named falsifier, and the defect `820ab24` fixed only in prose.
+
+    A `cor:scoreFloor` is a REGRESSION GUARD, so nothing stops it being pinned at whatever a
+    document scores today. Under the criterion as §7.1 first worded it, six such lines would
+    take this rung from 1/7 to 7/7 without a single reading improving — a criterion that
+    rewards writing the number down. This pins all three rows of §7.1's table on the same
+    synthetic document, so the refusal is provably about the hold-vs-accept STATE and not
+    about the floor, the score, or the document:
+
+      * floor pinned at the measured score + a recorded HOLD -> NOT met  (the falsifier)
+      * the same floor + an accepting verdict                -> met      (not vacuous)
+      * a bare unadjudicated row, no floor at all            -> NOT met
+
+    Without the middle row a predicate that returned False unconditionally would pass this
+    test, which is the failure mode CLAUDE.md § Plan authoring rule 4 exists for.
+    """
+    gamed = _synthetic(f'cor:scoreFloor "{_MEASURED}"^^xsd:decimal ; {_HOLD}')
+    assert etkl_met_by_document(gamed)[_FILE] is False, (
+        "a floor pinned at the measured score, under a rationale that HOLDS the reading, "
+        "must not satisfy the etkl criterion — never lower a bar to meet it")
+
+    accepted = _synthetic(f'cor:scoreFloor "{_MEASURED}"^^xsd:decimal ; {_ACCEPT}')
+    assert etkl_met_by_document(accepted)[_FILE] is True, (
+        "the predicate must be able to say YES, or the falsifier above proves nothing")
+
+    bare = _synthetic("cor:expectedVerdict cor:Unadjudicated")
+    assert etkl_met_by_document(bare)[_FILE] is False
+
+
+def test_etkl_criteria_agree_with_the_corpus_manifest():
+    """The `etkl` numerator is DERIVED-AND-CHECKED, not merely asserted.
+
+    Task 3 authored all seven `prog:met` booleans by hand. This recomputes them from
+    `tests/corpus-manifest.ttl` and refuses any disagreement — so an edit to either manifest
+    that moves this rung without moving the other one goes red. It is the only thing in the
+    repo that makes the strip's `etkl 1/7` answerable to the corpus register.
+
+    Note what this does NOT do: it never writes `prog:met` (spec §9). A disagreement is a
+    refusal for a hand to resolve in a reviewed commit, in whichever direction is true.
+    """
+    computed = etkl_met_by_document(Graph().parse(CORPUS_MANIFEST, format="turtle"))
+    asserted = etkl_criteria(Graph().parse(MANIFEST, format="turtle"))
+
+    assert set(asserted) == set(computed), (
+        "every corpus document must have exactly one etkl criterion and vice versa; "
+        f"only in the arc manifest: {sorted(set(asserted) - set(computed))}; "
+        f"only in the corpus register: {sorted(set(computed) - set(asserted))}")
+    for f, (iri, met, _) in sorted(asserted.items()):
+        assert met == computed[f], (
+            f"{iri} asserts prog:met {met} for {f}, but the corpus register computes "
+            f"{computed[f]} — fix whichever is wrong by hand; nothing here writes either file")
+    assert sum(computed.values()) == 1, (
+        f"measured 2026-08-20: exactly one corpus document is accepted; got {computed}")
+
+
+def test_etkl_criterion_sources_point_at_the_document_they_name():
+    """`prog:source` is a LINE POINTER into a file that keeps growing, and the membrane
+    checks neither its path nor its line — `prog:source` is required to be PRESENT and
+    nothing more. So every commit that inserts a line into the corpus register silently
+    invalidates the pointers below it, which is exactly what this task's own adjudication
+    pass did to six of the seven. Prose cannot hold that; this can.
+    """
+    corpus = Graph().parse(CORPUS_MANIFEST, format="turtle")
+    subject_of = {str(corpus.value(d, COR.file)): str(d)
+                  for d in corpus.subjects(RDF.type, COR.Document)}
+    lines = CORPUS_MANIFEST.read_text(encoding="utf-8").splitlines()
+
+    for f, (iri, _, source) in sorted(etkl_criteria(Graph().parse(MANIFEST, "turtle")).items()):
+        path, _, lineno = source.rpartition(":")
+        assert path == "tests/corpus-manifest.ttl", f"{iri}: unexpected prog:source {source!r}"
+        assert lines[int(lineno) - 1].startswith(f"<{subject_of[f]}>"), (
+            f"{iri} points at {source}, which is not the subject line of {f} — "
+            f"that line now reads {lines[int(lineno) - 1]!r}; re-point it")
 
 
 # ------------------------------------------------------------------------ the one positive
