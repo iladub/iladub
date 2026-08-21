@@ -60,10 +60,12 @@ Tasks 2, 3 and 4 each found one. **Every remaining dispatch must carry "your run
 - **Task 4's re-review had not returned.** It was dispatched at `5367dcf..674d16f` to verify Ruling 12's
   new `met true`, and to spot-check two untouched rows for finding 4's bug class. **Read its verdict
   before starting Task 5.**
-- **The corpus leg at `6f11d13` had not finished.** The non-corpus leg is **GREEN: 1216 passed, 7
-  skipped, 1 xfailed, 10 warnings (18m02s)** — exactly +1 on `93234cb`, so `001014e` is covered by a
-  full leg for the first time. **No leg covers `5367dcf` or `674d16f`;** re-run both in the worktree at
-  the head you inherit (recipe in the previous handoff; `baml_client` + `corpus` must be symlinked in).
+- **Both suite legs are GREEN at `6f11d13`** — non-corpus **1216 passed, 7 skipped, 1 xfailed, 10
+  warnings (18m02s)**, exactly +1 on `93234cb`; corpus **43 passed (17m25s)**, matching Tasks 1 and 3
+  exactly. This is the first full-suite coverage of the Task 3 fix commit `001014e`. **No leg covers
+  `5367dcf` or `674d16f` (Task 4);** re-run both in the worktree at the head you inherit (recipe in the
+  previous handoff; `baml_client` + `corpus` must be symlinked in or six modules fail to collect and
+  the run is a FALSE RED).
 - **The ten warnings are explained and are NOT this branch's** — eight are one rdflib JSON-LD
   `ConjunctiveGraph is deprecated` warning raised from `tests/test_fluree_policy.py` and
   `tests/test_writegate.py`, two from a docgov serialization. No `arc_*` test appears in the summary.
