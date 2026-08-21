@@ -5,7 +5,7 @@
 # rung with no criteria is deliberately not a refusal.
 #
 # Authored so far: `etkl` (7), `holon` (6), `substrate` (3) — task 3 of the 2026-08-20 loop;
-# `dec` (16) — task 4. Still `?`: `tab` (10, task 6), which APPENDS its own section
+# `dec` (17) — task 4. Still `?`: `tab` (10, task 6), which APPENDS its own section
 # below without touching these. Every criterion is a top-level IRI subject; nothing here
 # nests, so appending a section is the whole edit.
 #
@@ -435,7 +435,7 @@ prog:criterion:substrate:03 a prog:Criterion ;
     prog:oracleTest "tests/substrate/test_in_engine_policy.py::test_engine_enforces_ai_inherits_user" .
 
 
-# ========================================================================= dec — 16 criteria
+# ========================================================================= dec — 17 criteria
 #
 # THE DENOMINATOR WAS ALREADY WRITTEN DOWN, in this repo's Contract file. CLAUDE.md:252:
 #   "Every vocabulary/shape ships with a worked example that conforms **and** a negative
@@ -445,8 +445,8 @@ prog:criterion:substrate:03 a prog:Criterion ;
 #   $ git log -L 252,252:CLAUDE.md --date=short --format='%h %ad %s'
 #     ee221de 2026-05-31 Add CLAUDE.md and reference docs; wire up MkDocs nav
 #     (one commit, the file-creating one; no later touch)
-# So all fifteen pairing criteria carry prog:declaredOn "2026-05-31" and prog:source
-# "CLAUDE.md:252".
+# So all SIXTEEN pairing criteria carry prog:declaredOn "2026-05-31" and prog:source
+# "CLAUDE.md:252". The seventeenth criterion is a different rule and carries its own source.
 #
 # THE SHAPE CENSUS — the denominator, measured rather than inherited. Every sh:NodeShape in
 # the four namespaces this rung governs (dec: / risk: / iladub: / gsh:), found by parsing
@@ -464,13 +464,21 @@ prog:criterion:substrate:03 a prog:Criterion ;
 #                                       risk:RiskAssessmentShape:35 risk:SensitivityShape:49
 #   vocab/shapes/governance-shapes.ttl  gsh:AiInheritsUserShape:27 gsh:PermissionShape:45
 #   vocab/shapes/iladub-hga-shapes.ttl  iladub:HgaGroundingGovernanceShape:27
-# That is SIXTEEN node shapes, not the fifteen the spec §7.2 counted. The sixteenth is
-# iladub:HgaGroundingGovernanceShape, and it is NOT authored here because it is ALREADY a
-# criterion: prog:criterion:holon:03 above states exactly CLAUDE.md:252's pairing for it
-# (examples/holon-grounding-conformant.ttl + tests/holon-grounding-leak.ttl, both oracles
-# named). Counting one shape on two rungs would let a single artifact move two fractions,
-# which is the one thing a denominator may not do. So: 16 shapes, 15 here + 1 on `holon`,
-# each counted once, and the two rungs jointly cover the census exactly.
+# That is SIXTEEN node shapes, not the fifteen the spec §7.2 counted — the sixteenth being
+# iladub:HgaGroundingGovernanceShape. ALL SIXTEEN ARE AUTHORED HERE (criteria 01-16).
+#
+# THE SIXTEENTH OVERLAPS `holon` ON PURPOSE, and that is settled (Ruling 12, 2026-08-21).
+# Task 4 first excluded it, on the ground that prog:criterion:holon:03 and :04 above already
+# cite examples/holon-grounding-conformant.ttl and tests/holon-grounding-leak.ttl. The ruling
+# overturned that: THE RUNGS PARTITION DECLARING PROSE, NOT ARTIFACTS. holon:03's
+# prog:source is docs/holonic-interaction.md:151-153 and it asks whether that shape's
+# INVARIANT is built; criterion 16 below carries prog:source CLAUDE.md:252 and asks whether
+# the shape SHIPS A CONFORMING EXAMPLE AND A NEGATIVE TEST. Two rules about one artifact is
+# the design — evidence reuse across criteria is already everywhere in this file (etkl:01's
+# corpus row, holon:03 and :04 sharing both oracles). Exempting a shape because another rung
+# mentions it would be a curation rule CLAUDE.md:252 does not contain: the rule ranges over
+# "Every vocabulary/shape", and a curated denominator is a fabricated numerator seen from the
+# other side. So: 16 shapes, 16 pairing criteria, no exemption.
 #
 # THE PAIRINGS ARE MEASURED, NOT ASSUMED — this is the step the brief warned about, since a
 # `*-leak.ttl` fixture need not belong to the shape whose name it resembles. Every negative
@@ -493,12 +501,16 @@ prog:criterion:substrate:03 a prog:Criterion ;
 #   ::test_neg_grounded_without_promotion_fails   -> iladub:GroundedNodeShape (alone)
 #   ::test_neg_proposition_asserted_fails         -> iladub:CandidateConceptShape
 #                                                    + iladub:NoLeakShape
+# That sweep loaded the FIVE shape files above; the sixteenth shape lives in a sixth
+# (vocab/shapes/iladub-hga-shapes.ttl), so tests/holon-grounding-leak.ttl came back clean
+# from it and was measured separately, against the shape graph its own caller loads:
+#   tests/holon-grounding-leak.ttl -> iladub:HgaGroundingGovernanceShape (alone) — see 16
 #
 # THE ONE PAIRING THAT LOOKS LIKE A MATCH AND IS NOT. tests/federation-projection-leak.ttl
 # trips iladub:PromotionDecisionShape in that union sweep — a bare tx:leaked-decision typed
 # iladub:PromotionDecision with neither iladub:reviews nor dec:decidedBy. But no test
-# validates that fixture against iladub-shapes.ttl: tests/test_federation.py:45-60 loads
-# vocab/shapes/etkl-shapes.ttl alone, and the assertion is about etkl:DocumentProjectionShape
+# validates that fixture against iladub-shapes.ttl: tests/test_federation.py:47 loads
+# vocab/shapes/etkl-shapes.ttl alone, and the assertion at :61 is about etkl:DocumentProjectionShape
 # refusing an interior leak. Nothing SHIPS that refusal as PromotionDecisionShape's negative
 # test, so criterion 09 is unmet. This is precisely the trap the brief named, and the answer
 # came from reading the caller, not the fixture name.
@@ -537,7 +549,11 @@ prog:criterion:substrate:03 a prog:Criterion ;
 # counted directly), 2026-08-21 — every one of the fifteen has at least one:
 #   DecisionHolon 1 · Confidence 1 · Milestone 1 · Event 1 · ExpansionRequest 1 ·
 #   Escalation 2 · NoEmpiricRisk 5 · RiskAssessment 2 · Sensitivity 3 · AiInheritsUser 4 ·
-#   Permission 7 · CandidateConcept 1 · GroundedNode 1 · PromotionDecision 1 · NoLeak 1
+#   Permission 7 · CandidateConcept 1 · GroundedNode 1 · PromotionDecision 1 · NoLeak 1 ·
+#   HgaGroundingGovernance 1
+# and the count is taken over EXACTLY the files each criterion cites, which is what caught
+# criterion 10: iladub:NoLeakShape has 0 focus nodes in examples/promotion.ttl alone and 1
+# across proposal.ttl + promotion.ttl, so the artifact list had to name both.
 
 prog:rung:dec prog:criterion
     prog:criterion:dec:01 , prog:criterion:dec:02 , prog:criterion:dec:03 ,
@@ -545,7 +561,7 @@ prog:rung:dec prog:criterion
     prog:criterion:dec:07 , prog:criterion:dec:08 , prog:criterion:dec:09 ,
     prog:criterion:dec:10 , prog:criterion:dec:11 , prog:criterion:dec:12 ,
     prog:criterion:dec:13 , prog:criterion:dec:14 , prog:criterion:dec:15 ,
-    prog:criterion:dec:16 .
+    prog:criterion:dec:16 , prog:criterion:dec:17 .
 
 # --- vocab/shapes/dec-shapes.ttl ------------------------------------------------------
 
@@ -682,9 +698,9 @@ prog:criterion:dec:08 a prog:Criterion ;
     prog:oracleTest "tests/test_grounding.py::test_neg_grounded_without_promotion_fails" .
 
 # UNMET, and it is the near miss documented in this section's header:
-# tests/federation-projection-leak.ttl WOULD trip this shape, but tests/test_federation.py:45-60
-# validates that fixture against vocab/shapes/etkl-shapes.ttl only, asserting
-# etkl:DocumentProjectionShape's refusal. No shipped test puts a malformed
+# tests/federation-projection-leak.ttl WOULD trip this shape, but tests/test_federation.py:58-61
+# validates that fixture against vocab/shapes/etkl-shapes.ttl only (loaded at :47), and the
+# assertion at :61 is etkl:DocumentProjectionShape's refusal. No shipped test puts a malformed
 # iladub:PromotionDecision in front of iladub-shapes.ttl. prog:oracleTest is a TARGET.
 prog:criterion:dec:09 a prog:Criterion ;
     prog:ofRung "dec" ;
@@ -697,6 +713,10 @@ prog:criterion:dec:09 a prog:Criterion ;
 
 # prog:retrospective TRUE for the same measured reason as criterion 07: shape, example and
 # fixture all at e48ebf2 2026-05-31, metOn == declaredOn.
+# BOTH example files are named, and that is a correction: iladub:NoLeakShape targets
+# iladub:CandidateConcept, and the only such focus node is ex:cand-wirkstoffspiegel at
+# examples/proposal.ttl:10 — promotion.ttl alone would leave this shape with no focus node at
+# all. test_promotion_grounds loads the two together (tests/test_boundary.py:23).
 prog:criterion:dec:10 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/iladub-shapes.ttl:65 — iladub:NoLeakShape ships a worked example that conforms and a negative test that must fail (measured: tests/leak-attempt.ttl trips this shape)." ;
@@ -706,6 +726,7 @@ prog:criterion:dec:10 a prog:Criterion ;
     prog:metOn "2026-05-31"^^xsd:date ;
     prog:retrospective true ;
     prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:65" ;
+    prog:oracleArtifact "examples/proposal.ttl" ;
     prog:oracleArtifact "examples/promotion.ttl" ;
     prog:oracleArtifact "tests/leak-attempt.ttl" ;
     prog:oracleTest "tests/test_boundary.py::test_promotion_grounds" ;
@@ -780,7 +801,50 @@ prog:criterion:dec:15 a prog:Criterion ;
     prog:retrospective false ;
     prog:oracleTest "tests/test_governance.py::test_permission_without_action_rejected" .
 
-# --- the sixteenth: a rule in the Contract that no test asserts --------------------------
+# --- vocab/shapes/iladub-hga-shapes.ttl -----------------------------------------------
+#
+# THE OVERLAP IS DELIBERATE (Ruling 12). This shape is also the subject of
+# prog:criterion:holon:03 and prog:criterion:holon:04 above, which cite the same three
+# artifacts. They are NOT this criterion: their prog:source is
+# docs/holonic-interaction.md:151-153/154-156 and they ask whether the governed-grounding
+# INVARIANT and its traversal example are built. This one's prog:source is CLAUDE.md:252 and
+# it asks the pairing question — conforming example AND negative test — of a shape the rule
+# ranges over. A reader comparing the rungs should see the overlap here rather than derive it.
+#
+# BOTH HALVES MEASURED 2026-08-21, and the caller checked the way criterion 09's was:
+#   $ <pyshacl, inference="rdfs", advanced=True, ont = iladub.ttl + etkl-holons.ttl>
+#     tests/holon-grounding-leak.ttl vs [iladub-hga-shapes.ttl]
+#       conforms=False   fires=[iladub:HgaGroundingGovernanceShape]   (alone)
+#     tests/holon-grounding-leak.ttl vs [iladub-shapes.ttl, iladub-hga-shapes.ttl]
+#       conforms=False   fires=[iladub:HgaGroundingGovernanceShape]   (still alone)
+#     examples/holon-grounding-conformant.ttl vs [both]  conforms=True
+# and the caller does load that shape graph — tests/test_hga_alignment.py:35 binds
+# HGA_SHAPES = [iladub-hga-shapes.ttl], which :62 passes for the leak, while :57 passes
+# SHAPES (both files) for the conformant example. So unlike criterion 09, the refusal this
+# fixture earns IS shipped as this shape's negative test.
+#
+# metOn 2026-06-23: shape, example, leak and both tests all landed at 781527f that day
+# (`git log --diff-filter=A --follow` on each of the four paths, and
+# `git log -S"def test_ungoverned_grounding_rejected"` -> 781527f 2026-06-23).
+# declaredOn 2026-05-31 < metOn, so prog:retrospective is FALSE — and note this is where the
+# overlap earns its keep: holon:03 is retrospective TRUE (its declaring bullet landed in the
+# same commit as the artifacts), while this criterion's declaring line predates them by three
+# weeks. Same artifacts, different rules, different answers to "was this grandfathered?".
+prog:criterion:dec:16 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl:27 — iladub:HgaGroundingGovernanceShape ships a worked example that conforms and a negative test that must fail (measured: tests/holon-grounding-leak.ttl trips this shape, and only this shape, against the shape graph its caller loads)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl:27" ;
+    prog:oracleArtifact "examples/holon-grounding-conformant.ttl" ;
+    prog:oracleArtifact "tests/holon-grounding-leak.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
+
+# --- the seventeenth: a rule in the Contract that no test asserts ------------------------
 #
 # CLAUDE.md:249-251 is a different rule from :252 and gets its own prog:source:
 #   "- Decision/provenance reuse standards: `dec:DecisionHolon ⊑ prov:Activity`;
@@ -808,11 +872,15 @@ prog:criterion:dec:15 a prog:Criterion ;
 # same rule this manifest applies to the `holon` rung above), so the declaration is ee221de,
 # 2026-05-31 — the day the Contract was written.
 #
-# NO prog:oracleArtifact here, deliberately. vocab/ontology/dec.ttl exists, so naming it would
-# make M5 report green on a claim that is false: the artifact half of this criterion is
-# satisfied and the TEST half is not. That is what makes M5b, not M5, the arm that defends
-# this row — see the FALSIFICATION block of task 4's report.
-prog:criterion:dec:16 a prog:Criterion ;
+# NO prog:oracleArtifact here, deliberately — but NOT because naming one would be refused.
+# On THIS row it would be inert: M5 evaluates only `met true` criteria
+# (tests/test_arc_manifest.py:153-156), and this row is `met false`, so an artifact named here
+# would be neither checked nor consulted. It is omitted because the moment someone flips this
+# row to met, an existing vocab/ontology/dec.ttl would let M5 pass a claim that is still false
+# — the axioms are on disk; the TEST is what is missing. Falsification arm A in task 4's
+# report runs exactly that counterfactual and shows M5 silent and M5b alone refusing. Leaving
+# the field off keeps the row's only evidence the one that can fail: prog:oracleTest.
+prog:criterion:dec:17 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "The four provenance-reuse axioms declared in the Contract — dec:DecisionHolon ⊑ prov:Activity, dec:consideredEvidence ⊑ prov:used, dec:decidedBy ⊑ prov:wasAssociatedWith, dec:produced ⊑ prov:generated (vocab/ontology/dec.ttl:38,55,72,85) — are asserted by a test. They are declared and enforced by nothing." ;
     prog:source "CLAUDE.md:249-251" ;
