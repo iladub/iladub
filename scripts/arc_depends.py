@@ -28,7 +28,10 @@ twice and would be deleted within a week.
 
 CODE NEVER WRITES `tests/arc-manifest.ttl` (that file's own head, spec §9). This script writes
 exactly one path: `docs/superpowers/arc-dependency-landscape.md`, and `--out` exists so the gate
-can regenerate into a tmp_path.
+can regenerate into a tmp_path. `main()` REFUSES an `--out` that resolves to the manifest — the
+tracked one, or whichever file `--manifest` named — because until 2026-08-22 that constraint was
+held by an argparse default and by every call site happening to be correct, which is not
+enforcement (task 6 review, Minor 1; pinned by `tests/test_arc_landscape.py`).
 
 GATE CLASSIFICATION (CLAUDE.md §8): **PROCEDURAL, and irreducible for a stated reason** —
 rendering markdown is not a derivation. There is no decision here to express as an axiom: the
@@ -272,10 +275,26 @@ def _terms(names: list[str]) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="render the arc's dependency landscape")
     ap.add_argument("--out", type=Path, default=LANDSCAPE,
-                    help="output path (default: the tracked cache)")
+                    help="output path (default: the tracked cache; refuses the manifest)")
     ap.add_argument("--manifest", type=Path, default=MANIFEST,
                     help="the hand-authored source (default: tests/arc-manifest.ttl)")
     args = ap.parse_args(argv)
+
+    # CODE NEVER WRITES `tests/arc-manifest.ttl` (that file's own head, :16-18; spec §9; Global
+    # Constraint 4 of the 2026-08-22 plan). Until this refusal existed the constraint was held by
+    # an argparse DEFAULT and by every call site happening to be correct — `arc_depends.py --out
+    # tests/arc-manifest.ttl` would have had a renderer overwrite the hand-authored source it had
+    # just read. A hard constraint enforced only by a default is enforced by nothing (task 6
+    # review, Minor 1). The second member generalises it: a generator never writes its own source,
+    # whichever file the caller named as that source.
+    forbidden = {args.manifest.resolve(): "the manifest this run reads",
+                 MANIFEST.resolve(): "tests/arc-manifest.ttl"}
+    if args.out.resolve() in forbidden:
+        raise SystemExit(
+            f"arc_depends refuses to write {args.out} — that is "
+            f"{forbidden[args.out.resolve()]}, and edges are hand-authored in reviewed commits "
+            f"(tests/arc-manifest.ttl:16-18). This script writes exactly one kind of file: the "
+            f"generated landscape cache.")
 
     graph = Graph()
     graph.parse(args.manifest, format="turtle")

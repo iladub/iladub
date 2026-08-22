@@ -38,20 +38,29 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-22: 102 rows, 22 closed, 80 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-22: 109 rows, 22 closed, 87 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
 R107, R108, and — at loop close, from its whole-branch review and its warning attribution —
 R109, R110, R111 and R112, and closed ~~R105~~ in
-task 6.
+task 6; loop `the-arc-has-edges` raised R113–R119 at close and closed none.
+
+**Seven raised, none closed, is the honest reading of that last clause and it is worth saying
+out loud.** `the-arc-has-edges` added a capability (a criterion→criterion dependency graph, its
+membrane and its landscape) rather than repaying debt; four of its seven rows are limitations it
+*named in its own spec* before it started (R113, R114, R115) or findings its own instruments
+produced (R116, R117, R118, R119), and two — R117 and R118 — were found only because the loop
+built something that could refute a claim. A loop that raises rows it discovered by refuting
+itself is not the same as one that leaks them, but the closed-fraction does not know that, and
+this register is deliberately the kind that does not let the distinction flatter the number.
 
 **Verified, not asserted — and re-run whenever this line is edited:**
 
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   22  closed
-  80  open
+  87  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -192,3 +201,10 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R110 | open | The arc membrane's own messages degrade: two unnumbered `sh:nodeKind` refusals and three predicates with no property shape |
 | R111 | open | Strip legibility: `frontier`/`ready` carry no unit, the docstring illustration is stale, and a dead `else 0.0` would render the forbidden `0/0` |
 | R112 | open | 60 invisible `ResourceWarning`s — pytest never un-ignores the class, so the reported warning count is not the raised count |
+| R113 | open | A5's ablation grounds consumption at FILE granularity — an edge means "X's oracle needs this file", never "X needs the term at line n" |
+| R114 | open | `etkl:01`'s oracle cannot EXECUTE in a worktree (gitignored corpus), so no edge can be asserted at either of its ends — and it is the `etkl` rung's only met criterion |
+| R115 | open | The 80% orphan question is NOT subsumed by the dependency graph: 65 of 80 open rows block no criterion of any rung (re-measured at close) |
+| R116 | open | M20 candidate: an orphan `rdf:Statement` rationale node, and a `prog:dependencyRationale` on a criterion, are refused by nothing — dead prose is admitted |
+| R117 | open | Nothing checks that the terms `iladub-hga-align.ttl` aligns are DECLARED — a dangling subclass ships green, and that is why `holon:02 -> holon:01` was refuted |
+| R118 | open | M19 scores a collection ERROR as a FAILURE, making arm 1 permissive — an unrelated import break reads as consumption |
+| R119 | open | M19's progress-line parser assumes `pyproject.toml` carries no `addopts` — fails loudly, never falsely, but undeclared |

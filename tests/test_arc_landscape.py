@@ -100,6 +100,44 @@ def test_regeneration_is_deterministic(tmp_path):
     )
 
 
+def test_the_generator_refuses_to_write_the_hand_authored_manifest(tmp_path):
+    """GLOBAL CONSTRAINT 4, pinned instead of trusted.
+
+    `tests/arc-manifest.ttl:16-18` says code never writes that file, and every in-repo call site
+    honours it — but `--out` was unconstrained, so `arc_depends.py --out tests/arc-manifest.ttl`
+    would have had a renderer overwrite the hand-authored source it had just parsed. Misuse-only,
+    and a hard constraint held by an argparse default is held by nothing.
+
+    Two arms, because the guard makes two claims:
+      1. a generator never writes its own source, whichever file `--manifest` named — run
+         entirely inside `tmp_path`, so removing the guard destroys a copy and not the repo;
+      2. the tracked manifest specifically, which is the constraint's letter. That arm names the
+         real path, so it snapshots the bytes and restores them in a `finally` — a falsification
+         run of this test deletes the guard on purpose, and must not be able to take the arc's
+         only hand-authored file with it."""
+    gen = _generator()
+
+    # Arm 1 — self-overwrite, contained.
+    copy = tmp_path / "arc-manifest.ttl"
+    copy.write_bytes(MANIFEST.read_bytes())
+    before = copy.read_bytes()
+    with pytest.raises(SystemExit) as exc:
+        gen.main(["--manifest", str(copy), "--out", str(copy)])
+    assert "refuses to write" in str(exc.value)
+    assert copy.read_bytes() == before, "the generator overwrote the manifest it was reading"
+
+    # Arm 2 — the constraint's letter, with the tree protected against its own falsification.
+    tracked = MANIFEST.read_bytes()
+    try:
+        with pytest.raises(SystemExit) as exc:
+            gen.main(["--out", str(MANIFEST)])
+        assert "tests/arc-manifest.ttl" in str(exc.value)
+        assert MANIFEST.read_bytes() == tracked
+    finally:
+        if MANIFEST.read_bytes() != tracked:
+            MANIFEST.write_bytes(tracked)
+
+
 def test_the_generator_refuses_a_criterion_that_is_not_a_uriref():
     """THE `arc-depends.rq` TRAP, pinned here for the first time.
 
