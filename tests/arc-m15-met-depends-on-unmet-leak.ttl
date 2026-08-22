@@ -1,0 +1,37 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M15: a met criterion depending on an unmet one — the analogue of M8 and the cheapest
+# catcher of a reversed edge. If holon:01 is already met, it cannot be waiting on holon:05.
+#
+# Proposition grade, one rationale node: at the asserted grade the unmet end would also fail
+# A1 and earn M16. M17 stays silent for the same reason — A1 fails, so this proposition is
+# not hiding a groundable edge.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" ;
+    prog:proposedDependsOn prog:criterion:holon:05 .
+
+prog:criterion:holon:05 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "A membrane-health check that computes and reports a compiled document's cleanliness (etkl:membraneHealth → Intact / Weakened / Compromised) from validation results." ;
+    prog:source "docs/holonic-interaction.md:160-161" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleTest "tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health" .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:01 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:05 ;
+   prog:dependencyRationale "reading: the holons module would consume the membrane-health computation; ungroundable because the target is unmet, so no ablation can run." .

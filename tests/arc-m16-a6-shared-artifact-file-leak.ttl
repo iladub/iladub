@@ -1,0 +1,46 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M16 / A6 — the Q6 refusal: A3's argument at FILE granularity. dec:04 and dec:03 name
+# `vocab/shapes/dec-shapes.ttl:60` and `vocab/shapes/dec-shapes.ttl:48`, which are two
+# pointers into ONE file. A5 ablates by deleting files, so deleting either end's artifact
+# deletes the other's too and both arms of the ablation collapse — the same trivial failure
+# A3 refuses at test granularity.
+#
+# This is the pair that exercises the `:line` strip, and it is a real pair out of the live
+# manifest rather than an invented one. It is also the fixture that pins the SPARQL form
+# against `_LINE_SUFFIX` (tests/test_arc_manifest.py:63): if the strip stopped stripping,
+# `…ttl:60` and `…ttl:48` would compare unequal and this edge would be admitted.
+#
+# Everything else holds: both met (A1), both carry oracles (A2), their oracle tests are
+# disjoint (A3: test_event_shacl vs test_timeline_shacl), and both were met 2026-06-18 so A4
+# holds non-strictly.
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" .
+
+prog:criterion:dec:04 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:60 — dec:EventShape ships a worked example that conforms and a negative test that must fail." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:60" ;
+    prog:oracleArtifact "examples/transplant/event-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/event-leak.ttl" ;
+    prog:oracleTest "tests/test_event_shacl.py::test_event_with_condition_conforms" ;
+    prog:oracleTest "tests/test_event_shacl.py::test_event_without_condition_fails" ;
+    prog:dependsOn prog:criterion:dec:03 .

@@ -433,6 +433,201 @@ def test_m9b_an_iri_that_disagrees_with_its_rung_is_refused():
     _refused_by_shacl("arc-m9b-iri-rung-disagreement-leak.ttl", "M9b")
 
 
+# ------------------------------------------- M12–M18: the dependency graph, also SHACL
+#
+# Seven refusals over the EDGES between criteria (spec 2026-08-22 §5). They are AXIOM /
+# constraint, closed world, and they live in `tests/arc-shapes.ttl` for the same reason M1–M9b
+# do: a dependency edge is a triple, so a membrane can see it. M19 — A5's two-sided ablation —
+# is the one that cannot be here, and it is not in this module either: it creates a worktree,
+# deletes a file and reads a pytest exit code, and lives in `tests/test_arc_ablation.py`.
+#
+# Every fixture below is a COMPLETE manifest fragment, copied from `tests/arc-manifest.ttl` so
+# that no criterion in it earns an M1 as well; each one's header comment names, explicitly, why
+# the other six refusals stay silent on it. That is what makes `_refused_by_shacl`'s exact-set
+# assertion evidence about the constraint the fixture was written for.
+
+def test_m12_a_dependency_on_something_that_is_not_a_criterion_is_refused():
+    """A dangling edge is worse than no edge: it reads as structure and points at nothing.
+
+    The contrast that makes this refusal correct rather than merely tidy is `prog:blockedBy`,
+    whose values are plain string literals naming rows of a markdown register that is not in
+    the graph at all — so the membrane cannot check them and M7 does it from the filesystem.
+    A dependency target IS in the graph, so dangling is checkable here, and what is checkable
+    in the membrane never gets delegated to procedural code.
+    """
+    _refused_by_shacl("arc-m12-dangling-target-leak.ttl", "M12")
+
+
+def test_m13_a_criterion_that_depends_on_itself_is_refused():
+    """A criterion cannot be its own precondition.
+
+    M13 OWNS the self-edge and M14 is written not to see one — measured, and it is the whole
+    reason M14 carries `FILTER(?y != $this)`. If both fired here the fixture would be
+    evidence about neither, and the cycle refusal would be pinned by nothing.
+    """
+    _refused_by_shacl("arc-m13-self-edge-leak.ttl", "M13")
+
+
+def test_m14_a_dependency_cycle_is_refused():
+    """The GLOBAL refusal, and the one no local rule can stand in for.
+
+    Every edge of `arc-m14-cycle-leak.ttl` is individually impeccable: both ends met, oracle
+    tests disjoint, artifact files disjoint, both met the same day so A4 holds in BOTH
+    directions. M15 sees nothing (nothing is unmet), M16 sees nothing (every precondition
+    holds), M13 sees nothing (neither edge is a self-edge). Only the cycle is wrong, and only
+    a query that follows the closure can find it.
+
+    The second assertion is what stops M14 collapsing into M13: it must fire on BOTH members
+    of the two-cycle, which a self-edge rule never would.
+    """
+    _refused_by_shacl("arc-m14-cycle-leak.ttl", "M14")
+    _, report = validate_manifest(REPO / "tests" / "arc-m14-cycle-leak.ttl")
+    for iri in ("criterion:holon:01", "criterion:holon:03"):
+        assert f"progress#{iri}>" in report, (
+            f"M14 must name every member of the cycle, and {iri} is missing:\n{report}")
+
+
+def test_m15_a_met_criterion_may_not_depend_on_an_unmet_one():
+    """The analogue of M8, and the cheapest catcher of a reversed edge: if the work landed,
+    it was not waiting on something that has not.
+
+    The constraint is EVIDENCE-POSITIVE — it matches a target asserting `prog:met false`, not
+    one that merely fails to assert `prog:met true`. That is what keeps it off M12's dangling
+    target, which has no `prog:met` at all, and it is CLAUDE.md §8's rule that a derivation
+    never infers from absence applied to a membrane that easily could have.
+    """
+    _refused_by_shacl("arc-m15-met-depends-on-unmet-leak.ttl", "M15")
+
+
+def test_m16_an_asserted_edge_that_fails_a_precondition_is_refused():
+    """A1–A4 and A6, one fixture each, all five carrying the refusal number M16.
+
+    Five assertions and not one, because five separate `sh:sparql` constraints answer five
+    different questions and a single fixture would leave four of them unpinned — a constraint
+    no fixture reaches is a constraint that can rot silently, which is the failure CLAUDE.md
+    § Plan authoring rule 4 exists to prevent.
+
+      * A1 — an end that is not met. The unmet end is the SUBJECT, deliberately: a met
+        criterion asserting a dependency on an unmet one is M15's case, not M16's.
+      * A2 — an end naming no oracle at all: nothing to delete, nothing to run.
+      * A3 — the Q2 refusal: the two ends share both oracle tests, so both arms of the
+        ablation would fail for the same reason and say nothing about either criterion.
+      * A4 — a target met five days AFTER the criterion that supposedly depended on it.
+        Non-strict, so a same-day pair is admitted; only the contradiction is refused.
+      * A6 — the Q6 refusal: `vocab/shapes/dec-shapes.ttl:60` and `…:48` are ONE file, and
+        ablation deletes files.
+    """
+    for fixture in ("arc-m16-ungrounded-assertion-leak.ttl",
+                    "arc-m16-a1-unmet-end-leak.ttl",
+                    "arc-m16-a2-no-oracle-leak.ttl",
+                    "arc-m16-a4-target-met-later-leak.ttl",
+                    "arc-m16-a6-shared-artifact-file-leak.ttl"):
+        _refused_by_shacl(fixture, "M16")
+
+    # …and each fixture must reach ITS OWN precondition. Without this the five could all be
+    # tripping A1 and the exact-set assertion above would not notice.
+    for fixture, precondition in (("arc-m16-ungrounded-assertion-leak.ttl", "M16: A3"),
+                                  ("arc-m16-a1-unmet-end-leak.ttl", "M16: A1"),
+                                  ("arc-m16-a2-no-oracle-leak.ttl", "M16: A2"),
+                                  ("arc-m16-a4-target-met-later-leak.ttl", "M16: A4"),
+                                  ("arc-m16-a6-shared-artifact-file-leak.ttl", "M16: A6")):
+        _, report = validate_manifest(REPO / "tests" / fixture)
+        assert precondition in report, f"{fixture} must trip {precondition}:\n{report}"
+
+
+def test_m17_a_proposition_that_hides_a_groundable_edge_is_refused():
+    """THE FORCING FUNCTION. It makes "propose it and move on" unavailable wherever grounding
+    is possible.
+
+    `holon:03 → holon:01` satisfies every membrane precondition of the asserted grade, so the
+    author owes the assertion and owes CI the chance to refute the reading. Without M17 the
+    proposition grade becomes a place to hide and the two-predicate split buys nothing —
+    `prog:dependsOn+` would still be a grounded closure, over an arbitrarily small subset of
+    the edges the author actually believes in.
+
+    The exact complement is asserted too: the SAME pair at the SAME grade with a rationale is
+    what `arc-m17-hidden-groundable-leak.ttl` carries, and `arc-m18-asserted-with-rationale-
+    leak.ttl` is that pair at the OTHER grade — so between them the two fixtures prove M17
+    fires on the grade and not on the pair.
+    """
+    _refused_by_shacl("arc-m17-hidden-groundable-leak.ttl", "M17")
+
+
+def test_m18_the_rationale_cardinality_of_an_edge_is_refused_when_wrong():
+    """Exactly one rationale per proposition, none per assertion — three fixtures, three ways
+    to get it wrong, and all three are real.
+
+      * NONE on a proposition. An ungrounded claim entered without saying why it could not be
+        grounded is indistinguishable, later, from an assertion somebody forgot to ground.
+      * TWO on a proposition. Not a richer record: an unresolved disagreement stored as if it
+        were a fact. Pinning only the zero side would leave a membrane that accepted any
+        number above zero looking green.
+      * ANY on an assertion. An assertion is grounded by A5's ablation running in CI and by
+        nothing else; prose beside it is a second, unfalsifiable account that will still read
+        as true on the day the ablation refutes the edge. Spec §3 refuses a stored
+        `prog:ablation` record for exactly this reason.
+
+    The rationale rides an `rdf:Statement` reification node, not a literal on the criterion
+    (plan §0/C3): a literal on the criterion cannot say WHICH proposed edge it explains, so
+    "exactly one" would be unstatable the moment a criterion proposed two targets.
+    """
+    for fixture in ("arc-m18-rationale-cardinality-leak.ttl",
+                    "arc-m18-two-rationales-leak.ttl",
+                    "arc-m18-asserted-with-rationale-leak.ttl"):
+        _refused_by_shacl(fixture, "M18")
+
+    for fixture, arm in (("arc-m18-rationale-cardinality-leak.ttl", "carries no prog:depend"),
+                         ("arc-m18-two-rationales-leak.ttl", "carries more than one"),
+                         ("arc-m18-asserted-with-rationale-leak.ttl", "may not carry a")):
+        _, report = validate_manifest(REPO / "tests" / fixture)
+        assert arm in report, f"{fixture} must trip the {arm!r} arm of M18:\n{report}"
+
+
+# ------------------------------------------ the one <path>:<line> parser, asserted to be one
+
+_REPLACE_CALL = re.compile(r'REPLACE\(STR\(\?\w+\), "([^"]+)", ""\)')
+
+
+def test_the_sparql_line_strip_agrees_with_the_python_one():
+    """A6 STRIPS `<path>:<line>` IN SPARQL AND `_LINE_SUFFIX` STRIPS IT IN PYTHON, and this is
+    the only thing that says the two agree.
+
+    R109 is open precisely because this repo already carries two divergent `<path>:<line>`
+    parsers; M16/A6 would have been a third if it were pinned by a comment. So this reads the
+    regex OUT OF the membrane rather than restating it — a restated regex is a fourth copy —
+    demands that every `REPLACE` in `tests/arc-shapes.ttl` uses the same one, and then makes
+    the two implementations strip every `prog:oracleArtifact` value in the live manifest and
+    agree on the result.
+
+    The last assertion is the one that keeps the agreement HONEST rather than accidental.
+    MEASURED 2026-08-22 over all 43 criteria: `prog:oracleArtifact` takes exactly two forms,
+    `<path>` and `<path>:<n>`. The range form `<path>:<n>-<m>` occurs in `prog:source` and in
+    no `prog:oracleArtifact`, and `":[0-9]+$"` and `r":\\d+$"` agree on every form that does
+    occur. The day one does not, this goes red and the divergence becomes a decision instead
+    of a silent third parser.
+    """
+    strips = set(_REPLACE_CALL.findall(SHAPES.read_text(encoding="utf-8")))
+    assert len(strips) == 1, (
+        f"tests/arc-shapes.ttl strips a line suffix {len(strips)} different ways: {strips}. "
+        "M16/A6 and M17 must use one regex, or an edge can fail one and pass the other")
+    (sparql_strip,) = strips
+
+    g = Graph().parse(MANIFEST, format="turtle")
+    rows = list(g.query("""PREFIX prog: <https://w3id.org/iladub/progress#>
+        SELECT ?a (REPLACE(STR(?a), "%s", "") AS ?f) WHERE { ?c prog:oracleArtifact ?a }"""
+                        % sparql_strip))
+    assert rows, "the manifest names no prog:oracleArtifact; this test would be vacuous"
+
+    for artifact, stripped in rows:
+        assert str(stripped) == _LINE_SUFFIX.sub("", str(artifact)), (
+            f"{artifact!s}: the membrane strips it to {stripped!s} and _LINE_SUFFIX "
+            f"(tests/test_arc_manifest.py:63) strips it to "
+            f"{_LINE_SUFFIX.sub('', str(artifact))} — R109's third parser has arrived")
+        assert ":" not in str(stripped), (
+            f"{artifact!s} carries a suffix neither parser was measured against (a range, a "
+            "drive letter, a URL scheme). Decide what A6 means for it before adding it")
+
+
 # ------------------------------------------------- M5, M5b, M5c, M7: the environment leg
 
 def test_m5_a_met_criterion_pointing_at_an_absent_artifact_is_refused():

@@ -1,0 +1,34 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M16 / A2 — an ASSERTED edge from a criterion that names no oracle at all. A criterion with
+# no prog:oracleArtifact has nothing to delete and one with no prog:oracleTest has nothing to
+# run, so A5's ablation has no arms; the edge would be an assertion nothing could ever refute.
+#
+# This is holon:01 with its two oracle lines removed and nothing else changed — a synthetic
+# variant, said plainly, because every criterion in the live manifest that is prog:met true
+# does name an oracle (measured), so no real block carries this shape. With no oracleTest on
+# the subject A3 cannot fire, and with no oracleArtifact A6 cannot; both ends are met so A1
+# and M15 stay silent, and both metOn are 2026-06-23 so A4 holds. A2 is the only one left.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:dependsOn prog:criterion:holon:03 .
+
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: a GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .

@@ -1,0 +1,44 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M18, third arm — an ASSERTION carrying a rationale. An asserted edge is grounded by A5's
+# two-sided ablation running in CI, and by nothing else. A prose rationale beside it is not
+# extra evidence: it is a second, unfalsifiable account of why the edge is there, and the day
+# the ablation refutes the edge the prose will still read as if it did not. Spec §3 refuses a
+# stored prog:ablation record for exactly this reason, and a rationale on an assertion is the
+# same stored label wearing different vocabulary.
+#
+# The edge itself is impeccable — holon:03 → holon:01 satisfies A1–A4 and A6 (see
+# arc-m17-hidden-groundable-leak.ttl, which is this same pair at the other grade) — so M16
+# has nothing to say and the rationale node is the only thing wrong.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" .
+
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: a GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" ;
+    prog:dependsOn prog:criterion:holon:01 .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:03 ;
+   rdf:predicate prog:dependsOn ;
+   rdf:object    prog:criterion:holon:01 ;
+   prog:dependencyRationale "the governance shape is layered onto the holon types — a claim the ablation already makes, and this sentence cannot be refuted by anything." .

@@ -7,11 +7,22 @@
 # Inferring by absence in a derivation is what CLAUDE.md §8 forbids; closing over the
 # manifest, which is one hand-authored file, is what a membrane is for.
 #
-# It carries SEVEN of the TEN refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b).
+# It carries FOURTEEN of the EIGHTEEN refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b)
+# over a single criterion, and M12–M18 over the DEPENDENCY GRAPH between criteria
+# (spec 2026-08-22 §5, added 2026-08-22).
 # M5, M5b, M5c, M7 and M10 are NOT here and cannot be: they ask about the filesystem, a
 # pytest collection and `sys.version`, none of which are triples. They live in
 # tests/test_arc_manifest.py, which states why that split is irreducible.
 # (M10 — does prog:source's <path>:<line> resolve — was added 2026-08-21, Ruling 18, R105.)
+#
+# M19 CANNOT BE HERE either, and for a stronger reason than M5's. M19 is A5, the two-sided
+# ablation: it creates a git worktree, DELETES a file inside it and reads a pytest exit code.
+# A filesystem mutation and a subprocess exit code are not triples, and a membrane that
+# pretended otherwise would be asserting a fact about a run it never made. It lives in
+# tests/test_arc_ablation.py and says so in its own docstring.
+#
+# M11 IS RESERVED for R106's non-vacuity rule and is deliberately skipped — the numbering
+# jumps M10 → M12. Do not reuse it (spec 2026-08-22 §5).
 #
 # `prog:` (https://w3id.org/iladub/progress#) is repo-internal and unpublished, exactly as
 # `cor:` and `dg:` are: not w3id-registered, never in vocab/ontology/. No HGA IRI appears
@@ -21,13 +32,19 @@
 # that a fixture trips EXACTLY ONE of them. That is what makes each fixture evidence about
 # the constraint it was written for rather than about the membrane in general.
 
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix prog: <https://w3id.org/iladub/progress#> .
 
+# `rdf:` joined this block for M18: the rationale of a proposition rides a standard
+# rdf:Statement reification node (spec 2026-08-22 §3 as corrected by the plan's §0/C3), so
+# the constraint that counts those nodes must be able to name rdf:subject/predicate/object.
 prog:prefixes sh:declare [ sh:prefix "prog" ;
-    sh:namespace "https://w3id.org/iladub/progress#"^^xsd:anyURI ] .
+    sh:namespace "https://w3id.org/iladub/progress#"^^xsd:anyURI ] ,
+    [ sh:prefix "rdf" ;
+      sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
 
 # ---------------------------------------------------------------------------- the rung
@@ -144,6 +161,243 @@ prog:CriterionShape a sh:NodeShape ;
             FILTER(!isBlank($this))
             FILTER(!REGEX(STR($this),
               CONCAT("^https://w3id[.]org/iladub/progress#criterion:", ?k, ":[a-z0-9][a-z0-9-]*$"))) }""" ] .
+
+
+# ------------------------------------------------------- the dependency graph: the terms
+#
+# Two predicates for ONE relation — "X cannot be met while Y is unmet, and X's oracle
+# demonstrably consumes Y's artifact" — differing only in whether that claim is GROUNDED.
+# This is CLAUDE.md §3 turned on the arc itself: assert only what you can ground, propose
+# everything else, and never let a proposition pass as an assertion.
+#
+# Two predicates rather than one predicate plus a grade property, because the grade must
+# survive TRANSITIVE CLOSURE. A SPARQL property path cannot filter on a node property
+# mid-path, so with one predicate `prog:dependsOn+` would walk grounded and guessed edges
+# indiscriminately and the asserted closure would be uncomputable. With two,
+# `prog:dependsOn+` IS the grounded closure and
+# `(prog:dependsOn|prog:proposedDependsOn)+` is the full one (spec 2026-08-22 §3).
+#
+# NOTE WHAT IS DELIBERATELY ABSENT: no rdfs:range. Declaring
+# `prog:dependsOn rdfs:range prog:Criterion` would make every dependency target a
+# prog:Criterion BY INFERENCE, and M12 — which refuses a target that is not a declared
+# criterion — would go permanently vacuous. The membrane must not be handed the answer it
+# exists to check. Nothing here declares a domain either, for the same reason.
+prog:dependsOn a rdf:Property ;
+    rdfs:label "depends on (asserted)" ;
+    rdfs:comment "Criterion -> Criterion, ASSERTED. Admitted only where A1-A4 and A6 hold (M16) and where A5's two-sided ablation passes in CI (M19). Carries no rationale: the ablation is the grounding, and a prose rationale beside it would be an unfalsifiable second account (M18)." .
+
+prog:proposedDependsOn a rdf:Property ;
+    rdfs:label "depends on (proposed)" ;
+    rdfs:comment "Criterion -> Criterion, PROPOSITION. The same relation, ungrounded. Carries exactly one prog:dependencyRationale (M18), and is refused outright where the pair is groundable (M17) — a proposition may not hide an edge that could have been asserted." .
+
+prog:dependencyRationale a rdf:Property ;
+    rdfs:label "dependency rationale" ;
+    rdfs:comment "Why a proposed edge could not be grounded. It hangs on an rdf:Statement reification node beside the direct triple, NOT on the criterion: a literal on the criterion could not say WHICH proposed edge it explains, and 'exactly one' would be unstatable for a criterion with two proposed targets. The direct triple stays, so the property paths of spec 2026-08-22 §3 are untouched. Not language-constrained (CLAUDE.md § Serialization)." .
+
+
+# --------------------------------------------------- the dependency graph: M12 to M18
+#
+# GATE (CLAUDE.md §8): all seven are AXIOM / constraint, CLOSED WORLD. They are a membrane
+# over one hand-authored file, which is what closing over absence is legitimate for; none of
+# them derives anything, and none carries a tuned constant, threshold or tolerance.
+#
+# Each is stated so that it FIRES ON EVIDENCE THAT IS PRESENT — M15 matches a target that
+# asserts `prog:met false`, never one that merely fails to assert `prog:met true`, so a
+# dangling target (M12's case) cannot also earn M15. That discipline is what lets
+# tests/test_arc_manifest.py assert that each fixture trips EXACTLY ONE refusal number.
+
+prog:CriterionShape
+
+    sh:sparql [
+        sh:message "M12: a dependency target must be a declared prog:Criterion IRI. Unlike prog:blockedBy, whose values name rows of a markdown register that is not in the graph at all, this edge is IN the graph — so dangling is checkable, and is refused." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this (prog:dependsOn|prog:proposedDependsOn) ?y .
+            FILTER(!isIRI(?y) || NOT EXISTS { ?y a prog:Criterion }) }""" ] ;
+
+    # M13 OWNS the self-edge, and M14 below is written so that it does NOT see one. That
+    # split is deliberate: M13 is a local refusal a reader can check by eye on one line,
+    # M14 is the global one that no local rule sees. A membrane where a self-edge tripped
+    # both would leave neither fixture as evidence about the constraint it was written for.
+    sh:sparql [
+        sh:message "M13: a criterion may not depend on itself, at either grade. A criterion cannot be its own precondition, and a self-edge makes every closure through it useless." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this (prog:dependsOn|prog:proposedDependsOn) $this }""" ] ;
+
+    # M14 duplicates nothing. M15 refuses one LOCAL inconsistency; a cycle is a GLOBAL one
+    # and every edge in it can be individually impeccable. `FILTER(?y != $this)` is what
+    # hands the self-edge to M13: it forces the returning path to pass through at least one
+    # node other than $this, so a pure self-loop is invisible here and a 2-cycle is not.
+    # The `*` closure then needs length >= 1, because its zero-length case is exactly the
+    # ?y = $this the filter has already excluded.
+    sh:sparql [
+        sh:message "M14: this criterion is part of a dependency cycle — following prog:dependsOn / prog:proposedDependsOn from it returns to it. A cycle asserts that each of its members must land before the others, which is a claim no ordering can satisfy." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this (prog:dependsOn|prog:proposedDependsOn) ?y .
+            FILTER(?y != $this)
+            ?y (prog:dependsOn|prog:proposedDependsOn)* $this }""" ] ;
+
+    # The analogue of M8, and the cheapest catcher of a REVERSED edge. Evidence-positive on
+    # purpose: it matches `?y prog:met false` and never `NOT EXISTS { ?y prog:met true }`,
+    # so a target that is not in the graph at all is M12's case and only M12's.
+    sh:sparql [
+        sh:message "M15: a met criterion may not depend, at either grade, on an unmet one. If the work landed, it was not waiting on this — the edge is stale, or it points the wrong way." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:met true .
+            $this (prog:dependsOn|prog:proposedDependsOn) ?y .
+            ?y prog:met false }""" ] ;
+
+    # ---- M16: the five membrane preconditions of the ASSERTED grade (spec §4).
+    #
+    # Five constraints rather than one disjunction, all carrying the same refusal number so
+    # that tests/test_arc_manifest.py's exact-set assertion still reads {M16}. The reason is
+    # diagnostic and it is load-bearing for the task that authors 43 criteria worth of
+    # edges: "this edge fails A6" is actionable and "this edge fails M16" is not. Each of
+    # the five is pinned by its own fixture, so none can rot unnoticed.
+    #
+    # A1 — both ends met. A5's ablation is the whole grounding of this grade, and it cannot
+    # run against an oracle that does not pass today: there is no green to turn red.
+    sh:sparql [
+        sh:message "M16: A1 — an asserted prog:dependsOn requires BOTH ends prog:met true. The ablation that grounds an assertion needs a passing oracle at each end; propose it instead, with a rationale." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            FILTER(NOT EXISTS { $this prog:met true } || NOT EXISTS { ?y prog:met true }) }""" ] ;
+
+    # A2 — both ends name an oracle. No artifact is nothing to delete; no test is nothing to
+    # run. An edge whose ablation has no arms is an assertion nothing could ever refute.
+    sh:sparql [
+        sh:message "M16: A2 — an asserted prog:dependsOn requires BOTH ends to carry at least one prog:oracleArtifact and at least one prog:oracleTest. Without an artifact there is nothing to ablate and without a test there is nothing to observe." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            FILTER(NOT EXISTS { $this prog:oracleArtifact ?ax }
+                || NOT EXISTS { $this prog:oracleTest ?tx }
+                || NOT EXISTS { ?y prog:oracleArtifact ?ay }
+                || NOT EXISTS { ?y prog:oracleTest ?ty }) }""" ] ;
+
+    # A3 — the Q2 refusal, in SET semantics (plan §0/C1: prog:oracleTest is multi-valued and
+    # eleven met criteria carry two). Disjointness is the reading that carries the argument:
+    # with even ONE shared test both ablation arms fail for the same reason and prove nothing
+    # about either criterion in particular. Such a pair is not refused as an edge — it is
+    # refused as an ASSERTION, and belongs at the proposition grade.
+    sh:sparql [
+        sh:message "M16: A3 — an asserted prog:dependsOn requires the two ends to share NO prog:oracleTest. A shared test makes both arms of the ablation fail for the same reason, so it can never say which way the dependency runs." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            $this prog:oracleTest ?t .
+            ?y prog:oracleTest ?t }""" ] ;
+
+    # A4 — a SANITY refusal, not the direction disposer; A5 is. NON-STRICT (spec §4, Q3):
+    # same-day pairs are the common case in this manifest and refusing them would cost all
+    # ten intra-holon edges to buy a rule A5 already gives better. So only a target met
+    # STRICTLY LATER is refused, which is the plain contradiction and nothing more.
+    sh:sparql [
+        sh:message "M16: A4 — an asserted prog:dependsOn requires metOn(target) <= metOn(subject). A target met AFTER the criterion that supposedly depended on it is a contradiction in the record, whichever of the two dates is wrong." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            $this prog:metOn ?mx .
+            ?y prog:metOn ?my .
+            FILTER(?my > ?mx) }""" ] ;
+
+    # A6 — the Q6 refusal: A3's argument at FILE granularity, because ablation DELETES FILES.
+    # `vocab/shapes/dec-shapes.ttl:15` and `vocab/shapes/dec-shapes.ttl:48` are one artifact
+    # for that purpose, so the `:line` suffix is stripped before comparing.
+    #
+    # THE STRIP MUST AGREE WITH tests/test_arc_manifest.py:63 (`_LINE_SUFFIX`, r":\\d+$"),
+    # and that agreement is pinned by a test rather than by this comment
+    # (test_the_sparql_line_strip_agrees_with_the_python_one) — R109 is open precisely
+    # because this repo already carries two divergent <path>:<line> parsers. MEASURED
+    # 2026-08-22 over all 43 criteria: prog:oracleArtifact takes exactly two forms, `<path>`
+    # and `<path>:<n>`; no range form (`<path>:<n>-<m>`) occurs, and no non-ASCII digit does.
+    sh:sparql [
+        sh:message "M16: A6 — an asserted prog:dependsOn requires the two ends to name NO prog:oracleArtifact file in common, comparing with any :line suffix stripped. Ablation deletes files, so a shared file collapses both arms exactly as a shared oracle test does." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            $this prog:oracleArtifact ?ax .
+            ?y prog:oracleArtifact ?ay .
+            FILTER(REPLACE(STR(?ax), ":[0-9]+$", "") = REPLACE(STR(?ay), ":[0-9]+$", "")) }""" ] ;
+
+    # ---- M17: the forcing function of the whole design.
+    #
+    # It makes "propose it and move on" UNAVAILABLE wherever grounding is possible. Without
+    # it the proposition grade becomes a place to hide and the two-predicate split buys
+    # nothing. It is the exact complement of M16: M16 refuses an assertion that fails any of
+    # A1-A4+A6, M17 refuses a proposition that satisfies ALL of them.
+    #
+    # Note the consequence recorded by the plan's §0/C4: a REFUTED edge cannot be demoted to
+    # a proposition, because M17 would refuse it. Deletion is the only membrane-legal
+    # outcome, and the refutation is written into the loop's evidence, never into the graph.
+    sh:sparql [
+        sh:message "M17: a proposition may not hide a groundable edge — this prog:proposedDependsOn satisfies A1, A2, A3, A4 and A6, so it must be asserted and let CI's ablation refute the reading if it was wrong." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:proposedDependsOn ?y .
+            $this prog:met true .
+            ?y prog:met true .
+            $this prog:metOn ?mx .
+            ?y prog:metOn ?my .
+            FILTER(?my <= ?mx)
+            FILTER EXISTS { $this prog:oracleArtifact ?ax }
+            FILTER EXISTS { $this prog:oracleTest ?tx }
+            FILTER EXISTS { ?y prog:oracleArtifact ?ay }
+            FILTER EXISTS { ?y prog:oracleTest ?ty }
+            FILTER NOT EXISTS { $this prog:oracleTest ?t . ?y prog:oracleTest ?t }
+            FILTER NOT EXISTS {
+                $this prog:oracleArtifact ?a .
+                ?y prog:oracleArtifact ?b .
+                FILTER(REPLACE(STR(?a), ":[0-9]+$", "") = REPLACE(STR(?b), ":[0-9]+$", "")) } }""" ] ;
+
+    # ---- M18: exactly one rationale per proposition, none per assertion.
+    #
+    # Three constraints, one number, one fixture each — the same diagnostic split as M16, and
+    # for the same reason: "zero", "two" and "on an assertion" are three different mistakes.
+    #
+    # The rationale rides an rdf:Statement reification node (plan §0/C3). Reification is the
+    # W3C form for saying something about a triple and is not new vocabulary (CLAUDE.md
+    # § Holonic interaction model: align, don't reinvent); RDF-star would have broken the
+    # property paths M14 and the closure queries rest on.
+    sh:sparql [
+        sh:message "M18: a prog:proposedDependsOn carries no prog:dependencyRationale. A proposition entered without saying why it could not be grounded is indistinguishable, later, from an assertion somebody forgot to ground." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:proposedDependsOn ?y .
+            FILTER NOT EXISTS {
+                ?st a rdf:Statement ;
+                    rdf:subject $this ;
+                    rdf:predicate prog:proposedDependsOn ;
+                    rdf:object ?y ;
+                    prog:dependencyRationale ?r } }""" ] ;
+
+    sh:sparql [
+        sh:message "M18: a prog:proposedDependsOn carries more than one prog:dependencyRationale. Two rationales for one edge is not a richer record, it is an unresolved disagreement stored as a fact — a reader cannot tell which reading the author stands behind." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:proposedDependsOn ?y .
+            ?s1 a rdf:Statement ;
+                rdf:subject $this ; rdf:predicate prog:proposedDependsOn ; rdf:object ?y ;
+                prog:dependencyRationale ?r1 .
+            ?s2 a rdf:Statement ;
+                rdf:subject $this ; rdf:predicate prog:proposedDependsOn ; rdf:object ?y ;
+                prog:dependencyRationale ?r2 .
+            FILTER(?s1 != ?s2 || ?r1 != ?r2) }""" ] ;
+
+    sh:sparql [
+        sh:message "M18: a prog:dependsOn may not carry a prog:dependencyRationale. An assertion is grounded by A5's ablation running in CI and by nothing else; prose beside it is a second, unfalsifiable account that will still read as true on the day the ablation refutes the edge (spec §3 refuses a stored prog:ablation record for the same reason)." ;
+        sh:prefixes prog:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this prog:dependsOn ?y .
+            ?st a rdf:Statement ;
+                rdf:subject $this ;
+                rdf:predicate prog:dependsOn ;
+                rdf:object ?y ;
+                prog:dependencyRationale ?r }""" ] .
 
 
 # ------------------------------------------------------------------------- the manifest

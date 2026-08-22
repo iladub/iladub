@@ -1,0 +1,30 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M12: a dependency edge whose target is not a declared prog:Criterion. Unlike
+# prog:blockedBy — whose values are plain strings naming rows of a markdown register that is
+# not in the graph at all — this edge is IN the graph, so dangling is checkable and refused.
+#
+# The edge is at the PROPOSITION grade on purpose: at the asserted grade the same dangling
+# target would also fail A1 and earn M16, and a fixture that trips two refusals is evidence
+# about neither (tests/test_arc_manifest.py:333-343). It carries exactly one rationale node
+# so that M18 stays silent too.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" ;
+    prog:proposedDependsOn prog:criterion:holon:99 .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:01 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:99 ;
+   prog:dependencyRationale "reading: the holons module would need a criterion that nobody has declared; ungroundable because the target does not exist." .

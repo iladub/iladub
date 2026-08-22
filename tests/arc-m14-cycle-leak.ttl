@@ -1,0 +1,38 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M14: a two-cycle, holon:01 ⇄ holon:03. A cycle is a GLOBAL inconsistency and no local rule
+# sees it: every edge here is individually impeccable.
+#
+# MEASURED choice of pair, and it is what makes this fixture evidence about M14 alone. Both
+# ends are prog:met true (A1), both carry an oracleArtifact and an oracleTest (A2), their
+# oracle tests are disjoint (A3), both were met 2026-06-23 so A4 non-strict holds in BOTH
+# directions, and their artifact files — vocab/ontology/etkl-holons.ttl and
+# vocab/shapes/iladub-hga-shapes.ttl — are disjoint (A6). So M16 cannot fire on either edge,
+# M15 cannot fire (nothing here is unmet), and M13 cannot fire (neither edge is a self-edge).
+# What is left is the cycle, which only M14 can see.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" ;
+    prog:dependsOn prog:criterion:holon:03 .
+
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: a GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" ;
+    prog:dependsOn prog:criterion:holon:01 .

@@ -1,0 +1,29 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M13: a criterion depending on itself. M13 OWNS the self-edge and M14 must not see it —
+# M14 is the GLOBAL refusal (a cycle through at least one other node) and a fixture that
+# tripped both would be evidence about neither.
+#
+# Proposition grade, one rationale node: at the asserted grade the self-edge would also fail
+# A3 (a node shares every oracle test with itself) and earn M16. M17 stays silent here for
+# exactly that reason — A3 fails, so this proposition is not hiding a groundable edge.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" ;
+    prog:proposedDependsOn prog:criterion:holon:01 .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:01 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:01 ;
+   prog:dependencyRationale "reading: the module depends on itself; ungroundable because a criterion cannot be its own precondition." .

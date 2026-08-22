@@ -1,0 +1,36 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M16 / A1 — an ASSERTED edge whose subject is not met. A5's two-sided ablation is the whole
+# grounding of the asserted grade, and it cannot run against a criterion whose oracle does
+# not pass today: there is no green to turn red.
+#
+# The unmet end is the SUBJECT here, not the target, and that is deliberate. An asserted edge
+# from a met criterion to an UNMET one also trips M15, and a fixture that trips two refusals
+# is evidence about neither. tab:10 is a real unmet criterion that carries both an
+# oracleArtifact and an oracleTest, so A2 is satisfied; it has no prog:metOn, so A4 (which
+# needs two dates) cannot fire; its artifact file and oracle tests are disjoint from
+# holon:01's, so A3 and A6 stay silent. A1 is the only precondition left standing.
+prog:criterion:holon:01 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/etkl-holons.ttl — the holon types + grounding portal + membrane health, in the etkl namespace, standalone (no HGA dependency)." ;
+    prog:source "docs/holonic-interaction.md:147-148" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/etkl-holons.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_holons_module_standalone" .
+
+prog:criterion:tab:10 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "Every shape wired into the compile membrane is live, or registered idle with an adjudicated reason distinguishing corpus gap from dead shape." ;
+    prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:129-131" ;
+    prog:declaredOn "2026-08-20"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/etkl/test_vacuity_registry.py:87" ;
+    prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_every_idle_shape_is_registered" ;
+    prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_no_registered_shape_has_gone_live" ;
+    prog:dependsOn prog:criterion:holon:01 .

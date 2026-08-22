@@ -1,0 +1,41 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M16 / A4 — an ASSERTED edge whose target was met AFTER the criterion that supposedly
+# depended on it. dec:03 was met 2026-06-18; holon:02 was met 2026-06-23. If dec:03 really
+# could not be met while holon:02 was unmet, the record says it was, five days early.
+#
+# A4 is a SANITY refusal and not the direction disposer — A5 is. It is non-strict on purpose
+# (spec §4, Q3): same-day pairs are common in this manifest and refusing them would cost all
+# ten intra-holon edges to buy a rule A5 already gives better. So this fixture uses a STRICTLY
+# later target, which is the only thing A4 refuses.
+#
+# Everything else holds: both met (A1), both carry oracles (A2), their oracle tests are
+# disjoint (A3) and their artifact files are disjoint (A6).
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" ;
+    prog:dependsOn prog:criterion:holon:02 .
+
+prog:criterion:holon:02 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/ontology/iladub-hga-align.ttl — the optional alignment module (alignment-not-import): rdfs:subClassOf axioms only, pointing our document holons and grounding portal outward and never importing them." ;
+    prog:source "docs/holonic-interaction.md:149-150" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/ontology/iladub-hga-align.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_alignment_axioms_present" ;
+    prog:oracleTest "tests/test_source_ownership.py::test_alignment_modules_only_point_outward" .

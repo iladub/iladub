@@ -1,0 +1,53 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M18, second arm — ONE proposition, TWO rationales. "Exactly one" has two sides and both are
+# pinned; a fixture for the zero side alone would leave a membrane that accepted any number
+# above zero looking green.
+#
+# Two rationales for one edge is not a richer record, it is an unresolved disagreement stored
+# as if it were a fact: a reader cannot tell which reading the author stands behind, and
+# neither can the author who closes it later. If two readings are in play the edge is two
+# edges, or it is one edge and one of the readings is wrong.
+#
+# Same holon:04 → holon:03 pair as the zero-rationale fixture, and for the same reason: the
+# shared oracle tests fail A3, so M17 has nothing to say.
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: a GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
+
+prog:criterion:holon:04 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "examples/holon-grounding-conformant.ttl + tests/holon-grounding-leak.ttl — a conforming governed-grounding traversal and a negative case." ;
+    prog:source "docs/holonic-interaction.md:154-156" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "examples/holon-grounding-conformant.ttl" ;
+    prog:oracleArtifact "tests/holon-grounding-leak.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" ;
+    prog:proposedDependsOn prog:criterion:holon:03 .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:04 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:03 ;
+   prog:dependencyRationale "reading: the example exercises the governance shape; ungroundable because both criteria are exercised by the same two oracle tests (A3)." .
+
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:04 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:03 ;
+   prog:dependencyRationale "reading: actually the shape came first and the example was written against it; ungroundable for the same A3 reason." .

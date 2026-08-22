@@ -1,0 +1,38 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_manifest.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M16 / A3 — the Q2 refusal, and the reason the proposition grade exists at all.
+# holon:04 and holon:03 are exercised by the SAME TWO oracle tests. Ablate either end and
+# both tests fail for the same reason, so the two-sided ablation of A5 could never say which
+# way the dependency runs. Such a pair is not refused as an EDGE; it is refused as an
+# ASSERTION, and belongs at the proposition grade with a rationale.
+#
+# Everything else about this pair is impeccable — both met (A1), both carry an oracleArtifact
+# and an oracleTest (A2), both met 2026-06-23 so A4 holds non-strictly, and their artifact
+# files are disjoint (A6) — so A3 is the only thing this fixture is evidence about.
+prog:criterion:holon:03 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "vocab/shapes/iladub-hga-shapes.ttl — iladub:HgaGroundingGovernanceShape: a GroundingRecord may reach RegisteredStatus only as the product of an iladub:PromotionDecision." ;
+    prog:source "docs/holonic-interaction.md:151-153" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "vocab/shapes/iladub-hga-shapes.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
+
+prog:criterion:holon:04 a prog:Criterion ;
+    prog:ofRung "holon" ;
+    prog:statement "examples/holon-grounding-conformant.ttl + tests/holon-grounding-leak.ttl — a conforming governed-grounding traversal and a negative case." ;
+    prog:source "docs/holonic-interaction.md:154-156" ;
+    prog:declaredOn "2026-06-23"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-23"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "examples/holon-grounding-conformant.ttl" ;
+    prog:oracleArtifact "tests/holon-grounding-leak.ttl" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
+    prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" ;
+    prog:dependsOn prog:criterion:holon:03 .
