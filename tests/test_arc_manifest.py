@@ -1,10 +1,17 @@
-"""The arc manifest's membrane (spec 2026-08-20 §4) — ten refusals over prog:.
+"""The arc manifest's membrane (spec 2026-08-20 §4, extended 2026-08-22 §5) — eighteen
+refusals over prog:, counted as `tests/arc-shapes.ttl`'s own header counts them (M2/M2b are
+one, M9/M9b are one, M5/M5b/M5c are one).
 
 **Gate classification (CLAUDE.md §8): PROCEDURAL, and here is why it is irreducible.**
-Seven of the ten refusals are NOT here: M1, M2 (+M2b), M3, M4, M6, M8 and M9 (+M9b) are
-declarative over the manifest graph and live in `tests/arc-shapes.ttl` as SHACL — AXIOM /
-constraint, closed world, the membrane. This module owns only the five questions **no SHACL
-engine can see, because they are facts about the environment rather than about the graph**:
+Fifteen of the eighteen refusals are NOT here. Fourteen — M1, M2 (+M2b), M3, M4, M6, M8,
+M9 (+M9b) over a single criterion, and **M12–M18 over the DEPENDENCY GRAPH between criteria**
+(added 2026-08-22) — are declarative over the manifest graph and live in
+`tests/arc-shapes.ttl` as SHACL — AXIOM / constraint, closed world, the membrane. The
+fifteenth, **M19**, is not here either and could not be: it is A5's two-sided ablation, which
+creates a `git worktree`, deletes a file inside it and reads a pytest exit code, so it lives
+in `tests/test_arc_ablation.py` — split off by COST, not by concern (see that module's
+docstring). This module owns only the five questions **no SHACL engine can see, because they
+are facts about the environment rather than about the graph**:
 
   * **M5**  — does the file named by `prog:oracleArtifact` exist in the working tree?
   * **M5b** — does the node id named by `prog:oracleTest` COLLECT under this runner?
@@ -68,8 +75,11 @@ _LINE_SUFFIX = re.compile(r":\d+$")
 def validate_manifest(data_path, shapes_path=SHAPES):
     """The SHACL leg: (conforms, report_text) for one manifest against the membrane.
 
-    `advanced=True` is required — six of the constraints are `sh:sparql` — and
+    `advanced=True` is required — most of the constraints are `sh:sparql` — and
     `inference="rdfs"` matches every other membrane in this repo (CLAUDE.md § Serialization).
+    MEASURED 2026-08-22, after M12–M18 landed: `grep -c 'sh:sparql' tests/arc-shapes.ttl` ->
+    **19** (it was 6 when this docstring was first written, and the number went stale in
+    silence, which is why it now carries the command that produced it).
     """
     ok, _, report = validate(
         Graph().parse(data_path, format="turtle"),
@@ -606,7 +616,18 @@ def test_the_sparql_line_strip_agrees_with_the_python_one():
     occur. The day one does not, this goes red and the divergence becomes a decision instead
     of a silent third parser.
     """
-    strips = set(_REPLACE_CALL.findall(SHAPES.read_text(encoding="utf-8")))
+    shapes_text = SHAPES.read_text(encoding="utf-8")
+    calls = _REPLACE_CALL.findall(shapes_text)
+    # The SET assertion below cannot see a call the REGEX misses — a `REPLACE( STR(?a), …)`
+    # written with different spacing would be a second parser that never enters `strips` at
+    # all, so `len(strips) == 1` would stay green while the divergence shipped. This counts
+    # the calls INDEPENDENTLY, by the bare token, and is the only thing that says the regex
+    # reads every one of them. MEASURED 2026-08-22: 4 (M16/A6 and M17, two each).
+    assert len(calls) == shapes_text.count("REPLACE("), (
+        f"{shapes_text.count('REPLACE(')} REPLACE calls in tests/arc-shapes.ttl but "
+        f"_REPLACE_CALL matches only {len(calls)} — one is written in a form this test "
+        "cannot read, so it is an unchecked <path>:<line> parser (R109)")
+    strips = set(calls)
     assert len(strips) == 1, (
         f"tests/arc-shapes.ttl strips a line suffix {len(strips)} different ways: {strips}. "
         "M16/A6 and M17 must use one regex, or an edge can fail one and pass the other")

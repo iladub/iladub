@@ -1,0 +1,60 @@
+# NEGATIVE FIXTURE — this file MUST be refused. See tests/test_arc_ablation.py.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M19 — the two-sided ablation, and the one refusal the membrane cannot make.
+#
+# `dec:11 prog:dependsOn dec:03` satisfies EVERY membrane precondition of the asserted grade:
+#   A1  both ends prog:met true.
+#   A2  both ends carry a prog:oracleArtifact and a prog:oracleTest.
+#   A3  their oracle test sets are disjoint — tests/test_risk.py vs tests/test_timeline_shacl.py.
+#   A4  metOn(dec:03) 2026-06-18 <= metOn(dec:11) 2026-06-26, non-strict, no contradiction.
+#   A6  their artifact FILES are disjoint — risk-shapes/transplant-risk/risk-leak against
+#       dec-shapes/heart-timeline-{conformant,leak}; the `:17` and `:48` suffixes are stripped
+#       before the comparison, and even unstripped the two sets share nothing.
+# M12 (both targets are declared criteria), M13 (not a self-edge), M14 (one edge, no cycle),
+# M15 (neither end is unmet) and M18 (an assertion carries no rationale, and none is here) are
+# all silent too. So the graph membrane ADMITS this edge — `validate_manifest` returns
+# Conforms: True — and it is left to A5's ablation to say whether the reading is true.
+#
+# It is not. MEASURED 2026-08-22 (and independently in the plan's §0/C5 and in Task 1's
+# fail-matrix, `docs/superpowers/2026-08-22-worktree-oracle-seam.md` § The fail-matrix): with
+# dec:03's three artifact files deleted inside a throwaway worktree, dec:11's own two oracle
+# tests still PASS. `test_risk.py` never loads `dec-shapes.ttl` or either heart-timeline
+# example, so the risk shapes do not consume the milestone shape and ARM 1 refutes the edge.
+# Arm 2 is satisfied (removing dec:11's artifacts leaves test_timeline_shacl.py green), which
+# is what makes this fixture evidence about arm 1 in particular rather than about "both arms
+# failed, the coupling is symmetric."
+#
+# This is the shape `_refused_by_environment` has for M5/M5b/M5c/M7/M10: SHACL-clean by
+# construction, refused by the leg that reads something no triple can express — here, a
+# filesystem and a pytest exit code.
+
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/heart-timeline-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" .
+
+prog:criterion:dec:11 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/risk-shapes.ttl:17 — risk:NoEmpiricRiskShape ships a worked example that conforms and a negative test that must fail (measured: tests/risk-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-26"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/risk-shapes.ttl:17" ;
+    prog:oracleArtifact "examples/transplant/transplant-risk.ttl" ;
+    prog:oracleArtifact "tests/risk-leak.ttl" ;
+    prog:oracleTest "tests/test_risk.py::test_transplant_contextual_risk_conformant" ;
+    prog:oracleTest "tests/test_risk.py::test_empiric_risk_stamp_rejected" ;
+    prog:dependsOn prog:criterion:dec:03 .
