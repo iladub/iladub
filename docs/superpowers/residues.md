@@ -38,11 +38,12 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-22: 101 rows, 22 closed, 79 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-22: 102 rows, 22 closed, 80 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
-R107, R108, and — from its whole-branch review — R109, R110 and R111, and closed ~~R105~~ in
+R107, R108, and — at loop close, from its whole-branch review and its warning attribution —
+R109, R110, R111 and R112, and closed ~~R105~~ in
 task 6.
 
 **Verified, not asserted — and re-run whenever this line is edited:**
@@ -50,7 +51,7 @@ task 6.
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   22  closed
-  79  open
+  80  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -190,3 +191,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R109 | open | Two divergent `<path>:<line>` parsers — M5 strips the line, M10 checks it; one defect wearing four faces, all latent, all measured |
 | R110 | open | The arc membrane's own messages degrade: two unnumbered `sh:nodeKind` refusals and three predicates with no property shape |
 | R111 | open | Strip legibility: `frontier`/`ready` carry no unit, the docstring illustration is stale, and a dead `else 0.0` would render the forbidden `0/0` |
+| R112 | open | 60 invisible `ResourceWarning`s — pytest never un-ignores the class, so the reported warning count is not the raised count |
