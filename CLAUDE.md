@@ -417,8 +417,12 @@ false. So:
 Every tracked markdown file belongs to **exactly one class**, by location —
 enforced by `tests/test_doc_governance.py` (SHACL membrane + SPARQL staleness,
 under `pytest`): **Evidence** (`docs/superpowers/**`, `docs/loops/**`,
-`docs/w3id/**` — immutable after loop close; `residues.md` is the mutable
-register), **Wiki** (`docs/wiki/**` — LLM-maintained synthesis, committed,
+`docs/w3id/**` — immutable after loop close, with **two named exceptions**:
+`residues.md` is the mutable register, and a **generated cache** — a file
+written by a script from a committed source and gated by regenerate-and-diff,
+so CI fails unless the tracked bytes are exactly what the source produces — is
+likewise mutable. The gate is what earns the exception: without it a derived
+file committed here is a stored label, and is forbidden), **Wiki** (`docs/wiki/**` — LLM-maintained synthesis, committed,
 never published), **Assertion** (the `mkdocs.yml` nav — authored, CC-BY,
 describes the *released* artifact only), **Manual** (the READMEs + `RELEASE.md` —
 their commands must run), **Contract** (this file — edited only on explicit

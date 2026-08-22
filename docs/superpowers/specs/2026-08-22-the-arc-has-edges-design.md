@@ -4,9 +4,9 @@
 · **Rows:** raises none at authoring time; §8 and §9 name the three it expects to raise
 
 **Doc impact: increment.** One generated artifact enters the tracked tree (§6). No Assertion-class
-page changes, no release-blocking contradiction. Whether the generated file needs a documentation
-class of its own is §6's open sub-decision, and it is the one thing in this spec that may touch
-`CLAUDE.md` — which is Contract-class and edited only on explicit request.
+page changes, no release-blocking contradiction. The one `CLAUDE.md` change this spec needed — a
+generated-cache exception to evidence-immutability — was **requested and granted 2026-08-22** and
+is already in the tree; §6 records it.
 
 **Origin:** `docs/superpowers/2026-08-22-next-loop-handoff.md`, § CHOSEN DIRECTION. That handoff is
 evidence-class; read it before this file. This spec does not restate its measurements — it cites
@@ -320,11 +320,18 @@ exception of exactly this shape** in the same sentence: *"`residues.md` is the m
 So the honest resolution is a second entry beside it — one clause naming generated caches, gated by
 regenerate-and-diff, as likewise mutable.
 
-`CLAUDE.md` is **Contract-class, edited only on explicit request.** The implementer must therefore
-**stop and ask the maintainer** for that clause before committing the generated file. If the answer
-is no, the generated landscape does not ship and §6 reduces to the three queries — which is a
-legitimate outcome, not a blocked loop. **Do not edit `CLAUDE.md` without that answer, and do not
-route around it via the `.databook.md` exemption.**
+`CLAUDE.md` is **Contract-class, edited only on explicit request** — so this was asked, and
+**GRANTED by the maintainer, 2026-08-22.** The clause is in the tree: `CLAUDE.md`
+§ Documentation governance now names **two** exceptions to evidence-immutability, `residues.md` and
+a **generated cache** — *"a file written by a script from a committed source and gated by
+regenerate-and-diff, so CI fails unless the tracked bytes are exactly what the source produces"* —
+with the gate stated as what earns the exception.
+
+**The implementer therefore does NOT need to ask again.** What the implementer must not do is ship
+the generated file **without** its regenerate-and-diff gate: the clause grants the exception *to a
+gated cache*, and an ungated derived file committed under `docs/superpowers/` is a stored label and
+is forbidden by the same sentence. Nor may it route around governance via the `.databook.md`
+exemption.
 
 ---
 
@@ -405,7 +412,7 @@ The loop closes when, on real input and not a fixture:
 3. M19 runs the two-sided ablation over every asserted edge and is green.
 4. `arc-depends.rq` and `arc-ready.rq` return rows over the real manifest, and the answer to
    *"what must land before the next unmet criterion"* is printed in the loop's evidence.
-5. **Either** the generated landscape is committed with its regenerate-and-diff gate green **or**
-   §6's `CLAUDE.md` clause was declined and the loop ships the three queries without it — stated
-   explicitly, either way. A loop that quietly drops the landscape has not closed.
+5. The generated landscape is committed **and** its regenerate-and-diff gate is green. The §6
+   clause was granted, so the escape hatch that stood here is gone: shipping the landscape ungated
+   is now forbidden by `CLAUDE.md` itself, and dropping it is no longer a legitimate close.
 6. §9's acyclicity result is stated as a **measured** answer, whichever way it came out.

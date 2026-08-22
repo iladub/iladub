@@ -34,8 +34,10 @@ so "what must land before X" is a derivation rather than a reading.
 - **A6 (distinct artifact files) added** — found by the spec's own self-review, recorded in
   **spec §2 Q6 and §4**. Never reviewed by anyone but its author.
 - **`docs/superpowers/arc-dependency-landscape.md` as the generated file's home** — recorded in
-  **spec §6 only**, and it is *contingent*: it needs one clause in `CLAUDE.md`, which is
-  Contract-class. **Nowhere else is this decision recorded, and it is reversible.**
+  **spec §6**. No longer contingent: the `CLAUDE.md` clause it needed was **requested and GRANTED
+  by the maintainer, 2026-08-22**, and is **recorded in `CLAUDE.md` § Documentation governance
+  itself** — evidence-immutability now names two exceptions, `residues.md` and a gated generated
+  cache. The grant is *to a gated cache*; an ungated derived file remains forbidden.
 
 ## Unverified or assumed
 
@@ -55,6 +57,13 @@ so "what must land before X" is a derivation rather than a reading.
 
 ## The next concrete action
 
-In a **fresh session**: have the maintainer review the spec, then invoke `superpowers:writing-plans`
-against it. The plan's first task is spec §4's MEASURE box — the worktree seam — because M19's whole
-design rests on an answer nobody has.
+In a **fresh session**: invoke `superpowers:writing-plans` against the spec. The maintainer has
+reviewed it and granted the one clause it asked for; nothing else is waiting on them.
+
+The plan's **first task is spec §4's MEASURE box** — whether an oracle test passes with `cwd` in a
+bare `git worktree` and no local `.venv`. M19's whole design rests on that answer and nobody has it.
+Do not let the plan assert it from reading (CLAUDE.md § Plan authoring, rule 2).
+
+**Two things in the spec have been reviewed by nobody but their author** and deserve a plan author's
+adversarial pass before anything is built: **A4's demotion** to non-strict (§2 Q3, §4) and **A6**
+(§2 Q6, §4).
