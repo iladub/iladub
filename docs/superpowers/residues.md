@@ -38,18 +38,18 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-21: 96 rows, 22 closed, 74 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-22: 98 rows, 22 closed, 76 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
-split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105 and
-R106 and closed ~~R105~~ in task 6.
+split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
+R107 and R108 and closed ~~R105~~ in task 6.
 
 **Verified, not asserted — and re-run whenever this line is edited:**
 
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   22  closed
-  74  open
+  76  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -184,3 +184,5 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R104 | closed | CLOSED 2026-08-17 (`742e862`) — `_validate` returns the refusing legs; `_refusal_message` names them |
 | R105 | closed | CLOSED 2026-08-21 (task 6, Ruling 18) — **M10**: every criterion's `prog:source` path must exist and its line be in range; the `etkl` join is kept beside it, not replaced |
 | R106 | open | A `prog:met true` arc criterion can cite evidence containing ZERO focus nodes for the shape it claims — the membrane says `shacl_ok=True` either way; the rule that catches it is prose |
+| R107 | open | The arc membrane admits two `prog:Rung` nodes sharing one `prog:rungKey` — both readers are immune today, for **different** reasons; "that is luck, not design" |
+| R108 | open | A `prog:blockedBy` naming a **closed** register row is admitted — M7 checks presence, not state, and R105 is now exactly such a row |
