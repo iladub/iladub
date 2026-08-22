@@ -56,6 +56,15 @@ pass turns a false edge green. Hence: one subprocess per module, per-id attribut
 pytest's own `-v` progress lines, and `_scores` **raises** rather than guessing when a
 requested node id comes back with no outcome at all.
 
+**Why the `-v` progress region and not the `-rA` short summary.** The summary cannot attribute a
+SKIP to a node id at all — MEASURED, it renders one as `SKIPPED [1] tests/test_corpus.py:67: …`,
+naming a *file and line* rather than the id that skipped, so a skipped oracle would be
+unattributable however wide the terminal. The progress region does name the id. It is **not**
+true, though, that the progress region is a simple `<id> <OUTCOME>` grid: it appends `(reason)`
+to SKIPPED and XFAIL whenever the line fits the terminal, which is a real hazard the first
+version of `_PROGRESS` was blind to. See that regex's own comment for the measurement and the
+test that pins it.
+
 **Three stated limitations.** None is hidden and none is worked around:
 
   1. **The worktree is checked out at `HEAD`, so M19 validates the COMMITTED tree.**
@@ -92,6 +101,7 @@ NEVER `python3` (Global Constraint 1) — it carries rdflib 7.1.4 and no pyrudof
 subprocesses this module spawns inherit `sys.executable`, so a foreign interpreter would
 ablate against the wrong runner as well as read the manifest with it.
 """
+import os
 import re
 import shutil
 import subprocess
@@ -99,8 +109,10 @@ import sys
 import tempfile
 from collections import defaultdict
 from pathlib import Path
+from unittest import mock
 
-from rdflib import Graph, Namespace
+import pytest
+from rdflib import RDF, Graph, Namespace
 
 from tests.test_arc_manifest import (MANIFEST, REPO, _LINE_SUFFIX, oracle_rows,
                                      validate_manifest)
@@ -112,11 +124,23 @@ FIXTURE = REPO / "tests" / "arc-m19-false-edge-leak.ttl"
 # pytest's own `-v` progress lines, one per executed test and ending in a percentage:
 #     tests/test_risk.py::test_empiric_risk_stamp_rejected PASSED              [100%]
 # Read out of pytest rather than inferred from the exit code, because an exit code cannot say
-# WHICH id failed when one module carries two criteria's oracles. The `-rA` short summary is
-# NOT the source here: MEASURED 2026-08-22, it renders a skip as `SKIPPED [1] file.py:67: …`,
-# with no node id at all, so a skipped oracle would come back unattributable.
+# WHICH id failed when one module carries two criteria's oracles.
+#
+# THE OPTIONAL `(reason)` IS LOAD-BEARING AND THE REGEX ONCE MISSED IT. MEASURED 2026-08-22 on
+# pytest 9.0.3, the same node id under two terminal widths:
+#     COLUMNS=80   …::test_expected_verdict[…] SKIPPED                          [ 14%]
+#     COLUMNS=250  …::test_expected_verdict[…] SKIPPED (corpus not populated: … ) [ 14%]
+# pytest prints the reason for SKIPPED/XFAIL **whenever the line fits the terminal** and drops
+# it when it does not, so a pattern demanding the `[ nn%]` column immediately after the outcome
+# token parses the SAME RUN differently depending on the window size. It never produced a false
+# pass — the id came back unattributed and `_scores` raised — but "raises on a wide terminal,
+# refuses politely on 80-column CI" is a defect, and it is not hypothetical: the 9 corpus oracle
+# ids skip WITH a reason (`tests/test_corpus.py:67,69`), and `corpus/` is gitignored so they
+# always skip inside a worktree. `.*` is greedy on purpose — the reasons themselves carry nested
+# parens (`… (scripts/fetch_corpus.py))`), so the match must run to the LAST one on the line.
+# `test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width` pins both renderings.
 _PROGRESS = re.compile(
-    r"^(\S.*?) (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+\[\s*\d+%\]\s*$", re.M)
+    r"^(\S.*?) (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)(?: \(.*\))?\s+\[\s*\d+%\]\s*$", re.M)
 # …and the one thing the progress region cannot show, because the test never started: a module
 # that failed to import. `ERROR tests/x.py - FileNotFoundError: …` in the summary.
 _COLLECT_ERROR = re.compile(r"^ERROR (\S+)", re.M)
@@ -252,7 +276,8 @@ def ablation_refusals(graph):
     if not edges:
         return []
     oracles = _oracles(graph)
-    dangling = sorted({e for edge in edges for e in edge} - set(oracles))
+    ends = {e for edge in edges for e in edge}
+    dangling = sorted(ends - set(oracles))
     # NOT a refusal of M19's — M12 owns the dangling target and refuses it in the membrane,
     # where it belongs. This only says so legibly instead of raising a bare KeyError two
     # frames down, and it never invents an M-numbered refusal for a graph SHACL already
@@ -261,6 +286,26 @@ def ablation_refusals(graph):
         f"M19 was handed edges whose ends are not declared prog:Criterion subjects: "
         f"{dangling}. That is M12's refusal, in tests/arc-shapes.ttl — validate the graph "
         f"through the membrane before asking the ablation to run against it")
+
+    # …and the same shape for A2, which is M16's refusal. BOTH ends of an edge are RUN: the
+    # source in arm 1 (inside the target's worktree) and the target in arm 2 (inside the
+    # source's). An end with no prog:oracleTest therefore contributes an EMPTY result set, and
+    # arm 2's `broken` list — computed by filtering that set — comes back empty, so the edge is
+    # ADMITTED having been tested by nothing. (Arm 1 is safe by luck of the quantifier: `all()`
+    # over an empty set is True, so a testless source refutes rather than admits.)
+    #
+    # This is a producer-side guard that the membrane also enforces, and CLAUDE.md § "Producer-
+    # side guards vs the membrane" is why it stays: `ablation_refusals` is a public entry point
+    # that any caller may reach without validating first, so total coverage by the membrane is
+    # not provable here — and the failure it prevents is silent admission, which is the one
+    # direction that must never happen. It fails at the call site that handed in the bad graph,
+    # naming the refusal that owns the question.
+    testless = sorted(e for e in ends if not oracles[e][1])
+    assert not testless, (
+        f"M19 was handed edges whose ends carry no prog:oracleTest: {testless}. Both ends of "
+        f"an edge are RUN — the source in arm 1, the target in arm 2 — so an end with no "
+        f"oracle would make arm 2 vacuously green. That is M16's A2 precondition, in "
+        f"tests/arc-shapes.ttl; validate the graph through the membrane first")
     sources, targets = defaultdict(list), defaultdict(list)
     for x, y in edges:
         sources[y].append(x)      # arm 1: remove y, run x
@@ -323,6 +368,82 @@ def test_m19_an_edge_the_membrane_admits_and_the_ablation_refutes():
     assert reason.startswith("M19: arm 1 refutes "), reason
     for end in ("criterion:dec:11", "criterion:dec:03"):
         assert end in reason, f"M19 must name both ends of the edge it refutes: {reason}"
+
+
+def test_m19_refuses_to_run_against_a_graph_the_membrane_would_have_stopped():
+    """The two PRODUCER-SIDE GUARDS, and why they are not duplicates of M12 and M16/A2.
+
+    CLAUDE.md § "Producer-side guards vs the membrane": a guard the membrane also enforces earns
+    its place when the membrane's total coverage of that producer is not provable.
+    `ablation_refusals` is a public entry point — Task 4's tooling, a future query script, any
+    caller — and nothing in its signature forces a `validate_manifest` first. So it checks the
+    two things it cannot survive, and names the refusal that OWNS each question rather than
+    minting a third M-number for a graph SHACL already rejects.
+
+      * an end that is not a declared criterion — M12's refusal. Without this it is a bare
+        `KeyError` two frames down, with the manifest nowhere in the message.
+      * an end carrying no `prog:oracleTest` — M16's A2. This one is not cosmetic: BOTH ends of
+        an edge are run (the source in arm 1, the target in arm 2), so a testless end gives arm 2
+        an EMPTY result set, `broken` comes back empty, and the edge is ADMITTED having been
+        tested by nothing. **Silent admission is the one direction M19 must never fail in.**
+        Arm 1 is safe only by luck of the quantifier — `all()` over an empty set refutes — and
+        luck is not a guard, which is why this asserts rather than relying on it.
+
+    Both graphs are built in memory from the LIVE manifest, so the only thing wrong with each is
+    the end this test is about.
+    """
+    live = Graph().parse(MANIFEST, format="turtle")
+
+    dangling = Graph() + live
+    dangling.add((PROG["criterion:dec:11"], PROG.dependsOn, PROG["criterion:nope:99"]))
+    with pytest.raises(AssertionError, match="not declared prog:Criterion subjects"):
+        ablation_refusals(dangling)
+
+    testless = Graph() + live
+    testless.add((PROG["criterion:dec:99"], RDF.type, PROG.Criterion))
+    testless.add((PROG["criterion:dec:11"], PROG.dependsOn, PROG["criterion:dec:99"]))
+    with pytest.raises(AssertionError, match="carry no prog:oracleTest"):
+        ablation_refusals(testless)
+
+
+_SKIPS_WITH_A_REASON = "tests/test_corpus.py::test_expected_verdict"
+
+
+def test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width():
+    """THE SAME RUN MUST NOT GET TWO ANSWERS DEPENDING ON THE WINDOW SIZE.
+
+    pytest 9.0.3 appends `(reason)` to a `-v` SKIPPED/XFAIL line whenever the line fits the
+    terminal and drops it when it does not, so terminal width silently changes the shape of the
+    text M19 parses. The first version of `_PROGRESS` demanded the `[ nn%]` column immediately
+    after the outcome token: on 80 columns it read the skip correctly, and on a wide terminal it
+    matched nothing, `_scores` found the id unattributed, and M19 died with an instrument-failure
+    RuntimeError instead of the refusal it documents. Never a false pass — but "raises at home,
+    refuses on CI" is a defect, and it is squarely in Task 4's path: `corpus/` is gitignored, so
+    every one of the 9 corpus oracle ids skips WITH a reason inside every worktree M19 creates.
+
+    So this runs the real oracle in a real worktree TWICE, forcing each rendering, and demands
+    the two agree. 80 and 250 are the two renderings, not a threshold: nothing is compared
+    against them and no behaviour is tuned to either (CLAUDE.md §8).
+
+    The assertion is on the OUTCOME, not on the text: a skip grounds nothing, so it must come
+    back as the documented "did not execute" sentence — neither `PASSED` (which would admit an
+    arm-2 edge on an oracle that never ran) nor a raise.
+    """
+    seen = {}
+    for columns in ("80", "250"):
+        with mock.patch.dict(os.environ, {"COLUMNS": columns}):
+            seen[columns] = _ablate([], [_SKIPS_WITH_A_REASON])[_SKIPS_WITH_A_REASON]
+
+    assert seen["80"] == seen["250"], (
+        f"M19 read the same skipped oracle two different ways depending on terminal width: "
+        f"{seen} — the `(reason)` pytest appends when the line fits is not optional text")
+    for columns, verdict in sorted(seen.items()):
+        assert verdict not in (PASSED, FAILED), (
+            f"at COLUMNS={columns} a SKIPPED oracle was scored {verdict!r}; it executed nothing "
+            "and must ground nothing")
+        assert verdict.startswith("did not execute") and "SKIPPED" in verdict, (
+            f"at COLUMNS={columns} the refusal must say what pytest actually reported, so a "
+            f"reader can tell a skip from a failure: {verdict!r}")
 
 
 def test_m19_the_live_manifest_carries_no_refuted_edge():
