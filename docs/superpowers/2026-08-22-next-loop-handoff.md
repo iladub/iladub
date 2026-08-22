@@ -62,7 +62,43 @@ the cockpit stops printing `stage ?/5`. **Shipped**: `arc etkl 1/7 · dec 11/17 
 4. **R97-R101** — the vacuity-registry family the earlier tracker still names, of which R101 (a
    module-level skip hides a subsystem behind one line) is the one with teeth.
 
+## CHOSEN DIRECTION (maintainer, 2026-08-22): the dependency graph
+
+**The question asked:** *do we have a clear landscape of dependencies for building the full
+architecture?* **Measured answer: NO, and deliberately so.**
+
+`tests/arc-manifest.ttl` carries **no dependency edge of any kind**. Predicate census of the live
+file: `ofRung` 44, `blockedBy` 11, and **`precedes` appears exactly once — in a comment saying it
+does not exist** (`:19-21`): *"RUNGS ARE UNORDERED (decision 8). There is no prog:precedes and no
+index property: `tab` is depth inside `etkl`, not a stage after `substrate`, so the repo does not
+assert an ordering that is false for one of the five."* The only edges in the graph are
+criterion→rung and criterion→residue. **The arc is a scoreboard, not a graph.**
+
+**Decision 8 is not wrong — it is right at the wrong granularity, and that is the whole loop.** At
+rung scope an ordering IS false: `etkl` needs a minimal holon substrate to compile *into*, and the
+holarchy needs holons that only `etkl` can produce, so `etkl → holon` and `holon → etkl` are both
+true and the rung-level graph has a **cycle**. At criterion scope it need not: *which* holon
+criteria `etkl`'s next criterion actually needs is a smaller, checkable claim. **So the dependency
+edge belongs between CRITERIA, and the loop's first job is to establish whether that graph is
+acyclic — not to assume it.**
+
+**What this subsumes:** candidate 1. The register's 59-of-74 orphan rows have nowhere to attach
+today *because there is no edge type that would carry them*; a criterion→criterion graph gives
+"what unblocks what" a derivation instead of a count.
+
+**The seam to name in the spec, not answer here** — a hand-asserted `prog:dependsOn` is a
+**proposition**, and the loop is worthless without an independent disposer. The candidate oracle:
+a dependency X→Y is falsifiable by asking whether X's oracle test can pass with Y's artifact absent.
+Whoever writes the spec must decide whether that is checkable at acceptable cost, and say so before
+designing the vocabulary. **Proposer and disposer must not be the same reading** (see the
+spec-writing discipline).
+
+**What "one document that monitors" means here:** the monitor is **generated from the graph**, never
+hand-maintained — the cockpit strip and `residues.md` are hand-maintained today, which is why they
+drift (three recorded tally corrections). Its shape is a spec question, not a plan one.
+
 ## The next concrete action
 
-In a **fresh session**: open `docs/superpowers/residues.md`, then decide between candidate 1 and
-candidate 3 above — they are different kinds of loop, and only candidate 1 needs a spec.
+In a **fresh session, in its first third**: write the spec for the dependency graph above — the
+edge's semantics, the acyclicity question at criterion scope, the falsifying oracle for a dependency
+claim, and what the generated monitor asserts. Candidates 2-4 stay on the menu behind it.
