@@ -38,18 +38,19 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-22: 98 rows, 22 closed, 76 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-22: 101 rows, 22 closed, 79 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
-R107 and R108 and closed ~~R105~~ in task 6.
+R107, R108, and — from its whole-branch review — R109, R110 and R111, and closed ~~R105~~ in
+task 6.
 
 **Verified, not asserted — and re-run whenever this line is edited:**
 
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   22  closed
-  76  open
+  79  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -186,3 +187,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R106 | open | A `prog:met true` arc criterion can cite evidence containing ZERO focus nodes for the shape it claims — the membrane says `shacl_ok=True` either way; the rule that catches it is prose |
 | R107 | open | The arc membrane admits two `prog:Rung` nodes sharing one `prog:rungKey` — both readers are immune today, for **different** reasons; "that is luck, not design" |
 | R108 | open | A `prog:blockedBy` naming a **closed** register row is admitted — M7 checks presence, not state, and R105 is now exactly such a row |
+| R109 | open | Two divergent `<path>:<line>` parsers — M5 strips the line, M10 checks it; one defect wearing four faces, all latent, all measured |
+| R110 | open | The arc membrane's own messages degrade: two unnumbered `sh:nodeKind` refusals and three predicates with no property shape |
+| R111 | open | Strip legibility: `frontier`/`ready` carry no unit, the docstring illustration is stale, and a dead `else 0.0` would render the forbidden `0/0` |
