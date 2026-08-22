@@ -18,7 +18,11 @@
 #     commits — never auto-flipped to met.
 #   - RUNGS ARE UNORDERED (decision 8). There is no prog:precedes and no index property:
 #     `tab` is depth inside `etkl`, not a stage after `substrate`, so the repo does not
-#     assert an ordering that is false for one of the five.
+#     assert an ordering that is false for one of the five. That is UNCHANGED by the
+#     dependency section at the foot of this file: those edges are between CRITERIA, which
+#     is a strictly smaller claim (spec 2026-08-22 §1), and the loop that authored them
+#     MEASURED that their rung-level projection has a 2-cycle (dec <-> holon) while the
+#     criterion-level graph is acyclic — decision 8, confirmed rather than weakened.
 #
 # Criterion IRIs are `prog:criterion:<rungKey>:<slug>` and must agree with prog:ofRung
 # (M9/M9b). That is not tidiness: scripts/cockpit.py must read this file WITHOUT rdflib
@@ -31,9 +35,14 @@
 # descriptive slug would leave "holon:05" with nothing to point at. Each criterion's
 # human-readable identity is its prog:statement and the comment above it.
 
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix prog: <https://w3id.org/iladub/progress#> .
+# `rdf:` joined this block for the dependency section at the foot of this file: a
+# proposition's prog:dependencyRationale rides a standard rdf:Statement reification node
+# (plan 2026-08-22 §0/C3). Without this line the FIRST such node is a BadSyntax parse error
+# rather than a refusal — measured twice before the section was written.
 
 # The runner these assertions were validated against — M5's third arm (spec §7.2.2).
 # "If CI is green, every oracle is green" is true only RELATIVE TO A RUNNER: under the
@@ -1226,3 +1235,244 @@ prog:criterion:tab:10 a prog:Criterion ;
     prog:oracleArtifact "tests/etkl/test_vacuity_registry.py:87" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_every_idle_shape_is_registered" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_no_registered_shape_has_gone_live" .
+
+
+# ================================================== the dependency graph — authored 2026-08-22
+#
+# Spec docs/superpowers/specs/2026-08-22-the-arc-has-edges-design.md; the reading, the
+# refutations and the acyclicity answer are in docs/superpowers/2026-08-22-arc-edges-authored.md.
+#
+# BOTH PREDICATES MEAN THE SAME THING — "X cannot be met while Y is unmet, and X's oracle
+# demonstrably consumes Y's artifact" — and differ only in whether that claim is GROUNDED
+# (spec §3). `prog:dependsOn` is admitted only where A1-A4 and A6 hold (M16) and where A5's
+# two-sided ablation passes in CI (M19, tests/test_arc_ablation.py). Everything else is a
+# `prog:proposedDependsOn` carrying exactly one prog:dependencyRationale on an rdf:Statement
+# reification node (M18, plan §0/C3). The direct triple stays in both cases, so
+# `(prog:dependsOn|prog:proposedDependsOn)+` walks the full graph and `prog:dependsOn+` walks
+# the grounded one.
+#
+# CODE NEVER WRITES THESE EDGES either (the rule at the head of this file). They were read off
+# the 43 criteria BEFORE the membrane was consulted, then graded by it, then disposed by M19.
+#
+# ONE READING WAS AUTHORED, RUN AND REFUTED, and it is recorded in the evidence file rather
+# than here: `holon:02 prog:dependsOn holon:01` — iladub-hga-align.ttl subclasses five terms
+# DECLARED in etkl-holons.ttl (measured at vocab/ontology/iladub-hga-align.ttl: etkl:DocumentHolon,
+# RawDocumentHolon, CleanDocumentHolon, SemanticHolon, GroundingPortal), so the alignment axioms
+# name terms that cannot exist without holon:01. M19 arm 1 REFUTED it, 2026-08-22:
+#   with holon:01's artifact ['vocab/ontology/etkl-holons.ttl'] removed, BOTH of holon:02's
+#   oracle tests still pass ({test_alignment_axioms_present: passed,
+#   test_alignment_modules_only_point_outward: passed}), so holon:02 does not consume holon:01.
+# Per plan §0/C4 a refuted edge is DELETED, never demoted — M17 would refuse the demotion — so
+# the reading survives only as this comment and the evidence file's row. What the refutation
+# actually found is a hole in holon:02's oracle, not in the reading: nothing in the tree checks
+# that the terms iladub-hga-align.ttl aligns are DECLARED anywhere, so a dangling
+# `etkl:Foo rdfs:subClassOf holon:DataHolon` would keep both tests green. Do not re-author this
+# edge until that hole is closed; then it becomes groundable for a reason that is measured.
+
+# --- ASSERTED: A1-A4 + A6 in the membrane, A5's two-sided ablation in CI --------------------
+
+# The doc-holon fabric is the vocabulary the HGA-facing shape, its example pair and the
+# CLAUDE.md:252 pairing rule are all stated over: tests/test_hga_alignment.py:33 binds
+# ONTS = [iladub.ttl, etkl-holons.ttl] and passes it as the knowledge graph of every one of
+# those three criteria's oracles. Remove etkl-holons.ttl and all three break; remove any of
+# them and test_holons_module_standalone is untouched.
+prog:criterion:holon:03 prog:dependsOn prog:criterion:holon:01 .
+prog:criterion:holon:04 prog:dependsOn prog:criterion:holon:01 .
+prog:criterion:dec:16   prog:dependsOn prog:criterion:holon:01 .
+
+# The governed-grounding example is not only an HGA artifact: it types an
+# iladub:CandidateConcept (examples/holon-grounding-conformant.ttl:17) and
+# tests/test_hga_alignment.py:34 validates it against iladub-shapes.ttl as well as
+# iladub-hga-shapes.ttl. So the example pair depends on the two core shapes that RANGE OVER a
+# CandidateConcept — iladub:CandidateConceptShape (dec:07) and iladub:NoLeakShape (dec:10).
+# Both edges ground to the same FILE (iladub-shapes.ttl), which is spec §4's stated
+# file-granularity limitation and is disclosed in the evidence file rather than hidden here.
+# iladub:GroundedNodeShape (dec:08) is deliberately NOT an edge: that example carries no
+# iladub:GroundedNode, so the shape has no focus node in it — and dec:08's metOn is later
+# anyway, which A4 refuses.
+prog:criterion:holon:04 prog:dependsOn prog:criterion:dec:07 .
+prog:criterion:holon:04 prog:dependsOn prog:criterion:dec:10 .
+
+# dec:EscalationShape is layered ON dec:DecisionHolonShape, not beside it:
+# examples/transplant/transplant-escalation.ttl:20,34 carry two dec:DecisionHolon subjects and
+# tests/test_escalation_shacl.py:30-31 loads dec-shapes.ttl INTO the shape graph alongside
+# escalation-shapes.ttl (the leak test at :37 loads escalation-shapes.ttl alone). The
+# escalation example must therefore conform to the decision shape as well as to its own.
+prog:criterion:dec:06 prog:dependsOn prog:criterion:dec:01 .
+
+# --- PROPOSED: the reading is there, the grounding is not ----------------------------------
+
+# Q2's refusal wearing its own face: holon:03, holon:04 and dec:16 share BOTH oracle tests, so
+# every ablation among them fails symmetrically and grounds adjacency rather than direction.
+prog:criterion:holon:04 prog:proposedDependsOn prog:criterion:holon:03 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:04 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:03 ;
+   prog:dependencyRationale "reading: holon:04 IS the conformant/leak pair that exercises iladub:HgaGroundingGovernanceShape — tests/test_hga_alignment.py:57,62 validate both example files against HGA_SHAPES, so the example pair has nothing to conform to until the shape exists. Ungroundable: fails A3 — the two criteria share BOTH prog:oracleTest ids (test_governed_grounding_conformant, test_ungoverned_grounding_rejected), so each arm of the ablation fails for the same reason and can never say which way the dependency runs." .
+
+prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:03 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:16 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:03 ;
+   prog:dependencyRationale "reading: dec:16 asks CLAUDE.md:252's pairing question OF iladub:HgaGroundingGovernanceShape, and holon:03 is whether that shape's invariant is built at all (Ruling 12: the rungs partition declaring prose, not artifacts) — there is no pairing to ship for a shape that does not exist. Ungroundable: fails A3 (both criteria name test_governed_grounding_conformant and test_ungoverned_grounding_rejected) and A6 (both name vocab/shapes/iladub-hga-shapes.ttl, line suffix stripped)." .
+
+prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:04 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:16 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:04 ;
+   prog:dependencyRationale "reading: dec:16's 'ships a worked example that conforms AND a negative test that must fail' is satisfied by exactly the two files holon:04 declares — examples/holon-grounding-conformant.ttl and tests/holon-grounding-leak.ttl. Ungroundable: fails A3 (both oracle tests shared) and A6 (both example files shared)." .
+
+# The two unmet holon criteria are stated in vocabulary etkl-holons.ttl declares. MEASURED at
+# vocab/ontology/etkl-holons.ttl:62,67,75,86 — CleanDocumentHolon, GroundingPortal,
+# MembraneHealth and the membraneHealth property are all there, and this manifest's holon:05
+# note already records that nothing DERIVES the term.
+prog:criterion:holon:05 prog:proposedDependsOn prog:criterion:holon:01 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:05 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:01 ;
+   prog:dependencyRationale "reading: a membrane-health check reports etkl:membraneHealth -> Intact/Weakened/Compromised, and all four terms are declared in vocab/ontology/etkl-holons.ttl:75-86 and nowhere else in the tree (this manifest's own grep at holon:05). Ungroundable: fails A1 (holon:05 is unmet — there is no green oracle to turn red) and A2 (holon:05 carries no prog:oracleArtifact; its prog:oracleTest is a target that does not exist)." .
+
+prog:criterion:holon:06 prog:proposedDependsOn prog:criterion:holon:01 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:holon:06 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:holon:01 ;
+   prog:dependencyRationale "reading: a full RawDocumentHolon -> portal -> CleanDocumentHolon traversal example can only be typed out of etkl-holons.ttl:47,62,67, which declares all three. Ungroundable: fails A1 (holon:06 unmet) and A2 (no prog:oracleArtifact; the named test is a target)." .
+
+# The promotion pipeline, inside one shape file. examples/promotion.ttl:12 has the promotion
+# `iladub:reviews ex:cand-wirkstoffspiegel`, a subject that exists only in examples/proposal.ttl:9
+# — the grounded node is downstream of the candidate concept, in the data as well as in the
+# epistemics. All three criteria declare vocab/shapes/iladub-shapes.ttl, which is what A6 sees.
+prog:criterion:dec:08 prog:proposedDependsOn prog:criterion:dec:07 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:08 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:07 ;
+   prog:dependencyRationale "reading: iladub:GroundedNodeShape's conformant half is examples/promotion.ttl, whose promotion reviews ex:cand-wirkstoffspiegel — an iladub:CandidateConcept declared in examples/proposal.ttl:9, dec:07's example. A grounded node exists only as the product of promoting a candidate (CLAUDE.md §3), and the example says so literally. Ungroundable: fails A6 — the two criteria share vocab/shapes/iladub-shapes.ttl AND examples/proposal.ttl, and ablation deletes files." .
+
+prog:criterion:dec:10 prog:proposedDependsOn prog:criterion:dec:07 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:10 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:07 ;
+   prog:dependencyRationale "reading: iladub:NoLeakShape targets iladub:CandidateConcept, and this manifest's own non-vacuity count records that its ONLY focus node anywhere is ex:cand-wirkstoffspiegel at examples/proposal.ttl:10 — dec:07's example. No candidate concept, no focus node, no pairing. Ungroundable: fails A3 (both criteria name tests/test_boundary.py::test_leak_rejected) and A6 (both name vocab/shapes/iladub-shapes.ttl and examples/proposal.ttl)." .
+
+prog:criterion:dec:08 prog:proposedDependsOn prog:criterion:dec:01 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:08 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:01 ;
+   prog:dependencyRationale "reading: an iladub:PromotionDecision IS a dec:DecisionHolon (examples/promotion.ttl:11 types it as both), and tests/test_boundary.py:25-26 — one of dec:08's two oracles — validates proposal.ttl + promotion.ttl against vocab/shapes/dec-shapes.ttl, so dec:08's conformant half must satisfy dec:DecisionHolonShape as well as its own. Ungroundable: fails A6 — both criteria declare examples/promotion.ttl." .
+
+prog:criterion:dec:02 prog:proposedDependsOn prog:criterion:dec:01 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:02 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:01 ;
+   prog:dependencyRationale "reading: dec:ConfidenceShape TARGETS dec:DecisionHolon (this manifest's dec:02 note), so its positive half is the one dec:DecisionHolon in examples/promotion.ttl — dec:01's example — and the missing negative fixture would carry an out-of-range dec:confidence on that same class. Ungroundable: fails A1 (dec:02 unmet) and A2 (no prog:oracleArtifact; the named test is a target)." .
+
+prog:criterion:dec:12 prog:proposedDependsOn prog:criterion:dec:11 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:12 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:11 ;
+   prog:dependencyRationale "reading: risk:RiskAssessmentShape's conformant half is the 2 focus nodes this manifest counted in examples/transplant/transplant-risk.ttl, and its future oracle would load vocab/shapes/risk-shapes.ttl + that example — both of them dec:11's declared prog:oracleArtifact. Ungroundable: fails A1 (dec:12 unmet) and A2 (no prog:oracleArtifact). NOTE the weaker half of the predicate's meaning: dec:11 being unmet would not by itself block dec:12, so what is proposed here is the artifact-consumption half, and it is a proposition for that reason too." .
+
+prog:criterion:dec:13 prog:proposedDependsOn prog:criterion:dec:11 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:13 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:11 ;
+   prog:dependencyRationale "reading: risk:SensitivityShape's conformant half is the 3 focus nodes counted in examples/transplant/transplant-risk.ttl and its shape file is vocab/shapes/risk-shapes.ttl — both dec:11's artifacts. Ungroundable: fails A1 (dec:13 unmet) and A2 (no prog:oracleArtifact). Same caveat as dec:12 -> dec:11: this is the consumption half of the reading, not the blocking half." .
+
+prog:criterion:dec:15 prog:proposedDependsOn prog:criterion:dec:14 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:dec:15 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:14 ;
+   prog:dependencyRationale "reading: gsh:PermissionShape's positive half is the 7 odrl permissions counted in examples/transplant/transplant-governance.ttl, and its shape file is vocab/shapes/governance-shapes.ttl — both of them dec:14's declared artifacts; this manifest's dec:15 note calls that positive half 'the strongest on this rung'. Ungroundable: fails A1 (dec:15 unmet) and A2 (no prog:oracleArtifact). Consumption half only, as with dec:12/dec:13." .
+
+# The one edge that leaves the vocabulary rungs for the runtime one.
+prog:criterion:substrate:03 prog:proposedDependsOn prog:criterion:dec:14 .
+[] a rdf:Statement ;
+   rdf:subject   prog:criterion:substrate:03 ;
+   rdf:predicate prog:proposedDependsOn ;
+   rdf:object    prog:criterion:dec:14 ;
+   prog:dependencyRationale "reading: substrate:03's oracle is named test_engine_enforces_ai_inherits_user, and 'AI access must equal the interacting user's access ... enforced by gsh:AiInheritsUserShape' is CLAUDE.md's own wording — the invariant an engine would enforce is the one dec:14 pairs with an example and a negative test. Ungroundable: fails A1 (substrate:03 unmet — there is no engine, measured at this manifest's substrate header) and A2 (no prog:oracleArtifact; the test is a target)." .
+
+# --- PROPOSED: a corpus document cannot be ACCEPTED while a reason it fires is undisposed ---
+#
+# The etkl criteria demand a cor:adjudication that ACCEPTS the score, "not one that holds it".
+# The tab criteria demand that each escalation reason be DISPOSED on every document it fires
+# on. Every adjudication naming one of these reasons today is a recorded HOLD (this manifest's
+# tab header). So per-document: the etkl row waits on the tab rows its own document fires.
+# Firing counts are the census's, graph-side, reproduced in this manifest's tab header:
+#   apple    REGION_TILING_FAILED x8 (p0,p2) · MATRIX_AMBIGUOUS x2 (p0,p2) · DATAGRID_RESIDUE x1 (p1)
+#   bfs      REGION_TILING_FAILED x2 (p4,p5) · KIND_NOT_SUPPORTED x3 (p0,p6) · ROUND_TRIP_FAIL x5 (p5)
+#   who-wfa  MATRIX_AMBIGUOUS x3
+# graincorp-stem (etkl:01, met), graincorp-capacity (etkl:02) and ons (etkl:04) fire NOTHING and
+# take no edge here. ons deliberately: R43 claims a REGION_TILING_FAILED on it and this
+# manifest's own tab header measures ons at zero records of any reason and calls the row stale —
+# an edge resting on a row the file already flags as stale would be worse than no edge.
+
+prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:02 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:02 ;
+   prog:dependencyRationale "reading: bfs fires REGION_TILING_FAILED twice (p4, p5) and its 2026-08-20 adjudication NAMES the reason and HOLDs; an accepting adjudication for bfs cannot be written while that hold stands. Ungroundable: fails A1 (both ends unmet) and A2 (tab:02 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:07 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:07 ;
+   prog:dependencyRationale "reading: KIND_NOT_SUPPORTED fires 3 times and ONLY on bfs (p0 masthead, p6 x2); its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:07 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:09 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:09 ;
+   prog:dependencyRationale "reading: ROUND_TRIP_FAIL fires 5 times and ONLY on bfs (p5, region-level #htable{n}-rt URIs); its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:09 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:02 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:02 ;
+   prog:dependencyRationale "reading: apple fires REGION_TILING_FAILED 8 times (p0 x4, p2 x4) — the largest single reason/document cell in the census — and its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:02 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:05 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:05 ;
+   prog:dependencyRationale "reading: apple fires MATRIX_AMBIGUOUS twice (p0, p2 — the 'Three Months Ended / Nine Months Ended' double header) and its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:05 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:08 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:08 ;
+   prog:dependencyRationale "reading: DATAGRID_RESIDUE fires exactly once in the whole corpus and it is on apple p1, the adopted page (document.py:1473) — so apple is the only document whose acceptance can be blocked by it. Ungroundable: fails A1 (both ends unmet) and A2 (tab:08 carries no prog:oracleArtifact)." .
+
+prog:criterion:etkl:07 prog:proposedDependsOn prog:criterion:tab:05 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:07 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:05 ;
+   prog:dependencyRationale "reading: who-wfa fires MATRIX_AMBIGUOUS 3 times (one z-score header block, once per page) and nothing else; its adjudication names the reason and HOLDs, so this is the ONLY reason standing between who-wfa and an accepting adjudication. Ungroundable: fails A1 (both ends unmet) and A2 (tab:05 carries no prog:oracleArtifact)." .
+
+# cbh fires NOTHING, and the two edges below are the case where zero is not absence. R74 and
+# R77 both measure cbh places where table structure goes unread WITHOUT any reason firing, and
+# this manifest already carries them as tab:01's and tab:04's blocking rows. An accepting
+# adjudication for cbh has to confront those readings; a HOLD is what it has today.
+prog:criterion:etkl:03 prog:proposedDependsOn prog:criterion:tab:01 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:03 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:01 ;
+   prog:dependencyRationale "reading: MULTI_TABLE_AMBIGUOUS is corpus-dead, and tab:01's own note says R74 measures the cbh data grid leaking one row from a SECOND table on the same page — 'this reason's exact subject matter, and therefore a corpus place where its silence may be FALSE silence'. cbh cannot be accepted on a silence its own blocking row calls into question. Ungroundable: fails A1 (both ends unmet) and A2 (tab:01 carries no prog:oracleArtifact); and this reading travels through a register row rather than through an oracle consuming an artifact, which is a second reason it is not assertable." .
+
+prog:criterion:etkl:03 prog:proposedDependsOn prog:criterion:tab:04 .
+[] a rdf:Statement ;
+   rdf:subject prog:criterion:etkl:03 ; rdf:predicate prog:proposedDependsOn ;
+   rdf:object  prog:criterion:tab:04 ;
+   prog:dependencyRationale "reading: ROW_GROUP_AMBIGUOUS is corpus-dead and tab:04's note names R74 (the cbh leaked row) and R77 (cbh's four panel totals missed for the no-label reason) as two corpus places where row-group structure goes unread without this reason firing. Both are cbh. Ungroundable: fails A1 (both ends unmet) and A2 (tab:04 carries no prog:oracleArtifact); and, as with tab:01, the reading runs through the register rather than through artifact consumption." .

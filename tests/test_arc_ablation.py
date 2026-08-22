@@ -447,26 +447,27 @@ def test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width():
 
 
 def test_m19_the_live_manifest_carries_no_refuted_edge():
-    """The live leg — and TODAY IT IS VACUOUS, deliberately, which a later reader must not
-    mistake for evidence.
+    """The live leg — AND IT IS NO LONGER VACUOUS. Task 4 authored the first edges.
 
-    `tests/arc-manifest.ttl` carries no `prog:dependsOn` at this commit (Task 4 of the
-    2026-08-22 loop authors the first edges), so `ablation_refusals` returns `[]` without
-    creating a single worktree. The assertion below is the loop's REAL gate the moment Task 4
-    lands, and nothing about it changes then — which is why it ships now rather than being
-    written against edges that do not exist yet.
+    When this test shipped, `tests/arc-manifest.ttl` carried no `prog:dependsOn` at all and
+    `ablation_refusals` returned `[]` without creating a single worktree; the docstring said so
+    and the second assertion below existed to make the day that changed impossible to miss. That
+    day was 2026-08-22: Task 4 of the same loop authored 7 asserted edges, M19 refuted one
+    (`holon:02 -> holon:01`, arm 1 — holon:02's oracles never load `etkl-holons.ttl`), it was
+    DELETED rather than demoted (plan §0/C4, because M17 refuses the demotion), and **6** remain.
 
-    The second assertion is what keeps the vacuity honest rather than hidden: it states the
-    edge count this test ran against, so the day the count moves off zero the docstring above
-    stops being true and this line is what says so.
+    So this now creates real worktrees and runs real oracles. MEASURED 2026-08-22 over those 6
+    edges: 9 endpoint criteria, 6.69 s wall-clock, real tree `git status --porcelain` clean
+    throughout. The second assertion keeps stating the count the first one ran against — a
+    guard against the gate silently going vacuous again if a future edit empties the section.
     """
     g = Graph().parse(MANIFEST, format="turtle")
     edges = asserted_edges(g)
     assert ablation_refusals(g) == [], (
         "every asserted prog:dependsOn must survive A5's two-sided ablation; an edge the "
-        "ablation refutes is a reading to fix by hand in a reviewed commit — demote it to "
-        "prog:proposedDependsOn with a rationale, or reverse it")
-    assert len(edges) == 0, (
-        "MEASURED 2026-08-22: the live manifest carries 0 asserted edges, so the assertion "
-        f"above is VACUOUS. It now carries {len(edges)} — update this test's docstring: the "
-        "gate has become real and the vacuity note is stale")
+        "ablation refutes is a reading to fix by hand in a reviewed commit — DELETE it (M17 "
+        "refuses demoting a groundable pair to a proposition), or reverse it")
+    assert edges, (
+        "the live manifest carries 0 asserted prog:dependsOn edges, so the assertion above is "
+        "VACUOUS. Task 4 of the 2026-08-22 loop authored 6; if they are gone, say so in a "
+        "reviewed commit and update this test — do not let the gate quietly stop gating")
