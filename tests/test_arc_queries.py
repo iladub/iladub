@@ -131,7 +131,8 @@ def rows(graph, name, **bindings):
 #     is ready on the direct reading and would vanish on a transitive one.
 #
 # The graph is ACYCLIC, deliberately: a cycle would make the closures true but the hand
-# computation unreadable, and cycle behaviour is the membrane's question (M15), not a query's.
+# computation unreadable, and cycle behaviour is the membrane's question (M14 — M15 is the
+# met-depends-on-unmet rule; corrected by the final review, M-2), not a query's.
 FIXTURE = """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix prog: <https://w3id.org/iladub/progress#> .

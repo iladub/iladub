@@ -108,13 +108,28 @@ def test_the_generator_refuses_to_write_the_hand_authored_manifest(tmp_path):
     would have had a renderer overwrite the hand-authored source it had just parsed. Misuse-only,
     and a hard constraint held by an argparse default is held by nothing.
 
-    Two arms, because the guard makes two claims:
+    Three arms, because the guard makes two claims and the second one can be reached two ways:
       1. a generator never writes its own source, whichever file `--manifest` named — run
          entirely inside `tmp_path`, so removing the guard destroys a copy and not the repo;
-      2. the tracked manifest specifically, which is the constraint's letter. That arm names the
-         real path, so it snapshots the bytes and restores them in a `finally` — a falsification
-         run of this test deletes the guard on purpose, and must not be able to take the arc's
-         only hand-authored file with it."""
+      2. the tracked manifest specifically, which is the constraint's letter;
+      3. the two forbidden members **DIVERGING** — `--manifest <a copy> --out <the tracked
+         manifest>`, the misuse that actually destroys data, since here the run reads a healthy
+         copy and would overwrite the real thing.
+
+    Arms 2 and 3 name the real path, so each snapshots the bytes and restores them in a
+    `finally` — a falsification run of this test deletes the guard on purpose, and must not be
+    able to take the arc's only hand-authored file with it.
+
+    **Arm 2 asserts on the REASON, not the path, and that is load-bearing** (final review M-1).
+    `main()` builds `forbidden = {args.manifest.resolve(): "the manifest this run reads",
+    MANIFEST.resolve(): "tests/arc-manifest.ttl"}` (`scripts/arc_depends.py:288-289`). With no
+    `--manifest`, `args.manifest` defaults to `MANIFEST` and the two dict keys are the *same
+    path* — so deleting the second entry still raises, via the first, and an assertion that only
+    looked for the string `"tests/arc-manifest.ttl"` was satisfied by the interpolated
+    `{args.out}` regardless. MEASURED: with that entry deleted the module reported `6 passed`.
+    The arm pinned nothing. Asserting the **reason clause** distinguishes the two entries (the
+    later key wins the dict, so the reason is `"tests/arc-manifest.ttl"` only while the entry
+    exists), and arm 3 removes the coincidence entirely by making the two keys differ."""
     gen = _generator()
 
     # Arm 1 — self-overwrite, contained.
@@ -127,12 +142,34 @@ def test_the_generator_refuses_to_write_the_hand_authored_manifest(tmp_path):
     assert copy.read_bytes() == before, "the generator overwrote the manifest it was reading"
 
     # Arm 2 — the constraint's letter, with the tree protected against its own falsification.
+    # The assertion is on the REASON clause, not the path: see the docstring — the path alone is
+    # satisfied by the interpolated `{args.out}` and pinned nothing.
     tracked = MANIFEST.read_bytes()
     try:
         with pytest.raises(SystemExit) as exc:
             gen.main(["--out", str(MANIFEST)])
-        assert "tests/arc-manifest.ttl" in str(exc.value)
+        assert "that is tests/arc-manifest.ttl" in str(exc.value), (
+            "the refusal fired, but not as the tracked-manifest member — `forbidden`'s "
+            f"MANIFEST.resolve() entry no longer names the reason. Got: {exc.value}")
         assert MANIFEST.read_bytes() == tracked
+    finally:
+        if MANIFEST.read_bytes() != tracked:
+            MANIFEST.write_bytes(tracked)
+
+    # Arm 3 — the two forbidden members DIVERGE: read a copy, try to write the tracked manifest.
+    # This is the misuse that destroys data (arm 2's shape overwrites the file it just read, so
+    # a lost guard there costs the same bytes twice), and no arm exercised it before the final
+    # review. Without `forbidden`'s MANIFEST.resolve() member this call does NOT raise at all —
+    # it writes rendered markdown over the arc's only hand-authored file, which is why the
+    # `finally` restores unconditionally.
+    other = tmp_path / "some-other-manifest.ttl"
+    other.write_bytes(MANIFEST.read_bytes())
+    try:
+        with pytest.raises(SystemExit) as exc:
+            gen.main(["--manifest", str(other), "--out", str(MANIFEST)])
+        assert "that is tests/arc-manifest.ttl" in str(exc.value)
+        assert MANIFEST.read_bytes() == tracked, (
+            "the generator wrote the tracked manifest while reading a different source")
     finally:
         if MANIFEST.read_bytes() != tracked:
             MANIFEST.write_bytes(tracked)

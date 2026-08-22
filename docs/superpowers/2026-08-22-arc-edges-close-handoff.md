@@ -95,6 +95,26 @@ of them are all `etkl`, all waiting on `tab`, and all through **proposed** edges
 `etkl:03 ← tab:01,tab:04` · `etkl:05 ← tab:02,tab:07,tab:09` · `etkl:06 ← tab:02,tab:05,tab:08` ·
 `etkl:07 ← tab:05`.
 
+> **Read the 22 with its caveat — the number is honest, but it is not what it first sounds like**
+> (final review, M-4; re-measured here over the shipped manifest). Of the 22 criteria
+> `arc-ready.rq` returns, **15 have no dependency edge of either grade at all** — `dec:09 dec:17
+> etkl:02 etkl:04 substrate:01 substrate:02 tab:01 tab:02 tab:03 tab:04 tab:05 tab:07 tab:08
+> tab:09 tab:10` — i.e. they are ready through the query's **vacuous branch**. Only **7** are
+> ready because a *read* dependency was found and is met (`dec:02←dec:01`, `dec:12←dec:11`,
+> `dec:13←dec:11`, `dec:15←dec:14`, `holon:05←holon:01`, `holon:06←holon:01`,
+> `substrate:03←dec:14`). **`etkl:02`, the headline, is one of the 15.** So *"nothing blocks
+> `etkl:02`"* is what the graph says; *"we established what `etkl:02` needs and it is already
+> there"* is what it does **not** say, and the two must not be read as the same claim. The
+> reading behind the 15 was a real sweep, not an omission — `2026-08-22-arc-edges-authored.md`
+> §1 names nine rejected readings, `etkl:02` and `etkl:04` among them explicitly (the manifest
+> comment *"graincorp-capacity … fire NOTHING and take no edge here"*) — but **the graph cannot
+> represent the difference between *read, none found* and *never read***, so a later reader
+> cannot recover it from the manifest alone. Worth a row: an explicit "read, no dependency
+> found" marker, so the two branches stop rendering as the same row. `arc-ready.rq`'s header,
+> `arc-depends.rq`'s *"absence of an edge is absence of a READING"*, the landscape's §1 prose
+> and the generated file's own lede all state this; this handoff repeated the bare number and
+> now does not.
+
 ```
 $ ./.venv/bin/python scripts/arc_depends.py && open docs/superpowers/arc-dependency-landscape.md
 ```
@@ -243,6 +263,9 @@ today*, 22 ready) and §2 (*what must land first*), and restated as this handoff
 concrete action**: the next unmet criterion is **`etkl:02`** and **nothing
 must land before it**; 22 of 26 unmet criteria are startable today; the only four with anything
 in front of them are `etkl:03/05/06/07`, all waiting on `tab`, all through **proposed** edges.
+**With the caveat recorded under *One next concrete action* above: 15 of those 22 — `etkl:02`
+included — are ready through `arc-ready.rq`'s VACUOUS branch (no edge of either grade), and only
+7 because a read dependency is met.**
 
 `arc-reach.rq` — the spec's own cuttable item, **not cut** — ranks the frontier: **R44** and
 **R62** gate five unmet criteria each; R97–R100 one each.

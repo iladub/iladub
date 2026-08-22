@@ -65,7 +65,7 @@ to SKIPPED and XFAIL whenever the line fits the terminal, which is a real hazard
 version of `_PROGRESS` was blind to. See that regex's own comment for the measurement and the
 test that pins it.
 
-**Three stated limitations.** None is hidden and none is worked around:
+**Four stated limitations.** None is hidden and none is worked around:
 
   1. **The worktree is checked out at `HEAD`, so M19 validates the COMMITTED tree.**
      Uncommitted edits to an artifact are invisible to it, and an artifact that exists in the
@@ -84,6 +84,31 @@ test that pins it.
   3. **Grounding is to FILE granularity** (spec §4's own stated limitation): `X dependsOn
      dec:01` is demonstrated as "X consumes `dec-shapes.ttl`", not as "X consumes the shape at
      line 15". Ablation deletes files.
+  4. **THE ABLATION IS NOT HERMETIC FOR `src/`: the editable install is never ablated, and this
+     is the only limitation here that can produce a FALSE GREEN.** MEASURED in this tree:
+     `.venv/lib/python3.*/site-packages/_editable_impl_iladub.pth` carries the **absolute
+     main-tree** path `…/iladub/src`, and `pyproject.toml:98` sets `pythonpath = ["."]` — the
+     worktree *root*, never `worktree/src`. So `import iladub` inside a worktree resolves to the
+     main tree, even for a module deleted from the worktree:
+
+         $ git worktree add --detach $WT HEAD && rm -rf $WT/src/iladub/ground.py
+         $ cd $WT && …/iladub/.venv/bin/python -c "import iladub.ground as g; print(g.__file__)"
+         /Volumes/WD Green/dev/git/iladub/src/iladub/ground.py     # the MAIN tree's copy
+
+     **No live impact today, and that too is measured:** all 35 distinct `prog:oracleArtifact`
+     values in `tests/arc-manifest.ttl` live under `vocab/` (14), `examples/` (12) and `tests/`
+     (9) — **zero** under `src/`. Non-`src/` artifacts ablate correctly, because pytest's rootdir
+     *is* the worktree (Task 1's `tab:06` `COLLECT_ERROR` row is the positive evidence).
+     **The failure scenario, stated so a later author cannot walk into it unwarned:** a criterion
+     declares e.g. `src/iladub/ground.py:199` — a natural thing to declare, since `dec:08`'s
+     epistemics live there. M19 deletes that file inside the worktree; the oracle imports the
+     main tree's surviving copy and **PASSES**. Arm 2 (`C dependsOn Y` ⇒ Y's tests must PASS)
+     therefore goes green on a file that was never effectively removed, and a false edge is
+     **asserted**. Arm 1 would spuriously refute, which is the safe direction; arm 2 is the
+     unsafe one — exactly the direction the producer-side guards below exist to protect.
+     Do not declare a `src/` artifact on a criterion that is an edge endpoint until `_ablate`
+     carries a producer-side refusal for a removed path that lies under a directory named by a
+     `.pth` on `sys.path` — the same shape as the two guards already there.
 
 **No tuned constant, threshold or tolerance** (Global Constraint 3), and **no subprocess
 timeout**: any wall-clock number here would be exactly the tuned constant CLAUDE.md §8 calls
