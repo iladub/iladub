@@ -51,7 +51,7 @@ prog:RungShape a sh:NodeShape ;
 
 # ------------------------------------------------------------------------ the criterion
 
-# M9 — the clause scripts/cockpit.py's performance contract (cockpit.py:34-38) rests on.
+# M9 — the clause scripts/cockpit.py's performance contract (cockpit.py:76-80) rests on.
 # The strip must read this manifest WITHOUT rdflib. A regex read of arbitrary Turtle is
 # unsafe; a regex read of a file where every criterion is a top-level IRI subject encoding
 # its own rung is safe. This shape is what buys that.
@@ -91,7 +91,7 @@ prog:CriterionShape a sh:NodeShape ;
                   sh:message "M1: a criterion carries exactly one prog:source — the file:line where the prose that declares it lives. Without it prog:declaredOn is a date with nothing to audit it against." ] ;
     sh:property [ sh:path prog:met ;
                   sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
-                  sh:message "M1: exactly one prog:met. The cockpit cannot derive met-ness at render time (cockpit.py:34-38), so it reads an assertion — and an assertion that is sometimes absent is a guess." ] ;
+                  sh:message "M1: exactly one prog:met. The cockpit cannot derive met-ness at render time (cockpit.py:76-80), so it reads an assertion — and an assertion that is sometimes absent is a guess." ] ;
     sh:property [ sh:path prog:retrospective ;
                   sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
                   sh:message "M1: prog:retrospective is required on every criterion — an adjudication and a measurement must be told apart." ] ;

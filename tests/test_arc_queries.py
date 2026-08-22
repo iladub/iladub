@@ -266,7 +266,7 @@ def test_arc_orphan_returns_nothing_when_there_is_no_arc():
     with no prog:Rung, "this residue blocks no criterion of any rung" is vacuously true — and
     answering it would declare every row in the register an orphan on the strength of a
     missing file. The positive `?rung a prog:Rung` support makes the answer empty instead,
-    the same discipline `tests/test_cockpit.py:22` holds for the strip (no source -> `?`,
+    the same discipline `tests/test_cockpit.py:106` holds for the strip (no source -> `?`,
     never a number)."""
     assert rows(Graph(), "arc-orphan.rq", residue="R903") == []
 

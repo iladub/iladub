@@ -26,7 +26,7 @@
 # each criterion names its rung by key. Only the key is pinned to the criterion's own IRI —
 # by M9b (`tests/arc-shapes.ttl:139-146`), which refuses a criterion whose IRI and prog:ofRung
 # disagree — and the criterion IRI is what scripts/cockpit.py's regex reader parses without
-# rdflib (its performance contract, cockpit.py:34-38). So counting by prog:ofRung is counting
+# rdflib (its performance contract, cockpit.py:76-80). So counting by prog:ofRung is counting
 # by the same fact the fast reader counts by, which is what makes the two readings comparable
 # at all. The prog:criterion edge is a convenience index; MEASURED 2026-08-21 on this tree,
 # the two readings agree exactly (43 criteria typed, 43 linked, no row in either difference),

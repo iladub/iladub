@@ -421,7 +421,7 @@ def test_m8_a_met_criterion_may_not_be_blocked():
 
 
 def test_m9_a_blank_node_criterion_is_refused():
-    """scripts/cockpit.py must read the manifest WITHOUT rdflib (cockpit.py:34-38). A regex
+    """scripts/cockpit.py must read the manifest WITHOUT rdflib (cockpit.py:76-80). A regex
     read of arbitrary Turtle is unsafe; a regex read of a file where every criterion is a
     top-level IRI subject is safe, and M9 is what buys that."""
     _refused_by_shacl("arc-m9-blank-node-criterion-leak.ttl", "M9")

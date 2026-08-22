@@ -5,7 +5,7 @@
 # rung with no criteria is deliberately not a refusal.
 #
 # Authored so far: `etkl` (7), `holon` (6), `substrate` (3) — task 3 of the 2026-08-20 loop;
-# `dec` (17) — task 4. Still `?`: `tab` (10, task 6), which APPENDS its own section
+# `dec` (17) — task 4; `tab` (10) — task 6, which APPENDED its own section
 # below without touching these. Every criterion is a top-level IRI subject; nothing here
 # nests, so appending a section is the whole edit.
 #
@@ -22,7 +22,7 @@
 #
 # Criterion IRIs are `prog:criterion:<rungKey>:<slug>` and must agree with prog:ofRung
 # (M9/M9b). That is not tidiness: scripts/cockpit.py must read this file WITHOUT rdflib
-# (its performance contract, cockpit.py:34-38), and a regex read is safe only over a
+# (its performance contract, cockpit.py:76-80), and a regex read is safe only over a
 # file where every criterion is a top-level IRI subject encoding its own rung.
 #
 # The slug is a ZERO-PADDED ORDINAL — `prog:criterion:etkl:01`. Tasks 4 and 6 continue it
@@ -819,8 +819,8 @@ prog:criterion:dec:15 a prog:Criterion ;
 # --- vocab/shapes/iladub-hga-shapes.ttl -----------------------------------------------
 #
 # THE OVERLAP IS DELIBERATE (Ruling 12). This shape is also the subject of
-# prog:criterion:holon:03 and prog:criterion:holon:04 above, which cite the same three
-# artifacts. They are NOT this criterion: their prog:source is
+# prog:criterion:holon:03 and prog:criterion:holon:04 above, whose oracle artifacts (one
+# and two) union to these three. They are NOT this criterion: their prog:source is
 # docs/holonic-interaction.md:151-153/154-156 and they ask whether the governed-grounding
 # INVARIANT and its traversal example are built. This one's prog:source is CLAUDE.md:252 and
 # it asks the pairing question — conforming example AND negative test — of a shape the rule

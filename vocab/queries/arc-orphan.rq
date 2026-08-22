@@ -54,7 +54,7 @@
 # honest: the claim "blocks no criterion of any rung" presupposes that there are rungs, so if
 # the manifest is empty or missing the query returns nothing rather than declaring every
 # residue in the register an orphan. That is the same discipline the cockpit's own honesty
-# test holds (`tests/test_cockpit.py:22` — delete the source and the gauge reads `?`, never a
+# test holds (`tests/test_cockpit.py:106` — delete the source and the gauge reads `?`, never a
 # number).
 #
 # MEASURED 2026-08-21, this query run over tests/arc-manifest.ttl once per `open` row of

@@ -38,7 +38,7 @@ def _query(name: str) -> str:
 def test_the_strips_reading_equals_rdflibs_reading_of_the_same_file():
     """THE STRIP AND THE GRAPH MUST COUNT THE SAME THING, and this is the only thing that says so.
 
-    `scripts/cockpit.py` may not import rdflib (its performance contract, `cockpit.py:34-38`),
+    `scripts/cockpit.py` may not import rdflib (its performance contract, `cockpit.py:76-80`),
     so it reads `tests/arc-manifest.ttl` with a regex — a SECOND reader of a fact whose reader of
     record is `vocab/queries/arc-position.rq`. Two readers of one fact is a defect generator: the
     `residues()` regex once went blind to every struck tally snapshot and nothing noticed for a
