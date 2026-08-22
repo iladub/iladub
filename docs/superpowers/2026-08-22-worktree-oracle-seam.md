@@ -122,6 +122,83 @@ still "0 items" run). This is specific to **explicit node-id selection**, not to
 "no data" for 16 unrelated tests in the `etkl:01` and `tab:06` rows — a false claim about the
 instrument, not a limit of the seam.
 
+**Re-measured 2026-08-22 (fix round 1), transcript below — a throwaway worktree off `HEAD`
+(`43815c4`), `tests/corpus-manifest.ttl` removed (the same artifact `etkl:01`'s row removes),
+two explicit node ids: the now-unimportable `tests/test_corpus.py::test_expected_verdict[...]`
+and a healthy, unrelated sibling `tests/test_boundary.py::test_leak_rejected`.**
+
+```
+$ cd "/Volumes/WD Green/dev/git/iladub"
+$ WT=/private/.../scratchpad/wt-repro
+$ git worktree add --detach "$WT" HEAD
+Preparing worktree (detached HEAD 43815c4)
+$ rm "$WT/tests/corpus-manifest.ttl"
+$ cd "$WT"
+
+$ "/Volumes/WD Green/dev/git/iladub/.venv/bin/python" -m pytest \
+    "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" \
+    "tests/test_boundary.py::test_leak_rejected" \
+    -v --tb=line
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-9.0.3, pluggy-1.6.0 -- .../.venv/bin/python
+collecting ... ERROR: found no collectors for .../tests/test_corpus.py::test_expected_verdict
+
+collected 1 item / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting tests/test_corpus.py _____________________
+E   FileNotFoundError: [Errno 2] No such file or directory: '.../tests/corpus-manifest.ttl'
+=========================== short test summary info ============================
+ERROR tests/test_corpus.py - FileNotFoundError: [Errno 2] No such file or dir...
+=============================== 1 error in 0.14s ===============================
+EXIT_CODE=4
+```
+
+**No `PASSED`/`FAILED` line for `tests/test_boundary.py::test_leak_rejected` appears anywhere in
+that output** — "collected 1 item" refers to the healthy node id, but it is never executed; the
+run terminates at the collection error with `rc=4`. Adding `--continue-on-collection-errors` to
+the same combined invocation produces byte-identical output (same `rc=4`, same missing sibling
+result) — the flag does not rescue an explicit node id in a sibling module:
+
+```
+$ "/Volumes/WD Green/dev/git/iladub/.venv/bin/python" -m pytest \
+    "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" \
+    "tests/test_boundary.py::test_leak_rejected" \
+    -v --tb=line --continue-on-collection-errors
+[... identical: collected 1 item / 1 error, 1 error in 0.09s, EXIT_CODE=4 ...]
+```
+
+The same two node ids as **separate invocations** (the fix actually shipped) both report:
+
+```
+$ "/Volumes/WD Green/dev/git/iladub/.venv/bin/python" -m pytest \
+    "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" -v --tb=line
+collected 0 items / 1 error
+ERROR tests/test_corpus.py - FileNotFoundError: [Errno 2] No such file or directory: '.../tests/corpus-manifest.ttl'
+=============================== 1 error in 0.07s ===============================
+EXIT_CODE=4
+
+$ "/Volumes/WD Green/dev/git/iladub/.venv/bin/python" -m pytest \
+    "tests/test_boundary.py::test_leak_rejected" -v --tb=line
+collecting ... collected 1 item
+
+tests/test_boundary.py::test_leak_rejected PASSED                        [100%]
+
+============================== 1 passed in 0.21s ===============================
+EXIT_CODE=0
+```
+
+```
+$ cd "/Volumes/WD Green/dev/git/iladub"
+$ git worktree remove --force "$WT" && git worktree prune
+$ git status --porcelain      # clean — real tree untouched
+```
+
+The reproduction uses the repo's own modules (`test_corpus.py`, `test_boundary.py`) and the
+repo's own artifact (`tests/corpus-manifest.ttl`), not a synthetic throwaway — it is the exact
+pair that produced the `etkl:01` row's `COLLECT_ERROR` in the Step 3 sweep, isolated down to two
+node ids so the collection-error/sibling-loss mechanism is visible on its own.
+
 **Fix:** one `pytest` subprocess **per test module** (13 modules span the 25 tests), merged into
 one outcome map per worktree. A module whose import fails is recorded `COLLECT_ERROR` for every
 test id it contains; every other module runs in its own subprocess, unaffected. This is a finding
