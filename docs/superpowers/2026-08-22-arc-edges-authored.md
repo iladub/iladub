@@ -23,8 +23,13 @@ dependency believed to exist was written down, *before* A1–A6 were checked aga
 An author who grades while reading only ever "finds" edges the membrane already permits, and the
 proposition half of the graph then comes out empty for the wrong reason.
 
-The 25 readings below are the raw output of that pass. Grading (§2) came after; three readings
-were dropped at that stage for a stated reason, and one was authored, run and **refuted** (§5).
+The **29** readings below are the raw output of that pass — the same 29 the tables of §2 grade
+(7 asserted + 22 proposed), one of which was then authored, run and **refuted** by A5 and deleted
+(§5), leaving the 6 + 22 the manifest carries. **Grading dropped none of them:** every reading
+that survived the reading pass was authored at whatever grade the membrane permitted, which is
+M17's whole point. The readings that were *not* authored were rejected during this same reading
+pass, before any precondition was checked — nine of them tabulated at the end of this section,
+and a tenth (`holon:04 → dec:08`) rejected inline in Reading B below.
 
 ### Reading A — the doc-holon fabric is the vocabulary three other criteria are stated over
 
@@ -279,6 +284,25 @@ argument, not a proof, and spec §4 already concedes what the proof is worth: an
 grounded to **file** granularity. `holon:04 → dec:07` and `holon:04 → dec:10` are the sharpest
 case — both ground to the *same* file, `vocab/shapes/iladub-shapes.ttl`, so the ablation cannot
 tell them apart and only the two shapes' target classes do.
+
+**And that ambiguity is THREE-way, not two-way.** MEASURED 2026-08-22 — `vocab/shapes/iladub-shapes.ttl`
+is declared by **three** criteria, not two:
+
+```
+$ grep -n 'prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl' tests/arc-manifest.ttl
+699:    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:16" ;   # dec:07, CandidateConceptShape
+718:    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:37" ;   # dec:08, GroundedNodeShape
+752:    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:65" ;   # dec:10, NoLeakShape
+```
+
+So when arm 1 removes that file and `holon:04`'s oracles break, the ablation is equally consistent
+with `holon:04 → dec:07`, `holon:04 → dec:10` **and** `holon:04 → dec:08`. Nothing is
+mis-asserted — `dec:08` was rejected during the reading pass on its own evidence (the example
+carries no `iladub:GroundedNode`, so that shape has no focus node in it), and the membrane would
+have refused the edge independently: `dec:08 metOn 2026-07-20` is **later** than `holon:04`'s
+`2026-06-23`, which A4 refuses outright. But the third criterion belongs in this disclosure
+rather than in the reasoning that excluded it: at file granularity the ablation had no way to
+separate the three, and what separated them was the reading and a date.
 
 ---
 
