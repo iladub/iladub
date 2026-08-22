@@ -1,0 +1,83 @@
+# arc-depends.rq (loop the-arc-has-edges, 2026-08-22) — WHAT MUST LAND BEFORE THIS ONE.
+#
+# THE READER OF RECORD (spec docs/superpowers/specs/2026-08-22-the-arc-has-edges-design.md §6).
+# Given ONE criterion, bound by the caller, it returns the transitive set of criteria that must
+# land first — every one of them GRADE-LABELLED, so a reader sees where the chain stops being
+# grounded. Before this file existed, *"what must land before X"* was a reading of 1200 lines of
+# Turtle; it is now a derivation.
+#
+# ---------------------------------------------------------------------------------------
+# THE CALLER SUPPLIES ?criterion. Same idiom, and the same reason, as arc-orphan.rq and
+# adoption-candidate.rq: the query text carries NO literal, and the subject is data. Under
+# rdflib that is
+#     g.query(text, initBindings={"criterion": URIRef(".../criterion:etkl:06")})
+# — a URIRef, not a Literal, because a criterion IS a node of this graph (unlike arc-orphan's
+# residue, which is a plain string from a markdown file that is not in the graph at all).
+#
+# UNBOUND, it returns the whole graded edge relation — every (dependency, grade) pair reachable
+# from ANY criterion. That is not a fail-safe the way arc-orphan's empty answer is, and it is
+# said out loud rather than left to be discovered: the answer is still true, but it is no
+# longer an answer ABOUT anything, and a caller that forgets its binding gets a landscape where
+# it asked for a path. `scripts/arc_depends.py` binds one criterion per call for exactly this
+# reason.
+# ---------------------------------------------------------------------------------------
+#
+# WHY TWO CLOSURES ARE REPORTED SEPARATELY RATHER THAN MERGED — spec §3's decisive argument,
+# and the whole reason the vocabulary carries TWO predicate names for ONE relation.
+#
+# `prog:dependsOn` and `prog:proposedDependsOn` MEAN THE SAME THING — *X cannot be met while Y
+# is unmet, and X's oracle demonstrably consumes Y's artifact* — and differ only in whether
+# that claim is GROUNDED (asserted: A1-A4 + A6 in the membrane, M16, and A5's two-sided
+# ablation in CI, M19). The obvious design is one predicate plus a grade property on the edge.
+# It does not work, and the reason is a property of SPARQL, not a preference:
+#
+#   **A property path cannot filter on a node property mid-path.** With a single predicate,
+#   `prog:dependsOn+` walks grounded and guessed edges indiscriminately, the ASSERTED closure
+#   becomes UNCOMPUTABLE, and every derived "what must land before X" silently mixes the two.
+#   A reader would have no way to tell an ablation-grounded chain from one somebody read off
+#   the source on a Friday afternoon.
+#
+# With two predicates, `prog:dependsOn+` *is* the grounded closure for free, and
+# `(prog:dependsOn|prog:proposedDependsOn)+` is the full one. This query computes BOTH, here,
+# once — and nothing downstream recomputes them. `scripts/arc_depends.py` renders what this
+# file returns; it does not re-derive a grade, because a second reader of a derived fact is the
+# defect generator M9/M9b already cost this repo once.
+#
+# `?grade` IS A PROPERTY OF THE PAIR, NOT OF A PATH. A dependency reachable BOTH by an asserted
+# chain and by a chain containing a proposition is graded **asserted** — the grounded chain
+# exists, and that is the fact. A per-path grading would emit the same node twice with two
+# grades and force the consumer to pick, which is the merge this design exists to avoid.
+# MEASURED against the unit fixture (tests/test_arc_queries.py): `tab:03` reaches `tab:01` by
+# one asserted edge AND by a two-hop proposed chain through `etkl:01`, and comes back once, as
+# `asserted`.
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# There is NO negation in this query — not `NOT EXISTS`, not `MINUS`, not one query-local
+# closure. `EXISTS` is a POSITIVE test: it asks whether a grounded chain is PRESENT, and the
+# `"proposed"` label records that no such chain was found IN THIS GRAPH, which is the open-world
+# reading and not a claim that none exists. It writes nothing, constructs nothing, and derives
+# nothing about met-ness: `prog:met` does not appear in this file at all — readiness is
+# arc-ready.rq's question and met-ness is READ, never inferred.
+#
+# WHAT THIS QUERY DOES NOT SAY. Not that the dependency is unmet (it may be long done); not
+# that the chain is complete (the arc's edges were read by a human and 22 of the 28 are
+# propositions); not that a `proposed` edge is wrong. Absence of an edge is absence of a
+# READING, never evidence of independence — which is why the landscape is a monitor and not a
+# scheduler.
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT DISTINCT ?dependency ?grade WHERE {
+  # POSITIVE SUPPORT — the caller's subject is a criterion of this graph. Over an empty or
+  # missing manifest this alone yields nothing, so the query cannot answer "depends on
+  # nothing" on the strength of a missing file (the discipline tests/test_cockpit.py:106
+  # holds for the strip: no source -> `?`, never a number).
+  ?criterion a prog:Criterion .
+  # THE FULL CLOSURE — grounded and guessed edges together. This is the set the caller asked
+  # for; the grade below says which half each member came from.
+  ?criterion (prog:dependsOn|prog:proposedDependsOn)+ ?dependency .
+  # THE GROUNDED CLOSURE, computed over the SAME pair. `prog:dependsOn+` is the asserted
+  # relation by construction (see the header) — this is the one line that a single-predicate
+  # vocabulary could not have written.
+  BIND(IF(EXISTS { ?criterion prog:dependsOn+ ?dependency }, "asserted", "proposed") AS ?grade)
+}
+ORDER BY ?grade ?dependency

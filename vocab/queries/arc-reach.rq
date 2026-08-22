@@ -1,0 +1,87 @@
+# arc-reach.rq (loop the-arc-has-edges, 2026-08-22) — HOW MUCH OF THE ARC THIS ROW HOLDS UP.
+#
+# For a residue named in `prog:blockedBy`, how many unmet criteria its closure eventually gates
+# (spec docs/superpowers/specs/2026-08-22-the-arc-has-edges-design.md §6, third bullet).
+#
+# THIS IS THE PAYOFF, and spec §6 says why: it upgrades `frontier 15` from an ADJACENCY COUNT
+# to a RANKING. *"R99 blocks one criterion"* is a fact and not a strategy; *"closing R99
+# unblocks tab:07, which gates tab:09"* is a strategy. arc-frontier.rq answers the first —
+# which residues sit on an unmet criterion — and stops at one hop, because when it was written
+# the arc had no edges to walk. This one walks them.
+#
+# ---------------------------------------------------------------------------------------
+# THE CALLER SUPPLIES ?residue, and it is the SAME SEAM arc-orphan.rq's header states at
+# length: `prog:blockedBy`'s values are PLAIN STRING LITERALS ("R43", tests/arc-manifest.ttl),
+# and the residue register is a MARKDOWN FILE that is not part of the graph at all — which is
+# why M7 reads it in procedural code (tests/test_arc_manifest.py, module docstring). The
+# register is read ONCE, from the register, by the procedural leg that already owns register
+# reading; it is never mirrored into triples (the design arc-orphan.rq's header REJECTS, for
+# the staleness reason CLAUDE.md § Deferred residues records against R87/R88). Under rdflib:
+#     g.query(text, initBindings={"residue": Literal("R99")})
+#
+# UNBOUND, it returns one row per residue that gates anything — a whole ranking rather than an
+# answer about one row. Harmless, but it is not what a caller asking about R99 wanted, and a
+# rewrite that quietly stopped honouring the binding would look exactly like this. That is the
+# falsification arm for this file (task-5 report): rename the body's ?residue and the fixture's
+# one-row answer becomes two.
+# ---------------------------------------------------------------------------------------
+#
+# WHAT "GATES" MEANS HERE, stated precisely because a count invites over-reading:
+#
+#   the residue blocks an UNMET criterion B (`B prog:blockedBy ?residue`, `B prog:met false`),
+#   and the answer counts every UNMET criterion that reaches B along
+#   `(prog:dependsOn|prog:proposedDependsOn)*` — B ITSELF INCLUDED (the zero-length step).
+#
+# Three deliberate choices in that sentence:
+#
+#   1. **`prog:met false` on the blocked criterion.** A met criterion's blocker is a STALE
+#      edge, not a frontier — arc-frontier.rq's own argument, and M8 refuses the combination on
+#      an admitted manifest anyway. A stale edge must not inflate a ranking.
+#   2. **`prog:met false` on the counted criteria.** A criterion that is already MET is not
+#      being held up by anything. It still TRANSMITS gating, because the path runs over edges
+#      and not over met-ness — a met criterion sitting mid-chain does not shield its dependents.
+#   3. **BOTH grades in the path.** A proposition is a dependency somebody read; excluding it
+#      would under-count the reach of every residue on the 22 proposed edges and make the
+#      grounded 6 look like the whole arc. Which half a chain came from is arc-depends.rq's
+#      question, and it is answered per-pair there rather than smuggled into a number here.
+#
+# THERE IS NO `?rung a prog:Rung` JOIN, unlike arc-frontier.rq — and the omission is the
+# considered one. That join exists in the other queries either because the rung key is
+# PROJECTED, or because it is the POSITIVE SUPPORT that keeps a negation honest over an empty
+# graph (arc-orphan.rq's header). Neither applies: nothing here is projected from the rung, and
+# there is NO NEGATION in this file to support. Over an empty graph the `prog:blockedBy`
+# pattern matches nothing and the answer is empty, which is already the fail-safe. Adding the
+# join would only add the join that a duplicated prog:Rung node doubles — absorbed by
+# COUNT(DISTINCT), but a derivation should not carry a hazard it has no use for.
+#
+# NO ROW MEANS "GATES NOTHING MEASURABLE", NOT "0". A residue that names no unmet criterion
+# produces no row at all rather than a zero, which is decision 6 of the previous loop applied
+# here (arc-position.rq: *unknown is not zero*, and a rendered `0` licenses a reading the
+# evidence does not support). MEASURED on the unit fixture: R902 blocks tab:02, which is MET,
+# and comes back EMPTY; R903 is named by nothing and comes back empty too. The consumer
+# renders `?` for what it does not find.
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# Every row grows from triples that are all PRESENT — the blocking edge, both met booleans, the
+# dependency edges — and there is NO negation in this query, not even a query-local one. The
+# count is a tally of present criteria, never a met-ness judgement. It writes nothing,
+# constructs nothing, and says nothing ABOUT the residue: not that it is urgent, not that it is
+# closeable, not that it should be worked next. It reports how much of the arc, as authored,
+# stands behind it — and the arc's edges are 6 grounded and 22 read, so the number is only ever
+# as good as the reading (arc-depends.rq is where a caller checks that).
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT ?residue (COUNT(DISTINCT ?gatedCriterion) AS ?gated) WHERE {
+  # The criterion this residue is named as blocking — unmet, or the edge is stale (choice 1).
+  ?blocked a prog:Criterion ;
+           prog:met false ;
+           prog:blockedBy ?residue .
+  # The closure, walked BACKWARDS from the blocked criterion: everything that must wait for it.
+  # `*` (zero-or-more) is what puts ?blocked itself in its own reach — the residue gates that
+  # criterion directly, and a ranking that omitted it would score a leaf residue at 0.
+  ?gatedCriterion (prog:dependsOn|prog:proposedDependsOn)* ?blocked .
+  ?gatedCriterion a prog:Criterion ;
+                  prog:met false .
+}
+GROUP BY ?residue
+ORDER BY ?residue

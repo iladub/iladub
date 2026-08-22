@@ -1,0 +1,115 @@
+# arc-ready.rq (loop the-arc-has-edges, 2026-08-22) — WHAT CAN ACTUALLY BE STARTED.
+#
+# The unmet criteria whose **DIRECT** dependencies are all met (spec
+# docs/superpowers/specs/2026-08-22-the-arc-has-edges-design.md §6, second bullet). Nothing has
+# to land before one of these: the work is startable today.
+#
+# IT IS NOT arc-unblocked.rq, AND THE SHARED SHAPE IS DELIBERATE. Both project
+# (?rungKey, ?criterion, ?statement) so a consumer can render either through one code path —
+# and they answer different questions over disjoint evidence. arc-unblocked.rq knows only about
+# REGISTER ROWS (`prog:blockedBy`); this one knows only about CRITERIA (`prog:dependsOn` /
+# `prog:proposedDependsOn`). A criterion can easily be one and not the other, and on the unit
+# fixture it is, in both directions at once (MEASURED, tests/test_arc_queries.py):
+#
+#     tab:01 — no dependency edges at all, so READY here; carries R900 and R901, so it is NOT
+#              in arc-unblocked.rq.
+#     tab:03 — nothing named as blocking it, so it IS in arc-unblocked.rq; depends on the
+#              unmet tab:01, so it is NOT ready here.
+#
+# Read together they are two halves of "what is startable": nothing is named as blocking it
+# AND nothing it needs is still missing.
+#
+# ---------------------------------------------------------------------------------------
+# DIRECT, NOT TRANSITIVE — A CLAUDE.md §8 DECISION, NOT A CONVENIENCE. Spec §6 states it and
+# this file obeys it.
+#
+# `FILTER NOT EXISTS { ?criterion <one hop> ?anyDep }` closes over ONE NODE — the criterion the
+# surrounding pattern already bound — asking whether THAT node carries an outgoing edge. That
+# is the holon-scoped closure arc-unblocked.rq:60-66 argues for and the one CLAUDE.md §8
+# permits: *"query-local NOT EXISTS closes WITHIN the one holon while the graph stays open."*
+#
+# A `NOT EXISTS` over a whole TRANSITIVE CONE closes over a **chain** — it asserts something
+# about every node reachable from the criterion, which is a strictly larger closure claim, and
+# nobody has made the argument that would license it. Transitive readiness follows by ITERATING
+# the direct query anyway, so the larger claim buys nothing.
+#
+# The cost is named rather than glossed: a criterion whose direct dependency is met but whose
+# GRAND-dependency is not still appears here. That is not a bug, it is the direct reading —
+# and it is exactly what the falsification arm measures (change the two paths below to `+` and
+# the fixture's `etkl:02` disappears; see the task-5 report).
+# ---------------------------------------------------------------------------------------
+#
+# NOTHING HERE DERIVES `met`. Met-ness is READ from a hand-asserted boolean in a POSITIVE
+# triple pattern, in three places, and is never concluded from an absence:
+#
+#   - the criterion's own `prog:met false` — the row is about unmet work;
+#   - each dependency's `prog:met true` — a dependency counts as met only where that triple is
+#     PRESENT.
+#
+# That second one is why this query counts instead of negating, and the difference bites. The
+# obvious form is `FILTER NOT EXISTS { ?criterion <hop> ?dep . ?dep prog:met false }` — and it
+# treats a dependency carrying NO `prog:met` triple at all as MET, which is deriving met-ness
+# from an absence, precisely what CLAUDE.md §8 forbids and what
+# tests/test_arc_queries.py::test_no_query_infers_a_fact_from_absence_of_evidence scans this
+# source for. On an admitted manifest the two forms agree; a derivation must be correct over
+# the graph it is HANDED (CLAUDE.md § Producer-side guards), and the graphs a query is handed
+# are not all admitted ones. So: a dependency is met when the evidence SAYS SO, and a criterion
+# is ready when the count of its direct dependencies equals the count of those with that
+# evidence.
+#
+# THE VACUOUS CASE IS A ROW, AND ON PURPOSE. A criterion with no dependency edges has all zero
+# of its dependencies met, so it is ready — that is branch 1. It is the honest open-world
+# reading twice over: nobody has READ a dependency for it, which is not the same claim as "it
+# has none", and either way there is no criterion this work must wait for.
+#
+# GATE CLASSIFICATION (CLAUDE.md §8): **AXIOM / derivation, OPEN WORLD, evidence-positive.**
+# Every row grows from present triples. The output is a SELECTION of criteria, never a derived
+# fact ABOUT one: nothing here says a criterion is easy, next, important, or met. It writes
+# nothing and constructs nothing (spec §9 — code validates the hand-authored graph, never
+# writes it).
+PREFIX prog: <https://w3id.org/iladub/progress#>
+
+SELECT DISTINCT ?rungKey ?criterion ?statement WHERE {
+  # The rung, positively — same reason as arc-unblocked.rq's: a criterion naming a key no
+  # prog:Rung declares is not evidence about any rung of the arc. DISTINCT is what that join
+  # costs: the membrane ADMITS two prog:Rung nodes sharing one prog:rungKey (M6 constrains the
+  # value, not the number of nodes carrying it — measured, `Conforms: True`), and one ready
+  # criterion must never be reported as two pieces of work.
+  ?rung a prog:Rung ;
+        prog:rungKey ?rungKey .
+  ?criterion a prog:Criterion ;
+             prog:ofRung ?rungKey ;
+             prog:met false ;
+             prog:statement ?statement .
+  {
+    # BRANCH 1 — nothing must land first. The ONE negation in this file: holon-scoped over the
+    # criterion's own outgoing edges, ONE HOP, and it reads no met-ness whatsoever. ?anyDep is
+    # existentially quantified inside the group and deliberately not projected — the question
+    # is whether ANY dependency is named, and naming which one is arc-depends.rq's job.
+    FILTER NOT EXISTS { ?criterion (prog:dependsOn|prog:proposedDependsOn) ?anyDep }
+  }
+  UNION
+  {
+    # BRANCH 2 — every direct dependency carries POSITIVE evidence that it is met. Both grades
+    # count: a proposition is a dependency somebody READ, and refusing to wait for it because
+    # its grounding is not yet measured would be the arc telling itself a comfortable story.
+    {
+      SELECT ?criterion
+             (COUNT(DISTINCT ?dep) AS ?direct)
+             (COUNT(DISTINCT ?metDep) AS ?metDirect)
+      WHERE {
+        ?criterion (prog:dependsOn|prog:proposedDependsOn) ?dep .
+        # OPTIONAL, not a negation: ?metDep binds only where the met triple is PRESENT, so a
+        # dependency with no prog:met at all is counted in ?direct and NOT in ?metDirect, and
+        # the criterion is correctly not ready. That asymmetry IS the evidence-positive rule.
+        OPTIONAL {
+          ?dep prog:met true .
+          BIND(?dep AS ?metDep)
+        }
+      }
+      GROUP BY ?criterion
+    }
+    FILTER(?direct = ?metDirect)
+  }
+}
+ORDER BY ?rungKey ?criterion

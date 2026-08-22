@@ -1,6 +1,12 @@
-"""The arc's four derivations (spec 2026-08-20 §5) — `vocab/queries/arc-*.rq`.
+"""The arc's derivations — `vocab/queries/arc-*.rq`.
 
-**Gate classification (CLAUDE.md §8).** The four `.rq` files are **AXIOM / derivation, open
+Four of them are the arc's POSITION (spec 2026-08-20 §5: position, frontier, unblocked,
+orphan). Three more are its EDGES (spec 2026-08-22-the-arc-has-edges-design §6: depends,
+ready, reach), added once `tests/arc-manifest.ttl` carried a criterion->criterion dependency
+graph — 6 asserted edges and 22 propositions — so that *"what must land before X"* became a
+derivation rather than a reading of 1200 lines of Turtle.
+
+**Gate classification (CLAUDE.md §8).** All seven `.rq` files are **AXIOM / derivation, open
 world, evidence-positive**: they grow rows from triples that are present and never infer a
 fact from an absence. This module is their oracle and is **PROCEDURAL** for the ordinary
 reason a test is — it runs an engine and compares answers — plus one that is specific to
@@ -23,6 +29,13 @@ derivation must be correct over the graph it is HANDED, and the graphs a query i
 not all admitted ones. The M8-refused row is what makes `arc-frontier.rq`'s `prog:met false`
 binding load-bearing rather than a duplicate of the membrane.
 
+The 2026-08-22 edges keep that rule rather than quietly breaking it: the fixture's two
+`prog:proposedDependsOn` triples carry **no `rdf:Statement` rationale node**, which M18 refuses
+outright, and its `prog:dependsOn` triples were never put through A1-A4/A6 or M19's ablation.
+That is again the point — `arc-depends.rq` must grade an edge by WHICH PREDICATE CARRIES IT,
+because that is all a derivation can see; whether the predicate was *earned* is the membrane's
+question and is enforced one file along in `tests/test_arc_manifest.py`.
+
 Run: ./.venv/bin/python -m pytest tests/test_arc_queries.py -q
 NEVER `python3` — it carries rdflib 7.1.4 and reports false reds across this repo's corpus
 tests (spec §7.2.2).
@@ -31,7 +44,7 @@ import re
 from pathlib import Path
 
 import pytest
-from rdflib import Graph, Literal
+from rdflib import Graph, Literal, URIRef
 
 REPO = Path(__file__).resolve().parent.parent
 QUERIES = REPO / "vocab" / "queries"
@@ -40,15 +53,23 @@ REGISTER = REPO / "docs" / "superpowers" / "residues.md"
 
 PROG = "https://w3id.org/iladub/progress#"
 
-# The four files and the result shape each one PROMISES. The shape is a contract with
-# scripts/cockpit.py (task 8) and with any future session: a query may be rewritten, but a
-# rewrite that renames or reorders a projected variable is a breaking change and this tuple
-# is where it is caught.
+# The seven files and the result shape each one PROMISES. The shape is a contract with
+# scripts/cockpit.py, with scripts/arc_depends.py, and with any future session: a query may be
+# rewritten, but a rewrite that renames or reorders a projected variable is a breaking change
+# and this tuple is where it is caught.
+#
+# `arc-ready.rq` carries the SAME tuple as `arc-unblocked.rq` deliberately — one consumer code
+# path, two different questions over disjoint evidence (register rows vs criterion edges). The
+# duplication here is the contract saying so, not an oversight; the two queries' own tests show
+# them disagreeing in both directions on the fixture.
 SHAPES = {
     "arc-position.rq": ("rungKey", "met", "declared"),
     "arc-frontier.rq": ("residue", "rungKey", "criterion"),
     "arc-unblocked.rq": ("rungKey", "criterion", "statement"),
     "arc-orphan.rq": ("residue",),
+    "arc-depends.rq": ("dependency", "grade"),
+    "arc-ready.rq": ("rungKey", "criterion", "statement"),
+    "arc-reach.rq": ("residue", "gated"),
 }
 
 
@@ -56,9 +77,20 @@ def q(name):
     return (QUERIES / name).read_text(encoding="utf-8")
 
 
+def _term(value):
+    """A caller-supplied binding, as the RDF term the query expects.
+
+    `arc-orphan.rq`/`arc-reach.rq` take a residue, which is a PLAIN STRING from a markdown file
+    that is not in the graph (that seam is the whole reason those two take their subject from
+    the caller). `arc-depends.rq` takes a criterion, which IS a node of the graph and must
+    arrive as a URIRef — bound as a Literal it matches nothing and the query answers "depends
+    on nothing", which is the one wrong answer that looks like a right one."""
+    return value if isinstance(value, (URIRef, Literal)) else Literal(value)
+
+
 def rows(graph, name, **bindings):
     """Run one arc query and return its rows as tuples of plain strings, in query order."""
-    result = graph.query(q(name), initBindings={k: Literal(v) for k, v in bindings.items()})
+    result = graph.query(q(name), initBindings={k: _term(v) for k, v in bindings.items()})
     return [tuple(None if v is None else str(v) for v in r) for r in result]
 
 
@@ -73,6 +105,33 @@ def rows(graph, name, **bindings):
 #   dec   — declared as a rung, NO criteria at all                        -> unknown (absent)
 #
 # Residue ids are R900+ so that nothing here can be confused with a real register row.
+#
+# ---- and, from the-arc-has-edges (2026-08-22), FOUR dependency edges of BOTH grades --------
+#
+#   etkl:02 --asserted--> etkl:01 --proposed--> tab:01
+#   tab:03  --asserted--> tab:01
+#   tab:03  --proposed--> etkl:01
+#
+# Four edges, chosen so each of the three new queries has both a positive and a negative, and
+# so the three properties that would otherwise go unpinned are each pinned by ONE of them.
+# NO CRITERION IS ADDED — the four position/frontier/unblocked/orphan answers above are facts
+# about criteria and blockers and none of them may move when an edge appears. (If one does,
+# that is a real regression in a query that should not be reading the edges at all.)
+#
+#   * a TWO-HOP CHAIN whose SECOND HOP IS PROPOSED (etkl:02 -> etkl:01 -> tab:01), so `?grade`
+#     has something to distinguish: merge the two closures and tab:01 comes back "asserted".
+#   * a node reachable BOTH WAYS: tab:01 is one asserted hop from tab:03 AND two proposed hops
+#     from it (via etkl:01). It must come back ONCE, graded "asserted" — the grounded chain
+#     exists. A per-path grading emits it twice.
+#   * an UNMET criterion depending on an UNMET criterion (tab:03 -> tab:01), which is
+#     arc-ready.rq's negative — and tab:03 is simultaneously arc-unblocked.rq's POSITIVE, which
+#     is the two queries disagreeing in the direction the spec claims they can.
+#   * an unmet criterion whose direct dependency is MET but whose GRAND-dependency is not
+#     (etkl:02 -> etkl:01 met -> tab:01 unmet). This is the direct-vs-transitive seam: etkl:02
+#     is ready on the direct reading and would vanish on a transitive one.
+#
+# The graph is ACYCLIC, deliberately: a cycle would make the closures true but the hand
+# computation unreadable, and cycle behaviour is the membrane's question (M15), not a query's.
 FIXTURE = """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix prog: <https://w3id.org/iladub/progress#> .
@@ -94,6 +153,11 @@ prog:criterion:tab:02 a prog:Criterion ;
     prog:blockedBy "R902" .
 prog:criterion:tab:03 a prog:Criterion ;
     prog:ofRung "tab" ; prog:statement "T3" ; prog:met false .
+
+prog:criterion:etkl:02 prog:dependsOn         prog:criterion:etkl:01 .
+prog:criterion:etkl:01 prog:proposedDependsOn prog:criterion:tab:01 .
+prog:criterion:tab:03  prog:dependsOn         prog:criterion:tab:01 .
+prog:criterion:tab:03  prog:proposedDependsOn prog:criterion:etkl:01 .
 """
 
 
@@ -148,6 +212,210 @@ def test_arc_orphan_answers_only_about_the_caller_supplied_residue(fixture_graph
     assert rows(fixture_graph, "arc-orphan.rq", residue="R903") == [("R903",)]
     assert rows(fixture_graph, "arc-orphan.rq", residue="R900") == []
     assert rows(fixture_graph, "arc-orphan.rq", residue="R902") == []
+
+
+# -------------------------------------------------- the three edge queries (2026-08-22)
+
+def test_arc_depends_returns_the_full_closure_graded_by_which_predicate_carries_it(
+        fixture_graph):
+    """Hand-computed from the FIXTURE text, edge by edge, for two callers.
+
+    From `etkl:02` the only outgoing edge is the asserted one to `etkl:01`; `etkl:01`'s only
+    outgoing edge is the PROPOSED one to `tab:01`. So the full closure is {etkl:01, tab:01}
+    and the asserted closure — `prog:dependsOn+`, which cannot traverse the second hop — is
+    {etkl:01} alone. ORDER BY ?grade puts "asserted" before "proposed".
+
+    From `tab:03` there are two outgoing edges: asserted to `tab:01`, proposed to `etkl:01`;
+    and `etkl:01` reaches `tab:01` again by a proposed hop. `tab:01` is therefore reachable
+    BOTH ways and must come back exactly ONCE, graded "asserted" — the grounded chain exists,
+    and that is the fact. Two rows, not three."""
+    assert rows(fixture_graph, "arc-depends.rq",
+                criterion=URIRef(crit("etkl", "02"))) == [
+        (crit("etkl", "01"), "asserted"),
+        (crit("tab", "01"), "proposed"),
+    ]
+    assert rows(fixture_graph, "arc-depends.rq",
+                criterion=URIRef(crit("tab", "03"))) == [
+        (crit("tab", "01"), "asserted"),
+        (crit("etkl", "01"), "proposed"),
+    ]
+
+
+def test_arc_depends_grade_marks_where_the_chain_stops_being_grounded(fixture_graph):
+    """The one assertion the whole two-predicate vocabulary exists to make (spec §3).
+
+    A grade column that reads "asserted" on every row has pinned NOTHING — it is the merged
+    single-predicate closure wearing a label — so this test asserts the distinction directly
+    rather than only through a row tuple: over `etkl:02`'s closure BOTH grades occur, and the
+    node whose only route is through a `prog:proposedDependsOn` hop is the one graded
+    "proposed". Merge the two closures in the query and this fails on the second assertion
+    with `tab:01` labelled "asserted", which is exactly the silent mixing §3 forbids."""
+    got = dict(rows(fixture_graph, "arc-depends.rq", criterion=URIRef(crit("etkl", "02"))))
+
+    assert set(got.values()) == {"asserted", "proposed"}, (
+        "arc-depends must report BOTH closures — a grade column that is constant across a "
+        f"chain with a proposed hop in it distinguishes nothing; got {got!r}")
+    assert got[crit("etkl", "01")] == "asserted", (
+        "etkl:02 --prog:dependsOn--> etkl:01 is a grounded hop and must grade asserted")
+    assert got[crit("tab", "01")] == "proposed", (
+        "tab:01 is reachable from etkl:02 ONLY through etkl:01's prog:proposedDependsOn hop, "
+        "so the chain stops being grounded there and the grade must say so")
+
+
+def test_arc_depends_says_nothing_where_no_edge_was_read(fixture_graph):
+    """Open world, evidence-positive: a criterion with no outgoing edge returns NO rows.
+
+    `tab:01` carries no dependency edge and `tab:02` carries none either. The empty answer
+    means *no dependency has been READ for this criterion* — never *this criterion depends on
+    nothing*. The distinction is the reason 22 of the manifest's 28 edges are propositions.
+    And with the caller's binding omitted entirely the query does not answer about one
+    criterion at all, which the header states rather than leaves to be discovered."""
+    assert rows(fixture_graph, "arc-depends.rq", criterion=URIRef(crit("tab", "01"))) == []
+    assert rows(fixture_graph, "arc-depends.rq", criterion=URIRef(crit("tab", "02"))) == []
+    assert rows(Graph(), "arc-depends.rq", criterion=URIRef(crit("etkl", "02"))) == [], (
+        "over a graph with no criteria the answer must be empty, not 'depends on nothing'")
+
+
+def test_arc_ready_names_unmet_criteria_whose_DIRECT_dependencies_are_all_met(fixture_graph):
+    """Hand-computed. The unmet criteria are etkl:02, tab:01 and tab:03:
+
+      etkl:02 — one direct dependency, etkl:01, which is `prog:met true`  -> READY
+      tab:01  — no outgoing dependency edge at all (vacuously ready)      -> READY
+      tab:03  — two direct dependencies: tab:01 (`met false`) and etkl:01 (`met true`), so
+                one of the two carries no met evidence                    -> NOT ready
+
+    Two rows, ordered by rung then criterion. The met criteria (etkl:01, tab:02) are absent
+    whatever their dependencies say — this query is about work that is not done."""
+    assert rows(fixture_graph, "arc-ready.rq") == [
+        ("etkl", crit("etkl", "02"), "E2"),
+        ("tab", crit("tab", "01"), "T1"),
+    ]
+
+
+def test_arc_ready_is_direct_and_not_transitive(fixture_graph):
+    """Spec §6's closure decision, asserted as a property of the ANSWER and not of the text.
+
+    `etkl:02`'s direct dependency `etkl:01` is met, so it is ready. Its GRAND-dependency
+    `tab:01` is unmet — `etkl:01 --prog:proposedDependsOn--> tab:01`. A transitive reading
+    would therefore drop `etkl:02`, and this test is what fails when someone makes that
+    change: the two paths in the query become `+`, the answer loses its `etkl` row, and the
+    holon-scoped closure CLAUDE.md §8 licenses has quietly become a claim about a chain.
+
+    Stated the other way: this test asserts that a criterion IS reported ready while something
+    it transitively needs is still missing. That is a feature of the direct reading, it is the
+    cost the header names, and transitive readiness follows by iterating this query."""
+    ready = [r[1] for r in rows(fixture_graph, "arc-ready.rq")]
+
+    # the direct dependency is met ...
+    assert rows(fixture_graph, "arc-depends.rq",
+                criterion=URIRef(crit("etkl", "02")))[0] == (crit("etkl", "01"), "asserted")
+    assert (URIRef(crit("etkl", "01")), URIRef(PROG + "met"), Literal(True)) in fixture_graph
+    # ... while the grand-dependency is NOT ...
+    assert (URIRef(crit("tab", "01")), URIRef(PROG + "met"), Literal(False)) in fixture_graph
+    # ... and etkl:02 is ready anyway. This is the whole assertion.
+    assert crit("etkl", "02") in ready, (
+        "arc-ready must close over ONE criterion's own outgoing edges (CLAUDE.md §8): "
+        "etkl:02's direct dependency is met, so it is ready even though the chain behind it "
+        "is not — a transitive NOT EXISTS would close over a chain, which is a larger closure "
+        "claim than this repo has licensed")
+
+
+def test_arc_ready_requires_positive_met_evidence_and_never_infers_it_from_absence():
+    """A dependency carrying NO `prog:met` triple at all must NOT count as met.
+
+    This is the difference between the count in `arc-ready.rq` and the obvious
+    `FILTER NOT EXISTS { ?c <hop> ?dep . ?dep prog:met false }`, which passes every test above
+    and gets THIS one wrong. Hand-computed over a graph where `x:02` depends on `x:03` and
+    `x:03` carries a statement and a type but no met boolean: `x:02` is NOT ready, because
+    nothing in the graph says its dependency is done. Deriving met-ness from that silence is
+    precisely what CLAUDE.md §8 forbids.
+
+    `x:01` is in the same graph, depends on nothing, and IS ready — so an empty answer here
+    could not be produced by the query simply failing to match anything."""
+    g = Graph()
+    g.parse(data="""
+@prefix prog: <https://w3id.org/iladub/progress#> .
+prog:rung:x a prog:Rung ; prog:rungKey "x" .
+prog:criterion:x:01 a prog:Criterion ; prog:ofRung "x" ; prog:statement "X1" ; prog:met false .
+prog:criterion:x:02 a prog:Criterion ; prog:ofRung "x" ; prog:statement "X2" ; prog:met false ;
+    prog:dependsOn prog:criterion:x:03 .
+prog:criterion:x:03 a prog:Criterion ; prog:ofRung "x" ; prog:statement "X3" .
+""", format="turtle")
+
+    assert rows(g, "arc-ready.rq") == [("x", crit("x", "01"), "X1")], (
+        "x:02 depends on x:03, which carries NO prog:met triple; a dependency is met only "
+        "where the evidence SAYS SO, never because nothing says otherwise")
+
+
+def test_arc_ready_and_arc_unblocked_disagree_in_both_directions(fixture_graph):
+    """Spec §6: *it is NOT arc-unblocked.rq* — same result shape, different evidence.
+
+    Hand-computed, and the fixture is built so the disagreement runs BOTH ways at once:
+
+      tab:01 — no dependency edges, so READY; carries R900 and R901, so NOT unblocked.
+      tab:03 — nothing names it as blocked, so UNBLOCKED; depends on the unmet tab:01, so
+               NOT ready.
+
+    A rewrite that made either query read the other's evidence — say, arc-ready growing a
+    `prog:blockedBy` clause — collapses one of these two assertions. The shared SHAPES tuple
+    cannot catch that, because the shape would still be identical; this can."""
+    ready = {r[1] for r in rows(fixture_graph, "arc-ready.rq")}
+    unblocked = {r[1] for r in rows(fixture_graph, "arc-unblocked.rq")}
+
+    assert crit("tab", "01") in ready and crit("tab", "01") not in unblocked, (
+        "tab:01 has no dependency edges (ready) but two register rows name it (not unblocked)")
+    assert crit("tab", "03") in unblocked and crit("tab", "03") not in ready, (
+        "tab:03 is named by no register row (unblocked) but depends on the unmet tab:01 "
+        "(not ready)")
+    assert ready != unblocked
+
+
+def test_arc_reach_counts_the_unmet_criteria_a_residue_closure_gates(fixture_graph):
+    """Hand-computed. R900 blocks tab:01, which is unmet. Walking
+    `(prog:dependsOn|prog:proposedDependsOn)*` BACKWARDS from tab:01 reaches, in the fixture:
+
+      tab:01  itself (the zero-length step)                      unmet -> counted
+      etkl:01 (etkl:01 --proposed--> tab:01)                     MET   -> not counted
+      etkl:02 (etkl:02 --asserted--> etkl:01 --proposed--> tab:01)  unmet -> counted
+      tab:03  (tab:03 --asserted--> tab:01, and again via etkl:01)  unmet -> counted, ONCE
+
+    So three. R901 blocks the same criterion and must give the same three — a residue's reach
+    is a fact about the criterion it blocks, not about how many residues share it. Note that
+    etkl:01, though MET, still TRANSMITS the gating to etkl:02: the path runs over edges, not
+    over met-ness, and a met criterion mid-chain does not shield its dependents."""
+    assert rows(fixture_graph, "arc-reach.rq", residue="R900") == [("R900", "3")]
+    assert rows(fixture_graph, "arc-reach.rq", residue="R901") == [("R901", "3")]
+
+
+def test_arc_reach_answers_only_about_the_caller_supplied_residue(fixture_graph):
+    """The caller-binding contract, and it is the assertion that fails if a rewrite stops
+    honouring it (this file's falsification arm for arc-reach.rq).
+
+    R900 and R901 both block tab:01, so a query that ignored its binding would return BOTH
+    rows for either call — the answer would still be true and would no longer be an answer
+    about anything. Each call returns exactly its own residue, and the value echoed back in
+    column one is the caller's own term."""
+    for residue in ("R900", "R901"):
+        got = rows(fixture_graph, "arc-reach.rq", residue=residue)
+        assert [r[0] for r in got] == [residue], (
+            f"arc-reach must answer about {residue} alone; got {got!r}")
+
+
+def test_arc_reach_reports_no_row_rather_than_zero(fixture_graph):
+    """Decision 6 of the previous loop, applied here: unknown is not zero.
+
+    Hand-computed. R902 blocks tab:02, which is MET — a met criterion's blocker is a stale
+    edge and not a frontier (arc-frontier.rq's own argument, and M8 refuses the combination
+    on an admitted manifest), so the reach is not `0`, it is NOT REPORTED. R903 is named by
+    nothing at all and is likewise absent. A `("R902", "0")` row would licence a reading —
+    *this residue gates nothing* — that the graph does not support, and it would rank a stale
+    edge alongside a measured one.
+
+    The empty graph is the fail-safe: no blocking triple, no row, so a missing manifest can
+    never make every residue look harmless."""
+    assert rows(fixture_graph, "arc-reach.rq", residue="R902") == []
+    assert rows(fixture_graph, "arc-reach.rq", residue="R903") == []
+    assert rows(Graph(), "arc-reach.rq", residue="R900") == []
 
 
 # --------------------------------------------------- decision 6, and the two gate arms
@@ -260,6 +528,17 @@ def test_a_duplicated_rung_node_does_not_double_any_count_or_row():
     assert rows(g, "arc-unblocked.rq") == [("etkl", crit("etkl", "02"), "E2")]
     assert rows(g, "arc-orphan.rq", residue="R901") == [("R901",)]
 
+    # The 2026-08-22 queries carry the same hazard for the same reason. DUPLICATE_RUNG has no
+    # dependency edges, so both unmet criteria are vacuously ready — and each must appear ONCE
+    # despite the doubled rung join (arc-ready.rq is the one that joins the rung; arc-reach.rq
+    # deliberately does not, and its count is DISTINCT over criteria either way).
+    assert rows(g, "arc-ready.rq") == [
+        ("etkl", crit("etkl", "02"), "E2"),
+        ("etkl", crit("etkl", "03"), "E3"),
+    ], "a second prog:Rung node must not report one ready criterion as two pieces of work"
+    assert rows(g, "arc-reach.rq", residue="R900") == [("R900", "1")], (
+        "R900 blocks etkl:03, which nothing depends on — reach 1, not 2")
+
 
 def test_arc_orphan_returns_nothing_when_there_is_no_arc():
     """The fail-safe, and it is the deriving-by-absence guard doing its job. Over a graph
@@ -279,7 +558,7 @@ def test_arc_orphan_unbound_returns_nothing(fixture_graph):
     assert rows(fixture_graph, "arc-orphan.rq") == []
 
 
-# ------------------------------------------------------- the four sources, inspected
+# ------------------------------------------------------ the seven sources, inspected
 
 def _strip_comments(text):
     return "\n".join(line.split("#", 1)[0] for line in text.splitlines())
@@ -316,13 +595,23 @@ def test_no_query_infers_a_fact_from_absence_of_evidence():
        the brief's *none is a CONSTRUCT that adds prog:met*.
 
     2. **No negation reads met-ness.** `prog:met` never appears inside a `NOT EXISTS` or
-       `MINUS` group in any of the four. Met-ness is READ from the hand-asserted boolean in a
+       `MINUS` group in any of the seven. Met-ness is READ from the hand-asserted boolean in a
        positive triple pattern and is never concluded from something being absent — which is
        precisely the derive-by-absence CLAUDE.md §8 forbids. (`arc-position.rq`'s
        `(SUM(?one) AS ?met)` is an alias over a tally of present criteria, not a met-ness
        judgement, and it is nowhere near a negation.)
 
-    The file set is pinned to the four so a fifth arc query cannot ship unscanned."""
+       **This rule survived the edge queries unchanged, and it cost something to keep.**
+       `arc-ready.rq`'s question — *are this criterion's direct dependencies all met?* — is
+       naturally written `FILTER NOT EXISTS { ?c <hop> ?dep . ?dep prog:met false }`, which
+       trips this scan. It is also WRONG for the reason the scan exists: a dependency carrying
+       no `prog:met` triple at all would be treated as met. So the query counts positive met
+       evidence instead of negating over its absence (see its header, and
+       `test_arc_ready_requires_positive_met_evidence_and_never_infers_it_from_absence`). The
+       textual rule pointed at a real defect rather than merely inconveniencing a rewrite,
+       which is the argument for leaving it exactly as strict as it was.
+
+    The file set is pinned to the seven so an eighth arc query cannot ship unscanned."""
     found = sorted(p.name for p in QUERIES.glob("arc-*.rq"))
     assert found == sorted(SHAPES), f"unexpected arc query file set: {found}"
 
@@ -341,11 +630,24 @@ def test_no_query_infers_a_fact_from_absence_of_evidence():
                 f"absence, which CLAUDE.md §8 forbids: {group!r}")
 
 
-def test_the_four_queries_keep_their_declared_result_shapes(fixture_graph):
-    """The contract task 8 and every future session read. A projected variable that is
-    renamed or reordered breaks a consumer silently; here it breaks a test loudly."""
+def test_every_arc_query_keeps_its_declared_result_shape(fixture_graph):
+    """The contract task 8, `scripts/arc_depends.py` and every future session read. A projected
+    variable that is renamed or reordered breaks a consumer silently; here it breaks a test
+    loudly.
+
+    Each query is run with the binding its header says it takes, so the shape is measured on a
+    query the caller could actually have issued — a residue for the two that read the register
+    seam, a criterion (as a URIRef, not a Literal) for `arc-depends.rq`, nothing for the three
+    that answer about the whole arc."""
+    bindings = {
+        "arc-orphan.rq": {"residue": "R903"},
+        "arc-reach.rq": {"residue": "R900"},
+        "arc-depends.rq": {"criterion": URIRef(crit("etkl", "02"))},
+    }
     for name, shape in SHAPES.items():
-        result = fixture_graph.query(q(name), initBindings={"residue": Literal("R903")})
+        result = fixture_graph.query(
+            q(name),
+            initBindings={k: _term(v) for k, v in bindings.get(name, {}).items()})
         assert tuple(str(v) for v in result.vars) == shape, (
             f"{name}: result shape drifted from its declared contract")
 
