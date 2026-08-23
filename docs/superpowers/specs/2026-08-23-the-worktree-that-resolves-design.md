@@ -279,8 +279,19 @@ checked.
 1. §4.1–§4.5 implemented, each with its §7 falsification evidence.
 2. **`ablation_refusals` over the LIVE manifest re-run, and its result reported whatever it is.**
    §4.1 changes what oracles can see: a pair that refuted because the deletion was invisible may
-   now ground. If the live result is no longer `[]`, that is a **finding**, not a regression to be
-   suppressed — report it and stop for a maintainer ruling.
+   now ground. **The rule, settled 2026-08-23 so the loop needs no mid-flight ruling: a newly
+   grounding pair is RECORDED AS A FINDING and authored as an edge in a LATER loop — never in
+   this one.** Three reasons, and the third is binding:
+   - authoring edges is its own loop with its own review (`2026-08-22-arc-edges-authored.md`);
+   - under [[R113]] the evidence is file-granular, so a newly grounding pair may be ambiguous
+     across several criteria sharing one artifact — the exact ambiguity that made the previous
+     loop decline to author `dec:09 → dec:07/08/10` at all;
+   - an instrument change and the first graph claim it produces must not be reviewed together.
+     The same reading would have authored both, which is the defect CLAUDE.md's plan-authoring
+     rules exist for.
+   The loop is therefore **not blocked** by a non-empty result. It reports it, files the row, and
+   still closes. Suppressing it — or re-tuning the instrument until `[]` comes back — is the one
+   forbidden response.
 3. `pytest --collect-only -q` inside a worktree created by the shipped `_ablate` reports **0**
    collection errors, re-derived there (from 6 — §2.6).
 4. **A residue row raised for the question this loop declines to ask** (§9, final bullet):
