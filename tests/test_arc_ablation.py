@@ -200,11 +200,22 @@ def _run_module(node_ids, cwd):
     Per-module and never wider: see this module's docstring for the measured reason. The
     interpreter is `sys.executable`, which is absolute and therefore unaffected by the
     worktree having no `.venv` of its own (measured, Task 1 § Step 2).
+
+    [[R121]], spec §4.1: the editable install's `_editable_impl_iladub.pth` carries the MAIN
+    tree's `src/`, so `import iladub` in the subprocess would otherwise resolve there instead of
+    into `cwd` (the worktree), and every ablation would be silently reading unablated files. A
+    plain path `.pth` is outranked by `PYTHONPATH`, so prepending `<cwd>/src` re-roots every
+    import onto the worktree. Measured (Task 1 § Step 1): `PYTHONPATH` is unset in this
+    environment, so there is nothing to preserve beyond appending it if it is ever set.
     """
+    env = dict(os.environ)
+    src = str(Path(cwd) / "src")
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = src if not existing else os.pathsep.join([src, existing])
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", *node_ids,
          "-v", "--tb=no", "-p", "no:cacheprovider"],
-        cwd=cwd, capture_output=True, text=True)
+        cwd=cwd, capture_output=True, text=True, env=env)
     reported = {}
     for node, outcome in _PROGRESS.findall(proc.stdout):
         reported.setdefault(node, []).append(outcome)
@@ -469,6 +480,39 @@ def test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width():
         assert verdict.startswith("did not execute") and "SKIPPED" in verdict, (
             f"at COLUMNS={columns} the refusal must say what pytest actually reported, so a "
             f"reader can tell a skip from a failure: {verdict!r}")
+
+
+_PROBE = "tests/test_arc_worktree_probe.py::test_library_resolves_to_this_checkout"
+
+
+def test_m19_resolves_the_library_into_the_worktree_it_ablates():
+    """[[R121]]: the ablation must edit the tree the oracles actually read.
+
+    Two legs, and the second is the one the abandoned spec never measured:
+
+      1. **It resolves.** In an un-ablated worktree the probe PASSES, so `import iladub` and both
+         `vocab/`-resolution styles land inside the checkout under test rather than in the main
+         tree the editable install pins.
+      2. **And it is ABLATION-SENSITIVE.** Deleting a `vocab/` file that library code resolves
+         makes the probe FAIL. Resolution alone is not the property M19 needs — an oracle that
+         runs but cannot see the deletion produces a silent false refutation — so the deletion
+         must be *observable through library code*.
+
+    Run through the SHIPPED `_ablate`, not a hand-built worktree: leg 2 depends on the ordering
+    of `git worktree add` -> materialise -> `unlink()`, and a hand-built probe proves the
+    mechanism without proving the mechanism survives materialisation.
+    """
+    assert _ablate([], [_PROBE])[_PROBE] == PASSED, (
+        "the library did not resolve into an un-ablated M19 worktree — every ablation this "
+        "module performs is reading the main tree (R121)"
+    )
+
+    ablated = _ablate(["vocab/queries/grid-region.rq"], [_PROBE])[_PROBE]
+    assert ablated == FAILED, (
+        f"a vocab/ file deleted inside the worktree was still visible to library code: the "
+        f"probe scored {ablated!r}, not {FAILED!r}. Resolution without ablation-sensitivity is "
+        f"the silent false refutation R121 names"
+    )
 
 
 def test_m19_the_live_manifest_carries_no_refuted_edge():
