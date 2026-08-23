@@ -1,0 +1,60 @@
+# FIXTURE — forges the control's failure (spec §4.3, Task 3 Step 1).
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# The live control is green today (measured 2026-08-23: 10 endpoint oracle ids across 4
+# modules, all PASSED in an un-ablated worktree with baml_client materialised) — so pinning
+# the refusal needs a graph whose endpoint oracle CANNOT pass in any worktree M19 creates.
+# `tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]` is
+# that id: `corpus/` is gitignored and this loop deliberately does not materialise it
+# (spec §2.5), so it SKIPs in every worktree — measured, not assumed. A SKIP is not a PASS.
+#
+# `prog:criterion:etkl:01` already carries exactly that oracle in the live manifest
+# (tests/arc-manifest.ttl:149ff) — copied here verbatim rather than invented, per the setup
+# note's re-measurement instruction. Its oracleArtifact, `tests/corpus-manifest.ttl`, is
+# under `tests/`, so it does not collide with `baml_client/` (§4.4 is silent on this fixture).
+#
+# `prog:criterion:dec:03` is copied verbatim from tests/arc-m19-false-edge-leak.ttl so the
+# edge satisfies every membrane precondition the same way that fixture does:
+#   A1  both ends prog:met true.
+#   A2  both ends carry a prog:oracleArtifact and a prog:oracleTest.
+#   A3  their oracle test sets are disjoint — tests/test_timeline_shacl.py vs
+#       tests/test_corpus.py.
+#   A4  metOn(dec:03) 2026-06-18 <= metOn(etkl:01) 2026-08-03, non-strict, no contradiction —
+#       so etkl:01 (the later date) is the source, dec:03 the target.
+#   A6  their artifact FILES are disjoint — dec-shapes/heart-timeline-{conformant,leak}
+#       against tests/corpus-manifest.ttl.
+# M12 (both ends declared criteria), M13 (not a self-edge), M14 (one edge, no cycle), M15
+# (neither end unmet) and M18 (the assertion carries no rationale, and none is here) are all
+# silent too — validate_manifest must return Conforms: True, so that ONLY the control can
+# refuse this fixture, never the graph membrane.
+#
+# The control never reaches an arm: it runs BEFORE the ablation loop and raises on the union
+# of endpoint oracle ids, so dec:03's two (passing) oracle tests are collateral evidence that
+# the control judges the WHOLE union, not this fixture's more interesting half alone.
+
+prog:criterion:etkl:01 a prog:Criterion ;
+    prog:ofRung "etkl" ;
+    prog:statement "ag-trade/graincorp-stem-2026-07-31.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
+    prog:source "tests/corpus-manifest.ttl:24" ;
+    prog:declaredOn "2026-08-02"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-08-03"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/corpus-manifest.ttl" ;
+    prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]" ;
+    prog:dependsOn prog:criterion:dec:03 .
+
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/heart-timeline-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" .

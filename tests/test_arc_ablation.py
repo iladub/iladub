@@ -145,6 +145,7 @@ from tests.test_arc_manifest import (MANIFEST, REPO, _LINE_SUFFIX, oracle_rows,
 PROG = Namespace("https://w3id.org/iladub/progress#")
 
 FIXTURE = REPO / "tests" / "arc-m19-false-edge-leak.ttl"
+CONTROL_FAILS_FIXTURE = REPO / "tests" / "arc-m19-control-fails.ttl"
 
 # pytest's own `-v` progress lines, one per executed test and ending in a percentage:
 #     tests/test_risk.py::test_empiric_risk_stamp_rejected PASSED              [100%]
@@ -380,6 +381,50 @@ def _ablate(removed_files, node_ids, repo=REPO):
         subprocess.run(["git", "worktree", "prune"], cwd=repo, capture_output=True, text=True)
 
 
+def _run_control(node_ids, repo=REPO):
+    """§4.3: prove the worktree faithful BEFORE any deletion, over the UNION of endpoint ids.
+
+    One worktree for every endpoint (invariant 2): `_ablate([], node_ids, repo)` deletes
+    nothing, so this is the same mechanism a real ablation uses — `git worktree add`,
+    materialise, run — minus the `unlink()` loop. Reusing `_ablate` rather than reimplementing
+    its worktree/materialise/subprocess plumbing is deliberate: a second copy of that logic is
+    the next divergent parser R109 warns about.
+
+    Invariant 4: any requested id that did not come back `PASSED` — `FAILED`, or the "did not
+    execute" sentence `_scores` returns for a SKIP/XFAIL/XPASS — means this worktree is not an
+    environment every endpoint oracle can pass in, so nothing below this call may be scored on
+    evidence gathered here. Raises naming every such id and what `_scores` reported for it.
+
+    Invariant 5 (controller ruling PF-1): a `RuntimeError` escaping `_ablate` itself — today
+    only `_scores`'s unresolved-node-id instrument failure; once §4.5 lands, also an
+    unattributable collection ERROR, which a control worktree manufactures for EVERY module
+    because nothing there was ever removed — is caught and re-raised carrying the same
+    `_declared_inputs` partition invariant 3 requires, so that raise does not escape before the
+    partition is built. Defensive: no live endpoint reaches it (measured — the four control
+    modules import no `baml_client`), so no test exercises this branch directly.
+
+    Both raises carry the same partition, built once: which `_MATERIALISED` entries exist in
+    `repo` (and were therefore copied into the worktree) and which do not — an actionable
+    sentence for a developer who has never generated a `baml_client`.
+    """
+    declared = _declared_inputs(repo)
+    materialised = sorted(p.relative_to(repo).as_posix() for p in declared if p.exists())
+    absent = sorted(p.relative_to(repo).as_posix() for p in declared if not p.exists())
+    partition = (f"declared environment inputs — materialised into the control worktree: "
+                 f"{materialised}; absent from the main tree and NOT materialised: {absent}")
+    try:
+        scored = _ablate([], node_ids, repo)
+    except RuntimeError as instrument_failure:
+        raise RuntimeError(f"{instrument_failure}\n{partition}") from instrument_failure
+    unfaithful = {node: outcome for node, outcome in scored.items() if outcome != PASSED}
+    if unfaithful:
+        raise RuntimeError(
+            f"M19: the control run found {sorted(unfaithful)} not PASSED in an UN-ABLATED "
+            f"worktree (nothing was removed): {unfaithful}. An oracle that does not pass with "
+            f"nothing taken away cannot ground any ablation (spec §4.3) — this worktree is not "
+            f"proved faithful, so it is never scored. {partition}")
+
+
 # ------------------------------------------------------------------------- the one refusal
 
 def ablation_refusals(graph):
@@ -434,6 +479,15 @@ def ablation_refusals(graph):
     # created and torn down worktrees for every criterion that sorts before it.
     _refuse_materialisation_collision(
         sorted({a for e in ends for a in oracles[e][0]}))
+
+    # THE CONTROL (spec §4.3) — after the two producer-side guards above and the disjointness
+    # guard, before the ablation loop touches a single worktree. It disposes the proposition
+    # "this worktree is an environment in which every endpoint oracle runs" over the UNION of
+    # every end's oracle ids, in ONE worktree that deletes nothing — independent of arm 1/arm 2
+    # and of which criterion an id belongs to, so it must run before the per-criterion loop
+    # below, not folded into it.
+    _run_control(sorted({t for e in ends for t in oracles[e][1]}))
+
     sources, targets = defaultdict(list), defaultdict(list)
     for x, y in edges:
         sources[y].append(x)      # arm 1: remove y, run x
@@ -658,6 +712,48 @@ def test_m19_refuses_an_artifact_that_materialisation_would_restore():
     assert not never.called, (
         "the disjointness guard fired only once _ablate had already been entered; it must "
         "refuse before the first worktree is created"
+    )
+
+
+def test_m19_refuses_to_score_in_an_environment_it_has_not_proved_faithful():
+    """THE CONTROL: before any deletion, every endpoint oracle must PASS with nothing removed.
+
+    An oracle that fails an UN-ABLATED run is an instrument failure, not evidence (spec §3): its
+    outcome under ablation says nothing about the removed artifact, because it did not pass
+    without it either. So it raises with the transcript — the same shape `_scores:219-226`
+    already uses for an unresolved node id — and is never scored.
+
+    MEASURED 2026-08-23 over the live manifest: 6 asserted edges, 8 endpoint criteria, a union of
+    10 endpoint oracle ids across 4 modules, all 10 PASSED in an un-ablated worktree with
+    `baml_client` materialised. **The control is green today**, so this test pins the refusal, not
+    a live failure — it forges the failure by handing `ablation_refusals` a graph whose endpoint
+    oracle is a node id that cannot pass in a worktree.
+
+    `tests/test_corpus.py::test_expected_verdict` is that id: `corpus/` is gitignored and this
+    loop deliberately does not materialise it (spec §2.5), so all 7 of its parametrized ids SKIP
+    in every worktree M19 creates — measured, not assumed. A SKIP is not a PASS, so the control
+    must refuse rather than let the edge be scored on an oracle that never executed.
+
+    The message must name the failing id, its outcome, AND which declared inputs were and were
+    not materialised (§4.3 invariant 3) — a developer who has never generated a `baml_client`
+    needs an actionable sentence, not a bare red.
+    """
+    live = Graph().parse(MANIFEST, format="turtle")
+    edges = asserted_edges(live)
+    assert edges, "the live manifest carries no asserted edge, so this test has no endpoint"
+
+    with pytest.raises(RuntimeError) as caught:
+        ablation_refusals(Graph().parse(CONTROL_FAILS_FIXTURE, format="turtle"))
+
+    message = str(caught.value)
+    assert "tests/test_corpus.py::test_expected_verdict" in message, message
+    assert "SKIPPED" in message, (
+        f"the control must say WHAT pytest reported, so a reader can tell a skip from a "
+        f"failure: {message}"
+    )
+    assert "baml_client" in message, (
+        f"the control must report which declared environment inputs were materialised, so a "
+        f"developer without a generated client gets an actionable sentence: {message}"
     )
 
 
