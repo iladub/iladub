@@ -38,7 +38,57 @@ worktree a faithful environment, then re-reading `etkl:01`'s ends for dependency
 **Nothing has been implemented.** The branch contains the spec and this file. No test, no workflow,
 no change to `test_arc_ablation.py`.
 
+## §3bis CORRECTION, same day — §4's probe answered the wrong question; the yield is ZERO
+
+**Raised by an adversarial review, verified independently before being recorded here.** §4 below
+is left standing because its *method* is sound and its file list is accurate; its **conclusion is
+wrong**, and this section supersedes it.
+
+§4's probe ran in the **main tree**. It established which files the compile *opens* — it never
+established whether deleting one in a **worktree** would change anything. It cannot: the oracle
+does not resolve `vocab/` relative to its own checkout. It resolves it through the editable
+install, from `src/iladub/`, which the `.pth` pins to the main tree:
+
+- `src/iladub/etkl/compile.py:374-383` — `_repo_vocab()` walks up from `os.path.abspath(__file__)`
+- `src/iladub/etkl/gridregion.py:29-31` and seven sibling modules — `Path(__file__).resolve().parents[3] / "vocab" / …`
+
+Measured in a worktree with **the entire `vocab/` tree deleted**:
+
+```
+cwd            : …/scratchpad/wt-verify
+_repo_vocab()  : /Volumes/WD Green/dev/git/iladub/vocab
+GRID_REGION_RQ : /Volumes/WD Green/dev/git/iladub/vocab/queries/grid-region.rq
+  exists?      : True
+=> resolves to WORKTREE? False
+```
+
+**Consequence.** All 8 of §4's "can ground" candidates declare `vocab/` files. Arm 1 grounds only
+if deleting `Y`'s artifact makes `etkl:01`'s oracle **FAIL** — and the deletion is invisible to it.
+Every one of the 8 refutes, `etkl:01 → dec:06` included. **The measured yield of the corpus/CI
+half is zero edges, not one.**
+
+**The root cause of R114 is therefore misnamed.** It is not the gitignored corpus; it is the
+`.pth` shadow that makes every `vocab/` artifact un-ablatable for any oracle reaching it through
+library code. The corpus fix makes the oracle *run*; nothing in this spec makes it *ablatable*.
+
+**Scope of the shadow — the shipped graph is NOT affected.** `tests/test_boundary.py:6` and its
+siblings derive their root from the **test file's** `__file__`, which in a worktree is the
+worktree. That is why the 6 asserted edges grounded, and it is self-evidencing: an edge that
+grounded is an edge whose oracle was ablation-sensitive. In the met set, `etkl:01` is the **only**
+oracle that reaches its evidence through `src/iladub/`.
+
+**What this invalidates in the spec:** §2.3's existence proof (it retired "does it run?", not "is
+it ablatable?"), §2.1's dismissal of F3 as latent (the test *"zero declared artifacts under
+`src/`"* is the wrong test; the right one is *"does the oracle resolve the artifact through a
+main-tree-rooted path?"*, and by it **8 of the 29 declared files are un-ablatable**), §7, §9's
+headline, and DoD items 1, 7, 8, 10.
+
+---
+
 ## §4 The probe — the measurement that changes the economics
+
+> **Superseded by §3bis.** The file list below is accurate and re-derivable; the yield conclusion
+> it draws is wrong. Read §3bis first.
 
 Taken **after** the spec was committed; the spec does not contain it. One traced compile answers
 all 15 candidate pairs at once, because an edge `etkl:01 → Y` can only ground if the compile
@@ -153,13 +203,28 @@ Recorded so the next session trusts the spec's *measurements* more than its *rec
 
 ## §7 The next concrete action
 
-**Reconsider the decomposition before writing any plan** — the probe in §4 is new information the
-spec does not contain, and the maintainer asked for exactly this. The specific question:
+**Do not write a plan from this spec.** §3bis removes its reason for existing. The three actions,
+in order:
 
-> The instrument repairs — the control run, [[R118]]'s live false-assertion path, the disjointness
-> guard, and the two record corrections in spec §11 — cost **no** CI change, **no** external
-> dependency and **no** 164 s. The corpus/CI half costs all three and buys **one** edge. The spec
-> treats them as one loop. **Should they be two?**
+1. **Ship the instrument-only slice.** The control run, the disjointness guard, [[R118]]'s
+   **general** form (read the ERROR's exception, not merely its existence), `baml_client`-only
+   materialisation, and the two record corrections in spec §11. Costs **no** corpus, **no** CI
+   job, **no** 164 s — and measured, `baml_client` alone takes the worktree from *1293 collected,
+   6 errors* to *1314 collected, 0 errors*; the corpus contributes nothing to that.
+2. **Re-file R114** with its true cause: the `.pth` shadow, not the gitignored corpus. It gates
+   the whole `etkl` rung, and the remedy is the guard `test_arc_ablation.py:109-111` already
+   prescribes plus a per-worktree install or a vocab-root injection point.
+3. **Reverse the §6 CI ruling.** It was requested and granted against an unmeasured yield that is
+   in fact zero. Nothing should be built on it.
 
-Do this in a **fresh session**, reading the spec cold plus §4 and §5 of this file. Then collect the
-adversarial review's findings before writing the plan.
+Do this in a **fresh session**, reading §3bis and §5 of this file first, then the spec cold.
+
+**Three further blockers the adversarial review measured**, not repeated here in full and worth
+reading before any implementation: (i) spec §5's claim that the terminal-width skip test survives
+is false — `_SKIPS_WITH_A_REASON` is a **bare** node id that fans out to all 7 corpus documents
+once a corpus is materialised, turning that test red and ~11 minutes long on any corpus-present
+machine; (ii) spec §6's containment fails — `tests/test_arc_ablation.py` carries no `pytestmark`
+and CI runs a bare `pytest -q`, so an asserted `etkl` edge makes the **default** job raise, not
+the new one; (iii) §2.5's *209* is the sum of module totals, and the real corpus-gated envelope is
+`43` deselected by `-m corpus` plus ~35 static skipifs — a number the spec spent to reject an
+architecture in its Appendix without measuring.
