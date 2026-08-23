@@ -84,31 +84,60 @@ test that pins it.
   3. **Grounding is to FILE granularity** (spec §4's own stated limitation): `X dependsOn
      dec:01` is demonstrated as "X consumes `dec-shapes.ttl`", not as "X consumes the shape at
      line 15". Ablation deletes files.
-  4. **THE ABLATION IS NOT HERMETIC FOR `src/`: the editable install is never ablated, and this
-     is the only limitation here that can produce a FALSE GREEN.** MEASURED in this tree:
-     `.venv/lib/python3.*/site-packages/_editable_impl_iladub.pth` carries the **absolute
-     main-tree** path `…/iladub/src`, and `pyproject.toml:98` sets `pythonpath = ["."]` — the
-     worktree *root*, never `worktree/src`. So `import iladub` inside a worktree resolves to the
-     main tree, even for a module deleted from the worktree:
+  4. **THE ABLATION WAS NOT HERMETIC FOR ANY ARTIFACT AN ORACLE RESOLVES THROUGH LIBRARY CODE
+     — CORRECTED 2026-08-23 ([[R121]], closed by Task 1, `7e4f84c`).** The hazard was never
+     "an artifact lives *under* `src/`"; it is an artifact *resolved through* `src/`, and the
+     original text here dismissed the wrong test. MEASURED (this brief's own census command,
+     re-run against the live manifest with `tests/test_arc_manifest.py`'s `MANIFEST`/
+     `_LINE_SUFFIX`): **29** distinct declared `prog:oracleArtifact` files across **48** raw
+     triples (the two counts are not the same thing, and this docstring previously conflated
+     them) — `examples/` 12, `tests/` 9, `vocab/` **8** (not 14: `14` was `vocab/`'s *triple*
+     count, not its file count), `src/` **0**. Zero-under-`src/` was the wrong reading. The
+     right test is *"does the consuming oracle reach this file through library code?"* —
+     because `src/iladub/etkl/compile.py:374-383` (`_repo_vocab()`) and eight `parents[3]`-style
+     siblings (e.g. `src/iladub/etkl/gridregion.py:29-31`) resolve `vocab/` by walking up from
+     THEIR OWN `__file__`, which — before this loop's `PYTHONPATH` fix below — was always the
+     main tree's `src/`, however the worktree's `vocab/` was ablated:
 
-         $ git worktree add --detach $WT HEAD && rm -rf $WT/src/iladub/ground.py
-         $ cd $WT && …/iladub/.venv/bin/python -c "import iladub.ground as g; print(g.__file__)"
-         /Volumes/WD Green/dev/git/iladub/src/iladub/ground.py     # the MAIN tree's copy
+         $ git worktree add --detach $WT HEAD && rm -rf $WT/vocab
+         $ cd $WT && …/iladub/.venv/bin/python -c \
+             "import iladub.etkl.gridregion as g; print(g.GRID_REGION_RQ.is_file())"
+         True     # resolved through src/, so the worktree's deletion is INVISIBLE
 
-     **No live impact today, and that too is measured:** all 35 distinct `prog:oracleArtifact`
-     values in `tests/arc-manifest.ttl` live under `vocab/` (14), `examples/` (12) and `tests/`
-     (9) — **zero** under `src/`. Non-`src/` artifacts ablate correctly, because pytest's rootdir
-     *is* the worktree (Task 1's `tab:06` `COLLECT_ERROR` row is the positive evidence).
-     **The failure scenario, stated so a later author cannot walk into it unwarned:** a criterion
-     declares e.g. `src/iladub/ground.py:199` — a natural thing to declare, since `dec:08`'s
-     epistemics live there. M19 deletes that file inside the worktree; the oracle imports the
-     main tree's surviving copy and **PASSES**. Arm 2 (`C dependsOn Y` ⇒ Y's tests must PASS)
-     therefore goes green on a file that was never effectively removed, and a false edge is
-     **asserted**. Arm 1 would spuriously refute, which is the safe direction; arm 2 is the
-     unsafe one — exactly the direction the producer-side guards below exist to protect.
-     Do not declare a `src/` artifact on a criterion that is an edge endpoint until `_ablate`
-     carries a producer-side refusal for a removed path that lies under a directory named by a
-     `.pth` on `sys.path` — the same shape as the two guards already there.
+     By that test, **all 8 of the 29 `vocab/`-rooted files were un-ablatable**: any oracle
+     reaching them through such a helper would read the main tree's copy regardless of what the
+     worktree ablation deleted. That is the FALSE-GREEN direction ([[R121]]'s own name for it):
+     arm 2 (`C dependsOn Y` ⇒ Y's tests must PASS) goes green on a file that was never
+     effectively removed, and a false edge is asserted; arm 1 would spuriously refute, which is
+     the safe direction.
+
+     **No shipped edge was ever affected — but for a different reason than this docstring first
+     gave.** The 6 asserted edges in the live manifest all grounded, and MEASURED, they grounded
+     because their oracles root their evidence in the TEST file's own `__file__`
+     (`tests/test_boundary.py:6` and its siblings), which in a worktree *is* the worktree —
+     never in a `src/`-resolved helper. That is self-evidencing: an edge that grounded is an
+     edge whose oracle was ablation-sensitive. In the met set, `etkl:01` was the only criterion
+     whose oracle reached `vocab/` through library code, and it is not an endpoint of any
+     shipped edge ([[R121]] in `docs/superpowers/residues-closed.md`).
+
+     **§4.1 (`_run_module`'s `PYTHONPATH` prefix, Task 1) now re-roots every `src/`-resolved
+     import onto the worktree**, and MEASUREMENT shows it closes both readings of this
+     limitation, not only the library-code one above. The literal reading the original text
+     warned about — a criterion declaring a file *under* `src/` itself, e.g.
+     `src/iladub/ground.py` — is ALSO closed: with `PYTHONPATH=<worktree>/src` set and that file
+     deleted inside the worktree, `import iladub.ground` now raises `ModuleNotFoundError`
+     rather than silently resolving the main tree's surviving copy (measured in a throwaway
+     worktree; without the `PYTHONPATH` prefix the same import silently returns the main tree's
+     `iladub/ground.py`). Regular Python packages resolve to a single directory, so once
+     `<worktree>/src` outranks the editable install's `.pth`, a missing submodule there is not
+     found anywhere else on `sys.path` — no producer-side guard was needed for this case after
+     all, because the import mechanism itself now enforces it.
+
+     **What limitation 4 still cannot claim — and does not, having been corrected rather than
+     retired — is that NOTHING else in this codebase resolves to the main tree.** Only the two
+     resolution styles actually inventoried above (`import`, and the `parents[N]`/`__file__`
+     helpers) were measured; a third style this loop did not think to name is not ruled out.
+     That question stays **declared, not measured** (spec §9) — see the R122 row Task 6 raises.
 
 **No tuned constant, threshold or tolerance** (Global Constraint 3), and **no subprocess
 timeout**: any wall-clock number here would be exactly the tuned constant CLAUDE.md §8 calls
@@ -907,10 +936,32 @@ def test_m19_the_live_manifest_carries_no_refuted_edge():
     (`holon:02 -> holon:01`, arm 1 — holon:02's oracles never load `etkl-holons.ttl`), it was
     DELETED rather than demoted (plan §0/C4, because M17 refuses the demotion), and **6** remain.
 
-    So this now creates real worktrees and runs real oracles. MEASURED 2026-08-22 over those 6
-    edges: 9 endpoint criteria, 6.69 s wall-clock, real tree `git status --porcelain` clean
-    throughout. The second assertion keeps stating the count the first one ran against — a
-    guard against the gate silently going vacuous again if a future edit empties the section.
+    So this now creates real worktrees and runs real oracles. **CORRECTED 2026-08-23 (M7,
+    Task 5)** — the `9 endpoint criteria, 6.69 s` figure recorded here on 2026-08-22 was the
+    *7*-edge count: it counted `holon:02`, whose edge the paragraph above already says was
+    DELETED, so the sentence named 6 edges and reported the 7-edge endpoint total. Re-derived
+    over the live manifest with this module's own `asserted_edges`/`_oracles` helpers (a reader
+    can re-run it):
+
+        $ ./.venv/bin/python -c "
+        from rdflib import Graph
+        from tests.test_arc_ablation import MANIFEST, asserted_edges, _oracles
+        g = Graph().parse(MANIFEST, format='turtle')
+        edges = asserted_edges(g); oracles = _oracles(g)
+        ends = sorted({e for pair in edges for e in pair})
+        ids = sorted({t for e in ends for t in oracles[e][1]})
+        print(len(edges), 'edges', len(ends), 'endpoints', len(ids), 'ids',
+              len({t.split('::')[0] for t in ids}), 'modules')"
+        6 edges 8 endpoints 10 ids 4 modules
+
+    MEASURED 2026-08-23 over those same 6 edges: **8** endpoint criteria, a union of **10**
+    endpoint oracle ids across **4** modules, ≈9.3 s wall-clock (two runs of this test alone:
+    9.48 s and 9.23 s), real tree `git status --porcelain` clean throughout. The wall-clock also
+    moved from the 2026-08-22 figure for a real reason, not noise: Task 3 added the un-ablated
+    control run (`_run_control`) ahead of the ablation loop, so this number describes the
+    shipped instrument — control plus ablation — rather than the pre-control one. The second
+    assertion keeps stating the count the first one ran against — a guard against the gate
+    silently going vacuous again if a future edit empties the section.
     """
     g = Graph().parse(MANIFEST, format="turtle")
     edges = asserted_edges(g)
