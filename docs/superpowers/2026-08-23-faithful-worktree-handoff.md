@@ -5,7 +5,19 @@
 **Shape: originating, stopped at 156k** — the spec is written; the *reconsideration* it now needs
 is deliberately not done here (§5).
 
-## §1 Goal
+> ## ⚠ READ THIS FIRST — the spec on this branch is ABANDONED, and this file is the record of why
+>
+> The loop was specced, then killed at spec stage by its own measurement. **Read §3bis, then §7,
+> then §5.** §1, §3 and §4 describe the superseded design and are kept only because their
+> *measurements* are sound and re-derivable — their *conclusions* are not.
+>
+> **The one-line outcome:** R114's cause is misnamed. Making `etkl:01`'s oracle *run* (materialise
+> the corpus) leaves it *un-ablatable*, because the editable-install `.pth` pins `src/iladub/` to
+> the main tree — so the corpus half of the design buys **zero** edges. Raised as [[R121]].
+>
+> **Nothing was implemented. No plan was written. The §6 CI ruling should be reversed.**
+
+## §1 Goal (as originally framed — superseded, see §3bis)
 
 Close [[R114]] — `etkl:01`'s oracle cannot execute in an M19 ablation worktree — by making the
 worktree a faithful environment, then re-reading `etkl:01`'s ends for dependency edges.
