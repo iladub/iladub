@@ -1,4 +1,4 @@
-# Handoff — the plan is written and Task 1 is committed but UNREVIEWED
+# Handoff — Task 1 is complete and reviewed clean; Tasks 2-6 remain
 
 **Topic:** the arc / M19 · **Date:** 2026-08-23 · **Branch:** `the-worktree-that-resolves`
 **Runner:** `./.venv/bin/python`, never `python3`.
@@ -8,8 +8,8 @@ coordinated; the ledger, not this file, is the resumption state.
 ## §1 Goal
 
 Finish executing `docs/superpowers/plans/2026-08-23-the-worktree-that-resolves.md` under
-`superpowers:subagent-driven-development`. **Next action: dispatch the Task 1 task reviewer**
-(§5). Task 1's code is committed but nothing independent has checked it.
+`superpowers:subagent-driven-development`. **Next action: dispatch the Task 2 implementer** (§5).
+Task 1 is done and its review is clean.
 
 ## §2 Where the primaries are
 
@@ -35,8 +35,10 @@ Finish executing `docs/superpowers/plans/2026-08-23-the-worktree-that-resolves.m
 
 ## §4 Unverified or assumed — not empty
 
-1. **Task 1 is UNREVIEWED.** `7e4f84c` is self-reported DONE. No task reviewer has run, so its
-   spec-compliance and quality verdicts do not exist. Do not treat it as complete.
+1. ~~**Task 1 is UNREVIEWED.**~~ **Closed 2026-08-23**: spec ✅, quality Approved, one deferred
+   Minor (the stale limitation-4 docstring, already owned by Task 5 Step 1). The reviewer checked
+   both committed artifacts byte-for-byte against the brief and cleared both named risks. Ledger
+   has the verdict.
 2. **S2 is still open** — which pytest flag puts a collection ERROR's exception in `proc.stdout`.
    Plan § Named seams. It belongs to Task 4 and must be measured before that rule is written.
    The module docstring's claim at `:169-170` is a candidate, not a measurement.
@@ -57,7 +59,13 @@ Finish executing `docs/superpowers/plans/2026-08-23-the-worktree-that-resolves.m
 
 ## §5 The next concrete action
 
-Dispatch the Task 1 task reviewer (`superpowers:subagent-driven-development`,
-`task-reviewer-prompt.md`) with three paths: `task-1-brief.md`, `task-1-report.md`, and
-`review-256955b..7e4f84c.diff`, plus the plan's Global Constraints block verbatim. Then continue
-the task loop at Task 2. Do not re-dispatch Task 1's implementer — its work is committed.
+Dispatch the **Task 2** implementer (`superpowers:subagent-driven-development`,
+`implementer-prompt.md`) with `task-2-brief.md`, the report path `task-2-report.md`, and the
+Global Constraints block. Record BASE (`git rev-parse HEAD`) before dispatching — the review
+package needs it, and `HEAD~1` silently truncates a multi-commit task. Carry into that dispatch:
+(a) `baml_client/` holds 27 files in the main tree and `.gitignore:30` carries `/baml_client`;
+(b) the six modules that error without it are `test_extract_baml`, `test_loop`, `test_m4_databook`,
+`test_m4_pipeline`, `test_targeted`, `test_to_rdf`; (c) the membrane checks that the
+`prog:oracleArtifact` **triple** exists, not that the file does (`tests/arc-shapes.ttl:273-354`),
+so the collision fixture does not need a real file under `baml_client/` — but Step 1 must still
+run it through `validate_manifest`. Do not re-dispatch Task 1.
