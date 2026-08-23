@@ -4,7 +4,7 @@
 measured out to a wider root cause · **Tree:** `main` @ `8523462`, clean ·
 **Runner:** `./.venv/bin/python` (3.12.0, pytest 9.0.3, rdflib 7.6.0) — **never `python3`**.
 
-**Doc impact: `increment`.** The wiki gains nothing this loop. `CLAUDE.md` gains nothing. CI
+**Doc impact:** increment — CI gains a job. The wiki gains nothing this loop. `CLAUDE.md` gains nothing. CI
 gains a job, which is a Manual-class fact (`.github/workflows/ci.yml`) and is described in §6.
 No published assertion changes; no contradiction with a released artifact.
 
