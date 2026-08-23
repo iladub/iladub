@@ -46,9 +46,9 @@ R107, R108, and — at loop close, from its whole-branch review and its warning 
 R109, R110, R111 and R112, and closed ~~R105~~ in
 task 6; loop `the-arc-has-edges` raised R113–R119 at close and R120 in its final-review fix wave,
 and closed none; loop `the-worktree-that-resolves` (task 5) closed R121 and R118, raising no new
-row of its own. **The previous line's "88 open" had already drifted stale by one before this
-edit** (109 rows summed at the time, not 110) — corrected here to the re-run figure rather than
-carried forward.
+row of its own. **The previous line's "88 open" had already undercounted by one before this
+edit** (111 rows summed at the time — 89 open + 22 closed — not 110) — corrected here to the
+re-run figure rather than carried forward.
 
 **Eight raised, none closed, is the honest reading of that last clause and it is worth saying
 out loud.** `the-arc-has-edges` added a capability (a criterion→criterion dependency graph, its
