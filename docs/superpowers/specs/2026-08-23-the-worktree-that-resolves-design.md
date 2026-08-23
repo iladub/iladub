@@ -258,8 +258,38 @@ green.
 
 1. **Remove the `PYTHONPATH` env from `_run_module`** → the test pinning worktree-rooted
    resolution goes red. Cheap, no corpus, directly assertable (§2.2 is the assertion).
-2. **Delete the materialisation step** → the control run goes red **naming the missing input**,
-   and the ablation does not proceed.
+2. ~~**Delete the materialisation step** → the control run goes red **naming the missing input**,
+   and the ablation does not proceed.~~ **CORRECTED 2026-08-23 — this oracle is UNSATISFIABLE as
+   written, and the correction is part of the spec rather than a footnote to it.** The control
+   runs the union of the 6 asserted edges' endpoint oracles, which lives in exactly four modules,
+   and none of them imports `baml_client`:
+
+   ```
+   $ for m in test_boundary test_escalation_shacl test_hga_alignment test_vocab_shapes; do \
+         printf "%-28s %s\n" "$m" "$(grep -c baml tests/$m.py) baml refs"; done
+   test_boundary                0 baml refs
+   test_escalation_shacl        0 baml refs
+   test_hga_alignment           0 baml refs
+   test_vocab_shapes            0 baml refs
+   ```
+
+   Deleting the materialisation step therefore leaves the control **green**: its subject cannot be
+   made to fail, so the oracle pins nothing (CLAUDE.md § Plan authoring, defect 5 — *"a test that
+   passes when its subject is deleted"*). This spec wrote it one section after §2.6 measured that
+   the six `baml_client`-dependent modules are `test_extract_baml`, `test_loop`, `test_m4_databook`,
+   `test_m4_pipeline`, `test_targeted` and `test_to_rdf` — none of which is an endpoint. The defect
+   is mine, not the implementation's.
+
+   **The satisfiable oracle carrying the same force:** remove the `_declared_inputs` partition from
+   the control's message → the control test's assertion that the message names the materialised
+   inputs goes red. That falsifies §4.3 invariant 3 directly, which is what oracle 2 was for.
+   An end-to-end form remains available and is **optional**, not required: build a fixture whose
+   endpoint criterion's `prog:oracleTest` lies in one of the six modules above, and with
+   materialisation deleted that endpoint errors at collection and the control refuses.
+
+   Recorded here rather than only in the plan because a reader who reaches §7 from the spec must
+   not be sent to write a test that cannot fail. See
+   `docs/superpowers/plans/2026-08-23-the-worktree-that-resolves.md` Task 3 Step 5.
 3. **Declare a `prog:oracleArtifact` under `baml_client/` in a fixture** → the guard raises
    **before** any worktree is created. If it raises later, or not at all, §4.4 is prose.
 4. **Point a declared input at a path absent from the main tree** → materialisation stays silent
