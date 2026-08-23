@@ -168,8 +168,37 @@ CONTROL_FAILS_FIXTURE = REPO / "tests" / "arc-m19-control-fails.ttl"
 _PROGRESS = re.compile(
     r"^(\S.*?) (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)(?: \(.*\))?\s+\[\s*\d+%\]\s*$", re.M)
 # …and the one thing the progress region cannot show, because the test never started: a module
-# that failed to import. `ERROR tests/x.py - FileNotFoundError: …` in the summary.
+# that failed to import. `ERROR tests/x.py …` in the short summary names WHICH module, and that
+# leading field is never truncated because it sits at the start of the line.
 _COLLECT_ERROR = re.compile(r"^ERROR (\S+)", re.M)
+# WHY the module path alone is not enough, and why the exception text is read out of the ERRORS
+# section instead of the summary line the comment above parses ([[R118]], spec §4.5): §4.5 scores
+# a collection ERROR as ablation evidence ONLY when its exception NAMES one of the removed paths,
+# so the text must survive intact. The summary line does not. MEASURED 2026-08-23, pytest 9.0.3,
+# one worktree, one node id (`tests/test_docgov_shapes.py::test_conforming_minimal_graph` with
+# `vocab/shapes/doc-governance-shapes.ttl` removed), the only difference being `COLUMNS`:
+#   COLUMNS=80   ERROR tests/test_docgov_shapes.py - FileNotFoundError: [Errno 2] No such file...
+#   COLUMNS=250  ERROR tests/test_docgov_shapes.py - FileNotFoundError: [Errno 2] No such file or
+#                directory: '<wt>/vocab/shapes/doc-governance-shapes.ttl'
+# The summary tail is CLIPPED TO THE TERMINAL WIDTH — the same width-sensitivity `_PROGRESS`'s
+# comment records — so on an 80-column CI the removed path is simply gone and every true positive
+# would turn into a raise. Worse, MEASURED on the import-error shape (`tests/docgov_extract.py`
+# removed) the summary line carries NO exception tail at any width: `ERROR
+# tests/test_docgov_shapes.py`, full stop.
+#
+# The `ERRORS` section is not clipped at either width, and it is why `_run_module` runs
+# `--tb=line` rather than `--tb=no` (see its docstring for that measurement):
+#     ____________ ERROR collecting tests/test_docgov_shapes.py ____________
+#     E   FileNotFoundError: [Errno 2] No such file or directory: '<wt>/vocab/shapes/…ttl'
+# A SECOND pattern rather than a widened `_COLLECT_ERROR`, deliberately: the two read different
+# regions of the transcript and answer different questions — which module errored (summary, under
+# every `--tb`) and why (ERRORS section, only once a traceback is printed). Fusing them into one
+# regex would make the module's identity depend on the traceback flag. The block runs to the next
+# section separator — pytest writes those as a line of `=` or `_` fill around a title, with at
+# least one fill character on each side even at minimum width, and no traceback line begins that
+# way.
+_COLLECT_ERROR_TEXT = re.compile(
+    r"^_+ ERROR collecting (\S+) _+$\n(.*?)(?=^[=_]+ |\Z)", re.M | re.S)
 
 PASSED, FAILED = "passed", "failed"
 
@@ -208,6 +237,16 @@ def _run_module(node_ids, cwd):
     plain path `.pth` is outranked by `PYTHONPATH`, so prepending `<cwd>/src` re-roots every
     import onto the worktree. Measured (Task 1 § Step 1): `PYTHONPATH` is unset in this
     environment, so there is nothing to preserve beyond appending it if it is ever set.
+
+    [[R118]], spec §4.5: `--tb=line` and NOT `--tb=no`, and the flag is a MEASUREMENT rather than
+    a taste. §4.5 reads the collection ERROR's exception text — see `_COLLECT_ERROR_TEXT` for the
+    two transcripts showing the short-summary line is clipped to the terminal width and, on the
+    import-error shape, carries no exception at all. Measured 2026-08-23 on the same worktree and
+    node id: `--tb=no` prints NO `ERRORS` section whatsoever, so the text §4.5 needs does not
+    exist in the output; `--tb=line` prints it, un-clipped at both COLUMNS=80 and COLUMNS=250.
+    It leaves `_PROGRESS`'s input untouched — measured on a run mixing one FAILED id with the 7
+    skipping corpus ids: the `-v` progress region is identical under both flags, and the FAILURES
+    section `--tb=line` adds carries no line ending in `[ nn%]` and none beginning `ERROR `.
     """
     env = dict(os.environ)
     src = str(Path(cwd) / "src")
@@ -215,7 +254,7 @@ def _run_module(node_ids, cwd):
     env["PYTHONPATH"] = src if not existing else os.pathsep.join([src, existing])
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", *node_ids,
-         "-v", "--tb=no", "-p", "no:cacheprovider"],
+         "-v", "--tb=line", "-p", "no:cacheprovider"],
         cwd=cwd, capture_output=True, text=True, env=env)
     reported = {}
     for node, outcome in _PROGRESS.findall(proc.stdout):
@@ -299,17 +338,56 @@ def _refuse_materialisation_collision(removed_files):
                     f"on evidence that was never removed")
 
 
-def _scores(module, node_ids, proc, reported):
+def _scores(module, node_ids, proc, reported, removed):
     """{requested node id: PASSED | FAILED | a sentence saying it did not execute}.
 
     A requested id with NO reported outcome is an instrument failure, not a datum: it is the
     exact shape Task 1's combined-invocation defect produced, and scoring it either way would
     make an oracle that never ran decide an edge. So it RAISES, with the transcript attached,
-    unless pytest itself reported the module as a collection ERROR — in which case every id
-    the module was asked for is a genuine ablation signal (the test cannot even import once
-    its artifact is gone) and scores as a failure.
+    unless pytest itself reported the module as a collection ERROR **whose exception names one
+    of `removed`** — in which case every id the module was asked for is a genuine ablation
+    signal (the test cannot even import once its artifact is gone) and scores as a failure.
+
+    §4.5 / [[R118]] — THE NAME IS THE CRITERION, and the direction is why. Arm 1 refuses an edge
+    only when ALL of X's results are `PASSED`, so a `FAILED` **admits**: scoring every collection
+    ERROR `FAILED`, as this did before, made a missing generated client, a syntax error on the
+    branch or a broken conftest all read as "X consumes Y" and let arm 1 assert an edge on no
+    evidence at all. A collection ERROR is ablation evidence only if its exception TEXT contains
+    one of the removed paths — a name PRESENT, never consumption inferred from the absence of a
+    contradiction (CLAUDE.md §8, the open-world/evidence-positive half of the AXIOM split).
+
+    Matched on the removed path and never on the exception TYPE. An `OSError` is not the
+    criterion: `FileNotFoundError` is what a removed `.ttl` raises today, but a module that
+    reads its artifact through `json`, `rdflib` or a `subprocess` raises something else, and a
+    rule keyed on the type would silently stop finding true positives while looking healthy.
+
+    Path form, MEASURED (the containment test is a suffix match for exactly this reason):
+    `removed` entries are repo-root-relative POSIX (`_ablate` builds `wt / f` from them), while
+    a traceback prints the worktree-ABSOLUTE path —
+    `'<wt>/vocab/shapes/doc-governance-shapes.ttl'` — so the relative path appears as a
+    substring of the absolute one. That is also what makes the test immune to the macOS symlink
+    forms (`/tmp` -> `/private/tmp`, `/var/folders` -> `/private/var/folders`) that force every
+    path COMPARISON in this repo to be `.resolve()`d first: the shared tail is below the
+    worktree root, so no prefix is ever compared.
+
+    Anything else pytest calls a collection ERROR is an INSTRUMENT FAILURE, not a refusal (Global
+    Constraint 5, spec §5): it raises with the transcript, the same shape an unresolved node id
+    already uses, rather than minting an M-number for a broken checkout.
     """
     collect_error = module in _COLLECT_ERROR.findall(proc.stdout)
+    if collect_error:
+        exception_text = "\n".join(
+            text for errored, text in _COLLECT_ERROR_TEXT.findall(proc.stdout)
+            if errored == module)
+        if not any(f in exception_text for f in removed):
+            raise RuntimeError(
+                f"M19 instrument failure: {module} failed to COLLECT, and its exception names "
+                f"none of the removed artifacts {sorted(removed)}. A collection ERROR grounds an "
+                f"ablation only when the exception says the removed file is what broke it (spec "
+                f"§4.5, [[R118]]) — otherwise a missing dependency or a broken conftest would "
+                f"read as consumption, and arm 1 admits on a FAILED.\nEXCEPTION\n"
+                f"{exception_text}\nexit={proc.returncode}\nSTDOUT\n{proc.stdout[-3000:]}\n"
+                f"STDERR\n{proc.stderr[-3000:]}")
     out, unresolved = {}, []
     for node in node_ids:
         # A parametrized oracle may be cited bare while pytest only ever reports its
@@ -318,6 +396,8 @@ def _scores(module, node_ids, proc, reported):
                     for o in outs]
         if not outcomes:
             if collect_error:
+                # …and the guard above has already established that this module's collection
+                # ERROR names one of `removed`, so the id never ran BECAUSE of the ablation.
                 out[node] = FAILED
                 continue
             unresolved.append(node)
@@ -372,7 +452,7 @@ def _ablate(removed_files, node_ids, repo=REPO):
         scored = {}
         for module, ids in sorted(by_module.items()):
             proc, reported = _run_module(ids, wt)
-            scored.update(_scores(module, ids, proc, reported))
+            scored.update(_scores(module, ids, proc, reported, removed_files))
         return scored
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)],
@@ -395,10 +475,10 @@ def _run_control(node_ids, repo=REPO):
     environment every endpoint oracle can pass in, so nothing below this call may be scored on
     evidence gathered here. Raises naming every such id and what `_scores` reported for it.
 
-    Invariant 5 (controller ruling PF-1): a `RuntimeError` escaping `_ablate` itself — today
-    only `_scores`'s unresolved-node-id instrument failure; once §4.5 lands, also an
-    unattributable collection ERROR, which a control worktree manufactures for EVERY module
-    because nothing there was ever removed — is caught and re-raised carrying the same
+    Invariant 5 (controller ruling PF-1): a `RuntimeError` escaping `_ablate` itself — either
+    `_scores`'s unresolved-node-id instrument failure or, since §4.5 landed, an unattributable
+    collection ERROR, which a control worktree manufactures for EVERY module because `removed`
+    is empty here so no exception can ever name it — is caught and re-raised carrying the same
     `_declared_inputs` partition invariant 3 requires, so that raise does not escape before the
     partition is built. Defensive: no live endpoint reaches it (measured — the four control
     modules import no `baml_client`), so no test exercises this branch directly.
@@ -754,6 +834,66 @@ def test_m19_refuses_to_score_in_an_environment_it_has_not_proved_faithful():
     assert "baml_client" in message, (
         f"the control must report which declared environment inputs were materialised, so a "
         f"developer without a generated client gets an actionable sentence: {message}"
+    )
+
+
+# The §4.5 probe pair, MEASURED 2026-08-23 in worktrees built the way `_ablate` builds them
+# (`git worktree add --detach <wt> HEAD`, `baml_client` copied in), pytest 9.0.3:
+#
+#   * `tests/test_docgov_shapes.py:12` parses `vocab/shapes/doc-governance-shapes.ttl` at MODULE
+#     scope, so with that file gone the module cannot be imported and `pytest --collect-only -q
+#     <id>` reports `no tests collected, 1 error` — a COLLECTION error, not a test failure. The
+#     exception NAMES the removed file: `FileNotFoundError: [Errno 2] No such file or directory:
+#     '<wt>/vocab/shapes/doc-governance-shapes.ttl'`. This is the TRUE positive.
+#   * `tests/test_docgov_shapes.py:9` imports `tests.docgov_extract` at module scope, so removing
+#     `tests/docgov_extract.py` produces the SAME collection error shape — and an exception that
+#     names the *dotted module* and never the removed path: `ModuleNotFoundError: No module named
+#     'tests.docgov_extract'`. Nothing in that transcript spells `tests/docgov_extract.py`.
+#
+# Neither file is a declared `prog:oracleArtifact` and `test_docgov_shapes` is nobody's oracle
+# (measured: `grep -c docgov tests/arc-manifest.ttl` -> 0), so this pair cannot perturb a live
+# edge. NOT A PAIR OF THE FORM THE BRIEF ASKED FOR FIRST, and the task report says so: since Task
+# 2 materialises `baml_client`, there is no longer any file in the tracked tree whose removal the
+# probe module does not touch yet still breaks its collection. What remains — and what §4.5 is
+# actually about — is an import break the instrument CANNOT ATTRIBUTE: the removal did cause it,
+# but nothing in the exception says so, and an instrument that scored it `FAILED` would score
+# every unrelated import break the same way.
+_ERROR_PROBE = "tests/test_docgov_shapes.py::test_conforming_minimal_graph"
+_ERROR_ARTIFACT = "vocab/shapes/doc-governance-shapes.ttl"
+_UNRELATED_REMOVAL = "tests/docgov_extract.py"
+
+
+def test_m19_refuses_a_collection_error_that_names_no_removed_artifact():
+    """[[R118]]'s general form: read the exception, not the mere existence of an ERROR.
+
+    Arm 1 admits an edge when X's oracles FAIL with Y's artifacts gone, so scoring *any* import
+    break as FAILED makes arm 1 permissive: a missing dependency, a syntax error on the branch or
+    a broken conftest all read as "X consumes Y" — an edge asserted on no evidence at all. The
+    direction matters: arm 2 is unaffected in the unsafe direction, because there a FAILED
+    refutes.
+
+    Two halves, and both are needed — a rule that only raises is as wrong as one that only
+    scores:
+
+      * an ERROR whose exception NAMES a removed path is genuine consumption and scores FAILED.
+        This is the commonest TRUE positive the instrument has, and refusing it would refuse
+        every edge whose oracle module cannot import without its artifact.
+      * an ERROR whose exception names nothing removed is an instrument failure and RAISES with
+        the transcript, exactly as an unresolved node id already does (`_scores:219-226`).
+    """
+    consumed = _ablate([_ERROR_ARTIFACT], [_ERROR_PROBE])[_ERROR_PROBE]
+    assert consumed == FAILED, (
+        f"a module that cannot import once its declared artifact is removed IS consumption; "
+        f"scoring it {consumed!r} would refuse the instrument's commonest true positive"
+    )
+
+    with pytest.raises(RuntimeError) as caught:
+        _ablate([_UNRELATED_REMOVAL], [_ERROR_PROBE])
+    message = str(caught.value)
+    assert _ERROR_PROBE.split("::")[0] in message, message
+    assert _UNRELATED_REMOVAL in message, (
+        f"the refusal must name what WAS removed, so a reader can see that the exception does "
+        f"not mention it: {message}"
     )
 
 
