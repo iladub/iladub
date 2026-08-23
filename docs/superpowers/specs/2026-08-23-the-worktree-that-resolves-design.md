@@ -223,23 +223,7 @@ under each candidate flag (`-rE`, `--tb=line`, `--tb=short`) **before** choosing
 do not assume a format. This is evidence-positive by construction — a name present, never a name
 inferred from absence (CLAUDE.md § the AXIOM split).
 
-## §5 The probe — run once, shipped as evidence, not as machinery
-
-Under the control run, install a `sys.addaudithook` recording repo-file `open` events whose
-resolved path lies **outside the worktree** and **outside `.venv/`**, and report the set.
-
-- Before §4.1 this predicate is useless: every oracle imports `iladub` from the main tree, so it
-  fires universally. After §4.1 it is sharp.
-- **Run it once, over the oracles that can run in a worktree.** If the set is empty, ship an
-  assertion and no machinery. If it is non-empty, raise a residue row with the transcript and
-  ship no machinery **this** loop.
-- This is what turns limitation 4's F3 from *declared latent* into *measured*. The abandoned
-  spec declared it; nobody had measured it.
-
-YAGNI is deliberate: a permanent hook is instrument surface guarding a hazard with zero known
-live instances once §4.1 lands. Measure first; build only against a finding.
-
-## §6 Why no new M-number
+## §5 Why no new M-number
 
 `tests/arc-shapes.ttl` gains nothing.
 
@@ -251,7 +235,7 @@ live instances once §4.1 lands. Measure first; build only against a finding.
 A control failure, a disjointness collision and an unattributable collection ERROR are all the
 second kind. None of them is a claim about the arc.
 
-## §7 Corrections to the record this loop owes
+## §6 Corrections to the record this loop owes
 
 1. **Limitation 4's docstring** (`tests/test_arc_ablation.py:87-111`): `35` → `29` with the
    per-directory census corrected (`vocab` 8, not 14), **and** the dismissal reasoning replaced —
@@ -267,7 +251,7 @@ second kind. None of them is a claim about the arc.
 4. **[[R114]]'s row**: its remedy column still argues from the gitignored corpus. Its cause was
    corrected 2026-08-23; the remedy column has not been.
 
-## §8 The falsifying oracles — one per shipped rule, all mandatory
+## §7 The falsifying oracles — one per shipped rule, all mandatory
 
 Per CLAUDE.md § Plan authoring rule 4, each ships with the test failing, restored, and the suite
 green.
@@ -286,26 +270,28 @@ green.
 
 **What a real failure of this spec looks like**, stated so it is recognised rather than explained
 away: §4.1 lands, the ablation runs, and no edge changes state — leaving an instrument that is
-honest and a graph that is identical. **That outcome is expected (§10) and must be reported
+honest and a graph that is identical. **That outcome is expected (§9) and must be reported
 as-is.** The unacceptable outcome is an edge asserted or refuted on an arm whose control was never
 checked.
 
-## §9 Definition of done
+## §8 Definition of done
 
-1. §4.1–§4.5 implemented, each with its §8 falsification evidence.
+1. §4.1–§4.5 implemented, each with its §7 falsification evidence.
 2. **`ablation_refusals` over the LIVE manifest re-run, and its result reported whatever it is.**
    §4.1 changes what oracles can see: a pair that refuted because the deletion was invisible may
    now ground. If the live result is no longer `[]`, that is a **finding**, not a regression to be
    suppressed — report it and stop for a maintainer ruling.
 3. `pytest --collect-only -q` inside a worktree created by the shipped `_ablate` reports **0**
    collection errors, re-derived there (from 6 — §2.6).
-4. The §5 probe run once, its result in the loop's evidence, and a residue row if non-empty.
-5. The four §7 corrections landed **in the tracked artifacts**, not only in this spec.
+4. **A residue row raised for the question this loop declines to ask** (§9, final bullet):
+   after §4.1, is any oracle still resolving evidence to the main tree? Deferring it is
+   legitimate; leaving it unrecorded is not (CLAUDE.md § Deferred residues).
+5. The four §6 corrections landed **in the tracked artifacts**, not only in this spec.
 6. The real tree `git status --porcelain`-clean before and after every M19 run.
 7. Every number this spec cites re-derived by the implementer at implementation time. §2.6's
    1293/1314 and §2.4's 29 are the two carried from elsewhere; both are marked MEASURE.
 
-## §10 What this loop does NOT do
+## §9 What this loop does NOT do
 
 - **It asserts no new edge, and predicts zero.** `etkl:01` is the only met oracle reaching
   evidence through `src/iladub/`, and it still cannot run without a corpus this loop does not
@@ -316,9 +302,15 @@ checked.
 - **It does not close** [[R113]] (file-granularity ablation — still the binding constraint on
   yield), [[R115]], [[R116]], [[R117]], [[R119]], [[R120]].
 - **It fetches no corpus, adds no CI job, changes no workflow, and moves no `prog:met` value.**
-- **It ships no permanent hermeticity machinery** — §5 is a measurement, not a component.
+- **It does not measure the residual non-hermeticity, and does not ask whether any remains.**
+  §4.1 re-roots `src/`, which is the one path measured to shadow the worktree (§2.2). Whether
+  anything *else* still resolves to the main tree is a question this loop deliberately
+  declines — an audit-hook probe was scoped out as not worth the loop, its expected finding
+  being empty. It ships **no** hermeticity machinery, permanent or one-shot. The question is
+  carried in the register (§8 item 4), not answered here, and limitation 4's F3 therefore
+  stays **declared** rather than measured — corrected in its reasoning (§6 item 1), not retired.
 
-## §11 Provenance of the abandoned spec — what is reused and what is discarded
+## §10 Provenance of the abandoned spec — what is reused and what is discarded
 
 | from `2026-08-23-the-faithful-worktree-design.md` | here |
 | --- | --- |
@@ -327,9 +319,9 @@ checked.
 | §4.3 discovered-demand, no mapping table | **reused**, §4.2 |
 | §4.4 disjointness | **reused**, §4.4 |
 | §4.5 one control worktree | **reused**, §4.3 |
-| §5 no new M-number | **reused**, §6 |
-| §11.1/§11.2 record corrections | **reused and extended**, §7 |
+| §5 no new M-number | **reused**, §5 |
+| §11.1/§11.2 record corrections | **reused and extended**, §6 |
 | §2.3 the feasibility probe | **discarded** — retired the wrong question |
-| §2.5 CI census (209), §6 the CI job, the corpus half | **discarded and reversed**, §2.5 + §7.2 |
+| §2.5 CI census (209), §6 the CI job, the corpus half | **discarded and reversed**, §2.5 + §6 item 2 |
 | §7 the reading, §9 headline, DoD 1/7/8/10 | **discarded** — all rest on the zero-yield purchase |
 | Appendix's six rejected designs | **standing** — not re-derived here; read them there |
