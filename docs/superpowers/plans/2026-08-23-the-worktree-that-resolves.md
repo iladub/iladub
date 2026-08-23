@@ -703,6 +703,8 @@ git commit -m "M19: materialise declared environment inputs, and refuse an artif
 
 **Interfaces:**
 - Consumes: Task 2's `_declared_inputs(repo)`; Task 1's re-rooted `_run_module`.
+- Renumbered invariant: Step 3 carries **six** invariants, not five — the sixth (*"ablation and
+  scoring then proceed unchanged"*) stays last.
 - Produces: no new public name. `ablation_refusals`'s signature and return type are unchanged.
 
 **What the control is for, and what it cannot do.** It disposes the proposition *"this worktree is
@@ -789,6 +791,15 @@ Invariants (spec §4.3), no bodies:
    guard, and **before** the ablation loop at `:338`.
 4. Any requested id not `PASSED` ⇒ `RuntimeError` carrying the transcript, the failing id, its
    outcome, and the `_declared_inputs` partition.
+5. **The control catches a `RuntimeError` escaping `_ablate` and re-raises it with the
+   `_declared_inputs` partition appended** (controller ruling PF-1, 2026-08-23). Why it is here
+   and not in Task 4: once §4.5 lands, a collection ERROR naming no removed path raises from
+   `_scores` — and in a control worktree **nothing** is removed, so *every* collection ERROR
+   raises there. That raise would escape before the control's own verdict check runs, and
+   invariant 3's message would never be built. No live endpoint produces a collection ERROR in
+   the control today (measured: the four control modules import no `baml_client`), so this is
+   **defensive, not load-bearing for the shipped tests** — implement it, do not build a test
+   around it.
 5. An edge set that is empty still returns `[]` at `:301-302` **without** creating a control
    worktree — the early return stays first.
 6. Ablation and scoring then proceed unchanged.
@@ -802,9 +813,37 @@ so expect 4 subprocess startups. Record what you measure.
 
 - [ ] **Step 5: FALSIFICATION (spec §7 oracles 2 and 4)**
 
-1. **Delete the materialisation step from Task 2** → this control test's *sibling* behaviour
-   changes: run `test_m19_the_live_manifest_carries_no_refuted_edge` and show the control raising
-   and **naming the missing input**, with the ablation not proceeding. Restore; green.
+1. **Remove the `_declared_inputs` partition from the control's message** → the new test's third
+   assertion (`"baml_client" in message`) goes red. Restore; green. This is what pins spec §4.3
+   invariant 3.
+
+   **CORRECTED 2026-08-23 — do NOT attempt the form spec §7 oracle 2 states.** That oracle says
+   *"delete the materialisation step → the control run goes red naming the missing input"*, and
+   **it is unsatisfiable against the live manifest.** MEASURED: the control's union runs in four
+   modules — `tests/test_boundary.py`, `tests/test_escalation_shacl.py`,
+   `tests/test_hga_alignment.py`, `tests/test_vocab_shapes.py` — and
+
+   ```
+   $ for m in test_boundary test_escalation_shacl test_hga_alignment test_vocab_shapes; do \
+         printf "%-28s %s\n" "$m" "$(grep -c baml tests/$m.py) baml refs"; done
+   test_boundary                0 baml refs
+   test_escalation_shacl        0 baml refs
+   test_hga_alignment           0 baml refs
+   test_vocab_shapes            0 baml refs
+   ```
+
+   **none of them imports `baml_client`.** Deleting the materialisation step therefore changes
+   nothing for the live control: it stays green, and a falsification that cannot make its subject
+   fail pins nothing (CLAUDE.md § Plan authoring, defect 5). The spec's oracle 2 has the same hole,
+   one section over from where it was written; report the correction, do not work around it.
+
+   **Optional second half, if you want the missing-input path exercised end to end:** build a
+   fixture whose endpoint criterion's `prog:oracleTest` lies in one of the six `baml_client`-
+   dependent modules (`test_extract_baml`, `test_loop`, `test_m4_databook`, `test_m4_pipeline`,
+   `test_targeted`, `test_to_rdf` — measured, M3), in memory as
+   `test_m19_refuses_to_run_against_a_graph_the_membrane_would_have_stopped:419` already builds
+   its two. With materialisation deleted that endpoint's module errors at collection and the
+   control refuses. Not required; the primary falsification above is.
 2. **Point `_MATERIALISED` at a path absent from the main tree** → materialisation stays silent
    **and the control still passes**, because no endpoint needed it. If this raises, the design is
    declared-demand, not discovered-demand (spec §7 oracle 4) — report it as a design defect, do
@@ -1155,9 +1194,14 @@ Honest list, in the shape spec §4 used.
 2. **Task 4's `_ERROR_PROBE` / `_UNRELATED_REMOVAL` pair is not known to exist.** The plan states
    how to find it and what to do if it does not (Task 4, setup note). This is the plan's weakest
    setup claim and the likeliest place a plan-supplied test turns out to be unwritable.
-3. **Task 3's `CONTROL_FAILS_FIXTURE` rests on `etkl:01`'s oracle still being
-   `tests/test_corpus.py::test_expected_verdict`** — read from [[R114]]'s row citing
-   `tests/arc-manifest.ttl:158`, **not re-measured here**. Measure it in Task 3 Step 1.
+3. ~~**Task 3's `CONTROL_FAILS_FIXTURE` rests on `etkl:01`'s oracle still being
+   `tests/test_corpus.py::test_expected_verdict`**~~ — **MEASURED 2026-08-23, closed.** It still
+   is, but as the **parametrized** id
+   `tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-stem-2026-07-31.pdf]`, declared
+   at `tests/arc-manifest.ttl:149ff` (not `:158`), with `prog:oracleArtifact
+   tests/corpus-manifest.ttl` — under `tests/`, so no collision with `baml_client/`. The plan's
+   test assertion is a **substring** check, so it matches the parametrized id unchanged; `_scores`
+   resolves it directly (`n == node`). Nothing to change.
 4. **Whether §4.1 flips any live pair is still unknown** (spec §9 predicts zero). Nobody has run
    `ablation_refusals` under the change. That is Task 6, and it is a measurement, not a
    formality.
