@@ -1,0 +1,57 @@
+# FIXTURE — the disjointness invariant's collision case (spec §4.2 + §4.4, Task 2 Step 1).
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# Same edge shape as tests/arc-m19-false-edge-leak.ttl (dec:03 <- dec:11), with ONE change:
+# dec:11 additionally declares a prog:oracleArtifact under `baml_client/`, the directory
+# `_MATERIALISED` names (tests/test_arc_ablation.py). The membrane cannot see that collision —
+# `baml_client/` is a plain string to SHACL, indistinguishable from any other artifact path —
+# so this file must be SHACL-clean (validate_manifest returns Conforms: True) for
+# test_m19_refuses_an_artifact_that_materialisation_would_restore to prove anything: if the
+# membrane already refused it, the guard under test would never be reached.
+#
+# It still satisfies A1-A4 and A6 exactly as the false-edge-leak fixture does:
+#   A1  both ends prog:met true.
+#   A2  both ends carry a prog:oracleArtifact and a prog:oracleTest.
+#   A3  their oracle test sets are disjoint — tests/test_risk.py vs tests/test_timeline_shacl.py.
+#   A4  metOn(dec:03) 2026-06-18 <= metOn(dec:11) 2026-06-26, non-strict, no contradiction.
+#   A6  their artifact FILES are disjoint — `baml_client/types.py` is not named by dec:03,
+#       so the shared-file check that compares the two ends' sets stays silent.
+# M12/M13/M14/M15/M18 are silent for the same reasons given in arc-m19-false-edge-leak.ttl.
+#
+# The guard this fixture is FOR is not in tests/arc-shapes.ttl at all: `_materialise` copies
+# every `_MATERIALISED` entry into the worktree straight after `git worktree add`, so deleting
+# `baml_client/types.py` for dec:11's ablation would be silently restored before dec:11's
+# oracle ever runs — the exact false-green §4.4 names. `_refuse_materialisation_collision`
+# is the producer-side guard that closes it, and it must fire before `_ablate` is ever
+# entered (test asserts `_ablate` mocked-and-uncalled).
+
+prog:criterion:dec:03 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/dec-shapes.ttl:48 — dec:MilestoneShape ships a worked example that conforms and a negative test that must fail (measured: examples/transplant/heart-timeline-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-18"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:48" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-conformant.ttl" ;
+    prog:oracleArtifact "examples/transplant/heart-timeline-leak.ttl" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_conformant_milestone_passes" ;
+    prog:oracleTest "tests/test_timeline_shacl.py::test_milestone_without_order_fails" .
+
+prog:criterion:dec:11 a prog:Criterion ;
+    prog:ofRung "dec" ;
+    prog:statement "vocab/shapes/risk-shapes.ttl:17 — risk:NoEmpiricRiskShape ships a worked example that conforms and a negative test that must fail (measured: tests/risk-leak.ttl trips this shape)." ;
+    prog:source "CLAUDE.md:252" ;
+    prog:declaredOn "2026-05-31"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-06-26"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/risk-shapes.ttl:17" ;
+    prog:oracleArtifact "examples/transplant/transplant-risk.ttl" ;
+    prog:oracleArtifact "tests/risk-leak.ttl" ;
+    prog:oracleArtifact "baml_client/types.py" ;
+    prog:oracleTest "tests/test_risk.py::test_transplant_contextual_risk_conformant" ;
+    prog:oracleTest "tests/test_risk.py::test_empiric_risk_stamp_rejected" ;
+    prog:dependsOn prog:criterion:dec:03 .
