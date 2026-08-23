@@ -38,17 +38,25 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-23: 111 rows, 24 closed, 87 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-23: 113 rows, 24 closed, 89 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
 R107, R108, and — at loop close, from its whole-branch review and its warning attribution —
 R109, R110, R111 and R112, and closed ~~R105~~ in
 task 6; loop `the-arc-has-edges` raised R113–R119 at close and R120 in its final-review fix wave,
-and closed none; loop `the-worktree-that-resolves` (task 5) closed R121 and R118, raising no new
-row of its own. **The previous line's "88 open" had already undercounted by one before this
-edit** (111 rows summed at the time — 89 open + 22 closed — not 110) — corrected here to the
-re-run figure rather than carried forward.
+and closed none; loop `the-worktree-that-resolves` closed R121 and R118 (task 5) and raised R122
+and R123 (task 6, at loop close). **The previous line's "88 open" had already undercounted by one
+before task 5's edit** (111 rows summed at the time — 89 open + 22 closed — not 110) — corrected
+there to the re-run figure rather than carried forward.
+
+**`the-worktree-that-resolves` is 2 closed / 2 raised, and the two raised rows are of different
+kinds.** [[R122]] is a question the loop's own spec (§9) declined **before it started** and
+recorded as declined — the shape [[R115]] and [[R113]] already have. [[R123]] is different and is
+the more useful of the two: it exists because task 6 **re-ran a census task 4 had asserted from
+reading** and found it refuted — *"zero of the 29 declared artifacts are `.py`"* is false, two are.
+A row raised by an instrument refuting its own loop's prose is [[R120]]'s class again, third
+instance in two loops, and the closed-fraction cannot tell that apart from a leak.
 
 **Eight raised, none closed, is the honest reading of that last clause and it is worth saying
 out loud.** `the-arc-has-edges` added a capability (a criterion→criterion dependency graph, its
@@ -67,7 +75,7 @@ this register is deliberately the kind that does not let the distinction flatter
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   24  closed
-  87  open
+  89  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -217,3 +225,5 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R119 | open | M19's progress-line parser assumes `pyproject.toml` carries no `addopts` — fails loudly, never falsely, but undeclared |
 | R120 | open | The 44/18 blast-radius figures cited in `test_arc_ablation.py`'s docstring are not reproducible from repo state — the pair census never shipped. **A second unreproducible number found in the same docstring, 2026-08-23 (M7): `9 endpoint criteria` was the 7-edge figure; corrected to 8** |
 | R121 | closed | CLOSED 2026-08-23 (Task 1, `7e4f84c`) — `_run_module` prepends `<worktree>/src` to `PYTHONPATH`, outranking the editable-install `.pth`; no library file touched. Full evidence in `residues-closed.md` |
+| R122 | open | The question `the-worktree-that-resolves` declines to ask: after §4.1 re-roots `src/`, is any oracle still resolving evidence to the main tree? Two styles measured and closed; a third is not ruled out and nothing would notice one |
+| R123 | open | A declared `prog:oracleArtifact` that is a Python MODULE is real consumption §4.5 refuses to score (it raises) — and Task 4's "zero are `.py`" census is REFUTED: **2 of the 29 are**, `tests/etkl/fixtures.py` (`tab:06`) and `tests/etkl/test_vacuity_registry.py` (`tab:10`) |

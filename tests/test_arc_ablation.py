@@ -829,7 +829,7 @@ def test_m19_refuses_to_score_in_an_environment_it_has_not_proved_faithful():
 
     An oracle that fails an UN-ABLATED run is an instrument failure, not evidence (spec §3): its
     outcome under ablation says nothing about the removed artifact, because it did not pass
-    without it either. So it raises with the transcript — the same shape `_scores:219-226`
+    without it either. So it raises with the transcript — the same shape `_scores:440-446`
     already uses for an unresolved node id — and is never scored.
 
     MEASURED 2026-08-23 over the live manifest: 6 asserted edges, 8 endpoint criteria, a union of
@@ -908,7 +908,7 @@ def test_m19_refuses_a_collection_error_that_names_no_removed_artifact():
         This is the commonest TRUE positive the instrument has, and refusing it would refuse
         every edge whose oracle module cannot import without its artifact.
       * an ERROR whose exception names nothing removed is an instrument failure and RAISES with
-        the transcript, exactly as an unresolved node id already does (`_scores:219-226`).
+        the transcript, exactly as an unresolved node id already does (`_scores:440-446`).
     """
     consumed = _ablate([_ERROR_ARTIFACT], [_ERROR_PROBE])[_ERROR_PROBE]
     assert consumed == FAILED, (
