@@ -84,31 +84,60 @@ test that pins it.
   3. **Grounding is to FILE granularity** (spec §4's own stated limitation): `X dependsOn
      dec:01` is demonstrated as "X consumes `dec-shapes.ttl`", not as "X consumes the shape at
      line 15". Ablation deletes files.
-  4. **THE ABLATION IS NOT HERMETIC FOR `src/`: the editable install is never ablated, and this
-     is the only limitation here that can produce a FALSE GREEN.** MEASURED in this tree:
-     `.venv/lib/python3.*/site-packages/_editable_impl_iladub.pth` carries the **absolute
-     main-tree** path `…/iladub/src`, and `pyproject.toml:98` sets `pythonpath = ["."]` — the
-     worktree *root*, never `worktree/src`. So `import iladub` inside a worktree resolves to the
-     main tree, even for a module deleted from the worktree:
+  4. **THE ABLATION WAS NOT HERMETIC FOR ANY ARTIFACT AN ORACLE RESOLVES THROUGH LIBRARY CODE
+     — CORRECTED 2026-08-23 ([[R121]], closed by Task 1, `7e4f84c`).** The hazard was never
+     "an artifact lives *under* `src/`"; it is an artifact *resolved through* `src/`, and the
+     original text here dismissed the wrong test. MEASURED (this brief's own census command,
+     re-run against the live manifest with `tests/test_arc_manifest.py`'s `MANIFEST`/
+     `_LINE_SUFFIX`): **29** distinct declared `prog:oracleArtifact` files across **48** raw
+     triples (the two counts are not the same thing, and this docstring previously conflated
+     them) — `examples/` 12, `tests/` 9, `vocab/` **8** (not 14: `14` was `vocab/`'s *triple*
+     count, not its file count), `src/` **0**. Zero-under-`src/` was the wrong reading. The
+     right test is *"does the consuming oracle reach this file through library code?"* —
+     because `src/iladub/etkl/compile.py:374-383` (`_repo_vocab()`) and eight `parents[3]`-style
+     siblings (e.g. `src/iladub/etkl/gridregion.py:29-31`) resolve `vocab/` by walking up from
+     THEIR OWN `__file__`, which — before this loop's `PYTHONPATH` fix below — was always the
+     main tree's `src/`, however the worktree's `vocab/` was ablated:
 
-         $ git worktree add --detach $WT HEAD && rm -rf $WT/src/iladub/ground.py
-         $ cd $WT && …/iladub/.venv/bin/python -c "import iladub.ground as g; print(g.__file__)"
-         /Volumes/WD Green/dev/git/iladub/src/iladub/ground.py     # the MAIN tree's copy
+         $ git worktree add --detach $WT HEAD && rm -rf $WT/vocab
+         $ cd $WT && …/iladub/.venv/bin/python -c \
+             "import iladub.etkl.gridregion as g; print(g.GRID_REGION_RQ.is_file())"
+         True     # resolved through src/, so the worktree's deletion is INVISIBLE
 
-     **No live impact today, and that too is measured:** all 35 distinct `prog:oracleArtifact`
-     values in `tests/arc-manifest.ttl` live under `vocab/` (14), `examples/` (12) and `tests/`
-     (9) — **zero** under `src/`. Non-`src/` artifacts ablate correctly, because pytest's rootdir
-     *is* the worktree (Task 1's `tab:06` `COLLECT_ERROR` row is the positive evidence).
-     **The failure scenario, stated so a later author cannot walk into it unwarned:** a criterion
-     declares e.g. `src/iladub/ground.py:199` — a natural thing to declare, since `dec:08`'s
-     epistemics live there. M19 deletes that file inside the worktree; the oracle imports the
-     main tree's surviving copy and **PASSES**. Arm 2 (`C dependsOn Y` ⇒ Y's tests must PASS)
-     therefore goes green on a file that was never effectively removed, and a false edge is
-     **asserted**. Arm 1 would spuriously refute, which is the safe direction; arm 2 is the
-     unsafe one — exactly the direction the producer-side guards below exist to protect.
-     Do not declare a `src/` artifact on a criterion that is an edge endpoint until `_ablate`
-     carries a producer-side refusal for a removed path that lies under a directory named by a
-     `.pth` on `sys.path` — the same shape as the two guards already there.
+     By that test, **all 8 of the 29 `vocab/`-rooted files were un-ablatable**: any oracle
+     reaching them through such a helper would read the main tree's copy regardless of what the
+     worktree ablation deleted. That is the FALSE-GREEN direction ([[R121]]'s own name for it):
+     arm 2 (`C dependsOn Y` ⇒ Y's tests must PASS) goes green on a file that was never
+     effectively removed, and a false edge is asserted; arm 1 would spuriously refute, which is
+     the safe direction.
+
+     **No shipped edge was ever affected — but for a different reason than this docstring first
+     gave.** The 6 asserted edges in the live manifest all grounded, and MEASURED, they grounded
+     because their oracles root their evidence in the TEST file's own `__file__`
+     (`tests/test_boundary.py:6` and its siblings), which in a worktree *is* the worktree —
+     never in a `src/`-resolved helper. That is self-evidencing: an edge that grounded is an
+     edge whose oracle was ablation-sensitive. In the met set, `etkl:01` was the only criterion
+     whose oracle reached `vocab/` through library code, and it is not an endpoint of any
+     shipped edge ([[R121]] in `docs/superpowers/residues-closed.md`).
+
+     **§4.1 (`_run_module`'s `PYTHONPATH` prefix, Task 1) now re-roots every `src/`-resolved
+     import onto the worktree**, and MEASUREMENT shows it closes both readings of this
+     limitation, not only the library-code one above. The literal reading the original text
+     warned about — a criterion declaring a file *under* `src/` itself, e.g.
+     `src/iladub/ground.py` — is ALSO closed: with `PYTHONPATH=<worktree>/src` set and that file
+     deleted inside the worktree, `import iladub.ground` now raises `ModuleNotFoundError`
+     rather than silently resolving the main tree's surviving copy (measured in a throwaway
+     worktree; without the `PYTHONPATH` prefix the same import silently returns the main tree's
+     `iladub/ground.py`). Regular Python packages resolve to a single directory, so once
+     `<worktree>/src` outranks the editable install's `.pth`, a missing submodule there is not
+     found anywhere else on `sys.path` — no producer-side guard was needed for this case after
+     all, because the import mechanism itself now enforces it.
+
+     **What limitation 4 still cannot claim — and does not, having been corrected rather than
+     retired — is that NOTHING else in this codebase resolves to the main tree.** Only the two
+     resolution styles actually inventoried above (`import`, and the `parents[N]`/`__file__`
+     helpers) were measured; a third style this loop did not think to name is not ruled out.
+     That question stays **declared, not measured** (spec §9) — see the R122 row Task 6 raises.
 
 **No tuned constant, threshold or tolerance** (Global Constraint 3), and **no subprocess
 timeout**: any wall-clock number here would be exactly the tuned constant CLAUDE.md §8 calls
@@ -133,7 +162,7 @@ import subprocess
 import sys
 import tempfile
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from unittest import mock
 
 import pytest
@@ -145,6 +174,7 @@ from tests.test_arc_manifest import (MANIFEST, REPO, _LINE_SUFFIX, oracle_rows,
 PROG = Namespace("https://w3id.org/iladub/progress#")
 
 FIXTURE = REPO / "tests" / "arc-m19-false-edge-leak.ttl"
+CONTROL_FAILS_FIXTURE = REPO / "tests" / "arc-m19-control-fails.ttl"
 
 # pytest's own `-v` progress lines, one per executed test and ending in a percentage:
 #     tests/test_risk.py::test_empiric_risk_stamp_rejected PASSED              [100%]
@@ -167,8 +197,37 @@ FIXTURE = REPO / "tests" / "arc-m19-false-edge-leak.ttl"
 _PROGRESS = re.compile(
     r"^(\S.*?) (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)(?: \(.*\))?\s+\[\s*\d+%\]\s*$", re.M)
 # …and the one thing the progress region cannot show, because the test never started: a module
-# that failed to import. `ERROR tests/x.py - FileNotFoundError: …` in the summary.
+# that failed to import. `ERROR tests/x.py …` in the short summary names WHICH module, and that
+# leading field is never truncated because it sits at the start of the line.
 _COLLECT_ERROR = re.compile(r"^ERROR (\S+)", re.M)
+# WHY the module path alone is not enough, and why the exception text is read out of the ERRORS
+# section instead of the summary line the comment above parses ([[R118]], spec §4.5): §4.5 scores
+# a collection ERROR as ablation evidence ONLY when its exception NAMES one of the removed paths,
+# so the text must survive intact. The summary line does not. MEASURED 2026-08-23, pytest 9.0.3,
+# one worktree, one node id (`tests/test_docgov_shapes.py::test_conforming_minimal_graph` with
+# `vocab/shapes/doc-governance-shapes.ttl` removed), the only difference being `COLUMNS`:
+#   COLUMNS=80   ERROR tests/test_docgov_shapes.py - FileNotFoundError: [Errno 2] No such file...
+#   COLUMNS=250  ERROR tests/test_docgov_shapes.py - FileNotFoundError: [Errno 2] No such file or
+#                directory: '<wt>/vocab/shapes/doc-governance-shapes.ttl'
+# The summary tail is CLIPPED TO THE TERMINAL WIDTH — the same width-sensitivity `_PROGRESS`'s
+# comment records — so on an 80-column CI the removed path is simply gone and every true positive
+# would turn into a raise. Worse, MEASURED on the import-error shape (`tests/docgov_extract.py`
+# removed) the summary line carries NO exception tail at any width: `ERROR
+# tests/test_docgov_shapes.py`, full stop.
+#
+# The `ERRORS` section is not clipped at either width, and it is why `_run_module` runs
+# `--tb=line` rather than `--tb=no` (see its docstring for that measurement):
+#     ____________ ERROR collecting tests/test_docgov_shapes.py ____________
+#     E   FileNotFoundError: [Errno 2] No such file or directory: '<wt>/vocab/shapes/…ttl'
+# A SECOND pattern rather than a widened `_COLLECT_ERROR`, deliberately: the two read different
+# regions of the transcript and answer different questions — which module errored (summary, under
+# every `--tb`) and why (ERRORS section, only once a traceback is printed). Fusing them into one
+# regex would make the module's identity depend on the traceback flag. The block runs to the next
+# section separator — pytest writes those as a line of `=` or `_` fill around a title, with at
+# least one fill character on each side even at minimum width, and no traceback line begins that
+# way.
+_COLLECT_ERROR_TEXT = re.compile(
+    r"^_+ ERROR collecting (\S+) _+$\n(.*?)(?=^[=_]+ |\Z)", re.M | re.S)
 
 PASSED, FAILED = "passed", "failed"
 
@@ -200,28 +259,172 @@ def _run_module(node_ids, cwd):
     Per-module and never wider: see this module's docstring for the measured reason. The
     interpreter is `sys.executable`, which is absolute and therefore unaffected by the
     worktree having no `.venv` of its own (measured, Task 1 § Step 2).
+
+    [[R121]], spec §4.1: the editable install's `_editable_impl_iladub.pth` carries the MAIN
+    tree's `src/`, so `import iladub` in the subprocess would otherwise resolve there instead of
+    into `cwd` (the worktree), and every ablation would be silently reading unablated files. A
+    plain path `.pth` is outranked by `PYTHONPATH`, so prepending `<cwd>/src` re-roots every
+    import onto the worktree. Measured (Task 1 § Step 1): `PYTHONPATH` is unset in this
+    environment, so there is nothing to preserve beyond appending it if it is ever set.
+
+    [[R118]], spec §4.5: `--tb=line` and NOT `--tb=no`, and the flag is a MEASUREMENT rather than
+    a taste. §4.5 reads the collection ERROR's exception text — see `_COLLECT_ERROR_TEXT` for the
+    two transcripts showing the short-summary line is clipped to the terminal width and, on the
+    import-error shape, carries no exception at all. Measured 2026-08-23 on the same worktree and
+    node id: `--tb=no` prints NO `ERRORS` section whatsoever, so the text §4.5 needs does not
+    exist in the output; `--tb=line` prints it, un-clipped at both COLUMNS=80 and COLUMNS=250.
+    It leaves `_PROGRESS`'s input untouched — measured on a run mixing one FAILED id with the 7
+    skipping corpus ids: the `-v` progress region is identical under both flags, and the FAILURES
+    section `--tb=line` adds carries no line ending in `[ nn%]` and none beginning `ERROR `.
     """
+    env = dict(os.environ)
+    src = str(Path(cwd) / "src")
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = src if not existing else os.pathsep.join([src, existing])
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", *node_ids,
-         "-v", "--tb=no", "-p", "no:cacheprovider"],
-        cwd=cwd, capture_output=True, text=True)
+         "-v", "--tb=line", "-p", "no:cacheprovider"],
+        cwd=cwd, capture_output=True, text=True, env=env)
     reported = {}
     for node, outcome in _PROGRESS.findall(proc.stdout):
         reported.setdefault(node, []).append(outcome)
     return proc, reported
 
 
-def _scores(module, node_ids, proc, reported):
+# `baml_client/` is gitignored (.gitignore:30) and generated by the BAML compiler, so no
+# worktree checked out at HEAD ever contains it — six modules fail to COLLECT without it
+# (test_extract_baml, test_loop, test_m4_databook, test_m4_pipeline, test_targeted,
+# test_to_rdf), and every such ERROR is an instrument artefact, not ablation evidence
+# (module docstring, limitation-adjacent; [[R118]]). NOT the corpus: M5 measured that
+# materialising it fans `_SKIPS_WITH_A_REASON` out to 7 parametrized ids and turns M19's own
+# parser self-test (`test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width`) red
+# on any corpus-present machine.
+#
+# Declared HERE, in the instrument, and never in tests/arc-manifest.ttl (Global Constraint 4):
+# "this repo's test environment needs a generated client" is a fact about the harness, not a
+# claim about the arc the manifest describes.
+_MATERIALISED = ("baml_client",)
+
+
+def _declared_inputs(repo):
+    """Every `_MATERIALISED` entry resolved against `repo`, present or not.
+
+    Existence is not decided here — Best effort (spec §4.2): an input absent from the main
+    tree is not an error and is not copied, and *which* entries are absent is DISCOVERED by a
+    caller checking `.exists()` for itself, never declared in a mapping table. `_materialise`
+    is one such caller; Task 3's control, partitioning the result into materialised and
+    not-materialised for its own error message, is another — neither restates `_MATERIALISED`.
+    """
+    return tuple(repo / name for name in _MATERIALISED)
+
+
+def _materialise(wt, repo):
+    """Copy every `_MATERIALISED` input present in `repo` into worktree `wt`. Best effort.
+
+    COPY, never symlink (Global Constraint 7): `_ablate`'s job is to delete files, and through
+    a symlinked directory `Path.unlink()` deletes the real file back in `repo`. Called between
+    `git worktree add` and the first `unlink()` (brief Step 4), so a `_MATERIALISED` entry that
+    `removed_files` names too stays deleted — materialisation only fills a gap the checkout
+    itself left, it does not re-supply what the ablation asked to remove.
+    """
+    for src in _declared_inputs(repo):
+        if not src.exists():
+            continue
+        dst = wt / src.relative_to(repo)
+        if src.is_dir():
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+        else:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+
+
+def _refuse_materialisation_collision(removed_files):
+    """Raise if any of `removed_files` lies at or under a `_MATERIALISED` entry.
+
+    THE DISJOINTNESS INVARIANT (spec §4.4) — vacuous today (29 distinct declared
+    `prog:oracleArtifact` files in the live manifest, none under `baml_client/`), and enforced
+    for exactly that reason (CLAUDE.md § Producer-side guards vs the membrane).
+
+    MEASURED 2026-08-23 (`_ablate`, this module): `_materialise(wt, repo)` runs BEFORE the
+    unlink loop, so a deletion of a materialised path is not pre-empted — it lands, and stays
+    deleted, for the rest of that worktree's life. The real hazard is different: `baml_client/`
+    is gitignored, so *without* materialisation `_ablate`'s own committed-tree check (`target
+    .exists()` after `git worktree add --detach HEAD`) would refuse any artifact under it as
+    "absent from a worktree checked out at HEAD" — correctly, since M19 validates the COMMITTED
+    tree. Materialisation exists to let genuinely-generated inputs (the BAML client) pass that
+    check by copying them in from the working tree. But that same copy is indistinguishable, to
+    the check, from a *committed* artifact: it smuggles an uncommitted, gitignored file past the
+    committed-tree invariant M19 exists to enforce, so an edge could be asserted on evidence that
+    was never in the git history at all. A false-assertion path is closed by a raise, not by the
+    observation that nobody has done it yet.
+
+    Called at the top of both `ablation_refusals` (over the union of every endpoint's declared
+    artifacts) and `_ablate` (over its own argument) — see the two callers for why both are
+    needed. Either way it runs before any worktree exists: nothing above this loop touches the
+    filesystem.
+    """
+    for f in removed_files:
+        f_path = PurePosixPath(f)
+        for entry in _MATERIALISED:
+            entry_path = PurePosixPath(entry)
+            if f_path == entry_path or entry_path in f_path.parents:
+                raise RuntimeError(
+                    f"M19 refuses to ablate {f!r}: it lies under materialised input "
+                    f"{entry!r}, which _materialise copies into every M19 worktree from the "
+                    f"(gitignored, uncommitted) working tree — deleting it there would assert "
+                    f"an edge on evidence that was never in the committed tree M19 validates")
+
+
+def _scores(module, node_ids, proc, reported, removed):
     """{requested node id: PASSED | FAILED | a sentence saying it did not execute}.
 
     A requested id with NO reported outcome is an instrument failure, not a datum: it is the
     exact shape Task 1's combined-invocation defect produced, and scoring it either way would
     make an oracle that never ran decide an edge. So it RAISES, with the transcript attached,
-    unless pytest itself reported the module as a collection ERROR — in which case every id
-    the module was asked for is a genuine ablation signal (the test cannot even import once
-    its artifact is gone) and scores as a failure.
+    unless pytest itself reported the module as a collection ERROR **whose exception names one
+    of `removed`** — in which case every id the module was asked for is a genuine ablation
+    signal (the test cannot even import once its artifact is gone) and scores as a failure.
+
+    §4.5 / [[R118]] — THE NAME IS THE CRITERION, and the direction is why. Arm 1 refuses an edge
+    only when ALL of X's results are `PASSED`, so a `FAILED` **admits**: scoring every collection
+    ERROR `FAILED`, as this did before, made a missing generated client, a syntax error on the
+    branch or a broken conftest all read as "X consumes Y" and let arm 1 assert an edge on no
+    evidence at all. A collection ERROR is ablation evidence only if its exception TEXT contains
+    one of the removed paths — a name PRESENT, never consumption inferred from the absence of a
+    contradiction (CLAUDE.md §8, the open-world/evidence-positive half of the AXIOM split).
+
+    Matched on the removed path and never on the exception TYPE. An `OSError` is not the
+    criterion: `FileNotFoundError` is what a removed `.ttl` raises today, but a module that
+    reads its artifact through `json`, `rdflib` or a `subprocess` raises something else, and a
+    rule keyed on the type would silently stop finding true positives while looking healthy.
+
+    Path form, MEASURED (the containment test is a suffix match for exactly this reason):
+    `removed` entries are repo-root-relative POSIX (`_ablate` builds `wt / f` from them), while
+    a traceback prints the worktree-ABSOLUTE path —
+    `'<wt>/vocab/shapes/doc-governance-shapes.ttl'` — so the relative path appears as a
+    substring of the absolute one. That is also what makes the test immune to the macOS symlink
+    forms (`/tmp` -> `/private/tmp`, `/var/folders` -> `/private/var/folders`) that force every
+    path COMPARISON in this repo to be `.resolve()`d first: the shared tail is below the
+    worktree root, so no prefix is ever compared.
+
+    Anything else pytest calls a collection ERROR is an INSTRUMENT FAILURE, not a refusal (Global
+    Constraint 5, spec §5): it raises with the transcript, the same shape an unresolved node id
+    already uses, rather than minting an M-number for a broken checkout.
     """
     collect_error = module in _COLLECT_ERROR.findall(proc.stdout)
+    if collect_error:
+        exception_text = "\n".join(
+            text for errored, text in _COLLECT_ERROR_TEXT.findall(proc.stdout)
+            if errored == module)
+        if not any(f in exception_text for f in removed):
+            raise RuntimeError(
+                f"M19 instrument failure: {module} failed to COLLECT, and its exception names "
+                f"none of the removed artifacts {sorted(removed)}. A collection ERROR grounds an "
+                f"ablation only when the exception says the removed file is what broke it (spec "
+                f"§4.5, [[R118]]) — otherwise a missing dependency or a broken conftest would "
+                f"read as consumption, and arm 1 admits on a FAILED.\nEXCEPTION\n"
+                f"{exception_text}\nexit={proc.returncode}\nSTDOUT\n{proc.stdout[-3000:]}\n"
+                f"STDERR\n{proc.stderr[-3000:]}")
     out, unresolved = {}, []
     for node in node_ids:
         # A parametrized oracle may be cited bare while pytest only ever reports its
@@ -230,6 +433,8 @@ def _scores(module, node_ids, proc, reported):
                     for o in outs]
         if not outcomes:
             if collect_error:
+                # …and the guard above has already established that this module's collection
+                # ERROR names one of `removed`, so the id never ran BECAUSE of the ablation.
                 out[node] = FAILED
                 continue
             unresolved.append(node)
@@ -256,12 +461,19 @@ def _ablate(removed_files, node_ids, repo=REPO):
     THE SAFETY PROPERTY: the real tree is never mutated. Every deletion happens inside the
     worktree, and `git worktree remove --force` runs in a `finally`, so a crashed subprocess
     — or an exception raised by `_scores` — cannot leave the repository broken.
+
+    Producer-side guard: `_refuse_materialisation_collision` runs first, over this call's own
+    `removed_files`, so a direct caller of `_ablate` (this module's own tests call it that way)
+    is covered even when it did not go through `ablation_refusals` first (CLAUDE.md § Producer-
+    side guards vs the membrane — `_ablate` is itself a public entry point).
     """
+    _refuse_materialisation_collision(removed_files)
     parent = Path(tempfile.mkdtemp(prefix="arc-m19-"))
     wt = parent / "wt"
     try:
         subprocess.run(["git", "worktree", "add", "--detach", str(wt), "HEAD"],
                        cwd=repo, capture_output=True, text=True, check=True)
+        _materialise(wt, repo)
         for f in removed_files:
             target = wt / f
             if not target.exists():
@@ -277,13 +489,57 @@ def _ablate(removed_files, node_ids, repo=REPO):
         scored = {}
         for module, ids in sorted(by_module.items()):
             proc, reported = _run_module(ids, wt)
-            scored.update(_scores(module, ids, proc, reported))
+            scored.update(_scores(module, ids, proc, reported, removed_files))
         return scored
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)],
                        cwd=repo, capture_output=True, text=True)
         shutil.rmtree(parent, ignore_errors=True)
         subprocess.run(["git", "worktree", "prune"], cwd=repo, capture_output=True, text=True)
+
+
+def _run_control(node_ids, repo=REPO):
+    """§4.3: prove the worktree faithful BEFORE any deletion, over the UNION of endpoint ids.
+
+    One worktree for every endpoint (invariant 2): `_ablate([], node_ids, repo)` deletes
+    nothing, so this is the same mechanism a real ablation uses — `git worktree add`,
+    materialise, run — minus the `unlink()` loop. Reusing `_ablate` rather than reimplementing
+    its worktree/materialise/subprocess plumbing is deliberate: a second copy of that logic is
+    the next divergent parser R109 warns about.
+
+    Invariant 4: any requested id that did not come back `PASSED` — `FAILED`, or the "did not
+    execute" sentence `_scores` returns for a SKIP/XFAIL/XPASS — means this worktree is not an
+    environment every endpoint oracle can pass in, so nothing below this call may be scored on
+    evidence gathered here. Raises naming every such id and what `_scores` reported for it.
+
+    Invariant 5 (controller ruling PF-1): a `RuntimeError` escaping `_ablate` itself — either
+    `_scores`'s unresolved-node-id instrument failure or, since §4.5 landed, an unattributable
+    collection ERROR, which a control worktree manufactures for EVERY module because `removed`
+    is empty here so no exception can ever name it — is caught and re-raised carrying the same
+    `_declared_inputs` partition invariant 3 requires, so that raise does not escape before the
+    partition is built. Defensive: no live endpoint reaches it (measured — the four control
+    modules import no `baml_client`), so no test exercises this branch directly.
+
+    Both raises carry the same partition, built once: which `_MATERIALISED` entries exist in
+    `repo` (and were therefore copied into the worktree) and which do not — an actionable
+    sentence for a developer who has never generated a `baml_client`.
+    """
+    declared = _declared_inputs(repo)
+    materialised = sorted(p.relative_to(repo).as_posix() for p in declared if p.exists())
+    absent = sorted(p.relative_to(repo).as_posix() for p in declared if not p.exists())
+    partition = (f"declared environment inputs — materialised into the control worktree: "
+                 f"{materialised}; absent from the main tree and NOT materialised: {absent}")
+    try:
+        scored = _ablate([], node_ids, repo)
+    except RuntimeError as instrument_failure:
+        raise RuntimeError(f"{instrument_failure}\n{partition}") from instrument_failure
+    unfaithful = {node: outcome for node, outcome in scored.items() if outcome != PASSED}
+    if unfaithful:
+        raise RuntimeError(
+            f"M19: the control run found {sorted(unfaithful)} not PASSED in an UN-ABLATED "
+            f"worktree (nothing was removed): {unfaithful}. An oracle that does not pass with "
+            f"nothing taken away cannot ground any ablation (spec §4.3) — this worktree is not "
+            f"proved faithful, so it is never scored. {partition}")
 
 
 # ------------------------------------------------------------------------- the one refusal
@@ -331,6 +587,24 @@ def ablation_refusals(graph):
         f"an edge are RUN — the source in arm 1, the target in arm 2 — so an end with no "
         f"oracle would make arm 2 vacuously green. That is M16's A2 precondition, in "
         f"tests/arc-shapes.ttl; validate the graph through the membrane first")
+
+    # THE DISJOINTNESS INVARIANT (spec §4.4) — over the UNION of every endpoint's declared
+    # artifacts, before the first worktree is created. Must run here, not only inside
+    # `_ablate`, because it must fire before ANY of this graph's endpoints has paid the cost
+    # of a worktree, and the loop below creates one per endpoint in `sorted(...)` order —
+    # a guard reached only once the loop got to the colliding criterion would have already
+    # created and torn down worktrees for every criterion that sorts before it.
+    _refuse_materialisation_collision(
+        sorted({a for e in ends for a in oracles[e][0]}))
+
+    # THE CONTROL (spec §4.3) — after the two producer-side guards above and the disjointness
+    # guard, before the ablation loop touches a single worktree. It disposes the proposition
+    # "this worktree is an environment in which every endpoint oracle runs" over the UNION of
+    # every end's oracle ids, in ONE worktree that deletes nothing — independent of arm 1/arm 2
+    # and of which criterion an id belongs to, so it must run before the per-criterion loop
+    # below, not folded into it.
+    _run_control(sorted({t for e in ends for t in oracles[e][1]}))
+
     sources, targets = defaultdict(list), defaultdict(list)
     for x, y in edges:
         sources[y].append(x)      # arm 1: remove y, run x
@@ -471,6 +745,200 @@ def test_m19_reads_a_skip_that_carries_its_reason_at_any_terminal_width():
             f"reader can tell a skip from a failure: {verdict!r}")
 
 
+_PROBE = "tests/test_arc_worktree_probe.py::test_library_resolves_to_this_checkout"
+
+
+def test_m19_resolves_the_library_into_the_worktree_it_ablates():
+    """[[R121]]: the ablation must edit the tree the oracles actually read.
+
+    Two legs, and the second is the one the abandoned spec never measured:
+
+      1. **It resolves.** In an un-ablated worktree the probe PASSES, so `import iladub` and both
+         `vocab/`-resolution styles land inside the checkout under test rather than in the main
+         tree the editable install pins.
+      2. **And it is ABLATION-SENSITIVE.** Deleting a `vocab/` file that library code resolves
+         makes the probe FAIL. Resolution alone is not the property M19 needs — an oracle that
+         runs but cannot see the deletion produces a silent false refutation — so the deletion
+         must be *observable through library code*.
+
+    Run through the SHIPPED `_ablate`, not a hand-built worktree: leg 2 depends on the ordering
+    of `git worktree add` -> materialise -> `unlink()`, and a hand-built probe proves the
+    mechanism without proving the mechanism survives materialisation.
+    """
+    assert _ablate([], [_PROBE])[_PROBE] == PASSED, (
+        "the library did not resolve into an un-ablated M19 worktree — every ablation this "
+        "module performs is reading the main tree (R121)"
+    )
+
+    ablated = _ablate(["vocab/queries/grid-region.rq"], [_PROBE])[_PROBE]
+    assert ablated == FAILED, (
+        f"a vocab/ file deleted inside the worktree was still visible to library code: the "
+        f"probe scored {ablated!r}, not {FAILED!r}. Resolution without ablation-sensitivity is "
+        f"the silent false refutation R121 names"
+    )
+
+
+_MATERIALISED_PROBE = "tests/test_to_rdf.py::test_groundable_abo_becomes_asserted_literal"
+MATERIALISED_FIXTURE = REPO / "tests" / "arc-m19-materialised-artifact.ttl"
+
+
+def test_m19_materialises_the_generated_client_it_did_not_check_out():
+    """`baml_client/` is gitignored and generated, so no worktree at HEAD contains it.
+
+    MEASURED 2026-08-23 in a worktree built with `_ablate`'s own `git worktree add --detach <wt>
+    HEAD`: `pytest --collect-only -q` reports **1293 tests collected, 6 errors** — six modules
+    (`test_extract_baml`, `test_loop`, `test_m4_databook`, `test_m4_pipeline`, `test_targeted`,
+    `test_to_rdf`) cannot import `baml_client` — and **1314 collected, 0 errors** once the
+    directory is copied in. That import break has NO relation to any removed artifact, so an
+    oracle in one of those modules would read as consumption of a file M19 never touched
+    ([[R118]]).
+
+    Asserted as *not* PASSED rather than *equal to* FAILED on the falsification side, because
+    §4.5 (Task 4) turns the unattributable ERROR from a score into a raise. The invariant that
+    survives both is: **with the client materialised the oracle runs; without it, it does not
+    come back PASSED.**
+    """
+    assert _ablate([], [_MATERIALISED_PROBE])[_MATERIALISED_PROBE] == PASSED, (
+        "a module that needs the generated BAML client did not run in an M19 worktree; every "
+        "collection ERROR it raises there is an instrument artefact, not ablation evidence"
+    )
+
+
+def test_m19_refuses_an_artifact_that_materialisation_would_restore():
+    """THE DISJOINTNESS INVARIANT — vacuous today, and that is precisely why it is enforced.
+
+    Measured 2026-08-23 over the live manifest: 29 distinct declared `prog:oracleArtifact`
+    files — `examples/` 12, `tests/` 9, `vocab/` 8 — and **none** under `baml_client/`.
+    `_materialise` runs BEFORE `_ablate`'s unlink loop (measured in `_ablate`, this module), so a
+    deletion under `baml_client/` is not pre-empted by it. The hazard is that `baml_client/` is
+    gitignored: without materialisation, `_ablate`'s committed-tree check would correctly refuse
+    such an artifact as absent from a worktree checked out at HEAD, but materialisation copies it
+    in from the (uncommitted, gitignored) working tree anyway — smuggling evidence M19 never
+    validated as committed past the check it exists to enforce, so arm 1 could assert an edge on
+    a file that was never in the git history at all. A false-assertion path is closed by a raise,
+    not by the observation that nobody has done it yet (CLAUDE.md § Producer-side guards vs the
+    membrane).
+
+    It must raise BEFORE any worktree exists: by the time `_ablate` reaches the colliding
+    criterion, earlier criteria have already had worktrees created and torn down, and a guard
+    that fires there is a guard that fired late.
+    """
+    fixture = Graph().parse(MATERIALISED_FIXTURE, format="turtle")
+    ok, report = validate_manifest(MATERIALISED_FIXTURE)
+    assert ok, (f"{MATERIALISED_FIXTURE.name} must be SHACL-clean so that only the guard can "
+                f"refuse it; the graph membrane already objects:\n{report}")
+
+    with mock.patch("tests.test_arc_ablation._ablate") as never:
+        with pytest.raises(RuntimeError, match="baml_client"):
+            ablation_refusals(fixture)
+    assert not never.called, (
+        "the disjointness guard fired only once _ablate had already been entered; it must "
+        "refuse before the first worktree is created"
+    )
+
+
+def test_m19_refuses_to_score_in_an_environment_it_has_not_proved_faithful():
+    """THE CONTROL: before any deletion, every endpoint oracle must PASS with nothing removed.
+
+    An oracle that fails an UN-ABLATED run is an instrument failure, not evidence (spec §3): its
+    outcome under ablation says nothing about the removed artifact, because it did not pass
+    without it either. So it raises with the transcript — the same shape `_scores:440-446`
+    already uses for an unresolved node id — and is never scored.
+
+    MEASURED 2026-08-23 over the live manifest: 6 asserted edges, 8 endpoint criteria, a union of
+    10 endpoint oracle ids across 4 modules, all 10 PASSED in an un-ablated worktree with
+    `baml_client` materialised. **The control is green today**, so this test pins the refusal, not
+    a live failure — it forges the failure by handing `ablation_refusals` a graph whose endpoint
+    oracle is a node id that cannot pass in a worktree.
+
+    `tests/test_corpus.py::test_expected_verdict` is that id: `corpus/` is gitignored and this
+    loop deliberately does not materialise it (spec §2.5), so all 7 of its parametrized ids SKIP
+    in every worktree M19 creates — measured, not assumed. A SKIP is not a PASS, so the control
+    must refuse rather than let the edge be scored on an oracle that never executed.
+
+    The message must name the failing id, its outcome, AND which declared inputs were and were
+    not materialised (§4.3 invariant 3) — a developer who has never generated a `baml_client`
+    needs an actionable sentence, not a bare red.
+    """
+    live = Graph().parse(MANIFEST, format="turtle")
+    edges = asserted_edges(live)
+    assert edges, "the live manifest carries no asserted edge, so this test has no endpoint"
+
+    with pytest.raises(RuntimeError) as caught:
+        ablation_refusals(Graph().parse(CONTROL_FAILS_FIXTURE, format="turtle"))
+
+    message = str(caught.value)
+    assert "tests/test_corpus.py::test_expected_verdict" in message, message
+    assert "SKIPPED" in message, (
+        f"the control must say WHAT pytest reported, so a reader can tell a skip from a "
+        f"failure: {message}"
+    )
+    assert "baml_client" in message, (
+        f"the control must report which declared environment inputs were materialised, so a "
+        f"developer without a generated client gets an actionable sentence: {message}"
+    )
+
+
+# The §4.5 probe pair, MEASURED 2026-08-23 in worktrees built the way `_ablate` builds them
+# (`git worktree add --detach <wt> HEAD`, `baml_client` copied in), pytest 9.0.3:
+#
+#   * `tests/test_docgov_shapes.py:12` parses `vocab/shapes/doc-governance-shapes.ttl` at MODULE
+#     scope, so with that file gone the module cannot be imported and `pytest --collect-only -q
+#     <id>` reports `no tests collected, 1 error` — a COLLECTION error, not a test failure. The
+#     exception NAMES the removed file: `FileNotFoundError: [Errno 2] No such file or directory:
+#     '<wt>/vocab/shapes/doc-governance-shapes.ttl'`. This is the TRUE positive.
+#   * `tests/test_docgov_shapes.py:9` imports `tests.docgov_extract` at module scope, so removing
+#     `tests/docgov_extract.py` produces the SAME collection error shape — and an exception that
+#     names the *dotted module* and never the removed path: `ModuleNotFoundError: No module named
+#     'tests.docgov_extract'`. Nothing in that transcript spells `tests/docgov_extract.py`.
+#
+# Neither file is a declared `prog:oracleArtifact` and `test_docgov_shapes` is nobody's oracle
+# (measured: `grep -c docgov tests/arc-manifest.ttl` -> 0), so this pair cannot perturb a live
+# edge. NOT A PAIR OF THE FORM THE BRIEF ASKED FOR FIRST, and the task report says so: since Task
+# 2 materialises `baml_client`, there is no longer any file in the tracked tree whose removal the
+# probe module does not touch yet still breaks its collection. What remains — and what §4.5 is
+# actually about — is an import break the instrument CANNOT ATTRIBUTE: the removal did cause it,
+# but nothing in the exception says so, and an instrument that scored it `FAILED` would score
+# every unrelated import break the same way.
+_ERROR_PROBE = "tests/test_docgov_shapes.py::test_conforming_minimal_graph"
+_ERROR_ARTIFACT = "vocab/shapes/doc-governance-shapes.ttl"
+_UNRELATED_REMOVAL = "tests/docgov_extract.py"
+
+
+def test_m19_refuses_a_collection_error_that_names_no_removed_artifact():
+    """[[R118]]'s general form: read the exception, not the mere existence of an ERROR.
+
+    Arm 1 admits an edge when X's oracles FAIL with Y's artifacts gone, so scoring *any* import
+    break as FAILED makes arm 1 permissive: a missing dependency, a syntax error on the branch or
+    a broken conftest all read as "X consumes Y" — an edge asserted on no evidence at all. The
+    direction matters: arm 2 is unaffected in the unsafe direction, because there a FAILED
+    refutes.
+
+    Two halves, and both are needed — a rule that only raises is as wrong as one that only
+    scores:
+
+      * an ERROR whose exception NAMES a removed path is genuine consumption and scores FAILED.
+        This is the commonest TRUE positive the instrument has, and refusing it would refuse
+        every edge whose oracle module cannot import without its artifact.
+      * an ERROR whose exception names nothing removed is an instrument failure and RAISES with
+        the transcript, exactly as an unresolved node id already does (`_scores:440-446`).
+    """
+    consumed = _ablate([_ERROR_ARTIFACT], [_ERROR_PROBE])[_ERROR_PROBE]
+    assert consumed == FAILED, (
+        f"a module that cannot import once its declared artifact is removed IS consumption; "
+        f"scoring it {consumed!r} would refuse the instrument's commonest true positive"
+    )
+
+    with pytest.raises(RuntimeError) as caught:
+        _ablate([_UNRELATED_REMOVAL], [_ERROR_PROBE])
+    message = str(caught.value)
+    assert _ERROR_PROBE.split("::")[0] in message, message
+    assert _UNRELATED_REMOVAL in message, (
+        f"the refusal must name what WAS removed, so a reader can see that the exception does "
+        f"not mention it: {message}"
+    )
+
+
 def test_m19_the_live_manifest_carries_no_refuted_edge():
     """The live leg — AND IT IS NO LONGER VACUOUS. Task 4 authored the first edges.
 
@@ -481,10 +949,32 @@ def test_m19_the_live_manifest_carries_no_refuted_edge():
     (`holon:02 -> holon:01`, arm 1 — holon:02's oracles never load `etkl-holons.ttl`), it was
     DELETED rather than demoted (plan §0/C4, because M17 refuses the demotion), and **6** remain.
 
-    So this now creates real worktrees and runs real oracles. MEASURED 2026-08-22 over those 6
-    edges: 9 endpoint criteria, 6.69 s wall-clock, real tree `git status --porcelain` clean
-    throughout. The second assertion keeps stating the count the first one ran against — a
-    guard against the gate silently going vacuous again if a future edit empties the section.
+    So this now creates real worktrees and runs real oracles. **CORRECTED 2026-08-23 (M7,
+    Task 5)** — the `9 endpoint criteria, 6.69 s` figure recorded here on 2026-08-22 was the
+    *7*-edge count: it counted `holon:02`, whose edge the paragraph above already says was
+    DELETED, so the sentence named 6 edges and reported the 7-edge endpoint total. Re-derived
+    over the live manifest with this module's own `asserted_edges`/`_oracles` helpers (a reader
+    can re-run it):
+
+        $ ./.venv/bin/python -c "
+        from rdflib import Graph
+        from tests.test_arc_ablation import MANIFEST, asserted_edges, _oracles
+        g = Graph().parse(MANIFEST, format='turtle')
+        edges = asserted_edges(g); oracles = _oracles(g)
+        ends = sorted({e for pair in edges for e in pair})
+        ids = sorted({t for e in ends for t in oracles[e][1]})
+        print(len(edges), 'edges', len(ends), 'endpoints', len(ids), 'ids',
+              len({t.split('::')[0] for t in ids}), 'modules')"
+        6 edges 8 endpoints 10 ids 4 modules
+
+    MEASURED 2026-08-23 over those same 6 edges: **8** endpoint criteria, a union of **10**
+    endpoint oracle ids across **4** modules, ≈9.3 s wall-clock (two runs of this test alone:
+    9.48 s and 9.23 s), real tree `git status --porcelain` clean throughout. The wall-clock also
+    moved from the 2026-08-22 figure for a real reason, not noise: Task 3 added the un-ablated
+    control run (`_run_control`) ahead of the ablation loop, so this number describes the
+    shipped instrument — control plus ablation — rather than the pre-control one. The second
+    assertion keeps stating the count the first one ran against — a guard against the gate
+    silently going vacuous again if a future edit empties the section.
     """
     g = Graph().parse(MANIFEST, format="turtle")
     edges = asserted_edges(g)
