@@ -392,7 +392,7 @@ len: 0
 **`[]` — the outcome spec §9 predicted before the loop began.** Spec §7's closing paragraph names
 this exact result and requires it to be reported as-is: *"§4.1 lands, the ablation runs, and no
 edge changes state — leaving an instrument that is honest and a graph that is identical. That
-outcome is expected and must be reported as-is."* Global Constraint 9's forbidden response — a
+outcome is expected (§9) and must be reported as-is."* Global Constraint 9's forbidden response — a
 non-empty result suppressed, or the instrument re-tuned until `[]` came back — did not arise: the
 first run returned `[]` and nothing was adjusted.
 

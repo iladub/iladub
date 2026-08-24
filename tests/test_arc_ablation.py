@@ -343,12 +343,20 @@ def _refuse_materialisation_collision(removed_files):
 
     THE DISJOINTNESS INVARIANT (spec §4.4) — vacuous today (29 distinct declared
     `prog:oracleArtifact` files in the live manifest, none under `baml_client/`), and enforced
-    for exactly that reason (CLAUDE.md § Producer-side guards vs the membrane): the day a
-    criterion declares one there, `_materialise` would copy it back into the worktree straight
-    after `git worktree add` — BEFORE `removed_files` is ever deleted — so the deletion would be
-    silently pre-empty of effect, the oracle would pass on evidence that was never removed, and
-    an arm-1 run would go silently green. A false-assertion path is closed by a raise, not by
-    the observation that nobody has done it yet.
+    for exactly that reason (CLAUDE.md § Producer-side guards vs the membrane).
+
+    MEASURED 2026-08-23 (`_ablate`, this module): `_materialise(wt, repo)` runs BEFORE the
+    unlink loop, so a deletion of a materialised path is not pre-empted — it lands, and stays
+    deleted, for the rest of that worktree's life. The real hazard is different: `baml_client/`
+    is gitignored, so *without* materialisation `_ablate`'s own committed-tree check (`target
+    .exists()` after `git worktree add --detach HEAD`) would refuse any artifact under it as
+    "absent from a worktree checked out at HEAD" — correctly, since M19 validates the COMMITTED
+    tree. Materialisation exists to let genuinely-generated inputs (the BAML client) pass that
+    check by copying them in from the working tree. But that same copy is indistinguishable, to
+    the check, from a *committed* artifact: it smuggles an uncommitted, gitignored file past the
+    committed-tree invariant M19 exists to enforce, so an edge could be asserted on evidence that
+    was never in the git history at all. A false-assertion path is closed by a raise, not by the
+    observation that nobody has done it yet.
 
     Called at the top of both `ablation_refusals` (over the union of every endpoint's declared
     artifacts) and `_ablate` (over its own argument) — see the two callers for why both are
@@ -362,9 +370,9 @@ def _refuse_materialisation_collision(removed_files):
             if f_path == entry_path or entry_path in f_path.parents:
                 raise RuntimeError(
                     f"M19 refuses to ablate {f!r}: it lies under materialised input "
-                    f"{entry!r}, which _materialise copies back into every M19 worktree — "
-                    f"deleting it there would be silently restored and the oracle would pass "
-                    f"on evidence that was never removed")
+                    f"{entry!r}, which _materialise copies into every M19 worktree from the "
+                    f"(gitignored, uncommitted) working tree — deleting it there would assert "
+                    f"an edge on evidence that was never in the committed tree M19 validates")
 
 
 def _scores(module, node_ids, proc, reported, removed):
@@ -800,11 +808,16 @@ def test_m19_refuses_an_artifact_that_materialisation_would_restore():
     """THE DISJOINTNESS INVARIANT — vacuous today, and that is precisely why it is enforced.
 
     Measured 2026-08-23 over the live manifest: 29 distinct declared `prog:oracleArtifact`
-    files — `examples/` 12, `tests/` 9, `vocab/` 8 — and **none** under `baml_client/`. The day
-    someone declares one there, `_materialise` copies the file back in **after** `_ablate`
-    deleted it, the oracle passes on evidence that was never removed, and arm 1 goes SILENTLY
-    green. A false-assertion path is closed by a raise, not by the observation that nobody has
-    done it yet (CLAUDE.md § Producer-side guards vs the membrane).
+    files — `examples/` 12, `tests/` 9, `vocab/` 8 — and **none** under `baml_client/`.
+    `_materialise` runs BEFORE `_ablate`'s unlink loop (measured in `_ablate`, this module), so a
+    deletion under `baml_client/` is not pre-empted by it. The hazard is that `baml_client/` is
+    gitignored: without materialisation, `_ablate`'s committed-tree check would correctly refuse
+    such an artifact as absent from a worktree checked out at HEAD, but materialisation copies it
+    in from the (uncommitted, gitignored) working tree anyway — smuggling evidence M19 never
+    validated as committed past the check it exists to enforce, so arm 1 could assert an edge on
+    a file that was never in the git history at all. A false-assertion path is closed by a raise,
+    not by the observation that nobody has done it yet (CLAUDE.md § Producer-side guards vs the
+    membrane).
 
     It must raise BEFORE any worktree exists: by the time `_ablate` reaches the colliding
     criterion, earlier criteria have already had worktrees created and torn down, and a guard

@@ -20,11 +20,15 @@
 # M12/M13/M14/M15/M18 are silent for the same reasons given in arc-m19-false-edge-leak.ttl.
 #
 # The guard this fixture is FOR is not in tests/arc-shapes.ttl at all: `_materialise` copies
-# every `_MATERIALISED` entry into the worktree straight after `git worktree add`, so deleting
-# `baml_client/types.py` for dec:11's ablation would be silently restored before dec:11's
-# oracle ever runs — the exact false-green §4.4 names. `_refuse_materialisation_collision`
-# is the producer-side guard that closes it, and it must fire before `_ablate` is ever
-# entered (test asserts `_ablate` mocked-and-uncalled).
+# every `_MATERIALISED` entry into the worktree straight after `git worktree add`, and BEFORE
+# `_ablate`'s unlink loop (measured in `_ablate`, tests/test_arc_ablation.py) — so deleting
+# `baml_client/types.py` for dec:11's ablation is not pre-empted by that copy. The real hazard:
+# `baml_client/` is gitignored, so without materialisation `_ablate`'s committed-tree check
+# would correctly refuse such an artifact as absent from a worktree checked out at HEAD;
+# materialisation instead copies it in from the uncommitted working tree, smuggling evidence
+# M19 never validated as committed past the check that exists to enforce exactly that.
+# `_refuse_materialisation_collision` is the producer-side guard that closes it, and it must
+# fire before `_ablate` is ever entered (test asserts `_ablate` mocked-and-uncalled).
 
 prog:criterion:dec:03 a prog:Criterion ;
     prog:ofRung "dec" ;

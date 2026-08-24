@@ -38,7 +38,7 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-23: 113 rows, 24 closed, 89 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-23: 115 rows, 24 closed, 91 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
@@ -46,7 +46,10 @@ R107, R108, and — at loop close, from its whole-branch review and its warning 
 R109, R110, R111 and R112, and closed ~~R105~~ in
 task 6; loop `the-arc-has-edges` raised R113–R119 at close and R120 in its final-review fix wave,
 and closed none; loop `the-worktree-that-resolves` closed R121 and R118 (task 5) and raised R122
-and R123 (task 6, at loop close). **The previous line's "88 open" had already undercounted by one
+and R123 (task 6, at loop close), then raised R124 and R125 (final whole-branch review fix wave,
+2026-08-23) — R124 records that spec §4.4's stated mechanism is superseded by the shipped
+materialise-before-unlink ordering, R125 records the pre-existing, not-this-branch's, unconstrained
+`prog:oracleArtifact` path shape. **The previous line's "88 open" had already undercounted by one
 before task 5's edit** (111 rows summed at the time — 89 open + 22 closed — not 110) — corrected
 there to the re-run figure rather than carried forward.
 
@@ -75,7 +78,7 @@ this register is deliberately the kind that does not let the distinction flatter
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   24  closed
-  89  open
+  91  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -227,3 +230,5 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R121 | closed | CLOSED 2026-08-23 (Task 1, `7e4f84c`) — `_run_module` prepends `<worktree>/src` to `PYTHONPATH`, outranking the editable-install `.pth`; no library file touched. Full evidence in `residues-closed.md` |
 | R122 | open | The question `the-worktree-that-resolves` declines to ask: after §4.1 re-roots `src/`, is any oracle still resolving evidence to the main tree? Two styles measured and closed; a third is not ruled out and nothing would notice one |
 | R123 | open | A declared `prog:oracleArtifact` that is a Python MODULE is real consumption §4.5 refuses to score (it raises) — and Task 4's "zero are `.py`" census is REFUTED: **2 of the 29 are**, `tests/etkl/fixtures.py` (`tab:06`) and `tests/etkl/test_vacuity_registry.py` (`tab:10`) |
+| R124 | open | Spec §4.4's stated mechanism (a pre-empted deletion) is superseded by the shipped code's ordering — `_materialise` runs BEFORE `_ablate`'s unlink loop, so no false green from pre-emption is possible; the real hazard is a gitignored artifact smuggled past the committed-tree check |
+| R125 | open | Pre-existing GC2 exposure: no `sh:pattern` constrains a `prog:oracleArtifact` path, so a declared `../../x` or absolute path would let `_ablate`'s `unlink()` mutate outside the worktree; `_scores`' bare substring containment is also unanchored on separators |
