@@ -34,6 +34,70 @@ def _cheap_document(tmp_path, name="false_transposed.pdf"):
     return compile_document(p)
 
 
+CORPUS_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))), "corpus")
+
+
+def _corpus(rel):
+    """Corpus PDFs are gitignored, so an absent one SKIPS visibly rather than failing —
+    the discipline `tests/test_corpus.py:66-67` already uses."""
+    path = os.path.join(CORPUS_ROOT, rel)
+    if not os.path.exists(path):
+        pytest.skip(f"corpus not populated: {rel} (scripts/fetch_corpus.py)")
+    return path
+
+
+@pytest.fixture(scope="module")
+def apple_report():
+    """ONE apple compile, shared by O2's second and third legs — the saving Task 4's Step 1
+    was told to go and measure, and it landed: `apple` refuses under the R127 lever, so the
+    third leg no longer needs its own corpus document.
+
+    MEASURED 2026-08-25 (`compile_document` on each of the three, then the lever applied):
+
+        graincorp-stem   162.8 s   Intact     legs ('tab','dec')
+        apple             34.4 s   Weakened   legs ('dec',)   10 non-superseded escalations
+                                              → lever REFUSES, legs=('dec',), Compromised
+        bfs               24.1 s   Weakened   legs ('dec',)   10 non-superseded escalations
+                                              → lever REFUSES, legs=('dec',), Compromised
+
+    So the plan's `bfs` → `apple` substitution is TAKEN: it removes a 24.1 s compile and the
+    two legs stand on one specimen. (The plan's 30.6 s figure for `bfs` is its own M1
+    measurement; 24.1 s is what this machine measured today. Either way the compile is gone.)
+
+    MODULE-SCOPED, and the third leg therefore mutates a TRIPLE-IDENTICAL COPY rather than
+    this graph: `_seal` writes in place, and a shared mutable graph would make the second leg's
+    verdict depend on which test pytest ran first. A copy is the real compiled graph for every
+    purpose either leg has — the derivation and the membrane read triples, not namespace
+    bindings — and it keeps the two legs independent, which is the whole reason they are two
+    tests and not one."""
+    return compile_document(_corpus("financial/apple-fy2026q3-statements.pdf"))
+
+
+def _one_more_rationale(graph):
+    """The R127 lever: a SECOND `dec:rationale` on a NON-SUPERSEDED escalated decision.
+    `escalation-furnish.rq` then carries it into a second `dec:condition`, which
+    `dec:EventShape` caps at 1 (`dec-shapes.ttl:60-63`). Returns the decision it mutated.
+
+    The target is READ OFF THE GRAPH, never hardcoded: a SUPERSEDED escalation furnishes
+    nothing and is not a lever (plan M8). `sorted(...)[0]` because a corpus document offers
+    TEN of them (measured above) and one is as good as another — but the choice must be
+    deterministic, or a failure here would not reproduce.
+
+    Distinct from `_the_escalated_decision` below, which asserts the escalated decision is
+    UNIQUE and selects it through `dec:chosen` + its `rdfs:label`. That helper is the right
+    one for a fixture whose shape a change should not be allowed to grow silently; this one is
+    the only one a ten-escalation corpus document can use at all."""
+    targets = [d for d in graph.subjects(DEC.escalatedTo, None)
+               if not list(graph.subjects(DEC.supersedes, d))]
+    assert targets, "vehicle broken: no non-superseded escalated decision to mutate"
+    d = sorted(targets)[0]
+    existing = list(graph.objects(d, DEC.rationale))
+    assert len(existing) == 1, existing
+    graph.add((d, DEC.rationale, Literal("une seconde raison", lang="fr")))
+    return d
+
+
 def test_membrane_refusal_is_an_assertionerror_subclass():
     """O11 (half): the producer-side guard is not softened. Every one of the repo's
     AssertionError interceptors is isinstance-based (plan M2), so a subclass is
@@ -331,3 +395,190 @@ def test_re_entering_the_seam_leaves_exactly_one_health_value(tmp_path):
     assert values[0] == ETKL.Compromised, values[0]
     # the refused graph is the one that carries it — the whole point of the subclass
     assert list(exc.value.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Compromised]
+
+
+@pytest.mark.corpus
+def test_intact_and_weakened_are_reachable_on_real_input(apple_report):
+    """O2, legs 1 and 2 — REACHABILITY ON REAL INPUT. NOT an independence check: these
+    expectations were derived with the same held-candidate pattern the query uses, so if
+    that reading of "held" is wrong, query and expectation share the error (spec §3, review
+    P3). O1 is what carries independence. If a value cannot be produced from real input,
+    THIS TEST FAILS AND SAYS WHICH — it does not fall back to a fixture.
+
+    graincorp-stem is NOT interchangeable with a cheaper Intact document: it is the specimen
+    that carries the point that health is not the score (spec §1, review B8) — it scores
+    0.9655 with 77 escalated tokens of unread ink and is correctly Intact, because nothing
+    is HELD at the membrane.
+
+    Reads `apple_report.graph` and never writes it; O2's third leg mutates a copy."""
+    doc = URIRef(_DOC)
+    stem = compile_document(_corpus("ag-trade/graincorp-stem-2026-07-31.pdf"))
+    assert list(stem.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Intact]
+
+    assert list(apple_report.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Weakened]
+
+
+@pytest.mark.corpus
+def test_compromised_is_reachable_by_the_r127_lever_on_a_real_graph(apple_report):
+    """O2, leg 3 — AMENDED 2026-08-25, option (a'), and the concession is written here
+    rather than engineered around.
+
+    COMPROMISED IS NOT REACHABLE FROM ANY PUBLIC INPUT TODAY. Measured on three independent
+    routes: every tab-side lever refuses at the PAGE gate (`compile.py:1173`) before document
+    validation is reached, and no compile can mint a second `dec:rationale`
+    (`BandRecorder.record` writes exactly one, and the four decision-URI namespaces are
+    disjoint). So this leg takes a REAL compiled corpus graph, adds ONE triple, and re-enters
+    the REAL seam: no monkeypatch of `validate`/`_validate`, no `validate_shapes=False`, no
+    hand-built graph.
+
+    THE LEVER IS R127 — `dec:rationale` is uncapped while `dec:condition` is capped at 1, and
+    CLAUDE.md explicitly permits language-tagged rationale literals. It is a latent REAL
+    defect this loop deliberately does not fix, because it is the only measured route to this
+    value. CLOSING R127 WITHOUT RE-HOMING THIS LEG TURNS THIS TEST RED FOR AN INVISIBLE
+    REASON.
+
+    VEHICLE SUBSTITUTED, and the substitution is the one the plan authorised in advance:
+    `apple-fy2026q3-statements`, not `bfs-population-bilan-2023`. Step 1 measured apple's
+    lever end-to-end (see `apple_report`) — it refuses, with `legs == ('dec',)` — so the leg
+    rides a compile O2's second leg already pays for and one corpus document leaves the suite.
+
+    THE CONTROL ARM IS `Weakened`, NOT `Intact`, and that is a MEASURED PLAN DEFECT rather
+    than a vehicle swap: the plan asserted `Intact` for `bfs`, and `bfs` measures `Weakened`
+    too (24.1 s compile, 2026-08-25). Neither candidate vehicle was ever Intact. Asserting the
+    measured value is what makes this leg say something: the health value TRANSITIONS
+    Weakened → Compromised across the mutation, so the added triple is demonstrably what moved
+    it, which a control arm reading `Intact` could not have shown on either document.
+
+    The mutation lands on a COPY of the module-scoped graph, so this leg cannot perturb the
+    reachability leg above; the copy is triple-identical and is the real compiled graph for
+    everything the furnish, the membrane and the derivation read."""
+    doc = URIRef(_DOC)
+    g = Graph()
+    g += apple_report.graph
+    assert list(g.objects(doc, ETKL.membraneHealth)) == [ETKL.Weakened], "control arm broken"
+
+    _one_more_rationale(g)
+    with pytest.raises(membrane.MembraneRefusal) as exc:
+        _seal(g, _legs_for_document(apple_report.recognized, False), True)
+    assert exc.value.legs == ("dec",), exc.value.legs
+    assert list(exc.value.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Compromised]
+
+
+def test_an_unmutated_re_entry_still_conforms(tmp_path):
+    """O2's CONTROL ARM — the thing the (a') ruling explicitly left for the plan to measure.
+    `escalation-furnish.rq` runs a second time over a graph already carrying its own output;
+    that must be a no-op and the graph must still conform, or the leg above proves nothing
+    about the mutation. MEASURED before this plan: 0 triples added, conforms=True.
+    Structural, not incidental — `?req` is bound `IRI(CONCAT(STR(?d),"-expansion"))`, a pure
+    function of `?d` (`escalation-furnish.rq:56-59`).
+
+    SUBSTITUTED (CLAUDE.md rule 1 — a plan-supplied test is a proposition). The plan asserted
+    the re-entered health is `ETKL.Intact`; `_cheap_document` measures `ETKL.Weakened`:
+
+        $ ./.venv/bin/python -c "…compile_document(false_transposed.pdf)…"
+        health: [rdflib.term.URIRef('https://w3id.org/iladub/etkl#Weakened')]
+
+    and `test_re_entering_the_seam_leaves_exactly_one_health_value` above already asserts
+    Weakened on the same vehicle, one screen up — so the plan contradicted a shipped
+    measurement, not merely an unmeasured guess. The substituted form is STRICTLY STRONGER
+    than a hardcoded value: it pins that the health value is UNCHANGED by the re-entry, which
+    is the claim the plan was reaching for, and it additionally pins the conformance verdict
+    the test's own name promises and the plan never checked."""
+    rep = _cheap_document(tmp_path)
+    g, doc = rep.graph, URIRef(_DOC)
+    before_len = len(g)
+    before_health = list(g.objects(doc, ETKL.membraneHealth))
+    assert before_health == [ETKL.Weakened], before_health
+    _seal(g, _legs_for_document(rep.recognized, False), True)
+    assert len(g) == before_len, "the re-entry was not a no-op"
+    assert list(g.objects(doc, ETKL.membraneHealth)) == before_health
+    assert [v.toPython() for v in g.objects(ACT, SH.conforms)] == [True]
+
+
+def test_a_promoted_candidate_does_not_weaken_a_document(tmp_path):
+    """O3 — PROMOTION IS NOT HELD, ON A REAL EXECUTION PATH. Vehicle: the caption-wrap
+    fixture compiled AT DOCUMENT SCOPE with a proposer wired, at the default
+    `validate_shapes=True` (plan M4: 2 candidates, 2 promotions, 0 held, 3.4 s — re-measured
+    2026-08-25: 2 promotions, 2 candidates, 0 unreviewed, Intact). NOT a hand-built graph and
+    NOT a corpus document — M1 measured promoted == 0 on all seven corpus documents, so no
+    corpus specimen can exercise this clause at all.
+
+    This is the ONLY test in the file that reaches the `FILTER NOT EXISTS` through a COMPILE.
+    `test_a_reviewed_candidate_no_longer_weakens_the_membrane` above pins the same clause on a
+    hand-built graph, and the pair is not redundant: that one proves the query discriminates,
+    this one proves a real compile can actually produce the state it discriminates on.
+    Falsify: delete the FILTER NOT EXISTS; held becomes 2 and this must fail."""
+    p = os.path.join(str(tmp_path), "caption_wrap.pdf")
+    F.caption_wrap_report_pdf(p)
+    from iladub.etkl.propose import FakeRowRoleProposer, RowRoleProposal
+    prop = RowRoleProposal(("furniture", "continuation"), 0.85, "date caption + wrap fragment")
+    rep = compile_document(p, row_role_proposer=FakeRowRoleProposer(prop))
+
+    promotions = list(rep.graph.subjects(RDF.type, ILADUB.PromotionDecision))
+    assert promotions, "vehicle broken: no promotion, so this oracle proves nothing"
+    reviewed = {c for pd in promotions for c in rep.graph.objects(pd, ILADUB.reviews)}
+    candidates = set(rep.graph.subjects(RDF.type, ILADUB.CandidateConcept))
+    assert candidates and candidates <= reviewed, (candidates - reviewed)
+    assert list(rep.graph.objects(URIRef(_DOC), ETKL.membraneHealth)) == [ETKL.Intact]
+
+
+def test_the_minted_nodes_perturb_no_verdict(tmp_path):
+    """O6 — spec §2.1 held as a regression rather than a one-off measurement. Re-validating
+    a graph that carries the health triple, the type triple and the validation act yields
+    the same verdict as before they were added, ON BOTH LEGS. Safe because none of the five
+    wired shape files names an `etkl:` term and `etkl-holons.ttl` is not in `_FULL_ONT`
+    (plan M6).
+
+    BOTH LEGS deliberately, even though `_cheap_document` itself only RUNS ('dec',): the
+    claim is about the five minted triples, and a `tab` shape that happened to name an
+    `etkl:` term would be invisible to a dec-only validation. Re-measured 2026-08-25:
+    5 minted triples, before=(True, ()) after=(True, ())."""
+    rep = _cheap_document(tmp_path)
+    g = rep.graph
+    minted = set(g.triples((None, None, ETKL.MembraneValidation))) | \
+             set(g.triples((ACT, None, None))) | \
+             set(g.triples((URIRef(_DOC), ETKL.membraneHealth, None))) | \
+             set(g.triples((URIRef(_DOC), RDF.type, ETKL.CompiledDocumentHolon)))
+    assert minted, "nothing was minted — this oracle would be vacuous"
+    after = _validate(g, ("tab", "dec"))
+    before_graph = Graph()
+    for t in g:
+        if t not in minted:
+            before_graph.add(t)
+    before = _validate(before_graph, ("tab", "dec"))
+    assert before[0] == after[0] and before[2] == after[2], (before[0], after[0])
+
+
+def test_the_refusal_carries_the_graph(tmp_path):
+    """O7 — THE HIGHEST-RISK ORACLE IN THE SET. Shares its SEAM with O2's third leg (ruled
+    2026-08-25): the same real-graph-plus-one-triple mutation through the same `_seal`. It no
+    longer shares that leg's VEHICLE — Step 1 moved the third leg onto `apple`, and this
+    oracle is a claim about the exception object, not about real input, so it keeps the 1.1 s
+    fixture and pays no corpus cost.
+
+    A forced non-conforming document raises `MembraneRefusal`; the raised object's `.graph`
+    carries `<doc> etkl:membraneHealth etkl:Compromised`; and a bare `except AssertionError`
+    still catches it, because every one of the repo's interceptors is isinstance-based and
+    none compares `type(e) is AssertionError`.
+
+    THAT COUNT IS **7**, not plan M2's 17 — the census does not reproduce, and the corrected
+    figure is derived once, in `test_membrane_refusal_is_an_assertionerror_subclass` above;
+    this docstring cites it rather than re-deriving it (CLAUDE.md rule 6). The command there
+    now returns 9 because its own two docstring lines match themselves, so the form that
+    reproduces 7 on this branch is:
+
+        $ git ls-files '*.py' | xargs grep -n AssertionError | grep -E "except |raises\\(" \\
+              | grep -v test_membrane_health.py | wc -l
+        7
+
+    M2's substantive claim is unaffected and is stronger with fewer sites.
+    Falsify: revert to a bare AssertionError; this must fail."""
+    rep = _cheap_document(tmp_path)
+    g, doc = rep.graph, URIRef(_DOC)
+    _one_more_rationale(g)
+    with pytest.raises(AssertionError) as exc:          # deliberately the BASE class
+        _seal(g, _legs_for_document(rep.recognized, False), True)
+    assert isinstance(exc.value, membrane.MembraneRefusal)
+    assert exc.value.graph is g
+    assert list(exc.value.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Compromised]
+    assert str(exc.value).startswith("document-level facts failed dec: SHACL:")
