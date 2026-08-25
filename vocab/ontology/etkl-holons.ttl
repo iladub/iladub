@@ -30,7 +30,7 @@ these under the W3C Holon CG ontology by rdfs:subClassOf."""@en ;
     dcterms:creator "François Rosselet" ;
     dcterms:created "2026-06-23"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     vann:preferredNamespacePrefix "etkl" ;
     vann:preferredNamespaceUri "https://w3id.org/iladub/etkl#" ;
     rdfs:seeAlso <https://w3id.org/iladub/etkl> ,
@@ -74,12 +74,12 @@ etkl:GroundingPortal a owl:Class ;
 
 etkl:MembraneHealth a owl:Class ;
     rdfs:label "Membrane Health"@en ;
-    rdfs:comment "The health of a holon's boundary: the result of validating its interior against its membrane (SHACL shapes). For a CleanDocumentHolon this is the document's quality signal."@en .
+    rdfs:comment "The health of a holon's boundary, derived from two kinds of evidence that are both PRESENT in the graph: whether the interior conformed when the membrane last validated it, and whether any proposition is still HELD at that boundary. It is NOT the compilation score — a document may be read incompletely and still be Intact, because nothing is held."@en .
 
 etkl:Intact      a etkl:MembraneHealth ; rdfs:label "intact"@en ;
     rdfs:comment "Interior fully conforms to the membrane."@en .
 etkl:Weakened    a etkl:MembraneHealth ; rdfs:label "weakened"@en ;
-    rdfs:comment "Interior conforms but warnings are present."@en .
+    rdfs:comment "Interior conforms, but at least one proposition is HELD at the membrane: a candidate concept that no promotion decision has admitted. This is not a severity — no SHACL warning exists in this contract — and it says nothing about how much of the document was read."@en .
 etkl:Compromised a etkl:MembraneHealth ; rdfs:label "compromised"@en ;
     rdfs:comment "Interior violates the membrane: the holon is not clean."@en .
 
@@ -87,6 +87,26 @@ etkl:membraneHealth a owl:ObjectProperty ;
     rdfs:label "membrane health"@en ;
     rdfs:domain etkl:DocumentHolon ; rdfs:range etkl:MembraneHealth ;
     rdfs:comment "The membrane-health signal computed for this holon."@en .
+
+#################################################################
+#  The compile-scope product, and the act that validates it
+#  (holon:05, spec 2026-08-25 §4.1/§4.2; B1 and B2 rulings)
+#################################################################
+
+etkl:CompiledDocumentHolon a owl:Class ;
+    rdfs:subClassOf etkl:DocumentHolon ;
+    rdfs:label "Compiled Document Holon"@en ;
+    rdfs:comment "The product of compiling a document, as a holon: the merged document-scope graph a compile emits — the regions read from each page, the continuation chains recognized across the page breaks, and the decision record that produced them. Deliberately NOT an etkl:CleanDocumentHolon, whose interior is the grounded graph and the promotion decisions that produced it: a compile graph contains neither, and the two are disjoint artefacts. Its membrane health reports what is HELD at the boundary, never how much of the document was read — that is the compilation score, a different signal."@en .
+
+etkl:MembraneValidation a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Membrane Validation"@en ;
+    rdfs:comment "One act of validating a holon's interior against its membrane. It records that a validation HAPPENED and what it returned — not the graph's conformance status as a property of the graph. prov:used names the holon validated, sh:conforms carries the engine's verdict as an xsd:boolean, and etkl:refusingLeg names each shape set that refused. It is the evidence membrane health is derived FROM, which is why health is a derivation and not a stored label."@en .
+
+etkl:refusingLeg a owl:DatatypeProperty ;
+    rdfs:label "refusing leg"@en ;
+    rdfs:domain etkl:MembraneValidation ; rdfs:range xsd:string ;
+    rdfs:comment "A shape set that REFUSED in this validation, named by the code-level key the membrane uses for it (\"tab\", \"dec\"). Zero-to-many: a leg appears only when it has something to say, so a validation that conformed names none."@en .
 
 #################################################################
 #  Interaction properties
