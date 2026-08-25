@@ -1,7 +1,18 @@
 # The membrane reports its health — closing `holon:05`
 
 **Date:** 2026-08-25 · **Criterion:** `prog:criterion:holon:05` (`tests/arc-manifest.ttl:352-359`) ·
-**Rung:** `holon` 4/6 → 5/6 · **Branch:** `holon-05-spec-revision`
+**Rung:** `holon` 4/6 → 5/6 · **Branch:** `holon-05-spec-revision`, then `holon-05-o2-ruling`
+
+> **AMENDMENT 2026-08-25 (second), from the seam-6 measurement and the rulings it asked for** —
+> `docs/superpowers/2026-08-25-holon-05-seam-6-refusal-vehicle.md` and
+> `docs/superpowers/2026-08-25-holon-05-o2-finding6-rulings.md`. **Cited, never re-derived.**
+> Four things change, and nothing else: **O2's `Compromised` leg** is amended to option (a′) — a real
+> compiled graph plus one triple, with the written concession that no public input reaches the
+> document gate today (§7); **the mint site is an extracted internal seam** spanning
+> `document.py:1609–1626`, not an edit in place, and it starts at the *furnish*, not the validation
+> (§4.5); **§10 seam 6 is ruled** and names what the plan must still measure; and **three residues
+> (`R127`–`R129`) are raised** (§11), one of which — `R127` — **O2's third leg is load-bearing on**,
+> so this loop deliberately does *not* fix it (§9).
 
 > **REVISION 2026-08-25.** This spec was adversarially reviewed before any plan was written, and
 > **did not survive unchanged**. It is rewritten here from
@@ -479,6 +490,22 @@ provably validates every product of that producer, and here it demonstrably cann
 product never becomes a returned `DocumentReport` at all. This is the opposite of the R102 pattern:
 not a guard that looks redundant, but the only thing between a non-conforming graph and its caller.
 
+**THE MINT SITE IS AN EXTRACTED SEAM, NOT AN EDIT IN PLACE** (ruled 2026-08-25, O2 option (a′);
+`docs/superpowers/2026-08-25-holon-05-o2-finding6-rulings.md`). The three rows above are implemented
+by extracting `document.py:1609–1626` — **escalation-furnish → `_validate` → mint → raise/return** —
+into **one named internal function**, which `compile_document` calls and which O2's third leg and O7
+call directly with a real compiled graph plus one triple.
+
+**The seam starts at `:1609`, NOT at the validation call**, and that is load-bearing: the mutation is
+a second `dec:rationale`, which becomes fatal only once `escalation-furnish.rq` carries it into a
+second `dec:condition` (seam-6: *"before re-furnish: 1 … after re-furnish: 2"*). A seam beginning at
+`:1623` cannot be driven by the measured lever.
+
+It is a refactor of code this loop rewrites regardless (health minting here, `MembraneRefusal` here),
+and **not** a new public parameter on `compile_document` — the public signature is unchanged, so no
+test-only backdoor is added to it. §10 seams 3 and 4 become live rather than precautionary because of
+this extraction.
+
 ### §4.6 The vocabulary amendment — four artifacts, one act
 
 **Ruled 2026-08-25 (B3):** the re-reading of `Weakened` is a **semantic amendment to the health
@@ -730,12 +757,23 @@ evidence ⇒ the task review fails.**
   *Falsify:* collapse the `IF` to a constant; O1 must fail.
 - **O2 — REACHABILITY on real input.** Each of the three values is produced by at least one **real**
   execution path, not only by a fixture: `Intact` from `graincorp-stem-2026-07-31`, `Weakened` from
-  `apple-fy2026q3-statements` (11 held) — both specimens measured twice (§5.5) — and `Compromised`
-  from a forced non-conforming graph at the real raise site (**§10 seam 6: the vehicle does not exist
-  yet**). This is the R87 vacuity-registry question asked of a derivation instead of a shape. **If a
-  value cannot be produced from real input, this test fails and says which — it does not fall back to
-  a fixture.** Its docstring must state that O2 is a *reachability* check and **not** an independence
+  `apple-fy2026q3-statements` (11 held) — both specimens measured twice (§5.5). This is the R87
+  vacuity-registry question asked of a derivation instead of a shape. **If `Intact` or `Weakened`
+  cannot be produced from real input, this test fails and says which — it does not fall back to a
+  fixture.** Its docstring must state that O2 is a *reachability* check and **not** an independence
   check, because its expectations were derived with the pattern under test (§3).
+  **`Compromised`'s leg is AMENDED, per the ruling of 2026-08-25** —
+  `docs/superpowers/2026-08-25-holon-05-o2-finding6-rulings.md`, option (a′). Seam 6 measured, on
+  three independent routes, that **no public input drives a document-scope refusal**: the page gate
+  (`compile.py:1173`) always fires first. The standard above therefore cannot be met for this value,
+  and the concession is written here rather than engineered around. **The amended standard:** a
+  **real compiled document graph**, mutated by **one added `dec:rationale` triple** on a decision
+  whose chosen option is `escalated`, re-entering the **real** seam of §4.5 — **no monkeypatch of
+  `validate`/`_validate`, no `validate_shapes=False`, no hand-built graph.** The mutation is the
+  exact triple a language-tagged rationale pair produces (`R127`), so the oracle pins a latent real
+  defect, not an invented one. **The docstring must state both facts: that `Compromised` is
+  unreachable from public input today, and that the lever it uses is `R127` — which therefore must
+  not be closed without re-homing this leg.**
 - **O3 — PROMOTION IS NOT HELD, on a real execution path.** A candidate reviewed by an
   `iladub:PromotionDecision` must not make a document `Weakened`. **Vehicle: the caption-wrap fixture
   compiled at document scope with a proposer wired**, per §5.6 — *not* a hand-built graph, and *not*
@@ -757,7 +795,8 @@ evidence ⇒ the task review fails.**
 - **O7 — THE REFUSAL CARRIES THE GRAPH.** A forced non-conforming document raises `MembraneRefusal`;
   the raised object's `.graph` contains `<doc> etkl:membraneHealth etkl:Compromised`; and
   `except AssertionError` still catches it. *Falsify:* revert to a bare `AssertionError`; O7 must fail.
-  **Shares §10 seam 6 with O2's third leg** — this is the highest-risk oracle in the set.
+  **Shares its vehicle and seam with O2's third leg** — the same real-graph-plus-one-triple mutation
+  through the same §4.5 seam, ruled 2026-08-25. Still the highest-risk oracle in the set.
 - **O8 — THE DATATYPE CANNOT SLIP (review B6, both halves).** *Mint side:* the conformance literal in
   a real compiled graph is `xsd:boolean`. *Read side:* a graph whose validation act carries
   `Literal("false")` — no datatype, or `xsd:string` — yields **no health triple**, and specifically
@@ -816,6 +855,11 @@ evidence ⇒ the task review fails.**
   may make the edge groundable — it was failing A1 and A2 — but measuring that is the arc instrument's
   job. Note it; do not act on it.
 - **It does not fix the latent `IndexError`** in `_validate` on an empty legs tuple (§5.4).
+- **It does not fix `R127`** — the uncapped `dec:rationale` whose second instance refuses at document
+  scope with a message naming `dec:condition`. Deliberate, and ruled 2026-08-25: that triple is the
+  **only measured lever** into a document-scope refusal, so closing it would leave O2's third leg and
+  O7 with no vehicle (the four tab-side levers are gated off by `_legs_for_document` precisely when
+  they would matter). It ships as a named residue coupled to the oracle that depends on it.
 - **It does not add a fourth health value**, and it does not report health where nothing was validated
   (§4.5, O4).
 
@@ -854,8 +898,14 @@ Named per rule 3 — **which fact to measure, not the answer**:
    shape — a test that passes with its subject deleted, because nothing real produced the refusal.
    **MEASURED 2026-08-25, ahead of the plan — see `docs/superpowers/2026-08-25-holon-05-seam-6-refusal-vehicle.md`.**
    The smallest mutation is one added `dec:rationale` on an escalated decision, and it is **not
-   reachable from any public input today**. That file states the ruling O2 now needs, with four
-   options and their costs; it changes no design here.
+   reachable from any public input today**.
+   **RULED 2026-08-25 — `docs/superpowers/2026-08-25-holon-05-o2-finding6-rulings.md`, option (a′).**
+   The four options are history, not a live choice. What the ruling leaves for the plan to measure is
+   listed there under *"what these rulings do NOT settle"* — chiefly **whether re-entering the seam on
+   an already-furnished graph is a no-op absent the mutation** (O2's third leg needs that control arm),
+   and **whether any CORPUS document escalates at document scope at all** — the lever was proven on
+   `recognized_pair_plus_escalating_page_pdf` (`tests/etkl/test_escalation_wiring.py:33-34,54-61`), a
+   **synthetic generator**, not a corpus document.
 7. **Whether §4.9's enumerator can be built without touching `shapes_graph`, `node_shapes`,
    `focus_nodes` or `body_terms`** (§2.8). If it cannot, take the named fallback — do not rewrite them.
 
@@ -890,3 +940,29 @@ the row, **do not delete it**. Its two mis-cited line ranges (`etkl-holons.ttl:7
 5. **The promotion clause is unexercised on the corpus sweep** (§5.6) — **raised ONLY if §4.9's fallback
    is taken.** If the tripwire ships, this is a machine guard and not a residue, and the spec says so
    rather than opening a row that is already closed.
+
+**Raised from the seam-6 measurement, ruled into this loop 2026-08-25** (`…-o2-finding6-rulings.md`,
+ruling 2). One subject in three rows — *the `dec` membrane does not constrain what it derives from* —
+and a **candidate** successor loop, named alongside `holon:06` in the handoff, not pre-committed:
+
+6. **`R127` — `dec:rationale` has no cardinality constraint, and CLAUDE.md permits a second one.**
+   `escalation-furnish.rq` binds `?req dec:condition ?why` from `?d dec:rationale ?why`;
+   `dec:EventShape` caps `dec:condition` at 1 (`dec-shapes.ttl:60-63`); **nothing caps
+   `dec:rationale`**. CLAUDE.md § Serialization explicitly permits language-tagged rationale literals
+   — so the day an escalating decision carries a `de`/`fr` pair, every document containing it refuses
+   at document scope, with a message naming neither `dec:rationale` nor the language tag.
+   **COUPLED TO O2:** this lever is what O2's third leg and O7 run on (§7, ruled). *Closes when:* the
+   furnish collapses multiple rationales, **or** `dec:rationale` is capped, **or** `dec:EventShape`
+   admits one condition per language — **and, in the same act, O2's `Compromised` leg is re-homed onto
+   whatever lever replaces it.** Closing this row without that is how O2 goes red for an invisible
+   reason.
+7. **`R128` — `dec:supersedes` is constrained by nothing.** Document-only, load-bearing for withdrawal,
+   section repair and adoption; `git grep -n "supersedes" -- vocab/shapes/` → exit 1. A malformed
+   supersession cannot refuse at any membrane. *Closes when:* a shape targets its subjects.
+8. **`R129` — a non-IRI `suggester_iri` crashes the membrane rather than refusing.** A proposer
+   returning `suggester_iri="not an iri at all"` dies at `membrane.py:348` with a raw `Exception`
+   about N3/Turtle serialization — not an `AssertionError`, so it is neither a membrane verdict nor
+   catchable as one, and `MembraneRefusal` will not catch it either. *Closes when:* the mint site
+   refuses a non-IRI suggester at the boundary, as a verdict.
+
+**The next number after this loop is `R130`.**
