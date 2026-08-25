@@ -852,6 +852,10 @@ Named per rule 3 — **which fact to measure, not the answer**:
    whether any can be applied *before* validation on a real path.
    **The trap to refuse:** monkeypatching `validate`/`_validate` to return `False` is the R73 defect-5
    shape — a test that passes with its subject deleted, because nothing real produced the refusal.
+   **MEASURED 2026-08-25, ahead of the plan — see `docs/superpowers/2026-08-25-holon-05-seam-6-refusal-vehicle.md`.**
+   The smallest mutation is one added `dec:rationale` on an escalated decision, and it is **not
+   reachable from any public input today**. That file states the ruling O2 now needs, with four
+   options and their costs; it changes no design here.
 7. **Whether §4.9's enumerator can be built without touching `shapes_graph`, `node_shapes`,
    `focus_nodes` or `body_terms`** (§2.8). If it cannot, take the named fallback — do not rewrite them.
 
