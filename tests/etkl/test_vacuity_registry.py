@@ -411,9 +411,14 @@ def test_the_escalation_shape_is_live_and_binds_the_furnished_escalations(corpus
 # the failure this module's own docstring exists to prevent. So the forward arm does NOT ship,
 # and R130 carries the measurement, the commands that produced it, and what would close it.
 #
-# What DOES ship is the half that needs no population at all. `test_no_registered_shape_has_
-# gone_live` (`:337`) iterates the registry's own hand-typed keys and consumes no population
-# either — the reverse arm never did. Every row below names a term of a query MEASURED to run
+# What DOES ship is the half that needs no population ENUMERATOR. Its ROWS are hand-typed, so
+# nothing has to enumerate the `.rq` files — exactly as `test_no_registered_shape_has_gone_live`
+# (`:337`) keys off the registry's own hand-typed rows. Be precise about what that does and does
+# not claim (MEASURED 2026-08-25, and an earlier wording here overstated it): both reverse arms
+# DO consume the corpus graphs, and the shape one additionally calls `shapes_graph()` ->
+# `wired_shape_files()` (`:133-140`) to look its rows' shapes up. What neither arm needs is an
+# enumerator of the population being REGISTERED — and that is the thing there is no membrane to
+# read a `.rq` population from. Every row below names a term of a query MEASURED to run
 # over the compiled document graph (`document.py:1324`), so no row here can be a category
 # error, and both registered terms sit in positions `vocabulary_of` can see (one an `rdf:type`
 # object, one a predicate). The arm fails the day a proposer is wired into the corpus sweep and
