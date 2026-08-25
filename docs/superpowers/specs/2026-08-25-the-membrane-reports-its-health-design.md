@@ -346,16 +346,63 @@ form and drops the zero-legs extension**; there is nothing there to pin.
 `IndexError` rather than refusing or conforming. Unreachable today, guarded by one total function.
 Worth a residue row, not a fix in this loop (§9).
 
-### §5.5 `Intact` reachability
+### §5.5 `Intact` and `Weakened` reachability — MEASURED across the whole corpus
 
-`Weakened` is measured reachable (`corpus/health/who-wfa-boys-zscore-0-5.pdf` p0: 1 held candidate,
-0 `PromotionDecision`s). `Intact` requires a document whose compiled graph carries **zero held
-candidates**; graincorp-stem p0's *compile* graph had 0 candidates, so it is reachable at page scope.
-**At document scope it is being measured as this spec is written** — if no real document reaches it,
-the vacuity has merely moved from `Weakened` to `Intact`, and §7 O2 is the oracle that says so out
-loud rather than letting it pass.
+All 27 corpus pages and **all seven documents** compiled; 0 raised. Document scope, held candidates
+by the §2.2 pattern:
 
----
+| document | triples | held | → |
+| --- | --- | --- | --- |
+| `graincorp-stem-2026-07-31` | 29,999 | **0** | `Intact` |
+| `cbh-stem-2026-08-03` | 12,153 | **0** | `Intact` |
+| `ons-index-of-services-2026-02` | 11,076 | **0** | `Intact` |
+| `graincorp-capacity-2026-08-04` | 5,705 | **0** | `Intact` |
+| `apple-fy2026q3-statements` | 3,788 | **11** | `Weakened` |
+| `bfs-population-bilan-2023` | 8,244 | **10** | `Weakened` |
+| `who-wfa-boys-zscore-0-5` | 8,098 | **3** | `Weakened` |
+
+**Both values are reachable on real input, 4 documents to 3.** The hazard is closed, and O2 has its
+specimens: `graincorp-stem` for `Intact`, `apple` for `Weakened`.
+
+### §5.6 The discriminator is UNEXERCISED at compile scope — a hazard this measurement found
+
+**`promoted = 0` in all 34 measurements** (27 pages + 7 documents). In every compile-only graph, held
+count and total candidate count are the **same number**: no `iladub:PromotionDecision` exists there at
+all. The 385/167 partition of §2.2 arises only *after* `ground_document`, in the graph §4.4 measured
+as disjoint.
+
+**So §4.3's `FILTER NOT EXISTS` cannot fire on any corpus document today.** That is criterion 2 of the
+R87 vacuity registry (`tests/etkl/test_vacuity_registry.py:1-40`) — *can this clause discriminate at
+all* — and the honest answer for the default corpus path is **no**.
+
+It is **not dead code**, and it must not be dropped. The compile-path emitters of a
+`PromotionDecision`/`iladub:reviews` pair are `promote.py:79,126,170`, reached from `reshape.py:221`,
+`span.py:79` and `rowrole.py:230` — all **proposer-driven**, and a bare `compile_tables`/
+`compile_document` call passes no `span_proposer`/`row_role_proposer`, so those paths simply never
+fire on the corpus sweep. Removing the clause would be correct on today's corpus and **wrong the
+first time a proposer is wired**, silently reporting `Weakened` for a document whose propositions
+were all promoted.
+
+**What this costs the oracle set, stated rather than discovered later:** **O3 is a fixture-only
+oracle.** It cannot be pinned on real input, and the plan must not pretend otherwise by reaching for
+a corpus document. O2 covers `Intact` and `Weakened` on real input; O3 covers the promotion clause on
+a hand-built graph; neither substitutes for the other. **This asymmetry is itself worth a residue
+row** — the discriminator is correct and unexercised, which is exactly the state R87 was in.
+
+### §5.7 Document health is NOT the union of page healths — and that is correct
+
+MEASURED: `cbh-stem` has **4** held candidates at page scope and **0** at document scope;
+`graincorp-stem` 0+1+1 → **0**; `apple` 5+5+5 = 15 → **11**.
+
+Cause measured for cbh: the page-scope candidates are `doc#region1,3,5,7`; the document report's
+`repaired_bands` are `((0,1),(0,3),(0,5),(0,7))` and those four regions come back
+`verdict='asserted'` — the **section-repair pass** (`document.py:1337`) re-compiles the band and its
+assertion replaces the proposition in the merged graph. (Apple's 15 → 11 was not traced.)
+
+**A page-scope `Weakened` can therefore become a document-scope `Intact`, and that is the right
+answer**: the proposition was promoted into an assertion by repair, so it is no longer held at the
+membrane. It is also the second reason §4.1 puts health at document scope only — a per-page signal
+would report a weakness the document no longer has.
 
 ## §6 Gate classification (CLAUDE.md §8)
 
@@ -382,14 +429,17 @@ review fails.**
   *Falsify:* collapse the `IF` to a constant; O1 must fail.
 - **O2 — REACHABILITY on real input.** Each of the three values is produced by at least one **real**
   execution path, not only by a fixture: `Intact` and `Weakened` from named corpus documents,
-  `Compromised` from a forced non-conforming graph at the real raise site. This is the R87
-  vacuity-registry question (*"can it fire at all"* — `tests/etkl/test_vacuity_registry.py:1-40`)
+  `Compromised` from a forced non-conforming graph at the real raise site. **Specimens are measured**
+  (§5.5): `graincorp-stem-2026-07-31` → `Intact`, `apple-fy2026q3-statements` (11 held) → `Weakened`.
+  This is the R87 vacuity-registry question (*"can it fire at all"* — `tests/etkl/test_vacuity_registry.py:1-40`)
   asked of a derivation instead of a shape. **If a value cannot be produced from real input, this
   test fails and says which — it does not fall back to a fixture.**
-- **O3 — PROMOTION IS NOT HELD.** A candidate reviewed by an `iladub:PromotionDecision` must not
-  make a document `Weakened`. *Falsify:* delete the `FILTER NOT EXISTS`; O3 must fail. This is what
-  pins §2.2's discriminator, and the reason O1 alone is not enough — a query that ignores promotion
-  passes O1.
+- **O3 — PROMOTION IS NOT HELD (fixture-only, and §5.6 says why).** A candidate reviewed by an
+  `iladub:PromotionDecision` must not make a document `Weakened`. *Falsify:* delete the
+  `FILTER NOT EXISTS`; O3 must fail. This pins §2.2's discriminator, and it is the reason O1 alone is
+  not enough — a query that ignores promotion passes O1. **It cannot be pinned on real input:**
+  promoted = 0 in all 34 corpus measurements, so the plan must build the graph by hand and must not
+  reach for a corpus document.
 - **O4 — ABSENCE, NOT A FOURTH STATE.** A document compiled with `validate_shapes=False` carries
   **no** `etkl:membraneHealth` triple and **no** `etkl:CleanDocumentHolon` type. `validate_shapes`
   is the only route into this state — §5.4 refuted the zero-legs one. *Falsify:* mint the verdict
@@ -462,5 +512,6 @@ Named per rule 3 — **which fact to measure, not the answer**:
 4. **Whether `DocumentReport` construction is positional.** `CompilationReport` is
    (`compile.py:1175`); `DocumentReport` was measured as keyword (`document.py:1636-1639`). Re-check
    before adding anything to either.
-5. **Whether any real document reaches `Intact` at document scope** (§5.5). O2 is the test; the plan
-   must know the answer before it writes O2's expected values.
+5. **Whether the four `Intact` documents and three `Weakened` ones still split that way** when O2 is
+   written (§5.5). The counts are small and the section-repair interaction of §5.7 moves them; re-run
+   the two specimens rather than trusting the table.
