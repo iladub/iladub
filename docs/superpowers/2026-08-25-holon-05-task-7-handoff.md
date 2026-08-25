@@ -1,5 +1,8 @@
 # Handoff — continue the `holon:05` loop at Task 7
 
+**Topic:** the `holon:05` membrane-health loop — Tasks 1-5 are shipped and reviewed and Task 6 is
+mid-fix-round; the work is its scoped re-review, then Task 7.
+
 **Date:** 2026-08-25 · **Branch:** `holon-05-plan` · **Shape: mechanical** — pointers only.
 It restates nothing from the primaries and settles nothing they settle.
 

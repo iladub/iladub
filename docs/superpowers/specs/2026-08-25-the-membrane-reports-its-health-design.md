@@ -506,7 +506,7 @@ and **not** a new public parameter on `compile_document` — the public signatur
 test-only backdoor is added to it. §10 seams 3 and 4 become live rather than precautionary because of
 this extraction.
 
-### §4.6 The vocabulary amendment — four artifacts, one act
+### §4.6 The vocabulary amendment — four artifacts, one act (AMENDED 2026-08-25 to five)
 
 **Ruled 2026-08-25 (B3):** the re-reading of `Weakened` is a **semantic amendment to the health
 model**, not a comment tweak, and it is carried completely. `etkl:CleanDocumentHolon`'s comment
@@ -519,9 +519,21 @@ one.
 | 2 | `etkl:MembraneHealth`'s `rdfs:comment` (`:77`) | *"the result of validating its interior against its membrane"* contradicts the design too |
 | 3 | `docs/holonic-interaction.md:160-161` | the criterion's own `prog:source`; §8 item 7 already moves this bullet, so **word it in the same act** |
 | 4 | `tests/arc-manifest.ttl:354`'s `prog:statement` | a verbatim join of (3) — *"from validation results"* excludes held candidates |
+| 5 | `etkl:Intact`'s `rdfs:comment` (`etkl-holons.ttl:80`) | *"Interior fully conforms to the membrane"* is equally true of `etkl:Weakened`, which also requires `?conforms = true` — so it does not DISCRIMINATE the value it defines. Added by amendment, 2026-08-25 (below) |
 
-All four are worded per §4.4's last paragraph: **held propositions**, never *everything that reached
+All five are worded per §4.4's last paragraph: **held propositions**, never *everything that reached
 the boundary*. `owl:versionInfo` `0.1.0` → `0.2.0` (`:33`) covers these plus §4.7's three new terms.
+
+**AMENDMENT 2026-08-25, from the whole-branch review — row 5 was missing, and its absence was a
+SPEC gap, not an implementation slip.** §4.4's last paragraph already establishes the discriminating
+fact — *"`Intact` means **nothing is held at the membrane**"* — and B3's amendment set carried it
+into `etkl:MembraneHealth`'s comment (row 2) and `etkl:Weakened`'s (row 1). It was never carried into
+`etkl:Intact`'s, because this table did not list it, so the shipped comment states only the half the
+three values SHARE. The discriminant is read off `vocab/queries/membrane-health.rq`, not paraphrased:
+`Compromised` ⇐ `?conforms = false`; `Weakened` ⇐ `?conforms = true` **and** `?held`; `Intact` ⇐
+`?conforms = true` **and not** `?held`, where `?held` is an `iladub:CandidateConcept` that no
+`iladub:PromotionDecision` `iladub:reviews`. **Conformance is common to two of the three values; the
+empty boundary is what is unique to `Intact`**, and the comment must say so.
 
 **Amending a criterion's `prog:statement` in the very loop that flips it to `met true` gets its own
 comment in the manifest saying so**, in the MEASURED form the file already uses (`dec:16`'s block at

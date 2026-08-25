@@ -77,7 +77,7 @@ etkl:MembraneHealth a owl:Class ;
     rdfs:comment "The health of a holon's boundary, derived from two kinds of evidence that are both PRESENT in the graph: whether the interior conformed when the membrane last validated it, and whether any proposition is still HELD at that boundary. It is NOT the compilation score — a document may be read incompletely and still be Intact, because nothing is held."@en .
 
 etkl:Intact      a etkl:MembraneHealth ; rdfs:label "intact"@en ;
-    rdfs:comment "Interior fully conforms to the membrane."@en .
+    rdfs:comment "Interior conforms AND nothing is HELD at the membrane: every candidate concept, if there was one, has been reviewed by a promotion decision. Conformance alone does not distinguish this value — etkl:Weakened conforms too — the empty boundary does. It says nothing about how much of the document was read: a document with escalated regions and no candidates is correctly Intact."@en .
 etkl:Weakened    a etkl:MembraneHealth ; rdfs:label "weakened"@en ;
     rdfs:comment "Interior conforms, but at least one proposition is HELD at the membrane: a candidate concept that no promotion decision has admitted. This is not a severity — no SHACL warning exists in this contract — and it says nothing about how much of the document was read."@en .
 etkl:Compromised a etkl:MembraneHealth ; rdfs:label "compromised"@en ;

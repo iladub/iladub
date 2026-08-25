@@ -1,5 +1,8 @@
 # Handoff — execute the `holon:05` plan (`the membrane reports its health`)
 
+**Topic:** the `holon:05` membrane-health loop — executing the plan end to end; Task 1 is done and
+committed, the six tasks after it are the work.
+
 **Date:** 2026-08-25 · **Branch:** `holon-05-plan` @ `a0dd528` (off `main` @ `18226e7`) ·
 **Shape: mechanical** — pointers only. It restates nothing from the primaries and settles nothing.
 
