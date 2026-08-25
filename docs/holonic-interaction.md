@@ -154,11 +154,14 @@ holon types and its grounding portal are defined in the `iladub`/`dec` namespace
 - `examples/holon-grounding-conformant.ttl` + `tests/holon-grounding-leak.ttl` — a
   conforming governed-grounding traversal and a negative case; exercised by
   `tests/test_hga_alignment.py`.
+- `vocab/queries/membrane-health.rq` — the membrane-health check: a compiled document
+  carries `etkl:membraneHealth` → Intact / Weakened / Compromised, derived from **two kinds
+  of evidence both PRESENT in the graph** — the `etkl:MembraneValidation` act the membrane
+  minted, and the propositions still **held** at that boundary. Never from an absence, and
+  never from the compilation score.
 
 ## Planned work (not done yet)
 
-- A membrane-health check that computes and reports a compiled document's cleanliness
-  (`etkl:membraneHealth` → Intact / Weakened / Compromised) from validation results.
 - A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
   (the current example covers the grounding-governance crossing only).
 
