@@ -1,4 +1,9 @@
-# Handoff — `holon:05`, the three blocking measurements are DONE; spec still NOT written
+# Handoff — `holon:05` measurements
+
+**SUPERSEDED as the entry point by the spec it fed:**
+`docs/superpowers/specs/2026-08-25-the-membrane-reports-its-health-design.md`, written the same day.
+Read the spec first; this file is the evidence behind its §2, kept for the raw commands and output.
+Where the two disagree, the spec is later and carries the corpus sweep this file predates.
 
 **Topic:** process · **Date:** 2026-08-25 · **`main` @ `20a5b0e`** (merge of PR #116,
 `holon-05-design-decisions`) · **Shape: originating, stopped at 83,205 tokens** — 1.7× the 50k
@@ -359,13 +364,14 @@ and nowhere else, and it has not been reviewed by anyone.
 
 ## The next concrete action
 
-In a **fresh session, in its first third**: confirm the suite is green, run the **four** measurements
-in § *Unverified* (they are small and delegable — the zero-legs one is a two-line call), then **write
-the spec** against decisions 1–3, adjudicating § *The design finding* first, because it changes what
-the AXIOM is a query over. Run the adversarial review on the spec before any plan. Do not write the
-plan in the same session as the spec.
+**The spec is written.** Next: the **adversarial review on the spec, before any plan**, in a fresh
+session — a standing requirement since 2026-08-24 and still never run as a named step. Three targets,
+because each can still change the design rather than refine it:
 
-**Nothing else needs measuring before the spec can be written.** The three questions that could have
-invalidated the design are answered and the design survived all three: decision 1's subject is safe
-(measurement 1), decision 2's query has a discriminator (measurement 2), and decision 3's seam is a
-single re-raising catcher plus one newly-found third raise site (measurement 3).
+1. **§4.2's verdict fact** — is emitting `sh:conforms` into the evidence graph really PROCEDURAL raw
+   extraction, or is it a stored label wearing a fact's clothes? O5 is the spec's answer; attack it.
+2. **§5.6** — the discriminator is correct and cannot fire on any corpus document. The spec keeps it
+   and makes O3 fixture-only. Is that the right call, or should the loop wire a proposer so the
+   clause is exercised on real input?
+3. **§4.5's `MembraneRefusal`** — a subclass keeps the one measured catcher working, but it makes
+   what the error carries part of an interface. Re-run the catcher census first.
