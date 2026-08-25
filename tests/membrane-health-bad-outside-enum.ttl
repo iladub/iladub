@@ -1,0 +1,10 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  NON-CONFORMANT: a compiled document holon whose membraneHealth points at
+#  something that is not one of the three declared individuals
+#  (etkl:Intact / etkl:Weakened / etkl:Compromised). sh:in closes the
+#  enumeration.
+
+ex:compiled-doc a etkl:CompiledDocumentHolon ;
+    etkl:membraneHealth ex:NotAHealthValue .

@@ -1,0 +1,8 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  A minimal MEMBRANE-HEALTH-CONFORMANT compiled document holon: exactly one
+#  membraneHealth value, drawn from the closed enumeration.
+
+ex:compiled-doc a etkl:CompiledDocumentHolon ;
+    etkl:membraneHealth etkl:Intact .

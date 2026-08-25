@@ -1,0 +1,9 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  NON-CONFORMANT: a compiled document holon carrying TWO membraneHealth
+#  values. The signal is minted once, from one derivation — sh:maxCount 1
+#  says a holon does not carry two contradictory verdicts.
+
+ex:compiled-doc a etkl:CompiledDocumentHolon ;
+    etkl:membraneHealth etkl:Intact, etkl:Weakened .
