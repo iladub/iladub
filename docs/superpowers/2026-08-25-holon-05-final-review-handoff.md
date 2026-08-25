@@ -23,6 +23,7 @@ decide the merge** — under `superpowers:subagent-driven-development`. There is
 | primary | what to establish there |
 |---|---|
 | `.superpowers/sdd/2026-08-25-the-membrane-reports-its-health/progress.md` | **THE LEDGER — read this FIRST and in full.** The recovery map: the pre-flight scan, rulings R-PF1–R-PF4, every task's completion line, the **seventeen** deferred minors (re-count them; the ledger's own greps do not reproduce), and every `Ruling:` line. Tasks with a `Task N: complete` line are DONE — do not re-dispatch. |
+| `docs/superpowers/2026-08-25-holon-05-loop-ledger.md` | **The COMMITTED copy of that ledger**, verbatim. The working copy above lives in a git-ignored workspace the SDD process DELETES at loop close — read this one if the workspace is gone. |
 | the same directory's `task-7-report.md` | Task 7's nine falsifications, its four non-reproducing brief values, and the edge-deletion reasoning. |
 | the same directory's `review-b314c23..ae5fefd.diff` | The package the Task-7 reviewer read. |
 | the plan | § Global Constraints, § Measurements M1–M9, § Named seams. |
