@@ -104,7 +104,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
-from rdflib.namespace import XSD
+from rdflib.namespace import PROV, SH, XSD
 
 from . import interpret
 from .compile import (CompilationReport, compile_tables, page_bands, _DOC, _validate,
@@ -112,9 +112,11 @@ from .compile import (CompilationReport, compile_tables, page_bands, _DOC, _vali
 from .decisionlog import DEC
 from .geometry import COORD_EPS
 from .holon import TAB
+from .membrane import MembraneRefusal
 
 _EV = Namespace("urn:iladub:continuation:")   # transient per-pair instance namespace
 _LIC = Namespace("urn:iladub:licence:")       # transient per-pair licence-evidence namespace
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
 # three dirs up from src/iladub/etkl/document.py -> repo root, then vocab/queries/
 _QUERIES = Path(__file__).resolve().parents[3] / "vocab" / "queries"
@@ -128,6 +130,14 @@ CONTINUATION_LICENCE_RQ = _QUERIES / "continuation-licence.rq"
 # substance of G3's licence, and a reader of the membrane has to be able to see which files
 # that is. (Precedent: `feed.py:586-587`'s `_GROUND_ONT_FILES`.)
 ESCALATION_FURNISH_RQ = _QUERIES / "escalation-furnish.rq"
+
+# MEMBRANE HEALTH (holon:05, spec 2026-08-25 §4.3). The derivation that reads the validation
+# act `_seal` mints and states the document's `etkl:membraneHealth`. Named beside the furnish
+# above for the same reason: a reader of the seam has to be able to see which derivations run
+# in it. An inert `Path` — nothing reads the file at import time, and `_seal` does not run it
+# yet; that wiring is the next task's.
+MEMBRANE_HEALTH_RQ = _QUERIES / "membrane-health.rq"
+
 _ONTOLOGY = _QUERIES.parent / "ontology"
 _ESCALATION_VOCAB_FILES = ("risk.ttl", "etkl.ttl")
 _ESCALATION_VOCAB = None
@@ -1162,6 +1172,116 @@ def _legs_for_document(recognized, section_facts) -> tuple[str, ...]:
     return ("tab", "dec") if (recognized or section_facts) else ("dec",)
 
 
+def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
+    """Close the document's membrane over `graph`: furnish, validate, record the act, refuse.
+
+    Mutates `graph` IN PLACE and returns `None`; the same object goes out as came in, because
+    every writer here is `+=`, `.add` or `.remove` on that object and nothing rebinds the name.
+    Raises `membrane.MembraneRefusal` — an `AssertionError` subclass carrying the refused graph
+    — on a document-scope refusal.
+
+    `legs` is the legs the membrane RUNS, decided by the caller (`_legs_for_document`); it is
+    distinct from the legs that REFUSE, which `_validate` returns and which this function
+    records. Extracted from `compile_document` (spec 2026-08-25 §4.5, ruling (a')) so that the
+    whole furnish → validate → mint → raise path can be re-entered on a real compiled graph:
+    the seam deliberately begins at the FURNISH and not at the validation, because the lever
+    that makes a real document refuse is a fact the furnish carries.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL throughout, and each part says why beside
+    itself — the furnish is engine glue over an AXIOM (`escalation-furnish.rq`), the validation
+    is engine glue over a closed-world membrane, and the act is raw extraction of an external
+    engine's output. Nothing here inspects a value against a constant.
+    """
+    # ESCALATION FURNISHING (R87, plan 2026-08-15 Task 3 — the S1 seam, answered by
+    # measurement in docs/superpowers/2026-08-15-r87-task3-measurement.md).
+    #
+    # A region the reader could not read is a DECISION, and that decision is already
+    # recorded; `escalation-furnish.rq` states its consequence — the severity it realized,
+    # the autonomy scope it exceeded, and the human-addressed `dec:ExpansionRequest` it
+    # escalates to. AXIOM in derivation form (CLAUDE.md §8): the line below is engine glue
+    # and decides nothing.
+    #
+    # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
+    # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
+    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges —
+    # `:1486` (section repair) and `:1690` (datagrid adoption), which `grep -n
+    # "DEC.supersedes"` on this file shows are the only two — write into THIS graph and
+    # into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
+    # A page-scope site is therefore not merely early, it is permanently blind:
+    # `compile_tables` returns before the driver has anything to link, and the link is then
+    # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
+    # expansion requests on cbh-stem and 5 on apple — each one a matter a later reading had
+    # already resolved, raised to a human anyway.
+    #
+    # AND BEFORE the validation below, not after. `dec:ExpansionRequest` is an
+    # `rdfs:subClassOf dec:Event` (`dec.ttl:197-198`), so
+    # under the subclass closure every request minted here is a focus node of
+    # `dec:EventShape` and `dec:ExpansionRequestShape` — both already in `_DEC_SHAPE_FILES`
+    # and both idle until this commit. Furnishing after the validation would put
+    # unvalidated decision records into the returned graph; the membrane has to be able to
+    # REFUSE what this line writes, and `test_escalation_wiring.py`'s T3.2 shows it doing so.
+    #
+    # UNCONDITIONAL, unlike the validation below. The furnished triples are part of the
+    # document's record, not validation fodder: on a document that opens neither arm of
+    # the gate below they are still written and simply cross no membrane. The PAGE leg is
+    # deliberately left unfurnished — furnishing it is unguardable, as measured above — so
+    # `dec:EscalationShape` stays idle there; that is a Task 6 residue, not a defect.
+    graph += interpret.run(ESCALATION_FURNISH_RQ, graph, _escalation_vocab())
+
+    # WHOLE-GRAPH VALIDATION (task 4; see `compile_document`'s docstring for why the gate is
+    # `recognized` rather than always-on — and, since loop Q, `section_facts` for the same reason:
+    # an adoption, an intra-page stitch or a section total puts document-level facts into the
+    # merged graph that no per-page membrane ever saw). Every document-level fact is asserted
+    # by this point: the pairing loop above added continuesTable/continuesColumn/
+    # inLogicalColumn, the arithmetic pass retyped aggregations and rebuilt row groups over the
+    # logical table, and the section pass added its adoptions, links and totals.
+    #
+    # THE GATE IS PER-LEG SINCE R102 (`_legs_for_document`, above): `recognized or
+    # section_facts` still gates the TAB leg, and the DEC leg runs whenever `validate_shapes`
+    # does — that tuple is now `legs`, decided by the caller. `validate_shapes` itself is
+    # unchanged and stays a separate condition — a caller that asks for no membrane still
+    # gets none, and gets no validation act either (spec §4.5, third row).
+    if not validate_shapes:
+        return
+    conforms, text, refusing = _validate(graph, legs)
+
+    # THE VALIDATION ACT (spec 2026-08-25 §4.2 — its shape is stated there and is NOT
+    # re-derived here). PROCEDURAL, and irreducibly so: the conformance verdict is not in the
+    # source document and not derivable from the evidence graph — it is an external engine's
+    # output, and emitting it as typed RDF is raw extraction, the one thing CLAUDE.md §8
+    # reserves PROCEDURAL for. No tuned constant, no threshold, no judgment: four values that
+    # are already in scope, written down.
+    #
+    # IDEMPOTENT BY REPLACEMENT, and that is not tidiness. The act IRI is a function of the
+    # document URI alone, so a second pass over the SAME graph lands on the SAME subject:
+    # without the removal a re-entered graph carries `sh:conforms` true AND false at once, and
+    # therefore two contradictory healths, with nothing at runtime to refuse it.
+    #
+    # THE DATATYPE IS PINNED HERE. `Literal(conforms)` off the Python `bool` `_validate`
+    # returned, NEVER `Literal(str(conforms))`: an untyped `"false"` has a SPARQL effective
+    # boolean value of TRUE, so a stringified verdict makes a REFUSING membrane report itself
+    # healthy — a failure upward, and silent.
+    #
+    # `etkl:refusingLeg` carries `_validate`'s THIRD element verbatim, which is the legs that
+    # refused — not `legs`, which is the legs that RAN. A conforming validation therefore names
+    # no leg at all: a leg appears only when it has something to say.
+    act = URIRef(f"{_DOC}#membrane-validation")
+    graph.remove((act, None, None))
+    graph.add((act, RDF.type, ETKL.MembraneValidation))
+    graph.add((act, PROV.used, _DOC))
+    graph.add((act, SH.conforms, Literal(conforms)))
+    for leg in refusing:
+        graph.add((act, ETKL.refusingLeg, Literal(leg)))
+
+    if not conforms:
+        # UNCONDITIONAL still (CLAUDE.md § Producer-side guards): what changed is that the
+        # refused graph travels WITH the refusal instead of dying on the stack. `str(exc)` is
+        # byte-identical to the bare `AssertionError` this replaced — `refusing` is the same
+        # tuple the old code passed under the rebound name `legs`.
+        raise MembraneRefusal(
+            _refusal_message("document-level facts", refusing, text), graph, refusing)
+
+
 def compile_document(pdf_path: str, validate_shapes: bool = True,
                      span_proposer=None, row_role_proposer=None) -> DocumentReport:
     """Compile a whole document: every page under its own page-scoped document URI, merged into
@@ -1572,58 +1692,13 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run
 
-    # ESCALATION FURNISHING (R87, plan 2026-08-15 Task 3 — the S1 seam, answered by
-    # measurement in docs/superpowers/2026-08-15-r87-task3-measurement.md).
-    #
-    # A region the reader could not read is a DECISION, and that decision is already
-    # recorded; `escalation-furnish.rq` states its consequence — the severity it realized,
-    # the autonomy scope it exceeded, and the human-addressed `dec:ExpansionRequest` it
-    # escalates to. AXIOM in derivation form (CLAUDE.md §8): the line below is engine glue
-    # and decides nothing.
-    #
-    # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
-    # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
-    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges —
-    # `:1332` (section repair) and `:1536` (datagrid adoption), which `grep -n
-    # "DEC.supersedes"` on this file shows are the only two — write into THIS graph and
-    # into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
-    # A page-scope site is therefore not merely early, it is permanently blind:
-    # `compile_tables` returns before the driver has anything to link, and the link is then
-    # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
-    # expansion requests on cbh-stem and 5 on apple — each one a matter a later reading had
-    # already resolved, raised to a human anyway.
-    #
-    # AND BEFORE the validation below, not after. `dec:ExpansionRequest` is an
-    # `rdfs:subClassOf dec:Event` (`dec.ttl:197-198`), so
-    # under the subclass closure every request minted here is a focus node of
-    # `dec:EventShape` and `dec:ExpansionRequestShape` — both already in `_DEC_SHAPE_FILES`
-    # and both idle until this commit. Furnishing after the validation would put
-    # unvalidated decision records into the returned graph; the membrane has to be able to
-    # REFUSE what this line writes, and `test_escalation_wiring.py`'s T3.2 shows it doing so.
-    #
-    # UNCONDITIONAL, unlike the validation below. The furnished triples are part of the
-    # document's record, not validation fodder: on a document that opens neither arm of
-    # the gate below they are still written and simply cross no membrane. The PAGE leg is
-    # deliberately left unfurnished — furnishing it is unguardable, as measured above — so
-    # `dec:EscalationShape` stays idle there; that is a Task 6 residue, not a defect.
-    graph += interpret.run(ESCALATION_FURNISH_RQ, graph, _escalation_vocab())
-
-    # WHOLE-GRAPH VALIDATION (task 4; see the docstring above for why the gate is `recognized`
-    # rather than always-on — and, since loop Q, `section_facts` for exactly the same reason:
-    # an adoption, an intra-page stitch or a section total puts document-level facts into the
-    # merged graph that no per-page membrane ever saw). Every document-level fact is asserted
-    # by this point: the pairing loop above added continuesTable/continuesColumn/
-    # inLogicalColumn, the arithmetic pass retyped aggregations and rebuilt row groups over the
-    # logical table, and the section pass added its adoptions, links and totals.
-    #
-    # THE GATE IS PER-LEG SINCE R102 (`_legs_for_document`, above): `recognized or
-    # section_facts` still gates the TAB leg, and the DEC leg runs whenever `validate_shapes`
-    # does. `validate_shapes` itself is unchanged and stays a separate condition — a caller that
-    # asks for no membrane still gets none.
-    if validate_shapes:
-        conforms, text, legs = _validate(graph, _legs_for_document(recognized, section_facts))
-        if not conforms:
-            raise AssertionError(_refusal_message("document-level facts", legs, text))
+    # THE SEAL — furnish, validate, mint the validation act, then return or refuse (spec
+    # 2026-08-25 §4.5). The legs are computed HERE and passed in rather than inside the seam:
+    # the last write to either name is `:1693`, above this line (the complete writer set is
+    # `:1371` for `recognized` and `:1511`, `:1523`, `:1555`, `:1693` for `section_facts`), so
+    # asking the question here and asking it after the furnish are the same question —
+    # MEASURED, not assumed.
+    _seal(graph, _legs_for_document(recognized, section_facts), validate_shapes)
 
     asserted = sum(rep.asserted for rep in pages)
     escalated = sum(rep.escalated for rep in pages)

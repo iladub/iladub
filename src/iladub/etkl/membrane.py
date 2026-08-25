@@ -497,3 +497,39 @@ def subclass_closure(data_graph: Graph, ont_graph: Graph) -> Graph:
         for c in supers.get(cls, ()):
             out.add((s, RDF.type, c))
     return out
+
+
+class MembraneRefusal(AssertionError):
+    """Raised when a membrane refuses; carries the graph it refused.
+
+    A SUBCLASS of `AssertionError`, deliberately, and that is the whole of the compatibility
+    story: every one of the repo's `AssertionError` interceptors is isinstance-based (no site
+    compares `type(e) is AssertionError`), so raising this where a bare `AssertionError` was
+    raised before is transparent to all of them. `str(exc)` is unchanged too — the message is
+    passed through to `AssertionError` untouched, so a caller that only prints the refusal sees
+    exactly what it saw before.
+
+    The producer-side guard is NOT softened by this (CLAUDE.md § Producer-side guards): the
+    raise stays unconditional, and a refusing product still never becomes a returned report.
+    What changes is only that the refused graph travels WITH the refusal instead of being lost
+    to the stack — an oracle (and a human) can then ask the refused graph what it says about
+    itself, which is exactly what a membrane-health signal minted before the raise is for.
+
+    `legs` carries `compile._validate`'s third element verbatim — the legs that REFUSED, in
+    `legs`' own order — so it is never empty on a real refusal and never invented here.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL. Exception plumbing — no decision lives in
+    it. The decision is the SHACL verdict this exception reports; constructing an exception
+    object and attaching two already-computed values to it inspects no value, shape or
+    threshold, and carries no tuned constant or tolerance. Irreducible: a refusal must be
+    raised from somewhere, and neither a SPARQL derivation nor a SHACL constraint can unwind a
+    Python call stack.
+    """
+
+    graph: Graph                 # the refused graph, health triple included
+    legs: tuple[str, ...]        # _validate's third element: the legs that REFUSED
+
+    def __init__(self, message: str, graph: Graph, legs: tuple[str, ...]):
+        super().__init__(message)
+        self.graph = graph
+        self.legs = legs
