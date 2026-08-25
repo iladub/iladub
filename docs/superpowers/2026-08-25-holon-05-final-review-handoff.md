@@ -1,22 +1,22 @@
-# Handoff — `holon:05`, one open fix then the final whole-branch review
+# Handoff — `holon:05`, the final whole-branch review
 
-**Topic:** the `holon:05` membrane-health loop — Task 7's open Important finding, then the final
-whole-branch review.
+**Topic:** the `holon:05` membrane-health loop — all seven tasks complete; the final whole-branch
+review is what remains.
 
 **Date:** 2026-08-25 · **Branch:** `holon-05-plan` · **Shape: mechanical** — pointers only.
 It restates nothing from the primaries and settles nothing they settle.
 
-**Why this exists:** written by the **fourth** controlling session at ~174k tokens, past the 150k
-executing floor with the override logged. **All seven tasks are shipped. Tasks 1–6 are complete and
-reviewed. Task 7 is reviewed and APPROVED but has ONE Important finding open** — the maintainer
-directed that the fix loop not be started in this session. This supersedes
+**Why this exists:** written by the **fourth** controlling session at ~174k tokens and **revised in
+place at ~204k**, both past the 150k executing floor with the override logged. **ALL SEVEN TASKS ARE
+COMPLETE AND REVIEWED.** Task 7's one Important finding was fixed at the maintainer's direction
+(`5d01a4c`) and its scoped re-review came back clean. This supersedes
 `2026-08-25-holon-05-task-7-handoff.md`, which is spent.
 
 ## Goal
 
-One line: **fix Task 7's one open Important finding, then run the final whole-branch review** of
+One line: **run the final whole-branch review** of
 `docs/superpowers/plans/2026-08-25-the-membrane-reports-its-health.md`, under
-`superpowers:subagent-driven-development`.
+`superpowers:subagent-driven-development`, then decide the merge.
 
 ## Where the primaries are, and what to establish at each
 
@@ -28,24 +28,23 @@ One line: **fix Task 7's one open Important finding, then run the final whole-br
 | the plan | § Global Constraints, § Measurements M1–M9, § Named seams. |
 | the spec, `…/specs/2026-08-25-the-membrane-reports-its-health-design.md` | Read where the plan **cites** it — §4.9, §7, §8, §9, §11. |
 
-## The one open finding — this is the first action
+## The finding that was open, and how it closed
 
-**`docs/superpowers/residues.md:261`** — R137's **index** line reads *"The only guard is M7, and it
-covers only the **~15** rows a `prog:blockedBy` names."* Measured by the reviewer:
+`docs/superpowers/residues.md:261` — R137's **index** line claimed M7 *"covers only the ~15 rows a
+`prog:blockedBy` names."* Measured, it is **7 distinct residues** (R43 R44 R45 R71 R74 R79 R97) across
+**11 statements** — an ~2x overstatement, and the branch's own named failure mode (a count made from
+reading) committed into an index line.
 
-```
-$ grep -oE 'prog:blockedBy +"[^"]+"' tests/arc-manifest.ttl | grep -oE 'R[0-9]+' | sort -u
-R43 R44 R45 R71 R74 R79 R97            → 7 distinct residues
-$ grep -cE 'prog:blockedBy' tests/arc-manifest.ttl        → 11 statements
-```
+Fixed in `5d01a4c`: `~15` -> `7`, the distinct-residue count, which is what the sentence's referent
+("the rows a `prog:blockedBy` names") is about. Both the implementer and the re-reviewer re-derived the
+figure independently rather than transcribing it. Scope verified at one file, one insertion, one
+deletion; R137's detail row untouched; no deferred minor opportunistically fixed.
 
-Neither is `~15`; the figure overstates the guard's coverage by roughly 2×. **The fix is one token:
-`~15` → `7`.** The **detail** row in `residues-open.md` is clean — it states the scope qualitatively
-and carries no number, so it needs no edit.
-
-This matters more than its size: it is the branch's own named failure mode — a count made from
-reading — committed into an **index** line, which is exactly the artefact CLAUDE.md § Deferred
-residues records being consumed as fact (the R87/R88 case).
+**Its falsification is the honest one and is worth carrying forward: NOTHING machine-checks this
+figure.** M7 confirms named residues exist but checks no count. That absence was reported rather than
+papered over with a manufactured test — and it is precisely the hole R137 exists to record. **R137 is
+the highest-value row this loop raised**: the register is CLAUDE.md-canonical, now 127 rows, and M7's
+real coverage is 7 of them.
 
 ## What was decided in the fourth session, and where each decision is recorded
 
@@ -92,13 +91,13 @@ residues records being consumed as fact (the R87/R88 case).
 
 Then, in order:
 
-1. **Fix the one open Important finding** above (`~15` → `7`), dispatched to an implementer, not fixed
-   in the controller session. Then one scoped re-review
-   (`scripts/review-package PLAN ae5fefd HEAD`), and Task 7's completion line.
-2. **Run the final whole-branch review** on the most capable model, over
+1. **Run the final whole-branch review** on the most capable model, over
    `git merge-base main HEAD`..HEAD (merge-base is `18226e7`), using
    `superpowers:requesting-code-review`'s `code-reviewer.md`, pointed at the ledger's
-   `minor (deferred):` and `Ruling:` lines so it can triage the fifteen.
-3. **One fix wave only**, then one scoped re-review; adjudicate residuals with rulings.
-4. **Collect every ledger line containing `Ruling:`** into the closing message — that list is the only
+   `minor (deferred):` and `Ruling:` lines so it can triage the fifteen. **A base-commit trap has bitten
+   three times on this branch: controller handoff commits land between a task and its review, so check
+   what is actually in your range before dispatching.**
+2. **One fix wave only**, then one scoped re-review; adjudicate residuals with rulings.
+3. **Collect every ledger line containing `Ruling:`** into the closing message — that list is the only
    place the decisions taken on the maintainer's behalf reach them.
+4. **`superpowers:finishing-a-development-branch`** for the merge decision, which is the maintainer's.
