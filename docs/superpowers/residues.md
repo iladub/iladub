@@ -38,7 +38,7 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-23: 115 rows, 24 closed, 91 open.** (Ten numbers between R1 and R96 were never
+**As of 2026-08-24: 116 rows, 24 closed, 92 open.** (Ten numbers between R1 and R96 were never
 issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
@@ -49,7 +49,7 @@ and closed none; loop `the-worktree-that-resolves` closed R121 and R118 (task 5)
 and R123 (task 6, at loop close), then raised R124 and R125 (final whole-branch review fix wave,
 2026-08-23) — R124 records that spec §4.4's stated mechanism is superseded by the shipped
 materialise-before-unlink ordering, R125 records the pre-existing, not-this-branch's, unconstrained
-`prog:oracleArtifact` path shape. **The previous line's "88 open" had already undercounted by one
+`prog:oracleArtifact` path shape. **R126 was raised by no loop at all** (2026-08-24): the direction-setting session for `holon:05` ran the criterion's cheapest invalidating measurement *before* writing its spec, and found the property's declared `rdfs:domain` is a class nothing instantiates. A row raised by pre-flight measurement rather than by a loop's residue is the cheapest kind this register holds, and the closed-fraction cannot tell it from a leak either. **The previous line's "88 open" had already undercounted by one
 before task 5's edit** (111 rows summed at the time — 89 open + 22 closed — not 110) — corrected
 there to the re-run figure rather than carried forward.
 
@@ -78,7 +78,7 @@ this register is deliberately the kind that does not let the distinction flatter
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
   24  closed
-  91  open
+  92  open
 ```
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
@@ -232,3 +232,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R123 | open | A declared `prog:oracleArtifact` that is a Python MODULE is real consumption §4.5 refuses to score (it raises) — and Task 4's "zero are `.py`" census is REFUTED: **2 of the 29 are**, `tests/etkl/fixtures.py` (`tab:06`) and `tests/etkl/test_vacuity_registry.py` (`tab:10`) |
 | R124 | open | Spec §4.4's stated mechanism (a pre-empted deletion) is superseded by the shipped code's ordering — `_materialise` runs BEFORE `_ablate`'s unlink loop, so no false green from pre-emption is possible; the real hazard is a gitignored artifact smuggled past the committed-tree check |
 | R125 | open | Pre-existing GC2 exposure: no `sh:pattern` constrains a `prog:oracleArtifact` path, so a declared `../../x` or absolute path would let `_ablate`'s `unlink()` mutate outside the worktree; `_scores`' bare substring containment is also unanchored on separators |
+| R126 | open | The whole `etkl` doc-holon fabric is declared vocabulary with ZERO instance data — 0 of 326 triples have the document URI as a subject at either compile scope, and 0 of the 11 `rdf:type` values are `etkl:`, so `etkl:membraneHealth`'s declared `rdfs:domain` is a class nothing instantiates |

@@ -82,10 +82,9 @@ to attack. **Re-run them; do not carry them as fact.**
   time — **but I did not check whether the A6 artifact-file-disjointness arm would admit it**, and
   a loop that closes `holon:05` may be able to promote the proposed edge as a second product. Treat
   that as an opportunity to measure, not a plan.
-- **Whether `etkl:membraneHealth`'s domain (`etkl:DocumentHolon`) is actually minted by the compile
-  path** was not checked. If compiled output carries no `etkl:DocumentHolon` subject, the property
-  has nothing to attach to and that is a larger loop than this handoff assumes. **Measure this
-  first** — it is the cheapest thing that could invalidate the whole slice.
+- ~~Whether `etkl:membraneHealth`'s domain is minted by the compile path~~ — **MEASURED
+  2026-08-24, and it is now [[R126]]. It does not invalidate the slice; it enlarges it.** See
+  § The measurement below.
 - **No test was run this session beyond `tests/test_doc_governance.py`** (4 passed). The full suite
   was last green at the PR #114 merge; `main` has moved by exactly this session's CLAUDE.md edit.
 - **The register is 24 closed / 91 open**, verified with the register's own `awk` command, and the
@@ -93,10 +92,41 @@ to attack. **Re-run them; do not carry them as fact.**
   debt, which continues that trend deliberately — the R123 bundle is the loop that reverses it, and
   choosing this one is choosing the rung over the ratio.
 
+## The measurement that was flagged as "do this first" — made 2026-08-24, now [[R126]]
+
+Run on **live compiles**, both scopes, because the claim is about runtime triples and a source
+grep is only a proxy for that (`enumerating-before-claiming` § the last quick-reference row):
+
+```
+compile_tables(simple_table_pdf, 0)      → 326 triples, 0 with the doc URI as subject
+document.compile_document(same)          → 326 triples, score 1.0, 0 with the doc URI as subject
+distinct rdf:type in either graph        → 11 values; prov:1, dec:3, tab:7, etkl: 0
+$ grep -rn "sh:severity" vocab/ tests/*.ttl | wc -l   → 0
+```
+
+**The document URI is a URI *stem*, never an asserted subject.** 56 child subjects start with it
+(`…/doc#p0-reading`, `…/doc#region0-d0`, …); the stem itself carries no triple. And no compiled
+graph contains a single `etkl:`-namespace type — the doc-holon fabric
+(`DocumentHolon`/`RawDocumentHolon`/`CleanDocumentHolon`/`GroundingPortal`) is declared vocabulary
+with **zero instance data anywhere in the repo**.
+
+**What that does to the slice.** `etkl:membraneHealth` declares `rdfs:domain etkl:DocumentHolon`
+(`etkl-holons.ttl:88`) — a class nothing instantiates. So `holon:05` is not *derive one value and
+attach it*. The spec must choose, explicitly:
+
+- **(a)** attach the health signal to a subject that already exists, and then answer why violating
+  the property's declared domain is acceptable — and make the **membrane** say so, not prose; or
+- **(b)** mint the document-holon node as the loop's first product, which pulls in part of
+  `holon:06` and the CLAUDE.md open item *"express the holonic interaction model in `vocab/`"*, and
+  should be **costed as the larger loop it is**.
+
+Combined with the `sh:severity` finding, `holon:05` carries **two independent vacuity hazards**:
+an unreachable state (`Weakened`) and an uninstantiated domain. Both are the [[R106]] class, and
+both must be disposed in the spec rather than discovered in the plan.
+
 ## The next concrete action
 
-In a **fresh session, in its first third**: measure the `etkl:DocumentHolon` question in
-§ Unverified first (it can invalidate the slice for a few hundred tokens), then write the spec for
+In a **fresh session, in its first third**: write the spec for
 `holon:05` — what disposes the health states, whether `Weakened` is in scope or a named residue,
 where the derivation lives under the neurosymbolic gate (a health signal derived from a validation
 report is an **AXIOM over an RDF evidence graph**, not Python), and the falsifying oracle. Then run
