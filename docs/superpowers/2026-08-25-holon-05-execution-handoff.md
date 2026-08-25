@@ -1,7 +1,14 @@
 # Handoff — execute the `holon:05` plan (`the membrane reports its health`)
 
-**Date:** 2026-08-25 · **Branch:** `holon-05-plan` @ `ae75da7` (off `main` @ `18226e7`) ·
+**Date:** 2026-08-25 · **Branch:** `holon-05-plan` @ `a0dd528` (off `main` @ `18226e7`) ·
 **Shape: mechanical** — pointers only. It restates nothing from the primaries and settles nothing.
+
+> **STATUS 2026-08-25, after the handoff was first written: TASK 1 IS DONE AND COMMITTED**
+> (`a0dd528`). The three owned terms are declared, `etkl:Weakened`'s and `etkl:MembraneHealth`'s
+> comments carry the B3 amendment, `owl:versionInfo` is `0.2.0`. Falsification: a deliberate Turtle
+> syntax error made `tests/test_source_ownership.py:68` FAIL, restored → `13 passed in 0.60s`
+> across `test_source_ownership.py`, `test_vocab_shapes.py`, `test_hga_alignment.py`. **Nothing
+> else in the plan is executed.** Start at Task 2.
 
 ## Goal
 
@@ -56,7 +63,9 @@ are measured. Nothing else is owed before the code.
 
 ## The next concrete action
 
-**In a fresh session: read the plan's four front-matter sections, then execute Task 1.** Use
+**In a fresh session: read the plan's four front-matter sections, then execute Task 2** — the
+`MembraneRefusal` subclass and the extraction of `document.py:1609-1626` into `_seal`. It is the
+highest-risk task in the plan and was deliberately left to a fresh context. Use
 `superpowers:subagent-driven-development` (fresh subagent per task, review between) or
 `superpowers:executing-plans`. **Do not start Task 4 before Tasks 2 and 3 are green** — it asserts
 against them as shipped.
