@@ -1314,6 +1314,12 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     #   Scoped to the health VALUE and to `_DOC`, the same subject the act's `prov:used` names
     #   above. The `etkl:CompiledDocumentHolon` type triple is not removed and needs no
     #   removal: it is the same triple on every pass and carries no verdict that can go stale.
+    #   AND IT IS BELOW THE `validate_shapes` EARLY RETURN, so a `validate_shapes=False`
+    #   re-entry keeps a STALE HEALTH VALUE exactly as it keeps the stale act — deliberately,
+    #   and for the same reason stated at the early return above: retracting a health value
+    #   because no validation was REQUESTED would derive a fact from the absence of a request.
+    #   Unreachable from `compile_document` (one `validate_shapes` reaches one `_seal`), but a
+    #   caller that enters `_seal` directly can see it.
     graph.remove((_DOC, ETKL.membraneHealth, None))
     graph += interpret.run(MEMBRANE_HEALTH_RQ, graph)
 

@@ -450,7 +450,7 @@ def test_single_page_document_matches_compile_tables(tmp_path):
     #   refuses no leg, so there is no `etkl:refusingLeg`) and two from the health derivation
     #   (§4.3, Task 3 — `a etkl:CompiledDocumentHolon` and `etkl:membraneHealth etkl:Intact`;
     #   `Intact` and not `Weakened` because this fixture holds no candidate at all, §4.4).
-    # The +3 half was already failing at f33db9f, BEFORE Task 3: see the Task 3 report.
+    # The +3 half — the act of §4.2 — was already failing here before §4.3 was wired at all.
     seal = set(doc.graph.triples((_ACT, None, None))) | \
         set(doc.graph.triples((_DOC, ETKL.membraneHealth, None))) | \
         set(doc.graph.triples((_DOC, RDF.type, ETKL.CompiledDocumentHolon)))

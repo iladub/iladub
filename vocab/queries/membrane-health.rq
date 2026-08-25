@@ -47,6 +47,11 @@
 #     constraint below is not optional.
 #   The `?pd a iladub:PromotionDecision` type clause STAYS although it is currently
 #   redundant: it is the guard against the IRI collision of spec §2.2.
+#   Pinned by `test_a_reviewed_candidate_no_longer_weakens_the_membrane`, and it is the ONLY
+#   test that can pin it: MEASURED, deleting this `FILTER NOT EXISTS` changes the derived
+#   value on exactly one of four graph states — a candidate that a promotion decision REVIEWS
+#   (Intact as shipped, Weakened without it). Every other state, the whole shipped fixture
+#   corpus included, is blind to it.
 #
 #   SITE CONSTRAINT this places on the caller: run this over ONE DOCUMENT'S GRAPH, never a
 #   union of several. The binding reason is not the closed-world scoping above (true, and

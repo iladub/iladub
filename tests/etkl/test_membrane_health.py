@@ -207,6 +207,47 @@ def test_the_three_values_discriminate(tmp_path):
                 (conforming_empty, conforming_held, refusing)}) == 3
 
 
+def test_a_reviewed_candidate_no_longer_weakens_the_membrane(tmp_path):
+    """Spec §4.3 invariant 2 — the ONLY test that exercises the `FILTER NOT EXISTS`, which is
+    the query's one closed-world guard and the clause §4.3's last paragraph says "STAYS".
+
+    ADDED AT REVIEW, from a measurement: as first shipped, deleting that FILTER left all
+    twelve tests green. Run against four hand-built states, shipped `.rq` vs the clause
+    deleted:
+
+        conforming_empty     as-shipped=['Intact']      filter-deleted=['Intact']      same
+        conforming_held      as-shipped=['Weakened']    filter-deleted=['Weakened']    same
+        reviewed_candidate   as-shipped=['Intact']      filter-deleted=['Weakened']    DIFFERS
+        refusing             as-shipped=['Compromised'] filter-deleted=['Compromised'] same
+
+    Only the third discriminates, and nothing built one: `_cheap_document` is 1 candidate /
+    0 promotions, so no fixture-driven test can reach it either. The report's traceability
+    table had claimed `test_the_three_values_discriminate`'s Weakened row pinned this; the
+    measurement refutes that — that row fires identically with the negation deleted.
+
+    A SEPARATE TEST rather than a fourth graph inside `test_the_three_values_discriminate`,
+    for two reasons: that test's closing assertion counts THREE distinct values, and a fourth
+    state deriving `Intact` (a value already in the set) would have to rewrite it — and it is
+    plan-supplied text a deferred review item is already looking at. Its name would also stop
+    describing it. What it pins is different in kind: not that the three values discriminate,
+    but that a proposition WHICH HAS BEEN DECIDED is no longer held at the membrane — which is
+    the promotion epistemics of CLAUDE.md §3 read back out of the health signal."""
+    from iladub.etkl import interpret
+    from iladub.etkl.document import MEMBRANE_HEALTH_RQ
+
+    g = Graph()
+    g.add((ACT, RDF.type, ETKL.MembraneValidation))
+    g.add((ACT, PROV.used, URIRef(_DOC)))
+    g.add((ACT, SH.conforms, Literal(True)))
+    cand, pd = URIRef(f"{_DOC}#c1"), URIRef(f"{_DOC}#pd1")
+    g.add((cand, RDF.type, ILADUB.CandidateConcept))
+    g.add((pd, RDF.type, ILADUB.PromotionDecision))
+    g.add((pd, ILADUB.reviews, cand))
+
+    health = list(interpret.run(MEMBRANE_HEALTH_RQ, g).objects(None, ETKL.membraneHealth))
+    assert health == [ETKL.Intact], health   # NOT Weakened: the candidate is no longer HELD
+
+
 def test_a_document_compiled_without_the_membrane_has_no_health(tmp_path):
     """O4 — ABSENCE, NEVER A FOURTH STATE. No validation means no act means the WHERE has
     no support means no health triple. `validate_shapes` is the only route into this
