@@ -103,11 +103,30 @@ def test_membrane_refusal_is_an_assertionerror_subclass():
     AssertionError interceptors is isinstance-based (plan M2), so a subclass is
     transparent — but only if it really is one.
 
-    RE-MEASURED 2026-08-25, because M2's count does not reproduce: `git ls-files '*.py' |
-    xargs grep -n AssertionError | grep -E "except |raises\\("` finds **7**, not 17 — one bare
-    `except AssertionError` (tests/test_corpus.py:129) and six `pytest.raises`. M2's claim that
-    matters is unaffected and stronger with fewer sites: ZERO of them compares
-    `type(e) is AssertionError`."""
+    RE-MEASURED 2026-08-25, because neither M2's count NOR the first correction of it
+    reproduces. A census that greps for the bare word matches the docstrings that quote it, so
+    this one anchors on CODE — and it therefore needs no `grep -v`, which means nothing it
+    counts can be hidden:
+
+        $ git ls-files '*.py' | xargs grep -nE \\
+              '^ *(except [^:]*AssertionError|with pytest[.]raises[(]AssertionError)' | wc -l
+        8
+
+    EIGHT sites: one bare `except AssertionError` (tests/test_corpus.py:129) and seven
+    `pytest.raises(AssertionError)` — two in tests/test_arc_ablation.py, one in
+    tests/test_concept_feed.py, three in tests/test_corpus_battery_unit.py, and one in THIS
+    module, O7's deliberate base-class catch below. M2's 17 does not reproduce; neither does
+    the **7** an earlier wording here reported. That 7 came from a LOOSE census — grep for the
+    bare word, then `grep -v test_membrane_health.py` — and the exclusion hid a real
+    interceptor. No loose figure is quoted here on purpose: it counts this file's own
+    docstrings, so every rewrite of this paragraph moves it, which is how it drifted in the
+    first place. The command above is stable because its own text cannot match it.
+
+    M2's claim that matters is unaffected and is stronger with fewer sites: ZERO of the eight
+    compares `type(e) is AssertionError`. Measured —
+    `git ls-files '*.py' | xargs grep -nE 'type[(][^)]*[)] is AssertionError'` returns three
+    hits (membrane.py's comment and two docstrings in this module, including this line); every
+    one is prose, none is code."""
     assert issubclass(membrane.MembraneRefusal, AssertionError)
 
 
@@ -561,15 +580,12 @@ def test_the_refusal_carries_the_graph(tmp_path):
     still catches it, because every one of the repo's interceptors is isinstance-based and
     none compares `type(e) is AssertionError`.
 
-    THAT COUNT IS **7**, not plan M2's 17 — the census does not reproduce, and the corrected
+    THAT COUNT IS **8**, not plan M2's 17 — the census does not reproduce, and the corrected
     figure is derived once, in `test_membrane_refusal_is_an_assertionerror_subclass` above;
-    this docstring cites it rather than re-deriving it (CLAUDE.md rule 6). The command there
-    now returns 9 because its own two docstring lines match themselves, so the form that
-    reproduces 7 on this branch is:
-
-        $ git ls-files '*.py' | xargs grep -n AssertionError | grep -E "except |raises\\(" \\
-              | grep -v test_membrane_health.py | wc -l
-        7
+    this docstring cites it rather than re-deriving it (CLAUDE.md rule 6). One of the eight is
+    the `pytest.raises(AssertionError)` on this test's own body, which is exactly why the
+    census up there anchors on code instead of excluding this file: an exclusion that hides a
+    real interceptor makes the guard weaker than it reads.
 
     M2's substantive claim is unaffected and is stronger with fewer sites.
     Falsify: revert to a bare AssertionError; this must fail."""

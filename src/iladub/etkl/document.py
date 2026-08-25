@@ -134,8 +134,8 @@ ESCALATION_FURNISH_RQ = _QUERIES / "escalation-furnish.rq"
 # MEMBRANE HEALTH (holon:05, spec 2026-08-25 §4.3). The derivation that reads the validation
 # act `_seal` mints and states the document's `etkl:membraneHealth`. Named beside the furnish
 # above for the same reason: a reader of the seam has to be able to see which derivations run
-# in it. An inert `Path` — nothing reads the file at import time, and `_seal` does not run it
-# yet; that wiring is the next task's.
+# in it. An inert `Path` at import time — nothing reads the file here; it is opened and run
+# once per compile, by `_seal`'s derivation step at `:1324`.
 MEMBRANE_HEALTH_RQ = _QUERIES / "membrane-health.rq"
 
 _ONTOLOGY = _QUERIES.parent / "ontology"
@@ -1203,9 +1203,9 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     #
     # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
     # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
-    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges —
-    # `:1486` (section repair) and `:1690` (datagrid adoption), which `grep -n
-    # "DEC.supersedes"` on this file shows are the only two — write into THIS graph and
+    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges — `:1536`
+    # (section repair) and `:1740` (datagrid adoption), which `grep -n "DEC.supersedes"` on this
+    # file shows are the only two (re-measured 2026-08-25) — write into THIS graph and
     # into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
     # A page-scope site is therefore not merely early, it is permanently blind:
     # `compile_tables` returns before the driver has anything to link, and the link is then
@@ -1744,10 +1744,14 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
 
     # THE SEAL — furnish, validate, mint the validation act, then return or refuse (spec
     # 2026-08-25 §4.5). The legs are computed HERE and passed in rather than inside the seam:
-    # the last write to either name is `:1693`, above this line (the complete writer set is
-    # `:1371` for `recognized` and `:1511`, `:1523`, `:1555`, `:1693` for `section_facts`), so
-    # asking the question here and asking it after the furnish are the same question —
-    # MEASURED, not assumed.
+    # the last write to either name is `:1743`, above this line, so asking the question here and
+    # asking it after the furnish are the same question — MEASURED, not assumed.
+    #   THE COMPLETE WRITER SET, re-measured 2026-08-25 with `grep -n recognized` and
+    #   `grep -n section_facts` on this file: `recognized` has TWO writers, `:1395` (the empty
+    #   list) and `:1421` (its only `append`); `section_facts` has four, `:1561`, `:1573`,
+    #   `:1605` and `:1743`. The figures cited here before were all off by 50 and named one
+    #   writer of `recognized` where there are two — under the words "MEASURED, not assumed",
+    #   which is why the command is now written out beside them.
     _seal(graph, _legs_for_document(recognized, section_facts), validate_shapes)
 
     asserted = sum(rep.asserted for rep in pages)
