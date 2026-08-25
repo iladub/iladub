@@ -1280,6 +1280,43 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     for leg in refusing:
         graph.add((act, ETKL.refusingLeg, Literal(leg)))
 
+    # MEMBRANE HEALTH (spec 2026-08-25 §4.3). AXIOM in derivation form: the line below is
+    # engine glue and decides nothing — the query reads the act just minted plus the
+    # propositions still held, and states what the pair MEANS about the document holon.
+    #
+    # ONE CALL, BOTH PATHS. It sits above the `if not conforms` deliberately, so the graph
+    # carries its health on the returning path AND on the raising path — the refused graph
+    # travels with the refusal (`membrane.MembraneRefusal`), and a graph that says nothing
+    # about its own health is exactly what that subclass exists to prevent.
+    #
+    # AFTER the validation, unlike the furnish above, and that is not an oversight: health is
+    # derived FROM the verdict, so it cannot be minted before there is one. It is therefore
+    # deliberately outside the membrane — spec §4.2 states that, and §4.8 governs it.
+    #
+    # The query's header states a SITE CONSTRAINT on its caller — one document's graph, never
+    # a union — and it is satisfied here by construction: this runs over the ONE graph `_seal`
+    # was handed. The reason is derived there and is not re-derived here.
+    #
+    # NO VOCABULARY GRAPH, unlike the furnish above (which passes `_escalation_vocab()` to
+    # BIND its ordinals from `risk.ttl`). Every term this derivation reads — the act, the
+    # verdict, the candidates, the promotion decisions — is in the document's own graph, and
+    # the three health values are IRIs it constructs, not literals it looks up.
+    #
+    # IDEMPOTENT BY REPLACEMENT, for the same reason the act mint above is, and MEASURED to be
+    # necessary rather than assumed. The query never reads its own product, so a re-run over an
+    # UNCHANGED graph re-derives exactly the triple already there and a Graph is a set — but a
+    # re-entry whose VERDICT DIFFERS derives a different value onto the same `?doc`. Driving
+    # the R127 lever through this seam without the removal below left the refused graph
+    # carrying `Weakened` AND `Compromised` at once: the collision harm the query's header
+    # derives for a union, reached instead by re-entry, and refused by nothing at runtime
+    # because health is minted after the membrane has already run. Pinned by
+    # `test_re_entering_the_seam_leaves_exactly_one_health_value`.
+    #   Scoped to the health VALUE and to `_DOC`, the same subject the act's `prov:used` names
+    #   above. The `etkl:CompiledDocumentHolon` type triple is not removed and needs no
+    #   removal: it is the same triple on every pass and carries no verdict that can go stale.
+    graph.remove((_DOC, ETKL.membraneHealth, None))
+    graph += interpret.run(MEMBRANE_HEALTH_RQ, graph)
+
     if not conforms:
         # UNCONDITIONAL still (CLAUDE.md § Producer-side guards): what changed is that the
         # refused graph travels WITH the refusal instead of dying on the stack. `str(exc)` is

@@ -163,3 +163,130 @@ def test_re_entering_the_seam_leaves_exactly_one_conformance_value(tmp_path):
     assert exc.value.graph is g
     assert exc.value.legs == ("dec",)
     assert str(exc.value).startswith("document-level facts failed dec: SHACL:")
+
+
+def test_compiled_document_reports_membrane_health(tmp_path):
+    """THE PRE-DECLARED ORACLE (tests/arc-manifest.ttl:359 — this name is fixed and the
+    manifest names it; do not rename it). A compiled document carries exactly one health
+    value, and it is one of the three."""
+    rep = _cheap_document(tmp_path)
+    doc = URIRef(_DOC)
+    assert (doc, RDF.type, ETKL.CompiledDocumentHolon) in rep.graph
+    values = list(rep.graph.objects(doc, ETKL.membraneHealth))
+    assert len(values) == 1, values
+    assert values[0] in (ETKL.Intact, ETKL.Weakened, ETKL.Compromised), values[0]
+
+
+def test_the_three_values_discriminate(tmp_path):
+    """O1 — THE FALSIFYING ORACLE. Three hand-built graph states must yield three DIFFERENT
+    values. Expected values are computed BY HAND from the fixture (spec §3), never by
+    running the query and recording what it said. Falsify by collapsing the IF to a
+    constant: this test must fail."""
+    from iladub.etkl import interpret
+    from iladub.etkl.document import MEMBRANE_HEALTH_RQ
+
+    def act(conforms):
+        g = Graph()
+        g.add((ACT, RDF.type, ETKL.MembraneValidation))
+        g.add((ACT, PROV.used, URIRef(_DOC)))
+        g.add((ACT, SH.conforms, Literal(conforms)))
+        return g
+
+    def health(g):
+        return list(interpret.run(MEMBRANE_HEALTH_RQ, g).objects(None, ETKL.membraneHealth))
+
+    conforming_empty = act(True)                                    # hand-computed: Intact
+    conforming_held = act(True)                                     # hand-computed: Weakened
+    conforming_held.add((URIRef(f"{_DOC}#c1"), RDF.type, ILADUB.CandidateConcept))
+    refusing = act(False)                                           # hand-computed: Compromised
+
+    assert health(conforming_empty) == [ETKL.Intact]
+    assert health(conforming_held) == [ETKL.Weakened]
+    assert health(refusing) == [ETKL.Compromised]
+    assert len({str(health(g)[0]) for g in
+                (conforming_empty, conforming_held, refusing)}) == 3
+
+
+def test_a_document_compiled_without_the_membrane_has_no_health(tmp_path):
+    """O4 — ABSENCE, NEVER A FOURTH STATE. No validation means no act means the WHERE has
+    no support means no health triple. `validate_shapes` is the only route into this
+    state — spec §5.4 refuted the zero-legs one."""
+    p = os.path.join(str(tmp_path), "false_transposed.pdf")
+    F.false_transposed_pdf(p)
+    rep = compile_document(p, validate_shapes=False)
+    assert list(rep.graph.objects(URIRef(_DOC), ETKL.membraneHealth)) == []
+    assert (URIRef(_DOC), RDF.type, ETKL.CompiledDocumentHolon) not in rep.graph
+
+
+def test_health_is_re_derived_not_stored(tmp_path):
+    """O5 — NOT A STORED LABEL. Strip the health triple and the type triple, re-run the
+    .rq, and the re-derived triples equal what was stripped, compared AS SETS OF TRIPLES
+    (RDF has no byte identity without canonicalisation — spec §3). This is explicitly NOT
+    the falsifying oracle, and it says nothing about the validation act."""
+    from iladub.etkl import interpret
+    from iladub.etkl.document import MEMBRANE_HEALTH_RQ
+
+    rep = _cheap_document(tmp_path)
+    g, doc = rep.graph, URIRef(_DOC)
+    stripped = set(g.triples((doc, ETKL.membraneHealth, None))) | \
+               set(g.triples((doc, RDF.type, ETKL.CompiledDocumentHolon)))
+    assert stripped, "nothing to strip — the compile did not mint health"
+    for t in stripped:
+        g.remove(t)
+    assert set(interpret.run(MEMBRANE_HEALTH_RQ, g)) == stripped
+
+
+def test_a_slipped_datatype_yields_no_health_rather_than_intact(tmp_path):
+    """O8, READ side (review B6 — the only finding that failed UPWARD). A validation act
+    carrying Literal('false') with no datatype, or xsd:string, must yield NO health triple
+    — and specifically NOT Intact, which is what SPARQL's effective boolean value of a
+    non-empty string would otherwise produce. This fails DOWNWARD, into the silence spec
+    §4.5's third row already licenses."""
+    from iladub.etkl import interpret
+    from iladub.etkl.document import MEMBRANE_HEALTH_RQ
+
+    for slipped in (Literal("false"), Literal("false", datatype=XSD.string)):
+        g = Graph()
+        g.add((ACT, RDF.type, ETKL.MembraneValidation))
+        g.add((ACT, PROV.used, URIRef(_DOC)))
+        g.add((ACT, SH.conforms, slipped))
+        out = interpret.run(MEMBRANE_HEALTH_RQ, g)
+        assert len(out) == 0, (slipped, list(out))
+
+
+def test_re_entering_the_seam_leaves_exactly_one_health_value(tmp_path):
+    """ADDED IN TASK 3, from a MEASUREMENT rather than from the brief (CLAUDE.md rule 1 —
+    a plan-supplied step is a proposition). The brief's Step 4 says only "run it on both
+    paths"; wired exactly that way (`graph += interpret.run(...)`), M9's
+    replace-don't-accumulate hazard applies to the HEALTH triple just as it does to
+    `sh:conforms`, which Task 2 fixed for the act ALONE.
+
+    MEASURED before the fix, driving the same R127 lever as the test above:
+        health: ['…#Weakened']
+        refused; conforms: [False]
+        health after re-entry: ['…#Compromised', '…#Weakened']
+    That is precisely the harm spec §4.3 invariant 3 names for a unioned graph — two health
+    values on one subject, with nothing at runtime to refuse them — reached by re-entry
+    instead. `?doc` binds from `prov:used`, and `_DOC` is one constant IRI (`compile.py:22`),
+    so the second derivation lands on the SAME subject; and health is minted AFTER the
+    membrane has run (spec §4.2), so no shape ever sees the contradiction.
+
+    Unlike the derivation's own idempotence (`test_health_is_re_derived_not_stored`), this
+    needs the verdict to CHANGE: a re-entry that reaches the same verdict re-derives an
+    identical triple, and an rdflib Graph is a set. Same lever, same R127 caveat as the test
+    above: when a later loop closes R127 this fails with DID NOT RAISE, and the fix is
+    another way to make the verdicts differ — not deleting the test."""
+    rep = _cheap_document(tmp_path)
+    g, doc = rep.graph, URIRef(_DOC)
+    assert list(g.objects(doc, ETKL.membraneHealth)) == [ETKL.Weakened]
+    g.add((_the_escalated_decision(g), DEC.rationale,
+           Literal("une seconde justification", lang="fr")))
+    legs = _legs_for_document(rep.recognized, False)
+    with pytest.raises(membrane.MembraneRefusal) as exc:
+        _seal(g, legs, True)
+
+    values = list(g.objects(doc, ETKL.membraneHealth))
+    assert len(values) == 1, values            # NOT [Weakened, Compromised]
+    assert values[0] == ETKL.Compromised, values[0]
+    # the refused graph is the one that carries it — the whole point of the subclass
+    assert list(exc.value.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Compromised]
