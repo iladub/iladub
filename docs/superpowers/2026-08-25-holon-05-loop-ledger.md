@@ -1,38 +1,3 @@
-# `holon:05` — the loop ledger (preserved SDD evidence)
-
-**Topic:** the complete decision record of the `holon:05` membrane-health loop — every ruling,
-deferred minor, measurement and process failure, across four controlling sessions.
-
-**Date:** 2026-08-25 · **Branch:** `holon-05-plan` · **Class:** Evidence (immutable after loop close).
-
-**What this is.** A verbatim copy of the subagent-driven-development ledger that governed this loop,
-taken at the close of the fourth session. The working copy lived at
-`.superpowers/sdd/2026-08-25-the-membrane-reports-its-health/progress.md`, inside a **git-ignored**
-workspace that the SDD process deletes when the loop closes. This copy exists because that deletion
-would otherwise destroy the only record of ~20 rulings taken on the maintainer's behalf and ten
-measured process failures — including four by the controllers themselves.
-
-**Why it is here and not tracked in place.** `.superpowers/sdd/` carries a deliberate `*` gitignore,
-and the documentation-governance membrane requires every tracked markdown file to carry exactly one
-class by path (`tests/docgov_extract.py`, `classify()`). A ledger tracked at its working path
-classifies as nothing and hard-fails `test_doc_governance.py::test_membrane` — measured, not assumed:
-
-```
-Focus Node: …/doc/.superpowers/sdd/…/progress.md
-Message: every tracked markdown file must belong to exactly one class (spec §3)
-Constraint: MinCountConstraintComponent on dg:docClass
-```
-
-`docs/superpowers/` classifies as Evidence, which is what a loop ledger is.
-
-**How to read it.** Tasks with a `Task N: complete` line are done. Lines containing `Ruling:` are
-decisions taken without the maintainer present — that set is the most important thing in the file.
-Lines containing `minor (deferred):` are findings triaged to the final review. **Re-count rather than
-citing any figure in here**: the ledger's own counts are themselves a recorded instance of this
-branch's signature failure, a load-bearing claim made from reading rather than measuring.
-
----
-
 # SDD ledger — plan: docs/superpowers/plans/2026-08-25-the-membrane-reports-its-health.md
 
 Spec: docs/superpowers/specs/2026-08-25-the-membrane-reports-its-health-design.md (reachable, twice amended)
@@ -926,3 +891,141 @@ FINAL WHOLE-BRANCH REVIEW: **YES WITH FIXES. Zero Critical. ZERO CODE FINDINGS.*
   a different query than the one I reported. I stated a figure from one command and labelled it as
   another. Cost: the reviewer triaged 17 items correctly anyway, having re-counted rather than trusting
   me — which is the discipline working.
+
+## Session 5 (fresh controller — the final fix wave, the scoped re-review, the merge decision)
+
+FINAL FIX WAVE dispatched (ONE subagent, opus, agent a501711a98c6e04e9) — **FIX_BASE 58b7459** (= HEAD).
+  Brief: .superpowers/sdd/.../final-fix-wave-brief.md — eight items, all prose, zero code.
+  Model choice: opus, not sonnet/haiku. Why: the skill puts single-file mechanical fixes at the
+  cheapest tier, and item 4 IS that — but items 5 and 8 are not. Item 5 requires deciding how to make
+  a census command, its output and its prose agree; item 8 requires reading membrane-health.rq and
+  AUTHORING discriminating ontology prose from that measurement. And there is no second wave.
+  — Cost if wrong: an expensive seat on a prose diff.
+**BASE CHOICE — the fourth appearance of this branch's base trap, and the first time it was priced in
+  BEFORE the dispatch rather than caught after.** The last review saw 298b54f; two controller artefacts
+  landed on top (416270a the handoff, 58b7459 the ledger preservation). FIX_BASE 58b7459 means the
+  scoped re-reviewer sees the fix commits ALONE. The three earlier instances are at Task 6's dispatch,
+  Task 7's dispatch and Task 7's fix round.
+Ruling: **the `etkl:Intact` spec-gap Minor is FOLDED INTO the wave as item 8, not deferred.** — Why:
+  it is the one deferred item that is a defect in SHIPPED ONTOLOGY PROSE rather than in evidence — a
+  class comment that does not discriminate the class it defines, in the vocabulary this loop exists to
+  add. It is also the only item whose remedy is upstream (spec §4.6's amendment set omitted it), and
+  deferring a spec gap past the loop that opened it is how R127 became a label with no row. Folding it
+  extends no round: it rides the one wave that was already dispatched. — Cost if wrong: one rdfs:comment
+  and one spec bullet edited in the wave's commit instead of a later loop's.
+Ruling: **the wave is instructed to RE-MEASURE every figure I hand it, and to report non-reproducing
+  figures as results.** — Why: this is the tenth instance of the transcribe-don't-measure failure on
+  this branch, and the previous nine were all caught by an implementer told exactly this. Global
+  Constraint 7. — Cost if wrong: a longer report.
+FINAL FIX WAVE: implementer DONE (commits 101fc05, 31b10ee, c419e22; 11 files, +79/-30; PROSE ONLY,
+  zero production logic; tree clean; report final-fix-wave-report.md). All eight items shipped.
+  Tests: doc_governance+arc_manifest+cockpit **44 -> 45 passed** (the one INTENDED flip,
+  test_the_live_newest_handoff_declares_a_topic, shown red before / green after / red again on
+  inversion / green on restore); vocab_shapes+source_ownership+membrane_health 29 passed;
+  vacuity_registry+hga_alignment 15 passed. Nothing else moved.
+  - Two brief figures did not fully reproduce, BOTH toward doing more: (a) the false "consumes no
+    population" claim is in R130's row TWICE (Measured cell AND Deferred cell) — fixing one would have
+    left the row self-contradictory; both fixed. (b) item 5's "second census command" is a genuinely
+    DISTINCT second docstring ~460 lines away, not the same site; both fixed. Everything else in the
+    brief reproduced EXACTLY, including 12-not-7, the honest 8, the hidden interceptor at :579, the
+    off-by-50 five, the two `recognized` writers, and R136's 31-passed.
+  - **THE WAVE MADE THE WAVE'S OWN FAILURE AND CAUGHT IT — the eleventh instance, and the first
+    self-caught inside the same edit.** Item 4's first edit added one line to a comment that cites
+    lines BELOW itself, moving 1536/1740 to 1537/1741: the correction would have shipped stale. Caught
+    by re-measuring AFTER the edit, not before; reflowed line-neutral and re-verified. This is a
+    genuinely new lesson for the register — a citation that points DOWNWARD is invalidated by its own
+    correction — and no rule on this branch had it.
+  - Implementer DELIBERATELY REMOVED a number rather than correcting it (item 5): the loose census
+    counts test_membrane_health.py's OWN docstrings, so it self-destabilises — mid-edit its new prose
+    moved it 12 -> 13. The shipped census is code-anchored, needs no exclusion, and cannot match its
+    own pasted text. It flagged this as a RULING owed, not an oversight. NOT pre-judged to the
+    re-reviewer.
+  - Falsification honestly ABSENT for 7 of 8 items, with the searches named (git grep for the claim
+    -> 8 hits all prose; no doctest runner configured; the only citation resolver is M10, scoped to
+    arc-manifest.ttl; test_vocab_shapes.py never mentions "comment"). No guard manufactured, no test
+    module touched. Correct per 5d01a4c's precedent.
+FINAL FIX WAVE: scoped re-review dispatched (opus, agent a91dc853f13d7ece5) over **58b7459..c419e22** (3 commits,
+  86438 bytes). Model choice: opus, not sonnet. Why: the diff is small and prose-only, which argues
+  cheap — but the gate is not a diff check. It must RE-DERIVE ~12 measurements across code, tests,
+  ontology, register and spec, and answer one genuinely SEMANTIC question: does etkl:Intact's new
+  comment actually discriminate Intact from Weakened under membrane-health.rq's shipped logic? That
+  needs the query read and reasoned about. And there is no second wave.
+  — Cost if wrong: an expensive seat on an 86 KB prose diff.
+Ruling: **spec §4.5's stale `document.py:1624/:1626` citations (fixer concern 4) are DEFERRED, not
+  folded into this wave.** — What it is: at HEAD `_seal` is :1175-1334, health derivation :1323-1324,
+  refusing branch :1326-1332; the spec's figures no longer resolve. — Why deferred: it is the same
+  SHAPE as Task 7's already-deferred R132 minor — drift inflicted ON a frozen Evidence artefact BY
+  this loop's own edits, not a claim made from reading. The spec is dated evidence describing the code
+  at spec time, and CLAUDE.md directs a reader to the exact .py rather than to spec prose. Folding it
+  would make this a second fix wave, which the skill forbids and which the handoff explicitly rules
+  out. — Cost if wrong: one stale citation pair survives in a spec section a later loop must re-measure
+  anyway. **Surfaced to the maintainer in the closing message, not buried here.**
+Ruling: **the fixer's four untouched knock-ons STAND untouched** — plan-handoff.md's missing Topic
+  (inherited from main, outside the branch's sustaining set), the ledger's and task-7-handoff's repeat
+  of the item-1 false claim (frozen Evidence; the ledger ALREADY records it as measured-false, which is
+  the correct treatment for an evidence artefact), and arc-manifest.ttl:387's "four-artifact set"
+  phrasing (the fixer marked §4.6's heading "AMENDED ... to five" rather than rewriting it, so that
+  citation still correctly names the act Task 1 performed). — Why: constraint 2 of the brief, and each
+  is either inherited or correctly frozen. — Cost if wrong: three prose lines a later loop touches.
+FINAL FIX WAVE: scoped re-review **ALL EIGHT ADDRESSED, 0 open, no new breakage** (58b7459..c419e22).
+  Re-reviewer RE-DERIVED every figure at HEAD rather than accepting the fixer's — which is the whole
+  point, since accepting them would have reproduced the defect in the act of closing it. Verified:
+  section_facts writers :1561/:1573/:1605/:1743 and BOTH recognized writers :1395/:1421 (the third hit
+  :1766 is a read), with _seal called at :1755 and nothing writing either name between; the two
+  DEC.supersedes writers :1536/:1740 BOTH still resolve after the reflow (the line-neutrality held);
+  MEMBRANE_HEALTH_RQ inert at :139 and run at :1324 inside _seal, with interpret.run re-reading the
+  file every call so "opened and run once per compile" is literally true; `git grep` for the old
+  figures and the old claim returns ZERO hits in src/tests/vocab/register.
+  JUDGMENTS: (1) **etkl:Intact's new comment DISCRIMINATES** — read off the .rq itself
+  (Intact <= conforms AND NOT ?held), the comment is the exact negation of ?held including the vacuous
+  case, and it NAMES Weakened as the value conformance alone cannot separate it from. Spec §4.6 row 5
+  cites :80 and :80 IS Intact's rdfs:comment at HEAD. (2) **The removed census number was the RIGHT
+  call** — the re-reviewer reproduced the instability: the loose form returns **13** at HEAD, not the
+  12 the brief measured, because it counts this file's own docstrings (8 code + 5 docstring lines), so
+  the figure moved under the edit correcting it. The shipped anchored regex CANNOT match its own pasted
+  text and needs no exclusion. M2's substantive claim re-verified independently: the 3 `type(e) is`
+  hits are ALL PROSE, zero code. (3) Item 7 green and the four Topic lines are substantive, not filler.
+  (4) **Scope verified, not assumed:** it filtered every changed .py line that is not a comment — the
+  residue is docstring prose only; **the only non-comment byte in the entire wave is one rdfs:comment
+  string literal.** No snapshot moved; by construction none of the 17 deferred minors was touched.
+  Falsification honesty VERIFIED as genuine absence, not asserted: it reproduced the searches (no
+  doctest config exists; nothing in tests/ asserts on Intact's comment text) and confirmed no test
+  module gained a guard.
+Ruling: **the item-1 false claim SURVIVING in task-7-handoff.md:60 and the loop ledger STANDS.** The
+  re-reviewer noted the frozen-Evidence defence is weaker for task-7-handoff.md because THIS WAVE
+  edited it (adding a Topic line). — Why it stands anyway: adding a governance-required `**Topic:**`
+  header is METADATA, not a content amendment, and that distinction is exactly what keeps an Evidence
+  artefact frozen while still lint-conformant. A handoff is a DATED record of what was believed when
+  it was written; the correction belongs in the register and the ledger, and is there three times over
+  (ledger :625/:871/:909, final-review-handoff :39). Rewriting spent handoffs to match later knowledge
+  would destroy the audit trail this repo's doc governance exists to keep. — Cost if wrong: one stale
+  sentence in a handoff that is superseded BY NAME and that nothing points a reader to.
+Ruling: **spec §4.5's stale citations get a REGISTER ROW rather than a fix (refining the earlier
+  defer).** The re-reviewer measured FIVE stale citations, not the two I recorded — `:1624` x4 and
+  `:1626` — and added the fact that decides it: the §4.5 text was written PROSPECTIVELY, before `_seal`
+  was extracted. So it is not a claim made from reading; it is drift inflicted on dated Evidence by the
+  implementation that followed it, the same shape as R132. — Cost if wrong: five stale citations in a
+  spec section a later loop re-measures anyway.
+CLOSING BOOKKEEPING dispatched (sonnet, agent a037320c622030ac5): raise TWO register rows — (A) spec
+  §4.5's five stale citations, (B) **a genuinely NEW lesson no rule in this repo carries: a citation
+  that points DOWNWARD in its own file is invalidated by its own correction.** CLAUDE.md plan-rule 2
+  ("measure the load-bearing claim") is INSUFFICIENT for this case — the wave's measurement was correct
+  when taken and was falsified by the act of writing it down. Told to re-count the register and
+  re-measure both stories at HEAD rather than transcribe mine. — Why a subagent and not the controller:
+  the register's snapshot convention is fiddly and the controller is at 139k. — Cost if wrong: two rows
+  a later loop corrects.
+CLOSING BOOKKEEPING: DONE (commit 02c8670; two register files only; 31 passed).
+  **R138 (25/127 closed)** — spec §4.5's citation drift. **R139 (25/128 closed)** — the downward-
+  citation lesson, fully reproduced against 31b10ee's line-neutral reflow.
+  **IT CORRECTED TWO OF MY FIGURES, which is the discipline working for the twelfth time on this
+  branch:** (a) the five stale citations split **2+3** (`:1624` at :465,:476; `:1626` at :466,:486,
+  :495), NOT the `:1624`x4 I handed it; (b) my "same shape as R132" pointer was WRONG — R132 is the
+  single-document-IRI residue; the real match is **R124** (a spec's stated mechanism superseded by the
+  implementation that followed it). It fixed the pointer in the row rather than carrying it forward.
+  Register now **129 rows / 25 closed / 104 open**, next free number **R140**.
+LOOP CLOSED. Merging to main (maintainer directive, option 1). Maintainer also directed SKIPPING the
+  42-minute full suite on the grounds the wave is prose-only — backed by measurement (the only
+  non-comment byte in the wave is one rdfs:comment literal; M6 shows the compile membrane never loads
+  etkl-holons.ttl). A targeted run over the modules that PARSE the changed files was substituted.
+  **RESIDUAL, stated plainly: the last full-suite run was at ae5fefd (1 failed, 1334 passed) and the
+  one red it recorded is the one this wave fixed.**
