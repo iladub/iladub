@@ -60,8 +60,18 @@ def test_validate_shapes_false_mints_no_validation_act(tmp_path):
 def test_the_conformance_literal_is_xsd_boolean(tmp_path):
     """O8, mint side (review B6 — the one finding that fails UPWARD). A Literal('false')
     with no datatype makes a REFUSING membrane report Intact, because SPARQL's effective
-    boolean value of a non-empty string is true."""
+    boolean value of a non-empty string is true.
+
+    It also pins the act's OTHER two triples (review round 1, finding 1). The type and the
+    `prov:used` edge were minted by no standing assertion: deleting either line left all six
+    tests green, because the only test that mentioned the type mentioned it NEGATIVELY, and an
+    absent triple satisfies a `not in` just as well as a suppressed one. Both are what Task 3's
+    derivation keys on — `?act a etkl:MembraneValidation … prov:used ?doc` — so an unpinned mint
+    there fails upward exactly the way B6 did: the health triple would simply never be
+    constructed, and nothing would say so."""
     rep = _cheap_document(tmp_path)
+    assert (ACT, RDF.type, ETKL.MembraneValidation) in rep.graph
+    assert list(rep.graph.objects(ACT, PROV.used)) == [_DOC]
     values = list(rep.graph.objects(ACT, SH.conforms))
     assert len(values) == 1, values
     assert values[0].datatype == XSD.boolean, values[0]
@@ -124,7 +134,17 @@ def test_re_entering_the_seam_leaves_exactly_one_conformance_value(tmp_path):
     seam-6 measurement): one added `dec:rationale` on a non-superseded escalated decision, which
     the seam's own re-furnish carries into a second `dec:condition`, which `dec:EventShape`'s
     `sh:maxCount 1` refuses. It is also why the seam had to begin at the furnish and not at the
-    validation — a seam starting at `_validate` cannot be driven by this lever at all."""
+    validation — a seam starting at `_validate` cannot be driven by this lever at all.
+
+    THE LEVER IS `R127`, AND CLOSING `R127` INVALIDATES IT. That a language-tagged second
+    `dec:rationale` — which CLAUDE.md § Serialization explicitly permits — makes every document
+    containing it refuse at document scope is the open defect `R127`, not a property of this
+    test's fixture. holon:05 deliberately leaves it open because this oracle depends on it. When
+    a later loop caps `dec:rationale` or collapses the rationales in `escalation-furnish.rq`,
+    THIS TEST WILL FAIL with `DID NOT RAISE MembraneRefusal` and nothing else will explain why:
+    the fix is then to find another way to make the re-entry's verdict DIFFER from the first
+    pass's, not to delete the test — the invariant it pins (the mint replaces) is untouched by
+    R127's closure."""
     rep = _cheap_document(tmp_path)
     g = rep.graph
     assert [v.toPython() for v in g.objects(ACT, SH.conforms)] == [True]

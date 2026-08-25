@@ -1241,6 +1241,13 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     # does — that tuple is now `legs`, decided by the caller. `validate_shapes` itself is
     # unchanged and stays a separate condition — a caller that asks for no membrane still
     # gets none, and gets no validation act either (spec §4.5, third row).
+    # DELIBERATELY NON-DESTRUCTIVE, and it matters to a caller that re-enters the seam. This
+    # path mints nothing (invariant 2), and it also REMOVES nothing: a graph that already carries
+    # an act from an earlier `validate_shapes=True` pass keeps that act, stale verdict included.
+    # No production caller can reach that state — `compile_document` passes one `validate_shapes`
+    # to one `_seal` — but Task 4 calls `_seal` directly, and "no validation ran" is not the same
+    # claim as "an earlier validation is retracted". Retracting one would be deriving a fact from
+    # the absence of a request (CLAUDE.md §8's never-derive-from-absence), so it is not done here.
     if not validate_shapes:
         return
     conforms, text, refusing = _validate(graph, legs)
