@@ -472,7 +472,9 @@ review fails.**
 5. `etkl:Weakened`'s comment amended, `owl:versionInfo` bumped (§4.6).
 6. `docs/holonic-interaction.md:154-155` — the bullet moves out of *"Planned work"*.
 7. **Full suite green**, run in the repo venv (`.venv/bin/python -m pytest -q`; note
-   `pytest-timeout` is not installed, so `--timeout` is not a valid flag).
+   `pytest-timeout` is not installed, so `--timeout` is not a valid flag). **Baseline measured
+   2026-08-25 before any implementation: `1312 passed, 7 skipped, 1 xfailed` in 2386.82s.** The
+   loop's own run must match or exceed the passed count.
 8. The residues this loop opens are appended to the register, each recording the tally snapshot at
    the moment it was raised — **`(24/116 closed)` as re-counted 2026-08-25**.
 

@@ -329,9 +329,11 @@ and nowhere else, and it has not been reviewed by anyone.
 
 ## Unverified or assumed
 
-- **The full suite was launched and had not finished at stop.** `.venv/bin/python -m pytest -q`,
-  background id `bxxmzm5rc`. **`main`'s green state is STILL unverified** — two sessions running.
-  Note `--timeout` is not available (`pytest-timeout` is not installed).
+- **The full suite is GREEN** — `.venv/bin/python -m pytest -q` on the branch tip (docs-only commits
+  above `main` @ `20a5b0e`): `1312 passed, 7 skipped, 1 xfailed, 10 warnings in 2386.82s (0:39:46)`,
+  exit 0. This is the baseline §8 item 7 measures against, and it ends the two-session gap in which
+  `main`'s green state was unverified. Note `--timeout` is not a valid flag (`pytest-timeout` is not
+  installed), and the 40-minute wall time was inflated by concurrent corpus sweeps.
 - **All three of the previous handoff's blocking measurements are now ANSWERED** — but they raised
   four new unmeasured questions, and these are what the next session must run first:
   1. **What `compile._validate` returns when `_legs_for_document(...)` selects ZERO legs**
