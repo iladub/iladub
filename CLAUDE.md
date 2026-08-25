@@ -379,9 +379,48 @@ The rule this adds:
    Rule 2's "measure the load-bearing claim" extends to the test's **setup**, not only its
    assertion: *can the state this test needs actually be constructed by the code as it stands?*
 
-**Reviewers enforce all five.** A plan containing a function body, an unmeasured load-bearing
-claim, a test that contradicts its own spec's §"what is not done", or a task report without a
-falsification block is a *review failure* — not a style note.
+6. **State each invariant ONCE. A plan that argues the same point in three places is a spec that
+   was not finished.** Added 2026-08-24, from the `the-worktree-that-resolves` whole-branch review,
+   after the plan-ratio finding was deferred three times and then ruled.
+
+   **What was measured** (re-run 2026-08-24 before this rule was written):
+
+   ```
+   $ wc -l docs/superpowers/plans/2026-08-23-the-worktree-that-resolves.md \
+           docs/superpowers/specs/2026-08-23-the-worktree-that-resolves-design.md
+       1212 …/plans/2026-08-23-the-worktree-that-resolves.md
+        368 …/specs/2026-08-23-the-worktree-that-resolves-design.md
+   $ awk '/^```/{f=!f; next} f{n++} END{print n}' …/plans/2026-08-23-the-worktree-that-resolves.md
+        310
+   ```
+
+   3.3 plan lines per spec line, and **902 of the 1212 are prose** — so the defence offered on
+   record, *"the bulk is transcripts plus verbatim tests"*, is **false**. Fenced content is a
+   quarter of the file.
+
+   **What this rule is NOT.** The ratio was ruled **not** a rule-1 violation and **not** a merge
+   blocker, and that ruling stands. Rules 1–5 condemn their counter-example for five *content*
+   defects — a function body, unmeasured claims, a self-contradictory instruction, dead wiring, a
+   test that passed with its subject deleted — **not for length**, and the 1212-line plan carries
+   none of them. **There is no line budget here and none should be added**: a plan that needs
+   1200 measured, non-repeating lines is a plan that needed them.
+
+   **What it IS.** The defect is *restatement*, and it is a spec defect wearing a plan's clothes.
+   When a plan argues the same invariant in the task body, again in its rationale, and again in
+   its review notes, the repetition is the author convincing themself of something the spec left
+   unsettled. The remedy is upstream: settle it in the spec, then **cite** it from the plan —
+   `see spec §4.5` — rather than re-deriving it. The cost is paid by the implementer, in context
+   budget, at the moment they can least afford it (§ Loop & context hygiene).
+
+   **The check, for an author and a reviewer:** pick any invariant the plan asserts and grep the
+   plan for it. More than one *derivation* — as opposed to one derivation plus citations of it —
+   means the spec is the file to fix, not the plan.
+
+**Reviewers enforce all six.** A plan containing a function body, an unmeasured load-bearing
+claim, a test that contradicts its own spec's §"what is not done", a task report without a
+falsification block, or one invariant derived in three places is a *review failure* — not a style
+note. **Rule 6 alone is a spec finding**: the fix goes upstream into the spec, and a reviewer who
+reports it as "the plan is too long" has misread it.
 
 ## Deferred residues — the register
 
