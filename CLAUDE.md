@@ -272,25 +272,42 @@ muddied authorship provenance.)
 - Keep the work domain-neutral in public examples (healthcare, insurance, etc.) — never
   tied to an employer's domain. Personal time, personal resources, no internal data.
 
-## Loop & context hygiene (enforced, 2026-08-09)
+## Loop & context hygiene (enforced 2026-08-09; unit re-ruled 2026-08-26)
 
 **A loop is a session.** Starting a new loop requires a cleared context — not a continuation.
 
-**Never work past 40% of the context window.** Accuracy degrades well before the window is
-full: in the session that produced this rule, 40% was crossed at turn 222 of 763, and the
-later 71% produced five blocked specs while the early part shipped a loop. The fourth spec of
-that day misquoted this repo's own residue register — a fatigue signature, not a knowledge gap.
-
 **Specs are written in the first third of a session or not at all.** A spec drafted late is a
-draft to re-derive, not work to review.
+draft to re-derive, not work to review. **The handoff is written early, while still accurate** —
+never saved for the end.
 
-**The handoff is written at 30%, while still accurate** — never saved for the end.
+**The unit is absolute tokens, never a percentage of the window.** A fraction gets monotonically
+more permissive as windows grow: 40% of 200K and 40% of 1M are not the same claim, and on the 1M
+window this repo runs against, the old 40% rule permitted 400,000 tokens — roughly an order of
+magnitude past where multi-step reasoning is already compromised. Ruled by the maintainer in
+`2b33802` (2026-08-15); that commit message is the record.
 
-Enforced by `scripts/context_budget.py`, wired as a `UserPromptSubmit` hook in
-`.claude/settings.json`: it reads the true per-turn figure the API reports
-(`input + cache_read + cache_creation`) from the session transcript, stays silent below 30%,
-asks for the handoff at 30%, and refuses new design work past 40%. Self-monitoring is the
-thing that fails first, so the harness does it. See R76.
+**The floor is measured on work accumulated ABOVE the session baseline** — `working = tokens −
+baseline` — not on total window occupancy. Gate *originating* work (spec, plan, design, review,
+starting a loop) at **50,000 working tokens** and *executing* work at **150,000**; reading,
+searching, answering and named edits are ungated.
+
+Baseline-relative, because total-window was unsatisfiable here and measurably so: a fresh session
+starts at **46,243 tokens — 92.5% of the 50K floor**, 3 of 482 recorded turns have ever been under
+it, and the override rate sat **flat at 54% for three weeks**. A gate overridden half the time,
+flat, is unsatisfiable by construction rather than flouted. The baseline is not this repo's to cut
+(CLAUDE.md is ~8.9K of that 46K; the rest is harness), so revising the tier was the only remedy
+left. **These floors are asserted, not proven** — `tiers.py` labels the 150K `NO SOURCE` — and the
+ruling makes one falsifiable prediction: *the override rate falls below 54%.* If it stays flat, the
+unit was never the problem. Full evidence, the premise that could sink it, and what is deliberately
+left open: `docs/superpowers/2026-08-26-context-regime-ruling.md`.
+
+**Enforced by plimslop** (github.com/Frosselet/plimslop), installed user-scope, not by anything in
+this repo: it reads the true per-turn figure the API reports (`input + cache_read + cache_creation`),
+warns once per session past the floor, and logs every pre-flight decision — including overrides — to
+a local corpus, because a gate whose circumvention nobody can count is a gate that will be
+circumvented. `scripts/context_budget.py` is the orphaned predecessor: its `UserPromptSubmit`
+registration was **deleted in `2b33802`**, and `.claude/settings.json` has carried no `hooks` key
+since. Self-monitoring is the thing that fails first, so the harness does it. See R76.
 
 ## Plan authoring discipline (enforced, 2026-08-09; rule 5 added 2026-08-11)
 
