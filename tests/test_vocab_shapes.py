@@ -1,6 +1,7 @@
 """Conformance tests for the ET(K)L and dec vocabularies: a worked example
 that CONFORMS and a negative example that must FAIL, for each shape set."""
 import os
+import pytest
 from rdflib import Graph
 from pyshacl import validate
 
@@ -62,5 +63,27 @@ def test_hol_rubber_stamp_rejected():
         [os.path.join(TST, "dec-bad.ttl")],
         os.path.join(SH, "dec-shapes.ttl"),
         [os.path.join(ONT, "dec.ttl")],
+    )
+    assert not c
+
+
+# --- membrane health: the signal minted after validation is governed by SHACL ---
+
+def test_membrane_health_conformant():
+    c, t = _validate(
+        [os.path.join(EX, "membrane-health-conformant.ttl")],
+        os.path.join(SH, "etkl-shapes.ttl"),
+        [os.path.join(ONT, "etkl-holons.ttl")],
+    )
+    assert c, t
+
+
+@pytest.mark.parametrize("bad", ["membrane-health-bad-two-values.ttl",
+                                 "membrane-health-bad-outside-enum.ttl"])
+def test_membrane_health_malformed_rejected(bad):
+    c, _ = _validate(
+        [os.path.join(TST, bad)],
+        os.path.join(SH, "etkl-shapes.ttl"),
+        [os.path.join(ONT, "etkl-holons.ttl")],
     )
     assert not c

@@ -1,0 +1,103 @@
+# membrane-health.rq — a membrane's own health, read off the act that closed it.
+#
+# `_seal` mints an `etkl:MembraneValidation` recording that a validation HAPPENED and what
+# the engine returned (spec 2026-08-25 §4.2). This states what that verdict, together with
+# the propositions still held at the boundary, MEANS about the document holon:
+#   Compromised — a validation act that says the interior did not conform;
+#   Weakened    — it conformed, and a candidate concept is still held at the membrane;
+#   Intact      — it conformed, and nothing is held.
+# `Intact` says NOTHING about how much of the document was read (spec §4.4): a document with
+# escalated bands and zero candidates is correctly Intact. `score` is the other signal.
+#
+# GATE (CLAUDE.md §8): AXIOM, derivation form. Open world, evidence-positive, idempotent. It
+# decides nothing — the conformance judgement was already made by the membrane and recorded
+# at the call site; this states its consequence.
+#
+# ---------------------------------------------------------------------------------------
+# EVIDENCE-POSITIVE, in all three arms (spec §4.3 invariant 1). Each value is derived from a
+# triple that is PRESENT: `Compromised` from an act whose `sh:conforms` is `false`,
+# `Weakened` from a candidate that exists, `Intact` from an act whose `sh:conforms` is
+# `true`. `Intact` is NEVER derived from a violation not being in the graph — inferring from
+# the absence of a violation is precisely what the gate forbids in its own words, and it is
+# why the health is read off an ACT rather than off the graph's quietness.
+#   The same rule is what makes the third row of spec §4.5 a consequence rather than a
+#   special case: with `validate_shapes=False` no act is minted, this WHERE has no support,
+#   and the document carries NO health triple. Absence, never a fourth state.
+#   Pinned by tests/etkl/test_membrane_health.py —
+#   `test_the_three_values_discriminate` (the falsifying oracle: collapse the IF to a
+#   constant and it fails) and `test_a_document_compiled_without_the_membrane_has_no_health`.
+#
+# THE QUERY REFUSES TO GUESS (spec §4.3 invariant 5; review B6). `?conforms = false`, never
+# `!?conforms`: the `!` operator would run SPARQL's effective-boolean-value coercion, under
+# which an untyped `"false"` is TRUE and a REFUSING membrane would report itself Intact — a
+# failure upward, and silent. The `datatype(?conforms) = xsd:boolean` filter closes the same
+# hole from the other side: a slipped datatype yields no health triple AT ALL rather than a
+# wrong one, failing downward into the silence the paragraph above already licenses.
+#   Pinned by `test_a_slipped_datatype_yields_no_health_rather_than_intact`, which asserts
+#   the OUTPUT IS EMPTY for both an untyped and an xsd:string verdict.
+#
+# HOLON-SCOPED CLOSED WORLD (spec §4.3 invariant 2). `?held` uses two negation-flavoured
+# constructs and both are scoped to this one document's holon, which CLAUDE.md §8 names as
+# the closure boundary:
+#   * the `FILTER NOT EXISTS` is scoped to a BOUND `?cand` — it selects between two PRESENT
+#     readings of that candidate (proposed, or reviewed by a promotion decision) and never
+#     derives a fact from an absence in the wider world. Same construct, same classification
+#     and same licence as `escalation-furnish.rq`'s supersession guard.
+#   * the enclosing `EXISTS` closes over the graph it is run on — which is why the site
+#     constraint below is not optional.
+#   The `?pd a iladub:PromotionDecision` type clause STAYS although it is currently
+#   redundant: it is the guard against the IRI collision of spec §2.2.
+#   Pinned by `test_a_reviewed_candidate_no_longer_weakens_the_membrane`, and it is the ONLY
+#   test that can pin it: MEASURED, deleting this `FILTER NOT EXISTS` changes the derived
+#   value on exactly one of four graph states — a candidate that a promotion decision REVIEWS
+#   (Intact as shipped, Weakened without it). Every other state, the whole shipped fixture
+#   corpus included, is blind to it.
+#
+#   SITE CONSTRAINT this places on the caller: run this over ONE DOCUMENT'S GRAPH, never a
+#   union of several. The binding reason is not the closed-world scoping above (true, and
+#   insufficient) but SUBJECT-IRI COLLISION: `_DOC` is one constant IRI shared by every
+#   document (`compile.py:22`), so `?doc` binds to the same subject in every graph and a
+#   union puts two health values on one subject, with nothing at runtime to refuse them —
+#   MEASURED in spec §4.3 invariant 3 (three triples on one `?doc`, `Compromised` AND
+#   `Intact`), not asserted here. `_seal` satisfies the constraint by construction: it runs
+#   over the single graph it was handed.
+#   THE SAME COLLISION IS REACHABLE WITHOUT A UNION, and that one was measured in this loop:
+#   re-entering `_seal` with a DIFFERENT verdict derives a second value onto the same `?doc`.
+#   The site answers it — `document.py` removes the stale value before re-deriving, pinned by
+#   `test_re_entering_the_seam_leaves_exactly_one_health_value` — because a CONSTRUCT cannot
+#   retract, and health is minted after the membrane has run so no shape sees it.
+#
+# IDEMPOTENT, AND IT NEVER READS ITS OWN PRODUCT (spec §4.3 invariant 4). No pattern in the
+# WHERE mentions `etkl:membraneHealth` or `etkl:CompiledDocumentHolon`, so re-running over a
+# graph that already carries the health triple re-derives exactly it, and the derivation
+# stays a pure function of the evidence. Idempotence is structural rather than asserted.
+#   Pinned by `test_health_is_re_derived_not_stored`: strip both constructed triples, re-run,
+#   and the re-derived set equals what was stripped.
+PREFIX etkl:   <https://w3id.org/iladub/etkl#>
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX sh:     <http://www.w3.org/ns/shacl#>
+PREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?doc rdf:type            etkl:CompiledDocumentHolon ;
+       etkl:membraneHealth ?health .
+}
+WHERE {
+  # THE ACT, never the graph's quietness. `prov:used` names the holon that was validated, so
+  # `?doc` is bound from the evidence and never written here.
+  ?act rdf:type      etkl:MembraneValidation ;
+       sh:conforms   ?conforms ;
+       prov:used     ?doc .
+  # refuses to guess — see above
+  FILTER(datatype(?conforms) = xsd:boolean)
+  # a proposition still HELD at this membrane: proposed, and no promotion decision reviews it
+  BIND(EXISTS { ?cand rdf:type iladub:CandidateConcept .
+                FILTER NOT EXISTS { ?pd rdf:type  iladub:PromotionDecision ;
+                                        iladub:reviews ?cand } }
+       AS ?held)
+  # `?conforms = false`, never `!?conforms` — see THE QUERY REFUSES TO GUESS above
+  BIND(IF(?conforms = false,
+          etkl:Compromised,
+          IF(?held, etkl:Weakened, etkl:Intact)) AS ?health)
+}

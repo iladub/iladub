@@ -386,6 +386,150 @@ def test_the_escalation_shape_is_live_and_binds_the_furnished_escalations(corpus
         "no corpus document furnished anything — this pin is vacuous"
 
 
+# ======================================================= THE QUERY-TERM REGISTRY (residue R130)
+#
+# The registry above is keyed by SHAPE, and pronounces a whole shape idle. A `.rq` is not a
+# shape, and the claim this loop needs to pin is finer than "the query is idle":
+# `membrane-health.rq` FIRES on every corpus document and produces a health value — only its
+# PROMOTION CLAUSE is unexercised. So this registry is keyed by (query file, term), which is the
+# honest shape of the claim and is what `unreachable_terms`' own semantics (`:184-187`) already
+# compute. Nothing in the four SHACL-shaped functions (`shapes_graph:143`, `node_shapes:150`,
+# `focus_nodes:154`, `body_terms:166`) is reachable from a standalone `.rq`, and none is used or
+# changed here; `vocabulary_of` (`:178`), `_TERM` (`:63`) and `_PREFIX_NS` (`:58-62`) are reused
+# exactly as they stand.
+#
+# DECLARED LIMITATION — ONE ARM SHIPS, NOT TWO, AND **RESIDUE R130** IS THE ROW THAT SAYS SO.
+# The shape registry has a forward arm as well (`test_every_idle_shape_is_registered`, `:325`),
+# and a forward arm needs a POPULATION: `wired_shape_files` (`:133-140`) reads it from the
+# compile membrane rather than restating it. There is no membrane to read a `.rq` population
+# from — every call site names its own file. MEASURED 2026-08-25 over the 29 `.rq` files
+# mentioned anywhere in `src/**.py` (comments and docstrings included), less the three named
+# only by `federate.py`: **164** (query, term) pairs come back unreachable, and **162 of them
+# are a CATEGORY ERROR rather than vacuity** — those queries run over transient
+# `urn:iladub:evidence:` graphs built per band / per pair / per recipe, never over the graph
+# `compile_document` returns. Registering them would record CONFORMANCE as VACUITY, which is
+# the failure this module's own docstring exists to prevent. So the forward arm does NOT ship,
+# and R130 carries the measurement, the commands that produced it, and what would close it.
+#
+# What DOES ship is the half that needs no population ENUMERATOR. Its ROWS are hand-typed, so
+# nothing has to enumerate the `.rq` files — exactly as `test_no_registered_shape_has_gone_live`
+# (`:337`) keys off the registry's own hand-typed rows. Be precise about what that does and does
+# not claim (MEASURED 2026-08-25, and an earlier wording here overstated it): both reverse arms
+# DO consume the corpus graphs, and the shape one additionally calls `shapes_graph()` ->
+# `wired_shape_files()` (`:133-140`) to look its rows' shapes up. What neither arm needs is an
+# enumerator of the population being REGISTERED — and that is the thing there is no membrane to
+# read a `.rq` population from. Every row below names a term of a query MEASURED to run
+# over the compiled document graph (`document.py:1324`), so no row here can be a category
+# error, and both registered terms sit in positions `vocabulary_of` can see (one an `rdf:type`
+# object, one a predicate). The arm fails the day a proposer is wired into the corpus sweep and
+# the promotion clause goes live — forcing DE-REGISTRATION rather than leaving the residue to a
+# human's memory. R106's row says "the rule that catches it is prose"; this is the half of the
+# instrument that stops it being the second instance.
+
+QUERIES_DIR = os.path.join(ROOT, "vocab", "queries")
+
+QUERY_VACUITY_REGISTRY = {
+    ("membrane-health.rq", ILADUB.PromotionDecision): (
+        "the promotion clause's type guard, `?pd rdf:type iladub:PromotionDecision`. Measured "
+        "2026-08-25 on all 7 corpus documents: absent from EVERY position — subject, predicate "
+        "and object — of every compiled graph, so `vocabulary_of` and an all-positions "
+        "criterion agree and this is not an artifact of the criterion's blind spot. NOT dead "
+        "code: `test_membrane_health.py::test_a_promoted_candidate_does_not_weaken_a_document` "
+        "(O3) reaches this clause through a real `compile_document` of the caption-wrap fixture "
+        "with a proposer wired. Unexercised by the CORPUS sweep, live on a real path — which is "
+        "why this is a registration and not a deletion."),
+    ("membrane-health.rq", ILADUB.reviews): (
+        "the promotion clause's discriminator, `?pd iladub:reviews ?cand`, negated inside the "
+        "`FILTER NOT EXISTS` that separates a HELD candidate from a reviewed one. Measured with "
+        "the row above and under the same conditions: absent from every position of all 7 "
+        "compiled graphs. Its counterpart `iladub:CandidateConcept` IS present, on 3 of the 7 "
+        "(apple, bfs, who-wfa) — so half the clause is exercised by the corpus and half is not, "
+        "and that asymmetry is what this pair of rows records."),
+}
+
+
+def strip_rq_comments(text):
+    """A `.rq`'s prose header removed, leaving the query. MANDATORY, not tidiness.
+
+    MEASURED 2026-08-25: 10 of the 46 files in `vocab/queries/` name terms in their `#` headers
+    that their query bodies do not — `escalation-furnish.rq` adds `dec:EscalationShape` and
+    `risk:Severity` — and over the 29-file population leaving the headers in inflates the
+    unreachable count from 164 to 173. A registry built on unstripped text would register nine
+    terms no query ever asks for.
+
+    A scanner rather than a regex because `#` is not always a comment: it opens the local part
+    of every full IRI a `.rq` declares (`<https://w3id.org/iladub#reviews>`), and may appear
+    inside a string literal.
+    """
+    out = []
+    for line in text.splitlines():
+        i, in_iri, in_str, quote, cut = 0, False, False, "", None
+        while i < len(line):
+            c = line[i]
+            if in_str:
+                if c == "\\":
+                    i += 2
+                    continue
+                if c == quote:
+                    in_str = False
+            elif in_iri:
+                if c == ">":
+                    in_iri = False
+            elif c == "<":
+                in_iri = True
+            elif c in "\"'":
+                in_str, quote = True, c
+            elif c == "#":
+                cut = i
+                break
+            i += 1
+        out.append(line if cut is None else line[:cut])
+    return "\n".join(out)
+
+
+def rq_terms(filename):
+    """Every prefixed term named in a query's BODY.
+
+    `body_terms` (`:166`) for a file that carries its own text instead of reaching it through
+    `sh:sparql`/`sh:select`. Same `_TERM`, same `_PREFIX_NS`, same expansion idiom (`:173-174`).
+    """
+    with open(os.path.join(QUERIES_DIR, filename), encoding="utf-8") as f:
+        body = strip_rq_comments(f.read())
+    return {URIRef(_PREFIX_NS[pfx] + local) for pfx, local in _TERM.findall(body)}
+
+
+@pytest.mark.corpus
+def test_no_registered_query_term_has_gone_live(corpus_graphs):
+    """The reverse arm for `.rq` bodies — R130's shipped half, and the point of the exercise.
+
+    TWO assertions, because either alone lets the registry rot:
+
+      1. THE ROW'S SUBJECT STILL EXISTS. A row naming a term its query no longer contains is
+         bookkeeping about nothing — and it is also how this residue gets closed by DELETION
+         (someone drops the promotion clause) rather than by the corpus growing into it. The
+         shape registry needs a separate test for this (`:352`) because its rows are keyed by a
+         shape it must look up; here the query text is the key's other half, so it belongs in
+         the arm.
+      2. THE ARM PROPER. A registered term that has become reachable on ANY corpus document
+         must be de-registered and its residue closed. Reachability is `vocabulary_of` over the
+         subclass-closed compile graph, exactly as `unreachable_terms` (`:184-187`) computes it,
+         and "live on any document" mirrors `idle_shapes`' corpus-wide reading (`:190-209`).
+    """
+    live = {}
+    for (fname, term), _why in QUERY_VACUITY_REGISTRY.items():
+        assert term in rq_terms(fname), (
+            f"{fname} no longer names {term} in its query body — the clause was removed, so "
+            f"delete this row and close its residue rather than leave it pinning nothing")
+        on = sorted(doc for doc, g in corpus_graphs.items() if term in vocabulary_of(g))
+        if on:
+            live[(fname, term)] = on
+    assert not live, (
+        "registered as unreachable but now LIVE on the corpus — delete the row and, if it "
+        "earned one, close its residue:\n"
+        + "\n".join(f"  {f} — {t} is reachable on {', '.join(docs)}"
+                    for (f, t), docs in sorted(live.items(), key=str)))
+
+
 # ==================================================================== T5.1 / O2, offline
 
 

@@ -416,10 +416,39 @@ The rule this adds:
    plan for it. More than one *derivation* — as opposed to one derivation plus citations of it —
    means the spec is the file to fix, not the plan.
 
-**Reviewers enforce all six.** A plan containing a function body, an unmeasured load-bearing
+7. **A same-file citation pointing DOWNWARD is invalidated by the edit that corrects it. Measuring
+   before you write is not enough for this class — re-measure AFTER.** Added 2026-08-25, from
+   `holon:05`'s final fix wave, which committed this failure *while correcting stale citations*.
+
+   Rule 2 requires every load-bearing claim about existing code to be measured and to carry its
+   measurement inline. That is necessary and, here alone, **not sufficient**. A comment citing line
+   numbers *below its own position in the same file* can be falsified by the act of editing that
+   comment: add one line and every cited number shifts by one, so the correction ships already stale
+   — measured honestly, and wrong. The measurement was true when taken and was falsified by writing
+   it down.
+
+   **What was measured.** The wave's first edit to `src/iladub/etkl/document.py:1204-1207` — the
+   comment naming the only two writers of `dec:supersedes` — added a line while correcting
+   `:1486`/`:1690` to `:1536`/`:1740`. Both targets sit *below* the comment, so the write moved them
+   to `:1537`/`:1741`. It was caught by re-measuring **after** the edit and repaired by reflowing
+   three comment lines into three, line-neutral. The failed attempt never reached a commit, so
+   **`R139` is its only record** — read that row for the full evidence.
+
+   **The remedy, in order of preference.** Cite a **symbol** rather than a line for a downward
+   same-file reference — that removes the hazard instead of guarding it. Failing that, keep the edit
+   **line-neutral** and say so, and why, in the commit message. Either way, **re-measure after the
+   edit, not only before.**
+
+   **The check, for an author and a reviewer:** for every `file:line` a comment carries, ask whether
+   the target is in *this* file and *below* this comment. If it is, the diff that changed the comment
+   is the diff it must be re-measured against. A citation into another file is safe to
+   measure-then-write; this one is not. **Nothing in the suite checks this** — `R139` stays open on
+   its instrument half for that reason.
+
+**Reviewers enforce all seven.** A plan containing a function body, an unmeasured load-bearing
 claim, a test that contradicts its own spec's §"what is not done", a task report without a
-falsification block, or one invariant derived in three places is a *review failure* — not a style
-note. **Rule 6 alone is a spec finding**: the fix goes upstream into the spec, and a reviewer who
+falsification block, one invariant derived in three places, or a downward same-file citation not
+re-measured after the edit that touched it, is a *review failure* — not a style note. **Rule 6 alone is a spec finding**: the fix goes upstream into the spec, and a reviewer who
 reports it as "the plan is too long" has misread it.
 
 ## Deferred residues — the register

@@ -64,3 +64,24 @@ etkl:DocumentProjectionShape a sh:NodeShape ;
             }
         """ ;
     ] .
+
+#################################################################
+#  Membrane health's own shape (holon:05, spec 2026-08-25 §4.8, B7).
+#  Deliberately in THIS file: it is the one shape file the compile
+#  membrane does not load (src/iladub/etkl/compile.py's _TAB_SHAPE_FILES
+#  / _DEC_SHAPE_FILES, src/iladub/feed.py's _GROUND_SHAPE_FILES,
+#  src/iladub/etkl/tiling.py's tab-shapes/tab-physical-shapes — none
+#  name etkl-shapes.ttl), so the shape inherits that non-loading and
+#  spec §2.1's safety argument is untouched. Validated in the test
+#  only, never wired in: wiring it would re-open §2.1 and be vacuous,
+#  since health does not exist yet when the compile membrane validates.
+#  `owl:FunctionalProperty` is rejected, not merely unused: inference
+#  is off (membrane.py:124-125) so it would do nothing, and under a
+#  reasoner it would entail owl:sameAs between two health values
+#  rather than refuse them.
+#################################################################
+
+etkl:MembraneHealthShape a sh:NodeShape ;
+    sh:targetClass etkl:CompiledDocumentHolon ;
+    sh:property [ sh:path etkl:membraneHealth ; sh:maxCount 1 ;
+                  sh:in ( etkl:Intact etkl:Weakened etkl:Compromised ) ] .

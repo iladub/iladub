@@ -77,9 +77,24 @@ this register is deliberately the kind that does not let the distinction flatter
 
 ```
 $ awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c
-  24  closed
-  92  open
+  25  closed
+ 102  open
 ```
+
+> **UPDATED 2026-08-25** (loop `the-membrane-reports-its-health`, Task 7), by re-running the command
+> above rather than by arithmetic on the sentence. **127 rows, 25 closed, 102 open.** The loop closed
+> ~~R126~~ (Tasks 1+3 gave the `etkl` doc-holon fabric its first instance datum) and raised eleven:
+> R130 in Task 6, and R127, R128, R129, R131, R132, R133, R134, R135, R136, R137 here. **1 closed /
+> 11 raised is the honest reading**, and the composition is worth stating because the closed-fraction
+> cannot see it. **Seven were named in the spec BEFORE the loop started** (§9's *"what this loop does
+> NOT do"* and §11) — R127–R129 and R131–R134 — so they are declared scope boundaries, not leaks.
+> **Four the loop's own instruments produced, and those are the ones worth reading:** R130, when Task
+> 6's enumerator measured 164 unreachable pairs and refuted its own tripwire's premise; R135, when
+> M19's ablation refuted an edge M17 had just forced this task to assert; and R136 + R137, which came
+> out of Task 7's **falsification round** — the deliberate attempt to break its own record and see
+> what caught it. Two things did not: a met criterion may cite *"Planned work (not done yet)"* as its
+> source (R136), and this register has no integrity check of its own (R137). That fourth kind is
+> [[R120]]'s class — a loop refuting itself — and it is the only kind a loop can raise about itself.
 
 > ⚠️ **CORRECTED 2026-08-21** (task 6). This line read *"As of 2026-08-20: 94 rows, 21 closed, 73
 > open"* and was stale by two rows: R105 and R106 were appended on 2026-08-21 without it being
@@ -232,4 +247,17 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R123 | open | A declared `prog:oracleArtifact` that is a Python MODULE is real consumption §4.5 refuses to score (it raises) — and Task 4's "zero are `.py`" census is REFUTED: **2 of the 29 are**, `tests/etkl/fixtures.py` (`tab:06`) and `tests/etkl/test_vacuity_registry.py` (`tab:10`) |
 | R124 | open | Spec §4.4's stated mechanism (a pre-empted deletion) is superseded by the shipped code's ordering — `_materialise` runs BEFORE `_ablate`'s unlink loop, so no false green from pre-emption is possible; the real hazard is a gitignored artifact smuggled past the committed-tree check |
 | R125 | open | Pre-existing GC2 exposure: no `sh:pattern` constrains a `prog:oracleArtifact` path, so a declared `../../x` or absolute path would let `_ablate`'s `unlink()` mutate outside the worktree; `_scores`' bare substring containment is also unanchored on separators |
-| R126 | open | The whole `etkl` doc-holon fabric is declared vocabulary with ZERO instance data — 0 of 326 triples have the document URI as a subject at either compile scope, and 0 of the 11 `rdf:type` values are `etkl:`, so `etkl:membraneHealth`'s declared `rdfs:domain` is a class nothing instantiates |
+| R126 | closed | CLOSED 2026-08-25 by `holon:05` (`the-membrane-reports-its-health`, Tasks 1+3), on the row's OWN vehicle: `compile_document(simple_table_pdf)` now emits **331** triples of which **2** have `_DOC` as subject (`a etkl:CompiledDocumentHolon`, `etkl:membraneHealth etkl:Intact`), and **2 of 13** `rdf:type` values are `etkl:`. `etkl:CompiledDocumentHolon ⊑ etkl:DocumentHolon`, so the property's `rdfs:domain` is instantiated. **Page scope is unchanged (0 of 326) and that is deliberate** — see the row. Full evidence in `residues-closed.md` |
+| R127 | open | `dec:rationale` has no cardinality cap while `dec:EventShape` caps `dec:condition` at 1, so a second (e.g. language-tagged) rationale — which CLAUDE.md explicitly permits — makes every document containing that escalation refuse at document scope. **Left open deliberately: it is the only measured lever into a document-scope refusal and FOUR shipped tests ride it. Closing it requires re-homing them in the same act** |
+| R128 | open | `dec:supersedes` is constrained by nothing — `git grep -n "supersedes" -- vocab/shapes/` exits 1 — so a malformed supersession cannot refuse at any membrane, while withdrawal, section repair and adoption are all load-bearing on it |
+| R129 | open | A non-IRI `suggester_iri` CRASHES the membrane rather than refusing: `membrane.py:348` dies with a raw serialization `Exception`, which is neither a membrane verdict nor catchable as one |
+| R130 | open | `holon:05` §4.9's `(query, term)` registry ships its REVERSE arm only — the FORWARD arm ("every idle query is registered") has no population enumerator, because over the 29 `.rq` files mentioned in `src/**.py` the criterion yields **164** unreachable pairs of which **162 are a category error** (the query runs over a transient `urn:iladub:evidence:` graph, never the compiled one). Numbered R130, not the ruled R128 — see the row |
+| R131 | open | A PAGE-scope refusal preempts the document-scope one: `compile.py:1173` raises a bare `AssertionError` before `_seal` ever runs, so `Compromised` reports document-scope refusals ONLY and a page-level violation aborts the document with no health signal at all |
+| R132 | open | Every compiled document shares ONE document IRI — `_DOC` is a module constant (`compile.py:22`) and `compile_document` takes no `doc_uri`, so the health subject is the same node for every document and carries no link to the `…/doc/p{n}` URIs holding all the content. **6 non-doc files hardcode the literal, not the spec's 5** |
+| R133 | open | `_validate(graph, legs=())` raises `IndexError: tuple index out of range` at `compile.py:523` — unreachable today because one total function supplies every legs tuple, but the membrane's own entry point crashes rather than refusing or conforming |
+| R134 | open | The grounding portal has no health signal: `src/iladub/feed.py:642-643` guards a different graph behind a different boundary with a bare `assert` that `python -O` erases, and `etkl:GroundingPortal` is instantiated NOWHERE in `*.py`/`*.rq`. `holon:06` territory |
+| R135 | open | Nothing checks that an `etkl:` term a RUNTIME artifact names is DECLARED anywhere — `membrane-health.rq` BINDs `etkl:Intact`/`Weakened`/`Compromised` as bare IRIs, so M19 arm 1 refuted `holon:05 → holon:01` on 2026-08-25 (deleting `etkl-holons.ttl` leaves the oracle green). Same CLASS as R117, different artifact: R117 is about `iladub-hga-align.ttl`'s subclass axioms, this is about a `.rq` |
+| R136 | open | A criterion can be `prog:met true` while its own `prog:source` points into *"Planned work (not done yet)"*, and NOTHING refuses it. M10 checks only that the `<path>:<line>` RESOLVES, never what the line says — measured by reverting this loop's own doc move and finding `tests/test_arc_manifest.py` + `tests/test_doc_governance.py` green at **31 passed** (two modules, NOT the full suite; see the row) |
+| R137 | open | The residue register has NO integrity check: deleting an index row outright, or flipping a closed row back to `open` while its detail row sits in `residues-closed.md`, both leave the suite GREEN. The only guard is M7, and it covers only the 7 rows a `prog:blockedBy` names |
+| R138 | open | Spec §4.5's five `document.py:1624`/`:1626` citations no longer resolve to `_seal` — they land in the unrelated page-scope-adoption comment at `:1609-1636`, drift inflicted by the extraction that followed the spec |
+| R139 | open | A same-file citation pointing DOWNWARD is falsified by the very edit correcting it — the `holon:05` fix wave's first attempt shifted its own cited line numbers before the reflow was made line-neutral; "measure before writing" does not guard this class. **PARTIAL 2026-08-25: the convention half is now CLAUDE.md plan-rule 7; the row stays OPEN on its instrument half — nothing machine-checks it** |

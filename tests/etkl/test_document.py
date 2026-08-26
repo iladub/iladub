@@ -1,8 +1,15 @@
 """Loop M — the document driver (spec 2026-08-02 §3b): case-1 independence and
 the DocumentReport contract. The case-2 stitching proof lives in
 tests/test_corpus_stem.py against the real specimen."""
+from rdflib import Namespace, RDF, URIRef
+
+from iladub.etkl.compile import _DOC
 from iladub.etkl.document import compile_document
 from tests.etkl.fixtures import two_page_unrelated_pdf
+
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
+# the document seal's act — a function of the document URI (`document.py`'s `_seal`)
+_ACT = URIRef(f"{_DOC}#membrane-validation")
 
 
 def test_case1_unrelated_pages_never_stitch(tmp_path):
@@ -434,5 +441,18 @@ def test_single_page_document_matches_compile_tables(tmp_path):
     doc = compile_document(pdf)
     assert len(doc.pages) == 1
     assert doc.score == single.score
-    # EXACT, not >=: page-scoping renames URIs, it must not add or lose a triple (measured 175==175)
-    assert len(doc.graph) == len(single.graph)
+    # EXACT, not >=: page-scoping renames URIs, it must not add or lose a triple (measured
+    # 175==175). Since holon:05 the DOCUMENT SEAL mints five triples for which page compile has
+    # no analogue at all, so they are ENUMERATED and subtracted rather than the equality being
+    # relaxed to `>=` — which would stop pinning the thing this test exists for.
+    #   MEASURED (326 vs 331): three from the validation act (spec 2026-08-25 §4.2, Task 2 —
+    #   `a etkl:MembraneValidation`, `prov:used`, `sh:conforms`; this fixture conforms and
+    #   refuses no leg, so there is no `etkl:refusingLeg`) and two from the health derivation
+    #   (§4.3, Task 3 — `a etkl:CompiledDocumentHolon` and `etkl:membraneHealth etkl:Intact`;
+    #   `Intact` and not `Weakened` because this fixture holds no candidate at all, §4.4).
+    # The +3 half — the act of §4.2 — was already failing here before §4.3 was wired at all.
+    seal = set(doc.graph.triples((_ACT, None, None))) | \
+        set(doc.graph.triples((_DOC, ETKL.membraneHealth, None))) | \
+        set(doc.graph.triples((_DOC, RDF.type, ETKL.CompiledDocumentHolon)))
+    assert len(seal) == 5, sorted(seal)
+    assert len(doc.graph) - len(seal) == len(single.graph)

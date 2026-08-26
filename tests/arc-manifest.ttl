@@ -342,20 +342,63 @@ prog:criterion:holon:04 a prog:Criterion ;
     prog:oracleTest "tests/test_hga_alignment.py::test_governed_grounding_conformant" ;
     prog:oracleTest "tests/test_hga_alignment.py::test_ungoverned_grounding_rejected" .
 
-# `met false` MEASURED 2026-08-20, not read off the "not done yet" heading:
+# `met true` MEASURED 2026-08-25 (loop `the-membrane-reports-its-health`, Task 7). The block
+# this replaces recorded `met false` on 2026-08-20 with two greps; BOTH ARE RE-RUN HERE, and
+# both now answer the other way — the same commands, so the flip is checkable by eye:
 #   $ grep -rn "membraneHealth\|MembraneHealth" src/ --include='*.py' | grep -v __pycache__
-#     (no output — nothing in the compiler computes it)
+#     src/iladub/etkl/document.py:135   (the derivation seam, named beside the furnish)
+#     src/iladub/etkl/document.py:1323  (`graph.remove((_DOC, ETKL.membraneHealth, None))`)
 #   $ grep -rln "membraneHealth" --include='*.ttl' --include='*.py' --include='*.rq' .
-#     tests/arc-m3-met-before-declared-leak.ttl        (a task-1 negative fixture)
-#     vocab/ontology/etkl-holons.ttl                   (the VOCABULARY declaring the term)
-# The term is declared and nothing derives it. prog:oracleTest below is a TARGET.
+#     was 2 files (a negative fixture + the vocabulary); is now 12, of which the load-bearing
+#     three are vocab/queries/membrane-health.rq (the DERIVATION), vocab/shapes/etkl-shapes.ttl
+#     (etkl:MembraneHealthShape) and src/iladub/etkl/document.py (the wiring).
+# So the 2026-08-20 reading — "the term is declared and nothing derives it" — is FALSIFIED, and
+# `prog:oracleTest` is no longer a TARGET:
+#   $ ./.venv/bin/python -m pytest --collect-only -q \
+#         tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health
+#     tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health
+#     1 test collected in 0.88s
+#
+# metOn 2026-08-25 = the day the derivation and its pre-declared oracle both landed, in ONE
+# commit — not the day the vocabulary was declared:
+#   $ git log --diff-filter=A --format='%h %ad %s' --date=short -- vocab/queries/membrane-health.rq
+#     d3fd206 2026-08-25 feat(etkl): derive membrane health from the validation act and held propositions
+#   $ git log -S"def test_compiled_document_reports_membrane_health" --format='%h %ad' --date=short
+#     d3fd206 2026-08-25   (the test body)
+#     ae75da7 2026-08-25   (the PLAN naming it — a target, not an oracle)
+# declaredOn 2026-06-23 < metOn 2026-08-25, so `prog:retrospective` is FALSE and stays false:
+# nothing was grandfathered here, the declaring bullet predates the artifacts by nine weeks.
+# (Contrast holon:01 above, retrospective TRUE, whose bullet and artifact landed the same day.)
+#
+# `prog:oracleArtifact` is NEW — this criterion has never carried one, which is half of why the
+# `holon:05 -> holon:01` edge at the foot of this file failed A2. See that edge's own note.
+#
+# THE `prog:statement` WAS AMENDED IN THE SAME COMMIT THAT FLIPPED `prog:met`, AND THAT IS THE
+# ONE EDIT HERE A READER SHOULD DISTRUST — it is indistinguishable from moving the goalposts
+# unless the reason is on the record, so here it is. The old statement ended *"from validation
+# results"*. MEASURED against what shipped: validation results are only ONE of the two inputs.
+#   $ sed -n '88,102p' vocab/queries/membrane-health.rq    (the derivation's own two clauses)
+#     :88-93  reads the etkl:MembraneValidation act's sh:conforms — the validation result;
+#     :94-97  BINDs ?held from an iladub:CandidateConcept that NO iladub:reviews admits — a
+#             proposition still at the boundary, which no validation result mentions at all;
+#     :100-102 Compromised from ?conforms = false, else Weakened if ?held, else Intact.
+# A statement excluding half the design would have made this criterion met by an artifact that
+# does not answer it. The wording is carried IDENTICALLY into the three other places that state
+# it (spec §4.6's four-artifact set): etkl:MembraneHealth's and etkl:Weakened's rdfs:comment in
+# vocab/ontology/etkl-holons.ttl:77,82, and docs/holonic-interaction.md:157-161 below.
+#
+# `prog:source` MOVED, and the pointer moved with it: the bullet it names left "Planned work
+# (not done yet)" for "What is built" in the same commit (docs/holonic-interaction.md:157-161,
+# re-measured after the edit — it was :160-161 while it sat under the other heading).
 prog:criterion:holon:05 a prog:Criterion ;
     prog:ofRung "holon" ;
-    prog:statement "A membrane-health check that computes and reports a compiled document's cleanliness (etkl:membraneHealth → Intact / Weakened / Compromised) from validation results." ;
-    prog:source "docs/holonic-interaction.md:160-161" ;
+    prog:statement "A membrane-health check that computes and reports a compiled document's cleanliness (etkl:membraneHealth → Intact / Weakened / Compromised) from the membrane's own validation act and the propositions still HELD at that boundary." ;
+    prog:source "docs/holonic-interaction.md:157-161" ;
     prog:declaredOn "2026-06-23"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-08-25"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/queries/membrane-health.rq" ;
     prog:oracleTest "tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health" .
 
 # `met false` MEASURED 2026-08-20:
@@ -367,10 +410,30 @@ prog:criterion:holon:05 a prog:Criterion ;
 # The shipped example (holon-grounding-conformant.ttl) types a CandidateConcept, a
 # PromotionDecision, a GroundingRecord, a Suggester and a SourceRegion — the
 # grounding-governance crossing only, exactly as the bullet says. prog:oracleTest is a TARGET.
+#
+# `prog:source` RE-POINTED 2026-08-25 by the same commit that flipped holon:05: that criterion's
+# bullet moved out of "Planned work (not done yet)" into "What is built", which pushed THIS
+# bullet down two lines. Was :162-163; re-measured AFTER the edit with
+#   $ awk 'NR>=163 && NR<=166 {printf "%d: %s\n", NR, $0}' docs/holonic-interaction.md
+#     163: ## Planned work (not done yet)
+#     164:
+#     165: - A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
+#     166:   (the current example covers the grounding-governance crossing only).
+# M10 would NOT have caught the stale pointer — :162-163 is still IN RANGE, it just names the
+# wrong lines — so it is corrected by hand here. That is R105's defect class exactly.
+#
+# THIS NOTE SITS ABOVE THE BLOCK, NOT INSIDE IT, AND THAT IS LOAD-BEARING. It was first written
+# between `prog:statement` and `prog:source`, and scripts/cockpit.py's regex reader silently
+# stopped counting holon:06: `_criteria()` walks a block to the first line ENDING IN `.`
+# (cockpit.py:196-227), a comment sentence ends in one, and the block terminated before
+# `prog:met false` was reached. MEASURED — the pin caught it, which is what the pin is for:
+#   $ ./.venv/bin/python -m pytest -q tests/test_cockpit.py
+#     the regex reader and rdflib disagree about the arc … ('holon', 5, 5) != ('holon', 5, 6)
+# Every MEASURED comment in this file already sits above its subject. Keep it that way.
 prog:criterion:holon:06 a prog:Criterion ;
     prog:ofRung "holon" ;
     prog:statement "A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only)." ;
-    prog:source "docs/holonic-interaction.md:162-163" ;
+    prog:source "docs/holonic-interaction.md:165-166" ;
     prog:declaredOn "2026-06-23"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -1280,6 +1343,53 @@ prog:criterion:holon:03 prog:dependsOn prog:criterion:holon:01 .
 prog:criterion:holon:04 prog:dependsOn prog:criterion:holon:01 .
 prog:criterion:dec:16   prog:dependsOn prog:criterion:holon:01 .
 
+# HOLON:05 -> HOLON:01 WAS A PROPOSITION UNTIL 2026-08-25, AND THE MEMBRANE FORCED THIS EDIT.
+# The loop that flipped holon:05 to met intended to leave the edge alone (its spec §9: "it does
+# not score the holon:05 -> holon:01 proposed edge ... note it; do not act on it"). THAT IS NOT
+# AVAILABLE, and it is M17 — the forcing function — that makes it unavailable. MEASURED, at the
+# moment the flip landed and before this edge was touched:
+#   $ ./.venv/bin/python -m pytest -q tests/test_arc_manifest.py
+#     FAILED test_a_rung_with_no_criteria_conforms_and_is_not_a_refusal
+#     Focus Node: prog:criterion:holon:05
+#     M17: a proposition may not hide a groundable edge — this prog:proposedDependsOn satisfies
+#     A1, A2, A3, A4 and A6, so it must be asserted and let CI's ablation refute the reading if
+#     it was wrong.
+# The old rationale's own words say why: it recorded "fails A1 (holon:05 is unmet) and A2
+# (holon:05 carries no prog:oracleArtifact)" — and the flip repaired BOTH grounds in one act.
+# A1: both ends prog:met true. A2: holon:05 now carries vocab/queries/membrane-health.rq and
+# holon:01 carries vocab/ontology/etkl-holons.ttl. A3: the two oracle tests are disjoint. A4:
+# metOn(holon:01) 2026-06-23 <= metOn(holon:05) 2026-08-25. A6: the two artifact files differ.
+# So the only membrane-legal outcomes were ASSERT or DELETE, and M17's message names the first.
+#
+# THE READING, stated so the ablation could refute it: membrane health is REPORTED in the four
+# terms etkl-holons.ttl declares — etkl:MembraneHealth and Intact/Weakened/Compromised
+# (vocab/ontology/etkl-holons.ttl:75-89) — and vocab/queries/membrane-health.rq BINDs those
+# IRIs as its output. Remove holon:01's artifact and the derivation names classes no ontology
+# declares.
+#
+# A5's TWO-SIDED ABLATION REFUTED IT, 2026-08-25 — THE SECOND EDGE THIS MANIFEST HAS AUTHORED
+# AND M19 HAS KILLED, and the failure mode is identical to holon:02's above:
+#   $ ./.venv/bin/python -c "from rdflib import Graph
+#     from tests.test_arc_ablation import MANIFEST, ablation_refusals
+#     g = Graph().parse(MANIFEST, format='turtle')
+#     [print(r) for r in ablation_refusals(g)]"
+#     M19: arm 1 refutes holon:05 prog:dependsOn holon:01 — with holon:01's artifacts
+#     ['vocab/ontology/etkl-holons.ttl'] removed, every one of holon:05's oracle tests still
+#     passes ({'tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health':
+#     'passed'}), so holon:05 does not consume holon:01
+# So the edge is DELETED, per plan §0/C4 — a refuted edge is never demoted, because M17 (which
+# forced the assertion in the first place) would refuse the demotion. The reading survives only
+# as this comment.
+#
+# WHAT THE REFUTATION FOUND IS A HOLE IN holon:05'S ORACLE, NOT IN THE READING, and it is the
+# same CLASS of hole R117 records for holon:02 in a different artifact (R117 is about
+# iladub-hga-align.ttl's subclass axioms; this is about a `.rq`, so the row does not cover it —
+# it is raised as R135): nothing in the tree checks that an etkl: term a runtime artifact NAMES
+# is DECLARED anywhere. membrane-health.rq BINDs etkl:Intact / Weakened /
+# Compromised as bare IRIs, and rdflib resolves an IRI whether or not an ontology declares it —
+# so deleting the declaring file cannot make the derivation fail. Do not re-author this edge
+# until that hole is closed; then it becomes groundable for a reason that is measured.
+
 # The governed-grounding example is not only an HGA artifact: it types an
 # iladub:CandidateConcept (examples/holon-grounding-conformant.ttl:17) and
 # tests/test_hga_alignment.py:34 validates it against iladub-shapes.ttl as well as
@@ -1325,16 +1435,12 @@ prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:04 .
    rdf:object    prog:criterion:holon:04 ;
    prog:dependencyRationale "reading: dec:16's 'ships a worked example that conforms AND a negative test that must fail' is satisfied by exactly the two files holon:04 declares — examples/holon-grounding-conformant.ttl and tests/holon-grounding-leak.ttl. Ungroundable: fails A3 (both oracle tests shared) and A6 (both example files shared)." .
 
-# The two unmet holon criteria are stated in vocabulary etkl-holons.ttl declares. MEASURED at
-# vocab/ontology/etkl-holons.ttl:62,67,75,86 — CleanDocumentHolon, GroundingPortal,
-# MembraneHealth and the membraneHealth property are all there, and this manifest's holon:05
-# note already records that nothing DERIVES the term.
-prog:criterion:holon:05 prog:proposedDependsOn prog:criterion:holon:01 .
-[] a rdf:Statement ;
-   rdf:subject   prog:criterion:holon:05 ;
-   rdf:predicate prog:proposedDependsOn ;
-   rdf:object    prog:criterion:holon:01 ;
-   prog:dependencyRationale "reading: a membrane-health check reports etkl:membraneHealth -> Intact/Weakened/Compromised, and all four terms are declared in vocab/ontology/etkl-holons.ttl:75-86 and nowhere else in the tree (this manifest's own grep at holon:05). Ungroundable: fails A1 (holon:05 is unmet — there is no green oracle to turn red) and A2 (holon:05 carries no prog:oracleArtifact; its prog:oracleTest is a target that does not exist)." .
+# The ONE unmet holon criterion left in this block is stated in vocabulary etkl-holons.ttl
+# declares. MEASURED at vocab/ontology/etkl-holons.ttl:47,62,67 — DocumentHolon,
+# CleanDocumentHolon and GroundingPortal are all there.
+#
+# holon:05's edge WAS here, with the same shape of rationale, until 2026-08-25. It is not any
+# more, and the reason is recorded in the ASSERTED block above rather than deleted with it.
 
 prog:criterion:holon:06 prog:proposedDependsOn prog:criterion:holon:01 .
 [] a rdf:Statement ;
