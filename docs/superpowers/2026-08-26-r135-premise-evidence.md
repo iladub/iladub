@@ -136,3 +136,16 @@ Declaring set = subjects of the **non-align** `vocab/ontology/*.ttl` files.
 1. `tab:` (116 terms) is entirely clean — including it costs nothing and quadruples coverage.
 2. `docgov:` = `https://w3id.org/iladub/docgov#` is a SECOND owned namespace with no ontology
    file, 12 terms, used by the `docgov-*.rq` queries. `prog:` was not the only one.
+
+## Ruling — five namespaces, CONFIRMED 2026-08-26
+
+The maintainer's first ruling was *"the four owned namespaces (`etkl` `iladub` `dec` `risk`),
+`prog:` explicitly excluded with a recorded reason."* M8 was measured **after** that ruling and
+carried two facts it could not have accounted for: `tab:` is 116 terms and entirely clean, and
+`docgov:` is a **second** namespace with no ontology file.
+
+The amendment — five namespaces in scope, `prog:` and `docgov:` excluded under one reason — was
+put to the maintainer with that evidence and **CONFIRMED on 2026-08-26**.
+
+Recorded here and in spec §4.1. Nowhere else, so it is reversible on a reason.
+Decided against: dropping `tab:`. The day-one failure count is `risk:order` either way.

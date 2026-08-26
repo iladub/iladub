@@ -4,7 +4,7 @@
 **Related, deliberately NOT closed:** `R117` (`residues-open.md:93`) ·
 **Base:** `main` @ `0d82736` · **Branch:** `the-query-names-a-declared-term`
 
-**Doc impact:** `increment` — one new owned property and one new owned class in `etkl.ttl`,
+**Doc impact:** increment — one new owned property and one new owned class in `etkl.ttl`,
 one new shape file, and one repaired declaration in `risk.ttl`. No published assertion is
 contradicted; the increment queues for the next release.
 
@@ -178,9 +178,13 @@ invisible.
 > 116-term population that is **entirely clean**, so including it costs nothing and is the largest
 > single block of coverage; and `prog:` is **not** the only namespace with no ontology file —
 > `docgov:` is a second. Including `tab:` and excluding both empty namespaces under one stated
-> reason is the same ruling applied to the measured facts, and it is recorded here so it can be
-> reversed. **If the maintainer prefers the literal four, drop `tab:` from the list in §4.1 and
-> nothing else in this spec changes** — the day-one failure count is `risk:order` either way.
+> reason is the same ruling applied to the measured facts.
+>
+> **CONFIRMED by the maintainer, 2026-08-26, after the amendment and its evidence were put to them.**
+> Five namespaces is now a taken decision, not this spec's proposal, and re-opening it needs a
+> reason rather than a preference. Recorded here and in the loop's evidence file; nowhere else.
+> For the record of what was decided against: dropping `tab:` would change the list in §4.1 and
+> nothing else in this spec — the day-one failure count is `risk:order` either way.
 
 ### §4.2 What "declared" means
 
