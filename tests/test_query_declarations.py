@@ -23,11 +23,13 @@ restore `"rdfs"` and it goes green.
 from pathlib import Path
 
 from pyshacl import validate
-from rdflib import Graph
+from rdflib import RDF, Graph
 
 from tests.query_terms import (
+    ETKL,
     REPO,
     declaring_graph,
+    evidence_graph,
     extract_named_terms,
     query_files,
 )
@@ -94,6 +96,26 @@ def test_a_query_naming_an_undeclared_term_is_refused():
     # hold. Selectivity is the claim; assert it (G6: substitute the satisfiable form
     # carrying the same force, never weaken).
     assert "etkl#SemanticDataContract" not in report
+
+
+def test_every_authored_query_names_only_declared_terms():
+    """O1 (spec §7) — the instrument, over the whole authored corpus.
+
+    THIS NODE ID IS holon:05'S SECOND prog:oracleTest (Task 4). Ablating
+    vocab/ontology/etkl-holons.ttl must make it FAIL; that failure is what re-authors
+    holon:05 -> holon:01, and M19 arm 1 refutes an edge only when EVERY one of the source's
+    oracle tests passes (tests/test_arc_ablation.py, `ablation_refusals`, arm 1).
+    """
+    conforms, report = _validate(evidence_graph() + declaring_graph())
+    assert conforms, report
+
+
+def test_the_membrane_binds_one_focus_node_per_query_file():
+    """O4 (spec §7) — asserted as a NUMBER, never as "> 0". A shape that binds zero focus
+    nodes is R97/R99's vacuity, and it passes."""
+    data = evidence_graph() + declaring_graph()
+    focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
+    assert len(focus) == len(query_files()) == 46, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

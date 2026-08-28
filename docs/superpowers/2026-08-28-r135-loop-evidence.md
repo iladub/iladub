@@ -259,3 +259,141 @@ $ ./.venv/bin/pytest tests/test_query_declarations.py tests/test_query_terms.py 
 .................                                                        [100%]
 17 passed in 3.21s
 ```
+
+---
+
+## Task 3 — wire the corpus: O1 red, the repair, green
+
+### Step 1 — RED. This is O1 (spec §7), and it is the sentence that makes the loop vertical
+
+The two corpus tests were added to `tests/test_query_declarations.py` against the tree exactly as
+it stood at `b56ceb8`. Verbatim, one violation:
+
+```
+$ ./.venv/bin/pytest tests/test_query_declarations.py -q --durations=5
+E       AssertionError: Validation Report
+E         Conforms: False
+E         Results (1):
+E         Constraint Violation in SPARQLConstraintComponent:
+E         	Severity: sh:Violation
+E         	Source Shape: etkl:QueryArtifactShape
+E         	Focus Node: <urn:iladub:query:vocab/queries/escalation-furnish.rq>
+E         	Message: urn:iladub:query:vocab/queries/escalation-furnish.rq names
+E         	         https://w3id.org/iladub/risk#order, which no owned ontology declares
+1.83s call tests/test_query_declarations.py::test_every_authored_query_names_only_declared_terms
+1 failed, 4 passed in 3.39s
+```
+
+Exactly the one violation the spec (§4.6) and plan §0 predicted, on the file they predicted, for
+the term they predicted — found by the shipped instrument rather than by a prototype. **O4 was
+already green at this step** (46 focus nodes), which is the point of Step 4's second inversion
+below: O4 cannot tell a working membrane from an idle one.
+
+### A plan number that did not hold — 371 evidence triples, not 325 (G6, reported honestly)
+
+Task 3's MEASURED block predicts the shipped `evidence_graph()` emits **325** triples where the
+prototype emitted 317. It emits **371**. Measured, and fully reconciled — there is no defect:
+
+```
+$ ./.venv/bin/python -c "…evidence_graph()…"
+rdf:type triples : 46
+namesTerm triples: 325
+total            : 371 = 46 + 325
+out-of-scope (prog:/docgov:) namesTerm triples: 54
+in-scope namesTerm triples: 271
+```
+
+The plan reached 325 as `317 + 8`, and 325 *is* the true `namesTerm` count — but by coincidence,
+not by that arithmetic. The real decomposition:
+
+* prototype, scoped **inside** the extractor: `46 type + 271 in-scope namesTerm = 317` ✓
+* shipped, scoped **in the shape** (spec §4.3 — the extractor decides nothing): the same 317 plus
+  the **54** `prog:`/`docgov:` `namesTerm` triples the extractor must now emit and the shape must
+  now exclude = **371**.
+
+So the 8 the plan added was a distinct-term delta (9 `prog:` + 12 `docgov:` distinct terms, plan
+§0) used where a per-occurrence delta was needed. The shipped extractor is correct on the number
+the plan actually derived; the total was mislabelled. Recorded because a reviewer checking `325`
+against the tree will find `371` and should not have to re-derive why.
+
+### A wording drift between plan and shipped shape (not a defect)
+
+Task 3's MEASURED block quotes the message as *"which no **non-align** owned ontology declares"*.
+The shape shipped in Task 2 says *"which no owned ontology declares"* — which is what plan §0.1 F1
+itself measured. The prototype's older wording survived into Task 3's block. No test asserts the
+sentence, and the exclusion of align modules is documented where it is enforced
+(`tests/query_terms.py::declaring_files`), so the shipped wording was kept.
+
+### Step 2 — the repair: `risk:order` declared in `vocab/ontology/risk.ttl`
+
+Placed in a section of its own, immediately beside its four uses (`risk.ttl:62,64,66,68`) rather
+than in `Properties — context & sensitivity`; plan Step 2 permits either. `rdfs:domain
+risk:Severity` is measured from those four uses, all `a risk:Severity`, not guessed;
+`rdfs:range xsd:integer` mirrors `dec:order` (`vocab/ontology/dec.ttl:136-138`). The
+`rdfs:comment` is written fresh — `dec:`'s sentence names milestones — and says the thing this
+ontology needs said: an order is a **position, never a magnitude**, so severities may be ordered
+but never summed. `git diff --stat` = 8 insertions, no deletions.
+
+### Step 3 — green
+
+```
+$ ./.venv/bin/pytest tests/test_query_declarations.py tests/test_risk.py \
+                     tests/test_vocab_shapes.py tests/test_source_ownership.py -q --durations=5
+....................                                                     [100%]
+1.78s call tests/test_query_declarations.py::test_every_authored_query_names_only_declared_terms
+0.84s call tests/test_query_declarations.py::test_the_membrane_binds_one_focus_node_per_query_file
+20 passed in 3.87s
+```
+
+### Step 4 — FALSIFICATION (G6), two inversions
+
+**Inversion 1 — the `risk:order` declaration removed again.** O1 returns, with its message:
+
+```
+$ ./.venv/bin/pytest tests/test_query_declarations.py -q
+E         	Focus Node: <urn:iladub:query:vocab/queries/escalation-furnish.rq>
+E         	Message: urn:iladub:query:vocab/queries/escalation-furnish.rq names
+E         	         https://w3id.org/iladub/risk#order, which no owned ontology declares
+1 failed, 4 passed in 3.35s
+```
+
+Restored (`git diff --stat` back to 8 insertions): `5 passed in 3.29s`. **The repair is what makes
+O1 green** — not the extractor's scope, not the shape's namespace filter.
+
+**Inversion 2 — `sh:targetClass etkl:QueryArtifact` deleted from the shape.** The plan predicts O1
+goes green with nothing checked while O4 still passes, and asks for the result reported honestly.
+It does, and the honest result is **stronger than the plan claimed**:
+
+```
+$ ./.venv/bin/pytest tests/test_query_declarations.py -q --no-header -rA
+PASSED  test_every_authored_query_names_only_declared_terms      <- O1, GREEN ON AN IDLE MEMBRANE
+PASSED  test_the_membrane_binds_one_focus_node_per_query_file    <- O4, counts data, not targets
+PASSED  test_the_leak_fixture_is_not_in_the_population
+FAILED  test_a_declared_and_an_undeclared_term_are_told_apart    <- seam-5 fixture
+FAILED  test_a_query_naming_an_undeclared_term_is_refused        <- O5
+2 failed, 3 passed in 2.54s
+```
+
+Restored (empty `git diff`): `5 passed in 2.99s`.
+
+**What this measures.** With no target the shape binds no focus node, validates nothing, and
+conforms — V1's hazard exactly, and **O1 and O4 together cannot see it**. O4 is not a non-idleness
+oracle: it counts `etkl:QueryArtifact` subjects in the *data* graph, which the extractor put there
+and no shape edit can remove. The plan named O5 as the one thing that bites; **two** tests bite —
+O5 *and* the two-term seam-5 fixture — because each carries a negative that a silent membrane
+cannot satisfy. This is the concrete argument for CLAUDE.md's negative-test rule: the corpus test
+that looks like the instrument is the one that cannot police itself.
+
+### Step 5 — the full suite (G1), foreground
+
+```
+$ ./.venv/bin/pytest -q
+1344 passed, 7 skipped, 1 xfailed, 10 warnings in 2480.68s (0:41:20)
+[exited with code 0]
+```
+
+Nothing else in the tree moved: the `risk:order` declaration is additive (8 insertions, no
+deletions), and the two new tests are the only additions to the count. Plan Step 5 says do not
+background this run; the 41-minute wall clock exceeded the 600s tool cap and the harness detached
+it, so it was **blocked on to completion in-turn** rather than left to run unattended — the
+summary line above is from the finished process, not a partial read.

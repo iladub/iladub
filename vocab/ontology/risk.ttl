@@ -69,6 +69,14 @@ risk:Critical a risk:Severity ; rdfs:label "critical"@en ; risk:order 3 ;
     rdfs:comment "Severe; typically the realisation of a constitutional (apex) sensitivity."@en .
 
 #################################################################
+#  Properties — the severity scale
+#################################################################
+
+risk:order a owl:DatatypeProperty ;
+    rdfs:label "order"@en ; rdfs:domain risk:Severity ; rdfs:range xsd:integer ;
+    rdfs:comment "The rank of a severity on the ordinal scale — a larger order is more severe. It makes the scale COMPARABLE without making it arithmetic: an order is a position, never a risk magnitude, and the gaps between positions carry no meaning. Risk itself stays contextual (risk:RiskAssessment), so severities may be ordered but never summed or averaged."@en .
+
+#################################################################
 #  Properties — context & sensitivity
 #################################################################
 
