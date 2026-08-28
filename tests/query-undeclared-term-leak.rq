@@ -1,0 +1,23 @@
+# query-undeclared-term-leak.rq — O5's negative fixture (spec §7; plan Task 2 Step 1).
+#
+# CLAUDE.md § Serialization requires every shape to ship with a worked example that conforms
+# AND a negative test that must fail. This file is the negative side of
+# `vocab/shapes/query-declaration-shapes.ttl`: an authored query that names an owned-namespace
+# term no owned ontology declares.
+#
+# NOT part of the instrument's population. The population glob is `vocab/queries/*.rq`
+# (`tests/query_terms.py:48`); this file lives in `tests/`, and
+# `test_the_leak_fixture_is_not_in_the_population` pins that it stays outside. A fixture that
+# joined the population would turn the suite permanently red and the instrument permanently
+# meaningless (V5's shape, one directory over).
+#
+# It names ONE declared term and ONE undeclared one, so a membrane that refuses everything is
+# distinguishable from a membrane that refuses the right thing.
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?contract WHERE {
+  # declared in vocab/ontology/etkl.ttl — must NOT be refused
+  ?contract rdf:type etkl:SemanticDataContract .
+  # declared nowhere — this is what the membrane must refuse
+  ?contract etkl:NoSuchTermAnywhere ?leak .
+}
