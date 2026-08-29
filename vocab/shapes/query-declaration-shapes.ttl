@@ -1,0 +1,47 @@
+# vocab/shapes/query-declaration-shapes.ttl
+#
+# The declaration membrane (R135; spec §4.4, plan Task 2): an authored SPARQL query may only
+# name a term one of the owned ontologies declares.
+#
+# NEUROSYMBOLIC GATE (CLAUDE.md §8) — AXIOM, CONSTRAINT FORM, CLOSED WORLD. This file
+# VALIDATES what the PROCEDURAL extractor (tests/query_terms.py) asserted; it never derives.
+# The `FILTER NOT EXISTS` is licensed because it is HOLON-SCOPED: the data graph handed to it
+# is exactly the union of the non-align owned ontologies — the vocabulary holon — so "no
+# triple has this term as a subject" is a closed question inside that holon, not an inference
+# from the absence of evidence in an open world. Do NOT build an "undeclared terms" graph from
+# this: deriving `?term a etkl:UndeclaredTerm` from an absence is exactly what §8 forbids.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+
+etkl:QueryArtifactShape a sh:NodeShape ;
+    sh:targetClass etkl:QueryArtifact ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} names {?term}, which no owned ontology declares" ;
+        # SCOPE. The extractor emits EVERY owned-namespace IRI a query names, `prog:` and
+        # `docgov:` included, and decides nothing; the choice of which of them must be
+        # declared is made HERE, visibly and with a date, rather than invisibly in Python.
+        #
+        # `prog:` (https://w3id.org/iladub/progress#, 9 terms named) and `docgov:`
+        # (https://w3id.org/iladub/docgov#, 12 terms named) are excluded 2026-08-26 under one
+        # reason: neither namespace has an ontology file at all, so they are undeclared
+        # VOCABULARIES rather than dangling terms in a declared one, and authoring them is a
+        # different act (spec §4.1). Tracked as a residue, not an omission.
+        #
+        # This is a NAMESPACE list, not a term list — no term is ever typed here (G3 / spec
+        # §3 I4). It is an ORed STRSTARTS rather than VALUES because SHACL forbids VALUES
+        # inside an sh:sparql constraint, MEASURED 2026-08-28 (plan §0.1 F3):
+        #     Validation Failure - A SPARQL Constraint must not contain a VALUES clause.
+        sh:select """
+            SELECT $this ?term WHERE {
+                $this <https://w3id.org/iladub/etkl#namesTerm> ?term .
+                FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub#")
+                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/dec#")
+                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/etkl#")
+                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/risk#")
+                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/tab#") )
+                FILTER NOT EXISTS { ?term ?p ?o }
+            }""" ;
+    ] .

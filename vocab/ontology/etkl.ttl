@@ -170,3 +170,15 @@ etkl:readerScope a dec:Scope ;
     rdfs:label "reader scope"@en ;
     dec:maxSeverity risk:Watch ;
     rdfs:comment "The autonomy scope of the reader: what a compiler reading a document may resolve on its own. Its ceiling is risk:Watch — a reader may note, never adjudicate — so every region it could not read realizes a severity above its own autonomy and must be escalated to a human. ONE severity for every region escalation: 'beyond local autonomy' is what escalation means, so there is no per-case judgement and no tuned constant here. Per-reason severity stays addable later as pure vocabulary data. The ordinal scale itself is risk.ttl's to own and is never restated here."@en .
+
+#################################################################
+#  Query artifacts — the vocabulary an authored query names
+#################################################################
+
+etkl:QueryArtifact a owl:Class ;
+    rdfs:label "Query Artifact"@en ;
+    rdfs:comment "An authored SPARQL query, taken as a subject in its own right so that what it NAMES can be asserted and validated. A query is a first-class artifact of the method — the open-world derivation half of the neurosymbolic gate is written in SPARQL — so the terms it names are part of the vocabulary's surface, and a query naming a term no ontology declares is a dangling edge in that surface, not a private detail of the query."@en .
+
+etkl:namesTerm a owl:ObjectProperty ;
+    rdfs:label "names term"@en ; rdfs:domain etkl:QueryArtifact ;
+    rdfs:comment "An owned-namespace IRI that this query mentions, wherever in the query it occurs. The relation is reported by extraction and carries no judgement: whether naming a given term is acceptable is decided at the membrane (vocab/shapes/query-declaration-shapes.ttl), never by the act of naming it."@en .

@@ -1,0 +1,23 @@
+# query-nested-bind-exists.rq — O3's completeness fixture (spec §7; plan Task 1 Step 1).
+#
+# NOT part of the instrument's population. The population glob is `vocab/queries/*.rq`; this
+# file lives in `tests/`, and `test_the_leak_fixture_is_not_in_the_population` (Task 2) pins
+# that it stays outside.
+#
+# It mirrors the real shape of `vocab/queries/membrane-health.rq`: two owned terms reachable
+# ONLY through `BIND(EXISTS { … FILTER NOT EXISTS { … } })` — the construct spec §2.4 and plan
+# §0.1 F2 both measured as LOST by a naive algebra walk — plus one owned term named in a plain
+# triple pattern, so a walk that reports nothing at all is distinguishable from one that
+# reports only the easy terms.
+PREFIX etkl:   <https://w3id.org/iladub/etkl#>
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?doc ?held WHERE {
+  # named OUTSIDE any nested construct — the easy term
+  ?doc rdf:type etkl:CompiledDocumentHolon .
+  # named INSIDE BIND(EXISTS { … FILTER NOT EXISTS { … } }) — the terms the naive walk loses
+  BIND(EXISTS { ?cand rdf:type iladub:CandidateConcept .
+                FILTER NOT EXISTS { ?pd rdf:type       iladub:PromotionDecision ;
+                                        iladub:reviews ?cand } }
+       AS ?held)
+}
