@@ -50,7 +50,9 @@ def test_every_authored_query_parses():
 
 
 def test_the_population_is_every_file_in_vocab_queries():
-    """The population is enumerated from the directory, never typed (G3). 46 today; this
-    asserts the identity with the glob, not the number, so adding a query does not break it."""
+    """The population is enumerated from the directory, never typed (G3). 47 today; this
+    asserts the identity with the glob first, and the count second as the pin against the
+    glob itself collapsing. RE-MEASURED 2026-08-29: 46 -> 47, the one query this loop's D1
+    derivation adds (`vocabulary-role.rq`)."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 46, len(query_files())
+    assert len(query_files()) == 47, len(query_files())

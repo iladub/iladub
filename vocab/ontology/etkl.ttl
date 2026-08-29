@@ -172,13 +172,17 @@ etkl:readerScope a dec:Scope ;
     rdfs:comment "The autonomy scope of the reader: what a compiler reading a document may resolve on its own. Its ceiling is risk:Watch — a reader may note, never adjudicate — so every region it could not read realizes a severity above its own autonomy and must be escalated to a human. ONE severity for every region escalation: 'beyond local autonomy' is what escalation means, so there is no per-case judgement and no tuned constant here. Per-reason severity stays addable later as pure vocabulary data. The ordinal scale itself is risk.ttl's to own and is never restated here."@en .
 
 #################################################################
-#  Query artifacts — the vocabulary an authored query names
+#  Authored artifacts — the vocabulary an authored artifact names
 #################################################################
 
 etkl:QueryArtifact a owl:Class ;
     rdfs:label "Query Artifact"@en ;
     rdfs:comment "An authored SPARQL query, taken as a subject in its own right so that what it NAMES can be asserted and validated. A query is a first-class artifact of the method — the open-world derivation half of the neurosymbolic gate is written in SPARQL — so the terms it names are part of the vocabulary's surface, and a query naming a term no ontology declares is a dangling edge in that surface, not a private detail of the query."@en .
 
+etkl:VocabularyArtifact a owl:Class ;
+    rdfs:label "Vocabulary Artifact"@en ;
+    rdfs:comment "An authored RDF artifact — an ontology, a shape file, a worked example, a manifest — taken as a subject in its own right so that what it USES AS VOCABULARY can be asserted and validated. Sibling of etkl:QueryArtifact and distinct from it in what licenses the demand: a query is read for every owned IRI it mentions, an RDF artifact for the owned IRIs it puts in a VOCABULARY ROLE (predicate position, or object of a schema predicate). Vocabulary-ness is not a property of a name, a namespace or a file but a role a term occupies in a triple, and a term occupying that role in an authored artifact while no owned ontology declares it is a dangling edge in the vocabulary surface."@en .
+
 etkl:namesTerm a owl:ObjectProperty ;
-    rdfs:label "names term"@en ; rdfs:domain etkl:QueryArtifact ;
-    rdfs:comment "An owned-namespace IRI that this query mentions, wherever in the query it occurs. The relation is reported by extraction and carries no judgement: whether naming a given term is acceptable is decided at the membrane (vocab/shapes/query-declaration-shapes.ttl), never by the act of naming it."@en .
+    rdfs:label "names term"@en ;
+    rdfs:comment "An owned-namespace IRI that this artifact names: for a QueryArtifact, one the query mentions anywhere; for a VocabularyArtifact, one its triples use as vocabulary. The relation is reported by extraction and by open-world derivation, and carries no judgement: whether naming a given term is acceptable is decided at the membrane (vocab/shapes/query-declaration-shapes.ttl), never by the act of naming it. Domain deliberately left undeclared, for the reason tab:aggregates records in tab.ttl: an rdfs:domain naming EITHER artifact class would RDFS-entail every subject of the OTHER usage into a foreign class — a .ttl artifact inferred a QueryArtifact — and trip that class's shape wherever inference=\"rdfs\" is in force."@en .

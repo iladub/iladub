@@ -15,7 +15,7 @@ from tests.artifact_terms import (
     artifact_files,
     artifact_graph_iri,
 )
-from tests.query_terms import OWNED_ROOT, REPO
+from tests.query_terms import ETKL, OWNED_ROOT, REPO
 
 
 def _tracked_ttl() -> list[str]:
@@ -91,3 +91,65 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     assert len(occurrences) == 18
     assert len({str(o) for o in occurrences}) == 7
     assert not any(isinstance(o, URIRef) for o in occurrences)
+
+
+# =========================================================================================
+# D1 — the vocabulary-role derivation (spec §2.1, §4.3). AXIOM, derivation form, open world.
+# Numbers below are spec §2.2/§2.3, re-measured here.
+# =========================================================================================
+
+PROG = "https://w3id.org/iladub/progress#"
+
+
+def _demanded() -> set[str]:
+    from tests.artifact_terms import derive_vocabulary_terms
+    return {str(o) for o in derive_vocabulary_terms().objects(None, ETKL.namesTerm)}
+
+
+def _declared() -> set[str]:
+    from tests.query_terms import declaring_graph
+    return {str(s) for s in declaring_graph().subjects()}
+
+
+def _undeclared_demands() -> set[str]:
+    declared = _declared()
+    return {t for t in _demanded() if t not in declared}
+
+
+def test_the_rule_demands_53_undeclared_terms():
+    """Spec §2.2, asserted as a NUMBER. This count moves only when the tree does."""
+    assert len(_undeclared_demands()) == 53
+
+
+def test_the_prog_vocabulary_is_21_terms():
+    """Spec §2.3 (M3): the role rule reproduces R142's corrected census term-for-term,
+    by a method that shares nothing with the lexical scan that produced it."""
+    assert len({t for t in _undeclared_demands() if t.startswith(PROG)}) == 21
+
+
+def test_the_live_etkl_leak_is_demanded():
+    """Spec §2.4 (M4) — O1's subject. The ontology declares etkl:SemanticDataContract."""
+    assert "https://w3id.org/iladub/etkl#Contract" in _undeclared_demands()
+
+
+def test_an_arc_instance_iri_is_not_demanded():
+    """Spec §2.2. NOTE (plan-rule 5, spec §9): this asserts the term is NOT DEMANDED.
+    It does NOT assert the term 'is an instance' — spec §9 scopes that claim out, and
+    the rule makes no such claim. Do not strengthen this assertion."""
+    assert PROG + "criterion:holon:05" not in _demanded()
+
+
+def test_a_shacl_shape_node_is_not_demanded():
+    """Spec §2.2: no owned IRI is used as a SHACL metaclass, and sh:node with an owned
+    object has zero occurrences — so shape nodes fall out on their own, unfiltered."""
+    assert "https://w3id.org/iladub/docgov#DocumentShape" not in _demanded()
+
+
+def test_every_artifact_is_typed_for_the_membrane():
+    """O4's precondition: the membrane targets etkl:VocabularyArtifact by class."""
+    from rdflib import RDF
+    from tests.artifact_terms import derive_vocabulary_terms
+    g = derive_vocabulary_terms()
+    typed = set(g.subjects(RDF.type, ETKL.VocabularyArtifact))
+    assert len(typed) == len(artifact_files())
+    assert all(isinstance(s, URIRef) for s in typed)

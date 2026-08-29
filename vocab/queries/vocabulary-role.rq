@@ -1,0 +1,58 @@
+# vocab/queries/vocabulary-role.rq
+#
+# D1 — the vocabulary-role derivation (spec §2.1, §4.3, §4.4).
+#
+# NEUROSYMBOLIC GATE (CLAUDE.md §8) — AXIOM, DERIVATION FORM, OPEN WORLD. The rule is
+# POSITIONAL and EVIDENCE-POSITIVE throughout: a term is emitted because a triple SHOWS it
+# occupying a vocabulary role, never because something is absent. There is no NOT EXISTS, no
+# COUNT, no threshold and no tolerance in this file; the closed-world question — "and is it
+# declared?" — belongs to the membrane (vocab/shapes/query-declaration-shapes.ttl), which is
+# where it is asked.
+#
+# THE RULE. An owned IRI occupies a vocabulary role in a graph if either
+#   (a) it appears in the PREDICATE position of any triple; or
+#   (b) it appears in the OBJECT position of a triple whose predicate is one of the sixteen
+#       RDFS/OWL/SHACL predicates listed below.
+#
+# The sixteen predicates are STANDARD VOCABULARY — they are the rule itself, not a list of
+# owned terms under test. No owned term is ever typed in this file (G3), and no local name is
+# ever string-tested. VALUES is used deliberately: SHACL forbids VALUES inside an sh:sparql
+# constraint (MEASURED 2026-08-28, R135 F3), but this is a standalone CONSTRUCT and that
+# restriction does not apply — confirmed by running it.
+#
+# GRAPH ?artifact, not a flat union: role is a PER-GRAPH property (spec §2.1) and provenance
+# to the file must survive into the membrane's failure message (CLAUDE.md §6).
+#
+# © 2026 François Rosselet · CC-BY-4.0
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX sh:   <http://www.w3.org/ns/shacl#>
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+
+CONSTRUCT {
+    ?artifact a etkl:VocabularyArtifact ;
+              etkl:namesTerm ?term .
+}
+WHERE {
+    GRAPH ?artifact {
+        {
+            # (a) predicate position
+            ?s ?term ?o .
+        }
+        UNION
+        {
+            # (b) object of a schema predicate
+            VALUES ?schemaPredicate {
+                rdf:type rdfs:subClassOf rdfs:subPropertyOf rdfs:domain rdfs:range
+                owl:equivalentClass owl:equivalentProperty owl:onProperty
+                owl:someValuesFrom owl:allValuesFrom
+                sh:targetClass sh:path sh:targetSubjectsOf sh:targetObjectsOf
+                sh:class sh:datatype
+            }
+            ?s ?schemaPredicate ?term .
+        }
+    }
+    FILTER ( isIRI(?term) )
+    FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub") )
+}

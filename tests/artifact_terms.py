@@ -28,7 +28,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from rdflib import Dataset, Graph, URIRef
+from rdflib import RDF, Dataset, Graph, URIRef
 
 from tests.query_terms import ETKL, OWNED_ROOT, REPO  # noqa: F401  (ETKL/OWNED_ROOT re-exported)
 
@@ -92,3 +92,37 @@ def from_fixture(path: Path) -> Dataset:
     dataset = Dataset()
     dataset.graph(artifact_graph_iri(path)).parse(path, format="turtle")
     return dataset
+
+
+# --------------------------------------------------------------------------------------
+# The derivations. These are AXIOM steps and live in `vocab/queries/*.rq`; the code below
+# only RUNS them and attributes their results. It states no rule of its own.
+# --------------------------------------------------------------------------------------
+
+VOCABULARY_ROLE_QUERY = QUERY_DIR / "vocabulary-role.rq"
+
+
+def _run_construct(query_path: Path, dataset: Dataset | None = None) -> Graph:
+    """Run one authored `CONSTRUCT` over the artifact dataset and return its product."""
+    dataset = artifact_dataset() if dataset is None else dataset
+    graph = Graph()
+    for triple in dataset.query(query_path.read_text(encoding="utf-8")):
+        graph.add(triple)
+    return graph
+
+
+def derive_vocabulary_terms(dataset: Dataset | None = None) -> Graph:
+    """D1 (spec §4.3): every owned IRI an artifact USES AS VOCABULARY.
+
+    The `a etkl:VocabularyArtifact` typing is added here for EVERY file in the population,
+    not only for those the derivation found a term in: being in the population is what makes
+    a file a vocabulary artifact, and that is attribution, not a decision. Which TERMS it
+    names is the query's answer and only the query's — exactly as `extract_named_terms`
+    types a `.rq` in Python and takes its terms from the extractor.
+    """
+    dataset = artifact_dataset() if dataset is None else dataset
+    graph = _run_construct(VOCABULARY_ROLE_QUERY, dataset)
+    for context in dataset.graphs():
+        if len(context) and isinstance(context.identifier, URIRef):
+            graph.add((context.identifier, RDF.type, ETKL.VocabularyArtifact))
+    return graph

@@ -112,10 +112,13 @@ def test_every_authored_query_names_only_declared_terms():
 
 def test_the_membrane_binds_one_focus_node_per_query_file():
     """O4 (spec §7) — asserted as a NUMBER, never as "> 0". A shape that binds zero focus
-    nodes is R97/R99's vacuity, and it passes."""
+    nodes is R97/R99's vacuity, and it passes.
+
+    RE-MEASURED 2026-08-29 (spec §10 seam 6: compute the count, never copy it): 46 -> 47,
+    the one query `vocabulary-role.rq` this loop's D1 derivation adds."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 46, sorted(focus)
+    assert len(focus) == len(query_files()) == 47, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():
