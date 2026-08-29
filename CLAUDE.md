@@ -255,6 +255,39 @@ epistemics, contextual risk, apex escalation), aligned by `rdfs:subClassOf`/`sub
   (de/fr/it) — do **not** constrain such properties to `xsd:string` (that rejects
   `rdf:langString`).
 
+## Branch protection — every change goes through a PR (ruled 2026-08-29)
+
+**No commit reaches `main` except through a pull request whose CI is green. There is no bypass,
+for anyone, including the repo owner.** Ruled by the maintainer 2026-08-29.
+
+Why it was ruled, measured rather than felt: **`gh pr merge --auto` is a no-op on this repo** —
+with no rule requiring a check, it merges immediately instead of waiting, so PR #132 reached `main`
+without CI having passed on it. That was caught after the fact and the tree turned out to be green
+(`docs/superpowers/2026-08-29-after-used-as-vocabulary-handoff.md` §4), which is luck, not a
+process. The rule makes `--auto` mean what it says.
+
+What it changes for a loop:
+
+- **Branch first, always** — docs, handoffs and register passes included. Direct `git push origin
+  main` is refused; three commits on 2026-08-29 (`06ca823`, `1ef1ccf`, `e2ada33`) took that path
+  and would now be rejected.
+- **The required check is `test`, the JOB name in `.github/workflows/ci.yml` — not `ci`, the
+  workflow name.** Rename that job and every PR blocks forever on a check that never arrives.
+- **`enforce_admins: true` means the escape hatch is deleting the rule**, not overriding it. If CI
+  stops reporting for any reason, nothing merges until the owner relaxes protection.
+- A PR is required; an **approval is not** (`required_approving_review_count: 0`). A solo maintainer
+  cannot approve their own PR, so any higher number would deadlock every merge.
+- `strict: false` — a PR need not be rebased onto the latest `main` first. With ~14-minute CI this
+  buys less than the rebase churn costs; it is the one knob worth revisiting.
+
+**Second-order, and already recorded:** `concurrency.cancel-in-progress` means any push to `main`
+cancels the CI run of the commit before it, so a run seen green is only ever the run for HEAD
+(`f2d055a`). Protection does not change that; it only guarantees the PR path was green.
+
+Applying it needs admin on `iladub/iladub`, which the `Frosselet` collaborator token does not have
+(`"admin": false`; the protection endpoints return 404, not 403, to non-admins). It is the `iladub`
+account's to set — see the Open items entry below for the exact payload and the verification.
+
 ## Naming discipline (a hard-won lesson)
 
 Before claiming any name, verify across **PyPI + GitHub (repo collision) + a web
@@ -536,6 +569,16 @@ request), **Confidential** (`internal/` — never tracked).
 - [x] Masthead glyph verified 2026-06-03: `𒅍` U+1214D (íl, "carrier") + `𒁾` U+12077 (dub,
       "tablet") = "the document-carrier".
 - [x] `vocab/LICENSE` (CC-BY-4.0) + root `CITATION.cff` verified 2026-05-31.
+- [ ] **Branch protection is RULED but NOT YET APPLIED** — measured 2026-08-29 after the ruling:
+      `gh api repos/iladub/iladub/branches/main -q .protected` → `false`, and `allow_auto_merge`
+      → `false`. Until both flip, the rule above describes an intention, not an enforcement, and
+      `--auto` still merges immediately. Set by the `iladub` account with `required_status_checks:
+      {strict: false, contexts: ["test"]}`, `enforce_admins: true`,
+      `required_pull_request_reviews: {required_approving_review_count: 0}`, `restrictions: null`,
+      plus `PATCH repos/iladub/iladub -F allow_auto_merge=true`. Verify with
+      `gh api repos/iladub/iladub/branches/main -q '{p: .protected, c:
+      .protection.required_status_checks.contexts}'` → `{"p": true, "c": ["test"]}`. A wrong check
+      name fails silently in the blocking direction.
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
 - [ ] Express the holonic interaction model in `vocab/` — but **scope it to iladub's
