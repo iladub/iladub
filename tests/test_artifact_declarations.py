@@ -169,12 +169,15 @@ def test_the_exemption_is_gone():
     assert "docgov#" not in text
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "O1 + O2 (spec §7): EXPECTED RED until Task 7 repairs both live defects — etkl:Contract "
-    "in the two federation examples, and the six dangling tab:aggFn* in tab-fno-align.ttl. "
-    "The marker is removed in the repair commit. A test simply ABSENT here would prove "
-    "nothing about the red."))
 def test_every_artifact_names_only_declared_terms():
-    """O1 + O2 (spec §7) — the instrument, over the whole authored corpus, both families."""
+    """O1 + O2 (spec §7) — the instrument, over the whole authored corpus, both families.
+
+    This shipped RED, deliberately and in its own commit (36ab900), carrying an
+    `xfail(strict=True)` marker and the eight quoted refusals: `etkl:Contract` in both
+    federation contracts (O1) and the six `tab:aggFn*` in `tab-fno-align.ttl` (O2). The
+    marker came off in the commit that repaired them. A membrane that was green on its first
+    run would never have been shown to read the new files at all — that is `R143`'s own
+    warning, and this is the answer to it.
+    """
     conforms, report = _validate(evidence() + declaring_graph())
     assert conforms, report

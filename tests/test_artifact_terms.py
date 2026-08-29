@@ -180,11 +180,19 @@ CORPUS = "https://w3id.org/iladub/corpus#"
 _SURPLUS_IN_CENSUS = {CORPUS + "Verdict", CORPUS + "Adjudication"}
 
 
-def test_the_rule_demands_57_undeclared_terms_and_55_over_the_tree_it_was_measured_on():
-    """Spec §2.2 measured 53 before the SHACL path traversal of §4.4; §2.3 measured 55 after
-    it. Asserted as NUMBERS. Each step was EARNED — 53 -> 55 in the commit that added the
-    traversal, 55 -> 57 in the commit that authored vocab/internal/ — never adjusted to make
-    a suite go green.
+def test_the_census_chain_from_53_to_56_with_every_step_earned():
+    """Every step of the census is a NUMBER, and every step was EARNED by a named change in
+    the commit that caused it — never adjusted to make a suite go green:
+
+        53   spec §2.2, over the 136 tracked .ttl, before the SHACL path traversal
+        55   + the path traversal of §4.4 (docgov:cites, docgov:citesExternal)
+        57   + vocab/internal/ joining the population as three more artifacts
+        56   - etkl:Contract, repaired; and 54 over the 136-artifact tree
+
+    The plan pinned 53 and 55 and stopped there, so Tasks 5 and 7 each invalidated a constant
+    the plan had written as fixed (G6, recorded rather than quietly retuned). That is not a
+    tuned constant: a census is a measurement OF A TREE, and this loop changes the tree twice
+    — once by authoring vocabulary, once by repairing a leak. Both deltas are asserted below.
 
     Measured against the PUBLISHED ontologies: this is the CENSUS question — what the rule
     demands that no published ontology declares — and it is a property of the rule and the
@@ -198,8 +206,8 @@ def test_the_rule_demands_57_undeclared_terms_and_55_over_the_tree_it_was_measur
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    assert len(_census_over(_pre_loop_artifacts())) == 55
-    assert len(_census()) == 57
+    assert len(_census_over(_pre_loop_artifacts())) == 54
+    assert len(_census()) == 56
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -209,10 +217,24 @@ def test_the_prog_vocabulary_is_21_terms():
     assert len({t for t in _census() if t.startswith(PROG)}) == 21
 
 
-def test_the_live_etkl_leak_is_demanded():
-    """Spec §2.4 (M4) — O1's subject. The ontology declares etkl:SemanticDataContract."""
-    assert "https://w3id.org/iladub/etkl#Contract" in _undeclared_demands()
-    assert "https://w3id.org/iladub/etkl#Contract" in _census()
+def test_the_etkl_leak_is_repaired_and_nothing_is_left_undeclared():
+    """Spec §2.4 (M4) — O1's subject, AFTER the repair.
+
+    Written as a pin on the repair rather than on the defect, because Task 7 removes the
+    defect and a test asserting `etkl:Contract in _undeclared_demands()` — which is what the
+    plan supplied — cannot survive its own loop (G6). The evidence that the defect was real
+    is the RED commit 36ab900, which quotes the eight refusals, and the FALSIFICATION block
+    that restores `etkl:Contract` and shows O1 red again.
+
+    The second assertion is the stronger claim: after both repairs NOTHING the two demands
+    reach is undeclared. That is the state the membrane is now holding.
+    """
+    from tests.query_terms import REPO
+    for name in ("doc-a-contract.ttl", "doc-b-contract.ttl"):
+        text = (REPO / "examples" / "federation" / name).read_text(encoding="utf-8")
+        assert "etkl:SemanticDataContract" in text
+        assert "etkl:Contract " not in text and "etkl:Contract;" not in text
+    assert _undeclared_demands() == set()
 
 
 def test_an_arc_instance_iri_is_not_demanded():
@@ -255,12 +277,18 @@ def test_a_term_inside_a_blank_node_path_is_reached():
 
 
 def test_the_path_traversal_adds_exactly_two_terms():
-    """Spec §2.3, MEASURED by running the traversal: 53 without it, 55 with it, and the
-    two added are docgov:cites and docgov:citesExternal. Over the .ttl corpus ALONE both
-    are hidden — docgov:cites's rescuing occurrence is in the .rq population, which this
-    derivation does not read. Asserting the delta as well as the total is what makes this
-    a check that the traversal does not OVER-reach."""
-    assert len(_census_over(_pre_loop_artifacts())) == 55
+    """Spec §2.3, MEASURED by running the traversal rather than predicting it: over the
+    136-artifact tree the census was 53 without it and 55 with it, and the two added are
+    docgov:cites and docgov:citesExternal. Over the .ttl corpus ALONE both are hidden —
+    docgov:cites's rescuing occurrence is in the .rq population, which this derivation does
+    not read. Asserting the DELTA as well as the total is what makes this a check that the
+    traversal does not OVER-reach.
+
+    The total here is 54, not 55: repairing etkl:Contract removed one term from the same
+    tree (see `test_the_census_chain_from_53_to_56_with_every_step_earned` for the full
+    chain). The two terms this test is about are unaffected, and are asserted by name — the
+    number alone was never the claim."""
+    assert len(_census_over(_pre_loop_artifacts())) == 54
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 
@@ -301,29 +329,64 @@ def test_the_fixtures_are_not_in_the_population():
 TAB = "https://w3id.org/iladub/tab#"
 
 
-def _align_demands() -> set[str]:
+def _align_demanded() -> set[str]:
+    """Everything D2 demands, before any disposer is consulted."""
     from tests.artifact_terms import derive_alignment_subjects
-    g = derive_alignment_subjects()
-    return {str(o) for o in g.objects(None, ETKL.namesTerm)} - _declared()
+    return {str(o) for o in derive_alignment_subjects().objects(None, ETKL.namesTerm)}
 
 
-def test_the_six_dangling_aggregation_terms_are_demanded():
-    """O2's subject (spec §2.5, M5) — R117's live instance, dangling since
-    tab-fno-align.ttl was written."""
-    assert _align_demands() == {
-        TAB + n for n in
-        ("aggFnSum", "aggFnMean", "aggFnMin", "aggFnMax", "aggFnCount", "aggFnProduct")
-    }
+def _align_demands() -> set[str]:
+    """What D2 demands that nothing declares — the instrument's live reading."""
+    return _align_demanded() - _declared()
+
+
+#: R117's live instance, dangling from the day tab-fno-align.ttl was written until 2026-08-29.
+AGG_FNS = {TAB + n for n in
+           ("aggFnSum", "aggFnMean", "aggFnMin", "aggFnMax", "aggFnCount", "aggFnProduct")}
+
+
+def test_the_six_aggregation_terms_are_demanded_and_now_declared():
+    """O2's subject (spec §2.5, M5) — R117's live instance, and its repair.
+
+    D2 still DEMANDS all six: that is the demand R117 asked for and it must not weaken.
+    What changed is the disposer — vocab/ontology/tab.ttl declares them — so the demand is
+    now discharged rather than dangling. Asserting both halves is what keeps this a test of
+    the instrument and not merely of the repair: `_align_demanded()` is the raw demand,
+    `_align_demands()` is what survives the declaring graph.
+    """
+    assert AGG_FNS <= _align_demanded()
+    assert _align_demands() == set()
 
 
 def test_ontology_document_iris_are_not_demanded():
     """Spec §4.1: 9 before the owl:Ontology exclusion, 6 after. An ontology document IRI
     is not a vocabulary term and no ontology declares it."""
-    assert "https://w3id.org/iladub/hga-alignment" not in _align_demands()
-    assert "https://w3id.org/iladub/dec/hga-alignment" not in _align_demands()
+    assert "https://w3id.org/iladub/hga-alignment" not in _align_demanded()
+    assert "https://w3id.org/iladub/dec/hga-alignment" not in _align_demanded()
 
 
 def test_d2_reaches_something_d1_cannot():
-    """The whole justification for a second demand (spec §4.1): the align family has
-    ZERO vocabulary-role terms, so D1 is structurally blind here."""
-    assert _align_demands() - _census() != set()
+    """The whole justification for a second demand (spec §4.1), measured WHERE IT IS TRUE:
+    over the align family itself.
+
+    Spec §2.6 class 1 measures the align family's vocabulary-role count at ZERO — an aligned
+    term is always a SUBJECT, so D1 is structurally blind there. Restricted to
+    `tab-fno-align.ttl`, D1 reaches nothing and D2 reaches all six.
+
+    RESTRICTED to that one file rather than asserting over the whole tree (G6): since Task 7
+    declared the six in tab.ttl, D1 now reaches them THERE, as the objects of their own
+    `rdf:type` triples. That is real and harmless, and it would silently hollow out the
+    whole-tree form of this assertion — which is exactly the kind of test that passes while
+    pinning nothing.
+    """
+    from rdflib import Dataset
+    from tests.artifact_terms import (artifact_graph_iri, derive_alignment_subjects,
+                                      derive_vocabulary_terms)
+    from tests.query_terms import ONTOLOGY_DIR
+    align = ONTOLOGY_DIR / "tab-fno-align.ttl"
+    ds = Dataset()
+    ds.graph(artifact_graph_iri(align)).parse(align, format="turtle")
+    d1 = {str(o) for o in derive_vocabulary_terms(ds).objects(None, ETKL.namesTerm)}
+    d2 = {str(o) for o in derive_alignment_subjects(ds).objects(None, ETKL.namesTerm)}
+    assert d1 == set()
+    assert d2 == AGG_FNS
