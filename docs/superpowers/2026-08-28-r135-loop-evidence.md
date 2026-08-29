@@ -508,3 +508,88 @@ real all along but unobservable. The two authorings M19 killed were killed for t
 that nothing in the tree read declarations — R135's hole. Closing the hole is what makes the third
 authoring survive, and the inversion above is the only thing that distinguishes it from the two
 that did not.
+
+---
+
+## Task 5 — close `R135`, raise what this loop defers, close the loop
+
+### The five oracles (spec §7), each with the command that produced it
+
+| Oracle | What it disposes | Where it is quoted above | Result |
+| --- | --- | --- | --- |
+| **O1** | the live violation — the RED that starts the loop | Task 3 Step 1 (`./.venv/bin/pytest tests/test_query_declarations.py -q`) | RED on `risk:order`, a **real** leak in the shipped tree; green after the declaration |
+| **O2** | the two-sided ablation — the re-authoring oracle | Task 4 Step 4 (`ablation_refusals(g)` over the parsed manifest) | **no output** — no refusal of the new edge, and none anywhere else in the manifest |
+| **O3** | extractor completeness — a term nested inside `BIND`/`EXISTS` | Task 1 (`tests/query-nested-bind-exists.rq`, the algebra walk vs. the text cross-check) | 7 terms that the early `dict`-branch `return` lost are recovered; 0 disagreements over 46 files |
+| **O4** | the shape is not idle — 46 focus nodes, one per `.rq` | Task 3 Step 3 / the falsification | passes, **and is measured NOT to be a non-idleness oracle** — see Task 3 inversion 2 |
+| **O5** | the negative fixture the conventions require | Task 2 / Task 3 (`tests/query-undeclared-term-leak.rq`) | refuses, and is one of the two tests that bite when the membrane is made idle |
+
+Falsification blocks: Task 1 (§ FALSIFICATION — Task 1), Task 2 (Step 6, three inversions), Task 3
+(Step 4, two inversions), Task 4 (Step 5, the oracle removed and restored). Full suite, Task 3
+Step 5, foreground: **`1344 passed, 7 skipped, 1 xfailed, 10 warnings in 2480.68s`**.
+
+### `R135` closed, on its own "what would close it"
+
+The row asked for two things and got both: *"a membrane (or a test) refuses a `.rq` that names a
+term no loaded ontology declares, with a negative fixture that must fail"* — and *"then, and only
+then, re-author `holon:05 → holon:01`"*. The index row now reads `closed`; the detail row is struck
+(`~~R135~~`), moved to `residues-closed.md` with its closure evidence in place and its original text
+kept under `ORIGINAL ROW FOLLOWS`, and the `(25/124 closed)` snapshot it was raised with is
+untouched.
+
+**`R117` is NOT struck.** Spec §9 forbids it and the reason is not a formality: this instrument
+reads `.rq` files, and `R117` is about the subjects of subclass axioms in a `.ttl`. `R144` records
+that `R117` is open on its oracle with **no live instance**, so the next reader does not mistake an
+unrealized hypothetical for a stale row.
+
+### Raised: `R142`–`R145`
+
+Numbering starts at `R142`, not the spec's `R140` — `R140` and `R141` landed after the spec was
+written. Each snapshot was measured with the register's own command at the moment the row was
+written, and is never updated afterwards:
+
+```
+$ awk -F'|' '/^\| R[0-9]+ /{n++; s=$3; gsub(/ /,"",s); if (s ~ /^closed/) c++} END{print n, c}' \
+      docs/superpowers/residues.md
+131 26      <- before this task
+131 27      <- after R135 closed; R142 raised here
+135 27      <- after all four rows
+```
+
+- **`R142`** — `prog:` (9 terms) and `docgov:` (12 terms) have no ontology file at all, so the
+  in-scope filter must exclude them. The sharp edge: `prog:` is the **arc instrument's own**
+  vocabulary, so the register's measuring apparatus is itself undeclared. Closes when the two files
+  exist **and the filter is deleted**.
+- **`R143`** — the population is `.rq` only; `vocab/shapes/`, `examples/` and `tests/*.ttl` are
+  unchecked **and uncensused**. `R130`'s warning is carried into the row: census first, then
+  enumerate. This is the row that would subsume `R117`.
+- **`R144`** — `R117` open, no live instance, recorded as a measurement rather than left to a later
+  reader's inference.
+- **`R145`** — the row this **plan** found, which the spec did not have: a whole-tree integrity test
+  used as a criterion's oracle broadens what the ablation reads as a dependency.
+
+**A plan number this task corrected.** Plan Step 3 says the broad oracle makes `holon:05` fail under
+ablation of *"any of the seven non-align ontologies."* Measured, by ablating each from the declaring
+graph and validating the corpus:
+
+```
+dec.ttl → conforms=False   etkl-holons.ttl → False   etkl.ttl → False   iladub.ttl → False
+risk.ttl → False           tab.ttl → False           tab-datagrid.ttl → conforms=TRUE
+```
+
+**Six of seven, not seven.** No authored query names a term that only `tab-datagrid.ttl` declares.
+The hazard the row records is unchanged — the artifact dependency is still the whole directory, not
+one file — but the number in the row is the measured one.
+
+### The suite, re-run at the loop's head (§Done item 5)
+
+```
+$ ./.venv/bin/pytest -q
+1344 passed, 7 skipped, 1 xfailed, 10 warnings in 2582.73s (0:43:02)
+[exited with code 0]
+```
+
+Run in the background and **blocked on to completion in-turn** — the 43-minute wall clock exceeds
+the 600s tool cap, so the summary line above is read from the finished process, not from a partial
+log. The counts are **identical** to Task 3 Step 5's run, which is the expected result: Task 4 added
+a `prog:oracleTest` reference to an existing test and Task 5 touched only documentation, so neither
+adds a test to the population. A changed count here would have been the finding.
