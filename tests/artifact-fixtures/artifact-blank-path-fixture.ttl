@@ -1,0 +1,24 @@
+# tests/artifact-fixtures/artifact-blank-path-fixture.ttl
+#
+# O3's fixture (spec §7): a shape whose sh:path is a BLANK NODE holding a property-path
+# expression, hiding one owned term behind an RDF list. The sole real occurrence of this
+# construct in the tree is vocab/shapes/doc-governance-shapes.ttl (see § the docgov row of
+# spec §2.3); this fixture makes the case testable in isolation and permanently.
+#
+# It names BOTH a DECLARED owned term (etkl:SemanticDataContract) and an UNDECLARED one
+# (etkl:NoSuchPathTermAnywhere). Without the declared one the test would pass against a
+# derivation that demands everything it sees — the selectivity trap R135 Task 2 measured.
+#
+# THIS FILE IS DELIBERATELY INVALID under the declaration membrane. It lives in
+# tests/artifact-fixtures/ because the artifact population is EVERY tracked .ttl, so a
+# fixture anywhere else would join its own population and turn the corpus permanently red.
+# `test_the_fixtures_are_not_in_the_population` pins that carve-out.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+
+<urn:iladub:fixture:blank-path> a sh:NodeShape ;
+    sh:property [
+        sh:path [ sh:alternativePath ( etkl:SemanticDataContract etkl:NoSuchPathTermAnywhere ) ] ;
+    ] .

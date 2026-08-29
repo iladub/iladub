@@ -116,9 +116,13 @@ def _undeclared_demands() -> set[str]:
     return {t for t in _demanded() if t not in declared}
 
 
-def test_the_rule_demands_53_undeclared_terms():
-    """Spec §2.2, asserted as a NUMBER. This count moves only when the tree does."""
-    assert len(_undeclared_demands()) == 53
+def test_the_rule_demands_55_undeclared_terms():
+    """Spec §2.2 measured 53 before the SHACL path traversal of spec §4.4; §2.3 measured
+    55 after it. Asserted as a NUMBER. This count moves only when the tree does — and the
+    step from 53 to 55 was EARNED, in the commit that added the traversal, never adjusted
+    to make a suite go green. `test_the_path_traversal_adds_exactly_two_terms` holds the
+    delta and names the two terms."""
+    assert len(_undeclared_demands()) == 55
 
 
 def test_the_prog_vocabulary_is_21_terms():
@@ -153,3 +157,56 @@ def test_every_artifact_is_typed_for_the_membrane():
     typed = set(g.subjects(RDF.type, ETKL.VocabularyArtifact))
     assert len(typed) == len(artifact_files())
     assert all(isinstance(s, URIRef) for s in typed)
+
+
+# =========================================================================================
+# Task 3 — SHACL property-path traversal (spec §2.3, §4.4). Positional, not heuristic: a term
+# inside a property path IS being used as a property, and the construct set is exhaustively
+# fixed by the SHACL recommendation, so completeness is by construction, not by tuning.
+# =========================================================================================
+
+DOCGOV = "https://w3id.org/iladub/docgov#"
+
+
+def test_a_term_inside_a_blank_node_path_is_reached():
+    """O3 (spec §7). The sole blank-node sh:path in the tree hides docgov:citesExternal
+    behind an RDF list (spec §2.3); its sibling docgov:cites survives only by accident,
+    because a .rq also names it."""
+    assert DOCGOV + "citesExternal" in _demanded()
+
+
+def test_the_path_traversal_adds_exactly_two_terms():
+    """Spec §2.3, MEASURED by running the traversal: 53 without it, 55 with it, and the
+    two added are docgov:cites and docgov:citesExternal. Over the .ttl corpus ALONE both
+    are hidden — docgov:cites's rescuing occurrence is in the .rq population, which this
+    derivation does not read. Asserting the delta as well as the total is what makes this
+    a check that the traversal does not OVER-reach."""
+    assert len(_undeclared_demands()) == 55
+    assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _undeclared_demands()
+
+
+def test_the_fixture_path_hides_an_undeclared_term_from_a_naive_reading():
+    """The traversal, isolated on the fixture, WITH its selectivity asserted.
+
+    Both owned terms sit behind the same blank node and the same RDF list, so a derivation
+    that reads only the direct object of sh:path sees NEITHER. One of them is declared and
+    one is not, so a derivation that demands everything it reaches would fail this too.
+    """
+    from tests.artifact_terms import (
+        BLANK_PATH_FIXTURE,
+        derive_vocabulary_terms,
+        from_fixture,
+    )
+    demanded = {str(o) for o in
+                derive_vocabulary_terms(from_fixture(BLANK_PATH_FIXTURE)).objects(None, ETKL.namesTerm)}
+    assert "https://w3id.org/iladub/etkl#NoSuchPathTermAnywhere" in demanded
+    assert "https://w3id.org/iladub/etkl#SemanticDataContract" in demanded
+    assert demanded - _declared() == {"https://w3id.org/iladub/etkl#NoSuchPathTermAnywhere"}
+
+
+def test_the_fixtures_are_not_in_the_population():
+    """A fixture that joined the population would turn the suite permanently red and the
+    instrument permanently meaningless."""
+    names = {p.name for p in artifact_files()}
+    assert "artifact-blank-path-fixture.ttl" not in names
+    assert "artifact-undeclared-term-leak.ttl" not in names

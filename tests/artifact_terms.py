@@ -126,3 +126,7 @@ def derive_vocabulary_terms(dataset: Dataset | None = None) -> Graph:
         if len(context) and isinstance(context.identifier, URIRef):
             graph.add((context.identifier, RDF.type, ETKL.VocabularyArtifact))
     return graph
+
+
+#: O3's fixture (spec §7): the blank-node `sh:path` case, isolated and permanent.
+BLANK_PATH_FIXTURE = FIXTURE_DIR / "artifact-blank-path-fixture.ttl"

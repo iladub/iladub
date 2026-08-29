@@ -12,7 +12,13 @@
 # THE RULE. An owned IRI occupies a vocabulary role in a graph if either
 #   (a) it appears in the PREDICATE position of any triple; or
 #   (b) it appears in the OBJECT position of a triple whose predicate is one of the sixteen
-#       RDFS/OWL/SHACL predicates listed below.
+#       RDFS/OWL/SHACL predicates listed below; or
+#   (c) it is reached from an sh:path by following a SHACL property-path expression
+#       (spec §4.4) — a term inside a property path IS being used as a property. The
+#       construct set is exhaustively fixed by the SHACL recommendation, so clause (c) is
+#       complete BY CONSTRUCTION rather than by tuning. Measured yield over the tree:
+#       exactly docgov:cites and docgov:citesExternal, which is also the check that it
+#       does not over-reach.
 #
 # The sixteen predicates are STANDARD VOCABULARY — they are the rule itself, not a list of
 # owned terms under test. No owned term is ever typed in this file (G3), and no local name is
@@ -51,6 +57,13 @@ WHERE {
                 sh:class sh:datatype
             }
             ?s ?schemaPredicate ?term .
+        }
+        UNION
+        {
+            # (c) inside a SHACL property-path expression reachable from sh:path
+            ?s sh:path ?pathRoot .
+            ?pathRoot ( sh:alternativePath | sh:inversePath | sh:zeroOrMorePath
+                      | sh:oneOrMorePath | sh:zeroOrOnePath | rdf:first | rdf:rest )+ ?term .
         }
     }
     FILTER ( isIRI(?term) )
