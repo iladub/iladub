@@ -399,7 +399,8 @@ prog:criterion:holon:05 a prog:Criterion ;
     prog:metOn "2026-08-25"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "vocab/queries/membrane-health.rq" ;
-    prog:oracleTest "tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health" .
+    prog:oracleTest "tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health" ;
+    prog:oracleTest "tests/test_query_declarations.py::test_every_authored_query_names_only_declared_terms" .
 
 # `met false` MEASURED 2026-08-20:
 #   $ grep -rln "CleanDocumentHolon" examples/
@@ -1389,6 +1390,34 @@ prog:criterion:dec:16   prog:dependsOn prog:criterion:holon:01 .
 # Compromised as bare IRIs, and rdflib resolves an IRI whether or not an ontology declares it —
 # so deleting the declaring file cannot make the derivation fail. Do not re-author this edge
 # until that hole is closed; then it becomes groundable for a reason that is measured.
+
+# THE HOLE IS NOW CLOSED, SO THE EDGE IS RE-AUTHORED — its THIRD authoring, satisfying the
+# standing instruction the note above ends on. R135's instrument is that closure:
+# tests/query_terms.py extracts the owned terms an authored query names, and
+# vocab/shapes/query-declaration-shapes.ttl refuses a query naming a term no ontology under
+# vocab/ontology/ declares. So `membrane-health.rq BINDs etkl:Intact` is now a fact some file
+# must STATE, and holon:05's oracle set reads holon:01's artifact for the first time.
+# MEASURED, rebuilding the declaring graph without etkl-holons.ttl (the graph-level simulation
+# that predicted the ablation; step 4's O2 below is the real two-sided run):
+#     ABLATED etkl-holons.ttl -> conforms = False
+#       membrane-health.rq names etkl#CompiledDocumentHolon , etkl#Compromised, etkl#Intact,
+#       etkl#MembraneValidation, etkl#Weakened, etkl#membraneHealth
+#
+# A SECOND prog:oracleTest rather than a new criterion is ruled by spec §4.7
+# (docs/superpowers/specs/2026-08-26-the-query-names-a-declared-term-design.md) — CITED, not
+# re-argued. The plan concurs and adds one ground the spec did not have: a new criterion would
+# need its own prog:oracleArtifact, and the only candidate is the new shape file, which would
+# make the arc assert that the membrane depends on itself.
+#
+# THE TWO PRIOR AUTHORINGS, so a reader does not mistake this for a first attempt:
+#   1. 44c04ae — authored as a PROPOSITION, M16 having refused the assertion on A1 (holon:05
+#      unmet) and A2 (holon:05 carried no prog:oracleArtifact).
+#   2. ae5fefd — the flip to met repaired both grounds, M17 FORCED the assertion, and M19's
+#      arm 1 refuted it the same day: with etkl-holons.ttl removed, holon:05's one oracle test
+#      still passed. Deleted rather than demoted, because M17 refuses the demotion.
+# Neither the reading nor the membrane has changed. holon:05's ORACLE SET has: it now contains
+# a test that reads declarations.
+prog:criterion:holon:05 prog:dependsOn prog:criterion:holon:01 .
 
 # The governed-grounding example is not only an HGA artifact: it types an
 # iladub:CandidateConcept (examples/holon-grounding-conformant.ttl:17) and

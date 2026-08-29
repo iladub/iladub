@@ -397,3 +397,114 @@ deletions), and the two new tests are the only additions to the count. Plan Step
 background this run; the 41-minute wall clock exceeded the 600s tool cap and the harness detached
 it, so it was **blocked on to completion in-turn** rather than left to run unattended — the
 summary line above is from the finished process, not a partial read.
+
+---
+
+## Task 4 — re-author `holon:05 → holon:01` on a measured refusal
+
+### The seams, measured before the manifest was touched
+
+**Seam 1 — A6 (shared artifact file) stays satisfied, and no `prog:oracleArtifact` was added.**
+A6 (`tests/arc-shapes.ttl`, the `sh:sparql` carrying the `M16: A6` message) compares the two ends'
+`prog:oracleArtifact` values with any `:line` suffix stripped. `holon:05` names
+`vocab/queries/membrane-health.rq`, `holon:01` names `vocab/ontology/etkl-holons.ttl` — disjoint,
+and this task adds **no** artifact to either end, so the sets are unchanged. A3 (no shared
+`prog:oracleTest`) likewise holds: the new test is in `tests/test_query_declarations.py`, and
+`grep -n 'test_query_declarations' tests/arc-manifest.ttl` returned **0** lines before the edit.
+
+**Seam 2 — the control run.** Task 3 is committed at `c0f5152`, so `_ablate`'s checkout of `HEAD`
+carries the extractor, the shape and the corpus test. The ablation ran without raising the
+vacuous-artifact error, and `_run_control` passed — quoted in step 4 below.
+
+**Seam 3 — comment placement.** The rationale is written **above** the edge block, never inside a
+criterion block, because `scripts/cockpit.py` walks a block to the first line ending in `.`.
+`tests/test_cockpit.py` is in the step 2 run and passes.
+
+**Seam 4 — CLAUDE.md plan-rule 7 (downward same-file citation).** The comment written in step 3
+carries **no `file:line` citation into `tests/arc-manifest.ttl` itself**. Its references are two
+commit hashes (`44c04ae`, `ae5fefd`), a spec path with a **§ number** rather than a line, and two
+paths into other files. There is therefore nothing in it that the act of writing it could shift.
+
+### Step 1 — the second oracle test
+
+`prog:criterion:holon:05` now carries, in addition to its membrane-health oracle:
+
+```
+    prog:oracleTest "tests/test_query_declarations.py::test_every_authored_query_names_only_declared_terms" .
+```
+
+### Step 2 — the manifest membrane did NOT force the assertion, and the plan predicted it might
+
+```
+$ ./.venv/bin/pytest tests/test_arc_manifest.py tests/test_cockpit.py tests/test_arc_landscape.py -q
+47 passed in 25.55s
+```
+
+The plan says *"M17 may now force the edge's assertion — it did exactly that on 2026-08-25."* **It
+did not, and could not.** M17 refuses a `prog:proposedDependsOn` that satisfies A1–A4+A6, and after
+the 2026-08-25 refutation there is **no edge of either grade** to refuse — `grep -n
+"criterion:holon:05" tests/arc-manifest.ttl` finds the criterion block, the rung membership and a
+comment, and nothing else. `git log -S"criterion:holon:05 prog:dependsOn"` returns **no commits at
+all**: the forced assertion of 2026-08-25 was refuted and deleted inside its own loop and never
+reached the tracked file. So step 3 is a hand authoring, not a membrane-forced one. The plan's
+"may" is correct; its parenthetical is the part that does not transfer.
+
+### Step 3 — the edge, asserted with its rationale
+
+`prog:criterion:holon:05 prog:dependsOn prog:criterion:holon:01 .`, under a comment that states the
+reading once, cites spec §4.7 for the second-oracle ruling rather than re-arguing it (plan-rule 6),
+and names the two prior authorings so the next reader does not read this as a first attempt.
+
+**A seam the plan did not name — the generated cache.** The first run of step 2 after the assertion
+failed, correctly:
+
+```
+Failed: docs/superpowers/arc-dependency-landscape.md has DRIFTED from its source at line 22:
+  tracked:     … 6 of its 27 edges are grounded by a two-sided ablation and 21 are propositions.
+  regenerated: … 7 of its 28 edges are grounded by a two-sided ablation and 21 are propositions.
+This file is a generated cache, never hand-edited: run `./.venv/bin/python scripts/arc_depends.py`.
+```
+
+Regenerated from its source (3 insertions, 2 deletions); the run then went `47 passed in 20.35s`.
+This is the documentation-governance generated-cache gate doing exactly its job — the count 6→7 and
+27→28 is the arc's own record of this edge landing, and it is derived, never hand-written.
+
+### Step 4 — O2, the real two-sided ablation
+
+```
+$ ./.venv/bin/python -c "from rdflib import Graph
+from tests.test_arc_ablation import MANIFEST, ablation_refusals
+g = Graph().parse(MANIFEST, format='turtle')
+[print(r) for r in ablation_refusals(g)]"
+(no output)
+```
+
+**No `M19: arm 1 refutes holon:05 …` line — and no other refusal either**, over the whole manifest,
+not merely the new edge. Nothing is filtered from that quote; the command printed nothing.
+
+```
+$ ./.venv/bin/pytest tests/test_arc_ablation.py -q
+9 passed in 42.00s
+```
+
+### Step 5 — FALSIFICATION (G6)
+
+The second `prog:oracleTest` removed from `holon:05`, the asserted edge left in place, O2 re-run:
+
+```
+M19: arm 1 refutes …#criterion:holon:05 prog:dependsOn …#criterion:holon:01 — with
+…#criterion:holon:01's artifacts ['vocab/ontology/etkl-holons.ttl'] removed, every one of
+…#criterion:holon:05's oracle tests still passes
+({'tests/etkl/test_membrane_health.py::test_compiled_document_reports_membrane_health': 'passed'}),
+so …#criterion:holon:05 does not consume …#criterion:holon:01
+```
+
+That is the **2026-08-25 message, verbatim in substance**, produced again on demand. Restored, O2 is
+silent again (no output).
+
+**This is the whole content of the re-authoring.** The reading did not change and the membrane did
+not change; `holon:05`'s **oracle set** did, and the ablation can now see a dependency that was
+real all along but unobservable. The two authorings M19 killed were killed for the honest reason
+that nothing in the tree read declarations — R135's hole. Closing the hole is what makes the third
+authoring survive, and the inversion above is the only thing that distinguishes it from the two
+that did not.
