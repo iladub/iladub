@@ -1,7 +1,18 @@
 # vocab/shapes/query-declaration-shapes.ttl
 #
-# The declaration membrane (R135; spec §4.4, plan Task 2): an authored SPARQL query may only
-# name a term one of the owned ontologies declares.
+# The declaration membrane (R135; extended to every tracked .ttl 2026-08-29, spec §4.6): an
+# authored artifact may only name a term one of the owned vocabularies declares.
+#
+# TWO ARTIFACT FAMILIES, ONE RULE. An etkl:QueryArtifact is read for EVERY owned IRI the query
+# mentions (tests/query_terms.py, PROCEDURAL). An etkl:VocabularyArtifact is read for the owned
+# IRIs its triples USE AS VOCABULARY, and for the owned subjects of an alignment module
+# (vocab/queries/vocabulary-role.rq and alignment-subject.rq, AXIOM / derivation / open world).
+# The two derivations emit the SAME predicate deliberately: the demand being made is the same
+# demand. SEAM 4 (spec §4.7) was decided by writing this shape BOTH ways and running it — with a
+# separate etkl:alignmentSubject predicate the message reads "…tab-fno-align.ttl ALIGNS
+# …tab#aggFnSum" instead of "names", while the file and the term are named identically, and a
+# second constraint would have to restate this namespace filter and this FILTER NOT EXISTS. One
+# invariant, one derivation of it: etkl:alignmentSubject was NOT added.
 #
 # NEUROSYMBOLIC GATE (CLAUDE.md §8) — AXIOM, CONSTRAINT FORM, CLOSED WORLD. This file
 # VALIDATES what the PROCEDURAL extractor (tests/query_terms.py) asserted; it never derives.
@@ -20,28 +31,42 @@ etkl:QueryArtifactShape a sh:NodeShape ;
     sh:sparql [
         a sh:SPARQLConstraint ;
         sh:message "{$this} names {?term}, which no owned ontology declares" ;
-        # SCOPE. The extractor emits EVERY owned-namespace IRI a query names, `prog:` and
-        # `docgov:` included, and decides nothing; the choice of which of them must be
-        # declared is made HERE, visibly and with a date, rather than invisibly in Python.
+        # SCOPE. The producers emit EVERY owned IRI their artifact names and decide nothing;
+        # the choice of which of them must be declared is made HERE, visibly and with a date,
+        # rather than invisibly in Python.
         #
-        # `prog:` (https://w3id.org/iladub/progress#, 9 terms named) and `docgov:`
-        # (https://w3id.org/iladub/docgov#, 12 terms named) are excluded 2026-08-26 under one
-        # reason: neither namespace has an ontology file at all, so they are undeclared
-        # VOCABULARIES rather than dangling terms in a declared one, and authoring them is a
-        # different act (spec §4.1). Tracked as a residue, not an omission.
+        # THE NAMESPACE EXEMPTION IS DELETED (2026-08-29). Until now this filter named five
+        # owned namespaces one by one, which excluded `prog:`, `docgov:` and `corpus:` by
+        # omission — the three that had no ontology file at all, so that including them would
+        # have painted the instrument red on day one for a reason that was not a leak. Those
+        # three are now declared in vocab/internal/ and the filter is the SINGLE OWNED ROOT.
+        # The deletion IS the oracle: while the exemption existed this instrument could not
+        # see those namespaces even if a term went missing from them.
         #
-        # This is a NAMESPACE list, not a term list — no term is ever typed here (G3 / spec
-        # §3 I4). It is an ORed STRSTARTS rather than VALUES because SHACL forbids VALUES
-        # inside an sh:sparql constraint, MEASURED 2026-08-28 (plan §0.1 F3):
+        # This is a NAMESPACE prefix, not a term list — no term is ever typed here (G3). It
+        # stays STRSTARTS rather than VALUES because SHACL forbids VALUES inside an sh:sparql
+        # constraint, MEASURED 2026-08-28 (R135 F3):
         #     Validation Failure - A SPARQL Constraint must not contain a VALUES clause.
         sh:select """
             SELECT $this ?term WHERE {
                 $this <https://w3id.org/iladub/etkl#namesTerm> ?term .
-                FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub#")
-                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/dec#")
-                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/etkl#")
-                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/risk#")
-                      || STRSTARTS(STR(?term), "https://w3id.org/iladub/tab#") )
+                FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub") )
+                FILTER NOT EXISTS { ?term ?p ?o }
+            }""" ;
+    ] .
+
+# The same constraint, over the .ttl family. Its LOGIC is identical by construction — the two
+# shapes differ only in sh:targetClass — because the demand is one demand and a second
+# derivation of it would be the restatement CLAUDE.md plan-rule 6 forbids.
+etkl:VocabularyArtifactShape a sh:NodeShape ;
+    sh:targetClass etkl:VocabularyArtifact ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} names {?term}, which no owned vocabulary declares" ;
+        sh:select """
+            SELECT $this ?term WHERE {
+                $this <https://w3id.org/iladub/etkl#namesTerm> ?term .
+                FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub") )
                 FILTER NOT EXISTS { ?term ?p ?o }
             }""" ;
     ] .

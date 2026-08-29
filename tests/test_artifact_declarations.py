@@ -84,3 +84,97 @@ def test_corpus_declares_terms_the_rule_never_demanded():
 def test_the_declaring_graph_now_includes_the_internal_vocabularies():
     from tests.query_terms import declaring_files
     assert {p.name for p in declaring_files()} >= {"prog.ttl", "docgov.ttl", "corpus.ttl"}
+
+
+# =========================================================================================
+# The membrane over the `.ttl` corpus — O1, O2, O4, O5, O7 (spec §7).
+# =========================================================================================
+
+import pytest
+from pyshacl import validate
+
+from tests.artifact_terms import (
+    FIXTURE_DIR,
+    artifact_files,
+    derive_alignment_subjects,
+    derive_vocabulary_terms,
+    from_fixture,
+)
+from tests.query_terms import ETKL, declaring_graph, evidence_graph, query_files
+
+SHAPES = REPO / "vocab" / "shapes" / "query-declaration-shapes.ttl"
+LEAK_FIXTURE = FIXTURE_DIR / "artifact-undeclared-term-leak.ttl"
+
+
+def _validate(data_graph):
+    """`inference="none"` is LOAD-BEARING — see the module docstring. `advanced=True` is
+    required because the constraint is `sh:sparql`."""
+    conforms, _, text = validate(
+        data_graph,
+        shacl_graph=Graph().parse(SHAPES, format="turtle"),
+        inference="none",
+        advanced=True,
+    )
+    return conforms, text
+
+
+def evidence() -> Graph:
+    """The whole evidence graph the membrane validates: both artifact families, both demands."""
+    return derive_vocabulary_terms() + derive_alignment_subjects() + evidence_graph()
+
+
+def test_the_membrane_binds_one_focus_node_per_artifact():
+    """O4 (spec §7) — asserted as NUMBERS, never '> 0'. A shape binding zero focus nodes is
+    R97/R99's vacuity, and it passes. Both counts RE-MEASURED, never copied from the spec
+    (§10 seam 6): the `.ttl` population grew to 139 when this loop authored three
+    vocabularies, and the `.rq` population to 48 when it authored two derivations."""
+    data = evidence() + declaring_graph()
+    vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
+    query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
+    assert len(vocab_nodes) == len(artifact_files()) == 139
+    assert len(query_nodes) == len(query_files()) == 48
+
+
+def test_a_ttl_naming_an_undeclared_term_is_refused():
+    """O5 (spec §7) — the negative fixture § Serialization requires.
+
+    The fixture also names a DECLARED term. Without that assertion this test passes against
+    a membrane that refuses EVERY term; selectivity is the claim, so assert it.
+    """
+    data = derive_vocabulary_terms(from_fixture(LEAK_FIXTURE)) + declaring_graph()
+    conforms, report = _validate(data)
+    assert not conforms, report
+    assert "artifact-undeclared-term-leak.ttl" in report
+    assert "etkl#NoSuchTermAnywhere" in report
+    assert "etkl#SemanticDataContract" not in report
+
+
+def test_a_blank_node_path_fixture_is_refused():
+    """O3 (spec §7) at the MEMBRANE, not only at the derivation. Stated in this direction
+    deliberately: remove the path-expression traversal and the validation CONFORMS, so this
+    test FAILS — 'must pass' is ambiguous between those and they are opposites here."""
+    from tests.artifact_terms import BLANK_PATH_FIXTURE
+    data = derive_vocabulary_terms(from_fixture(BLANK_PATH_FIXTURE)) + declaring_graph()
+    conforms, report = _validate(data)
+    assert not conforms, report
+    assert "etkl#NoSuchPathTermAnywhere" in report
+    assert "etkl#SemanticDataContract" not in report
+
+
+def test_the_exemption_is_gone():
+    """O7 (spec §7). While the filter existed the instrument could not see those namespaces
+    even if a term went missing — the deletion IS the oracle."""
+    text = SHAPES.read_text(encoding="utf-8")
+    assert "progress#" not in text
+    assert "docgov#" not in text
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "O1 + O2 (spec §7): EXPECTED RED until Task 7 repairs both live defects — etkl:Contract "
+    "in the two federation examples, and the six dangling tab:aggFn* in tab-fno-align.ttl. "
+    "The marker is removed in the repair commit. A test simply ABSENT here would prove "
+    "nothing about the red."))
+def test_every_artifact_names_only_declared_terms():
+    """O1 + O2 (spec §7) — the instrument, over the whole authored corpus, both families."""
+    conforms, report = _validate(evidence() + declaring_graph())
+    assert conforms, report
