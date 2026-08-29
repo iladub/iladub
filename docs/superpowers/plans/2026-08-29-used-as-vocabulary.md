@@ -15,6 +15,14 @@ part of the declaring graph.
 
 **Tech Stack:** Python 3, rdflib, pySHACL (`advanced=True`, `inference="none"`), pytest, SPARQL 1.1.
 
+**Doc impact: increment.** Same as the spec's (§ its header): the declaration membrane grows a
+second artifact family and a second demand, `docs/wiki/concepts/` gains no page in this loop, and no
+released assertion changes. Nothing here contradicts a published page, so this does not block a
+release tag. *Added 2026-08-29 during execution — the plan shipped without it, and
+`tests/test_doc_governance.py::test_membrane` was RED on `dg:DocImpactShape` from the commit that
+introduced the plan (`58f1b27`) until this line. The spec carried its block; the plan did not, and
+nothing catches that at authoring time — only the suite does, one commit later.*
+
 **Spec:** `docs/superpowers/specs/2026-08-29-used-as-vocabulary-design.md` — **read it first and
 keep it open.** This plan argues *from* the spec and does not restate it (CLAUDE.md plan-rule 6).
 Every "why" question is answered there by section number.
