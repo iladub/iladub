@@ -1,0 +1,45 @@
+# vocab/queries/alignment-subject.rq
+#
+# D2 — the align-subject derivation (spec §4.1, §4.3). R117's own sentence, as a query.
+#
+# NEUROSYMBOLIC GATE (CLAUDE.md §8) — AXIOM, DERIVATION FORM, OPEN WORLD. Evidence-positive:
+# a term is emitted because a triple SHOWS it as a subject inside an alignment module.
+#
+# WHY A SECOND DEMAND, AND WHY IT CANNOT BE FOLDED INTO D1. An aligned term occupies NO
+# vocabulary role by construction — an alignment module says `our:T rdfs:subClassOf holon:T`,
+# so the owned term is always a SUBJECT and never a predicate nor the object of a schema
+# predicate. Measured (spec §2.6 class 1): vocabulary-role terms in the align family = 0.
+# D1 is structurally blind here. D2 is licensed instead by the PURPOSE OF THE FILE FAMILY:
+# an align module exists to relate terms THIS PROJECT OWNS to external ones, so every owned
+# subject in one is a term the project claims. Selecting that family by the `-align.ttl`
+# suffix is a POPULATION definition — the same act `declaring_files()` performs in Python
+# with the same suffix — and never a test on a term's local name.
+#
+# THE owl:Ontology EXCLUSION. An ontology DOCUMENT IRI is not a vocabulary term and no
+# ontology declares one. MEASURED (spec §4.1): 9 undeclared align subjects before the
+# exclusion, 6 after; the three removed are the hga-alignment document IRIs. The test is
+# POSITIONAL (`a owl:Ontology`), never a name test on "/hga-alignment", and its NOT EXISTS is
+# HOLON-SCOPED — evaluated inside the one named graph that holds the subject, so it closes
+# within that holon while the dataset stays open (CLAUDE.md §8).
+#
+# D2 REACHES SUBJECTS ONLY, deliberately. `tab:product` is undeclared and occurs only as the
+# OBJECT of an rdfs:seeAlso in an align module; it is out of reach by design and is carried as
+# a residue (spec §9, §11) rather than repaired by widening this query.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+
+CONSTRUCT {
+    ?artifact a etkl:VocabularyArtifact ;
+              etkl:namesTerm ?term .
+}
+WHERE {
+    GRAPH ?artifact {
+        ?term ?p ?o .
+        FILTER NOT EXISTS { ?term a owl:Ontology }
+    }
+    FILTER ( isIRI(?term) )
+    FILTER ( STRSTARTS(STR(?term), "https://w3id.org/iladub") )
+    FILTER ( STRENDS(STR(?artifact), "-align.ttl") )
+}

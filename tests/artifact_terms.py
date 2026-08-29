@@ -130,3 +130,17 @@ def derive_vocabulary_terms(dataset: Dataset | None = None) -> Graph:
 
 #: O3's fixture (spec §7): the blank-node `sh:path` case, isolated and permanent.
 BLANK_PATH_FIXTURE = FIXTURE_DIR / "artifact-blank-path-fixture.ttl"
+
+
+ALIGNMENT_SUBJECT_QUERY = QUERY_DIR / "alignment-subject.rq"
+
+
+def derive_alignment_subjects(dataset: Dataset | None = None) -> Graph:
+    """D2 (spec §4.1): every owned SUBJECT of an alignment module.
+
+    Same predicate and same artifact class as D1, deliberately: the demand being made is the
+    same demand (spec §4.3), so the membrane needs no second constraint to see it. Seam 4 was
+    decided by writing the shape both ways — see the note in
+    `vocab/shapes/query-declaration-shapes.ttl`.
+    """
+    return _run_construct(ALIGNMENT_SUBJECT_QUERY, dataset)

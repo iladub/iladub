@@ -210,3 +210,40 @@ def test_the_fixtures_are_not_in_the_population():
     names = {p.name for p in artifact_files()}
     assert "artifact-blank-path-fixture.ttl" not in names
     assert "artifact-undeclared-term-leak.ttl" not in names
+
+
+# =========================================================================================
+# D2 — align-module subjects (spec §4.1). R117's own sentence, turned into an oracle.
+# AXIOM, derivation form, open world; licensed by the PURPOSE of the file family rather than
+# by triple position, which is exactly why it cannot be folded into D1.
+# =========================================================================================
+
+TAB = "https://w3id.org/iladub/tab#"
+
+
+def _align_demands() -> set[str]:
+    from tests.artifact_terms import derive_alignment_subjects
+    g = derive_alignment_subjects()
+    return {str(o) for o in g.objects(None, ETKL.namesTerm)} - _declared()
+
+
+def test_the_six_dangling_aggregation_terms_are_demanded():
+    """O2's subject (spec §2.5, M5) — R117's live instance, dangling since
+    tab-fno-align.ttl was written."""
+    assert _align_demands() == {
+        TAB + n for n in
+        ("aggFnSum", "aggFnMean", "aggFnMin", "aggFnMax", "aggFnCount", "aggFnProduct")
+    }
+
+
+def test_ontology_document_iris_are_not_demanded():
+    """Spec §4.1: 9 before the owl:Ontology exclusion, 6 after. An ontology document IRI
+    is not a vocabulary term and no ontology declares it."""
+    assert "https://w3id.org/iladub/hga-alignment" not in _align_demands()
+    assert "https://w3id.org/iladub/dec/hga-alignment" not in _align_demands()
+
+
+def test_d2_reaches_something_d1_cannot():
+    """The whole justification for a second demand (spec §4.1): the align family has
+    ZERO vocabulary-role terms, so D1 is structurally blind here."""
+    assert _align_demands() - _undeclared_demands() != set()
