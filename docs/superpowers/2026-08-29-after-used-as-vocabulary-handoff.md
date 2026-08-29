@@ -37,10 +37,16 @@ maintainer raised it on 2026-08-29 — and act on the answer.
 
 ## 4. Unverified or assumed
 
-- **CI on `2abc62c` was still IN PROGRESS when this file was written.** The identical tree passed
-  locally (`1371 passed, 7 skipped, 1 xfailed`, 45:49), but the merge-commit run was not seen green.
-  **Check it first:** `gh run list --branch main --limit 3`. If it is red, that is the next action,
-  ahead of everything below.
+- **CI on `2abc62c` shows `cancelled`, and that is EXPECTED — do not read it as a failure.**
+  `.github/workflows/ci.yml:7-9` sets `concurrency: cancel-in-progress: true`, so pushing this very
+  handoff commit (`43318c1`) cancelled the merge-commit run. The replacement run is on `43318c1`,
+  whose tree is `2abc62c` plus a docs-only commit — a strict superset. **That run is the one to
+  read:** `gh run list --branch main --limit 3`. The identical tree passed locally
+  (`1371 passed, 7 skipped, 1 xfailed`, 45:49), and **the `43318c1` run came back
+  `completed/success` (run `33243170653`)** — so the merged tree IS verified green on CI, by the
+  superset run rather than by its own.
+  *Second-order consequence worth knowing: any push to `main` cancels the CI run of the commit
+  before it, so a run seen green is only ever the run for HEAD.*
 - **The merge bypassed CI unintentionally.** `gh pr merge --auto` is a no-op on this repo — there is
   no branch protection requiring checks, so it merged immediately rather than waiting. Assumed, not
   verified: that adding a required-check rule is desirable. Someone should decide.
