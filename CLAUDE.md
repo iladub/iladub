@@ -342,6 +342,58 @@ circumvented. `scripts/context_budget.py` is the orphaned predecessor: its `User
 registration was **deleted in `2b33802`**, and `.claude/settings.json` has carried no `hooks` key
 since. Self-monitoring is the thing that fails first, so the harness does it. See R76.
 
+### The handoff's next action is TYPED — assertion or proposition (ruled 2026-08-29)
+
+The rule above says the handoff is written early. **Measured, not felt: it never is.** Of 45 tracked
+handoffs, only 3 record what they cost to write — and all 3 were authored past the originating floor:
+
+```
+$ ls docs/superpowers/*handoff*.md | wc -l
+      45
+$ for f in docs/superpowers/*handoff*.md; do v=$(grep -oiE "~?[0-9][0-9,]*k? working tokens" "$f" \
+    | head -1); [ -n "$v" ] && printf "%-52s %s\n" "$(basename $f)" "$v"; done
+2026-08-29-after-defect-rate-handoff.md              ~149k working tokens     3.0x the 50K floor
+2026-08-29-after-used-as-vocabulary-handoff.md       ~240k working tokens     4.8x
+2026-08-29-next-loop-handoff.md                      92,969 working tokens    1.9x
+```
+
+The other 42 record no figure, so the population that can be checked is 3, and it is 3 for 3. This is
+**not carelessness**: a handoff is written at the end by definition of when anyone writes one, so the
+artifact the next session depends on most is the one most reliably produced under precisely the
+conditions the floors exist to prevent.
+
+**The failure is localised to part 5, and only part 5.** Parts 1-4 of the handoff format are
+*pointers and records* — where the primaries are, what was decided and where it is recorded, what is
+unverified. Those are fatigue-proof, and they hold: on 2026-08-29 every pointer in
+`2026-08-29-after-defect-rate-handoff.md` was accurate. Part 5, *"the next concrete action"*, is the
+format's **only piece of originating reasoning** — a design decision — and it is written last and
+most degraded. That morning it sent the next session to run a prediction refuted in three minutes
+(see [[R151]], corrected in place, and its measurement in `residues-open.md`).
+
+**The rule:**
+
+1. **Part 5 is typed in the repo's own epistemics (§ Core design principles 3).** An **asserted**
+   next action is mechanical: the outcome is known and doing it *is* the work. A **proposed** next
+   action rests on a prediction that must be RUN and may fail — and if it fails, the loop this
+   handoff imagined is not the loop to run. A session reading *proposed* budgets for refutation; a
+   session reading *"the next concrete action"* is ambushed by it.
+2. **Part 5 is written FIRST, not last** — while the session still holds the context and is still
+   under the floor. Parts 1-4 may be appended at any cost, because pointers do not degrade.
+3. **A handoff authored over the floor grades part 5, per action** — not once in a preamble, where
+   it reads as a disclaimer about the document rather than a confidence on the claim beneath it.
+
+**What this rule is NOT.** It is not a ban on predictions in a handoff, and R151 is the case that
+proves it: that prediction was labelled falsifiable, ordered to be run *before* anything was built
+on it, and cost three minutes to refute. **That is the epistemics working**, and a handoff forbidden
+to predict would have shipped a confident wrong plan instead. The defect was filing a proposition
+under a heading that reads as a plan — this repo types assertion-vs-proposition everywhere else, and
+did not type it in the one document a fresh session reads first.
+
+**The check, for an author and a reviewer:** read part 5 and ask — *if this is wrong, does the next
+session find out in minutes, or after a day of building on it?* If the second, it is **proposed**,
+and it must say so.
+
+
 ## Plan authoring discipline (enforced, 2026-08-09; rule 5 added 2026-08-11)
 
 **A plan is a contract, not a draft of the code.** It states *interfaces, invariants and the
