@@ -105,7 +105,21 @@ sh:path [ sh:alternativePath ( dg:cites dg:citesExternal ) ] ;
 ```
 
 hides `docgov:citesExternal` behind a list. Its sibling `docgov:cites` survives only by accident,
-because `docgov-staleness-*.rq` also names it.
+because `docgov-staleness-*.rq` also names it — **and that accident is what makes the count depend
+on which population you ask about.** MEASURED 2026-08-29, running the traversal rather than
+predicting it:
+
+```
+undeclared, NO path traversal   = 53
+undeclared, WITH path traversal = 55
+added by traversal: docgov:cites, docgov:citesExternal
+```
+
+Over the `.ttl` corpus alone the traversal recovers **both** terms, because `docgov:cites`'s rescuing
+`.rq` occurrence is in the *other* population. So **§2.2's 53 becomes 55 once §4.4 ships**, and the
+"22 vs 23" of the previous paragraph is a statement about the combined `.ttl`+`.rq` vocabulary, not
+about the `.ttl` role census. Stated explicitly because the first draft of this spec implied 54 and
+the plan written from it guessed 53; neither was right, and only running it settled it.
 
 ### §2.4 A live leak, found by the rule (M4)
 
@@ -430,8 +444,10 @@ only proof D2 is doing work D1 cannot.
 
 **O3 — the blank-node path.** A fixture shape whose `sh:path` is `[ sh:alternativePath ( … ) ]` over
 one declared and one undeclared owned term is refused, naming the undeclared one. **Falsify by
-removing the path-expression traversal: this must pass** — the term becomes invisible, which is
-§2.3's measurement turned into a standing pin.
+removing the path-expression traversal: the validation then CONFORMS and this test FAILS** — the
+term becomes invisible, which is §2.3's measurement turned into a standing pin. (Stated this way
+deliberately: "must pass" is ambiguous between *the validation conforms* and *the test passes*, and
+those are opposites here.)
 
 **O4 — the membrane is not idle.** The validation binds exactly one focus node per tracked `.ttl`
 and per `.rq`, asserted as two numbers.
