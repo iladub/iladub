@@ -166,3 +166,29 @@ context was near zero. The figure belongs to session `3a1c7a94`; the session act
 Corrected for it, the post-ruling arm is 4/6 rather than 5/7 — which changes the fraction and not
 the sample-size verdict. **The defect inflates override counts on exactly the arm the ruling's
 prediction depends on, and it fires on every `/clear`, which is once per loop by design.**
+
+### Repaired the same day — plimslop PR #3
+
+`clear-session-inheritance`, opened 2026-08-29, 136 → 152 tests. The repair does not detect a
+`/clear` — it takes the session id the harness names (`CLAUDE_CODE_SESSION_ID`, verified to be the
+same id `hook.py` records), which ends every cross-session inheritance at once, including two
+sessions open in one project. The same command that produced `270,265 working — OVERRIDE` now reads
+`43,128 working — under the floor`.
+
+Two further defects were found by fixing the first, and one by looking:
+
+- `_override` split the observed arm from the counterfactual on the `measured` flag alone. That was
+  sound only while every post-repair record carried a measurement — and a legitimately unmeasured
+  record becomes scoreable as soon as its session records a turn, because `baselines` is built at
+  **read** time. Records now name their own instrument (`unit`).
+- The already-contaminated records are counted rather than dropped. **The detector is the signature,
+  not the inference**: flagging every inferred record read "47 of 49", which says only that the
+  corpus is old. An inherited figure is marked by the inferred session recording *no turn after* the
+  decision — a cleared session never speaks again. That reads **11 of 49, and 3 of the 6 in the
+  observed arm**.
+- `PLIMSLOP_MODE_<SHAPE>`, the documented escape hatch holding the R140 gate at `warn`, had **no
+  test**. Now tested end-to-end.
+
+**Consequence for §7 above: the post-ruling arm is not merely thin, it is half suspect** — 3 of its
+6 records carry the `/clear` signature. The 2026-08-26 prediction cannot be judged on the corpus as
+it stands, and the records that will judge it start accruing from this repair forward.
