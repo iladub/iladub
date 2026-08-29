@@ -30,6 +30,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 REPO = Path(__file__).resolve().parent.parent
 QUERY_DIR = REPO / "vocab" / "queries"
 ONTOLOGY_DIR = REPO / "vocab" / "ontology"
+INTERNAL_DIR = REPO / "vocab" / "internal"
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
@@ -49,13 +50,23 @@ def query_files() -> list[Path]:
 
 
 def declaring_files() -> list[Path]:
-    """The disposer (spec §4.2): the NON-ALIGN owned ontologies.
+    """The disposer: every owned vocabulary this repo AUTHORS.
+
+    Two directories, and the pair is the honest reading of "declared" (spec §4.5):
+    `vocab/ontology/*.ttl` — the published, w3id-registered ontologies — plus
+    `vocab/internal/*.ttl` — `prog:`, `docgov:` and `corpus:`, which three separate artifacts
+    record as deliberately unpublished and NOT w3id-registered (`tests/arc-shapes.ttl:27`,
+    `vocab/shapes/doc-governance-shapes.ttl:8`, `tests/corpus-shapes.ttl:2`). Before this,
+    "declared" meant "appears in the published ontology tree", and those three vocabularies
+    were therefore undeclarable without changing their posture. It now means "declared by an
+    owned vocabulary this repo authors", which is what the three statements always implied.
 
     Align modules are excluded deliberately. `iladub-hga-align.ttl` makes
     `etkl:CleanDocumentHolon` a subject; counting that would let a term declared ONLY in an
     align file pass, which is precisely R117's dangling case — the hole next door.
     """
-    return sorted(p for p in ONTOLOGY_DIR.glob("*.ttl") if not p.name.endswith("-align.ttl"))
+    published = (p for p in ONTOLOGY_DIR.glob("*.ttl") if not p.name.endswith("-align.ttl"))
+    return sorted([*published, *INTERNAL_DIR.glob("*.ttl")])
 
 
 def query_iri(path: Path) -> URIRef:

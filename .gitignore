@@ -36,8 +36,16 @@ htmlcov/
 *.swp
 .DS_Store
 
-# Confidential / internal — never commit (client/domain specifics)
-internal/
+# Confidential / internal — never commit (client/domain specifics).
+# ROOT-ANCHORED, and the anchor is load-bearing: the bare pattern `internal/` matches a
+# directory of that name at ANY depth, which silently swallowed the whole of
+# `vocab/internal/` (the unpublished prog:/docgov:/corpus: vocabularies) — three separate
+# authors hit it on the same day, and `git status` simply did not list the files.
+# CLAUDE.md § Documentation governance defines the Confidential class as `internal/` at the
+# repo root, and `tests/docgov_extract.py:43` already reads it root-anchored
+# (`path.startswith("internal/")` on a repo-relative path). Anchoring here restores
+# agreement between the two rules rather than changing either.
+/internal/
 .venv/
 
 # Real third-party document corpus — fetched by scripts/fetch_corpus.py, never committed

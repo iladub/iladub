@@ -1,0 +1,195 @@
+# vocab/internal/corpus.ttl — the test-corpus register vocabulary.
+#
+# REPO-INTERNAL, UNPUBLISHED, NOT w3id-REGISTERED. This vocabulary describes a
+# harness that lives inside this repository: the register of real third-party
+# documents the compiler is measured against. It is not part of the published
+# iladub / etkl / dec / risk ontologies, no w3id redirect resolves it, and nothing
+# outside this repository is expected to consume it.
+#
+# It sits in vocab/internal/ rather than vocab/ontology/ PRECISELY BECAUSE of the
+# statement it discharges — tests/corpus-shapes.ttl:2, "cor: is repo-internal (like
+# dg:) — not published, not w3id-registered." Declaring these terms under
+# vocab/ontology/ would silently promote test scaffolding into published, w3id-served
+# vocabulary: a change of posture, not the bookkeeping repair this file is.
+#
+# Why it exists at all: every owned IRI an authored artifact names must be declared by
+# an owned vocabulary. tests/corpus-manifest.ttl and tests/corpus-shapes.ttl name these
+# terms; until this file, nothing declared them. Authored from those two artifacts plus
+# their oracles (tests/test_corpus.py, tests/test_corpus_manifest.py,
+# tests/test_corpus_battery_unit.py, tests/test_fetch_corpus.py, scripts/fetch_corpus.py).
+#
+# Prefix note: this file binds the namespace as `corpus:` (its vann preferred prefix);
+# every consuming artifact in the repo binds the same namespace as `cor:`.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+
+@prefix corpus:  <https://w3id.org/iladub/corpus#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/corpus> a owl:Ontology ;
+    dcterms:title "corpus — the test-corpus register vocabulary (repo-internal)"@en ;
+    dcterms:description "Vocabulary of the real-document corpus register: which third-party documents the compiler is measured against, which edition of each is pinned, what verdict the register asserts about it, and the dated, attributed adjudications that justify that verdict. Repo-internal and unpublished — it describes a test harness, not the compiled knowledge graph. Instance data: tests/corpus-manifest.ttl; membrane over that data: tests/corpus-shapes.ttl."@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-29"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "corpus" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/corpus#" .
+
+#################################################################
+#  The register entry
+#################################################################
+
+corpus:Document a owl:Class ;
+    rdfs:label "Corpus document"@en ;
+    rdfs:comment "One entry in the test-corpus register: a real, third-party document (in practice a PDF, published by someone with no interest in this compiler) that the reading pipeline is measured against, named by a urn:iladub:corpus: IRI. The class describes the REGISTER ROW, not the bytes: the document itself is never committed — it is fetched from corpus:url into the gitignored corpus/ tree by scripts/fetch_corpus.py and pinned by corpus:sha256 — so an entry exists, and carries a verdict, whether or not the file is present on any given machine. Absence makes the battery skip visibly; drift makes it fail."@en .
+
+corpus:file a owl:DatatypeProperty ;
+    rdfs:label "file"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Where the fetched document lands, as a path relative to the corpus/ root, family-segment first (e.g. \"ag-trade/graincorp-stem-2026-07-31.pdf\"). This is the register's join key onto the working tree and the id the battery reports under; it is a local placement convention, not an identity — the entry's identity is its subject IRI."@en .
+
+corpus:url a owl:DatatypeProperty ;
+    rdfs:label "source URL"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The publisher address the pinned edition was retrieved from, recorded as a STRING rather than an IRI resource on purpose: it is a historical retrieval fact, not a claim that the address still resolves or still serves the same bytes. URLs rot and publishers rotate editions — when they do, the checksum catches it (scripts/fetch_corpus.py reports the mismatch and deletes the file) and the register is repaired by a reviewed edit, never automatically."@en .
+
+corpus:family a owl:DatatypeProperty ;
+    rdfs:label "family"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The domain family this document belongs to, from the closed set the register balances across — ag-trade, gov-stats, financial, health (closed by sh:in in tests/corpus-shapes.ttl, and also the leading path segment of corpus:file). Its job is anti-overfitting: a corpus drawn from one publisher's house style would measure that house style rather than the reading, so the register keeps documents from producers with unrelated typesetting habits and refuses a family it has not agreed to."@en .
+
+corpus:series a owl:DatatypeProperty ;
+    rdfs:label "series"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The recurring publication an entry is one edition of (e.g. \"graincorp-shipping-stem\" — a weekly release whose layout is stable and whose numbers are not). It exists so that two entries of the same series read as the SAME reading problem measured twice, not as two independent documents: a later edition can be added, or can supersede an earlier one, without losing the lineage that makes a score comparison meaningful."@en .
+
+corpus:producer a owl:DatatypeProperty ;
+    rdfs:label "producer"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The PDF /Producer metadata string of the pinned edition, read off the file by scripts/fetch_corpus.py and pinned by hand. Recorded as EVIDENCE ABOUT THE DOCUMENT'S MAKING, not as bibliography: the producing toolchain (\"Microsoft: Print To PDF\", \"Microsoft® Excel® for Microsoft 365\", \"Quartz PDFContext\", \"Acrobat Distiller\", \"OpenPDF\") is the single strongest predictor of the text-layer geometry the reader has to survive — glyph runs, ruling lines, whether a table is drawn or merely aligned. Two documents that look alike to a human and carry different producers are two different reading problems."@en .
+
+corpus:fetched a owl:DatatypeProperty ;
+    rdfs:label "fetched on"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The day the pinned edition was downloaded. Together with corpus:sha256 it dates the evidence: the digest says WHICH bytes were measured, this says WHEN they were obtained, and the pair is what lets a later reader judge how stale a recorded score is when the publisher's URL now serves something else."@en .
+
+corpus:sha256 a owl:DatatypeProperty ;
+    rdfs:label "sha256"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Lowercase 64-hex SHA-256 digest of the exact bytes the register's measurements were taken on (shape-constrained by pattern ^[0-9a-f]{64}$). This is the pin that makes a score reproducible rather than anecdotal: an on-disk file whose digest differs FAILS the battery instead of skipping it, because measuring an unpinned edition would silently decouple the register from the evidence it claims to record. An entry with no digest yet is an unfinished first fetch — the battery skips it and the fetcher exits nonzero until it is pinned, in a deliberate, reviewed manifest edit."@en .
+
+corpus:pages a owl:DatatypeProperty ;
+    rdfs:label "pages"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Page count of the pinned edition as the PDF reader reports it, pinned at fetch time. It records the SCALE of what a verdict covers — a score on a nine-page statistical release and a score on a one-page table are not the same claim — and it is how a reader notices that a re-fetched edition grew or lost pages even before the digest is compared."@en .
+
+#################################################################
+#  The verdict — what the register asserts about a document
+#################################################################
+
+corpus:Verdict a owl:Class ;
+    rdfs:label "Corpus verdict"@en ;
+    owl:oneOf (corpus:CompilesAbove corpus:SemanticEscalation corpus:Unadjudicated) ;
+    rdfs:comment "The closed set of things the register is allowed to assert about a corpus document. Closed twice, deliberately and redundantly: enumerated here by owl:oneOf, and independently by sh:in on corpus:expectedVerdict in tests/corpus-shapes.ttl — the enumeration here says what the vocabulary MEANS, the sh:in refuses a manifest that strays, and the two must be changed together. The set is small because a verdict is an accountable claim, not a status label: two of the three assert something about the reading, and the third exists so that asserting nothing stays a first-class, recordable option."@en .
+
+corpus:CompilesAbove a owl:NamedIndividual, corpus:Verdict ;
+    rdfs:label "compiles above floor"@en ;
+    rdfs:comment "The register asserts that this document compiles end-to-end through the DOCUMENT-level driver — one chain across all its pages, never a per-page reading stitched together afterwards — and scores at or above its corpus:scoreFloor, with at least one region actually asserted. The strongest verdict the register issues and the only one that pins a number, so the shapes refuse it without a corpus:scoreFloor, and refuse it (as they refuse any non-default verdict) without a pinned edition and a recorded adjudication behind it."@en .
+
+corpus:SemanticEscalation a owl:NamedIndividual, corpus:Verdict ;
+    rdfs:label "semantic escalation expected"@en ;
+    rdfs:comment "The register asserts that this document compiles AND that at least one region escalates for a genuinely SEMANTIC reason — an ambiguity a careful reader could not resolve either — as opposed to crashing, hanging, or failing mechanically. Here the escalation is the expected, correct outcome: the verdict says the compiler was right to decline to guess. Because that claim is worthless without saying what was ambiguous, the shapes refuse this verdict unless corpus:ambiguity names it in prose."@en .
+
+corpus:Unadjudicated a owl:NamedIndividual, corpus:Verdict ;
+    rdfs:label "unadjudicated"@en ;
+    rdfs:comment "No verdict has been recorded. The gate is only that compiling RETURNS AT ALL — never crashes, never hangs — and nothing whatever is claimed about whether what was carried is what the page says. This is the register's default and its honest resting state: a score measured under it is printed as evidence and asserted by nobody, and a high number is emphatically not an acceptance. A HOLD is encoded AS this verdict plus a corpus:adjudication carrying the reason; there is deliberately NO corpus:Hold term, and this comment exists so that a reader who goes looking for one learns it was refused rather than dropped."@en .
+
+corpus:expectedVerdict a owl:ObjectProperty ;
+    rdfs:label "expected verdict"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range corpus:Verdict ;
+    rdfs:comment "Exactly one per entry: the register's standing claim about what compiling this document should show. It is READ by the battery and never written by it — the test suite asserts against this value and is forbidden to edit the manifest, so a verdict only ever changes as a measured event in a reviewed commit with an adjudication beside it. That asymmetry is the whole point: a bar a test can move is not a bar."@en .
+
+corpus:scoreFloor a owl:DatatypeProperty ;
+    rdfs:label "score floor"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The regression FLOOR a corpus:CompilesAbove document is asserted against — deliberately at or below the measured score, and never the measured value itself, so ordinary run-to-run variation is not a failure while a real regression is. Two disciplines ride on it and neither is enforceable by the shapes. A document that falls below its floor is REPORTED at its measured score; the floor is never lowered to meet it. And a floor is never pinned merely because some number was measured: nothing in the vocabulary stops a floor being set at a score achieved without reading a single glyph correctly, so entries whose reading is untrusted carry corpus:Unadjudicated and no floor at all."@en .
+
+#################################################################
+#  The grounding trio — the contract this document is read against
+#################################################################
+
+corpus:contract a owl:DatatypeProperty ;
+    rdfs:label "contract"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Repo-relative path to the semantic data contract (an ontology, not a schema) declaring the target semantics this document is compiled INTO. Its presence is what makes the grounding leg of the battery run at all: an entry without it is parametrized out of the grounding test entirely, so its promotion invariant is never exercised no matter how good its score looks."@en .
+
+corpus:terms a owl:DatatypeProperty ;
+    rdfs:label "terms"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Repo-relative path to the terminology graph (the SKOS/vocabulary side) that the grounding portal matches this document's concepts against. It is the source of truth for what CAN be grounded here; everything it does not cover is a proposition, quarantined rather than dropped."@en .
+
+corpus:shapes a owl:DatatypeProperty ;
+    rdfs:label "shapes"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Repo-relative path to the SHACL shapes forming the membrane for this document — what may cross into the grounded graph. In the battery it is not decoration: validation against these shapes IS the promotion-invariant check (every grounded node behind exactly one accountable promotion), replacing a hand-rolled Python loop that once restated a fraction of it. The trio corpus:contract / corpus:terms / corpus:shapes travels together, all or none, enforced by the register's shapes: a partial trio would let a document look contracted while its membrane never ran."@en .
+
+#################################################################
+#  Adjudication — the dated, attributed reading behind a verdict
+#################################################################
+
+corpus:Adjudication a owl:Class ;
+    rdfs:label "Adjudication"@en ;
+    rdfs:comment "One dated, attributed note recording what a reading of this document's compile was taken to MEAN. It is the accountable act the register is built around — a score is a measurement and an adjudication is the judgement about it — and instances are written as blank nodes hanging off their document, since an adjudication has no identity apart from the entry it judges."@en .
+
+corpus:adjudication a owl:ObjectProperty ;
+    rdfs:label "adjudication"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range corpus:Adjudication ;
+    rdfs:comment "Attaches an adjudication to a corpus document. Repeatable and APPEND-ONLY: a note that no longer holds is superseded by a later note that says so and says why, never edited in place, because a rationale silently rewritten is a rationale nobody can audit — the stale note plus its supersession is the record, and the stale note alone would be a lie the register could not detect. Required (with a pinned edition) by any verdict other than corpus:Unadjudicated: a claim about a document must have a reading behind it."@en .
+
+corpus:by a owl:DatatypeProperty ;
+    rdfs:label "adjudicated by"@en ;
+    rdfs:domain corpus:Adjudication ;
+    rdfs:range rdfs:Literal ;
+    rdfs:comment "Who is ACCOUNTABLE for this note — not who typed it. Where a note was composed by an agent the value says so plainly and names the human whose review and merge of the carrying commit is the actual sign-off, because an unattributable judgement is not a judgement the register can rely on. Range left as rdfs:Literal rather than xsd:string: these values are prose attributions, and pinning them to xsd:string would reject a language-tagged one."@en .
+
+corpus:on a owl:DatatypeProperty ;
+    rdfs:label "adjudicated on"@en ;
+    rdfs:domain corpus:Adjudication ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date this note was recorded. It is what makes an append-only stack of notes readable as a history: which reading came first, which superseded which, and how old the standing judgement is relative to the pinned edition's corpus:fetched date."@en .
+
+corpus:rationale a owl:DatatypeProperty ;
+    rdfs:label "rationale"@en ;
+    rdfs:domain corpus:Adjudication ;
+    rdfs:range rdfs:Literal ;
+    rdfs:comment "The reasoning, in prose: the measurements the verdict rests on (scores, page counts, token ledgers, escalation censuses, with the commit they were taken at), what was superseded and why, and — the part no other property can carry — WHAT REMAINS UNREAD. This is where a HOLD lives, and where the register refuses a number it could technically have accepted. Range left as rdfs:Literal rather than xsd:string, deliberately: rationales are human prose and may be language-tagged, and xsd:string would reject rdf:langString."@en .
+
+corpus:ambiguity a owl:DatatypeProperty ;
+    rdfs:label "ambiguity"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range rdfs:Literal ;
+    rdfs:comment "The reviewer's prose statement of WHAT is ambiguous in a document whose expected verdict is corpus:SemanticEscalation — the header block, the double column span, the reading a competent human also could not settle. The register's shapes refuse that verdict without it, and the reason is epistemic rather than clerical: an escalation nobody can name is indistinguishable from a defect the register has grown used to. No document in the register carries this term today (every current entry is CompilesAbove or Unadjudicated), so it is exercised only by the negative fixtures — the constraint that demands it is live regardless. Range rdfs:Literal, not xsd:string: this is prose and may be language-tagged."@en .

@@ -36,9 +36,12 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     than assuming the directory is empty. Same force: the population is git's answer, minus
     a named directory, and both halves are counted.
     """
+    # RE-MEASURED after Task 5 (spec §10 seam 6: compute the count, never copy it):
+    # 136 -> 139, the three authored vocabularies under vocab/internal/. They are artifacts
+    # like any other and are read by the same rule that reads the rest.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 136
+    assert len(artifact_files()) == len(tracked) - len(carved) == 139
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -77,8 +80,16 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     a plain string (vann:preferredNamespaceUri) and those are two distinct terms. Spec §2.7's
     figure is 18, and 18 is the OCCURRENCE count — MEASURED 2026-08-29 over this population:
 
-        occurrences 18   (sh:namespace 11, vann:preferredNamespaceUri 7)
+        occurrences 18   (sh:namespace 11, vann:preferredNamespaceUri 7)   [136 artifacts]
         distinct values 7
+
+    RE-MEASURED after Task 5, which authors three more artifacts each carrying its own
+    `vann:preferredNamespaceUri`:
+
+        occurrences 21   distinct values 8   [139 artifacts]
+
+    The eighth distinct value is `https://w3id.org/iladub/docgov#`, present now as a plain
+    string as well as the `xsd:anyURI` a shape already carried.
 
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
@@ -88,8 +99,8 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 18
-    assert len({str(o) for o in occurrences}) == 7
+    assert len(occurrences) == 21
+    assert len({str(o) for o in occurrences}) == 8
     assert not any(isinstance(o, URIRef) for o in occurrences)
 
 
@@ -107,33 +118,101 @@ def _demanded() -> set[str]:
 
 
 def _declared() -> set[str]:
+    """Everything the disposer declares TODAY: published ontologies + vocab/internal."""
     from tests.query_terms import declaring_graph
     return {str(s) for s in declaring_graph().subjects()}
 
 
+def _declared_by_published_only() -> set[str]:
+    """The disposer as it stood BEFORE this loop widened it — the PUBLISHED, w3id-registered
+    ontologies alone.
+
+    Two different questions were being asked under one name, and Task 5 forced them apart
+    (recorded here as a plan defect, G6). "How many terms does the rule DEMAND that no
+    published ontology declares?" is the CENSUS — spec §2.2's 53 and §2.3's 55 — and it is a
+    property of the rule and the tree, fixed for good. "How many demands are still
+    undischarged?" is the INSTRUMENT's live reading, and authoring vocab/internal/ is exactly
+    what was supposed to drive it to the two real defects. Measuring the first against the
+    widened disposer collapses it to the second and destroys the census; the plan's Task 2 and
+    Task 3 tests did that, because they were written before Task 5 existed.
+    """
+    from rdflib import Graph
+    from tests.query_terms import ONTOLOGY_DIR
+    graph = Graph()
+    for path in sorted(ONTOLOGY_DIR.glob("*.ttl")):
+        if not path.name.endswith("-align.ttl"):
+            graph.parse(path, format="turtle")
+    return {str(s) for s in graph.subjects()}
+
+
+def _census() -> set[str]:
+    """The rule's yield against the published ontologies — spec §2.2/§2.3's question."""
+    return _demanded() - _declared_by_published_only()
+
+
+def _pre_loop_artifacts():
+    """The 136 tracked `.ttl` spec §2.2/§2.3 measured, i.e. before vocab/internal/ existed."""
+    from tests.query_terms import INTERNAL_DIR
+    return [p for p in artifact_files() if INTERNAL_DIR not in p.parents]
+
+
+def _census_over(files) -> set[str]:
+    """The census restricted to a chosen sub-population, so the two trees stay comparable."""
+    from rdflib import Dataset
+    from tests.artifact_terms import artifact_graph_iri, derive_vocabulary_terms
+    dataset = Dataset()
+    for path in files:
+        dataset.graph(artifact_graph_iri(path)).parse(path, format="turtle")
+    demanded = {str(o) for o in derive_vocabulary_terms(dataset).objects(None, ETKL.namesTerm)}
+    return demanded - _declared_by_published_only()
+
+
 def _undeclared_demands() -> set[str]:
-    declared = _declared()
-    return {t for t in _demanded() if t not in declared}
+    """What the instrument still refuses TODAY, against the full declaring graph."""
+    return _demanded() - _declared()
 
 
-def test_the_rule_demands_55_undeclared_terms():
-    """Spec §2.2 measured 53 before the SHACL path traversal of spec §4.4; §2.3 measured
-    55 after it. Asserted as a NUMBER. This count moves only when the tree does — and the
-    step from 53 to 55 was EARNED, in the commit that added the traversal, never adjusted
-    to make a suite go green. `test_the_path_traversal_adds_exactly_two_terms` holds the
-    delta and names the two terms."""
-    assert len(_undeclared_demands()) == 55
+CORPUS = "https://w3id.org/iladub/corpus#"
+
+#: The two artifacts the census is measured over, and why there are two. Spec §2.2/§2.3
+#: measured the rule's yield over the 136 tracked `.ttl` that existed BEFORE this loop
+#: authored three more; those three are themselves artifacts, read by the same rule.
+_SURPLUS_IN_CENSUS = {CORPUS + "Verdict", CORPUS + "Adjudication"}
+
+
+def test_the_rule_demands_57_undeclared_terms_and_55_over_the_tree_it_was_measured_on():
+    """Spec §2.2 measured 53 before the SHACL path traversal of §4.4; §2.3 measured 55 after
+    it. Asserted as NUMBERS. Each step was EARNED — 53 -> 55 in the commit that added the
+    traversal, 55 -> 57 in the commit that authored vocab/internal/ — never adjusted to make
+    a suite go green.
+
+    Measured against the PUBLISHED ontologies: this is the CENSUS question — what the rule
+    demands that no published ontology declares — and it is a property of the rule and the
+    tree. It is NOT the instrument's live reading, which `test_the_only_undeclared_demands_
+    left_are_the_two_live_defects` holds. Conflating the two destroys the census, and the
+    plan's Task 2 and Task 3 tests did exactly that, having been written before Task 5 existed.
+
+    THE DELTA IS THE AUTHORSHIP EVIDENCE, and this is a second and sharper O6 (spec §7).
+    Authoring the three internal vocabularies moved the census by exactly two, and the two
+    are `corpus:Verdict` and `corpus:Adjudication` — classes the pre-loop tree NEVER demanded,
+    which exist because an author decided what the verdict individuals and the adjudication
+    nodes ARE. A transcription of the census cannot move the census.
+    """
+    assert len(_census_over(_pre_loop_artifacts())) == 55
+    assert len(_census()) == 57
+    assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
 def test_the_prog_vocabulary_is_21_terms():
     """Spec §2.3 (M3): the role rule reproduces R142's corrected census term-for-term,
     by a method that shares nothing with the lexical scan that produced it."""
-    assert len({t for t in _undeclared_demands() if t.startswith(PROG)}) == 21
+    assert len({t for t in _census() if t.startswith(PROG)}) == 21
 
 
 def test_the_live_etkl_leak_is_demanded():
     """Spec §2.4 (M4) — O1's subject. The ontology declares etkl:SemanticDataContract."""
     assert "https://w3id.org/iladub/etkl#Contract" in _undeclared_demands()
+    assert "https://w3id.org/iladub/etkl#Contract" in _census()
 
 
 def test_an_arc_instance_iri_is_not_demanded():
@@ -181,8 +260,8 @@ def test_the_path_traversal_adds_exactly_two_terms():
     are hidden — docgov:cites's rescuing occurrence is in the .rq population, which this
     derivation does not read. Asserting the delta as well as the total is what makes this
     a check that the traversal does not OVER-reach."""
-    assert len(_undeclared_demands()) == 55
-    assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _undeclared_demands()
+    assert len(_census_over(_pre_loop_artifacts())) == 55
+    assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 
 def test_the_fixture_path_hides_an_undeclared_term_from_a_naive_reading():
@@ -202,6 +281,7 @@ def test_the_fixture_path_hides_an_undeclared_term_from_a_naive_reading():
     assert "https://w3id.org/iladub/etkl#NoSuchPathTermAnywhere" in demanded
     assert "https://w3id.org/iladub/etkl#SemanticDataContract" in demanded
     assert demanded - _declared() == {"https://w3id.org/iladub/etkl#NoSuchPathTermAnywhere"}
+    assert demanded - _declared_by_published_only() == {"https://w3id.org/iladub/etkl#NoSuchPathTermAnywhere"}
 
 
 def test_the_fixtures_are_not_in_the_population():
@@ -246,4 +326,4 @@ def test_ontology_document_iris_are_not_demanded():
 def test_d2_reaches_something_d1_cannot():
     """The whole justification for a second demand (spec §4.1): the align family has
     ZERO vocabulary-role terms, so D1 is structurally blind here."""
-    assert _align_demands() - _undeclared_demands() != set()
+    assert _align_demands() - _census() != set()
