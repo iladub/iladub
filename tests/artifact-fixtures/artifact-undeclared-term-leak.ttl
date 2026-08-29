@@ -1,0 +1,21 @@
+# tests/artifact-fixtures/artifact-undeclared-term-leak.ttl
+#
+# O5's negative fixture (spec §7) — the failing test CLAUDE.md § Serialization requires for
+# every shape. A synthetic artifact that uses ONE UNDECLARED owned term and ONE DECLARED one
+# in the same vocabulary role.
+#
+# The declared term is not decoration. Without it this fixture passes against a membrane that
+# refuses EVERY term it is handed, and SELECTIVITY is the claim being made — R135's Task 2
+# measured exactly that failure: with `FILTER NOT EXISTS` deleted, a fixture carrying only an
+# undeclared term still produced a red report, and the test could not tell the two membranes
+# apart.
+#
+# THIS FILE IS DELIBERATELY INVALID under the declaration membrane, and lives in
+# tests/artifact-fixtures/ for the reason its sibling does: the artifact population is EVERY
+# tracked .ttl. `test_the_fixtures_are_not_in_the_population` pins the carve-out.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+
+<urn:iladub:fixture:leak> rdfs:subClassOf etkl:NoSuchTermAnywhere , etkl:SemanticDataContract .

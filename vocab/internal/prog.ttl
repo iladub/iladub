@@ -1,0 +1,207 @@
+# vocab/internal/prog.ttl — the arc's progress vocabulary, declared.
+#
+# WHY THIS FILE IS IN vocab/internal/ AND NOT IN vocab/ontology/.
+# `prog:` (https://w3id.org/iladub/progress#) is REPO-INTERNAL and UNPUBLISHED. It is not
+# w3id-registered, it is not content-negotiated, it ships in no release, and it describes
+# this repository's own record of its own progress — not anything iladub asserts about the
+# world. `tests/arc-shapes.ttl:27` states that posture in one line ("`prog:` … is
+# repo-internal and unpublished, exactly as `cor:` and `dg:` are: not w3id-registered,
+# **never in vocab/ontology/**"), and this file is what discharges it: the terms get a real
+# declaration, and they get it in the directory that statement allows. Putting them under
+# vocab/ontology/ would contradict the sentence this file exists to satisfy.
+#
+# WHAT IT IS FOR. The arc is this repo's denominator: five named rungs, the criteria counted
+# within them, and the dependency edges between those criteria. The instance data is
+# hand-authored in `tests/arc-manifest.ttl`, a membrane refuses the malformed shapes of it
+# (`tests/arc-shapes.ttl`), procedural legs answer the questions no membrane can see
+# (`tests/test_arc_manifest.py`, `tests/test_arc_ablation.py`), and the derivations that read
+# it live in `vocab/queries/arc-*.rq`. Until now nothing DECLARED the terms all four use.
+# This file declares them, and nothing else: it states no constraint, derives nothing, and
+# is never loaded to make the manifest conform. The membrane stays in arc-shapes.ttl.
+#
+# WHAT IS DELIBERATELY NOT DECLARED, because a declaration is a claim.
+#   * No rdfs:domain or rdfs:range on prog:dependsOn / prog:proposedDependsOn — a range
+#     would type every dependency target as a prog:Criterion by inference and make the
+#     membrane's dangling-target refusal permanently vacuous (tests/arc-shapes.ttl:180-184
+#     states exactly this, and it is honoured here rather than restated as new reasoning).
+#   * No rdfs:domain on prog:dependencyRationale, for the same class of reason, one property
+#     over: see its comment.
+#   * No ordering. There is no prog:precedes and no index property, because the rungs are
+#     unordered — `tab` is depth inside `etkl`, not a stage after `substrate`.
+#   * No rdfs:range where `tests/arc-shapes.ttl` pins no sh:datatype. Every xsd: range below
+#     is the datatype the membrane actually constrains, and the properties that may carry
+#     prose (prog:statement, prog:dependencyRationale) carry NO range at all, so that a
+#     language-tagged literal is never rejected (CLAUDE.md § Serialization).
+#
+# SOURCE OWNERSHIP (CLAUDE.md § Source ownership): every subject here is a `prog:` term we
+# own, or this file's own ontology IRI. No HGA IRI appears anywhere in this file, as an
+# object or otherwise — `prog:` describes the repo's progress record and has nothing to
+# align to the holon substrate.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+
+@prefix prog:    <https://w3id.org/iladub/progress#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/progress> a owl:Ontology ;
+    dcterms:title "prog — the arc's progress vocabulary (repo-internal)"@en ;
+    dcterms:description "The vocabulary of iladub's own progress record: rungs, the criteria counted within them, the oracle that decides each criterion, and the two grades of dependency edge between criteria. Repo-internal and unpublished — not w3id-registered, not released, and never in vocab/ontology/ (tests/arc-shapes.ttl:27). It declares terms only; the membrane over the manifest is tests/arc-shapes.ttl and the derivations are vocab/queries/arc-*.rq."@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-29"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "prog" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/progress#" .
+
+
+#################################################################
+#  The three node kinds
+#################################################################
+
+prog:Criterion a owl:Class ;
+    rdfs:label "Criterion"@en ;
+    rdfs:comment "One countable thing that would have to be true for the arc to have advanced — the arc's unit of DENOMINATOR, declared before it may be claimed. A criterion carries the prose that says what done means (prog:statement), the date that prose was written (prog:declaredOn) with a pointer to it (prog:source) so the date can be audited by `git blame`, a hand-asserted verdict (prog:met), and the oracle that would decide it (prog:oracleArtifact + prog:oracleTest). Its IRI is `prog:criterion:<rungKey>:<ordinal>` and must agree with its prog:ofRung: that is not tidiness but a performance contract, since the cockpit strip reads the manifest with a regex rather than rdflib and can only count a criterion whose rung is encoded in its own IRI. The denominator grows with ambition — adding a document or a goal LOWERS the fraction, and a gauge that can only be raised by aiming higher is measuring the right thing."@en .
+
+prog:Rung a owl:Class ;
+    rdfs:label "Rung"@en ;
+    rdfs:comment "A named region of the arc that criteria are counted within — five of them, settled, and a sixth is a decision rather than an edit. Rungs are UNORDERED, and this vocabulary asserts no ordering because there is none to assert: `tab` is depth inside `etkl`, not a stage after `substrate`. A rung whose criteria nobody has authored yet is not a refusal and is not zero either — it is absent from the count and renders as unknown, which is why every per-rung derivation joins through present triples and never infers a rung's standing from silence."@en .
+
+prog:Manifest a owl:Class ;
+    rdfs:label "Manifest"@en ;
+    rdfs:comment "The single node recording the RUNNER that the arc manifest's assertions were validated against. It exists because \"if CI is green, every oracle is green\" is true only relative to an interpreter: under the wrong one the corpus battery reports false reds and some dependencies are simply absent, so a green run would be evidence about the wrong environment. It is not a container of criteria — the rungs do that — and it holds nothing but the three recorded environment facts."@en .
+
+
+#################################################################
+#  The rung, and the criterion's membership in it
+#################################################################
+
+prog:rungKey a owl:DatatypeProperty ;
+    rdfs:label "rung key"@en ;
+    rdfs:domain prog:Rung ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The short settled name by which a rung is cited — one of the five, and the value a criterion's IRI encodes. It is the rung's IDENTITY for counting; the rung's rdfs:label is prose for the eye and is never a join key. A key is a name and never a number: nothing in this vocabulary orders the five."@en .
+
+prog:criterion a owl:ObjectProperty ;
+    rdfs:label "has criterion"@en ;
+    rdfs:domain prog:Rung ;
+    rdfs:comment "Lists a criterion under the rung it belongs to. This edge is a CONVENIENCE INDEX and not the authority: every per-rung count joins through prog:ofRung instead, because only the key is pinned to the criterion's own IRI and only the key is visible to the regex reader the cockpit uses. Where the index and the keys disagree, the key is right and this edge is the stale one. No rdfs:range is declared, deliberately: under the rdfs inference this repo validates with, a range would type every listed object as a prog:Criterion, so an index typo would silently satisfy the membrane clause that requires a dependency target to be a DECLARED criterion."@en .
+
+prog:ofRung a owl:DatatypeProperty ;
+    rdfs:label "of rung"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The rung key this criterion is counted under — the join key of every per-rung fraction. Held as the KEY rather than as a link to the prog:Rung node on purpose: the key is the fact the criterion's own IRI already encodes, so the rdflib reading and the regex reading count by the same fact and their answers are comparable. A criterion belongs to exactly one rung."@en .
+
+
+#################################################################
+#  What a criterion declares, and what it claims
+#################################################################
+
+prog:statement a owl:DatatypeProperty ;
+    rdfs:label "statement"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:comment "The prose that says, in one countable sentence, what would have to be true for this criterion to be met. It is the criterion's human-readable identity — the IRI slug is a bare ordinal and carries no meaning — and it is written so that a reader can tell whether it is satisfied without trusting the boolean beside it. NO rdfs:range is declared, matching the membrane, which pins no datatype here: a statement is prose and may be language-tagged, and constraining it to xsd:string would reject rdf:langString (CLAUDE.md § Serialization)."@en .
+
+prog:declaredOn a owl:DatatypeProperty ;
+    rdfs:label "declared on"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date the prose that declares this criterion was written — the DENOMINATOR's timestamp, and the whole reason the arc is a gauge rather than a scoreboard: you must say what done means before you may claim it. A prog:metOn earlier than this date is refused as met-before-defined, and a prog:metOn equal to it means the criterion was written against evidence that already existed, which must then be labelled prog:retrospective."@en .
+
+prog:source a owl:DatatypeProperty ;
+    rdfs:label "source"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A repo-relative pointer — `<path>`, `<path>:<line>` or `<path>:<start>-<end>` — to the prose in this repo that DECLARES this criterion. It is what makes prog:declaredOn auditable: without it the date is a claim with nothing to run `git blame` against. It is checked for resolving (the path exists, the line is in range) and deliberately not for what the cited line SAYS — that is a different question and would make one refusal answer two. Held as a plain string and never language-tagged: a locator is not prose."@en .
+
+prog:met a owl:DatatypeProperty ;
+    rdfs:label "met"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether this criterion is satisfied today. HAND-ASSERTED in a reviewed commit and never written by code: nothing in this repo derives it, flips it, or infers it from a passing test — the readers of this vocabulary tally the asserted boolean and a membrane refuses the records that are inconsistent around it (met with no date, met while blocked, met while depending on something unmet). It can go DOWN as well as up; the fill is a measurement, not a ratchet."@en .
+
+prog:metOn a owl:DatatypeProperty ;
+    rdfs:label "met on"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date this criterion became true. Required wherever prog:met is true — a claim with no date is not auditable — and forbidden wherever it is false, so un-meeting a criterion takes its date with it and cannot leave a stale one behind to be read later as evidence."@en .
+
+prog:retrospective a owl:DatatypeProperty ;
+    rdfs:label "retrospective"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when the criterion was written against evidence that ALREADY EXISTED — the denominator authored after the numerator. Required on every criterion, met or not, so that an adjudication and a measurement can be told apart by a reader who was not there: grandfathering is labelled, never hidden, and a criterion whose prog:metOn equals its prog:declaredOn must say so rather than presenting as a same-day achievement."@en .
+
+prog:blockedBy a owl:DatatypeProperty ;
+    rdfs:label "blocked by"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:comment "Names a row of this repo's deferred-residue register whose CLOSURE WOULD ADVANCE this criterion — not merely a row that mentions the same subject matter; a row that discusses the topic without gating the work is not an edge. Values are plain string identifiers (\"R43\") because the register is a markdown file that is not part of this graph at all, and is deliberately NOT mirrored into triples: a mirror would go stale exactly as the register's own history warns, and a query over it would then report the mirror's gaps rather than the arc's. Checking that a named row exists is therefore procedural, and no rdfs:range is declared because the membrane pins no datatype here. A met criterion may carry none — the work landed and the edge did not."@en .
+
+
+#################################################################
+#  The oracle — what would decide the criterion
+#################################################################
+
+prog:oracleArtifact a owl:DatatypeProperty ;
+    rdfs:label "oracle artifact"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:comment "A repo-relative file, optionally with a `:line` pointer into it, that this criterion's claim rests on — and, concretely, the thing a two-sided ablation DELETES from a scratch checkout to see whether the oracle notices. Multi-valued. Two values differing only in their `:line` suffix name ONE artifact for that purpose, because deletion works on files; and two criteria naming a file in common cannot ground a direction between them, since removing it collapses both arms of the ablation at once. No rdfs:range is declared: the membrane pins no datatype here, and the value is read as a path by the procedural leg that checks it against the working tree."@en .
+
+prog:oracleTest a owl:DatatypeProperty ;
+    rdfs:label "oracle test"@en ;
+    rdfs:domain prog:Criterion ;
+    rdfs:comment "A pytest node id that DECIDES this criterion — the thing run, inside a checkout with an artifact removed, to find out whether the reading holds. Multi-valued. An unmet criterion may name an oracle that is a TARGET, an id nobody has written yet, and that is honest rather than a gap; a met criterion's oracle must actually collect under the recorded runner, which is a fact about a pytest collection and so is checked procedurally rather than by the membrane. Two criteria that share an oracle test can never ground a direction between them: both ablation arms then fail for the same reason. No rdfs:range is declared, for the same reason as prog:oracleArtifact."@en .
+
+
+#################################################################
+#  The dependency graph: one relation at two grades of grounding
+#################################################################
+#
+# CLAUDE.md §3 turned on the arc itself — assert only what you can ground, propose everything
+# else, and never let a proposition pass as an assertion. Two predicates rather than one
+# predicate plus a grade flag, because the grade must survive TRANSITIVE CLOSURE: a SPARQL
+# property path cannot filter on a node property mid-path, so with one predicate the grounded
+# closure would be uncomputable. With two, `prog:dependsOn+` IS the grounded closure.
+
+prog:dependsOn a owl:ObjectProperty ;
+    rdfs:label "depends on (asserted)"@en ;
+    rdfs:comment "ASSERTED, criterion to criterion: this criterion could not have been met while its target was unmet, AND its oracle demonstrably consumes the target's artifacts. It is admitted only where the membrane's preconditions all hold and where CI's two-sided ablation passes — remove the target's files and this criterion's oracle must fail; remove this criterion's files and the target's oracle must still pass. The CI run IS the grounding, which is why this grade carries no prose rationale and why no record of a past ablation is stored: such a record would be true on the day it was written and unfalsifiable ever after. An edge the ablation refutes is DELETED, never demoted. NO rdfs:domain or rdfs:range is declared, and that absence is load-bearing rather than an omission: a range would make every target a prog:Criterion by inference and render the membrane's dangling-target refusal permanently vacuous — the membrane must not be handed the answer it exists to check."@en .
+
+prog:proposedDependsOn a owl:ObjectProperty ;
+    rdfs:label "depends on (proposed)"@en ;
+    rdfs:comment "The SAME relation as prog:dependsOn, at the PROPOSITION grade: a reading somebody can state and defend, which the ablation cannot yet ground — usually because one end is unmet (there is no green to turn red), or because the two ends share an oracle test or an artifact file, so both arms would fail for the same reason and adjacency would masquerade as direction. It carries exactly one prog:dependencyRationale, and it is REFUSED wherever the pair is in fact groundable: without that refusal the proposition grade becomes a place to hide, and the two-predicate split buys nothing. Domain and range are deliberately undeclared, for the reason given on prog:dependsOn."@en .
+
+prog:dependencyRationale a owl:DatatypeProperty ;
+    rdfs:label "dependency rationale"@en ;
+    rdfs:comment "Why a proposed edge could not be grounded: the reading it rests on, and the named precondition it fails. It hangs on a standard rdf:Statement reification node BESIDE the direct triple, never on the criterion — a literal on the criterion could not say WHICH proposed edge it explains, and \"exactly one\" would be unstatable for a criterion with two proposed targets. The direct triple stays, so the closure paths are untouched, and reification is used rather than RDF-star precisely because those paths must keep working. An asserted edge may not carry one. NO rdfs:domain is declared, and the reason is exact: `rdfs:domain rdf:Statement` would, under the rdfs inference this repo validates with, type every carrier as an rdf:Statement and so satisfy BY INFERENCE the clause the membrane uses to find these nodes at all. No range either — the rationale is prose and may be language-tagged."@en .
+
+
+#################################################################
+#  The runner the manifest was validated against
+#################################################################
+
+prog:interpreter a owl:DatatypeProperty ;
+    rdfs:label "interpreter"@en ;
+    rdfs:domain prog:Manifest ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The REPO-RELATIVE Python runner the manifest's assertions were validated against. Repo-relative and not absolute on purpose: an absolute path is a fact about one laptop, while the relative one is a fact about this repository and is the same claim on every machine. Reading the manifest under a different interpreter is refused rather than warned about, because a green run under the wrong environment is evidence about the wrong environment."@en .
+
+prog:pythonVersion a owl:DatatypeProperty ;
+    rdfs:label "python version"@en ;
+    rdfs:domain prog:Manifest ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The Python version the manifest was validated under, RECORDED TO THE PRECISION THAT IS THE ASSERTION. The check is dotted-prefix equality, so the number of components written down chooses what is being claimed: the feature version admits every patch of it, while adding a patch component claims that patch and refuses the next one. Nothing here is a threshold or a tolerance — the manifest decides its own strictness by what it writes. A string, not a number: a dotted version sequence is not a decimal."@en .
+
+prog:rdflibVersion a owl:DatatypeProperty ;
+    rdfs:label "rdflib version"@en ;
+    rdfs:domain prog:Manifest ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The rdflib version the manifest was validated under, recorded to the MINOR version — and that precision is itself the assertion, under the same dotted-prefix rule as prog:pythonVersion. The failure this record exists to catch is a MINOR-version difference between the project runner and a system one, which produces false reds; recording only the major version would admit exactly that failure, while pinning the patch would turn CI red the day rdflib ships an unrelated patch against a floating requirement with no lockfile. A string, for the same reason as prog:pythonVersion."@en .

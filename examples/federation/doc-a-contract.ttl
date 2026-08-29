@@ -1,7 +1,7 @@
 @prefix etkl: <https://w3id.org/iladub/etkl#> .
 @prefix tx:   <https://example.org/transplant#> .
 
-tx:contract-a a etkl:Contract ;
+tx:contract-a a etkl:SemanticDataContract ;
     etkl:targetClass tx:Offer ;
     etkl:hasField tx:field-abo .
 tx:field-abo etkl:fillsProperty tx:aboGroup ; etkl:admissibleScheme tx:scheme-abo .

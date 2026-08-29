@@ -164,6 +164,34 @@ tab:opFunction a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdf
 tab:opTargetLabel a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ;
     rdfs:label "operation target label"@en ;
     rdfs:comment "The leaf label of the aggregate row/column this strip op removes and re-derives (e.g. \"Total\")."@en .
+# --- the aggregation functions themselves ------------------------------------
+# The six named aggregations an AggregationCell or a StripAggregationOp can realize, as
+# owned TERMS. tab:aggregationFunction and tab:opFunction carry the name as an xsd:string
+# ("sum", "mean", …) and that is unchanged; these IRIs are what tab-fno-align.ttl aligns to
+# the standard XPath/F&O function IRIs, which is what makes "column = SUM(...)" a verifiable
+# rule rather than an opaque string. tab:opFunction's own rdfs:comment already cites that
+# alignment module by name — so the six were being POINTED AT by the core ontology while
+# being declared nowhere, and the declaration membrane found them dangling (R117's live
+# instance, 2026-08-29). Declared rather than deleted for exactly that reason: the citation
+# is deliberate and the alignment carries real information; it was the declaration that was
+# missing. `tab:product` is deliberately NOT declared here — it has no F&O counterpart and
+# occurs only as the OBJECT of an rdfs:seeAlso, out of reach of both demands, and it is
+# carried as a recorded limit of the instrument rather than repaired out of existence.
+tab:AggregationFunction a owl:Class ; rdfs:label "Aggregation function"@en ;
+    rdfs:comment "A named function an aggregate is computed by. The class exists so the six functions can be owned terms with external alignments, rather than bare strings; the string form stays the value carried on tab:aggregationFunction and tab:opFunction, and these IRIs are its vocabulary."@en .
+tab:aggFnSum a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "sum"@en ;
+    rdfs:comment "Addition over the operand group — the aggregation loop H detects by exact Decimal arithmetic and the only one a StripAggregationOp currently forwards."@en .
+tab:aggFnMean a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "mean"@en ;
+    rdfs:comment "Arithmetic mean over the operand group. Aligned to F&O avg, whose name differs from this one deliberately: the owned term reads as the table's word, the alignment carries the standard's."@en .
+tab:aggFnMin a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "min"@en ;
+    rdfs:comment "The least operand in the group."@en .
+tab:aggFnMax a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "max"@en ;
+    rdfs:comment "The greatest operand in the group."@en .
+tab:aggFnCount a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "count"@en ;
+    rdfs:comment "The number of operands in the group — the one function whose result is not in the operands' own unit, which is why a count column reconciles against no measure sum."@en .
+tab:aggFnProduct a owl:NamedIndividual, tab:AggregationFunction ; rdfs:label "product"@en ;
+    rdfs:comment "Multiplication over the operand group. It has NO XPath/F&O counterpart, so tab-fno-align.ttl points it at the owned tab:product instead of outward — the one member of this class whose alignment stays inside our namespace."@en .
+
 tab:opMember a owl:DatatypeProperty ; rdfs:domain tab:StripAggregationOp ; rdfs:range xsd:string ;
     rdfs:label "operation member"@en ;
     rdfs:comment "A base member label the aggregate is computed from (repeated once per member)."@en .

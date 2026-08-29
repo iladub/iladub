@@ -1,0 +1,208 @@
+# vocab/internal/docgov.ttl
+#
+# The documentation-governance vocabulary — the terms the doc-governance lint
+# asserts, validates and derives over the repo's own tracked markdown.
+#
+# THIS VOCABULARY IS REPO-INTERNAL. It is not published, it is not part of the
+# iladub / etkl / dec / risk / tab family that iladub releases, and it is NOT
+# registered at w3id — dereferencing https://w3id.org/iladub/docgov# resolves
+# nothing and is not meant to. It exists so that the terms this repo's own
+# governance machinery names are DECLARED somewhere rather than dangling.
+#
+# That posture is not invented here: it is stated at
+# vocab/shapes/doc-governance-shapes.ttl:8 — "The dg: namespace is repo-internal
+# governance vocabulary. It is NOT part of the published iladub/etkl/dec/risk
+# ontologies and is NOT registered at w3id." This file discharges that
+# statement by declaring the terms, and it lives in vocab/internal/ rather than
+# vocab/ontology/ PRECISELY because of it: vocab/ontology/ is the published
+# surface, and putting an unregistered, unpublished namespace there would
+# contradict the sentence above.
+#
+# Two prefixes name the same namespace and both are correct: `dg:` in the
+# shapes, the queries and the extractor; `docgov:` is the preferred prefix
+# recorded below and the one the declaration membrane's scope comment uses.
+#
+# The facts these terms carry are minted per run by tests/docgov_extract.py
+# (PROCEDURAL: git + YAML + file I/O), validated by
+# vocab/shapes/doc-governance-shapes.ttl (AXIOM, closed world) and derived over
+# by vocab/queries/docgov-*.rq (AXIOM, open world). Nothing in this file
+# validates or derives; it only says what the terms MEAN.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+
+@prefix docgov:  <https://w3id.org/iladub/docgov#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/docgov> a owl:Ontology ;
+    dcterms:title "docgov — the repo-internal documentation-governance vocabulary"@en ;
+    dcterms:description "Terms for governing this repository's own prose: one governance class per tracked markdown file, the mkdocs nav as the published surface, wiki-page frontmatter (title, type, confidence, updated, cited sources), the promotion of a wiki proposition into a published assertion, and the staleness / release-gate derivations. Repo-internal and unregistered at w3id — see vocab/shapes/doc-governance-shapes.ttl:8; that is why this file is under vocab/internal/ and not vocab/ontology/."@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-29"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "docgov" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/docgov#" .
+
+#################################################################
+#  The three node kinds
+#################################################################
+
+docgov:Document a owl:Class ;
+    rdfs:label "Governed document"@en ;
+    rdfs:comment "One tracked markdown file, enumerated from `git ls-files *.md` minus the exempt prefixes (skill/agent tooling, DataBook data — prose is governed, tooling is not). A Document is the unit the governance membrane targets: it must land in exactly one class by LOCATION, and a file that matches no location rule is emitted with no class at all so the membrane fails it loudly rather than a guess being recorded. Documents are minted fresh from the live repo on every lint run; none of them is stored in a committed graph."@en .
+
+docgov:NavEntry a owl:Class ;
+    rdfs:label "Navigation entry"@en ;
+    rdfs:comment "One leaf of the `nav:` tree in mkdocs.yml — an entry in the published site's table of contents. It is modelled separately from a Document because the two populations can disagree in exactly the way that matters: a nav entry is an intention to publish a path, which may name a file that does not exist. Checking that disagreement is the whole purpose of the kind."@en .
+
+docgov:Source a owl:Class ;
+    rdfs:label "Cited source"@en ;
+    rdfs:comment "A repo-relative path listed in a wiki page's `sources:` frontmatter — the evidence a wiki page rests its claims on. A Source is not necessarily a governed Document: it is often code (`.py`, `.ttl`, a workflow file) that the governance classes never cover. When the cited path IS a tracked markdown file the Source and the Document are the SAME node (both mint the IRI from the path), which is exactly how the staleness derivations can ask a cited source for its own governance class. `vault:` citations are deliberately NOT Sources — see docgov:citesExternal."@en .
+
+#################################################################
+#  Identity and classification
+#################################################################
+
+docgov:path a owl:DatatypeProperty ;
+    rdfs:label "path"@en ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The repo-relative POSIX path the node was minted from, carried as a literal so that a lint failure can name a file a human can open rather than an IRI. Domain deliberately left undeclared, for the same reason tab:aggregates is domainless: this property is carried by BOTH governed Documents and cited Sources, and those two populations overlap without coinciding (a cited `.py` file is a Source and never a Document). Declaring either class as the domain would RDFS-entail the other kind's nodes into it — under the lint's `inference=\"rdfs\"` run that would drag cited code into docgov:Document and hand it to shapes that demand a governance class it cannot have."@en .
+
+docgov:docClass a owl:DatatypeProperty ;
+    rdfs:label "governance class"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The single governance class this document belongs to: \"evidence\" (a loop record — measured, immutable after loop close), \"wiki\" (LLM-maintained synthesis — a proposition, committed but never published), \"assertion\" (a page in the mkdocs nav — describes the released artifact), \"manual\" (a README or RELEASE.md whose commands must actually run), \"contract\" (CLAUDE.md, edited only on explicit request) or \"confidential\" (`internal/`, which must never be tracked at all). It is DERIVED FROM LOCATION, not declared by the author, which is what makes it unfalsifiable-by-forgetting; a file matching no rule carries no docClass triple, and the membrane's minCount turns that silence into a failure."@en .
+
+docgov:inWikiIndex a owl:DatatypeProperty ;
+    rdfs:label "in wiki index"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether this wiki page is linked from docs/wiki/index.md. Emitted for wiki-class documents ONLY, and never for the index page itself, which cannot list itself (tests/docgov_extract.py:174). The index is the wiki's own membership register — CLAUDE.md tells agents to read it first — so a wiki page missing from it is a synthesis nobody will find, and dg:WikiIndexMembershipShape refuses it. Distinct from docgov:inNav, which is about the PUBLISHED site: the wiki is committed and never published, so the two flags govern two different surfaces and a page is normally in one and not the other. DECLARED AS AUTHORED SURPLUS, not because the membrane demanded it: this term's only occurrence in any tracked RDF is inside an sh:sparql query STRING (vocab/shapes/doc-governance-shapes.ttl:146), where it is a run of characters in a literal and not an RDF node at all, so no positional rule can reach it. It was found by scanning literal text and is recorded as a residue of this loop."@en .
+
+docgov:inNav a owl:DatatypeProperty ;
+    rdfs:label "in nav"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether this document's path appears in the mkdocs.yml `nav:` tree. The nav is the definition of the published surface, so this flag and the \"assertion\" class are two views of one fact: an assertion-classed document that is not in the nav is a page claiming to describe the release while being unreachable from it, and the membrane refuses it."@en .
+
+docgov:excludedFromSite a owl:DatatypeProperty ;
+    rdfs:label "excluded from site"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether this document's path is covered by an `exclude_docs` prefix in mkdocs.yml — i.e. whether the site build is guaranteed to leave it out. This is the leak boundary: wiki and evidence documents are committed but must never reach the published site, so for them the flag must be true. Being merely absent from the nav is not enough, because mkdocs will still build a page it can find under docs/."@en .
+
+docgov:resolves a owl:DatatypeProperty ;
+    rdfs:label "resolves"@en ;
+    rdfs:domain docgov:NavEntry ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the file this nav entry names exists on disk. A false value is a broken published table of contents, and the membrane hard-fails it — the nav is an assertion about the released artifact, so an entry pointing at nothing is an assertion with no referent."@en .
+
+docgov:exists a owl:DatatypeProperty ;
+    rdfs:label "exists"@en ;
+    rdfs:domain docgov:Source ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the cited source path is a file on disk. False means a wiki page rests a claim on evidence that has been moved, renamed or never existed — a citation that cannot be checked, which the membrane treats as no citation at all."@en .
+
+#################################################################
+#  Wiki-page frontmatter — the proposition's own metadata
+#################################################################
+
+docgov:title a owl:DatatypeProperty ;
+    rdfs:label "title"@en ;
+    rdfs:comment "The wiki page's human-readable title, taken from its YAML frontmatter `title:`. NO rdfs:range is declared: a title is prose and may be language-tagged, and pinning it to xsd:string would reject rdf:langString outright — this project is multilingual by construction (CLAUDE.md § Serialization). The membrane requires exactly one title per wiki page and says nothing about its datatype, and this declaration deliberately matches that silence."@en .
+
+docgov:docType a owl:DatatypeProperty ;
+    rdfs:label "wiki page type"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "What kind of wiki page this is: \"concept\" (synthesis about an idea), \"source\" (a digest of one external or vault source) or \"index\" (the entry point agents are told to read first). The distinction has teeth beyond bookkeeping — only concept pages are candidates for promotion into the published site, so this value is what puts a page into, or keeps it out of, the promotion queue."@en .
+
+docgov:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The page author's self-declared confidence in the synthesis — \"high\", \"medium\" or \"low\". A coarse three-valued scale, not a score: it exists so that a wiki page is legible as a PROPOSITION rather than an assertion (CLAUDE.md §3 applied to prose), and it is mandatory precisely so that no page can present itself as settled by omitting the qualifier."@en .
+
+docgov:updated a owl:DatatypeProperty ;
+    rdfs:label "updated"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date the wiki page's author last revised it, declared in the page's own frontmatter. This is a CLAIM about when the synthesis was last reconciled with its sources, not an observation of the filesystem or of git — which is exactly what makes it checkable: staleness is the comparison of this claimed date against the real last-commit date of the sources the page cites."@en .
+
+docgov:cites a owl:ObjectProperty ;
+    rdfs:label "cites"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range docgov:Source ;
+    rdfs:comment "Links a wiki page to one in-repo source it rests on, resolved from a `sources:` frontmatter entry to a node minted from that repo-relative path. Every wiki page must cite at least one source (a synthesis with no evidence behind it is opinion), and each citation is the edge the staleness derivations walk to ask whether the source has moved on since the page was updated."@en .
+
+docgov:citesExternal a owl:DatatypeProperty ;
+    rdfs:label "cites external source"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A citation of a source that lives OUTSIDE this repo, recorded verbatim as its `vault:…` identifier. It is a literal rather than a docgov:Source node on purpose: the private vault is cited, never merged and never written (the prose analogue of § Source ownership), so there is nothing on disk to check for existence or last-commit date. Such a citation satisfies the requirement that a wiki page cite something, but it can never trigger a staleness finding — the cost of citing what this repo cannot see."@en .
+
+docgov:promotedTo a owl:ObjectProperty ;
+    rdfs:label "promoted to"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range docgov:Document ;
+    rdfs:comment "Records that this wiki page's content has been lifted into a published page — the accountable act by which a proposition becomes an assertion. The target must itself be an assertion-classed document, and the membrane enforces that: a promotion pointing at another wiki page, or at a loop record, would be a promotion that never crossed the boundary it claims to have crossed. Absence of this property is meaningful, not missing data — see docgov:inPromotionQueue."@en .
+
+#################################################################
+#  Evidence-document declarations — the release train's inputs
+#################################################################
+
+docgov:docDate a owl:DatatypeProperty ;
+    rdfs:label "document date"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date carried by a dated spec's or plan's FILENAME (docs/superpowers/{specs,plans}/YYYY-MM-DD-…), parsed from the path itself. Deliberately the filename date and not a commit date or a frontmatter field: it is the date the loop stamped on its own record, it never changes when the file is later touched, and it is what both governance cutoffs are measured against — the 2026-07-31 grandfather line below which no doc-impact declaration is demanded, and the previous-release boundary the release gate compares to."@en .
+
+docgov:docImpact a owl:DatatypeProperty ;
+    rdfs:label "doc impact"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The effect a spec or plan declares its work has on the PUBLISHED documentation: \"none\", \"increment\" (new published material queues for the next release) or \"contradiction\" (the released documentation now says something false, and the release train must repair it before tagging). Extracted verbatim from the document's own `Doc impact:` line; an absent or unrecognised declaration emits no triple at all, so the membrane fails the document instead of silently defaulting it to harmless. The cutoff date and the three admissible values are MEMBRANE policy, stated in SHACL rather than in the extractor."@en .
+
+#################################################################
+#  Derived facts — never authored, minted per run by the SPARQL
+#  derivations in vocab/queries/docgov-*.rq (open world)
+#################################################################
+
+docgov:blocksRelease a owl:DatatypeProperty ;
+    rdfs:label "blocks release"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Derived, never stored: this spec or plan declared a doc-impact contradiction and is dated after the previous release tag, so the published documentation it contradicts has not yet been repaired and the tag build must stop. It is the release gate's entire rule — the runner only reads git tag dates and turns this derivation's result into an exit code. A blocker is drained by the release that fixes the affected published page, confirmed by a human before tagging."@en .
+
+docgov:inPromotionQueue a owl:DatatypeProperty ;
+    rdfs:label "in promotion queue"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Derived, never stored: this wiki concept page has not been promoted to any published assertion yet, so it is synthesis waiting for a release to lift it. Reported as a warning rather than a failure — a page may legitimately sit in the queue for many loops; the queue exists so that the backlog is visible and countable at release time instead of being rediscovered by accident."@en .
+
+docgov:staleAgainstEvidence a owl:ObjectProperty ;
+    rdfs:label "stale against evidence"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range docgov:Source ;
+    rdfs:comment "Derived, never stored: names an evidence-classed source whose last commit POSTDATES the wiki page's own `updated:` date — the synthesis is provably behind the loop record it claims to summarise. This is a HARD failure, because evidence is immutable after loop close: a commit touching it means the record genuinely changed, so a page still claiming to reflect it is asserting something no longer true. The fix is to reconcile the page AND move its `updated:` date."@en .
+
+docgov:staleAgainstCode a owl:ObjectProperty ;
+    rdfs:label "stale against code"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range docgov:Source ;
+    rdfs:comment "Derived, never stored: the same comparison as docgov:staleAgainstEvidence, but against a cited source that is NOT an evidence document — code, shapes, queries, workflows. Deliberately a WARNING and not a gate: code churns on nearly every commit, so hard-failing here would turn every loop into a documentation loop and the lint would simply be disabled. The signal is still emitted, so the drift is visible; only its force is different."@en .
+
+docgov:lastCommitDate a owl:DatatypeProperty ;
+    rdfs:label "last commit date"@en ;
+    rdfs:domain docgov:Source ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The day of the most recent commit touching this cited source, read from git and truncated to a date — the observed counterpart to a wiki page's self-declared `updated:` claim, and the only input the two staleness derivations compare against it. It depends on real repository history: on a shallow clone git answers HEAD's date for every path, which would silently make every page look either fresh or stale, so the extractor refuses to run rather than emit a plausible-looking wrong value."@en .
