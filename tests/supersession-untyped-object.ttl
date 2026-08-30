@@ -1,0 +1,16 @@
+#  MUST FAIL dec:SupersessionShape's sh:class on the object: what is superseded is
+#  not a dec:DecisionHolon at all — here a dec:Process container, the mistake
+#  document.py:1527-1530's comment warns against by name ("the link joins the two
+#  JUDGEMENTS and NOT the two dec:Process containers").
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:   <https://example.org/demo#> .
+
+ex:v2 a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o1 ; dec:decidedBy ex:reader ;
+    dec:supersedes ex:chain1 .
+
+ex:chain1 a dec:Process ; rdfs:label "the pass-1 reading chain"@en .
+ex:o1 a dec:Option . ex:o2 a dec:Option .
+ex:reader a prov:SoftwareAgent .

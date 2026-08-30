@@ -1,0 +1,50 @@
+#  Worked example for dec:SupersessionShape and dec:SupersededOnceShape (R128).
+#  CC-BY-4.0 — François Rosselet, 2026.
+#
+#  It CONFORMS, and it is shaped like the corpus rather than like a minimal
+#  fixture: the fan-out below (one admission superseding three band verdicts) is
+#  the shape apple's `.../p1/adopt#p1-datagrid-admission` actually has, measured
+#  2026-08-30 at out-degree 5. The negative cases live in tests/supersession-*.ttl.
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:   <https://example.org/demo#> .
+
+#  (1) SECTION REPAIR — a pass-2 verdict supersedes the pass-1 verdict it re-read.
+ex:v1-band4 a dec:DecisionHolon ;
+    rdfs:label "verdict"@en ;
+    dec:optionSpace ex:opt-assert , ex:opt-escalate ;
+    dec:chosen ex:opt-escalate ;
+    dec:decidedBy ex:automated-reader .
+
+ex:v2-band4 a dec:DecisionHolon ;
+    rdfs:label "verdict"@en ;
+    dec:optionSpace ex:opt-assert , ex:opt-escalate ;
+    dec:chosen ex:opt-assert ;
+    dec:decidedBy ex:automated-reader ;
+    dec:supersedes ex:v1-band4 .
+
+#  (2) DATAGRID ADOPTION — ONE admission supersedes MANY band verdicts. This is
+#      why there is no sh:maxCount on the arc itself.
+ex:p1-datagrid-admission a dec:DecisionHolon ;
+    rdfs:label "verdict"@en ;
+    dec:optionSpace ex:opt-adopt , ex:opt-keep ;
+    dec:chosen ex:opt-adopt ;
+    dec:decidedBy ex:automated-reader ;
+    dec:supersedes ex:v1-band7 , ex:v1-band8 , ex:v1-band9 .
+
+ex:v1-band7 a dec:DecisionHolon ;
+    dec:optionSpace ex:opt-assert , ex:opt-escalate ; dec:chosen ex:opt-escalate ;
+    dec:decidedBy ex:automated-reader .
+ex:v1-band8 a dec:DecisionHolon ;
+    dec:optionSpace ex:opt-assert , ex:opt-escalate ; dec:chosen ex:opt-escalate ;
+    dec:decidedBy ex:automated-reader .
+ex:v1-band9 a dec:DecisionHolon ;
+    dec:optionSpace ex:opt-assert , ex:opt-escalate ; dec:chosen ex:opt-escalate ;
+    dec:decidedBy ex:automated-reader .
+
+ex:opt-assert   a dec:Option ; rdfs:label "assert the region"@en .
+ex:opt-escalate a dec:Option ; rdfs:label "escalate the region"@en .
+ex:opt-adopt    a dec:Option ; rdfs:label "adopt the data grid's reading"@en .
+ex:opt-keep     a dec:Option ; rdfs:label "keep the band readings"@en .
+ex:automated-reader a prov:SoftwareAgent ; rdfs:label "the automated reader"@en .

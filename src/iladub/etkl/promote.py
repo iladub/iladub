@@ -25,7 +25,8 @@ def _slug(s):
 
 
 def _suggester(g, proposal):
-    agent = URIRef(proposal.suggester_iri)
+    from .membrane import suggester_agent           # R129: refuse a non-IRI suggester HERE
+    agent = suggester_agent(proposal.suggester_iri)
     g.add((agent, RDF.type, ILADUB.Suggester))
     return agent
 
@@ -107,7 +108,8 @@ def emit_span_promotion(g, region_uri, node_text, flank, choice, proposal):
     (loop B1.3). The reading is a PROPOSITION: region_tiles has confirmed it is structurally
     LEGAL, but geometry could not decide it uniquely — so it is admitted accountably, never
     asserted as grounded truth (§3). Returns the PromotionDecision uri."""
-    agent = URIRef(proposal.suggester_iri)
+    from .membrane import suggester_agent           # R129: refuse a non-IRI suggester HERE
+    agent = suggester_agent(proposal.suggester_iri)
     g.add((agent, RDF.type, ILADUB.Suggester))
     confidence = Literal(Decimal(str(round(proposal.confidence, 6))))
 

@@ -127,11 +127,18 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     """O4 (spec §7) — asserted as NUMBERS, never '> 0'. A shape binding zero focus nodes is
     R97/R99's vacuity, and it passes. Both counts RE-MEASURED, never copied from the spec
     (§10 seam 6): the `.ttl` population grew to 139 when this loop authored three
-    vocabularies, and the `.rq` population to 48 when it authored two derivations."""
+    vocabularies, and the `.rq` population to 48 when it authored two derivations.
+
+    RE-MEASURED 2026-08-30 (R128's closure): the `.ttl` population is **144** — the five added
+    are `examples/supersession.ttl` and the four `tests/supersession-*.ttl` negatives, which
+    bind a focus node like any other artifact and name declared terms only. The `.rq`
+    population is unchanged at 48. See `test_artifact_terms.py`'s own note for why a green
+    local suite run does not predict this count: the population is `git ls-files`, so a new
+    `.ttl` joins it at `git add`, not at creation."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(vocab_nodes) == len(artifact_files()) == 139
+    assert len(vocab_nodes) == len(artifact_files()) == 144
     assert len(query_nodes) == len(query_files()) == 48
 
 

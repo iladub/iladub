@@ -39,9 +39,21 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # RE-MEASURED after Task 5 (spec §10 seam 6: compute the count, never copy it):
     # 136 -> 139, the three authored vocabularies under vocab/internal/. They are artifacts
     # like any other and are read by the same rule that reads the rest.
+    #
+    # RE-MEASURED AGAIN 2026-08-30 (R128's closure): 139 -> 144, `git ls-files "*.ttl"` = 146
+    # minus the 2 carved. The five are `examples/supersession.ttl` and the four
+    # `tests/supersession-*.ttl` negatives. They are NOT carved out and must not be: the
+    # carve-out is by DIRECTORY (`tests/artifact-fixtures/`) and exists only for fixtures that
+    # would fail THIS membrane by design. These four are negatives for `dec-shapes.ttl` and
+    # name declared terms only, so they belong in the population like
+    # `tests/expansion-request-leak.ttl` before them.
+    #
+    # WHY CI CAUGHT THIS AND A LOCAL RUN DID NOT: the population is `git ls-files`, so a new
+    # `.ttl` joins it at `git add`, not at creation. A full local suite run against an
+    # uncommitted tree is green on a count this test will fail the moment the files are staged.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 139
+    assert len(artifact_files()) == len(tracked) - len(carved) == 144
 
 
 def test_each_file_gets_its_own_named_graph():

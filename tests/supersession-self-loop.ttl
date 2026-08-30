@@ -1,0 +1,13 @@
+#  MUST FAIL dec:SupersessionShape's sh:sparql: a decision that supersedes ITSELF.
+#  dec:supersedes names a PRIOR decision, so this is a lineage cycle of length one —
+#  and effective-chain.rq would report the same decision as both history and the
+#  effective verdict.
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:   <https://example.org/demo#> .
+
+ex:v1 a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o1 ; dec:decidedBy ex:reader ;
+    dec:supersedes ex:v1 .
+ex:o1 a dec:Option . ex:o2 a dec:Option .
+ex:reader a prov:SoftwareAgent .

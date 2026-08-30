@@ -1,0 +1,19 @@
+#  MUST FAIL dec:SupersededOnceShape: ONE verdict superseded by TWO decisions.
+#  why-escalated.rq:18-24 states this state as the one it cannot answer correctly —
+#  "every row of the chain would be multiplied ... DISTINCT would not collapse that" —
+#  and calls the guarantee "Unreachable today", i.e. an assumption. This is the
+#  negative example that turns it into a checked fact.
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:   <https://example.org/demo#> .
+
+ex:v1 a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o1 ; dec:decidedBy ex:reader .
+ex:v2-repair a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o2 ; dec:decidedBy ex:reader ;
+    dec:supersedes ex:v1 .
+ex:v2-adoption a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o2 ; dec:decidedBy ex:reader ;
+    dec:supersedes ex:v1 .
+ex:o1 a dec:Option . ex:o2 a dec:Option .
+ex:reader a prov:SoftwareAgent .
