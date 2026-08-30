@@ -72,3 +72,91 @@ dec:ExpansionRequestShape a sh:NodeShape ;
     sh:targetClass dec:ExpansionRequest ;
     sh:property [ sh:path dec:regarding ; sh:minCount 1 ;
         sh:message "An expansion request must name the off-the-map content it was raised about (dec:regarding)." ] .
+
+#################################################################
+#  DECISION LINEAGE — dec:supersedes (R128).
+#
+#  Until 2026-08-30 dec:supersedes was constrained by NOTHING:
+#  declared in dec.ttl:173-175 with a domain and a range, and
+#  targeted by no shape in vocab/shapes/ at all
+#  (`git grep -n supersedes -- vocab/shapes/` -> exit 1). It is
+#  load-bearing for withdrawal, section repair and datagrid
+#  adoption, and three queries read it (why-escalated.rq,
+#  effective-chain.rq, escalation-furnish.rq) — so a malformed
+#  supersession could refuse at no membrane and silently change
+#  what those queries return.
+#
+#  MEASURED ON THE CORPUS 2026-08-30, all 7 tracked documents
+#  compiled at document scope with the subclass closure applied
+#  (the `corpus_graphs` recipe of tests/etkl/test_vacuity_registry.py):
+#    9 dec:supersedes triples (4 cbh-stem, 5 apple; 5 of 7 documents
+#    have none), 0 untyped subjects, 0 untyped objects, 0 blank
+#    nodes on either side, 0 self-loops, max IN-degree 1,
+#    max OUT-degree 5.
+#
+#  WHY THERE IS NO sh:nodeKind sh:IRI ON THE OBJECT, though the
+#  row invited one. It would be VACUOUS at the compile membrane and
+#  would look enforced: membrane._payload_nt SKOLEMIZES the graph
+#  before either engine sees it (R88's unpin), so every blank node
+#  is an IRI by the time a shape runs. MEASURED 2026-08-30:
+#  tests/supersession-blank-object.ttl (since deleted) refused under
+#  iladub.validate.validate and CONFORMED under membrane.validate,
+#  with the same shapes and the same data. It would also falsify a
+#  load-bearing premise recorded in _payload_nt's own comment — "no
+#  shape file uses sh:nodeKind and no sh:sparql body tests
+#  isBlank/isIRI/isURI/BNODE (spec §2 P4)", the stated reason
+#  skolemization is verdict-neutral. That premise is TRUE at HEAD:
+#  `grep -rn nodeKind vocab/shapes/` -> no output. Registered as
+#  R152; naming the superseded decision is a separate question from
+#  typing it, and this shape answers only the second.
+#
+#  WHY THERE IS NO sh:maxCount ON THE ARC ITSELF, and this is the
+#  measurement that decided it: apple's
+#  `.../p1/adopt#p1-datagrid-admission` supersedes FIVE distinct
+#  verdict decisions — document.py's adoption site adds one edge
+#  per superseded band, in a loop. `sh:maxCount 1` there would
+#  refuse a document that is correct. The cardinality that IS
+#  true is on the other side, below.
+#################################################################
+
+dec:SupersessionShape a sh:NodeShape ;
+    sh:targetSubjectsOf dec:supersedes ;
+    sh:class dec:DecisionHolon ;
+    sh:message "Only a decision holon may supersede a decision (dec:supersedes' declared domain)." ;
+    sh:property [ sh:path dec:supersedes ;
+        sh:class dec:DecisionHolon ;
+        sh:message "What is superseded must be a decision holon (dec:supersedes' declared range) — the two JUDGEMENTS, not the two dec:Process containers that hold them." ] ;
+    sh:sparql [
+        sh:message "A decision cannot supersede itself — dec:supersedes names a PRIOR decision, so a self-loop is a lineage cycle of length one." ;
+        sh:prefixes dec:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this dec:supersedes $this .
+            }
+        """ ;
+    ] .
+
+#  THE CARDINALITY ON THE ARC, and it is the IN-degree.
+#
+#  This is not a new opinion: it is the precondition two shipped
+#  queries already REST on and neither enforces.
+#  why-escalated.rq:18-24 — "If ?v1 could gain more than one
+#  incoming dec:supersedes edge, every row of the chain would be
+#  multiplied ... DISTINCT would not collapse that"; and it calls
+#  the guarantee "Unreachable today", i.e. an assumption about the
+#  emitters, not a checked fact. effective-chain.rq:19-26 states
+#  the same single-hop precondition. Making it a constraint turns
+#  a silent row-multiplication in a query into a loud refusal at
+#  the membrane.
+#
+#  THE RISK, stated rather than discovered later: an iterative
+#  repair pipeline — one that both section-repairs a band and then
+#  adopts a data grid over it — would give one verdict two
+#  superseders and refuse the whole document here. That refusal is
+#  the intended behaviour (it is exactly the state why-escalated.rq
+#  says it cannot answer correctly), but the day it fires, the fix
+#  is to decide the lineage semantics, not to delete this shape.
+dec:SupersededOnceShape a sh:NodeShape ;
+    sh:targetObjectsOf dec:supersedes ;
+    sh:property [ sh:path [ sh:inversePath dec:supersedes ] ; sh:maxCount 1 ;
+        sh:message "A superseded decision is superseded by at most one decision: two superseders make the effective verdict ambiguous and multiply every row of why-escalated.rq's chain." ] .

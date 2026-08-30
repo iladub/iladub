@@ -513,6 +513,35 @@ def _validate(graph: Graph,
     # membrane that reported only the first failing shape set would make a page look like a
     # tab defect when it is also a promotion defect, and the caller raises on the combined
     # verdict either way.
+    if not legs:
+        # R133 — THE ZERO-LEG VERDICT, and it is a REFUSAL, not a conformance.
+        #
+        # Before this branch, `legs=()` reached the conforming path below and crashed there with
+        # `IndexError: tuple index out of range` on `legs[0]`: the membrane's own entry point
+        # crashed rather than answering. The two possible answers were conform-with-empty-report
+        # and refuse; CLAUDE.md § Core design principles 7 decides it. A validation that checked
+        # NOTHING and returned True is failing upward — it would license a caller to treat an
+        # unvalidated graph as one the membrane had passed, which is the precise class §7 forbids.
+        #
+        # `refusing` is `()` and that is honest, not a gap: no leg refused, because no leg ran.
+        # It is also why the reason has to travel in the TEXT — `MembraneRefusal.legs` is
+        # documented as "never empty on a real refusal and never invented here", and inventing a
+        # leg name to fill it would make this refusal look like a SHACL verdict it is not.
+        #
+        # UNREACHABLE FROM INSIDE THIS TREE, deliberately kept anyway: every legs tuple the repo
+        # builds comes from `document._legs_for_document`, which is total over its two booleans
+        # and returns `("tab", "dec")` or `("dec",)` — never `()`
+        # (`test_legs_for_document_never_returns_an_empty_tuple`). `_validate` is nonetheless a
+        # seam external callers and tests reach directly, and CLAUDE.md § Producer-side guards
+        # is on the point: this fails fast at the call site that asked for nothing.
+        #
+        # Gate classification (CLAUDE.md §8): PROCEDURAL. It is the guard on this function's own
+        # argument, not a decision about a graph — it inspects no triple, consults no shape and
+        # carries no tuned constant. Irreducible to AXIOM because the emptiness it tests is a
+        # property of a Python call, not of any RDF evidence graph; irreducible to NEURAL because
+        # nothing about it is underdetermined.
+        return False, ("no membrane leg was named: `legs` was empty, so no shape set ran and "
+                       "nothing about this graph was checked"), ()
     _shapes_for = {"tab": _TAB_SHAPES, "dec": _DEC_SHAPES}
     verdicts = {leg: membrane.validate(graph, _shapes_for[leg], _FULL_ONT) for leg in legs}
     refusing = tuple(leg for leg in legs if not verdicts[leg][0])
@@ -1170,6 +1199,32 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     ):
         conforms, text, legs = _validate(graph)
         if not conforms:
-            raise AssertionError(_refusal_message("asserted holon", legs, text))
+            # R131(a) — a PAGE-scope refusal is a membrane verdict too, and now says so by TYPE.
+            #
+            # Before this, the document seam raised `membrane.MembraneRefusal` and this one raised
+            # a bare `AssertionError`, so a caller could not write one `except` clause that sees
+            # both scopes: the least-clean document — the one that aborts here, before `_seal` is
+            # ever reached — was the one a caller could not recognise as having refused.
+            #
+            # `str(exc)` is byte-identical to the bare `AssertionError` this replaces, and
+            # `MembraneRefusal` is an `AssertionError` subclass whose interceptors in this repo
+            # are all isinstance-based (see its docstring), so every existing catcher is unaffected.
+            # `legs` is `_validate`'s third element verbatim — the legs that REFUSED — and is
+            # never empty here, because a non-conforming verdict from a non-empty `legs` always
+            # names at least one refusing leg (the empty-`legs` verdict added for R133 cannot
+            # reach this call site: `_validate(graph)` takes the default `("tab", "dec")`).
+            #
+            # R131(b) — MINTING PAGE-SCOPE MEMBRANE HEALTH — IS NOT DONE HERE. That is the
+            # modelling half of the row ("is a page graph a holon with its own membrane health?")
+            # and it is `holon:06`'s. `graph` travels with the refusal so that half becomes
+            # answerable; it does not answer it. The graph carried here has NO health triple,
+            # unlike the document-scope refusal's.
+            #
+            # Gate classification (CLAUDE.md §8): PROCEDURAL. Exception plumbing over a verdict
+            # `_validate` has already decided — same classification, and for the same reason, as
+            # `MembraneRefusal` itself.
+            from . import membrane          # local, matching `_validate`'s own import idiom
+            raise membrane.MembraneRefusal(
+                _refusal_message("asserted holon", legs, text), graph, legs)
 
     return CompilationReport(score, tuple(reports), graph, asserted_total, escalated_total)

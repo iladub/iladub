@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import re
 
-from rdflib import Graph, RDF
+from rdflib import Graph, RDF, URIRef
 
 
 def engine_name() -> str:
@@ -533,3 +533,60 @@ class MembraneRefusal(AssertionError):
         super().__init__(message)
         self.graph = graph
         self.legs = legs
+
+
+def suggester_agent(suggester_iri: str) -> URIRef:
+    """R129 — THE MINT-SIDE GUARD on a proposer-supplied suggester IRI. Returns the `URIRef`, or
+    REFUSES with the offending value in hand.
+
+    THE DEFECT IT CLOSES. A proposer returning `suggester_iri="not an iri at all"` used to reach
+    `URIRef(...)` unchallenged at five mint sites, sit in the graph as a malformed term, and kill
+    the membrane hundreds of triples later inside `_payload_nt`'s
+    `skolemize(...).serialize(format="nt")` with a raw `Exception`: *"not an iri at all" does not
+    look like a valid URI, I cannot serialize this as N3/Turtle.* A raw `Exception` is neither a
+    membrane verdict nor catchable as one — `MembraneRefusal`, an `AssertionError` subclass, does
+    not catch it — so the membrane CRASHED where it should have REFUSED.
+
+    THE FIVE CALL SITES, and they are the whole population of `URIRef(<a suggester string>)` in
+    `src/` (`grep -rn "suggester" src/`): `ground.py:_emit_candidate`,
+    `splitkey.py:_emit_candidate`, `etkl/promote.py:_suggester`,
+    `etkl/promote.py:emit_span_promotion`, and `etkl/holon.py:_suggester_uri`. The fifth is not a
+    proposer's string but a slug DERIVED from an escalation reason — and a reason carrying a
+    space produces exactly the same malformed IRI, so it is guarded on the same footing rather
+    than exempted for being "internal".
+
+    WHY A PRODUCER-SIDE GUARD RATHER THAN A SHAPE (CLAUDE.md § Producer-side guards vs the
+    membrane, which is directly on the point). A SHACL membrane cannot reach this: the graph
+    carrying a malformed IRI cannot be SERIALIZED, so it never gets as far as a shape to be
+    refused by. The guard is not a duplicate of a membrane constraint; it is the only enforcement
+    there can be, and it fails at the call site that minted the bad value, with that call site on
+    the stack.
+
+    WHY `AssertionError` AND NOT `MembraneRefusal`. `MembraneRefusal.legs` is documented as
+    `_validate`'s third element — "never empty on a real refusal and never invented here" — and
+    no SHACL leg refused here, because no SHACL ran. Filling that field would dress a mint-side
+    refusal as a shape verdict it is not. `AssertionError` is the base class every membrane
+    verdict in this repo already shares, so a caller writing `except AssertionError` sees this
+    refusal exactly as it sees the two SHACL seams.
+
+    EXACTLY AS STRICT AS THE SERIALIZER, BY CONSTRUCTION — the same idiom, and for the same
+    reason, as `audit_literals`' reparse: the check is rdflib's OWN `URIRef.n3()`, the call that
+    would have raised downstream, rather than a hand-written IRI regex. A regex here would be a
+    second opinion that could drift out of step with the serializer in either direction, and the
+    permissive direction is the one that puts the crash back. `n3()` is called and its result
+    discarded; nothing about the returned term depends on it.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL. A representation-invariant check against
+    rdflib's own serializer — it inspects no domain value, no shape and no threshold, and carries
+    no tuned constant or tolerance. Irreducible to AXIOM because the malformed term cannot enter
+    an RDF evidence graph a SPARQL derivation could read (it cannot be serialized at all), and
+    irreducible to NEURAL because nothing about "is this a serializable IRI" is underdetermined.
+    """
+    agent = URIRef(suggester_iri)
+    try:
+        agent.n3()
+    except Exception as exc:                    # rdflib raises a bare `Exception` here
+        raise AssertionError(
+            f"the membrane refuses a non-IRI suggester: {suggester_iri!r} is not a serializable "
+            f"IRI, so no graph carrying it could ever cross a membrane ({exc})") from None
+    return agent

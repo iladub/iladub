@@ -127,7 +127,8 @@ def _emit_candidate(g, name, markers, anchor_iri, suggester_iri, confidence):
     g.add((cand, RDFS.label, Literal(name)))
     g.add((cand, ILADUB.surfaceText, Literal(", ".join(markers))))
     g.add((cand, ILADUB.suggestedAnchor, URIRef(anchor_iri)))
-    agent = URIRef(suggester_iri)
+    from .etkl.membrane import suggester_agent      # R129: refuse a non-IRI suggester HERE
+    agent = suggester_agent(suggester_iri)
     g.add((agent, RDF.type, ILADUB.Suggester))
     g.add((cand, ILADUB.suggestedBy, agent))
     g.add((cand, ILADUB.confidence, Literal(Decimal(str(round(confidence, 6))))))

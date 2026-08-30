@@ -1,0 +1,15 @@
+#  MUST FAIL dec:SupersessionShape's node-level sh:class: the SUPERSEDER is not a
+#  decision holon. dec:supersedes' declared domain (dec.ttl:174) said so and
+#  nothing enforced it.
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex:   <https://example.org/demo#> .
+
+ex:chain2 a dec:Process ; rdfs:label "the pass-2 reading chain"@en ;
+    dec:supersedes ex:v1 .
+
+ex:v1 a dec:DecisionHolon ;
+    dec:optionSpace ex:o1 , ex:o2 ; dec:chosen ex:o1 ; dec:decidedBy ex:reader .
+ex:o1 a dec:Option . ex:o2 a dec:Option .
+ex:reader a prov:SoftwareAgent .

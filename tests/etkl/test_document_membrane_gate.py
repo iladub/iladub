@@ -31,3 +31,39 @@ def test_the_tab_leg_keeps_its_condition_exactly():
     assert _legs_for_document(False, True) == ("tab", "dec")
     assert _legs_for_document(True, True) == ("tab", "dec")
     assert _legs_for_document(False, False) == ("dec",)
+
+
+# ==================================================================== R133: the empty legs tuple
+
+def test_an_empty_legs_tuple_refuses_rather_than_crashing():
+    """R133. `_validate(graph, legs=())` used to raise `IndexError: tuple index out of range` at
+    `compile.py:523` — `verdicts` is empty, so `refusing` is empty, so the conforming branch is
+    taken and indexes `legs[0]` on an empty tuple. The membrane's own entry point CRASHED.
+
+    THE DECISION, which the row (R133) left open and this test pins: a zero-leg validation
+    REFUSES. It does not conform. A validation that checked nothing and returned True is failing
+    upward — CLAUDE.md § Core design principles 7 ("only emit what the source supports")
+    forbids exactly that, and the row says `Prefer refuse`.
+    """
+    from rdflib import Graph
+    from iladub.etkl.compile import _validate
+    conforms, text, refusing = _validate(Graph(), legs=())
+    assert conforms is False
+    assert refusing == ()
+    assert "no membrane leg" in text
+
+
+def test_legs_for_document_never_returns_an_empty_tuple():
+    """R133's DEFERRAL RATIONALE, re-measured rather than carried forward.
+
+    The row deferred the fix on the ground that `legs=()` is unreachable because one total
+    function supplies every legs tuple the tree ever builds. The 2026-08-29 handoff recorded
+    that `_legs_for_document`'s returns had NOT been re-enumerated. They are, here: the function
+    is total over its two boolean arguments and neither branch is empty. The rationale holds —
+    which is why the fix above is a repair of a crash the membrane must not have, not a bug fix
+    for a reachable path.
+    """
+    from iladub.etkl.document import _legs_for_document
+    for recognized in (True, False):
+        for section_facts in (True, False):
+            assert _legs_for_document(recognized, section_facts) != ()

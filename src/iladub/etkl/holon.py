@@ -417,8 +417,12 @@ def _suggester_uri(reason: str) -> URIRef:
     proposed this" a join (`?c iladub:suggestedBy <…/matrix-ambiguous-rule>`) instead of a
     `FILTER regex` over a rationale string.
     """
+    # R129: guarded on the same footing as the four proposer-supplied sites. The slug is
+    # DERIVED, not supplied, but a reason string carrying a space produces exactly the same
+    # unserializable IRI — "internal" is not a reason to be unguarded.
+    from .membrane import suggester_agent
     slug = reason.strip().lower().replace("_", "-")
-    return URIRef(f"urn:iladub:suggester/{slug}-rule")
+    return suggester_agent(f"urn:iladub:suggester/{slug}-rule")
 
 
 def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str,
