@@ -99,15 +99,21 @@ Execute the R45 spec end to end: re-point the census test, ship the falsifying f
 
 ## 4. Unverified or assumed
 
-- **The `-m "not corpus"` unit suite has NOT been observed green on this tree** at the time this was
-  written — it is the last gate and it takes ~22 min. The matrix-adjacent suites are green
-  (`test_matrix`, `test_closing_slice`, `test_holon`, `test_border_grid`, `test_hrule_split`,
-  `test_segment`: 73 passed) and so are all four arc suites (65 passed) and `test_doc_governance`.
+- ~~The `-m "not corpus"` unit suite has NOT been observed green on this tree.~~ **RESOLVED:**
+  `./.venv/bin/python -m pytest -m "not corpus" -q` on the committed tree →
+  **`1381 passed, 7 skipped, 46 deselected, 1 xfailed in 1302.05s (21m42s)`**. An earlier run of the
+  same command, taken mid-loop, failed on `test_residue_register_integrity.py` alone — a **register
+  format error, not a code one**: the index row for a closed residue keeps its plain id
+  (`| R45 | closed | …`); only the DETAIL row is struck (`| ~~R45~~ |`). `_INDEX_ROW`
+  (`tests/test_residue_register_integrity.py`) does not match a struck index id, so striking one
+  orphans the detail row. Worth knowing before closing the next residue — `CLAUDE.md`'s "strike the
+  row" is about the detail file.
 - **The `-m corpus` battery ran: `1 failed, 45 passed, 1389 deselected in 1282.70s`.** The single
   failure was the predicted one — `test_no_registered_shape_has_gone_live` on
   `tab:LicenceRefusalShape` — and it is fixed by deleting that registry row (see part 3). The
   battery has **not been re-run end to end since that deletion**; only
-  `tests/etkl/test_vacuity_registry.py -m corpus` was.
+  `tests/etkl/test_vacuity_registry.py -m corpus` was (**5 passed, 4 deselected in 336.77s**). CI on
+  PR #145 is the end-to-end check.
 - **`tests/etkl/test_vacuity_registry.py`'s `iladub:CandidateConcept` on 3 of 7** (apple, bfs,
   who-wfa) was not re-measured directly, but the row's test passed in the battery above.
 - **`prog:source "tests/corpus-manifest.ttl:118"`** on `etkl:07` is a line pointer into a file this
