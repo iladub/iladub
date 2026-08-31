@@ -8,45 +8,75 @@ Part 5 is written first, per CLAUDE.md § "The handoff's next action is TYPED".
 
 ## 5. The next concrete action — TYPED
 
+**The falsification this section originally ordered HAS BEEN RUN, and it settled the fork.** The
+prediction, its result and the loop it produced are all below. Read § 2.5 before § 5.3 — the
+proposal is only as good as the measurement under it.
+
 ### ASSERTED — mechanical, outcome known
 
-**Reproduce the diagnosis in § 2 before designing anything.** The four commands are recorded there
-and each takes ~2 minutes on a warm venv. Their outcomes are known and pinned: score `0.5597`; one
-refusing shape (`tab:UnambiguousAccessShape`) on all three bands; 7 of 11 leaf columns carrying
-`n=2` leaf headers; and the 14-node column tree printed in § 2.4. Nothing here needs deciding — it
-needs re-running, because a fresh session must not build on this file's word for it.
+**Reproduce §§ 2.3-2.5 before designing anything.** Each takes ~2 minutes on a warm venv and each
+outcome is pinned here: score `0.5597`; one refusing shape (`tab:UnambiguousAccessShape`) on all
+three bands; 7 of 11 leaf columns at `n=2`; the 14-node tree of § 2.4; and pdfplumber's four clean
+header words of § 2.5. A fresh session must not take this file's word for any of it.
 
-### PROPOSED — rests on a prediction that must be RUN before anything is built on it
+### ASSERTED — the fork is discharged, and the subject MOVED
 
-**The remedy is NOT yet known, and the obvious one may be wrong.** This session's opening read —
-"`infer_column_tree_by_proximity` assumes centred merges, so the fix is a NEURAL proposer at the
-column-tree seam" — was **measured and refuted**: `classify_matrix` succeeds on all three WHO bands,
-so the proximity tree is built, not refused. The refusal is one step later, at the tiling oracle.
+The two branches this section originally posed were **(a)** the column tree is the defect and
+**(b)** the grid is, with the tree a symptom. **(b) is confirmed; (a) is dead as framed.**
 
-That leaves **two candidate root causes, and they prescribe opposite loops**:
+`extract_words` on WHO page 0 returns `'Z-scores' // '(weight' // 'in' // 'kg)'` — four clean runs
+(§ 2.5). The `"Z-s" / "res (weight" / "kg)"` fragments the header tree carries **do not exist in the
+PDF**. They are manufactured by `_build_ruled_band` (`compile.py:73`, called at `:319`), which
+re-extracts a ruled band from `page_chars` at the ruled column boundaries — correct for data rows,
+and mid-word for a header label that crosses rulings by design.
 
-- **(a) The column tree is the defect.** Nearest-centre assignment hands the last label on a line
-  every trailing column (`S` → cols 4-11) and strict-subset parent linking (`matrix.py:69`,
-  `set(nd.covers) <= set(m.covers)`) then finds no parent, so two levels both stay leaves. Remedy:
-  a NEURAL span proposer under CLAUDE.md §8, disposed by the tiling oracle that already exists.
-- **(b) The grid is the defect, and the tree is a symptom.** The level-0 label
-  `Z-scores (weight in kg)` arrives as **three** pseudo-labels — `"Z-s"`, `"res (weight"`, `"kg)"`.
-  Those cut points look like `recover_leaf_grid` column boundaries slicing a wide centred label,
-  not like three text runs the PDF actually contains. If so, a NEURAL proposer at the tree seam
-  would be papering over a grid defect one layer down, and the loop to run is a different one.
+**So the subject of this loop is `_build_ruled_band`, NOT `matrix.py`.** Anyone who opens
+`infer_column_tree_by_proximity` first is reading the symptom. A NEURAL span proposer at the tree
+seam — this session's opening instinct — would have asked a model to reconstruct a label the
+extractor had already destroyed.
 
-**Falsify (b) FIRST — it is cheap and it decides which loop exists.** Extract the raw word runs of
-the WHO header line straight from the PDF (bypassing `recover_leaf_grid`) and ask whether
-`Z-scores (weight in kg)` is one run or three. One run ⇒ (b) holds, the grid is the subject. Three
-runs ⇒ (b) is dead and (a) is the subject. *Budget for refutation; this session already spent one
-premise that way, which is the argument for spending another.*
+### PROPOSED — the loop, and it must be scoped fresh
 
-### PROPOSED — the loop's shape, contingent on the above
+**The invariant:** *a ruled re-extraction must never split inside a word run.* Where a ruled
+boundary falls strictly inside a word's x-extent, that word is not split; it is a label spanning the
+columns it crosses.
 
-Whichever branch survives, the loop is a **reading loop on one document** (`R45`, arc `tab:05`) and
-its oracle already exists and already works — `tab:UnambiguousAccessShape` refuses correctly today.
-That is the unusual and favourable part: **what disposes is built and independent of whatever will
-propose.** Do not rebuild it.
+**Classified AXIOM, not NEURAL, and the argument matters.** CLAUDE.md §8 routes *"which columns does
+X span"* to NEURAL, so the reflex is a BAML proposer. The measurement makes that wrong here: knowing
+`Z-scores` spans a boundary needs no perception, only the observation that the split lands mid-word,
+and the extractor has already asserted the word is one run. Evidence-positive, open-world, no
+tolerance, no constant, no model. §8's default IS axiom and NEURAL must be *earned*; this decision is
+not underdetermined, so it does not earn it. **If a reviewer disagrees, that is the argument to have
+before any code — it is the whole shape of the loop.**
+
+**What proposes / what disposes.** Proposer: the word-atomic re-extraction (new). Disposer:
+`tab:UnambiguousAccessShape` + the twelve other tiling shapes in `region_tiles` — already built,
+refusing correctly today, and authored in complete ignorance of this change. **Independent by
+construction**, which is the rare and favourable part of this loop.
+
+**The loop's own falsifiable prediction — budget for refutation.** *Word-atomicity alone makes WHO
+tile.* It may not. `S` covering cols 4-11 and `-3 SD` covering 1-5 (§ 2.4) come from **nearest-centre
+assignment**, which may still misbehave once the top label is a single node. If the prediction
+fails, the loop's second half is the column tree after all — and the spec should say so up front
+rather than discover it in a plan.
+
+**The success oracle is TWO-SIDED, and the second side is the work.** `_build_ruled_band` is on the
+path for **every ruled band in every document**, `graincorp-stem` included — the one document that
+passes, at 0.9655 against a pinned 0.95 floor. WHO tiling is not success if anything else regresses.
+This is what makes it a loop rather than a chore, and it is the reason the full corpus battery must
+run inside it (see § 4 — it has not run in five loops).
+
+**Deliberately out of scope:** apple's 11 `REGION_TILING_FAILED` (different mechanism, unmeasured
+relation); and the `< 0.5` level-grouping tolerance in `infer_column_tree_by_proximity` — a standing
+§8 smell that **no measurement here implicates**. Note it; do not fix it in this loop.
+
+**Accounting if it closes:** strikes `R45`, moves arc `tab:05` — the sole dependency of `etkl:07`
+and one of three for `etkl:06`. It would be the first arc movement since 2026-08-25.
+
+### PROPOSED — blocked on rulings, unchanged and NOT re-derived
+
+`R132` (identity/merge), `R127` (four coupled oracles), `R131`(b). Open
+`docs/superpowers/2026-08-30-four-rows-closed-handoff.md` § 5 — that table is still the source.
 
 ## 1. Goal
 
@@ -61,6 +91,7 @@ to end.
 | `docs/superpowers/arc-dependency-landscape.md` | The generated arc cache. 21 criteria ready today; `tab:05` is the sole dependency of `etkl:07` and one of three for `etkl:06` |
 | `tests/arc-manifest.ttl` | 43 criteria, **18 met**, last met `2026-08-25` (`grep -oE 'prog:metOn "[0-9-]+"' | sort | tail -1`) |
 | `docs/superpowers/residues-open.md`, `R45` | The row already prescribes this loop: *"whether it needs a NEURAL-disposed clause or a tiling-oracle extension"* |
+| `src/iladub/etkl/compile.py:73` (`_build_ruled_band`), called at `:319` | **THE SUBJECT OF THE LOOP.** Re-extracts a ruled band from `page_chars` (`:304`) at ruled column boundaries. Read its comment at `:316-317` for the stated intent, and `:132` for the char filter |
 | `src/iladub/etkl/matrix.py` | 127 lines. `infer_column_tree_by_proximity:39` (the proposer), `classify_matrix:101` (the chain), and the docstring's stated assumption |
 | `src/iladub/etkl/tiling.py` | `region_tiles` — the 13-shape SHACL gate that refuses. PROCEDURAL glue over AXIOM shapes |
 | `vocab/shapes/tab-shapes.ttl:127` | `tab:UnambiguousAccessShape` — "exactly one leaf header per column". The shape that fires |
@@ -130,6 +161,23 @@ same columns.
 **The oracle is right and the proposer is wrong.** That is the epistemics working — nothing
 silently mis-read — and it is why the loop is a *reading* loop, not a bug fix.
 
+### 2.5 The falsification, run — the fragments are manufactured
+
+`extract_words(pdf, 0)` + `text_lines`, page 0, first lines:
+
+```
+top= 104.37 | 'Z-scores' // '(weight' // 'in' // 'kg)'
+top= 118.71 | 'Year:' // 'Month' // 'Month' // 'L' // 'M' // 'S' // '-3' // 'SD' // '-2' // 'SD'
+             // '-1' // 'SD' // 'Median' // '1' // 'SD' // '2' // 'SD' // '3' // 'SD'
+```
+
+Four clean runs where the header tree of § 2.4 carries three mid-word fragments. The cut points are
+therefore **grid artefacts, not text**. `compile.py:304` extracts `page_chars` only when the page has
+rules, and `:319` hands them to `_build_ruled_band` (`:73`), whose own comment states the intent:
+*"re-extract cells by the ruled columns (splits pdfplumber-merged blobs at the author's exact
+boundaries)."* That intent is right for a data row and wrong for a spanning header, and nothing in
+the code distinguishes the two.
+
 ## 3. What was decided, and where that decision is recorded
 
 - **Refocus onto the product, and specifically onto WHO / `R45` / `tab:05`** — the maintainer chose
@@ -140,6 +188,8 @@ silently mis-read — and it is why the loop is a *reading* loop, not a bug fix.
 - **Accepting `graincorp-capacity` (1.0000) and `ons` (0.9720) was considered and set aside**: they
   are held for want of a contract and a human reading the compile against the PDF, so the work is
   the maintainer's eyes rather than a loop. It remains the cheapest route from 1/7 to 3/7.
+- **The loop's subject MOVED from `matrix.py` to `_build_ruled_band`, by measurement, not by argument** (§ 2.5). Recorded here and in this branch's PR; **nowhere else; reversible.**
+- **The word-atomicity invariant is classified AXIOM rather than NEURAL** — the argument is in § 5, and it is deliberately exposed there as the thing to attack. Recorded **here only.**
 - **No spec was written this session, deliberately** — CLAUDE.md § Loop & context hygiene: a loop is
   a session. This session spent its budget on reflection and measurement; the spec belongs to a
   fresh one.
@@ -147,16 +197,19 @@ silently mis-read — and it is why the loop is a *reading* loop, not a bug fix.
 ## 4. Unverified or assumed
 
 - **The full corpus battery was NOT run.** Two documents were compiled directly; the other five
-  carry 2026-08-20 figures nobody has reproduced since. **Unchanged for five loops now.**
+  carry 2026-08-20 figures nobody has reproduced since. **Unchanged for five loops now**, and § 5
+  makes running it part of the next loop's success oracle rather than a chore beside it.
 - **The `-m "not corpus"` suite was NOT run this session.** No code was changed, so nothing is
   claimed about it.
-- **Branch (b) of part 5 is unfalsified** — that `"Z-s" / "res (weight" / "kg)"` are grid artefacts
-  rather than genuine PDF text runs is inferred from how the cuts *look*, not from reading the PDF's
-  word runs. It is the single most load-bearing unmeasured claim in this file.
+- **Whether word-atomicity alone makes WHO tile is UNKNOWN** — it is § 5's stated prediction, not a
+  result. The nearest-centre assignment may still mis-span once the top label is one node.
+- **The blast radius of changing `_build_ruled_band` is UNMEASURED.** It is asserted to be on every
+  ruled band's path from reading `:319`, not from a call-site census or a corpus run.
 - **The apple tree was not dumped**; whether its two `MATRIX_AMBIGUOUS` firings share WHO's
   mechanism is unknown, and the two documents are assumed related only by escalation label.
-- **`infer_column_tree_by_proximity`'s `< 0.5` level-grouping tolerance was not exercised** as a
-  suspect. It is a tuned constant and CLAUDE.md §8 calls that prima facie evidence, but no
-  measurement here implicates it.
-- **No working-token figure was reported to this session**, so the gate was logged at 0 and the
-  handoff was written on the reading-order argument rather than on a measured crossing.
+- **`infer_column_tree_by_proximity`'s `< 0.5` tolerance was not exercised** as a suspect. It is a
+  tuned constant and CLAUDE.md §8 calls that prima facie evidence, but nothing here implicates it.
+- **The AXIOM-not-NEURAL classification in § 5 is an argument, not a measurement.** It is the single
+  most contestable claim in this file and the right thing for a reviewer to attack first.
+- **This handoff's § 5 was authored at ~87k working tokens, 1.7x the originating floor**, with the
+  override logged. Its measurements are safe; its reasoning is the part to re-derive.
