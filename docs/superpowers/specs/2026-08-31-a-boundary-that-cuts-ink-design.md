@@ -7,7 +7,7 @@ label mid-word, and chop/merge interleave so no downstream weld recovers it."*
 **PROPOSED** and required the prediction be RUN before anything was planned. It was run first; §3 is
 that run.
 
-**Doc impact:** `none` — no released assertion changes; the wiki's table-reading pages describe the
+**Doc impact: none.** No released assertion changes; the wiki's table-reading pages describe the
 ruled re-extraction at a level this does not contradict.
 
 ---
