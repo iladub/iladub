@@ -21,7 +21,10 @@ DOCS = [
 ]
 
 # The no-regression gate (spec §4: stem 0.9655/2152 cells/chain [3], CBH 0.9047, capacity
-# 1.0000, WHO 0.5597 all byte-identical pre/post this loop). These are the MEASURED page-0
+# 1.0000, WHO 0.5597 all byte-identical pre/post this loop). The WHO figure is a PROSE RECORD
+# of that loop's run, not a pin this file checks — who-wfa is not in DOCS and nothing here
+# reads it. It is superseded as a current measurement by R45 (2026-08-31), which took WHO to
+# 0.9096; the other three are pinned below and are unchanged. These are the MEASURED page-0
 # band verdicts under the production `compile.page_bands` seam, recorded here as a literal
 # baseline so a future change to any of these four documents' verdicts is a test FAILURE,
 # not just a printed line a reviewer has to notice.

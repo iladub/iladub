@@ -765,7 +765,9 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
     Task 3 authored all seven `prog:met` booleans by hand. This recomputes them from
     `tests/corpus-manifest.ttl` and refuses any disagreement — so an edit to either manifest
     that moves this rung without moving the other one goes red. It is the only thing in the
-    repo that makes the strip's `etkl 1/7` answerable to the corpus register.
+    repo that makes the strip's `etkl` fraction answerable to the corpus register. (It read
+    `etkl 1/7` when written; R45 took who-wfa to an accepting adjudication on 2026-08-31 and
+    the fraction is 2/7. The count is pinned below and moves only by a reviewed hand.)
 
     Note what this does NOT do: it never writes `prog:met` (spec §9). A disagreement is a
     refusal for a hand to resolve in a reviewed commit, in whichever direction is true.
@@ -781,8 +783,8 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
         assert met == computed[f], (
             f"{iri} asserts prog:met {met} for {f}, but the corpus register computes "
             f"{computed[f]} — fix whichever is wrong by hand; nothing here writes either file")
-    assert sum(computed.values()) == 1, (
-        f"measured 2026-08-20: exactly one corpus document is accepted; got {computed}")
+    assert sum(computed.values()) == 2, (
+        f"measured 2026-08-31: exactly two corpus documents are accepted; got {computed}")
 
 
 def test_etkl_criterion_sources_point_at_the_document_they_name():

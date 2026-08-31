@@ -172,7 +172,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R42 | closed | CLOSED (Loop Q Task 7, 2026-08-04) |
 | R43 | open | ONS gov-stats document: 1× `REGION_TILING_FAILED` plus an unnamed oddity — an `UNSUPPORTED_TABLE` kind carrying verdict `asserted` |
 | R44 | open | BFS gov-stats document: 2× `KIND_NOT_SUPPORTED`, 2× `REGION_TILING_FAILED`, 5× `ROUND_TRIP_FAIL` |
-| R45 | open | WHO health document: 3× `MATRIX_AMBIGUOUS` on the dense age × z-score matrix |
+| R45 | closed | CLOSED 2026-08-31 — `matrix._level_tops` deleted; a header level is a band line. WHO 0.5597 → 0.9096, 3 escalations → 0 |
 | R46 | open | Fetcher hardening — `_pdf_facts` crashes uncaught on non-PDF bytes at BOTH call sites |
 | R47 | open | Both the grid-region peel and the hrule-box weld are scoped LEADING-only — a trailing full-width strip is neither peeled nor welded |
 | R48 | open | `sectiongraph._leading_box_y`'s header-box-candidate selection can, on a document shape the interior-crossing test does not discriminate, locate a… |
@@ -219,7 +219,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R95 | open | `_payload`/`_payload_nt`'s `audit=False` escape hatch is a standing hazard, fenced by a substring-scan test |
 | R96 | open | `audit_literals`'s LEXICAL half is a silent no-op if rdflib's `NORMALIZE_LITERALS` global is ever `False` |
 | R97 | open | Four wired `tab:` shapes the corpus does not exercise — 0 focus nodes each |
-| R98 | open | `tab:LicenceRefusalShape` is idle BY DESIGN; spec §3's reason for it is wrong |
+| R98 | closed | CLOSED 2026-08-31 — the shape is LIVE: R45 gave who-wfa's already-refused pair (1,2) a table on both sides, so the withheld edge is now written |
 | R99 | open | `iladub:NoLeakShape` can never fire at compile — 11 focus nodes, unreachable term |
 | R100 | open | `dec:EscalationShape` live at document scope, idle at page scope; registry cannot say so |
 | R101 | open | A green CI tick can cover less than it looks — a module-level skip guard hides a whole module behind one skip line |

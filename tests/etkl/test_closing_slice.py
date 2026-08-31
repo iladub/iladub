@@ -200,6 +200,29 @@ def test_crosstab_compiles(tmp_path):
     assert report.score == 1.0
 
 
+def test_crosstab_with_sub_point_leaf_drift_compiles(tmp_path):
+    """R45 end to end: 0.9pt drift inside the leaf header row must change NOTHING.
+
+    Same table as test_crosstab_compiles, drawn with who-wfa's baseline drift (spec
+    docs/superpowers/specs/2026-08-31-a-header-level-is-a-band-line-design.md §3.2).
+    MEASURED at HEAD before the fix: no tab:HierarchicalTable is typed at all — the
+    region reads MATRIX_AMBIGUOUS and compile_tables returns score 0.0 (asserted 0,
+    escalated 22). Under compile_document the same PDF scored 0.6363636363636364,
+    the matrix region superseded by a DataGrid fallback asserting 14 cells and
+    escalating an 8-token DATAGRID_RESIDUE.
+    """
+    from tests.etkl.fixtures import crosstab_drifting_leafrow_pdf
+    from iladub.etkl.holon import TAB
+    from rdflib import RDF
+    p = tmp_path / "ctd.pdf"; crosstab_drifting_leafrow_pdf(str(p))
+    report = compile_tables(str(p))
+    assert (None, RDF.type, TAB.HierarchicalTable) in report.graph
+    tbl = next(report.graph.subjects(RDF.type, TAB.HierarchicalTable))
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafColumn))) == 6   # data-only
+    assert len(list(report.graph.objects(tbl, TAB.hasLeafRow))) == 2
+    assert report.score == 1.0
+
+
 def test_pivot_still_column_hierarchy(tmp_path):
     # regression: Loop 2's pivot is NOT stolen by the matrix gate (stub_data_split None)
     from tests.etkl.fixtures import pivoted_table_pdf

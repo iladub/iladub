@@ -205,7 +205,7 @@ def test_a_superseded_escalation_is_not_furnished():
 
 # ---------------------------------------------------------------- T2.8 (the corpus census)
 
-WHO = os.path.join(ROOT, "corpus", "health", "who-wfa-boys-zscore-0-5.pdf")
+BFS = os.path.join(ROOT, "corpus", "gov-stats", "bfs-population-bilan-2023.pdf")
 CBH = os.path.join(ROOT, "corpus", "ag-trade", "cbh-stem-2026-08-03.pdf")
 
 
@@ -220,26 +220,34 @@ def _census(g):
 
 
 @pytest.mark.corpus
-@pytest.mark.skipif(not os.path.exists(WHO), reason="corpus not populated")
+@pytest.mark.skipif(not os.path.exists(BFS), reason="corpus not populated")
 def test_corpus_census_every_live_escalating_decision_is_furnished():
     """One expansion request per decision that chose "escalated", carries dec:regarding,
     and was NOT superseded.
 
-    who-wfa is chosen because it escalates and NONE of its escalations are withdrawn
-    (measured 2026-08-15: B=3, C=3, superseded=0); a test written against graincorp-stem or
-    ons, which carry zero escalations, pins nothing. B - C is invariant 5's coverage hole.
+    bfs-population is chosen because it escalates and NONE of its escalations are
+    withdrawn (measured 2026-08-31 with _census itself: B=10, C=10, superseded=0,
+    live=10); a test written against graincorp-stem or ons, which carry zero
+    escalations, pins nothing. B - C is invariant 5's coverage hole.
+
+    It replaces who-wfa (measured 2026-08-15: B=3, C=3, superseded=0), which R45 took
+    to B=0 — a document that no longer escalates cannot pin this. apple was rejected
+    though it escalates: 5 of its 15 are superseded (measured the same day), so it does
+    not carry the "none withdrawn" property this test's choice rests on, and cbh-stem
+    already covers the wholly-superseded case below.
     """
     from iladub.etkl.document import compile_document
 
-    g = compile_document(WHO).graph
+    g = compile_document(BFS).graph
     escalating, with_regarding, superseded = _census(g)
     live = with_regarding - superseded
     requests = set(_derive(g).subjects(RDF.type, DEC.ExpansionRequest))
 
-    print(f"\nwho-wfa: B(chose escalated)={len(escalating)} C(and dec:regarding)="
+    print(f"\nbfs-population: B(chose escalated)={len(escalating)} C(and dec:regarding)="
           f"{len(with_regarding)} B-C={len(escalating) - len(with_regarding)} "
           f"superseded={len(superseded)} live={len(live)} requests={len(requests)}")
     assert len(escalating) > 0, "chose a document that does not escalate — the test pins nothing"
+    assert len(superseded) == 0, "chose a document whose escalations are withdrawn — see cbh-stem"
     assert len(requests) == len(live)
 
 
