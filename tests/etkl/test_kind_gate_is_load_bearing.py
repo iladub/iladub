@@ -118,13 +118,20 @@ def test_the_coherence_oracle_refuses_the_transposed_reading(suppressed, key):
         "reading. That changes the whole finding — re-run the measurement in spec §3/§4."
 
 
-@pytest.mark.parametrize("key,n_header_words,ncols", [((0, 2), 2, 17), ((2, 1), 1, 17)])
+@pytest.mark.parametrize("key,n_header_words,ncols", [((0, 2), 1, 17), ((2, 1), 1, 17)])
 def test_the_header_is_a_multi_row_wrapped_header(suppressed, key, n_header_words, ncols):
     """WHY the oracle misfires: `band.lines[0]` — a 1-2 word line spanning 17 columns — is
     only the TOP of a multi-row wrapped column header, not the whole header. Pinning this
     keeps the diagnosis attached to the evidence, so the next loop knows what to fix
     (route the orientation oracles through a header/body split — spec §7; R10 was checked
-    and refuted as the cause, see spec §7 and R71)."""
+    and refuted as the cause, see spec §7 and R71).
+
+    R154, 2026-08-31: key (0, 2)'s pinned count moved 2 -> 1, and the DIAGNOSIS IS UNCHANGED —
+    "a 1-2 word line spanning 17 columns" still describes it, now at the 1 end of that range.
+    graincorp-stem's whole flush population is ONE crossing, and this is it: the ruled reading
+    chopped the date 'Friday, 31 July 2026' into 'Friday, 31' // 'July 2026' at a boundary whose
+    right-hand ink starts 0.353pt BEFORE it (measured), so the boundary cut a text run and no
+    longer divides that row. The weld is the repair, not a regression — the line is one date."""
     band, region = suppressed[key]
     assert len(band.lines[0].words) == n_header_words, \
         f"header word count changed: {[w.text for w in band.lines[0].words]}"

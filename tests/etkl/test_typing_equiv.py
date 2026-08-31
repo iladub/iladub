@@ -45,7 +45,15 @@ EXPECTED_VERDICTS = {
         ("NON_TABLE", None, None, None),
         ("UNSUPPORTED_TABLE", 4, False, None),
         ("NON_TABLE", None, None, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
+        # R154, 2026-08-31: was UNSUPPORTED_TABLE. The band's DATA is byte-identical (lines 1-5
+        # unchanged); what moved is its title row, chopped 'Stock at Port (' // 'Main Storage
+        # Area) as at 29/07/2' // '026' // 'PORT MAINTENANCE SHU' // 'TDOWN DATES - 2026' and now
+        # welded to the two titles it is. The kind judgement then reads the band as records.
+        # NOT CERTIFIED AS CORRECT -- this band welds TWO side-by-side tables (line 1 is
+        # 'PORT'..'TOTAL' followed by the maintenance table's 'ALB' // '1 - 15 October'), so
+        # RECORD_TABLE is a STRONGER claim over an already-conflated grid. The conflation is
+        # PRE-EXISTING and unchanged by R154; only the label moved. See [[R156]].
+        ("RECORD_TABLE", 1, False, None),
     ],
     "capacity": [
         ("NON_TABLE", None, None, None),
