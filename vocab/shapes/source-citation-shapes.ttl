@@ -1,0 +1,42 @@
+# vocab/shapes/source-citation-shapes.ttl
+#
+# Source-comment citation membrane (R139 disjunct (a); spec: docs/superpowers/specs/
+# 2026-08-31-the-comment-cannot-cite-below-itself-design.md §2, §5). CLOSED WORLD: this file
+# only VALIDATES what the PROCEDURAL extractor (tests/source_citations.py) asserted — it never
+# derives. The refusal is a membrane on what may cross into the tracked tree.
+#
+# The sc: namespace is repo-internal governance vocabulary. It is NOT part of the published
+# iladub/etkl/dec/risk ontologies and is NOT registered at w3id — the same standing as dg:
+# (see doc-governance-shapes.ttl).
+#
+# Full IRIs inside sh:select, matching doc-governance-shapes.ttl: no sh:prefixes machinery.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix sc:  <https://w3id.org/iladub/srccite#> .
+
+# THE RULE (spec §2, derived there and cited here). A comment may not cite a line of its OWN file
+# below its own position: the edit that corrects such a citation shifts the line it cites, so the
+# correction ships already stale. Measuring before the write does not guard this class — CLAUDE.md
+# plan-rule 7 is the convention, and this is its instrument.
+#
+# The three conjuncts:
+#   ?ref = ?self   the referent resolved to this very file
+#   ?cites > ?at   downward. An upward citation is outside the class: an edit AT the comment
+#                  cannot move a line above it.
+#   ?cites <= ?len within this file's own length. A number past EOF cannot be a line of this
+#                  file, so it is a cross-file citation whose anchor the block scope did not carry.
+sc:DownwardSelfCitationShape a sh:NodeShape ;
+    sh:targetClass sc:Citation ;
+    sh:sparql [
+        sh:message "a comment cites a line BELOW itself in its own file — cite the symbol, or the grep that finds it (CLAUDE.md plan-rule 7; R139)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/srccite#atLine>     ?at ;
+                      <https://w3id.org/iladub/srccite#citesLine>  ?cites ;
+                      <https://w3id.org/iladub/srccite#referent>   ?ref ;
+                      <https://w3id.org/iladub/srccite#selfName>   ?self ;
+                      <https://w3id.org/iladub/srccite#fileLength> ?len .
+                FILTER (?ref = ?self && ?cites > ?at && ?cites <= ?len)
+            }""" ;
+    ] .

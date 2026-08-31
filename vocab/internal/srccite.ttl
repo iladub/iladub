@@ -1,0 +1,100 @@
+# vocab/internal/srccite.ttl
+#
+# The source-citation vocabulary — the terms the downward-citation lint asserts
+# and validates over this repo's own tracked source comments (R139 disjunct (a);
+# spec: docs/superpowers/specs/
+# 2026-08-31-the-comment-cannot-cite-below-itself-design.md).
+#
+# THIS VOCABULARY IS REPO-INTERNAL. It is not published, it is not part of the
+# iladub / etkl / dec / risk / tab family that iladub releases, and it is NOT
+# registered at w3id — dereferencing https://w3id.org/iladub/srccite# resolves
+# nothing and is not meant to. It exists so that the terms this repo's own
+# governance machinery names are DECLARED somewhere rather than dangling, and it
+# lives in vocab/internal/ rather than vocab/ontology/ for exactly the reason
+# vocab/internal/docgov.ttl gives: vocab/ontology/ is the published surface.
+#
+# The facts these terms carry are minted per run by tests/source_citations.py
+# (PROCEDURAL: git + file I/O + lexing) and validated by
+# vocab/shapes/source-citation-shapes.ttl (AXIOM, closed world). Nothing derives
+# over them, and nothing in this file validates; it only says what the terms MEAN.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+
+@prefix srccite: <https://w3id.org/iladub/srccite#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata
+#################################################################
+
+<https://w3id.org/iladub/srccite> a owl:Ontology ;
+    dcterms:title "srccite — the repo-internal source-citation vocabulary"@en ;
+    dcterms:description "Terms for one `:NNN` citation token found on a comment line of this repository's own tracked Python, Turtle and SPARQL source: where the token sits, what line it names, and which file it resolves against. Exists to support a single membrane — a comment may not cite a line BELOW itself in its own file, because the edit that corrects such a citation shifts the line it cites. Repo-internal and unregistered at w3id — see vocab/shapes/source-citation-shapes.ttl; that is why this file is under vocab/internal/ and not vocab/ontology/."@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-08-31"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "srccite" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/srccite#" .
+
+#################################################################
+#  The one node kind
+#################################################################
+
+srccite:Citation a owl:Class ;
+    rdfs:label "Source-comment citation"@en ;
+    rdfs:comment "One `:NNN` token appearing on a comment line of a tracked `.py`, `.ttl` or `.rq` file — a pointer, written by a human, at a line of source. A Citation is NOT a claim that the pointer is correct: three of the four sites this vocabulary was built against were correct when it was written, and the class the membrane refuses is a HAZARD, not an error. Citations are minted fresh from the live tree on every lint run; none of them is stored in a committed graph. A range `:NNN-MMM` mints TWO Citations, one per endpoint, because an edit can invalidate either end."@en .
+
+#################################################################
+#  Where the token sits
+#################################################################
+
+srccite:inFile a owl:DatatypeProperty ;
+    rdfs:label "in file"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The repo-relative POSIX path of the file whose comment carries this token, carried as a literal so a lint failure can name a file a human can open rather than an IRI. Repo-relative and never absolute: the repository's own containing directory must not reach a failure message."@en .
+
+srccite:atLine a owl:DatatypeProperty ;
+    rdfs:label "at line"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The 1-indexed line number of the COMMENT LINE the token was written on — the citation's own position, not its target. This is the half of the comparison that makes the hazard visible: an edit made AT this line can move everything below it, so a target greater than this number is a target the edit itself can invalidate."@en .
+
+srccite:citesLine a owl:DatatypeProperty ;
+    rdfs:label "cites line"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The line number the token names. For a range, one Citation carries the start and another the end. Nothing here says the line exists or that it holds what the comment claims — that is deliberately outside this vocabulary, and outside the membrane it feeds."@en .
+
+#################################################################
+#  What the token resolves against
+#################################################################
+
+srccite:referent a owl:DatatypeProperty ;
+    rdfs:label "referent"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The BASENAME of the file this token points into, as a reader would resolve it: the citing file itself, unless an explicit `basename.ext:MMM` anchor appeared earlier in the same comment PARAGRAPH, in which case later bare tokens inherit that anchor. The unit is the paragraph — a contentless `#` line or any code line ends it — and not the contiguous comment block, because the longest such block in this repo is 122 lines and a block-scoped referent was measured leaking across one, hiding a real instance. Carried as a basename rather than a path because that is what a comment writes."@en .
+
+srccite:selfName a owl:DatatypeProperty ;
+    rdfs:label "self name"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The basename of the file the token is written IN. Emitted alongside srccite:referent so that \"does this token point at its own file?\" is a comparison of two literals in the membrane rather than string surgery inside a SPARQL constraint — and, more importantly, so that the EXTRACTOR never makes that comparison. Deciding is the membrane's job; the extractor only reports."@en .
+
+srccite:fileLength a owl:DatatypeProperty ;
+    rdfs:label "file length"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The number of lines in the citing file. It is what lets the membrane discharge a bare token whose target lies past this file's own end: such a number cannot be a line of this file, so it is a cross-file citation whose anchor the paragraph scope did not carry. Two live cross-file citations are silent for exactly this reason — `vocab/queries/arc-position.rq` cites `:139-146` and is 84 lines long, and `src/iladub/etkl/datagrid.py` cites `:949` and is 790."@en .
+
+srccite:text a owl:DatatypeProperty ;
+    rdfs:label "comment text"@en ;
+    rdfs:domain srccite:Citation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The stripped text of the comment line the token was found on, carried for one purpose only: a refusal message that shows the sentence rather than a coordinate. A lint whose message does not let the reader see what it objected to gets suppressed rather than fixed. Nothing validates or derives over this value."@en .
