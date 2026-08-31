@@ -273,7 +273,7 @@ What it changes for a loop:
   and would now be rejected.
 - **The required check is `test`, the JOB name in `.github/workflows/ci.yml` — not `ci`, the
   workflow name.** Rename that job and every PR blocks forever on a check that never arrives.
-- **`enforce_admins: true` means the escape hatch is deleting the rule**, not overriding it. If CI
+- **An empty bypass list means the escape hatch is deleting the rule**, not overriding it. If CI
   stops reporting for any reason, nothing merges until the owner relaxes protection.
 - A PR is required; an **approval is not** (`required_approving_review_count: 0`). A solo maintainer
   cannot approve their own PR, so any higher number would deadlock every merge.
@@ -284,9 +284,16 @@ What it changes for a loop:
 cancels the CI run of the commit before it, so a run seen green is only ever the run for HEAD
 (`f2d055a`). Protection does not change that; it only guarantees the PR path was green.
 
-Applying it needs admin on `iladub/iladub`, which the `Frosselet` collaborator token does not have
-(`"admin": false`; the protection endpoints return 404, not 403, to non-admins). It is the `iladub`
-account's to set — see the Open items entry below for the exact payload and the verification.
+**APPLIED 2026-08-31, as a RULESET — not classic branch protection, and the difference changes how
+you verify it.** The rule is now enforced; the Open items entry below carries the measured payload.
+
+Applying it needed admin on `iladub/iladub`, which the `Frosselet` collaborator token does not have
+(`"admin": false`; the protection endpoints return 404, not 403, to non-admins) — **and cannot be
+given**, which is the part worth recording. `iladub` is a **User** account, not an Organization
+(`gh api users/iladub -q .type` → `User`), so its repos have exactly one collaborator permission
+level: there is no role dropdown and admin is not grantable to a collaborator at all. Only the owning
+account has it. Any future session hitting a 404 on a protection endpoint should stop there and hand
+the action to the owner rather than look for a permission to escalate.
 
 ## Naming discipline (a hard-won lesson)
 
@@ -621,16 +628,44 @@ request), **Confidential** (`internal/` — never tracked).
 - [x] Masthead glyph verified 2026-06-03: `𒅍` U+1214D (íl, "carrier") + `𒁾` U+12077 (dub,
       "tablet") = "the document-carrier".
 - [x] `vocab/LICENSE` (CC-BY-4.0) + root `CITATION.cff` verified 2026-05-31.
-- [ ] **Branch protection is RULED but NOT YET APPLIED** — measured 2026-08-29 after the ruling:
-      `gh api repos/iladub/iladub/branches/main -q .protected` → `false`, and `allow_auto_merge`
-      → `false`. Until both flip, the rule above describes an intention, not an enforcement, and
-      `--auto` still merges immediately. Set by the `iladub` account with `required_status_checks:
-      {strict: false, contexts: ["test"]}`, `enforce_admins: true`,
-      `required_pull_request_reviews: {required_approving_review_count: 0}`, `restrictions: null`,
-      plus `PATCH repos/iladub/iladub -F allow_auto_merge=true`. Verify with
+- [x] **Branch protection APPLIED 2026-08-31, by the `iladub` account, as a REPOSITORY RULESET.**
+      Measured, not asserted — `gh api repos/iladub/iladub/rulesets/21898723`:
+
+      ```
+      name          main-requires-green-pr
+      enforcement   active
+      conditions    ref_name.include = ["~DEFAULT_BRANCH"]
+      bypass_actors null                       ← nobody, the owner included
+      ```
+
+      and `gh api repos/iladub/iladub/rules/branches/main`: `pull_request`
+      (`required_approving_review_count: 0`, `require_last_push_approval: false`),
+      `required_status_checks` (`[{"context": "test", "integration_id": 15368}]`,
+      `strict_required_status_checks_policy: false`), plus `deletion` and `non_fast_forward`.
+      `gh api repos/iladub/iladub -q .allow_auto_merge` → `true`, so `--auto` now means what it says.
+
+      **VERIFY WITH THE RULES ENDPOINT, NEVER THE BRANCHES ONE.** This entry used to prescribe
       `gh api repos/iladub/iladub/branches/main -q '{p: .protected, c:
-      .protection.required_status_checks.contexts}'` → `{"p": true, "c": ["test"]}`. A wrong check
-      name fails silently in the blocking direction.
+      .protection.required_status_checks.contexts}'` → `{"p": true, "c": ["test"]}`. Under a ruleset
+      that returns **`{"p": true, "c": []}`** — a **false negative** that reads as "never applied".
+      The classic rule is a separate, now-inert mechanism (`protection.enabled: false`,
+      `enforcement_level: "off"`) that still makes `.protected` report `true`. The check that
+      answers the question is:
+
+      ```
+      gh api repos/iladub/iladub/rules/branches/main
+      ```
+
+      **A wrong check name still fails silently in the blocking direction** — `test` is the JOB name
+      in `.github/workflows/ci.yml`, and `integration_id: 15368` binds it to GitHub Actions rather
+      than to free text. **PROVEN BEHAVIOURALLY, not only read:** PR #136 — the one carrying this
+      entry — is the first through the ruleset, and `gh pr view --json mergeStateStatus` returns
+      **`BLOCKED`** while `test` is pending. The contrast is the evidence: PR #135, merged hours
+      earlier under the same `.protected: true`, reported **`UNSTABLE`** — mergeable, checks not
+      required. `BLOCKED` is the rule firing; `UNSTABLE` was it not existing.
+- [ ] **Delete the leftover classic branch-protection rule on `main`.** It is inert (the ruleset does
+      the work) but it keeps `.protected` reporting `true`, which is what made the old verification
+      recipe above look like it still worked. One rule, one place to look. Owner's to do.
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
 - [ ] Express the holonic interaction model in `vocab/` — but **scope it to iladub's
