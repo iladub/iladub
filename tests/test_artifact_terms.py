@@ -48,12 +48,16 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # name declared terms only, so they belong in the population like
     # `tests/expansion-request-leak.ttl` before them.
     #
+    # RE-MEASURED AGAIN 2026-08-31 (R139's instrument half): 144 -> 146, `vocab/internal/
+    # srccite.ttl` and `vocab/shapes/source-citation-shapes.ttl` — the declaration and the
+    # membrane of the source-comment citation lint. Both are artifacts like any other.
+    #
     # WHY CI CAUGHT THIS AND A LOCAL RUN DID NOT: the population is `git ls-files`, so a new
     # `.ttl` joins it at `git add`, not at creation. A full local suite run against an
     # uncommitted tree is green on a count this test will fail the moment the files are staged.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 144
+    assert len(artifact_files()) == len(tracked) - len(carved) == 146
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -103,6 +107,15 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     The eighth distinct value is `https://w3id.org/iladub/docgov#`, present now as a plain
     string as well as the `xsd:anyURI` a shape already carried.
 
+    RE-MEASURED 2026-08-31 (R139's instrument half), which authors a fourth internal
+    vocabulary carrying its own `vann:preferredNamespaceUri`:
+
+        occurrences 22   distinct values 9   [146 artifacts]
+
+    The ninth is `https://w3id.org/iladub/srccite#`. It appears ONCE, not twice as `docgov#`
+    does: `source-citation-shapes.ttl` writes full IRIs inside its `sh:select` rather than
+    declaring an `sh:namespace`, so no `xsd:anyURI` twin exists.
+
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
     floor — a floor cannot detect the guard silently collecting fewer, which is the failure
@@ -111,8 +124,8 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 21
-    assert len({str(o) for o in occurrences}) == 8
+    assert len(occurrences) == 22
+    assert len({str(o) for o in occurrences}) == 9
     assert not any(isinstance(o, URIRef) for o in occurrences)
 
 
@@ -162,10 +175,30 @@ def _census() -> set[str]:
     return _demanded() - _declared_by_published_only()
 
 
+#: The commit at which the 136-artifact tree below was the whole tree: the parent of the commit
+#: that added `vocab/internal/`. `git log --diff-filter=A -- vocab/internal/docgov.ttl` names the
+#: adder, `435049f8`, and `git ls-tree -r --name-only 72d0cffc | grep -c '\.ttl$'` is 137, minus
+#: the one fixture = **136**. RE-MEASURED 2026-08-31.
+_PRE_INTERNAL_COMMIT = "72d0cffcecf8081ed1c1b3905a3dbbd51c2a0c19"
+
+
 def _pre_loop_artifacts():
-    """The 136 tracked `.ttl` spec §2.2/§2.3 measured, i.e. before vocab/internal/ existed."""
-    from tests.query_terms import INTERNAL_DIR
-    return [p for p in artifact_files() if INTERNAL_DIR not in p.parents]
+    """The 136 tracked `.ttl` spec §2.2/§2.3 measured, i.e. before vocab/internal/ existed.
+
+    RECONSTRUCTED FROM GIT, not proxied. This used to be `artifact_files()` minus
+    `vocab/internal/`, which was exact when written and silently drifts afterwards: EVERY later
+    loop's non-internal `.ttl` joins a population that is supposed to be a fixed historical tree.
+    It had already drifted to 141 by R128's five `supersession-*.ttl`, and stayed green only
+    because those five happen to name no undeclared owned term — so the defect was invisible
+    until a loop added one that does (R139's `srccite:Citation`, 2026-08-31, which is exactly
+    what exposed it). Naming the commit removes the hazard instead of guarding it; a file
+    deleted since is simply absent from `artifact_files()` and drops out on its own.
+    """
+    tracked_then = set(subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", _PRE_INTERNAL_COMMIT],
+        cwd=REPO, capture_output=True, text=True, check=True,
+    ).stdout.split())
+    return [p for p in artifact_files() if p.relative_to(REPO).as_posix() in tracked_then]
 
 
 def _census_over(files) -> set[str]:
@@ -189,10 +222,20 @@ CORPUS = "https://w3id.org/iladub/corpus#"
 #: The two artifacts the census is measured over, and why there are two. Spec §2.2/§2.3
 #: measured the rule's yield over the 136 tracked `.ttl` that existed BEFORE this loop
 #: authored three more; those three are themselves artifacts, read by the same rule.
-_SURPLUS_IN_CENSUS = {CORPUS + "Verdict", CORPUS + "Adjudication"}
+#:
+#: EXTENDED 2026-08-31 (R139's instrument half). The set is the difference between the census
+#: over the live tree and the census over the 136-artifact tree, so EVERY later loop that
+#: authors an owned term outside that historical tree belongs in it. `srccite:Citation` is
+#: R139's. The O6 AUTHORSHIP CLAIM below is unchanged and is about the first two only: those
+#: are the terms an author supplied that no positional rule demanded.
+SRCCITE = "https://w3id.org/iladub/srccite#"
+_SURPLUS_IN_CENSUS = {
+    CORPUS + "Verdict", CORPUS + "Adjudication",   # 2026-08-30, R128's loop
+    SRCCITE + "Citation",                          # 2026-08-31, R139's loop
+}
 
 
-def test_the_census_chain_from_53_to_56_with_every_step_earned():
+def test_the_census_chain_from_53_to_57_with_every_step_earned():
     """Every step of the census is a NUMBER, and every step was EARNED by a named change in
     the commit that caused it — never adjusted to make a suite go green:
 
@@ -200,6 +243,12 @@ def test_the_census_chain_from_53_to_56_with_every_step_earned():
         55   + the path traversal of §4.4 (docgov:cites, docgov:citesExternal)
         57   + vocab/internal/ joining the population as three more artifacts
         56   - etkl:Contract, repaired; and 54 over the 136-artifact tree
+        57   + srccite:Citation, R139's citation membrane (2026-08-31)
+
+    THAT LAST STEP IS ONE TERM, NOT EIGHT: `source-citation-shapes.ttl` names
+    `srccite:Citation` as an `sh:targetClass` OBJECT, and its seven properties appear only
+    inside the `sh:select` STRING, where they are a run of characters and not RDF nodes at
+    all. R150's class, live again — and the reason `srccite.ttl` declares all eight anyway.
 
     The plan pinned 53 and 55 and stopped there, so Tasks 5 and 7 each invalidated a constant
     the plan had written as fixed (G6, recorded rather than quietly retuned). That is not a
@@ -219,7 +268,7 @@ def test_the_census_chain_from_53_to_56_with_every_step_earned():
     nodes ARE. A transcription of the census cannot move the census.
     """
     assert len(_census_over(_pre_loop_artifacts())) == 54
-    assert len(_census()) == 56
+    assert len(_census()) == 57
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -297,7 +346,7 @@ def test_the_path_traversal_adds_exactly_two_terms():
     traversal does not OVER-reach.
 
     The total here is 54, not 55: repairing etkl:Contract removed one term from the same
-    tree (see `test_the_census_chain_from_53_to_56_with_every_step_earned` for the full
+    tree (see `test_the_census_chain_from_53_to_57_with_every_step_earned` for the full
     chain). The two terms this test is about are unaffected, and are asserted by name — the
     number alone was never the claim."""
     assert len(_census_over(_pre_loop_artifacts())) == 54

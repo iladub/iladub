@@ -10,8 +10,8 @@
 #   A3  their oracle test sets are disjoint — tests/test_risk.py vs tests/test_timeline_shacl.py.
 #   A4  metOn(dec:03) 2026-06-18 <= metOn(dec:11) 2026-06-26, non-strict, no contradiction.
 #   A6  their artifact FILES are disjoint — risk-shapes/transplant-risk/risk-leak against
-#       dec-shapes/heart-timeline-{conformant,leak}; the `:17` and `:48` suffixes are stripped
-#       before the comparison, and even unstripped the two sets share nothing.
+#       dec-shapes/heart-timeline-{conformant,leak}; the `risk-shapes.ttl:17` and
+#       `dec-shapes.ttl:48` suffixes are stripped, and even unstripped the sets share nothing.
 # M12 (both targets are declared criteria), M13 (not a self-edge), M14 (one edge, no cycle),
 # M15 (neither end is unmet) and M18 (an assertion carries no rationale, and none is here) are
 # all silent too. So the graph membrane ADMITS this edge — `validate_manifest` returns

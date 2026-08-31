@@ -135,7 +135,7 @@ ESCALATION_FURNISH_RQ = _QUERIES / "escalation-furnish.rq"
 # act `_seal` mints and states the document's `etkl:membraneHealth`. Named beside the furnish
 # above for the same reason: a reader of the seam has to be able to see which derivations run
 # in it. An inert `Path` at import time — nothing reads the file here; it is opened and run
-# once per compile, by `_seal`'s derivation step at `:1324`.
+# once per compile, by `_seal`'s derivation step — `grep -n MEMBRANE_HEALTH_RQ` finds both.
 MEMBRANE_HEALTH_RQ = _QUERIES / "membrane-health.rq"
 
 _ONTOLOGY = _QUERIES.parent / "ontology"
@@ -1203,10 +1203,10 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     #
     # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
     # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
-    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges — `:1536`
-    # (section repair) and `:1740` (datagrid adoption), which `grep -n "DEC.supersedes"` on this
-    # file shows are the only two (re-measured 2026-08-25) — write into THIS graph and
-    # into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
+    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges — section
+    # repair and datagrid adoption, which `grep -n "DEC.supersedes"` on this file shows are the
+    # only two (re-measured 2026-08-31; BY GREP, not by line, per plan-rule 7) — write into THIS
+    # graph and into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
     # A page-scope site is therefore not merely early, it is permanently blind:
     # `compile_tables` returns before the driver has anything to link, and the link is then
     # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
