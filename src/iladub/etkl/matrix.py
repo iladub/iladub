@@ -7,6 +7,10 @@ numeric group). infer_column_tree_by_proximity instead assigns each data leaf co
 to its NEAREST parent-label center (Voronoi) — exact for any label width. This
 assumes CENTERED parent merges (a documented convention, the mirror of Loop 2's
 centered-merge and Loop 5's blank-below); the SHACL + round-trip certify the result.
+
+Header LEVELS are the band's own lines (band.lines[:split]) — the same grouping
+header_rows_of indexes — never re-derived from word tops with a tolerance of this
+module's own (R45).
 """
 from __future__ import annotations
 
@@ -32,29 +36,30 @@ class ColHeaderNode:
     page: int
 
 
-def _level_tops(band: Band, split: int) -> list[float]:
-    return sorted({round(w.top, 1) for ln in band.lines[:split] for w in ln.words})
-
-
 def infer_column_tree_by_proximity(band, grid, split, data_cols):
     """Column tree over the DATA columns by nearest-parent-center assignment.
 
-    For each header level (top to bottom = 0..), take that line's labels as
-    (text, x_center, word); assign each data column to the nearest label center; a
-    node covers the contiguous run assigned to it. Parent links: level L -> the
-    level-(L-1) node whose covers contain this node's. None if a level has no labels.
+    A header LEVEL IS A BAND LINE: level L is band.lines[L] for L in range(split),
+    and level L's labels are exactly that line's words. `split` is a count of
+    band.lines (header_body_split returns it; header_rows_of dereferences the same
+    integer as band.lines[body_line].top), so the two share one coordinate system.
+    No tolerance is applied here — what a line is has already been decided, once,
+    by the band producer.
+
+    For each level, take that line's labels as (text, x_center, word); assign each
+    data column to the nearest label center; a node covers the contiguous run
+    assigned to it. Parent links: level L -> the level-(L-1) node whose covers
+    contain this node's. None if a level has no labels.
     """
     b = grid.boundaries
     centers = {c: (b[c] + b[c + 1]) / 2.0 for c in data_cols}
-    tops = _level_tops(band, split)
-    if not tops:
+    levels = band.lines[:split]
+    if not levels:
         return None
     nodes: list[ColHeaderNode] = []
-    for level, t in enumerate(tops):
-        labels = sorted(
-            ((w.text, (w.x0 + w.x1) / 2.0, w)
-             for ln in band.lines[:split] for w in ln.words if abs(round(w.top, 1) - t) < 0.5),
-            key=lambda z: z[1])
+    for level, ln in enumerate(levels):
+        labels = sorted(((w.text, (w.x0 + w.x1) / 2.0, w) for w in ln.words),
+                        key=lambda z: z[1])
         if not labels:
             return None
         assign: dict[int, list[int]] = {}

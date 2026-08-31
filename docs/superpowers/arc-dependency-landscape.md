@@ -19,7 +19,7 @@ the hand-authored manifest, and CI fails unless the tracked bytes are exactly wh
 | renderer | `scripts/arc_depends.py` (PROCEDURAL — markdown is not a derivation) |
 | gate | `tests/test_arc_landscape.py` (regenerate-and-diff) |
 
-**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 43 criteria by a human and then graded by the membrane: 7 of its 28 edges are grounded by a two-sided ablation and 21 are propositions. This is a monitor, not a scheduler.
+**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 43 criteria by a human and then graded by the membrane: 7 of its 27 edges are grounded by a two-sided ablation and 20 are propositions. This is a monitor, not a scheduler.
 
 ## §1 What can be started today — `arc-ready.rq`
 
@@ -63,7 +63,7 @@ stops being grounded. A dependency reachable both by an asserted chain and by on
 containing a proposition is graded `asserted` — the grounded chain exists, and that is
 the fact.
 
-**17 of 43 criteria carry a closure**; for the other 26 no dependency has been read, which is not a claim that they have none.
+**16 of 43 criteria carry a closure**; for the other 27 no dependency has been read, which is not a claim that they have none.
 
 | criterion | asserted — grounded by ablation | proposed — read, not grounded |
 | --- | --- | --- |
@@ -78,7 +78,6 @@ the fact.
 | `etkl:03` | — | `tab:01`, `tab:04` |
 | `etkl:05` | — | `tab:02`, `tab:07`, `tab:09` |
 | `etkl:06` | — | `tab:02`, `tab:05`, `tab:08` |
-| `etkl:07` | — | `tab:05` |
 | `holon:03` | `holon:01` | — |
 | `holon:04` | `dec:07`, `dec:10`, `holon:01` | `holon:03` |
 | `holon:05` | `holon:01` | — |
@@ -99,9 +98,8 @@ not a recommendation; which residue to close is a judgment and stays the reader'
 | residue | unmet criteria gated |
 | --- | --- |
 | `R44` | 5 |
-| `R62` | 5 |
+| `R62` | 4 |
 | `R43` | 3 |
-| `R45` | 3 |
 | `R71` | 3 |
 | `R74` | 3 |
 | `R77` | 2 |
@@ -110,7 +108,6 @@ not a recommendation; which residue to close is a judgment and stays the reader'
 | `R83` | 2 |
 | `R84` | 2 |
 | `R97` | 1 |
-| `R98` | 1 |
 | `R99` | 1 |
 | `R100` | 1 |
 

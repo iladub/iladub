@@ -372,6 +372,46 @@ def crosstab_table_pdf(path: str) -> dict:
             "row_axis": ["North", "South"]}
 
 
+def crosstab_drifting_leafrow_pdf(path: str) -> dict:
+    """crosstab_table_pdf with SUB-POINT BASELINE DRIFT inside its leaf header row.
+
+    The synthetic form of who-wfa page 0, whose one visual header line carries two
+    baselines 0.9pt apart (`Year: | Month | ... | L | M | S` at top 118.7, `-3 SD ...`
+    at 119.6). Q1's three leaf labels sit at ``top - 13.0``, Q2's three at ``top - 13.9``
+    — one visual row to any reader and to both band producers (`text_lines` and
+    `rule_aware_lines` group rows on 0.6 x median glyph height, ~5pt here), so
+    `header_body_split` still reports 2 header lines.
+
+    A level derivation that reads the band's own lines sees two levels and the tree
+    tiles. One that re-derives levels from rounded word tops sees THREE and the leaf
+    row is torn in half over overlapping columns, which `tab:UnambiguousAccessShape`
+    correctly refuses. Ground truth is `crosstab_table_pdf`'s: the drift is a rendering
+    accident and must change nothing.
+    """
+    stub_x = 55.0
+    data_x = [140.0, 210.0, 280.0, 380.0, 450.0, 520.0]   # Q1:Rev,Cost,Unit | Q2:Rev,Cost,Unit
+    leaf_dy = [13.0, 13.0, 13.0, 13.9, 13.9, 13.9]        # the 0.9pt drift, Q1 vs Q2
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[2]) / 2.0, top, "Q1")
+    c.drawCentredString((data_x[3] + data_x[5]) / 2.0, top, "Q2")
+    for x, dy, name in zip(data_x, leaf_dy, ["Rev", "Cost", "Unit", "Rev", "Cost", "Unit"]):
+        c.drawCentredString(x, top - dy, name)
+    c.setFont("Courier", 9)
+    body = [("North", ["100", "60", "5", "110", "65", "6"]),
+            ("South", ["120", "70", "7", "130", "75", "8"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 30.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"n_data_cols": 6, "n_leaf_rows": 2,
+            "col_groups": {"Q1": [1, 2, 3], "Q2": [4, 5, 6]},
+            "row_axis": ["North", "South"], "drift_pt": 0.9}
+
+
 def side_by_side_pdf(path: str) -> dict:
     """Two independent record tables abreast, separated by a wide full-height gutter.
     detect_bands (1-D) fuses them into one wide table today; segment must split them."""

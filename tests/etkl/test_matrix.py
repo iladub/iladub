@@ -1,7 +1,8 @@
 import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
-from tests.etkl.fixtures import crosstab_table_pdf, pivoted_table_pdf, simple_table_pdf
+from tests.etkl.fixtures import (crosstab_drifting_leafrow_pdf, crosstab_table_pdf,
+                                 pivoted_table_pdf, simple_table_pdf)
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
 from iladub.etkl.headers import header_body_split
@@ -26,6 +27,38 @@ def test_proximity_column_tree(tmp_path):
     assert l0["Q2"] == (4, 5, 6)
     leaves = [n for n in tree if n.level == 1]
     assert len(leaves) == 6 and all(len(n.covers) == 1 for n in leaves)
+
+
+def _tree(maker, tmp_path, name):
+    d = tmp_path / name; d.mkdir()
+    band = _band(maker, d)
+    grid = recover_leaf_grid(band)
+    split = header_body_split(band, grid)
+    return infer_column_tree_by_proximity(band, grid, split, tuple(range(1, grid.ncols)))
+
+
+def test_sub_point_leaf_drift_is_one_header_level(tmp_path):
+    """R45: 0.9pt baseline drift inside ONE leaf header row is not a level boundary.
+
+    Measured on who-wfa page 0, whose single visual header line carries two baselines
+    (`Year: | Month | ... | L | M | S` at top 118.7, `-3 SD ...` at 119.6) — see spec
+    docs/superpowers/specs/2026-08-31-a-header-level-is-a-band-line-design.md §3.2.
+    Both band producers group those into one line; a level derivation that re-reads
+    rounded word tops instead manufactures a THIRD level, tears the leaf row in half
+    over overlapping columns and orphans two nodes, which tab:UnambiguousAccessShape
+    then correctly refuses.
+
+    The drift is a rendering accident, so the tree must be the undrifted one, node for
+    node — including parents. Falsified by restoring a top-based level derivation.
+    """
+    drifted = _tree(crosstab_drifting_leafrow_pdf, tmp_path, "drift")
+    flat = _tree(crosstab_table_pdf, tmp_path, "flat")
+    assert drifted is not None and flat is not None
+    shape = lambda t: [(n.level, n.text, n.covers, n.parent) for n in t]
+    assert shape(drifted) == shape(flat)
+    assert {n.level for n in drifted} == {0, 1}
+    assert {n.text: n.covers for n in drifted if n.level == 0} == {"Q1": (1, 2, 3), "Q2": (4, 5, 6)}
+    assert all(n.parent is not None for n in drifted if n.level > 0)
 
 
 def test_is_matrix_candidate(tmp_path):

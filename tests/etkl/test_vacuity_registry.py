@@ -108,16 +108,16 @@ VACUITY_REGISTRY = {
     TAB.BaseFactShape: (
         "corpus does not exercise it — measured 0 focus nodes on all 7 documents. RESIDUE: "
         "corpus gap or dead shape, not adjudicated here."),
-    TAB.LicenceRefusalShape: (
-        "idle by BOTH criteria — 0 focus nodes and `tab:licenceRefused` absent from every "
-        "compiled graph. SPEC §3's REASON ('corpus does not exercise it') IS WRONG and this "
-        "row replaces it: who-wfa DOES refuse a licence, on pair (1,2), and "
-        "`DocumentReport.refused_licences` records it. The graph FACT is withheld "
-        "DELIBERATELY — `document.py:1246-1253` writes the edge only when both refused "
-        "regions asserted a table, because the fact names two table URIs, and its comment "
-        "states the asymmetry is intended. So the shape is idle BY DESIGN on this corpus. "
-        "RESIDUE: whether a refusal between two ASSERTED tables ever occurs, which is the "
-        "only state that would make this shape speak."),
+    # DELETED 2026-08-31 (R45 loop): TAB.LicenceRefusalShape. It was registered idle with the
+    # adjudication "who-wfa DOES refuse a licence, on pair (1,2), but the graph FACT is withheld
+    # because the edge names two table URIs and one of those regions asserted no table" — and a
+    # RESIDUE (R98): whether a refusal between two ASSERTED tables ever occurs at all. It does,
+    # and R45 is what made it occur: who-wfa's pages stopped escalating MATRIX_AMBIGUOUS, so both
+    # halves of its already-refused pair (1,2) now assert a table and the writer's condition is
+    # met. MEASURED at this commit — `compile_document` on who-wfa: `refused_licences == ((1, 2),)`
+    # unchanged, and ONE `tab:licenceRefused` edge, `p2#mtable1 -> p1#mtable2`. The shape is LIVE,
+    # this test's other arm said so before this row was touched, and R98 is closed on the first of
+    # the two outcomes its own row named (a specimen, not a proof of unreachability).
     TAB.PivotedDimensionShape: (
         "corpus does not exercise it — measured 0 focus nodes on all 7 documents. RESIDUE: "
         "corpus gap or dead shape, not adjudicated here."),

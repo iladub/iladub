@@ -122,6 +122,21 @@ prog:rung:substrate a prog:Rung ;
 # 1 met, 6 unmet — and all six are BARE Unadjudicated, not recorded HOLDs. Rows 2 and 3
 # score the same and are not the same thing; the manifest records which is which.
 #
+# RE-MEASURED 2026-08-31 (R45 loop), same command, same file. The block above is kept as the
+# record of what was read on 2026-08-20 and is NOT repaired in place; it was taken BEFORE the
+# same day's census wrote its HOLD nodes, which is why every adjudications= reads 0 there:
+#   ag-trade/cbh-stem-2026-08-03.pdf             Unadjudicated  floor=None  adjudications=1
+#   ag-trade/graincorp-capacity-2026-08-04.pdf   Unadjudicated  floor=None  adjudications=1
+#   ag-trade/graincorp-stem-2026-07-31.pdf       CompilesAbove  floor=0.95  adjudications=4
+#   financial/apple-fy2026q3-statements.pdf      Unadjudicated  floor=None  adjudications=1
+#   gov-stats/bfs-population-bilan-2023.pdf      Unadjudicated  floor=None  adjudications=1
+#   gov-stats/ons-index-of-services-2026-02.pdf  Unadjudicated  floor=None  adjudications=1
+#   health/who-wfa-boys-zscore-0-5.pdf           CompilesAbove  floor=0.90  adjudications=2
+# 2 met, 5 unmet. who-wfa moved on a lifted HOLD, never on a number written down: R45's fix
+# took it from 0.5597 with 3 MATRIX_AMBIGUOUS escalations to 0.9095966620305981 with none.
+# The remaining five are recorded HOLDs, not bare rows — the 2026-08-20 line above saying
+# "all six are BARE Unadjudicated" was already false when it was written.
+#
 # THE DENOMINATOR GROWS WITH AMBITION, and that is correct: adding a document to the corpus
 # lowers the fraction. A gauge that can only be raised by aiming higher measures the right
 # thing (spec §7.1).
@@ -229,12 +244,22 @@ prog:criterion:etkl:06 a prog:Criterion ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[financial/apple-fy2026q3-statements.pdf]" .
 
+# who-wfa — the SECOND met document on this rung, and it is met the same way the first was:
+# a recorded HOLD lifted, not a floor pinned at whatever the document scored. The 2026-08-20
+# adjudication held it on one condition ("Held until that header block is read"); R45 read the
+# header block and the 2026-08-31 adjudication lifts it. Both nodes are in the file.
+# The met-value is measured by RUNNING the oracle, 2026-08-31:
+#   $ ./.venv/bin/python -m pytest "tests/test_corpus.py::test_expected_verdict[health/who-wfa-boys-zscore-0-5.pdf]" -q -s -m corpus
+#     health/who-wfa-boys-zscore-0-5.pdf: score=0.9096 pages=3 chains=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1] wall=46s
+#     1 passed in 46.79s
+# declaredOn 2026-08-04 < metOn 2026-08-31, so prog:retrospective stays FALSE and is true.
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:118" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-08-31"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[health/who-wfa-boys-zscore-0-5.pdf]" .
@@ -1020,6 +1045,10 @@ prog:criterion:dec:17 a prog:Criterion ;
 #   REGION_TILING_FAILED 10 · MATRIX_AMBIGUOUS 5 · ROUND_TRIP_FAIL 5 · KIND_NOT_SUPPORTED 3 ·
 #   DATAGRID_RESIDUE 1 · MERGE_AMBIGUOUS 0 · MULTI_TABLE_AMBIGUOUS 0 · ROW_GROUP_AMBIGUOUS 0 ·
 #   TRANSPOSED 0        — 24 records on 3 documents (apple 11, bfs 10, who-wfa 3).
+# RE-MEASURED 2026-08-31 (R45 loop): 21 records on 2 documents (apple 11, bfs 10). who-wfa's 3
+# MATRIX_AMBIGUOUS are gone and it now emits zero records of any reason; MATRIX_AMBIGUOUS falls
+# 5 -> 2 and every other per-reason count above is unchanged. The line above is the 2026-08-20
+# record and is kept, not repaired.
 #
 # D2 — GRAPH-SIDE 24, REPORT-SIDE 29, AND THE DIFFERENCE IS ONE PAGE. Recorded here and not
 # only in the plan, so a future re-measurement reading 29 recognises a known difference rather
@@ -1181,6 +1210,11 @@ prog:criterion:tab:04 a prog:Criterion ;
 
 # FIRES 5 — who-wfa x3 (one z-score header block, once per page) and apple x2 (p0, p2, the
 # "Three Months Ended … Nine Months Ended" double header). Both adjudications name it; both HOLD.
+# RE-MEASURED 2026-08-31 (R45 loop), whole-corpus compile: FIRES 2 — apple x2 only, byte-for-byte
+# the same two firings. who-wfa's 3 are GONE (R45 closed; its adjudication now ACCEPTS), so the
+# who half of this criterion is discharged and "both adjudications HOLD" is no longer true of it.
+# apple's two are untouched and its adjudication still HOLDs, so tab:05 stays prog:met false on
+# R62 alone. The line above is the 2026-08-20 record and is kept, not repaired.
 prog:criterion:tab:05 a prog:Criterion ;
     prog:ofRung "tab" ;
     prog:statement "MATRIX_AMBIGUOUS (compile.py:830): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
@@ -1188,7 +1222,7 @@ prog:criterion:tab:05 a prog:Criterion ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
-    prog:blockedBy "R45" , "R62" ;
+    prog:blockedBy "R62" ;
     prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
 
 # THE ONE MET ROW ON THIS RUNG, and it is met on arm (b), never on silence.
@@ -1277,9 +1311,13 @@ prog:criterion:tab:09 a prog:Criterion ;
 # What is UNMET is the adjudication, not the instrument. Four registry rows read verbatim
 # "RESIDUE: corpus gap or dead shape, not adjudicated here" — tab:AggregationCellShape (:105),
 # tab:BaseFactShape (:108), tab:PivotedDimensionShape (:121), tab:SectionTotalShape (:124),
-# re-read at those lines 2026-08-21 — and a fifth, tab:LicenceRefusalShape (:111-120), carries a
-# real adjudication and is NOT one of the four. R97 covers the four; R98 records that spec §3's
-# stated reason for LicenceRefusal is wrong; R99 (iladub:NoLeakShape has 11 focus nodes and
+# re-read at those lines 2026-08-21 and RE-MEASURED unchanged 2026-08-31 — and a fifth,
+# tab:LicenceRefusalShape (:111-120), carried a real adjudication and was NOT one of the four;
+# those same lines now hold the comment that DELETES it. R97 covers the four; R98 recorded that spec §3's
+# stated reason for LicenceRefusal is wrong — CLOSED 2026-08-31 by the R45 loop, which made the
+# shape LIVE (who-wfa's refused pair (1,2) now has a table on both sides, so the edge is written);
+# its registry row and its prog:blockedBy edge are both deleted, per the maintainer's 2026-08-22
+# R108 ruling. tab:10 stays unmet on R97, R99 and R100. R99 (iladub:NoLeakShape has 11 focus nodes and
 # still cannot fire, because `iladub:asserted` appears in no compiled graph) and R100
 # (dec:EscalationShape live at document scope, idle at page scope, and the registry cannot say
 # so) are the two D3 moved here from `dec`.
@@ -1295,7 +1333,7 @@ prog:criterion:tab:10 a prog:Criterion ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
-    prog:blockedBy "R97" , "R98" , "R99" , "R100" ;
+    prog:blockedBy "R97" , "R99" , "R100" ;
     prog:oracleArtifact "tests/etkl/test_vacuity_registry.py:87" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_every_idle_shape_is_registered" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_no_registered_shape_has_gone_live" .
@@ -1548,7 +1586,12 @@ prog:criterion:substrate:03 prog:proposedDependsOn prog:criterion:dec:14 .
 # Firing counts are the census's, graph-side, reproduced in this manifest's tab header:
 #   apple    REGION_TILING_FAILED x8 (p0,p2) · MATRIX_AMBIGUOUS x2 (p0,p2) · DATAGRID_RESIDUE x1 (p1)
 #   bfs      REGION_TILING_FAILED x2 (p4,p5) · KIND_NOT_SUPPORTED x3 (p0,p6) · ROUND_TRIP_FAIL x5 (p5)
-#   who-wfa  MATRIX_AMBIGUOUS x3
+#   who-wfa  MATRIX_AMBIGUOUS x3     <- RE-MEASURED 2026-08-31 (R45 loop): who-wfa fires NOTHING.
+#                                        Its edge to tab:05 is deleted below, on the measurement
+#                                        rather than on the argument: an edge saying etkl:07 waits
+#                                        on tab:05 is refuted the moment who-wfa stops firing the
+#                                        reason tab:05 is about. etkl:07 is now met, so the edge
+#                                        would also be a met-depends-on-unmet leak (arc-shapes M15).
 # graincorp-stem (etkl:01, met), graincorp-capacity (etkl:02) and ons (etkl:04) fire NOTHING and
 # take no edge here. ons deliberately: R43 claims a REGION_TILING_FAILED on it and this
 # manifest's own tab header measures ons at zero records of any reason and calls the row stale —
@@ -1590,11 +1633,14 @@ prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:08 .
    rdf:object  prog:criterion:tab:08 ;
    prog:dependencyRationale "reading: DATAGRID_RESIDUE fires exactly once in the whole corpus and it is on apple p1, the adopted page (document.py:1473) — so apple is the only document whose acceptance can be blocked by it. Ungroundable: fails A1 (both ends unmet) and A2 (tab:08 carries no prog:oracleArtifact)." .
 
-prog:criterion:etkl:07 prog:proposedDependsOn prog:criterion:tab:05 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:07 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:05 ;
-   prog:dependencyRationale "reading: who-wfa fires MATRIX_AMBIGUOUS 3 times (one z-score header block, once per page) and nothing else; its adjudication names the reason and HOLDs, so this is the ONLY reason standing between who-wfa and an accepting adjudication. Ungroundable: fails A1 (both ends unmet) and A2 (tab:05 carries no prog:oracleArtifact)." .
+# DELETED 2026-08-31 (R45 loop): prog:criterion:etkl:07 prog:proposedDependsOn prog:criterion:tab:05.
+# Its rationale read "who-wfa fires MATRIX_AMBIGUOUS 3 times ... and nothing else; ... this is the
+# ONLY reason standing between who-wfa and an accepting adjudication." That was correct and is now
+# discharged: who-wfa fires nothing, its adjudication accepts, etkl:07 is met. Per the maintainer's
+# 2026-08-22 ruling in the R108 row, closing a residue deletes every prog:blockedBy edge naming it;
+# this edge names no residue but rests on the same measurement, and leaving it would ALSO trip
+# arc-shapes M15 (a met criterion depending on an unmet one). Recorded here rather than silently
+# dropped — the edge existed, and why it stopped being true is the auditable part.
 
 # cbh fires NOTHING, and the two edges below are the case where zero is not absence. R74 and
 # R77 both measure cbh places where table structure goes unread WITHOUT any reason firing, and
