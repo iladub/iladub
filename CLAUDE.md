@@ -658,8 +658,11 @@ request), **Confidential** (`internal/` — never tracked).
 
       **A wrong check name still fails silently in the blocking direction** — `test` is the JOB name
       in `.github/workflows/ci.yml`, and `integration_id: 15368` binds it to GitHub Actions rather
-      than to free text. **NOT YET PROVEN BEHAVIOURALLY:** this is a configuration read. No PR has
-      been pushed through the ruleset — the next one is the proof.
+      than to free text. **PROVEN BEHAVIOURALLY, not only read:** PR #136 — the one carrying this
+      entry — is the first through the ruleset, and `gh pr view --json mergeStateStatus` returns
+      **`BLOCKED`** while `test` is pending. The contrast is the evidence: PR #135, merged hours
+      earlier under the same `.protected: true`, reported **`UNSTABLE`** — mergeable, checks not
+      required. `BLOCKED` is the rule firing; `UNSTABLE` was it not existing.
 - [ ] **Delete the leftover classic branch-protection rule on `main`.** It is inert (the ruleset does
       the work) but it keeps `.protected` reporting `true`, which is what made the old verification
       recipe above look like it still worked. One rule, one place to look. Owner's to do.
