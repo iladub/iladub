@@ -405,12 +405,12 @@ _TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 # wiring the shape into that leg would re-create exactly the vacuity this loop repairs.
 #
 # THE SHAPE IS LIVE ON ONE LEG AND IDLE ON THE OTHER, and that is a property of this set,
-# not of the shape. `_validate` is called at page scope (`:1124`; this comment cited `:1083`
-# until 2026-08-17, by which time that line had drifted to `denom = asserted_total +
-# escalated_total` — a line citation in a comment two hundred lines above its subject rots, and
-# the grep that finds the call is `grep -n 'conforms, text, legs = _validate'`) and at document
-# scope
-# (`document.py`), with this one shape set both times, while the furnishing runs at document
+# not of the shape. `_validate` is called at page scope and at document
+# scope (`document.py`), with this one shape set both times. THE CALL IS CITED BY GREP AND NOT
+# BY LINE, deliberately (R139, plan-rule 7): this comment carried `:1083`, was corrected to
+# `:1124` on 2026-08-17, and BOTH rotted — the second was 76 lines out when R139's census found
+# it on 2026-08-31, inside the sentence explaining that such a citation rots. The call is
+# `grep -n 'conforms, text, legs = _validate'`. While the furnishing runs at document
 # scope only — measured: page-scope furnishing raises 4 spurious expansion requests on
 # cbh-stem and 5 on apple, because no page graph ever carries a `dec:supersedes` edge.
 # So `dec:EscalationShape` binds rows on the document leg and none on the page leg. Task 5's
