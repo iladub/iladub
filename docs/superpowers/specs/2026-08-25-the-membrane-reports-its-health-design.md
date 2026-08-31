@@ -460,10 +460,39 @@ at the membrane**, never "fully read" — `score` (`compile.py:367-368`, token c
 
 ### §4.5 Where health is minted — three sites, one query, and one asymmetry
 
+> ⚠️ **POINTERS CORRECTED 2026-08-31 (R138) — the argument is untouched; only the citations are.**
+> This section was written **prospectively**, before the seam it specifies had been extracted, so
+> its `document.py:1609–1626` pointers named lines in `compile_document` that no longer exist as
+> cited: the extraction this very section ORDERS moved them, and unrelated code grew into the
+> range. At HEAD they land in the `# ---- ADOPTION (spec 2026-08-09, R73)` comment
+> (`document.py:1609`), which has nothing to do with membrane health. They are replaced below by
+> **symbol** references, which cannot drift when code above them grows (CLAUDE.md plan-rule 7).
+> The mapping, measured at HEAD before this note was written:
+>
+> | as written | what it named | at HEAD |
+> |---|---|---|
+> | `document.py:1609–1626` | the span to extract | **`_seal`** (`src/iladub/etkl/document.py`), whose own docstring cites this section back |
+> | `document.py:1609` | the escalation furnish, where the seam starts | `_seal`'s `interpret.run(ESCALATION_FURNISH_RQ, …)` |
+> | `document.py:1624` | the conforming return | `_seal`'s membrane-health derivation, `graph += interpret.run(MEMBRANE_HEALTH_RQ, graph)` |
+> | `document.py:1626` | the refusing raise | `_seal`'s `if not conforms:` branch, `raise MembraneRefusal(…)` |
+>
+> **Scope, stated rather than left to be discovered:** R138 is scoped to §4.5's five citations and
+> only those. **The same drift affects other sections of this file** — deliberately NOT edited
+> here, because rewriting a dated Evidence artefact's arguments is a heavier act than repairing
+> the pointers one register row names. Find them with the command rather than a line list, which
+> this very note would invalidate by existing (CLAUDE.md plan-rule 7 — a downward same-file
+> citation is falsified by the edit that writes it):
+>
+> ```
+> grep -n "document.py:16" docs/superpowers/specs/2026-08-25-the-membrane-reports-its-health-design.md
+> ```
+>
+> Every hit outside this note is stale in the same way. See `residues-closed.md` `~~R138~~`.
+
 | site | verdict | what happens |
 |---|---|---|
-| `document.py:1624`, conforming | `true` | mint validation act → run query → add result to `graph` → return `DocumentReport` |
-| `document.py:1626`, refusing | `false` | mint validation act → run query → add result to `graph` → **raise, carrying the graph** |
+| `_seal`'s conforming path | `true` | mint validation act → run query → add result to `graph` → return `DocumentReport` |
+| `_seal`'s refusing branch | `false` | mint validation act → run query → add result to `graph` → **raise, carrying the graph** |
 | validation not run (`validate_shapes=False`) | — | **no validation act, therefore no health triple** |
 
 The third row is the design's answer to the reachability rule, and it is a *consequence* rather than
@@ -473,7 +502,7 @@ a special case: no validation means no act means the `WHERE` has no support mean
 **THE ASYMMETRY, stated out loud** (review B5, which the first version left as an unnoticed hole).
 `compile_document` passes `validate_shapes` straight down to every page compile
 (`document.py:1274,1337,1474`, §2.6), and the page gate raises a bare `AssertionError` at
-`compile.py:1173` — **before** document validation at `:1624` is ever reached. §9 deliberately keeps
+`compile.py:1173` — **before** document validation inside `_seal` is ever reached. §9 deliberately keeps
 that site unchanged, and the catcher census (§2.4) confirms nothing between them intercepts it.
 **Therefore: `Compromised` reports DOCUMENT-scope refusals only. A page-level violation aborts the
 document first — no validation act, no health triple, no carried graph, and a bare `AssertionError`
@@ -483,7 +512,7 @@ It is a **named residue** (§11), not a gap, and it does not require minting hea
 
 **The refusal carries the graph via a subclass, not a softened raise.** Introduce
 `membrane.MembraneRefusal(AssertionError)` with `.graph` and `.legs`, and raise it at
-`document.py:1626` in place of the bare `AssertionError`. Because it is a **subclass**, the one
+`_seal`'s refusing branch in place of the bare `AssertionError`. Because it is a **subclass**, the one
 measured catcher (§2.4) keeps working unchanged. The guard is **not** softened, downgraded, or made
 conditional: CLAUDE.md § Producer-side guards licenses deleting a guard only when the membrane
 provably validates every product of that producer, and here it demonstrably cannot — a refusing
@@ -492,14 +521,14 @@ not a guard that looks redundant, but the only thing between a non-conforming gr
 
 **THE MINT SITE IS AN EXTRACTED SEAM, NOT AN EDIT IN PLACE** (ruled 2026-08-25, O2 option (a′);
 `docs/superpowers/2026-08-25-holon-05-o2-finding6-rulings.md`). The three rows above are implemented
-by extracting `document.py:1609–1626` — **escalation-furnish → `_validate` → mint → raise/return** —
-into **one named internal function**, which `compile_document` calls and which O2's third leg and O7
+by extracting the **escalation-furnish → `_validate` → mint → raise/return** span
+into **one named internal function** (shipped as `_seal`), which `compile_document` calls and which O2's third leg and O7
 call directly with a real compiled graph plus one triple.
 
-**The seam starts at `:1609`, NOT at the validation call**, and that is load-bearing: the mutation is
+**The seam starts at the FURNISH, NOT at the validation call**, and that is load-bearing: the mutation is
 a second `dec:rationale`, which becomes fatal only once `escalation-furnish.rq` carries it into a
 second `dec:condition` (seam-6: *"before re-furnish: 1 … after re-furnish: 2"*). A seam beginning at
-`:1623` cannot be driven by the measured lever.
+the validation call cannot be driven by the measured lever.
 
 It is a refactor of code this loop rewrites regardless (health minting here, `MembraneRefusal` here),
 and **not** a new public parameter on `compile_document` — the public signature is unchanged, so no

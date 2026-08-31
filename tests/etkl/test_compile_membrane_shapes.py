@@ -10,6 +10,7 @@ Two assertions, and the SECOND is the one that matters: (a) alone would pass if 
 were parsed into the membrane and then never applied to anything.
 """
 import os
+import re
 
 import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
@@ -283,3 +284,88 @@ def test_tab_datagrid_axioms_are_unreachable_by_every_membrane_shape():
         "a membrane shape now reaches a superclass tab-datagrid.ttl introduces "
         f"({sorted(str(c) for c in collide)}) — admitting the file is no longer a no-op. "
         "REOPEN R103 and re-run the 27-page closure-delta measurement.")
+
+
+# ============================================================ R152: the transport premise
+
+_BLANK_NODE_SPARQL = re.compile(r"\b(isBlank|isIRI|isURI|BNODE)\s*\(", re.I)
+
+
+def membrane_shape_files():
+    """Every shape file that reaches `membrane._payload_nt`, read from the modules that wire
+    it — never a list retyped here, which would pin this test's copy rather than the membrane's.
+
+    THREE legs call `membrane.validate`, and all three are skolemized by the same
+    `_payload_nt`, so the premise below is about all of them and not only the compile leg:
+    `compile.py:546` (tab + dec), `feed.py:615` (grounding), `tiling.py:70`. Tiling adds no
+    FILE — `_build_tiling_shapes` takes CBDs out of `tab-shapes.ttl` + `tab-physical-shapes.ttl`,
+    both already wired into the compile leg — so it is covered by inclusion. That is asserted
+    by `test_the_tiling_leg_adds_no_shape_file_of_its_own`, not assumed here.
+    """
+    from iladub import feed
+    from iladub.etkl import compile as compile_mod
+    return sorted(set(compile_mod._TAB_SHAPE_FILES) | set(compile_mod._DEC_SHAPE_FILES)
+                  | set(feed._GROUND_SHAPE_FILES))
+
+
+def _sparql_bodies(g):
+    """Every SPARQL text a shape carries — constraints (`sh:select`, `sh:ask`) and rules
+    (`sh:construct`). All three are strings an engine runs, none reachable as triples."""
+    for p in (SH.select, SH.ask, SH.construct):
+        for o in g.objects(None, p):
+            yield str(p), str(o)
+
+
+def test_the_tiling_leg_adds_no_shape_file_of_its_own():
+    """`membrane_shape_files` claims tiling is covered by inclusion; this measures it.
+
+    `tiling._build_tiling_shapes` extracts CBDs from two files rather than naming a file list
+    of its own, so the claim cannot be checked by comparing tuples — it is checked by the
+    shapes it produces all being declared in files the compile leg already carries.
+    """
+    from iladub.etkl import tiling
+    declared = set()
+    for f in membrane_shape_files():
+        declared |= _declared_node_shapes(f)
+    tiling_shapes = set(tiling._TILING_SHAPES.subjects(RDF.type, SH.NodeShape))
+    assert tiling_shapes and tiling_shapes <= declared, (
+        f"the tiling leg carries shapes no membrane-wired file declares: "
+        f"{sorted(tiling_shapes - declared, key=str)} — R152's premise guard does not cover "
+        f"them, so give tiling its own arm rather than widening this claim")
+
+
+@pytest.mark.parametrize("shape_file", membrane_shape_files())
+def test_no_membrane_shape_can_see_the_skolemization(shape_file):
+    """`_payload_nt`'s premise, machine-checked — R152.
+
+    `membrane._payload_nt` SKOLEMIZES the data graph before either engine sees it (R88's
+    unpin: rudof cannot bind a blank-node focus — it emits `VALUES $this { _:b… }`, which is
+    illegal SPARQL). Skolemization is declared a TRANSPORT concern, and `membrane.py:342-343`
+    states the premise that makes it verdict-neutral: *no shape file uses `sh:nodeKind` and no
+    `sh:sparql` body tests `isBlank`/`isIRI`/`isURI`/`BNODE`.* **Nothing enforced that**, and it
+    is a claim about the SHAPES, held only by nobody having written one.
+
+    The day someone does, they get a constraint that is VACUOUS at the compile membrane by
+    construction — every blank node has already become an IRI — while refusing correctly at
+    `iladub.validate.validate`, the seam the vocabulary examples are tested at. The two seams
+    disagree silently, in the PERMISSIVE direction, and the shape looks enforced. Measured on
+    `tests/supersession-blank-object.ttl` while closing R128: same shapes, same data,
+    `pyshacl_rdfs=False membrane=True`.
+
+    **This does NOT make `sh:nodeKind` work at the membrane** — that is R88's territory and
+    would need the rudof blank-node incapacity re-measured first. It fails at the moment the
+    hazard comes into existence, which is the moment someone writes the constraint.
+    """
+    g = Graph().parse(os.path.join(SHAPES_DIR, shape_file), format="turtle")
+
+    carriers = sorted(g.subjects(SH.nodeKind, None), key=str)
+    assert carriers == [], (
+        f"{shape_file} uses sh:nodeKind on {carriers} — VACUOUS at the compile membrane, "
+        f"which skolemizes before any engine runs (membrane._payload_nt), while refusing "
+        f"correctly at iladub.validate.validate. See R152 before shipping it")
+
+    blank_aware = [(p, body) for p, body in _sparql_bodies(g)
+                   if _BLANK_NODE_SPARQL.search(body)]
+    assert blank_aware == [], (
+        f"{shape_file} has a SPARQL body testing blank-node-ness; the membrane skolemizes "
+        f"first, so it can never fire there. See R152: {blank_aware}")
