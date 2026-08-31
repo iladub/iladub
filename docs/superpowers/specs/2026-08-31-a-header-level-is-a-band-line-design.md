@@ -31,6 +31,9 @@ stays open on its own row and this loop must not be read as bearing on it.
 
 **Does NOT revisit the span-assignment question** the predecessor's § 5 posed. See §2.
 
+**The safety evidence is thinner than the corpus table suggests** — five of the six unchanged
+documents never reach the function at all (§3.4.1). Read that before citing the battery.
+
 **Costs more than it looks.** WHO is currently used across the suite as *evidence that escalation
 happens* — one test selects it precisely because it escalates with nothing withdrawn, and fails by
 design when this loop succeeds. §6 enumerates that surface; it is the loop's real work, not the
@@ -134,8 +137,38 @@ byline:
 | `who` | `0.559748427672956` | `0.909596662030598` | 3 escalations → 0 |
 
 "Identical" is exact: score, every verdict counter, every escalation reason, `asserted_tokens`,
-`escalated_tokens`, `adopted`, `repaired_bands`. **Six of seven documents are inert under this
-change.**
+`escalated_tokens`, `adopted`, `repaired_bands`. WHO's tokens move 445/350 asserted/escalated →
+654/65; the other six are identical to the token.
+
+### 3.4.1 The oracle is WEAKER than the table makes it look — five of six PASS rows are VACUOUS
+
+**This qualification is load-bearing and was measured only after §3.4's table was first written.**
+A probe running baseline semantics while computing the byline tree at every call site counts how
+often `infer_column_tree_by_proximity` is reached at all:
+
+| document | calls to `infer_column_tree_by_proximity` | trees differing |
+| --- | --- | --- |
+| graincorp-stem | **0** | 0 |
+| graincorp-capacity | **0** | 0 |
+| bfs | **0** | 0 |
+| ons | **0** | 0 |
+| cbh | **0** | 0 |
+| apple | 2 | **0** |
+| who | 3 | **3** |
+
+**`graincorp-stem`'s 0.95 floor is protected by NON-REACH, not by robustness.** A variant cannot
+regress a document whose code path it never enters. Five of the six "PASS" rows in §3.4 therefore
+assert nothing about this change and must not be cited as if they did.
+
+**The entire negative evidence in the corpus is `apple`: reached twice, identical tree both times**
+(`split=2`/`band_lines=12`/4 data cols, and `split=2`/`band_lines=4`/2 data cols). That is one
+document and two call sites. It is real evidence and it is not nothing — but the corpus does **not**
+establish that this change is safe across a range of header geometries, because the corpus contains
+only two documents that exercise the cross-tab path at all.
+
+**Consequence for §7's oracle 3, stated here once:** re-running the six inert documents is a
+regression guard of low power. The load-bearing safety evidence is `apple`'s two unchanged trees and
+the new fixture of §7.1 — not the six green rows.
 
 ### 3.5 The constant is unpinned by the current suite
 
@@ -285,10 +318,11 @@ second is dated and annotated.
    report it, do not weaken the assertion.
 2. **WHO, end to end.** `compile_document` on the WHO PDF: score `0.909596662030598`, zero escalated
    regions. Falsified by restoring `_level_tops`.
-3. **The two-sided corpus oracle.** The six inert documents must stay byte-identical to §3.4 —
-   score, verdicts, reasons, both token counts, `adopted`, `repaired_bands`. `graincorp-stem` at
-   `0.9654553611484971` against its 0.95 floor is the headline; **any** change on **any** of the six
-   is a stop-and-report, not a re-pin.
+3. **The two-sided corpus oracle — and read §3.4.1 before weighing it.** The six documents must
+   stay byte-identical to §3.4; **any** change on **any** of them is a stop-and-report, not a
+   re-pin. But five of them never reach the function (§3.4.1), so this guard is **low power** and
+   `graincorp-stem` holding is **not** evidence of robustness. The corpus's real negative evidence
+   is `apple` — reached twice, tree identical both times — and that is the row to watch.
 4. **The re-pointed escalation census (§6.1).** `test_corpus_census_every_live_escalating_decision_is_furnished`
    must pass against its NEW document and must still pin something: `len(escalating) > 0` has to
    hold for a real reason, not because the assertion was relaxed. **Falsify it the way its author
@@ -312,13 +346,17 @@ second is dated and annotated.
 
 ## 9. Unverified when this spec was written
 
-- **The `-m "not corpus"` suite has NOT been observed green at HEAD `22263a2`.** A run was
-  commissioned in parallel with this spec and had not returned. The implementer must establish the
-  baseline green **before** changing code; if it is already red, that is a finding that precedes
-  this loop.
-- **Whether any corpus document other than WHO contains sub-point header drift is UNKNOWN.** §3.4
-  shows six are inert *under this change*, which is a statement about outcomes, not about whether
-  the condition is present and harmless somewhere.
+- ~~The `-m "not corpus"` suite has NOT been observed green at HEAD.~~ **RESOLVED after the first
+  draft of this spec:** `./.venv/bin/python -m pytest -m "not corpus" -q -x` →
+  **`1379 passed, 7 skipped, 46 deselected, 1 xfailed in 1314.82s (21m54s)`** at the code of
+  `22263a2`. Note `--timeout=0` is **unusable in this tree** — `pytest-timeout` is not installed and
+  pytest exits with `unrecognized arguments`.
+- **Whether any corpus document other than WHO contains sub-point header drift is UNKNOWN**, and
+  §3.4.1 makes this sharper than it first appeared: five documents never reach the function, so the
+  corpus cannot answer the question for them either way. Only `apple` is a genuine negative
+  observation.
+- **The corpus exercises the cross-tab path on TWO documents only** (`apple`, `who`). Any claim
+  about this change's behaviour across header geometries rests on those two plus §7.1's fixture.
 - **The WHO tree under `byline` was inspected on page 0 and asserted structurally correct against
   the visual layout by reading `extract_words` output** (§3.2). It was not checked against the
   published WHO table by a human. The tiling oracle certifies consistency, not fidelity to the
