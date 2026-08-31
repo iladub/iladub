@@ -648,8 +648,14 @@ request), **Confidential** (`internal/` — never tracked).
       `gh api repos/iladub/iladub/branches/main -q '{p: .protected, c:
       .protection.required_status_checks.contexts}'` → `{"p": true, "c": ["test"]}`. Under a ruleset
       that returns **`{"p": true, "c": []}`** — a **false negative** that reads as "never applied".
-      The classic rule is a separate, now-inert mechanism (`protection.enabled: false`,
-      `enforcement_level: "off"`) that still makes `.protected` report `true`. The check that
+      **WHY, corrected 2026-08-31 — the first explanation recorded here was wrong.** It said a
+      leftover classic rule was shadowing the truth. There is no classic rule: `.protection.enabled`
+      is **`false`**, the owner sees only the ruleset in the UI, and of the repo's 5 branches only
+      `main` reports `protected` — matching the ruleset's `~DEFAULT_BRANCH` target. The real
+      mechanism is that **`.protected` accounts for rulesets while the `.protection` sub-object
+      reports CLASSIC protection only**, so `contexts` is empty for a structural reason, not a stale
+      one. (Stated at that strength deliberately: `branches/main/protection` 404s for a non-admin
+      token, so absence is inferred from three agreeing signals, not read directly.) The check that
       answers the question is:
 
       ```
@@ -663,9 +669,6 @@ request), **Confidential** (`internal/` — never tracked).
       **`BLOCKED`** while `test` is pending. The contrast is the evidence: PR #135, merged hours
       earlier under the same `.protected: true`, reported **`UNSTABLE`** — mergeable, checks not
       required. `BLOCKED` is the rule firing; `UNSTABLE` was it not existing.
-- [ ] **Delete the leftover classic branch-protection rule on `main`.** It is inert (the ruleset does
-      the work) but it keeps `.protected` reporting `true`, which is what made the old verification
-      recipe above look like it still worked. One rule, one place to look. Owner's to do.
 - [ ] SNOMED CT / LOINC identifiers in examples are illustrative — confirm terminology
       licensing before redistributing real mappings. Keep example documents synthetic.
 - [ ] Express the holonic interaction model in `vocab/` — but **scope it to iladub's
