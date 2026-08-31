@@ -74,18 +74,30 @@ silently:
 - `test_typing_equiv[cbh]`: band 9 kind `UNSUPPORTED_TABLE → RECORD_TABLE`. **This one is NOT
   certified** — see `R156`(a) and the next bullet.
 
-### PROPOSED — `R156`(a), and it is the one thing here I would not ship unexamined
+### PROPOSED — `R156`(a), narrowed by measurement to a single type triple
 
 cbh page-0 band 9 now asserts `RECORD_TABLE` where it asserted `UNSUPPORTED_TABLE`, on a band whose
 header row is `'PORT','WHEAT','MAIN WHEAT GRADES','BARLEY','CANOLA','OTHER','TOTAL'` **followed by
 `'ALB','1 - 15 October'`** — the header of a SECOND, side-by-side table. One grid, two tables.
 
-**The conflation is pre-existing and this loop did not cause it**: the band's data lines 1-5 are
-byte-identical before and after, and only the kind label moved — welding the chopped *title* row
-made the band read as records. So refusing this loop would not fix it. **But the claim is stronger
-than it was, over a grid that cannot support it, and that is a §7 question the loop's own tiling
-oracle cannot answer** — tiling certifies consistency, not fidelity. Open `R156` before treating
-this branch as safe to build on.
+**MEASURED AFTER THIS SECTION WAS FIRST WRITTEN, AND IT NARROWS THE CONCERN SHARPLY.** The graph
+diff for `table9`, baseline vs. fix, shows the emitted structure is **identical**:
+`13 EntryCell · 3 LabelCell · 16 hasCell · 3 hasHeaderNode · 3 hasLeafColumn · 9 hasLeafRow` in
+BOTH. The conflation this was raised about — row `r2` pairing the left table's
+`'ALB 129,183 APW1/ASW9/AWW1 27,023 3,345 1,293 160,845'` with the right table's
+`'ESP 1 - 15 August'` — **is asserted identically at baseline**. R154 neither causes nor worsens it.
+
+The whole delta on `table9` is **one type triple** (`htable9 a tab:RecordTable`) and **four cellText
+FIDELITY REPAIRS**: `'Stock at Port ( Main Storage Area) as at 29/07/2 026'` → the correct string,
+`'PORT MAINTENANCE SHU TDOWN DATES - 2026'` → `'…SHUTDOWN…'`, and two garbled prose notes
+(`'ass ume total capacity is allocat ed'`, `'distribut ion of the informati on contained withi n'`)
+made whole. And (b)'s four regions are **escalated in both** modes, so no false assertion rides on
+the reason change either.
+
+**What remains is narrow and real:** may a band whose header row concatenates two tables' headers
+carry `tab:RecordTable` at all? That is a **kind-gate** question, not a cell-extraction one, and
+refusing this loop would neither answer it nor remove the conflation — it would only keep the
+garbled text. `R156` is where it is recorded.
 
 ### PROPOSED — blocked on rulings, unchanged and NOT re-derived
 
