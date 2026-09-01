@@ -38,8 +38,8 @@ Two consequences for how rows are handled:
 - **A closing change records the closure evidence in the row it strikes** — what was measured,
   and what now prevents recurrence.
 
-**As of 2026-08-24: 116 rows, 24 closed, 92 open.** (Ten numbers between R1 and R96 were never
-issued as rows; the denominator is rows that exist, not the highest number.) Was 18 closed at
+**As of 2026-09-01: 147 rows, 41 closed, 106 open.** (Ten numbers between R1 and R96 were never
+issued as rows; the denominator is rows that exist, not the highest number.) **CORRECTED 2026-09-01** (loop `progress-census`): this line read *"As of 2026-08-24: 116 rows, 24 closed, 92 open"* and was **31 rows and 17 closures stale** — measured by parsing the file's own rows (`^\| R\d+ \|`, status column), not by trusting the header. Nothing machine-checks this line; `test_residue_register_integrity.py` pins the index/detail correspondence but not the HEADER's arithmetic, which is why it drifted through 20 loops unnoticed. That is the same class as the stale rows the three-way split was built to prevent. Was 18 closed at
 `e3f447a`; loop `the-gate-and-the-label` closed ~~R102~~ and ~~R104~~ and loop 1 of the R97–R104
 split closed ~~R103~~, none raising a new row; loop `the-arc-has-a-denominator` raised R105, R106,
 R107, R108, and — at loop close, from its whole-branch review and its warning attribution —
