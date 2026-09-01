@@ -129,18 +129,6 @@ class Char:
     x1: float
     top: float
     bottom: float
-    mcid: int | None = None
-    """The author's marked-content id for this glyph, verbatim from the page (R155).
-
-    An OPAQUE grouping token, and deliberately nothing more: it says which marked-content item the
-    producer drew this glyph inside, not what that item MEANS. `/StructTreeRoot` is never read, so
-    this must not be described as reading tagged-PDF semantics — `tag` is uniformly 'P' on both
-    tagged documents in the corpus and carries no signal.
-
-    DEFAULTS TO None so every positional construction is unchanged, and a `Char` carrying None is
-    inert in `_row_dividers`. Four of the seven tracked documents emit no marked content at all
-    (spec §3.5), so their output is byte-identical BY CONSTRUCTION rather than by a threshold that
-    happens to spare them."""
 
 
 def extract_chars(pdf_path: str, page_number: int = 0) -> list[Char]:
@@ -149,8 +137,7 @@ def extract_chars(pdf_path: str, page_number: int = 0) -> list[Char]:
     proximity word-grouping fuses tight adjacent cells into one blob."""
     with pdfplumber.open(pdf_path) as pdf:
         page = pdf.pages[page_number]
-        return [Char(c["text"], float(c["x0"]), float(c["x1"]), float(c["top"]), float(c["bottom"]),
-                     mcid=c.get("mcid"))
+        return [Char(c["text"], float(c["x0"]), float(c["x1"]), float(c["top"]), float(c["bottom"]))
                 for c in page.chars]
 
 
@@ -273,33 +260,6 @@ def refine_rule_columns(chars: list["Char"], rule_xs: list[float],
     return sorted(set(out))
 
 
-def _marked_runs(ink: list[Char]) -> list[tuple[float, float]]:
-    """The x-spans of this row's ink, grouped into MARKED-CONTENT runs (R155).
-
-    A run is a maximal group of x-consecutive glyphs carrying the same non-None `Char.mcid` -- the
-    author's own producer said "these glyphs are one item". Glyphs with `mcid is None` start and end
-    a run of their own and can never enclose anything, so a page with no marked content yields only
-    degenerate runs and the caller's test can never fire. That is the OPEN-WORLD half (CLAUDE.md
-    §8): a boundary is declined only where an enclosing run is PRESENT, never inferred from absence.
-
-    ROW-LOCAL, and that matters because `mcid` is a PAGE-scoped id: two rows may legitimately reuse
-    one id, and grouping across rows would let one row's span decline another row's gutters. The
-    caller passes one row's ink and gets that row's runs.
-
-    Built from INK only -- `rule_aware_lines` has already dropped the space glyphs, and the census
-    that justifies this rule (spec §3.5: 8 declines in 3613 boundaries, 0 of them a legitimate
-    gutter) was measured over ink runs. A space glyph's mcid is never consulted."""
-    runs: list[tuple[float, float]] = []
-    prev: object = object()              # sentinel: never equal to an mcid, so run 0 always opens
-    for c in sorted(ink, key=lambda c: c.x0):
-        if c.mcid is not None and c.mcid == prev:
-            runs[-1] = (runs[-1][0], max(runs[-1][1], c.x1))
-        else:
-            runs.append((c.x0, c.x1))
-        prev = c.mcid
-    return runs
-
-
 def _row_dividers(ink: list[Char], xs: list[float]) -> list[float]:
     """The subset of `xs` that may divide THIS row into cells: an interior boundary is kept only
     where the ink on both sides of it CLEARS it.
@@ -331,7 +291,6 @@ def _row_dividers(ink: list[Char], xs: list[float]) -> list[float]:
     be cutting a run. MEASURED, not reasoned alone — dropping instead of keeping produces
     byte-identical cells over all 95 ruled bands of the seven tracked corpus documents.
     """
-    runs = _marked_runs(ink)
     out = [xs[0]]
     for b in xs[1:-1]:
         left = [c for c in ink if (c.x0 + c.x1) / 2.0 < b]
@@ -340,11 +299,6 @@ def _row_dividers(ink: list[Char], xs: list[float]) -> list[float]:
             # nearest ink on each side: the rightmost left edge, the leftmost right edge
             if max(c.x1 for c in left) > b - COORD_EPS or min(c.x0 for c in right) < b + COORD_EPS:
                 continue                 # the boundary cuts a text run -> not a divider for THIS row
-            # R155: the ink clears the boundary on both sides, so this is a GAP -- but the author
-            # may have drawn both sides as one marked-content item, i.e. one label with a word gap
-            # in it. Where they did, the gap is a word gap and not a column gutter.
-            if any(x0 < b - COORD_EPS and b < x1 - COORD_EPS for x0, x1 in runs):
-                continue
         out.append(b)
     out.append(xs[-1])
     return out
