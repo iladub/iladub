@@ -260,9 +260,55 @@ def refine_rule_columns(chars: list["Char"], rule_xs: list[float],
     return sorted(set(out))
 
 
+def _row_dividers(ink: list[Char], xs: list[float]) -> list[float]:
+    """The subset of `xs` that may divide THIS row into cells: an interior boundary is kept only
+    where the ink on both sides of it CLEARS it.
+
+    R154. `rule_aware_lines` assigns each character to a column by its centre, so a boundary
+    falling inside a text run shreds it — one cell per character where the rule x's arrive dense
+    (WHO page 0 band 2: 48 raw x's in quads of twin stroke edges, adjacent x's 0.72pt apart,
+    'Z-scores' emerging as 'Z-s' // 'c' // 'o' // 'res (weight').
+
+    The predicate is `ruledroles._within`'s, applied one stage earlier — at the moment the chop
+    would be made rather than downstream where it is detected. Its justification is already
+    written there and is not restated: a cell's content is laid out clear of the rule that draws
+    its border, while "ink that REACHES a ruled boundary was not laid out in that cell — it is a
+    text run the renderer drew across the grid ... the chop is exact, so the clearance is exactly
+    zero." COORD_EPS is the repo's float-comparison epsilon, making `>` mean `>`; it is NOT a
+    clearance threshold — no minimum padding is required, only a non-zero one, so WHO's 0.03pt
+    overhang reads as a chop exactly as a 3pt one does.
+
+    ROW-LOCAL, and that is load-bearing. `xs` is never mutated and a boundary declined here is
+    still available to every other row, to `refine_rule_columns`, to `confirmed_boundaries` and to
+    `Band.column_xs`. The global variant — dropping such a boundary outright, i.e. forcing word
+    atomicity — is MEASURED to fail: R154's row records it collapsing `header_body_split` from >=2
+    to 1, `column_xs` to `()` against 49, and WHO's escalation into ROUND_TRIP_FAIL.
+
+    A boundary with ink on only one side is kept, and that branch CANNOT change the output: if no
+    char has its centre below `b`, nothing is assigned below `b` either way, so keeping `b` adds an
+    empty column and dropping it merges an empty one — the grouping is identical. Written this way
+    so the predicate is total and reads as its own claim: only a boundary with ink on BOTH sides can
+    be cutting a run. MEASURED, not reasoned alone — dropping instead of keeping produces
+    byte-identical cells over all 95 ruled bands of the seven tracked corpus documents.
+    """
+    out = [xs[0]]
+    for b in xs[1:-1]:
+        left = [c for c in ink if (c.x0 + c.x1) / 2.0 < b]
+        right = [c for c in ink if (c.x0 + c.x1) / 2.0 >= b]
+        if left and right:
+            # nearest ink on each side: the rightmost left edge, the leftmost right edge
+            if max(c.x1 for c in left) > b - COORD_EPS or min(c.x0 for c in right) < b + COORD_EPS:
+                continue                 # the boundary cuts a text run -> not a divider for THIS row
+        out.append(b)
+    out.append(xs[-1])
+    return out
+
+
 def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | None = None) -> list[Line]:
     """Re-group characters into cells by ruled columns: rows by vertical proximity (as text_lines),
-    then within each row a cell per rule-column (char CENTER within [rule_xs[i], rule_xs[i+1]]);
+    then within each row a cell per rule-column (char CENTER within [rule_xs[i], rule_xs[i+1]]),
+    over the boundaries `_row_dividers` keeps for that row -- a boundary cutting through the row's
+    ink divides nothing (R154);
     each non-empty cell becomes one Word at its char-span bbox. The cell's text drops padding space
     glyphs (see `_cell_text`) and the bbox is taken from non-space glyphs. Chars outside all rule
     columns are dropped (they lie beyond the table's outer rules). Deterministic containment
@@ -290,10 +336,13 @@ def rule_aware_lines(chars: list[Char], rule_xs: list[float], y_tol: float | Non
         rows[-1].append(c)
     lines: list[Line] = []
     for row in rows:
+        # R154: a boundary that cuts through this row's ink is not a divider for this row.
+        # Row-local -- `xs` is untouched (see _row_dividers).
+        rxs = _row_dividers([c for c in row if c.text.strip()], xs)
         buckets: dict[int, list[Char]] = {}
         for c in row:
             cx = (c.x0 + c.x1) / 2.0
-            col = next((i for i in range(len(xs) - 1) if xs[i] <= cx < xs[i + 1]), None)
+            col = next((i for i in range(len(rxs) - 1) if rxs[i] <= cx < rxs[i + 1]), None)
             if col is not None:
                 buckets.setdefault(col, []).append(c)
         words: list[Word] = []

@@ -45,7 +45,20 @@ EXPECTED_VERDICTS = {
         ("NON_TABLE", None, None, None),
         ("UNSUPPORTED_TABLE", 4, False, None),
         ("NON_TABLE", None, None, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
+        # R154, 2026-08-31: was UNSUPPORTED_TABLE. The band's DATA is byte-identical (lines 1-5
+        # unchanged); what moved is its title row, chopped 'Stock at Port (' // 'Main Storage
+        # Area) as at 29/07/2' // '026' // 'PORT MAINTENANCE SHU' // 'TDOWN DATES - 2026' and now
+        # welded to the two titles it is. The kind judgement then reads the band as records.
+        # This band welds TWO side-by-side tables (line 1 is 'PORT'..'TOTAL' followed by the
+        # maintenance table's 'ALB' // '1 - 15 October'), so RECORD_TABLE is a stronger claim over
+        # an already-conflated grid. MEASURED, and it narrows the concern: the EMITTED STRUCTURE is
+        # identical either side of R154 -- 13 EntryCell / 3 LabelCell / 16 hasCell / 3 hasHeaderNode
+        # / 3 hasLeafColumn / 9 hasLeafRow in BOTH -- so the conflation is pre-existing and R154
+        # neither causes nor worsens it. The whole delta is ONE type triple (htable9 a
+        # tab:RecordTable) plus four cellText FIDELITY REPAIRS ('Stock at Port ( Main Storage Area)
+        # as at 29/07/2 026' -> '...29/07/2026', etc). The open question is the type triple alone,
+        # and it belongs to the kind gate, not to cell extraction. See [[R156]].
+        ("RECORD_TABLE", 1, False, None),
     ],
     "capacity": [
         ("NON_TABLE", None, None, None),

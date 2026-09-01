@@ -347,8 +347,14 @@ def test_region_tiles_rationale_names_the_real_unit(apple_graph):
 
 @needs_apple
 def test_recording_does_not_change_the_verdicts(apple_report):
-    """This slice records; it does not decide."""
+    """This slice records; it does not decide.
+
+    R154, 2026-08-31: the pinned page-0 score moved 0.1170 -> 0.1198. It is a DENOMINATOR effect,
+    not a reading improvement: apple's 25 flush crossings are chopped banner text ('ThreeMo' //
+    'nthsEndedNineM'), and welding two fragments into one cell removes an ink token from the
+    count. A smaller denominator is not better reading -- see the R154 closure row, which states
+    this at length and forbids citing the rise as evidence."""
     rep = apple_report
     verdicts = [(r.kind.name, r.verdict, r.reason, r.cells) for r in rep.regions]
-    assert abs(rep.score - 0.1170) < 0.0001, f"score moved: {rep.score}"
+    assert abs(rep.score - 0.1198) < 0.0001, f"score moved: {rep.score}"
     assert sum(1 for v in verdicts if v[1] == "asserted") == 1

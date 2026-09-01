@@ -114,8 +114,10 @@ def interior_rule_xs(band: Band, rules: Sequence[Rule]) -> list[float]:
 
     Exposed for loop Q's repair path; not yet wired into `weld_hrule_boxes` (Task 3's
     scope is the peel only — "everything else, including the leading-box weld, as
-    shipped" per the plan). rule_aware_lines' own column bucketing keeps using every
-    rule x, including the outer edges, unaffected by this function."""
+    shipped" per the plan). rule_aware_lines' own column bucketing keeps receiving every
+    rule x, including the outer edges, unaffected by this function -- what it does with
+    them is its own affair (R154: it declines, per row, any boundary that cuts that row's
+    ink), and narrowing them is what this function does NOT do."""
     return sorted({round(float(row.x), 2)
                    for row in _grid_rows(band, rules, ink_witness=True)})
 
