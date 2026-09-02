@@ -971,9 +971,10 @@ def test_an_unread_table_page_no_longer_scores_perfect():
 
 
 # --- the fourth oracle: a page the pipeline ESCALATES ------------------------------
-# apple page 1, transcribed (43 lines). Chosen because compile_tables asserts NOTHING
-# here and escalates instead — so it is the case R73 turns on: is a data-grid reading
-# actually better than the escalation it would replace?
+# apple page 1, transcribed (43 lines). It was chosen because compile_tables asserted
+# NOTHING here and escalated instead; since 2026-09-02 (the stub-body start, spec § 1.2 /
+# § 8) it asserts 14 and escalates 70, so the page no longer witnesses R73's swap — the
+# block below remains the grid-completeness warrant for test_apple_p1_is_complete_and_sound.
 #
 # METADATA is the title block, the two-line boxhead, the cut-in headings, and three
 # rows that carry no entry at all:

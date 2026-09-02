@@ -70,9 +70,14 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
     PRODUCER-SIDE under CLAUDE.md § "Producer-side guards vs the membrane" because
     the membrane cannot enforce it: a word that wins no column is never emitted as a
     node, so the dropped ink never enters the graph for any shape to see. Refuses
-    (returns None) when a header level's data-column word texts are not a subset of
-    that level's node texts. A word centred in a STUB column is exempt (WHO's
-    `Year: Month`, spec § 1.5) — the guard is scoped to `data_cols` only.
+    (returns None) when a label whose centre falls in a DATA column has an index that
+    is not a key of that level's `assign` — i.e. it won no column and so becomes no
+    node. The test is on the label INDEX, never on its text: header texts repeat both
+    across levels and WITHIN one level (apple p0 L1 is `June 27, | June 28, | June 27,
+    | June 28,`), so a text-subset test lets a duplicate-text label that wins nothing
+    pass on its twin's node — dropping its ink silently, the exact CLAUDE.md §7
+    violation this guard exists to refuse. A label centred in a STUB column is exempt
+    (WHO's `Year: Month`, spec § 1.5) — the guard is scoped to `data_cols` only.
     """
     b = grid.boundaries
     centers = {c: (b[c] + b[c + 1]) / 2.0 for c in data_cols}
@@ -89,19 +94,13 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
         for c in data_cols:
             k = min(range(len(labels)), key=lambda j: abs(labels[j][1] - centers[c]))
             assign.setdefault(k, []).append(c)
+        for j, (_, x_center, _) in enumerate(labels):        # the uncarried-ink guard
+            if j not in assign and column_of(x_center, b) in data_cols:
+                return None
         for k, cols in assign.items():
             text, _, w = labels[k]
             nodes.append(ColHeaderNode(level, tuple(sorted(cols)), text, None,
                                        w.x0, w.top, w.x1, w.bottom, w.page))
-    node_texts_by_level: dict[int, set[str]] = {}
-    for nd in nodes:
-        node_texts_by_level.setdefault(nd.level, set()).add(nd.text)
-    for level, ln in enumerate(levels):
-        for w in ln.words:
-            if column_of((w.x0 + w.x1) / 2.0, b) not in data_cols:
-                continue
-            if w.text not in node_texts_by_level.get(level, set()):
-                return None
     linked: list[ColHeaderNode] = []
     for nd in nodes:
         pidx = None
@@ -173,8 +172,8 @@ class MatrixRegion:
 
 
 def classify_matrix(band):
-    """Chain the stages into a MatrixRegion (or None), in order (spec § 3.3): grid -> type
-    split -> k -> matrix body start -> column tree -> leaf rows -> row tree. Mirror of
+    """Chain the stages into a MatrixRegion (or None). Order of operations: see the module
+    docstring, spec § 3.3 — stated once there and not restated here. Mirror of
     classify_row_hier, with a proximity column tree over the data columns as the extra
     axis.
 

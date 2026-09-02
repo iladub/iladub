@@ -477,6 +477,42 @@ def unruled_multiword_spanner_pdf(path: str) -> dict:
     return {"spanner_words": ["Nine", "Months", "Ended"], "n_data_cols": 2}
 
 
+def duplicate_text_header_pdf(path: str) -> dict:
+    """An UNRULED band whose top header level carries the SAME text twice — `Total` at x=300
+    and `Total` at x=400 — over two data columns, both of whose centres are nearer x=300.
+
+    Duplicate texts on one header level are real in this document family: apple p0 L1 is
+    `June 27, | June 28, | June 27, | June 28,`. Here nearest-centre assignment gives BOTH
+    data columns to the first `Total`, so the second wins no column and becomes no node,
+    while its centre still falls in a data column — dropped ink (CLAUDE.md §7). A guard that
+    tested a level's data-column word TEXTS against its node texts passed this band, because
+    the twin's node carries the same string; the shipped guard tests the label INDEX against
+    the level's assignment and refuses. The second header level (`Jun`/`Sep`, one word per
+    data centre) is uncarried-ink-clean, so the refusal is attributable to L0 alone.
+
+    The test measures the geometry (`assign`, the label list, split/k/body) rather than
+    trusting this docstring."""
+    stub_x = 55.0
+    data_x = [250.0, 320.0]
+    dup_x = [300.0, 400.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    for x in dup_x:
+        c.drawCentredString(x, top, "Total")
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    c.setFont("Courier", 9)
+    body = [("Cash", ["35,934", "29,943"]), ("Debt", ["1,200", "1,100"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 31.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"duplicate_text": "Total", "n_data_cols": 2, "dup_x": dup_x}
+
+
 def crosstab_drifting_leafrow_pdf(path: str) -> dict:
     """crosstab_table_pdf with SUB-POINT BASELINE DRIFT inside its leaf header row.
 
