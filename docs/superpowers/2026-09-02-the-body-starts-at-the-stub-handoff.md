@@ -72,3 +72,38 @@ stub cell (AXIOM), and refuse a column tree that drops header ink (producer-side
 - The full corpus battery has not run in seven loops; the spec's O5 is the first run.
 - The `-m "not corpus"` suite was not run this session (no `src/` change yet).
 - The working-token figure above is an estimate.
+
+---
+
+## Session 2 (2026-09-02, fresh context) — the plan is WRITTEN; part 5 re-typed
+
+**Plan:** `docs/superpowers/plans/2026-09-02-the-body-starts-at-the-stub.md`, on branch
+`the-body-starts-at-the-stub-build` (off `main` at `f4fd540`, PR #151's squash). Written under the
+originating floor (`plimslop preflight` at session start reported "unmeasured"; the plan was the
+first artefact of the session, after ~40K tokens of reading and measurement).
+
+**Everything the session-1 part 5 asked for was done before the plan:** § 1.2 REPRODUCED (forced
+split=3 on apple p0 band 2 → 3 levels, 28 entries, tiles), the two-binding `run_scalar` seam driven
+(returns 3 / 3 / 2 on apple p0, apple p2, the crosstab fixture), `absorb_unit_markers` placed
+(`page_bands`' last statement), the three synthetic fixtures the oracle needs CONSTRUCTED and
+measured, and the HEAD baseline captured (apple 0.3587 `adopted [1]` 35.7 s; WHO 0.9096 `adopted []`
+41.9 s). All in the plan's "Measured seams" S1–S6.
+
+**One correction to the spec, recorded in the plan (S5), not edited into the spec:** apple p2 band 2
+at HEAD does not refuse in `classify_matrix`; it builds a 2-level region and is stopped by
+`region_tiles` → False. The loop's consequence is unchanged.
+
+**One plan decision that departs from the spec's wording (plan Global Constraints):**
+`is_matrix_candidate` is left untouched — its only use of `split` is the `>= 2` count, which the
+moved start (invariant `>= split`) can only raise.
+
+### 5. The next concrete action — TYPED
+
+**ASSERTED — executing shape (150K working floor):** run the plan, task by task, with
+`superpowers:subagent-driven-development`. Task 1 is a measurement whose expected output is already
+in the plan; Tasks 2–4 are unit-fixture TDD with their tests supplied verbatim and falsification
+mandatory; Task 5 is the corpus leg; Task 6 the register.
+
+**PROPOSED — what the run may refute:** (a) the report-side `MATRIX_AMBIGUOUS` count lands at 1
+(plan Task 5 Step 2); (b) `test_typing_equiv.py`'s apple page-0 pins do not move; (c) the manifest
+shape accepts a second `cor:adjudication` node. Each is checked in minutes by the task that meets it.
