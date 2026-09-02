@@ -999,24 +999,55 @@ def test_apple_p1_is_complete_and_sound():
         f"missed {sorted(APPLE_P1_DATA - admitted)}")
 
 
-@corpus_only
+@stem_only
 def test_the_pipeline_escalates_the_page_the_grid_reads_completely():
     """The R73 gap, stated as a test: the shipped reader asserts zero cells on a page the
-    data grid reads completely. The fallback cannot help here, because filling in an
-    escalation would mask it and double-count its tokens."""
+    data grid reads. The fallback cannot help here, because filling in an escalation would
+    mask it and double-count its tokens.
+
+    RE-POINTED 2026-09-02, loop `the-body-starts-at-the-stub`: apple p1 -> stem p1. The
+    subject was REMOVED from apple p1, not weakened. The matrix body now starts at the first
+    stub-bearing line, so apple p1's header band ASSERTS where it used to escalate (spec
+    2026-09-02-the-body-starts-at-the-stub-design.md § 1.4, residue R160). MEASURED at HEAD:
+    `compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)` -> asserted=14,
+    escalated=70 -- so `asserted == 0`, the state this test needs, no longer exists there.
+
+    The new subject was found by SURVEYING every page of the corpus (27 pages, 7 documents)
+    for the gap at HEAD. Exactly four pages carry `asserted == 0 and escalated > 0`: stem p1
+    (escalated 850, grid 77 rows), stem p2 (766, 68 rows), and bfs p0/p4, whose
+    `derive_data_grid` returns None and which therefore cannot state the gap at all. stem p1
+    is chosen because it is already the page-scope adoption subject of
+    tests/test_corpus_stem.py::test_page_scope_adoption_would_have_taken_the_page_the_driver_reads.
+
+    ONE HALF OF THE OLD CONJUNCTION IS NO LONGER CO-LOCATED, said here rather than left for
+    the test name to imply: apple p1's *completely* was warranted by the hand transcription
+    above (APPLE_P1_DATA / APPLE_P1_METADATA) via test_apple_p1_is_complete_and_sound, which
+    still PASSES at HEAD -- the grid still reads all 28 entry rows and none of the 15 metadata
+    lines on apple p1. There is no line transcription for stem p1, so what this test pins on
+    stem p1 is the GAP plus the grid's measured row count; the completeness oracle stays on
+    apple p1, one test up. Both halves still hold; they are on two pages now."""
     from iladub.etkl.compile import compile_tables
 
-    rep = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=True)
+    rep = compile_tables(STEM, 1, validate_shapes=False, datagrid_fallback=True)
     assert rep.asserted == 0, "fixture drift: this page is supposed to assert nothing"
     assert rep.escalated > 0
-    assert len(derive_data_grid(APPLE, 1).rows) == 28
+    assert len(derive_data_grid(STEM, 1).rows) == 77
 
 
 # --- R73: adoption, and what it may and may not withdraw ---------------------------
 
-@corpus_only
+@stem_only
 def test_adoption_is_off_by_default_at_page_scope():
     """Page scope is not where the decision belongs (spec 2026-08-09 §5.1).
+
+    RE-POINTED 2026-09-02, loop `the-body-starts-at-the-stub`: apple p1 -> stem p1, for the
+    reason and by the survey recorded in
+    test_the_pipeline_escalates_the_page_the_grid_reads_completely above -- apple p1 MEASURES
+    asserted=14 at HEAD, so page-scope adoption is pre-empted there (its gate is
+    `asserted_total == 0`, compile.py) and the flag can no longer change anything on that
+    page. A flag test on a page where the flag is inert asserts nothing. The third compile
+    below is ADDED, not moved: it is what stops "off by default" from being vacuous, and it
+    fails loudly the day adoption stops firing on stem p1 too.
 
     The register's original reason — 'compile_document compiles each page standalone before
     re-compiling continuation pages' — is MEASURED FALSE: the driver makes one pass and the
@@ -1034,40 +1065,64 @@ def test_adoption_is_off_by_default_at_page_scope():
     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads."""
     from iladub.etkl.compile import compile_tables
 
-    default = compile_tables(APPLE, 1, validate_shapes=False)
-    explicit = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)
+    default = compile_tables(STEM, 1, validate_shapes=False)
+    explicit = compile_tables(STEM, 1, validate_shapes=False, datagrid_adopt=False)
     assert default.score == explicit.score == 0.0
     assert default.escalated > 0
+    adopted = compile_tables(STEM, 1, validate_shapes=False, datagrid_adopt=True)
+    assert adopted.score > default.score, (
+        "off-by-default says nothing unless ON differs on this very page", adopted.score)
 
 
-@corpus_only
+@stem_only
 def test_adoption_withdraws_only_the_escalation_of_ink_it_READ():
     """Line-granular, both directions pinned (spec §5.3).
 
-    Not 1.0000: the section labels the grid never admitted keep escalating.
-    Not 0.594: the lines the grid DID read are not counted on both sides."""
+    Not 1.0000: the ink the grid never admitted keeps escalating.
+    Not everything: the lines the grid DID read are not counted on both sides.
+
+    RE-POINTED 2026-09-02, loop `the-body-starts-at-the-stub`: apple p1 -> stem p1, for the
+    reason and by the survey recorded in
+    test_the_pipeline_escalates_the_page_the_grid_reads_completely above. Every assertion is
+    carried over unchanged in force; only the two numeric pins are re-measured on the new
+    page. MEASURED at HEAD on stem p1: off asserted=0 escalated=850 score=0.0; on
+    asserted=1025 escalated=44 score=0.9588400374181478 -- so the residue survives (44 > 0)
+    and shrinks (44 < 850), and the page does not score 1.0000. The cell pin is 811 rather
+    than a rows x columns product: this grid is ragged (77 rows, 15 columns, 811 cells), and
+    811 is the same figure
+    tests/test_corpus_stem.py::test_page_scope_adoption_would_have_taken_the_page_the_driver_reads
+    already pins on this page, so the two agree by measurement rather than by copying."""
     from iladub.etkl.compile import compile_tables
 
-    off = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=False)
-    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=True)
+    off = compile_tables(STEM, 1, validate_shapes=False, datagrid_adopt=False)
+    on = compile_tables(STEM, 1, validate_shapes=False, datagrid_adopt=True)
     assert off.asserted == 0 and off.escalated > 0
     assert on.asserted > 0
     assert 0 < on.escalated < off.escalated, "residue must survive, and must shrink"
     assert on.score < 1.0, "an adopted page must never score 1.0000 by construction"
     assert on.score > off.score
-    print(f"\napple p1 adopted: {on.asserted}/{on.escalated} score={on.score:.4f}")
+    print(f"\nstem p1 adopted: {on.asserted}/{on.escalated} score={on.score:.4f}")
     grid_cells = sum(r.cells for r in on.regions)
-    assert grid_cells == 28 * 3, "28 entry rows x 3 columns"
+    assert grid_cells == 811, "77 ragged entry rows over 15 columns"
 
 
-@corpus_only
+@stem_only
 def test_adoption_keeps_the_band_index_contract():
     """Region report index IS band index (page_bands' pinned enumeration contract). The
-    driver reads it at five sites; adoption used to collapse the tuple to length 1."""
+    driver reads it at five sites; adoption used to collapse the tuple to length 1.
+
+    RE-POINTED 2026-09-02, loop `the-body-starts-at-the-stub`: apple p1 -> stem p1, for the
+    reason and by the survey recorded in
+    test_the_pipeline_escalates_the_page_the_grid_reads_completely above. Nothing here is
+    relaxed -- the contract is stated as inequalities and sums, not as page-specific numbers,
+    so it transfers whole. MEASURED at HEAD on stem p1: page_bands -> 3 bands, adoption
+    yields 5 regions, region[3] is the RECORD_TABLE carrying the grid's table_uri, region[1]
+    is `superseded REGION_TILING_FAILED` with 0 escalated tokens, and region[4] is the
+    DATAGRID_RESIDUE band holding all 44."""
     from iladub.etkl.compile import compile_tables, page_bands
 
-    bands = page_bands(APPLE, 1)
-    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_adopt=True)
+    bands = page_bands(STEM, 1)
+    on = compile_tables(STEM, 1, validate_shapes=False, datagrid_adopt=True)
     assert len(on.regions) >= len(bands) + 1
     assert on.regions[len(bands)].table_uri is not None, "the grid region carries its URI"
     assert on.asserted == sum(r.tokens_asserted for r in on.regions)
@@ -1080,15 +1135,23 @@ def test_adoption_keeps_the_band_index_contract():
 
 @corpus_only
 def test_adoption_never_touches_a_page_that_read_something():
-    """apple page 0 asserts 20 cells. A partial reading is not a total failure, and
-    adoption is scoped to total failure only."""
+    """apple page 0 asserts 48 cells. A partial reading is not a total failure, and
+    adoption is scoped to total failure only.
+
+    RE-MEASURED 2026-09-02, loop `the-body-starts-at-the-stub`: the cell pin moved 20 -> 48,
+    and the page is UNCHANGED as this test's subject -- it still reads something, which is
+    the whole gate. The matrix body now starts at the first stub-bearing line, so p0's
+    income-statement header band asserts 28 cells beside the RECORD_TABLE's 20 (spec
+    2026-09-02-the-body-starts-at-the-stub-design.md § 1.2, oracles O1/O5). The rise is NOT
+    cited as better reading -- see the § 1.4 rule and R154's closure row; the pin exists so
+    that a movement is loud."""
     from iladub.etkl.compile import compile_tables
 
     off = compile_tables(APPLE, 0, validate_shapes=False, datagrid_adopt=False)
     on = compile_tables(APPLE, 0, validate_shapes=False, datagrid_adopt=True)
     assert off.asserted > 0
     assert on.score == off.score
-    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 20
+    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 48
 
 
 # --- the fifth oracle: cbh, a DECORATION-universe page with two tables --------------
