@@ -107,3 +107,28 @@ mandatory; Task 5 is the corpus leg; Task 6 the register.
 **PROPOSED — what the run may refute:** (a) the report-side `MATRIX_AMBIGUOUS` count lands at 1
 (plan Task 5 Step 2); (b) `test_typing_equiv.py`'s apple page-0 pins do not move; (c) the manifest
 shape accepts a second `cor:adjudication` node. Each is checked in minutes by the task that meets it.
+
+---
+
+## Session 2, close — execution STARTED and handed off at the executing floor
+
+Execution began in the plan-writing session under `superpowers:subagent-driven-development`; the
+context gate then reported **167,732 working tokens, 1.1× the 150K executing floor**, and the session
+handed off (logged by `plimslop preflight`, decision `handoff`). State on disk, all of it:
+
+| where | what to establish there |
+| --- | --- |
+| `.superpowers/sdd/2026-09-02-the-body-starts-at-the-stub/progress.md` (git-ignored, this checkout) | the SDD ledger: pre-flight scan table, rulings, Task 1 complete, Task 2 status and its review verdict |
+| same directory: `task-N-brief.md`, `task-2-report.md`, `review-78f9dec..11d0588.diff`, `global-constraints.md` | briefs for all six tasks; Task 2's implementer report and review package |
+| branch `the-body-starts-at-the-stub-build`, commits `78f9dec` (plan) and `11d0588` (Task 2) | the work itself; pushed |
+| `<scratchpad>/baseline-HEAD.json` from session 2 (path in the ledger) | Task 5's HEAD side; if that scratchpad is gone, re-run Task 1 (35 s + 42 s) |
+
+### 5. The next concrete action — TYPED
+
+**ASSERTED — executing shape, in a FRESH session:** open the ledger, confirm Task 2's line reads
+`complete` (or resume its fix loop at the round the ledger names), then invoke
+`superpowers:subagent-driven-development` on the plan and continue at **Task 3**. The plan's task
+text is the brief; nothing needs re-deriving.
+
+**PROPOSED (unchanged from the section above):** the three predictions the run may refute are
+listed there; each is checked in minutes by the task that meets it.
