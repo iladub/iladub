@@ -291,8 +291,11 @@ marker words from the lines the guard reads.
 
 - `k` from the type split equals `k` from the moved body start on every corpus band — assumed,
   measured only on apple (k=1 either way).
-- The p1 balance-sheet header band's assertion is a *correct* reading — its tree was not dumped;
-  only p0's was. The plan's O5 leg dumps it.
+- ~~The p1 balance-sheet header band's assertion is a *correct* reading — its tree was not dumped.~~
+  **MEASURED 2026-09-02, same session, after approval:** p1 band 2 has `type_split=1`,
+  `body_start=2`, `k=1`; tree `L0 'June 27,'(1) 'September 27,'(2)`, `L1 '2026'(1)→0 '2025'(2)→1`;
+  data-column header words carried by no node: **none**; 14 entries; `region_tiles` True. The
+  reading is correct and the accepted drop (§ 1.4) is honest.
 - `run_scalar` bindings: read (`celltype.py:141-147`), not driven with two bindings.
 - The `- 0.5` in `logical_rows` (`rows.py:28`) is a pre-existing constant this loop consumes and
   does not touch; noted, not classified here.

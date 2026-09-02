@@ -25,9 +25,9 @@ graded as over). Per CLAUDE.md § "The handoff's next action is TYPED".
 
 ### PROPOSED — predictions the spec makes that the loop must RUN
 
-- **apple p1's header band asserts a CORRECT reading under the stub rule.** Its tree was never
-  dumped (spec § 8). If it is wrong, the accepted score drop (§ 1.4) is not "honest" and the
-  maintainer's choice must be re-put.
+- ~~**apple p1's header band asserts a CORRECT reading under the stub rule.**~~ **MEASURED after
+  approval, same session — CONFIRMED** (spec § 8 carries the tree: two levels, every data-column
+  header word carried, 14 entries, tiles). The accepted drop is honest; the choice stands.
 - **`k` from the type split equals `k` from the moved body start on every corpus band.** Measured
   on apple only.
 - **The guard (§ 3.2) fires on NO currently-asserted corpus region.** Predicted from WHO's stub
