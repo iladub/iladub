@@ -30,6 +30,7 @@ from .bands import Band
 from .cells import recover_leaf_grid
 from .grid import LeafGrid
 from .headers import header_body_split
+from .regions import column_of
 from .rowheaders import stub_data_split
 
 
@@ -63,6 +64,15 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
     data column to the nearest label center; a node covers the contiguous run
     assigned to it. Parent links: level L -> the level-(L-1) node whose covers
     contain this node's. None if a level has no labels.
+
+    Uncarried-ink guard (spec § 2 B, § 3.2): a closed-world completeness check —
+    "every header word over a DATA column is carried by exactly one node" — kept
+    PRODUCER-SIDE under CLAUDE.md § "Producer-side guards vs the membrane" because
+    the membrane cannot enforce it: a word that wins no column is never emitted as a
+    node, so the dropped ink never enters the graph for any shape to see. Refuses
+    (returns None) when a header level's data-column word texts are not a subset of
+    that level's node texts. A word centred in a STUB column is exempt (WHO's
+    `Year: Month`, spec § 1.5) — the guard is scoped to `data_cols` only.
     """
     b = grid.boundaries
     centers = {c: (b[c] + b[c + 1]) / 2.0 for c in data_cols}
@@ -83,6 +93,15 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
             text, _, w = labels[k]
             nodes.append(ColHeaderNode(level, tuple(sorted(cols)), text, None,
                                        w.x0, w.top, w.x1, w.bottom, w.page))
+    node_texts_by_level: dict[int, set[str]] = {}
+    for nd in nodes:
+        node_texts_by_level.setdefault(nd.level, set()).add(nd.text)
+    for level, ln in enumerate(levels):
+        for w in ln.words:
+            if column_of((w.x0 + w.x1) / 2.0, b) not in data_cols:
+                continue
+            if w.text not in node_texts_by_level.get(level, set()):
+                return None
     linked: list[ColHeaderNode] = []
     for nd in nodes:
         pidx = None

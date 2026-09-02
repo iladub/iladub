@@ -5,14 +5,16 @@ from rdflib import Graph, URIRef
 
 from tests.etkl.fixtures import (crosstab_drifting_leafrow_pdf, crosstab_table_pdf,
                                  pivoted_table_pdf, simple_table_pdf,
-                                 three_level_numeric_header_pdf)
+                                 three_level_numeric_header_pdf,
+                                 unruled_multiword_spanner_pdf)
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
 from iladub.etkl.headers import header_body_split
 from iladub.etkl.holon import assert_matrix_region
 from iladub.etkl.matrix import (infer_column_tree_by_proximity,
                                 is_matrix_candidate,
-                                classify_matrix, MatrixRegion)
+                                classify_matrix, matrix_body_start, MatrixRegion)
+from iladub.etkl.rowheaders import stub_data_split
 from iladub.etkl.tiling import region_tiles
 
 
@@ -118,3 +120,35 @@ def test_numeric_third_header_level_is_a_header_level(tmp_path):
     g = Graph()
     assert_matrix_region(g, mreg, band, URIRef("urn:t"), URIRef("urn:doc"), 0)
     assert region_tiles(g) is True
+
+
+def test_a_header_word_carried_by_no_node_refuses_the_tree(tmp_path):
+    """O3 (spec § 5; § 1.3 Finding B). On an unruled band a multi-word spanner is three pdfplumber
+    words; nearest-centre assignment lets two of them win the two data columns and the third
+    ('Months') becomes no node at all. Asserting that tree emits a header with a third of its
+    ink gone (CLAUDE.md §7). The guard refuses; compile escalates MATRIX_AMBIGUOUS at the existing
+    site. Falsified by deleting the guard: the tree has 6 nodes for 7 data-column header words
+    and classify_matrix returns a region that tiles."""
+    p = tmp_path / "x.pdf"; unruled_multiword_spanner_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    assert [w.text for w in band.lines[0].words] == ["Nine", "Months", "Ended"]   # measured, not assumed
+    assert band.rules == ()
+    grid = recover_leaf_grid(band)
+    split = header_body_split(band, grid); k = stub_data_split(band, grid)
+    body = matrix_body_start(band, grid, split, k)
+    assert (split, k, body) == (2, 1, 3)
+    assert infer_column_tree_by_proximity(band, grid, body, tuple(range(k, grid.ncols))) is None
+    assert classify_matrix(band) is None
+
+
+def test_a_stub_column_header_does_not_trigger_the_guard(tmp_path):
+    """O4 (spec § 5; § 3.2). WHO's 'Year: Month' sits over the STUB column at a header level;
+    it is never a column-tree node and must not be counted as dropped ink. Falsified by removing
+    the data-column condition from the guard: 'Segment' is uncarried and the band refuses."""
+    p = tmp_path / "x.pdf"; three_level_numeric_header_pdf(str(p), corner="Segment")
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    assert band.lines[1].words[0].text == "Segment"
+    mreg = classify_matrix(band)
+    assert mreg is not None
+    assert "Segment" not in {n.text for n in mreg.col_tree}
+    assert sorted({n.level for n in mreg.col_tree}) == [0, 1, 2]

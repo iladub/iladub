@@ -411,6 +411,38 @@ def three_level_numeric_header_pdf(path: str, corner: str | None = None) -> dict
             "years": ["2026", "2025", "2026", "2025"]}
 
 
+def unruled_multiword_spanner_pdf(path: str) -> dict:
+    """An UNRULED band (no vertical or horizontal rules drawn) whose top header level is a
+    multi-word spanner — apple p2 band 2's shape (spec 2026-09-02-the-body-starts-at-the-stub-
+    design.md § 1.3, Finding B). `Nine Months Ended` is drawn as ONE `drawCentredString` call,
+    but pdfplumber's word extraction still splits it into three words on whitespace gaps
+    (`Nine`, `Months`, `Ended` — measured by the test, not assumed here). Nearest-centre
+    assignment over two data columns lets `Nine` and `Ended` each win a column and leaves
+    `Months` carried by no node: exactly the dropped ink `infer_column_tree_by_proximity`'s
+    guard must refuse (spec § 3.2). Grouping the three words into one label is the NEURAL
+    question `R155` measured a tuned geometric constant could not answer, and is out of scope
+    for this loop (spec § 4) — this fixture exercises the guard only."""
+    stub_x = 55.0
+    data_x = [300.0, 400.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[1]) / 2.0, top, "Nine Months Ended")
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    for x, year in zip(data_x, ["2026", "2025"]):
+        c.drawCentredString(x, top - 26.0, year)
+    c.setFont("Courier", 9)
+    body = [("Cash", ["35,934", "29,943"]), ("Debt", ["1,200", "1,100"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 44.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"spanner_words": ["Nine", "Months", "Ended"], "n_data_cols": 2}
+
+
 def crosstab_drifting_leafrow_pdf(path: str) -> dict:
     """crosstab_table_pdf with SUB-POINT BASELINE DRIFT inside its leaf header row.
 
