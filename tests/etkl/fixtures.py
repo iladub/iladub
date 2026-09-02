@@ -372,6 +372,45 @@ def crosstab_table_pdf(path: str) -> dict:
             "row_axis": ["North", "South"]}
 
 
+def three_level_numeric_header_pdf(path: str, corner: str | None = None) -> dict:
+    """A three-level column header whose THIRD level is numeric (`2026 2025 2026 2025`) — the
+    apple shape (spec 2026-09-02-the-body-starts-at-the-stub-design.md § 1.2, this loop's plan
+    S6): a bare years line is indistinguishable from a numeric DATA line by datatype alone, so
+    `header_body_split` (unmodified by this loop) types it body. `Quarter`/`YTD`/`Jun`/`Sep`
+    are each single tokens — one pdfplumber word, one grid cell — because grouping a MULTI-word
+    spanner into one label is the NEURAL question `R155` measured a tuned geometric constant
+    could not answer, and this fixture exercises the AXIOM derivation only (spec § 4). `corner`,
+    when given, draws a stub-column label on the L1 (`Jun`/`Sep`) header line, so a stub cell
+    ABOVE `?split` is present in the evidence graph — pinning that `matrix_body_start` does not
+    let it pull the body start up (spec § 3.1's `?split` invariant)."""
+    stub_x = 55.0
+    data_x = [200.0, 270.0, 380.0, 450.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[1]) / 2.0, top, "Quarter")
+    c.drawCentredString((data_x[2] + data_x[3]) / 2.0, top, "YTD")
+    for x, name in zip(data_x, ["Jun", "Sep", "Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    if corner is not None:
+        c.drawString(stub_x, top - 13.0, corner)
+    for x, year in zip(data_x, ["2026", "2025", "2026", "2025"]):
+        c.drawCentredString(x, top - 26.0, year)
+    c.setFont("Courier", 9)
+    body = [("Sales:", None),
+            ("Products", ["100", "90", "300", "280"]),
+            ("Services", ["50", "45", "150", "140"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 44.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        if vals is not None:
+            for x, v in zip(data_x, vals):
+                c.drawCentredString(x, y, v)
+    c.save()
+    return {"n_header_levels": 3, "body_line": 3, "corner": corner,
+            "years": ["2026", "2025", "2026", "2025"]}
+
+
 def crosstab_drifting_leafrow_pdf(path: str) -> dict:
     """crosstab_table_pdf with SUB-POINT BASELINE DRIFT inside its leaf header row.
 

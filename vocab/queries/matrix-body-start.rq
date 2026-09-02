@@ -1,0 +1,20 @@
+# matrix-body-start.rq — the first cell-bearing line at/after the header/body TYPE split
+# (?split, from header-body-split.rq — untouched by this query) that carries a cell in a
+# STUB column (grid column < ?k, the width stub-data-split.rq derives). MIN(?row) is
+# evidence-positive: a line becomes body because a stub cell is PRESENT on it, never because
+# something is absent — a numeric header level with no stub cell (e.g. a bare `2026 2025`
+# years line, typed body by the type split) is correctly skipped, and the body starts one
+# line further down, at the first line the author actually headed in the stub. Band-scoped
+# (this query, like header-body-split.rq and stub-data-split.rq, runs over one band's typed-
+# cell evidence graph) and adds no vocabulary: tab:GridCell / tab:atGridRow / tab:atGridColumn
+# are the same terms header-body-split.rq and stub-data-split.rq already read. Stub cells are
+# identified BY COLUMN (?col < ?k), never by tab:cellDatatype — a numeric stub label is still
+# a stub label. No tuned constant. header-body-split.rq is deliberately not modified: the type
+# transition stays the global header/body rule; "stub" is a two-axis (matrix-only) notion, so
+# this rule is separate and matrix-scoped (spec 2026-09-02-the-body-starts-at-the-stub-design
+# § 2 A, § 3.1). Empty result -> None (no line at/after ?split has a stub cell).
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT (MIN(?row) AS ?body) WHERE {
+  ?c tab:atGridRow ?row ; tab:atGridColumn ?col .
+  FILTER(?row >= ?split && ?col < ?k)
+}

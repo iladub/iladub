@@ -81,6 +81,33 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
     return tuple(linked)
 
 
+def matrix_body_start(band: Band, grid: LeafGrid, split: int, k: int) -> int | None:
+    """The first cell-bearing line at/after the header/body TYPE split (`header_body_split`)
+    that carries a cell in a STUB column (grid column < the stub width `stub_data_split`
+    derives). AXIOM, open-world, evidence-positive: a line is body because a stub cell is
+    PRESENT on it, never because something is absent (spec § 2 A). Matrix-scoped because
+    "stub" is a two-axis notion that only exists once a stub|data split is derived — it does
+    not belong beside `header_body_split` in headers.py, and consumes that split unmodified
+    (spec § 4).
+
+    Invariants (spec § 3.1): result >= split always; result < len(band.lines) when not None;
+    equals `split` when line `split` itself already carries a stub cell (the common case —
+    every non-apple corpus band, spec § 1.5). None when no line at/after `split` has a stub
+    cell (e.g. k=0, the contract's edge case, never `stub_data_split`'s own range).
+    """
+    from .headers import _grid_cells
+    from . import celltype
+    from rdflib import Literal
+    from rdflib.namespace import XSD
+    import os
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "matrix-body-start.rq")
+    return celltype.run_scalar(q, g, bindings={
+        "split": Literal(split, datatype=XSD.integer),
+        "k": Literal(k, datatype=XSD.integer),
+    })
+
+
 def is_matrix_candidate(band: Band) -> bool:
     """A matrix candidate: a multi-level column header (>=2 header lines) over a
     clean text-stub | numeric-data split. (The caller has already established the
