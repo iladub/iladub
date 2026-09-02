@@ -6,6 +6,7 @@ from rdflib import Graph, URIRef
 from tests.etkl.fixtures import (crosstab_drifting_leafrow_pdf, crosstab_table_pdf,
                                  pivoted_table_pdf, simple_table_pdf,
                                  three_level_numeric_header_pdf,
+                                 two_level_numeric_header_pdf,
                                  unruled_multiword_spanner_pdf)
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
@@ -117,6 +118,38 @@ def test_numeric_third_header_level_is_a_header_level(tmp_path):
             parent = mreg.col_tree[n.parent]
             assert parent.level == 1 and parent.covers == n.covers
     assert len(mreg.leaf_rows) == 3                    # 'Sales:' section row + two data rows
+    g = Graph()
+    assert_matrix_region(g, mreg, band, URIRef("urn:t"), URIRef("urn:doc"), 0)
+    assert region_tiles(g) is True
+
+
+def test_two_level_numeric_header_is_a_matrix_candidate(tmp_path):
+    """Task 3b (controller ruling 2026-09-02): both `is_matrix_candidate` and `classify_matrix`
+    must count header levels at the DERIVED body start (spec § 3.1, both callers), not at the
+    type split. apple p1 band 2 (spec § 8, measured `type_split=1, body_start=2, k=1`) has a
+    type split of 1, so the pre-task `< 2` gates in both callers refused it before
+    `matrix_body_start` ever ran, contradicting the spec's own § 8 measurement that this band
+    asserts correctly. Falsified two ways (Step 5): reverting either gate back to testing
+    `split` instead of the derived start makes this test fail at its own assertion for that
+    gate."""
+    p = tmp_path / "x.pdf"; two_level_numeric_header_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    grid = recover_leaf_grid(band)
+    split = header_body_split(band, grid)
+    assert split == 1
+    k = stub_data_split(band, grid)
+    assert matrix_body_start(band, grid, split, k) == 2
+    assert is_matrix_candidate(band) is True
+    mreg = classify_matrix(band)
+    assert mreg is not None
+    assert mreg.body_line == 2
+    assert sorted({n.level for n in mreg.col_tree}) == [0, 1]
+    years = {n.covers: n.text for n in mreg.col_tree if n.level == 1}
+    assert years == {(1,): "2026", (2,): "2025"}
+    for n in mreg.col_tree:
+        if n.level == 1:
+            parent = mreg.col_tree[n.parent]
+            assert parent.level == 0 and parent.covers == n.covers
     g = Graph()
     assert_matrix_region(g, mreg, band, URIRef("urn:t"), URIRef("urn:doc"), 0)
     assert region_tiles(g) is True

@@ -141,14 +141,24 @@ def matrix_body_start(band: Band, grid: LeafGrid, split: int, k: int) -> int | N
 
 
 def is_matrix_candidate(band: Band) -> bool:
-    """A matrix candidate: a multi-level column header (>=2 header lines) over a
-    clean text-stub | numeric-data split. (The caller has already established the
-    region is UNSUPPORTED_TABLE.)"""
+    """A matrix candidate: a multi-level column header (>=2 header lines, counted at the
+    DERIVED matrix body start, not the type split — spec § 3.1, controller ruling 2026-09-02
+    task 3b) over a clean text-stub | numeric-data split. (The caller has already established
+    the region is UNSUPPORTED_TABLE.) The type split can undercount a matrix's own header
+    levels (apple p1 band 2, spec § 8: type split 1, derived start 2) whenever a header line
+    carries no stub cell and is typed body by `header_body_split`; `matrix_body_start` is >=
+    `split` always, so this widens candidacy, never narrows it."""
     grid = recover_leaf_grid(band)
     if grid.ncols < 3:
         return False
     split = header_body_split(band, grid)
-    return split is not None and split >= 2 and stub_data_split(band, grid) is not None
+    if split is None:
+        return False
+    k = stub_data_split(band, grid)
+    if k is None:
+        return False
+    body_start = matrix_body_start(band, grid, split, k)
+    return body_start is not None and body_start >= 2
 
 
 @dataclass(frozen=True)
@@ -166,14 +176,20 @@ def classify_matrix(band):
     """Chain the stages into a MatrixRegion (or None), in order (spec § 3.3): grid -> type
     split -> k -> matrix body start -> column tree -> leaf rows -> row tree. Mirror of
     classify_row_hier, with a proximity column tree over the data columns as the extra
-    axis."""
+    axis.
+
+    The `< 2` header-level-count gate is tested against the DERIVED `matrix_body_start`, not
+    against the type `split` (spec § 3.1, controller ruling 2026-09-02 task 3b): `split is
+    None` still short-circuits before `k` is derived (nothing to widen without a type split at
+    all), but a type split of 0 or 1 no longer refuses a band whose stub-bearing body starts
+    at line >= 2 (apple p1 band 2, spec § 8)."""
     from .rows import logical_rows
     from .rowheaders import infer_row_header_tree
     grid = recover_leaf_grid(band)
     if grid.ncols < 3:
         return None
     split = header_body_split(band, grid)
-    if split is None or split < 2:
+    if split is None:
         return None
     k = stub_data_split(band, grid)
     if k is None:
@@ -181,7 +197,7 @@ def classify_matrix(band):
     stub_cols = tuple(range(k))
     data_cols = tuple(range(k, grid.ncols))
     body_start = matrix_body_start(band, grid, split, k)
-    if body_start is None:
+    if body_start is None or body_start < 2:
         return None
     col_tree = infer_column_tree_by_proximity(band, grid, body_start, data_cols)
     if col_tree is None:

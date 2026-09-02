@@ -411,6 +411,40 @@ def three_level_numeric_header_pdf(path: str, corner: str | None = None) -> dict
             "years": ["2026", "2025", "2026", "2025"]}
 
 
+def two_level_numeric_header_pdf(path: str) -> dict:
+    """A TWO-level column header whose second (last) level is numeric — apple p1 band 2's own
+    shape (spec 2026-09-02-the-body-starts-at-the-stub-design.md § 8, measured: `type_split=1,
+    body_start=2, k=1`), which is `three_level_numeric_header_pdf` WITHOUT its L0 `Quarter`/`YTD`
+    spanner line: L0 is `Jun`/`Sep` over the two data centres (one text header line), L1 is the
+    bare years `2026`/`2025`. The type split is 1 — `header_body_split` (unmodified by this
+    loop) sees exactly one text line (`Jun`/`Sep`) above a Numeric line (`2026`/`2025`) that is
+    Numeric over Currency data, one Quantity family, so the years line types BODY despite being
+    a header level in the reader's own convention. `Jun`/`Sep` are single pdfplumber tokens, as
+    in `three_level_numeric_header_pdf`'s own L1, so no header word is ever uncarried and the
+    guard (§ 3.2) never fires here — this fixture exercises the moved gates (task 3b), not B."""
+    stub_x = 55.0
+    data_x = [200.0, 270.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top, name)
+    for x, year in zip(data_x, ["2026", "2025"]):
+        c.drawCentredString(x, top - 13.0, year)
+    c.setFont("Courier", 9)
+    body = [("Sales:", None),
+            ("Products", ["100", "90"]),
+            ("Services", ["50", "45"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 31.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        if vals is not None:
+            for x, v in zip(data_x, vals):
+                c.drawCentredString(x, y, v)
+    c.save()
+    return {"type_split": 1, "body_start": 2, "years": ["2026", "2025"]}
+
+
 def unruled_multiword_spanner_pdf(path: str) -> dict:
     """An UNRULED band (no vertical or horizontal rules drawn) whose top header level is a
     multi-word spanner — apple p2 band 2's shape (spec 2026-09-02-the-body-starts-at-the-stub-
