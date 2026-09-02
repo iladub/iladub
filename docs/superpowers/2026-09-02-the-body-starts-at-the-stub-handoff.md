@@ -17,7 +17,7 @@ graded as over). Per CLAUDE.md § "The handoff's next action is TYPED".
 
 ### ASSERTED — mechanical
 
-1. **Review the spec, then invoke `superpowers:writing-plans` on it.** No plan exists. The spec's
+1. **The spec is APPROVED by the maintainer (2026-09-02, in session; recorded here only). Start a FRESH session and invoke `superpowers:writing-plans` on it** — this session stopped at ~98K working tokens, twice the originating floor, and did not write the plan. No plan exists. The spec's
    § 5 names six oracles and § 6 names the three seams the plan must measure before writing a call.
 2. **Reproduce § 1.2 before building** (~1 minute): monkeypatch `matrix.header_body_split` to return
    3 on apple p0 band 2 and confirm `region_tiles` is True with a three-level tree. Every figure in
@@ -48,7 +48,7 @@ stub cell (AXIOM), and refuse a column tree that drops header ink (producer-side
 ## 2. Where the primaries are
 
 | primary | what to establish there |
-|---|---|
+| --- | --- |
 | `docs/superpowers/specs/2026-09-02-the-body-starts-at-the-stub-design.md` | The measurements (§ 1), the §8 argument (§ 2), design (§ 3), what is NOT done (§ 4), oracle (§ 5) |
 | `src/iladub/etkl/headers.py:84` + `vocab/queries/header-body-split.rq` | The type transition that places the years line in the body. **Untouched by this loop** |
 | `src/iladub/etkl/matrix.py:39` (`infer_column_tree_by_proximity`) | Where the guard goes; the tree is otherwise correct on apple p0 |
@@ -59,7 +59,7 @@ stub cell (AXIOM), and refuse a column tree that drops header ink (producer-side
 ## 3. What was decided, and where it is recorded
 
 | decision | recorded |
-|---|---|
+| --- | --- |
 | The subject moved from the column tree to the matrix body start | spec § 1; this file; nowhere else yet |
 | A: AXIOM derivation, matrix-scoped, `header-body-split.rq` untouched | spec § 2, § 3.1 |
 | B: producer-side guard, justified by CLAUDE.md § Producer-side guards | spec § 2, § 3.2 |
