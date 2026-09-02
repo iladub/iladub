@@ -353,8 +353,23 @@ def test_recording_does_not_change_the_verdicts(apple_report):
     not a reading improvement: apple's 25 flush crossings are chopped banner text ('ThreeMo' //
     'nthsEndedNineM'), and welding two fragments into one cell removes an ink token from the
     count. A smaller denominator is not better reading -- see the R154 closure row, which states
-    this at length and forbids citing the rise as evidence."""
+    this at length and forbids citing the rise as evidence.
+
+    RE-MEASURED 2026-09-02, loop `the-body-starts-at-the-stub`: the pinned page-0 score moved
+    0.1198 -> 0.3243 (asserted=48, escalated=100), by running THIS test's own path and reading
+    the failure message -- never by copying a figure from elsewhere. The matrix body now starts
+    at the first stub-bearing line, so page 0's income-statement header band asserts where it
+    used to escalate (spec `2026-09-02-the-body-starts-at-the-stub-design.md` § 1.2, oracles
+    O1/O5; the whole-document consequence is § 1.4). The score is NOT the oracle here and the
+    rise is NOT evidence of better reading -- the pin exists so a silent movement is loud. The
+    assertion this test makes is unchanged: recording does not change the verdicts.
+
+    The asserted-region count moved 1 -> 2 in the same act and for the same reason, MEASURED on
+    this page: the two are `UNSUPPORTED_TABLE asserted` (28 cells -- the header band that used
+    to escalate) and `RECORD_TABLE asserted` (20 cells -- the one that always did). Four regions
+    still escalate REGION_TILING_FAILED and two are ignored (eight regions in all), so this is
+    not a page that went quiet; one band crossed."""
     rep = apple_report
     verdicts = [(r.kind.name, r.verdict, r.reason, r.cells) for r in rep.regions]
-    assert abs(rep.score - 0.1198) < 0.0001, f"score moved: {rep.score}"
-    assert sum(1 for v in verdicts if v[1] == "asserted") == 1
+    assert abs(rep.score - 0.3243) < 0.0001, f"score moved: {rep.score}"
+    assert sum(1 for v in verdicts if v[1] == "asserted") == 2, verdicts

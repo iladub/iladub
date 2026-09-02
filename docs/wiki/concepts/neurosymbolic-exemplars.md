@@ -17,9 +17,11 @@ sources:
   - src/iladub/etkl/document.py
   - src/iladub/splitkey.py
   - tests/test_cbh_e2e.py
+  - vocab/queries/matrix-body-start.rq
+  - src/iladub/etkl/matrix.py
 related: ["[[dimension-split]]"]
 confidence: high
-updated: 2026-08-04
+updated: 2026-09-02
 promoted_to: docs/neurosymbolic-first.md
 ---
 
@@ -147,3 +149,61 @@ scope, closing R42's both gaps, measured end-to-end on the real CBH document
   gap itself is open as R53 in `docs/superpowers/residues.md` — a reminder that the §8
   gate classifies DECISIONS, not the membrane that is supposed to catch a decision gone
   wrong, and the two need independent verification.
+
+## The body starts at the stub (2026-09-02) — matrix body start (AXIOM) and the uncarried-ink guard (producer-side, not PROCEDURAL)
+
+apple's `Three Months Ended … Nine Months Ended` double header was measured (this loop's spec,
+`docs/superpowers/specs/2026-09-02-the-body-starts-at-the-stub-design.md` §1.1) to be a SPLIT
+defect, not a tree defect: `header_body_split`'s type-transition query correctly finds a Numeric-
+over-Currency boundary, but places it one line too early for a *matrix* — at the bare `2026 2025
+2026 2025` years line, which carries no stub cell, rather than at the first line the author
+actually headed in the stub. One AXIOM derivation and one producer-side guard close it, argued
+fresh against this subject rather than inheriting either of two adjacent, non-transferable
+rulings (R154's word-atomicity AXIOM; [[dimension-split]]'s Loop Q section-repair scope).
+
+- **`vocab/queries/matrix-body-start.rq`** (+ `matrix_body_start` in
+  `src/iladub/etkl/matrix.py`) — an AXIOM, open-world derivation: *which line is the first body
+  line of a two-axis matrix*, answered by the **presence** of a stub cell, never by absence. The
+  query runs over the same typed-cell evidence graph `header_body_split` already builds
+  (`celltype.grid_evidence`), takes exactly **two bindings** it does not derive itself — `?split`
+  (the type transition `header_body_split` already found) and `?k` (the stub width
+  `stub_data_split` already found) — and returns `MIN(?row)` over cells with
+  `tab:atGridRow >= ?split` and `tab:atGridColumn < ?k`: the first cell-bearing line at or after
+  the type split that carries a cell in a STUB column, stub columns identified BY COLUMN INDEX,
+  never by `tab:cellDatatype` (so a numeric stub label such as a bare year is still a stub
+  label). The `MIN` is holon-scoped to one band; the query adds no vocabulary (`tab:GridCell`,
+  `tab:atGridRow`, `tab:atGridColumn` are terms `header-body-split.rq` and `stub-data-split.rq`
+  already read); no numeric literal is tuned — `?split`/`?k` arrive as bound integers, not
+  authored constants. `header-body-split.rq` itself is deliberately **untouched**: the type
+  transition stays the global header/body rule, and "stub" is a two-axis notion that only exists
+  once a matrix's own stub|data split has already been derived, so this rule is matrix-scoped,
+  living beside `matrix_body_start` in `matrix.py` rather than in `headers.py`. Measured on apple
+  p1 band 2: type split 1, derived body start 2 — the years line becomes a header LEVEL, disposed
+  by the existing column-tree and `region_tiles` machinery exactly as any other header level is,
+  never asserted as a header by this rule itself. Both `classify_matrix` and `is_matrix_candidate`
+  now count header levels at this DERIVED start rather than at the raw type split (controller
+  ruling, spec §3.1, task 3b) — the plan that preceded that ruling had measured
+  `is_matrix_candidate` as having "nothing to consume" from the new result and left it untouched;
+  Task 5 then measured apple p1's TYPE split alone at 1, below EITHER gate's `>= 2` threshold, so
+  the plan's own premise was a defect the controller corrected in the shipped code, not a design
+  this exemplar should be read as endorsing.
+- **The uncarried-ink guard** (`infer_column_tree_by_proximity`, same file) — **a closed-world
+  completeness check, kept PRODUCER-SIDE under CLAUDE.md § "Producer-side guards vs the
+  membrane," and explicitly NOT a third PROCEDURAL exemplar for this gate.** The constraint —
+  *every header word whose centre lies over a DATA column is carried by exactly one column-tree
+  node* — is closed-world over one holon (the band), which is SHACL's world in principle. But the
+  membrane cannot enforce it in practice: a header word that wins no column is never emitted as a
+  node at all, so the dropped ink never enters the graph for any shape to see or refuse — there is
+  nothing there to validate. The guard reads only the band's own words and the nodes already
+  built from them (no constant, no tolerance); it refuses (`classify_matrix` → `None`,
+  `MATRIX_AMBIGUOUS`) when a data-column word's text is not among that level's node texts, and is
+  explicitly exempted for a word centred in the STUB column (WHO's `Year: Month`, spec §1.5's O4
+  leg), because the constraint is scoped to `data_cols` only. This is why it is not classed
+  PROCEDURAL: it answers no "which columns/rows does X span" reading judgement and computes no
+  arithmetic — it is a presence/membership check the membrane happens to be structurally unable to
+  host, which CLAUDE.md's producer-side-guards ruling (R89/R102) treats as sufficient grounds to
+  keep a guard at the producer rather than deleting it as a supposed membrane duplicate.
+  Grouping unruled multi-word header spans into one label — the move that would let apple p2 band
+  2 assert instead of refuse — is left undone: it is a *"which words form one label"* judgement,
+  NEURAL by §8's own wording, and R155 already measured that class's geometric half
+  impossible without a tuned constant. Raised as R162.

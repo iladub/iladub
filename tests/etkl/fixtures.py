@@ -372,6 +372,147 @@ def crosstab_table_pdf(path: str) -> dict:
             "row_axis": ["North", "South"]}
 
 
+def three_level_numeric_header_pdf(path: str, corner: str | None = None) -> dict:
+    """A three-level column header whose THIRD level is numeric (`2026 2025 2026 2025`) — the
+    apple shape (spec 2026-09-02-the-body-starts-at-the-stub-design.md § 1.2, this loop's plan
+    S6): a bare years line is indistinguishable from a numeric DATA line by datatype alone, so
+    `header_body_split` (unmodified by this loop) types it body. `Quarter`/`YTD`/`Jun`/`Sep`
+    are each single tokens — one pdfplumber word, one grid cell — because grouping a MULTI-word
+    spanner into one label is the NEURAL question `R155` measured a tuned geometric constant
+    could not answer, and this fixture exercises the AXIOM derivation only (spec § 4). `corner`,
+    when given, draws a stub-column label on the L1 (`Jun`/`Sep`) header line, so a stub cell
+    ABOVE `?split` is present in the evidence graph — pinning that `matrix_body_start` does not
+    let it pull the body start up (spec § 3.1's `?split` invariant)."""
+    stub_x = 55.0
+    data_x = [200.0, 270.0, 380.0, 450.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[1]) / 2.0, top, "Quarter")
+    c.drawCentredString((data_x[2] + data_x[3]) / 2.0, top, "YTD")
+    for x, name in zip(data_x, ["Jun", "Sep", "Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    if corner is not None:
+        c.drawString(stub_x, top - 13.0, corner)
+    for x, year in zip(data_x, ["2026", "2025", "2026", "2025"]):
+        c.drawCentredString(x, top - 26.0, year)
+    c.setFont("Courier", 9)
+    body = [("Sales:", None),
+            ("Products", ["100", "90", "300", "280"]),
+            ("Services", ["50", "45", "150", "140"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 44.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        if vals is not None:
+            for x, v in zip(data_x, vals):
+                c.drawCentredString(x, y, v)
+    c.save()
+    return {"n_header_levels": 3, "body_line": 3, "corner": corner,
+            "years": ["2026", "2025", "2026", "2025"]}
+
+
+def two_level_numeric_header_pdf(path: str) -> dict:
+    """A TWO-level column header whose second (last) level is numeric — apple p1 band 2's own
+    shape (spec 2026-09-02-the-body-starts-at-the-stub-design.md § 8, measured: `type_split=1,
+    body_start=2, k=1`), which is `three_level_numeric_header_pdf` WITHOUT its L0 `Quarter`/`YTD`
+    spanner line: L0 is `Jun`/`Sep` over the two data centres (one text header line), L1 is the
+    bare years `2026`/`2025`. The type split is 1 — `header_body_split` (unmodified by this
+    loop) sees exactly one text line (`Jun`/`Sep`) above a Numeric line (`2026`/`2025`) that is
+    Numeric over Currency data, one Quantity family, so the years line types BODY despite being
+    a header level in the reader's own convention. `Jun`/`Sep` are single pdfplumber tokens, as
+    in `three_level_numeric_header_pdf`'s own L1, so no header word is ever uncarried and the
+    guard (§ 3.2) never fires here — this fixture exercises the moved gates (task 3b), not B."""
+    stub_x = 55.0
+    data_x = [200.0, 270.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top, name)
+    for x, year in zip(data_x, ["2026", "2025"]):
+        c.drawCentredString(x, top - 13.0, year)
+    c.setFont("Courier", 9)
+    body = [("Sales:", None),
+            ("Products", ["100", "90"]),
+            ("Services", ["50", "45"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 31.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        if vals is not None:
+            for x, v in zip(data_x, vals):
+                c.drawCentredString(x, y, v)
+    c.save()
+    return {"type_split": 1, "body_start": 2, "years": ["2026", "2025"]}
+
+
+def unruled_multiword_spanner_pdf(path: str) -> dict:
+    """An UNRULED band (no vertical or horizontal rules drawn) whose top header level is a
+    multi-word spanner — apple p2 band 2's shape (spec 2026-09-02-the-body-starts-at-the-stub-
+    design.md § 1.3, Finding B). `Nine Months Ended` is drawn as ONE `drawCentredString` call,
+    but pdfplumber's word extraction still splits it into three words on whitespace gaps
+    (`Nine`, `Months`, `Ended` — measured by the test, not assumed here). Nearest-centre
+    assignment over two data columns lets `Nine` and `Ended` each win a column and leaves
+    `Months` carried by no node: exactly the dropped ink `infer_column_tree_by_proximity`'s
+    guard must refuse (spec § 3.2). Grouping the three words into one label is the NEURAL
+    question `R155` measured a tuned geometric constant could not answer, and is out of scope
+    for this loop (spec § 4) — this fixture exercises the guard only."""
+    stub_x = 55.0
+    data_x = [300.0, 400.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    c.drawCentredString((data_x[0] + data_x[1]) / 2.0, top, "Nine Months Ended")
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    for x, year in zip(data_x, ["2026", "2025"]):
+        c.drawCentredString(x, top - 26.0, year)
+    c.setFont("Courier", 9)
+    body = [("Cash", ["35,934", "29,943"]), ("Debt", ["1,200", "1,100"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 44.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"spanner_words": ["Nine", "Months", "Ended"], "n_data_cols": 2}
+
+
+def duplicate_text_header_pdf(path: str) -> dict:
+    """An UNRULED band whose top header level carries the SAME text twice — `Total` at x=300
+    and `Total` at x=400 — over two data columns, both of whose centres are nearer x=300.
+
+    Duplicate texts on one header level are real in this document family: apple p0 L1 is
+    `June 27, | June 28, | June 27, | June 28,`. Here nearest-centre assignment gives BOTH
+    data columns to the first `Total`, so the second wins no column and becomes no node,
+    while its centre still falls in a data column — dropped ink (CLAUDE.md §7). A guard that
+    tested a level's data-column word TEXTS against its node texts passed this band, because
+    the twin's node carries the same string; the shipped guard tests the label INDEX against
+    the level's assignment and refuses. The second header level (`Jun`/`Sep`, one word per
+    data centre) is uncarried-ink-clean, so the refusal is attributable to L0 alone.
+
+    The test measures the geometry (`assign`, the label list, split/k/body) rather than
+    trusting this docstring."""
+    stub_x = 55.0
+    data_x = [250.0, 320.0]
+    dup_x = [300.0, 400.0]
+    top = PAGE_H - 90.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier-Bold", 9)
+    for x in dup_x:
+        c.drawCentredString(x, top, "Total")
+    for x, name in zip(data_x, ["Jun", "Sep"]):
+        c.drawCentredString(x, top - 13.0, name)
+    c.setFont("Courier", 9)
+    body = [("Cash", ["35,934", "29,943"]), ("Debt", ["1,200", "1,100"])]
+    for i, (lbl, vals) in enumerate(body):
+        y = top - 31.0 - i * 16.0
+        c.drawString(stub_x, y, lbl)
+        for x, v in zip(data_x, vals):
+            c.drawCentredString(x, y, v)
+    c.save()
+    return {"duplicate_text": "Total", "n_data_cols": 2, "dup_x": dup_x}
+
+
 def crosstab_drifting_leafrow_pdf(path: str) -> dict:
     """crosstab_table_pdf with SUB-POINT BASELINE DRIFT inside its leaf header row.
 

@@ -114,11 +114,12 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
     """O4 (spec §7) — asserted as a NUMBER, never as "> 0". A shape that binds zero focus
     nodes is R97/R99's vacuity, and it passes.
 
-    RE-MEASURED 2026-08-29 (spec §10 seam 6: compute the count, never copy it): 46 -> 48,
-    the two queries `vocabulary-role.rq` and `alignment-subject.rq` this loop adds."""
+    RE-MEASURED 2026-09-02 (spec §10 seam 6: compute the count, never copy it): 48 -> 49,
+    `matrix-body-start.rq` this loop adds (2026-09-02-the-body-starts-at-the-stub-design.md
+    § 3.1)."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 48, sorted(focus)
+    assert len(focus) == len(query_files()) == 49, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

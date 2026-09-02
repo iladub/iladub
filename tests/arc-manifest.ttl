@@ -244,10 +244,10 @@ prog:criterion:etkl:06 a prog:Criterion ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[financial/apple-fy2026q3-statements.pdf]" .
 
-# who-wfa — the SECOND met document on this rung, and it is met the same way the first was:
-# a recorded HOLD lifted, not a floor pinned at whatever the document scored. The 2026-08-20
-# adjudication held it on one condition ("Held until that header block is read"); R45 read the
-# header block and the 2026-08-31 adjudication lifts it. Both nodes are in the file.
+# who-wfa — the SECOND met document on this rung, and it is met the same way the first was: a recorded HOLD lifted, not a
+# floor pinned at whatever the document scored. The 2026-08-20 adjudication held it on one condition ("Held until that header
+# block is read"); R45 read the header block and the 2026-08-31 adjudication lifts it. Both nodes are in the file. prog:source
+# RE-MEASURED 2026-09-02: grep -n "^<urn:iladub:corpus:who" tests/corpus-manifest.ttl -> line 120 (was 118, apple pushed it).
 # The met-value is measured by RUNNING the oracle, 2026-08-31:
 #   $ ./.venv/bin/python -m pytest "tests/test_corpus.py::test_expected_verdict[health/who-wfa-boys-zscore-0-5.pdf]" -q -s -m corpus
 #     health/who-wfa-boys-zscore-0-5.pdf: score=0.9096 pages=3 chains=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1] wall=46s
@@ -256,7 +256,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:118" ;
+    prog:source "tests/corpus-manifest.ttl:120" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-31"^^xsd:date ;

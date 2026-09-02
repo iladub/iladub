@@ -144,12 +144,18 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     RE-MEASURED 2026-08-31 (R139's instrument half): the `.ttl` population is **146** — the two
     added are `vocab/internal/srccite.ttl` and `vocab/shapes/source-citation-shapes.ttl`, the
     declaration and the membrane of the source-comment citation lint. The `.rq` population is
-    unchanged at 48: that lint derives nothing, so it authored no query."""
+    unchanged at 48: that lint derives nothing, so it authored no query.
+
+    RE-MEASURED 2026-09-02 (spec §10 seam 6: compute the count, never copy it): the `.rq`
+    population is **49** — `vocab/queries/matrix-body-start.rq`, the AXIOM derivation the
+    2026-09-02 the-body-starts-at-the-stub loop adds (spec
+    `2026-09-02-the-body-starts-at-the-stub-design.md` § 3.1). The `.ttl` population is
+    unchanged at 146: that loop authored no vocabulary."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
     assert len(vocab_nodes) == len(artifact_files()) == 146
-    assert len(query_nodes) == len(query_files()) == 48
+    assert len(query_nodes) == len(query_files()) == 49
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():
