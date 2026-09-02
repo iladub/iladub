@@ -1,14 +1,19 @@
 import pytest
 pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
 
+from rdflib import Graph, URIRef
+
 from tests.etkl.fixtures import (crosstab_drifting_leafrow_pdf, crosstab_table_pdf,
-                                 pivoted_table_pdf, simple_table_pdf)
+                                 pivoted_table_pdf, simple_table_pdf,
+                                 three_level_numeric_header_pdf)
 from iladub.etkl import extract_words, text_lines, detect_bands
 from iladub.etkl.cells import recover_leaf_grid
 from iladub.etkl.headers import header_body_split
+from iladub.etkl.holon import assert_matrix_region
 from iladub.etkl.matrix import (infer_column_tree_by_proximity,
                                 is_matrix_candidate,
                                 classify_matrix, MatrixRegion)
+from iladub.etkl.tiling import region_tiles
 
 
 def _band(maker, tmp_path):
@@ -89,3 +94,27 @@ def test_classify_matrix_none_on_flat_header(tmp_path):
 def test_classify_matrix_none_on_pivot(tmp_path):
     # Loop 2 pivot: stub_data_split None -> not a matrix
     assert classify_matrix(_band(pivoted_table_pdf, tmp_path)) is None
+
+
+def test_numeric_third_header_level_is_a_header_level(tmp_path):
+    """O1 (spec § 5). The years line is typed body by header-body-split.rq (a Numeric line over
+    Currency lines is one Quantity family) but carries no stub cell, so the matrix body cannot
+    start there. Reproduces apple p0 band 2 (spec § 1.2: three levels, tiles) on a synthetic.
+    Falsified by reverting classify_matrix to the type split: logical_rows finds no anchor
+    column and the region is None."""
+    p = tmp_path / "x.pdf"; three_level_numeric_header_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[-1]
+    mreg = classify_matrix(band)
+    assert mreg is not None
+    assert mreg.body_line == 3
+    assert sorted({n.level for n in mreg.col_tree}) == [0, 1, 2]
+    years = {n.covers: n.text for n in mreg.col_tree if n.level == 2}
+    assert years == {(1,): "2026", (2,): "2025", (3,): "2026", (4,): "2025"}
+    for n in mreg.col_tree:
+        if n.level == 2:
+            parent = mreg.col_tree[n.parent]
+            assert parent.level == 1 and parent.covers == n.covers
+    assert len(mreg.leaf_rows) == 3                    # 'Sales:' section row + two data rows
+    g = Graph()
+    assert_matrix_region(g, mreg, band, URIRef("urn:t"), URIRef("urn:doc"), 0)
+    assert region_tiles(g) is True

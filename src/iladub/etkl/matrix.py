@@ -10,7 +10,17 @@ centered-merge and Loop 5's blank-below); the SHACL + round-trip certify the res
 
 Header LEVELS are the band's own lines (band.lines[:split]) — the same grouping
 header_rows_of indexes — never re-derived from word tops with a tolerance of this
-module's own (R45).
+module's own (R45). What `split` IS, at the call site, has moved (see Order of
+operations below): `classify_matrix` passes `infer_column_tree_by_proximity` the
+matrix body start, not `header_body_split`'s type split.
+
+Order of operations (spec 2026-09-02-the-body-starts-at-the-stub-design.md § 3.3), stated
+once, here, and consumed by classify_matrix without restatement: grid -> type split
+(header_body_split) -> stub width (stub_data_split, k) -> matrix body start
+(matrix_body_start, consuming split and k unmodified) -> column tree -> leaf rows -> row
+tree. `header_body_split` and its query stay the global type-transition rule;
+`matrix_body_start` is the matrix-scoped refinement that moves the body start past a
+stubless line without re-deriving `k`.
 """
 from __future__ import annotations
 
@@ -40,11 +50,14 @@ def infer_column_tree_by_proximity(band, grid, split, data_cols):
     """Column tree over the DATA columns by nearest-parent-center assignment.
 
     A header LEVEL IS A BAND LINE: level L is band.lines[L] for L in range(split),
-    and level L's labels are exactly that line's words. `split` is a count of
-    band.lines (header_body_split returns it; header_rows_of dereferences the same
-    integer as band.lines[body_line].top), so the two share one coordinate system.
-    No tolerance is applied here — what a line is has already been decided, once,
-    by the band producer.
+    and level L's labels are exactly that line's words. The `split` argument here is
+    the caller's header-level count, not necessarily `header_body_split`'s own return
+    value: `classify_matrix` passes it `matrix_body_start`'s result (the matrix body
+    start, spec § 3.1), which is >= `header_body_split`'s type split whenever a header
+    level carries no stub cell. Either way `split` is a count of band.lines and
+    header_rows_of dereferences the same integer as band.lines[body_line].top, so the
+    two share one coordinate system. No tolerance is applied here — what a line is has
+    already been decided, once, by the band producer.
 
     For each level, take that line's labels as (text, x_center, word); assign each
     data column to the nearest label center; a node covers the contiguous run
@@ -131,8 +144,10 @@ class MatrixRegion:
 
 
 def classify_matrix(band):
-    """Chain the stages into a MatrixRegion (or None). Mirror of classify_row_hier,
-    with a proximity column tree over the data columns as the extra axis."""
+    """Chain the stages into a MatrixRegion (or None), in order (spec § 3.3): grid -> type
+    split -> k -> matrix body start -> column tree -> leaf rows -> row tree. Mirror of
+    classify_row_hier, with a proximity column tree over the data columns as the extra
+    axis."""
     from .rows import logical_rows
     from .rowheaders import infer_row_header_tree
     grid = recover_leaf_grid(band)
@@ -146,14 +161,17 @@ def classify_matrix(band):
         return None
     stub_cols = tuple(range(k))
     data_cols = tuple(range(k, grid.ncols))
-    col_tree = infer_column_tree_by_proximity(band, grid, split, data_cols)
+    body_start = matrix_body_start(band, grid, split, k)
+    if body_start is None:
+        return None
+    col_tree = infer_column_tree_by_proximity(band, grid, body_start, data_cols)
     if col_tree is None:
         return None
-    leaf_rows = logical_rows(band, grid, band.lines[split].top)
+    leaf_rows = logical_rows(band, grid, band.lines[body_start].top)
     if not leaf_rows:
         return None
     row_tree = infer_row_header_tree(band, grid, stub_cols, leaf_rows)
     if row_tree is None:
         return None
     return MatrixRegion(grid, col_tree, tuple(row_tree), tuple(leaf_rows),
-                        stub_cols, data_cols, split)
+                        stub_cols, data_cols, body_start)
