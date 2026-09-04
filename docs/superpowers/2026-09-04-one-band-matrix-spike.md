@@ -248,3 +248,81 @@ are ruled, so `Three Months Ended` is one cell.
 - **`R160`.** The p1 numbers above are the input to that ruling, not the ruling.
 - **Document score.** Not measured, on any page. The entry counts above are `assert_matrix_region`'s
   return value on a scratch graph, not a compile.
+
+---
+
+## 7. The corpus census — **the licence R165 named is REFUTED**
+
+`R165`'s remedy names one licence: *"do not split at section headings inside one
+`tab:ruleXsSignature`"* — i.e. a maximal contiguous run of bands sharing one rule-x signature is
+one band. That licence had never been run against the corpus. It was, 2026-09-04, on all 7
+documents and all 27 pages (`sectiongraph._rule_xs_signature` over `page_bands`' own bands; the
+census script is scratch, its output is below).
+
+**Runs the licence would produce, and what merging each actually yields:**
+
+| document | page | run | cells today | merged band |
+| --- | --- | --- | --- | --- |
+| apple | 0 | **2..7** | 48 (`ass,esc,ass,esc,esc,esc`) | **124 entries, tiles** ✓ |
+| apple | 1 | **2..3** | 14 (`ass,esc`) | 26 entries, tiles — but the § 3 reading of 2..7 gave **56** |
+| apple | 2 | **3..7** | 3 (`esc,esc,esc,ass,esc`) | `is_matrix_candidate` → **False** |
+| bfs | 3 | 3..5 | 0 (all `ign`) | not run |
+| bfs | 5 | 3..5 | 0 (all `ign`) | not run |
+| bfs | 6 | **3..10** | **216** (`ign,ass,ass,ass,ign,ass,ass,esc`) | `is_matrix_candidate` → **False** |
+| ons | 0 | 0..1 | 0 (all `ign`) | not run |
+| ons | 1 | 8..11 | 0 (all `ign`) | not run |
+| ons | 5 | 9..12 | 0 (all `ign`) | not run |
+| ons | 7 | 2..14 | 0 (all `ign`) | `is_matrix_candidate` → **False** |
+| ons | 8 | 1..7 | 0 (all `ign`) | not run |
+| who | 0,1,2 | — | — | **no runs at all** (4/4/3 ruled bands, 4/4/3 distinct signatures) |
+| cbh, graincorp ×2 | all 5 pages | — | — | **no runs at all** |
+
+Three things follow, and each one is a design constraint the spec has to answer:
+
+### 7.1 The licence UNDERSHOOTS on apple p1 — the confirmed 56-entry reading is out of its reach
+
+p1 has **3 distinct signatures across its 6 ruled bands**, so the licence stops the run at band 3:
+
+```
+  band 2: sig=49.96 52.6 417.16 419.8 488.68 489.64 493.24 562.36 563.08          'June 27, September 27,'
+  band 3: sig=49.96 52.6 417.16 419.8 488.68 489.64 493.24 562.36 563.08          'Non-current assets:'
+  band 4: sig=49.96 52.6 417.16 419.8 488.68 489.64 493.24 560.44 562.36 563.08   'LIABILITIES AND SHAREHOLDERS’ EQUITY:'
+  band 5: sig=49.96 52.6 417.16 419.8 488.68 489.64 493.24 562.36 563.08          'Non-current liabilities:'
+  band 6: sig=49.96 52.6 417.16 419.8 489.64 493.24 563.08                        'Commitments and contingencies'
+  band 7: sig=49.96 52.6 417.16 419.8 488.68 489.64 493.24 562.36 563.08          'Shareholders’ equity:'
+```
+
+Band 4 carries **one extra** x (`560.44`); band 6 — the one-line `Commitments and contingencies`
+band, which has no value cells — is **missing two** (`488.68`, `562.36`). Every other band on the
+page is identical. Set *equality* of the distinct x positions is the wrong relation: band 6's set
+is a strict **subset** of band 5's, band 4's a strict **superset** of band 3's. Loosening equality
+to subsumption would join p1's 2..7 — and that loosening is precisely the kind of thing that needs
+a stated oracle rather than a tolerance (CLAUDE.md §8).
+
+### 7.2 The licence MISSES THE HEADER on apple p2
+
+p2's header band 2 (`Nine Months Ended`) carries **no rules at all**, so its signature is `None`
+and it can never join a run. The licence's run starts at band 3 — the merged band has no column
+header, and `is_matrix_candidate` refuses it. Even with `R167` and `R162` fixed, p2 needs a rule
+that can attach an UNRULED header band to a ruled run beneath it.
+
+### 7.3 An unconditional split change would DESTROY 216 asserted cells on bfs p6
+
+bfs p6's run 3..10 spans six `asserted` bands totalling 216 cells, and the merged band is **not a
+matrix candidate**. The same shape appears at ons p7 (13 bands, run 2..14, not a candidate).
+
+**So the merge cannot be an unconditional change to `page_bands`.** It has to be a *proposal
+disposed by the existing oracle*: attempt the merged reading, keep it only when
+`classify_matrix` + `region_tiles` both accept, and otherwise fall back to the bands as they are
+today. That is the assert/propose/promote shape (CLAUDE.md §3) applied to a band split, and it is
+what makes the change safe on bfs and ons without any per-document knowledge.
+
+### 7.4 What the census does NOT show
+
+- The five untested `ign`-only runs (bfs p3/p5, ons p0/p1/p5/p8) were not merged and not read.
+  They assert nothing today, so the downside is bounded, but "bounded" is not "measured".
+- The fallback design in § 7.3 is **not implemented and not run**. Nothing here shows the compile
+  can be restructured to try a merged reading and fall back cleanly, nor what it costs in the
+  band-index contract (`compile.py:270-297`) that `section_repair_bands`, the per-band decision
+  log and every `#mtableN` / `#tableN` URI depend on.
+- No document score was measured, on any page, under any of this.
