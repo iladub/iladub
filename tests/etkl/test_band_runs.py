@@ -90,8 +90,32 @@ STEM = os.path.join(CORPUS, "ag-trade", "graincorp-stem-2026-07-31.pdf")
 corpus_only = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not fetched")
 
 
+@pytest.fixture
+def as_proposed(monkeypatch):
+    """`page_bands` as the PROPOSER sees it — the unmerged band list.
+
+    PLAN DEFECT, found by measuring the test's setup rather than its assertion
+    (CLAUDE.md § Plan authoring discipline, rule 5). The plan's O1 calls
+    `merge_run_candidates(page_bands(APPLE, 1))`. Once Task 4's seam lands,
+    `page_bands` returns the list WITH accepted runs already spliced, so that
+    expression runs the relation over its own output and derives `()` — the
+    assertion becomes vacuous exactly where it is supposed to bite (apple, the
+    only document whose runs are accepted), while still passing on graincorp-stem,
+    whose run is refused.
+
+    The relation under test is the proposer, and it must be measured on the list
+    the proposer actually reads inside `page_bands`: the unrepaired, unmerged one.
+    Suppressing the DISPOSAL — never the geometry, and at the same late-bound patch
+    point O5 uses — is what recovers it. The assertions are unchanged."""
+    import iladub.etkl.compile as compile_mod
+
+    monkeypatch.setattr(compile_mod, "merged_run_admissible",
+                        lambda merged, first, last, page_number: False)
+
+
+
 @corpus_only
-def test_the_relation_is_subsumption_not_equality_apple_p1():
+def test_the_relation_is_subsumption_not_equality_apple_p1(as_proposed):
     """O1, first half. Under set EQUALITY apple p1 stops at (2,3) — 26 entries, not the
     56 measured. Under adjacent subsumption its six ruled bands are ONE run 2..7.
     (spec § 1.2 refutation 1, § 3.3 Q1/Q2.)"""
@@ -103,7 +127,7 @@ def test_the_relation_is_subsumption_not_equality_apple_p1():
 
 
 @corpus_only
-def test_the_relation_joins_the_dangerous_case_too_graincorp_stem_p0():
+def test_the_relation_joins_the_dangerous_case_too_graincorp_stem_p0(as_proposed):
     """O1, SECOND half, and it is the half that matters: a test that only pinned apple
     would pass for a relation that special-cases it.
 
@@ -118,7 +142,7 @@ def test_the_relation_joins_the_dangerous_case_too_graincorp_stem_p0():
 
 
 @corpus_only
-def test_runs_are_disjoint_and_ascending_across_the_whole_corpus():
+def test_runs_are_disjoint_and_ascending_across_the_whole_corpus(as_proposed):
     """DECISION D: maximal contiguous chains over adjacency on a linear index are
     disjoint BY CONSTRUCTION, which is why § 3.2's 'longest run first, then leftmost'
     tie-break is not implemented. This is the pin that makes that argument checkable

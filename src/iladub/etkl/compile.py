@@ -288,6 +288,22 @@ def page_bands(pdf_path: str, page_number: int = 0,
     `section_repair_bands=None` (the default) is falsy for every index, so every band builds with
     `section_repair=False` — byte-identical to before this parameter existed.
 
+    WHAT AN INDEX NAMES, since R165 (the run is one band): a band, OR A MERGED RUN OF BANDS.
+    Where band-run.rq proposes a contiguous run of ruled bands as one table and
+    `merged_run_admissible` (the existing tiling membrane) accepts it, the run's bands are
+    REPLACED by their merge, at the run's first index. Later indices therefore shift down by
+    `last - first`, and the bands the run absorbed no longer have an index of their own. Three
+    other modules are written against this docstring, so read that literally: an index is still
+    a position in the list THIS function returns and still names the identical band in
+    `compile_tables`' `for idx, band in enumerate(bands)` — but it may now name a band no single
+    `segment` call produced. When the membrane REFUSES a proposal (the case on 12 of the corpus's
+    14 candidate runs) the list is exactly what it was before this paragraph existed.
+
+    `section_repair_bands` indexes the UNREPAIRED list — the one built above, before any merge —
+    which is invariant M1 (spec 2026-09-04-the-run-is-one-band-design.md § 3.1): the partition
+    must not depend on the repair set, or two callers passing different repair sets would be
+    talking about two different index spaces.
+
     Disambiguation (review round 1, minor): "the driver's per-band verdict/report" above means
     THIS function's own caller, `compile_tables`'s per-PAGE loop (`for idx, band in
     enumerate(bands)`) — NOT `document.py`'s multi-PAGE driver, which enumerates pages, not
@@ -304,22 +320,50 @@ def page_bands(pdf_path: str, page_number: int = 0,
     page_chars = extract_chars(pdf_path, page_number) if page_rules else []
     raw_bands = detect_bands(text_lines(words))
     bands = []
+    # Per index, the (sub, sub_rules, sub_hrules) a RULED band was built from, or None for an
+    # unruled one. Kept so a named band can be REBUILT with section_repair=True after the run
+    # partition has been decided on the unrepaired list — that is invariant M1, and it costs
+    # exactly +1 _build_ruled_band per named band: the page's extract_*/detect_bands/segment
+    # machinery still runs once.
+    specs: list[tuple | None] = []
     for band in raw_bands:
         for sub in segment(band):
             sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
             sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
-            idx = len(bands)             # the position this band is about to occupy
             if not sub_rules:
                 bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
+                specs.append(None)
                 continue
             # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
             # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
             # become columns only when the header confirms them (_build_ruled_band, the seam).
-            section_repair = bool(section_repair_bands) and idx in section_repair_bands
             bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
-                                           section_repair=section_repair))
+                                           section_repair=False))
+            specs.append((sub, sub_rules, sub_hrules))
     from .unitmarker import absorb_unit_markers
     bands = [absorb_unit_markers(b) for b in bands]
+
+    # PROPOSE (AXIOM, open world) then DISPOSE (the existing closed-world tiling membrane).
+    # Both read the UNREPAIRED list: M1 says the partition is a pure function of the build with
+    # section_repair=False, for every value of section_repair_bands. `merged_run_admissible` is
+    # looked up as a module global on purpose — that late binding is O5's only patch point.
+    from .sectiongraph import merge_run_candidates
+    accepted = [(first, last) for first, last in merge_run_candidates(bands)
+                if merged_run_admissible(merge_bands(bands, first, last),
+                                         first, last, page_number)]
+
+    # Only NOW is the repair flag applied, to the constituent bands WITHIN the fixed partition.
+    if section_repair_bands:
+        for idx in sorted(section_repair_bands):
+            if 0 <= idx < len(specs) and specs[idx] is not None:
+                sub, sub_rules, sub_hrules = specs[idx]
+                bands[idx] = absorb_unit_markers(
+                    _build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
+                                      section_repair=True))
+
+    # Splice DESCENDING by first, so an earlier run's indices are not invalidated mid-splice.
+    for first, last in sorted(accepted, reverse=True):
+        bands[first:last + 1] = [merge_bands(bands, first, last)]
     return bands
 
 
@@ -349,6 +393,48 @@ def merge_bands(bands, first: int, last: int):
         captions=tuple(c for b in run for c in b.captions),
         unit_markers=tuple(m for b in run for m in b.unit_markers),
     )
+
+
+
+# The scratch document a run PROPOSAL is offered against. It is a placeholder and never
+# reaches any graph that survives: MEASURED 2026-09-04 over all 14 corpus runs against three
+# unrelated (doc, fragment) pairs, 0 verdicts differ — no stage of the disposal chain reads
+# either URI. That is why merged_run_admissible does not take a doc URI.
+_RUN_PROPOSAL_DOC = URIRef("urn:iladub:run-proposal")
+
+
+def merged_run_admissible(merged, first: int, last: int, page_number: int) -> bool:
+    """Does the existing tiling membrane accept the merged run `first..last` as ONE table?
+
+    THE WHOLE OF D2 (spec § 2), and deliberately a single named module-level function
+    rather than four inlined stages. It offers `merged` to the identical chain
+    `compile_tables` already runs for a matrix band — is_matrix_candidate ->
+    classify_matrix -> assert_matrix_region -> region_tiles — on a SCRATCH graph that is
+    discarded either way. The derivation (band-run.rq) enumerates; this disposes.
+
+    A refusal costs nothing observable: the scratch graph is dropped, no decision-log node
+    is recorded, no report is written, and the page is byte-identical to a page whose
+    proposal was never made (spec § 3.2, pinned by test_a_refused_run_leaves_the_page_byte_identical).
+    It is NOT free on the clock — graincorp-stem p0's refusal costs 3.06s at
+    is_matrix_candidate alone (R172).
+
+    `first`/`last` are in the signature because O5 keys its forced acceptance on the RUN
+    (`(first, last) == (2, 5)`) rather than on a band's line count; `page_bands` looks this
+    function up as a plain module global, so monkeypatching the module attribute reaches
+    it — the same late binding the shipped chain already relies on."""
+    from .matrix import is_matrix_candidate, classify_matrix
+    from .holon import assert_matrix_region
+    from .tiling import region_tiles
+    if not is_matrix_candidate(merged):
+        return False
+    mreg = classify_matrix(merged)
+    if mreg is None:
+        return False
+    scratch = Graph()
+    assert_matrix_region(scratch, mreg, merged,
+                         URIRef(f"{_RUN_PROPOSAL_DOC}#mtable{first}"),
+                         _RUN_PROPOSAL_DOC, page_number)
+    return bool(region_tiles(scratch))
 
 
 @dataclass(frozen=True)
