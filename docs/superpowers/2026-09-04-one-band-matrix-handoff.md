@@ -53,10 +53,22 @@ or run.**
 
 **Why proposed, not asserted:** every one of the three rests on a census this session ran once, on
 a merge performed *after* `page_bands` returned. Nothing here shows `page_bands` can be
-restructured to produce a candidate merged band and fall back cleanly, nor what that costs the
-band-index contract (`compile.py:270-297`) that `section_repair_bands`, the per-band decision log
-and every `#mtableN` / `#tableN` URI depend on. **The band-index question is the one that could
-sink the design, and it has not been looked at at all.**
+restructured to produce a candidate merged band and fall back cleanly.
+
+**The band-index question — named here first as "the one that could sink the design" — WAS then
+measured** (evidence doc § 8). It does not sink it, on this corpus: **zero bands renumber**, because
+every run the oracle accepts is a page tail, and the full compile reaches page score 1.0000 on p0
+and p1 with the apple document score going **0.1895 → 0.6289**. Read § 8 rather than this paragraph.
+What § 8 nevertheless surfaced, and what the spec must answer:
+
+- the index is persisted into the **shipped** graph and onward into the **grounded** graph
+  (`ground.py:100` mints `urn:iladub:region:<fragment>` node IRIs from it), so a renumbering is an
+  identity change in published output, not an internal detail;
+- **three** two-pass flows use pass-1 indices against pass-2 results, and the merge touches one of
+  them directly — adoption, where `grid_idx = len(pages[p].regions)` (`document.py:1657`) goes
+  8 → 3 on the two merged pages;
+- **the corpus contains no non-tail run that the oracle accepts**, so the one dangerous case has no
+  evidence at all. A spec that relies on "accepted runs are tails" is relying on a corpus accident.
 
 ### ASSERTED — a small, separable piece, safe to do first or never
 
@@ -95,11 +107,17 @@ licence that prediction's remedy names, before anything was designed on *that*. 
 | **R165's own `tab:ruleXsSignature` licence is REFUTED by the corpus** | evidence doc § 7; `R165` row last cell |
 | **Maintainer ruling: build first, re-measure `R160` after** | **this file § 5 only** — nowhere else; reversible |
 | The three-part design shape in § 5 | **this file § 5 only**, graded PROPOSED; nothing built |
+| The band-index renumbering is measured: zero bands renumber on this corpus | evidence doc § 8; `R165` row |
+| `R160`'s 0.3587-vs-0.1895 numbers are superseded by 0.6289, and adoption never fires either way | evidence doc § 8.4; `R160` row last cell |
+| **`R160` itself is NOT ruled** — the measurement is in, the call is the maintainer's | `R160` row; nowhere else |
 
 ## 4. Unverified or assumed
 
 - **The three-part design in § 5 is a proposition. None of it is implemented or run.**
-- **The band-index renumbering was not examined at all** — the single largest unknown.
+- **The band-index renumbering WAS examined** (evidence doc § 8) — but only for runs this corpus contains. **No non-tail run that the oracle accepts exists anywhere in the corpus**, so the case § 8.5 says would be dangerous is entirely unmeasured.
+- The § 8.4 document compiles ran with `validate_shapes=False`: the membrane was not exercised.
+- The 20 index-pinning test files were **not** run against a merged compile. Which ones would change (evidence doc § 8.5 (d)) is read off their source, not off a failing run.
+- § 8.4 patches `page_bands` from outside with a hard-coded run. It shows the compile survives a merged band; it shows nothing about a licence selecting one.
 - The subsumption relation in § 5 part 2 was **not run**. That apple p1 band 6's x-set is a strict
   subset of band 5's is read off the printed signatures in evidence doc § 7.1, not computed.
 - Five signature runs (bfs p3/p5, ons p0/p1/p5/p8) were censused but **never merged or read**. They
