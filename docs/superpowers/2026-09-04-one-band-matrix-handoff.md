@@ -8,6 +8,16 @@ corpus, and **it is refuted**.
 **Part 5 was written first**, before parts 1–4, per `CLAUDE.md` § "The handoff's next action is
 TYPED", and is graded per action.
 
+**But it was AMENDED twice, late, and the second amendment is exactly what that rule warns about.**
+The maintainer asked for the band-index measurement after this file already existed, so part 5's
+design list grew a fourth item — and that item was authored at ~170,000 working tokens, 3.4× the
+50K originating floor, which is the condition the rule exists to prevent. Two consequences, stated
+rather than hidden: the four design parts are **not** of equal provenance (1–3 were written under
+the floor, 4 was not), and part 4 of *this* file is the one to trust over part 5 if they disagree.
+Parts 1–4 are pointers and records, which do not degrade; part 5's fourth item is originating
+reasoning written at the worst moment for it. **Re-derive it from evidence doc § 8.5 rather than
+inheriting it.**
+
 **Doc impact: none.**
 
 ---
