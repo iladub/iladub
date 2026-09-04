@@ -14,10 +14,18 @@ TYPED", and is graded per action.
 
 ## 5. The next concrete action — TYPED
 
+> **The next session writes the SPEC.** All three measurements this loop was raised to make are in:
+> the one-band prediction (§ 2–3), the licence (§ 7), and the band-index renumbering (§ 8). Nothing
+> further needs measuring before a spec can be written, and no code was written this loop.
+> **The spec is originating work — start it in a fresh session, under the 50K floor** (CLAUDE.md
+> § Loop & context hygiene). This loop authored none of it deliberately; it ended at 2.3× that floor.
+
 ### ASSERTED — mechanical, the outcome is known and doing it is the work
 
-Read `docs/superpowers/2026-09-04-one-band-matrix-spike.md` § 2–3 (the confirmation) and **§ 7 (the
-refutation)** for the readings, not this file. Re-run either instrument if the compile has changed:
+Read `docs/superpowers/2026-09-04-one-band-matrix-spike.md` § 2–3 (the confirmation), **§ 7 (the
+licence refuted)** and **§ 8 (the band index)** for the readings, not this file. § 8.6 is the list
+of what § 8 does *not* settle and is the shortest thing worth reading twice. Re-run either
+instrument if the compile has changed:
 
 ```
 PYTHONPATH=. .venv/bin/python scripts/one_band_matrix_spike.py \
@@ -26,13 +34,14 @@ PYTHONPATH=. .venv/bin/python scripts/one_band_matrix_spike.py \
 
 The maintainer's ruling, 2026-09-04, recorded nowhere but here: **build first, re-measure `R160`
 after** — do not rule the reader-authority question against the 0.3587-vs-0.1895 numbers, because
-the one-band reading is about to invalidate them. `R160` closes as dissolved or is ruled against
-the new numbers.
+the one-band reading was about to invalidate them. **It did** (§ 8.4: document score 0.6289, and
+`adopted=()` in both runs). `R160`'s measurement is therefore complete and **its ruling is still
+open and is the maintainer's** — a spec may cite § 8.4 but must not rule it in passing.
 
-### PROPOSED — the spec's shape, which rests on § 7 and on nothing that has been built
+### PROPOSED — the spec's shape, which rests on § 7–8 and on nothing that has been built
 
-The evidence supports a three-part design. **Each part is a proposition; none has been implemented
-or run.**
+The evidence supports a **four**-part design. **Each part is a proposition; none has been
+implemented or run.** Parts 1–3 come from § 7; part 4 is what § 8 added.
 
 1. **The merge is a PROPOSAL, never an unconditional band split.** § 7.3 is the falsifying case:
    bfs p6's signature run 3..10 spans six `asserted` bands, 216 cells, and its merged band is not
@@ -51,7 +60,15 @@ or run.**
    strength reaches it. This is a *separate* rule from 2, and p2 additionally needs `R167` and
    `R162`, so **p2 is out of scope for the first loop** — say so in the spec's "what is NOT done".
 
-**Why proposed, not asserted:** every one of the three rests on a census this session ran once, on
+4. **The design must be correct for a non-tail merge, which this corpus cannot exercise.** § 8.1
+   measured zero renumbering only because every run the oracle accepts happens to end at the last
+   band on its page. § 8.5 lists what breaks otherwise: the index is persisted into the shipped and
+   **grounded** graphs (`ground.py:100`), and three two-pass flows use pass-1 indices against pass-2
+   results — adoption (`document.py:1657-1740`) being the one the merge touches directly, where
+   `grid_idx = len(pages[p].regions)` goes 8 → 3. **The spec must state what happens to a non-tail
+   accepted merge and supply its own fixture**, because no corpus document will fail for it.
+
+**Why proposed, not asserted:** every one of the four rests on a census this session ran once, on
 a merge performed *after* `page_bands` returned. Nothing here shows `page_bands` can be
 restructured to produce a candidate merged band and fall back cleanly.
 
