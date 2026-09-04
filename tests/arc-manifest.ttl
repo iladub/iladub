@@ -256,7 +256,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:120" ;
+    prog:source "tests/corpus-manifest.ttl:122" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-31"^^xsd:date ;
