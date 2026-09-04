@@ -323,6 +323,34 @@ def page_bands(pdf_path: str, page_number: int = 0,
     return bands
 
 
+def merge_bands(bands, first: int, last: int):
+    """The run `bands[first..last]` as one `Band`. Lines in document order; top/bottom the run's
+    extent; rules/hrules/captions/unit_markers concatenated. `column_xs` is taken from the first
+    band in the run that carries any — NOT unioned: `column_xs` is a boundary vector, and mixing
+    two vectors would invent boundaries no band derived.
+
+    Promoted verbatim from scripts/one_band_matrix_spike.py (R165), which now imports it: a
+    second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
+    prevent, and the script is committed evidence whose output must stay reproducible.
+
+    It covers ALL EIGHT of `Band`'s fields. A ninth would be silently defaulted here and nothing
+    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count."""
+    from .bands import Band
+    run = bands[first:last + 1]
+    lines = tuple(ln for b in run for ln in b.lines)
+    col_xs = next((b.column_xs for b in run if b.column_xs), ())
+    return Band(
+        lines=lines,
+        top=min(b.top for b in run),
+        bottom=max(b.bottom for b in run),
+        rules=tuple(r for b in run for r in b.rules),
+        hrules=tuple(h for b in run for h in b.hrules),
+        column_xs=col_xs,
+        captions=tuple(c for b in run for c in b.captions),
+        unit_markers=tuple(m for b in run for m in b.unit_markers),
+    )
+
+
 @dataclass(frozen=True)
 class RegionReport:
     kind: RegionKind

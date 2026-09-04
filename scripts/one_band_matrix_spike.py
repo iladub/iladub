@@ -34,25 +34,10 @@ from rdflib import Graph, URIRef
 TAB = "https://w3id.org/iladub/tab#"
 
 
-def merge_bands(bands, first: int, last: int):
-    """The run `bands[first..last]` as one `Band`. Lines in document order; top/bottom the run's
-    extent; rules/hrules/captions/unit_markers concatenated. `column_xs` is taken from the first
-    band in the run that carries any — NOT unioned: `column_xs` is a boundary vector, and mixing
-    two vectors would invent boundaries no band derived."""
-    from iladub.etkl.bands import Band
-    run = bands[first:last + 1]
-    lines = tuple(ln for b in run for ln in b.lines)
-    col_xs = next((b.column_xs for b in run if b.column_xs), ())
-    return Band(
-        lines=lines,
-        top=min(b.top for b in run),
-        bottom=max(b.bottom for b in run),
-        rules=tuple(r for b in run for r in b.rules),
-        hrules=tuple(h for b in run for h in b.hrules),
-        column_xs=col_xs,
-        captions=tuple(c for b in run for c in b.captions),
-        unit_markers=tuple(m for b in run for m in b.unit_markers),
-    )
+# merge_bands was PROMOTED to iladub.etkl.compile (R165 Task 3) and is imported here rather
+# than copied: this script is committed evidence and its output must stay reproducible, but a
+# second copy of the constructor is the drift `page_bands`' docstring exists to prevent.
+from iladub.etkl.compile import merge_bands  # noqa: E402,F401
 
 
 def main(argv):

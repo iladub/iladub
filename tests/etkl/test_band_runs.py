@@ -3,6 +3,7 @@
 Spec: docs/superpowers/specs/2026-09-04-the-run-is-one-band-design.md
 Plan: docs/superpowers/plans/2026-09-04-the-run-is-one-band.md
 """
+import dataclasses
 import os
 
 import pytest
@@ -134,3 +135,37 @@ def test_runs_are_disjoint_and_ascending_across_the_whole_corpus():
             span = set(range(first, last + 1))
             assert not (span & seen), f"overlapping runs on {pdf} p{page}: {runs}"
             seen |= span
+
+
+# --- Task 3: merge_bands, promoted from the spike ---
+
+
+def test_merge_bands_covers_every_field_of_band():
+    """A ninth Band field would be SILENTLY DEFAULTED by merge_bands, and nothing else
+    in the suite would notice. Band has 8 fields (bands.py:16-34). If this fails, a
+    field was added: decide how the merge carries it, then move this number."""
+    from iladub.etkl.bands import Band
+
+    assert len(dataclasses.fields(Band)) == 8, [f.name for f in dataclasses.fields(Band)]
+
+
+def test_column_xs_comes_from_the_first_carrier_and_is_never_unioned():
+    """The contract's load-bearing clause. column_xs is a BOUNDARY VECTOR: unioning two
+    vectors invents boundaries no band derived."""
+    from iladub.etkl.compile import merge_bands
+
+    a = dataclasses.replace(_band([10.0]), column_xs=())
+    b = dataclasses.replace(_band([10.0], y=20.0), column_xs=(1.0, 2.0))
+    c = dataclasses.replace(_band([10.0], y=40.0), column_xs=(7.0, 8.0))
+    merged = merge_bands([a, b, c], 0, 2)
+    assert merged.column_xs == (1.0, 2.0), "first CARRIER, not first band, and not a union"
+
+
+def test_merge_bands_takes_the_runs_extent_and_concatenates_the_rest():
+    from iladub.etkl.compile import merge_bands
+
+    a, b = _band([10.0], y=0.0), _band([20.0], y=20.0)
+    merged = merge_bands([a, b], 0, 1)
+    assert merged.top == min(a.top, b.top) and merged.bottom == max(a.bottom, b.bottom)
+    assert merged.lines == a.lines + b.lines
+    assert len(merged.rules) == len(a.rules) + len(b.rules)
