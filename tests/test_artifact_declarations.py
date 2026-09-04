@@ -150,12 +150,17 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     population is **49** — `vocab/queries/matrix-body-start.rq`, the AXIOM derivation the
     2026-09-02 the-body-starts-at-the-stub loop adds (spec
     `2026-09-02-the-body-starts-at-the-stub-design.md` § 3.1). The `.ttl` population is
-    unchanged at 146: that loop authored no vocabulary."""
+    unchanged at 146: that loop authored no vocabulary.
+
+    RE-MEASURED 2026-09-04: the `.rq` population is **50** — `vocab/queries/band-run.rq`, the
+    adjacent-subsumption run derivation the R165 the-run-is-one-band loop adds (spec
+    `2026-09-04-the-run-is-one-band-design.md` § 3.4). The `.ttl` population is unchanged at
+    146: that loop declares its four new terms inside the existing `vocab/ontology/tab.ttl`."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
     assert len(vocab_nodes) == len(artifact_files()) == 146
-    assert len(query_nodes) == len(query_files()) == 49
+    assert len(query_nodes) == len(query_files()) == 50
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

@@ -67,14 +67,18 @@ EXPECTED_VERDICTS = {
         ("RECORD_TABLE", 1, False, None),
         ("NON_TABLE", None, None, None),
     ],
+    # RE-BASELINED 2026-09-04 (R165, the run is one band): 8 entries -> 3. This is NOT a
+    # verdict moving; it is the PARTITION moving. apple p0's bands 2..7 are a contiguous run
+    # whose rule-x sets subsume one another, band-run.rq proposes them as one table, and the
+    # tiling membrane ACCEPTS — so six of the eight page-0 bands no longer exist as separate
+    # bands, and the single entry that replaces them is their merge. The three that remain
+    # are: two NON_TABLE strips, then the merged band, which classify reads as
+    # UNSUPPORTED_TABLE and the matrix path asserts as 124 entries (48 cells at the previous
+    # baseline). stem, cbh and capacity are UNCHANGED — measured, not assumed: no run on
+    # their page 0 is accepted.
     "apple": [
         ("NON_TABLE", None, None, None),
         ("NON_TABLE", None, None, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
-        ("RECORD_TABLE", 1, False, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
-        ("UNSUPPORTED_TABLE", 1, False, None),
         ("UNSUPPORTED_TABLE", 1, False, None),
     ],
 }
@@ -124,7 +128,16 @@ def test_apple_band_4_is_no_longer_seen_as_transposed():
     The band is located by CONTENT ("(171)", the parenthesized cell the spec's measurement
     keys off) rather than a fixed index — band ORDER is not this test's claim, band IDENTITY
     is, and content-lookup survives a future band-ordering change that would otherwise let the
-    wrong band pass silently."""
+    wrong band pass silently.
+
+    RE-BASELINED 2026-09-04 (R165, the run is one band), and the content-lookup is exactly
+    what made it a re-baseline rather than a rewrite. The '(171)' ink used to sit in page-0
+    band 4 on its own (5 columns, kind RECORD_TABLE). It now sits INSIDE the merged band at
+    index 2 (3 columns), which classify reads as UNSUPPORTED_TABLE because the merged reading
+    is a matrix, not a record table. WHAT THE NEW KIND MEANS is exactly that, and nothing
+    about transposition: the load-bearing assertion below — looks_transposed is False, the
+    Quantity family being applied — is UNCHANGED and still measured False on the merged band.
+    Only the kind moved, and it moved because the partition did."""
     apple = os.path.join(ROOT, "corpus/financial/apple-fy2026q3-statements.pdf")
     if not os.path.exists(apple):
         pytest.skip("corpus document not fetched")
@@ -136,7 +149,7 @@ def test_apple_band_4_is_no_longer_seen_as_transposed():
     assert len(hits) == 1, f"expected exactly one band containing '(171)', found {len(hits)}"
     b = hits[0]
     reg = classify(b)
-    assert reg.kind.name == "RECORD_TABLE"
+    assert reg.kind.name == "UNSUPPORTED_TABLE"
     assert looks_transposed(reg) is False, \
         "band containing '(171)' still reads as transposed — the Quantity family is not " \
         "being applied"

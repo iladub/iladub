@@ -25,6 +25,7 @@ band-local repair.
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from pathlib import Path
 from typing import Sequence
 
@@ -39,6 +40,7 @@ TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
 
 SECTION_REPEAT_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "section-repeat.rq"
+BAND_RUN_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "band-run.rq"
 
 
 def _line_text(line) -> str:
@@ -175,6 +177,16 @@ def _leading_box_y(band: Band, rules: Sequence[Rule]) -> tuple[float, float] | N
     return None
 
 
+def _distinct_rule_xs(rules: Sequence[Rule]) -> list[float]:
+    """The band's DISTINCT vertical rule x-positions, rounded to 2dp, ascending.
+
+    THE single rounding site, shared by `_rule_xs_signature` (section recognition)
+    and `run_evidence` (the R165 run derivation). A second site would let the two
+    derivations quietly disagree about what "the same x" means. The 2dp is
+    INHERITED, not tuned here or by either caller."""
+    return sorted({round(r.x, 2) for r in rules})
+
+
 def _rule_xs_signature(rules: Sequence[Rule]) -> str | None:
     """The band's DISTINCT rounded (2dp) rule x-positions, space-joined ascending —
     a canonical string fact for set identity (brief's licensed shape). Deliberately
@@ -183,7 +195,7 @@ def _rule_xs_signature(rules: Sequence[Rule]) -> str | None:
     exactly the test the doubled-edge shape defeats (see module docstring) — using
     its output here would just reintroduce that defeat one level up. None when the
     band carries no rules at all."""
-    xs = sorted({round(r.x, 2) for r in rules})
+    xs = _distinct_rule_xs(rules)
     if not xs:
         return None
     return " ".join(str(x) for x in xs)
@@ -205,6 +217,45 @@ def section_evidence(bands: Sequence[tuple[int, Band, tuple[Rule, ...]]]) -> Gra
         g.add((u, TAB.bandIndex, Literal(idx, datatype=XSD.integer)))
         g.add((u, TAB.headerBoxText, Literal(text)))
         g.add((u, TAB.ruleXsSignature, Literal(sig)))
+    return g
+
+
+def run_evidence(bands: Sequence[Band]) -> Graph:
+    """Emit the transient per-page run-evidence graph for band-run.rq (R165): one
+    `tab:RuledBand` node per band THAT CARRIES RULES, carrying its `tab:bandIndex`,
+    its predecessor's index (`tab:prevBandIndex`, omitted at index 0), and one
+    `tab:bandRuleX` per DISTINCT rounded x-position.
+
+    The index is the band's position in the passed list — `compile.page_bands`'
+    single index space (spec § 3.0), which is why this takes the plain band list
+    rather than `section_evidence`'s (idx, band, rules) triples: a parallel index
+    built by the caller would be a second index space.
+
+    A band with NO rules emits NOTHING — no node, no type triple. That honest
+    abstain (section_evidence's `continue`, for a different population) is the whole
+    protection: a node carrying zero `tab:bandRuleX` facts would satisfy both legs
+    of the query's subsumption VACUOUSLY and join every adjacent band in both
+    directions. The query cannot defend against it; only the emitter can.
+
+    `tab:prevBandIndex` is emitted whether or not the predecessor emitted a node.
+    When the predecessor abstained, the join simply finds nothing — which is
+    correct: an unruled band never joins, and it breaks the chain (DECISION C).
+
+    Each x is emitted as `Decimal(str(x))` so the lexical form is canonical: the
+    query's `NOT EXISTS` legs match by TERM, not by value, and one emitter for every
+    literal is what makes that sound."""
+    g = Graph()
+    for idx, band in enumerate(bands):
+        xs = _distinct_rule_xs(band.rules)
+        if not xs:
+            continue
+        u = _EV["runband-%d" % idx]
+        g.add((u, RDF.type, TAB.RuledBand))
+        g.add((u, TAB.bandIndex, Literal(idx, datatype=XSD.integer)))
+        if idx > 0:
+            g.add((u, TAB.prevBandIndex, Literal(idx - 1, datatype=XSD.integer)))
+        for x in xs:
+            g.add((u, TAB.bandRuleX, Literal(Decimal(str(x)))))
     return g
 
 
@@ -243,3 +294,36 @@ def section_candidates(bands: Sequence[tuple[int, Band, tuple[Rule, ...]]]) -> t
         key=lambda t: t[0],
     )
     return tuple(groups)
+
+
+def merge_run_candidates(bands: Sequence[Band]) -> tuple[tuple[int, int], ...]:
+    """Maximal contiguous runs of ruled bands that band-run.rq derives as ONE table
+    candidate, as (first, last) pairs with last > first — ascending by first,
+    DISJOINT, deterministic. A page with no candidate run returns ().
+
+    The PROCEDURAL half only (the relation itself is band-run.rq, AXIOM): build the
+    per-page evidence graph, run the query, walk the derived adjacent pairs into
+    chains. `section_candidates` unions its pairs because those are NON-adjacent
+    repeats and a group is a connected component; these pairs are adjacent links on a
+    linear index, so the assembly is a WALK and the chains are maximal.
+
+    Disjointness is by construction, not by a tie-break: maximal chains under an
+    adjacent relation over a linear index cannot overlap (DECISION D — spec § 3.2's
+    'longest run first, then leftmost' presupposes an enumerator that can propose
+    overlapping runs, and this is not one). The invariant is pinned by
+    tests/etkl/test_band_runs.py rather than defended by dead code here.
+
+    This ENUMERATES; it settles nothing. `compile.merged_run_admissible` disposes."""
+    g = run_evidence(bands)
+    succ: dict[int, int] = {}
+    for row in g.query(BAND_RUN_RQ.read_text()):
+        succ[int(row.a)] = int(row.b)
+
+    tails = set(succ.values())
+    runs: list[tuple[int, int]] = []
+    for first in sorted(k for k in succ if k not in tails):
+        last = first
+        while last in succ:
+            last = succ[last]
+        runs.append((first, last))
+    return tuple(runs)

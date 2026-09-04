@@ -1,0 +1,35 @@
+# band-run.rq — the adjacent-subsumption run derivation (R165, spec
+# 2026-09-04-the-run-is-one-band-design.md § 3.3/§ 3.4).
+#
+# Open-world derivation over the per-page run-evidence graph (the page is the closure
+# boundary — one fresh Graph per merge_run_candidates call, exactly as section-repeat.rq,
+# classify-kind.rq and grid-region.rq close within their own transient graphs). Two
+# ADJACENT ruled bands extend the same run iff one band's set of distinct rounded rule
+# x-positions is a SUBSET of the other's, in EITHER direction — a continuation band that
+# redraws only some of the table's rules subsumes, and a title band drawn with the
+# table's outer rules is subsumed. Adjacency is the tab:prevBandIndex join, never
+# arithmetic: every value compared here is a FACT emitted by sectiongraph.run_evidence,
+# and this query contains no numeric literal.
+#
+# This derivation ENUMERATES CANDIDATES AND SETTLES NOTHING. Whether a proposed run is
+# actually one table is disposed of by the existing closed-world tiling membrane
+# (compile.merged_run_admissible: is_matrix_candidate -> classify_matrix ->
+# assert_matrix_region -> region_tiles), on a scratch graph that is discarded on refusal.
+# That split is why the derivation is AXIOM under CLAUDE.md §8 and not a NEURAL
+# violation: the reading judgement §8 sends to NEURAL is the one that DISPOSES.
+#
+# A band carrying no rules emits no node at all (run_evidence's honest abstain), so it
+# can never appear here and it breaks the chain. The two subsumption legs sit inside ONE
+# FILTER and not two UNION branches: a UNION branch is evaluated independently, so ?a and
+# ?b would fall out of scope. Each leg is holon-scoped (NOT EXISTS closes WITHIN this one
+# page graph while the graph stays open). The reader (merge_run_candidates) assembles the
+# derived (?a, ?b) adjacent pairs into maximal contiguous chains.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?a ?b WHERE {
+  ?u1 a tab:RuledBand ; tab:bandIndex ?a .
+  ?u2 a tab:RuledBand ; tab:bandIndex ?b ; tab:prevBandIndex ?a .
+  FILTER(
+       NOT EXISTS { ?u1 tab:bandRuleX ?x . FILTER NOT EXISTS { ?u2 tab:bandRuleX ?x } }
+    || NOT EXISTS { ?u2 tab:bandRuleX ?y . FILTER NOT EXISTS { ?u1 tab:bandRuleX ?y } }
+  )
+}

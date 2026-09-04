@@ -116,10 +116,13 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
 
     RE-MEASURED 2026-09-02 (spec §10 seam 6: compute the count, never copy it): 48 -> 49,
     `matrix-body-start.rq` this loop adds (2026-09-02-the-body-starts-at-the-stub-design.md
-    § 3.1)."""
+    § 3.1).
+
+    RE-MEASURED 2026-09-04: 49 -> 50, `band-run.rq` the R165 the-run-is-one-band loop adds
+    (2026-09-04-the-run-is-one-band-design.md § 3.4)."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 49, sorted(focus)
+    assert len(focus) == len(query_files()) == 50, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

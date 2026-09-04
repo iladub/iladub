@@ -50,13 +50,17 @@ def test_every_authored_query_parses():
 
 
 def test_the_population_is_every_file_in_vocab_queries():
-    """The population is enumerated from the directory, never typed (G3). 49 today; this
+    """The population is enumerated from the directory, never typed (G3). 50 today; this
     asserts the identity with the glob first, and the count second as the pin against the
     glob itself collapsing. RE-MEASURED 2026-08-29: 46 -> 48, the two queries this loop's D1 and
     D2 derivations add (`vocabulary-role.rq`, `alignment-subject.rq`).
 
     RE-MEASURED 2026-09-02 (spec §10 seam 6: compute the count, never copy it): 48 -> 49,
     `matrix-body-start.rq` the 2026-09-02 the-body-starts-at-the-stub loop adds (spec
-    `2026-09-02-the-body-starts-at-the-stub-design.md` § 3.1)."""
+    `2026-09-02-the-body-starts-at-the-stub-design.md` § 3.1).
+
+    RE-MEASURED 2026-09-04: 49 -> 50, `band-run.rq` the R165 the-run-is-one-band loop
+    adds — the adjacent-subsumption derivation that proposes a contiguous run of ruled
+    bands as one band (spec `2026-09-04-the-run-is-one-band-design.md` § 3.4)."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 49, len(query_files())
+    assert len(query_files()) == 50, len(query_files())

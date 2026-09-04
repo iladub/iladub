@@ -896,15 +896,35 @@ def test_fallback_fires_only_where_the_page_produced_nothing_at_all():
     assert sum(r.cells for r in on.regions) == 276
 
 
-@corpus_only
+@stem_only
 def test_fallback_never_masks_an_escalation():
-    """apple page 1 escalates. The fallback must leave it alone — an escalation is a
-    result, and filling it in silently is what §7 forbids."""
+    """graincorp-stem page 1 escalates and asserts NOTHING. The fallback must leave it alone —
+    an escalation is a result, and filling it in silently is what §7 forbids.
+
+    RETARGETED 2026-09-04, apple page 1 -> graincorp-stem page 1 (R165, plan Task 5 Step 3).
+    This is a deliberate ruling, not a re-baseline: the old fixture failed at its own
+    precondition (`assert 0 > 0`, "this page is supposed to escalate") because apple p1 now
+    reads as one band and stops escalating entirely.
+
+    BOTH CLAUSES ARE ASSERTED BELOW, and that is the whole content of the repair. The gate
+    this test guards is `asserted_total == 0 and escalated_total == 0`. A page that asserts
+    ANYTHING declines on the FIRST clause, so `and` short-circuits and the escalation clause
+    is never the operative reason — the test would pass without ever exercising what it is
+    named for. apple p1 asserted 14 at baseline, so this test had not isolated the escalation
+    clause for some time already; the merge exposed that, it did not cause it. (The plan's
+    proposed replacement, apple page 2, was REFUTED for exactly the same reason: it asserts 3.)
+
+    graincorp-stem p1 is the corpus's largest escalation — MEASURED 2026-09-04: asserted=0,
+    escalated=850 — so a fallback that fired here would be unmissable. It is also completely
+    unchanged by the merge, which is why it is a stable witness rather than another fixture
+    that drifts on the next reading improvement."""
     from iladub.etkl.compile import compile_tables
 
-    off = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=False)
-    on = compile_tables(APPLE, 1, validate_shapes=False, datagrid_fallback=True)
-    assert off.escalated > 0, "fixture drift: this page is supposed to escalate"
+    off = compile_tables(STEM, 1, validate_shapes=False, datagrid_fallback=False)
+    on = compile_tables(STEM, 1, validate_shapes=False, datagrid_fallback=True)
+    assert off.asserted == 0 and off.escalated > 0, \
+        "fixture drift: this page must assert NOTHING and escalate, or the gate's escalation " \
+        "clause is never the operative one"
     assert on.score == off.score
     assert len(on.regions) == len(off.regions)
 
@@ -1145,6 +1165,13 @@ def test_adoption_never_touches_a_page_that_read_something():
     income-statement header band asserts 28 cells beside the RECORD_TABLE's 20 (spec
     2026-09-02-the-body-starts-at-the-stub-design.md § 1.2, oracles O1/O5). The rise is NOT
     cited as better reading -- see the § 1.4 rule and R154's closure row; the pin exists so
+    that a movement is loud.
+
+    RE-MEASURED 2026-09-04, loop `the-run-is-one-band` (R165): the cell pin moved 48 -> 124,
+    and the page is STILL UNCHANGED as this test's subject -- it reads something, which is the
+    whole gate. Page 0's bands 2..7 are one accepted merged band, so the two regions that
+    asserted 28 and 20 cells separately are now one region asserting 124. The rise is NOT
+    cited as better reading -- see the § 1.4 rule and R154's closure row; the pin exists so
     that a movement is loud."""
     from iladub.etkl.compile import compile_tables
 
@@ -1152,7 +1179,7 @@ def test_adoption_never_touches_a_page_that_read_something():
     on = compile_tables(APPLE, 0, validate_shapes=False, datagrid_adopt=True)
     assert off.asserted > 0
     assert on.score == off.score
-    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 48
+    assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 124
 
 
 # --- the fifth oracle: cbh, a DECORATION-universe page with two tables --------------

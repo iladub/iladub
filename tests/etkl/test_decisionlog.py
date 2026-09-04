@@ -215,6 +215,24 @@ def apple_graph(apple_report):
     return apple_report.graph
 
 
+@pytest.fixture(scope="module")
+def apple_p2_graph():
+    """apple PAGE 2, for the three tests below whose subjects page 0 no longer has.
+
+    ADDED 2026-09-04 (R165, the run is one band). Page 0's bands 2..7 are now one accepted
+    merged band, so `region3` and `region4` do not exist there any more and the page mints no
+    escalated region at all. Page 2 carries the same shapes — region3 rejects RECORD_TABLE on
+    "header has 1 words but 3 columns", region6 carries the `transposed` judgement, and the
+    page exercises BOTH region_tiles unit paths (hierarchical body-tokens on regions 3/4/5/7,
+    entries on region 6). It is also stable under this loop: page 2's proposed run 3..7 is
+    REFUSED by the tiling membrane, so the page is byte-identical before and after the merge.
+
+    The page-0 fixture is deliberately KEPT for every other test in this module, including
+    test_recording_does_not_change_the_verdicts, whose whole subject is page 0's own score."""
+    from iladub.etkl import compile_tables
+    return compile_tables(APPLE, page_number=2).graph
+
+
 @needs_apple
 def test_every_band_carries_a_chain(apple_graph):
     """No region may end without a record of how it got there (spec §6).
@@ -235,24 +253,32 @@ def test_every_band_carries_a_chain(apple_graph):
 
 
 @needs_apple
-def test_the_kind_rejection_is_recorded_for_band_3(apple_graph):
-    """Spec §5's honest limit, made concrete: band 3 rejected RECORD_TABLE because the
-    caption line was read as a header row — and nothing else was ever a candidate."""
-    g = apple_graph
+def test_the_kind_rejection_is_recorded_for_band_3(apple_p2_graph):
+    """Spec §5's honest limit, made concrete: a band rejected RECORD_TABLE because the
+    caption line was read as a header row — and nothing else was ever a candidate.
+
+    RETARGETED 2026-09-04, page 0 -> page 2 (R165): page 0's band 3 is inside the merged
+    band and no longer exists. Page 2's region3 carries the identical observation, "header
+    has 1 words but 3 columns", so the assertion below is unchanged."""
+    g = apple_p2_graph
     rejections = [str(o) for _, _, o in g.triples((None, DEC.rejectedBecause, None))]
     assert any("1 words" in r for r in rejections), \
-        f"band 3's kind rejection is not in the record; got {rejections[:5]}"
+        f"the kind rejection is not in the record; got {rejections[:5]}"
 
 
 @needs_apple
-def test_band_4_records_transposed_before_coherence(apple_graph):
+def test_band_4_records_transposed_before_coherence(apple_p2_graph):
     """THE R55 QUESTION. The register claimed coherence failed 'solely' because of
     parenthesized negatives; the truth is looks_transposed fired FIRST and the coherence
-    oracle was only then consulted. dec:order must make that readable."""
-    g = apple_graph
+    oracle was only then consulted. dec:order must make that readable.
+
+    RETARGETED 2026-09-04, page 0 band 4 -> page 2 region 6 (R165): page 0's band 4 is inside
+    the merged band. Page 2's region6 is the band that still carries a `transposed` judgement,
+    and it is chosen for that reason, not for its index."""
+    g = apple_p2_graph
     orders = {}
     for d in g.subjects(RDF.type, DEC.DecisionHolon):
-        if "region4-d" not in str(d):
+        if "region6-d" not in str(d):
             continue
         label = str(next(g.objects(d, RDFS.label)))
         orders[label] = int(next(g.objects(d, DEC.order)))
@@ -293,7 +319,7 @@ def test_rationale_is_not_a_restatement_of_chosen(apple_graph):
 
 
 @needs_apple
-def test_region_tiles_rationale_names_the_real_unit(apple_graph):
+def test_region_tiles_rationale_names_the_real_unit(apple_p2_graph):
     """Fix round 2: `n` is an EntryCell count (asserted += 1) on the
     assert_record_region / assert_transposed_region / assert_row_hier_region /
     assert_matrix_region paths, but a body-TOKEN count (asserted += len(cell.words),
@@ -309,8 +335,17 @@ def test_region_tiles_rationale_names_the_real_unit(apple_graph):
     entry-counting path when it carries region_tiles alongside either kind="RECORD_TABLE"
     (assert_transposed_region / assert_row_hier_region / assert_record_region, all
     "asserted += 1") or matrix_candidate="matrix" (assert_matrix_region, also
-    "asserted += 1")."""
-    g = apple_graph
+    "asserted += 1").
+
+    NEW FIXTURE 2026-09-04 (R165, plan Task 5 Step 2), NOT a re-baseline — this test failed at
+    its own guard, "page 0 does not exercise the assert_hier_region (body-token) path", which
+    is a fixture that stopped exercising what the test was written to exercise. Page 0's
+    merged reading never takes the hier path at all, so there is no number here to move.
+    MEASURED replacement: apple page 2 exercises BOTH units — body tokens on regions 3, 4, 5
+    and 7 (hierarchical chosen, region_tiles present) and entries on region 6 (RECORD_TABLE,
+    region_tiles present). The coverage this test provides is therefore preserved in full,
+    not deleted and not weakened; only the page it reads changed."""
+    g = apple_p2_graph
     by_band: dict = {}
     for d in g.subjects(RDF.type, DEC.DecisionHolon):
         band = str(next(g.objects(d, DEC.withinProcess)))
@@ -338,10 +373,10 @@ def test_region_tiles_rationale_names_the_real_unit(apple_graph):
             saw_entries = True
 
     assert saw_body_tokens, \
-        "the apple corpus doc's page 0 does not exercise the assert_hier_region " \
+        "the apple corpus doc's page 2 does not exercise the assert_hier_region " \
         "(body-token) region_tiles path — cannot assert the unit fix on this fixture"
     assert saw_entries, \
-        "the apple corpus doc's page 0 does not exercise an entry-counting " \
+        "the apple corpus doc's page 2 does not exercise an entry-counting " \
         "region_tiles path — cannot assert the unit fix on this fixture"
 
 
@@ -368,8 +403,24 @@ def test_recording_does_not_change_the_verdicts(apple_report):
     this page: the two are `UNSUPPORTED_TABLE asserted` (28 cells -- the header band that used
     to escalate) and `RECORD_TABLE asserted` (20 cells -- the one that always did). Four regions
     still escalate REGION_TILING_FAILED and two are ignored (eight regions in all), so this is
-    not a page that went quiet; one band crossed."""
+    not a page that went quiet; one band crossed.
+
+    RE-MEASURED 2026-09-04, loop `the-run-is-one-band` (R165): the pinned page-0 score moved
+    0.3243 -> 1.0 (asserted=124, escalated=0), and the asserted-region count 2 -> 1. WHAT THE
+    NEW NUMBERS MEAN: page 0's bands 2..7 are a contiguous run whose rule-x sets subsume one
+    another; band-run.rq proposes them as one table and the tiling membrane accepts, so the
+    page is three bands and its one asserted region is the merged statement, 124 entries.
+    Nothing escalates any more, which is why the ratio is exactly 1.
+
+    AND THE SCORE IS NOW SATURATED, which is a LOSS this pin must carry rather than celebrate:
+    1.0 is the ceiling, so no future regression on page 0 can ever be detected by its score
+    again. 63 of the page's band words are counted on neither side of the ratio — the stub
+    column the matrix-asserted branch has always excluded (compile.py's matrix branch), a
+    pre-existing convention this loop did not introduce and does not repair. As every earlier
+    note in this docstring says: the score is NOT the oracle here, and this rise is NOT
+    evidence of better reading. The assertion this test makes is unchanged: recording does not
+    change the verdicts."""
     rep = apple_report
     verdicts = [(r.kind.name, r.verdict, r.reason, r.cells) for r in rep.regions]
-    assert abs(rep.score - 0.3243) < 0.0001, f"score moved: {rep.score}"
-    assert sum(1 for v in verdicts if v[1] == "asserted") == 2, verdicts
+    assert abs(rep.score - 1.0) < 0.0001, f"score moved: {rep.score}"
+    assert sum(1 for v in verdicts if v[1] == "asserted") == 1, verdicts

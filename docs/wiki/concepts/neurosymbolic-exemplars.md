@@ -19,9 +19,10 @@ sources:
   - tests/test_cbh_e2e.py
   - vocab/queries/matrix-body-start.rq
   - src/iladub/etkl/matrix.py
+  - vocab/queries/band-run.rq
 related: ["[[dimension-split]]"]
 confidence: high
-updated: 2026-09-02
+updated: 2026-09-04
 promoted_to: docs/neurosymbolic-first.md
 ---
 
@@ -207,3 +208,56 @@ rulings (R154's word-atomicity AXIOM; [[dimension-split]]'s Loop Q section-repai
   2 assert instead of refuse — is left undone: it is a *"which words form one label"* judgement,
   NEURAL by §8's own wording, and R155 already measured that class's geometric half
   impossible without a tuned constant. Raised as R162.
+
+## The run is one band (2026-09-04) — the run derivation (AXIOM) and why the merge is a proposal
+
+**Confidence: high** — measured on the shipped tree, not on the prototype every earlier
+figure for this loop came from. Sources: `vocab/queries/band-run.rq`,
+`sectiongraph.run_evidence` / `merge_run_candidates`, `compile.merged_run_admissible`,
+`compile.merge_bands`, `tests/etkl/test_band_runs.py`,
+`tests/etkl/test_run_merge_seam.py`, spec
+`docs/superpowers/specs/2026-09-04-the-run-is-one-band-design.md`.
+
+- **The adjacent-subsumption run derivation** (`vocab/queries/band-run.rq`, consumed by
+  `sectiongraph.merge_run_candidates`) — **AXIOM / derivation / open world.** *Which
+  contiguous ruled bands are CANDIDATES for one table?* Two adjacent bands extend the same
+  run when one's set of distinct rounded rule x-positions is a subset of the other's, in
+  either direction; runs are the maximal contiguous chains under that relation. It is a
+  `SELECT` over a transient per-page evidence graph that `run_evidence` builds — one fresh
+  `Graph` per call, the page as the closure boundary, exactly the `section-repeat.rq` /
+  `classify-kind.rq` / `grid-region.rq` idiom — and it is evidence-positive: a band that
+  carries no rules emits **no node at all** (`run_evidence`'s honest abstain) and so can
+  never join. The two subsumption legs are holon-scoped `FILTER NOT EXISTS`, closing
+  *within* the one page graph while the graph stays open, and adjacency is a **join on an
+  emitted `tab:prevBandIndex` fact** rather than `?b = ?a + 1`, so the query keeps
+  `section-repeat.rq`'s standing property that it contains **no numeric literal**.
+
+- **Why this is not a NEURAL violation, and it is the whole argument.** §8 sends *"which
+  columns/rows does X span / read / group"* to NEURAL. *"Are these bands one table?"* sounds
+  like exactly that question — and it would be, if this derivation ANSWERED it. It does not.
+  **D1 enumerates candidates and settles nothing; D2 disposes.** The judgement that decides
+  whether a merged reading is admissible is `compile.merged_run_admissible`, which offers
+  the merged band to the **existing, unchanged** closed-world chain
+  `is_matrix_candidate → classify_matrix → assert_matrix_region → region_tiles` on a
+  **scratch graph that is discarded on refusal** — the tiling membrane, reused rather than
+  copied. So the shape is the §3 epistemics applied to geometry: the derivation PROPOSES,
+  the oracle DISPOSES, and a refusal leaves the page's graph identical (pinned by
+  `test_a_refused_run_leaves_the_page_byte_identical`, up to blank-node labelling — the
+  page carries 3516 unlabelled bbox nodes, so `rdflib.compare.isomorphic` is the honest form
+  of that claim and N-Triples line equality is not expressible).
+
+- **Measured.** 14 candidate runs across all 27 corpus pages; the membrane accepts exactly
+  **two**, apple p0 `2..7` and apple p1 `2..7`, and refuses 12. apple's document score moves
+  0.1895 → 0.6289, **identical** under `validate_shapes=True`. The SPARQL form was
+  cross-checked against `scripts/band_run_census.py`'s plain-Python relation on all 27
+  pages: 0 mismatches. **No tuned constant anywhere**: the only number in the whole design is
+  the 2dp rounding INHERITED from `sectiongraph._rule_xs_signature`, which this loop
+  neither re-tuned nor justified — and which was measured to change the run set on **0 of
+  27 pages**.
+
+- **The exposure this exemplar must not hide.** The refusal is doing real work, and nothing
+  specified it to. Forcing `merged_run_admissible` to accept unconditionally costs
+  graincorp-capacity p0 390 asserted cells, bfs p6 216, apple p2 3 — so `is_matrix_candidate`
+  is the sole guard on ink it was never designed to guard. That is **R170**, and it is made
+  falsifiable (a corpus-wide per-page ink oracle) rather than guarded, because a guard tuned
+  to today's evidence would be the §8 defect this entry is otherwise an example of avoiding.
