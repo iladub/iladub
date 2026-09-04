@@ -13,9 +13,28 @@ pytestmark = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus doc no
 
 @pytest.fixture(scope="module")
 def g():
-    """Compile apple page 0 once for the whole module — compiling takes ~1 minute."""
+    """Compile apple page 2 once for the whole module — compiling takes ~1 minute.
+
+    RETARGETED 2026-09-04, page 0 -> page 2 (R165, the run is one band). This is a FIXTURE
+    replacement, not a re-baseline, and the reason matters: page 0's bands 2..7 are now one
+    accepted merged band, so `#region3` and `#region4` — the two subjects every test in this
+    module queried — no longer exist, and the page mints no escalated region at all. There is
+    nothing on page 0 left to retarget these four questions at.
+
+    Page 2 answers all four, and answers them with the SAME SHAPES page 0 used to:
+      * region3 is escalated, its chain is ordered, and its kind rationale is "header has
+        1 words but 3 columns" — the identical "1 words" observation the old band 3 carried;
+      * region6 chose RECORD_TABLE on a POSITIVE justification (no refutation on any loser)
+        and carries the `transposed` judgement — the old band 4's two roles.
+    So `_region(3)` is unchanged below and `_region(4)` becomes `_region(6)`; no assertion is
+    weakened.
+
+    Page 2 was also chosen because it is STABLE under this loop: its proposed run 3..7 is
+    REFUSED by the tiling membrane (is_matrix_candidate declines), so page 2 is byte-identical
+    before and after the merge. These questions are about the decision-log audit surface, not
+    about apple page 0."""
     from iladub.etkl import compile_tables
-    return compile_tables(APPLE, page_number=0).graph
+    return compile_tables(APPLE, page_number=2).graph
 
 
 def _run(name, graph, region):
@@ -61,10 +80,13 @@ def test_what_was_considered_shows_the_thin_option_space(g):
 
 
 def test_a_positive_justification_refutes_nothing(g):
-    """The other half of C2: band 4 chose RECORD_TABLE on "flat single-level header", which is
-    a POSITIVE justification of the winner and refutes no other kind. Silence is the honest
-    record (§7) — neither loser may carry a refutation."""
-    rows = _run("what-was-considered.rq", g, _region(4))
+    """The other half of C2: a band that chose RECORD_TABLE on a POSITIVE justification of the
+    winner, which refutes no other kind. Silence is the honest record (§7) — neither loser may
+    carry a refutation.
+
+    RETARGETED 2026-09-04 with the module fixture: page 0 band 4 -> page 2 region 6. Same
+    shape, measured: refuted == {}."""
+    rows = _run("what-was-considered.rq", g, _region(6))
     kinds = {str(o) for j, o, _ in rows if str(j) == "kind"}
     assert kinds == {"RECORD_TABLE", "UNSUPPORTED_TABLE", "NON_TABLE"}, kinds
     refuted = _kind_refutations(rows)
@@ -73,8 +95,11 @@ def test_a_positive_justification_refutes_nothing(g):
 
 
 def test_judgement_order_answers_the_r55_question(g):
-    """Band 4: looks_transposed fired BEFORE the coherence oracle was consulted."""
-    rows = _run("judgement-order.rq", g, _region(4))
+    """looks_transposed fired BEFORE the coherence oracle was consulted.
+
+    RETARGETED 2026-09-04 with the module fixture: page 0 band 4 -> page 2 region 6, the band
+    that still carries a `transposed` judgement once page 0's bands 2..7 are one band."""
+    rows = _run("judgement-order.rq", g, _region(6))
     order = {str(j): int(o) for j, o in rows}
     assert "transposed" in order, f"got {sorted(order)}"
     # Final-review I6: this used to be a silent `if`, so the ordering assertion — the one the

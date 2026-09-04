@@ -31,13 +31,22 @@ def _asserted(band, page):
 
 
 def test_p0_income_statement_header_is_three_levels():
-    """Spec § 1.2: Three/Nine Months Ended over June 27,/June 28, over 2026/2025; 28 entries."""
+    """Spec § 1.2: Three/Nine Months Ended over June 27,/June 28, over 2026/2025.
+
+    RE-BASELINED 2026-09-04 (R165, the run is one band): 9 leaf rows / 28 entries -> 38 / 124.
+    WHAT THE NEW NUMBERS MEAN: band index 2 still names this statement's header — it is the
+    run's FIRST band, so the header line assertion below is untouched — but it now names the
+    whole accepted run 2..7 rather than only the run's first band. Its leaf rows are therefore
+    the statement's rows entire (38) and its entries the statement's data cells entire (124),
+    which is the page's whole asserted count. THE HEADER READING ITSELF DID NOT MOVE: body_line
+    is still 3 and the three levels are still [0, 1, 2] — those two assertions are what this
+    test is named for, and they pass unchanged."""
     band = _band(0, 2)
     assert [w.text for w in band.lines[2].words] == ["2026", "2025", "2026", "2025"]
     mreg, n = _asserted(band, 0)
     assert mreg.body_line == 3
     assert sorted({x.level for x in mreg.col_tree}) == [0, 1, 2]
-    assert len(mreg.leaf_rows) == 9 and n == 28
+    assert len(mreg.leaf_rows) == 38 and n == 124
 
 
 def test_p1_balance_sheet_header_is_two_levels():
@@ -45,11 +54,16 @@ def test_p1_balance_sheet_header_is_two_levels():
     Confirmed 2026-09-02 (controller ruling, commit 80f0cdf, "Task 3b"): both matrix gates now
     count header levels at the DERIVED matrix_body_start rather than the raw header_body_split
     result, so this band's type_split=1/body_start=2 case is no longer refused before
-    matrix_body_start runs (spec § 3.1's "use its result wherever they use split today")."""
+    matrix_body_start runs (spec § 3.1's "use its result wherever they use split today").
+
+    RE-BASELINED 2026-09-04 (R165, the run is one band): 14 entries -> 56, for the same reason
+    as p0 above — band 2 now names the accepted run 2..7, so its entries are the balance
+    sheet's data cells entire rather than the run's first band's alone. The TWO-LEVEL header
+    reading this test is named for is unchanged: body_line 2, levels [0, 1]."""
     mreg, n = _asserted(_band(1, 2), 1)
     assert mreg.body_line == 2
     assert sorted({x.level for x in mreg.col_tree}) == [0, 1]
-    assert n == 14
+    assert n == 56
 
 
 def test_p2_unruled_header_refuses_rather_than_dropping_ink():
