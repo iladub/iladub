@@ -40,6 +40,7 @@ TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
 
 SECTION_REPEAT_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "section-repeat.rq"
+BAND_RUN_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "band-run.rq"
 
 
 def _line_text(line) -> str:
@@ -293,3 +294,36 @@ def section_candidates(bands: Sequence[tuple[int, Band, tuple[Rule, ...]]]) -> t
         key=lambda t: t[0],
     )
     return tuple(groups)
+
+
+def merge_run_candidates(bands: Sequence[Band]) -> tuple[tuple[int, int], ...]:
+    """Maximal contiguous runs of ruled bands that band-run.rq derives as ONE table
+    candidate, as (first, last) pairs with last > first — ascending by first,
+    DISJOINT, deterministic. A page with no candidate run returns ().
+
+    The PROCEDURAL half only (the relation itself is band-run.rq, AXIOM): build the
+    per-page evidence graph, run the query, walk the derived adjacent pairs into
+    chains. `section_candidates` unions its pairs because those are NON-adjacent
+    repeats and a group is a connected component; these pairs are adjacent links on a
+    linear index, so the assembly is a WALK and the chains are maximal.
+
+    Disjointness is by construction, not by a tie-break: maximal chains under an
+    adjacent relation over a linear index cannot overlap (DECISION D — spec § 3.2's
+    'longest run first, then leftmost' presupposes an enumerator that can propose
+    overlapping runs, and this is not one). The invariant is pinned by
+    tests/etkl/test_band_runs.py rather than defended by dead code here.
+
+    This ENUMERATES; it settles nothing. `compile.merged_run_admissible` disposes."""
+    g = run_evidence(bands)
+    succ: dict[int, int] = {}
+    for row in g.query(BAND_RUN_RQ.read_text()):
+        succ[int(row.a)] = int(row.b)
+
+    tails = set(succ.values())
+    runs: list[tuple[int, int]] = []
+    for first in sorted(k for k in succ if k not in tails):
+        last = first
+        while last in succ:
+            last = succ[last]
+        runs.append((first, last))
+    return tuple(runs)

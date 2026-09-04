@@ -3,6 +3,9 @@
 Spec: docs/superpowers/specs/2026-09-04-the-run-is-one-band-design.md
 Plan: docs/superpowers/plans/2026-09-04-the-run-is-one-band.md
 """
+import os
+
+import pytest
 from rdflib import Graph, Namespace
 
 from iladub.etkl.bands import Band
@@ -76,3 +79,58 @@ def test_the_predecessor_fact_is_emitted_even_when_the_predecessor_abstained():
     node = next(s for s in g.subjects(None, TAB.RuledBand)
                 if int(next(g.objects(s, TAB.bandIndex))) == 2)
     assert int(next(g.objects(node, TAB.prevBandIndex))) == 1
+
+
+# --- Task 2: the derivation query and the run assembly ---
+
+CORPUS = os.path.join(os.path.dirname(__file__), "..", "..", "corpus")
+APPLE = os.path.join(CORPUS, "financial", "apple-fy2026q3-statements.pdf")
+STEM = os.path.join(CORPUS, "ag-trade", "graincorp-stem-2026-07-31.pdf")
+corpus_only = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not fetched")
+
+
+@corpus_only
+def test_the_relation_is_subsumption_not_equality_apple_p1():
+    """O1, first half. Under set EQUALITY apple p1 stops at (2,3) — 26 entries, not the
+    56 measured. Under adjacent subsumption its six ruled bands are ONE run 2..7.
+    (spec § 1.2 refutation 1, § 3.3 Q1/Q2.)"""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.sectiongraph import merge_run_candidates
+
+    bands = page_bands(APPLE, 1)
+    assert merge_run_candidates(bands) == ((2, 7),)
+
+
+@corpus_only
+def test_the_relation_joins_the_dangerous_case_too_graincorp_stem_p0():
+    """O1, SECOND half, and it is the half that matters: a test that only pinned apple
+    would pass for a relation that special-cases it.
+
+    graincorp-stem p0 band 1 is a TITLE band ('SHIPPING STEM', 5 rule x's) whose set is a
+    strict subset of the table's 20. The relation JOINS them — 586 asserted cells are
+    inside that proposed run — and only the oracle keeps them (spec § 3.3, R171)."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.sectiongraph import merge_run_candidates
+
+    bands = page_bands(STEM, 0)
+    assert (1, 2) in merge_run_candidates(bands)
+
+
+@corpus_only
+def test_runs_are_disjoint_and_ascending_across_the_whole_corpus():
+    """DECISION D: maximal contiguous chains over adjacency on a linear index are
+    disjoint BY CONSTRUCTION, which is why § 3.2's 'longest run first, then leftmost'
+    tie-break is not implemented. This is the pin that makes that argument checkable
+    rather than asserted."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.sectiongraph import merge_run_candidates
+
+    for pdf, page in [(APPLE, 0), (APPLE, 1), (APPLE, 2), (STEM, 0)]:
+        runs = merge_run_candidates(page_bands(pdf, page))
+        assert list(runs) == sorted(runs), (pdf, page)
+        seen = set()
+        for first, last in runs:
+            assert last > first, (pdf, page, first, last)
+            span = set(range(first, last + 1))
+            assert not (span & seen), f"overlapping runs on {pdf} p{page}: {runs}"
+            seen |= span

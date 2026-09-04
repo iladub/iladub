@@ -108,7 +108,10 @@ def dispose(bands, first, last, page):
     return res
 
 
-DOCS = sorted(glob.glob("/Volumes/WD Green/dev/git/iladub/corpus/*/*.pdf"))
+# Relative to the repo root, never absolute: an absolute path defeats the reason this
+# instrument is committed (re-runnability) and fails outright in a git worktree.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOCS = sorted(glob.glob(os.path.join(REPO_ROOT, "corpus", "*", "*.pdf")))
 
 
 def main():
