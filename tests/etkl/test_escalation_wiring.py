@@ -189,14 +189,27 @@ APPLE = os.path.join(ROOT, "corpus", "financial", "apple-fy2026q3-statements.pdf
 
 @pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not populated")
-def test_corpus_apple_furnishes_the_measured_ten(tmp_path):
-    """apple is the one corpus document that reaches `document.py:1407-1412` and hands
-    `datagrid_adopt=True` to `compile_tables` (`adopted=(1,)`).
+def test_corpus_apple_furnishes_what_it_escalates(tmp_path):
+    """RE-BASELINED 2026-09-05 ([[R173]] 5a), from `test_corpus_apple_furnishes_the_measured_ten`.
 
-    MEASURED 2026-08-15, and written against the measured number rather than the expected
-    one: 15 decisions chose "escalated", 5 of them are withdrawn by page 1's adoption, and
-    the document graph furnishes 10. The page-scope sum is 15 — so this single number is
-    the difference between the two candidate sites, on a real document.
+    It was written 2026-08-15 against the measurement of the day: apple was the one corpus
+    document that reached `document.py`'s adoption gate (`adopted=(1,)`), 15 decisions chose
+    "escalated", 5 were withdrawn by page 1's adoption, and the document graph furnished 10 —
+    so the single number 10 was the DIFFERENCE between the two candidate derivation sites on a
+    real document, page scope summing to 15.
+
+    WHAT THE NEW NUMBERS MEAN. Since `4cfee38` ([[R160]]) apple adopts nothing, and since
+    [[R165]]'s one-band reading pages 0 and 1 assert outright, so almost all of that escalation
+    is gone: MEASURED 2026-09-05 as `adopted=(), chose escalated=5, superseded=0, requests=5`.
+    With no adoption there is no withdrawal, so the difference this test measured is ZERO on
+    apple and the number 10 cannot be recovered by editing it — `escalating == requests` is
+    what apple can still say, and it says it: every escalating decision furnishes a request
+    because none is superseded.
+
+    THE SITE CLAIM IS NOT LOST WITH IT. `test_the_adopting_path_furnishes_nothing` above pins
+    the derivation site on a SYNTHETIC adopting document (`adopted=(0,)`, one withdrawal, zero
+    requests) and runs in CI, where this test has always skipped — see the module-level note in
+    `tests/etkl/test_adoption_document.py`. This one is now apple's corroboration, not the pin.
     """
     rep = compile_document(APPLE)
     escalating = _chose_escalated(rep.graph)
@@ -205,10 +218,13 @@ def test_corpus_apple_furnishes_the_measured_ten(tmp_path):
 
     print(f"\napple: adopted={rep.adopted!r} chose escalated={len(escalating)} "
           f"superseded={len(superseded)} requests={len(requests)}")
-    assert rep.adopted == (1,)
-    assert len(escalating) == 15
-    assert len(superseded) == 5
-    assert len(requests) == 10
+    assert rep.adopted == ()
+    assert len(escalating) == 5
+    assert len(superseded) == 0
+    assert len(requests) == 5
+    # the invariant that survives the numbers: with nothing withdrawn, the document furnishes
+    # exactly what it escalates — a request lost between the two sites still fails here.
+    assert requests and len(requests) == len(escalating)
 
 
 # ---------------------------------------------------------------- the carried vocabulary
