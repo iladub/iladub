@@ -353,8 +353,28 @@ def test_stem_record_identity_is_one_kind(stem_document):
 def test_stem_document_is_byte_identical_under_adoption(stem_document):
     """The adjudicated floor, to the last digit (spec §V1). Adoption must not fire here:
     carriage makes p1/p2 assert BEFORE the gate can ask. If this number moves, STOP and
-    report it — never lower it."""
-    assert stem_document.score == 0.9654553611484971, stem_document.score
+    report it — never lower it.
+
+    R174, 2026-09-05: the pinned score moved 0.9654553611484971 -> 0.9658886894075404 at
+    `20cc5b8` (R154, *a boundary that cuts ink is not a boundary*). It is a DENOMINATOR effect,
+    not a reading improvement, and the same one R154 itself ruled on for apple page 0 in
+    `tests/etkl/test_decisionlog.py` -- welding two ink fragments into one cell removes an ink
+    token from the count. A smaller denominator is not better reading, and the rise must never
+    be cited as evidence of one.
+
+    MEASURED, not inferred (`docs/superpowers/2026-09-05-r174-stem-denominator.md`): the
+    numerator is byte-identical at 2152 and the denominator falls 2229 -> 2228, so
+    2152/2229 -> 2152/2228 is the whole of the move. Not one additional cell was read --
+    2047 `tab:EntryCell` nodes and 2104 `tab:cellText` triples at BOTH commits, and a diff of
+    every (cell, cellText) pair is 0 lines. The document-wide diff is ONE line: stem p0 band 2
+    L0, ['Friday, 31', 'July 2026'] -> ['Friday, 31 July 2026'], a date banner that is not a
+    cell at either commit, so the weld took its one token off the ESCALATED leg only.
+
+    The pin went stale for a reason that is [[R173]]'s, not this test's: `20cc5b8` published
+    the move in its own commit message (`gstem .96546->.96589`) and re-baselined the three
+    pinned tests it moved -- all three NON-corpus. A test nothing runs cannot be re-baselined
+    by a careful author."""
+    assert stem_document.score == 0.9658886894075404, stem_document.score
     assert stem_document.adopted == (), stem_document.adopted
     assert len(stem_document.chains) == 1 and len(stem_document.chains[0]) == 3
 
