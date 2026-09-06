@@ -2066,6 +2066,63 @@ def currency_marker_escalating_pdf(path: str) -> dict:
     return {"cols": xs, "n_rows": len(rows)}
 
 
+def currency_marker_escalating_with_note_pdf(path: str) -> dict:
+    """[[R175]] — `currency_marker_escalating_pdf` plus ONE untouched band, so the
+    document-scope adoption pins and the control that keeps them non-vacuous can live on the
+    same CI-visible document.
+
+    WHY A SIBLING AND NOT AN EDIT. `currency_marker_escalating_pdf` is relied on by
+    `tests/etkl/test_unit_marker.py` and `tests/etkl/test_escalation_wiring.py`, and both name
+    its SINGLE band in prose. Adding a band there would falsify their docstrings, so this is
+    additive: the table above the note is drawn from the same rows and the same x-positions,
+    verbatim.
+
+    WHAT THE NOTE IS FOR. It is ONE line, and one line is what makes it work: `classify` refuses
+    a band of `fewer than 2 lines` as NON_TABLE, so the band books a verdict and NO tokens, and
+    `compile.py:1276` supersedes a report only when `i in _led.touched AND r.tokens_escalated >
+    0` — so this band cannot be superseded and survives adoption as `ignored`. A TWO-line note
+    was measured too and is the wrong shape: it classifies UNSUPPORTED_TABLE / KIND_NOT_SUPPORTED
+    and books 23 escalated tokens, which moves the page to `16/25` and breaks the residue
+    equality `booked == p.escalated` that `test_the_ledger_and_the_graph_agree_on_the_adopted_page`
+    pins.
+
+    MEASURED 2026-09-06 at document scope, and it is the same page arithmetic as the one-band
+    fixture — that is the point of the shape chosen:
+
+        adopted=(0,)  score=0.8888888888888888  page0 asserted=16 escalated=2
+        region0 superseded UNSUPPORTED_TABLE REGION_TILING_FAILED   a=0  e=0
+        region1 ignored    NON_TABLE         'fewer than 2 lines'   a=0  e=0
+        region2 asserted   RECORD_TABLE      (the grid)             a=16 e=0
+        region3 escalated  UNSUPPORTED_TABLE DATAGRID_RESIDUE       a=0  e=2
+
+    and on `region1` both shipped queries return the same three-row chain
+    `[(0, multi_table), (1, kind), (2, verdict)]` with no `supersededBy` on any row, while
+    `region0`'s chain is the grid's admission and carries `supersededBy` on every row.
+    """
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    rows = [
+        ("Item",     "",  "Amount",  "",  ""),
+        ("Products", "$", "78,678",  "$", "272,629"),
+        ("Services", "",  "30,739",  "",  "91,728"),
+        ("Other",    "",  "11,729",  "",  "34,035"),
+        ("Overall",  "$", "121,146", "$", "398,392"),
+    ]
+    xs = [72.0, 220.0, 260.0, 380.0, 420.0]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, t in zip(xs, row):
+            if t:
+                c.drawString(x, y, t)
+    # The gap is what keeps the note a band of its own rather than a sixth table line. 60pt
+    # against the table's 14pt line pitch; measured, not tuned to a boundary.
+    note = "These condensed statements are unaudited and stated in thousands."
+    c.drawString(72.0, y0 - len(rows) * 14.0 - 60.0, note)
+    c.save()
+    return {"cols": xs, "n_rows": len(rows), "note": note}
+
+
 def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
     """R87 TASK 3 FIXTURE — the only synthetic shape that both ESCALATES and opens
     `document.py:1515`'s validation gate.

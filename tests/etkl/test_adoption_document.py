@@ -15,13 +15,21 @@ reports `adopted=()`. Two pages still reach the candidate gate — bfs `p0` (0 a
 escalated) and `p4` (0/36) — and both refuse at the re-compile with *"adoption refused — no data
 grid region"*. So the document-scope adoption BRANCH has no live corpus fixture at all.
 
-It does have a synthetic one, and it is better than what it replaces: `currency_marker_escalating_pdf`
-adopts page 0 at document scope (`adopted=(0,)`, one superseded band, a grid region asserting 16
-tokens, a 2-token `DATAGRID_RESIDUE`, and the admission holon) — already relied on by
-`tests/etkl/test_escalation_wiring.py::test_the_adopting_path_furnishes_nothing`. The withdrawal,
-the supersession, the attribution, the ledger agreement and the zeroing-tautology refusal are
-therefore re-pointed at it, NOT deleted and NOT weakened — and they now run **in CI**, which the
-apple versions never could. Each carries its falsification evidence in its own docstring.
+It does have a synthetic one, and it is better than what it replaces: it adopts page 0 at
+document scope (`adopted=(0,)`, one superseded band, a grid region asserting 16 tokens, a
+2-token `DATAGRID_RESIDUE`, and the admission holon). The withdrawal, the supersession, the
+attribution, the ledger agreement and the zeroing-tautology refusal are therefore re-pointed at
+it, NOT deleted and NOT weakened — and they now run **in CI**, which the apple versions never
+could. Each carries its falsification evidence in its own docstring.
+
+[[R175]] CLOSED 2026-09-06. The fixture above was `currency_marker_escalating_pdf`, which has
+exactly ONE band — so the control that keeps the two supersession pins non-vacuous had no
+unsuperseded region to stand on and stayed behind on apple, corpus-gated, while the five pins it
+controls ran in CI without it. `currency_marker_escalating_with_note_pdf` draws a second,
+one-line band that classifies NON_TABLE and therefore CANNOT be superseded
+(`compile.py:1276` supersedes only a report with `tokens_escalated > 0`), so the control now sits
+on the same document, in the same run, in CI — at identical page arithmetic, which is why no pin
+above was re-baselined to get it.
 
 What stays on apple is what is still true of apple: that it adopts nothing, why, and the ledger
 and query pins that never needed adoption.
@@ -61,15 +69,24 @@ def apple_doc():
 def adopting_doc(tmp_path_factory):
     """THE DOCUMENT-SCOPE ADOPTION FIXTURE, synthetic and therefore CI-visible.
 
-    One page, one band, and that band escalates REGION_TILING_FAILED — so the candidate gate
+    One page, TWO bands. The first escalates REGION_TILING_FAILED — so the candidate gate
     opens, the re-compile's own gate (`compile.py:1224`, `asserted_total == 0 and
-    escalated_total > 0`) opens with it, the grid reads the page and supersedes the band.
-    Measured 2026-09-05: `adopted=(0,)`, `score=0.888…`, regions
-    `[superseded, asserted(grid, 16 tokens), escalated(DATAGRID_RESIDUE, 2 tokens)]`."""
-    from tests.etkl.fixtures import currency_marker_escalating_pdf
+    escalated_total > 0`) opens with it, the grid reads the page and supersedes that band. The
+    second is a one-line note that classifies NON_TABLE and books no tokens, so the grid cannot
+    supersede it (`compile.py:1276` needs `tokens_escalated > 0`) and it survives as the
+    CONTROL — see `test_an_unsuperseded_band_on_the_adopting_page_is_untouched`.
+
+    CHANGED 2026-09-06 ([[R175]]) from `currency_marker_escalating_pdf`, whose single band left
+    every pin below with no control on the same document. The page arithmetic is IDENTICAL —
+    that is why this shape was chosen over a two-line note, which books 23 escalated tokens and
+    would have re-baselined the residue equality below. Measured at document scope:
+    `adopted=(0,)`, `score=0.8888888888888888`, page0 `asserted=16 escalated=2`, regions
+    `[superseded, ignored(NON_TABLE), asserted(grid, 16 tokens), escalated(DATAGRID_RESIDUE, 2
+    tokens)]`."""
+    from tests.etkl.fixtures import currency_marker_escalating_with_note_pdf
     from iladub.etkl.document import compile_document
     p = tmp_path_factory.mktemp("adoption") / "adopting.pdf"
-    currency_marker_escalating_pdf(str(p))
+    currency_marker_escalating_with_note_pdf(str(p))
     return compile_document(str(p))
 
 
@@ -235,6 +252,59 @@ def test_the_admission_verdict_names_its_agent(adopting_doc):
         assert list(g.objects(v1, DEC.decidedBy)) == [_READER_AGENT], v1
 
 
+def test_an_unsuperseded_band_on_the_adopting_page_is_untouched(adopting_doc):
+    """THE CONTROL, and it now runs in CI ([[R175]], closing it).
+
+    Without it, a change that superseded EVERY region would pass
+    `test_no_superseded_band_keeps_its_escalation_candidate` and
+    `test_the_effective_reading_of_a_superseded_band_is_not_the_escalated_one` for the wrong
+    reason: both iterate `_superseded(...)` and assert something about each member, so a graph
+    in which nothing escaped supersession satisfies them vacuously. This pins that something
+    did — and that the two shipped queries agree about it.
+
+    It lived on apple until 2026-09-06 because the one-band fixture had no unsuperseded region
+    to control with; the fixture now draws one, so the control and the five pins it controls sit
+    on the same document, in the same run, in CI. What it asserts is unchanged in force.
+
+    FALSIFICATION (2026-09-06, and it is the second half of [[R175]]'s criterion): widen
+    `document.py:1737`'s supersession loop — the `dec:supersedes` one, NOT the
+    `_remove_escalation_record` withdrawal loop at `:1682`, which is textually identical — from
+    `for idx in superseded` to `for idx in range(grid_idx)` — the over-application this control exists to catch — and BOTH assertions
+    below break, measured separately because the test can only report the first:
+
+        eff = [(0, 'verdict')]                                       # the admission itself
+        why = [(0, 'multi_table'), (1, 'kind'), (2, 'verdict')]      # the band's own chain
+        rows carrying supersededBy: 3 of 3
+
+    so `effective-chain.rq` now answers *the grid's admission* as the effective reading of a
+    band the grid never touched. `eff == why` is what trips first; the `supersededBy` assertion
+    is the same defect seen from the other query and is kept because it names it. Restored, the
+    test passes.
+
+    The OPPOSITE stub — deleting the `graph.add((admission, DEC.supersedes, v1))` edge entirely
+    — does not fail here, and should not:
+    `test_the_effective_reading_of_a_superseded_band_is_not_the_escalated_one` is what catches
+    that direction. This control is one-sided by design."""
+    page_doc = _page_doc(SYNTH_ADOPTED_PAGE)
+    p = adopting_doc.pages[SYNTH_ADOPTED_PAGE]
+    others = [i for i, r in enumerate(p.regions) if r.verdict == "ignored"]
+    assert others, "no unsuperseded band to use as a control"
+    # ...and the thing it controls really is non-empty, or the pins above are vacuous and this
+    # test would not have noticed. Asserted here rather than left to the reader: the control and
+    # the controlled must both be non-empty for either to mean anything.
+    assert _superseded(p), "nothing was superseded — the supersession pins are vacuous"
+    idx = others[0]
+    region = URIRef(f"{page_doc}#region{idx}")
+    eff = [(int(r["order"]), str(r["judgement"])) for r in
+           _run("effective-chain.rq", adopting_doc.graph, region)]
+    why = [(int(r["order"]), str(r["judgement"])) for r in
+           _run("why-escalated.rq", adopting_doc.graph, region)]
+    assert eff, f"effective-chain returned NOTHING for the unsuperseded region {idx}"
+    assert eff == why, f"diverged on an unsuperseded region:\n eff={eff}\n why={why}"
+    assert all("supersededBy" not in r
+               for r in _run("why-escalated.rq", adopting_doc.graph, region))
+
+
 # =========================================================================== apple, as it IS
 
 
@@ -307,15 +377,19 @@ def test_apples_page_one_ledger_adds_up(apple_doc):
 
 
 @corpus_only
-def test_an_unsuperseded_band_on_apples_page_one_is_untouched(apple_doc):
-    """The control. Without it a change that superseded EVERY region would pass the two
-    supersession tests above for the wrong reason.
+def test_the_two_queries_agree_on_an_untouched_band_of_a_real_document(apple_doc):
+    """The same query-agreement invariant, on a REAL document rather than a drawn one.
 
-    Renamed 2026-09-05 from `…_on_the_adopted_page_is_untouched`: apple p1 is not adopted any
-    more, and the fixture that is has no `ignored` region to control with (its three regions
-    are superseded / asserted-grid / residue). So the control stays on apple, where an
-    unsuperseded band still exists — it pins that the two shipped queries agree on a band
-    nothing superseded, which needs no adoption to mean something."""
+    NOT the control any more, and the previous name (`…_on_apples_page_one_is_untouched`) said
+    it was. [[R175]], 2026-09-06: apple adopts NOTHING since `4cfee38`, so apple p1 has no
+    superseded region for this to be the control OF — it was controlling tests that run on a
+    different document. The control moved to the fixture that adopts, where it can be
+    non-vacuous and where it runs in CI; this is kept, not deleted, because the assertion is
+    still true and still worth making against 28 rows of a real statement rather than against a
+    caption we drew ourselves.
+
+    Read a red line here as *the shipped queries disagree on a band nothing touched*, never as
+    *supersession over-applied* — that is now the fixture-side control's finding to report."""
     page_doc = _page_doc()
     p1 = apple_doc.pages[ADOPTED_PAGE]
     others = [i for i, r in enumerate(p1.regions) if r.verdict == "ignored"]
