@@ -121,6 +121,17 @@ def test_a_wholesale_branch_is_left_alone(tmp_path):
 
     Measured on the corpus before the repair: who-wfa p0 bands 3 and 5, `ink == booked == 76`,
     unbooked 0 on all 7 corpus bands reaching those sites. This fixture is the CI-runnable stand-in.
+
+    WHICH OF THE THREE IT ACTUALLY COVERS, found by FALSIFYING rather than by reading — a first
+    attempt injected the forbidden double-booking at `compile.py:1110` and this test **passed**,
+    pinning nothing. Tracing the five `#htable`-producing fixtures
+    (`all_text_hier_ruled_pdf`, `subtotal_hier_table_pdf`, `pivoted_table_pdf`,
+    `left_aligned_parent_ruled_pdf`, `bordered_two_level_header_ruled_pdf`) shows **every one of
+    them books at `:1193` and none at `:1110` or `:1136`**. Re-aimed at `:1193` the injection
+    fails this test loudly (`tokens_escalated` 0 → 26), so it does pin its branch.
+    **The other two wholesale branches are reached by CORPUS documents only** (who-wfa's ruled
+    bands) and are therefore not guarded in CI — a new instance of [[R173]]'s open half, recorded
+    here rather than left for the next reader to rediscover the same way.
     A second booking there would push `tokens_asserted + tokens_escalated` ABOVE the band's ink
     plus its unit-marker ink, which is what this asserts cannot happen. The marker term is not
     slack: `_marker_word_count` is carried glyph ink that is genuinely booked ON TOP of

@@ -327,6 +327,12 @@ operands keep their names and their arithmetic; only what feeds them grows.
 - **The `Doc impact` check was a grep over the 16 nav pages, not a read of them.** Patterns:
   `denominator`, `score *=`, `asserted *[/(]`, `escalated)`. A page that describes the score in
   prose without any of those tokens would not have been caught.
+- **The `#htable` exclusion is guarded in CI at ONE of its three sites, not three.** Found by
+  falsification, not by reading: injecting the forbidden double-booking at `compile.py:1110` left
+  `test_a_wholesale_branch_is_left_alone` GREEN. All five `#htable`-producing fixtures book at
+  `:1193`; `:1110` and `:1136` are reached by corpus documents only. Re-aimed at `:1193` the
+  injection fails the test loudly, so the test pins its own branch and only its own. Recorded in
+  that test's docstring.
 - **The corpus is 7 documents, 45 non-ignored bands.** Every number in § 1 is that corpus. The
   row-hierarchical site (`compile.py:906`/`:872`) is reached by **no** corpus band, so its
   diagnosis is read off the code and its repair cannot be falsified by O1 — see § 3.2's last
