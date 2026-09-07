@@ -83,6 +83,7 @@ def fate(path, page_number):
           % (page_number, rep.score, rep.asserted, rep.escalated,
              len(entries), len(labels), e_missing, l_missing))
 
+    page_orphans = 0
     for idx, (band, r) in enumerate(zip(bands, rep.regions)):
         if r.verdict != "asserted":
             continue
@@ -104,6 +105,13 @@ def fate(path, page_number):
                              tally["entry"], tally["label"], tally["orphan"]))
         if orphan_text:
             print("      orphans: %s" % " ".join(orphan_text[:24]))
+        page_orphans += tally["orphan"]
+    # Returned so a corpus driver can derive facts ACROSS pages without re-parsing stdout.
+    # `no_bbox` is the count of LabelCells this page emitted with no `tab:hasBBox` -- the ink
+    # they cover is invisible to `_covered`, so it lands in `orphan` whether it was carried or
+    # dropped. That confound is [[R177]]; `unbooked_ink_fate_corpus.py` pairs the two counts
+    # across all 27 corpus pages, which is how [[R178]]'s population is bounded.
+    return {"page": page_number, "no_bbox": l_missing, "orphans": page_orphans}
 
 
 def main(argv):

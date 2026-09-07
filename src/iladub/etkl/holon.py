@@ -530,11 +530,28 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
         g.add((h, TAB.headerLevel, Literal(effective_level, datatype=XSD.integer)))
         for col in n.covers:
             g.add((h, TAB.coversColumn, cols[col]))
-        # LabelCell carries the header text + provenance context
+        # LabelCell carries the header text + provenance context.
+        # [[R177]]: until 2026-09-07 that comment was false -- this was the one LabelCell emitter
+        # of six writing no geometry, so a hierarchical header label had text and no location. It
+        # now mirrors `assert_row_hier_region`'s writer, which is the closest sibling (a header
+        # tree whose nodes carry their own bounds rather than a `SourceCell` in hand).
         lc = URIRef(f"{table_uri}-hl{idx}")
         g.add((lc, RDF.type, TAB.LabelCell))
         g.add((table_uri, TAB.hasCell, lc))
         g.add((lc, TAB.cellText, Literal(n.text)))
+        # PRESENCE test, never an inference from absence (CLAUDE.md § Core design principles 7):
+        # `span.build_reading` mints a node for a column with no header ink, and that node has no
+        # box to write. Such a cell keeps its text and stays boxless, which is the honest reading
+        # -- not a zero box, which would assert a location the source never carried.
+        if None not in (n.x0, n.top, n.x1, n.bottom, n.page):
+            g.add((lc, TAB.onPage, Literal(n.page, datatype=XSD.integer)))
+            bb = BNode()
+            g.add((bb, RDF.type, TAB.BBox))
+            g.add((bb, TAB.x0, Literal(Decimal(str(round(n.x0, 2))))))
+            g.add((bb, TAB.y0, Literal(Decimal(str(round(n.top, 2))))))
+            g.add((bb, TAB.x1, Literal(Decimal(str(round(n.x1, 2))))))
+            g.add((bb, TAB.y1, Literal(Decimal(str(round(n.bottom, 2))))))
+            g.add((lc, TAB.hasBBox, bb))
         g.add((h, TAB.hasLabel, lc))
 
     # Parent links — using effective URIs (promotion doesn't affect parent-pointer logic)
