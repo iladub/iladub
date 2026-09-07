@@ -141,3 +141,31 @@ def test_unplaceable_continuation_is_refused():
     # drop the leaf label that covers column 1, leaving column 1 uncovered at the leaf level
     stripped = [rows[0], rows[1], [c for c in rows[2] if c.text != "Ref"]]
     assert build_row_reading(stripped, GRID, ("furniture", "continuation")) is None
+
+
+def test_continuation_merge_unions_the_fragment_bounds_into_the_label_box():
+    """[[R181]] — the joined label's box must cover every source line the join consumed.
+
+    The defect this pins: `rowrole.py`'s continuation loop collected `cell.text` and discarded
+    the `SourceCell`, so `replace(nodes[tgt], text=merged)` kept the LEAF row's box alone. On
+    graincorp-stem p0 that shipped `'Date of Grain Loading Commencement'` under a box identical
+    to the word `'Commencement'` — provenance-to-the-page (CLAUDE.md § 6) present but PARTIAL.
+
+    This fixture is the same shape at unit scale and needs no corpus: `Unit` (x 155-175, top 12)
+    is prefixed onto leaf `Ref` (x 155-172, top 24), so the box must grow UP to 12 and RIGHT to
+    175. It is the only pin here that runs in CI.
+    """
+    rows = header_rows_of(caption_and_wrap_band(), GRID, 3)
+    nodes, _caps, _src = build_row_reading(rows, GRID, ("furniture", "continuation"))
+    merged = next(n for n in nodes if n.text == "Unit Ref")
+    assert (merged.x0, merged.top, merged.x1, merged.bottom) == (155.0, 12.0, 175.0, 34.0)
+
+
+def test_an_unmerged_label_keeps_its_own_box_exactly():
+    """The union must not leak across columns: a leaf label no continuation fragment landed on
+    is byte-identical to its source cell. Without this, widening every label would pass the test
+    above while destroying the geometry of the other three."""
+    rows = header_rows_of(caption_and_wrap_band(), GRID, 3)
+    nodes, _caps, _src = build_row_reading(rows, GRID, ("furniture", "continuation"))
+    item = next(n for n in nodes if n.text == "Item")
+    assert (item.x0, item.top, item.x1, item.bottom) == (110.0, 24.0, 140.0, 34.0)

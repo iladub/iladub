@@ -131,7 +131,8 @@ def row_role_context(header_rows, grid) -> dict:
 
 def build_row_reading(header_rows, grid, roles):
     """Rewrite the header tree under a proposed role vector. Pure structural rewrite — no
-    geometry decision, no tuned constant. Returns (nodes, captions, source_cells), or None to
+    geometry DECISION, no tuned constant (the continuation merge does union four bounds, which is
+    exact arithmetic over a membership the role vector already fixed — [[R181]]). Returns (nodes, captions, source_cells), or None to
     REFUSE (an empty header_rows, a malformed vector, or a continuation fragment that cannot be
     placed — its ink center lies in no column at all, or in a column no leaf label covers).
 
@@ -143,7 +144,9 @@ def build_row_reading(header_rows, grid, roles):
                     cell's ink center (no clamp — a cell outside every column refuses the whole
                     reading rather than being welded onto an unrelated label). Collected first
                     and applied once, so multiple continuation rows compose in reading order
-                    ('Date of Grain' + 'Loading' + 'Commencement').
+                    ('Date of Grain' + 'Loading' + 'Commencement'). The leaf label's bbox is
+                    UNIONED with every fragment's, so the box covers the text it is the
+                    provenance of ([[R181]]); before that it was the leaf line's box alone.
     furniture    -> the row contributes NO level; its cells become tab:RegionCaption records, so
                     the text is CARRIED, never dropped (CLAUDE.md §5/§7).
 
@@ -163,7 +166,7 @@ def build_row_reading(header_rows, grid, roles):
 
     # Collect continuation fragments per column FIRST (top-to-bottom), then prefix once.
     b = grid.boundaries
-    extra: dict[int, list[str]] = {}
+    extra: dict[int, list] = {}
     for row, role in zip(non_leaf, roles):
         if role != "continuation":
             continue
@@ -171,15 +174,27 @@ def build_row_reading(header_rows, grid, roles):
             col = _column_containing((cell.x0 + cell.x1) / 2.0, b)
             if col is None:
                 return None                    # ink center outside every column -> refuse
-            extra.setdefault(col, []).append(cell.text)
+            extra.setdefault(col, []).append(cell)   # the CELL, not its text -- see the union below
 
-    for col, texts in extra.items():
+    for col, frags in extra.items():
         tgt = next((i for i, n in enumerate(nodes)
                     if n.level == leaf_lvl and col in n.covers), None)
         if tgt is None:
             return None                        # unplaceable continuation -> refuse (spec §3.1)
-        merged = (" ".join(texts) + " " + nodes[tgt].text).strip()
-        nodes[tgt] = replace(nodes[tgt], text=merged)
+        n = nodes[tgt]
+        merged = (" ".join(c.text for c in frags) + " " + n.text).strip()
+        # [[R181]] -- the box must cover every source line the join consumed. Before this only
+        # `cell.text` was collected above, so `replace(..., text=merged)` kept the LEAF row's box
+        # and shipped a joined label under a box identical to its last word alone. PROCEDURAL:
+        # exact arithmetic over an ALREADY-DECIDED membership (the role vector was NEURAL-proposed
+        # and oracle-disposed before this line runs), with no tuned constant; the precedent is
+        # `cells._cell_from`'s identical union over its words. `page` is deliberately unchanged --
+        # a wrap is within one band by construction, hence within one page.
+        nodes[tgt] = replace(n, text=merged,
+                             x0=min([n.x0] + [c.x0 for c in frags]),
+                             top=min([n.top] + [c.top for c in frags]),
+                             x1=max([n.x1] + [c.x1 for c in frags]),
+                             bottom=max([n.bottom] + [c.bottom for c in frags]))
 
     captions = tuple((r, cell.text)
                      for r, (row, role) in enumerate(zip(non_leaf, roles))
