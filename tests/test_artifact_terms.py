@@ -55,9 +55,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # WHY CI CAUGHT THIS AND A LOCAL RUN DID NOT: the population is `git ls-files`, so a new
     # `.ttl` joins it at `git add`, not at creation. A full local suite run against an
     # uncommitted tree is green on a count this test will fail the moment the files are staged.
+    #
+    # RE-MEASURED AGAIN 2026-09-07 ([[R179]]): 146 -> 147, `tests/tab-label-nobox-leak.ttl` — the
+    # negative fixture for `tab:LabelCellPhysicalShape` that CLAUDE.md § Serialization requires of
+    # every shape. It is NOT carved out and must not be: it names declared `tab:` terms only, so it
+    # belongs in the population exactly like the `tests/supersession-*.ttl` negatives above. The
+    # carve-out is for fixtures that would fail THIS membrane by design; this one does not.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 146
+    assert len(artifact_files()) == len(tracked) - len(carved) == 147
 
 
 def test_each_file_gets_its_own_named_graph():

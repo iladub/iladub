@@ -155,11 +155,17 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     RE-MEASURED 2026-09-04: the `.rq` population is **50** — `vocab/queries/band-run.rq`, the
     adjacent-subsumption run derivation the R165 the-run-is-one-band loop adds (spec
     `2026-09-04-the-run-is-one-band-design.md` § 3.4). The `.ttl` population is unchanged at
-    146: that loop declares its four new terms inside the existing `vocab/ontology/tab.ttl`."""
+    146: that loop declares its four new terms inside the existing `vocab/ontology/tab.ttl`.
+
+    RE-MEASURED 2026-09-07 ([[R179]]): the `.ttl` population is **147** —
+    `tests/tab-label-nobox-leak.ttl`, the negative fixture for `tab:LabelCellPhysicalShape`. The
+    `.rq` population is unchanged at 50: that shape is a closed-world CONSTRAINT and derives
+    nothing, so it authored no query. The shape itself is declared inside the existing
+    `vocab/shapes/tab-physical-shapes.ttl`."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(vocab_nodes) == len(artifact_files()) == 146
+    assert len(vocab_nodes) == len(artifact_files()) == 147
     assert len(query_nodes) == len(query_files()) == 50
 
 

@@ -254,6 +254,24 @@ shape was still defective**. It could not see this, because `compile`'s producti
 substitute for the suite, and a loop that had shipped on O1 alone would have shipped a shape whose
 meaning depends on which closure you validate under.
 
+### 4.4 What CI found that no local run could
+
+The first push went **red**, on two tests neither the full `tests/etkl/` suite nor the four register
+lints include: `tests/test_artifact_terms.py::test_the_population_is_every_tracked_ttl_outside_the_fixture_directory`
+and `tests/test_artifact_declarations.py::test_the_membrane_binds_one_focus_node_per_artifact`, both
+asserting the tracked-`.ttl` population as a **number** (146). `tests/tab-label-nobox-leak.ttl` makes
+it 147.
+
+**This was not avoidable by running more locally before committing**, and the tests say so
+themselves: the population is `git ls-files`, so a new `.ttl` joins it **at `git add`, not at
+creation** — every local run against the uncommitted tree was green on a count that fails the moment
+the file is staged. Both counts are re-measured in place with the reason, per those tests' own
+convention (*compute the count, never copy it*). The fixture is **not** carved out: the carve-out is
+for fixtures that would fail that membrane by design, and this one names declared `tab:` terms only.
+
+The pre-push run that would have caught it is `pytest tests/ --ignore=tests/etkl` — **603 passed,
+5 skipped in 14:29**, run green before the second push.
+
 ## 5. What is NOT done
 
 - **Option (a) is not taken and not closed.** The flank filler stays a `tab:LabelCell` and stays
