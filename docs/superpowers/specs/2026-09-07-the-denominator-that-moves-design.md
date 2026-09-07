@@ -33,7 +33,7 @@ two pages; this is the corpus.
 `scripts/unbooked_ink_census.py` (written this loop) books each band's ink against the
 `RegionReport.tokens_*` the compiler actually recorded. `reports[i]` IS `bands[i]` — the compile
 loop appends exactly one report per band and derives `tokens_*` by differencing the running
-totals around each band's turn (`src/iladub/etkl/compile.py:723-727`) — so the pairing is an
+totals around each band's turn (`src/iladub/etkl/compile.py:767-771`) — so the pairing is an
 identity, not an alignment guess.
 
 ```
@@ -47,7 +47,7 @@ ignored         146       2935          0       2935  100.0%
 **Read the three rows together — that is the finding.** An *escalated* band books 100% of its ink
 (the −2 is unit-marker ink, which is carried into the graph but is not a `band.lines` word:
 `compile.py:261-267`). An *ignored* band books 0% **by design** — its ink is prose, and counting it
-would be the C1 defect in reverse (`compile.py:757`). An *asserted* band — the one case where the
+would be the C1 defect in reverse (`compile.py:801`). An *asserted* band — the one case where the
 reader claims to have READ the band — books **89.4%**, and silently drops the rest. **17 of 24
 asserted bands** are affected.
 
@@ -96,9 +96,9 @@ sites there is nothing to consult:
 
 | escalation site | what exists there |
 | --- | --- |
-| `compile.py:739` `MULTI_TABLE_AMBIGUOUS` | escalates **before `classify(band)` runs at all** — no region, no grid, no cells |
-| `compile.py:1121` `KIND_NOT_SUPPORTED` | the `else` of the hierarchical-candidate test — no `hreg` was ever built |
-| `compile.py:973` `MATRIX_AMBIGUOUS` | reached when `mreg is None` **or** the region did not tile; in the first case there are no `data_cols` to complement |
+| `compile.py:783` `MULTI_TABLE_AMBIGUOUS` | escalates **before `classify(band)` runs at all** — no region, no grid, no cells |
+| `compile.py:1212` `KIND_NOT_SUPPORTED` | the `else` of the hierarchical-candidate test — no `hreg` was ever built |
+| `compile.py:1064` `MATRIX_AMBIGUOUS` | reached when `mreg is None` **or** the region did not tile; in the first case there are no `data_cols` to complement |
 
 Corpus escalation reasons, measured (`unbooked_ink_census.py`): `REGION_TILING_FAILED` n=12
 (ink 2598), `ROUND_TRIP_FAIL` n=5 (345), `KIND_NOT_SUPPORTED` n=3 (31), `MATRIX_AMBIGUOUS` n=1 (22).
@@ -166,7 +166,7 @@ and confines the diff to the sites the census names.
 
 Affected sites are exactly those whose asserted branch books a *subset* of the band. They are
 **named by measurement, not by reading**: every asserted branch mints a distinct `table_uri`
-prefix (`compile.py:786, 853, 895, 943, 1005/1027/1065`), so the census' `uri` column identifies
+prefix (`compile.py:830, 853, 895, 943, 1005/1027/1065`), so the census' `uri` column identifies
 the site that booked each band with no inference at all.
 
 | site | mint | books | corpus asserted bands | unbooked |
@@ -245,25 +245,49 @@ disagree, the helper is wrong, not the probe.
 page with `verdict == "asserted"`, `tokens_asserted + tokens_escalated == band ink`. Falsified by
 reverting any one site's new call: the census' `unbooked%` for `asserted` returns above 0.
 
+**RUN, and satisfied on the whole corpus:**
+
+```
+verdict       bands        ink     booked   unbooked  unbooked%
+asserted         24       2482       2482          0  0.0%      (was 2220 / 262 / 10.6%)
+escalated        21       2996       2998         -2  -0.1%     (unchanged)
+ignored         146       2935          0       2935  100.0%    (unchanged, by design)
+
+ASSERTED bands with unbooked ink : 0 of 24                      (was 17 of 24)
+```
+
 **O2 (the refutation, pinned).** apple p0 and p1 still score exactly `1.0`, and now with
 `asserted == 172` and `98` rather than `124` and `56`. This is the two-sided form: a repair that
 booked label ink as *escalated* instead would drop them to 0.72 and 0.57, and O2 catches it.
 
-**O3 (the movement, predicted before it is run).** These are computed from § 1's measurements and
-are falsifiable to the digit. A plan must RUN them, not restate them:
+**O3 (the movement, predicted before it was run — and then RUN).** Predictions were computed from
+§ 1's measurements and were falsifiable to the digit. The right column is the census re-run after
+the repair, not a restatement:
 
-| page | score now | score predicted |
-| --- | --- | --- |
-| apple p0 | 1.0 | 1.0 (asserted 124 → 172) |
-| apple p1 | 1.0 | 1.0 (56 → 98) |
-| apple p2 | 0.027027… | 6/114 = 0.052631… |
-| graincorp-capacity p0 | 1.0 | 1.0 (390 → 406) |
-| cbh-stem p0 | 0.057110… | 54/896 = 0.060267… |
-| bfs p5 | 0.018817… | 16/381 = 0.041994… |
-| bfs p6 | 0.898785… | 276/301 = 0.916943… |
-| who p0 | 0.911564… | 288/315 = 0.914285… |
-| who p1 | 0.908127… | 276/303 = 0.910891… |
-| who p2 | 0.908450… | 148/162 = 0.913580… |
+| page | score before | PREDICTED | MEASURED after |
+| --- | --- | --- | --- |
+| apple p0 | 1.0 | 1.0 (asserted 124 → 172) | **1.0, asserted 172** ✓ |
+| apple p1 | 1.0 | 1.0 (56 → 98) | **1.0, asserted 98** ✓ |
+| apple p2 | 0.027027… | 6/114 = 0.052631… | **0.05263157894736842** ✓ |
+| graincorp-capacity p0 | 1.0 | 1.0 (390 → 406) | **1.0, asserted 406** ✓ |
+| cbh-stem p0 | 0.057110… | 54/896 = 0.060267… | **0.060267857142857144** ✓ |
+| bfs p5 | 0.018817… | 16/381 = 0.041994… | **0.04199475065616798** ✓ |
+| bfs p6 | 0.898785… | 276/301 = 0.916943… | **0.9169435215946844** ✓ |
+| who p0 | 0.911564… | ~~288/315~~ | **0.9176829268292683 (301/328)** ✗ |
+| who p1 | 0.908127… | ~~276/303~~ | **0.9145569620253164 (289/316)** ✗ |
+| who p2 | 0.908450… | 148/162 = 0.913580… | **0.9135802469135802** ✓ |
+
+**8 of 10 exact; the two misses are an arithmetic error in THIS spec, not a surprise from the
+code, and the distinction matters.** who p0 and p1 each have **two** dirty bands — band 2 (matrix,
+20/19 words) *and* band 4 (record, 13 words) — and the prediction summed only the first. `268 + 20
++ 13 = 301` and `257 + 19 + 13 = 289` are the corrected figures, and they are exactly what the
+re-run reports. who p2 has only one dirty band, which is why its prediction survived. The lesson
+is § 1.1's own table read one row too narrowly: the per-band census lists bands, and a page can
+appear in it twice.
+
+**O3 also pins what did NOT move.** The census reports the identical band population before and
+after — `asserted 24 / escalated 21 / ignored 146` — so the repair changed the accounting and
+touched no reading.
 
 **O4 (the orphan is booked, not swallowed).** who-wfa p0 band 2 books its `Year: Month` word into
 `tokens_escalated`. Falsified by making the helper return `(n, 0)` unconditionally: O4 fails while
@@ -304,7 +328,7 @@ operands keep their names and their arithmetic; only what feeds them grows.
   `denominator`, `score *=`, `asserted *[/(]`, `escalated)`. A page that describes the score in
   prose without any of those tokens would not have been caught.
 - **The corpus is 7 documents, 45 non-ignored bands.** Every number in § 1 is that corpus. The
-  row-hierarchical site (`compile.py:853`/`:872`) is reached by **no** corpus band, so its
+  row-hierarchical site (`compile.py:906`/`:872`) is reached by **no** corpus band, so its
   diagnosis is read off the code and its repair cannot be falsified by O1 — see § 3.2's last
   paragraph, which makes that a decision the plan must take rather than a gap it may inherit.
   (An earlier draft of this spec named the *transposed* site as the unexercised one. That was

@@ -267,6 +267,50 @@ def _marker_word_count(band) -> int:
     return sum(len(m[2]) for m in getattr(band, "unit_markers", ()) or ())
 
 
+def _book_recovered_ink(band, booked, recovered_extents) -> tuple[int, int]:
+    """R176: the band ink an assert branch's own arithmetic did not count, split in two.
+
+    Returns `(asserted_delta, escalated_delta)` for every word of `band` that is not in
+    `booked` — asserted when some structure the branch CARRIED into the graph holds it,
+    escalated when nothing does.
+
+    WHY THIS EXISTS. Four assert branches book a SUBSET of their band — the data cells — while
+    every escalate branch books all of it. Measured over the corpus before this function existed:
+    an asserted band booked 89.4% of its ink (262 of 2482 words, 17 of 24 bands), an escalated
+    band 100%. So the score's denominator was a property of the VERDICT rather than of the page,
+    and `score` was not comparable between two readings of one page. See
+    `docs/superpowers/specs/2026-09-07-the-denominator-that-moves-design.md` § 1.1 and
+    `scripts/unbooked_ink_census.py`, which re-measures it.
+
+    § 8 CLASSIFICATION — AXIOM in form. A word is booked `asserted` only when supporting
+    structure is PRESENT; nothing is inferred from absence, and unsupported ink defaults to the
+    conservative side. Monotonic: carrying more structure can only move ink from `escalated` to
+    `asserted`. It is not lowered to SPARQL because the evidence — the band's individual words —
+    is not in RDF and has no consumer that would want it there; serialising every word to
+    evaluate a predicate with zero degrees of freedom buys nothing. The summation itself is
+    PROCEDURAL (decidable exact arithmetic), like the accumulators it feeds.
+
+    NO TOLERANCE, and that is structural rather than lucky. `recovered_extents` are
+    `(x0, top, x1, bottom)` read off the objects the branch emitted — never off the graph, where
+    `holon.py` rounds them to 2 dp. A `Cell`'s extent is min/max over its own words and a
+    `ColHeaderNode`/row-header node is built from a single word (`matrix.py:101-103`), so a word
+    a structure carried lies inside it EXACTLY, and a word no structure carried lies outside every
+    one of them. There is no epsilon to tune and none is needed.
+    """
+    boxes = tuple(recovered_extents)
+    a = e = 0
+    for ln in band.lines:
+        for w in ln.words:
+            if w in booked:
+                continue
+            if any(x0 <= w.x0 and w.x1 <= x1 and y0 <= w.top and w.bottom <= y1
+                   for (x0, y0, x1, y1) in boxes):
+                a += 1
+            else:
+                e += 1
+    return a, e
+
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -820,6 +864,15 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         value_cells = [c for c in region.cells if c.col >= 1]
                         asserted_total += sum(len(c.words) for c in value_cells if cell_round_trips(c, b))
                         escalated_total += sum(len(c.words) for c in value_cells if not cell_round_trips(c, b))
+                        # R176: book the ink the two lines above do not. MIRRORS the emitter —
+                        # assert_transposed_region's LabelCells are exactly `by_rc[(k, 0)]`, the
+                        # col-0 cells (holon.py:181-188). Corpus: bfs-population p5 band 13, 9
+                        # words dropped here before this call existed.
+                        _a, _e = _book_recovered_ink(
+                            band, {w for c in value_cells for w in c.words},
+                            (c.bbox for c in region.cells if c.col == 0))
+                        asserted_total += _a
+                        escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
@@ -864,6 +917,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         _emit_band_captions(graph, table_uri, band)
                         _emit_unit_markers(graph, table_uri, band, rreg.grid.boundaries)
                         b = rreg.grid.boundaries
+                        _booked = set()
                         for rb in rreg.leaf_rows:
                             for c in rb.cells:
                                 col = column_of((c.x0 + c.x1) / 2.0, b)
@@ -872,6 +926,20 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     (asserted_total, escalated_total) = (
                                         (asserted_total + len(c.words), escalated_total) if fits
                                         else (asserted_total, escalated_total + len(c.words)))
+                                    _booked.update(c.words)
+                        # R176: MIRRORS the emitter — assert_row_hier_region carries TWO label
+                        # structures, the first band line's words keyed by column
+                        # (holon.py:225-229, emitted at :245-257) and the row-header tree
+                        # `rreg.tree` (:267-289). NO corpus document reaches this branch, so the
+                        # oracle here is `tests/etkl/test_read_band_books_every_word.py`'s
+                        # row_grouped_table_pdf fixture and nothing else.
+                        _a, _e = _book_recovered_ink(
+                            band, _booked,
+                            [(w.x0, w.top, w.x1, w.bottom)
+                             for w in (band.lines[0].words if band.lines else ())]
+                            + [(nd.x0, nd.top, nd.x1, nd.bottom) for nd in rreg.tree])
+                        asserted_total += _a
+                        escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
@@ -922,6 +990,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         data_cells = [c for c in region.cells if c.row > 0]
                         asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
                         escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
+                        # R176: MIRRORS the emitter — assert_record_region turns every `row == 0`
+                        # cell into a tab:LabelCell and skips it from the entry count
+                        # (holon.py:128-140). 11 corpus bands dropped 102 words here.
+                        _a, _e = _book_recovered_ink(
+                            band, {w for c in data_cells for w in c.words},
+                            (c.bbox for c in region.cells if c.row == 0))
+                        asserted_total += _a
+                        escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
@@ -954,6 +1030,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     _emit_band_captions(graph, table_uri, band)
                     _emit_unit_markers(graph, table_uri, band, mreg.grid.boundaries)
                     b = mreg.grid.boundaries
+                    _booked = set()
                     for rb in mreg.leaf_rows:
                         for sc in rb.cells:
                             col = column_of((sc.x0 + sc.x1) / 2.0, b)
@@ -963,6 +1040,20 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     asserted_total += len(sc.words)
                                 else:
                                     escalated_total += len(sc.words)
+                                _booked.update(sc.words)
+                    # R176: MIRRORS the emitter — assert_matrix_region's LabelCells are exactly
+                    # the `col_tree` and `row_tree` nodes (holon.py:361, :383). This is the
+                    # largest of the four sites: 151 of the corpus' 262 dropped words, including
+                    # every one of apple p0's 48 and p1's 42. It is also the only site with a
+                    # measured ORPHAN — who-wfa's `Year: Month` axis caption, one word per page,
+                    # which the column-tree inference leaves unassigned and which now books
+                    # escalated instead of vanishing.
+                    _a, _e = _book_recovered_ink(
+                        band, _booked,
+                        [(nd.x0, nd.top, nd.x1, nd.bottom)
+                         for nd in tuple(mreg.col_tree) + tuple(mreg.row_tree)])
+                    asserted_total += _a
+                    escalated_total += _e
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "asserted", "")
                     reports.append(RegionReport(region.kind, "asserted", n, None,
