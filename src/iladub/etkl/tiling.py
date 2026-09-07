@@ -37,7 +37,13 @@ _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape
 # final validation THROUGH this gate; the physical shapes were only in compile._validate's
 # full set. Region defects expressible in the physical layer now refuse HERE, so every
 # path's existing escalation branch handles them (never crash, always at worst escalate).
-_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape]
+# R179 (2026-09-07): the THIRD physical shape. tab:LabelCellPhysicalShape must be listed
+# HERE and not only in tab-physical-shapes.ttl -- compile.py loads that whole file for its
+# final whole-graph validation, but this gate validates against a CBD subset of the IRIs
+# named in these two lists. A shape in the file alone would let a violating region pass
+# here and CRASH at final validation, which is the exact failure the R19 note above records.
+_PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape,
+                        TAB.LabelCellPhysicalShape]
 
 
 def _build_tiling_shapes():

@@ -23,9 +23,23 @@ def _source_cell(g, k, text, row=0):
 
 
 def _label(g, k, text):
+    """One header tab:LabelCell, as `assert_hier_region` writes it.
+
+    The geometry is not what these tests are about, but it is what the emitter emits, and since
+    [[R179]] `tab:LabelCellPhysicalShape` requires it of any label carrying text — so a label
+    minted here without it would be refused by the gate for a reason that has nothing to do with
+    content conservation. Adding it makes the fixture faithful; the assertions below are
+    unchanged. Measured 2026-09-07: without these two triples, `test_text_merged_into_a_label_is_conserved`
+    and `test_graph_without_source_cells_is_unaffected` fail on the physical shape, not the
+    conservation one.
+    """
     lc = URIRef("%s-hl%d" % (_T, k))
     g.add((lc, RDF.type, TAB.LabelCell))
     g.add((lc, TAB.cellText, Literal(text)))
+    g.add((lc, TAB.onPage, Literal(0, datatype=XSD.integer)))
+    bb = URIRef("%s-hl%d-bb" % (_T, k))
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((lc, TAB.hasBBox, bb))
     return lc
 
 

@@ -40,3 +40,60 @@ tab:WrappedCellShape a sh:NodeShape ;
             }
         """ ;
     ] .
+
+# A header LabelCell that carries surface TEXT must carry its location too — the exact
+# converse of tab:WrappedCellShape above (bbox => text), so text and geometry are
+# co-present on a label in both directions (provenance-to-the-page, R179 / R177).
+#
+# Conditional on the label's OWN non-empty cellText, and NOT on "the header node it labels
+# carries geometry": no tab:HeaderNode carries geometry in any emitted graph, so that
+# condition is not expressible in SHACL. Over the emitting tree the two predicates select
+# the same single node — span.build_reading's flank filler, HeaderNode(0, (flank,), "", None),
+# minted for a column with no header ink at all. That node is honestly boxless and stays
+# exempt: refusing it would infer from absence, which the ink never supported.
+#
+# The two halves are SEPARATE constraints so a violation names which one is missing; a merged
+# constraint hides the onPage half behind the bbox half.
+#
+# Both constraints EXCLUDE a cell that is also a tab:EntryCell, and that exclusion is provably
+# lossless: tab:EntryCellPhysicalShape above already requires cellText + onPage + hasBBox of
+# every entry, unconditionally -- strictly more than this shape asks. It is there because
+# tab:hasLabel has rdfs:range tab:LabelCell and rowgroups.py:93 points it at the SOURCE
+# EntryCell carrying a derived group's label (that module's own docstring says so). Under a
+# closure that materialises range typing, that entry becomes a tab:LabelCell and this shape
+# would target it -- the R19 accident (subclass_closure's docstring in membrane.py records why
+# domain/range typing was dropped from the production closure). Measured 2026-09-07: without
+# this filter, test_closure_equiv.py::test_both_closures_agree_on_a_mutated_real_page_graph
+# FAILS -- full closure reports one extra SPARQLConstraintComponent on htable2-e0_0 that the
+# subclass-only closure does not. The filter makes the shape say the same thing under both.
+tab:LabelCellPhysicalShape a sh:NodeShape ;
+    sh:targetClass tab:LabelCell ;
+    sh:property [ sh:name "LabelCellPhysicalShape" ; sh:path tab:hasBBox ; sh:maxCount 1 ] ;
+    sh:property [ sh:name "LabelCellPhysicalShape" ; sh:path tab:onPage ;
+                  sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:sparql [
+        sh:name "LabelCellPhysicalShape" ;
+        sh:message "A tab:LabelCell with non-empty cellText must carry a tab:hasBBox (provenance-to-the-page)." ;
+        sh:select """
+            PREFIX tab: <https://w3id.org/iladub/tab#>
+            SELECT $this WHERE {
+                $this tab:cellText ?t .
+                FILTER(strlen(str(?t)) > 0)
+                FILTER NOT EXISTS { $this a tab:EntryCell }
+                FILTER NOT EXISTS { $this tab:hasBBox ?bbox }
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        sh:name "LabelCellPhysicalShape" ;
+        sh:message "A tab:LabelCell with non-empty cellText must carry a tab:onPage (provenance-to-the-page)." ;
+        sh:select """
+            PREFIX tab: <https://w3id.org/iladub/tab#>
+            SELECT $this WHERE {
+                $this tab:cellText ?t .
+                FILTER(strlen(str(?t)) > 0)
+                FILTER NOT EXISTS { $this a tab:EntryCell }
+                FILTER NOT EXISTS { $this tab:onPage ?p }
+            }
+        """ ;
+    ] .
