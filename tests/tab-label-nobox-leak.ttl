@@ -1,0 +1,26 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# NEGATIVE fixture for tab:LabelCellPhysicalShape ([[R179]]).
+#
+# The defect [[R177]] repaired at the producer, expressed at the membrane: a header
+# LabelCell that carries surface text and NO location. Provenance-to-the-page
+# (CLAUDE.md § Core design principles 6) is violated and, until 2026-09-07, no shape
+# said so. ex:lcNoBox is missing tab:hasBBox; ex:lcNoPage is missing tab:onPage —
+# the two halves are separate constraints so a violation names which one is gone.
+#
+# Topology is deliberately minimal: this fixture is validated against the PHYSICAL
+# shapes alone (tests/test_tab.py::test_label_nobox_leak_fails), never the tiling set.
+ex:t a tab:HierarchicalTable ;
+    tab:hasHeaderNode ex:h1, ex:h2 ;
+    tab:hasCell ex:lcNoBox, ex:lcNoPage .
+
+ex:h1 a tab:HeaderNode ; tab:headerLevel 0 ; tab:hasLabel ex:lcNoBox .
+ex:h2 a tab:HeaderNode ; tab:headerLevel 0 ; tab:hasLabel ex:lcNoPage .
+
+# text, a page, and no box.
+ex:lcNoBox a tab:LabelCell ; tab:cellText "Currency" ; tab:onPage 0 .
+
+# text, a box, and no page.
+ex:lcNoPage a tab:LabelCell ; tab:cellText "Unit" ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 160.0 ; tab:y0 690.0 ; tab:x1 205.0 ; tab:y1 700.0 ] .

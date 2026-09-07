@@ -168,6 +168,25 @@ def test_wrapped_leak_fails():
     assert "WrappedCellShape" in t
 
 
+# R179: the membrane's label half. tab:EntryCellPhysicalShape required geometry of ENTRIES
+# only, so R177's 79 boxless header LabelCells violated provenance-to-the-page with nothing
+# validating it. The conformant example now carries three boxed labels AND the textless,
+# boxless one (`span.build_reading`'s flank filler) that the shape must exempt.
+def test_label_physical_conformant_passes():
+    c, t = _vp(os.path.join(EX, "hier-physical-conformant.ttl"))
+    assert c, t
+
+
+def test_label_missing_box_leak_fails():
+    c, t = _vp(os.path.join(TST, "tab-label-nobox-leak.ttl"))
+    assert not c
+    assert "LabelCellPhysicalShape" in t
+    # BOTH halves must be reported — the fixture is missing a box on one label and a page
+    # on another, and a merged constraint would surface only the first.
+    assert "must carry a tab:hasBBox" in t
+    assert "must carry a tab:onPage" in t
+
+
 def test_tab_transposedtable_term():
     g = _g(TAB_TTL)
     assert (TAB.TransposedTable, RDF.type, OWL.Class) in g
