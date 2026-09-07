@@ -327,26 +327,29 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
     assert (p1.asserted, p1.escalated) == (56, 0), (p1.asserted, p1.escalated)
 
 
-@corpus_only
-def test_an_adopted_page_never_scores_one_by_construction(apple_doc):
-    """The zeroing tautology, refused: ink the grid did not read keeps escalating.
-
-    **THIS TEST FAILS AT HEAD, BY DESIGN, AND MUST NOT BE RE-BASELINED** ([[R173]] 5a, and the
-    bisect's own § 5). It is the ONE of the eight that the [[R165]] merge broke rather than
-    R160's `adopted (1,) → ()`: apple p1 now reads `score=1.0, asserted=56, escalated=0`, so
-    `p1.escalated > 0` fails `0 > 0` — a page that reached 1.0 WITHOUT adopting anything.
-
-    That is exactly the state this assertion exists to refuse, so it is firing as [[R172]]'s
-    detector: nobody has content-diffed the merged band's 124 entries against the 48 cells
-    asserted before, and if 56 asserted cells is the wrong reading of apple p1, this found it.
-    The invariant it used to carry is now pinned on the fixture that adopts, by
-    `test_the_adopted_page_keeps_the_ink_the_grid_did_not_read`.
-
-    Closing it is [[R172]]'s work: rule on apple p1's reading, then either delete this test with
-    that ruling recorded, or repair the reading it caught."""
-    p1 = apple_doc.pages[ADOPTED_PAGE]
-    assert p1.escalated > 0
-    assert p1.score < 1.0
+# `test_an_adopted_page_never_scores_one_by_construction` STOOD HERE and was DELETED 2026-09-07,
+# with the ruling that deletes it, per the fork [[R173]] 5a and this test's own docstring set for
+# [[R172]]: *rule on apple p1's reading, then either delete this test with that ruling recorded,
+# or repair the reading it caught.*
+#
+# THE RULING: apple p1's reading is CORRECT, and its `p1.escalated > 0` is REFUTED rather than
+# stale. The cell-level diff (`scripts/entry_cell_diff.py`, evidence in
+# docs/superpowers/2026-09-07-r172-the-cell-level-diff.md § 2) shows the merged reading of p1
+# LOSES no baseline cell, CHANGES none, and GAINS 42 — every gain landing on a real baseline word
+# with identical text, every one out of a band that escalated before, and none out of the three
+# `ignored` prose bands. Nothing on that page is left unread, so `escalated == 0` is honest and an
+# assertion demanding otherwise is asserting something false about the document.
+#
+# WHAT IT WAS RIGHT ABOUT IS RE-HOMED, NOT DROPPED. Its concern — a page reaching 1.0 without
+# adopting — is real, and the diff located it at a different site: the score's DENOMINATOR moves
+# when a verdict changes (24 words on p0, 28 on p1 leave `asserted+escalated` altogether, because
+# an escalated band books every word it holds at compile.py:744 while an asserted matrix band books
+# only its data cells' words at compile.py:923). That is [[R176]], raised for it. The invariant
+# this test used to carry is pinned on the fixture that adopts, by
+# `test_the_adopted_page_keeps_the_ink_the_grid_did_not_read` above, and the diff's own findings
+# are pinned by `test_band_runs.py::test_the_merge_loses_no_cell_and_invents_no_ink`.
+#
+# DO NOT RESTORE IT. A page whose ink is entirely read must be allowed to say so.
 
 
 @corpus_only
