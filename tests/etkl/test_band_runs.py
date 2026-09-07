@@ -87,7 +87,13 @@ def test_the_predecessor_fact_is_emitted_even_when_the_predecessor_abstained():
 CORPUS = os.path.join(os.path.dirname(__file__), "..", "..", "corpus")
 APPLE = os.path.join(CORPUS, "financial", "apple-fy2026q3-statements.pdf")
 STEM = os.path.join(CORPUS, "ag-trade", "graincorp-stem-2026-07-31.pdf")
-corpus_only = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not fetched")
+def corpus_only(fn):
+    """Tag AND gate. The `pytest.mark.corpus` half was added 2026-09-07 ([[R172]]'s loop): the
+    skipif alone made these four invisible to `-m corpus`, which is the very census [[R173]]'s
+    open half needs to be honest. CI runs a bare `pytest -q` with no marker filter
+    (`.github/workflows/ci.yml:26`), so the tag changes nothing about what CI selects."""
+    fn = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not fetched")(fn)
+    return pytest.mark.corpus(fn)
 
 
 @pytest.fixture
@@ -193,3 +199,46 @@ def test_merge_bands_takes_the_runs_extent_and_concatenates_the_rest():
     assert merged.top == min(a.top, b.top) and merged.bottom == max(a.bottom, b.bottom)
     assert merged.lines == a.lines + b.lines
     assert len(merged.rules) == len(a.rules) + len(b.rules)
+
+
+@corpus_only
+@pytest.mark.parametrize("page", [0, 1])
+def test_the_merge_loses_no_cell_and_invents_no_ink(page):
+    """[[R172]]'s closure, and it is NOT the criterion that row was raised with.
+
+    R172 asked for a diff showing *"every cell the previous reading asserted is present in the
+    merged reading with the same text and the same column."* That is met exactly on apple p1 and
+    is **REFUTED on p0** — where the baseline `RECORD_TABLE` at band 4 read the `Operating income`
+    DATA ROW as its column header (columns literally labelled `('35,695',)` …) and read four row
+    stubs as entry cells. All 4 lost and all 16 column-changed cells are band 4, which is 20 of
+    20 — its entire baseline entry set. The criterion asked the merge to preserve a false
+    assertion; see docs/superpowers/2026-09-07-r172-the-cell-level-diff.md § 3.
+
+    What IS true on both pages, and what this pins:
+
+      1. no baseline entry cell VANISHES — each is an entry or a `tab:LabelCell` in the merged
+         reading (a demotion is a repair; an absence would be lost ink);
+      2. no gained entry INVENTS ink — each lands on a baseline word at the identical anchor
+         with identical text.
+
+    Corpus-gated because apple is the only corpus document on which a run merge is accepted
+    (R165: 14 candidate runs, 2 accepted, both apple page tails), so there is no synthetic
+    stand-in — that gap is [[R173]]'s open half, not this test's to close.
+    """
+    from scripts.entry_cell_diff import compare
+
+    cmp = compare(APPLE, page)
+
+    vanished = [a for a in cmp.lost if a not in cmp.m_labels]
+    assert not vanished, (
+        f"page {page}: {len(vanished)} baseline entry cells vanish entirely: {vanished}")
+
+    invented = [a for a in cmp.gained if a not in cmp.words]
+    assert not invented, (
+        f"page {page}: {len(invented)} gained cells land on no baseline word: {invented}")
+
+    mistyped = [(a, cmp.words[a][1], cmp.m_entries[a].text)
+                for a in cmp.gained if cmp.words[a][1] != cmp.m_entries[a].text]
+    assert not mistyped, (
+        f"page {page}: {len(mistyped)} gained cells disagree with the word they sit on: "
+        f"{mistyped[:3]}")
