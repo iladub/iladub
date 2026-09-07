@@ -135,6 +135,20 @@ def _hrule_split(band) -> int | None:
 
 @dataclass(frozen=True)
 class HeaderNode:
+    """A column-header node, with the geometry of the source cell it was read from.
+
+    The four bounds + `page` are OPTIONAL and appended last on purpose ([[R177]]). Optional,
+    because `span.build_reading` synthesises a node for a column that carries no header ink at all
+    (`HeaderNode(0, (flank,), "", None)`), and that node honestly has no box; appended last,
+    because every existing positional construction (23 across `tests/etkl/`) keeps its meaning.
+
+    They exist so `holon.assert_hier_region` can write `tab:hasBBox` like its five sibling
+    emitters. Before that, a hierarchical table's header labels carried text and no location:
+    provenance-to-the-page (CLAUDE.md § Core design principles 6) held for every table shape but
+    this one. Mirror of `rowheaders.RowHeaderNode`, which has carried the same five fields since it
+    was written -- the asymmetry between the two was the defect.
+    """
+
     level: int
     covers: tuple[int, ...]
     text: str
@@ -142,6 +156,11 @@ class HeaderNode:
     center_x: float | None = None
     ambiguous: bool = False
     ambiguous_flank: int | None = None
+    x0: float | None = None
+    top: float | None = None
+    x1: float | None = None
+    bottom: float | None = None
+    page: int | None = None
 
 
 def _covers_for_cell(cell, b: Sequence[float]) -> tuple[int, ...]:
@@ -434,7 +453,11 @@ def _tree_from_rows(header_rows, grid: LeafGrid) -> tuple[HeaderNode, ...]:
                 covers = covers_map.get((lvl, j), ())    # SPARQL leaf covering
             else:
                 covers = _covers_for_cell(cell, b)        # parent path, unchanged
-            nodes.append(HeaderNode(lvl, covers, cell.text, None, cx))
+            # `cell` is a SourceCell (cells.py), which carries all four bounds and the page.
+            # They were read here for `cx` and discarded before [[R177]].
+            nodes.append(HeaderNode(lvl, covers, cell.text, None, cx,
+                                    x0=cell.x0, top=cell.top, x1=cell.x1,
+                                    bottom=cell.bottom, page=cell.page))
 
     nodes = repair_coverage(nodes, grid)   # non-leaf levels only (B1.1); leaf covers preserved
 
@@ -458,8 +481,12 @@ def _tree_from_rows(header_rows, grid: LeafGrid) -> tuple[HeaderNode, ...]:
             if m.level == n.level - 1 and set(n.covers) <= set(m.covers):
                 parent_idx = j
                 break
-        linked.append(HeaderNode(n.level, n.covers, n.text, parent_idx,
-                                 n.center_x, n.ambiguous, n.ambiguous_flank))
+        # `replace`, not a field-by-field rebuild: of the seven sites that rebuild a HeaderNode
+        # this was the ONE listing its fields explicitly, so a field added to the dataclass was
+        # silently dropped here while the other six (three in this module, three in span.py, all
+        # already `replace`) carried it. That is how [[R177]]'s geometry would have been lost one
+        # line after being read -- see this loop's falsification 4.
+        linked.append(replace(n, parent=parent_idx))
     return tuple(linked)
 
 
