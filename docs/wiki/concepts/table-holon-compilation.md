@@ -29,6 +29,25 @@ cells become assertions; anything the geometry can't decide becomes a
 proposition and an escalation. The design goal stated directly: **"score =
 validated% + escalated%; silent-wrong is impossible."**
 
+**That goal was measurably unmet until 2026-09-07, and the gap was in the accounting rather
+than in the reading** ([[R176]]; spec
+`docs/superpowers/specs/2026-09-07-the-denominator-that-moves-design.md`). The two shares are
+supposed to SUM. Measured over the corpus, they did on an *escalated* band (100% of its ink) and
+did not on an *asserted* one (89.4% — 262 of 2482 words, 17 of 24 bands): four assert branches
+booked only their DATA cells, so a band's label and header ink left the score entirely at the
+moment the band started being read. The denominator was therefore a property of the **verdict**,
+not of the page, and `score` was not comparable between two readings of the same page — which is
+what made `score = 1.0` mean "everything the denominator counts was read" rather than "everything
+was read".
+
+`_book_recovered_ink` (`src/iladub/etkl/compile.py`) closes it: every word of an asserted band is
+booked once — **asserted** when a structure the reading carried into the graph holds it,
+**escalated** when nothing does. Confidence: high; the invariant is pinned per assert-site in
+`tests/etkl/test_read_band_books_every_word.py`, including the row-hierarchical site no corpus
+document reaches. Worth knowing for anyone reading an old score: apple p0/p1 read `1.0` before
+and after — their unbooked ink was 100% label-covered, so that `1.0` was correct all along and is
+now provable from its own operands.
+
 **How it works.** The loop doc's own increment log is the arc: increment 1
 closes a flat record table end-to-end; increment 2 adds hierarchical/wrapped
 column headers; **increment 3 — detect transposed tables — is explicitly

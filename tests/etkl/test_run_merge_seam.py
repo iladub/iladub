@@ -132,22 +132,39 @@ def test_m1_the_partition_does_not_depend_on_section_repair_bands():
 # RE-VERIFIED 2026-09-04 against the SHIPPED tree: 27 pages, and exactly the two apple
 # entries marked below moved. RE-RUN IT rather than trusting this table if main has moved:
 #     PYTHONPATH=src python3 scripts/page_ink_census.py
+#
+# RE-MEASURED 2026-09-07 by [[R176]], because main DID move and this table's own header
+# says to re-run rather than trust it. EVERY entry changed that had label ink to book: an
+# asserted band now books all of its ink, not only its data cells. **This is an accounting
+# re-baseline, not a reading change** — the corpus census reports the identical band
+# population before and after (asserted 24 / escalated 21 / ignored 146), and this test's
+# force is untouched: 25 of 27 pages must still be EQUAL, and only apple p0/p1 may rise.
+#
+# THE TWO APPLE ENTRIES ARE MEASURED DIFFERENTLY FROM THE OTHER 25, and must stay that way.
+# They are the PRE-MERGE reading — `compile_tables` with `compile.merged_run_admissible`
+# forced to return False, the technique `scripts/entry_cell_diff.py:163-173` uses — because
+# `>` against a post-merge number would be trivially false. Under R176 those baselines rise
+# too (48 -> 72, 14 -> 27): the refusing reading books ITS label ink as well. Reproduce with:
+#     PYTHONPATH=src python3 -c "from iladub.etkl import compile as C; \
+#       C.merged_run_admissible = lambda *a, **k: False; \
+#       print([C.compile_tables(APPLE, p, validate_shapes=False, \
+#              datagrid_fallback=False).asserted for p in (0, 1)])"
 BASELINE_ASSERTED = {
-    ("cbh-stem-2026-08-03", 0): 51,
-    ("graincorp-capacity-2026-08-04", 0): 390,
+    ("cbh-stem-2026-08-03", 0): 54,
+    ("graincorp-capacity-2026-08-04", 0): 406,
     ("graincorp-stem-2026-07-31", 0): 586,
     ("graincorp-stem-2026-07-31", 1): 0,
     ("graincorp-stem-2026-07-31", 2): 0,
-    ("apple-fy2026q3-statements", 0): 48,
-    ("apple-fy2026q3-statements", 1): 14,
-    ("apple-fy2026q3-statements", 2): 3,
+    ("apple-fy2026q3-statements", 0): 72,    # PRE-MERGE (forced refusal); post-merge is 172
+    ("apple-fy2026q3-statements", 1): 27,    # PRE-MERGE (forced refusal); post-merge is 98
+    ("apple-fy2026q3-statements", 2): 6,
     ("bfs-population-bilan-2023", 0): 0,
     ("bfs-population-bilan-2023", 1): 0,
     ("bfs-population-bilan-2023", 2): 0,
     ("bfs-population-bilan-2023", 3): 0,
     ("bfs-population-bilan-2023", 4): 0,
-    ("bfs-population-bilan-2023", 5): 7,
-    ("bfs-population-bilan-2023", 6): 222,
+    ("bfs-population-bilan-2023", 5): 16,
+    ("bfs-population-bilan-2023", 6): 276,
     ("ons-index-of-services-2026-02", 0): 0,
     ("ons-index-of-services-2026-02", 1): 0,
     ("ons-index-of-services-2026-02", 2): 0,
@@ -157,9 +174,9 @@ BASELINE_ASSERTED = {
     ("ons-index-of-services-2026-02", 6): 0,
     ("ons-index-of-services-2026-02", 7): 0,
     ("ons-index-of-services-2026-02", 8): 0,
-    ("who-wfa-boys-zscore-0-5", 0): 268,
-    ("who-wfa-boys-zscore-0-5", 1): 257,
-    ("who-wfa-boys-zscore-0-5", 2): 129,
+    ("who-wfa-boys-zscore-0-5", 0): 301,
+    ("who-wfa-boys-zscore-0-5", 1): 289,
+    ("who-wfa-boys-zscore-0-5", 2): 148,
 }
 
 # The ONLY two pages a merge may move, and both may only move UP. Every other page must be

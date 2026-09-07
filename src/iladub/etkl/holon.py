@@ -128,8 +128,14 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
     for cell in region.cells:
         if cell.row == 0:
             # header label: carry its text + geometry (context is not discarded)
-            # and link it to its column's HeaderNode. LabelCells are structural,
-            # not scored facts.
+            # and link it to its column's HeaderNode. LabelCells are structural, and
+            # they are NOT entries — `asserted` below counts entry cells only, and
+            # that is unchanged. What DID change (R176, 2026-09-07): their ink is no
+            # longer absent from the score. The caller books it, by mirroring this
+            # `cell.row == 0` test — see `_book_recovered_ink` in compile.py. An
+            # earlier form of this comment read "not scored facts", which stopped
+            # being true when a band that drops 10% of its ink stopped being able to
+            # claim it had read the band.
             lc = _region_uri(table_uri, "lc", cell.col)
             g.add((lc, RDF.type, TAB.LabelCell))
             g.add((table_uri, TAB.hasCell, lc))

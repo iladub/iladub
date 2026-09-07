@@ -321,10 +321,18 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
     which is [[R160]]'s open reader-authority question, not this test's to settle.
 
     It is still a detector: if any apple page is ever adopted again, this fails loudly, and the
-    re-pointed driver pins above are then owed a corpus fixture."""
+    re-pointed driver pins above are then owed a corpus fixture.
+
+    RE-BASELINED AGAIN 2026-09-07, `56 -> 98`, by [[R176]] — and the RULING is that this is an
+    operand re-baseline, not a reading change. The page's SCORE is unchanged at 1.0, the band
+    population is unchanged, and the cells it reads are unchanged; what moved is that the band's
+    42 label words are now booked instead of dropped (`_book_recovered_ink`, compile.py:1051).
+    98 IS the band's whole ink — measured, `scripts/unbooked_ink_census.py` — so this assertion
+    is now strictly stronger than the one it replaces: it says the page read EVERYTHING it holds,
+    where `56` only said it read every data cell and said nothing about the other 42 words."""
     assert apple_doc.adopted == (), apple_doc.adopted
     p1 = apple_doc.pages[ADOPTED_PAGE]
-    assert (p1.asserted, p1.escalated) == (56, 0), (p1.asserted, p1.escalated)
+    assert (p1.asserted, p1.escalated) == (98, 0), (p1.asserted, p1.escalated)
 
 
 # `test_an_adopted_page_never_scores_one_by_construction` STOOD HERE and was DELETED 2026-09-07,
@@ -343,8 +351,12 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
 # WHAT IT WAS RIGHT ABOUT IS RE-HOMED, NOT DROPPED. Its concern — a page reaching 1.0 without
 # adopting — is real, and the diff located it at a different site: the score's DENOMINATOR moves
 # when a verdict changes (24 words on p0, 28 on p1 leave `asserted+escalated` altogether, because
-# an escalated band books every word it holds at compile.py:744 while an asserted matrix band books
-# only its data cells' words at compile.py:923). That is [[R176]], raised for it. The invariant
+# an escalated band booked every word it holds while an asserted matrix band booked only its data
+# cells' words). That is [[R176]] — CLOSED 2026-09-07: `_book_recovered_ink` books the rest, the
+# corpus-wide unbooked ink of asserted bands went 262 words -> 0, and p1's operands read
+# `(98, 0)` above rather than `(56, 0)`. (The two `compile.py:NNN` citations that stood here were
+# deleted rather than re-pointed: the repair moved every line they named, and the sites are found
+# by symbol — `_book_recovered_ink`'s four call sites — far more reliably than by number.) The invariant
 # this test used to carry is pinned on the fixture that adopts, by
 # `test_the_adopted_page_keeps_the_ink_the_grid_did_not_read` above, and the diff's own findings
 # are pinned by `test_band_runs.py::test_the_merge_loses_no_cell_and_invents_no_ink`.
@@ -363,7 +375,13 @@ def test_the_document_score_rises(apple_doc):
 
     2026-09-05: reads 0.6288659793814433 — clearing the floor by the [[R165]] one-band reading,
     NOT by adoption (which no longer fires here at all). The floor is deliberately left where it
-    was: it is a floor, not a pin."""
+    was: it is a floor, not a pin.
+
+    2026-09-07: reads 0.71875 = 276/384, by [[R176]]. **This rise is NOT a better reading and
+    must not be reported as one** — it is 90 label words (48 on p0, 42 on p1) moving from
+    counted-nowhere into `asserted`, plus 3 into the p2 numerator. The document read exactly
+    what it read the day before. Recorded here because a headline number that moves for an
+    accounting reason is the one most likely to be misread later as progress."""
     assert apple_doc.score > 0.06068601583113457
     assert apple_doc.score >= 0.35560344827586204, apple_doc.score
 
