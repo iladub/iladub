@@ -66,6 +66,24 @@ tab:WrappedCellShape a sh:NodeShape ;
 # this filter, test_closure_equiv.py::test_both_closures_agree_on_a_mutated_real_page_graph
 # FAILS -- full closure reports one extra SPARQLConstraintComponent on htable2-e0_0 that the
 # subclass-only closure does not. The filter makes the shape say the same thing under both.
+#
+# THAT PREMISE WAS REMOVED AT ITS ROOT BY R61 (2026-09-08). tab:hasLabel now has rdfs:range
+# tab:Cell, not tab:LabelCell, precisely because deriving LabelCell on those 18 corpus EntryCells
+# was a false assertion in a published graph. So the range no longer types an entry as a label
+# under ANY closure, and the 2026-09-07 measurement above no longer reproduces: RE-RUN with both
+# filters deleted, test_closure_equiv.py is 18 passed in 81.74s. The filter is now inert on the
+# corpus, and it is KEPT anyway, under CLAUDE.md § Producer-side guards vs the membrane -- the
+# condition for deleting a guard is PROVABLE total coverage, and nothing prevents a future emitter
+# from typing one node both tab:LabelCell and tab:EntryCell explicitly.
+#
+# AND R61 ANSWERED THE QUESTION R61's ROW ASKED. The row wanted this filter pinned as
+# load-bearing. It CANNOT be, and the attempted falsification is what showed why: construct the
+# both-typed node with cellText and no geometry, and the only shape that refuses it is
+# tab:EntryCellPhysicalShape -- deleting this filter changes the verdict not at all. The exclusion
+# is LOSSLESS BY DOMINATION, exactly as the paragraph above claims and as nobody had measured: the
+# entry shape asks for strictly more, so exempting a both-typed cell here can never hide a defect.
+# A test asserting "delete the filter and the shape refuses" would have pinned the ENTRY shape
+# while claiming to pin this one. test_domain_range_agreement.py pins the domination instead.
 tab:LabelCellPhysicalShape a sh:NodeShape ;
     sh:targetClass tab:LabelCell ;
     sh:property [ sh:name "LabelCellPhysicalShape" ; sh:path tab:hasBBox ; sh:maxCount 1 ] ;

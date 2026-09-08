@@ -632,8 +632,11 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         if col.is_measure:
             g.add((c_uri, RDF.type, TAB.MeasureColumn))
         g.add((grid_uri, TAB.hasGridColumn, c_uri))
-        g.add((c_uri, TAB.x0, Literal(Decimal(str(round(col.x0, 2))))))
-        g.add((c_uri, TAB.x1, Literal(Decimal(str(round(col.x1, 2))))))
+        # R61: a column has an x-INTERVAL, not a box. tab:x0/x1 are rdfs:domain tab:BBox,
+        # so emitting them here made every grid column a tab:BBox for any consumer running
+        # our published axioms (R182 SS 2.3). tab:colX0/colX1 are domained on tab:GridColumn.
+        g.add((c_uri, TAB.colX0, Literal(Decimal(str(round(col.x0, 2))))))
+        g.add((c_uri, TAB.colX1, Literal(Decimal(str(round(col.x1, 2))))))
         if col.family:
             g.add((c_uri, TAB.columnFamily, TAB[col.family]))
 
