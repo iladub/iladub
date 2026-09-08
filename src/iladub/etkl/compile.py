@@ -226,6 +226,12 @@ def _emit_unit_markers(graph, table_uri, band, boundaries):
     FINAL grid boundaries via the carried neighbor_x). Provenance rides
     tab:markerRegion -> tab:BBox — deliberately NOT tab:hasBBox, whose rdfs:domain
     would type the marker as tab:Cell and trip WrappedCellShape at the gate (R19).
+    STILL LIVE, and [[R182]] is the case that proves it. That loop measured the
+    MEMBRANE (subclass-only closure, no domain/range typing) and concluded the hazard
+    was dead; it then emitted tab:hasBBox on a tab:HeaderSourceCell and the closure
+    differential (tests/etkl/test_closure_equiv.py, membrane.rdfs_closure's owlrl leg)
+    refused 26 nodes the membrane admitted. The membrane is not the only consumer of
+    full RDFS closure in this repo. Do not collapse this property into tab:hasBBox.
 
     `boundaries=None` (fix round 1, transposed branch ONLY): assert_transposed_region
     mints its `{table_uri}-c{k}` leaf-column URIs keyed by PHYSICAL ROW index (the axis

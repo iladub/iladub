@@ -169,3 +169,25 @@ def test_an_unmerged_label_keeps_its_own_box_exactly():
     nodes, _caps, _src = build_row_reading(rows, GRID, ("furniture", "continuation"))
     item = next(n for n in nodes if n.text == "Item")
     assert (item.x0, item.top, item.x1, item.bottom) == (110.0, 24.0, 140.0, 34.0)
+
+
+def test_source_cells_record_which_node_each_fragment_was_joined_into():
+    """[[R182]] — the join's membership must reach the graph, or no shape can check the box.
+
+    [[R181]] made the label's box cover its fragments; nothing records WHICH fragments, so
+    `tab:LabelCoversProvenanceShape` has no `sh:path` to walk. Measured on the real emission
+    (spec § 1): a `tab:HeaderSourceCell` has exactly one in-edge, `tab:hasHeaderSourceCell`
+    from the table, and a `tab:LabelCell` only `tab:hasLabel` + `tab:hasCell` — zero one-hop
+    edges between them.
+
+    `build_row_reading` is where the membership is known: `extra[col]` and `tgt` are locals at
+    the moment the union is taken. This pins that it survives into `source_cells` as the node
+    index, and that a cell no fragment landed on records None rather than a guess.
+    """
+    rows = header_rows_of(caption_and_wrap_band(), GRID, 3)
+    nodes, _caps, source_cells = build_row_reading(rows, GRID, ("furniture", "continuation"))
+    unit_idx = next(i for i, n in enumerate(nodes) if n.text == "Unit Ref")
+    assert [(r, c.text, d) for r, c, d in source_cells if d is not None] \
+        == [(1, "Unit", unit_idx)]
+    # and the other six -- two caption cells + four leaf labels -- claim no derivation
+    assert sum(1 for _r, _c, d in source_cells if d is None) == 6
