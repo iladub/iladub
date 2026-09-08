@@ -135,3 +135,44 @@ reader, and its blast radius on corpus tests is nil by construction.
   checked rather than obeyed — but the lesson generalises past the grade: **before writing
   "unverifiable from here", ask whether the thing has ever run.** A pipeline that has executed a
   step once has left evidence that it was configured.
+
+---
+
+## APPENDED 2026-09-08, after the tag — the release outcome
+
+**Strictly additive.** Parts 1–5 above are untouched; part 5 in particular is the reasoning written
+first, and is left exactly as it was authored. This block records what the pipeline did, which was
+unknown when the rest was written. (Whether appending to Evidence is legitimate at all is [[R186]]'s
+open question; this is the append arm, not the rewrite arm, and it is labelled so the distinction is
+readable rather than assumed.)
+
+**`v0.0.4` shipped.** Release run `34254093475`, tag `v0.0.4`, from `1007d48` on `main`. Every step
+of the pipeline reported `success` — including the two that could have failed independently:
+
+```
+Tag must match pyproject version=success          ← the guard on step 3's bump
+Tests (incl. doc-governance lint)=success
+Release gate — no undrained contradiction=success ← first tag ever cut with this passing
+Deploy iladub.dev (gh-pages)=success
+Publish to PyPI (trusted publishing)=success      ← the residual risk in part 4, discharged
+```
+
+**Verified independently of the run's own self-report**, because a green step and a live artifact
+are different claims:
+
+| what | measured | result |
+| --- | --- | --- |
+| PyPI | `curl https://pypi.org/pypi/iladub/json` | `latest: 0.0.4`; wheel `17:06:03`, sdist `17:06:05` |
+| iladub.dev | `curl -sIL https://iladub.dev` | `200` |
+| the deploy is THIS commit | `gh api …/branches/gh-pages` | `Deployed 1007d48 with MkDocs 1.6.1`, `17:05:41Z` |
+| w3id content negotiation | `curl -L -H "Accept: text/turtle" https://w3id.org/iladub` | `200` → `raw.githubusercontent.com/…/vocab/ontology/iladub.ttl` |
+| w3id, HTML leg | `curl -L -H "Accept: text/html" https://w3id.org/iladub` | `200` → `iladub.dev/assertion-proposition/` |
+
+**The Trusted Publisher caveat in part 4 is now discharged for this release** — the publisher was
+not merely configured in 2026-08, it published four minutes ago. The caveat's *form* still holds for
+the next release: the evidence is again historical the moment this is written.
+
+**One thing part 4 said would be nil, and was.** The full suite ran **1538 passed, 7 skipped, 1
+xfailed** in 56:10 with the corpus present — zero failures, on a branch that touched no reader. The
+[[R173]] eight did not appear. That is worth exactly one line and no more: this branch is not the
+place to conclude anything about R173, whose CI-visibility half stays open and unpriced.
