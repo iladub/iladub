@@ -97,3 +97,51 @@ tab:LabelCellPhysicalShape a sh:NodeShape ;
             }
         """ ;
     ] .
+
+# [[R182]] — a label's box must COVER the ink it claims as its provenance.
+#
+# The membrane half of [[R181]]. build_row_reading joins a wrapped header across N source lines
+# and unions their bounds into the leaf label's box; before that fix a joined label shipped under
+# a box identical to its last line alone — provenance-to-the-page (CLAUDE.md § 6) present and
+# PARTIAL, which is a false claim, not a missing one. Nothing validated it.
+#
+# CONDITIONAL on the prov:wasDerivedFrom edge, never on its absence: a label no continuation was
+# joined into makes no provenance claim, and requiring one would infer from absence (CLAUDE.md § 8
+# — the membrane is closed-world about what CROSSES, never about what the ink supported). So the
+# constraint is vacuously true for every label of every previously-shipped region, and for the
+# record/transposed makers, whose labels come from a single SourceCell with no join at all.
+#
+# EXACT comparison, no tolerance, deliberately. The label box is the min/max of the very source
+# boxes compared against, and both are rounded by the same Decimal(str(round(v, 2))) writer
+# (holon.py's _bbox_node), so min/max commutes with the rounding and equality is exact. An EPS
+# here would be a tuned constant widening the shape's blind spot (CLAUDE.md § 8), not a safety
+# margin — contrast scripts/unbooked_ink_fate.py's EPS, which compares two INDEPENDENTLY rounded
+# quantities (a word's extent against a cell's box) and needs one.
+#
+# The source side is walked through tab:sourceRegion, NOT tab:hasBBox: the latter's rdfs:domain
+# would RDFS-type a tab:HeaderSourceCell as a tab:Cell under full closure and trip
+# tab:WrappedCellShape (it carries tab:sourceText, not tab:cellText). Measured, not feared — the
+# first form of this loop used tab:hasBBox and tests/etkl/test_closure_equiv.py refused 26 nodes
+# the membrane admitted. The label side keeps tab:hasBBox, because a tab:LabelCell IS a tab:Cell.
+#
+# Listed in tiling._PHYSICAL_SHAPE_IRIS as well as here: the gate validates a CBD subset of the
+# IRIs those lists name, so a shape in this file alone would let a violating region pass the gate
+# and CRASH at compile's final whole-graph validation (the R19 failure, recorded in tiling.py).
+tab:LabelCoversProvenanceShape a sh:NodeShape ;
+    sh:targetClass tab:LabelCell ;
+    sh:sparql [
+        sh:name "LabelCoversProvenanceShape" ;
+        sh:message "A tab:LabelCell's tab:hasBBox must contain the box of every tab:HeaderSourceCell it prov:wasDerivedFrom (the joined label must cover the ink it was joined from)." ;
+        sh:select """
+            PREFIX tab:  <https://w3id.org/iladub/tab#>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            SELECT $this WHERE {
+                $this prov:wasDerivedFrom ?src .
+                ?src a tab:HeaderSourceCell ; tab:sourceRegion ?sb .
+                ?sb tab:x0 ?sx0 ; tab:y0 ?sy0 ; tab:x1 ?sx1 ; tab:y1 ?sy1 .
+                $this tab:hasBBox ?lb .
+                ?lb tab:x0 ?lx0 ; tab:y0 ?ly0 ; tab:x1 ?lx1 ; tab:y1 ?ly1 .
+                FILTER (?sx0 < ?lx0 || ?sy0 < ?ly0 || ?sx1 > ?lx1 || ?sy1 > ?ly1)
+            }
+        """ ;
+    ] .

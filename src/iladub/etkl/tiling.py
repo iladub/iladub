@@ -42,8 +42,13 @@ _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape
 # final whole-graph validation, but this gate validates against a CBD subset of the IRIs
 # named in these two lists. A shape in the file alone would let a violating region pass
 # here and CRASH at final validation, which is the exact failure the R19 note above records.
+# R182 (2026-09-08): the FOURTH physical shape, for the same reason R179's is here rather than
+# in the file alone -- a containment violation must refuse at the region, where every path already
+# has an escalation branch, not crash compile's final validation. It is conditional on
+# prov:wasDerivedFrom, which only rowrole.emit_reading_evidence writes onto a label, so every
+# region shipped before this is vacuously conformant.
 _PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape,
-                        TAB.LabelCellPhysicalShape]
+                        TAB.LabelCellPhysicalShape, TAB.LabelCoversProvenanceShape]
 
 
 def _build_tiling_shapes():

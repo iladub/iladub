@@ -181,3 +181,49 @@ def test_proposer_is_called_exactly_once():
     out = resolve_header_row_roles(g, hreg, band, _T, _D, 0, counting)
     assert out is not None
     assert counting.calls == 1, "the proposer must be consulted exactly once per invocation"
+
+
+def test_a_joined_label_points_at_the_source_cell_it_consumed_and_that_cell_carries_its_box():
+    """[[R182]] — the edge and the geometry that make the containment shape expressible.
+
+    Two facts in one committed graph, because either alone is useless: the label must REACH
+    the source cell (`prov:wasDerivedFrom` — the same predicate `tab:RepeatedHeaderRow` uses
+    for its own originating cells, `tab:RepeatedHeaderRow` in `vocab/ontology/tab.ttl`), and the source cell must
+    carry WHERE it was (`tab:sourceRegion` + `tab:sourcePage`).
+
+    NOT `tab:hasBBox` / `tab:onPage`, and this test pins the DEDICATED predicates on purpose.
+    Those two carry `rdfs:domain tab:Cell`, so full RDFS closure types a `tab:HeaderSourceCell`
+    as a `tab:Cell` — which carries `tab:sourceText`, not `tab:cellText` — and trips
+    `tab:WrappedCellShape`. This loop shipped `tab:hasBBox` first; the membrane admitted it
+    (subclass-only closure materialises no domain typing) and
+    `tests/etkl/test_closure_equiv.py`'s owlrl leg refused 26 nodes. Assert the sibling
+    predicates, or the next author will re-take the same wrong turn.
+    """
+    from rdflib.namespace import PROV
+    g, out = _resolve(("furniture", "continuation"))
+    assert out is not None
+    label = next(s for s, _p, o in g.triples((None, TAB.cellText, None)) if str(o) == "Unit Ref")
+    srcs = list(g.objects(label, PROV.wasDerivedFrom))
+    assert len(srcs) == 1, srcs
+    src = srcs[0]
+    assert (src, RDF.type, TAB.HeaderSourceCell) in g
+    assert str(g.value(src, TAB.sourceText)) == "Unit"
+    assert int(g.value(src, TAB.sourcePage)) == 0
+    assert g.value(src, TAB.hasBBox) is None, \
+        "a tab:HeaderSourceCell must NOT carry tab:hasBBox -- see the docstring"
+    bb = g.value(src, TAB.sourceRegion)
+    assert bb is not None, "a source cell a label claims as provenance must carry its box"
+    assert (float(g.value(bb, TAB.x0)), float(g.value(bb, TAB.y0)),
+            float(g.value(bb, TAB.x1)), float(g.value(bb, TAB.y1))) == (155.0, 12.0, 175.0, 22.0)
+
+
+def test_an_unjoined_source_cell_claims_no_derivation():
+    """The edge must not leak: the six header-region cells no continuation landed on are the
+    provenance of nothing, and a shape that saw a spurious edge would compare unrelated boxes.
+    Without this, deriving EVERY label from EVERY source cell would pass the test above."""
+    from rdflib.namespace import PROV
+    g, out = _resolve(("furniture", "continuation"))
+    assert out is not None
+    derived = {str(g.value(o, TAB.sourceText)) for _s, _p, o in g.triples((None, PROV.wasDerivedFrom, None))
+               if (o, RDF.type, TAB.HeaderSourceCell) in g}
+    assert derived == {"Unit"}, derived

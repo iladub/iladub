@@ -365,6 +365,12 @@ tab:sourceText a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:
 tab:sourceRow a owl:DatatypeProperty ; rdfs:domain tab:HeaderSourceCell ; rdfs:range xsd:integer ; rdfs:label "source row"@en ;
     rdfs:comment "0-based header-region row index the cell came from (0 = topmost)."@en .
 tab:hasHeaderSourceCell a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:HeaderSourceCell ; rdfs:label "has header source cell"@en .
+tab:sourceRegion a owl:ObjectProperty ; rdfs:label "source region"@en ;
+    rdfs:domain tab:HeaderSourceCell ; rdfs:range tab:BBox ;
+    rdfs:comment "Provenance to the page: where this header-region cell's ink was measured. Deliberately NOT tab:hasBBox, and NOT for tidiness — tab:hasBBox's rdfs:domain RDFS-types its subject as a tab:Cell, and a tab:HeaderSourceCell carries tab:sourceText rather than tab:cellText, so under full RDFS closure it would trip tab:WrappedCellShape's drop-continuation guard. MEASURED, not feared: [[R182]] first emitted tab:hasBBox here, the membrane admitted it (subclass-only closure materialises no domain typing) and tests/etkl/test_closure_equiv.py's full-RDFS leg refused 26 nodes. The exact sibling of tab:markerRegion, minted for the same reason."@en .
+tab:sourcePage a owl:DatatypeProperty ; rdfs:label "source page"@en ;
+    rdfs:domain tab:HeaderSourceCell ; rdfs:range xsd:integer ;
+    rdfs:comment "Zero-based index of the page this header-region cell's ink was measured on. Deliberately NOT tab:onPage, whose rdfs:domain is tab:Cell — same mechanism as tab:sourceRegion above."@en .
 
 # --- header-confirmed boundary evidence (transient, pre-holon; loop G attempt 2) ---
 tab:HeaderGlyph a owl:Class ; rdfs:label "Header glyph"@en ;
@@ -542,4 +548,4 @@ tab:markerSymbol a owl:DatatypeProperty ; rdfs:label "marker symbol"@en ;
     rdfs:comment "The absorbed currency symbol (e.g. \"$\")."@en .
 tab:markerRegion a owl:ObjectProperty ; rdfs:label "marker region"@en ;
     rdfs:domain tab:UnitMarker ; rdfs:range tab:BBox ;
-    rdfs:comment "Provenance to the page: the bounding box of one absorbed marker glyph. Deliberately NOT tab:hasBBox — that property's domain would RDFS-type the marker as tab:Cell and trip tab:WrappedCellShape at the gate (the R19 mechanism)."@en .
+    rdfs:comment "Provenance to the page: the bounding box of one absorbed marker glyph. Deliberately NOT tab:hasBBox — that property's domain would RDFS-type the marker as tab:Cell and trip tab:WrappedCellShape at the gate (the R19 mechanism). STILL LIVE: [[R182]] measured the MEMBRANE (subclass-only closure) and concluded otherwise, emitted tab:hasBBox on a tab:HeaderSourceCell, and the closure differential's full-RDFS leg refused 26 nodes the membrane admitted. tab:sourceRegion is this property's sibling, minted for the same reason."@en .

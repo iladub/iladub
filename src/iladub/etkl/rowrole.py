@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from rdflib import Literal, Namespace, RDF, URIRef
-from rdflib.namespace import XSD
+from rdflib.namespace import PROV, XSD
 
 from .headers import _tree_from_rows
 
@@ -176,6 +176,13 @@ def build_row_reading(header_rows, grid, roles):
                 return None                    # ink center outside every column -> refuse
             extra.setdefault(col, []).append(cell)   # the CELL, not its text -- see the union below
 
+    # [[R182]] -- flat index of every header-region cell, in the SAME enumeration order
+    # `source_cells` uses below, so a fragment's `-hsc{k}` URI is derivable here rather than
+    # re-derived (and possibly re-derived differently) at the emitter.
+    flat = [(r, cell) for r, row in enumerate(header_rows) for cell in row]
+    at = {id(cell): k for k, (_r, cell) in enumerate(flat)}
+    derived: dict[int, int] = {}               # flat source index -> node index it was joined into
+
     for col, frags in extra.items():
         tgt = next((i for i, n in enumerate(nodes)
                     if n.level == leaf_lvl and col in n.covers), None)
@@ -195,14 +202,15 @@ def build_row_reading(header_rows, grid, roles):
                              top=min([n.top] + [c.top for c in frags]),
                              x1=max([n.x1] + [c.x1 for c in frags]),
                              bottom=max([n.bottom] + [c.bottom for c in frags]))
+        for c in frags:
+            derived[at[id(c)]] = tgt           # [[R182]] -- record WHICH box the union covered
 
     captions = tuple((r, cell.text)
                      for r, (row, role) in enumerate(zip(non_leaf, roles))
                      if role == "furniture"
                      for cell in row)
-    source_cells = tuple((r, cell.text)
-                         for r, row in enumerate(header_rows)
-                         for cell in row)
+    source_cells = tuple((r, cell, derived.get(k))
+                         for k, (r, cell) in enumerate(flat))
     return tuple(nodes), captions, source_cells
 
 
@@ -210,19 +218,55 @@ def emit_reading_evidence(g, table_uri, captions, source_cells):
     """Commit the reading's accountability evidence: one tab:RegionCaption per furniture cell
     (so furniture text is carried, not dropped) and one tab:HeaderSourceCell per header-region
     cell — the target of tab:HeaderContentConservedShape, which refuses any reading that loses a
-    word. Region-bound; the region is the closure boundary."""
+    word. Region-bound; the region is the closure boundary.
+
+    [[R182]] — a source cell also carries WHERE it was (tab:sourceRegion + tab:sourcePage), and a cell a
+    continuation join consumed is pointed AT by the label it was joined into
+    (prov:wasDerivedFrom, the same predicate tab:RepeatedHeaderRow uses for its own originating
+    cells). Without both, tab:LabelCoversProvenanceShape has nothing to walk and nothing to
+    compare: measured on graincorp-stem p0, a tab:HeaderSourceCell had exactly ONE in-edge
+    (tab:hasHeaderSourceCell, from the table) and carried no geometry at all.
+
+    The geometry rides tab:sourceRegion / tab:sourcePage, NOT tab:hasBBox / tab:onPage, and that
+    is not a style choice. Those two carry rdfs:domain tab:Cell, so under FULL RDFS closure they
+    would type a tab:HeaderSourceCell as a tab:Cell — which carries tab:sourceText, not
+    tab:cellText, and so trips tab:WrappedCellShape's drop-continuation guard. This loop shipped
+    tab:hasBBox first, watched the membrane admit it (subclass-only closure materialises no domain
+    typing) and tests/etkl/test_closure_equiv.py's owlrl leg refuse 26 nodes, and moved. The
+    membrane is not the only consumer of full RDFS closure here; tab:markerRegion is the sibling
+    precedent (R19).
+
+    PROCEDURAL: raw extraction. The four bounds and the page are copied off a cells.SourceCell
+    already in hand, and the membership was decided upstream — the role vector is NEURAL-proposed
+    and oracle-disposed before build_row_reading runs. Nothing here decides anything.
+
+    The label URI is `-hl{idx}` for `idx` over the node tree, which is what assert_hier_region
+    mints (src/iladub/etkl/holon.py, the `-hl` writer) from the SAME `nodes` tuple this
+    function's caller passes it — see resolve_header_row_roles, where the two calls are adjacent.
+
+    The box is written by holon._bbox_node, NOT re-implemented here, and that is load-bearing
+    rather than tidiness: tab:LabelCoversProvenanceShape compares these bounds to a label's with
+    NO tolerance, and the comparison is only exact while both sides pass through the same
+    Decimal(str(round(v, 2))) writer. A second rounding site would need an EPS, and an EPS here
+    would be a tuned constant (CLAUDE.md § 8).
+    """
+    from .holon import _bbox_node
     for k, (row, text) in enumerate(captions):
         cap = URIRef("%s-cap%d" % (table_uri, k))
         g.add((cap, RDF.type, TAB.RegionCaption))
         g.add((cap, TAB.captionText, Literal(text)))
         g.add((cap, TAB.captionRow, Literal(row, datatype=XSD.integer)))
         g.add((table_uri, TAB.hasCaption, cap))
-    for k, (row, text) in enumerate(source_cells):
+    for k, (row, cell, derived_into) in enumerate(source_cells):
         sc = URIRef("%s-hsc%d" % (table_uri, k))
         g.add((sc, RDF.type, TAB.HeaderSourceCell))
-        g.add((sc, TAB.sourceText, Literal(text)))
+        g.add((sc, TAB.sourceText, Literal(cell.text)))
         g.add((sc, TAB.sourceRow, Literal(row, datatype=XSD.integer)))
+        g.add((sc, TAB.sourcePage, Literal(cell.page, datatype=XSD.integer)))
+        g.add((sc, TAB.sourceRegion, _bbox_node(g, cell)))
         g.add((table_uri, TAB.hasHeaderSourceCell, sc))
+        if derived_into is not None:
+            g.add((URIRef("%s-hl%d" % (table_uri, derived_into)), PROV.wasDerivedFrom, sc))
 
 
 def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, proposer):
