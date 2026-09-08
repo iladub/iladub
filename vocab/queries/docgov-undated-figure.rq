@@ -1,0 +1,22 @@
+# Derivation, OPEN WORLD (spec 2026-09-08 §3.4): a document states a corpus reading
+# with no date on the CLAIM. Evidence-positive and monotonic — a figure is derived
+# only where its support is present: an occurrence exists only where the extractor
+# matched the literal to a registered reading (tests/corpus-manifest.ttl), so nothing
+# is ever inferred from the absence of a date in the register.
+#
+# The closed-world half is inside one block and nowhere else: NOT EXISTS over the
+# occurrence's own dg:blockDated is holon-scoped closure (CLAUDE.md §8) — the block
+# either carries the reading's date or it does not, while the graph stays open.
+#
+# docs/superpowers/** is EXEMPT: it is the dated historical record, append-only and
+# prospectively binding since 5743af3, so a figure there is dated BY THE DOCUMENT.
+# That exemption is not free, and [[R192]] carries its price.
+PREFIX dg: <https://w3id.org/iladub/docgov#>
+CONSTRUCT { ?doc dg:statesUndatedReading ?occ }
+WHERE {
+    ?occ dg:inDoc          ?doc ;
+         dg:denotesReading ?reading ;
+         dg:blockDated     false .
+    ?doc dg:docClass ?class .
+    FILTER (?class != "evidence")
+}

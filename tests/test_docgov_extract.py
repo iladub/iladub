@@ -131,3 +131,73 @@ def test_wiki_pages_carry_index_membership():
     # the index itself carries no membership fact
     index = doc_iri("docs/wiki/index.md")
     assert list(g.objects(index, DG.inWikiIndex)) == []
+
+
+# ------------------------------------------------------- figure occurrences
+# The PROCEDURAL half of the figure gate (spec 2026-09-08 §2, D3): exact decimal
+# arithmetic over a lexical form. Every assertion below is two-sided — what the
+# rule accepts AND what it refuses — because a matcher that only ever matches is
+# indistinguishable from one that matches everything.
+
+from decimal import Decimal  # noqa: E402
+
+from tests.docgov_extract import (  # noqa: E402
+    blocks, denotes, is_dated, separating_precision, load_readings,
+)
+
+STEM = Decimal("0.9654553611484971")
+READINGS = {"stem": STEM, "apple": Decimal("0.06068601583113457")}
+
+
+def test_precision_is_exact_not_approximate():
+    """O5: `0.9655` IS a quotation of the stem's reading; `0.9659` is not — and
+    `0.9659` is the value that superseded it, so this is the discrimination the
+    whole gate rests on."""
+    assert denotes("0.9655", READINGS, 4) == "stem"
+    assert denotes("0.9654553611484971", READINGS, 4) == "stem"
+    assert denotes("0.9659", READINGS, 4) is None
+    assert denotes("0.96545536114849", READINGS, 4) is None
+
+
+def test_a_form_too_coarse_to_identify_the_register_is_not_a_finding():
+    """`0.1` rounds from apple's 0.0607 and is unique in this register — and is
+    still refused, because at one decimal the register cannot identify its own
+    rows. Measured false positives this kills: two, both the phrase 'quarantines
+    exactly like a 0.1-scored one'."""
+    assert denotes("0.1", READINGS, 1) == "apple"
+    assert denotes("0.1", READINGS, 4) is None
+
+
+def test_an_ambiguous_form_is_not_a_finding():
+    two = {"a": Decimal("0.90001"), "b": Decimal("0.90002")}
+    assert denotes("0.9000", two, 4) is None
+
+
+def test_separating_precision_is_derived_from_the_register():
+    assert separating_precision([Decimal("0.51"), Decimal("0.52")]) == 2
+    assert separating_precision([Decimal("0.90001"), Decimal("0.90002")]) == 5
+    assert separating_precision([Decimal("1.0")]) == 0
+
+
+def test_the_shipped_registers_separating_precision_is_four():
+    """O5b, asserted BY VALUE: `sep` is data-derived, so it moves. Two future
+    readings of one document differing only at 17dp would push it to 17 and
+    silence the gate — the under-firing shape [[R188]] exists for. This is the
+    only place that movement is visible before it hides a defect."""
+    _, values, _ = load_readings(REPO)
+    assert separating_precision(list(values.values())) == 4
+
+
+def test_a_block_is_dated_by_any_of_its_lines():
+    """O4: the block, not the line, is the closure boundary."""
+    dated = "Measured 2026-08-04 on CBH:\nscore 0.0698 -> 0.9047, four bands.\n"
+    assert [b[0] for b in blocks(dated)] == [1]
+    assert is_dated(dated)
+    moved = "Measured 2026-08-04 on CBH:\n\nscore 0.0698 -> 0.9047, four bands.\n"
+    assert [b[0] for b in blocks(moved)] == [1, 3]
+    assert not is_dated("\n".join(blocks(moved)[1][1]))
+
+
+def test_a_commit_sha_dates_a_block_but_a_hex_word_does_not():
+    assert is_dated("stem reads 0.9655 at `20cc5b8`")
+    assert not is_dated("the decade `add` `defaced` reads 0.9655")

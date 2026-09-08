@@ -161,7 +161,14 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     `tests/tab-label-nobox-leak.ttl`, the negative fixture for `tab:LabelCellPhysicalShape`. The
     `.rq` population is unchanged at 50: that shape is a closed-world CONSTRAINT and derives
     nothing, so it authored no query. The shape itself is declared inside the existing
-    `vocab/shapes/tab-physical-shapes.ttl`."""
+    `vocab/shapes/tab-physical-shapes.ttl`.
+
+    RE-MEASURED 2026-09-08 ([[R187]]): the `.rq` population is **51** —
+    `vocab/queries/docgov-undated-figure.rq`, the derivation that reports a corpus reading
+    stated with no date in its own markdown block. The `.ttl` population is unchanged at 148:
+    that loop authored no new artifact, extending `vocab/internal/corpus.ttl`,
+    `vocab/internal/docgov.ttl`, `tests/corpus-shapes.ttl` and `tests/corpus-manifest.ttl`
+    instead — which is why only one of these two numbers moves."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
@@ -169,7 +176,7 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # population at `git add` — see test_the_population_is_every_tracked_ttl_outside_the_
     # fixture_directory for why it is not carved out.
     assert len(vocab_nodes) == len(artifact_files()) == 148
-    assert len(query_nodes) == len(query_files()) == 50
+    assert len(query_nodes) == len(query_files()) == 51
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

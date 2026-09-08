@@ -14,7 +14,7 @@ sources:
   - src/iladub/etkl/document.py
 related: ["[[table-holon-compilation]]", "[[decision-holon]]", "[[corpus-harness]]", "[[assert-propose-promote]]"]
 confidence: high
-updated: 2026-08-09
+updated: 2026-09-08
 ---
 
 # The data grid — defining the data before detecting it
@@ -171,7 +171,8 @@ The page-scope flag (`datagrid_adopt`) stays **off by default**, and the reason 
 this loop was wrong. It used to say the driver compiles each page standalone before re-compiling
 continuation pages; measured, the driver makes **one pass** and page N-1's carried reading is an
 *input* to page N's compile, so forcing adoption on every page leaves the stem document
-byte-identical at `0.9654553611484971`.
+byte-identical at `0.9654553611484971` — **the stem's reading of 2026-08-03**, which is
+what was measured here and not a claim about what the tree reads today.
 
 The real reason is the **refusal branch**, and its first half is structural, not numeric: a
 single-page compile is **incapable of chaining at all** — `CompilationReport` carries no chain
@@ -185,7 +186,7 @@ refused not because the isolated reading would score deceptively higher, but bec
 measurably **lower**. *(The two cell counts are not comparable and are not being compared: R29's
 figure is 825 **tokens** asserted under the driver, the standalone figure is 811 **cells** —
 only the two scores share a scale.)* At document scope the whole stem is one chain of 3, 2152
-cells, at `0.9654553611484971`.
+cells, at `0.9654553611484971` (**reading of 2026-08-03**).
 
 The withdrawal ledger is **line-granular**, and that is what keeps adoption honest: zeroing the
 escalation would score any adopted page a perfect `1.0000` whatever the grid missed, and
@@ -202,9 +203,12 @@ band index *is* the region index), and the admission decision carries `dec:super
 verdicts it withdrew, so `effective-chain.rq` returns the live reading rather than the retracted
 one.
 
-Measured movement at document scope: **apple `0.06068601583113457` → `0.35560344827586204`**;
-stem unchanged at `0.9654553611484971`, `adopted == ()` — carriage makes its continuation pages
-assert before the gate can ask.
+Measured movement at document scope (**readings of 2026-08-09**): **apple
+`0.06068601583113457` → `0.35560344827586204`**; stem unchanged at `0.9654553611484971`,
+`adopted == ()` — carriage makes its continuation pages assert before the gate can ask.
+*"Unchanged" is a statement about that day's two compiles, not about the tree since; every
+figure in this paragraph is a dated reading, and `tests/corpus-manifest.ttl` records the
+later ones.*
 
 ## The methodological lesson
 

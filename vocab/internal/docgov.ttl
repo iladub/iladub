@@ -237,3 +237,71 @@ docgov:drainEvidence a owl:DatatypeProperty ;
     rdfs:domain docgov:ContradictionDrain ;
     rdfs:range xsd:string ;
     rdfs:comment "One statement of what makes the drained claim true now — which published page was fixed, in which commit, and what it says. At least one is required and it may not be empty, because a drain with no evidence is the assertion 'trust me' wearing the shape of a record. It is prose and not a structured citation on purpose: what counts as a repaired page is a human judgement about meaning, and encoding it as a triple would dress that judgement as a mechanical check (CLAUDE.md § Core design principles 7 — only emit what the source supports)."@en .
+
+#################################################################
+#  Figures — a measurement stated in prose, and the reading it claims to be
+#  (spec 2026-09-08, R187). The register itself is cor: (tests/corpus-manifest.ttl);
+#  these terms are the docgov instrument's view of it.
+#################################################################
+
+docgov:FigureOccurrence a owl:Class ;
+    rdfs:label "figure occurrence"@en ;
+    rdfs:comment "One decimal literal, at one line of one document, that DENOTES a registered corpus reading. Not every decimal: a literal matching no reading emits no occurrence at all, so this class carries figures rather than numbers. It is a fact and not a judgement — whether an occurrence is admissible is the membrane's question, decided against docgov:blockDated and the document's class."@en .
+
+docgov:inDoc a owl:ObjectProperty ;
+    rdfs:label "in document"@en ;
+    rdfs:domain docgov:FigureOccurrence ;
+    rdfs:range docgov:Document ;
+    rdfs:comment "The document the occurrence was found in."@en .
+
+docgov:line a owl:DatatypeProperty ;
+    rdfs:label "line"@en ;
+    rdfs:domain docgov:FigureOccurrence ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The 1-based line the literal sits on — what an author needs in order to act on a finding. It is deliberately NOT the unit of the datedness decision; that is the block (docgov:blockDated)."@en .
+
+docgov:lexical a owl:DatatypeProperty ;
+    rdfs:label "lexical form"@en ;
+    rdfs:domain docgov:FigureOccurrence ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The literal AS WRITTEN, never normalised. Its precision is evidence and is load-bearing: the number of decimals the author wrote is what decides which reading the form can denote, and rounding it here would destroy the only signal distinguishing a quotation from a coincidence."@en .
+
+docgov:blockDated a owl:DatatypeProperty ;
+    rdfs:label "block is dated"@en ;
+    rdfs:domain docgov:FigureOccurrence ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when the markdown BLOCK containing this occurrence carries an ISO date or a commit sha. The block — a maximal run of non-blank lines — is the closure boundary, exactly as a holon is elsewhere: measured reason, a date is routinely written one line above the figures it dates, so a line-scoped rule would report a correctly dated claim as a defect. Its consequence is equally deliberate: moving the date into a neighbouring paragraph un-dates the claim, because a reader scanning one paragraph would not see it either."@en .
+
+docgov:denotesReading a owl:ObjectProperty ;
+    rdfs:label "denotes reading"@en ;
+    rdfs:domain docgov:FigureOccurrence ;
+    rdfs:range docgov:Reading ;
+    rdfs:comment "The unique registered reading this literal is a quotation of. Uniqueness is required and is not a softening: a form that could be either of two readings is not evidence about either, and is therefore no finding at all."@en .
+
+docgov:Reading a owl:Class ;
+    rdfs:label "reading"@en ;
+    rdfs:comment "A corpus reading as the docgov instrument sees it — document, value, dates — re-minted from cor:Reading in tests/corpus-manifest.ttl rather than imported. The register is READ and never merged: its thousands of prose triples would swamp a membrane that has no business validating them, and a finding needs only enough of a reading to name what the figure claims to be."@en .
+
+docgov:readingOf a owl:DatatypeProperty ;
+    rdfs:label "reading of"@en ;
+    rdfs:domain docgov:Reading ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The corpus document slug this reading measures."@en .
+
+docgov:readingValue a owl:DatatypeProperty ;
+    rdfs:label "reading value"@en ;
+    rdfs:domain docgov:Reading ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The measured value, at the precision the register records it at."@en .
+
+docgov:readAt a owl:DatatypeProperty ;
+    rdfs:label "read at"@en ;
+    rdfs:domain docgov:Reading ;
+    rdfs:range xsd:date ;
+    rdfs:comment "A date this value was measured on; repeatable. It is what a finding tells the author to write down, so a figure stops being a claim about now and becomes a record of a day."@en .
+
+docgov:statesUndatedReading a owl:ObjectProperty ;
+    rdfs:label "states undated reading"@en ;
+    rdfs:domain docgov:Document ;
+    rdfs:range docgov:FigureOccurrence ;
+    rdfs:comment "DERIVED, open world: this document states a corpus measurement whose own block carries no date, so a reader cannot tell a reading from a current value. Hard for the wiki class, where a page is a proposition that may be rewritten but a measurement inside one may not be undated; a warning elsewhere; and not derived at all for docs/superpowers/**, which is dated by the document."@en .

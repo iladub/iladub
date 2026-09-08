@@ -54,3 +54,22 @@ cor:DocumentShape a sh:NodeShape ;
             FILTER(NOT EXISTS { $this cor:contract ?c } ||
                    NOT EXISTS { $this cor:terms ?t } ||
                    NOT EXISTS { $this cor:shapes ?p }) }""" ] .
+
+# A reading is a dated measured value (vocab/internal/corpus.ttl § Readings). The shape
+# is what makes the row traceable rather than merely present: exactly one value, at least
+# one date it was measured on, and at least one of a commit or a path where it is
+# transcribed — a number nobody can trace is not evidence, and this register's whole claim
+# is that its figures can be checked rather than trusted.
+cor:ReadingShape a sh:NodeShape ;
+    sh:targetClass cor:Reading ;
+    sh:property [ sh:path cor:value ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:datatype xsd:decimal ] ;
+    sh:property [ sh:path cor:readAt ; sh:minCount 1 ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path cor:notQuotable ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:sparql [
+        sh:message "a reading must carry at least one of cor:atCommit / cor:recordedIn — an untraceable number is not evidence" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this a cor:Reading .
+            FILTER(NOT EXISTS { $this cor:atCommit ?c } &&
+                   NOT EXISTS { $this cor:recordedIn ?p }) }""" ] .

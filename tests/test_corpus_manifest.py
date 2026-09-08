@@ -63,3 +63,26 @@ def test_refuses_partial_contract_triple():
 def test_refuses_malformed_sha256():
     _neg(BASE + '; cor:family "health" ; cor:expectedVerdict cor:Unadjudicated ; '
          'cor:sha256 "not-a-hash" .')
+
+
+# A reading is the register's machine-readable measurement (vocab/internal/corpus.ttl
+# § Readings). These three refusals are what make a row traceable rather than merely
+# present: an undated value is not evidence of anything, and a value with neither a
+# commit nor a path is a number nobody can check.
+
+READING = ('<urn:x> a cor:Document ; cor:file "f.pdf" ; cor:url "https://example.org/f" ; '
+           'cor:series "s" ; cor:family "health" ; cor:expectedVerdict cor:Unadjudicated ; '
+           'cor:reading [ a cor:Reading ; %s ] .')
+
+
+def test_refuses_reading_without_a_date():
+    _neg(READING % ('cor:value "0.5"^^xsd:decimal ; cor:recordedIn "docs/x.md"'))
+
+
+def test_refuses_reading_without_a_value():
+    _neg(READING % ('cor:readAt "2026-09-08"^^xsd:date ; cor:recordedIn "docs/x.md"'))
+
+
+def test_refuses_untraceable_reading():
+    """No commit and no path: the value cannot be checked, only believed."""
+    _neg(READING % ('cor:value "0.5"^^xsd:decimal ; cor:readAt "2026-09-08"^^xsd:date'))

@@ -134,3 +134,129 @@
         cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 0.5597, 3 pages, 3 escalation records, all MATRIX_AMBIGUOUS. § Token accounting for the same run reads 445 asserted / 350 escalated tokens. Census § Where the escalations actually are: MATRIX_AMBIGUOUS x1 per page, on the IDENTICAL z-score header block (Z-scores … Year: Month L M S), on all three pages. ONE DEFECT, THREE FIRINGS — and recording that is the whole reason this adjudication exists. A bare count of 3 invites three investigations where there is one header block to teach the matrix reader; worse, a per-record denominator would weight a single reading gap three times purely because the document repeats its header on every page, which measures the document's pagination and not the reading. The magnitude that matters here is the 350 escalated tokens, not the 3 records: the reader is losing nearly half this document's ink to one unresolved header. Held until that header block is read." ] ;
     cor:adjudication [ cor:by "composed by Claude Opus 5 (agent), the 2026-08-31 R45 loop; the accountable human sign-off is François Rosselet's review and merge of the commit that carries this node" ; cor:on "2026-08-31"^^xsd:date ;
         cor:rationale "HOLD LIFTED — the 2026-08-20 note above is NOT repaired in place (append-only register); its measurements stand as the record of what was held and why. Its own stated condition, 'Held until that header block is read', is discharged: R45 is closed. THE DEFECT was matrix._level_tops, which discarded the band's own line grouping and re-derived header levels from round(w.top, 1) filtered at a 0.5pt tolerance — so the 0.9pt intra-line baseline drift on this document's one header line (Year: | Month | ... | L | M | S at top 118.7, -3 SD ... at 119.6) was promoted to a third header level, tearing the leaf row over overlapping columns and orphaning two nodes, which tab:UnambiguousAccessShape then correctly refused. The shape was right; the tree fed to it was wrong. A header level is now a band line (band.lines[:split]) and no tolerance is applied in that function at all. MEASURED at this commit, whole-corpus two-sided oracle: score 0.9095966620305981 (654 asserted / 65 escalated tokens, was 445/350), 10 asserted regions and 8 ignored across 3 pages, ZERO escalation records of any reason. cor:scoreFloor is pinned at 0.90, at-or-below the measured score per this file's header, as a regression floor and not a claim about the reading. TWO THINGS THIS ACCEPTANCE DOES NOT SAY, recorded because a score is not an acceptance (the graincorp-capacity note's rule). First, the carried TEXT is known-bad: R154's ruled re-extraction chops 'Z-scores (weight in kg)' into fragments, so the top-level header nodes of the table now asserted read 'Z-s', 'res (weight', 'kg)'. Structurally correct, textually wrong, and shipping as an assertion — this document is now the strongest argument for prioritising R154, and that is stated here rather than left implicit. Second, the tiling oracle certifies CONSISTENCY, not fidelity: the recovered tree was read against extract_words output and asserted structurally correct, and has not been checked against the published WHO table by a human. What is accepted is that this document compiles above a floor with nothing escalated; what remains open is R154 and a human reading." ] .
+
+#################################################################
+#  Readings — appended 2026-09-08 (the R187 loop).
+#
+#  Every figure below was ALREADY in this repository, stated in prose: in the
+#  cor:rationale notes above, in a loop's evidence, in a code comment. What is new is
+#  that a machine can now match a literal written elsewhere against the reading it
+#  claims to be, which is the whole of what the docgov figure gate needs.
+#
+#  APPEND-ONLY, like every node above it: nothing here is edited when a score moves —
+#  a new cor:reading node is appended, and every row already written stays true.
+#  ONE NODE PER DISTINCT VALUE: a value re-measured later gains a second cor:readAt,
+#  never a second node (vocab/internal/corpus.ttl § Readings says why).
+#
+#  Precision is recorded as it was written down, never padded. Where a 2026-08-20
+#  census recorded four digits and a later full-precision reading agrees to those four,
+#  they are the SAME value and share one node; where no full-precision record exists
+#  (0.9047, 0.3438, 0.5597), four digits is all this register may claim.
+#
+#  NOT REGISTERED, deliberately: bfs 0.9401. Eight handoffs have repeated it as this
+#  compiler's bfs capability; it was measured under C3, the marked-content change
+#  REVERTED at 51bdd23, and was never a reading of any commit on main
+#  (docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md §1.4).
+#  Also not registered: PAGE scores (0.9560, 0.9588, 0.9706, 0.7802). This register
+#  covers the seven DOCUMENT scores only — the quantities one whole-corpus run
+#  re-measures in a single pass.
+#################################################################
+
+<urn:iladub:corpus:graincorp-stem-2026-07-31>
+    cor:reading [ a cor:Reading ; cor:value "0.9654553611484971"^^xsd:decimal ;
+        cor:readAt "2026-08-03"^^xsd:date ; cor:readAt "2026-08-20"^^xsd:date ;
+        cor:atCommit "820ab24" ;
+        cor:recordedIn "tests/corpus-manifest.ttl" ;
+        cor:recordedIn "docs/superpowers/2026-08-20-escalation-reason-census.md" ;
+        cor:recordedIn "src/iladub/etkl/compile.py" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.9658886894075404"^^xsd:decimal ;
+        cor:readAt "2026-09-05"^^xsd:date ; cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+<urn:iladub:corpus:graincorp-capacity-2026-08-04>
+    cor:reading [ a cor:Reading ; cor:value "1.0"^^xsd:decimal ;
+        cor:readAt "2026-08-20"^^xsd:date ; cor:readAt "2026-09-05"^^xsd:date ;
+        cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "tests/corpus-manifest.ttl" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ;
+        # THE ONE EXEMPTION, stated with its size: 1 reading of 18. This document scores
+        # exactly 1.0, and 1.0 is also how anyone in this repository writes a ratio
+        # ceiling — docs/wiki/concepts/data-grid.md uses `1.0000` three times for a
+        # HYPOTHETICAL perfect page score, which is a figure gate's only measured false
+        # positive here. The price: an undated quotation of THIS document's score can
+        # never be caught. Nothing else is exempt.
+        cor:notQuotable true ] .
+
+<urn:iladub:corpus:cbh-stem-2026-08-03>
+    cor:reading [ a cor:Reading ; cor:value "0.9047"^^xsd:decimal ;
+        cor:readAt "2026-08-20"^^xsd:date ;
+        cor:atCommit "820ab24" ;
+        cor:recordedIn "docs/superpowers/2026-08-20-escalation-reason-census.md" ;
+        cor:recordedIn "docs/wiki/concepts/dimension-split.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.9091940976163451"^^xsd:decimal ;
+        cor:readAt "2026-09-05"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.9095022624434389"^^xsd:decimal ;
+        cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+<urn:iladub:corpus:ons-index-of-services-2026-02>
+    cor:reading [ a cor:Reading ; cor:value "0.9719934102141681"^^xsd:decimal ;
+        cor:readAt "2026-09-05"^^xsd:date ; cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+<urn:iladub:corpus:bfs-population-bilan-2023>
+    cor:reading [ a cor:Reading ; cor:value "0.3438"^^xsd:decimal ;
+        cor:readAt "2026-08-20"^^xsd:date ;
+        cor:atCommit "820ab24" ;
+        cor:recordedIn "docs/superpowers/2026-08-20-escalation-reason-census.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.3464447806354009"^^xsd:decimal ;
+        cor:readAt "2026-09-05"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.40331491712707185"^^xsd:decimal ;
+        cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+<urn:iladub:corpus:apple-fy2026q3-statements>
+    cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
+        cor:readAt "2026-08-09"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/specs/2026-08-09-adoption-at-document-scope-design.md" ;
+        cor:recordedIn "docs/wiki/concepts/data-grid.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.35560344827586204"^^xsd:decimal ;
+        cor:readAt "2026-08-09"^^xsd:date ; cor:readAt "2026-08-20"^^xsd:date ;
+        cor:atCommit "820ab24" ;
+        cor:recordedIn "docs/superpowers/2026-08-20-escalation-reason-census.md" ;
+        cor:recordedIn "docs/wiki/concepts/data-grid.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.1895"^^xsd:decimal ;
+        cor:readAt "2026-09-04"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-04-one-band-matrix-spike.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.6288659793814433"^^xsd:decimal ;
+        cor:readAt "2026-09-04"^^xsd:date ; cor:readAt "2026-09-05"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-04-the-run-is-one-band-evidence.md" ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.71875"^^xsd:decimal ;
+        cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+<urn:iladub:corpus:who-wfa-boys-zscore-0-5>
+    cor:reading [ a cor:Reading ; cor:value "0.5597"^^xsd:decimal ;
+        cor:readAt "2026-08-20"^^xsd:date ;
+        cor:atCommit "820ab24" ;
+        cor:recordedIn "tests/corpus-manifest.ttl" ;
+        cor:recordedIn "docs/superpowers/2026-08-20-escalation-reason-census.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.9095966620305981"^^xsd:decimal ;
+        cor:readAt "2026-08-31"^^xsd:date ; cor:readAt "2026-09-05"^^xsd:date ;
+        cor:recordedIn "tests/corpus-manifest.ttl" ;
+        cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.9156327543424317"^^xsd:decimal ;
+        cor:readAt "2026-09-08"^^xsd:date ;
+        cor:atCommit "9eb5cd0" ;
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .

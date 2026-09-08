@@ -193,3 +193,47 @@ corpus:ambiguity a owl:DatatypeProperty ;
     rdfs:domain corpus:Document ;
     rdfs:range rdfs:Literal ;
     rdfs:comment "The reviewer's prose statement of WHAT is ambiguous in a document whose expected verdict is corpus:SemanticEscalation — the header block, the double column span, the reading a competent human also could not settle. The register's shapes refuse that verdict without it, and the reason is epistemic rather than clerical: an escalation nobody can name is indistinguishable from a defect the register has grown used to. No document in the register carries this term today (every current entry is CompilesAbove or Unadjudicated), so it is exercised only by the negative fixtures — the constraint that demands it is live regardless. Range rdfs:Literal, not xsd:string: this is prose and may be language-tagged."@en .
+
+#################################################################
+#  Readings — the dated VALUE behind an adjudication's prose
+#################################################################
+
+corpus:Reading a owl:Class ;
+    rdfs:label "Reading"@en ;
+    rdfs:comment "One measured value of a document's compile, with the date(s) it was measured on. A Reading is to corpus:Adjudication what a measurement is to a judgement: the adjudication says what a reading MEANT, this says what the number WAS. It exists because prose is not addressable — every figure in this register was already stated inside a corpus:rationale, where nothing outside a human reader can match it against a claim made elsewhere in the repository. APPEND-ONLY and never superseded in place: a register of dated readings stays true forever, where a register of the CURRENT value goes stale the moment a loop moves a score and forgets to say so — and a gate reading it then under-fires silently. The consequence is deliberate and is stated rather than hidden: this vocabulary can say which figures are undated claims, and cannot say which figure is current."@en .
+
+corpus:reading a owl:ObjectProperty ;
+    rdfs:label "reading"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range corpus:Reading ;
+    rdfs:comment "Attaches a measured reading to a corpus document. Repeatable and append-only. ONE NODE PER DISTINCT VALUE, not per measurement event: a value re-measured on a later day carries a second corpus:readAt rather than a second node, because two nodes bearing the same value would make that value ambiguous to any consumer matching a literal against the register, and a re-confirmation is not a new reading."@en .
+
+corpus:value a owl:DatatypeProperty ;
+    rdfs:label "reading value"@en ;
+    rdfs:domain corpus:Reading ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The measured document score, at the PRECISION IT WAS RECORDED AT — never padded and never rounded to look tidy. The precision is evidence: a value recorded as 0.9047 says four digits were written down and the rest were not measured, so a consumer may not read a fifth. Distinct from corpus:scoreFloor, which is a regression bound deliberately set at-or-below a reading and is not a measurement of anything."@en .
+
+corpus:readAt a owl:DatatypeProperty ;
+    rdfs:label "read at"@en ;
+    rdfs:domain corpus:Reading ;
+    rdfs:range xsd:date ;
+    rdfs:comment "A date this value was measured on. Repeatable: each date is one occasion the compile was run and produced this value. The earliest is when the reading was first taken; a later one is a re-confirmation, and its absence over a long interval says only that nobody looked."@en .
+
+corpus:atCommit a owl:DatatypeProperty ;
+    rdfs:label "at commit"@en ;
+    rdfs:domain corpus:Reading ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The commit the reading was taken at, where it is known. Optional, because most historical readings in this register were recorded with a date and no sha, and inventing one would be worse than admitting the gap."@en .
+
+corpus:recordedIn a owl:DatatypeProperty ;
+    rdfs:label "recorded in"@en ;
+    rdfs:domain corpus:Reading ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A repo-relative path where this reading is transcribed — the provenance of the ROW, not of the measurement. Repeatable: the same value is often stated in a loop's evidence, in this register's own rationale prose, and in a code comment, and listing all of them is what lets a reader check the row rather than trust it. Every row carries at least one of this or corpus:atCommit; a row that carries neither is a number nobody can trace."@en .
+
+corpus:notQuotable a owl:DatatypeProperty ;
+    rdfs:label "not quotable"@en ;
+    rdfs:domain corpus:Reading ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when this reading's value is so ordinary that a literal matching it is more likely to mean something else — the exemption a figure gate needs in order to stay honest, marked ON THE READING and stated with its size rather than hidden in a consumer's filter. It removes the reading from a gate's FINDINGS and never from the register: the value goes on participating in every ambiguity test, because dropping a row would shrink the extension those tests are computed over and could silently promote a different literal to uniqueness. The price is explicit: nothing can catch an undated quotation of a reading marked this way."@en .

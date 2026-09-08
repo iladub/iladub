@@ -22,7 +22,7 @@ sources:
   - vocab/queries/band-run.rq
 related: ["[[dimension-split]]"]
 confidence: high
-updated: 2026-09-04
+updated: 2026-09-08
 promoted_to: docs/neurosymbolic-first.md
 ---
 
@@ -122,7 +122,8 @@ scope, closing R42's both gaps, measured end-to-end on the real CBH document
   can only turn an escalation into a membrane-passing assertion, never touch an already-
   asserting band, never worsen anything — pinned by a stem-shaped fixture that must
   traverse the whole driver with zero repair activity (`repaired_bands == ()`). Measured
-  on CBH: `repaired_bands = ((0,1),(0,3),(0,5),(0,7))`, score 0.0698 → 0.9047, all four
+  on CBH (`tests/test_cbh_e2e.py`, reading of 2026-08-20): `repaired_bands =
+  ((0,1),(0,3),(0,5),(0,7))`, score 0.0698 → 0.9047, all four
   chained into one 4-member logical table via the existing `tab:continuesTable`
   machinery — no second stitching mechanism.
 - **The naming cascade's pick-among-verified discipline** (`src/iladub/splitkey.py`,
@@ -248,7 +249,8 @@ figure for this loop came from. Sources: `vocab/queries/band-run.rq`,
 
 - **Measured.** 14 candidate runs across all 27 corpus pages; the membrane accepts exactly
   **two**, apple p0 `2..7` and apple p1 `2..7`, and refuses 12. apple's document score moves
-  0.1895 → 0.6289, **identical** under `validate_shapes=True`. The SPARQL form was
+  0.1895 → 0.6289 (readings of 2026-09-04), **identical** under `validate_shapes=True`.
+  The SPARQL form was
   cross-checked against `scripts/band_run_census.py`'s plain-Python relation on all 27
   pages: 0 mismatches. **No tuned constant anywhere**: the only number in the whole design is
   the 2dp rounding INHERITED from `sectiongraph._rule_xs_signature`, which this loop
