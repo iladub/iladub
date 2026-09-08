@@ -28,7 +28,11 @@ tab:HierarchicalTable a owl:Class ; rdfs:subClassOf tab:Table ;
     rdfs:comment "A table with a multi-level header tree on a column or row axis."@en .
 
 # --- cells and their roles (Wang: label vs entry) ------------------------------
-tab:Cell a owl:Class ; rdfs:label "Cell"@en ;
+tab:PageLocated a owl:Class ; rdfs:label "Page-located"@en ;
+    rdfs:comment """Abstract supertype of everything that carries tab:onPage -- a cell, a data
+grid. Minted for R61 so onPage's domain asserts only what is true. NOTHING targets this class,
+deliberately."""@en .
+tab:Cell a owl:Class ; rdfs:subClassOf tab:PageLocated ; rdfs:label "Cell"@en ;
     rdfs:comment "Abstract supertype; a cell is either a LabelCell or an EntryCell."@en .
 tab:LabelCell a owl:Class ; rdfs:subClassOf tab:Cell ; rdfs:label "Label cell"@en ;
     rdfs:comment "A cell that locates entries (a header or stub label)."@en .
@@ -38,7 +42,12 @@ tab:EntryCell a owl:Class ; rdfs:subClassOf tab:Cell ; rdfs:label "Entry cell"@e
 # --- header trees and leaves ---------------------------------------------------
 tab:HeaderNode a owl:Class ; rdfs:label "Header node"@en ;
     rdfs:comment "A node in a header tree; covers a contiguous run of leaf columns."@en .
-tab:LeafColumn a owl:Class ; rdfs:label "Leaf column"@en ;
+tab:Column a owl:Class ; rdfs:label "Column"@en ;
+    rdfs:comment """Abstract supertype; a column is either a LeafColumn (addressed by a
+column-header path, asserted into a holon) or a GridColumn (index + extent, transient evidence).
+Minted for R61 so tab:atColumn can range over both without asserting that a grid column is a
+leaf column. NOTHING targets this class, deliberately."""@en .
+tab:LeafColumn a owl:Class ; rdfs:subClassOf tab:Column ; rdfs:label "Leaf column"@en ;
     rdfs:comment "A terminal column addressed by a column-header path."@en .
 tab:LeafRow a owl:Class ; rdfs:label "Leaf row"@en ;
     rdfs:comment "A terminal row addressed by a row-header path."@en .
@@ -53,8 +62,14 @@ tab:coversRow a owl:ObjectProperty ; rdfs:label "covers row"@en ;
     rdfs:domain tab:HeaderNode ; rdfs:range tab:LeafRow ;
     rdfs:comment "A leaf row in this header node's (vertical) span — the row-axis mirror of tab:coversColumn."@en .
 tab:hasLabel a owl:ObjectProperty ; rdfs:label "has label"@en ;
-    rdfs:domain tab:HeaderNode ; rdfs:range tab:LabelCell ;
-    rdfs:comment "Links a header node to the LabelCell carrying its surface text + geometry."@en .
+    rdfs:domain tab:HeaderNode ; rdfs:range tab:Cell ;
+    rdfs:comment """Links a header node to the Cell carrying its surface text + geometry.
+
+RANGE IS tab:Cell, NOT tab:LabelCell (R61, 2026-09-08). A derived row group points hasLabel at
+the SOURCE EntryCell that carries its key -- provenance to the page with no text duplication
+(see the rowgroups module docstring). Under a consumer's stock RDFS reasoner the narrower range
+derived LabelCell on 18 corpus EntryCells: a false assertion in a published graph. Widening
+costs no typing, because every genuine label cell is typed explicitly at emission."""@en .
 tab:headerLevel a owl:DatatypeProperty ; rdfs:label "header level"@en ;
     rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
     rdfs:comment "Depth of this node (0 = topmost)."@en .
@@ -79,7 +94,13 @@ tab:hasCell a owl:ObjectProperty ;
 
 # --- the access function (Wang's map: entry <- column path x row path) ---------
 tab:atColumn a owl:ObjectProperty ; rdfs:label "at column"@en ;
-    rdfs:domain tab:EntryCell ; rdfs:range tab:LeafColumn .
+    rdfs:domain tab:EntryCell ; rdfs:range tab:Column ;
+    rdfs:comment """RANGE IS tab:Column, NOT tab:LeafColumn (R61, 2026-09-08). The data-grid path
+points atColumn at a tab:GridColumn, which is NOT a tab:LeafColumn: the LeafColumn shapes
+(tab-shapes.ttl targetClass tab:LeafColumn) require ?tbl tab:hasLeafColumn $this, and a grid
+column is tab:hasGridColumn of a GRID, never hasLeafColumn of a table. Declaring the subclass
+edge that tab:GridColumn's own prose invites would drag 12 nodes into shapes they cannot
+satisfy; the abstract supertype asserts only what is true."""@en .
 tab:atRow a owl:ObjectProperty ; rdfs:label "at row"@en ;
     rdfs:domain tab:EntryCell ; rdfs:range tab:LeafRow .
 
@@ -101,8 +122,11 @@ tab:cellText a owl:DatatypeProperty ; rdfs:label "cell text"@en ;
     rdfs:domain tab:Cell ; rdfs:range rdfs:Literal ;
     rdfs:comment "The surface text a cell carries. Language-tagged literals are allowed; NOT constrained to xsd:string."@en .
 tab:onPage a owl:DatatypeProperty ; rdfs:label "on page"@en ;
-    rdfs:domain tab:Cell ; rdfs:range xsd:integer ;
-    rdfs:comment "Zero-based index of the page the cell was measured on."@en .
+    rdfs:domain tab:PageLocated ; rdfs:range xsd:integer ;
+    rdfs:comment """Zero-based index of the page the thing was measured on.
+
+DOMAIN IS tab:PageLocated, NOT tab:Cell (R61, 2026-09-08). A tab:DataGrid carries onPage and is
+genuinely page-located without being a cell; the narrower domain derived tab:Cell on it."""@en .
 tab:hasBBox a owl:ObjectProperty ; rdfs:label "has bbox"@en ;
     rdfs:domain tab:Cell ; rdfs:range tab:BBox ;
     rdfs:comment "The measured bounding box of the cell, in PDF points."@en .
@@ -236,7 +260,12 @@ tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;
     rdfs:comment "A genuinely-missing cell: empty, the self-declaring '(blank)', or a lone '-'. Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation."@en .
 tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
-tab:Text     a tab:CellDatatype ; rdfs:label "Text"@en .
+tab:Text     a tab:CellDatatype , tab:CellDatatypeFamily ; rdfs:label "Text"@en ;
+    rdfs:comment """BOTH a datatype and its own family (R61, 2026-09-08). tab:columnFamily has
+rdfs:range tab:CellDatatypeFamily and the grid emitter writes tab:Text as a family value, which
+tab-datagrid.ttl already asserts in prose -- 'tab:Text IS a legal family. This is the correction
+that made the definition universal.' Only the declaration was missing. Contrast tab:Quantity,
+which is a family WITHOUT being a datatype: it normalises Numeric and Currency."""@en .
 tab:Date     a tab:CellDatatype ; rdfs:label "Date"@en .
 tab:Currency a tab:CellDatatype ; rdfs:label "Currency"@en .
 tab:CurrencyGlyph a tab:CellDatatype ; rdfs:label "Currency glyph"@en ;
@@ -322,7 +351,18 @@ tab:NonTableKind a tab:RegionKind ; rdfs:label "Non table (kind)"@en .
 # --- header-covering evidence graph (transient, pre-holon; loop B) ---
 tab:HeaderCell a owl:Class ; rdfs:label "Header cell"@en ;
     rdfs:comment "A transient header-region cell (row, text, ink x-extent), evidence for the leaf-row column-covering derivation (header-covers.rq); never asserted into a holon."@en .
-tab:GridColumn a owl:Class ; rdfs:label "Grid column"@en ;
+tab:colX0 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:decimal ;
+    rdfs:label "column x0"@en ;
+    rdfs:comment """Left edge of a grid column's horizontal INTERVAL, in PDF points.
+
+NOT tab:x0 (R61, 2026-09-08, following R182's remedy). A column has an x-interval, not a
+rectangle -- it has no y extent and could not satisfy a box shape -- so carrying tab:x0, whose
+rdfs:domain is tab:BBox, made every grid column a tab:BBox for any consumer running our
+published axioms. The same emission was independently flagged by R92's close-out."""@en .
+tab:colX1 a owl:DatatypeProperty ; rdfs:domain tab:GridColumn ; rdfs:range xsd:decimal ;
+    rdfs:label "column x1"@en ;
+    rdfs:comment "Right edge of a grid column's horizontal interval. See tab:colX0."@en .
+tab:GridColumn a owl:Class ; rdfs:subClassOf tab:Column ; rdfs:label "Grid column"@en ;
     rdfs:comment "A transient leaf column (index + center-x), evidence for the covering derivation; never asserted into a holon."@en .
 tab:atHeaderRow a owl:DatatypeProperty ; rdfs:domain tab:HeaderCell ; rdfs:range xsd:integer ; rdfs:label "at header row"@en ;
     rdfs:comment "0-based header-region row index (0 = topmost). The leaf row is MAX(atHeaderRow)."@en .

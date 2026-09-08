@@ -65,7 +65,7 @@ circular."""@en ;
 #    (c) rows derived by FREQUENCY pick the wrong structure — wrapped continuation
 #        fragments are the most numerous line shape on a real document, not the data.
 
-tab:DataGrid a owl:Class ; rdfs:label "Data grid"@en ;
+tab:DataGrid a owl:Class ; rdfs:subClassOf tab:PageLocated ; rdfs:label "Data grid"@en ;
     rdfs:comment """The DATA of a table: a maximal rectangle of entry cells over a set of rows
 and a set of columns, admitted together. Wang's entries; the statistical 'field'. Everything a
 table contains that is NOT in some data grid is metadata, by definition and by construction.
@@ -246,7 +246,12 @@ tab:ArithmeticContradiction a tab:GridRefutation ; rdfs:label "R5 arithmetic con
 tab:ColumnUniverse a owl:Class ; rdfs:label "Column universe"@en ;
     rdfs:comment """The stable set of column boundaries a data grid is selected within.
 Established ONCE, before any row is admitted, because maximality is undefined against a
-moving candidate set."""@en .
+moving candidate set.
+
+Its two members are INDIVIDUALS, not subclasses (R61, 2026-09-08). They are enumerated values --
+datagrid.py:626 writes one of them as the object of tab:universeSource and nothing instantiates
+either -- so the subclass idiom made tab:universeSource's range derive that a CLASS was an
+instance. This follows the convention tab:Quantity already sets for tab:CellDatatypeFamily."""@en .
 
 tab:DrawnRule a owl:Class ; rdfs:label "Drawn rule"@en ;
     rdfs:comment """A drawn mark that contains NO glyph centre.
@@ -258,10 +263,16 @@ when fill edges are counted and exactly 2 when they are not, and WHO's column un
 collapses from 104 spurious columns to 4 emblem strokes. That conflation independently
 broke two earlier lines of work."""@en .
 
-tab:universeSource a owl:ObjectProperty ; rdfs:domain tab:ColumnUniverse ;
-    rdfs:label "universe source"@en .
+tab:universeSource a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
+    rdfs:range tab:ColumnUniverse ; rdfs:label "universe source"@en ;
+    rdfs:comment """Which column universe supplied this grid's columns.
 
-tab:DecorationUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+DOMAIN AND RANGE WERE TRANSPOSED (R61, 2026-09-08): the declaration read rdfs:domain
+tab:ColumnUniverse with no range, while the emitter writes grid -> tab:DecorationUniverse |
+tab:AlignmentUniverse, so every emitting grid was derived a tab:ColumnUniverse. An authoring
+slip, not a modelling question."""@en .
+
+tab:DecorationUniverse a tab:ColumnUniverse ;
     rdfs:label "Decoration universe"@en ;
     rdfs:comment """Columns bounded by tab:DrawnRule marks, each column ink-witnessed (at least
 two rows place a run inside it). Preferred where available, because decoration is applied to
@@ -272,7 +283,7 @@ of column counts, not a threshold. Measured necessity: stem's drawn marks are pa
 yielding 2 columns where alignment yields 15, and preferring them unconditionally cost that
 page every row."""@en .
 
-tab:AlignmentUniverse a owl:Class ; rdfs:subClassOf tab:ColumnUniverse ;
+tab:AlignmentUniverse a tab:ColumnUniverse ;
     rdfs:label "Alignment universe"@en ;
     rdfs:comment """Columns bounded by the gaps between the seed rows' run extents, used where
 no drawn universe resolves as finely. Carries the whole load on borderless documents — apple,
