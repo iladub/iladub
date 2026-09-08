@@ -159,3 +159,89 @@ def test_declared_impact_after_cutoff_passes():
     g.add((d, DG.docDate, Literal("2026-08-01", datatype=XSD.date)))
     g.add((d, DG.docImpact, Literal("increment")))
     assert _conforms(g)[0]
+
+
+# ── Contradiction drains (spec 2026-09-08 §4.3, oracle O3) ───────────────────
+# The drain is the permissive half of the gate: it UNBLOCKS a release on a
+# self-declared human judgement. One negative per clause, because the shape is
+# the only thing standing between "a release was cleared on evidence" and "a
+# release was cleared by a line someone typed".
+
+def _drained_doc(g, path="docs/superpowers/specs/2026-08-10-x-design.md",
+                 impact="contradiction", when="2026-08-10"):
+    d = _doc(g, path, "evidence")
+    g.add((d, DG.docDate, Literal(when, datatype=XSD.date)))
+    g.add((d, DG.docImpact, Literal(impact)))
+    return d
+
+
+def _drain(g, doc, when="2026-08-11", by="F", evidence="wiki page P fixed in 3251d5f",
+           omit=()):
+    n = URIRef("https://w3id.org/iladub/docgov/drain/t")
+    g.add((n, RDF.type, DG.ContradictionDrain))
+    if "drains" not in omit:
+        g.add((n, DG.drains, doc))
+    if "drainedOn" not in omit:
+        g.add((n, DG.drainedOn, Literal(when, datatype=XSD.date)))
+    if "drainedBy" not in omit:
+        g.add((n, DG.drainedBy, Literal(by)))
+    if "drainEvidence" not in omit:
+        g.add((n, DG.drainEvidence, Literal(evidence)))
+    return n
+
+
+def test_well_formed_drain_passes():
+    g = Graph()
+    _drain(g, _drained_doc(g))
+    assert _conforms(g)[0]
+
+
+def test_drain_without_evidence_fails():
+    g = Graph()
+    _drain(g, _drained_doc(g), omit=("drainEvidence",))
+    assert not _conforms(g)[0]
+
+
+def test_drain_with_empty_evidence_fails():
+    """A present-but-blank evidence string is the shape of a record with none
+    of the substance — minLength is what separates them."""
+    g = Graph()
+    _drain(g, _drained_doc(g), evidence="")
+    assert not _conforms(g)[0]
+
+
+def test_drain_without_agent_fails():
+    g = Graph()
+    _drain(g, _drained_doc(g), omit=("drainedBy",))
+    assert not _conforms(g)[0]
+
+
+def test_drain_without_date_fails():
+    g = Graph()
+    _drain(g, _drained_doc(g), omit=("drainedOn",))
+    assert not _conforms(g)[0]
+
+
+def test_drain_of_a_doc_declaring_increment_fails():
+    """A drain naming a document that never declared a contradiction drains
+    nothing — and would go on silently 'working' if the declaration were later
+    changed."""
+    g = Graph()
+    _drain(g, _drained_doc(g, impact="increment"))
+    assert not _conforms(g)[0]
+
+
+def test_drain_predating_its_document_fails():
+    """A drain dated before the contradiction was raised records something that
+    had not happened yet."""
+    g = Graph()
+    _drain(g, _drained_doc(g, when="2026-08-10"), when="2026-08-09")
+    assert not _conforms(g)[0]
+
+
+def test_drain_on_the_same_day_as_its_document_passes():
+    """The boundary is inclusive: a loop that declares and repairs in one day is
+    the good case, not a defect."""
+    g = Graph()
+    _drain(g, _drained_doc(g, when="2026-08-10"), when="2026-08-10")
+    assert _conforms(g)[0]

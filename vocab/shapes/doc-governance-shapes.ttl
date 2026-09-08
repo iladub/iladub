@@ -146,3 +146,48 @@ dg:WikiIndexMembershipShape a sh:NodeShape ;
                 $this <https://w3id.org/iladub/docgov#inWikiIndex> false .
             }""" ;
     ] .
+
+# A contradiction drain is the release-time act that clears the gate for one
+# document (spec 2026-09-08 §4.3). CLOSED WORLD, and deliberately strict: the
+# raise is conservative and costs nothing, the drain is permissive and unblocks
+# a release, so a self-declared drain must at least be complete, attributable
+# and about something that was actually declared.
+dg:ContradictionDrainShape a sh:NodeShape ;
+    sh:targetClass dg:ContradictionDrain ;
+    sh:property [
+        sh:path dg:drains ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "a drain must name exactly one document it drains" ;
+    ] ;
+    sh:property [
+        sh:path dg:drainedOn ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ;
+        sh:message "a drain must carry exactly one xsd:date — the day the PAGE was fixed" ;
+    ] ;
+    sh:property [
+        sh:path dg:drainedBy ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ; sh:minLength 1 ;
+        sh:message "a drain must name who ruled it drained (an unblocking judgement with no author is one nobody can be asked about)" ;
+    ] ;
+    sh:property [
+        sh:path dg:drainEvidence ; sh:minCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+        sh:message "a drain must state what makes the claim true now — a drain with no evidence is 'trust me' wearing the shape of a record" ;
+    ] ;
+    sh:sparql [
+        sh:message "a drain names a document that declares no 'Doc impact: contradiction' — it drains nothing (spec §4.3)" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#drains> ?doc .
+                FILTER NOT EXISTS {
+                    ?doc <https://w3id.org/iladub/docgov#docImpact> "contradiction" .
+                }
+            }""" ;
+    ] ;
+    sh:sparql [
+        sh:message "a drain predates the contradiction it drains (spec §4.3): drainedOn is before the drained document's own date" ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://w3id.org/iladub/docgov#drains>    ?doc ;
+                      <https://w3id.org/iladub/docgov#drainedOn> ?on .
+                ?doc <https://w3id.org/iladub/docgov#docDate> ?d .
+                FILTER (?on < ?d)
+            }""" ;
+    ] .

@@ -206,3 +206,34 @@ docgov:lastCommitDate a owl:DatatypeProperty ;
     rdfs:domain docgov:Source ;
     rdfs:range xsd:date ;
     rdfs:comment "The day of the most recent commit touching this cited source, read from git and truncated to a date — the observed counterpart to a wiki page's self-declared `updated:` claim, and the only input the two staleness derivations compare against it. It depends on real repository history: on a shallow clone git answers HEAD's date for every path, which would silently make every page look either fresh or stale, so the extractor refuses to run rather than emit a plausible-looking wrong value."@en .
+
+#################################################################
+#  Contradiction drains — the release act that clears the gate
+#################################################################
+
+docgov:ContradictionDrain a owl:Class ;
+    rdfs:label "contradiction drain"@en ;
+    rdfs:comment "The accountable record that a declared `Doc impact: contradiction` has been repaired — the affected published page now says something true, so the document that declared it no longer blocks a release tag. It is a node with its own identity rather than a property on the document, for the reason iladub:PromotionDecision is a node: draining is an ACT, performed by someone, on a date, on evidence, and a property could carry none of that. It lives in the mutable register tests/docgov-drains.ttl and NOT in the evidence document that declared the contradiction, because the drain is a RELEASE-time fact and the declaring document was written before the fix existed — the 2026-08-10 decision-membrane spec is the worked counter-example: it appended its own 'the release gate is unblocked by this spec' note, which was false when written and left the gate blocked for four further weeks (see docs/superpowers/specs/2026-09-08-the-drain-is-a-release-act-design.md §3.2). Nothing here PROVES the page was fixed — SHACL cannot read prose — so this is accountability, not proof: the judgement is dated, attributed, evidenced and enumerable in one file instead of being a sentence inside the document it exonerates."@en .
+
+docgov:drains a owl:ObjectProperty ;
+    rdfs:label "drains"@en ;
+    rdfs:domain docgov:ContradictionDrain ;
+    rdfs:comment "The document whose declared contradiction this drain repairs, named by the same path-minted IRI the extractor uses, so the register joins the extracted facts with no glue code. NO rdfs:range is declared, and the omission is deliberate in the same way docgov:path's missing domain is: range-typing the target as docgov:Document would, under the membrane's inference=\"rdfs\" run, drag any mistyped or non-existent target into docgov:Document and hand it to DocumentShape, which would then refuse it for missing docClass/inNav/excludedFromSite — a cascade of confusing messages in place of the one this loop wants, 'that document never declared a contradiction'. R182 is the case that taught this: an rdfs:range on an owned property refused 26 nodes through a closure leg nobody was validating against."@en .
+
+docgov:drainedOn a owl:DatatypeProperty ;
+    rdfs:label "drained on"@en ;
+    rdfs:domain docgov:ContradictionDrain ;
+    rdfs:range xsd:date ;
+    rdfs:comment "The date the affected published page was actually fixed — an observation about the repository, checkable in git history, NOT the date this record was typed. The two differ whenever a drain is recorded retroactively, and the register says so in its evidence rather than back-dating or forward-dating the fact. The membrane requires this date to be on or after the drained document's own docgov:docDate: a drain predating the contradiction it drains is a record of something that had not happened yet."@en .
+
+docgov:drainedBy a owl:DatatypeProperty ;
+    rdfs:label "drained by"@en ;
+    rdfs:domain docgov:ContradictionDrain ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Who ruled the contradiction drained. Mandatory for the reason dec:DecisionHolon requires prov:wasAssociatedWith: an unblocking judgement with no author is a judgement nobody can be asked about. This is the half of the record that makes a wrong drain attributable rather than anonymous, and it is the reason the drain may not live inside the document it clears — a document cannot be the agent that exonerates itself."@en .
+
+docgov:drainEvidence a owl:DatatypeProperty ;
+    rdfs:label "drain evidence"@en ;
+    rdfs:domain docgov:ContradictionDrain ;
+    rdfs:range xsd:string ;
+    rdfs:comment "One statement of what makes the drained claim true now — which published page was fixed, in which commit, and what it says. At least one is required and it may not be empty, because a drain with no evidence is the assertion 'trust me' wearing the shape of a record. It is prose and not a structured citation on purpose: what counts as a repaired page is a human judgement about meaning, and encoding it as a triple would dress that judgement as a mechanical check (CLAUDE.md § Core design principles 7 — only emit what the source supports)."@en .

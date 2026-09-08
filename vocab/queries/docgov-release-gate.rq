@@ -1,11 +1,19 @@
 # Derivation, OPEN WORLD (spec §7): the docs that block a release tag — specs/
 # plans declaring 'Doc impact: contradiction' dated after the previous release
-# (?since bound by the runner). Draining = the release that fixes the affected
-# published page(s); the human confirms the fix via RELEASE.md before tagging.
+# (?since bound by the runner), for which NO drain has been recorded.
+#
+# Draining = the release that fixes the affected published page(s), recorded as
+# a docgov:ContradictionDrain in tests/docgov-drains.ttl and confirmed by the
+# human via RELEASE.md step 2. Evidence-positive and monotonic: a document stops
+# blocking only when a drain record is PRESENT. Absence of a drain blocks, which
+# is the conservative direction — see 2026-09-08-the-drain-is-a-release-act-design.md
+# §3.1 for why the alternative (letting the tag being built move ?since forward)
+# was measured to make this gate vacuous rather than merely coarse.
 PREFIX dg: <https://w3id.org/iladub/docgov#>
 CONSTRUCT { ?doc dg:blocksRelease true }
 WHERE {
     ?doc dg:docImpact "contradiction" ;
          dg:docDate   ?d .
     FILTER (?d > ?since)
+    FILTER NOT EXISTS { [] a dg:ContradictionDrain ; dg:drains ?doc . }
 }

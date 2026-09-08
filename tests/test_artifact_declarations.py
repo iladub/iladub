@@ -165,7 +165,10 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(vocab_nodes) == len(artifact_files()) == 147
+    # RE-MEASURED 2026-09-08 ([[R185]]): 147 -> 148, `tests/docgov-drains.ttl` joins the
+    # population at `git add` — see test_the_population_is_every_tracked_ttl_outside_the_
+    # fixture_directory for why it is not carved out.
+    assert len(vocab_nodes) == len(artifact_files()) == 148
     assert len(query_nodes) == len(query_files()) == 50
 
 
