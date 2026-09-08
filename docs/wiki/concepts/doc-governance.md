@@ -7,9 +7,10 @@ sources:
   - scripts/release_gate.py
   - .github/workflows/ci.yml
   - .github/workflows/release.yml
+  - docs/superpowers/2026-09-08-r186-proposal.md
 related: ["[[promotion-decision]]"]
 confidence: high
-updated: 2026-08-01
+updated: 2026-09-08
 ---
 
 # Documentation governance — classes, lint, release train
@@ -29,6 +30,15 @@ explicit request only), Confidential (`internal/**`, never tracked). A file
 matching no rule is a lint failure, not a guess — `vocab/shapes/doc-governance-shapes.ttl`'s
 `dg:DocumentShape` enforces `dg:docClass` with `sh:in` over exactly those
 six string values.
+
+> **SUPERSEDED for the Evidence clause, 2026-09-08** — the quotation above is the *2026-07-31 spec's*
+> wording and stays as written, because that spec is Evidence. **The contract no longer says
+> "immutable".** `CLAUDE.md` § Documentation governance now reads *append-only after loop close: a
+> later PR may add, and may never delete or modify an existing line*, with a file's `Doc impact:`
+> **declared value** frozen outright, **binding prospectively from `5743af3` (2026-08-31)**. Ruled by
+> the maintainer from [[R186]]'s fork; the argument and its measurements are in
+> `docs/superpowers/2026-09-08-r186-proposal.md`. **No lint enforces it** — see [[R188]]. Read the
+> contract, not this page, for the operative rule.
 
 **How it works.** The spec states the epistemics directly: "the loop record
 is evidence, a wiki page is a proposition ..., a published page or contract

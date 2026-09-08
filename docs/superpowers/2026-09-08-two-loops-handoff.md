@@ -148,3 +148,24 @@ makes decidable: the loop has not closed, and nothing above it was deleted or mo
   intended for the first time in four loops. That is worth imitating, not celebrating — the
   difference was that this session's assigned action was *decidable*, so nothing had to be designed
   at the end.
+
+---
+
+## 6. Appended 2026-09-08 — **5a is TAKEN**; the next action is 5b′
+
+The fork was put to François with all four options (arm 2 as written, arm 3 as written, the
+proposal, no edit). **He chose the proposal.** `CLAUDE.md` § Documentation governance now carries
+the new Evidence clause and its prospective boundary; [[R186]] is **closed** and its row has moved
+to `residues-closed.md`; the ruling is recorded in
+`docs/superpowers/2026-09-08-r186-proposal.md` §6, and `docs/wiki/concepts/doc-governance.md`
+carries a dated SUPERSEDED note over the spec quotation it still reproduces verbatim.
+
+**5b′ — [[R187]]'s recalibration — is therefore the next loop, unchanged and unblocked**, including
+its deferred arm-1 convention half, which 5a's answer now settles: *append-only, never rewritten*
+means a superseded wiki figure is **struck, not replaced**, and that is now contract wording rather
+than a proposal. **5c′ ([[R188]]'s enumeration) and 5d (the two unmeasured capability figures)
+remain exactly as written above.**
+
+Note the new clause immediately constrains its own author: this section is an append, nothing above
+it is touched, and part 5's grades stand as they were written — including the ones the ruling has
+since confirmed.
