@@ -1240,11 +1240,14 @@ class</strong> (boundary semantics ride on <code>holon:boundaryMode</code> + SHA
 <li><code>examples/holon-grounding-conformant.ttl</code> + <code>tests/holon-grounding-leak.ttl</code> — a
   conforming governed-grounding traversal and a negative case; exercised by
   <code>tests/test_hga_alignment.py</code>.</li>
+<li><code>vocab/queries/membrane-health.rq</code> — the membrane-health check: a compiled document
+  carries <code>etkl:membraneHealth</code> → Intact / Weakened / Compromised, derived from <strong>two kinds
+  of evidence both PRESENT in the graph</strong> — the <code>etkl:MembraneValidation</code> act the membrane
+  minted, and the propositions still <strong>held</strong> at that boundary. Never from an absence, and
+  never from the compilation score.</li>
 </ul>
 <h2 id="planned-work-not-done-yet">Planned work (not done yet)<a class="headerlink" href="#planned-work-not-done-yet" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A membrane-health check that computes and reports a compiled document's cleanliness
-  (<code>etkl:membraneHealth</code> → Intact / Weakened / Compromised) from validation results.</li>
 <li>A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
   (the current example covers the grounding-governance crossing only).</li>
 </ul>

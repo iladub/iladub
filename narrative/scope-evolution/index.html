@@ -424,10 +424,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-etkl-the-document-compiler" class="md-nav__link">
+  <a href="#etkl-the-document-compiler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. etkl — the document compiler
+        etkl — the document compiler
       
     </span>
   </a>
@@ -435,10 +435,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-decidability-the-context-graph" class="md-nav__link">
+  <a href="#tab-reading-depth-inside-the-compiler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Decidability — the context graph
+        tab — reading depth, inside the compiler
       
     </span>
   </a>
@@ -446,10 +446,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-the-holon-reframe-from-record-to-active-holon" class="md-nav__link">
+  <a href="#dec-decidability-the-context-graph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The holon reframe — from record to active holon
+        dec — decidability, the context graph
       
     </span>
   </a>
@@ -457,10 +457,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-the-active-substrate" class="md-nav__link">
+  <a href="#holon-the-reframe-from-record-to-active-holon" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. The active substrate
+        holon — the reframe, from record to active holon
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#substrate-the-membrane-enforced-at-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        substrate — the membrane enforced at runtime
       
     </span>
   </a>
@@ -960,10 +971,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-etkl-the-document-compiler" class="md-nav__link">
+  <a href="#etkl-the-document-compiler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. etkl — the document compiler
+        etkl — the document compiler
       
     </span>
   </a>
@@ -971,10 +982,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-decidability-the-context-graph" class="md-nav__link">
+  <a href="#tab-reading-depth-inside-the-compiler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Decidability — the context graph
+        tab — reading depth, inside the compiler
       
     </span>
   </a>
@@ -982,10 +993,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-the-holon-reframe-from-record-to-active-holon" class="md-nav__link">
+  <a href="#dec-decidability-the-context-graph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The holon reframe — from record to active holon
+        dec — decidability, the context graph
       
     </span>
   </a>
@@ -993,10 +1004,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-the-active-substrate" class="md-nav__link">
+  <a href="#holon-the-reframe-from-record-to-active-holon" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. The active substrate
+        holon — the reframe, from record to active holon
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#substrate-the-membrane-enforced-at-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        substrate — the membrane enforced at runtime
       
     </span>
   </a>
@@ -1087,34 +1109,57 @@ as an assertion — and every grounded node is the product of an accountable pro
 <code>PromotionDecision</code>). <code>etkl</code>, <code>dec</code>, holons, and the storage substrate are all in service of it.</p>
 <hr />
 <h2 id="the-arc">The arc<a class="headerlink" href="#the-arc" title="Permanent link">&para;</a></h2>
+<p><strong>The rungs are named, not numbered — because a number is an ordering claim.</strong> Four of the five
+are entitled to one: <code>dec</code> presupposes <code>etkl</code>, <code>holon</code> reframes what <code>dec</code> governs, <code>substrate</code>
+enforces at runtime what <code>holon</code> only describes. The fifth, <code>tab</code>, is not next in that line. It is
+depth <em>inside</em> the compiler, built largely while <code>dec</code> and <code>holon</code> were being built, and numbering
+it would place it after the substrate — which is false.</p>
 <pre class="mermaid"><code>flowchart LR
   subgraph CORE["invariant core · assert / propose · every grounded node ← a promotion decision"]
     direction LR
-    E["1 · etkl&lt;br/&gt;document compiler&lt;br/&gt;recover + ground"]
-    DEC["2 · decidability (dec)&lt;br/&gt;context graph&lt;br/&gt;+ accountable decisions"]
-    HOL["3 · holon reframe&lt;br/&gt;record → interacting holon"]
-    SUB["4 · active substrate&lt;br/&gt;membrane enforced at runtime"]
+    E["etkl&lt;br/&gt;document compiler&lt;br/&gt;recover + ground"]
+    DEC["dec · decidability&lt;br/&gt;context graph&lt;br/&gt;+ accountable decisions"]
+    HOL["holon · the reframe&lt;br/&gt;record → interacting holon"]
+    SUB["substrate&lt;br/&gt;membrane enforced at runtime"]
+    TAB["tab · reading depth&lt;br/&gt;inside etkl, not after it"]
     E --&gt; DEC --&gt; HOL --&gt; SUB
+    E ---|"depth, not sequence"| TAB
   end
   SUB ==&gt; OUT(("active, governed holon&lt;br/&gt;semantic + access boundary"))</code></pre>
 <figure markdown="span">
-  <figcaption>Each phase adds a layer, on the same invariant core — and the output changes
-  category: from a static record to an active, governed holon.</figcaption>
+  <figcaption>Four phases, each adding a layer on the same invariant core — and the output changes
+  category: from a static record to an active, governed holon. <code>tab</code> hangs off the chain
+  deliberately: it deepens the first rung rather than following the last, and the link carries no
+  arrow because it asserts no order.</figcaption>
 </figure>
 
-<h3 id="1-etkl-the-document-compiler">1. <code>etkl</code> — the document compiler<a class="headerlink" href="#1-etkl-the-document-compiler" title="Permanent link">&para;</a></h3>
+<h3 id="etkl-the-document-compiler"><code>etkl</code> — the document compiler<a class="headerlink" href="#etkl-the-document-compiler" title="Permanent link">&para;</a></h3>
 <p><strong>Extract, Transform-with-(K)nowledge, Load.</strong> Traditional ETL maps fields <em>structurally</em>;
 <code>etkl</code> grounds <em>meaning</em> against a <strong>contract-as-ontology</strong>, with a knowledge module passed as
 an <em>argument</em> to the transform. Knowledge — not mappings — is the shape-change engine. Any
 <strong>human-addressed document, in any format</strong> → a grounded artifact conformed to a destination
 contract. (There is no "unstructured" input — only <a href="../../manifesto/">structure addressed to a human</a>.)</p>
-<h3 id="2-decidability-the-context-graph">2. Decidability — the context graph<a class="headerlink" href="#2-decidability-the-context-graph" title="Permanent link">&para;</a></h3>
+<h3 id="tab-reading-depth-inside-the-compiler"><code>tab</code> — reading depth, inside the compiler<a class="headerlink" href="#tab-reading-depth-inside-the-compiler" title="Permanent link">&para;</a></h3>
+<p>Not a stage after <code>etkl</code>: the inside of it. <code>etkl</code> promises <em>any</em> human-addressed document, and
+that promise is only as true as the hardest modality it meets — the <strong>table</strong>, where the author's
+structure is most present and least machine-addressed. A header that spans three columns, a stub
+that groups six rows, a footnote that re-scopes a unit: a human reads these at a glance, and
+recovering them is the work that makes "recover the author's structure" more than a slogan.</p>
+<p>It belongs to the same invariant core rather than to geometry. <em>Which columns does this header
+span?</em> is a perceptual, underdetermined judgment, so it is <strong>proposed</strong> — never computed by a tuned
+tolerance — and <strong>disposed by a semantic oracle</strong> (tiling constraints, a reshape round-trip). That
+is the assert/propose/promote signature applied to perception, and it is why the reading work is a
+rung of this arc and not an implementation detail beneath it.</p>
+<p>Its size is the reason it is named here at all: measured 2026-08-20, the table-reading work is the
+<strong>majority</strong> of the compiler's Python, of its vocabulary and shapes, and of its tests. An arc that
+did not name it was a map missing most of its own territory.</p>
+<h3 id="dec-decidability-the-context-graph"><code>dec</code> — decidability, the context graph<a class="headerlink" href="#dec-decidability-the-context-graph" title="Permanent link">&para;</a></h3>
 <p><code>dec</code> added the decisions that <em>change state</em> — both decisions found in document <strong>content</strong>
 and the compiler's own <strong>promotion</strong> decisions — as accountable, traceable holons
 (<code>dec:DecisionHolon</code>, escalation, events, timeline), with <strong>contextual risk</strong> as a
 decidability measure. At this stage the graph <em>annotated</em> data with decision + provenance +
 risk: the <strong>context around</strong> assertions.</p>
-<h3 id="3-the-holon-reframe-from-record-to-active-holon">3. The holon reframe — from record to active holon<a class="headerlink" href="#3-the-holon-reframe-from-record-to-active-holon" title="Permanent link">&para;</a></h3>
+<h3 id="holon-the-reframe-from-record-to-active-holon"><code>holon</code> — the reframe, from record to active holon<a class="headerlink" href="#holon-the-reframe-from-record-to-active-holon" title="Permanent link">&para;</a></h3>
 <p>The pivot: what <code>etkl</code> produces and <code>dec</code> governs are not annotated records but
 <strong>interacting holons</strong>. A holon = data <strong>+</strong> its context <strong>+</strong> its boundary <strong>+</strong> its
 projection, as one whole-that-is-also-a-part; the real system is <strong>many holons interacting</strong>
@@ -1124,7 +1169,7 @@ escalation) and <strong>lifecycle</strong> (events, state changes). iladub adopt
 (<code>holon:</code>) as the substrate vocabulary — <strong>consumed and aligned (<code>rdfs:subClassOf</code>/<code>seeAlso</code>),
 never cloned</strong> — and contributes the two gaps HGA leaves open: accountable <strong>decidability</strong> and
 <strong>contextual risk</strong> (both designed to be portable/upstreamable, not a fork).</p>
-<h3 id="4-the-active-substrate">4. The active substrate<a class="headerlink" href="#4-the-active-substrate" title="Permanent link">&para;</a></h3>
+<h3 id="substrate-the-membrane-enforced-at-runtime"><code>substrate</code> — the membrane enforced at runtime<a class="headerlink" href="#substrate-the-membrane-enforced-at-runtime" title="Permanent link">&para;</a></h3>
 <p>A holon is only <em>active</em> if something <strong>enforces its membrane at runtime</strong>. That requires an
 immutable <strong>event ledger</strong> (memory), <strong>validation-at-write</strong> (sensory), and <strong>in-engine policy</strong>
 (motor). The chosen substrate provides all three natively, so a <em>described</em> membrane becomes an
@@ -1185,7 +1230,9 @@ fully-structured, human-addressed document and grounds it against a contract-as-
 can ground, propose the rest, and never let a
 proposition pass as an assertion. It then absorbed <strong>decidability</strong> (<code>dec</code>): the decisions that
 change state — in document <em>content</em> and in the compiler's own promotions — became accountable,
-traceable holons. The pivot was recognizing that what <code>etkl</code> produces and governs are
+traceable holons — while the compiler itself went <strong>deep</strong> rather than forward, into <code>tab</code>, the
+recovery of an author's structure from the table, where that structure is most present and least
+machine-addressed. The pivot was recognizing that what <code>etkl</code> produces and governs are
 <strong>interacting holons</strong>: the output stopped being a static record and became an <strong>active, governed
 holon</strong> whose semantic boundary is <em>also</em> its access boundary. iladub consumes Cagle's HGA as the
 holon substrate (aligned, never cloned) and adds the two gaps HGA lacks — accountable decidability
