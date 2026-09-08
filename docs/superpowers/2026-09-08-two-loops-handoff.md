@@ -14,7 +14,9 @@ whenever part 5 carries reasoning, and 5b′ below does.
 
 ## 5. The next concrete action
 
-### 5a. ASSERTED — put [[R186]]'s two surviving arms to François, and do nothing else with them
+### 5a. ASSERTED — put [[R186]]'s two surviving arms to François, WITH the proposal now written
+
+**A proposal between them exists: `docs/superpowers/2026-09-08-r186-proposal.md`** (added later in the same session, on request, at 1.3× the floor with the override logged). It reports that neither arm is adoptable as written — arm 3's *premise* is falsified by the squash-merge regime, arm 2's *granularity* is refuted 14-to-0 — and proposes arm 3's sentence with arm 2's field folded in at value granularity. **Read it as a proposition; it is a recommendation to a maintainer, and it narrows this loop's own §1 rather than restating it.**
 
 Mechanical: the fork is fully argued, arm 1 is struck with evidence, and **the two survivors are
 both sentences in CLAUDE.md — a Contract-class file, which § Documentation governance says is
