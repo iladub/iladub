@@ -240,9 +240,19 @@ CORPUS = "https://w3id.org/iladub/corpus#"
 #: R139's. The O6 AUTHORSHIP CLAIM below is unchanged and is about the first two only: those
 #: are the terms an author supplied that no positional rule demanded.
 SRCCITE = "https://w3id.org/iladub/srccite#"
+DOCGOV = "https://w3id.org/iladub/docgov#"
 _SURPLUS_IN_CENSUS = {
     CORPUS + "Verdict", CORPUS + "Adjudication",   # 2026-08-30, R128's loop
     SRCCITE + "Citation",                          # 2026-08-31, R139's loop
+    # 2026-09-08, R187's figure gate. Two CLASSES and none of the nine properties
+    # beside them. MEASURED, not assumed: `_demanded()` collects terms NAMED AS OBJECTS
+    # (`etkl:namesTerm`), so `docgov:FigureOccurrence` and `docgov:Reading` are demanded
+    # by the rdfs:domain/rdfs:range of the properties around them in
+    # `vocab/internal/docgov.ttl`, while those properties are named by nothing but their
+    # own declaration and so are demanded by no artifact at all. That is a DIFFERENT
+    # asymmetry from srccite:Citation's, which turned on seven properties appearing only
+    # inside an `sh:select` string; do not read the two as one rule.
+    DOCGOV + "FigureOccurrence", DOCGOV + "Reading",
 }
 
 
@@ -257,8 +267,17 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
         57   + srccite:Citation, R139's citation membrane (2026-08-31)
         62   + the five docgov: drain terms, R185's release-gate repair (2026-09-08);
              and 59 over the 136-artifact tree
+        69   + the seven cor: reading terms, R187's figure register (2026-09-08);
+             and 66 over the 136-artifact tree
+        71   + docgov:FigureOccurrence and docgov:Reading, the same loop's gate — LIVE ONLY,
+             so 66 over the 136-artifact tree is UNCHANGED and the surplus set grows by two
 
-    THE LAST STEP MOVES BOTH NUMBERS BY THE SAME FIVE, AND THAT IS THE POINT. The terms
+    THE LAST TWO STEPS MOVE BOTH NUMBERS BY THE SAME AMOUNT, AND THAT IS THE POINT.
+    The seven cor: terms (corpus:Reading, :reading, :value, :readAt, :atCommit, :recordedIn,
+    :notQuotable) repeat the drain terms' shape exactly: demanded by `tests/corpus-shapes.ttl`
+    and `tests/corpus-manifest.ttl`, both INSIDE the 136-artifact tree, and declared in
+    `vocab/internal/corpus.ttl`, which is not a published ontology. Same reasoning, same
+    invariant, `_SURPLUS_IN_CENSUS` unchanged again — held by the third assertion below. The terms
     (docgov:ContradictionDrain, :drains, :drainedOn, :drainedBy, :drainEvidence) are demanded by
     `vocab/shapes/doc-governance-shapes.ttl`, which is INSIDE the 136-artifact tree, and declared
     in `vocab/internal/docgov.ttl`, which is not a published ontology — so they are census terms in
@@ -288,8 +307,8 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    assert len(_census_over(_pre_loop_artifacts())) == 59
-    assert len(_census()) == 62
+    assert len(_census_over(_pre_loop_artifacts())) == 66
+    assert len(_census()) == 71
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -370,7 +389,7 @@ def test_the_path_traversal_adds_exactly_two_terms():
     tree (see `test_the_census_chain_from_53_to_57_with_every_step_earned` for the full
     chain). The two terms this test is about are unaffected, and are asserted by name — the
     number alone was never the claim."""
-    assert len(_census_over(_pre_loop_artifacts())) == 59
+    assert len(_census_over(_pre_loop_artifacts())) == 66
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 

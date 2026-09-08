@@ -119,10 +119,14 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
     § 3.1).
 
     RE-MEASURED 2026-09-04: 49 -> 50, `band-run.rq` the R165 the-run-is-one-band loop adds
-    (2026-09-04-the-run-is-one-band-design.md § 3.4)."""
+    (2026-09-04-the-run-is-one-band-design.md § 3.4).
+
+    RE-MEASURED 2026-09-08: 50 -> 51, `docgov-undated-figure.rq` the [[R187]] figure-gate
+    loop adds — the derivation that reports a corpus reading stated with no date in its own
+    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4)."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 50, sorted(focus)
+    assert len(focus) == len(query_files()) == 51, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

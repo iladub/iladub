@@ -61,6 +61,10 @@ def test_the_population_is_every_file_in_vocab_queries():
 
     RE-MEASURED 2026-09-04: 49 -> 50, `band-run.rq` the R165 the-run-is-one-band loop
     adds — the adjacent-subsumption derivation that proposes a contiguous run of ruled
-    bands as one band (spec `2026-09-04-the-run-is-one-band-design.md` § 3.4)."""
+    bands as one band (spec `2026-09-04-the-run-is-one-band-design.md` § 3.4).
+
+    RE-MEASURED 2026-09-08: 50 -> 51, `docgov-undated-figure.rq` the [[R187]] figure-gate
+    loop adds — the derivation that reports a corpus reading stated with no date in its own
+    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4)."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 50, len(query_files())
+    assert len(query_files()) == 51, len(query_files())

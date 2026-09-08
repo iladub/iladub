@@ -12,7 +12,9 @@ from __future__ import annotations
 import re
 import subprocess
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
+from typing import Mapping, Sequence
 
 import yaml
 from rdflib import Graph, Literal, Namespace, RDF, URIRef
@@ -32,6 +34,14 @@ EXEMPT_PREFIXES = (".claude/", ".agents/")
 #: graph it validates the documents: both of ContradictionDrainShape's sh:sparql
 #: constraints are joins against extracted doc facts and are unexpressible otherwise.
 DRAIN_REGISTER = Path("tests") / "docgov-drains.ttl"
+#: The corpus reading register (spec 2026-09-08 §3.1) — the dated readings a prose
+#: figure may be a quotation OF. It is READ, never written (spec §6 I2), and it is not
+#: merged into the fact graph: its thousands of prose triples would swamp the membrane,
+#: so denoted readings are re-minted here as dg:Reading nodes carrying only what a
+#: finding must be able to say — which document, which value, read on which day.
+READING_REGISTER = Path("tests") / "corpus-manifest.ttl"
+COR = Namespace("https://w3id.org/iladub/corpus#")
+_READING = "https://w3id.org/iladub/docgov/reading/"
 
 
 def is_exempt(path: str) -> bool:
@@ -143,6 +153,127 @@ def _require_full_history(repo: Path) -> None:
         )
 
 
+# ---------------------------------------------------------------- figures
+# PROCEDURAL (spec §2, D3): decidable exact arithmetic over a lexical form. There is
+# no tolerance and no threshold anywhere below — the precision of a claim is the
+# author's, read off the literal they wrote, never a constant this module chooses.
+
+#: A decimal literal, not part of a longer dotted token (a version, an IP, a range).
+_DECIMAL = re.compile(r"(?<![\w.])\d+\.\d+(?![\w.])")
+#: What dates a block: an ISO date, or a backticked commit sha (>= one digit, so an
+#: ordinary hex-lettered word in backticks is not mistaken for a commit).
+_ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+_SHA = re.compile(r"`(?=[0-9a-f]*\d)[0-9a-f]{7,40}`")
+
+
+def blocks(text: str) -> list[tuple[int, list[str]]]:
+    """(first line number, lines) for every maximal run of non-blank lines.
+
+    The block is the closure boundary for datedness (spec §3.2), exactly as a holon
+    is elsewhere (CLAUDE.md §8). MEASURED reason it is not the line:
+    docs/wiki/concepts/dimension-split.md carries `(tests/test_cbh_e2e.py, 2026-08-04)`
+    one line above the figures it dates, so a line-scoped rule reports a correctly
+    dated claim as a finding."""
+    out: list[tuple[int, list[str]]] = []
+    start, run = 0, []
+    for n, line in enumerate(text.splitlines(), 1):
+        if line.strip():
+            if not run:
+                start = n
+            run.append(line)
+        elif run:
+            out.append((start, run))
+            run = []
+    if run:
+        out.append((start, run))
+    return out
+
+
+def is_dated(block: str) -> bool:
+    return bool(_ISO_DATE.search(block) or _SHA.search(block))
+
+
+def separating_precision(values: Sequence[Decimal]) -> int:
+    """Least k at which every registered value is pairwise distinct at k decimals.
+
+    NOT a threshold and NOT tuned: it is a property OF the register, recomputed from
+    it on every run, with no free parameter. Below it the register cannot identify its
+    own rows, so a literal at that precision is under-determined by construction and
+    cannot be a quotation of the register — whichever single row it happens to collide
+    with in one particular sample. This is what makes a `0.1` in prose ("quarantines
+    exactly like a 0.1-scored one") not a claim about a corpus score, without any
+    minimum-precision constant being chosen to make it so."""
+    for k in range(20):
+        rounded = [round(v, k) for v in values]
+        if len(set(rounded)) == len(rounded):
+            return k
+    raise ValueError("register holds two identical values — one node per distinct value")
+
+
+def denotes(lexical: str, readings: Mapping[str, Decimal], sep: int) -> str | None:
+    """The unique reading `lexical` is a quotation of, or None.
+
+    `round(value, k) == Decimal(lexical)` with k read off the literal itself — exact
+    decimal arithmetic, no epsilon (spec §6 I1). None when k < sep (under-determined,
+    see separating_precision) or when zero or more than one reading satisfies it:
+    an ambiguous form is not a finding, which is the honest reading and not a
+    softening."""
+    k = len(lexical.partition(".")[2])
+    if k < sep:
+        return None
+    want = Decimal(lexical)
+    hits = [key for key, value in readings.items() if round(value, k) == want]
+    return hits[0] if len(hits) == 1 else None
+
+
+def load_readings(repo: Path) -> tuple[Graph, dict[str, Decimal], set[str]]:
+    """The register, as (facts to emit, key -> value, keys that may not be quoted).
+
+    One dg:Reading node per registered corpus reading, keyed by document slug and
+    value so that a finding can name what the figure claims to be."""
+    reg = Graph().parse(repo / READING_REGISTER)
+    facts, values, unquotable = Graph(), {}, set()
+    for doc, node in reg.subject_objects(COR.reading):
+        value = Decimal(str(reg.value(node, COR.value)))
+        slug = str(doc).rsplit(":", 1)[-1]
+        key = f"{slug}/{value}"
+        iri = URIRef(_READING + key)
+        facts.add((iri, RDF.type, DG.Reading))
+        facts.add((iri, DG.readingOf, Literal(slug)))
+        facts.add((iri, DG.readingValue, Literal(value)))
+        for d in reg.objects(node, COR.readAt):
+            facts.add((iri, DG.readAt, Literal(str(d), datatype=XSD.date)))
+        values[key] = value
+        if reg.value(node, COR.notQuotable):
+            unquotable.add(key)
+    return facts, values, unquotable
+
+
+def _figure_facts(g: Graph, d: URIRef, path: str, text: str,
+                  values: Mapping[str, Decimal], sep: int) -> None:
+    """Emit one dg:FigureOccurrence per literal that DENOTES a registered reading.
+
+    A literal denoting nothing emits nothing: the graph carries figures, not every
+    decimal in the tree. Whether a denoting occurrence is admissible is not decided
+    here — that is the membrane's (spec §2, D2) and this function stays a pure fact
+    emitter (spec §6 I3)."""
+    for start, lines in blocks(text):
+        dated = Literal(is_dated("\n".join(lines)))
+        for offset, line in enumerate(lines):
+            for m in _DECIMAL.finditer(line):
+                key = denotes(m.group(), values, sep)
+                if key is None:
+                    continue
+                n = start + offset
+                occ = URIRef(f"{_DOC}{path}#figure-{n}-{m.start()}")
+                g.add((occ, RDF.type, DG.FigureOccurrence))
+                g.add((occ, DG.inDoc, d))
+                g.add((occ, DG.line, Literal(n)))
+                g.add((occ, DG.lexical, Literal(m.group())))
+                g.add((occ, DG.blockDated, dated))
+                g.add((occ, DG.denotesReading, URIRef(_READING + key)))
+
+
 def doc_iri(path: str) -> URIRef:
     return URIRef(_DOC + path)
 
@@ -156,6 +287,14 @@ def extract(repo: Path) -> Graph:
     nav = nav_paths(cfg)
     prefixes = exclude_prefixes(cfg)
     index_links = _index_links(repo)
+    reading_facts, values, unquotable = load_readings(repo)
+    g += reading_facts
+    # The quotable extension is what a FINDING may name; the ambiguity test in
+    # `denotes` runs over the WHOLE register (spec §3.3, plan D-C) — dropping a row
+    # would shrink the extension `sep` is computed from and could silently promote a
+    # different literal to uniqueness.
+    sep = separating_precision(list(values.values()))
+    quotable = {k: v for k, v in values.items() if k not in unquotable}
 
     for np in sorted(nav):
         entry = URIRef(_DOC + "nav/" + np)
@@ -173,22 +312,26 @@ def extract(repo: Path) -> Graph:
             g.add((d, DG.docClass, Literal(cls)))
         g.add((d, DG.inNav, Literal(path in nav)))
         g.add((d, DG.excludedFromSite, Literal(is_excluded(path, prefixes))))
+        # Read once, here: _evidence_facts and _wiki_facts each used to open the file
+        # for themselves, and the figure walk covers EVERY tracked markdown file.
+        text = (repo / path).read_text()
+        _figure_facts(g, d, path, text, quotable, sep)
         if cls == "evidence":
-            _evidence_facts(g, repo, d, path)
+            _evidence_facts(g, d, path, text)
         elif cls == "wiki":
-            _wiki_facts(g, repo, d, path)
+            _wiki_facts(g, repo, d, path, text)
             if path != "docs/wiki/index.md":
                 g.add((d, DG.inWikiIndex, Literal(path in index_links)))
     return g
 
 
-def _evidence_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
+def _evidence_facts(g: Graph, d: URIRef, path: str, text: str) -> None:
     m = _DATED.match(path)
     if not m:
         return
     g.add((d, DG.docDate,
            Literal(date(int(m[1]), int(m[2]), int(m[3])), datatype=XSD.date)))
-    mi = _IMPACT.search((repo / path).read_text())
+    mi = _IMPACT.search(text)
     if mi:
         g.add((d, DG.docImpact, Literal(mi.group(1))))
 
@@ -205,8 +348,8 @@ def _index_links(repo: Path) -> set[str]:
     }
 
 
-def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str) -> None:
-    fm = parse_frontmatter((repo / path).read_text())
+def _wiki_facts(g: Graph, repo: Path, d: URIRef, path: str, text: str) -> None:
+    fm = parse_frontmatter(text)
     if not fm:
         return  # missing frontmatter → WikiShape minCounts fail it loudly
     for key, prop in (("title", DG.title), ("type", DG.docType),

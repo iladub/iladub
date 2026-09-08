@@ -62,3 +62,40 @@ def test_promotion_queue_is_unpromoted_wiki_pages():
         g, "docgov-promotion-queue.rq")
     g.add((d, DG.promotedTo, doc_iri("docs/manifesto.md")))
     assert len(_construct(g, "docgov-promotion-queue.rq")) == 0
+
+
+def _stating(doc_class: str, dated: bool):
+    """A document carrying one figure occurrence that denotes a registered reading."""
+    g = Graph()
+    d = doc_iri("docs/wiki/concepts/p.md")
+    g.add((d, RDF.type, DG.Document))
+    g.add((d, DG.docClass, Literal(doc_class)))
+    occ = doc_iri("docs/wiki/concepts/p.md#figure-9-0")
+    g.add((occ, RDF.type, DG.FigureOccurrence))
+    g.add((occ, DG.inDoc, d))
+    g.add((occ, DG.line, Literal(9)))
+    g.add((occ, DG.lexical, Literal("0.9655")))
+    g.add((occ, DG.blockDated, Literal(dated)))
+    g.add((occ, DG.denotesReading, doc_iri("r/stem")))
+    return g, d, occ
+
+
+def test_an_undated_reading_in_a_wiki_page_is_derived():
+    """The gate's POSITIVE pin. Everything else about this instrument asserts an
+    empty result, and an empty result is what a silenced gate also returns — this
+    test is the one that fails if the derivation stops deriving. It earns its place:
+    the gate shipped once passing vacuously, because the CONSTRUCT's triples are not
+    in the extracted graph and the assertion matched nothing."""
+    g, d, occ = _stating("wiki", dated=False)
+    assert (d, DG.statesUndatedReading, occ) in _construct(
+        g, "docgov-undated-figure.rq")
+
+
+def test_a_dated_block_is_not_a_finding():
+    g, _, _ = _stating("wiki", dated=True)
+    assert len(_construct(g, "docgov-undated-figure.rq")) == 0
+
+
+def test_evidence_is_exempt_because_the_document_is_itself_dated():
+    g, _, _ = _stating("evidence", dated=False)
+    assert len(_construct(g, "docgov-undated-figure.rq")) == 0
