@@ -102,6 +102,14 @@ new evidence document, three register edits (R186 amended, R187 amended, R188 ra
 **No file under `src/` changed.** No wiki page was edited — the v0.0.4 ruling that rewriting a
 loop's measured figures destroys the record still stands.
 
+**Appended after the fact, within the same open PR:** a second commit (`24876e7`) adds
+`docs/superpowers/2026-09-08-r186-proposal.md` and wires it into R186's row and 5a above. It was
+written on request at 1.3× the originating floor with the override logged. **The branch therefore
+carries TWO commits and PR #178 was still unmerged with CI in progress when this line was written** —
+a fresh session should check `gh pr view 178` before assuming this loop landed. Note this paragraph
+is itself an *append to Evidence mid-loop*, which the proposal's own rule permits and the boundary
+makes decidable: the loop has not closed, and nothing above it was deleted or modified.
+
 ## 3. What was decided, and where that decision is recorded
 
 - **[[R186]] and [[R187]] are TWO loops.** Recorded in `2026-09-08-two-loops-sequenced.md` §0 and in
