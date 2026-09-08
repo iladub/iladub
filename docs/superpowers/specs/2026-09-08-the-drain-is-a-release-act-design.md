@@ -59,15 +59,21 @@ through: the last tag, `v0.0.3`, is dated 2026-08-02, eight days before the decl
 
 ## 2. How rare this is (it changes what machinery is justified)
 
-MEASURED — `contradiction` has been declared **once, ever**, across every spec and plan in the repo:
+MEASURED with the extractor the membrane and the gate both use — **not** with a grep over the
+prose, which does not reproduce (a `grep -c contradiction` over `Doc impact` lines returns 13,
+because the word appears in declarations that are not `contradiction`):
 
 ```
-$ grep -rn "Doc impact" docs/superpowers/{specs,plans} | grep -c contradiction
-2      # the 2026-08-10 spec, and the plan that inherits from it
+$ python3 -c "…Counter(extract(Path('.')).objects(None, DG.docImpact))…"
+  increment       50
+  none            29
+  contradiction    2      # the 2026-08-10 spec, and the plan that inherits from it
+  total dated specs/plans carrying a declaration: 81
 ```
 
-Every other declaration is `none` or `increment`. This is a rare, deliberate act — which argues
-for a *correct and legible* mechanism over a cheap one, and against anything elaborate.
+**2 declarations of 81, and they are one contradiction** — the plan's says so in its own words
+("inherited from the spec"). This is a rare, deliberate act, which argues for a *correct and
+legible* mechanism over a cheap one, and against anything elaborate.
 
 ## 3. The ruling
 
