@@ -26,6 +26,12 @@ MANUAL_ALLOWLIST = frozenset({
 })
 EVIDENCE_DIRS = ("docs/superpowers/", "docs/loops/", "docs/w3id/")
 EXEMPT_PREFIXES = (".claude/", ".agents/")
+#: The contradiction-drain register (spec 2026-09-08 §4.1) — a tracked governance
+#: input read like mkdocs.yml, not a derived fact. It is loaded HERE rather than in
+#: scripts/release_gate.py so that the SHACL membrane validates the drains in the same
+#: graph it validates the documents: both of ContradictionDrainShape's sh:sparql
+#: constraints are joins against extracted doc facts and are unexpressible otherwise.
+DRAIN_REGISTER = Path("tests") / "docgov-drains.ttl"
 
 
 def is_exempt(path: str) -> bool:
@@ -145,6 +151,7 @@ def extract(repo: Path) -> Graph:
     _require_full_history(repo)
     g = Graph()
     g.bind("dg", DG)
+    g.parse(repo / DRAIN_REGISTER)
     cfg = load_mkdocs(repo / "mkdocs.yml")
     nav = nav_paths(cfg)
     prefixes = exclude_prefixes(cfg)

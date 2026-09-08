@@ -1,0 +1,45 @@
+# tests/docgov-drains.ttl
+#
+# The contradiction-drain register (spec: docs/superpowers/specs/
+# 2026-09-08-the-drain-is-a-release-act-design.md §4.1). MUTABLE, append-only
+# in practice: a release that repairs a page declared `Doc impact: contradiction`
+# records the drain HERE, and the release gate stops blocking on that document.
+#
+# WHY IT IS NOT IN THE EVIDENCE DOCUMENT. docs/superpowers/** is Evidence, and
+# its mutable exceptions are enumerated in CLAUDE.md as exactly two (residues.md,
+# and a gated generated cache). More importantly the drain is a RELEASE-time fact
+# and the declaring document was written before the fix existed — see spec §3.2
+# for the worked counter-example, in which the declaring spec appended its own
+# "the release gate is unblocked by this spec" and left the gate blocked for a
+# further four weeks.
+#
+# WHY IT IS IN tests/. This is where the docgov machinery already lives:
+# scripts/release_gate.py imports its extractor from tests/docgov_extract.py, and
+# tests/corpus-manifest.ttl and tests/arc-manifest.ttl are the precedents for a
+# tracked, hand-authored register .ttl. A .ttl here is invisible to the doc
+# extractor, which walks `git ls-files *.md`, so it needs no governance exception.
+#
+# HOW TO ADD ONE (RELEASE.md step 2): mint a drain IRI, name the document by its
+# path-minted IRI, date it the day the PAGE was fixed (git, not today), attribute
+# it, and state what makes the claim true. The membrane refuses a drain that is
+# missing any of those, that names a document declaring no contradiction, or that
+# predates the document it drains.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+@prefix docgov: <https://w3id.org/iladub/docgov#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/iladub/docgov/drain/2026-08-11-decision-membrane-spec>
+    a docgov:ContradictionDrain ;
+    docgov:drains <https://w3id.org/iladub/docgov/doc/docs/superpowers/specs/2026-08-10-the-decision-membrane-design.md> ;
+    docgov:drainedOn "2026-08-11"^^xsd:date ;
+    docgov:drainedBy "François Rosselet" ;
+    docgov:drainEvidence "The spec declared that docs/wiki/concepts/promotion-decision.md and docs/wiki/concepts/decision-holon.md each claim the membrane enforces the promotion invariant, and measured both false. Commit 3251d5f (2026-08-11, 'docs: close R69, R81, R82 — the decision membrane is enforced, and says where') made them true and named the call sites: decision-holon.md:29 and promotion-decision.md:62,64 cite compile._validate (src/iladub/etkl/compile.py:668) and ground_document(..., validate_shapes=True) (src/iladub/feed.py:619). Both call sites verified present 2026-09-08." ;
+    docgov:drainEvidence "RECORDED RETROACTIVELY on 2026-09-08, four weeks after the fix, in the loop that ruled R185. drainedOn is the date the pages were fixed (measurable in git), not the date this record was typed; the gap is the defect R185 names — until this register existed there was nowhere for the fact to go, so the gate blocked the very release that would have drained it." .
+
+<https://w3id.org/iladub/docgov/drain/2026-08-11-decision-membrane-plan>
+    a docgov:ContradictionDrain ;
+    docgov:drains <https://w3id.org/iladub/docgov/doc/docs/superpowers/plans/2026-08-10-the-decision-membrane.md> ;
+    docgov:drainedOn "2026-08-11"^^xsd:date ;
+    docgov:drainedBy "François Rosselet" ;
+    docgov:drainEvidence "The plan declares the contradiction as INHERITED from its spec ('contradiction — inherited from the spec, and resolved by Task 8 Step 3') and names no page of its own. It is drained by the same commit 3251d5f and the same two repaired wiki pages as the spec drain above; it is recorded separately rather than derived from the spec's drain because inheritance is stated in prose the extractor does not read, and a derivation that guessed at it would be inferring a release-clearing fact from an unparsed sentence." .

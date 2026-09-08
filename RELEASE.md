@@ -28,7 +28,19 @@ Without this, the publish step fails with an OIDC error; everything before it
 
        .venv/bin/python scripts/release_gate.py
 
-   If it lists blockers, fix the affected published page(s) in this release.
+   If it lists blockers, fix the affected published page(s) in this release,
+   then **record the drain** — one `docgov:ContradictionDrain` per blocking
+   document, in `tests/docgov-drains.ttl`. Nothing else clears the gate: the
+   declaring spec cannot drain itself, and editing its `Doc impact:` line is
+   forbidden (it is Evidence). Each drain names the document, the date the PAGE
+   was fixed (from git, not today), who ruled it drained, and what makes the
+   claim true. The membrane refuses a drain missing any of those, one naming a
+   document that declared no contradiction, or one predating its document.
+
+   **The one thing this gate cannot catch is a drain recorded without fixing
+   the page** — SHACL cannot read prose. The record is dated and attributed so
+   that the judgement is answerable; it is not evidence that the judgement was
+   right. See `docs/superpowers/specs/2026-09-08-the-drain-is-a-release-act-design.md` §3.3.
 
    Also eyeball any spec/plan declaring `Doc impact: contradiction` dated the
    SAME day as the previous release tag — the gate's day-granularity comparison

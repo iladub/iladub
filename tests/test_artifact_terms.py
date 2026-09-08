@@ -60,10 +60,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # negative fixture for `tab:LabelCellPhysicalShape` that CLAUDE.md § Serialization requires of
     # every shape. It is NOT carved out and must not be: it names declared `tab:` terms only, so it
     # belongs in the population exactly like the `tests/supersession-*.ttl` negatives above. The
-    # carve-out is for fixtures that would fail THIS membrane by design; this one does not.
+    # RE-MEASURED AGAIN 2026-09-08 ([[R185]]): 147 -> 148, `tests/docgov-drains.ttl` — the
+    # contradiction-drain register that unblocks the release gate. It is NOT carved out and must
+    # not be: it names declared `docgov:` terms only and conforms to the docgov membrane, so it
+    # belongs in the population exactly like `tests/corpus-manifest.ttl`, the register it is
+    # modelled on. It is a REGISTER rather than a fixture, which is the same reason again — the
+    # carve-out is for fixtures that would fail THIS membrane by design.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 147
+    assert len(artifact_files()) == len(tracked) - len(carved) == 148
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -250,6 +255,16 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
         57   + vocab/internal/ joining the population as three more artifacts
         56   - etkl:Contract, repaired; and 54 over the 136-artifact tree
         57   + srccite:Citation, R139's citation membrane (2026-08-31)
+        62   + the five docgov: drain terms, R185's release-gate repair (2026-09-08);
+             and 59 over the 136-artifact tree
+
+    THE LAST STEP MOVES BOTH NUMBERS BY THE SAME FIVE, AND THAT IS THE POINT. The terms
+    (docgov:ContradictionDrain, :drains, :drainedOn, :drainedBy, :drainEvidence) are demanded by
+    `vocab/shapes/doc-governance-shapes.ttl`, which is INSIDE the 136-artifact tree, and declared
+    in `vocab/internal/docgov.ttl`, which is not a published ontology — so they are census terms in
+    the historical tree and in the live tree alike, and `_SURPLUS_IN_CENSUS` is UNCHANGED. Measured,
+    not reasoned: the third assertion below is what holds it, and it would have caught the mistake
+    of adding them to the surplus set.
 
     THAT LAST STEP IS ONE TERM, NOT EIGHT: `source-citation-shapes.ttl` names
     `srccite:Citation` as an `sh:targetClass` OBJECT, and its seven properties appear only
@@ -273,8 +288,8 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    assert len(_census_over(_pre_loop_artifacts())) == 54
-    assert len(_census()) == 57
+    assert len(_census_over(_pre_loop_artifacts())) == 59
+    assert len(_census()) == 62
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -355,7 +370,7 @@ def test_the_path_traversal_adds_exactly_two_terms():
     tree (see `test_the_census_chain_from_53_to_57_with_every_step_earned` for the full
     chain). The two terms this test is about are unaffected, and are asserted by name — the
     number alone was never the claim."""
-    assert len(_census_over(_pre_loop_artifacts())) == 54
+    assert len(_census_over(_pre_loop_artifacts())) == 59
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 
