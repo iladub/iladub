@@ -594,7 +594,10 @@ false. So:
 Every tracked markdown file belongs to **exactly one class**, by location —
 enforced by `tests/test_doc_governance.py` (SHACL membrane + SPARQL staleness,
 under `pytest`): **Evidence** (`docs/superpowers/**`, `docs/loops/**`,
-`docs/w3id/**` — immutable after loop close, with **two named exceptions**:
+`docs/w3id/**` — **append-only after loop close: a later PR may add, and may
+never delete or modify an existing line**; and a file's `Doc impact:` **declared
+value** (`none | increment | contradiction`) is frozen outright, that being the
+one field a release reads. With **two named exceptions**:
 `residues.md` is the mutable register, and a **generated cache** — a file
 written by a script from a committed source and gated by regenerate-and-diff,
 so CI fails unless the tracked bytes are exactly what the source produces — is
@@ -604,6 +607,28 @@ never published), **Assertion** (the `mkdocs.yml` nav — authored, CC-BY,
 describes the *released* artifact only), **Manual** (the READMEs + `RELEASE.md` —
 their commands must run), **Contract** (this file — edited only on explicit
 request), **Confidential** (`internal/` — never tracked).
+
+**The Evidence rule binds prospectively, from `5743af3` (2026-08-31)** — ruled by the maintainer
+2026-09-08, choosing the proposal written between [[R186]]'s two surviving arms
+(`docs/superpowers/2026-09-08-r186-proposal.md`; the fork itself is argued in
+`docs/superpowers/2026-09-08-two-loops-sequenced.md` §1). Before that boundary this repo merged with
+merge commits, and no instrument can separate loop iteration from post-close editing there: **229
+rewrite events across 133 files** sit on the wrong side of a line nobody can draw, at rewrite rates
+indistinguishable either side of any clock (73% vs 77%). Since the boundary every PR squashes to
+exactly one commit (32 commits, 0 PRs contributing two), so *"a commit later than the introducing
+commit"* **is** *"a later PR"* — no proxy, no grace window, no tuned constant — and `--numstat` makes
+*"deleted a line"* exact. **That dated change in the merge regime, caused by § Branch protection, is
+the only reason the rule is checkable at all, and it is checkable only forward.** The word it
+replaces, *"immutable"*, described a norm this repo was breaking at roughly a one-in-three rate while
+negotiating case by case in its own commit subjects.
+
+The `Doc impact:` half is free rather than costly, and that was measured before it was adopted: across
+all 329 Evidence files, **14** post-introduction commits touch a `Doc impact:` line and **0** change
+the declared value — the fourteen are additions, formatting normalisations, or prose after the
+keyword. Freezing the *line* (the arm as first drafted) would have refused all 14 and prevented 0
+defects; freezing the **value** has never once been violated, and [[R185]]'s drain register exists so
+it never needs editing. **No lint ships with this rule**: a gate that would fire on zero on day one is
+[[R188]]'s subject, not this ruling's.
 
 - **Agents: for concepts, read `docs/wiki/index.md` first.** Specs are
   evidence, wiki is synthesis, the site is assertion. The wiki never

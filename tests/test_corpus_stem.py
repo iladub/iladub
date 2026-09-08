@@ -388,7 +388,9 @@ def stem_p1_adopted():
 
 
 @needs_stem
-def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads(stem_p1_adopted):
+def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads(
+    stem_p1_adopted, stem_document
+):
     """THE REFUSAL BRANCH, on real evidence (spec §M3).
 
     The FIRST half of the refusal is structural, not numeric: a single-page compile is
@@ -406,11 +408,18 @@ def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads(stem_p1_
     THE ASSERTION BELOW DELIBERATELY PINS THE DOCUMENT FLOOR, NOT 0.9706. 0.9706 is a
     4-decimal figure from an earlier loop and no full-precision value for it was measured
     here; pinning against a rounded number would be exactly the defect this loop closes. The
-    prose cites R29; the assertion stays at the full-precision 0.9654553611484971, which the
-    driver reads over all three pages as one chain of 3, 2152 cells (measured in
-    test_stem_document_is_byte_identical_under_adoption / test_stem_document_stitches_three_pages,
-    same fixture). This test is the reason adoption is the document's LAST reader and not
-    the page's first."""
+    prose cites R29; the assertion takes the floor from `stem_document.score` ITSELF -- the
+    driver's own reading over all three pages as one chain of 3, 2152 cells -- rather than
+    from a copied literal.
+
+    IT USED TO COPY ONE, AND THE COPY WENT STALE. The bound was written
+    `< 0.9654553611484971`, and [[R174]] moved the driver to 0.9658886894075404 at `20cc5b8`
+    while re-baselining only `test_stem_document_stitches_three_pages` (`:377`). This line
+    kept executing the superseded number for three days: harmless, because a floor that moves
+    UP still holds, and therefore invisible. Reading the floor from the fixture removes the
+    class, not just the instance -- see [[R187]], whose subject is exactly a measured figure
+    copied into prose and left to rot. This test is the reason adoption is the document's LAST
+    reader and not the page's first."""
     standalone = stem_p1_adopted
     assert standalone.asserted > 0, "the grid does read this page standalone"
     grid_cells = sum(r.cells for r in standalone.regions)
@@ -418,7 +427,7 @@ def test_page_scope_adoption_would_have_taken_the_page_the_driver_reads(stem_p1_
     assert grid_cells == 811, grid_cells
     # the invariant the docstring claims, pinned rather than left for a human to notice:
     # the isolated reading scores LOWER than the document floor, never higher or equal.
-    assert standalone.score < 0.9654553611484971, standalone.score
+    assert standalone.score < stem_document.score, (standalone.score, stem_document.score)
     print(f"\nstem p1 standalone adopted: {grid_cells} FLAT cells, "
           f"score={standalone.score:.4f}")
 
