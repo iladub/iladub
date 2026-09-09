@@ -32,8 +32,13 @@ def _is_paren_shaped(s):
 
 
 def _is_blank_shaped(s):
+    # Hand-written from the SPEC's stated rule, like every reference above it, and NOT by
+    # importing celltype._NIL_SPELLINGS — importing the set under test would make the
+    # differential compare the code against itself. R167 (2026-09-09) added the two
+    # typographic dashes: the rule is "no ink, or the whole stripped text is one of the four
+    # declared markers, case-insensitively".
     t = s.strip()
-    return t == "" or t.lower() == "(blank)" or t == "-"
+    return t == "" or t.lower() in {"(blank)", "-", "\u2013", "\u2014"}
 
 
 def _abstains(s):

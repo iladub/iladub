@@ -258,7 +258,7 @@ tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
     rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop. loop-quantity-typing adds tab:ParenthesizedNumber (a datatype that ABSTAINS from homogeneity judgements, via tab:datatypeAbstains) and the tab:CellDatatypeFamily grouping (via tab:inDatatypeFamily) that normalises tab:Numeric and tab:Currency into tab:Quantity."@en .
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;
-    rdfs:comment "A genuinely-missing cell: empty, the self-declaring '(blank)', or a lone '-'. Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation."@en .
+    rdfs:comment "A genuinely-missing cell: one carrying no ink at all, or one whose whole text is a MARKER the author writes to mean 'nothing here'. The markers are enumerated as tab:nilSpelling on this term rather than in this sentence, so that adding one is a triple and not an edit in two places (the tab:CellDatatypeFamily precedent). Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation."@en .
 tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
 tab:Text     a tab:CellDatatype , tab:CellDatatypeFamily ; rdfs:label "Text"@en ;
     rdfs:comment """BOTH a datatype and its own family (R61, 2026-09-08). tab:columnFamily has
@@ -295,6 +295,12 @@ tab:datatypeAbstains a owl:DatatypeProperty ; rdfs:label "datatype abstains"@en 
 tab:Numeric  tab:inDatatypeFamily tab:Quantity .
 tab:Currency tab:inDatatypeFamily tab:Quantity .
 tab:Blank    tab:datatypeAbstains true .
+
+tab:nilSpelling a owl:DatatypeProperty ; rdfs:label "nil spelling"@en ;
+    rdfs:domain tab:CellDatatype ; rdfs:range xsd:string ;
+    rdfs:comment "A whole-cell text that an author writes to mean 'no value here'. THE MEMBERS ARE THE TRIPLES, not this sentence — a comment that lists them is a second source of truth and goes stale the next time one is added, which is the defect this property was created to remove. What the sentence fixes is the RULE and the BOUNDARY. The rule: matched on the cell's STRIPPED text by EQUALITY, case-insensitively, never as a substring — a dash inside other text is ink, not absence. The boundary: the set holds only the hyphen and its typographic variants plus the self-declaring '(blank)'; ambiguous SUPPRESSION markers ('n/a', '..', 'c') are NOT nil spellings, because their value is unknown rather than absent, and that is a different claim left to their own reading."@en .
+
+tab:Blank    tab:nilSpelling "(blank)", "-", "–", "—" .
 
 # --- band-classification evidence graph (transient, pre-holon; loop B2c) ---
 tab:ClassifyBand a owl:Class ; rdfs:label "Classify band"@en ;
