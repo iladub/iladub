@@ -201,3 +201,45 @@ def test_a_block_is_dated_by_any_of_its_lines():
 def test_a_commit_sha_dates_a_block_but_a_hex_word_does_not():
     assert is_dated("stem reads 0.9655 at `20cc5b8`")
     assert not is_dated("the decade `add` `defaced` reads 0.9655")
+
+
+def _lexicals(text: str) -> list[str]:
+    """The lexical forms `_figure_facts` emits for `text`, in line order."""
+    from tests.docgov_extract import _figure_facts
+
+    g = Graph()
+    _figure_facts(g, doc_iri("p.md"), "p.md", text, READINGS, 4)
+    # Sort by (line, column): the occurrence IRI ends `#figure-<line>-<column>`,
+    # and two figures on one line must come back in the order they were written.
+    def where(occ):
+        line, column = str(occ).rsplit("-", 2)[-2:]
+        return int(line), int(column)
+
+    return [str(g.value(occ, DG.lexical))
+            for occ in sorted(g.subjects(RDF.type, DG.FigureOccurrence), key=where)]
+
+
+def test_a_figure_at_the_end_of_a_sentence_is_still_a_figure():
+    """MEASURED 2026-09-09 at `4991dd1`: every one of the three sites [[R189]]
+    names is invisible to this module, and NOT for the reason R189 gives. Each
+    writes the reading at the end of a sentence, and the lexical rule refused any
+    decimal followed by a dot. Its stated intent is to refuse a LONGER DOTTED
+    TOKEN — a full stop is not one, so this was over-refusal against the rule's
+    own comment, not a design choice. Census: widening it makes exactly those
+    three visible across all 497 tracked .py/.ttl/.rq files, and adds ZERO
+    occurrences to docs/wiki/**, the class the hard gate guards."""
+    assert _lexicals("the stem compiles at 0.9654553611484971.\n") == [
+        "0.9654553611484971"]
+    assert _lexicals("stem 0.9655. apple 0.0607.\n") == ["0.9655", "0.0607"]
+    # A truncation ellipsis is a quotation of the reading, not a dotted token.
+    assert _lexicals("stem 0.9655... in the table\n") == ["0.9655"]
+
+
+def test_a_longer_dotted_token_is_still_refused():
+    """The widening keeps every refusal the rule was written for: a version, an
+    IP, a dotted range. FALSIFIES the fix by the only route that matters — a
+    tokeniser that matches a sentence-final figure by matching everything would
+    pass the test above and fail this one."""
+    assert _lexicals("released 0.9655.9659 as one token\n") == []
+    assert _lexicals("v1.0.9655 and 10.0.9655.1 and 0.9655.0\n") == []
+    assert _lexicals("the range 0.9655.0607 is not two figures\n") == []
