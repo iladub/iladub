@@ -65,11 +65,21 @@ def is_paren_number(s):
 
 
 def is_blank(s):
-    """A genuinely-missing cell: empty/whitespace, the self-declaring '(blank)', or a lone '-'.
-    Minimal, self-documenting missing-value recognition (a format signal, like is_date/is_currency)
-    — NOT a broad keyword list; ambiguous markers ('N/A', '0', '-5') are left to their real type."""
+    """A genuinely-missing cell: one carrying no ink, or one whose whole text is a declared
+    nil MARKER. Missing-value recognition is a format signal like is_date/is_currency — NOT a
+    broad keyword list; ambiguous markers ('N/A', '0', '-5') are left to their real type.
+
+    THE MARKER SET IS NOT WRITTEN HERE. It is read from `tab:nilSpelling` in
+    vocab/ontology/tab.ttl (see _NIL_SPELLINGS), for the reason `tab:CellDatatypeFamily`'s
+    own published comment gives about the homogeneity families: a rule stated in the
+    ontology AND in Python is a rule that drifts. R167 is the case that proves it — the
+    em-dash U+2014, US-GAAP's nil glyph, was missing from the Python set while
+    `tab:Blank`'s published comment enumerated the spellings in prose beside it.
+
+    Matching is on the STRIPPED text by EQUALITY, case-insensitively, never as a substring:
+    a dash inside other text ('2020—2024') is ink, not absence."""
     t = s.strip()
-    return t == "" or t.lower() == "(blank)" or t == "-"
+    return t == "" or t.lower() in _NIL_SPELLINGS
 
 
 def _cell_datatype(t):
@@ -98,6 +108,20 @@ _ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle
 # datatype-declaration triples elsewhere in tab.ttl (rdf:type, rdfs:label, ...) are irrelevant.
 _DATATYPE_DECLARATIONS = tuple(
     (s, p, o) for s, p, o in _ONT if p in (TAB.datatypeAbstains, TAB.inDatatypeFamily)
+)
+
+# The nil markers `is_blank` recognises, READ from tab:nilSpelling in the same parse rather
+# than repeated as a Python literal (R167; the reasoning is in is_blank's docstring). Lowered
+# once here so the per-cell test is a set membership. Deliberately NOT including the empty
+# string: a cell with no ink is structural absence, not a marker anyone writes, and is tested
+# separately in is_blank.
+#
+# DEFINED AFTER is_blank ON PURPOSE — do not "fix" the order. It needs _ONT, which is parsed
+# below the format predicates, and is_blank belongs beside its siblings (is_date, is_currency,
+# is_paren_number), not away from them. The reference resolves at CALL time, and nothing calls
+# is_blank during this module's body; every importer binds the name after the body completes.
+_NIL_SPELLINGS = frozenset(
+    str(o).strip().lower() for o in _ONT.objects(TAB.Blank, TAB.nilSpelling)
 )
 
 
