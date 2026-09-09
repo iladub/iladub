@@ -25,23 +25,42 @@ the argument has to be about `5743af3` and repairability, not about the count.
 
 **Why asserted:** the outcome is on disk and reproducible in ~40s (§2 gives the script's shape).
 
-### 5b. PROPOSED — [[R199]](a) is the only figure-gate residue with an unmeasured population left
+### 5b. RUN, and it settles: [[R199]](a)'s gated population is ONE occurrence, and it is a mention
 
-R199(a) — truncation is not rounding, `0.9654` denotes nothing — is deferred on *"the population of
-true findings is zero"*, and that zero was measured at `9716755` **by the same instrument family this
-loop just showed to be date-blind**. The dating defect does not touch R199(a) (it is a *matching*
-question, not a currency one), so the deferral probably survives — but "probably" is the word, and the
-22 truncated occurrences have never been read the way the 9 just were.
+This was drafted PROPOSED — a prediction that must be run and can fail. **It was run in the same
+session, because the cheap check it named is a single `sed`, and reading is ungated.**
 
-**Graded PROPOSED because it rests on a prediction that must be run and can fail:** that re-reading the
-22 finds no claim stated as present fact in a gated class. If it fails, R199(a) needs a truncation arm
-with its own separating precision, which is a code loop. If it holds — the likelier outcome — the
-result is one paragraph closing R199(a) as a measured refusal, like [[R200]].
+R199(a) — truncation is not rounding, so `0.9654` denotes nothing — is deferred on *"the population
+of true findings is zero"*, and that zero was measured at `9716755` by the same instrument family
+this loop just showed to be date-blind. But the dating defect cannot touch it: truncation is a
+**matching** question, not a currency one. And §6's ruling leaves Evidence ungated, so of R199(a)'s
+22 truncated occurrences (21 `evidence`, 1 `code`) the gated population is **one**:
 
-**Cheap check first, before any spec:** 21 of the 22 are `evidence` and 1 is `code`, and Evidence is
-ungated by §6's ruling. So the real population is **one occurrence**, `tests/etkl/test_adoption_document.py:371`.
-Read that one line. If it is a mention of a pin's threshold and not a corpus claim — which R199's row
-already asserts from reading, not measurement — R199(a) closes in minutes and the 22 never need reading.
+```
+tests/etkl/test_adoption_document.py:371
+    BOTH are pinned (final review m1). `> 0.0606…` alone lets the headline measurement regress
+```
+
+**MEASURED: it is a mention of a pin's threshold, and R199's row was right from reading.** The
+sentence is about what the test asserts, not about what the corpus reads; and the full-precision
+value with its date sits two lines above it in the same docstring (`:369`, *"Measured 2026-08-09:
+0.06068601583113457 before this loop"*), so even a truncation arm with its own separating precision
+would find the block dated and pass it.
+
+**R199(a) therefore stays open as a MEASURED refusal, not an asserted one** — the same grade as
+[[R200]]. Its close criterion is unchanged and unmet: it closes when a truncated quotation is
+measured **in a gated class**, and today there is one candidate and it is not a claim.
+
+### 5b-next. UNDECIDED — the next loop's subject is deliberately not named here
+
+The three figure-gate residues are now all measured refusals ([[R192]] arm 1 at 329/2, [[R199]](a) at
+1/0, [[R200]] at 7/0), so the obvious successor queue is empty and choosing the next subject is
+**originating work**. This session is at **1.8× the originating floor** and will not do it from here;
+naming a loop badly is exactly the [[R151]] failure this format's part-5 typing exists to prevent.
+
+**What a fresh session should do first:** read `docs/superpowers/residues.md` in full — it is the
+index and it is ~2.8k tokens — and pick from what is open, rather than inheriting a subject invented
+by a tired session. [[R199]](b) is explicitly *not closable* and must not be picked.
 
 ### 5c. ASSERTED — [[R200]] and [[R199]](b) stay unbuilt, and their rows are the record of why
 
