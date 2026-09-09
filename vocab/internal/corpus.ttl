@@ -218,7 +218,7 @@ corpus:readAt a owl:DatatypeProperty ;
     rdfs:label "read at"@en ;
     rdfs:domain corpus:Reading ;
     rdfs:range xsd:date ;
-    rdfs:comment "A date this value was measured on. Repeatable: each date is one occasion the compile was run and produced this value. The earliest is when the reading was first taken; a later one is a re-confirmation, and its absence over a long interval says only that nobody looked."@en .
+    rdfs:comment "A date on which this value was RECORDED IN THIS REGISTER — a refresh log, not reading provenance. Repeatable: each date is one occasion someone refreshed the register and wrote this value down. THE EARLIEST IS NOT WHEN THE READING WAS FIRST TAKEN, and reading it that way is R198: measured 2026-09-09, the earliest corpus:readAt LAGS the day the value first entered main for 8 of the 17 quotable readings, by 1 to 16 days (the register holds 7 distinct days for a repo whose 95 figure-bearing evidence documents span six weeks). Every row here is true; what was false was reading a refresh date as a first-read date, and no row is edited to repair that. For first observation use scripts/first_seen.py, which derives it from git rather than storing it — a derived value committed as data would be a stored label. A missing date over a long interval says only that nobody refreshed."@en .
 
 corpus:atCommit a owl:DatatypeProperty ;
     rdfs:label "at commit"@en ;
