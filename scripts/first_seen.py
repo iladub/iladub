@@ -101,14 +101,25 @@ def quotable_readings(repo: Path) -> dict[str, str]:
     return out
 
 
-def first_seen(repo: Path, values: list[str], rev: str = "main") -> dict[str, tuple[str, str]]:
-    """value -> (short sha, ISO date) of the first commit on `rev` that ADDS it.
+def first_seen(repo: Path, values: list[str], rev: str = "HEAD") -> dict[str, tuple[str, str]]:
+    """value -> (short sha, ISO date) of the first commit reachable from `rev` that ADDS it.
 
-    `rev` is `main` and not `--all` deliberately: a value that only ever existed on
-    an abandoned branch was never a reading of this tree (R199(b), the `bfs 0.9401`
-    case). MEASURED 2026-09-09 — `--all` and `main` agree on the DATE for all 18
-    registered readings and differ only in which hash they name, the branch commit
-    against the squashed merge, so the choice costs nothing today."""
+    `rev` is `HEAD` — this tree's own history, mainline plus whatever branch you are
+    on — and NOT `--all`. A value that only ever existed on an abandoned branch was
+    never a reading of this tree (R199(b), the `bfs 0.9401` case), and `--all` would
+    resurrect exactly those. MEASURED 2026-09-09: `--all` agrees with the ancestry
+    scope on the DATE for all 18 registered readings and differs only in which hash
+    it names, the branch commit against the squashed merge.
+
+    NOT a named branch, and CI is why. `main` was the first choice and it FAILED in
+    CI with exit 128: `actions/checkout` leaves a detached HEAD with no local `main`
+    ref, so the pickaxe could not run at all. The deeper defect the crash exposed is
+    worse than the crash — under `main` scope, a PR that appends a NEW reading to the
+    register would find its value absent from `main` and report it unrecoverable, so
+    `test_every_quotable_reading_is_recoverable` could never go green until after the
+    merge it is blocking. `HEAD` resolves in every checkout and includes the branch's
+    own commits, which is also the honest answer to "when did this value enter the
+    tree" while a change is in flight."""
     require_full_history(repo)
     if not values:
         return {}

@@ -80,9 +80,17 @@ One branch, `r198-readat-is-a-refresh-log`, off `4b886a9`.
 
 ## 4. Unverified or assumed
 
-- **CI has not run.** Locally green: `test_first_seen.py` (7), `test_doc_governance.py` (7), and 107
-  across the arc/manifest/terms/cockpit files. **The full suite (~61 min) was NOT run in this
-  session.** Nothing here touches `src/`, but that is an argument, not a measurement.
+- **CI RAN, FAILED, and the failure was a real defect — now fixed.** `scripts/first_seen.py` scoped
+  the pickaxe to `main`, which passed all 7 tests locally and exited 128 in CI: `actions/checkout`
+  leaves a detached HEAD with no local `main` ref. The scope is now `HEAD`, measured identical to
+  `main` on all 17 readings, and `test_it_runs_on_a_detached_HEAD_with_no_branch_ref` reproduces the
+  CI condition locally (it fails when the default is reverted to a named branch). **The deeper defect
+  the crash exposed:** under `main` scope a PR appending a NEW reading would report it unrecoverable
+  and could never merge — the unsatisfiable-gate shape spec §4.1 rejects for Evidence, which this
+  loop had nearly shipped in its own instrument.
+- **The full suite (~61 min) has still not passed locally in this session** — the first run died on
+  an unrecognised `--timeout` flag while the harness reported exit 0, and the retry was killed before
+  emitting output. **CI is the check, and its second run is the one that matters.**
 - **Method parity with R192's census is INFERRED, not verified.** Its instrument was scratch code
   and was never committed — its own handoff §4 says so — so this re-run reproduces the method *as
   described in that handoff's prose*: the same 328 undated evidence occurrences, the same strict

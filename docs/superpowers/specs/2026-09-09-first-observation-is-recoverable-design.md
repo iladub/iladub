@@ -19,7 +19,7 @@ readings, or only for readings taken from here on?* It predicted that if only th
 repair cannot validate itself against the 109 occurrences that motivated it, and the honest loop is
 a much smaller one."
 
-It is recoverable, for **18 of 18**, in **one 9.6-second pass over `main`** (§1). So the register
+It is recoverable, for **18 of 18**, in **one 9.6-second pass over the tree's own ancestry** (§1). So the register
 needs no redesign, no new stored field, and no going-forward-only compromise. The whole of 5a's
 feared repair — "per-reading provenance … a redesign of `tests/corpus-manifest.ttl` and of
 `load_readings`, touching the shipped wiki and code gates" — is **not built here, because it is not
@@ -39,12 +39,12 @@ motivating case.**
 
 **MEASURED 2026-09-09 at `4b886a9`.** Two independent instruments agree on all 18 readings.
 
-Per-value pickaxe, `git log --reverse -S<value> main`, 18 invocations, **56.7s**; and a single
-`git log --reverse -G<alternation> -U0 -p main` pass attributing each value to the first commit
+Per-value pickaxe, `git log --reverse -S<value>`, 18 invocations, **56.7s**; and a single
+`git log --reverse -G<alternation> -U0 -p` pass attributing each value to the first commit
 that *added* a line containing it, **9.6s**. The two agree on all 18 commits and all 18 dates.
 
 ```
-value                    readAt[0]    first seen on main     lag (days)
+value                    readAt[0]    first seen (ancestry)  lag (days)
 0.06068601583113457      2026-08-09   023a880  2026-08-09      0
 0.35560344827586204      2026-08-09   13e3af2  2026-08-09      0
 0.1895                   2026-09-04   4cfee38  2026-09-02      2
@@ -69,16 +69,26 @@ value                    readAt[0]    first seen on main     lag (days)
 [[R198]] confirmed from the register's own side; the row measured it from the documents' side (109
 occurrences post-dating their reading) and this is the same defect seen from the other end.
 
-**`--all` vs `main` was checked and it changes no date, only hashes** — the `--all` hit is the
-branch commit, the `main` hit the squashed merge, and every pair falls on the same day. `main` is
-the right scope (a value that only ever existed on an abandoned branch was never observed *of this
-tree* — the `bfs 0.9401` lesson, [[R199]](b)), and the dates being identical means the choice costs
-nothing today.
+**`--all` vs the ancestry scope was checked and it changes no date, only hashes** — the `--all` hit
+is the branch commit, the ancestry hit the squashed merge, and every pair falls on the same day.
+Ancestry is the right scope (a value that only ever existed on an abandoned branch was never
+observed *of this tree* — the `bfs 0.9401` lesson, [[R199]](b)), and the dates being identical means
+the choice costs nothing today.
+
+**The ancestry ref is `HEAD`, not `main`, and CI proved why.** `main` was the first choice, it passed
+all 7 tests locally, and it **failed in CI with exit 128**: `actions/checkout` leaves a detached HEAD
+with no local `main` ref. The crash was the cheap half. **The expensive half is a deadlock the crash
+exposed:** under `main` scope a PR that appends a NEW reading finds its value absent from `main` and
+reports it unrecoverable, so the recoverability test could never go green until after the merge it
+was blocking — the same unsatisfiable-gate shape §4.1 rejects for Evidence. `HEAD` resolves in every
+checkout, includes the branch's own commits, and is measured identical to `main` on all 17 quotable
+readings at `3dd380f`. `tests/test_first_seen.py::test_it_runs_on_a_detached_HEAD_with_no_branch_ref`
+pins it.
 
 ### 1.1 What "first seen" is, and what it is not
 
-It is the **first commit on `main` whose diff ADDS a line containing the value's exact lexical
-form**. That bounds the observation from above, and it is not the same as the moment someone ran
+It is the **first commit reachable from `HEAD` whose diff ADDS a line containing the value's
+exact lexical form**. That bounds the observation from above, and it is not the same as the moment someone ran
 the compiler. A value measured on the 7th and committed on the 8th reads as the 8th.
 
 This is stated as a limit, not a defect, because the alternative is worse: `readAt` bounds
@@ -236,10 +246,10 @@ otherwise identical.
 
 ## 6. The falsifying oracle
 
-**The claim this loop can be wrong about:** that the first-added-line-on-`main` date is a sound
-proxy for first observation.
+**The claim this loop can be wrong about:** that the first-added-line-in-this-tree's-ancestry date
+is a sound proxy for first observation.
 
-**What falsifies it:** a reading whose value appears on `main` in a commit *earlier* than any
+**What falsifies it:** a reading whose value appears in the ancestry in a commit *earlier* than any
 document that reports measuring it — i.e. the value was in the tree before anyone read it, which
 would mean the match is coincidental rather than provenantial. §1's table is the check: `1.0` is
 exactly that failure, at 81 days, and it is excluded on an independent ground (§2). If a *second*

@@ -147,6 +147,39 @@ def test_the_shallow_guard_is_WIRED_into_the_derivation(tmp_path, monkeypatch):
         first_seen(tmp_path, ["0.5"])
 
 
+def test_it_runs_on_a_detached_HEAD_with_no_branch_ref(tmp_path):
+    """THE CI CONDITION, and the defect that shipped past a green local suite.
+
+    `rev` was `main` at first. Locally that resolves and all 7 tests passed; in CI it
+    exits 128, because `actions/checkout` leaves a DETACHED HEAD with no local `main`
+    ref. A named branch is not a thing a checkout is guaranteed to have.
+
+    The crash was the cheap half. The expensive half is that under `main` scope a PR
+    appending a NEW reading would find its value absent from `main` and report it
+    unrecoverable — so `test_every_quotable_reading_is_recoverable` could not go green
+    until after the merge it was blocking. `HEAD` has neither problem."""
+    def git(*args):
+        subprocess.run(["git", *args], cwd=tmp_path, check=True,
+                       capture_output=True, text=True)
+    git("init", "-q")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    (tmp_path / "note.md").write_text("the score was 0.123456789\n")
+    git("add", "-A")
+    git("commit", "-qm", "add the value")
+    git("checkout", "-q", "--detach")
+    for ref in ("main", "master"):
+        subprocess.run(["git", "branch", "-qD", ref], cwd=tmp_path,
+                       capture_output=True, text=True)
+    assert subprocess.run(["git", "rev-parse", "--verify", "main"], cwd=tmp_path,
+                          capture_output=True).returncode != 0, "no main ref, as in CI"
+
+    seen = first_seen(tmp_path, ["0.123456789"])
+    assert "0.123456789" in seen, (
+        "the derivation cannot run on a detached HEAD, which is every CI checkout"
+    )
+
+
 def test_a_literal_registered_by_two_documents_is_refused(tmp_path):
     """The register's one-node-per-distinct-value rule is scoped per DOCUMENT, so two
     documents may register the same value. Git cannot tell those apart; attributing
