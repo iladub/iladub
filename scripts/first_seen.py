@@ -152,7 +152,7 @@ def main() -> None:
         for _, n in reg.subject_objects(COR.reading)
     }
     rows = sorted(readings, key=lambda v: (seen.get(v, ("", "9999"))[1], readings[v]))
-    print(f"{'slug':30s} {'value':22s} {'readAt[0]':11s} {'first seen on main':26s} lag")
+    print(f"{'slug':30s} {'value':22s} {'readAt[0]':11s} {'first seen (ancestry)':26s} lag")
     for value in rows:
         hit = seen.get(value)
         where = f"{hit[0]}  {hit[1]}" if hit else "UNRECOVERABLE"
