@@ -159,7 +159,14 @@ def _require_full_history(repo: Path) -> None:
 # author's, read off the literal they wrote, never a constant this module chooses.
 
 #: A decimal literal, not part of a longer dotted token (a version, an IP, a range).
-_DECIMAL = re.compile(r"(?<![\w.])\d+\.\d+(?![\w.])")
+#: The trailing guard refuses a following dot ONLY when another digit group follows
+#: it. MEASURED 2026-09-09: the blanket `(?![\w.])` this replaces also refused every
+#: SENTENCE-FINAL figure, which is not a dotted token and is exactly how all three
+#: sites [[R189]] names write their reading — so the rule over-refused against its
+#: own comment above. Widening adds 3 occurrences over 497 tracked .py/.ttl/.rq
+#: files (those three), 17 over tracked markdown (all `evidence`, all exempt), and
+#: ZERO in docs/wiki/**, so the hard gate's findings are unchanged.
+_DECIMAL = re.compile(r"(?<![\w.])\d+\.\d+(?!\w)(?!\.\d)")
 #: What dates a block: an ISO date, or a backticked commit sha (>= one digit, so an
 #: ordinary hex-lettered word in backticks is not mistaken for a commit).
 _ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
