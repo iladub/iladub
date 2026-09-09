@@ -245,3 +245,50 @@ def test_drain_on_the_same_day_as_its_document_passes():
     g = Graph()
     _drain(g, _drained_doc(g, when="2026-08-10"), when="2026-08-10")
     assert _conforms(g)[0]
+
+
+# ---------------------------------------------------- the walked source file
+# A .py file is NOT a governed Document (spec 2026-09-09 §5): it has no class by
+# location, is never in the nav, and is never published. These pin that it is
+# admitted as its own kind and refused when it claims to be anything else.
+
+def _source_file(g, cls="code", path="src/x.py"):
+    s = doc_iri(path)
+    g.add((s, RDF.type, DG.SourceFile))
+    g.add((s, DG.path, Literal(path)))
+    if cls is not None:
+        g.add((s, DG.docClass, Literal(cls)))
+    return s
+
+
+def test_a_walked_source_file_conforms():
+    g = Graph()
+    _source_file(g)
+    assert _conforms(g)[0]
+
+
+def test_a_source_file_claiming_a_document_class_fails():
+    """The negative that matters: `dg:docClass` is now carried by two kinds, and
+    the six document classes are derived from a LOCATION rule a .py file cannot
+    satisfy. A source file typed "wiki" is an extractor defect, not a page."""
+    g = Graph()
+    _source_file(g, cls="wiki")
+    assert not _conforms(g)[0]
+
+
+def test_a_source_file_without_a_class_fails():
+    g = Graph()
+    _source_file(g, cls=None)
+    assert not _conforms(g)[0]
+
+
+def test_a_source_file_is_not_entailed_into_a_document():
+    """MEASURED 2026-09-09, and the reason `docgov:docClass` carries no rdfs:domain:
+    with `rdfs:domain docgov:Document` on it, the lint's `inference="rdfs"` run
+    entailed every source file into docgov:Document, where dg:DocumentShape failed
+    it three ways — the sh:in list, dg:inNav and dg:excludedFromSite — for being a
+    .py file rather than for any defect. This test goes RED if the domain returns."""
+    g = Graph()
+    _source_file(g)
+    g.parse(Path(__file__).resolve().parent.parent / "vocab" / "internal" / "docgov.ttl")
+    assert _conforms(g)[0]

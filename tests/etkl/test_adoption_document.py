@@ -366,7 +366,7 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
 
 @corpus_only
 def test_the_document_score_rises(apple_doc):
-    """Measured before this loop: 0.06068601583113457, and 0.35560344827586204 after.
+    """Measured 2026-08-09: 0.06068601583113457 before this loop, 0.35560344827586204 after.
 
     BOTH are pinned (final review m1). `> 0.0606…` alone lets the headline measurement regress
     all the way back to 0.07 and stay green; the second assertion is the floor, recorded in

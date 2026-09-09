@@ -271,6 +271,9 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
              and 66 over the 136-artifact tree
         71   + docgov:FigureOccurrence and docgov:Reading, the same loop's gate — LIVE ONLY,
              so 66 over the 136-artifact tree is UNCHANGED and the surplus set grows by two
+        72   + docgov:SourceFile, the code-scope figure gate (2026-09-09) — demanded by
+             `doc-governance-shapes.ttl` as an sh:targetClass, INSIDE the 136-artifact tree,
+             so BOTH numbers move by one (67 over that tree) and the surplus is unchanged
 
     THE LAST TWO STEPS MOVE BOTH NUMBERS BY THE SAME AMOUNT, AND THAT IS THE POINT.
     The seven cor: terms (corpus:Reading, :reading, :value, :readAt, :atCommit, :recordedIn,
@@ -307,8 +310,8 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    assert len(_census_over(_pre_loop_artifacts())) == 66
-    assert len(_census()) == 71
+    assert len(_census_over(_pre_loop_artifacts())) == 67
+    assert len(_census()) == 72
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -388,8 +391,12 @@ def test_the_path_traversal_adds_exactly_two_terms():
     The total here is 54, not 55: repairing etkl:Contract removed one term from the same
     tree (see `test_the_census_chain_from_53_to_57_with_every_step_earned` for the full
     chain). The two terms this test is about are unaffected, and are asserted by name — the
-    number alone was never the claim."""
-    assert len(_census_over(_pre_loop_artifacts())) == 66
+    number alone was never the claim.
+
+    67, not 66, since 2026-09-09: `docgov:SourceFile` joined the same tree the same way the
+    drain terms did — demanded by a shape inside it, declared in an internal vocabulary. The
+    two terms this test is about are still asserted by name and still unaffected."""
+    assert len(_census_over(_pre_loop_artifacts())) == 67
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 

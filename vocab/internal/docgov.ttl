@@ -63,6 +63,10 @@ docgov:NavEntry a owl:Class ;
     rdfs:label "Navigation entry"@en ;
     rdfs:comment "One leaf of the `nav:` tree in mkdocs.yml — an entry in the published site's table of contents. It is modelled separately from a Document because the two populations can disagree in exactly the way that matters: a nav entry is an intention to publish a path, which may name a file that does not exist. Checking that disagreement is the whole purpose of the kind."@en .
 
+docgov:SourceFile a owl:Class ;
+    rdfs:label "Walked source file"@en ;
+    rdfs:comment "One tracked Python file, enumerated from `git ls-files *.py` minus the exempt prefixes. It is NOT a docgov:Document and must not be entailed into one: a .py file has no governance class by location, is never in the nav, and is never published, so the Document membrane's questions are all inapplicable to it. It exists for exactly one question — what corpus readings does this file's PROSE state, and are they dated (spec 2026-09-09) — and it carries docgov:docClass \"code\" so that the undated-figure derivation, which keys on docClass, needs no edit to reach it. Distinct from docgov:Source, which is a path CITED by a wiki page: the two populations overlap (a cited .py file is both) and neither implies the other."@en .
+
 docgov:Source a owl:Class ;
     rdfs:label "Cited source"@en ;
     rdfs:comment "A repo-relative path listed in a wiki page's `sources:` frontmatter — the evidence a wiki page rests its claims on. A Source is not necessarily a governed Document: it is often code (`.py`, `.ttl`, a workflow file) that the governance classes never cover. When the cited path IS a tracked markdown file the Source and the Document are the SAME node (both mint the IRI from the path), which is exactly how the staleness derivations can ask a cited source for its own governance class. `vault:` citations are deliberately NOT Sources — see docgov:citesExternal."@en .
@@ -78,9 +82,8 @@ docgov:path a owl:DatatypeProperty ;
 
 docgov:docClass a owl:DatatypeProperty ;
     rdfs:label "governance class"@en ;
-    rdfs:domain docgov:Document ;
     rdfs:range xsd:string ;
-    rdfs:comment "The single governance class this document belongs to: \"evidence\" (a loop record — measured, immutable after loop close), \"wiki\" (LLM-maintained synthesis — a proposition, committed but never published), \"assertion\" (a page in the mkdocs nav — describes the released artifact), \"manual\" (a README or RELEASE.md whose commands must actually run), \"contract\" (CLAUDE.md, edited only on explicit request) or \"confidential\" (`internal/`, which must never be tracked at all). It is DERIVED FROM LOCATION, not declared by the author, which is what makes it unfalsifiable-by-forgetting; a file matching no rule carries no docClass triple, and the membrane's minCount turns that silence into a failure."@en .
+    rdfs:comment "The single governance class this node belongs to: \"code\" (a tracked .py file, walked for the figures its PROSE states — spec 2026-09-09) or, for a governed Document, \"evidence\" (a loop record — measured, immutable after loop close), \"wiki\" (LLM-maintained synthesis — a proposition, committed but never published), \"assertion\" (a page in the mkdocs nav — describes the released artifact), \"manual\" (a README or RELEASE.md whose commands must actually run), \"contract\" (CLAUDE.md, edited only on explicit request) or \"confidential\" (`internal/`, which must never be tracked at all). It is DERIVED FROM LOCATION, not declared by the author, which is what makes it unfalsifiable-by-forgetting; a file matching no rule carries no docClass triple, and the membrane's minCount turns that silence into a failure. DOMAIN DELIBERATELY UNDECLARED, for the reason docgov:path states and MEASURED 2026-09-09 before it was removed: this property is now carried by BOTH Documents and SourceFiles, and under the lint's `inference=\"rdfs\"` run an `rdfs:domain docgov:Document` entailed every source file into docgov:Document, where dg:DocumentShape failed it three ways — the sh:in list, dg:inNav and dg:excludedFromSite — for being a .py file rather than for any defect."@en .
 
 docgov:inWikiIndex a owl:DatatypeProperty ;
     rdfs:label "in wiki index"@en ;

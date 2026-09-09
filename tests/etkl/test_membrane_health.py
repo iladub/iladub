@@ -426,8 +426,8 @@ def test_intact_and_weakened_are_reachable_on_real_input(apple_report):
 
     graincorp-stem is NOT interchangeable with a cheaper Intact document: it is the specimen
     that carries the point that health is not the score (spec §1, review B8) — it scores
-    0.9655 with 77 escalated tokens of unread ink and is correctly Intact, because nothing
-    is HELD at the membrane.
+    0.9655 (read 2026-08-20) with 77 escalated tokens of unread ink and is correctly
+    Intact, because nothing is HELD at the membrane.
 
     Reads `apple_report.graph` and never writes it; O2's third leg mutates a copy."""
     doc = URIRef(_DOC)

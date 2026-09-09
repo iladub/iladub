@@ -150,9 +150,9 @@ READINGS = {"stem": STEM, "apple": Decimal("0.06068601583113457")}
 
 
 def test_precision_is_exact_not_approximate():
-    """O5: `0.9655` IS a quotation of the stem's reading; `0.9659` is not — and
-    `0.9659` is the value that superseded it, so this is the discrimination the
-    whole gate rests on."""
+    """O5: `0.9655` IS a quotation of the stem's reading of 2026-08-20; `0.9659`
+    is not — `0.9659` is the value that superseded it on 2026-09-05, so this is
+    the discrimination the whole gate rests on."""
     assert denotes("0.9655", READINGS, 4) == "stem"
     assert denotes("0.9654553611484971", READINGS, 4) == "stem"
     assert denotes("0.9659", READINGS, 4) is None
@@ -160,10 +160,10 @@ def test_precision_is_exact_not_approximate():
 
 
 def test_a_form_too_coarse_to_identify_the_register_is_not_a_finding():
-    """`0.1` rounds from apple's 0.0607 and is unique in this register — and is
-    still refused, because at one decimal the register cannot identify its own
-    rows. Measured false positives this kills: two, both the phrase 'quarantines
-    exactly like a 0.1-scored one'."""
+    """`0.1` rounds from apple's 0.0607 (read 2026-08-09) and is unique in this
+    register — and is still refused, because at one decimal the register cannot
+    identify its own rows. Measured false positives this kills: two, both the
+    phrase 'quarantines exactly like a 0.1-scored one'."""
     assert denotes("0.1", READINGS, 1) == "apple"
     assert denotes("0.1", READINGS, 4) is None
 
@@ -205,10 +205,10 @@ def test_a_commit_sha_dates_a_block_but_a_hex_word_does_not():
 
 def _lexicals(text: str) -> list[str]:
     """The lexical forms `_figure_facts` emits for `text`, in line order."""
-    from tests.docgov_extract import _figure_facts
+    from tests.docgov_extract import _figure_facts, blocks
 
     g = Graph()
-    _figure_facts(g, doc_iri("p.md"), "p.md", text, READINGS, 4)
+    _figure_facts(g, doc_iri("p.md"), "p.md", blocks(text), READINGS, 4)
     # Sort by (line, column): the occurrence IRI ends `#figure-<line>-<column>`,
     # and two figures on one line must come back in the order they were written.
     def where(occ):
@@ -243,3 +243,75 @@ def test_a_longer_dotted_token_is_still_refused():
     assert _lexicals("released 0.9655.9659 as one token\n") == []
     assert _lexicals("v1.0.9655 and 10.0.9655.1 and 0.9655.0\n") == []
     assert _lexicals("the range 0.9655.0607 is not two figures\n") == []
+
+
+# ------------------------------------------------------- prose regions in code
+# A claim lives in prose (spec 2026-09-09 §2). In markdown every line is prose; in
+# a .py file prose is comments and docstrings, and everything else is code. These
+# fixtures pin BOTH halves of that rule — which regions carry a claim, and what the
+# closure boundary is inside one.
+
+PROSE_PY = '''\
+"""Module docstring, measured 2026-08-03.
+
+The stem read 0.9655 that day.
+"""
+STEM = 0.9654553611484971  # a value, not a claim
+APPLE = {"score": 0.0607}
+
+
+def f():
+    """Re-pointed 2026-09-02, for a reason about something else.
+
+    At document scope the stem reads 0.9654553611484971.
+    """
+    return 0.9659
+
+
+# Superseded on 2026-09-05.
+#
+# The stem reads 0.9655.
+def g():
+    pass
+'''
+
+
+def _py_lexicals(text: str) -> list[tuple[int, str, bool]]:
+    """(line, lexical, blockDated) for every figure `text`'s PROSE states."""
+    from tests.docgov_extract import _figure_facts, prose_blocks_py
+
+    g = Graph()
+    _figure_facts(g, doc_iri("m.py"), "m.py", prose_blocks_py(text), READINGS, 4)
+    return sorted(
+        (int(g.value(o, DG.line)), str(g.value(o, DG.lexical)),
+         bool(g.value(o, DG.blockDated).toPython()))
+        for o in g.subjects(RDF.type, DG.FigureOccurrence)
+    )
+
+
+def test_a_decimal_in_code_is_a_value_not_a_claim():
+    """MEASURED 2026-09-09 (spec §2): restricting the walk to prose drops 24 of the
+    44 occurrences over 294 tracked .py files, 6 of them undated — every one a
+    fixture literal in code — and loses ZERO of the four findings [[R189]] names.
+    `STEM = 0.9654553611484971` states nothing a reader could date."""
+    lines = {n for n, _, _ in _py_lexicals(PROSE_PY)}
+    assert 5 not in lines and 6 not in lines and 14 not in lines
+
+
+def test_a_date_in_a_neighbouring_paragraph_does_not_date_a_docstrings_figure():
+    """The refutation of [[R196]](a), pinned (spec §1). The candidate answer was to
+    make the whole docstring the closure boundary. `f`'s docstring is dated in its
+    FIRST paragraph, about its re-pointing; the figure two paragraphs down is a
+    superseded score stated as a present fact. Widen the boundary and that unrelated
+    date silently absolves it — which is how the candidate loses
+    tests/etkl/test_datagrid.py:1085, a real finding, on the live tree."""
+    assert (12, "0.9654553611484971", False) in _py_lexicals(PROSE_PY)
+    assert (3, "0.9655", False) in _py_lexicals(PROSE_PY)
+
+
+def test_a_bare_hash_is_a_paragraph_break_in_a_comment_run():
+    """A comment run has no blank lines by construction: its paragraph break is a
+    line bearing `#` and nothing else. Treat the run as one block and a comment
+    that dates its first paragraph absolves every figure below it — the same defect
+    the docstring case above refutes, wearing the other syntax."""
+    assert (19, "0.9655", False) in _py_lexicals(PROSE_PY)

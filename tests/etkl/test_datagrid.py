@@ -1082,7 +1082,7 @@ def test_adoption_is_off_by_default_at_page_scope():
     docs/superpowers/residues.md R29) — page scope reads it WORSE. The counts are NOT
     comparable (R29's 825 is tokens under the driver; 811 is standalone cells); only the scores
     share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
-    0.9654553611484971. See tests/test_corpus_stem.py's
+    0.9654553611484971 (read 2026-08-20). See tests/test_corpus_stem.py's
     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads."""
     from iladub.etkl.compile import compile_tables
 
