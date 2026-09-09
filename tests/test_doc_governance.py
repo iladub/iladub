@@ -66,13 +66,16 @@ def test_promotion_queue_report(facts):
         )
 
 
-def _undated(facts: Graph, wiki: bool) -> str:
+def _undated(facts: Graph, cls: str | None) -> str:
     """Render the undated-figure findings as lines an author can act on.
 
     Disposition lives HERE and not in a SHACL shape, following this instrument's own
     split: `staleAgainstEvidence` is a test-side gate over a SPARQL derivation, while
     `ContradictionDrainShape` is shape-side because it validates a register's own
-    integrity. A derived triple is the first kind, not the second."""
+    integrity. A derived triple is the first kind, not the second.
+
+    `cls` selects one governance class; None is everything the two hard gates do NOT
+    cover, which is what the warning below reports."""
     # The derivation is a CONSTRUCT, so its triples are NOT in `facts` — query the
     # union, or this test silently passes on an empty match (which it did, once).
     g = facts + _construct(facts, "docgov-undated-figure.rq")
@@ -83,8 +86,9 @@ def _undated(facts: Graph, wiki: bool) -> str:
             ?doc dg:statesUndatedReading ?occ ; dg:path ?path ; dg:docClass ?class .
             ?occ dg:line ?line ; dg:lexical ?lex ; dg:denotesReading ?r .
             ?r dg:readingOf ?slug ; dg:readAt ?d .
-            FILTER (?class %s "wiki")
-        } GROUP BY ?path ?line ?lex ?slug ORDER BY ?path ?line ?lex""" % ("=" if wiki else "!=")
+            FILTER (%s)
+        } GROUP BY ?path ?line ?lex ?slug ORDER BY ?path ?line ?lex"""
+        % (f'?class = "{cls}"' if cls else '?class NOT IN ("wiki", "code")')
     )
     return "\n".join(
         f"  {r.path}:{r.line}  `{r.lex}` is a reading of {r.slug}, taken {r.dates}"
@@ -102,7 +106,7 @@ def test_no_wiki_page_states_an_undated_reading(facts):
     a loop's measured figures in place destroys the record rather than dating it. The
     date belongs in the figure's own markdown block — put it in a neighbouring block
     and this test still fails, which is the point of the block scope."""
-    findings = _undated(facts, wiki=True)
+    findings = _undated(facts, "wiki")
     assert not findings, (
         "wiki page states a corpus reading with no date in its block — date the "
         "claim (the reading's own date, from tests/corpus-manifest.ttl), do not "
@@ -110,11 +114,31 @@ def test_no_wiki_page_states_an_undated_reading(facts):
     )
 
 
-def test_undated_readings_outside_the_wiki_are_a_warning(facts):
-    """Warning, not a gate: the extractor walks tracked MARKDOWN only, so the three
-    measured defects in `.py` prose (spec §1.3) are out of reach and a hard gate here
-    would assert a coverage this instrument does not have. [[R189]] carries it."""
-    findings = _undated(facts, wiki=False)
+def test_no_source_file_states_an_undated_reading(facts):
+    """HARD, on the licence the wiki gate had: a census run BEFORE the repair, showing
+    the gate has something to find (spec 2026-09-09 §6; [[R187]]'s recorded trap is that
+    a gate with nothing to find is indistinguishable from a clean tree).
+
+    MEASURED 2026-09-09 at `6141bcd`, over 294 tracked .py files: 20 occurrences in
+    prose, 10 of them undated — 6 findings (a superseded stem or apple score stated as
+    a present fact, in src/iladub/etkl/compile.py, tests/etkl/test_datagrid.py,
+    tests/etkl/test_membrane_health.py and tests/etkl/test_adoption_document.py) and 4
+    mentions in this gate's own docstrings. All ten were repaired the way [[R187]]
+    prescribes — DATE THE CLAIM, never rewrite the figure — and no exemption list was
+    introduced, an exemption being a coverage loss dressed as a fix ([[R188]])."""
+    findings = _undated(facts, "code")
+    assert not findings, (
+        "a tracked .py file's PROSE states a corpus reading with no date in its block "
+        "— date the claim (the reading's own date, from tests/corpus-manifest.ttl), do "
+        f"not rewrite the figure:\n{findings}"
+    )
+
+
+def test_undated_readings_in_other_classes_are_a_warning(facts):
+    """Warning, not a gate, for what the two hard gates do not cover: `assertion`,
+    `manual` and `contract` markdown. `evidence` is exempt in the derivation itself,
+    and `.ttl`/`.rq` prose is out of the walk's scope (spec 2026-09-09 §3)."""
+    findings = _undated(facts, None)
     if findings:
         warnings.warn(
             "non-wiki document states an undated corpus reading (non-blocking):\n"

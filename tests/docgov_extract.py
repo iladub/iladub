@@ -9,8 +9,11 @@ open world). Path-glob classification below is fact extraction per spec §6.
 """
 from __future__ import annotations
 
+import ast
+import io
 import re
 import subprocess
+import tokenize
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -129,6 +132,22 @@ def tracked_markdown(repo: Path) -> list[str]:
     return [line for line in out.splitlines() if line]
 
 
+def tracked_python(repo: Path) -> list[str]:
+    """The source files the figure walk covers (spec 2026-09-09 §3).
+
+    `.py` ONLY, measured rather than assumed: across 203 tracked .ttl/.rq files the
+    census finds ONE undated denoting occurrence (an rdfs:comment illustrating what
+    cor:value means — a false positive) and ZERO findings, while recovering their
+    prose regions exactly means a lexer that tells a `#` comment from the `#` in an
+    IRI and from one inside a string literal. Python hands that back for free, in
+    `tokenize`. The measured population licensing the lexer is zero."""
+    out = subprocess.run(
+        ["git", "ls-files", "*.py"], cwd=repo,
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return [line for line in out.splitlines() if line]
+
+
 def last_commit_date(repo: Path, path: str) -> str | None:
     out = subprocess.run(
         ["git", "log", "-1", "--format=%cI", "--", path], cwd=repo,
@@ -200,6 +219,81 @@ def is_dated(block: str) -> bool:
     return bool(_ISO_DATE.search(block) or _SHA.search(block))
 
 
+def prose_regions_py(text: str) -> list[tuple[int, list[str]]]:
+    """(first line number, lines) for every PROSE region of a Python file.
+
+    A claim lives in prose (spec 2026-09-09 §2): in markdown every line is prose, in
+    a .py file it is comments and docstrings, and everything else is code. MEASURED
+    2026-09-09: `STEM = Decimal("0.9654553611484971")` states nothing a reader could
+    date, and dropping such lines removes 24 of 44 occurrences over 294 tracked .py
+    files — 6 of them undated, every one a fixture literal — while losing none of the
+    four findings [[R189]] names.
+
+    EXACT, not heuristic (CLAUDE.md §8): Python's own grammar decides what a comment
+    and a docstring are, via `tokenize` and `ast`. No tolerance, no threshold, no
+    tuned constant — a "looks like prose" line reader would be a §8 defect.
+
+    Every emitted line keeps its ORIGINAL column positions, so an occurrence's column
+    names a place in the file. Two consequences, both deliberate: code preceding a
+    trailing comment is blanked rather than dropped, and a comment's own `#` is
+    blanked too, so a line bearing `#` and nothing else becomes whitespace — which is
+    how a comment run gets the paragraph break a blank line gives markdown.
+    """
+    try:
+        toks = list(tokenize.generate_tokens(io.StringIO(text).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return []  # honest failure: an unparseable file yields no claims, not guesses
+    out: list[tuple[int, list[str]]] = []
+    comments: dict[int, str] = {}
+    for tok in toks:
+        if tok.type == tokenize.COMMENT:
+            col = tok.start[1]
+            comments[tok.start[0]] = " " * (col + 1) + tok.string[1:]
+    start, run, prev = 0, [], None
+    for n in sorted(comments):
+        if prev is not None and n == prev + 1:
+            run.append(comments[n])
+        else:
+            if run:
+                out.append((start, run))
+            start, run = n, [comments[n]]
+        prev = n
+    if run:
+        out.append((start, run))
+
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return out
+    lines = text.splitlines()
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if not isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
+                                 ast.ClassDef)) or not body:
+            continue
+        first = body[0]
+        if (isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant)
+                and isinstance(first.value.value, str)):
+            out.append((first.lineno, lines[first.lineno - 1:first.end_lineno]))
+    return out
+
+
+def prose_blocks_py(text: str) -> list[tuple[int, list[str]]]:
+    """The units the figure walk sees in a .py file: `blocks` INSIDE each prose region.
+
+    The two halves are independent and were measured separately (spec §2). The prose
+    RESTRICTION is confirmed; widening the closure BOUNDARY to the whole comment run
+    or docstring is REFUTED — see prose_regions_py above and spec §1. A docstring is
+    longer than a markdown paragraph, so a date in its first line would absolve a
+    figure ten lines below it about something else entirely, which is exactly what
+    `blocks` exists to prevent (docs/wiki § the wiki gate's own message)."""
+    out: list[tuple[int, list[str]]] = []
+    for start, region in prose_regions_py(text):
+        for offset, run in blocks("\n".join(region)):
+            out.append((start + offset - 1, run))
+    return out
+
+
 def separating_precision(values: Sequence[Decimal]) -> int:
     """Least k at which every registered value is pairwise distinct at k decimals.
 
@@ -256,7 +350,8 @@ def load_readings(repo: Path) -> tuple[Graph, dict[str, Decimal], set[str]]:
     return facts, values, unquotable
 
 
-def _figure_facts(g: Graph, d: URIRef, path: str, text: str,
+def _figure_facts(g: Graph, d: URIRef, path: str,
+                  units: Sequence[tuple[int, list[str]]],
                   values: Mapping[str, Decimal], sep: int) -> None:
     """Emit one dg:FigureOccurrence per literal that DENOTES a registered reading.
 
@@ -264,7 +359,7 @@ def _figure_facts(g: Graph, d: URIRef, path: str, text: str,
     decimal in the tree. Whether a denoting occurrence is admissible is not decided
     here — that is the membrane's (spec §2, D2) and this function stays a pure fact
     emitter (spec §6 I3)."""
-    for start, lines in blocks(text):
+    for start, lines in units:
         dated = Literal(is_dated("\n".join(lines)))
         for offset, line in enumerate(lines):
             for m in _DECIMAL.finditer(line):
@@ -322,13 +417,27 @@ def extract(repo: Path) -> Graph:
         # Read once, here: _evidence_facts and _wiki_facts each used to open the file
         # for themselves, and the figure walk covers EVERY tracked markdown file.
         text = (repo / path).read_text()
-        _figure_facts(g, d, path, text, quotable, sep)
+        _figure_facts(g, d, path, blocks(text), quotable, sep)
         if cls == "evidence":
             _evidence_facts(g, d, path, text)
         elif cls == "wiki":
             _wiki_facts(g, repo, d, path, text)
             if path != "docs/wiki/index.md":
                 g.add((d, DG.inWikiIndex, Literal(path in index_links)))
+
+    # A claim lives in prose (spec 2026-09-09 §2). A source file is NOT a Document —
+    # it has no class by location, is never in the nav and is never published — so it
+    # is typed dg:SourceFile and answers exactly one question: what corpus readings
+    # does its prose state, and are they dated.
+    for path in tracked_python(repo):
+        if is_exempt(path):
+            continue
+        s = doc_iri(path)
+        g.add((s, RDF.type, DG.SourceFile))
+        g.add((s, DG.path, Literal(path)))
+        g.add((s, DG.docClass, Literal("code")))
+        _figure_facts(g, s, path, prose_blocks_py((repo / path).read_text()),
+                      quotable, sep)
     return g
 
 

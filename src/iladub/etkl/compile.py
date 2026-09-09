@@ -1285,7 +1285,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # The old reason — "the driver compiles each page standalone before re-compiling
     # continuation pages" — is MEASURED FALSE: `document.compile_document` makes ONE pass and
     # page N-1's carried reading is an INPUT to page N's compile, so forcing adoption on every
-    # page leaves the stem document byte-identical at 0.9654553611484971.
+    # page leaves the stem document byte-identical at 0.9654553611484971 (read 2026-08-20).
     #
     # The real reason is the REFUSAL BRANCH, and its FIRST half is structural, not numeric: a
     # single-page compile is INCAPABLE OF CHAINING AT ALL — `CompilationReport` carries no chain
@@ -1299,7 +1299,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # measurably LOWER. NB the two COUNTS are not comparable and are not compared: R29's figure
     # is 825 TOKENS asserted under the driver, the standalone figure is 811 CELLS — only the two
     # scores share a scale. At document scope the whole stem is one chain of 3, 2152 cells, at
-    # 0.9654553611484971. Pinned by tests/test_corpus_stem.py::
+    # 0.9654553611484971 (read 2026-08-20). Pinned by tests/test_corpus_stem.py::
     #     test_page_scope_adoption_would_have_taken_the_page_the_driver_reads
     # (whose assertion pins the full-precision document floor, not the 4-decimal 0.9706).
     #

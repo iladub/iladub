@@ -25,6 +25,19 @@ dg:DocumentShape a sh:NodeShape ;
     sh:property [ sh:path dg:inNav ; sh:minCount 1 ; sh:datatype xsd:boolean ] ;
     sh:property [ sh:path dg:excludedFromSite ; sh:minCount 1 ; sh:datatype xsd:boolean ] .
 
+# A walked source file (spec 2026-09-09 §5). Deliberately NOT dg:Document: a .py file
+# has no class by location and is never published, so DocumentShape's questions do not
+# apply to it. What must hold is that the extractor named it and typed it exactly once.
+dg:SourceFileShape a sh:NodeShape ;
+    sh:targetClass dg:SourceFile ;
+    sh:property [ sh:path dg:path ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [
+        sh:path dg:docClass ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( "code" ) ;
+        sh:message "a walked source file is class \"code\" and nothing else (spec 2026-09-09 §5)" ;
+    ] .
+
 # No confidential material may be tracked at all (spec §3 class 6).
 dg:NoTrackedConfidentialShape a sh:NodeShape ;
     sh:targetClass dg:Document ;
