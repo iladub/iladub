@@ -103,6 +103,11 @@ One branch, `r167-the-nil-glyph`, off `3fe0ce2`.
   set under test** — importing it would make the differential compare the code against itself.
 - **Instrument:** `scripts/corpus_verdict_snapshot.py`, committed (O4 is load-bearing and must
   stay reproducible).
+- **One detector INVERTED, after CI found it:**
+  `tests/test_one_band_matrix_spike.py::test_the_em_dash_types_as_text_while_the_ascii_hyphen_types_as_blank`
+  pinned R167 *"as it stands today"*, so the closure turned it red — independent confirmation from a
+  test this loop did not write. Its falsifying twin was MOVED as well as its assertion: the old twin
+  (the ASCII `-`) stops separating once all three glyphs agree. Loop record §6.2.
 
 **Falsification, all three run and restored:**
 
@@ -139,8 +144,10 @@ apple measurement on a synthetic grid, so it runs in CI on a tree with no `corpu
 - **The canonical graph hash normalises blank-node labels away** (`scripts/corpus_verdict_snapshot.py`,
   `_canonical_hash`). Two graphs differing ONLY in how blank nodes are shared would hash alike. Stated
   in the docstring rather than hidden; the summary fields beside the hash carry the reading itself.
-- **The full suite has NOT been run in this session** — see the loop record for exactly which
-  modules were. CI is the check.
+- **The pre-push subset was chosen by SOURCE reach and was INCOMPLETE** — CI caught a detector in
+  `tests/test_one_band_matrix_spike.py` that the subset never ran (loop record §6.2). The full suite
+  was run afterwards; its result is in the loop record. **Do not repeat the subset heuristic**:
+  enumerating a function's callers does not enumerate the tests that assert about it.
 - **The dash census is over `pdfplumber.extract_words`, not over cells.** A standalone word is a
   proxy for a whole-cell text: it is exact wherever a cell is one word, and a cell whose text joins
   a dash to other words is not a nil cell anyway. No cell-level census was run.

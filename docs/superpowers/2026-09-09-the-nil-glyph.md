@@ -171,6 +171,31 @@ loop), and now a missing wrapper binary. The common cause is identical every tim
 read where output should have been.** Never wrap a verification command in `timeout` here, and never
 report a suite result without a real `N passed` line.
 
+## 6.2 CI found a test the loop's own reach analysis missed — and it is the closure's best evidence
+
+**PR #188's first CI run went RED**, on
+`tests/test_one_band_matrix_spike.py::test_the_em_dash_types_as_text_while_the_ascii_hyphen_types_as_blank`.
+
+That test is a **detector for R167 itself** — the R165 spike wrote it to pin the defect *"as it
+stands today"*, with the ASCII `-` as its falsifying twin. Closing R167 correctly turns it red, so
+the failure is not a regression: **it is the independent confirmation that the repair reached the
+behaviour the residue was raised about**, from a test this loop did not write.
+
+Two things it exposes, both worth keeping:
+
+1. **The pre-push subset run was chosen by SOURCE reach, not TEST reach.** §3 enumerates every
+   reader of `is_blank`, and the modules were right — but the subset was `tests/etkl` plus named
+   top-level files, and this detector lives in `tests/test_one_band_matrix_spike.py`, which names
+   none of those modules in its path. Enumerating the callers of a function does not enumerate the
+   tests that assert about it. The remedy is not a better subset heuristic: it is running the full
+   suite, which is what was done after this.
+2. **The inverted pin's twin had to move, not just its assertion.** The old twin was the ASCII `-`
+   — same grammar, opposite answer — which separated only while the classifier *disagreed* about
+   the two glyphs. With all three now `tab:Blank`, that twin would pass against a classifier that
+   returned `tab:Blank` for everything, i.e. it would be **vacuous**. The twin is now a dash inside
+   other text (`'2020—2024'` is ink, not absence), which is the same boundary O3 guards. Re-baselining
+   an inverted pin without re-checking its falsifier is how a test survives as decoration.
+
 ## 7. What this loop did NOT do
 
 [[R162]] (unruled header labels are words, NEURAL) is untouched, so apple p2 still refuses.

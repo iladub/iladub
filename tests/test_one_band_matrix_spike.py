@@ -6,10 +6,12 @@ evidence doc `docs/superpowers/2026-09-04-one-band-matrix-spike.md` pastes its o
 pinned here is `merge_bands` — the construction the CONFIRMED result rests on — plus the two
 independent reasons p2 refused, each beside the twin that falsifies it:
 
-  * R167: `celltype._cell_datatype('—')` is `tab:Text`, while the ASCII `-` `is_blank` already
-    accepts is `tab:Blank`. One `tab:Text` body cell is what disqualified apple p2's column 1 in
-    `stub-data-split.rq`. The falsifying twin is the `-` case: same position, same grammar,
-    opposite answer — so the assertion is about the glyph, not about the classifier being inert.
+  * R167, **CLOSED 2026-09-09** (`docs/superpowers/2026-09-09-the-nil-glyph.md`): the em-dash
+    USED to type `tab:Text` while the ASCII `-` `is_blank` already accepts typed `tab:Blank`, and
+    that one `tab:Text` body cell is what disqualified apple p2's column 1 in `stub-data-split.rq`.
+    The nil spellings are now declared as `tab:nilSpelling` on `tab:Blank` and read from the
+    ontology, so all three glyphs agree. The pin below is INVERTED from what the spike recorded,
+    and its falsifying twin moved with it — see that test's own docstring.
   * R162: `infer_column_tree_by_proximity`'s uncarried-ink guard refuses a three-WORD
     `Nine Months Ended` over two data columns, because `Months` wins no column. The falsifying
     twin is the same header as ONE word — the cell a RULED band re-extracts — which yields a tree.
@@ -75,13 +77,21 @@ def test_merge_bands_carries_every_rule_and_marker_of_the_run():
 
 # ---------------------------------------------------------------- R167: the em-dash
 
-def test_the_em_dash_types_as_text_while_the_ascii_hyphen_types_as_blank():
-    """R167, pinned as it stands today. Apple p2 column 1's single `—` body cell is the whole
-    reason `stub_data_split` returned 2 instead of 1. The `-` twin is the falsifier: the
-    classifier is not inert, it just does not know this glyph."""
+def test_the_em_dash_types_as_blank_now_that_r167_is_closed():
+    """R167, INVERTED 2026-09-09 when the residue closed. This pin read
+    `_cell_datatype('—') == tab:Text` at the spike, and that single body cell was the whole
+    reason `stub_data_split` returned 2 instead of 1 for apple p2 column 1.
+
+    **The old falsifying twin no longer falsifies.** It was the ASCII `-` — same position, same
+    grammar, opposite answer — which separated only while the classifier disagreed about the two
+    glyphs. Now that all three agree, that twin would pass against a classifier that returned
+    `tab:Blank` for everything. The twin that still separates is a dash INSIDE other text:
+    matching is by equality on the stripped cell and never as a substring, so `'2020—2024'` is
+    ink, not absence. Deleting the twin rather than moving it would leave this pin vacuous."""
     assert _cell_datatype("-") == TAB.Blank
-    assert _cell_datatype("—") == TAB.Text          # em dash — the R167 defect
-    assert _cell_datatype("–") == TAB.Text          # en dash
+    assert _cell_datatype("—") == TAB.Blank         # em dash — was tab:Text before R167 closed
+    assert _cell_datatype("–") == TAB.Blank         # en dash
+    assert _cell_datatype("2020—2024") == TAB.Text  # the twin that still falsifies
 
 
 # ---------------------------------------------------------------- R162: word-vs-cell granularity
