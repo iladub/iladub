@@ -1,8 +1,8 @@
 # Spec — only a REFUSAL admits the model: GLiNER2 enters the pipeline at three post-hoc seams, and edits no deterministic line
 
 **Origin:** no residue. This design was reached across three sessions of conversation (2026-09-08 →
-2026-09-10) whose only prior record is `HANDOFF.md` in the `gliner2` probe repo
-(`/Volumes/WD Green/dev/git/gliner2`, commit `062dc9a`) and the probes beside it.
+2026-09-10) whose only prior record is `HANDOFF.md` in the probe repo
+(`/Volumes/WD Green/dev/git/iladub-gliner2-probes`, commit `d09c747`) and the probes beside it.
 **Written 2026-09-10**, off `93fa7ce`, branch `only-a-refusal-admits-the-model`.
 
 **Doc impact: one new term.** `iladub:supersededBy` (§3.3), plus the shape that constrains it.
