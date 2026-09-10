@@ -10,9 +10,12 @@ sources:
   - examples/shipping/cbh-terms.ttl
   - examples/shipping/cbh-shapes.ttl
   - tests/test_cbh_e2e.py
+  - src/iladub/ground.py
+  - tests/test_ground_section_marker.py
+  - docs/superpowers/2026-09-10-r207-marker-grounds-by-scheme-handoff.md
 related: ["[[neurosymbolic-exemplars]]", "[[table-holon-compilation]]", "[[assert-propose-promote]]", "[[grounding-membrane]]"]
 confidence: high
-updated: 2026-08-04
+updated: 2026-09-10
 ---
 
 # Dimension-split-as-denormalization
@@ -115,6 +118,21 @@ form (`tab:DerivedRowGroup` covering a section's rows, `tab:hasLabel` → the he
 cell, `prov:wasDerivedFrom` → a confirming total row) was never built — open as **R49**
 in the residue register, not overclaimed by loop Q's close. Measured end-to-end: 49 of
 CBH's 58 records are section-prefixed and distinct across all four ports.
+
+**The key reaches the record as a VALUE only since R207 (2026-09-10).** The sentence above
+— "`GERALDTON` grounds in the port scheme" — was true of the naming cascade's scratch graph
+and false of the record: `ground_concept` reached an injected marker only through
+`exact_field`, which compares a concept's TEXT to contract field NAMES, and a marker's text
+is its value, so every key marker was quarantined on every record. Measured 2026-09-10,
+before the fix: 58 of 58 CBH records carried no `cbh:port` after `ground_document`. The
+repair is one AXIOM branch, `ground.marker_field`: for a section marker no field name
+matches, ask which scheme-bound contract field's scheme carries the value as a
+`skos:prefLabel`; exactly one admitting field grounds the marker on it, through the same
+`_grounds_to` oracle as any scheme value; zero or two abstain and the marker stays a
+candidate. It is the per-value counterpart of the cascade's arm 2 and mints the same
+suggester IRI. Measured 2026-09-10, after the fix: every one of the 49 section-prefixed
+records carries exactly one `cbh:port`, equal to its identity prefix; the 9 unsectioned
+records carry none; the notice strips still ground nowhere.
 
 ## The three-arm cascade, and the §3 disposal split (spec §4.3)
 
