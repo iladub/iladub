@@ -112,8 +112,10 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
       - (cond 3) line i+1 occupies FEWER columns than the anchor
         (``len(cols_j) < len(anchor)``), i.e. it does not tile a fresh full row —
         a SOUND structural test,
-      - (gap) the vertical gap to the preceding line is strictly less than ``lead``,
-        the median of the document's own inter-line gaps,
+      - (gap) the vertical gap to the preceding line is strictly less than
+        ``tightest_row_gap``, the minimum gap over the band's CERTAIN pairs (below),
+        falling back to ``lead`` — the median inter-line gap — when the band certifies
+        no row boundary at all,
       - (hrule veto) no author-drawn horizontal rule (``band.hrules``) falls between the
         two lines. Measured on a real report: 35/54 consecutive line pairs carry an hrule —
         every genuine row boundary, including every suppressed-key-data/subtotal boundary —
@@ -122,22 +124,52 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         pattern). HONEST LIMIT: an unruled band (no hrules at all) keeps the fusion defect —
         the veto is a presence test, inert where there is nothing to test.
 
-    §8 gate — PROCEDURAL, not NEURAL (B3, 2026-07-22).  The wrap-vs-row-pitch boundary
-    is ``lead`` — a DERIVED statistic (the median gap, adaptive by construction, like
-    ``_median_pitch``), carrying NO tuned constant.  The previous ``lead * 0.9`` margin
-    WAS fixture-tuned (its docstring reasoned in specific point magnitudes) and is
-    retired: an empirical probe showed the bare ``gap < lead`` passes every fixture,
-    whereas dropping the gap entirely collapses the pivot's body rows — so the adaptive
-    gap is load-bearing but the magic 0.9 was not.  Conditions 2/3 are the sound
-    structural filter that keeps only partial subset lines as candidates (a full row can
-    never be a continuation regardless of gap), which is why relaxing 0.9→1.0 is safe:
-    it only lets a partial sub-line whose gap is just under the pitch (0.9·lead–lead) be
-    recognised as the continuation it structurally already is.  See
-    ``docs/superpowers/specs/2026-07-22-b3-wrap-continuation-procedural-design.md`` for
-    the classification + the accepted jitter tradeoff (a distribution-aware bimodal split
-    is deferred until a real jittery document demonstrates the need — no synthetic fixture).
-    The ultimate guard against a mis-grouping remains the downstream round-trip and SHACL
-    validation, not this threshold alone.
+    THE TIGHTEST CERTAIN BOUNDARY ([[R208]], 2026-09-10;
+    ``docs/superpowers/specs/2026-09-10-the-tightest-certain-boundary-design.md`` § 3).
+    Conditions 2/3 and the hrule veto are sound: a consecutive pair (j-1, j) that FAILS the
+    structural test — line j tiles as many columns, or a column line j-1 left closed — or that
+    an author hrule separates, is a row boundary by construction. Those are the band's
+    *certain pairs*, and their gaps are measurements of what a row boundary looks like in this
+    band, taken by the same instrument on the same page with the same noise. A candidate
+    continues the line above iff ``gap < min(gap over the certain pairs)`` — a wrap must be
+    tighter than EVERY row boundary the band certifies. That is the evidence-positive reading
+    CLAUDE.md § 8 asks for: a merge is asserted only on positive evidence that the gap is not
+    a row gap; a gap indistinguishable from an observed row boundary is a row. The previous
+    gate, ``gap < lead`` (B3, 2026-07-22), asserted a wrap whenever the gap was tighter than
+    the TYPICAL row, which on a uniform-pitch table is decided by coordinate noise: on
+    graincorp-stem every body gap is 6.48 pt and so is the median, and the seven at-pitch
+    partial lines (data rows whose month cell the author left blank) fell ~2e-5 pt either
+    side of it — 3 welded, 4 did not (``scripts/at_pitch_weld_probe.py``). Under this rule
+    all 13 of the document's at-pitch candidates are refused, the corpus's 2 genuine wraps
+    still merge, and 0 of its 30 candidates change verdict otherwise (spec § 7).
+
+    Certain pairs are RAW consecutive pairs, enumerated once before the loop (the loop's own
+    structural test is anchor-relative, against ``merged_into[i]``), so the threshold is a
+    property of the band, not of the loop's state. A vetoed pair counts as certified.
+
+    Where the band has no certain pair — every line a strict subset partial of the one
+    above — the rule has no minimum to take and falls back to ``lead``: with nothing
+    certified, the median is a comparison among the candidates themselves, the only evidence
+    the band offers. Measured: 3 corpus bands (bfs header blocks), byte-identical. The
+    refuse-when-nothing-certified arm is named in the spec and not run.
+
+    HONEST LIMITS (spec § 4). (a) A minimum is not jitter-robust where a median is: one
+    tight certified boundary refuses every genuine wrap in ``[tightest_row_gap, lead)`` that
+    ``gap < lead`` accepted. 0 of 30 corpus candidates lie there — absence on this corpus, not
+    evidence of absence — and the residual falls on the side the membrane can see (a refused
+    wrap is a partial row with blank cells; a wrongly accepted one is two records fused into
+    one that passes tiling). (b) At uniform pitch a noise floor remains, one order of
+    magnitude lower: an at-pitch candidate welds iff its gap is the tightest of every gap in
+    the band — 1 in ``n_certain + 1`` under exchangeable noise, where ``gap < lead`` was 1 in
+    2 — reachable only when the source's coordinates disagree below its stated precision.
+
+    §8 gate — PROCEDURAL, inherited from B3 § 2 on the same argument. ``tightest_row_gap`` is
+    a DERIVED statistic of the band (a minimum over a structurally-defined population), as
+    ``lead`` was (a median): no constant, no tolerance, no margin, strict comparison. Not
+    AXIOM because no evidence graph exists here — this runs on ``Line``s before
+    ``classifygraph`` mints a triple; not NEURAL because the question is not "which columns
+    does X span" but "is this gap a row gap", which the band's own certain pairs answer
+    exactly. The retired ``lead * 0.9`` margin WAS fixture-tuned and stays retired.
     """
     b = grid.boundaries
     lines = list(band.lines)
@@ -166,6 +198,20 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
             by_col.setdefault(column_of((w.x0 + w.x1) / 2.0, b), []).append(w)
         per_line.append(by_col)
 
+    # THE CERTAIN PAIRS (R208): raw consecutive pairs that fail the structural test or are
+    # hrule-vetoed are row boundaries by construction; the tightest of their gaps is the
+    # threshold a wrap must beat. Enumerated once, on raw pairs, so it is a band property.
+    def _vetoed(j: int) -> bool:
+        return any(tops[j - 1] < y <= tops[j] for y in hrule_ys)
+
+    def _partial_of(prev: dict[int, list[Word]], cur: dict[int, list[Word]]) -> bool:
+        return bool(cur) and all(c in prev for c in cur) and len(cur) < len(prev)
+
+    certain_gaps = [tops[j] - tops[j - 1] for j in range(1, len(lines))
+                    if _vetoed(j) or not _partial_of(per_line[j - 1], per_line[j])]
+    # Fallback to `lead` when the band certifies nothing — see the docstring; not a constant.
+    tightest_row_gap = min(certain_gaps) if certain_gaps else lead
+
     merged_into: list[dict[int, list[Word]]] = [dict() for _ in lines]
     consumed = [False] * len(lines)
 
@@ -176,11 +222,11 @@ def group_wrapped(band: Band, grid: LeafGrid) -> tuple[tuple["SourceCell", ...],
         for col, words in by_col.items():
             merged_into[i].setdefault(col, []).extend(words)
         # Pull wrap-continuations from subsequent contiguous lines.
-        # Gate: gap < lead (the adaptive median inter-line gap). PROCEDURAL, no tuned
-        # constant — see the docstring for why the retired 0.9 margin was fixture-tuned.
+        # Gate: gap < tightest_row_gap — tighter than every row boundary the band certifies.
+        # PROCEDURAL, a derived minimum, no tuned constant — see the docstring.
         j = i + 1
-        while (j < len(lines) and (tops[j] - tops[j - 1]) < lead
-               and not any(tops[j - 1] < y <= tops[j] for y in hrule_ys)):
+        while (j < len(lines) and (tops[j] - tops[j - 1]) < tightest_row_gap
+               and not _vetoed(j)):
             cols_j = per_line[j]
             # Continuation only if every word on line j sits in a column already open
             # on the anchor, AND line j does not tile a fresh full row (fewer cols).
