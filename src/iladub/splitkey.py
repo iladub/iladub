@@ -59,14 +59,15 @@ from decimal import Decimal
 
 from rdflib import RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
 
-from .ground import Contract, ContractField, SurfaceConcept, exact_field, scheme_member
+from .ground import (_UNIQUE_ADMITTING_FIELD_RULE, Contract, ContractField, SurfaceConcept,
+                     exact_field, scheme_member)
 
 ILADUB = Namespace("https://w3id.org/iladub#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
 
 _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
 _EXPLICIT_RULE = "urn:iladub:suggester/explicit-marker-naming-rule"
-_MEMBERSHIP_RULE = "urn:iladub:suggester/unique-admitting-field-rule"
+_MEMBERSHIP_RULE = _UNIQUE_ADMITTING_FIELD_RULE      # one rule, per NAME here, per VALUE in ground
 
 # "Port: GERALDTON" -> ("Port", "GERALDTON"). Requires a non-blank value after the colon
 # so a bare trailing ":" doesn't count as an explicit form.

@@ -13,13 +13,16 @@ WHAT IT MEASURES. For every `SurfaceConcept` of every record `table_records` yie
 `ground_concept` would take, replayed without a proposer and without emitting a graph:
   exact-grounded  exact_field hit, the field's oracle admitted the value
   exact-refused   exact_field hit, the oracle refused (quarantine)
-  novel           exact_field None -> the proposer would be asked (the RAW population)
+  marker-grounded exact_field None, marker_field named the one scheme carrying the value (R207)
+  novel           neither named a field -> the proposer would be asked (the RAW population)
 and for the novel cells, whether ANY oracle-bearing field admits the value as it stands
 (the CEILING — what a perfect proposer could add; a proposer only ever names contract fields).
 
-WHAT IT DOES NOT MEASURE. Whether a ceiling cell SHOULD ground there: a section marker whose
-text is a port's prefLabel is counted as admissible on the port field, which is a claim about
-the oracle, not about the page. Read the ceiling's label breakdown before believing the number.
+WHAT IT DOES NOT MEASURE. Whether a ceiling cell SHOULD ground there: a value some oracle
+admits is a claim about the oracle, not about the page. Read the ceiling's label breakdown
+before believing the number. (Before R207 the whole cbh ceiling — 49 cells — was section
+markers on `port`; the marker branch now grounds those before any proposer is asked, so they
+count under `marker-grounded` and the ceiling is what is LEFT for a model.)
 
 RUN. From the repo root, with the corpus populated (`scripts/fetch_corpus.py`):
     PYTHONPATH=. .venv/bin/python scripts/placement_population.py
@@ -40,7 +43,7 @@ from iladub.etkl.document import compile_document  # noqa: E402
 from iladub.feed import table_records  # noqa: E402
 from iladub.ground import (  # noqa: E402
     _grounds_to, _has_value_constraint, _property_shape, _value_conforms,
-    exact_field, load_contract, scheme_member,
+    exact_field, load_contract, marker_field, scheme_member,
 )
 
 # (corpus file, examples/shipping/<stem>-{contract,terms,shapes}.ttl) — the two contracted
@@ -73,6 +76,9 @@ def measure(pdf, ex):
         subj = URIRef("urn:iladub:probe:" + rec.row_id.replace(" ", "_"))
         for c in rec.concepts:
             f = exact_field(c, contract)
+            if f is None and (f := marker_field(c, contract, terms)) is not None:
+                tally["marker-grounded"] += 1        # R207: admitted by construction
+                continue
             if f is None:
                 tally["novel"] += 1
                 novel.append(c)

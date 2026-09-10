@@ -20,6 +20,10 @@ DEC = Namespace("https://w3id.org/iladub/dec#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 _EXACT_RULE = "urn:iladub:suggester/exact-match-rule"
+# One rule, two grains: `splitkey` applies it per NAME (a marker SET whole-set-admitted by one
+# field), `marker_field` below per VALUE (one marker admitted by one field's scheme). Both mint
+# this suggester, so a reader of the graph sees the same accountable rule at either grain.
+_UNIQUE_ADMITTING_FIELD_RULE = "urn:iladub:suggester/unique-admitting-field-rule"
 _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
 
 # Value constraints (as opposed to cardinality/path) — presence of any means the contract
@@ -37,7 +41,10 @@ class SurfaceConcept:
     # Loop Q §4.2: True for a candidate injected from a section's peeled captions (feed.py's
     # `_inject_section_captions`) — undiscriminated key-or-notice evidence, never set by any
     # other caller. Defaulted so every existing 3-arg call site (positional or keyword) is
-    # untouched; grounding disposal does not branch on it today (§4.3's naming cascade will).
+    # untouched. Grounding disposal branches on it in exactly one place (R207, 2026-09-10):
+    # `ground_concept` asks `marker_field` for the unique scheme that carries the marker's
+    # value when `exact_field` cannot name it — a marker's text IS its value, so a field name
+    # never matches it, and without that branch every key marker was quarantined.
     is_section_marker: bool = False
 
 
@@ -84,6 +91,30 @@ def scheme_member(value: str, scheme_iri: str, terms: Graph) -> str | None:
             if str(lbl) == value:
                 return str(c)
     return None
+
+
+def marker_field(concept: SurfaceConcept, contract: Contract, terms: Graph) -> ContractField | None:
+    """AXIOM (R207) — the ONE scheme-bound contract field whose admissible scheme carries the
+    marker's value as a `skos:prefLabel`; `None` when zero or several do.
+
+    A section marker names no column: `feed._inject_section_captions` mints it with text ==
+    value, so `exact_field` (which compares TEXT to field NAMES) can never place it, and the
+    proposer behind it is asked the wrong question — "which field is called GERALDTON?". The
+    right question is the contract's: "which field would ADMIT the value GERALDTON?", and the
+    contract answers it decidably, through the same `scheme_member` oracle `_grounds_to` applies
+    to every scheme value. Per-value counterpart of `splitkey.resolve_split_key_name`'s arm 2,
+    which asks the same question of the whole marker SET to recover the dimension's NAME.
+
+    Ambiguity abstains (§3): two admitting fields is a proposition, not an assertion, and the
+    marker stays a quarantined candidate exactly as a marker no scheme carries does. Not called
+    for any concept that is not a section marker — a DATA cell whose value happens to be a port
+    label sits under a column the contract did not declare, and grounding it by value alone
+    would let the value, not the author's structure, decide the field (§0)."""
+    if not concept.is_section_marker:
+        return None
+    admitting = [f for f in contract.fields
+                 if f.scheme is not None and scheme_member(concept.value, f.scheme, terms)]
+    return admitting[0] if len(admitting) == 1 else None
 
 
 def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
@@ -190,6 +221,12 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     if field is not None:
         suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
         is_exact = True
+    elif (field := marker_field(concept, contract, terms)) is not None:   # R207: a section marker
+        suggester, confidence, anchor = _UNIQUE_ADMITTING_FIELD_RULE, 1.0, _GIST_CATEGORY
+        rationale = (f"Section marker: {concept.value!r} is a prefLabel in the admissible scheme of "
+                     f"exactly one contract field ({field.fills_property}); unique admission "
+                     f"derives the field from the contract, no proposer asked.")
+        is_exact = True                                     # the field is derived, not proposed
     else:
         prop = proposer.propose_grounding(concept, contract.fields)
         anchor, confidence, rationale, suggester = prop.anchor_iri, prop.confidence, prop.rationale, prop.suggester_iri

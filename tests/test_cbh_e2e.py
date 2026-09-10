@@ -164,6 +164,41 @@ def test_cbh_grounds_with_section_key_candidates(cbh_document, cbh_grounded):
     assert len(sections) >= 2, sections            # more than one section actually keyed
 
 
+# --- (b2) R207: the section key reaches the RECORD as its port ------------------------
+
+@needs_cbh
+def test_cbh_every_sectioned_record_carries_its_section_port(cbh_document, cbh_grounded):
+    """Before R207 (measured 2026-09-10 at `6842c5f`): 58 of 58 cbh records had NO `cbh:port`
+    after grounding — the four port captions were injected on every record and quarantined on
+    every record, because a marker's text is its value and `exact_field` compares text to field
+    NAMES. Now every section-prefixed record carries exactly one `cbh:port`, and it is the
+    section's own key (the identity prefix), grounded to the port scheme's concept through
+    `scheme_member` — the marker branch (`ground.marker_field`), no proposer. The notice strips
+    on the same records still ground nowhere. Corpus pin of the R207 handoff § 2."""
+    from iladub.feed import _record_uri, table_records
+    from rdflib.namespace import SKOS
+
+    contract, terms, shapes, result, g = cbh_grounded
+    recs = table_records(cbh_document.graph)
+    sectioned = [r for r in recs if " > " in r.row_id]
+    assert sectioned
+    port_of_label = {str(terms.value(s, SKOS.prefLabel)): s
+                     for s in terms.subjects(SKOS.inScheme, CBHNS["scheme-port"])}
+    for r in sectioned:
+        key = r.row_id.split(" > ")[0]
+        ports = list(g.objects(_record_uri(r.row_id), CBHNS.port))
+        assert [str(p) for p in ports] == [key], (r.row_id, ports)
+    unsectioned = [r for r in recs if " > " not in r.row_id]
+    assert not any(list(g.objects(_record_uri(r.row_id), CBHNS.port)) for r in unsectioned)
+    # the scheme carries a fifth port (Bunbury) the roster never sections under: the grounded
+    # targets are exactly the ports the page's sections name, no more and no fewer
+    named = {port_of_label[r.row_id.split(" > ")[0]] for r in sectioned}
+    grounded_to_ports = {o for o in g.objects(None, ILADUB.groundsTo)} & set(port_of_label.values())
+    assert grounded_to_ports == named and len(named) == 4, (grounded_to_ports, named)
+    print(f"\nR207: {len(sectioned)} sectioned records, each with its section port; "
+          f"grounded={result.grounded} proposed={result.proposed}")
+
+
 # --- (c) the cascade: dimension-name resolution end to end --------------------------
 
 @needs_cbh
