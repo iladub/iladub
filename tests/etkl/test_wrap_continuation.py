@@ -2,6 +2,8 @@
 0.9 margin retired). These pin the endpoints (tight merges, at-pitch does not) and the
 condition-2/3 structural filter, plus the one behaviour the fix newly enables: a partial
 sub-line just under the row pitch is recognised as a continuation (the 0.9 margin missed it)."""
+import pytest
+
 from iladub.etkl.geometry import Word, Line
 from iladub.etkl.bands import Band
 from iladub.etkl.grid import LeafGrid
@@ -58,3 +60,31 @@ def test_full_row_never_merged_even_when_tight():
     rows = group_wrapped(_band_with_subline(5.0, sub_full=True), GRID)
     assert len(rows) == 5                        # anchor + tight full row + 3 body, nothing merged
     assert rows[0][1].text == "A1"               # anchor col-1 untouched
+
+
+def _band_with_noisy_subline(noise):
+    """`_band_with_subline(20.0)` — the at-pitch case — with the coordinate noise a real PDF
+    carries: the sub-line sits `noise` ABOVE the pitch and the first body line `noise` below it,
+    so the sub-line's gap is `20 - noise` against a median that stays exactly 20."""
+    sub = _line([_w("x", 110, 160, 20.0 - noise)], 20.0 - noise)
+    lines = [_row("A", 0.0), sub, _row("b0", 40.0 + noise), _row("b1", 60.0), _row("b2", 80.0)]
+    return Band(tuple(lines), 0.0, lines[-1].bottom)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "[[R208]] DETECTOR, measured 2026-09-10 — the at-pitch reading above holds only on exact "
+        "integer coordinates. On graincorp-stem p1 band 1 every body gap is 6.48 pt and so is the "
+        "median, and the PDF's text matrices carry ~2e-5 pt of noise per line: `gap < lead` is then "
+        "decided by that noise, and 3 of the 7 at-pitch partial lines weld (`Mackay Mackay Mackay`, "
+        "22 of the document's 48 exact-refusals; scripts/at_pitch_weld_probe.py prints the seven). "
+        "This fixture scales the same signature onto the B3 pitch of 20. It fails by design until "
+        "the comparison stops depending on noise; strict, so the fix must remove this marker."
+    ),
+)
+def test_at_pitch_partial_line_under_coordinate_noise_is_still_not_merged():
+    # same intended reading as test_at_pitch_partial_line_not_merged; only the coordinates differ
+    rows = group_wrapped(_band_with_noisy_subline(1e-5), GRID)
+    assert len(rows) == 5
+    assert "x" not in rows[0][1].text
