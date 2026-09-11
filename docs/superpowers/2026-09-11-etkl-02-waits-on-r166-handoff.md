@@ -134,3 +134,54 @@ header, the subset relation is not sufficient, and that census is the spec's § 
 
 The hidden-glyph finding (part 2, fourth bullet) still has no register row. This session did not
 raise one.
+
+## 7. Addendum: 6c run (the same fresh session, 2026-09-11)
+
+### 7a. ASSERTED: 6c is refuted. A strict subset of drawn rules is not sufficient
+
+The census walked every page of the 7 corpus documents: `page_bands`, then `_rule_boundaries` at
+2dp on each band with ≥ 3 x's. It found 14 ruled bands and **8 strict-subset pairs**
+(`drawn(earlier) ⊂ drawn(later)`, same page), not one:
+
+| page | donor | recipient(s) | ncols | donor line 0 | a header? |
+| --- | --- | --- | --- | --- | --- |
+| graincorp-capacity p0 | band 2 (1 line, NON_TABLE) | band 3 | 9 → 16, spans `1,1,2,2,2,2,2,2,2` | `Year \| Elevation Period \| Mackay \| …` | yes |
+| bfs p6 | band 3 (1 line, NON_TABLE) | bands 4, 5, 6, 8, 9 | 3 → 9, spans `7,1,1` | `Total 8 962 258 … \| 32.9 \| 31.8` | no, a data row |
+| bfs p6 | band 7 (1 line, NON_TABLE) | bands 8, 9 | 3 → 9, spans `7,1,1` | `Zurich 1 605 508 … \| 31.4 \| 27.5` | no, a data row |
+
+The two bfs donors are the 3-column-ruled data rows that the grid-donation spec § 2.2 already
+names as straddling every candidate grid.
+
+### 7b. ASSERTED: R203's licence separates them, 1 against 7
+
+The page datagrid's verdict on each donor's line 0, re-identified by ink as
+`scripts/donor_header_criterion.py` does:
+
+```
+graincorp-capacity p0 band2: page-line=[3]  datagrid: refused HeterogeneousColumn/every-measure
+bfs p6 band3:                page-line=[7]  datagrid: body row
+bfs p6 band7:                page-line=[22] datagrid: body row
+```
+
+So a relation of *strict subset of drawn rules* AND *R203 licence* admits graincorp and refuses
+all 7 bfs pairs. That answers R211's second question: the arm does **not** lose its control, and
+the corpus supplies 7 negatives, none of them synthetic. What it does not answer: **all 7 are
+refused by the licence, and none by the subset clause.** The subset clause has no negative of its
+own in this corpus, and its only positive is the page it was invented for. The spec must say that,
+and its synthetic fixture should aim at the subset clause (a donor that passes the licence and is
+not a coarsening).
+
+### 7c. PROPOSED: the spec can now be written, and its first open question is the leaves
+
+The relation is measured on 8 corpus pairs. What remains is the reading: parent = donor label
+spanning its interval, leaves = the recipient's columns inside it. Graincorp's leaves carry no
+printed label (a tonnage column and a Y/N column per port), so §7 allows a spanned parent over
+unlabelled leaves and nothing invented. Whether `holon.py`'s record-region emitter and grounding
+(`exact_field`) can carry an unlabelled leaf under a labelled parent is **unmeasured**. It is
+refuted or confirmed by reading `assert_record_region` and `ground.py` against a hand-built
+two-level region, and that is the spec's § 2, before any design.
+
+One discrepancy, not chased: this census counts only **3** equal-set pairs, while grid donation
+fires on 5 bfs p6 bands with donor band 2. The census compares drawn sets and donation compares
+counts plus tiling, so the two populations need not agree. It is recorded here only so that nobody
+reads the 3 as a contradiction of the 5.
