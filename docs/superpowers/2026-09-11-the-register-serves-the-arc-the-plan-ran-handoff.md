@@ -85,3 +85,17 @@ prog:criterion:<rung>:<slug>` moves the first digit.
 - The plan's predicted `serves 0/2/34` matched; whether the window's population is the 36 docs the
   plan counted was not re-derived (the third bucket is 34, consistent with 36 − 2).
 - No full-suite run this session (~61 minutes); CI on the PR is the run of record.
+
+## 6. Tasks 5 and 6 — run 2026-09-11 with the maintainer present (appended; § 5a is now done)
+
+- **Task 5.** Asked in-session; the maintainer said yes. CLAUDE.md § Deferred residues gained the
+  plan's two paragraphs verbatim (`diff` against plan lines 654–669 empty). `test_doc_governance.py`:
+  7 passed. Commit `0e119ac`.
+- **Task 6.** The 80 candidates (`--candidates`, re-measured: still 80) were presented with their
+  index lines. **The maintainer parked none today.** No register file changed. Tally before and
+  after: `cockpit.residues()[:2]` → `(63, 198)` both times; `parked()` → 0. The four test files:
+  62 passed. Strip line 1 reads `… 63/198 closed ▲1.0 parked 0 …`; line 2 ends `serves 0/3/34`.
+- **5b, first reading:** 0 of 80 parked is under 40, so the prediction held trivially. It is not
+  yet informative: a pass that parks nothing does not test whether PARKED is doing `closed`'s work.
+  It becomes informative at the first pass that parks a row. Carried forward, not refuted.
+- **5c** is unchanged by this: the loop declares `maintenance`, so the criterion digit stays 0.
