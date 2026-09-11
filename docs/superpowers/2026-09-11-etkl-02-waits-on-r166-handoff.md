@@ -97,3 +97,40 @@ These are on `512f82e`, and the edge is on this branch.
   branch was renamed.
 - The earlier handoff (PR #206) was still waiting on CI when this was written. Its 5c is refuted
   here, not edited there: that file is Evidence.
+
+## 6. Addendum: 5b measured (a fresh session, 2026-09-11)
+
+Appended, not edited: parts 1-5 above stand as written. This session started fresh on `536b0d3`
+and ran only measurements. The record is [[R211]], raised here.
+
+### 6a. ASSERTED: 5b is refuted as written. Grid donation refuses this donor, and the spec already said so
+
+Of the donation relation's four positive facts, three hold on graincorp p0 band 2 → band 3: it is
+earlier on the page, it is wholly drawn (10 rule x's), and the page datagrid refuses its line
+(page line 3) `every-measure` (`scripts/donor_header_criterion.py`). The fourth, `same_ncols`,
+fails: 9 against 16. Part 5b called this "unmeasured" because `grep -i capacity` over the plan
+returned nothing. The refusal is recorded in the spec the plan was written from:
+`specs/2026-09-10-the-grid-the-author-drew-design.md` census row 2 and § 3(c), where this page is
+the relation's null control. The grep searched the wrong file.
+
+### 6b. ASSERTED: the refused donor is a coarser partition of the recipient, not a wrong one
+
+Every x drawn on band 2 is also drawn on band 3 (exact, at `_rule_boundaries`' 2dp), and each of
+the 7 port labels spans exactly 2 of band 3's columns. The spec's reason for the control, *"a
+9-column header onto a 16-column table"*, is true of a donation that keeps equal counts, and says
+nothing about one that respects the spans. Merging the bands does not help either:
+`classify_hierarchical` on `merge_bands(bands, 2, 3)` gives each port ONE column and leaves every
+Y/N column unheaded, because the merge carries no drawn rules. Full figures in R211.
+
+### 6c. PROPOSED: the next etkl:02 loop is a spec for a spanning-donor arm, and it starts with a census
+
+The prediction to run before anything is designed: *across the corpus, every (earlier, later)
+ruled-band pair on a page whose drawn x's satisfy `drawn(donor) ⊂ drawn(recipient)` (strict) is a
+spanning header.* It is refuted in minutes by enumerating those pairs with `_rule_boundaries` over
+the 7 documents and reading each one. If graincorp is the only pair, the arm has one positive
+and no control. That is R211's second question: the spec must build a synthetic negative rather
+than borrow a control from the page it is trying to admit. If other pairs exist and any is not a
+header, the subset relation is not sufficient, and that census is the spec's § 2.
+
+The hidden-glyph finding (part 2, fourth bullet) still has no register row. This session did not
+raise one.
