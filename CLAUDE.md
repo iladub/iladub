@@ -589,6 +589,23 @@ false. So:
   place. It does NOT delete the row** (this reverses the earlier "deletes its row" rule): a deleted
   row erases the proof of repair and silently shrinks the denominator.
 
+**A row can be PARKED, and parked is not closed (2026-09-11).** A parked row is one the maintainer
+has decided, by date, not to pursue. It stays `open`, keeps its number in `t` and out of `c`, keeps
+its evidence and its raise-time snapshot, and is never struck. In the index its status cell reads
+`open (parked YYYY-MM-DD)`; in `residues-open.md` the row appends `**PARKED YYYY-MM-DD:** <reason>`
+and moves nowhere. Parking is a maintainer's decision in a dated triage pass — never a loop's, never
+an instrument's, never an age. Only a row named by no `prog:blockedBy` and with no OPEN neighbour in
+the register's link graph may be parked (`scripts/residue_graph.py --candidates` lists them). The
+first loop that cites a parked row unparks it in the same change. A criterion may not be
+`prog:blockedBy` a parked row (M21).
+
+**Every dated handoff or brief declares what it serves.** One header line
+`**Serves:** prog:criterion:<rung>:<nn>` (an IRI present in `tests/arc-manifest.ttl`) or
+`**Serves:** maintenance`, followed by prose after a dash if wanted. The strip reads the first token
+only and prints nothing for anything else. § 5a names its subject from the strip's `ready` or
+`frontier`; `residues.md` is opened to find what blocks a chosen criterion, never to find a
+subject.
+
 ## Documentation governance (spec 2026-07-31; lint-enforced)
 
 Every tracked markdown file belongs to **exactly one class**, by location —
