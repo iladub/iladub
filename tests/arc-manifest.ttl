@@ -194,11 +194,25 @@ prog:criterion:etkl:01 a prog:Criterion ;
 # agree_with_the_corpus_manifest, which recomputes all seven from tests/corpus-manifest.ttl.
 # (Closes the task-3 ledger's deferred minor on this region, task 5, 2026-08-20.)
 
+# etkl:02 is BLOCKED BY R166, measured 2026-09-11 on 512f82e. The score is 1.0000 because the
+# carried grid is WRONG, not because it is right: the RECORD_TABLE takes the page's first DATA
+# row as its column header, so all 26 carried records are keyed by that row's cells and none
+# carries a port name:
+#   $ table_records(compile_document(<this pdf>).graph)   -> 26 records; header paths
+#     {'August 2nd Half': 26, '0': 103, 'N': 104, '10,000': 26, 'Y': 78,
+#      'On Application': 26, '14,000': 26, '2025/26': 1}
+# The page's real header (Year | Elevation Period | Mackay | Gladstone | ... | Portland) sits in
+# its own one-line band, ignored as 'fewer than 2 lines'. R166's own census already lists this
+# document, row 2 of specs/2026-09-10-the-header-is-assumed-design.md § census: "NO — a data row".
+# Closing R166 advances this criterion (the rung's edge meaning, stated below): no contract
+# can ground this reading honestly, because exact_field (ground.py) matches a field by
+# header text, and the only header texts here are data values.
 prog:criterion:etkl:02 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:46" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
+    prog:blockedBy "R166" ;
     prog:met false ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
