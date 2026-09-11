@@ -1,16 +1,16 @@
-"""The arc manifest's membrane (spec 2026-08-20 §4, extended 2026-08-22 §5) — eighteen
-refusals over prog:, counted as `tests/arc-shapes.ttl`'s own header counts them (M2/M2b are
-one, M9/M9b are one, M5/M5b/M5c are one).
+"""The arc manifest's membrane (spec 2026-08-20 §4, extended 2026-08-22 §5, and 2026-09-11
+§ 3.3 with M21) — nineteen refusals over prog:, counted as `tests/arc-shapes.ttl`'s own header
+counts them (M2/M2b are one, M9/M9b are one, M5/M5b/M5c are one).
 
 **Gate classification (CLAUDE.md §8): PROCEDURAL, and here is why it is irreducible.**
-Fifteen of the eighteen refusals are NOT here. Fourteen — M1, M2 (+M2b), M3, M4, M6, M8,
+Fifteen of the nineteen refusals are NOT here. Fourteen — M1, M2 (+M2b), M3, M4, M6, M8,
 M9 (+M9b) over a single criterion, and **M12–M18 over the DEPENDENCY GRAPH between criteria**
 (added 2026-08-22) — are declarative over the manifest graph and live in
 `tests/arc-shapes.ttl` as SHACL — AXIOM / constraint, closed world, the membrane. The
 fifteenth, **M19**, is not here either and could not be: it is A5's two-sided ablation, which
 creates a `git worktree`, deletes a file inside it and reads a pytest exit code, so it lives
 in `tests/test_arc_ablation.py` — split off by COST, not by concern (see that module's
-docstring). This module owns only the five questions **no SHACL engine can see, because they
+docstring). This module owns only the six questions **no SHACL engine can see, because they
 are facts about the environment rather than about the graph**:
 
   * **M5**  — does the file named by `prog:oracleArtifact` exist in the working tree?
@@ -20,6 +20,9 @@ are facts about the environment rather than about the graph**:
               a markdown file that is not part of the graph at all?
   * **M10** — does the `<path>:<line>` named by `prog:source` RESOLVE: does the path exist,
               and is the line in range? (R105, closed 2026-08-21 by Ruling 18.)
+  * **M21** — is the row named by `prog:blockedBy` PARKED in the register index
+              (`open (parked YYYY-MM-DD)`, spec 2026-09-11 § 3.3)? A criterion cannot wait
+              on a row nobody is pursuing; M7's file, one qualifier further in.
 
 A closed-world SHACL constraint can only close over triples. The filesystem, a pytest
 collection and `sys.version` are none of those, and inventing triples that mirror them would
@@ -289,10 +292,24 @@ def _recorded_version_holds(recorded, running):
     return running.split(".")[:len(want)] == want
 
 
-# ------------------------------------------------------------------- the five refusals
+# The PARKED qualifier, spec 2026-09-11 § 3.3: `| R95 | open (parked 2026-09-11) |`. The
+# regex is the one `scripts/cockpit.py` and `scripts/residue_graph.py` read; stated in the plan
+# once (`plans/2026-09-11-the-register-serves-the-arc.md`, task 4) and copied, not derived.
+_PARKED_ROW = re.compile(r"^\| *(R\d+) *\| *open \(parked (\d{4}-\d{2}-\d{2})\)", re.M)
+
+
+def parked_rows():
+    """Every residue id whose index status is `open (parked YYYY-MM-DD)`. NOT cached, unlike
+    `register_rows()`: the M21 test points `REGISTER` at a fixture, and a cache would have to
+    be cleared around it."""
+    return frozenset(rid for rid, _date in
+                     _PARKED_ROW.findall(REGISTER.read_text(encoding="utf-8")))
+
+
+# -------------------------------------------------------------------- the six refusals
 
 def environment_refusals(graph):
-    """Every M5 / M5b / M5c / M7 / M10 refusal this graph earns. Empty == admitted."""
+    """Every M5 / M5b / M5c / M7 / M10 / M21 refusal this graph earns. Empty == admitted."""
     out = []
 
     for iri, met, artifacts, tests in oracle_rows(graph):
@@ -332,6 +349,12 @@ def environment_refusals(graph):
         if residue not in known:
             out.append(f"M7: {iri} is prog:blockedBy {residue!r}, which is not a row in "
                        f"{REGISTER.relative_to(REPO)}")
+    parked = parked_rows()
+    for iri, residue in blocked_rows(graph):
+        if residue in parked:
+            out.append(f"M21: {iri} is prog:blockedBy {residue!r}, which is parked — a "
+                       f"criterion cannot wait on a row nobody is pursuing; unpark it in the "
+                       f"same change")
     return out
 
 
@@ -679,6 +702,23 @@ def test_m7_a_blocking_edge_to_a_nonexistent_residue_is_refused():
     """A dangling edge is worse than no edge: it reads as strategy and points at nothing.
     R999 is not a row in the register index."""
     _refused_by_environment("arc-m7-dangling-residue-leak.ttl", "M7")
+
+
+def test_m21_a_blocking_edge_to_a_parked_residue_is_refused(tmp_path, monkeypatch):
+    """Spec 2026-09-11 § 3.3 (ii): a row the maintainer has parked may not be what a criterion
+    waits on — the two claims contradict, and the fix is to unpark it in the same change.
+
+    Two arms. CONTROL first: against the live register, where no row is parked, the fixture is
+    admitted by the environment leg, which proves the refusal below comes from the qualifier and
+    nothing else. Then the register is a fixture in which the named row IS parked."""
+    fixture = REPO / "tests" / "arc-m21-parked-blocker-leak.ttl"
+    g = Graph().parse(fixture, format="turtle")
+    assert environment_refusals(g) == [], "the control must be admitted against the live register"
+
+    index = tmp_path / "residues.md"
+    index.write_text("| R1 | open (parked 2026-09-11) | x |\n", encoding="utf-8")
+    monkeypatch.setattr(sys.modules[__name__], "REGISTER", index)
+    _refused_by_environment("arc-m21-parked-blocker-leak.ttl", "M21")
 
 
 def test_m10_a_source_pointer_that_resolves_to_nothing_is_refused():

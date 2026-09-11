@@ -7,13 +7,15 @@
 # Inferring by absence in a derivation is what CLAUDE.md §8 forbids; closing over the
 # manifest, which is one hand-authored file, is what a membrane is for.
 #
-# It carries FOURTEEN of the EIGHTEEN refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b)
+# It carries FOURTEEN of the NINETEEN refusals: M1, M2 (+M2b), M3, M4, M6, M8, M9 (+M9b)
 # over a single criterion, and M12–M18 over the DEPENDENCY GRAPH between criteria
 # (spec 2026-08-22 §5, added 2026-08-22).
-# M5, M5b, M5c, M7 and M10 are NOT here and cannot be: they ask about the filesystem, a
+# M5, M5b, M5c, M7, M10 and M21 are NOT here and cannot be: they ask about the filesystem, a
 # pytest collection and `sys.version`, none of which are triples. They live in
 # tests/test_arc_manifest.py, which states why that split is irreducible.
-# (M10 — does prog:source's <path>:<line> resolve — was added 2026-08-21, Ruling 18, R105.)
+# (M10 — does prog:source's <path>:<line> resolve — was added 2026-08-21, Ruling 18, R105.
+#  M21 — is the row prog:blockedBy names PARKED in the register index — added 2026-09-11,
+#  spec 2026-09-11 § 3.3; it reads the same markdown file M7 reads.)
 #
 # M19 CANNOT BE HERE either, and for a stronger reason than M5's. M19 is A5, the two-sided
 # ablation: it creates a git worktree, DELETES a file inside it and reads a pytest exit code.

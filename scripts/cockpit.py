@@ -10,6 +10,9 @@ WHAT IT SHOWS, and every figure is computed from a committed source, never store
 
     res  ▰▰▱▱▱▱▱▱  21/94   the residue register: closed / total, with the trend arrow against the
                            last tally snapshot recorded in the register itself
+    parked 0               open rows the maintainer has PARKED (`open (parked YYYY-MM-DD)`).
+                           A parked row is still OPEN — in the total, not in closed; the count
+                           beside the fraction is the only place the qualifier is read
     7d   ⊕9 ⊖9             raised / closed over the trailing 7 days — the velocity, as two numbers
                            rather than one index, DELIBERATELY (see § the tuned-constant trap)
     idle 0d                days since the last close. The stuck signal, unthresholded
@@ -26,6 +29,9 @@ and, on a SECOND LINE, the arc — the thing this strip could not say until the 
     frontier 15 ready 17   register rows that block an unmet criterion (how much of the arc is
                            waiting on the register), and unmet criteria that name NO blocker —
                            *work that is ready and is not being done*. Two counts, never a ranking
+    serves 0/2/34          loop documents in the trailing window that declare a criterion they
+                           serve / declare `maintenance` / say nothing readable. Three counts of
+                           authored declarations, and none of them is a verdict about a loop
 
 THE `?/4` THIS REPLACES was the honest answer for as long as it was true: `scope-evolution.md`
 named the stages and recorded no state, so nothing in the repo could say which rung we were on,
@@ -157,6 +163,20 @@ def residues() -> tuple[int, int, float | None]:
     return closed, total, delta
 
 
+# The PARKED qualifier (spec 2026-09-11 § 3.3), the regex every reader shares — stated once in
+# `plans/2026-09-11-the-register-serves-the-arc.md` task 4, copied here and in
+# `tests/test_arc_manifest.py` / `scripts/residue_graph.py`, never derived.
+_PARKED = re.compile(r"^\| *R\d+ *\| *open \(parked \d{4}-\d{2}-\d{2}\)", re.M)
+
+
+def parked() -> int:
+    """How many index rows are `open (parked YYYY-MM-DD)`. A sibling of `residues()`, not a
+    fourth element of its tuple, and deliberately so: parking must not move `c` or `t`, and
+    `residues()` is not edited by this feature — the `closed`/`total` regexes above never see
+    the qualifier, since `total` keys on the row prefix and `closed` on the literal word."""
+    return len(_PARKED.findall(_read(INDEX)))
+
+
 def velocity() -> tuple[int, int, int | None]:
     """(raised, closed, days-since-last-close) over the trailing window.
 
@@ -185,7 +205,8 @@ def velocity() -> tuple[int, int, int | None]:
 # `prog:ofRung` disagree, so the rung key is readable off the SUBJECT LINE and a regex is a sound
 # reader of this file. Anchored at column 0: the rung's own `prog:criterion` index lists the same
 # IRIs indented, and matching those would double every count.
-_CRITERION = re.compile(r"^prog:criterion:([A-Za-z0-9_-]+):[A-Za-z0-9_.-]+\s+a\s+prog:Criterion\b")
+# Group 1 is the rung, group 2 the slug; `_criteria()` reads only group 1.
+_CRITERION = re.compile(r"^prog:criterion:([A-Za-z0-9_-]+):([A-Za-z0-9_.-]+)\s+a\s+prog:Criterion\b")
 # `\s+` after `prog:met` is what keeps `prog:metOn` out: 17 of the manifest's 60 `prog:met`
 # occurrences are that longer predicate, and a prefix match would read a date as a boolean.
 _MET = re.compile(r"^\s+prog:met\s+(true|false)\s*[;.]\s*$")
@@ -226,6 +247,16 @@ def _criteria() -> list[tuple[str, bool, tuple[str, ...]]]:
                 out.append((rung, met, tuple(rows)))   # NEITHER column, as arc-position.rq does
             rung = None
     return out
+
+
+def _criterion_ids() -> frozenset[str]:
+    """Every `"<rung>:<slug>"` whose subject line is a criterion — met or not, and INCLUDING the
+    ones `_criteria()` drops for carrying no `prog:met` (measured 2026-09-11, `_criteria()` above:
+    a criterion with no asserted boolean is counted in neither column). Membership is a different
+    question from progress, so it is read straight off the `_CRITERION` matches. Empty when the
+    manifest is unreadable, which callers must treat as "unknowable", never as "none"."""
+    return frozenset(f"{m.group(1)}:{m.group(2)}"
+                     for m in map(_CRITERION.match, _read(ARC_MANIFEST).splitlines()) if m)
 
 
 def arc() -> list[tuple[str, int | None, int | None]]:
@@ -280,16 +311,55 @@ def frontier_counts() -> tuple[int | None, int | None]:
     return len(waiting), ready
 
 
+def _loop_docs() -> list[str]:
+    """Every dated brief/handoff on disk, as absolute paths; `[]` when the directory is not
+    readable. This is the population `serves_window()` counts and `_newest_loop_doc()` picks from."""
+    d = os.path.join(ROOT, "docs", "superpowers")
+    try:
+        return [os.path.join(d, f) for f in os.listdir(d)
+                if re.match(r"\d{4}-\d{2}-\d{2}-.*\.md$", f) and ("handoff" in f or "brief" in f)]
+    except OSError:
+        return []
+
+
 def _newest_loop_doc() -> str | None:
     """The newest brief/handoff on disk — the thing a fresh session would open. Filenames are
     ISO-dated, so `max()` on the name is `max()` on the date."""
-    d = os.path.join(ROOT, "docs", "superpowers")
-    try:
-        names = [f for f in os.listdir(d) if re.match(r"\d{4}-\d{2}-\d{2}-.*\.md$", f)
-                 and ("handoff" in f or "brief" in f)]
-    except OSError:
+    docs = _loop_docs()
+    return max(docs, key=os.path.basename) if docs else None
+
+
+def serves_window() -> tuple[int, int, int] | None:
+    """`(criterion, maintenance, silent)` over the loop documents dated inside the trailing
+    `_WINDOW` days — the same comparison `velocity()` uses on close dates.
+
+    **None when the manifest is unreadable**, for the reason `frontier_counts()` returns
+    `(None, None)`: with no manifest a criterion token cannot be told from a refused one, so a
+    three-way split would be fabricated and `?` is the honest render.
+
+    A doc whose `Serves:` line is present but REFUSED (`_serves_of` → None) counts in the third
+    bucket with the docs that carry no line at all: the strip already treats "unreadable" as
+    "silent" in `topic()`, and a fourth bucket would be a verdict about prose. Three counts, no
+    threshold, no tone beyond `mute` (spec 2026-09-11 § 3.2)."""
+    if not _criterion_ids():
         return None
-    return os.path.join(d, max(names)) if names else None
+    today = _dt.date.today()
+    crit = maint = silent = 0
+    for path in _loop_docs():
+        try:
+            d = _dt.date.fromisoformat(os.path.basename(path)[:10])
+        except ValueError:
+            continue
+        if (today - d).days >= _WINDOW:
+            continue
+        v = _serves_of(path)
+        if v == "maintenance":
+            maint += 1
+        elif v is None:
+            silent += 1
+        else:
+            crit += 1
+    return crit, maint, silent
 
 
 def entry_point() -> str:
@@ -323,18 +393,55 @@ def topic() -> str | None:
     return m.group(1)[:18] if m else None
 
 
+_SERVES = re.compile(r"^\*\*Serves:\*\*\s*(\S+)", re.M)
+_CRITERION_IRI = "prog:criterion:"
+
+
+def _serves_of(path: str) -> str | None:
+    """What one loop document declares it serves: `"maintenance"`, a `"<rung>:<slug>"` that the
+    manifest lists, or None. The value is the FIRST whitespace-delimited token after the field —
+    the live form is `**Serves:** maintenance — <why>`, and the prose after the dash is not read.
+    A criterion token not in `_criterion_ids()` is None: a refusal, not a default (spec 2026-09-11
+    § 3.1 (iii)), and with no manifest every criterion token is refused because membership is
+    unknowable, while `maintenance` still reads — it needs no manifest."""
+    m = _SERVES.search(_read(path)[:4000])
+    if not m:
+        return None
+    token = m.group(1)
+    if token == "maintenance":
+        return token
+    if token.startswith(_CRITERION_IRI):
+        cid = token[len(_CRITERION_IRI):]
+        if cid in _criterion_ids():
+            return cid
+    return None
+
+
+def serves() -> str | None:
+    """The `**Serves:**` field of the newest brief/handoff — the criterion it serves, as
+    `rung:slug`, or the literal `maintenance` — or None if it declares neither.
+
+    **This is the second AUTHORED figure on the strip**, beside `topic()`, and it is the stronger
+    of the two: a criterion value is checked against a NAMED SET, the top-level `prog:Criterion`
+    subjects of `tests/arc-manifest.ttl` — the check `topic()`'s docstring asked for and did not
+    build. `maintenance` is a declared literal and is bounded the way `topic()` is: it lives in a
+    dated file a new loop replaces. Anything else prints nothing (spec 2026-09-11 § 3.1)."""
+    path = _newest_loop_doc()
+    return None if path is None else _serves_of(path)
+
+
 def work() -> str:
     """WHAT WE ARE WORKING ON — the maintainer's first ask of this strip: `topic · subtopic`.
 
-    Rendered as `topic · subject · branch`, each part dropped when its source is silent. The
+    Rendered as `topic · serves · subject · branch`, each part dropped when its source is silent. The
     **subject** is the newest handoff/brief on disk (what a fresh session would open) and the
     **branch** is what git says HEAD is; neither can go stale, because neither is maintained.
 
     The **topic** half is the exception and is declared, not proven — see `topic()` for why that
     was chosen and what would check it. A doc that declares no topic simply drops that part; the
-    strip never invents one."""
+    strip never invents one. **serves** is declared too, but checked — see `serves()`."""
     branch = _run("git", "rev-parse", "--abbrev-ref", "HEAD").strip()
-    parts = [p for p in (topic(), entry_point()) if p and p != "?"]
+    parts = [p for p in (topic(), serves(), entry_point()) if p and p != "?"]
     if branch not in ("", "HEAD"):
         parts.append(branch[:24])
     return f" {chr(183)} ".join(parts) or "?"
@@ -367,6 +474,10 @@ def _arc_line(c) -> str:
     segments.append(f"{c('dim')}ready{c('off')} "
                     f"{c('warn') if ready is None else c('cool')}"
                     f"{'?' if ready is None else ready}{c('off')}")
+    sw = serves_window()
+    segments.append(f"{c('dim')}serves{c('off')} "
+                    + (f"{c('warn')}?{c('off')}" if sw is None else
+                       f"{c('mute')}{sw[0]}/{sw[1]}/{sw[2]}{c('off')}"))
     return f"{c('dim')}arc{c('off')}  " + "  ".join(segments)
 
 
@@ -397,7 +508,8 @@ def render(color: bool = True) -> str:
     return sep.join([
         f"{c('cool')}{work()}{c('off')}",
         f"{c('dim')}residues{c('off')} {c(tone)}{bar(frac)}{c('off')} "
-        f"{c('bold')}{closed}/{total}{c('off')} {c('dim')}closed{c('off')} {trend}",
+        f"{c('bold')}{closed}/{total}{c('off')} {c('dim')}closed{c('off')} {trend} "
+        f"{c('dim')}parked{c('off')} {c('mute')}{parked()}{c('off')}",
         f"{c('dim')}7d{c('off')} {c(vtone)}{raised} raised {closed_7d} closed{c('off')}",
         f"{c('dim')}last close{c('off')} {c(itone)}"
         f"{'?' if idle is None else str(idle) + 'd ago'}{c('off')}",

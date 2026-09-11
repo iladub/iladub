@@ -66,9 +66,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # belongs in the population exactly like `tests/corpus-manifest.ttl`, the register it is
     # modelled on. It is a REGISTER rather than a fixture, which is the same reason again — the
     # carve-out is for fixtures that would fail THIS membrane by design.
+    #
+    # RE-MEASURED AGAIN 2026-09-11 (PARKED / M21): 148 -> 149, `tests/arc-m21-parked-blocker-
+    # leak.ttl` — the negative fixture for M21 (a criterion `prog:blockedBy` a parked row). It is
+    # NOT carved out and must not be: it names declared `prog:` terms only, like every other
+    # `tests/arc-m*-leak.ttl` negative already in the population. `git ls-files "*.ttl"` = 151
+    # minus the 2 carved.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 148
+    assert len(artifact_files()) == len(tracked) - len(carved) == 149
 
 
 def test_each_file_gets_its_own_named_graph():

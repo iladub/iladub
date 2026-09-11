@@ -9,12 +9,17 @@ It prints the figures the maintainer asked for on 2026-09-11 (handoff
 `docs/superpowers/2026-09-11-the-register-serves-the-arc-handoff.md` § 2b): hubs by in-degree,
 connected components, how many rows are isolated, and where the arc touches the live component.
 With `--json PATH` it also writes the node/edge lists the graph artifact was drawn from.
+With `--candidates` it prints, one `R{n}` per line, the STRUCTURAL parking candidates of spec
+2026-09-11 § 3.3: open, named by no `prog:blockedBy`, and with no OPEN neighbour in either
+direction. That list is a structural set and no decision — parking is the maintainer's, per
+row, dated, with a reason; a parked row reads `open (parked YYYY-MM-DD)` in the index and is
+still open to every count here.
 
 PROCEDURAL by CLAUDE.md §8: it reads two files and counts. It decides nothing.
 
 Run from the repo root:
 
-    .venv/bin/python scripts/residue_graph.py [--json out.json]
+    .venv/bin/python scripts/residue_graph.py [--json out.json] [--candidates]
 """
 from __future__ import annotations
 
@@ -38,14 +43,34 @@ def read_rows():
                 continue
             n = int(m.group(1))
             rows[n] = {int(x) for x in re.findall(r"\[\[R(\d+)\]\]", line) if int(x) != n}
-    status, label = {}, {}
+    status, label, parked = {}, {}, set()
+    # The status word is the FIRST word of the cell; a parenthetical qualifier may follow
+    # (`open (half (a) done)`, `open (parked 2026-09-11)`). The reader of record for the index
+    # is `tests/test_residue_register_integrity.py:40`, whose status group this one copies.
+    # The PARKED regex is the one the plan states once (2026-09-11, task 4) and every reader copies.
     for line in open(INDEX, encoding="utf-8"):
-        m = re.match(r"\| ~?~?R(\d+)~?~? \| (\w+) \| (.*?) \|", line)
+        m = re.match(r"\| ~?~?R(\d+)~?~? \| ([A-Za-z]+)[^|]*\| (.*?) \|", line)
         if m:
             status[int(m.group(1))] = m.group(2)
             t = re.sub(r"\*\*|`|\[\[|\]\]", "", m.group(3)).strip()
             label[int(m.group(1))] = t[:150] + ("…" if len(t) > 150 else "")
-    return rows, status, label
+            if re.match(r"\| *R\d+ *\| *open \(parked \d{4}-\d{2}-\d{2}\)", line):
+                parked.add(int(m.group(1)))
+    return rows, status, label, parked
+
+
+def candidates(rows, status, crit):
+    """The structural parking candidates, sorted: open, in no criterion's `prog:blockedBy`, and
+    with no OPEN neighbour in either direction of the wikilink graph. Computed, never decided."""
+    front = {r for v in crit.values() for r in v}
+    open_ = {n for n, s in status.items() if s == "open"}
+    nb = {}
+    for a, refs in rows.items():
+        for b in refs:
+            if b in rows:
+                nb.setdefault(a, set()).add(b)
+                nb.setdefault(b, set()).add(a)
+    return sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
 
 
 def read_criteria():
@@ -62,8 +87,12 @@ def read_criteria():
 
 
 def main(argv):
-    rows, status, label = read_rows()
+    rows, status, label, parked = read_rows()
     crit = read_criteria()
+    if "--candidates" in argv:
+        for n in candidates(rows, status, crit):
+            print(f"R{n}")
+        return 0
     edges = [(a, b) for a, refs in rows.items() for b in refs if b in rows]
     indeg = collections.Counter(b for _, b in edges)
     parent = {n: n for n in rows}
@@ -85,7 +114,7 @@ def main(argv):
           f"{len({a for a, _ in edges} | {b for _, b in edges})}  isolated "
           f"{sum(1 for c in comps.values() if len(c) == 1)}")
     print(f"components {len(comps)}; largest {len(big)} rows R{min(big)}..R{max(big)}, "
-          f"{sum(status.get(n) == 'open' for n in big)} open")
+          f"{sum(status.get(n) == 'open' for n in big)} open; parked {len(parked)}")
     print("hubs (in-degree >= 5):",
           [(f"R{n}", c, status.get(n)) for n, c in indeg.most_common() if c >= 5])
     print(f"criterion->row edges {sum(len(v) for v in crit.values())}; frontier rows {len(front)}, "
@@ -93,6 +122,7 @@ def main(argv):
     if "--json" in argv:
         out = argv[argv.index("--json") + 1]
         json.dump({"nodes": [{"id": n, "status": status.get(n), "label": label.get(n, ""),
+                              "parked": n in parked,
                               "deg": indeg[n] + sum(1 for a, _ in edges if a == n)} for n in rows],
                    "edges": [{"s": a, "t": b} for a, b in edges], "crit": crit},
                   open(out, "w", encoding="utf-8"))
