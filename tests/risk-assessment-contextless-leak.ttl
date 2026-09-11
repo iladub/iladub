@@ -1,0 +1,13 @@
+@prefix risk: <https://w3id.org/iladub/risk#> .
+@prefix tx:   <https://example.org/transplant#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  THE NEGATIVE HALF OF risk:RiskAssessmentShape (arc criterion dec:12). An assessment
+#  that carries a severity but names NO subject and NO context — a risk that is about
+#  nothing, nowhere, which is the empiric stamp wearing the right class. The oracle
+#  (tests/test_risk.py::test_contextless_assessment_rejected) pins the shape by
+#  sh:sourceShape.
+
+tx:assessment-contextless a risk:RiskAssessment ;
+    rdfs:label "A risk assessment of nothing, in no context"@en ;
+    risk:severity risk:Critical .

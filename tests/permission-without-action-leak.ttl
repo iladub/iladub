@@ -1,0 +1,13 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix tx:   <https://example.org/transplant#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  THE NEGATIVE HALF OF gsh:PermissionShape (arc criterion dec:15). A policy whose one
+#  permission names an assignee and a target but NO odrl:action — a grant of nothing in
+#  particular, which an engine would have to read as "everything". The oracle
+#  (tests/test_governance.py::test_permission_without_action_rejected) pins the shape by
+#  sh:sourceShape.
+
+tx:policy-actionless a odrl:Policy ;
+    rdfs:label "A policy granting an unnamed action"@en ;
+    odrl:permission [ odrl:assignee tx:role-opo ; odrl:target tx:clinical ] .

@@ -1,0 +1,13 @@
+@prefix risk: <https://w3id.org/iladub/risk#> .
+@prefix tx:   <https://example.org/transplant#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  THE NEGATIVE HALF OF risk:SensitivityShape (arc criterion dec:13). A sensitivity that
+#  declares its severity but READS no condition — so it generates no read-scope for any
+#  context and the top-down inheritance has nothing to inherit. The oracle
+#  (tests/test_risk.py::test_sensitivity_without_reads_rejected) pins the shape by
+#  sh:sourceShape.
+
+tx:sensitivity-blind a risk:Sensitivity ;
+    rdfs:label "A sensitivity that reads nothing"@en ;
+    risk:severity risk:High .

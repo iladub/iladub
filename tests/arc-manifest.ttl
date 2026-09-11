@@ -695,17 +695,23 @@ prog:criterion:dec:01 a prog:Criterion ;
     prog:oracleTest "tests/test_vocab_shapes.py::test_hol_decision_conformant" ;
     prog:oracleTest "tests/test_vocab_shapes.py::test_hol_rubber_stamp_rejected" .
 
-# UNMET. The positive half exists (examples/promotion.ttl carries one dec:DecisionHolon, and
-# dec:ConfidenceShape targets that class), but NO fixture anywhere in the repo trips it: the
-# union sweep above never names it. A dec:confidence of "1.5"^^xsd:decimal, or two of them,
-# would — and nothing writes one. prog:oracleTest is a TARGET.
+# metOn 2026-09-11: the positive half is dec:01's example (examples/promotion.ttl carries the one
+# dec:DecisionHolon, with dec:confidence 0.9); the negative half is tests/dec-confidence-leak.ttl
+# — one holon carrying dec:confidence 1.5 AND 0.2, so both arms fire. The oracle pins the
+# (focus, path, component) triples, not the verdict: the same node also trips
+# dec:DecisionHolonShape, so `not conforms` alone was measured to pass with the confidence
+# put back in range (loop the-negative-half, spec § 2 oracle ii).
 prog:criterion:dec:02 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/dec-shapes.ttl:38 — dec:ConfidenceShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an out-of-range or duplicated dec:confidence)." ;
     prog:source "CLAUDE.md:252" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/dec-shapes.ttl:38" ;
+    prog:oracleArtifact "examples/promotion.ttl" ;
+    prog:oracleArtifact "tests/dec-confidence-leak.ttl" ;
     prog:oracleTest "tests/test_vocab_shapes.py::test_confidence_out_of_range_rejected" .
 
 # metOn 2026-06-18: shape (bda4151), example and leak (a488934) all that day.
@@ -810,18 +816,22 @@ prog:criterion:dec:08 a prog:Criterion ;
     prog:oracleTest "tests/test_boundary.py::test_promotion_grounds" ;
     prog:oracleTest "tests/test_grounding.py::test_neg_grounded_without_promotion_fails" .
 
-# UNMET, and it is the near miss documented in this section's header:
-# tests/federation-projection-leak.ttl WOULD trip this shape, but tests/test_federation.py:58-61
-# validates that fixture against vocab/shapes/etkl-shapes.ttl only (loaded at :47), and the
-# assertion at :61 is etkl:DocumentProjectionShape's refusal. No shipped test puts a malformed
-# iladub:PromotionDecision in front of iladub-shapes.ttl. prog:oracleTest is a TARGET.
+# metOn 2026-09-11: tests/promotion-unaccountable-leak.ttl puts an iladub:PromotionDecision with
+# neither iladub:reviews nor dec:decidedBy in front of iladub-shapes.ttl, and the oracle pins
+# both minCount violations at that node. (The near miss the earlier prose recorded —
+# tests/federation-projection-leak.ttl validated against etkl-shapes.ttl only — stands as
+# history; it is not this criterion's oracle.)
 prog:criterion:dec:09 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/iladub-shapes.ttl:53 — iladub:PromotionDecisionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no test validates a promotion decision lacking iladub:reviews or dec:decidedBy against these shapes)." ;
     prog:source "CLAUDE.md:252" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/iladub-shapes.ttl:53" ;
+    prog:oracleArtifact "examples/promotion.ttl" ;
+    prog:oracleArtifact "tests/promotion-unaccountable-leak.ttl" ;
     prog:oracleTest "tests/test_boundary.py::test_unaccountable_promotion_rejected" .
 
 # prog:retrospective TRUE for the same measured reason as criterion 07: shape, example and
@@ -862,26 +872,34 @@ prog:criterion:dec:11 a prog:Criterion ;
     prog:oracleTest "tests/test_risk.py::test_transplant_contextual_risk_conformant" ;
     prog:oracleTest "tests/test_risk.py::test_empiric_risk_stamp_rejected" .
 
-# UNMET. tests/risk-leak.ttl trips risk:NoEmpiricRiskShape and nothing else (measured); a
-# risk:RiskAssessment missing risk:ofSubject / risk:inContext / risk:severity exists nowhere.
+# metOn 2026-09-11: tests/risk-assessment-contextless-leak.ttl carries a risk:RiskAssessment with a
+# severity and neither risk:ofSubject nor risk:inContext; the oracle pins both minCounts.
 prog:criterion:dec:12 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/risk-shapes.ttl:35 — risk:RiskAssessmentShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an assessment without its subject, context or severity)." ;
     prog:source "CLAUDE.md:252" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/risk-shapes.ttl:35" ;
+    prog:oracleArtifact "examples/transplant/transplant-risk.ttl" ;
+    prog:oracleArtifact "tests/risk-assessment-contextless-leak.ttl" ;
     prog:oracleTest "tests/test_risk.py::test_contextless_assessment_rejected" .
 
-# UNMET, same measurement: no fixture carries a risk:Sensitivity without its severity or
-# without the condition(s) it reads.
+# metOn 2026-09-11: tests/sensitivity-without-reads-leak.ttl carries a risk:Sensitivity with a
+# severity and no risk:reads; the oracle pins the minCount on risk:reads at that node.
 prog:criterion:dec:13 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/risk-shapes.ttl:49 — risk:SensitivityShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a sensitivity without its severity or its risk:reads conditions)." ;
     prog:source "CLAUDE.md:252" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/risk-shapes.ttl:49" ;
+    prog:oracleArtifact "examples/transplant/transplant-risk.ttl" ;
+    prog:oracleArtifact "tests/sensitivity-without-reads-leak.ttl" ;
     prog:oracleTest "tests/test_risk.py::test_sensitivity_without_reads_rejected" .
 
 # --- vocab/shapes/governance-shapes.ttl -----------------------------------------------
@@ -901,17 +919,22 @@ prog:criterion:dec:14 a prog:Criterion ;
     prog:oracleTest "tests/test_governance.py::test_governance_example_conformant" ;
     prog:oracleTest "tests/test_governance.py::test_direct_ai_grant_rejected" .
 
-# UNMET. The governance leak fixture trips gsh:AiInheritsUserShape alone (measured); a
-# permission with no odrl:action or no odrl:assignee is written nowhere. Note the positive
-# half is the strongest on this rung — 7 focus nodes — which is exactly how a shape ends up
-# well exercised and never falsified.
+# metOn 2026-09-11: tests/permission-without-action-leak.ttl carries a policy whose one permission
+# names an assignee and a target but no odrl:action; the oracle pins the minCount on
+# odrl:action (the focus node is a blank permission, so it is not part of the key). The
+# positive half — 7 focus nodes in examples/transplant/transplant-governance.ttl — is
+# unchanged and is still the strongest on this rung.
 prog:criterion:dec:15 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "vocab/shapes/governance-shapes.ttl:45 — gsh:PermissionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a permission without an odrl:action or an odrl:assignee)." ;
     prog:source "CLAUDE.md:252" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/shapes/governance-shapes.ttl:45" ;
+    prog:oracleArtifact "examples/transplant/transplant-governance.ttl" ;
+    prog:oracleArtifact "tests/permission-without-action-leak.ttl" ;
     prog:oracleTest "tests/test_governance.py::test_permission_without_action_rejected" .
 
 # --- vocab/shapes/iladub-hga-shapes.ttl -----------------------------------------------
@@ -985,21 +1008,23 @@ prog:criterion:dec:16 a prog:Criterion ;
 # same rule this manifest applies to the `holon` rung above), so the declaration is ee221de,
 # 2026-05-31 — the day the Contract was written.
 #
-# NO prog:oracleArtifact here, deliberately — but NOT because naming one would be refused.
-# On THIS row it would be inert: M5 evaluates only `met true` criteria
-# (tests/test_arc_manifest.py:153-156), and this row is `met false`, so an artifact named here
-# would be neither checked nor consulted. It is omitted because the moment someone flips this
-# row to met, an existing vocab/ontology/dec.ttl would let M5 pass a claim that is still false
-# — the axioms are on disk; the TEST is what is missing. Falsification arm A in task 4's
-# report runs exactly that counterfactual and shows M5 silent and M5b alone refusing. Leaving
-# the field off keeps the row's only evidence the one that can fail: prog:oracleTest.
+# metOn 2026-09-11: tests/test_hga_alignment.py::test_dec_provenance_axioms_present parses dec.ttl
+# alone and asserts the four triples. The prog:oracleArtifact lines below name the four axiom
+# lines; they were withheld while the row was unmet (the earlier prose: on a `met false` row an
+# existing dec.ttl would have let M5 pass a claim the missing TEST made false), and they are
+# named now because M5b has the test to collect.
 prog:criterion:dec:17 a prog:Criterion ;
     prog:ofRung "dec" ;
     prog:statement "The four provenance-reuse axioms declared in the Contract — dec:DecisionHolon ⊑ prov:Activity, dec:consideredEvidence ⊑ prov:used, dec:decidedBy ⊑ prov:wasAssociatedWith, dec:produced ⊑ prov:generated (vocab/ontology/dec.ttl:38,55,72,85) — are asserted by a test. They are declared and enforced by nothing." ;
     prog:source "CLAUDE.md:249-251" ;
     prog:declaredOn "2026-05-31"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-11"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "vocab/ontology/dec.ttl:38" ;
+    prog:oracleArtifact "vocab/ontology/dec.ttl:55" ;
+    prog:oracleArtifact "vocab/ontology/dec.ttl:72" ;
+    prog:oracleArtifact "vocab/ontology/dec.ttl:85" ;
     prog:oracleTest "tests/test_hga_alignment.py::test_dec_provenance_axioms_present" .
 
 
@@ -1546,28 +1571,28 @@ prog:criterion:dec:02 prog:proposedDependsOn prog:criterion:dec:01 .
    rdf:subject   prog:criterion:dec:02 ;
    rdf:predicate prog:proposedDependsOn ;
    rdf:object    prog:criterion:dec:01 ;
-   prog:dependencyRationale "reading: dec:ConfidenceShape TARGETS dec:DecisionHolon (this manifest's dec:02 note), so its positive half is the one dec:DecisionHolon in examples/promotion.ttl — dec:01's example — and the missing negative fixture would carry an out-of-range dec:confidence on that same class. Ungroundable: fails A1 (dec:02 unmet) and A2 (no prog:oracleArtifact; the named test is a target)." .
+   prog:dependencyRationale "reading: dec:ConfidenceShape TARGETS dec:DecisionHolon (this manifest's dec:02 note), so its positive half is the one dec:DecisionHolon in examples/promotion.ttl — dec:01's example — and the missing negative fixture would carry an out-of-range dec:confidence on that same class. Ungroundable: fails A6 — both criteria declare vocab/shapes/dec-shapes.ttl (dec:01 at :15, dec:02 at :38) and examples/promotion.ttl." .
 
 prog:criterion:dec:12 prog:proposedDependsOn prog:criterion:dec:11 .
 [] a rdf:Statement ;
    rdf:subject   prog:criterion:dec:12 ;
    rdf:predicate prog:proposedDependsOn ;
    rdf:object    prog:criterion:dec:11 ;
-   prog:dependencyRationale "reading: risk:RiskAssessmentShape's conformant half is the 2 focus nodes this manifest counted in examples/transplant/transplant-risk.ttl, and its future oracle would load vocab/shapes/risk-shapes.ttl + that example — both of them dec:11's declared prog:oracleArtifact. Ungroundable: fails A1 (dec:12 unmet) and A2 (no prog:oracleArtifact). NOTE the weaker half of the predicate's meaning: dec:11 being unmet would not by itself block dec:12, so what is proposed here is the artifact-consumption half, and it is a proposition for that reason too." .
+   prog:dependencyRationale "reading: risk:RiskAssessmentShape's conformant half is the 2 focus nodes this manifest counted in examples/transplant/transplant-risk.ttl, and its future oracle would load vocab/shapes/risk-shapes.ttl + that example — both of them dec:11's declared prog:oracleArtifact. Ungroundable: fails A6 — both criteria declare vocab/shapes/risk-shapes.ttl (dec:11 at :17, dec:12 at :35) and examples/transplant/transplant-risk.ttl. NOTE the weaker half of the predicate's meaning: dec:11 being unmet would not by itself block dec:12, so what is proposed here is the artifact-consumption half, and it is a proposition for that reason too." .
 
 prog:criterion:dec:13 prog:proposedDependsOn prog:criterion:dec:11 .
 [] a rdf:Statement ;
    rdf:subject   prog:criterion:dec:13 ;
    rdf:predicate prog:proposedDependsOn ;
    rdf:object    prog:criterion:dec:11 ;
-   prog:dependencyRationale "reading: risk:SensitivityShape's conformant half is the 3 focus nodes counted in examples/transplant/transplant-risk.ttl and its shape file is vocab/shapes/risk-shapes.ttl — both dec:11's artifacts. Ungroundable: fails A1 (dec:13 unmet) and A2 (no prog:oracleArtifact). Same caveat as dec:12 -> dec:11: this is the consumption half of the reading, not the blocking half." .
+   prog:dependencyRationale "reading: risk:SensitivityShape's conformant half is the 3 focus nodes counted in examples/transplant/transplant-risk.ttl and its shape file is vocab/shapes/risk-shapes.ttl — both dec:11's artifacts. Ungroundable: fails A6 — both criteria declare vocab/shapes/risk-shapes.ttl (dec:11 at :17, dec:13 at :49) and examples/transplant/transplant-risk.ttl. Same caveat as dec:12 -> dec:11: this is the consumption half of the reading, not the blocking half." .
 
 prog:criterion:dec:15 prog:proposedDependsOn prog:criterion:dec:14 .
 [] a rdf:Statement ;
    rdf:subject   prog:criterion:dec:15 ;
    rdf:predicate prog:proposedDependsOn ;
    rdf:object    prog:criterion:dec:14 ;
-   prog:dependencyRationale "reading: gsh:PermissionShape's positive half is the 7 odrl permissions counted in examples/transplant/transplant-governance.ttl, and its shape file is vocab/shapes/governance-shapes.ttl — both of them dec:14's declared artifacts; this manifest's dec:15 note calls that positive half 'the strongest on this rung'. Ungroundable: fails A1 (dec:15 unmet) and A2 (no prog:oracleArtifact). Consumption half only, as with dec:12/dec:13." .
+   prog:dependencyRationale "reading: gsh:PermissionShape's positive half is the 7 odrl permissions counted in examples/transplant/transplant-governance.ttl, and its shape file is vocab/shapes/governance-shapes.ttl — both of them dec:14's declared artifacts; this manifest's dec:15 note calls that positive half 'the strongest on this rung'. Ungroundable: fails A6 — both criteria declare vocab/shapes/governance-shapes.ttl (dec:14 at :27, dec:15 at :45) and examples/transplant/transplant-governance.ttl. Consumption half only, as with dec:12/dec:13." .
 
 # The one edge that leaves the vocabulary rungs for the runtime one.
 prog:criterion:substrate:03 prog:proposedDependsOn prog:criterion:dec:14 .

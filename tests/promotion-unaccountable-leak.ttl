@@ -1,0 +1,14 @@
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix ex:     <https://example.org/demo#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  THE NEGATIVE HALF OF iladub:PromotionDecisionShape (arc criterion dec:09). A promotion
+#  that reviews NO candidate concept and names NO accountable agent: a membrane crossing
+#  nobody decided and nothing was decided about. The oracle
+#  (tests/test_boundary.py::test_unaccountable_promotion_rejected) pins the shape by
+#  sh:sourceShape.
+
+ex:promotion-unaccountable a iladub:PromotionDecision ;
+    rdfs:label "A promotion with no reviewer and nothing reviewed"@en ;
+    dec:confidence 0.9 .
