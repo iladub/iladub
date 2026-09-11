@@ -99,3 +99,12 @@ prog:criterion:<rung>:<slug>` moves the first digit.
   yet informative: a pass that parks nothing does not test whether PARKED is doing `closed`'s work.
   It becomes informative at the first pass that parks a row. Carried forward, not refuted.
 - **5c** is unchanged by this: the loop declares `maintenance`, so the criterion digit stays 0.
+
+## 7. CI on `90f673c` FAILED — the tracked-`.ttl` population trap, again (appended 2026-09-11)
+
+Two tests, one cause: `test_artifact_terms.py` and `test_artifact_declarations.py` pin the `.ttl`
+population as a re-measured number (148) and `tests/arc-m21-parked-blocker-leak.ttl` joined it at
+`git add` (`assert 149 == 148`; `(151 - 2) == 148`). § 2 above lists the files this loop ran
+locally — neither of these was among them, which is exactly the trap [[R179]]'s memory recorded:
+a new tracked `.ttl` fails only after `git add`, and only in tests the loop did not think to run.
+Re-measured to 149 in both, with the conventional dated comment; both files pass locally (27).
