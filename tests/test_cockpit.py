@@ -420,3 +420,17 @@ def test_serves_window_is_unknown_without_a_manifest(tmp_path, monkeypatch):
     assert cockpit.serves_window() is None
     arc_line = _strip(cockpit.render(color=False)).splitlines()[1]
     assert "serves ?" in arc_line, arc_line
+
+
+def test_a_parked_row_is_counted_and_the_tally_does_not_move(tmp_path, monkeypatch):
+    """Spec § 3.3 (iii): parking changes neither `c` nor `t`. The qualifier is read by one new
+    counter and is invisible to the one the maintainer's convention defines."""
+    _register(tmp_path, monkeypatch, index=_INDEX_4)
+    before = cockpit.residues()[:2]
+    assert cockpit.parked() == 0
+    _register(tmp_path, monkeypatch,
+              index=_INDEX_4.replace("| R4 | open |", "| R4 | open (parked 2026-09-11) |"))
+    assert cockpit.residues()[:2] == before == (2, 4)
+    assert cockpit.parked() == 1
+    line1 = _strip(cockpit.render(color=False)).splitlines()[0]
+    assert "parked 1" in line1, line1

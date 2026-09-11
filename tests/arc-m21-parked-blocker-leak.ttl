@@ -1,0 +1,22 @@
+# NEGATIVE FIXTURE — this file MUST be refused, AGAINST A REGISTER IN WHICH R1 IS PARKED.
+# See tests/test_arc_manifest.py::test_m21_a_blocking_edge_to_a_parked_residue_is_refused.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prog: <https://w3id.org/iladub/progress#> .
+
+# M21 (spec 2026-09-11 § 3.3): a prog:blockedBy naming a residue row the maintainer has PARKED
+# (`| R1 | open (parked YYYY-MM-DD) |` in the register index). A criterion cannot wait on a
+# row nobody is pursuing; the two claims contradict, and the fix is to unpark it in the same
+# change. The register this is refused against is a TEST FIXTURE: the live register parks
+# nothing until the maintainer's own triage, so against the live index this file is ADMITTED
+# (R1 exists there, closed and unparked) — which is the control arm of the test, and what
+# proves the refusal comes from the qualifier alone. SHACL-clean by design: the register is a
+# markdown file the graph cannot see. Copied from arc-m7-dangling-residue-leak.ttl with R1 for R999.
+prog:criterion:tab:matrix-ambiguous a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "MATRIX_AMBIGUOUS either does not fire on the corpus, or every occurrence is adjudicated." ;
+    prog:source "docs/superpowers/specs/2026-08-20-the-arc-has-a-denominator-design.md:423-424" ;
+    prog:declaredOn "2026-08-01"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R1" .

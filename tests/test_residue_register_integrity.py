@@ -23,6 +23,7 @@ structural one about rows, and conflating them would make one refusal answer two
 line is defined as a pointer (CLAUDE.md); what it points AT is what is checked here.
 """
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -106,3 +107,39 @@ def test_no_residue_id_is_declared_twice():
         if seen:
             dupes[name] = sorted(seen, key=lambda r: int(r[1:]))
     assert dupes == {}, f"residue ids declared more than once: {dupes}"
+
+
+def _register(tmp_path, monkeypatch, index: str, open_: str, closed: str = ""):
+    """Point the module's readers at a synthetic register (its three inputs)."""
+    (tmp_path / "residues.md").write_text(index, encoding="utf-8")
+    (tmp_path / "residues-open.md").write_text(open_, encoding="utf-8")
+    (tmp_path / "residues-closed.md").write_text(closed, encoding="utf-8")
+    monkeypatch.setattr(sys.modules[__name__], "INDEX", tmp_path / "residues.md")
+    monkeypatch.setattr(sys.modules[__name__], "DETAIL",
+                        {"open": tmp_path / "residues-open.md",
+                         "closed": tmp_path / "residues-closed.md"})
+
+
+def test_a_parked_row_routes_to_the_open_file_and_is_not_struck(tmp_path, monkeypatch):
+    """Spec 2026-09-11 § 3.3: PARKED is a qualifier on `open`, never a third file or a closure.
+    The first word still routes; the qualifier is prose to every reader here."""
+    _register(tmp_path, monkeypatch,
+              index="| R7 | open (parked 2026-09-11) | x |\n| R8 | closed | y |\n",
+              open_="| R7 (1/2 closed) | x. **PARKED 2026-09-11:** no loop cites it. |\n",
+              closed="| ~~R8~~ (1/2 closed) | y |\n")
+    assert index_rows() == {"R7": "open", "R8": "closed"}
+    test_every_index_status_is_open_or_closed()
+    test_every_index_row_has_exactly_one_detail_row_in_the_file_its_status_names()
+    test_every_detail_row_has_an_index_row()
+    test_a_row_is_struck_if_and_only_if_it_is_filed_closed("open")
+    test_a_row_is_struck_if_and_only_if_it_is_filed_closed("closed")
+
+
+def test_a_struck_parked_row_is_a_half_done_closure_and_is_refused(tmp_path, monkeypatch):
+    """Parking is not closing: a parked row that somebody struck is the same contradiction the
+    strike test already refuses, and the qualifier must not hide it."""
+    _register(tmp_path, monkeypatch,
+              index="| R7 | open (parked 2026-09-11) | x |\n",
+              open_="| ~~R7~~ (1/2 closed) | x. **PARKED 2026-09-11:** reason |\n")
+    with pytest.raises(AssertionError):
+        test_a_row_is_struck_if_and_only_if_it_is_filed_closed("open")

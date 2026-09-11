@@ -10,6 +10,9 @@ WHAT IT SHOWS, and every figure is computed from a committed source, never store
 
     res  ▰▰▱▱▱▱▱▱  21/94   the residue register: closed / total, with the trend arrow against the
                            last tally snapshot recorded in the register itself
+    parked 0               open rows the maintainer has PARKED (`open (parked YYYY-MM-DD)`).
+                           A parked row is still OPEN — in the total, not in closed; the count
+                           beside the fraction is the only place the qualifier is read
     7d   ⊕9 ⊖9             raised / closed over the trailing 7 days — the velocity, as two numbers
                            rather than one index, DELIBERATELY (see § the tuned-constant trap)
     idle 0d                days since the last close. The stuck signal, unthresholded
@@ -158,6 +161,20 @@ def residues() -> tuple[int, int, float | None]:
         if int(t):
             delta = closed / total * 100 - int(c) / int(t) * 100
     return closed, total, delta
+
+
+# The PARKED qualifier (spec 2026-09-11 § 3.3), the regex every reader shares — stated once in
+# `plans/2026-09-11-the-register-serves-the-arc.md` task 4, copied here and in
+# `tests/test_arc_manifest.py` / `scripts/residue_graph.py`, never derived.
+_PARKED = re.compile(r"^\| *R\d+ *\| *open \(parked \d{4}-\d{2}-\d{2}\)", re.M)
+
+
+def parked() -> int:
+    """How many index rows are `open (parked YYYY-MM-DD)`. A sibling of `residues()`, not a
+    fourth element of its tuple, and deliberately so: parking must not move `c` or `t`, and
+    `residues()` is not edited by this feature — the `closed`/`total` regexes above never see
+    the qualifier, since `total` keys on the row prefix and `closed` on the literal word."""
+    return len(_PARKED.findall(_read(INDEX)))
 
 
 def velocity() -> tuple[int, int, int | None]:
@@ -491,7 +508,8 @@ def render(color: bool = True) -> str:
     return sep.join([
         f"{c('cool')}{work()}{c('off')}",
         f"{c('dim')}residues{c('off')} {c(tone)}{bar(frac)}{c('off')} "
-        f"{c('bold')}{closed}/{total}{c('off')} {c('dim')}closed{c('off')} {trend}",
+        f"{c('bold')}{closed}/{total}{c('off')} {c('dim')}closed{c('off')} {trend} "
+        f"{c('dim')}parked{c('off')} {c('mute')}{parked()}{c('off')}",
         f"{c('dim')}7d{c('off')} {c(vtone)}{raised} raised {closed_7d} closed{c('off')}",
         f"{c('dim')}last close{c('off')} {c(itone)}"
         f"{'?' if idle is None else str(idle) + 'd ago'}{c('off')}",
