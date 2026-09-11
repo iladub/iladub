@@ -129,6 +129,7 @@ def test_the_arc_gauge_reports_unknown_and_must_not_guess(monkeypatch, tmp_path)
     arc_line = _strip(cockpit.render(color=False)).splitlines()[1]
     for key, _met, _declared in rungs:
         assert f"{key} ?" in arc_line, f"{key} does not read `?` on {arc_line!r}"
+    assert "serves ?" in arc_line, arc_line
     assert not re.search(r"\d", arc_line), (
         f"a digit reached the arc line with no manifest behind it: {arc_line!r}")
 
@@ -376,3 +377,46 @@ def test_the_live_newest_handoff_declares_what_it_serves():
     assert cockpit.serves() is not None, (
         f"{path} declares no readable `**Serves:**` — a criterion IRI present in the manifest, "
         "or `maintenance`")
+
+
+def _window_docs(tmp_path, monkeypatch, headers: dict[str, str]):
+    """`{filename: header-line}` → a docs dir the strip reads as its loop documents."""
+    paths = []
+    for name, header in headers.items():
+        p = tmp_path / name
+        p.write_text(f"# t\n\n**Topic:** x ·\n{header}\n", encoding="utf-8")
+        paths.append(str(p))
+    monkeypatch.setattr(cockpit, "_loop_docs", lambda: paths)
+    m = tmp_path / "manifest.ttl"
+    m.write_text(_MANIFEST_1, encoding="utf-8")
+    monkeypatch.setattr(cockpit, "ARC_MANIFEST", str(m))
+
+
+def test_serves_window_counts_criterion_maintenance_and_silence_inside_the_window(tmp_path, monkeypatch):
+    """Spec § 3.2: three counts, no verdict. A doc dated outside `_WINDOW` days is not counted;
+    a refused value counts with the silent ones — the strip does not grade prose."""
+    import datetime as dt
+    today = dt.date.today().isoformat()
+    old = (dt.date.today() - dt.timedelta(days=cockpit._WINDOW + 30)).isoformat()
+    _window_docs(tmp_path, monkeypatch, {
+        f"{today}-a-handoff.md": "**Serves:** prog:criterion:etkl:05",
+        f"{today}-b-handoff.md": "**Serves:** maintenance — why",
+        f"{today}-c-brief.md": "",
+        f"{today}-d-handoff.md": "**Serves:** prog:criterion:etkl:99",
+        f"{old}-e-handoff.md": "**Serves:** prog:criterion:etkl:05",
+    })
+    assert cockpit.serves_window() == (1, 1, 2)
+    arc_line = _strip(cockpit.render(color=False)).splitlines()[1]
+    assert "serves 1/1/2" in arc_line, arc_line
+
+
+def test_serves_window_is_unknown_without_a_manifest(tmp_path, monkeypatch):
+    """With no manifest a criterion token cannot be told from a refused one, so the split is
+    unknowable and renders `?` — the same refusal `frontier` makes (`cockpit.py:251-255`)."""
+    import datetime as dt
+    today = dt.date.today().isoformat()
+    _window_docs(tmp_path, monkeypatch, {f"{today}-a-handoff.md": "**Serves:** maintenance"})
+    monkeypatch.setattr(cockpit, "ARC_MANIFEST", str(tmp_path / "absent.ttl"))
+    assert cockpit.serves_window() is None
+    arc_line = _strip(cockpit.render(color=False)).splitlines()[1]
+    assert "serves ?" in arc_line, arc_line

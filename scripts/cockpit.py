@@ -26,6 +26,9 @@ and, on a SECOND LINE, the arc — the thing this strip could not say until the 
     frontier 15 ready 17   register rows that block an unmet criterion (how much of the arc is
                            waiting on the register), and unmet criteria that name NO blocker —
                            *work that is ready and is not being done*. Two counts, never a ranking
+    serves 0/2/34          loop documents in the trailing window that declare a criterion they
+                           serve / declare `maintenance` / say nothing readable. Three counts of
+                           authored declarations, and none of them is a verdict about a loop
 
 THE `?/4` THIS REPLACES was the honest answer for as long as it was true: `scope-evolution.md`
 named the stages and recorded no state, so nothing in the repo could say which rung we were on,
@@ -291,16 +294,55 @@ def frontier_counts() -> tuple[int | None, int | None]:
     return len(waiting), ready
 
 
+def _loop_docs() -> list[str]:
+    """Every dated brief/handoff on disk, as absolute paths; `[]` when the directory is not
+    readable. This is the population `serves_window()` counts and `_newest_loop_doc()` picks from."""
+    d = os.path.join(ROOT, "docs", "superpowers")
+    try:
+        return [os.path.join(d, f) for f in os.listdir(d)
+                if re.match(r"\d{4}-\d{2}-\d{2}-.*\.md$", f) and ("handoff" in f or "brief" in f)]
+    except OSError:
+        return []
+
+
 def _newest_loop_doc() -> str | None:
     """The newest brief/handoff on disk — the thing a fresh session would open. Filenames are
     ISO-dated, so `max()` on the name is `max()` on the date."""
-    d = os.path.join(ROOT, "docs", "superpowers")
-    try:
-        names = [f for f in os.listdir(d) if re.match(r"\d{4}-\d{2}-\d{2}-.*\.md$", f)
-                 and ("handoff" in f or "brief" in f)]
-    except OSError:
+    docs = _loop_docs()
+    return max(docs, key=os.path.basename) if docs else None
+
+
+def serves_window() -> tuple[int, int, int] | None:
+    """`(criterion, maintenance, silent)` over the loop documents dated inside the trailing
+    `_WINDOW` days — the same comparison `velocity()` uses on close dates.
+
+    **None when the manifest is unreadable**, for the reason `frontier_counts()` returns
+    `(None, None)`: with no manifest a criterion token cannot be told from a refused one, so a
+    three-way split would be fabricated and `?` is the honest render.
+
+    A doc whose `Serves:` line is present but REFUSED (`_serves_of` → None) counts in the third
+    bucket with the docs that carry no line at all: the strip already treats "unreadable" as
+    "silent" in `topic()`, and a fourth bucket would be a verdict about prose. Three counts, no
+    threshold, no tone beyond `mute` (spec 2026-09-11 § 3.2)."""
+    if not _criterion_ids():
         return None
-    return os.path.join(d, max(names)) if names else None
+    today = _dt.date.today()
+    crit = maint = silent = 0
+    for path in _loop_docs():
+        try:
+            d = _dt.date.fromisoformat(os.path.basename(path)[:10])
+        except ValueError:
+            continue
+        if (today - d).days >= _WINDOW:
+            continue
+        v = _serves_of(path)
+        if v == "maintenance":
+            maint += 1
+        elif v is None:
+            silent += 1
+        else:
+            crit += 1
+    return crit, maint, silent
 
 
 def entry_point() -> str:
@@ -415,6 +457,10 @@ def _arc_line(c) -> str:
     segments.append(f"{c('dim')}ready{c('off')} "
                     f"{c('warn') if ready is None else c('cool')}"
                     f"{'?' if ready is None else ready}{c('off')}")
+    sw = serves_window()
+    segments.append(f"{c('dim')}serves{c('off')} "
+                    + (f"{c('warn')}?{c('off')}" if sw is None else
+                       f"{c('mute')}{sw[0]}/{sw[1]}/{sw[2]}{c('off')}"))
     return f"{c('dim')}arc{c('off')}  " + "  ".join(segments)
 
 
