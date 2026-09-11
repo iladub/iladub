@@ -104,3 +104,27 @@ notes the criterion will not flip (the score is predicted unchanged).
 - Whether a PARKED state is expressible without touching the `(c/t closed)` arithmetic the
   maintainer ruled — the spec's question.
 - The working-token figure (~224K) is from the harness's context line, not a status-line reading.
+
+## 2b. Appended the same day — the register IS already a graph, and it was drawn
+
+The maintainer asked whether residues could be linked and resolved as a graph. They already are:
+every `[[R…]]` in a row's text is an edge. `scripts/residue_graph.py` (committed here, PROCEDURAL)
+extracts it; the drawing is the artifact *Residue Graph*
+(https://claude.ai/code/artifact/336546b7-19b0-4dda-a016-8bc7f8092a32, private, drawn from the
+script's `--json`). Measured on `main` at `0bc7aca`:
+
+```
+rows 198  row->row links 166  rows with any link 96  isolated 102
+components 109; largest 79 rows R26..R205, 46 open
+hubs (in-degree >= 5): R173 10 open · R188 8 open · R165 7 closed · R166 7 open · R187 6 closed · R174 5 closed
+criterion->row edges 18; frontier rows 13, in the largest component: [97, 99]
+```
+
+**What this adds to 5a/5b.** *Resolve it as a graph* means closing hubs, not leaves: R173 (corpus
+tests invisible to CI) is the stated reason ten rows' evidence cannot reach CI, and R166 is the
+root of the whole donation chain, one link from R44 — the missing edge between the live component
+and the arc frontier. Two conventions for the spec to weigh: a raised row links what it descends
+from (the September rows mostly do), and the 102 isolated rows are triaged first — a row nothing
+cites and that cites nothing is the natural PARKED candidate. The cockpit could carry one more
+count, *open hubs*, beside `frontier` and `ready`. None of this is ruled; 5b's clustering test is
+now cheap to run on the extracted graph.
