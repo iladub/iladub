@@ -26,7 +26,9 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     Measured 2026-09-11 with every index row read (task 1): 80 candidates; the spec's 78 was
     counted before R131 and R141 were readable. No row is parked on this tree.
     RE-MEASURED 2026-09-11 (the-negative-half): 80 -> 81 — R209 is open, blocks no criterion
-    and links only to the closed R179, so it is a candidate by § 3.3's own rule."""
+    and links only to the closed R179, so it is a candidate by § 3.3's own rule.
+    RE-MEASURED 2026-09-11 (etkl-02-r166-first): 81 -> 82 — R210 is open, blocks no criterion and
+    links to no row; R166, now named by etkl:02's prog:blockedBy, was not a candidate before or after."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -40,4 +42,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 81
+    assert len(expected) == 82
