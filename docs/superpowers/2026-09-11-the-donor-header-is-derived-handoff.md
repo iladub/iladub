@@ -1,5 +1,7 @@
 # Handoff — the donor's header is derived, and adoption is not the cheaper arm
 
+
+**Topic:** [[R203]], the donor's header derived — the measurement loop before the donation plan
 **Date:** 2026-09-11. **Loop shape:** a MEASUREMENT loop against the previous handoff's § 5c/§ 5d,
 run before the donation plan. No compiler behaviour changes. One instrument committed.
 **Doc impact: none.**
