@@ -244,3 +244,46 @@ are, the spec's § 2 is "a spanning parent whose label is a scheme member donate
 If not, the spec needs a scheme first, and that is a vocabulary loop, not an etkl one. Either way,
 the two unlabelled measures under each port need a contract field the source never names. That is
 the part §7 makes hard, and the spec must say how it is licensed or refuse it.
+
+## 9. Addendum: 8c run (the same session, 2026-09-11)
+
+Written at about 87K working tokens, past the 50K originating floor. 9a is a measurement and is
+fatigue-proof. 9b is graded below.
+
+### 9a. ASSERTED: 8c holds. The split between key and field name falls exactly on the span
+
+The shipped `scheme_member`, run over every field of `examples/shipping/stem-contract.ttl` against
+`stem-terms.ttl`, for each of band 2's 9 labels:
+
+```
+Year               admitting fields: 0 []
+Elevation Period   admitting fields: 0 []
+Mackay             admitting fields: 1 [('port', 'https://example.org/shipping#p-mackay')]
+Gladstone          admitting fields: 1 [('port', 'https://example.org/shipping#p-gladstone')]
+Fisherman Islands  admitting fields: 1 [('port', 'https://example.org/shipping#p-fisherman')]
+Carrington         admitting fields: 1 [('port', 'https://example.org/shipping#p-carrington')]
+Port Kembla        admitting fields: 1 [('port', 'https://example.org/shipping#p-kembla')]
+Geelong            admitting fields: 1 [('port', 'https://example.org/shipping#p-geelong')]
+Portland           admitting fields: 1 [('port', 'https://example.org/shipping#p-portland')]
+```
+
+All 7 two-column parents are admitted by exactly one field (`ship:port`), which is `marker_field`'s
+unique-admission rule (R207). The 2 one-column parents are admitted by none. A `grep` for each port
+name as a quoted literal over `examples/`, `vocab/` and `src/` finds only `stem-terms.ttl`. **The
+contract is the stem's, not capacity's.** graincorp-capacity still has no contract (5c), so the
+scheme is borrowed, not the document's own.
+
+### 9b. PROPOSED (written over the floor: medium confidence): the spec's § 2 is a key-donating parent, and its hard part is the unnamed measures
+
+The reading 9a supports: a donor label that spans more than one recipient column **and** is
+admitted by exactly one scheme field is a KEY. Graincorp then unpivots to one record per
+(Year, Elevation Period, port), where port grounds by scheme. A label that spans one column and is
+admitted by nothing stays a field name, as today. That gives the arm a built-in negative on the same
+page (`Year`, `Elevation Period`), besides the 7 bfs pairs from 7b. **What would refute it quickly:**
+a corpus page where a spanned label is a scheme member but is NOT a dimension value. Enumerate the
+spanning labels 7a found (bfs p6's donors are data rows, so none of them qualify), then ask the
+maintainer. **What the spec cannot dodge:** each port's two leaves carry no printed name (a tonnage,
+a Y/N). A key reading removes the port from the field name and leaves two nameless measures per
+record. §7 forbids inventing their names, so the spec must either license a name from somewhere the
+source supports (the page's title or caption, the contract) or keep them quarantined as
+propositions. Choosing between those is the maintainer's call, not a loop's.
