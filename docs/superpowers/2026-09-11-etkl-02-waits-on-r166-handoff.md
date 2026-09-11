@@ -97,3 +97,193 @@ These are on `512f82e`, and the edge is on this branch.
   branch was renamed.
 - The earlier handoff (PR #206) was still waiting on CI when this was written. Its 5c is refuted
   here, not edited there: that file is Evidence.
+
+## 6. Addendum: 5b measured (a fresh session, 2026-09-11)
+
+Appended, not edited: parts 1-5 above stand as written. This session started fresh on `536b0d3`
+and ran only measurements. The record is [[R211]], raised here.
+
+### 6a. ASSERTED: 5b is refuted as written. Grid donation refuses this donor, and the spec already said so
+
+Of the donation relation's four positive facts, three hold on graincorp p0 band 2 → band 3: it is
+earlier on the page, it is wholly drawn (10 rule x's), and the page datagrid refuses its line
+(page line 3) `every-measure` (`scripts/donor_header_criterion.py`). The fourth, `same_ncols`,
+fails: 9 against 16. Part 5b called this "unmeasured" because `grep -i capacity` over the plan
+returned nothing. The refusal is recorded in the spec the plan was written from:
+`specs/2026-09-10-the-grid-the-author-drew-design.md` census row 2 and § 3(c), where this page is
+the relation's null control. The grep searched the wrong file.
+
+### 6b. ASSERTED: the refused donor is a coarser partition of the recipient, not a wrong one
+
+Every x drawn on band 2 is also drawn on band 3 (exact, at `_rule_boundaries`' 2dp), and each of
+the 7 port labels spans exactly 2 of band 3's columns. The spec's reason for the control, *"a
+9-column header onto a 16-column table"*, is true of a donation that keeps equal counts, and says
+nothing about one that respects the spans. Merging the bands does not help either:
+`classify_hierarchical` on `merge_bands(bands, 2, 3)` gives each port ONE column and leaves every
+Y/N column unheaded, because the merge carries no drawn rules. Full figures in R211.
+
+### 6c. PROPOSED: the next etkl:02 loop is a spec for a spanning-donor arm, and it starts with a census
+
+The prediction to run before anything is designed: *across the corpus, every (earlier, later)
+ruled-band pair on a page whose drawn x's satisfy `drawn(donor) ⊂ drawn(recipient)` (strict) is a
+spanning header.* It is refuted in minutes by enumerating those pairs with `_rule_boundaries` over
+the 7 documents and reading each one. If graincorp is the only pair, the arm has one positive
+and no control. That is R211's second question: the spec must build a synthetic negative rather
+than borrow a control from the page it is trying to admit. If other pairs exist and any is not a
+header, the subset relation is not sufficient, and that census is the spec's § 2.
+
+The hidden-glyph finding (part 2, fourth bullet) still has no register row. This session did not
+raise one.
+
+## 7. Addendum: 6c run (the same fresh session, 2026-09-11)
+
+### 7a. ASSERTED: 6c is refuted. A strict subset of drawn rules is not sufficient
+
+The census walked every page of the 7 corpus documents: `page_bands`, then `_rule_boundaries` at
+2dp on each band with ≥ 3 x's. It found 14 ruled bands and **8 strict-subset pairs**
+(`drawn(earlier) ⊂ drawn(later)`, same page), not one:
+
+| page | donor | recipient(s) | ncols | donor line 0 | a header? |
+| --- | --- | --- | --- | --- | --- |
+| graincorp-capacity p0 | band 2 (1 line, NON_TABLE) | band 3 | 9 → 16, spans `1,1,2,2,2,2,2,2,2` | `Year \| Elevation Period \| Mackay \| …` | yes |
+| bfs p6 | band 3 (1 line, NON_TABLE) | bands 4, 5, 6, 8, 9 | 3 → 9, spans `7,1,1` | `Total 8 962 258 … \| 32.9 \| 31.8` | no, a data row |
+| bfs p6 | band 7 (1 line, NON_TABLE) | bands 8, 9 | 3 → 9, spans `7,1,1` | `Zurich 1 605 508 … \| 31.4 \| 27.5` | no, a data row |
+
+The two bfs donors are the 3-column-ruled data rows that the grid-donation spec § 2.2 already
+names as straddling every candidate grid.
+
+### 7b. ASSERTED: R203's licence separates them, 1 against 7
+
+The page datagrid's verdict on each donor's line 0, re-identified by ink as
+`scripts/donor_header_criterion.py` does:
+
+```
+graincorp-capacity p0 band2: page-line=[3]  datagrid: refused HeterogeneousColumn/every-measure
+bfs p6 band3:                page-line=[7]  datagrid: body row
+bfs p6 band7:                page-line=[22] datagrid: body row
+```
+
+So a relation of *strict subset of drawn rules* AND *R203 licence* admits graincorp and refuses
+all 7 bfs pairs. That answers R211's second question: the arm does **not** lose its control, and
+the corpus supplies 7 negatives, none of them synthetic. What it does not answer: **all 7 are
+refused by the licence, and none by the subset clause.** The subset clause has no negative of its
+own in this corpus, and its only positive is the page it was invented for. The spec must say that,
+and its synthetic fixture should aim at the subset clause (a donor that passes the licence and is
+not a coarsening).
+
+### 7c. PROPOSED: the spec can now be written, and its first open question is the leaves
+
+The relation is measured on 8 corpus pairs. What remains is the reading: parent = donor label
+spanning its interval, leaves = the recipient's columns inside it. Graincorp's leaves carry no
+printed label (a tonnage column and a Y/N column per port), so §7 allows a spanned parent over
+unlabelled leaves and nothing invented. Whether `holon.py`'s record-region emitter and grounding
+(`exact_field`) can carry an unlabelled leaf under a labelled parent is **unmeasured**. It is
+refuted or confirmed by reading `assert_record_region` and `ground.py` against a hand-built
+two-level region, and that is the spec's § 2, before any design.
+
+One discrepancy, not chased: this census counts only **3** equal-set pairs, while grid donation
+fires on 5 bfs p6 bands with donor band 2. The census compares drawn sets and donation compares
+counts plus tiling, so the two populations need not agree. It is recorded here only so that nobody
+reads the 3 as a contradiction of the 5.
+
+## 8. Addendum: 7c run (a fresh session, 2026-09-11, on `014fc4d`)
+
+Measurements only. A scratch probe hand-built the two-level region on graincorp p0: parents are band
+2's 9 labels, each with its own word box, covering band 3's leaf columns by drawn-x inclusion. The
+leaves are band 3's `recover_leaf_grid` (16 columns, equal to its drawn rules) and its 27
+`logical_rows`. It ran through the shipped `holon.assert_hier_region`, the tiling membrane
+(`membrane.validate(g, tiling._TILING_SHAPES, tiling._ONT)`) and `feed._column_header_path`, in two
+variants: **A** parents only, **B** parents plus one empty-text level-1 leaf per column under each
+two-column parent.
+
+```
+donor labels: ['Year', 'Elevation Period', 'Mackay', 'Gladstone', 'Fisherman Islands', 'Carrington', 'Port Kembla', 'Geelong', 'Portland']
+spans: [1, 1, 2, 2, 2, 2, 2, 2, 2]
+== A parents only: asserted tokens 406
+region_tiles: True
+  paths: ['Year', 'Elevation Period', 'Mackay', 'Mackay', 'Gladstone', 'Gladstone', …, 'Portland', 'Portland']
+  distinct paths: 9 of 16
+== B parents + empty leaves: asserted tokens 406
+region_tiles: True
+  paths: ['Year', 'Elevation Period', 'Mackay > ', 'Mackay > ', …, 'Portland > ', 'Portland > ']
+  distinct paths: 9 of 16
+```
+
+(The first run left the parents boxless and failed `LabelCellPhysicalShape` on every parent. That
+shape binds only non-empty `cellText`, so B's empty leaves stay boxless and pass. Nothing in the
+leaves is invented.)
+
+### 8a. ASSERTED: the region carries an unlabelled leaf under a labelled parent. That half of 7c's question is answered yes
+
+Both variants tile. A passes `UnambiguousAccessShape` because a childless parent is the one leaf
+header of each column it covers. B passes because each empty leaf is. No emitter change is needed
+to carry the reading. **Not measured:** `region_round_trips` saw band 3 alone, so the donor's words
+were never presented to it. Which band the arm hands the round-trip, and whether the donor's ink is
+then conserved, is still open.
+
+### 8b. ASSERTED: the feed does not carry it. Sixteen columns become 9 field names, and grounding merges two measures onto one property
+
+`_header_path` joins labels with `' > '`, and an empty leaf adds nothing that tells its two
+siblings apart. Each port's two columns get one path (`feed.py:489-538`), so `_read_table` gives
+both cells of a record the same `SurfaceConcept.text` (`feed.py:227`). `ground_concept` finds its
+field by that text alone (`exact_field`, `ground.py:80-85`), so both cells resolve to the same
+contract field. `_emit_grounded` then writes two values on one property of one offer
+(`ground.py:213-215`): per 7c, a tonnage and a Y/N under one port-named property. Nothing refuses
+this, and the tonnage/flag distinction the author drew as two columns is lost (§5).
+
+### 8c. PROPOSED: the open question is not the leaves. It is whether the spanned label is a field name at all
+
+A port name is a **dimension value**, not a measure name. It is the same kind of thing as CBH's
+section markers, which R207 grounds by scheme membership (`marker_field`, `ground.py:96-117`), not
+as a column path. Read that way, graincorp is an unpivot: one record per (year, period, port), with
+two measures that have no printed name. The contract would then have to name those measures, and
+that is 5c's design question, now with a sharper form. **The prediction to run first**, refutable in
+minutes: *every one of the 7 spanning labels on graincorp p0 is a member of one SKOS scheme the
+ag-trade vocabulary already carries* (`scheme_member` over the terms the CBH contract uses). If they
+are, the spec's § 2 is "a spanning parent whose label is a scheme member donates a KEY, not a path".
+If not, the spec needs a scheme first, and that is a vocabulary loop, not an etkl one. Either way,
+the two unlabelled measures under each port need a contract field the source never names. That is
+the part §7 makes hard, and the spec must say how it is licensed or refuse it.
+
+## 9. Addendum: 8c run (the same session, 2026-09-11)
+
+Written at about 87K working tokens, past the 50K originating floor. 9a is a measurement and is
+fatigue-proof. 9b is graded below.
+
+### 9a. ASSERTED: 8c holds. The split between key and field name falls exactly on the span
+
+The shipped `scheme_member`, run over every field of `examples/shipping/stem-contract.ttl` against
+`stem-terms.ttl`, for each of band 2's 9 labels:
+
+```
+Year               admitting fields: 0 []
+Elevation Period   admitting fields: 0 []
+Mackay             admitting fields: 1 [('port', 'https://example.org/shipping#p-mackay')]
+Gladstone          admitting fields: 1 [('port', 'https://example.org/shipping#p-gladstone')]
+Fisherman Islands  admitting fields: 1 [('port', 'https://example.org/shipping#p-fisherman')]
+Carrington         admitting fields: 1 [('port', 'https://example.org/shipping#p-carrington')]
+Port Kembla        admitting fields: 1 [('port', 'https://example.org/shipping#p-kembla')]
+Geelong            admitting fields: 1 [('port', 'https://example.org/shipping#p-geelong')]
+Portland           admitting fields: 1 [('port', 'https://example.org/shipping#p-portland')]
+```
+
+All 7 two-column parents are admitted by exactly one field (`ship:port`), which is `marker_field`'s
+unique-admission rule (R207). The 2 one-column parents are admitted by none. A `grep` for each port
+name as a quoted literal over `examples/`, `vocab/` and `src/` finds only `stem-terms.ttl`. **The
+contract is the stem's, not capacity's.** graincorp-capacity still has no contract (5c), so the
+scheme is borrowed, not the document's own.
+
+### 9b. PROPOSED (written over the floor: medium confidence): the spec's § 2 is a key-donating parent, and its hard part is the unnamed measures
+
+The reading 9a supports: a donor label that spans more than one recipient column **and** is
+admitted by exactly one scheme field is a KEY. Graincorp then unpivots to one record per
+(Year, Elevation Period, port), where port grounds by scheme. A label that spans one column and is
+admitted by nothing stays a field name, as today. That gives the arm a built-in negative on the same
+page (`Year`, `Elevation Period`), besides the 7 bfs pairs from 7b. **What would refute it quickly:**
+a corpus page where a spanned label is a scheme member but is NOT a dimension value. Enumerate the
+spanning labels 7a found (bfs p6's donors are data rows, so none of them qualify), then ask the
+maintainer. **What the spec cannot dodge:** each port's two leaves carry no printed name (a tonnage,
+a Y/N). A key reading removes the port from the field name and leaves two nameless measures per
+record. §7 forbids inventing their names, so the spec must either license a name from somewhere the
+source supports (the page's title or caption, the contract) or keep them quarantined as
+propositions. Choosing between those is the maintainer's call, not a loop's.
