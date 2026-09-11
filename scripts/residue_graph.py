@@ -39,8 +39,11 @@ def read_rows():
             n = int(m.group(1))
             rows[n] = {int(x) for x in re.findall(r"\[\[R(\d+)\]\]", line) if int(x) != n}
     status, label = {}, {}
+    # The status word is the FIRST word of the cell; a parenthetical qualifier may follow
+    # (`open (half (a) done)`, `open (parked 2026-09-11)`). The reader of record for the index
+    # is `tests/test_residue_register_integrity.py:40`, whose status group this one copies.
     for line in open(INDEX, encoding="utf-8"):
-        m = re.match(r"\| ~?~?R(\d+)~?~? \| (\w+) \| (.*?) \|", line)
+        m = re.match(r"\| ~?~?R(\d+)~?~? \| ([A-Za-z]+)[^|]*\| (.*?) \|", line)
         if m:
             status[int(m.group(1))] = m.group(2)
             t = re.sub(r"\*\*|`|\[\[|\]\]", "", m.group(3)).strip()
