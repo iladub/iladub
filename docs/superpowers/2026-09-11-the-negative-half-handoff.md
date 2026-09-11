@@ -95,3 +95,13 @@ With this handoff on disk the arc line's `serves` first digit leaves zero (`1/3/
   The row is raised, not fixed, because the gate is its own subject with its own falsification;
   the spec's sentence was wrong and is left as written (the spec is not rewritten under the
   loop; this section is the correction).
+
+## 7. CI on `bd7bbce` FAILED — a pinned live count, again (appended 2026-09-11)
+
+`1 failed, 1487 passed`: `tests/test_residue_graph.py::test_the_graph_reports_parked_rows_and_the_structural_candidates`
+pins the park-candidate count at 80, and [[R209]] — open, blocking no criterion, linked only to
+the closed R179 — is the 81st by the rule the test itself derives. The loop had even printed
+`--candidates | wc -l → 81` after raising the row and did not connect it to a pin in a file it
+did not run. Same class as PR #204 § 7 (the `.ttl` population): **a raise-time count pinned in a
+test the loop did not think to run**. Re-pinned 80 → 81 with the dated comment; the file passes
+locally. The guard-shaped pin is doing its job — it made the register change visible.
