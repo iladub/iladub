@@ -74,3 +74,17 @@ def test_dec_module_standalone():
     """The core dec vocabulary must NOT hard-depend on the holon: namespace."""
     text = open(os.path.join(ONT, "dec.ttl")).read()
     assert "w3id.org/holon" not in text, "core dec module leaked an HGA dependency"
+
+
+# --- dec:17 (arc): the Contract's four provenance-reuse axioms are asserted, not just declared ---
+
+def test_dec_provenance_axioms_present():
+    """CLAUDE.md § Serialization: dec:DecisionHolon ⊑ prov:Activity and the three property
+    alignments. dec.ttl alone (standalone module; PROV is not HGA — § Source ownership)."""
+    from rdflib import Namespace
+    DEC, PROV = Namespace("https://w3id.org/iladub/dec#"), Namespace("http://www.w3.org/ns/prov#")
+    g = _g(os.path.join(ONT, "dec.ttl"))
+    assert (DEC.DecisionHolon, RDFS.subClassOf, PROV.Activity) in g
+    assert (DEC.consideredEvidence, RDFS.subPropertyOf, PROV.used) in g
+    assert (DEC.decidedBy, RDFS.subPropertyOf, PROV.wasAssociatedWith) in g
+    assert (DEC.produced, RDFS.subPropertyOf, PROV.generated) in g

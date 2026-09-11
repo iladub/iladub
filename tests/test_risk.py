@@ -57,3 +57,38 @@ def test_empiric_risk_stamp_rejected():
     """A domain subject carrying risk:severity directly MUST fail."""
     c, _ = _v([os.path.join(TST, "risk-leak.ttl")], [RISK_SHAPES], [RISK_TTL])
     assert not c
+
+
+# --- dec:12 / dec:13 (arc): the negative halves of the two risk shapes, pinned to their constraints ---
+
+def _violations(data, shapes, ont):
+    """(focus, path, component) per violation from the results graph; `not c` alone could
+    pass on a neighbour shape, and sh:sourceShape is an anonymous property shape here."""
+    from rdflib.namespace import SH as SHACL
+    _, r, _ = validate(_g(*data), shacl_graph=_g(*shapes), ont_graph=_g(*ont),
+                       inference="rdfs", advanced=True)
+    return {(r.value(v, SHACL.focusNode), r.value(v, SHACL.resultPath),
+             r.value(v, SHACL.sourceConstraintComponent))
+            for v in r.subjects(SHACL.sourceConstraintComponent, None)}
+
+
+def test_contextless_assessment_rejected():
+    """An assessment with a severity but no subject and no context trips both minCounts
+    of RiskAssessmentShape at that node."""
+    from rdflib.namespace import SH as SHACL
+    node = URIRef("https://example.org/transplant#assessment-contextless")
+    fired = _violations([os.path.join(TST, "risk-assessment-contextless-leak.ttl")],
+                        [RISK_SHAPES], [RISK_TTL])
+    for path in ("https://w3id.org/iladub/risk#ofSubject", "https://w3id.org/iladub/risk#inContext"):
+        assert (node, URIRef(path), SHACL.MinCountConstraintComponent) in fired, fired
+
+
+def test_sensitivity_without_reads_rejected():
+    """A sensitivity with a severity and no risk:reads trips SensitivityShape's minCount on
+    risk:reads at that node."""
+    from rdflib.namespace import SH as SHACL
+    node = URIRef("https://example.org/transplant#sensitivity-blind")
+    fired = _violations([os.path.join(TST, "sensitivity-without-reads-leak.ttl")],
+                        [RISK_SHAPES], [RISK_TTL])
+    assert (node, URIRef("https://w3id.org/iladub/risk#reads"),
+            SHACL.MinCountConstraintComponent) in fired, fired

@@ -178,7 +178,10 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # RE-MEASURED 2026-09-11 (PARKED / M21): 148 -> 149, `tests/arc-m21-parked-blocker-leak.ttl`
     # joins the population at `git add`, exactly as the other `tests/arc-m*-leak.ttl` negatives
     # did. CI caught it; the loop's local run of the four register test files never can.
-    assert len(vocab_nodes) == len(artifact_files()) == 149
+    # RE-MEASURED 2026-09-11 (the-negative-half): 149 -> 154, five leak fixtures under tests/
+    # (dec-confidence, promotion-unaccountable, risk-assessment-contextless,
+    # sensitivity-without-reads, permission-without-action).
+    assert len(vocab_nodes) == len(artifact_files()) == 154
     assert len(query_nodes) == len(query_files()) == 51
 
 

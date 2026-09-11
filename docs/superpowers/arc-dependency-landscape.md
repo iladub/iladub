@@ -29,16 +29,10 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**21 ready.**
+**15 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
-| `dec` | `dec:02` | vocab/shapes/dec-shapes.ttl:38 — dec:ConfidenceShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an out-of-range or duplicated dec:confidence). |
-| `dec` | `dec:09` | vocab/shapes/iladub-shapes.ttl:53 — iladub:PromotionDecisionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no test validates a promotion decision lacking iladub:reviews or dec:decidedBy against these shapes). |
-| `dec` | `dec:12` | vocab/shapes/risk-shapes.ttl:35 — risk:RiskAssessmentShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries an assessment without its subject, context or severity). |
-| `dec` | `dec:13` | vocab/shapes/risk-shapes.ttl:49 — risk:SensitivityShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a sensitivity without its severity or its risk:reads conditions). |
-| `dec` | `dec:15` | vocab/shapes/governance-shapes.ttl:45 — gsh:PermissionShape ships a worked example that conforms and a negative test that must fail; the negative half is missing (no fixture carries a permission without an odrl:action or an odrl:assignee). |
-| `dec` | `dec:17` | The four provenance-reuse axioms declared in the Contract — dec:DecisionHolon ⊑ prov:Activity, dec:consideredEvidence ⊑ prov:used, dec:decidedBy ⊑ prov:wasAssociatedWith, dec:produced ⊑ prov:generated (vocab/ontology/dec.ttl:38,55,72,85) — are asserted by a test. They are declared and enforced by nothing. |
 | `etkl` | `etkl:02` | ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it. |
 | `etkl` | `etkl:04` | gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it. |
 | `holon` | `holon:06` | A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only). |

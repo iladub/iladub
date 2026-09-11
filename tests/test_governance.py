@@ -69,3 +69,24 @@ def test_board_apex_projection_includes_donor_phi():
     board = federate.derive_governed_projection(data, data, data, data, TX["role-board"])
     assert (TX["DONOR_ID"], SKOS.inScheme, PROJ["projection"]) in board   # apex sees PHI
     assert (TX["ABO_O"], SKOS.inScheme, PROJ["projection"]) in board      # and clinical
+
+
+# --- dec:15 (arc): the negative half of gsh:PermissionShape, pinned to its constraint ---
+
+def _violations(data, shapes):
+    """(path, component) per violation from the results graph; `not c` alone could pass on
+    a neighbour shape, and sh:sourceShape is an anonymous property shape here. The focus
+    node is a blank permission, so it is not part of the key."""
+    from rdflib.namespace import SH as SHACL
+    _, r, _ = validate(_g(*data), shacl_graph=_g(*shapes), inference="rdfs", advanced=True)
+    return {(r.value(v, SHACL.resultPath), r.value(v, SHACL.sourceConstraintComponent))
+            for v in r.subjects(SHACL.sourceConstraintComponent, None)}
+
+
+def test_permission_without_action_rejected():
+    """A permission naming an assignee but no odrl:action trips PermissionShape's minCount
+    on odrl:action."""
+    from rdflib.namespace import SH as SHACL
+    fired = _violations([os.path.join(TST, "permission-without-action-leak.ttl")], [GOV_SHAPES])
+    assert (URIRef("http://www.w3.org/ns/odrl/2/action"),
+            SHACL.MinCountConstraintComponent) in fired, fired

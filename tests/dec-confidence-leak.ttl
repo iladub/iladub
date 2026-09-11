@@ -1,0 +1,14 @@
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix ex:   <https://example.org/demo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#  THE NEGATIVE HALF OF dec:ConfidenceShape (arc criterion dec:02). A decision holon
+#  carrying a dec:confidence OUTSIDE [0,1] and, on top of that, TWO of them — so both
+#  arms of the shape (sh:maxInclusive 1, sh:maxCount 1) fire on one node. The oracle
+#  (tests/test_vocab_shapes.py::test_confidence_out_of_range_rejected) pins the shape by
+#  sh:sourceShape, because this node ALSO trips dec:DecisionHolonShape's minimums and a
+#  bare `not conforms` would pass for that reason alone.
+
+ex:decision-overconfident a dec:DecisionHolon ;
+    rdfs:label "A decision more than certain, twice"@en ;
+    dec:confidence 1.5, 0.2 .

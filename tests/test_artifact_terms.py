@@ -74,7 +74,10 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # minus the 2 carved.
     tracked = _tracked_ttl()
     carved = [p for p in tracked if p.startswith(FIXTURE_DIR.relative_to(REPO).as_posix() + "/")]
-    assert len(artifact_files()) == len(tracked) - len(carved) == 149
+    # RE-MEASURED 2026-09-11 (the-negative-half): 149 -> 154, five leak fixtures under tests/
+    # (dec-confidence, promotion-unaccountable, risk-assessment-contextless,
+    # sensitivity-without-reads, permission-without-action).
+    assert len(artifact_files()) == len(tracked) - len(carved) == 154
 
 
 def test_each_file_gets_its_own_named_graph():
