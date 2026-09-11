@@ -185,3 +185,62 @@ One discrepancy, not chased: this census counts only **3** equal-set pairs, whil
 fires on 5 bfs p6 bands with donor band 2. The census compares drawn sets and donation compares
 counts plus tiling, so the two populations need not agree. It is recorded here only so that nobody
 reads the 3 as a contradiction of the 5.
+
+## 8. Addendum: 7c run (a fresh session, 2026-09-11, on `014fc4d`)
+
+Measurements only. A scratch probe hand-built the two-level region on graincorp p0: parents are band
+2's 9 labels, each with its own word box, covering band 3's leaf columns by drawn-x inclusion. The
+leaves are band 3's `recover_leaf_grid` (16 columns, equal to its drawn rules) and its 27
+`logical_rows`. It ran through the shipped `holon.assert_hier_region`, the tiling membrane
+(`membrane.validate(g, tiling._TILING_SHAPES, tiling._ONT)`) and `feed._column_header_path`, in two
+variants: **A** parents only, **B** parents plus one empty-text level-1 leaf per column under each
+two-column parent.
+
+```
+donor labels: ['Year', 'Elevation Period', 'Mackay', 'Gladstone', 'Fisherman Islands', 'Carrington', 'Port Kembla', 'Geelong', 'Portland']
+spans: [1, 1, 2, 2, 2, 2, 2, 2, 2]
+== A parents only: asserted tokens 406
+region_tiles: True
+  paths: ['Year', 'Elevation Period', 'Mackay', 'Mackay', 'Gladstone', 'Gladstone', …, 'Portland', 'Portland']
+  distinct paths: 9 of 16
+== B parents + empty leaves: asserted tokens 406
+region_tiles: True
+  paths: ['Year', 'Elevation Period', 'Mackay > ', 'Mackay > ', …, 'Portland > ', 'Portland > ']
+  distinct paths: 9 of 16
+```
+
+(The first run left the parents boxless and failed `LabelCellPhysicalShape` on every parent. That
+shape binds only non-empty `cellText`, so B's empty leaves stay boxless and pass. Nothing in the
+leaves is invented.)
+
+### 8a. ASSERTED: the region carries an unlabelled leaf under a labelled parent. That half of 7c's question is answered yes
+
+Both variants tile. A passes `UnambiguousAccessShape` because a childless parent is the one leaf
+header of each column it covers. B passes because each empty leaf is. No emitter change is needed
+to carry the reading. **Not measured:** `region_round_trips` saw band 3 alone, so the donor's words
+were never presented to it. Which band the arm hands the round-trip, and whether the donor's ink is
+then conserved, is still open.
+
+### 8b. ASSERTED: the feed does not carry it. Sixteen columns become 9 field names, and grounding merges two measures onto one property
+
+`_header_path` joins labels with `' > '`, and an empty leaf adds nothing that tells its two
+siblings apart. Each port's two columns get one path (`feed.py:489-538`), so `_read_table` gives
+both cells of a record the same `SurfaceConcept.text` (`feed.py:227`). `ground_concept` finds its
+field by that text alone (`exact_field`, `ground.py:80-85`), so both cells resolve to the same
+contract field. `_emit_grounded` then writes two values on one property of one offer
+(`ground.py:213-215`): per 7c, a tonnage and a Y/N under one port-named property. Nothing refuses
+this, and the tonnage/flag distinction the author drew as two columns is lost (§5).
+
+### 8c. PROPOSED: the open question is not the leaves. It is whether the spanned label is a field name at all
+
+A port name is a **dimension value**, not a measure name. It is the same kind of thing as CBH's
+section markers, which R207 grounds by scheme membership (`marker_field`, `ground.py:96-117`), not
+as a column path. Read that way, graincorp is an unpivot: one record per (year, period, port), with
+two measures that have no printed name. The contract would then have to name those measures, and
+that is 5c's design question, now with a sharper form. **The prediction to run first**, refutable in
+minutes: *every one of the 7 spanning labels on graincorp p0 is a member of one SKOS scheme the
+ag-trade vocabulary already carries* (`scheme_member` over the terms the CBH contract uses). If they
+are, the spec's § 2 is "a spanning parent whose label is a scheme member donates a KEY, not a path".
+If not, the spec needs a scheme first, and that is a vocabulary loop, not an etkl one. Either way,
+the two unlabelled measures under each port need a contract field the source never names. That is
+the part §7 makes hard, and the spec must say how it is licensed or refuse it.
