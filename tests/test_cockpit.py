@@ -281,6 +281,7 @@ def test_a_document_that_declares_no_topic_gets_no_topic_invented(monkeypatch, t
 def test_the_work_line_degrades_on_a_detached_head(monkeypatch):
     """A rebase or a bisect leaves HEAD detached. The subject still holds; the branch half drops."""
     monkeypatch.setattr(cockpit, "topic", lambda: None)
+    monkeypatch.setattr(cockpit, "serves", lambda: None)   # the live newest doc declares one
     monkeypatch.setattr(cockpit, "entry_point", lambda: "some-loop")
     monkeypatch.setattr(cockpit, "_run", lambda *a: "HEAD\n")
     assert cockpit.work() == "some-loop"
@@ -295,3 +296,83 @@ def test_the_live_newest_handoff_declares_a_topic():
     assert path is not None, "no dated brief/handoff on disk"
     assert cockpit.topic() is not None, (
         f"{path} declares no `**Topic:**`, so the strip cannot say what we are working on")
+
+
+_MANIFEST_1 = ('@prefix prog: <https://w3id.org/iladub/progress#> .\n'
+               'prog:criterion:etkl:05 a prog:Criterion ;\n'
+               '    prog:ofRung "etkl" ;\n'
+               '    prog:met false .\n')
+
+
+def _serves_doc(tmp_path, monkeypatch, header: str, manifest: str | None = _MANIFEST_1):
+    """A newest loop doc with the given header line, against a one-criterion manifest."""
+    doc = tmp_path / "2026-09-11-a-loop-handoff.md"
+    doc.write_text(f"# t\n\n**Topic:** etkl · **Date:** 2026-09-11 ·\n{header}\n", encoding="utf-8")
+    monkeypatch.setattr(cockpit, "_newest_loop_doc", lambda: str(doc))
+    monkeypatch.setattr(cockpit, "_run", lambda *a: "a-branch\n")
+    if manifest is None:
+        monkeypatch.setattr(cockpit, "ARC_MANIFEST", str(tmp_path / "absent.ttl"))
+    else:
+        m = tmp_path / "manifest.ttl"
+        m.write_text(manifest, encoding="utf-8")
+        monkeypatch.setattr(cockpit, "ARC_MANIFEST", str(m))
+
+
+def test_a_document_that_serves_a_criterion_renders_its_rung_and_slug(tmp_path, monkeypatch):
+    """Spec 2026-09-11 § 3.1 (i): `prog:criterion:etkl:05` in the manifest renders `etkl:05`."""
+    _serves_doc(tmp_path, monkeypatch, "**Serves:** prog:criterion:etkl:05")
+    assert cockpit.serves() == "etkl:05"
+    assert cockpit.work() == "etkl · etkl:05 · a-loop · a-branch"
+
+
+def test_a_document_that_declares_maintenance_renders_the_word(tmp_path, monkeypatch):
+    """§ 3.1 (ii). The value is the first token: the live handoff writes
+    `**Serves:** maintenance — <why>` and the prose after the dash is not the value."""
+    _serves_doc(tmp_path, monkeypatch, "**Serves:** maintenance — this loop moves no criterion")
+    assert cockpit.serves() == "maintenance"
+    assert cockpit.work() == "etkl · maintenance · a-loop · a-branch"
+
+
+def test_a_criterion_absent_from_the_manifest_renders_no_segment(tmp_path, monkeypatch):
+    """§ 3.1 (iii): a refusal, not a default. `etkl:99` is not a top-level subject."""
+    _serves_doc(tmp_path, monkeypatch, "**Serves:** prog:criterion:etkl:99")
+    assert cockpit.serves() is None
+    assert cockpit.work() == "etkl · a-loop · a-branch"
+
+
+def test_a_document_with_no_serves_line_gets_none_invented(tmp_path, monkeypatch):
+    """§ 3.1 (iv)."""
+    _serves_doc(tmp_path, monkeypatch, "")
+    assert cockpit.serves() is None
+    assert cockpit.work() == "etkl · a-loop · a-branch"
+
+
+def test_prose_in_the_serves_field_is_refused_not_read(tmp_path, monkeypatch):
+    """`the etkl rung` is neither the literal nor an IRI; the strip prints nothing rather than
+    guessing, exactly as `topic()` does with an absent field."""
+    _serves_doc(tmp_path, monkeypatch, "**Serves:** the etkl rung")
+    assert cockpit.serves() is None
+
+
+def test_the_criterion_ids_the_regex_reads_equal_rdflibs_typed_nodes():
+    """Global Constraint 6: `_criterion_ids()` is a second reader of the manifest, and gets the
+    same pin `arc()` has. Every `prog:Criterion` typed node, met or not, must be in the set."""
+    from rdflib import RDF, Graph, Namespace
+    prog = Namespace("https://w3id.org/iladub/progress#")
+    g = Graph()
+    g.parse(cockpit.ARC_MANIFEST, format="turtle")
+    typed = {str(s).rsplit("criterion:", 1)[1] for s in g.subjects(RDF.type, prog.Criterion)}
+    assert cockpit._criterion_ids() == frozenset(typed), (
+        "the regex reader and rdflib disagree about which criteria exist; rdflib is right")
+
+
+def test_the_live_newest_handoff_declares_what_it_serves():
+    """The live half of § 3.1, the twin of `test_the_live_newest_handoff_declares_a_topic`:
+    whatever a fresh session would open right now must say what it serves — a criterion IRI in
+    `tests/arc-manifest.ttl` or the literal `maintenance`. This is the one test that goes RED on
+    the current tree only if the newest handoff omits the line (spec § 5)."""
+    path = cockpit._newest_loop_doc()
+    assert path is not None, "no dated brief/handoff on disk"
+    assert cockpit.serves() is not None, (
+        f"{path} declares no readable `**Serves:**` — a criterion IRI present in the manifest, "
+        "or `maintenance`")

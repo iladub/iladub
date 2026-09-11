@@ -185,7 +185,8 @@ def velocity() -> tuple[int, int, int | None]:
 # `prog:ofRung` disagree, so the rung key is readable off the SUBJECT LINE and a regex is a sound
 # reader of this file. Anchored at column 0: the rung's own `prog:criterion` index lists the same
 # IRIs indented, and matching those would double every count.
-_CRITERION = re.compile(r"^prog:criterion:([A-Za-z0-9_-]+):[A-Za-z0-9_.-]+\s+a\s+prog:Criterion\b")
+# Group 1 is the rung, group 2 the slug; `_criteria()` reads only group 1.
+_CRITERION = re.compile(r"^prog:criterion:([A-Za-z0-9_-]+):([A-Za-z0-9_.-]+)\s+a\s+prog:Criterion\b")
 # `\s+` after `prog:met` is what keeps `prog:metOn` out: 17 of the manifest's 60 `prog:met`
 # occurrences are that longer predicate, and a prefix match would read a date as a boolean.
 _MET = re.compile(r"^\s+prog:met\s+(true|false)\s*[;.]\s*$")
@@ -226,6 +227,16 @@ def _criteria() -> list[tuple[str, bool, tuple[str, ...]]]:
                 out.append((rung, met, tuple(rows)))   # NEITHER column, as arc-position.rq does
             rung = None
     return out
+
+
+def _criterion_ids() -> frozenset[str]:
+    """Every `"<rung>:<slug>"` whose subject line is a criterion — met or not, and INCLUDING the
+    ones `_criteria()` drops for carrying no `prog:met` (measured 2026-09-11, `_criteria()` above:
+    a criterion with no asserted boolean is counted in neither column). Membership is a different
+    question from progress, so it is read straight off the `_CRITERION` matches. Empty when the
+    manifest is unreadable, which callers must treat as "unknowable", never as "none"."""
+    return frozenset(f"{m.group(1)}:{m.group(2)}"
+                     for m in map(_CRITERION.match, _read(ARC_MANIFEST).splitlines()) if m)
 
 
 def arc() -> list[tuple[str, int | None, int | None]]:
@@ -323,18 +334,55 @@ def topic() -> str | None:
     return m.group(1)[:18] if m else None
 
 
+_SERVES = re.compile(r"^\*\*Serves:\*\*\s*(\S+)", re.M)
+_CRITERION_IRI = "prog:criterion:"
+
+
+def _serves_of(path: str) -> str | None:
+    """What one loop document declares it serves: `"maintenance"`, a `"<rung>:<slug>"` that the
+    manifest lists, or None. The value is the FIRST whitespace-delimited token after the field —
+    the live form is `**Serves:** maintenance — <why>`, and the prose after the dash is not read.
+    A criterion token not in `_criterion_ids()` is None: a refusal, not a default (spec 2026-09-11
+    § 3.1 (iii)), and with no manifest every criterion token is refused because membership is
+    unknowable, while `maintenance` still reads — it needs no manifest."""
+    m = _SERVES.search(_read(path)[:4000])
+    if not m:
+        return None
+    token = m.group(1)
+    if token == "maintenance":
+        return token
+    if token.startswith(_CRITERION_IRI):
+        cid = token[len(_CRITERION_IRI):]
+        if cid in _criterion_ids():
+            return cid
+    return None
+
+
+def serves() -> str | None:
+    """The `**Serves:**` field of the newest brief/handoff — the criterion it serves, as
+    `rung:slug`, or the literal `maintenance` — or None if it declares neither.
+
+    **This is the second AUTHORED figure on the strip**, beside `topic()`, and it is the stronger
+    of the two: a criterion value is checked against a NAMED SET, the top-level `prog:Criterion`
+    subjects of `tests/arc-manifest.ttl` — the check `topic()`'s docstring asked for and did not
+    build. `maintenance` is a declared literal and is bounded the way `topic()` is: it lives in a
+    dated file a new loop replaces. Anything else prints nothing (spec 2026-09-11 § 3.1)."""
+    path = _newest_loop_doc()
+    return None if path is None else _serves_of(path)
+
+
 def work() -> str:
     """WHAT WE ARE WORKING ON — the maintainer's first ask of this strip: `topic · subtopic`.
 
-    Rendered as `topic · subject · branch`, each part dropped when its source is silent. The
+    Rendered as `topic · serves · subject · branch`, each part dropped when its source is silent. The
     **subject** is the newest handoff/brief on disk (what a fresh session would open) and the
     **branch** is what git says HEAD is; neither can go stale, because neither is maintained.
 
     The **topic** half is the exception and is declared, not proven — see `topic()` for why that
     was chosen and what would check it. A doc that declares no topic simply drops that part; the
-    strip never invents one."""
+    strip never invents one. **serves** is declared too, but checked — see `serves()`."""
     branch = _run("git", "rev-parse", "--abbrev-ref", "HEAD").strip()
-    parts = [p for p in (topic(), entry_point()) if p and p != "?"]
+    parts = [p for p in (topic(), serves(), entry_point()) if p and p != "?"]
     if branch not in ("", "HEAD"):
         parts.append(branch[:24])
     return f" {chr(183)} ".join(parts) or "?"
