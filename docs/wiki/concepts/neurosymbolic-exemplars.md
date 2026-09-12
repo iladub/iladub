@@ -20,9 +20,12 @@ sources:
   - vocab/queries/matrix-body-start.rq
   - src/iladub/etkl/matrix.py
   - vocab/queries/band-run.rq
+  - vocab/queries/grid-donation.rq
+  - src/iladub/etkl/donation.py
+  - src/iladub/etkl/compile.py
 related: ["[[dimension-split]]"]
 confidence: high
-updated: 2026-09-08
+updated: 2026-09-12
 promoted_to: docs/neurosymbolic-first.md
 ---
 
@@ -263,3 +266,71 @@ figure for this loop came from. Sources: `vocab/queries/band-run.rq`,
   is the sole guard on ink it was never designed to guard. That is **R170**, and it is made
   falsifiable (a corpus-wide per-page ink oracle) rather than guarded, because a guard tuned
   to today's evidence would be the §8 defect this entry is otherwise an example of avoiding.
+
+## Grid donation (2026-09-12) — a header the author drew, donated to the bands beneath it
+
+**Confidence: high** — measured on the shipped tree at commit `b2bdbbe` with a whole-corpus
+before/after snapshot, not on a prototype. Sources: `vocab/queries/grid-donation.rq`,
+`sectiongraph.donor_evidence`, `src/iladub/etkl/donation.py`, the `compile_tables` RECORD_TABLE
+assert leg, `tests/etkl/test_{donor_evidence,grid_donation_query,grid_donation_disposal,grid_donation_seam}.py`,
+spec `docs/superpowers/specs/2026-09-10-the-grid-the-author-drew-design.md`, evidence
+`docs/superpowers/2026-09-12-grid-donation-evidence.md`.
+
+- **The donor-candidate derivation** (`vocab/queries/grid-donation.rq`, read by
+  `donation.donors_for`) — **AXIOM / derivation / open world.** *Which earlier band on this page may
+  a continuation band read its column labels from?* It fires on four facts that are PRESENT: the
+  donor is earlier on the page, its leaf-boundary vector is **wholly drawn** (every boundary is an x
+  the author actually drew), it delimits the **same leaf-column count** as the continuation, and the
+  page datagrid **refused its line 0 as a header**. A band owning no boundary vector emits no node
+  at all — the emitter's honest abstain, and the whole protection: a node with zero boundaries would
+  satisfy the drawn clause VACUOUSLY and donate to every band on the page. The query carries **no
+  numeric literal**; its one string literal is the datagrid's own published refusal name,
+  `HeterogeneousColumn/every-measure`, in the lexical form `emit_data_grid` writes into
+  `dec:rejectedBecause`.
+
+- **Why the tiling clause is NOT derived, which is the interesting half.** The spec lists three
+  clauses — tiles, same column count, wholly drawn — and only two are derived. Deriving *tiles* in
+  SPARQL would have meant putting `COORD_EPS` into a query as a numeric literal (a §8 violation) or
+  serialising every word box of every band into the evidence graph to evaluate a predicate with zero
+  degrees of freedom. Its shipped per-cell form, `roundtrip.cell_round_trips`, already exists on the
+  closed-world side. So tiling is **disposed, not derived** — and the corpus measures the two
+  formulations identical: with the tiling clause removed from the relation, the corpus yields the
+  same **5 structural pairs, all 5 accepted** (readings of 2026-09-12 at `b2bdbbe`).
+
+- **The disposal is the shipped membrane, reused rather than copied.** `donation_admissible` offers
+  the donated reading to `assert_record_region` on a **scratch graph discarded either way**, and
+  requires `region_tiles` *and* that every data cell round-trips into its own leaf column. Its
+  placeholder doc URI was **re-measured for this chain** rather than inherited from
+  `merged_run_admissible`: the five bfs p6 donations give one distinct verdict vector across three
+  unrelated doc URIs, so 0 verdicts differ.
+
+- **The donor's own header is DERIVED, not assumed** (R203) — what separates this loop from the
+  defect it repairs. Nothing in the geometric clauses says the donor's line 0 is a header rather
+  than its first data row, and a wrong donor would propagate a wrong header to every band beneath
+  it, strictly worse than the per-band error. The licence is the page datagrid's refusal of that
+  line, carried verbatim onto the donor node and matched by the query. It is emitted only where the
+  band's line 0 re-identifies **uniquely by ink** among the page's text lines (R202: band words are
+  word groups, so raw word-tuple equality re-identified 0 of 12); a body-row verdict, any other
+  refusal, no datagrid, or a non-unique match all emit nothing.
+
+- **Uniqueness is required and no ordering rule was added.** `donors_for` returns every qualifying
+  donor; `offer` proposes only when exactly one qualifies. Two qualifying donors is a page this
+  relation cannot read, and the band compiles as it does today.
+
+- **What it measures** (readings of 2026-09-12, commit `b2bdbbe`). bfs p6: **222 → 267 entries**,
+  the five continuation bands (4, 5, 6, 8, 9) each gaining 9 cells and each labelled by band 2's
+  drawn header instead of a regional subtotal row. Whole-corpus before/after: **six of seven
+  documents byte-identical**, bfs differing in 27 diff lines and nowhere else. The token ledger is
+  unchanged — `(asserted, escalated) == (276, 25)` — so **the document score does not move**
+  (0.40331491712707185 both sides): those tokens were already counted as asserted data, and what
+  changed is which labels they hang under. Cost: `page_bands` call counts are identical per document
+  before and after, and the only attributable wall-clock delta is bfs's +2.63s.
+
+- **A refusal is invisible.** No triple, no decision record, no report: a page whose donation the
+  membrane refuses is isomorphic to one where nothing was ever proposed. Only an accepted donation
+  mints the `tab:headerDonatedBy` link and its decision holon.
+
+- **Exposure.** R216: the disposal's refusing direction has **no corpus instance** — 5 structural
+  pairs, 5 accepted, and only a synthetic straddling page refuses. R217: the R203 licence is
+  exercised on **one** donor corpus-wide, and whether a page TITLE can sit inside a wholly-drawn
+  grid — the case the forward direction cannot separate — is unmeasured.

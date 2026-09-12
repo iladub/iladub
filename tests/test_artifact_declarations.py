@@ -168,7 +168,18 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     stated with no date in its own markdown block. The `.ttl` population is unchanged at 148:
     that loop authored no new artifact, extending `vocab/internal/corpus.ttl`,
     `vocab/internal/docgov.ttl`, `tests/corpus-shapes.ttl` and `tests/corpus-manifest.ttl`
-    instead — which is why only one of these two numbers moves."""
+    instead — which is why only one of these two numbers moves.
+
+    RE-MEASURED 2026-09-12 (R201/R203, grid donation): the `.rq` population is **52** —
+    `vocab/queries/grid-donation.rq`, the AXIOM derivation that enumerates, for one continuation
+    band, every earlier band on the page whose wholly-drawn leaf grid it may read its column labels
+    from (spec `2026-09-10-the-grid-the-author-drew-design.md` § 3-4). The `.ttl` population is
+    unchanged at 154: that loop declared its five new `tab:` terms inside the existing
+    `vocab/ontology/tab.ttl` and authored no new artifact — the same reason `band-run.rq` moved only
+    the `.rq` count on 2026-09-04. THIS IS THE THIRD GATE PINNING THE QUERY POPULATION: the other
+    two are `tests/test_query_terms.py::test_the_population_is_every_file_in_vocab_queries` and
+    `tests/test_query_declarations.py::test_the_membrane_binds_one_focus_node_per_query_file`, and a
+    loop adding a query must move all three."""
     data = evidence() + declaring_graph()
     vocab_nodes = set(data.subjects(RDF.type, ETKL.VocabularyArtifact))
     query_nodes = set(data.subjects(RDF.type, ETKL.QueryArtifact))
@@ -182,7 +193,7 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # (dec-confidence, promotion-unaccountable, risk-assessment-contextless,
     # sensitivity-without-reads, permission-without-action).
     assert len(vocab_nodes) == len(artifact_files()) == 154
-    assert len(query_nodes) == len(query_files()) == 51
+    assert len(query_nodes) == len(query_files()) == 52
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

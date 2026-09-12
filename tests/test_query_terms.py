@@ -50,7 +50,7 @@ def test_every_authored_query_parses():
 
 
 def test_the_population_is_every_file_in_vocab_queries():
-    """The population is enumerated from the directory, never typed (G3). 50 today; this
+    """The population is enumerated from the directory, never typed (G3). 52 today; this
     asserts the identity with the glob first, and the count second as the pin against the
     glob itself collapsing. RE-MEASURED 2026-08-29: 46 -> 48, the two queries this loop's D1 and
     D2 derivations add (`vocabulary-role.rq`, `alignment-subject.rq`).
@@ -65,6 +65,14 @@ def test_the_population_is_every_file_in_vocab_queries():
 
     RE-MEASURED 2026-09-08: 50 -> 51, `docgov-undated-figure.rq` the [[R187]] figure-gate
     loop adds — the derivation that reports a corpus reading stated with no date in its own
-    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4)."""
+    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4).
+
+    RE-MEASURED 2026-09-12: 51 -> 52, `grid-donation.rq` the R201/R203 grid-donation loop
+    adds — the derivation that enumerates, for one continuation band, every earlier band on
+    the page whose wholly-drawn leaf grid it may read its column labels from (spec
+    `2026-09-10-the-grid-the-author-drew-design.md` § 3-4). The plan predicted this gate
+    would pick the file up with no re-baseline; that prediction was REFUTED by running it —
+    the population is globbed, but the COUNT is pinned, which is exactly the pin doing its
+    job."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 51, len(query_files())
+    assert len(query_files()) == 52, len(query_files())

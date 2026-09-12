@@ -123,10 +123,18 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
 
     RE-MEASURED 2026-09-08: 50 -> 51, `docgov-undated-figure.rq` the [[R187]] figure-gate
     loop adds — the derivation that reports a corpus reading stated with no date in its own
-    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4)."""
+    markdown block (spec `2026-09-08-a-figure-carries-its-date-design.md` § 3.4).
+
+    RE-MEASURED 2026-09-12: 51 -> 52, `grid-donation.rq` the R201/R203 grid-donation loop
+    adds — the derivation that enumerates a continuation band's admissible header donors
+    (spec `2026-09-10-the-grid-the-author-drew-design.md` § 3-4). What the new number means
+    here is narrower than in test_query_terms: it is the count of query files the membrane
+    BINDS AS FOCUS NODES, so it moved only because the new file is actually read by the
+    shape — a file present on disk but unbound would leave this at 51 while the glob went to
+    52, which is the vacuity this assertion exists to catch."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 51, sorted(focus)
+    assert len(focus) == len(query_files()) == 52, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():
