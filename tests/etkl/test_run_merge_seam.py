@@ -49,7 +49,16 @@ def test_o2_the_fallback_is_what_saves_the_ink():
     and § 3.2 — and the reason the change is safe on 5 of the 7 documents.
 
     FALSIFIER (Step 5): make merged_run_admissible return True unconditionally. All
-    four fail. graincorp-stem alone loses 586 asserted cells."""
+    four fail. graincorp-stem alone loses 586 asserted cells.
+
+    RE-BASELINED 2026-09-12 by grid donation (R201/R203): bfs p6 moved 222 -> 267, and the
+    other three figures did NOT move. The move is not this test's subject changing — no run
+    is accepted on bfs p6 before or after, and the run membrane still refuses there. It is
+    that p6's five continuation bands now read their column labels from band 2's wholly-drawn
+    header, so 45 cells that were being consumed as a false header row are asserted as data.
+    WHAT THE NEW NUMBER MEANS: a page whose proposed run the membrane refuses still asserts
+    everything it asserts today, grid donation included — which is the same claim this line
+    always made, measured against a page that now reads more of its own ink."""
     from iladub.etkl.compile import compile_tables
 
     def cells(pdf, page):
@@ -57,7 +66,7 @@ def test_o2_the_fallback_is_what_saves_the_ink():
 
     assert cells(STEM, 0) == 586
     assert cells(CAPACITY, 0) == 390
-    assert cells(BFS, 6) == 222
+    assert cells(BFS, 6) == 267
     assert cells(APPLE, 2) == 3
 
 

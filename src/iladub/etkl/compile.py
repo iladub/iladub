@@ -764,6 +764,15 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     from .segment import is_multi_table_ambiguous
     doc = _DOC if doc_uri is None else doc_uri
     bands = page_bands(pdf_path, page_number, section_repair_bands=section_repair_bands)
+    # Grid donation (R201/R203): the page-scoped donor-evidence graph, built ONCE before the
+    # band loop and carrying donor-side facts only. The continuation's leaf-column count is
+    # bound per-band instead (donation.donors_for), because the loop already derives it once
+    # per band at `classify(band)` and emitting it up front would run infer_leaf_grid twice
+    # per band — the duplication R168 records. `head_line_refusals` does not touch the
+    # datagrid at all when no band on this page owns a rule-boundary vector (M1).
+    from . import donation as _donation
+    from .sectiongraph import donor_evidence
+    donor_ev = donor_evidence(bands, _donation.head_line_refusals(pdf_path, page_number, bands))
     graph = Graph()
     from .decisionlog import ReadingRecorder
     recorder = ReadingRecorder(graph, doc, page_number)
@@ -967,6 +976,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # ---- existing RECORD_TABLE assert logic ----
                     from .tiling import region_tiles
                     table_uri = URIRef(f"{doc}#table{idx}")
+                    # Grid donation (R201/R203), offered HERE and nowhere earlier: after
+                    # looks_transposed and looks_row_grouped have run on the band's OWN
+                    # reading, so a band that would escalate under its own reading is never
+                    # offered a donation. `offer` is looked up through the module so a test
+                    # patching donation.* reaches it (the late binding merged_run_admissible
+                    # already relies on). It returns None unless exactly one donor qualifies
+                    # AND the membrane accepts the donated reading; a refusal is invisible.
+                    donated = _donation.offer(bands, idx, region, donor_ev, page_number)
+                    if donated is not None:
+                        region = donated.region
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
                     n = assert_record_region(scratch, region, table_uri, doc, page_number)
@@ -990,6 +1009,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.RecordTable), ascii_view))
                     else:
                         graph += scratch
+                        if donated is not None:
+                            # ONLY an accepted donation is recorded (Global Constraint 6): the
+                            # provenance link into the compiled graph, and one decision holon.
+                            # A refused donation reaches neither, so the page is isomorphic to
+                            # one where nothing was ever proposed.
+                            graph.add((table_uri, TAB.headerDonatedBy,
+                                       URIRef(f"{doc}#table{donated.donor_index}")))
+                            _donor_line0 = " ".join(
+                                w.text for w in sorted(bands[donated.donor_index].lines[0].words,
+                                                       key=lambda w: w.x0))
+                            brec.record(
+                                "grid_donation", ["donated", "own_line_0"], "donated",
+                                f"read the column labels of band {donated.donor_index}, whose "
+                                f"line 0 the page datagrid refused as a header "
+                                f"(HeterogeneousColumn/every-measure): {_donor_line0[:120]}")
                         _emit_band_captions(graph, table_uri, band)
                         _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                         b = region.grid.boundaries
