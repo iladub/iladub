@@ -364,6 +364,34 @@ that the capacity contract exists. No `iladub:CandidateConcept` is minted for an
 matters, because doing so would have made § 2.8's registered 3-of-7 into 7-of-7 and falsified it. No
 `tab:RegionCaption` is reused and no transient `tab:*Block` term is promoted.
 
+**Two population gates moved, and the reason is the one their own docstring predicts.** The full
+suite refused `test_artifact_terms.py::test_the_population_is_every_tracked_ttl_outside_the_fixture_directory`
+and `test_artifact_declarations.py::test_the_membrane_binds_one_focus_node_per_artifact`, both at
+`154`. That is not a defect in this loop's work and not a defect in theirs: the population is
+`git ls-files`, so a new `.ttl` joins it **at `git add`, not at creation** — a caution written into
+`test_artifact_terms.py` on 2026-08-30 and observed here exactly as written. Every local run of those
+two tests during this loop was **green while the three new fixtures were untracked**, and only the
+committed tree fails them. Re-baselined to **157** in both gates, measured as a SET rather than a
+count: tracked `.ttl` outside the fixture directory at `HEAD~1` vs `HEAD` gives added = exactly
+`examples/ignored-band-conformant.ttl`, `tests/ignored-band-textless-leak.ttl` and
+`tests/ignored-band-pageless-leak.ttl`, removed = none. The `.rq` population does **not** move, and
+that asymmetry is meaningful rather than incidental: the carrier is a PROCEDURAL raw-extraction step
+that derives nothing, so it authored no query — the same shape `tab-label-nobox-leak.ttl` produced on
+2026-09-07. The four new terms and the shape went into the *existing* `etkl.ttl` and
+`etkl-shapes.ttl`, so no vocabulary file joined the population, only fixtures. Checked for a third
+gate: the only other tracked files mentioning `154` are a line citation, a residue number and a
+record count, none of them this population.
+
+**How the suite was actually run — a deviation from Global Constraint 7, stated rather than glossed.**
+The plan requires the full suite in-band, **once**. It could not be: the run was killed twice by the
+system for low memory, and a third attempt died instantly on an unmatched-glob error and ran nothing
+at all. The suite therefore ran as **several sequential processes** rather than one, which releases
+memory between them and covers the same set. The first kill also destroyed its own evidence — the run
+was piped into `tail`, so a kill left a 10-byte `[killed]` and no record of how far it got; subsequent
+runs redirect each chunk to its own log on disk, which is how the two population failures above became
+readable at all. Recorded because a suite that ran in pieces is not the same claim as a suite that ran
+whole, and the difference should be visible to a reviewer rather than inferred.
+
 **One finding this loop did not go looking for.** Deleting `_band_text` from `document.py` shifted
 every line below it by 11 and broke two citations in a comment **this loop did not write**: they named
 `section_facts`' writers by line, and the last of those lines moved from above the comment to below
