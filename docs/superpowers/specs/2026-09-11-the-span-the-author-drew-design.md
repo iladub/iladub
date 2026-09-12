@@ -20,8 +20,14 @@ advise that the tonnages shown are indicative only and are subject to change.`),
 > keep the Y/N column as a quarantined proposition (`iladub:CandidateConcept`). Only what the page
 > supports is asserted (§7).
 
-**Where it is recorded:** here, and nowhere else yet. It is reversible, and § 6 names the one
-reading of it that the maintainer should confirm at review.
+**Where it is recorded:** here, and nowhere else yet. It is reversible.
+
+**CONFIRMED AT REVIEW, 2026-09-12 — and this spec's reading of it was REFUTED.** § 6's first bullet
+asked *which agent names the measure*. The maintainer ruled: **the machine derives the name**, not
+the contract author. The licence must therefore reach the machine, which makes [[R212]] (an ignored
+band's text reaches no triple) and a proposer input carrying the page's furniture **prerequisites of
+this spec**, not later work. § 3.3, § 5 and § 6 are corrected below. The body of this spec was
+drafted on the refuted reading; where the two disagree, § 0 governs.
 
 ## 1. What is already measured
 
@@ -214,9 +220,13 @@ column groups split into records.
   `year`, `elevationPeriod`, `port` (with `ship:scheme-port` as its admissible scheme) and
   `capacity`. `capacity` has a value constraint: the numeral pattern that `stem-shapes.ttl` already
   declares for `ship:total`. **There is no field for the flag.**
-- **The licence.** The contract author names `capacity` from the page's title and footer (§ 0) and
-  records that on the field, quoting both lines. This is §1: the knowledge module names the measure,
-  and the compiler does not.
+- **The licence.** *(Corrected 2026-09-12 by the maintainer's ruling — § 0. The draft read this the
+  other way.)* The **machine** derives the measure's name from the page's title and footer. The
+  contract still declares the field `capacity` — that much is §1, the knowledge module declaring the
+  target and the compiler deciding no semantics — but the *binding* of an unlabelled leaf to it may
+  no longer rest on a name only the contract author read. **Two prerequisites follow, neither
+  optional:** the ignored bands' text must be carried ([[R212]]), and the proposer must be handed it
+  (§ 2.2). Until both ship, the capacity measure cannot be claimed grounded.
 - **The binding.** An unlabelled leaf reaches `capacity` only by proposal, because neither
   `exact_field` nor `marker_field` can place it (§ 2.2). The proposal is disposed by `_grounds_to`'s
   value-constraint branch (`ground.py:160-167`). A deterministic "the one field whose constraint
@@ -233,7 +243,9 @@ column groups split into records.
   spec does **not** change the battery's proposer to make it greener.
 - **What a live proposer sees today.** `surface_text = ""` and the value, not the title the licence
   rests on (§ 2.1, § 2.2). For the machine to consume the licence, the ignored bands' text must be
-  carried ([[R212]]) and the proposer must be handed it. Neither is this spec's work.
+  carried ([[R212]]) and the proposer must be handed it. **Under the 2026-09-12 ruling both ARE this
+  spec's work** — the sentence that stood here, *"neither is this spec's work"*, rested on the
+  refuted reading (§ 0).
 
 ### 3.4 The year
 
@@ -268,18 +280,24 @@ years missing is the maintainer's call at step 3 of § 5.
 1. **Execute the grid-donation plan as written.** Layer A reuses its evidence emitter, licence fact
    and seam (DECISIONS B and C), and those must be *shipped* before a plan can measure against them
    (plan rule 2).
-2. **Write one plan for Layers A and B together, plus the capacity contract**, as two task groups.
+2. **Carry the ignored bands' text, and hand it to the proposer** ([[R212]], § 2.1–2.2). *Added
+   2026-09-12 by the ruling in § 0:* the machine derives the measure's name, so the licence needs
+   both a carrier in the graph and a path to the proposer. It is a prerequisite of step 3's
+   *measures*, not of Layer A's *structure* — so it may be planned beside them or before them, but
+   the capacity contract cannot be claimed grounded until it ships.
+3. **Write one plan for Layers A and B together, plus the capacity contract**, as two task groups.
    Layer B has nothing to split until Layer A mints a spanning node, and Layer A alone changes
    graincorp's records without making them groundable.
-3. **The maintainer reads the carried records against the page**, which is route step 3 in the
+4. **The maintainer reads the carried records against the page**, which is route step 3 in the
    manifest's hold note (`tests/corpus-manifest.ttl:57`).
 
 ## 6. Unverified or assumed
 
-- **One reading of the ruling needs the maintainer's confirmation.** This spec reads "name from the
-  title and footer" as *the contract author names the field, with that text as the licence*. If the
-  intent was that the **machine** derives the name from the title, then [[R212]] and a proposer input
-  carrying the table's furniture become prerequisites of this spec, not later work.
+- ~~**One reading of the ruling needs the maintainer's confirmation.**~~ **ANSWERED 2026-09-12, and
+  the spec's reading was REFUTED: the machine derives the name.** This spec had read "name from the
+  title and footer" as *the contract author names the field, with that text as the licence*. The
+  maintainer ruled otherwise, so [[R212]] and a proposer input carrying the table's furniture **are**
+  prerequisites of this spec, not later work (§ 0, § 3.3, § 5 step 2).
 - **Layer B's population is measured on today's compile, not on the post-Layer-A one.** That is
   § 3.2's census, and it counts 0 matches. After Layer A, graincorp is predicted to be the only
   match. That prediction is not run.

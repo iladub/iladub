@@ -26,11 +26,16 @@ booked. **Refuted in minutes** if the donor's ink cannot be conserved, and then 
 design pass before any task is written. Layer B's population is already measured: 0 on today's
 compile, with 8 corpus negatives for its *childless* clause (spec § 3.2).
 
-### 5c. For the maintainer at review: confirm one reading of the ruling
+### 5c. ANSWERED at review, 2026-09-12 — the machine derives the name, and this spec's reading was REFUTED
 
-Spec § 6, first bullet. The spec reads the Split ruling as *the contract author names `capacity`,
-licensed by the page's title and footer*. If the intent was that the **machine** derives the name
-from the title, [[R212]] and a proposer input carrying the page's furniture become prerequisites.
+The question, for the record: spec § 6, first bullet read the Split ruling as *the contract author
+names `capacity`, licensed by the page's title and footer*.
+
+Asked at review on 2026-09-12, the maintainer ruled the other arm: **the machine derives the name**.
+[[R212]] and a proposer input carrying the page's furniture are therefore **prerequisites of the
+Layer A+B plan**, not later work. Corrected in spec § 0, § 3.3, § 5 (a new step 2) and § 6; R212's
+register row carries the same note. Nothing in § 5a changes — the grid-donation plan still goes
+first, and it is untouched by this.
 
 ## 1. Where the primaries are
 
