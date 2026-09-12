@@ -27,13 +27,14 @@ from __future__ import annotations
 
 from decimal import Decimal
 from pathlib import Path
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import XSD
 
 from .bands import Band
 from .geometry import Rule, hrule_boxes, box_y_fallback_candidates
+from .grid import _rule_boundaries
 from .gridregion import grid_lines, enclosed_lines, peel_leading_captions, interior_rule_xs
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
@@ -256,6 +257,58 @@ def run_evidence(bands: Sequence[Band]) -> Graph:
             g.add((u, TAB.prevBandIndex, Literal(idx - 1, datatype=XSD.integer)))
         for x in xs:
             g.add((u, TAB.bandRuleX, Literal(Decimal(str(x)))))
+    return g
+
+
+def donor_evidence(bands: Sequence[Band], head_refusals: Mapping[int, str]) -> Graph:
+    """Emit the transient per-page DONOR-evidence graph for grid-donation.rq
+    (R201/R203): one `tab:DonorBand` node per band that OWNS a leaf-boundary vector
+    (`grid._rule_boundaries`), carrying its `tab:bandIndex`, one
+    `tab:donorBoundaryX` per boundary of that vector, one `tab:bandRuleX` per
+    DISTINCT rounded rule x, its `tab:leafColumnCount`, and — only where the caller
+    mapped one — its `tab:headLineRefusal`.
+
+    ITS OWN GRAPH, never merged with `run_evidence`'s. The populations differ (a
+    ruled band whose words straddle its own rules emits a node THERE and none
+    here), so a merged graph would let this query read a run band's `tab:bandRuleX`
+    facts as if they were a donor's vector — the conflation `tab:PageBand`'s
+    comment forbids.
+
+    A band with NO vector emits NOTHING. That honest abstain is the same one
+    `run_evidence` makes for its own population and it protects the same thing: a
+    node carrying zero `tab:donorBoundaryX` facts would satisfy the query's drawn
+    clause VACUOUSLY (a `NOT EXISTS` over an empty set is true) and so donate to
+    every band on the page. The query cannot defend against that; only the emitter
+    can.
+
+    THE REFUSAL IS CARRIED, NEVER INFERRED (plan DECISION C). `head_refusals` maps
+    a band index to the page datagrid's refusal string for the page line that
+    band's line 0 re-identifies to by ink (`donation.head_line_refusals`). This
+    function never consults the datagrid itself and decides nothing about it: a
+    band absent from the mapping simply carries no licence, and the query refuses
+    it. Emitting a *default* here would be inventing the licence R203 exists to
+    derive.
+
+    Boundaries and rule xs are both minted as `Decimal(str(...))` at the SAME 2dp,
+    through `_distinct_rule_xs`' rounding — the drawn clause matches them BY TERM,
+    so one rounding for both is what makes the comparison sound. The rounding is
+    applied to the boundary HERE because `_rule_boundaries` passes `Band.column_xs`
+    through unrounded (grid.py:73), unlike the rule-derived branch."""
+    g = Graph()
+    for idx, band in enumerate(bands):
+        vector = _rule_boundaries(band)
+        if vector is None:
+            continue
+        u = _EV["donor-%d" % idx]
+        g.add((u, RDF.type, TAB.DonorBand))
+        g.add((u, TAB.bandIndex, Literal(idx, datatype=XSD.integer)))
+        for x in vector:
+            g.add((u, TAB.donorBoundaryX, Literal(Decimal(str(round(x, 2))))))
+        for x in _distinct_rule_xs(band.rules):
+            g.add((u, TAB.bandRuleX, Literal(Decimal(str(x)))))
+        g.add((u, TAB.leafColumnCount, Literal(len(vector) - 1, datatype=XSD.integer)))
+        if idx in head_refusals:
+            g.add((u, TAB.headLineRefusal, Literal(head_refusals[idx])))
     return g
 
 
