@@ -61,13 +61,16 @@ are recorded rather than fixed.
 | decision | recorded |
 | --- | --- |
 | The carrier is a committed fact in an owned namespace, neither asserted nor escalated | spec § 3 — **here and nowhere else yet; reversible** |
+| **The namespace is `etkl:`** — maintainer ruling, 2026-09-12 | spec § 0 and § 6; the local name is still the plan's to fix |
+| **All 146 ignored bands are carried, not a subset** — maintainer ruling, 2026-09-12, confirming the drafted design | spec § 0 and § 6 |
 | `iladub:CandidateConcept`, `tab:RegionCaption` and `tab:PriorPageTextBlock` are each refused, with a measured reason | spec § 3 — same status |
 | Every ignored band is carried, with no rule selecting "furniture" | spec § 3; this is what keeps the step PROCEDURAL under §8 |
 | The proposer input is the NEXT loop, not this one | spec § 4 |
 | `tab:RegionCaption`'s missing provenance is not repaired here | [[R218]] |
 | The census's band-vs-distinct-text confound is not resolved here | [[R219]] |
 
-The namespace for the new term (`tab:` vs `etkl:`) is **deliberately not decided** — spec § 6.
+~~The namespace for the new term (`tab:` vs `etkl:`) is **deliberately not decided**~~ — **ruled
+`etkl:` on 2026-09-12** (spec § 0). The term's local name is the plan's to fix.
 
 ## 3. Unverified or assumed
 

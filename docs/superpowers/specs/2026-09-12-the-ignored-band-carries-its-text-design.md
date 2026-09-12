@@ -23,6 +23,18 @@ Recorded in that spec's § 0/§ 3.3/§ 5/§ 6 and in [[R212]]'s row (PR #209, `f
 consequence is this spec's whole reason to exist: **a licence the machine must consume needs a
 carrier in the graph**, and today there is none.
 
+**Two further rulings, 2026-09-12, on this spec's § 6 open items.** Asked at review with the census
+in front of them, the maintainer ruled:
+
+> 1. **All.** Every ignored band is carried — not a selected subset.
+> 2. **`etkl:`.** The carried term lives in the `etkl` namespace.
+
+Both were § 6 questions when this spec was drafted; they are answers now, and § 3 and § 6 are
+corrected below. Ruling 1 confirms the drafted design rather than changing it, so nothing downstream
+of it moves. Ruling 2 settles a choice the spec had deliberately left open, and it is the right
+home: `etkl` is the doc-holon fabric (Raw/Clean/GroundingPortal/MembraneHealth), and a band the
+reader ignored is document fabric, not table vocabulary. **Recorded here and in the handoff's § 2.**
+
 ## 1. What is already measured
 
 Pointers, not restatements. Each was run by an earlier session.
@@ -140,8 +152,11 @@ asserted nor escalated.**
   `prov:wasDerivedFrom` the document. Provenance reuses the `iladub:SourceRegion` + `iladub:onPage`
   family (`iladub.ttl:104-116`), **not** `tab:onPage`, whose `rdfs:domain tab:Cell` would retype the
   node as a cell — the R69 mechanism that term was narrowed to prevent.
-- **No selection judgment.** *Every* ignored band is carried, with no rule deciding which bands are
-  "furniture". A band's text is carried because the reader ignored it, not because anything read it.
+- **No selection judgment — RULED "all", § 0.** *Every* ignored band is carried, with no rule
+  deciding which bands are "furniture". A band's text is carried because the reader ignored it, not
+  because anything read it. This is no longer the spec author's choice to revisit.
+- **The namespace is `etkl:` — RULED, § 0.** The local name is the plan's to fix; the namespace is
+  not.
 
 **§8 gate — PROCEDURAL, and irreducible.** This is raw extraction: source → typed RDF facts. Every
 value written is passed in or derived mechanically (the text by concatenation, the page off
@@ -210,11 +225,13 @@ here. Do not assume either; the answer changes where the emitter goes.
   `compile_tables` actually used.** `scripts/unbooked_ink_census.py:61-80` monkeypatch-captures the
   real list and asserts band/report alignment; this instrument does not. The ordering was replicated
   by reading (§ 2.1), not proven equal. A plan that pins a count should fork that script instead.
-- **Whether carriage is wanted for all 146 bands or only some documents is a maintainer question**
-  this spec answers by carrying all of them (§ 3). It is reversible.
+- ~~**Whether carriage is wanted for all 146 bands or only some documents is a maintainer
+  question** this spec answers by carrying all of them (§ 3). It is reversible.~~ **ANSWERED
+  2026-09-12: all** (§ 0). The drafted reading was confirmed, not refuted, so nothing downstream of
+  it moves — but it is a ruling now, not the spec author's choice.
 - **"No test pins zero-emission on the ignored path"** is one grep over `tests/`, not an enumeration.
-- The term's namespace (`tab:` vs `etkl:`) is not fixed here. Both are owned; the doc-holon fabric
-  lives in `etkl:` and the table vocabulary in `tab:`, and the carried node is arguably neither.
+- ~~The term's namespace (`tab:` vs `etkl:`) is not fixed here.~~ **ANSWERED 2026-09-12: `etkl:`**
+  (§ 0). The term's local name remains the plan's to fix.
 
 ## 7. Residues raised
 
