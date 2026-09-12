@@ -1,0 +1,52 @@
+# grid-donation.rq — the donor-candidate derivation for grid donation (R201/R203,
+# spec 2026-09-10-the-grid-the-author-drew-design.md § 3-4).
+#
+# Open-world derivation over the per-page DONOR-evidence graph (the page is the closure
+# boundary — one fresh Graph per page, exactly as band-run.rq, section-repeat.rq and
+# grid-region.rq close within their own transient graphs). An earlier band donates its
+# header to a continuation band iff, on facts that are PRESENT: it is earlier on the page,
+# its leaf-boundary vector is wholly drawn, it delimits the same number of leaf columns as
+# the continuation, and the page datagrid refused its line 0 as a header. The continuation
+# (?b) and its leaf-column count (?n) arrive as initBindings — the reader binds them
+# per-band because the count is a fact compile_tables already derives once per band, and
+# emitting it for every band up front would run infer_leaf_grid twice per band (R168).
+#
+# THE TILING CLAUSE IS DELIBERATELY ABSENT (plan DECISION A). Spec § 3 lists three clauses;
+# `tiles` is DISPOSED, not derived. Its shipped per-cell form is roundtrip.cell_round_trips,
+# which already carries the float-comparison epsilon COORD_EPS; deriving it here would
+# either put that epsilon in a query as a numeric literal — which the §8 gate forbids — or
+# serialise every word box of every band into the evidence graph to evaluate a predicate
+# with zero degrees of freedom. The corpus measures the two formulations identical: with
+# tiling removed from the relation, the accepted set is the same 5 pairs (plan M3).
+#
+# THE ONE STRING LITERAL IS THE DATAGRID'S OWN PUBLISHED REFUSAL NAME (plan DECISION C), in
+# the exact lexical form emit_data_grid writes into dec:rejectedBecause (datagrid.py:610).
+# It is not a constant of this derivation's choosing and it is not tuned: it names the
+# verdict "every cell of this line is a measure, so this line is not a header", which is
+# precisely the R203 licence — the donor's header is DERIVED, never assumed. Any other
+# refusal, a body-row verdict, or no fact at all leaves the donor unlicensed and refused.
+# This query contains NO NUMERIC LITERAL.
+#
+# THE DRAWN CLAUSE IS HOLON-SCOPED. The nested FILTER NOT EXISTS asks only "is every
+# boundary of THIS node's vector also one of THIS node's drawn rule xs" — closed within one
+# band node while the graph stays open, the same idiom as band-run.rq:32-33. It is what
+# refuses a donor whose vector carries a gutter this compiler INFERRED (Band.column_xs)
+# where the author drew nothing. Both properties are minted by one rounding site, so the
+# comparison is BY TERM.
+#
+# THIS DERIVATION ENUMERATES CANDIDATES AND SETTLES NOTHING. Whether a named donor's header
+# may actually be read over the continuation's ink is disposed of by the existing
+# closed-world membrane (donation.donation_admissible: region_tiles + cell_round_trips on a
+# scratch graph, discarded on refusal), and uniqueness is required by donation.offer, not
+# here — the relation reports every qualifying donor and adds no ordinal rule (spec § 3(b)
+# refused one). That split is why this is AXIOM under CLAUDE.md §8: the reading judgement
+# the gate sends elsewhere is the one that DISPOSES.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?a WHERE {
+  ?u a tab:DonorBand ;
+     tab:bandIndex ?a ;
+     tab:leafColumnCount ?n ;
+     tab:headLineRefusal "HeterogeneousColumn/every-measure" .
+  FILTER(?a < ?b)
+  FILTER NOT EXISTS { ?u tab:donorBoundaryX ?x . FILTER NOT EXISTS { ?u tab:bandRuleX ?x } }
+}
