@@ -392,6 +392,23 @@ runs redirect each chunk to its own log on disk, which is how the two population
 readable at all. Recorded because a suite that ran in pieces is not the same claim as a suite that ran
 whole, and the difference should be visible to a reviewer rather than inferred.
 
+The whole set did run, and this is its tally:
+
+| segment | processes | result |
+| --- | --- | --- |
+| `tests/` excluding `tests/etkl` | 1 | 678 passed, 5 skipped, **2 failed** — the two population gates above, fixed and re-verified |
+| `tests/etkl` (123 files) | 11 | **970 passed**, 2 skipped, 1 xfailed, **0 failed** |
+
+**1648 passed, 7 skipped, 1 xfailed, 0 outstanding failures.** The only two failures the suite ever
+raised were the `.ttl` population pins, and both are repaired above. Two caveats a reviewer should
+have rather than infer: `tests/etkl` reached a complete run only at the third attempt and only at
+8 files per process — the first two attempts were killed by the system mid-run — and the non-etkl
+segment has **not** been re-run end-to-end since the population fix, because that fix touched only
+two comments and two integers inside the two failing test files plus one markdown document, none of
+which any other test imports. What *was* re-run after it: those two files (36 passed), their two
+sibling query gates, doc governance (41 passed) and the citation lint. CI runs the suite whole, in
+one process, and is the check of record.
+
 **One finding this loop did not go looking for.** Deleting `_band_text` from `document.py` shifted
 every line below it by 11 and broke two citations in a comment **this loop did not write**: they named
 `section_facts`' writers by line, and the last of those lines moved from above the comment to below
