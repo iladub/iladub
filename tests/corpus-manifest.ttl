@@ -222,7 +222,11 @@
     cor:reading [ a cor:Reading ; cor:value "0.40331491712707185"^^xsd:decimal ;
         cor:readAt "2026-09-08"^^xsd:date ;
         cor:atCommit "9eb5cd0" ;
-        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] ;
+    cor:reading [ a cor:Reading ; cor:value "0.40331491712707185"^^xsd:decimal ;
+        cor:readAt "2026-09-12"^^xsd:date ;
+        cor:atCommit "b2bdbbe" ;
+        cor:recordedIn "docs/superpowers/2026-09-12-grid-donation-evidence.md" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
