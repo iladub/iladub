@@ -107,6 +107,23 @@ def _violations(data, shapes, ont):
             for r in results.subjects(SHACL.sourceConstraintComponent, None)}
 
 
+def _messages(data, shapes, ont):
+    """The sh:resultMessage of every violation. Used instead of `_violations` for
+    etkl:IgnoredBandShape's negatives for the reason that function's own docstring
+    records one case further down: its page requirement is a SEQUENCE path
+    (iladub:fromRegion / iladub:onPage), which pySHACL reports as a blank-node list
+    in sh:resultPath — nothing a test can spell. A message is authored per property
+    shape, so it names which constraint fired as precisely as a path would, and
+    distinguishes the two negatives, which otherwise both read as a MinCount
+    violation at the same focus node."""
+    from rdflib.namespace import SH as SHACL
+    _, results, _ = validate(
+        _g(*data), shacl_graph=_g(shapes), ont_graph=_g(*ont),
+        inference="rdfs", advanced=True,
+    )
+    return {str(o) for o in results.objects(None, SHACL.resultMessage)}
+
+
 def test_confidence_out_of_range_rejected():
     """A decision holon carrying dec:confidence 1.5 AND a second value trips BOTH arms of
     dec:ConfidenceShape — [0,1] and maxCount 1 — on dec:confidence, at that node."""
@@ -121,3 +138,44 @@ def test_confidence_out_of_range_rejected():
     )
     assert (node, path, SHACL.MaxInclusiveConstraintComponent) in fired, fired
     assert (node, path, SHACL.MaxCountConstraintComponent) in fired, fired
+
+
+# --- R212: the band the reader ignored carries its text ---
+
+_IGNORED_ONT = [os.path.join(ONT, "etkl.ttl"), os.path.join(ONT, "iladub.ttl")]
+
+
+def test_ignored_band_conformant():
+    """A carried ignored band with its text, its index, its verdict reason and a
+    region that carries the page CONFORMS. iladub.ttl is in the ont list because the
+    example uses iladub: terms — without it a negative could fail for the wrong reason."""
+    c, t = _validate(
+        [os.path.join(EX, "ignored-band-conformant.ttl")],
+        os.path.join(SH, "etkl-shapes.ttl"),
+        _IGNORED_ONT,
+    )
+    assert c, t
+
+
+def test_ignored_band_textless_rejected():
+    """A carried band with NO etkl:bandText is refused, and refused BY the text
+    requirement — not by a neighbour constraint that happens to also fire."""
+    fired = _messages(
+        [os.path.join(TST, "ignored-band-textless-leak.ttl")],
+        os.path.join(SH, "etkl-shapes.ttl"),
+        _IGNORED_ONT,
+    )
+    assert "An ignored band must carry the band's exact surface text — that text is " \
+           "the whole reason the node exists." in fired, fired
+
+
+def test_ignored_band_pageless_rejected():
+    """A carried band whose source region carries no page is refused: provenance to
+    the page (CLAUDE.md §6) reaches the node through iladub:fromRegion / iladub:onPage."""
+    fired = _messages(
+        [os.path.join(TST, "ignored-band-pageless-leak.ttl")],
+        os.path.join(SH, "etkl-shapes.ttl"),
+        _IGNORED_ONT,
+    )
+    assert "An ignored band must reach a page through its source region " \
+           "(provenance to the page)." in fired, fired

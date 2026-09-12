@@ -17,7 +17,7 @@ from .geometry import extract_words, text_lines
 from .bands import detect_bands
 from .regions import classify, RegionKind, column_of
 from .roundtrip import cell_round_trips, render_ascii
-from .holon import assert_record_region, escalate_region, TAB
+from .holon import assert_record_region, escalate_region, emit_ignored_band, TAB
 
 _DOC = URIRef("https://example.org/etkl/doc")
 
@@ -812,12 +812,17 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     rejected=_kind_refutations(region.kind.name, region.reason))
 
         if region.kind is RegionKind.NON_TABLE:
+            # C1 fix, extended by R212's carrier: an ignored band never contributed to the
+            # score, so NOTHING on this path touches a counter. The one invariant that
+            # applies is "ink the reader did not read still lands in the graph with
+            # provenance", and both emissions below serve it — unit markers for the
+            # absorbed marker ink, the carrier for the band's own surface text.
             if getattr(band, "unit_markers", ()):
-                # C1 fix: an ignored band never contributed to the score, so no
-                # accounting change — only the invariant "absorbed ink always lands
-                # in the graph with provenance" applies here.
                 cand_uri = URIRef(f"{doc}#region{idx}")
                 _emit_unit_markers(graph, cand_uri, band, None)
+            # Mints `{doc}#ignored{idx}`, deliberately disjoint from the `cand_uri` hanger
+            # above — emit_ignored_band's docstring states why.
+            emit_ignored_band(graph, doc, idx, band, page_number, region.reason)
             brec.record("verdict", ["asserted", "escalated", "ignored"], "ignored", "")
             reports.append(RegionReport(region.kind, "ignored", 0,
                                         region.reason, None, ascii_view))

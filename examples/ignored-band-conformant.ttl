@@ -1,0 +1,23 @@
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  A minimal CONFORMANT carried ignored band: the region reader classified this
+#  band NON_TABLE and therefore read nothing from it, so the band's EXACT surface
+#  text is carried — with its position among the page's bands, the verdict's own
+#  reason, and provenance to the page through its source region.
+#
+#  Modelled on graincorp-capacity-2026-08-04.pdf p0 b1, the licence the machine
+#  must consume (spec 2026-09-12-the-ignored-band-carries-its-text-design § 2.2).
+
+ex:capacity-doc-p0-ignored1 a etkl:IgnoredBand ;
+    etkl:bandText "ELEVATION CAPACITY TABLE\nAs At Tuesday, 4 August 2026" ;
+    etkl:bandIndex 1 ;
+    etkl:ignoredBecause "fewer than 2 columns" ;
+    iladub:fromRegion ex:capacity-doc-p0-ignored1-source ;
+    prov:wasDerivedFrom ex:capacity-doc-p0 .
+
+ex:capacity-doc-p0-ignored1-source a iladub:SourceRegion ;
+    iladub:onPage 0 ;
+    prov:wasDerivedFrom ex:capacity-doc-p0 .
