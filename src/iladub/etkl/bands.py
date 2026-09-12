@@ -54,3 +54,14 @@ def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:
         Band(tuple(g), min(ln.top for ln in g), max(ln.bottom for ln in g))
         for g in groups
     ]
+
+
+def band_text(band) -> str:
+    """A band's exact surface text: words left-to-right, lines top-to-bottom, newline-joined.
+
+    Raw extraction, and the whole of it — no normalisation, no case folding, no stripping. Two
+    renderings of one furniture block on two pages produce the same string exactly when the
+    renderer drew the same words; anything softer would be the pipeline deciding that two
+    different blocks are "the same enough", which is a judgment the law does not make.
+    """
+    return "\n".join(" ".join(w.text for w in ln.words) for ln in band.lines)

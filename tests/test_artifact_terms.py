@@ -77,7 +77,16 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # RE-MEASURED 2026-09-11 (the-negative-half): 149 -> 154, five leak fixtures under tests/
     # (dec-confidence, promotion-unaccountable, risk-assessment-contextless,
     # sensitivity-without-reads, permission-without-action).
-    assert len(artifact_files()) == len(tracked) - len(carved) == 154
+    # RE-MEASURED 2026-09-12 ([[R212]], the ignored band's carrier): 154 -> 157 — the carrier's
+    # worked example (`examples/ignored-band-conformant.ttl`) and its two must-fail negatives
+    # (`tests/ignored-band-textless-leak.ttl`, `tests/ignored-band-pageless-leak.ttl`), which
+    # CLAUDE.md § Serialization requires of every new shape (`etkl:IgnoredBandShape`). NOT carved
+    # out, for the same reason as the negatives above: they name declared `etkl:`/`iladub:` terms
+    # only. This is the hazard the WHY-CI-CAUGHT-THIS paragraph above names, observed again: the
+    # loop's own local runs of THIS test were green while the three files were untracked, and only
+    # the committed tree fails. Measured as a SET, not a count — tracked `.ttl` outside the fixture
+    # directory at HEAD~1 vs HEAD gives added = exactly those three, removed = none.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 157
 
 
 def test_each_file_gets_its_own_named_graph():
