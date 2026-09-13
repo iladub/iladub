@@ -74,7 +74,18 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     amendment's prose rather than from any status. The loop's own new rows [[R224]] and [[R225]]
     add NOTHING to this count — each cites an open row ([[R213]] and [[R224]] respectively), so
     neither is structurally isolated. Measured by recomputing `candidates` against HEAD
-    (`580cfcb`) and against this tree."""
+    (`580cfcb`) and against this tree.
+    RE-MEASURED 2026-09-13 by the [[R224]] repair loop: 91 -> 91, ADDED = [], REMOVED = [] — and
+    the STILLNESS IS A CANCELLATION, not an absence of movement, which is why it is recorded at
+    all. [[R224]] was CLOSED, and R202's only open neighbour was R224 (that is the entry two above,
+    which removed R202 from this set when the citation was authored), so the closure alone would
+    have returned R202 to the candidates. It did not, because the same loop raised [[R226]] and
+    R226's prose cites [[R202]] — a NEW ROW's prose replacing the open neighbour a STATUS change
+    had just taken away. The two entries above show prose moving this count on its own; this one
+    shows prose CONCEALING a status move by exactly cancelling it, so a reader must not take an
+    unchanged count as evidence that no row changed status. [[R225]] stays out of the set for an
+    unrelated reason, checked rather than assumed: it cites [[R44]], which is open. Measured by
+    recomputing `candidates` against the pre-edit tree and against this one."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()

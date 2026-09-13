@@ -2123,6 +2123,57 @@ def currency_marker_escalating_with_note_pdf(path: str) -> dict:
     return {"cols": xs, "n_rows": len(rows), "note": note}
 
 
+def border_only_grid_pdf(path: str) -> dict:
+    """R224's fixture — a page that asserts NOTHING, escalates NOTHING, and derives a grid.
+
+    This is the exact gate at `compile.py:1351`, the datagrid fallback, whose ONLY live corpus
+    instances are ons-index-of-services p7 and p8. Before this fixture existed the branch was
+    reachable in CI by no synthetic page at all: a sweep of every single-argument fixture in this
+    module (2026-09-13) found ZERO that trip the gate, which is why two defects introduced on
+    2026-08-09 survived until [[R224]] measured them.
+
+    HOW IT REACHES THE GATE, which is [[R225]]'s mechanism reproduced synthetically. Only the two
+    page-BORDER verticals are drawn — no interior rules. `_build_ruled_band` re-buckets the band
+    against `xs=[54.0, 540.0]` (`compile.py:133`), and a 2-element `xs` IS one column, so the call
+    can only FUSE: the rows come back as single tokens (`'2024102.4100.5106.3'`) and the band
+    classifies `NON_TABLE / "fewer than 2 columns"` (`regions.py:91`). Nothing asserts, nothing
+    escalates, and the gate opens. `derive_data_grid` is unaffected because it prefers ALIGNMENT
+    over decoration unless decoration resolves at least as finely (`datagrid.py:346`) — two border
+    boundaries give 1 column against alignment's 4 — so it still reads the real table.
+
+    MEASURED on this fixture 2026-09-13: 1 band (2 rules, 6 lines), `derive_data_grid` →
+    `rows=6 cols=4 universe=alignment`; `datagrid_fallback=False` → `asserted=0 escalated=0`,
+    1 region, 0 cells; `datagrid_fallback=True` → 2 regions (the fallback shape, bands + 1),
+    24 cells on the appended region, which carries `table_uri=…#p0-datagrid`.
+
+    The trigger is STRUCTURAL, not a publisher's palette — unlike [[R213]]'s colour discriminator
+    this rests on no n=1 corpus accident, so CI can hold [[R224]]'s invariants without the corpus.
+    """
+    cols = [80.0, 200.0, 320.0, 440.0]
+    rows = [
+        ("2024", "102.4", "100.5", "106.3"),
+        ("2025", "103.1", "101.2", "107.0"),
+        ("2026", "104.8", "102.9", "108.6"),
+        ("2027", "105.2", "103.4", "109.1"),
+        ("2028", "106.7", "104.1", "110.3"),
+        ("2029", "107.3", "105.8", "111.9"),
+    ]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 120.0
+    rh = 18.0
+    bottom = top - len(rows) * rh - 8.0
+    c.setLineWidth(0.7)
+    c.line(54.0, top + 12, 54.0, bottom)        # the two page borders, and nothing else
+    c.line(540.0, top + 12, 540.0, bottom)
+    c.setFont("Courier", 10)
+    for i, row in enumerate(rows):
+        y = top - i * rh
+        for x, cell in zip(cols, row):
+            c.drawString(x, y, cell)
+    c.save()
+    return {"cols": cols, "n_rows": len(rows), "n_cols": len(cols), "rule_xs": [54.0, 540.0]}
+
+
 def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
     """R87 TASK 3 FIXTURE — the only synthetic shape that both ESCALATES and opens
     `document.py:1515`'s validation gate.
