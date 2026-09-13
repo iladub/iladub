@@ -137,6 +137,30 @@ prog:rung:substrate a prog:Rung ;
 # The remaining five are recorded HOLDs, not bare rows — the 2026-08-20 line above saying
 # "all six are BARE Unadjudicated" was already false when it was written.
 #
+# RE-MEASURED 2026-09-13 ([[R211]], the span-donation loop), same command, same file. Both blocks
+# above are kept as the record of what was read on their own dates and are NOT repaired in place,
+# for the reason the 2026-08-31 note gives about the 2026-08-20 one:
+#   ag-trade/cbh-stem-2026-08-03.pdf             Unadjudicated  floor=None  adjudications=1
+#   ag-trade/graincorp-capacity-2026-08-04.pdf   CompilesAbove  floor=0.99  adjudications=2
+#   ag-trade/graincorp-stem-2026-07-31.pdf       CompilesAbove  floor=0.95  adjudications=4
+#   financial/apple-fy2026q3-statements.pdf      Unadjudicated  floor=None  adjudications=3
+#   gov-stats/bfs-population-bilan-2023.pdf      Unadjudicated  floor=None  adjudications=1
+#   gov-stats/ons-index-of-services-2026-02.pdf  Unadjudicated  floor=None  adjudications=1
+#   health/who-wfa-boys-zscore-0-5.pdf           CompilesAbove  floor=0.90  adjudications=2
+# 3 met, 4 unmet. apple reads adjudications=3 and not the 1 of the block above — two notes were
+# added between these two censuses; it is recorded here because the first draft of THIS block
+# carried the old 1 forward instead of the figure the same run had just computed, which is the
+# stale-figure defect these dated blocks exist to prevent, committed inside one of them.
+# graincorp-capacity moved on a READING, not on a number written down — which is
+# the distinction lines 104-112 exist to protect, so it is worth saying exactly how. Its floor is
+# 0.99 against a measured 1.0000, deliberately BELOW the score ([[R194]]: 1.0 is indistinguishable
+# from a ratio ceiling, and pinning the ceiling would refuse any future escalated token). The
+# reading that earned it: span donation gave band 3 the nine column labels band 2 DREW, so the
+# band no longer asserts its own first data row as a header — 9 header labels, 0 numeric, where
+# before there were 16 label cells every one of which was a data value. Entry cells 390 -> 406
+# with the ink ledger unmoved at 406/0, and the capacity contract grounds the port on all 189
+# records. The four remaining rows are recorded HOLDs, not bare rows.
+#
 # THE DENOMINATOR GROWS WITH AMBITION, and that is correct: adding a document to the corpus
 # lowers the fraction. A gauge that can only be raised by aiming higher measures the right
 # thing (spec §7.1).
@@ -204,16 +228,26 @@ prog:criterion:etkl:01 a prog:Criterion ;
 # The page's real header (Year | Elevation Period | Mackay | Gladstone | ... | Portland) sits in
 # its own one-line band, ignored as 'fewer than 2 lines'. R166's own census already lists this
 # document, row 2 of specs/2026-09-10-the-header-is-assumed-design.md § census: "NO — a data row".
-# Closing R166 advances this criterion (the rung's edge meaning, stated below): no contract
-# can ground this reading honestly, because exact_field (ground.py) matches a field by
-# header text, and the only header texts here are data values.
+#
+# MET 2026-09-13, and the prog:blockedBy "R166" edge is DELETED in the same act (M8 refuses a met
+# criterion that is blocked). What stood here was: "Closing R166 advances this criterion: no
+# contract can ground this reading honestly, because exact_field matches a field by header text,
+# and the only header texts here are data values." That reason is now FALSE, and its falsification
+# is what earns the advance rather than R166 closing. Span donation (R211) reads band 3 under the
+# nine labels band 2 DREW, whose ruling is a strict subset of band 3's, so the header texts are the
+# author's port names and no longer data values: measured at 9 header labels of which 0 are
+# numeric, and the capacity contract grounds the port on all 189 records through marker_field's
+# unique scheme admission. R166 itself stays OPEN on five donor-less bands in other documents;
+# what changed is that graincorp p0 band 3 is no longer one of them, so the row no longer blocks
+# THIS criterion. The document's own acceptance is the 2026-09-13 cor:adjudication, whose third
+# route step was discharged by four independent measurements rather than by eye.
 prog:criterion:etkl:02 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:46" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
-    prog:blockedBy "R166" ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-13"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/graincorp-capacity-2026-08-04.pdf]" .
@@ -221,7 +255,7 @@ prog:criterion:etkl:02 a prog:Criterion ;
 prog:criterion:etkl:03 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "ag-trade/cbh-stem-2026-08-03.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:70" ;
+    prog:source "tests/corpus-manifest.ttl:78" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -231,7 +265,7 @@ prog:criterion:etkl:03 a prog:Criterion ;
 prog:criterion:etkl:04 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:86" ;
+    prog:source "tests/corpus-manifest.ttl:94" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -241,7 +275,7 @@ prog:criterion:etkl:04 a prog:Criterion ;
 prog:criterion:etkl:05 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/bfs-population-bilan-2023.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:103" ;
+    prog:source "tests/corpus-manifest.ttl:111" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -251,7 +285,7 @@ prog:criterion:etkl:05 a prog:Criterion ;
 prog:criterion:etkl:06 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "financial/apple-fy2026q3-statements.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:116" ;
+    prog:source "tests/corpus-manifest.ttl:124" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -270,7 +304,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:133" ;
+    prog:source "tests/corpus-manifest.ttl:141" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-31"^^xsd:date ;

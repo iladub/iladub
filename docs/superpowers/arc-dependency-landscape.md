@@ -29,11 +29,10 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**15 ready.**
+**14 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
-| `etkl` | `etkl:02` | ag-trade/graincorp-capacity-2026-08-04.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it. |
 | `etkl` | `etkl:04` | gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it. |
 | `holon` | `holon:06` | A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only). |
 | `substrate` | `substrate:01` | The membrane is enforced at runtime by an immutable event ledger (memory): the holon's history is kept by the substrate itself, not reconstructed by the compiler process. |
@@ -104,5 +103,4 @@ not a recommendation; which residue to close is a judgment and stays the reader'
 | `R97` | 1 |
 | `R99` | 1 |
 | `R100` | 1 |
-| `R166` | 1 |
 
