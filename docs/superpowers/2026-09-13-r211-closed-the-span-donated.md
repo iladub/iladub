@@ -107,7 +107,38 @@ not move, which is what "it changes the reading and not the ink" means operation
 - **etkl:02 is not met.** R211 closes; the criterion needs a pinned floor and the maintainer reading
   the carried grid against the page (route step 3 of the manifest's hold note).
 
-## 6. Residues
+## 6. The reading verified four ways, and R213 measured (added 2026-09-13, after `7482db3`)
+
+The maintainer's read (route step 3) was scoped down by measurement rather than left whole. The
+question *"is each value under the right port?"* is answered by four checks, each using a different
+instrument, and the last two were run only because the maintainer declined to accept a check I had
+wrongly handed to them.
+
+| check | instrument | result |
+| --- | --- | --- |
+| structure | `region_tiles` / SHACL | 16 leaf columns covered exactly once; partition 1,1,2,2,2,2,2,2,2 |
+| content | `pdftotext -layout` (spec § 2.5, a different loop) | all 7 distribution figures identical |
+| per-cell geometry | each entry cell's bbox vs its port's drawn interval | **406 of 406 inside, 0 outside** |
+| ruling vs print | nearest printed label ink, using NO drawn rules | **406 agree, 0 disagree** |
+
+The fourth is the one that retires *"only an eye can settle whether the drawn rules sit where the
+labels appear"*. Assigning every data word to a port by proximity to the printed label ink — a rule
+that never consults the ruling — reproduces the drawn-interval assignment exactly. And every label
+is wholly inside its own interval with left/right gaps matching within about 1pt (`Mackay`
+28.92/28.62, `Gladstone` 24.07/24.32, `Fisherman Islands` 8.85/9.93), which is what a centred label
+over its own drawn cell looks like; an offset ruling would show as a lopsided or overflowing label.
+
+**[[R213]] is MEASURED and stays open.** Its central unmeasured question was *how many of the 110
+zero-reading cells are the invisible glyph*. The answer is all of them, by set identity rather than
+by a matching count: each of the 110 carries a glyph whose colour matches the filled rectangle
+behind it, dark navy `(0.063, 0.2, 0.353)` on `(0.114, 0.169, 0.314)`, and none is genuinely
+printed. The page's other 144 zero glyphs are black on pale blue — the zeros inside printed
+tonnages such as `10,000`. So invisibility is **decidable from the PDF**, which is a remedy path the
+row did not have; what it is not is a repair, because deciding what to emit for an invisible glyph
+(nothing, a typed absence, a proposition) is a §8 classification and not a change to slip into this
+loop.
+
+## 7. Residues
 
 **Closed:** [[R211]]. **Raised:** [[R222]] (a non-contiguous span is refused by nothing in the
 shipped membrane — measured, left open because interval containment makes it unreachable and

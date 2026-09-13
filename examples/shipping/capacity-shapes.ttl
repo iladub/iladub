@@ -8,11 +8,14 @@
 # point: they quarantine as propositions rather than being asserted as capacities.
 #
 # IT ALSO ADMITS A BARE `0`, and that is [[R213]]'s invisible-glyph hazard, named here rather
-# than left implicit. Most of the page's 110 zero-reading cells are the invisible glyph in its
-# dark cells, so a proposer that bound them to this field would assert a capacity of zero where
-# the page asserts nothing. Under the corpus battery's ABSTAINING proposer no unlabelled leaf
-# grounds at all, so the hazard is not live in CI; it becomes live the first time a real
-# proposer runs against this contract.
+# than left implicit. MEASURED 2026-09-13, and the figure is not "most" but ALL: every one of the
+# 110 cells this page's reading carries as `0` is a glyph whose colour matches the rectangle
+# behind it — dark navy on dark navy — so the page shows an EMPTY cell wherever the reading says
+# zero. Set identity, not a matching count: 110 of 110, none genuinely printed. A proposer that
+# bound those to this field would therefore assert 110 capacities of zero that the page does not
+# state. Under the corpus battery's ABSTAINING proposer no unlabelled leaf grounds at all, so the
+# hazard is not live in CI; it becomes live the first time a real proposer runs against this
+# contract, and it is the reason `capacity` must not be widened to admit an empty reading either.
 #
 # `year` and `elevationPeriod` carry NO value constraint by design — they ground by exact field
 # identity, and a pattern over a period spelling would be the contract inventing a format the
