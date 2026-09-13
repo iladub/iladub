@@ -1,0 +1,45 @@
+# The reading span donation produces (R211, spec 2026-09-11 § 3.1, plan DECISION C).
+#
+# An earlier band drew three labels over a coarser column grid; the band below it reads six
+# leaf columns on a grid the donor's boundaries are a strict subset of. Each label heads the
+# whole run of recipient columns inside its own drawn interval.
+#
+# THE SHAPE THIS EXAMPLE EXISTS TO SHOW: every header node is level 0, childless, and covers
+# MORE THAN ONE column. No other example in this repo carries that combination --
+# hierarchical-conformant.ttl's multi-column nodes all HAVE children, and its one childless
+# node (the stub) covers a single column. It matters because tab:UnambiguousAccessShape
+# DEFINES a leaf header as one nothing points at via tab:parentHeader, so three childless
+# spanning nodes are the canonical shape it asks for, not a shape it tolerates -- which is why
+# span donation needs no shape of its own and authors none.
+#
+# THERE ARE DELIBERATELY NO LEVEL-1 NODES. The donor drew one row of labels and the recipient's
+# own line 0 is a data row, so a second header level would be a node with no ink behind it --
+# an invented reading, which CLAUDE.md § Core design principles 7 forbids. The negative
+# tests/tab-span-invented-child-leak.ttl is what happens if one is minted anyway.
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/span-demo#> .
+
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2, ex:c3, ex:c4, ex:c5 ;
+    tab:hasLeafRow    ex:r0 ;
+    tab:hasHeaderNode ex:hMackay, ex:hGladstone, ex:hPortland ;
+    tab:hasCell ex:e0, ex:e1, ex:e2, ex:e3, ex:e4, ex:e5 .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:c3 a tab:LeafColumn . ex:c4 a tab:LeafColumn . ex:c5 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+# The donor's three drawn intervals, each containing two whole recipient columns.
+ex:hMackay    a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0, ex:c1 .
+ex:hGladstone a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c2, ex:c3 .
+ex:hPortland  a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c4, ex:c5 .
+
+# One body row of the recipient. Each leaf column carries its own entry; the labels above
+# span two columns each, so a column's address is (spanning label, leaf column), which is
+# exactly the collapse the key split in the feed later reads as one record per label.
+ex:e0 a tab:EntryCell ; tab:atColumn ex:c0 ; tab:atRow ex:r0 .
+ex:e1 a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r0 .
+ex:e2 a tab:EntryCell ; tab:atColumn ex:c2 ; tab:atRow ex:r0 .
+ex:e3 a tab:EntryCell ; tab:atColumn ex:c3 ; tab:atRow ex:r0 .
+ex:e4 a tab:EntryCell ; tab:atColumn ex:c4 ; tab:atRow ex:r0 .
+ex:e5 a tab:EntryCell ; tab:atColumn ex:c5 ; tab:atRow ex:r0 .

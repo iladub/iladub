@@ -229,3 +229,191 @@ def offer(bands: Sequence[Band], idx: int, region: ClassifiedRegion, evidence: G
     if not donation_admissible(donated, page_number):
         return None
     return Donation(donated, donors[0])
+
+
+# =============================================================================================
+# SPAN donation (R211) — the SECOND relation. Grid donation carries a header at the SAME leaf
+# column count; this one carries a COARSER header, each of whose drawn intervals spans a run of
+# the continuation's columns. Same evidence graph, same licence, one clause different.
+#
+# CLAUDE.md §8 CLASSIFICATION, per function, as above:
+#   `span_donors_for`      PROCEDURAL glue over an AXIOM (vocab/queries/span-donation.rq).
+#   `span_tree`            PROCEDURAL assembly over an AXIOM (vocab/queries/span-covers.rq) —
+#                          the query decides WHICH columns each label heads; this joins the
+#                          words the query placed in one interval and reads their geometry.
+#   `span_region`          PROCEDURAL region construction. It decides nothing.
+#   `span_donation_admissible`  the shipped closed-world MEMBRANE, reused and not copied.
+#   `span_offer`           PROCEDURAL composition; uniqueness (DECISION E) and nothing else.
+# =============================================================================================
+
+SPAN_DONATION_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "span-donation.rq"
+
+
+def span_donors_for(evidence: Graph, idx: int) -> tuple[int, ...]:
+    """Every band `span-donation.rq` derives as a SPANNING donor for band `idx` — ascending.
+
+    PROCEDURAL glue over an AXIOM. The four clauses live in the query; nothing here filters,
+    orders or prefers, and `span_offer` requires uniqueness, so a page with two qualifying
+    donors must be visible AS two here or that refusal could not be pinned.
+
+    NO `ncols` BINDING, and its absence is the whole difference from `donors_for`: grid
+    donation binds the continuation's leaf-column count because its relation joins on equality
+    of counts, while this relation compares the two bands' drawn BOUNDARY SETS, and both sets
+    are already facts in the evidence graph. The count is not merely unnecessary here — binding
+    it would re-impose the equality the strict-subset clause exists to replace."""
+    rows = evidence.query(
+        SPAN_DONATION_RQ.read_text(),
+        initBindings={"b": Literal(idx, datatype=XSD.integer)},
+    )
+    return tuple(sorted(int(row.a) for row in rows))
+
+
+def span_tree(donor: Band, recipient_grid, page: int) -> tuple:
+    """The donor's labels as level-0 childless header nodes over the recipient's leaf columns.
+
+    THE GROUPING IS THE QUERY'S, NOT `group_wrapped`'s, and that is a correction measured
+    before this call was written. `cells.group_wrapped(donor, recipient_grid)` groups the
+    donor's words by the RECIPIENT's columns, which splits the single label 'Port Kembla' into
+    two cells in two different columns — and a tree built from that emits TWO header nodes over
+    one drawn interval, the reading `tests/tab-span-doubled-label-leak.ttl` exists to refuse.
+    Words are therefore grouped by the interval `span-covers.rq` placed them in: same covers
+    tuple, same label. The decision stays in the query; only the join is here.
+
+    NO LEVEL-1 NODES (DECISION C). The donor drew one row of labels and the recipient's own
+    line 0 is a data row, so a second header level would be a node with no ink behind it —
+    which CLAUDE.md § Core design principles 7 forbids. `tests/tab-span-invented-child-leak.ttl`
+    is the negative for what the membrane does if one is minted anyway.
+
+    `page` is PASSED, never read off a Word: a `Word` may or may not carry `.page` (the
+    synthetic bands tests build do not), and defaulting to 0 would silently assert page 0 for a
+    band compiled from page 5. Provenance to the page (CLAUDE.md §6) is not a place to guess.
+
+    Returns () when the derivation placed no label — the honest abstain, which `span_region`
+    turns into a refusal."""
+    from .headers import HeaderNode
+    from .spangraph import SPAN_COVERS_RQ, run_span_covers, span_evidence
+
+    if not donor.lines:
+        return ()
+    covers = run_span_covers(SPAN_COVERS_RQ, span_evidence(donor, recipient_grid))
+    if not covers:
+        return ()
+    words = sorted(donor.lines[0].words, key=lambda w: w.x0)
+    by_span: dict[tuple[int, ...], list] = {}
+    for k, cols in covers.items():
+        by_span.setdefault(cols, []).append(words[k])
+
+    nodes = []
+    for cols in sorted(by_span, key=lambda c: c[0]):
+        ws = sorted(by_span[cols], key=lambda w: w.x0)
+        x0 = min(w.x0 for w in ws)
+        x1 = max(w.x1 for w in ws)
+        nodes.append(HeaderNode(
+            0, cols, " ".join(w.text for w in ws), None, (x0 + x1) / 2.0,
+            x0=x0, top=min(w.top for w in ws), x1=x1,
+            bottom=max(w.bottom for w in ws), page=page))
+    return tuple(nodes)
+
+
+def span_region(bands: Sequence[Band], donor_idx: int, idx: int, page: int):
+    """The reading a span donation proposes: band `idx`'s ink read under its OWN leaf grid,
+    with band `donor_idx`'s labels as the column header tree (DECISION C).
+
+    A `HierRegion`, not a `ClassifiedRegion`: the labels SPAN, so the reading is hierarchical
+    even though the tree is one level deep. `body_line=0` because the recipient's line 0 is a
+    data row — the donor supplied the only header row there is.
+
+    THE GRID IS `recover_leaf_grid`'s, the same one `classify_hierarchical` uses, never
+    `classify`'s `infer_leaf_grid`: the covering was derived against the recipient's leaf
+    boundaries and the reading must be asserted against the same ones, or the columns a label
+    was measured to head would not be the columns it is emitted over.
+
+    NO PARTITION CHECK HERE, deliberately. Whether every leaf column ends up headed exactly
+    once is the MEMBRANE's question (`tab:CoverageShape`, `tab:UnambiguousAccessShape`), and
+    `span_donation_admissible` below asks it on the real emitted graph. A Python re-check would
+    be a second opinion that could drift from the shape, and the clause that actually keeps a
+    half-covered reading off the page is clause (d) in the relation, which refuses such a donor
+    before a tree is ever built.
+
+    None when the donor placed no label, or the recipient has no body rows to read."""
+    from .cells import recover_leaf_grid
+    from .hierarchical import HierRegion
+    from .rows import logical_rows
+
+    recipient = bands[idx]
+    if not recipient.lines:
+        return None
+    grid = recover_leaf_grid(recipient)
+    tree = span_tree(bands[donor_idx], grid, page)
+    if not tree:
+        return None
+    rows = logical_rows(recipient, grid, recipient.lines[0].top)
+    if rows is None:
+        return None
+    return HierRegion(grid=grid, tree=tree, rows=rows, body_line=0)
+
+
+def span_donation_admissible(region, band: Band, page_number: int) -> bool:
+    """Does the SHIPPED membrane accept the spanning reading? The disposal, and the whole of it.
+
+    The sibling of `donation_admissible`, and patchable at module level for the same reason. It
+    offers the reading to `assert_hier_region` on a SCRATCH graph that is discarded either way,
+    and requires both that entries were asserted at all and that `region_tiles` accepts.
+
+    THE ENTRY COUNT IS PART OF THE TEST, not decoration: `assert_hier_region` escalates the
+    whole region and returns 0 when the round-trip refuses it, and a graph carrying only an
+    escalation can still tile vacuously. `compile_tables` guards its own record-table path the
+    same way (`tiles = region_tiles(scratch) if n else None`).
+
+    NO NEW SHAPE IS AUTHORED FOR THIS READING (DECISION C). Three childless spanning nodes over
+    six leaf columns is precisely the shape `tab:UnambiguousAccessShape` defines as correct — it
+    calls a leaf header one that nothing points at via `tab:parentHeader` — so the shipped
+    tiling membrane already accepts the reading and already refuses both ways it can go wrong
+    (`examples/tables/span-donation-conformant.ttl` and its two negatives).
+
+    A refusal costs nothing observable: the scratch graph is dropped, no decision record is
+    minted, no report is written."""
+    from .holon import assert_hier_region
+    from .tiling import region_tiles
+
+    scratch = Graph()
+    asserted = assert_hier_region(scratch, region, band,
+                                  URIRef(f"{_DONATION_PROPOSAL_DOC}#table"),
+                                  _DONATION_PROPOSAL_DOC, page_number)
+    return bool(asserted) and region_tiles(scratch)
+
+
+@dataclass(frozen=True)
+class SpanDonation:
+    """An ACCEPTED span donation: the hierarchical reading to compile, and the donor it came
+    from. It exists only on acceptance — a refusal returns None and leaves no trace at all."""
+    region: object                 # a hierarchical.HierRegion
+    donor_index: int
+
+
+def span_offer(bands: Sequence[Band], idx: int, evidence: Graph,
+               page_number: int) -> "SpanDonation | None":
+    """Propose the spanning reading for band `idx`, or None.
+
+    THE DONOR MUST BE UNIQUE (DECISION E, reused verbatim from grid donation). `span_donors_for`
+    returns every qualifying donor; two of them is a page this relation cannot read, and the
+    band then compiles exactly as it does today. No ordinal rule is added — taking "the first"
+    or "the nearest" would be inventing a reading the evidence does not support.
+
+    It takes no `region`, unlike `offer`: grid donation reads the continuation's leaf-column
+    count off the already-classified region to bind its equality clause, and this relation has
+    no such clause. The caller's classification still governs WHERE the offer is made — the
+    seam in `compile_tables` offers it only on a band whose own reading would otherwise
+    proceed — but it is not an input to the relation.
+
+    This function composes and judges nothing: the derivation named the candidates, the covering
+    derivation placed the labels, and the membrane disposed of the reading."""
+    donors = span_donors_for(evidence, idx)
+    if len(donors) != 1:
+        return None
+    region = span_region(bands, donors[0], idx, page_number)
+    if region is None:
+        return None
+    if not span_donation_admissible(region, bands[idx], page_number):
+        return None
+    return SpanDonation(region, donors[0])

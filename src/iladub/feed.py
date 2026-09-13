@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as _replace
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
@@ -34,6 +34,38 @@ from .ground import SurfaceConcept
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
+
+
+def _page_context(graph: Graph) -> str | None:
+    """The document's own FURNITURE as one text — every `etkl:IgnoredBand`'s carried surface
+    text, in band order — or None when the graph carries none ([[R211]] Task 6, [[R212]]).
+
+    WHAT IT IS FOR. The maintainer ruled (spec § 0) that the MACHINE derives an unlabelled
+    measure's name rather than the contract author. An unlabelled leaf reaches the portal with
+    `text == ""`, so the proposer is asked "which field is called ''?" — a question with a
+    blank subject. The page's title, date line and footer are what answer it, and until R212's
+    carrier they reached no triple at all. MEASURED on graincorp-capacity: four ignored bands,
+    of which one is the title ('ELEVATION CAPACITY TABLE / As At …') and one the footer
+    ('GrainCorp advise that the tonnages shown are indicative only …').
+
+    IT IS NOT A READING. Nothing here decides which band is a title, which is a footer, or what
+    any of them MEAN — every ignored band is carried, in the order the compiler enumerated
+    them, and the proposer is left to make what it can of them under the assert/propose
+    epistemics. Choosing among them would be a reading judgement needing an oracle (§8), and
+    this function has none.
+
+    Ordered by `etkl:bandIndex` then node IRI: the index is per-page, so a multi-page document
+    interleaves pages at equal index, and the IRI is the deterministic tie-break rather than
+    rdflib's iteration order."""
+    bands = []
+    for b in graph.subjects(RDF.type, ETKL.IgnoredBand):
+        text = graph.value(b, ETKL.bandText)
+        if text is None:
+            continue
+        idx = graph.value(b, ETKL.bandIndex)
+        bands.append((int(idx) if idx is not None else 0, str(b), str(text)))
+    return "\n".join(t for _, _, t in sorted(bands)) or None
 
 
 @dataclass(frozen=True)
@@ -226,10 +258,59 @@ def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
         region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
         concept = SurfaceConcept(header.get(col, ""), txt, region)
         x0, y0 = _bbox_xy(graph, e)
-        rows.setdefault(row, []).append((x0, y0, concept))
+        # THE COLUMN IS CARRIED ALONGSIDE ([[R211]] Layer B). It was dropped here, and the flat
+        # per-record cell list is precisely what a key split cannot work from: deciding which
+        # record a cell belongs to is a question about its COLUMN. Nothing reads it unless the
+        # table carries spanning keys, so every other table's reading is untouched.
+        rows.setdefault(row, []).append((x0, y0, concept, col))
         row_cols.setdefault(row, set()).add(_logical_column(graph, col))
-    ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _ in rows[r]))
+    ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _, _ in rows[r]))
     return ordered, rows, row_cols
+
+
+def _spanning_keys(graph: Graph, table) -> tuple:
+    """The table's SPANNING KEYS: `(label, region, frozenset(leaf columns))` per header node that
+    covers more than one leaf column and has neither a parent nor a child ([[R211]] Layer B,
+    spec § 3.2). `()` for every table that carries none, which is the overwhelming majority.
+
+    THE THREE CLAUSES, and why each is the one written:
+
+    * NO PARENT rather than `tab:headerLevel 0`. `holon.assert_hier_region` promotes every
+      parentless node to level 0 regardless of the syntactic level it appeared at, so the level
+      literal is a consequence of parentlessness and not an independent fact; reading the level
+      would be reading the emitter's arithmetic back.
+    * NO CHILD. A node with children is a column GROUP whose members name the columns — apple's
+      two and who's six multi-column level-0 nodes are exactly that, and splitting them would
+      turn a group header into a record key. Delete this clause and those two documents split.
+    * MORE THAN ONE COLUMN. A one-column header is an ordinary field name: graincorp's `Year`
+      and `Elevation Period` span one column each and must stay field names. Delete this clause
+      and `Year` becomes a key.
+
+    `tab:coversColumn`, never `tab:covers`: the latter has domain `tab:HeaderCell`, is transient
+    covering evidence, and is never asserted into a holon — reading it here would find nothing
+    on a compiled graph and silently disable the split.
+
+    Ordering is by node URI, which is the emitter's left-to-right minting order, so a document's
+    records come out in a stable sequence rather than rdflib's iteration order.
+    """
+    out = []
+    for h in sorted(graph.objects(table, TAB.hasHeaderNode), key=str):
+        if (h, TAB.parentHeader, None) in graph:
+            continue
+        if (None, TAB.parentHeader, h) in graph:
+            continue
+        cols = frozenset(graph.objects(h, TAB.coversColumn))
+        if len(cols) < 2:
+            continue
+        lc = graph.value(h, TAB.hasLabel)
+        label = str(graph.value(lc, TAB.cellText)) if lc is not None else ""
+        prov = graph.value(lc, PROV.wasDerivedFrom) if lc is not None else None
+        if prov is not None:
+            region = str(prov).split("#")[-1]
+        else:
+            region = str(lc if lc is not None else h).split("#")[-1]
+        out.append((label, region, cols))
+    return tuple(out)
 
 
 def _inject_group_keys(graph: Graph, members, rows: dict, row_cols: dict, owner: dict) -> None:
@@ -288,10 +369,11 @@ def _inject_group_keys(graph: Graph, members, rows: dict, row_cols: dict, owner:
                     continue
                 own = owner.get(row)
                 local = locals_by_table.get(own, {}).get(lcol, col)
-                own_y = min(y for _, y, _ in rows[row])
+                own_y = min(y for _, y, _, _ in rows[row])
                 rows[row].append((x0, own_y,
                                   SurfaceConcept(headers.get(own, {}).get(local, ""),
-                                                 key, region)))
+                                                 key, region),
+                                  local))
                 row_cols.setdefault(row, set()).add(lcol)
 
 
@@ -362,10 +444,14 @@ def _inject_section_captions(graph: Graph, members, rows: dict, owner: dict) -> 
         for row, cells in rows.items():
             if owner.get(row) != t:
                 continue
-            own_y = min(y for _, y, _ in cells)
+            own_y = min(y for _, y, _, _ in cells)
             for k, (text, region) in enumerate(caps):
+                # Column None: a caption names no column, so a key split copies it into EVERY
+                # record of the row rather than into one — the same reading the missing
+                # occupancy guard above already takes.
                 cells.append((-1000.0 + k, own_y,
-                             SurfaceConcept(text, text, region, is_section_marker=True)))
+                             SurfaceConcept(text, text, region, is_section_marker=True),
+                             None))
 
 
 def table_records(graph: Graph) -> list[Record]:
@@ -448,19 +534,48 @@ def table_records(graph: Graph) -> list[Record]:
             rid_of[row] = f"{key} > {base}" if key is not None else base
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
-        per_logical.append((ordered, rows, rid_of))
+        per_logical.append((ordered, rows, rid_of, owner))
     # Pass 2: mint ids using the GLOBAL (cross-table) multiplicity — collision guard
     # (loop I; closes the PR #59 recorded minor): two rows sharing a header path, whether
     # in the same table or across tables, must never mint the same record subject — each
     # colliding row keeps its opaque discriminator appended.
+    #
+    # THE KEY SPLIT ([[R211]] Layer B, spec § 3.2) happens HERE, and only here: a row of a table
+    # carrying spanning keys mints one record PER KEY instead of one. A table with no spanning
+    # key takes the `if not keys` branch and reads exactly as it did before — which is every
+    # table of six of the seven corpus documents, and every table of all seven before Layer A.
     minted: list[tuple] = []
-    for ordered, rows, rid_of in per_logical:
+    keys_cache: dict = {}
+    for ordered, rows, rid_of, owner in per_logical:
         for row in ordered:
-            cells = [c for _, _, c in sorted(rows[row], key=lambda kc: kc[0])]
+            entries = sorted(rows[row], key=lambda kc: kc[0])
             rid = rid_of[row]
             if multiplicity[rid] > 1:
                 rid = f"{rid} > {_row_discriminator(graph, row)}"
-            minted.append((row, rid, tuple(cells)))
+            own = owner.get(row)
+            if own not in keys_cache:
+                keys_cache[own] = _spanning_keys(graph, own) if own is not None else ()
+            keys = keys_cache[own]
+            if not keys:
+                minted.append((row, rid, tuple(c for _, _, c, _ in entries)))
+                continue
+            covered = {c for _, _, cols in keys for c in cols}
+            for label, region, cols in keys:
+                cells = []
+                for _x, _y, concept, col in entries:
+                    if col is not None and col in covered and col not in cols:
+                        continue          # a SIBLING key's column: not this record's
+                    if col is not None and col in cols:
+                        # § 3.2: this key's own leaf cells carry an EMPTY header text. The
+                        # label has become the record's KEY, so it no longer names the field
+                        # its columns sit under, and no other name exists without inventing
+                        # one (CLAUDE.md §7). This is the collapse the split repairs: before
+                        # it, a port's two measures both read text='Mackay' and landed on one
+                        # property.
+                        concept = _replace(concept, text="")
+                    cells.append(concept)
+                cells.append(SurfaceConcept(label, label, region, is_split_key=True))
+                minted.append((row, f"{rid} > {label}", tuple(cells)))
     # Pass 3: the guarantee (F1). Everything above is READABILITY — a header path, a page, a
     # fragment — and every one of them is the emitter's naming, which the feed does not control
     # and must not trust: appending a discriminator that EQUALS the id it disambiguates is a
@@ -629,11 +744,16 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     from .ground import ground_concept
 
     records = table_records(graph)
+    # The page's own furniture, read ONCE per document and handed to every proposal (Task 6).
+    # It is the same text for every concept of the document, so building it per concept would
+    # re-walk the graph 769 times on graincorp for one unchanging string.
+    context = _page_context(graph)
     grounded = proposed = 0
     for rec in records:
         subject = _record_uri(rec.row_id)
         for concept in rec.concepts:
-            status = ground_concept(concept, contract, subject, proposer, terms, shapes, g)
+            status = ground_concept(concept, contract, subject, proposer, terms, shapes, g,
+                                    page_context=context)
             if status == "grounded":
                 grounded += 1
             else:

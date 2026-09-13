@@ -1,0 +1,35 @@
+# NEGATIVE (R211, span donation): a level-1 header node the reading INVENTED.
+#
+# Plan DECISION C: the span reading has NO level-1 nodes. The donor drew ONE row of labels and
+# the recipient's own line 0 is a data row, so a second header level would be a node with no
+# ink behind it -- a reading the source does not support, which CLAUDE.md § Core design
+# principles 7 forbids outright.
+#
+# THE MECHANISM THAT REFUSES IT, and it is worth stating because it is not the obvious one.
+# The invented node does not fail for existing: it fails for what it does to its PARENT.
+# tab:UnambiguousAccessShape defines a leaf header as one nothing points at via
+# tab:parentHeader, so the moment ex:invented points at ex:hMackay, ex:hMackay stops being a
+# leaf header -- and ex:c1, the OTHER column ex:hMackay spans, is left with no leaf header at
+# all. MEASURED: the refusal's focus node is ex:c1, the sibling, not ex:invented.
+#
+# This is why span donation authors no shape of its own (DECISION C): the shipped membrane
+# already refuses an invented level, and it refuses it at the column the invention orphans.
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/span-demo#> .
+
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2, ex:c3, ex:c4, ex:c5 ;
+    tab:hasLeafRow    ex:r0 ;
+    tab:hasHeaderNode ex:hMackay, ex:hGladstone, ex:hPortland, ex:invented .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:c3 a tab:LeafColumn . ex:c4 a tab:LeafColumn . ex:c5 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+ex:hMackay    a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0, ex:c1 .
+ex:hGladstone a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c2, ex:c3 .
+ex:hPortland  a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c4, ex:c5 .
+
+# The invented second level: no ink behind it, under a spanning parent. It orphans ex:c1.
+ex:invented   a tab:HeaderNode ; tab:headerLevel 1 ; tab:parentHeader ex:hMackay ;
+              tab:coversColumn ex:c0 .

@@ -47,7 +47,24 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     belongs to, so it is a candidate by § 3.3's own rule exactly as R218-R220 were against the
     closed R212 and R216/R217 against the closed R201/R203. MEASURED that the delta is that one row
     and nothing else, by recomputing `candidates` against the HEAD versions of the register files
-    and against this tree: 87 before, 88 after, ADDED = [R221], REMOVED = []."""
+    and against this tree: 87 before, 88 after, ADDED = [R221], REMOVED = [].
+    RE-MEASURED 2026-09-13 (the span the author drew, the EXECUTING loop): 88 -> 93, and the five
+    decompose into two kinds. Closing [[R211]] removed the only OPEN neighbour of the three rows it
+    RAISED — R213, R214 and R215 each link to R211 and to nothing else open — so all three become
+    candidates by § 3.3's own rule without any row being added. R222 and R223 are the other kind: new
+    open rows blocking no criterion and linking only to the now-CLOSED R211, exactly as R218-R220
+    stood against the closed R212 and R216/R217 against the closed R201/R203. This is the first entry
+    here where a CLOSURE, not a raise, is most of the delta. MEASURED and not reasoned, by recomputing
+    `candidates` against the HEAD versions of the register files and against this tree: 88 before,
+    93 after, ADDED = [213, 214, 215, 222, 223], REMOVED = [].
+    RE-MEASURED 2026-09-13, same loop — and the MECHANISM IS NEW TO THIS LIST: 93 -> 92,
+    ADDED = [], REMOVED = [213]. No row was raised, closed or parked. An AMENDMENT'S PROSE cited
+    [[R157]] while qualifying R213's colour-discriminator claim, and R157 is open, so R213 gained
+    an open neighbour and stopped being a candidate (its other links — 172, 176, 211 — are all
+    closed, so R157 alone did it). Every prior entry above moved because a STATUS moved; this one
+    moved because a row started CITING another row. Worth knowing before reading any delta here as
+    progress: an amendment that cites an open row moves this count without changing a single
+    status. Measured by recomputing against HEAD (`c1a5484`) and against this tree."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -61,4 +78,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 88
+    assert len(expected) == 92

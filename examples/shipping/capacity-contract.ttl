@@ -1,0 +1,39 @@
+# Illustrative semantic data contract for the GrainCorp elevation-capacity table ([[R211]],
+# spec 2026-09-11-the-span-the-author-drew-design.md § 3.3).
+#
+# FOUR FIELDS, AND DELIBERATELY NO FIELD FOR THE FLAG. The page prints, per port, a tonnage and
+# a Y/N. `capacity` declares the numeral pattern, so 'Y' and 'N' fail the value constraint and
+# QUARANTINE — which is the second half of the maintainer's Split ruling, and it falls out of
+# the membrane with no special case. Naming the flag would mean asserting what Y/N MEANS, and
+# nothing on the page says (spec § 6). `Available` and `On Application` quarantine the same way:
+# they describe availability, not a tonnage.
+#
+# `port` IS SCHEME-BOUND, and that is what makes the key split groundable. The spanning header's
+# labels reach the portal as split keys — text that IS its value — which `exact_field` can never
+# place; `marker_field` grounds them by UNIQUE admission to ship:scheme-port instead.
+#
+# `year` and `elevationPeriod` are the two columns NO spanning header covers, so every split
+# record carries them, and their column labels name them exactly — they ground by exact field
+# match and need no scheme.
+#
+# WHAT IS NOT DECLARED HERE, and why the omission is the honest one: a provenance pointer naming
+# the furniture the measure's NAME was derived from (plan DECISION G). The maintainer's ruling
+# (§ 0) is that the MACHINE derives that name from the page's title and footer, and the path that
+# carries it to the proposer is not yet built. The pointer's target is also document-scoped — the
+# ignored band's source region is minted per compiled document URI — so a contract file cannot
+# name it without asserting an identity it cannot know. It belongs with the loop that hands the
+# proposer the page, not with this one.
+@prefix ship: <https://example.org/shipping#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ship:capacity-contract a etkl:SemanticDataContract ;
+    rdfs:label "Elevation capacity, by port and period"@en ;
+    etkl:targetClass ship:ElevationCapacity ;
+    etkl:requiresKnowledge ship:scheme-port ;
+    etkl:hasField ship:f-cap-year , ship:f-cap-period , ship:f-cap-port , ship:f-cap-capacity .
+
+ship:f-cap-year     a etkl:Field ; etkl:fillsProperty ship:year .
+ship:f-cap-period   a etkl:Field ; etkl:fillsProperty ship:elevationPeriod .
+ship:f-cap-port     a etkl:Field ; etkl:fillsProperty ship:port ; etkl:admissibleScheme ship:scheme-port .
+ship:f-cap-capacity a etkl:Field ; etkl:fillsProperty ship:capacity .

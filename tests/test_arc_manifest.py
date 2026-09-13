@@ -807,7 +807,12 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
     that moves this rung without moving the other one goes red. It is the only thing in the
     repo that makes the strip's `etkl` fraction answerable to the corpus register. (It read
     `etkl 1/7` when written; R45 took who-wfa to an accepting adjudication on 2026-08-31 and
-    the fraction is 2/7. The count is pinned below and moves only by a reviewed hand.)
+    the fraction is 2/7. The count is pinned below and moves only by a reviewed hand.
+    RE-MEASURED 2026-09-13: 3/7 — the [[R211]] span-donation loop took graincorp-capacity to an
+    accepting adjudication. This test is what forced that to be a REVIEWED act rather than a
+    side effect: the loop pinned a cor:scoreFloor, which made the register compute met=True, and
+    this assertion went red until a hand resolved the disagreement in the arc manifest and the
+    maintainer authorised the rung advance.)
 
     Note what this does NOT do: it never writes `prog:met` (spec §9). A disagreement is a
     refusal for a hand to resolve in a reviewed commit, in whichever direction is true.
@@ -823,8 +828,8 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
         assert met == computed[f], (
             f"{iri} asserts prog:met {met} for {f}, but the corpus register computes "
             f"{computed[f]} — fix whichever is wrong by hand; nothing here writes either file")
-    assert sum(computed.values()) == 2, (
-        f"measured 2026-08-31: exactly two corpus documents are accepted; got {computed}")
+    assert sum(computed.values()) == 3, (
+        f"re-measured 2026-09-13: exactly three corpus documents are accepted; got {computed}")
 
 
 def test_etkl_criterion_sources_point_at_the_document_they_name():

@@ -58,14 +58,30 @@ def test_o2_the_fallback_is_what_saves_the_ink():
     header, so 45 cells that were being consumed as a false header row are asserted as data.
     WHAT THE NEW NUMBER MEANS: a page whose proposed run the membrane refuses still asserts
     everything it asserts today, grid donation included — which is the same claim this line
-    always made, measured against a page that now reads more of its own ink."""
+    always made, measured against a page that now reads more of its own ink.
+
+    RE-BASELINED AGAIN 2026-09-13 by SPAN donation ([[R211]]): graincorp-capacity p0 moved
+    390 -> 406, and the other three figures did NOT move. It is the SAME mechanism as bfs p6's
+    move one paragraph up, on the other donation arm: band 3 now reads its column labels from
+    band 2's wholly-drawn spanning header, so its own line 0 stops being consumed as a header
+    row and becomes a data row. +16 is exactly the page's leaf-column count, and that identity
+    is the check — a move that is not `ncols` would be a different event wearing this one's
+    number.
+
+    THESE ARE ENTRY CELLS, NOT TOKENS, and it was measured rather than assumed: the span
+    reading emits 406 `tab:EntryCell` nodes against the record reading's 390, and on this page
+    every entry cell holds exactly one word (0 multi-word cells), so `assert_hier_region`'s
+    token return and the cell count coincide. THE INK LEDGER DOES NOT MOVE AT ALL — `rep.
+    asserted` is 406 before and after, because R176's `_book_recovered_ink` already booked
+    those 16 label words on the record path. Cells +16, ink +0: that is the whole claim of this
+    loop, and `test_o3` above is the pin on the ink half."""
     from iladub.etkl.compile import compile_tables
 
     def cells(pdf, page):
         return sum(r.cells for r in compile_tables(pdf, page, validate_shapes=False).regions)
 
     assert cells(STEM, 0) == 586
-    assert cells(CAPACITY, 0) == 390
+    assert cells(CAPACITY, 0) == 406
     assert cells(BFS, 6) == 267
     assert cells(APPLE, 2) == 3
 

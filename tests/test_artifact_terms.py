@@ -86,7 +86,22 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # loop's own local runs of THIS test were green while the three files were untracked, and only
     # the committed tree fails. Measured as a SET, not a count — tracked `.ttl` outside the fixture
     # directory at HEAD~1 vs HEAD gives added = exactly those three, removed = none.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 157
+    # RE-MEASURED 2026-09-13 ([[R211]], span donation): 157 -> 160 — the span reading's worked
+    # example (`examples/tables/span-donation-conformant.ttl`) and its two must-fail negatives
+    # (`tests/tab-span-doubled-label-leak.ttl`, `tests/tab-span-invented-child-leak.ttl`), which
+    # CLAUDE.md § Serialization requires of every new vocabulary. NOT carved out, for the reason
+    # every negative above is not: they name declared `tab:` terms only. The loop authored NO new
+    # shape (plan DECISION C — the shipped tiling membrane already accepts the reading and
+    # refuses both ways it can go wrong), so the three files are a vocabulary's example set, not
+    # a shape's. Measured as a SET, not a count: tracked `.ttl` outside the fixture directory
+    # before vs after gives added = exactly those three, removed = none.
+    # RE-MEASURED AGAIN 2026-09-13, same loop: 160 -> 163 — the capacity contract, its borrowed
+    # port terminology and its value membrane (`examples/shipping/capacity-{contract,terms,
+    # shapes}.ttl`), which put graincorp-capacity under `test_grounding_where_contracted` for the
+    # first time. They name `ship:` and `etkl:` terms only; `ship:` is not an owned namespace, so
+    # the declaration membrane's single-root filter passes over it exactly as it does for the
+    # stem and cbh contracts beside them.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 163
 
 
 def test_each_file_gets_its_own_named_graph():

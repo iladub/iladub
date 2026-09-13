@@ -46,6 +46,22 @@ class SurfaceConcept:
     # value when `exact_field` cannot name it — a marker's text IS its value, so a field name
     # never matches it, and without that branch every key marker was quarantined.
     is_section_marker: bool = False
+    # [[R211]] Layer B: True for a SPLIT KEY — the label of a spanning childless header, minted
+    # by `feed.table_records` when one row becomes one record per such header. Its text IS its
+    # value, exactly as a section marker's is, which is why `marker_field` is its oracle too.
+    #
+    # A SIBLING FLAG, NOT A WIDENING of `is_section_marker` (plan DECISION E). The two are
+    # different POPULATIONS: a section marker comes from a peeled section caption, and
+    # `tests/test_corpus_stem.py` pins that NO record of the stem may carry one — a pin that
+    # exists because the stem's own print-timestamp furniture was once read as a section key.
+    # Teaching `is_section_marker` to also mean "split key" would leave that assertion textually
+    # green while silently changing what it asserts. One oracle, two populations, both pins keep
+    # meaning what they meant.
+    #
+    # Defaulted, so the 5 `src/` and 35 `tests/` construction sites are untouched and the sites
+    # that compare SurfaceConcepts BY VALUE still compare equal — measured: both sides of
+    # `tests/test_federation.py`'s `in concepts` checks carry False.
+    is_split_key: bool = False
 
 
 @dataclass(frozen=True)
@@ -109,8 +125,18 @@ def marker_field(concept: SurfaceConcept, contract: Contract, terms: Graph) -> C
     marker stays a quarantined candidate exactly as a marker no scheme carries does. Not called
     for any concept that is not a section marker — a DATA cell whose value happens to be a port
     label sits under a column the contract did not declare, and grounding it by value alone
-    would let the value, not the author's structure, decide the field (§0)."""
-    if not concept.is_section_marker:
+    would let the value, not the author's structure, decide the field (§0).
+
+    TWO POPULATIONS, ONE ORACLE ([[R211]] Layer B, plan DECISION E). A SPLIT KEY — the label of a
+    spanning childless header, which `feed.table_records` carries when one row becomes one record
+    per such header — is the same KIND of concept: text that IS its value, which `exact_field`
+    can never place. So it reaches the same rule, through the disjunction below and nothing else.
+    THE BODY OF THIS FUNCTION IS UNTOUCHED by that change: what widened is which concepts are
+    admitted to ask the question, never how the question is answered. The alternative — teaching
+    `is_section_marker` to mean both — would have fought an existing negative pin
+    (`tests/test_corpus_stem.py`: no record of the stem may carry a furniture-sourced marker)
+    while leaving its text unchanged, which is how a pin rots into a rubber stamp."""
+    if not (concept.is_section_marker or concept.is_split_key):
         return None
     admitting = [f for f in contract.fields
                  if f.scheme is not None and scheme_member(concept.value, f.scheme, terms)]
@@ -216,7 +242,8 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
     return gn
 
 
-def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shapes, g) -> str:
+def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shapes, g,
+                   page_context: str | None = None) -> str:
     field = exact_field(concept, contract)
     if field is not None:
         suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
@@ -228,7 +255,14 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
                      f"derives the field from the contract, no proposer asked.")
         is_exact = True                                     # the field is derived, not proposed
     else:
-        prop = proposer.propose_grounding(concept, contract.fields)
+        # PASSED ONLY WHEN THERE IS ONE (plan DECISION F). The parameter is defaulted and this
+        # call stays two-argument when no page was supplied, so a proposer written before the
+        # slot existed keeps working on every path that does not use it — no signature
+        # introspection, and no `except TypeError` that would swallow a TypeError raised
+        # INSIDE the proposer.
+        prop = (proposer.propose_grounding(concept, contract.fields, page_context)
+                if page_context is not None
+                else proposer.propose_grounding(concept, contract.fields))
         anchor, confidence, rationale, suggester = prop.anchor_iri, prop.confidence, prop.rationale, prop.suggester_iri
         field = next((f for f in contract.fields if f.iri == prop.field_iri), None) if prop.field_iri else None
         is_exact = False
