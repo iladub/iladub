@@ -183,6 +183,26 @@ etkl:VocabularyArtifact a owl:Class ;
     rdfs:label "Vocabulary Artifact"@en ;
     rdfs:comment "An authored RDF artifact — an ontology, a shape file, a worked example, a manifest — taken as a subject in its own right so that what it USES AS VOCABULARY can be asserted and validated. Sibling of etkl:QueryArtifact and distinct from it in what licenses the demand: a query is read for every owned IRI it mentions, an RDF artifact for the owned IRIs it puts in a VOCABULARY ROLE (predicate position, or object of a schema predicate). Vocabulary-ness is not a property of a name, a namespace or a file but a role a term occupies in a triple, and a term occupying that role in an authored artifact while no owned ontology declares it is a dangling edge in the vocabulary surface."@en .
 
+#################################################################
+#  The ignored band — what the reader did not read, carried anyway
+#################################################################
+
+etkl:IgnoredBand a owl:Class ;
+    rdfs:label "Ignored Band"@en ;
+    rdfs:comment "A band of a source document that the region reader classified NON_TABLE and therefore read nothing from. The class is named for THE VERDICT, because that is the whole reason the node exists: a band's text is carried BECAUSE the reader ignored it, not because anything read it. Neither an assertion nor a proposition — it is context the document carries (CLAUDE.md §5), committed with provenance to the page (§6) and never grounded, never promoted, never escalated. Every ignored band is carried; no rule selects among them, so nothing here decides anything."@en .
+
+etkl:bandText a owl:DatatypeProperty ;
+    rdfs:label "band text"@en ; rdfs:domain etkl:IgnoredBand ; rdfs:range xsd:string ;
+    rdfs:comment "The band's exact surface text: words left-to-right, lines top-to-bottom, newline-joined. Raw extraction, and the whole of it — no normalisation, no case folding, no stripping. Anything softer would be the pipeline deciding that two different blocks are \"the same enough\", which is a judgment this carrier does not make."@en .
+
+etkl:bandIndex a owl:DatatypeProperty ;
+    rdfs:label "band index"@en ; rdfs:domain etkl:IgnoredBand ; rdfs:range xsd:integer ;
+    rdfs:comment "The band's 0-based position among its page's bands, in the single index space compile.page_bands enumerates and compile_tables re-enumerates unchanged. Distinct from tab:bandIndex, which carries the same fact for a DIFFERENT population (the transient intra-page evidence graphs' tab:PageBand family) and must not be conflated with it: a node read under the wrong population's query answers a question its facts were not emitted for."@en .
+
+etkl:ignoredBecause a owl:DatatypeProperty ;
+    rdfs:label "ignored because"@en ; rdfs:domain etkl:IgnoredBand ; rdfs:range xsd:string ;
+    rdfs:comment "The region reader's own reason for the NON_TABLE verdict, carried verbatim as the classifying AXIOM published it — today one of \"fewer than 2 lines\" or \"fewer than 2 columns\". It is the AXIOM's output, never a reason invented for the carried node, so the node is self-describing without anything being fabricated to make it so (CLAUDE.md §7)."@en .
+
 etkl:namesTerm a owl:ObjectProperty ;
     rdfs:label "names term"@en ;
     rdfs:comment "An owned-namespace IRI that this artifact names: for a QueryArtifact, one the query mentions anywhere; for a VocabularyArtifact, one its triples use as vocabulary. The relation is reported by extraction and by open-world derivation, and carries no judgement: whether naming a given term is acceptable is decided at the membrane (vocab/shapes/query-declaration-shapes.ttl), never by the act of naming it. Domain deliberately left undeclared, for the reason tab:aggregates records in tab.ttl: an rdfs:domain naming EITHER artifact class would RDFS-entail every subject of the OTHER usage into a foreign class — a .ttl artifact inferred a QueryArtifact — and trip that class's shape wherever inference=\"rdfs\" is in force."@en .

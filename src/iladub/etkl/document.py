@@ -107,6 +107,7 @@ from rdflib import Graph, Literal, Namespace, RDF, RDFS, URIRef
 from rdflib.namespace import PROV, SH, XSD
 
 from . import interpret
+from .bands import band_text
 from .compile import (CompilationReport, compile_tables, page_bands, _DOC, _validate,
                       _refusal_message)
 from .decisionlog import DEC
@@ -473,11 +474,11 @@ def _ordinal_normalized(text: str, ordinal) -> str:
     TOKENIZATION is `str.split()` per line — whitespace, the repo's established convention, the
     same one `rows._numeric_token_sum` and `rows.detect_aggregation_rows` tokenize cells with.
     Line structure is preserved (each line normalized, then rejoined with the newline
-    `_band_text` used) so two blocks are never made equal by a difference in line breaking.
+    `bands.band_text` used) so two blocks are never made equal by a difference in line breaking.
 
     ONE ASYMMETRY, STATED (loop O close, re-review N2): the rejoin collapses WHITESPACE RUNS
     within a line, so clause (b) compares whitespace-collapsed text while clause (a) compares
-    `tab:blockText` verbatim. The two entry points agree on every real band — `_band_text`
+    `tab:blockText` verbatim. The two entry points agree on every real band — `bands.band_text`
     already single-space-joins its words — so the divergence is reachable only through
     hand-built facts handed to `licence_evidence_from_facts`, never from a compiled page.
 
@@ -537,17 +538,6 @@ def licence_evidence_from_facts(blocks) -> Graph:
     return g
 
 
-def _band_text(band) -> str:
-    """A band's exact surface text: words left-to-right, lines top-to-bottom, newline-joined.
-
-    Raw extraction, and the whole of it — no normalisation, no case folding, no stripping. Two
-    renderings of one furniture block on two pages produce the same string exactly when the
-    renderer drew the same words; anything softer would be the pipeline deciding that two
-    different blocks are "the same enough", which is a judgment the law does not make.
-    """
-    return "\n".join(" ".join(w.text for w in ln.words) for ln in band.lines)
-
-
 def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index,
                      prev_page_number, cur_page_number) -> Graph:
     """The licence evidence for two pages' BAND inventories (the production entry point).
@@ -591,11 +581,11 @@ def licence_evidence(prev_bands, prev_table_index, cur_bands, cur_table_index,
     prev_table, cur_table = prev_bands[prev_table_index], cur_bands[cur_table_index]
     for i, band in enumerate(prev_bands):
         if i != prev_table_index:
-            facts.append((_band_text(band), 0, band.top > prev_table.bottom,
+            facts.append((band_text(band), 0, band.top > prev_table.bottom,
                           prev_page_number + 1))
     for i, band in enumerate(cur_bands):
         if i != cur_table_index:
-            facts.append((_band_text(band), 1, band.top > cur_table.bottom,
+            facts.append((band_text(band), 1, band.top > cur_table.bottom,
                           cur_page_number + 1))
     return licence_evidence_from_facts(facts)
 
@@ -1744,14 +1734,21 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
 
     # THE SEAL — furnish, validate, mint the validation act, then return or refuse (spec
     # 2026-08-25 §4.5). The legs are computed HERE and passed in rather than inside the seam:
-    # the last write to either name is `:1743`, above this line, so asking the question here and
-    # asking it after the furnish are the same question — MEASURED, not assumed.
-    #   THE COMPLETE WRITER SET, re-measured 2026-08-25 with `grep -n recognized` and
-    #   `grep -n section_facts` on this file: `recognized` has TWO writers, `:1395` (the empty
-    #   list) and `:1421` (its only `append`); `section_facts` has four, `:1561`, `:1573`,
-    #   `:1605` and `:1743`. The figures cited here before were all off by 50 and named one
-    #   writer of `recognized` where there are two — under the words "MEASURED, not assumed",
-    #   which is why the command is now written out beside them.
+    # the last write to either name is the adoption branch's `section_facts = True` immediately
+    # above this comment, so asking the question here and asking it after the furnish are the
+    # same question — MEASURED, not assumed.
+    #   THE COMPLETE WRITER SET, named by SYMBOL rather than by line, with the command that
+    #   finds them: `grep -n recognized` and `grep -n section_facts` on this file. `recognized`
+    #   has TWO writers (re-measured 2026-08-25): its empty-list initialiser and its only
+    #   `append`. `section_facts` has FOUR (re-measured 2026-09-12): its `bool(repaired)`
+    #   initialiser, the section-repair write, the `or confirmed` carriage write, and the
+    #   adoption write above.
+    #   WHY SYMBOLS AND NOT LINES. The figures cited here before were line numbers, and they
+    #   have now been falsified TWICE by edits elsewhere in this file — once off by 50, and
+    #   once when R212's carrier deleted `_band_text` from this module, which pulled the last
+    #   of them BELOW this comment and tripped `tests/test_source_citations.py`. A same-file
+    #   downward line citation is a hazard, not a measurement (CLAUDE.md plan rule 7): the edit
+    #   that corrects it is itself capable of invalidating it.
     _seal(graph, _legs_for_document(recognized, section_facts), validate_shapes)
 
     asserted = sum(rep.asserted for rep in pages)

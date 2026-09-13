@@ -192,7 +192,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # RE-MEASURED 2026-09-11 (the-negative-half): 149 -> 154, five leak fixtures under tests/
     # (dec-confidence, promotion-unaccountable, risk-assessment-contextless,
     # sensitivity-without-reads, permission-without-action).
-    assert len(vocab_nodes) == len(artifact_files()) == 154
+    # RE-MEASURED 2026-09-12 ([[R212]], the ignored band's carrier): 154 -> 157, the carrier's
+    # worked example plus its two must-fail negatives. The `.rq` population does NOT move: the
+    # carrier is a PROCEDURAL raw-extraction step that derives nothing, so it authored no query —
+    # the same asymmetry `tab-label-nobox-leak.ttl` produced on 2026-09-07. The loop's four new
+    # terms and its shape went into the EXISTING `vocab/ontology/etkl.ttl` and
+    # `vocab/shapes/etkl-shapes.ttl`, so no vocabulary FILE joined the population, only fixtures.
+    assert len(vocab_nodes) == len(artifact_files()) == 157
     assert len(query_nodes) == len(query_files()) == 52
 
 

@@ -23,6 +23,11 @@ sources:
   - vocab/queries/grid-donation.rq
   - src/iladub/etkl/donation.py
   - src/iladub/etkl/compile.py
+  - src/iladub/etkl/holon.py
+  - src/iladub/etkl/bands.py
+  - vocab/ontology/etkl.ttl
+  - vocab/shapes/etkl-shapes.ttl
+  - tests/etkl/test_ignored_band_carrier.py
 related: ["[[dimension-split]]"]
 confidence: high
 updated: 2026-09-12
@@ -334,3 +339,59 @@ spec `docs/superpowers/specs/2026-09-10-the-grid-the-author-drew-design.md`, evi
   pairs, 5 accepted, and only a synthetic straddling page refuses. R217: the R203 licence is
   exercised on **one** donor corpus-wide, and whether a page TITLE can sit inside a wholly-drawn
   grid — the case the forward direction cannot separate — is unmeasured.
+
+## The ignored band carries its text (2026-09-12) — the PROCEDURAL step that decides nothing
+
+**Confidence: high** — measured on the shipped tree, branch `r212-the-ignored-band-carries` cut
+from `eb74caa`, with the corpus arm run locally and not inferred from CI. Sources:
+`holon.emit_ignored_band`, `bands.band_text`, the `compile_tables` NON_TABLE branch,
+`vocab/ontology/etkl.ttl`, `vocab/shapes/etkl-shapes.ttl`,
+`tests/etkl/test_ignored_band_carrier.py`, spec
+`docs/superpowers/specs/2026-09-12-the-ignored-band-carries-its-text-design.md`, evidence
+`docs/superpowers/2026-09-12-the-ignored-band-carries-its-text-evidence.md`.
+
+This entry is in the catalog as the **PROCEDURAL** exemplar, and it earns that class by what it
+refuses to do rather than by what it computes.
+
+- **The step** (`holon.emit_ignored_band`, called once in the NON_TABLE branch of `compile_tables`)
+  — **PROCEDURAL, irreducible.** It is raw extraction: source → typed RDF facts. Every value it
+  writes is passed in or derived mechanically — the text by concatenation (`bands.band_text`: words
+  left-to-right, lines top-to-bottom, newline-joined, no normalisation and no case folding), the
+  page off the region, the index off the enumeration, the reason verbatim from the classifying
+  AXIOM's own published output. There is no threshold, no tolerance and no numeric literal in it.
+
+- **Why it is not AXIOM.** There is nothing to derive. The question *which bands were ignored* was
+  already answered upstream, in SPARQL, by the classifying axiom; this step reads that answer and
+  writes it down. A `CONSTRUCT` here would restate an existing verdict over an evidence graph
+  assembled for the purpose — the ceremony of an axiom with none of its content.
+
+- **Why it is not NEURAL, which is the load-bearing half.** The perceptual question in the
+  neighbourhood is *which* ignored bands deserve carriage — which of a page's leftovers are
+  meaningful furniture and which are noise. That question is genuinely underdetermined, it is a
+  reading judgment, and answering it in Python with a tuned rule would be exactly the §8 defect this
+  catalog exists to name. **So the carrier does not answer it: every ignored band is carried, with
+  no rule selecting among them.** The maintainer ruled *all* on 2026-09-12, and the ruling is what
+  keeps the step PROCEDURAL. A later loop that wants selection owes a NEURAL proposer and a semantic
+  oracle to dispose it — not a filter here.
+
+- **The membrane half is closed-world and deliberately NOT wired.** `etkl:IgnoredBandShape` makes
+  the text, the index, the reason and the page required, so the carried node can never decay into
+  the typed-but-empty stub `tab:RegionCaption` became (R218). It is **not** added to the compile
+  membrane's shape sets, and the reason is a measurement rather than a preference: the page membrane
+  runs only when the graph already holds a table, so a page of pure furniture — precisely the page
+  with the most ignored bands — never reaches a shape at all. Wiring would buy enforcement that
+  *looks* total while being absent exactly where the carrier matters most, which is failing upward
+  (§7). Enforcement is instead a test that validates a real compiled page graph against the shape
+  file, with a focus-node census pinned beside it.
+
+- **What it measures** (readings of 2026-09-12). Corpus-wide, ignored bands were carrying about 35%
+  of all band ink to no triple at all: 146 ignored bands, every one of them with words, 2935 words.
+  On `graincorp-capacity-2026-08-04.pdf` the four bands that were absent — the issuer line, the
+  title and its print date, the page's real header, and the footer the capacity licence rests on —
+  are now in the graph verbatim with their page and the classifier's reason, at 9 triples per band
+  and a uniform document delta. The carrier touches no counter, so no document score moves.
+
+- **Exposure.** R219: the census counts bands, not distinct text, so a running head repeated across
+  pages is counted once per page and the ink figure is an upper bound on what the corpus actually
+  loses. And because the shape is unwired by design, a single test is the whole enforcement — if
+  that test is deleted, nothing else refuses a textless carried node.

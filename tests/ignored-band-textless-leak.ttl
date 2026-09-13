@@ -1,0 +1,19 @@
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix ex:     <https://example.org/demo#> .
+
+#  NON-CONFORMANT: a carried ignored band with NO etkl:bandText — the typed-but-empty
+#  stub tab:RegionCaption decayed into ([[R218]], spec § 2.5). The band's text is the
+#  ONE reason this node exists; a node without it carries a verdict and no evidence.
+#  Exactly one thing is removed from examples/ignored-band-conformant.ttl.
+
+ex:capacity-doc-p0-ignored1 a etkl:IgnoredBand ;
+    etkl:bandIndex 1 ;
+    etkl:ignoredBecause "fewer than 2 columns" ;
+    iladub:fromRegion ex:capacity-doc-p0-ignored1-source ;
+    prov:wasDerivedFrom ex:capacity-doc-p0 .
+
+ex:capacity-doc-p0-ignored1-source a iladub:SourceRegion ;
+    iladub:onPage 0 ;
+    prov:wasDerivedFrom ex:capacity-doc-p0 .

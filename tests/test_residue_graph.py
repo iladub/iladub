@@ -34,7 +34,14 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     § 3.3's own rule, exactly as R209 was against the closed R179. MEASURED that the delta is those
     two and nothing else: 84 candidates total, both present, and 82 excluding them — closing R201
     and R203 changed no other row's candidacy (a closed row was never a candidate, and neither was
-    anyone's only open neighbour)."""
+    anyone's only open neighbour).
+    RE-MEASURED 2026-09-12 (R212, the ignored band's carrier): 84 -> 87 — R218, R219 and R220 are
+    open, block no criterion, and each has exactly ONE neighbour, the now-CLOSED R212 (R218 and R219
+    were raised by R212's spec; R220 by its carrier, the edge coming from R212's own closure text).
+    All three are candidates by § 3.3's own rule, exactly as R216/R217 were against the closed
+    R201/R203 and R209 against the closed R179. MEASURED that the delta is those three and nothing
+    else, by recomputing `candidates` against the HEAD versions of the three register files and
+    against this tree: 84 before, 87 after, ADDED = [218, 219, 220], REMOVED = []."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -48,4 +55,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 84
+    assert len(expected) == 87

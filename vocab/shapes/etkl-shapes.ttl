@@ -1,4 +1,5 @@
 @prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -85,3 +86,39 @@ etkl:MembraneHealthShape a sh:NodeShape ;
     sh:targetClass etkl:CompiledDocumentHolon ;
     sh:property [ sh:path etkl:membraneHealth ; sh:maxCount 1 ;
                   sh:in ( etkl:Intact etkl:Weakened etkl:Compromised ) ] .
+
+#################################################################
+#  The carried ignored band (R212). In THIS file, so it inherits the
+#  non-loading MembraneHealthShape above deliberately has: the compile
+#  membrane runs no shape at all on a page with no table (see
+#  compile.compile_tables' validate_shapes guard), and a page of pure
+#  furniture is precisely the page with the most ignored bands — so
+#  wiring this shape in would buy enforcement that LOOKS total and is
+#  silently absent exactly where the carrier matters most. Enforcement
+#  is instead the vocabulary convention (tests/test_vocab_shapes.py)
+#  plus a test validating a REAL compiled page graph against this file
+#  (tests/etkl/test_ignored_band_carrier.py).
+#
+#  Text and page are REQUIRED, and that is the point: tab:RegionCaption
+#  is the carried node that decayed into a typed-but-empty stub with no
+#  page and no provenance ([[R218]]), and this shape is what forbids the
+#  carrier repeating it.
+#################################################################
+
+etkl:IgnoredBandShape a sh:NodeShape ;
+    sh:targetClass etkl:IgnoredBand ;
+    sh:property [ sh:path etkl:bandText ; sh:minCount 1 ; sh:datatype xsd:string ;
+        sh:message "An ignored band must carry the band's exact surface text — that text is the whole reason the node exists." ] ;
+    sh:property [ sh:path etkl:bandIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+        sh:message "An ignored band must carry exactly one band index, typed xsd:integer." ] ;
+    sh:property [ sh:path etkl:ignoredBecause ; sh:minCount 1 ;
+        sh:message "An ignored band must carry the reader's own reason for the NON_TABLE verdict." ] ;
+    sh:property [ sh:path iladub:fromRegion ; sh:minCount 1 ;
+        sh:message "An ignored band must record its source region (provenance)." ] ;
+    #  The page is required ON THE REGION, never on the band node: iladub:onPage
+    #  carries rdfs:domain iladub:SourceRegion and its comment records at length why
+    #  it may sit nowhere else (the R69 mechanism). Stated as a SEQUENCE PATH from the
+    #  band rather than as a second NodeShape targeting iladub:SourceRegion, because
+    #  such a shape would fire on every escalated region in every compiled graph.
+    sh:property [ sh:path ( iladub:fromRegion iladub:onPage ) ; sh:minCount 1 ;
+        sh:message "An ignored band must reach a page through its source region (provenance to the page)." ] .

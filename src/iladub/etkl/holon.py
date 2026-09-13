@@ -12,11 +12,13 @@ from decimal import Decimal
 from rdflib import Graph, Namespace, Literal, BNode, URIRef, RDF, RDFS
 from rdflib.namespace import XSD
 
+from .bands import band_text
 from .regions import ClassifiedRegion
 from .roundtrip import cell_round_trips
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 ILADUB = Namespace("https://w3id.org/iladub#")
+ETKL = Namespace("https://w3id.org/iladub/etkl#")
 DEC = Namespace("https://w3id.org/iladub/dec#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 
@@ -476,6 +478,45 @@ def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str
     # and pointing iladub:fromRegion at it would satisfy the shape while asserting nothing.
     # It carries the page as a typed integer — see iladub:onPage's comment for why not
     # tab:onPage, and why not the page-scoped document IRI.
+    g.add((region_uri, RDF.type, ILADUB.SourceRegion))
+    g.add((region_uri, ILADUB.onPage, Literal(int(page), datatype=XSD.integer)))
+    g.add((region_uri, PROV.wasDerivedFrom, doc_uri))
+
+
+def emit_ignored_band(g: Graph, doc_uri: URIRef, idx: int, band,
+                      page: int, reason: str) -> None:
+    """Carry the surface text of a band the reader IGNORED — neither asserted nor escalated.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL, and the justification is the spec's, stated
+    once in its § 3 `§8 gate` paragraph
+    (docs/superpowers/specs/2026-09-12-the-ignored-band-carries-its-text-design.md). In one line:
+    raw extraction, source -> typed RDF facts, every value passed in or derived mechanically.
+    THE CARRIER DECIDES NOTHING — which bands are ignored was settled upstream by the existing
+    classifying AXIOM, and *choosing* which ignored bands deserve carriage would be NEURAL and
+    would need an oracle. Every ignored band is carried, so no rule selects among them and there
+    is no threshold, tolerance or span/read/group question anywhere in here.
+
+    THE SUBJECT IS DELIBERATELY NOT `{doc}#region{idx}`. That IRI is already taken on this path:
+    the same NON_TABLE branch mints it as a bare hanger for `_emit_unit_markers` when the band
+    carries absorbed marker columns. Reusing it would fuse two vocabularies onto one node on any
+    band that has both, and the hanger's own typing is not this function's to inherit — so the
+    carrier mints `{doc}#ignored{idx}`, disjoint by construction.
+
+    The page rides the SourceRegion, never the band node: `iladub:onPage` carries
+    `rdfs:domain iladub:SourceRegion` and its comment in iladub.ttl records at length why it may
+    sit nowhere else (the R69 mechanism). `reason` is the classifying AXIOM's own published
+    output, carried verbatim — never a reason invented here, which §7 would forbid.
+    """
+    band_uri = URIRef(f"{doc_uri}#ignored{idx}")
+    region_uri = URIRef(f"{band_uri}-source")
+
+    g.add((band_uri, RDF.type, ETKL.IgnoredBand))
+    g.add((band_uri, ETKL.bandText, Literal(band_text(band))))
+    g.add((band_uri, ETKL.bandIndex, Literal(int(idx), datatype=XSD.integer)))
+    g.add((band_uri, ETKL.ignoredBecause, Literal(reason)))
+    g.add((band_uri, ILADUB.fromRegion, region_uri))
+    g.add((band_uri, PROV.wasDerivedFrom, doc_uri))
+
     g.add((region_uri, RDF.type, ILADUB.SourceRegion))
     g.add((region_uri, ILADUB.onPage, Literal(int(page), datatype=XSD.integer)))
     g.add((region_uri, PROV.wasDerivedFrom, doc_uri))
