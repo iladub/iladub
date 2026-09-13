@@ -56,7 +56,15 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     stood against the closed R212 and R216/R217 against the closed R201/R203. This is the first entry
     here where a CLOSURE, not a raise, is most of the delta. MEASURED and not reasoned, by recomputing
     `candidates` against the HEAD versions of the register files and against this tree: 88 before,
-    93 after, ADDED = [213, 214, 215, 222, 223], REMOVED = []."""
+    93 after, ADDED = [213, 214, 215, 222, 223], REMOVED = [].
+    RE-MEASURED 2026-09-13, same loop — and the MECHANISM IS NEW TO THIS LIST: 93 -> 92,
+    ADDED = [], REMOVED = [213]. No row was raised, closed or parked. An AMENDMENT'S PROSE cited
+    [[R157]] while qualifying R213's colour-discriminator claim, and R157 is open, so R213 gained
+    an open neighbour and stopped being a candidate (its other links — 172, 176, 211 — are all
+    closed, so R157 alone did it). Every prior entry above moved because a STATUS moved; this one
+    moved because a row started CITING another row. Worth knowing before reading any delta here as
+    progress: an amendment that cites an open row moves this count without changing a single
+    status. Measured by recomputing against HEAD (`c1a5484`) and against this tree."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -70,4 +78,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 93
+    assert len(expected) == 92
