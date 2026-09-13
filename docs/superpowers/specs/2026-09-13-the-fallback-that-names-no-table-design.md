@@ -179,3 +179,37 @@ Read this section before writing any test, per rule 5.
 - **[[R213]] was RULED by the maintainer this session** (option (c): an invisible glyph is carried
   as a typed absence or a proposition, never as the value it hides and never dropped). Recorded in
   its row; **not implemented here** and not this loop's subject.
+
+## 8. Appended after § 0-7 were written: the upstream cause, and a refuted remedy
+
+This section is appended rather than folded into § 0, so the order in which the loop learned
+things stays legible. Nothing above is withdrawn; § 1-5 are unaffected, and R224's two defects
+stand exactly as measured. What changes is the CAUSAL story behind § 0's "nine pages nobody has
+read".
+
+**Why this document reaches the fallback at all.** ons p7/p8's data bands do not classify as
+tables because `_build_ruled_band` re-buckets them against the page BORDERS. Measured stage by
+stage on p7 band 12: `extract_words` → `text_lines` → `detect_bands` → `segment` all keep the row
+clean (`['2024','Dec','102.4','100.5','106.3','101.5']`), and `_build_ruled_band` returns the
+single token `'2024Dec102.4100.5106.3101.5103.4'`. The band intersects only `xs=[54.36, 540.24]`;
+the page's four interior rules sit at `top≈596-648`, outside the band's `top=268 bottom=382`. A
+two-element `xs` is one column, so `rule_aware_lines` can only fuse. Corpus census: **41 of 41
+border-only bands lose columns** (ons 33, bfs 8, zero elsewhere). Classified on the word-based
+band, p7's bands 6 and 12 are `RECORD_TABLE / flat single-level header`. Full evidence: [[R225]].
+
+**So the 70 ignored `NON_TABLE` bands are substantially a misreading**, not prose — which
+sharpens § 1's figures rather than contradicting them: the ink attribution, the missing
+`table_uri` and the mark ordering are all still exactly what was measured.
+
+**THE REMEDY IS REFUTED, and § 4 must not be read as authorising it.** Spiking the obvious guard
+(`len(xs) >= 3`; applied, measured, reverted; the four suites owning that path stayed green, 31
+passed) gives **ons 0.9720 → 0.5407, cells 571 → 389**. The mechanism is a coupling this spec did
+not see: the fallback fires only when a page asserts AND escalates nothing, so repairing band
+construction CLOSES that gate and the 276+276-cell grid reading disappears, replaced by a worse
+band reading. **The grid reading exists because the bands are broken.**
+
+**What this does to the loop's shape.** § 4's invariants are unchanged and still implementable —
+they are about the branch's bookkeeping, not about band construction. But etkl:04 cannot be
+adjudicated by repairing R224 alone, and R225 asks for a RULING (widen the gate so a page may
+carry both readings, or add a resolution test to the re-bucketing and re-derive the gate), not a
+patch. That ruling is the maintainer's and is not taken here.

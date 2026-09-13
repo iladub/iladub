@@ -64,7 +64,17 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     closed, so R157 alone did it). Every prior entry above moved because a STATUS moved; this one
     moved because a row started CITING another row. Worth knowing before reading any delta here as
     progress: an amendment that cites an open row moves this count without changing a single
-    status. Measured by recomputing against HEAD (`c1a5484`) and against this tree."""
+    status. Measured by recomputing against HEAD (`c1a5484`) and against this tree.
+    RE-MEASURED 2026-09-13 by the etkl:04 loop, hours later: 92 -> 91, ADDED = [], REMOVED = [202].
+    Again no row was raised, closed or parked. R202's row was amended to record that its two
+    unpaired ons regions ARE the datagrid fallback's appended region, and that amendment cites
+    [[R224]], which is open — so R202 gained an open neighbour and left the candidate set, exactly
+    as R213 did one entry above. **That makes the mechanism the entry above calls "NEW TO THIS LIST"
+    a RECURRING class, not a one-off**: two independent movements on the same day, both from an
+    amendment's prose rather than from any status. The loop's own new rows [[R224]] and [[R225]]
+    add NOTHING to this count — each cites an open row ([[R213]] and [[R224]] respectively), so
+    neither is structurally isolated. Measured by recomputing `candidates` against HEAD
+    (`580cfcb`) and against this tree."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -78,4 +88,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 92
+    assert len(expected) == 91
