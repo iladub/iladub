@@ -73,6 +73,20 @@ def test_the_population_is_every_file_in_vocab_queries():
     `2026-09-10-the-grid-the-author-drew-design.md` § 3-4). The plan predicted this gate
     would pick the file up with no re-baseline; that prediction was REFUTED by running it —
     the population is globbed, but the COUNT is pinned, which is exactly the pin doing its
-    job."""
+    job.
+
+    RE-MEASURED 2026-09-13 ([[R211]], span donation): 52 -> 53, `span-covers.rq` the span
+    donation loop adds — the derivation that places each label of a spanning donor band over
+    the recipient leaf columns lying inside that label's own drawn interval (spec
+    `2026-09-11-the-span-the-author-drew-design.md` § 3.1). Because this population is a
+    directory GLOB and not `git ls-files`, all three gates pinning it reddened the moment the
+    file was created, before any `git add` — the opposite of the `.ttl` population's
+    behaviour, and the reason both are re-baselined in the same change.
+
+    RE-MEASURED AGAIN 2026-09-13, same loop: 53 -> 54, `span-donation.rq` — the RELATION, where
+    `span-covers.rq` is the covering. Two queries because they answer different questions of
+    different subjects: which earlier band may donate a spanning header (a band pair), and which
+    recipient columns each of its labels heads (an interval and a column). The second is useless
+    without the first having named a donor."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 52, len(query_files())
+    assert len(query_files()) == 54, len(query_files())

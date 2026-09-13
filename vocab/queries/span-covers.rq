@@ -1,0 +1,57 @@
+# span-covers.rq — the span-covering derivation for span donation (R211, spec
+# 2026-09-11-the-span-the-author-drew-design.md § 3.1, plan DECISIONS A and B).
+#
+# Open-world derivation over the per-band-pair SPAN-evidence graph (the band PAIR is the
+# closure boundary — one fresh Graph per offer, exactly as grid-donation.rq closes within its
+# page and header-covers.rq within its band). A label the donor printed heads the recipient
+# leaf columns that lie inside the donor interval containing that label's ink centre.
+#
+# WHY THIS DERIVATION EXISTS AT ALL, rather than a clause added to an existing one. Both
+# shipped covering oracles are INK-OVERLAP derivations over ONE band's own grid, and they were
+# MEASURED unable to produce this reading (evidence § 2): a one-row donor makes every label
+# take the single-column leaf rule, so seven of sixteen recipient columns are left uncovered
+# and tab:CoverageShape refuses. This is an INTERVAL derivation ACROSS TWO BANDS — a different
+# question about a different subject — so it gets its own terms, its own transient graph and
+# its own query, per tab:PageBand's population rule in tab.ttl.
+#
+# THE RECIPIENT'S COLUMNS ARE tab:GridColumn, REUSED. A recipient leaf column carries exactly
+# the guarantee tab:colX0/tab:colX1 already state; the donor's INTERVAL does not, so it is a
+# tab:SpanInterval. That split is tab:donorBoundaryX's own test applied — mint a distinct term
+# when the fact carries a different guarantee, reuse when it carries the same one.
+#
+# TWO CONTAINMENTS, AND THE DIFFERENCE BETWEEN THEM IS LOAD-BEARING.
+#   * The LABEL is placed HALF-OPEN, lo <= centre < hi — the convention regions.column_of and
+#     header-covers.rq both use, and which header-covers.rq's own header records as
+#     load-bearing. A label sitting exactly on a boundary belongs to the interval it opens,
+#     never to both.
+#   * The COLUMN is placed CLOSED on both sides, lo <= colX0 and colX1 <= hi — a column is
+#     inside an interval only if the interval contains the WHOLE of it. This is what refuses a
+#     donor whose vector carries a boundary the recipient lacks: such a boundary cuts a
+#     recipient column, no interval then contains that column whole, and the covering stops
+#     being total. Clause (d) is disposed by the partition, never by a tolerance.
+#
+# THERE IS NO TOLERANCE HERE, INERT OR OTHERWISE, AND THAT IS THE POINT (CLAUDE.md §8, plan
+# Global Constraint 1). Both sides of both comparisons are minted by ONE rounding at 2dp,
+# inherited from sectiongraph._distinct_rule_xs — THE single rounding site — so every donor
+# boundary appears verbatim in the recipient's vector and exact comparison decides. An earlier
+# probe carried eps = 0.01 and measured it identical to eps = 0 on the real page (evidence
+# § 3); rather than ship an inert constant, the constant is gone. A tolerance appearing here
+# later is a review failure, not a tuning opportunity.
+#
+# THIS DERIVATION ENUMERATES AND SETTLES NOTHING. Whether the donor may be read over the
+# recipient at all is decided by the relation's five clauses (donation.py, Task 2) and
+# disposed by the shipped closed-world membrane (tiling.region_tiles); a label the query
+# places in NO interval simply yields no row, and the relation refuses rather than choosing a
+# nearest. That split — enumerate here, dispose there — is what makes this AXIOM under §8.
+#
+# Returns (?labelIdx ?cidx): for each donor label, one row per recipient leaf column it heads.
+# A label in no interval, and an interval holding no column, are both reported by ABSENCE.
+# THIS QUERY CONTAINS NO NUMERIC LITERAL.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?labelIdx ?cidx WHERE {
+  ?lab a tab:SpanLabel ; tab:spanLabelIndex ?labelIdx ; tab:spanLabelCenterX ?centre .
+  ?ivl a tab:SpanInterval ; tab:spanIntervalLo ?lo ; tab:spanIntervalHi ?hi .
+  FILTER(?lo <= ?centre && ?centre < ?hi)
+  ?gc a tab:GridColumn ; tab:colIndex ?cidx ; tab:colX0 ?cx0 ; tab:colX1 ?cx1 .
+  FILTER(?lo <= ?cx0 && ?cx1 <= ?hi)
+}

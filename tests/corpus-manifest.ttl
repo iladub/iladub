@@ -52,6 +52,17 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "ac66b478e20e82d4adede719c04a85f2071d5d5f005876b04851b94a76da2021" ;
     cor:pages 1 ;
+    # [[R211]], 2026-09-13 — step (1) of the route off the hold recorded in the 2026-08-20 note
+    # below: "author a cor:contract / cor:terms / cor:shapes triple for it — it carries none
+    # today, so tests/test_corpus.py::test_grounding_where_contracted does not parametrize this
+    # document at all and its grounding leg is entirely unexercised." It is parametrized from
+    # here on. Step (2) — that test passing — is MEASURED: 189 records, 392 grounded, 377 still
+    # quarantined, and the promotion membrane conforms. Step (3), a reviewer reading the carried
+    # grid against the source page, remains the maintainer's and is deliberately NOT recorded
+    # here; cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned.
+    cor:contract "examples/shipping/capacity-contract.ttl" ;
+    cor:terms "examples/shipping/capacity-terms.ttl" ;
+    cor:shapes "examples/shipping/capacity-shapes.ttl" ;
     cor:expectedVerdict cor:Unadjudicated ;
     cor:adjudication [ cor:by "composed by Claude Opus 5 (agent), task 5 of the 2026-08-20 arc-denominator loop; the accountable human sign-off is François Rosselet's review and merge of the commit that carries this node" ; cor:on "2026-08-20"^^xsd:date ;
         cor:rationale "HOLD — recorded, not accepted. cor:expectedVerdict stays cor:Unadjudicated and no cor:scoreFloor is pinned. Escalation-reason census 2026-08-20 (HEAD 820ab24), § Seam 1: score 1.0000, 1 page, ZERO escalation records on any of the nine reasons. § Token accounting for the same run reads 390 asserted / 0 escalated tokens — the only document in the corpus whose token ledger is clean. A SCORE IS NOT AN ACCEPTANCE: 1.0000 says nothing escalated, not that what was carried is what the page says, and no one has read this compile against the PDF. This is the corpus document nearest to acceptable, so the path to accepting it is named here rather than left implicit, and the rung has a route off 1/7: (1) author a cor:contract / cor:terms / cor:shapes triple for it — it carries none today, so tests/test_corpus.py::test_grounding_where_contracted does not parametrize this document at all and its grounding leg is entirely unexercised; (2) that test passing, so every grounded node stands behind exactly one accountable promotion; (3) a reviewer reading the carried grid against the source page and saying so in a dated note. Until all three, held." ] .

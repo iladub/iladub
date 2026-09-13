@@ -131,10 +131,24 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
     here is narrower than in test_query_terms: it is the count of query files the membrane
     BINDS AS FOCUS NODES, so it moved only because the new file is actually read by the
     shape — a file present on disk but unbound would leave this at 51 while the glob went to
-    52, which is the vacuity this assertion exists to catch."""
+    52, which is the vacuity this assertion exists to catch.
+
+    RE-MEASURED 2026-09-13 ([[R211]], span donation): 52 -> 53, `span-covers.rq` the span
+    donation loop adds — the derivation that places each label of a spanning donor band over
+    the run of recipient leaf columns inside the donor interval containing that label's ink
+    centre (spec `2026-09-11-the-span-the-author-drew-design.md` § 3.1). It is a SECOND
+    donation derivation, not an extension of `grid-donation.rq`: both shipped covering oracles
+    were measured unable to produce the reading, because they are ink-overlap derivations over
+    one band's own grid and this is an interval derivation across two.
+
+    RE-MEASURED AGAIN 2026-09-13, same loop: 53 -> 54, `span-donation.rq`, the relation whose
+    fourth clause is a STRICT SUBSET of drawn boundaries where `grid-donation.rq` joins on equal
+    leaf-column counts. The older query is narrowed by nothing and keeps its own null control;
+    the two are mutually exclusive by construction, since a strict subset is never an equal
+    set."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 52, sorted(focus)
+    assert len(focus) == len(query_files()) == 54, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

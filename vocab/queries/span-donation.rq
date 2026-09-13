@@ -1,0 +1,61 @@
+# span-donation.rq — the SPANNING donor-candidate derivation (R211, spec
+# 2026-09-11-the-span-the-author-drew-design.md § 3.1, plan DECISION D).
+#
+# Open-world derivation over the SAME per-page donor-evidence graph grid-donation.rq reads
+# (sectiongraph.donor_evidence) — the page is the closure boundary. An earlier band donates a
+# SPANNING header to a continuation band iff, on facts that are PRESENT: it is earlier on the
+# page, its leaf-boundary vector is wholly drawn, the page datagrid refused its line 0 as a
+# header, and its vector is a STRICT SUBSET of the continuation's.
+#
+# IT NEEDS NO NEW EMITTER, and that is measured rather than assumed: donor_evidence emits one
+# node per band that OWNS a vector, so the CONTINUATION's own boundaries are already in the
+# graph beside the donor's. On graincorp p0 it emits band 2 with 10 boundaries and band 3 with
+# 17, which is exactly the pair clause (d) has to compare.
+#
+# THE DIFFERENCE FROM grid-donation.rq IS ONE CLAUSE, AND IT IS A NARROWING, NOT A DELETION.
+# That query joins on tab:leafColumnCount — the donor and the continuation must read the SAME
+# number of leaf columns — and it still does, so it still refuses graincorp's band 2 as an
+# equal-count donor, which it is right to do: a 9-column header is not a 16-column one. This
+# query drops that join and requires PROPER CONTAINMENT instead. The two are siblings over one
+# evidence graph and they are mutually exclusive by construction: a strict subset is never an
+# equal set, so no page can satisfy both, and grid donation's only measured null control
+# survives untouched.
+#
+# THE CONTINUATION MUST ITSELF OWN A VECTOR, and the refusal that follows is honest rather than
+# incidental: clause (d) compares the donor's drawn set against the continuation's drawn set,
+# and a band the author never ruled HAS no drawn set to be a subset of. Such a band simply
+# emits no node here and the relation finds nothing — it is not a case this derivation declines
+# to handle, it is a case in which the question cannot be asked.
+#
+# BOTH NOT-EXISTS LEGS ARE HOLON-SCOPED, the same idiom as grid-donation.rq's drawn clause and
+# band-run.rq's subsumption: each asks a closed question about ONE named band pair while the
+# graph stays open. The drawn leg asks "is every boundary of THIS node's vector also one of
+# THIS node's drawn rule xs"; the subset leg asks "is every boundary of the donor's vector also
+# one of the continuation's". The strictness leg is EXISTS, not NOT EXISTS — a boundary the
+# continuation has and the donor lacks is positive evidence that the donor is genuinely
+# coarser, never an inference from absence.
+#
+# THE ONE STRING LITERAL IS THE DATAGRID'S OWN PUBLISHED REFUSAL NAME, carried verbatim from
+# grid-donation.rq, which carries it verbatim from emit_data_grid. It is the R203 licence: the
+# donor's header is DERIVED, never assumed. It is also the clause that keeps bfs p6 out — that
+# page carries seven strict-subset pairs, (3,4) (3,5) (3,6) (3,8) (3,9) (7,8) (7,9), and every
+# one is refused because bands 3 and 7 carry no licence. MEASURED: with this query, bfs p6
+# derives no donor for any band. THIS QUERY CONTAINS NO NUMERIC LITERAL.
+#
+# THIS DERIVATION ENUMERATES CANDIDATES AND SETTLES NOTHING. Whether the named donor's labels
+# may actually be read over the continuation's columns is decided by span-covers.rq and
+# disposed by the shipped closed-world membrane (donation.span_donation_admissible:
+# assert_hier_region + region_tiles on a scratch graph, discarded on refusal); uniqueness is
+# required by donation.span_offer, not here — this reports EVERY qualifying donor and adds no
+# ordinal rule. That split is why it is AXIOM under CLAUDE.md §8.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?a WHERE {
+  ?u a tab:DonorBand ;
+     tab:bandIndex ?a ;
+     tab:headLineRefusal "HeterogeneousColumn/every-measure" .
+  ?v a tab:DonorBand ; tab:bandIndex ?b .
+  FILTER(?a < ?b)
+  FILTER NOT EXISTS { ?u tab:donorBoundaryX ?x . FILTER NOT EXISTS { ?u tab:bandRuleX ?x } }
+  FILTER NOT EXISTS { ?u tab:donorBoundaryX ?x . FILTER NOT EXISTS { ?v tab:donorBoundaryX ?x } }
+  FILTER EXISTS     { ?v tab:donorBoundaryX ?y . FILTER NOT EXISTS { ?u tab:donorBoundaryX ?y } }
+}

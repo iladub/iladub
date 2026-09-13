@@ -24,7 +24,8 @@ class GroundingProposal:
 
 class GroundingProposer(Protocol):
     def propose_grounding(self, concept: SurfaceConcept,
-                          fields: tuple[ContractField, ...]) -> "GroundingProposal": ...
+                          fields: tuple[ContractField, ...],
+                          page_context: str | None = None) -> "GroundingProposal": ...
 
 
 @dataclass(frozen=True)
@@ -32,7 +33,7 @@ class FakeGroundingProposer:
     """Deterministic offline proposer for tests/showcase. Returns its fixed proposal."""
     proposal: "GroundingProposal"
 
-    def propose_grounding(self, concept, fields):
+    def propose_grounding(self, concept, fields, page_context=None):
         return self.proposal
 
 
@@ -45,10 +46,10 @@ class BamlGroundingProposer:
     """Live proposer — calls the BAML ProposeGrounding function. Lazy: baml_client is
     imported only inside the method, so constructing this never triggers the version guard."""
 
-    def propose_grounding(self, concept, fields):
+    def propose_grounding(self, concept, fields, page_context=None):
         from baml_client import sync_client
         labels = [f.fills_property.split("#")[-1] for f in fields]
-        r = sync_client.b.ProposeGrounding(concept.text, concept.value, labels)
+        r = sync_client.b.ProposeGrounding(concept.text, concept.value, labels, page_context)
         # map the model's returned label back to a field IRI
         field_iri = None
         if r.field_iri:
@@ -114,7 +115,7 @@ class MappingGroundingProposer:
     proposal). An unmapped header returns a field_iri=None proposal -> the concept quarantines."""
     mapping: dict
 
-    def propose_grounding(self, concept, fields):
+    def propose_grounding(self, concept, fields, page_context=None):
         return self.mapping.get(
             concept.text,
             GroundingProposal(None, "https://w3id.org/semanticarts/ns/ontology/gist/Category",

@@ -991,6 +991,67 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     donated = _donation.offer(bands, idx, region, donor_ev, page_number)
                     if donated is not None:
                         region = donated.region
+                    # SPAN donation (R211), offered ONLY where the equal-count relation found
+                    # nothing: the two are mutually exclusive by construction (a strict subset
+                    # is never an equal set), so this is belt-and-braces over a derivation that
+                    # cannot fire twice — and it keeps the older path's behaviour reachable
+                    # unchanged for any reader auditing this seam.
+                    #
+                    # IT LEAVES BY `continue`, and that is deliberate: the reading it produces
+                    # is a HierRegion, so it compiles through `assert_hier_region` and the
+                    # hierarchical ink accounting rather than through `assert_record_region`
+                    # below. Returning here rather than wrapping the record path in an `else`
+                    # keeps that path byte-identical for every band that is not donated to.
+                    span = (_donation.span_offer(bands, idx, donor_ev, page_number)
+                            if donated is None else None)
+                    if span is not None:
+                        from .holon import assert_hier_region
+                        htable = URIRef(f"{doc}#htable{idx}")
+                        # `#htable{idx}`, NOT a fragment kind of its own: the product IS a
+                        # hierarchical table, and test_run_merge_seam's O4 reads every minted
+                        # fragment against a fixed alternation — a new kind would be unmatched.
+                        scratch = Graph()
+                        n = assert_hier_region(scratch, span.region, band, htable, doc,
+                                               page_number)
+                        # NO SECOND region_tiles CALL. `span_offer` accepted this reading only
+                        # after `span_donation_admissible` ran assert_hier_region + region_tiles
+                        # over the IDENTICAL reading on a scratch graph; the two differ by the
+                        # document URI alone, and no tab: shape reads a URI. Re-validating here
+                        # would pay for a SHACL pass per accepted donation to re-derive a
+                        # verdict already taken — the duplicate the disposal exists to avoid.
+                        graph += scratch
+                        _emit_band_captions(graph, htable, band)
+                        _emit_unit_markers(graph, htable, band, span.region.grid.boundaries)
+                        # THE PROVENANCE LINK, pointed at whatever the donor band actually
+                        # became. Every span donor measured so far is a band the reader IGNORED
+                        # (graincorp p0's band 2, and the CI fixture's band 0), which R212's
+                        # carrier now gives a text-bearing node; a donor that compiled to a
+                        # table is named by its table URI instead. The donor's own report is
+                        # already appended — `donor_index < idx`, and every branch appends
+                        # exactly one report per band.
+                        _donor_report = reports[span.donor_index]
+                        graph.add((htable, TAB.spanHeaderDonatedBy,
+                                   URIRef(f"{doc}#ignored{span.donor_index}")
+                                   if _donor_report.verdict == "ignored"
+                                   else URIRef(_donor_report.table_uri)))
+                        tokens = sum(len(ln.words) for ln in band.lines)
+                        asserted_total += n
+                        escalated_total += max(0, tokens - n)
+                        _span_line0 = " ".join(
+                            w.text for w in sorted(bands[span.donor_index].lines[0].words,
+                                                   key=lambda w: w.x0))
+                        brec.record(
+                            "span_donation", ["donated", "own_line_0"], "donated",
+                            f"read spanning column labels from band {span.donor_index}, whose "
+                            f"wholly-drawn boundary vector is a strict subset of this band's "
+                            f"and whose line 0 the page datagrid refused as a header "
+                            f"(HeterogeneousColumn/every-measure): {_span_line0[:120]}")
+                        brec.record("verdict", ["asserted", "escalated", "ignored"],
+                                    "asserted", "")
+                        reports.append(RegionReport(region.kind, "asserted", n, None,
+                                                    str(TAB.HierarchicalTable), ascii_view,
+                                                    htable))
+                        continue
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
                     n = assert_record_region(scratch, region, table_uri, doc, page_number)

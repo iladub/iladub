@@ -1,0 +1,32 @@
+# NEGATIVE (R211, span donation): two WORDS of one drawn interval emitted as two header nodes.
+#
+# MEASURED on graincorp p0: the donor's line 0 carries nine Word objects for nine intervals,
+# and 'Fisherman Islands' / 'Port Kembla' each arrive as ONE word because the geometry adapter
+# already grouped them. That 1:1 is the document's coincidence, NOT a property of the relation
+# -- span-covers.rq places each word independently, so two words falling in one interval both
+# head its columns and the READING must join their text into one label. This fixture is what
+# happens if it emits two nodes instead.
+#
+# WHAT IT PINS THAT THE EXISTING NEGATIVES DO NOT. tab-overlap-leak.ttl fires NoOverlapShape
+# alone on a SINGLE shared column; tab-ambiguous-access-leak.ttl fires UnambiguousAccessShape
+# alone, on two leaf headers at DIFFERENT levels. This is the span reading's own failure --
+# two childless SAME-LEVEL nodes over a MULTI-COLUMN run -- and it fires BOTH shapes at once,
+# which is the claim the test asserts. It is also why span donation needs no shape of its own:
+# the shipped membrane already refuses the one way this reading can go wrong.
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/span-demo#> .
+
+ex:tbl a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1, ex:c2, ex:c3, ex:c4, ex:c5 ;
+    tab:hasLeafRow    ex:r0 ;
+    tab:hasHeaderNode ex:hPort, ex:hKembla, ex:hGladstone, ex:hPortland .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn . ex:c2 a tab:LeafColumn .
+ex:c3 a tab:LeafColumn . ex:c4 a tab:LeafColumn . ex:c5 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+# 'Port' and 'Kembla' are two words of ONE interval, wrongly emitted as two nodes.
+ex:hPort      a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0, ex:c1 .
+ex:hKembla    a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0, ex:c1 .
+ex:hGladstone a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c2, ex:c3 .
+ex:hPortland  a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c4, ex:c5 .

@@ -302,3 +302,53 @@ def test_licence_refusal_and_stitch_are_exclusive():
     c, t = _v(os.path.join(TST, "tab-licence-refused-leak.ttl"))
     assert not c
     assert "LicenceRefusalShape" in t
+
+
+# R211 (span donation, spec 2026-09-11 § 3.1) — the reading a SPANNING donor produces: every
+# header node level 0, CHILDLESS, and covering MORE THAN ONE leaf column. No other example in
+# this repo carries that combination (hierarchical-conformant.ttl's multi-column nodes all have
+# children; its one childless node covers a single column). Span donation authors NO shape of
+# its own — plan DECISION C — so what these three tests claim together is that the SHIPPED
+# membrane already accepts the reading and already refuses both ways it can go wrong.
+SPAN_CONFORMANT = os.path.join(EX, "span-donation-conformant.ttl")
+
+
+def test_span_donation_reading_passes_tiling():
+    """Three childless spanning nodes tile six leaf columns. tab:UnambiguousAccessShape
+    DEFINES a leaf header as one nothing points at via tab:parentHeader, so this is the
+    canonical shape it asks for, not one it tolerates."""
+    c, t = _v(SPAN_CONFORMANT)
+    assert c, t
+
+
+def test_span_doubled_label_fails_both_shapes():
+    """Two WORDS of one drawn interval emitted as two nodes — the one way this reading can go
+    wrong when an interval holds more than one word. (MEASURED: graincorp's nine-words-for-
+    nine-intervals is that document's coincidence, not a property of the relation, so the
+    reading must join same-interval words rather than assume the 1:1.)
+
+    BOTH shapes must fire, and that is what keeps this fixture from duplicating two that
+    already exist: tab-overlap-leak.ttl fires NoOverlapShape alone on a single shared column,
+    and tab-ambiguous-access-leak.ttl fires UnambiguousAccessShape alone on two leaf headers at
+    DIFFERENT levels. Neither is a same-level double over a multi-column run."""
+    c, t = _v(os.path.join(TST, "tab-span-doubled-label-leak.ttl"))
+    assert not c
+    assert "NoOverlapShape" in t
+    assert "UnambiguousAccessShape" in t
+
+
+def test_span_invented_child_fails_at_the_sibling_column():
+    """DECISION C's "there are NO level-1 nodes", pinned. A second header level would be a node
+    with no ink behind it (CLAUDE.md §7); mint one anyway and its spanning parent stops being a
+    leaf header, leaving the parent's OTHER column with none at all.
+
+    The focus node is asserted because the refusal is about the SIBLING, not the invented node
+    — a test asserting only `not conforms` would pass against a membrane refusing this for any
+    reason whatever, which is the fixture defect CLAUDE.md § Plan authoring records as defect 5.
+    NoOverlapShape is asserted ABSENT for the same reason: it distinguishes this fixture's claim
+    from the doubled-label one above."""
+    c, t = _v(os.path.join(TST, "tab-span-invented-child-leak.ttl"))
+    assert not c
+    assert "UnambiguousAccessShape" in t
+    assert "NoOverlapShape" not in t
+    assert "ex:c1" in t, t

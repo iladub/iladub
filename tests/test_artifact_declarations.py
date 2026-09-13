@@ -198,8 +198,30 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # the same asymmetry `tab-label-nobox-leak.ttl` produced on 2026-09-07. The loop's four new
     # terms and its shape went into the EXISTING `vocab/ontology/etkl.ttl` and
     # `vocab/shapes/etkl-shapes.ttl`, so no vocabulary FILE joined the population, only fixtures.
-    assert len(vocab_nodes) == len(artifact_files()) == 157
-    assert len(query_nodes) == len(query_files()) == 52
+    # RE-MEASURED 2026-09-13 ([[R211]], span donation): the `.rq` population is **53** —
+    # `vocab/queries/span-covers.rq`, the AXIOM derivation that places a spanning donor band's
+    # labels over the recipient leaf columns inside their own drawn intervals (spec
+    # `2026-09-11-the-span-the-author-drew-design.md` § 3.1). The `.ttl` population moves in the
+    # same change, 157 -> **160**: the span reading's worked example
+    # (`examples/tables/span-donation-conformant.ttl`) and its two must-fail negatives
+    # (`tests/tab-span-doubled-label-leak.ttl`, `tests/tab-span-invented-child-leak.ttl`). The
+    # loop's eight new `tab:` terms went into the EXISTING `vocab/ontology/tab.ttl` and it
+    # authored no new shape at all, so no vocabulary FILE joined the population, only fixtures —
+    # the same shape R212's carrier produced.
+    #
+    # NOTE THE TWO POPULATIONS ARE ENUMERATED DIFFERENTLY, and it decides when each gate fires:
+    # `query_files()` GLOBS the directory, so a new `.rq` reddens its three gates the moment the
+    # file exists; `artifact_files()` is `git ls-files`, so a new `.ttl` reddens its two only at
+    # `git add`. A local run that is green on one is not evidence about the other.
+    # RE-MEASURED AGAIN 2026-09-13, same loop: the `.rq` population is **54** —
+    # `vocab/queries/span-donation.rq`, the relation that names a spanning donor, beside
+    # `span-covers.rq`, the covering that places its labels. The `.ttl` population does not move
+    # again: the relation reuses `sectiongraph.donor_evidence` unchanged and declares no term.
+    # RE-MEASURED AGAIN 2026-09-13, same loop: the `.ttl` population is **163** — the capacity
+    # contract, terms and shapes (`examples/shipping/capacity-*.ttl`). The `.rq` population does
+    # not move again: a contract is a declaration, not a derivation, so it authored no query.
+    assert len(vocab_nodes) == len(artifact_files()) == 163
+    assert len(query_nodes) == len(query_files()) == 54
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

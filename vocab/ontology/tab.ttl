@@ -359,6 +359,74 @@ tab:headLineRefusal a owl:DatatypeProperty ; rdfs:domain tab:DonorBand ; rdfs:ra
     rdfs:comment "The page datagrid's refusal string for the page text line this band's line 0 re-identifies to BY INK, carried VERBATIM in the lexical form emit_data_grid writes into dec:rejectedBecause (datagrid.py:599-625). This is the R203 licence: the donor's header is DERIVED, never assumed — a donation is offered only where the datagrid refused that line as a header. The fact is emitted ONLY where the caller mapped one (donation.head_line_refusals); a body-row verdict, any other refusal, no datagrid at all, or a line-0 ink key matching no page line or more than one, each emit NO fact, and the query then refuses the donor."@en .
 tab:headerDonatedBy a owl:ObjectProperty ; rdfs:domain tab:RecordTable ; rdfs:range tab:RecordTable ; rdfs:label "header donated by"@en ;
     rdfs:comment "Provenance of an ACCEPTED grid donation: this record table read its column labels from the named earlier table's header, because its own ink tiles that table's wholly-drawn column grid at the same leaf-column count and the page datagrid refused that table's line 0 as a header (R201/R203). Emitted into the COMPILED graph by compile_tables, NEVER into a transient evidence graph. A refused donation emits nothing at all: the page is isomorphic to one where no donation was ever proposed."@en .
+# --- span donation (transient span-covering evidence; R211, spec 2026-09-11 § 3.1) ---
+# The SECOND donation relation, and a DIFFERENT question from grid donation's. Grid donation
+# asks "do these two bands read the same number of leaf columns"; this asks "which of the
+# recipient's leaf columns lie inside this donor interval" — so the donor's BOUNDARIES are
+# needed, where grid donation needed only their count (tab:leafColumnCount, above).
+#
+# ITS OWN TRANSIENT GRAPH AND ITS OWN POPULATION, per tab:PageBand's rule above: a donor band
+# reaches this derivation as a set of drawn INTERVALS, not as the tab:DonorBand node the
+# equal-count relation reads. Emitted by spangraph.span_evidence; consumed by
+# vocab/queries/span-covers.rq (AXIOM, derivation, open world).
+#
+# THE RECIPIENT'S COLUMNS REUSE tab:GridColumn AND ITS PROPERTIES, deliberately. A recipient
+# leaf column carries exactly the guarantee tab:colX0/tab:colX1 already state — a transient
+# leaf column's index and x-interval, however the grid was recovered, never asserted into a
+# holon — so minting a twin would be two names for one concept. The donor's INTERVAL does NOT
+# carry that guarantee (it is one cell of ANOTHER band's wholly-drawn vector, and "wholly
+# drawn" is the clause that admits the donor at all), which is why it gets its own class here.
+# That is tab:donorBoundaryX's own test, applied: mint a distinct term when the fact carries a
+# different guarantee, reuse when it carries the same one.
+tab:SpanInterval a owl:Class ; rdfs:label "Span interval (evidence)"@en ;
+    rdfs:comment "A transient node standing for ONE interval of a spanning donor band's leaf-boundary vector — the x-range between two consecutive boundaries the author DREW. Evidence for the span-covering derivation (span-covers.rq); never asserted into a holon. It is not a tab:GridColumn: a grid column is a column of the table being read, while this is an interval of a DIFFERENT band's vector, and the whole question the derivation asks is which of the former lie inside the latter. Emitted only for a band whose vector is wholly drawn and a strict subset of the recipient's; a donor the relation refuses emits nothing at all."@en .
+tab:spanIntervalIndex a owl:DatatypeProperty ; rdfs:domain tab:SpanInterval ; rdfs:range xsd:integer ;
+    rdfs:label "span interval index"@en ;
+    rdfs:comment "The interval's 0-based position in the donor's boundary vector, ascending left to right — interval i spans vector[i]..vector[i+1]. It is the join key the reading uses to ask which label heads which recipient columns."@en .
+tab:spanIntervalLo a owl:DatatypeProperty ; rdfs:domain tab:SpanInterval ; rdfs:range xsd:decimal ;
+    rdfs:label "span interval lo"@en ;
+    rdfs:comment "The interval's LEFT boundary, rounded to the SAME 2dp as tab:donorBoundaryX and tab:bandRuleX. The rounding is INHERITED from sectiongraph._distinct_rule_xs — THE single rounding site — and is not re-tuned here; grid.py's _rule_boundaries passes Band.column_xs through unrounded, so this emitter applies it, exactly as sectiongraph.donor_evidence does for its own population. Both sides of the containment comparison are minted by that one rounding, which is what makes the derivation's tolerance INERT rather than tuned: every donor boundary appears verbatim in the recipient's vector at 2dp."@en .
+tab:spanIntervalHi a owl:DatatypeProperty ; rdfs:domain tab:SpanInterval ; rdfs:range xsd:decimal ;
+    rdfs:label "span interval hi"@en ;
+    rdfs:comment "The interval's RIGHT boundary, at the same inherited 2dp. See tab:spanIntervalLo."@en .
+tab:SpanLabel a owl:Class ; rdfs:label "Span label (evidence)"@en ;
+    rdfs:comment "A transient node standing for one word-group the donor band printed on its own line 0 — the text that will become a spanning header label if, and only if, the derivation places it in exactly one drawn interval. Evidence only; never asserted into a holon. It is deliberately NOT a tab:HeaderCell: that class carries tab:atHeaderRow and tab:headerText for the LEAF-row covering derivation over the band's own grid (header-covers.rq), and a node bearing them would be read by that query as a header cell of a table it has nothing to do with."@en .
+tab:spanLabelIndex a owl:DatatypeProperty ; rdfs:domain tab:SpanLabel ; rdfs:range xsd:integer ;
+    rdfs:label "span label index"@en ;
+    rdfs:comment "The label's 0-based left-to-right position on the donor's line 0, by ink. It identifies the label in the derivation's answer and is NEVER used to assign it to an interval: ordinal position is the FALSIFIER of the ink-centre rule (spec § 3.1 DECISION B), not a second rule, so the derivation must be able to disagree with it."@en .
+tab:spanLabelText a owl:DatatypeProperty ; rdfs:domain tab:SpanLabel ; rdfs:range rdfs:Literal ;
+    rdfs:label "span label text"@en ;
+    rdfs:comment "The label's exact surface text, carried so the reading can be built from the derivation's answer without re-reading the band. Language-tagged literals are allowed; NOT constrained to xsd:string."@en .
+tab:spanLabelCenterX a owl:DatatypeProperty ; rdfs:domain tab:SpanLabel ; rdfs:range xsd:decimal ;
+    rdfs:label "span label centre x"@en ;
+    rdfs:comment "The label's ink x-midpoint, raw geometry, at the same inherited 2dp as the interval boundaries. The DECISION of which interval contains it stays in span-covers.rq, keeping that query free of numeric literals — the same split tab:inkCenterX makes for header-covers.rq. A label whose centre falls in no interval, or in more than one, is placed by the derivation nowhere, and the relation then refuses the donor rather than choosing."@en .
+
+tab:spanHeaderDonatedBy a owl:ObjectProperty ; rdfs:domain tab:HierarchicalTable ;
+    rdfs:label "span header donated by"@en ;
+    rdfs:comment """Provenance of an ACCEPTED SPAN donation: this hierarchical table read its
+spanning column labels from the named earlier band of the same page, because that band's
+wholly-drawn boundary vector is a STRICT SUBSET of this table's and the page datagrid refused
+its line 0 as a header (R211, building on R203's licence).
+
+IT IS NOT tab:headerDonatedBy, and the difference is not tidiness. That property carries BOTH
+rdfs:domain and rdfs:range tab:RecordTable, and neither holds here: the product of a span
+donation is a tab:HierarchicalTable (its labels SPAN, so the reading is hierarchical even at one
+level deep), and the donor is typically a band the reader IGNORED rather than a table at all —
+MEASURED, graincorp p0's donor is band 2, a NON_TABLE that mints {doc}#ignored2 and no table
+URI whatever. Reusing the older property would therefore do two false things at once: RDFS-infer
+this hierarchical table to be a tab:RecordTable for any consumer running our published axioms
+(the R61/R19 mechanism), and point at a table node that does not exist.
+
+RANGELESS, deliberately, on tab:namePromotedBy's precedent and for its reason — keeping this
+ontology standalone. The object is whatever node the donor band actually produced: an
+etkl:IgnoredBand where the reader ignored it (the usual case, and the one R212's carrier now
+gives a text-bearing node to point at), or that band's own table URI where it compiled to one.
+Declaring a range would drag an etkl: class into tab: to say so.
+
+Emitted into the COMPILED graph by compile_tables, NEVER into a transient evidence graph, and
+ONLY on acceptance: a refused span donation emits nothing at all, so the page is isomorphic to
+one where no donation was ever proposed."""@en .
+
 tab:RegionKind a owl:Class ; rdfs:label "Region kind"@en ;
     rdfs:comment "The classification verdict for a band. Its individuals are verdicts, NOT the compiled-holon table classes (tab:RecordTable a owl:Class subClassOf tab:Table) — hence the distinct '…Kind' IRIs to avoid dual-typing an existing class."@en .
 tab:RecordTableKind a tab:RegionKind ; rdfs:label "Record table (kind)"@en .

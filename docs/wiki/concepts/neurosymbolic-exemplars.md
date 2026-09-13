@@ -28,9 +28,17 @@ sources:
   - vocab/ontology/etkl.ttl
   - vocab/shapes/etkl-shapes.ttl
   - tests/etkl/test_ignored_band_carrier.py
+  - vocab/queries/span-covers.rq
+  - vocab/queries/span-donation.rq
+  - src/iladub/etkl/spangraph.py
+  - src/iladub/feed.py
+  - src/iladub/ground.py
+  - tests/etkl/test_span_covers_query.py
+  - tests/etkl/test_span_donation_reading.py
+  - tests/test_feed_key_split.py
 related: ["[[dimension-split]]"]
 confidence: high
-updated: 2026-09-12
+updated: 2026-09-13
 promoted_to: docs/neurosymbolic-first.md
 ---
 
@@ -395,3 +403,57 @@ refuses to do rather than by what it computes.
   pages is counted once per page and the ink figure is an upper bound on what the corpus actually
   loses. And because the shape is unwired by design, a single test is the whole enforcement — if
   that test is deleted, nothing else refuses a textless carried node.
+
+## Span donation — the covering is the author's drawn intervals (R211, 2026-09-13)
+
+*Readings in this section were taken on 2026-09-13.*
+
+An **AXIOM** entry, and it earns the class on the one property that is easiest to lose: it carries
+no tolerance at all.
+
+- **The question.** A band draws nine labels over a coarse ruling; the band beneath it reads
+  sixteen leaf columns on a finer one. Which columns does `Mackay` head? That is a question about
+  what the author *drew*, and the answer is set containment: the recipient columns lying inside the
+  donor's own drawn interval.
+
+- **The derivation** (`vocab/queries/span-covers.rq`, with `span-donation.rq` naming the donor) —
+  **AXIOM, derivation form, open world.** Geometry is emitted as evidence by
+  `src/iladub/etkl/spangraph.py` and every decision lives in the query. Two containments, and the
+  difference between them is load-bearing: a LABEL is placed half-open (`lo <= centre < hi`, the
+  convention `regions.column_of` and `header-covers.rq` already use), while a COLUMN is placed
+  closed on both sides, because an interval contains a column only if it contains the whole of it.
+  That second form is what refuses a donor carrying a boundary the recipient lacks — such a
+  boundary cuts a column, no interval then holds it whole, and the covering stops being total.
+
+- **Why it is a new derivation rather than a clause on an old one.** Both shipped covering oracles
+  were MEASURED unable to produce the reading: a one-row donor makes every label take the
+  single-column leaf rule, leaving 7 of 16 columns uncovered and `tab:CoverageShape` refusing. They
+  are ink-OVERLAP derivations over one band's own grid; this is an INTERVAL derivation across two
+  bands — a different question about a different subject, so it gets its own terms, its own
+  transient graph and its own query, per `tab:PageBand`'s population rule.
+
+- **THERE IS NO TOLERANCE, and that is the point.** An earlier probe carried `eps = 0.01` and
+  measured it identical to `eps = 0` on the real page, because both sides are minted by ONE
+  rounding at 2dp inherited from `sectiongraph._distinct_rule_xs`. Rather than ship an inert
+  constant, the constant is gone: exact comparison decides. A tolerance appearing here later is a
+  review failure, not a tuning opportunity — which is the whole difference between this and the
+  geometry heuristic §8 forbids.
+
+- **The disposal is the shipped membrane, and no shape was authored.** Nine childless spanning
+  nodes over sixteen leaf columns is precisely what `tab:UnambiguousAccessShape` DEFINES as
+  correct — it calls a leaf header one that nothing points at via `tab:parentHeader` — so
+  `region_tiles` already accepts the reading and already refuses both ways it can go wrong
+  (`examples/tables/span-donation-conformant.ttl` and its two negatives).
+
+- **What it measures.** On `graincorp-capacity-2026-08-04.pdf` page 0 the nine printed labels now
+  head the columns their intervals contain, in the partition 1,1,2,2,2,2,2,2,2. Entry cells rise
+  390 → 406, the +16 being exactly the leaf-column count — the band's own line 0 stops being eaten
+  as a header row — while the ink ledger does not move at all, staying at 406 asserted and 0
+  escalated. The page's score is unchanged. Downstream, the grounding portal splits each of the 27
+  rows into one record per port: 189 records, of which all 189 ground their port name against the
+  scheme.
+
+- **Exposure.** A span whose covered columns are NON-CONTIGUOUS is refused by nothing in the
+  shipped membrane — measured, and left open rather than patched, because interval containment
+  makes it unreachable from this derivation and authoring a shape for it was outside this loop's
+  disposal (R222).
