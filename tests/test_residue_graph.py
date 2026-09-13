@@ -41,7 +41,13 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     All three are candidates by § 3.3's own rule, exactly as R216/R217 were against the closed
     R201/R203 and R209 against the closed R179. MEASURED that the delta is those three and nothing
     else, by recomputing `candidates` against the HEAD versions of the three register files and
-    against this tree: 84 before, 87 after, ADDED = [218, 219, 220], REMOVED = []."""
+    against this tree: 84 before, 87 after, ADDED = [218, 219, 220], REMOVED = [].
+    RE-MEASURED 2026-09-13 (the span the author drew, the plan loop): 87 -> 88 — R221 is open,
+    blocks no criterion, and links only to the now-CLOSED R139, the citation-rot row whose class it
+    belongs to, so it is a candidate by § 3.3's own rule exactly as R218-R220 were against the
+    closed R212 and R216/R217 against the closed R201/R203. MEASURED that the delta is that one row
+    and nothing else, by recomputing `candidates` against the HEAD versions of the register files
+    and against this tree: 87 before, 88 after, ADDED = [R221], REMOVED = []."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -55,4 +61,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 87
+    assert len(expected) == 88
