@@ -235,6 +235,23 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
     though it escalates: 5 of its 15 are superseded (measured the same day), so it does
     not carry the "none withdrawn" property this test's choice rests on, and cbh-stem
     already covers the wholly-superseded case below.
+
+    RE-RULED 2026-09-14 (R225 arm B, D2): **the `superseded == 0` guard is REMOVED, and the
+    invariant it guarded is untouched and now harder to satisfy.** The widened adoption gate takes
+    bfs p5, and adoption's admission holon is precisely what adds `dec:supersedes` to the bands it
+    supersedes — so the "none withdrawn" property this test's SUBJECT CHOICE rested on is gone.
+    Measured 2026-09-14: `B=10, C=10, B-C=0, superseded=4, live=6, requests=6`.
+
+    WHY THIS IS A STRENGTHENING, not a relaxation. With `superseded=0`, `requests == live` and
+    `requests == len(escalating)` were the SAME assertion — the test could not tell a derivation
+    that respects supersession from one that ignores it. At 4 withdrawn and 6 live it can: a
+    derivation blind to `dec:supersedes` furnishes 10 and fails here. bfs is now the only corpus
+    document carrying live and withdrawn escalations AT ONCE (cbh-stem is wholly superseded, and
+    the documents rejected above escalate nothing), so the mixed case has a fixture for the first
+    time.
+
+    What replaces the guard is non-vacuity on the same axis: `live > 0`. A document whose
+    escalations are ALL withdrawn pins nothing here — that is cbh-stem's test, below.
     """
     from iladub.etkl.document import compile_document
 
@@ -247,7 +264,7 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
           f"{len(with_regarding)} B-C={len(escalating) - len(with_regarding)} "
           f"superseded={len(superseded)} live={len(live)} requests={len(requests)}")
     assert len(escalating) > 0, "chose a document that does not escalate — the test pins nothing"
-    assert len(superseded) == 0, "chose a document whose escalations are withdrawn — see cbh-stem"
+    assert len(live) > 0, "chose a document whose escalations are ALL withdrawn — see cbh-stem"
     assert len(requests) == len(live)
 
 

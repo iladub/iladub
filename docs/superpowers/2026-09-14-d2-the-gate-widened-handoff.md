@@ -156,6 +156,35 @@ re-run against the repair.
 - **5c and 5d entirely**, per their grading.
 - The baseline `snap-base` was taken on `5a893e0` in this session's scratchpad and is
   **session-local**; a later session must re-take it before diffing anything.
+- **THE FULL `tests/etkl` SUITE DID NOT COMPLETE LOCALLY, and the reason is environmental rather
+  than about this change.** It was run in chunks (128 files) and the machine killed it for low
+  memory TWICE — once at 8-file chunks with a corpus sweep sharing the box, once at 4-file chunks
+  without. Measured at the second kill: no stray Python processes, ~57 MB free, load 26. **Files
+  1–72 are green** (57 + 58 + 95 + 122 passed, 2 skipped, 1 xfailed, then 38 + 14 + 31 + 10 + 28 +
+  24 + 27 + 31 + 78) **with ONE failure; files 73–128 have not been run at all.** Anyone continuing
+  must run them — `ls tests/etkl/test_*.py | tail -n +73 | xargs -n 4 …` — and must not read the
+  green chunks as a green suite. CI does not close this gap: it cannot see the corpus, and these
+  are the corpus-gated modules.
+- **The one failure is `test_escalation_furnish.py::test_corpus_census_every_live_escalating
+  _decision_is_furnished`, and it is its own guard firing.** That test asserts
+  `len(superseded) == 0` on bfs, a document it chose *because* none of its escalations were
+  withdrawn (its docstring records rejecting apple for exactly that property, and re-pointing off
+  who-wfa when R45 took it to zero escalations). D2 makes bfs p5 adopt, and adoption's admission
+  holon is what adds `dec:supersedes` to the bands it supersedes — so the property the subject
+  choice rests on is gone. **The invariant it exists to pin, `requests == live`, is untouched by
+  that**, and is now exercised HARDER: bfs becomes the first corpus document carrying both live and
+  withdrawn escalations at once, where before, cbh covered wholly-superseded and nothing covered
+  mixed. The repair is therefore a ruling on the guard, not a re-baseline of the invariant — and
+  the figures for it must be read from the run, not predicted.
+- **RESOLVED, and the figures are now read rather than predicted** (2026-09-14):
+  `B(chose escalated)=10, C(and dec:regarding)=10, B-C=0, superseded=4, live=6, requests=6`. The
+  invariant **holds** — `requests == live`, 6 == 6 — and the four withdrawn are p5's
+  `#region9/10/11/12-d4`, exactly the bands adoption supersedes. The guard was replaced by
+  `live > 0`, non-vacuity on the same axis, with the ruling in the test's own docstring. Worth
+  carrying: at `superseded == 0` the assertion `requests == live` was indistinguishable from
+  `requests == len(escalating)`, so a derivation blind to `dec:supersedes` would have passed; at
+  4 withdrawn and 6 live it would furnish 10 and fail. **bfs is now the corpus's only document
+  carrying live and withdrawn escalations at once**, which is coverage nothing had before.
 
 ## 4. What this loop did
 
