@@ -144,10 +144,39 @@ ERROR ...::test_the_fallback_region_names_the_table_it_asserted
 7 passed, 2 errors in 442.28s
 ```
 
-**The full `tests/etkl` run is NOT yet evidence.** The first attempt passed `--timeout=1200`,
-which this repo has no plugin for: pytest answered `unrecognized arguments` and **exited 0 having
-run nothing**. A re-run without the flag is required before any claim that these three are the
-only breakage.
+**CORRECTED — the three described below are NOT the only breakage, and the paragraph that stood
+here asserted that on no evidence.** The first full-suite attempt passed `--timeout=1200`, which
+this repo has no plugin for: pytest answered `unrecognized arguments` and **exited 0 having run
+nothing** — a phantom green that would have shipped the understatement as verified. The clean
+re-run says:
+
+```
+$ .venv/bin/python -m pytest tests/etkl -q
+FAILED test_datagrid.py::test_fallback_fires_only_where_the_page_produced_nothing_at_all
+FAILED test_datagrid.py::test_fallback_output_passes_full_shacl_through_the_production_path
+FAILED test_datagrid.py::test_an_unread_table_page_no_longer_scores_perfect
+FAILED test_escalation_furnish.py::test_corpus_census_every_live_escalating_decision_is_furnished
+FAILED test_grid_donation_seam.py::test_bfs_p6_reads_267_entries_under_band_2s_labels
+FAILED test_grid_donation_seam.py::test_donation_moves_no_ink_between_the_ledgers
+FAILED test_grid_donation_seam.py::test_an_accepted_donation_is_a_recorded_decision
+FAILED test_header_confirmed_refinement.py::test_confirmed_split_reaches_the_grid_end_to_end
+FAILED test_read_band_books_every_word.py::test_no_band_books_ink_it_does_not_hold_on_the_fallback_page
+FAILED test_run_merge_seam.py::test_o2_the_fallback_is_what_saves_the_ink
+FAILED test_run_merge_seam.py::test_o3_no_page_loses_asserted_ink_to_a_merge
+FAILED test_run_merge_seam.py::test_o5_document_scope_completes_with_a_forced_non_tail_merge
+ERROR  test_fallback_region_books_and_names.py  (x2 — the preconditions described below)
+12 failed, 994 passed, 2 skipped, 1 xfailed, 2 errors in 3080.13s (0:51:20)
+```
+
+**At least two are substantive rather than preconditions**, and neither is a surprise — both agree
+with § 1b's own figures: `test_run_merge_seam.py:331` pins bfs p5 at **12** regions where D1 yields
+**14**, and `test_grid_donation_seam.py` pins bfs p6 at **267** donated entries where § 1b measured
+p6 moving to **369**. D1 therefore reaches [[R210]]'s grid-donation ink ledgers and the run-merge
+seam, not only ONS.
+
+**Per-failure classification is NOT done.** Until it is, nothing here says which of these D2
+resolves and which are pinned figures that must be re-derived and re-justified — and § 4's task
+list is incomplete by exactly that amount.
 
 All three break on a **fixture-drift precondition**, never on their substance
 (`test_read_band_books_every_word.py:103`, `test_fallback_region_books_and_names.py:68`, both of

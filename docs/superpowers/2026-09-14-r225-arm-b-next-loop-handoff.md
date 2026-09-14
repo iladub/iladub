@@ -86,10 +86,19 @@ make those two measures agree. If it cannot be built, the fallback branch loses 
 
 ## 3. Unverified or assumed
 
-- **The full `tests/etkl` run is not yet evidence.** The first attempt passed `--timeout=1200`,
-  which this repo has no plugin for; pytest answered `unrecognized arguments` and **exited 0 having
-  run nothing** — a phantom green. A clean re-run was started; if its result is not recorded below
-  this line, it did not complete in this session.
+- **The full `tests/etkl` run COMPLETED, and it refuted this handoff's first framing.** It is
+  **12 failed, 994 passed, 2 skipped, 1 xfailed, 2 errors (51m20s)** — not the three this document
+  and the spec originally implied. The list and the two clearly-substantive cases are in the spec
+  § 1d, corrected in place. In short: D1 also moves bfs p5's region count (12 → 14, pinned at
+  `test_run_merge_seam.py:331`) and bfs p6's donated entry count (267 → 369, pinned in
+  `test_grid_donation_seam.py`), so it reaches [[R210]]'s ink ledgers and the run-merge seam, not
+  only ONS. **Per-failure classification — which failures D2 resolves, and which are pinned
+  figures that must be re-derived and re-justified — is NOT done, and is the first thing the next
+  session must establish before touching D2.** That inflates 5a's scope: it is no longer one
+  clause plus an oracle.
+  (The first attempt at this run passed `--timeout=1200`, which this repo has no plugin for:
+  pytest answered `unrecognized arguments` and **exited 0 having run nothing** — a phantom green
+  that would have shipped this understatement as verified.)
 - **D1's § 8 classification is asserted, not argued.** It is procedural code comparing two derived
   measures, justified by the shipped precedent at `datagrid.py:346`. The plan must state that
   classification explicitly and defend it against the AXIOM default, or move it.
