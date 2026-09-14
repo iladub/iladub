@@ -1,5 +1,7 @@
 # Handoff — D2: the adoption gate widened, and the four sites it actually touches
 
+**Topic:** [[R225]] D2 — the widened gate and its lineage
+
 **Serves:** prog:criterion:etkl:04 — the gate half of [[R225]]'s ruled arm B.
 
 **Date:** 2026-09-14. **Branch:** `r225-arm-b-resolution-test`, continuing from `5a893e0`.

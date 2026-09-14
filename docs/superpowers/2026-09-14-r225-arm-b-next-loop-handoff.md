@@ -1,5 +1,7 @@
 # Handoff — R225 arm B: the predicate is measured, the gate is located, neither has landed
 
+**Topic:** [[R225]] arm B — the adoption gate, not the predicate
+
 **Serves:** prog:criterion:etkl:04 — the ruling is made and half-executed; what remains is one
 AXIOM clause and its oracle.
 

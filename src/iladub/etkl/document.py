@@ -1071,6 +1071,43 @@ def _verdict_decision(g: Graph, page_doc: URIRef, idx: int):
     return None
 
 
+def _effective_verdict(g: Graph, v: URIRef) -> URIRef:
+    """The HEAD of `v`'s supersession chain — `v` itself when nothing supersedes it.
+
+    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). Until D2 widened the adoption
+    gate a band could be superseded at most once per compile, so the two writers of
+    `dec:supersedes` — section repair (`graph.add((v2, DEC.supersedes, v1))`) and datagrid
+    adoption (the admission site below) — could never both reach one verdict, and
+    `_verdict_decision`'s pass-1 answer was always the one that still stood. D2 admits a band
+    that ASSERTED, which is exactly the band section repair has already re-read, so attaching
+    the admission to the PASS-1 verdict gives that verdict TWO incoming edges and
+    `dec:SupersededOnceShape` (in-degree `sh:maxCount 1`) refuses the whole document. That is
+    not a surprise: `vocab/shapes/dec-shapes.ttl` predicted this exact pipeline in prose, and
+    `tests/supersession-two-superseders.ttl` fixes it as a negative down to naming its two
+    superseders `v2-repair` and `v2-adoption`.
+
+    The ruling is to CHAIN, not to fan in: the admission supersedes the reading that currently
+    STANDS, which is what "supersedes" means everywhere else here. Lineage becomes
+    v1 <- v2 <- admission, the in-degree cap is untouched, and the deliberately UNCAPPED
+    out-degree (`test_a_fan_out_is_admitted_because_the_corpus_has_one`, measured at 5 on
+    apple) still lets one admission supersede every band it re-read.
+
+    WHY A WALK AND NOT A LOOKUP: v2 is minted under the pass-2 doc URI, so
+    `_verdict_decision(graph, page_doc_uri(p), idx)` cannot see it by construction — its prefix
+    is the pass-1 page's. Walking the edges already in `g` needs no knowledge of that URI.
+
+    `seen` is not decoration. The self-supersession shape forbids a 1-cycle and the in-degree
+    cap makes a longer one unreachable, but a cycle here would HANG the driver, and the
+    membrane that would have refused it runs afterwards."""
+    seen = {v}
+    while True:
+        nxt = next((s for s in g.subjects(DEC.supersedes, v) if s not in seen), None)
+        if nxt is None:
+            return v
+        seen.add(nxt)
+        v = nxt
+
+
 def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
     """The ONE band's subgraph out of a pass-2 whole-page compile: every subject minted under
     the table's URI space (`{table_uri}`, `{table_uri}-...` — the compile's own minting
@@ -1773,13 +1810,21 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         graph.add((admission, DEC.regarding, grid_uri))
         graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
         graph.add((admission, RDFS.label, Literal("verdict")))
+        # THE RATIONALE STATES WHAT THE GATE NOW ASKS. It read "the page asserted nothing",
+        # which was the OLD precondition and is FALSE under D2 on every page this branch newly
+        # admits (apple p2 and bfs p5 both assert). A rationale is the decision's own account of
+        # itself and is read back by `effective-chain.rq`, so leaving the old sentence standing
+        # would have put a false claim in the graph that no diff of the code would surface.
         graph.add((admission, DEC.rationale, Literal(
-            f"the page asserted nothing; the data grid read {len(superseded)} of its bands "
-            f"and its reading was adopted (spec 2026-08-09, R73)")))
+            f"the data grid read {len(superseded)} of the page's bands and left strictly less "
+            f"ink unread than they did; its reading was adopted (spec 2026-08-09, R73; gate "
+            f"widened 2026-09-14, R225 D2)")))
+        # ATTACH TO THE READING THAT STANDS, never to the pass-1 verdict — see
+        # `_effective_verdict` for the ruling and for why the pass-1 lookup cannot find v2.
         for idx in superseded:
             v1 = _verdict_decision(graph, page_doc_uri(p), idx)
             if v1 is not None:
-                graph.add((admission, DEC.supersedes, v1))
+                graph.add((admission, DEC.supersedes, _effective_verdict(graph, v1)))
         pages[p] = rep_a
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run
