@@ -156,6 +156,33 @@ dec:SupersessionShape a sh:NodeShape ;
 #  the intended behaviour (it is exactly the state why-escalated.rq
 #  says it cannot answer correctly), but the day it fires, the fix
 #  is to decide the lineage semantics, not to delete this shape.
+#
+#  IT FIRED 2026-09-14, exactly as written, and the instruction above
+#  was followed: this shape is unchanged. R225's D2 widened the
+#  adoption gate from "the page asserted nothing" to "the page left
+#  ink unread", which makes a band that section repair has ALREADY
+#  re-read adoptable as well — so both writers of dec:supersedes
+#  reached one verdict (document.py's section-repair site and its
+#  admission site, neither filtered against the other) and this
+#  constraint refused three documents.
+#
+#  THE LINEAGE RULING (maintainer, 2026-09-14): CHAIN, do not fan in.
+#  The admission supersedes the reading that currently STANDS, not
+#  the pass-1 verdict — v1 <- v2 <- admission. In-degree stays 1 at
+#  every node, so this shape is satisfied rather than relaxed, and
+#  the deliberately UNCAPPED out-degree (see
+#  test_a_fan_out_is_admitted_because_the_corpus_has_one) still lets
+#  one admission supersede every band it re-read.
+#
+#  THE TWO CONSUMERS WENT TRANSITIVE IN THE SAME CHANGE, because a
+#  chain breaks the single-hop assumption both of them documented:
+#  effective-chain.rq would have returned v2's SECTION reading as
+#  "effective" (its own header called that "a stale middle link ...
+#  silently"), and why-escalated.rq would have named an immediate
+#  superseder that was itself already replaced. Both now take the
+#  HEAD of the chain via dec:supersedes+ plus a terminal
+#  FILTER NOT EXISTS. Chaining WITHOUT that would have traded this
+#  loud refusal for a silent wrong answer.
 dec:SupersededOnceShape a sh:NodeShape ;
     sh:targetObjectsOf dec:supersedes ;
     sh:property [ sh:path [ sh:inversePath dec:supersedes ] ; sh:maxCount 1 ;

@@ -314,11 +314,26 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     """The second half of O5: a document-scope compile over bfs completes, and adoption's
     grid_idx equals the page's band count on the merged page.
 
-    THE LIMIT, stated because the spike measured it and the plan must not imply coverage
-    it does not have: adoption's re-compile fires only on bfs p0 and p4 and is REFUSED on
-    both, so ADOPTION'S BRANCH IS NEVER ENTERED on the merged page. This verifies an
-    equality of counts, NOT a successful trip through document.py's adoption path. No
-    corpus document both merges and adopts. That gap is R171."""
+    THE LIMIT IS RETIRED — R171's second case is now REAL (2026-09-14, R225 D2), and the
+    paragraph this replaces is kept in substance because it dated the gap it closes. It read:
+    "adoption's re-compile fires only on bfs p0 and p4 and is REFUSED on both, so ADOPTION'S
+    BRANCH IS NEVER ENTERED on the merged page ... No corpus document both merges and adopts.
+    That gap is R171." D2 widened the adoption gate from "the page asserted nothing" to "the
+    page left ink unread", and bfs p5 now ADOPTS at 404 cells — so this test became the first
+    place where one page both merges and adopts, which is exactly the state R171 recorded as
+    unexercised. It is no longer an equality of counts; it is a real trip through
+    document.py's adoption path.
+
+    THE COUNT MOVED ON THE LEFT ONLY, and the right-hand 12 is NOT stale. `page_bands` under
+    this monkeypatch is 12, not p5's natural 15, because forcing run (2,5) merges four bands
+    into one (15 - 3 = 12) — the sibling test above asserts exactly that. What adoption adds
+    are two regions the band count cannot contain: the grid's own RECORD_TABLE region
+    (`#p5-datagrid`, 404 cells) and the DATAGRID_RESIDUE region carrying the tokens the grid
+    left unread. MEASURED 2026-09-14: 14 regions = 12 + 1 + 1.
+
+    So the assertion pins the DECOMPOSITION rather than the number 14. A bare count taught
+    nothing when it broke — it could not say whether a region had been gained, lost, or
+    renumbered — and the two additions are the ones adoption is defined to make."""
     import iladub.etkl.compile as compile_mod
     from iladub.etkl.compile import page_bands
     from iladub.etkl.document import compile_document
@@ -328,4 +343,18 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
         lambda merged, first, last, page_number: (first, last) == (2, 5))
 
     doc = compile_document(BFS, validate_shapes=False)
-    assert len(doc.pages[5].regions) == 12 == len(page_bands(BFS, 5))
+    regions = doc.pages[5].regions
+    n_bands = len(page_bands(BFS, 5))
+    assert n_bands == 12, f"the run 2..5 must still merge four bands into one: {n_bands}"
+
+    # the grid region adoption appends, and the residue region for what it left unread
+    grid = [r for r in regions if r.table_uri and str(r.table_uri).endswith("p5-datagrid")]
+    residue = [r for r in regions if r.reason == "DATAGRID_RESIDUE"]
+    assert len(grid) == 1, f"adoption appended no single grid region: {len(grid)}"
+    assert len(residue) == 1, f"no DATAGRID_RESIDUE region: {len(residue)}"
+    assert grid[0].cells == 404, grid[0].cells
+    assert residue[0].tokens_escalated > 0, "a residue region that books no unread ink"
+
+    # ...and nothing else appeared: every remaining region is one of the merged page's bands
+    assert len(regions) == n_bands + 2, (
+        f"{len(regions)} regions for {n_bands} bands + grid + residue")

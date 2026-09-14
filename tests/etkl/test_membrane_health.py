@@ -48,6 +48,39 @@ def _corpus(rel):
 
 
 @pytest.fixture(scope="module")
+def bfs_report():
+    """O2's THIRD leg, re-pointed to bfs 2026-09-14 (R225 D2) — the substitution below is
+    REVERSED, and measurement is why.
+
+    The 2026-08-25 note under `apple_report` took bfs -> apple to delete a 24.1 s compile,
+    on the strength of apple then offering ten non-superseded escalated decisions for the
+    R127 lever. D2 removes that pool outright: adoption calls `_remove_escalation_record`,
+    which WITHDRAWS an escalation rather than marking it superseded, so an adopting page's
+    escalations leave the graph entirely.
+
+    MEASURED 2026-09-14, whole corpus, counting `dec:escalatedTo` subjects with no incoming
+    `dec:supersedes`:
+
+        cbh-stem            escalated=0   live=0
+        graincorp-capacity  escalated=0   live=0
+        graincorp-stem      escalated=0   live=0
+        apple-fy2026q3      escalated=0   live=0      <- the lever is GONE, not superseded
+        bfs-population      escalated=6   live=6      <- the only survivor corpus-wide
+        ons-index           escalated=0   live=0
+        who-wfa             escalated=0   live=0
+
+    So this leg cannot stay on apple under any phrasing, and `_cheap_document` would trade
+    O2's whole claim — reachability on REAL input — for 1.12 s. bfs is the only vehicle that
+    keeps the claim true. The 6 cross-check exactly against the furnish census's
+    `superseded=4, live=6` on the same document.
+
+    `apple_report` STAYS for `test_intact_and_weakened_are_reachable_on_real_input`, which
+    still passes: apple is still `Weakened`, and moving a vehicle that works would be
+    gratuitous."""
+    return compile_document(_corpus("gov-stats/bfs-population-bilan-2023.pdf"))
+
+
+@pytest.fixture(scope="module")
 def apple_report():
     """ONE apple compile, shared by O2's second and third legs — the saving Task 4's Step 1
     was told to go and measure, and it landed: `apple` refuses under the R127 lever, so the
@@ -438,7 +471,7 @@ def test_intact_and_weakened_are_reachable_on_real_input(apple_report):
 
 
 @pytest.mark.corpus
-def test_compromised_is_reachable_by_the_r127_lever_on_a_real_graph(apple_report):
+def test_compromised_is_reachable_by_the_r127_lever_on_a_real_graph(bfs_report):
     """O2, leg 3 — AMENDED 2026-08-25, option (a'), and the concession is written here
     rather than engineered around.
 
@@ -456,31 +489,58 @@ def test_compromised_is_reachable_by_the_r127_lever_on_a_real_graph(apple_report
     value. CLOSING R127 WITHOUT RE-HOMING THIS LEG TURNS THIS TEST RED FOR AN INVISIBLE
     REASON.
 
-    VEHICLE SUBSTITUTED, and the substitution is the one the plan authorised in advance:
-    `apple-fy2026q3-statements`, not `bfs-population-bilan-2023`. Step 1 measured apple's
-    lever end-to-end (see `apple_report`) — it refuses, with `legs == ('dec',)` — so the leg
-    rides a compile O2's second leg already pays for and one corpus document leaves the suite.
+    VEHICLE SUBSTITUTION REVERSED 2026-09-14 (R225 D2) — back to `bfs-population-bilan-2023`.
+    The 2026-08-25 swap to `apple-fy2026q3-statements` was taken to delete a 24.1 s compile,
+    and it rested on apple then offering ten non-superseded escalated decisions to hang the
+    lever on. D2 removes that pool outright: adoption calls `_remove_escalation_record`, which
+    WITHDRAWS an escalation rather than marking it superseded, so an adopting page's
+    escalations leave the graph. Measured across the whole corpus (see `bfs_report`), apple is
+    now `escalated=0` and bfs is the ONLY document with a live lever. `_cheap_document` would
+    have been faster still and is refused on purpose: this leg's claim is reachability on REAL
+    input, and a synthetic vehicle would hollow it out rather than repair it.
 
-    THE CONTROL ARM IS `Weakened`, NOT `Intact`, and that is a MEASURED PLAN DEFECT rather
-    than a vehicle swap: the plan asserted `Intact` for `bfs`, and `bfs` measures `Weakened`
-    too (24.1 s compile, 2026-08-25). Neither candidate vehicle was ever Intact. Asserting the
-    measured value is what makes this leg say something: the health value TRANSITIONS
-    Weakened → Compromised across the mutation, so the added triple is demonstrably what moved
-    it, which a control arm reading `Intact` could not have shown on either document.
+    THE CONTROL ARM IS ASSERTED AS A TRANSITION, NOT A CONSTANT, and that is a deliberate
+    change of form. The 2026-08-25 text recorded `Weakened` for both candidates and hardcoded
+    it — but that figure predates D2, which demonstrably moves graphs (it emptied apple's
+    escalation pool entirely), so transcribing it here would assert a number this loop has not
+    re-measured. What this leg actually claims is that the ADDED TRIPLE is what moved the
+    value: so the control arm reads whatever health bfs carries, requires it to be NOT
+    `Compromised`, and the assertion is that the mutation CHANGES it to `Compromised`. That is
+    strictly stronger than a hardcoded pair — a future change that made the control arm
+    `Compromised` on its own would silently satisfy the old form and is caught by this one.
 
     The mutation lands on a COPY of the module-scoped graph, so this leg cannot perturb the
     reachability leg above; the copy is triple-identical and is the real compiled graph for
     everything the furnish, the membrane and the derivation read."""
     doc = URIRef(_DOC)
     g = Graph()
-    g += apple_report.graph
-    assert list(g.objects(doc, ETKL.membraneHealth)) == [ETKL.Weakened], "control arm broken"
+    g += bfs_report.graph
+
+    # THE CONTROL ARM, read rather than hardcoded (see the docstring). The leg's claim is that
+    # the ADDED TRIPLE moves the health value, so what must hold before the mutation is that
+    # the document HAS a health value and it is not already the one we are trying to reach.
+    before = list(g.objects(doc, ETKL.membraneHealth))
+    assert len(before) == 1, f"control arm broken: {len(before)} health values, expected 1"
+    assert before != [ETKL.Compromised], (
+        "control arm is ALREADY Compromised — the mutation below could then prove nothing")
 
     _one_more_rationale(g)
     with pytest.raises(membrane.MembraneRefusal) as exc:
-        _seal(g, _legs_for_document(apple_report.recognized, False), True)
+        _seal(g, _legs_for_document(bfs_report.recognized, False), True)
     assert exc.value.legs == ("dec",), exc.value.legs
-    assert list(exc.value.graph.objects(doc, ETKL.membraneHealth)) == [ETKL.Compromised]
+    after = list(exc.value.graph.objects(doc, ETKL.membraneHealth))
+    assert after == [ETKL.Compromised], after
+    # NO `assert after != before` HERE, and the omission is deliberate. It was written, then
+    # removed the same day: `before != [Compromised]` and `after == [Compromised]` ENTAIL it,
+    # so it could never fail — the identical vacuity that falsification case B had just caught
+    # one module over (a disjunct that was a tautology at chain length 1). The transition is
+    # already pinned by the two assertions above; a third that cannot fail adds confidence
+    # without adding evidence, which is the thing CLAUDE.md rule 4 exists to refuse.
+    #
+    # MEASURED 2026-09-14 for the record, not asserted as a constant: bfs reads `Weakened`
+    # before the mutation (6 escalated / 6 live, `recognized == ()`). It is left unasserted so
+    # that a legitimate future move in bfs's health does not turn this leg red for a reason
+    # that has nothing to do with the R127 lever it exists to exercise.
 
 
 def test_an_unmutated_re_entry_still_conforms(tmp_path):
