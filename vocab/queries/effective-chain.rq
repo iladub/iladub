@@ -23,18 +23,27 @@
 # back to the superseded chain. Unreachable today: decisionlog.py:52 (BandRecorder.record) emits
 # dec:regarding on every judgement unconditionally.
 #
-# SINGLE-HOP ASSUMPTION: this query follows exactly one dec:supersedes edge (v1 -> v2), not a
-# chain of them. Safe today because document.py's section-repair (~L1258-1284) runs pass-2 at
-# most once per band per compile, so no region can accumulate a second supersession — but an
-# iterative-repair pipeline would need this query to walk the edge transitively, or a stale
-# middle link would be returned as "effective" silently.
+# TRANSITIVE, NOT SINGLE-HOP (2026-09-14, R225 D2). This query used to follow exactly one
+# dec:supersedes edge, which was safe only while a band could be superseded at most once per
+# compile. D2's widened adoption gate lets a band that section repair has already re-read be
+# adopted over by the page's data grid, and the maintainer's lineage ruling CHAINS those
+# judgements (v1 <- v2 <- admission) rather than fanning them into one verdict. Following a
+# single hop from ?v1 would now bind ?effective to v2's SECTION reading — a stale middle link
+# returned as "effective", which is precisely what the comment this replaces predicted.
+#
+# ?vN IS THE HEAD OF THE CHAIN: it supersedes ?v1 transitively and nothing supersedes it. The
+# FILTER NOT EXISTS is the same holon-scoped closed-world guard as branch B's (query-local,
+# scoped to this region, CLAUDE.md §8) — it SELECTS among readings that are present and never
+# derives a fact from absence. One hop is the special case where the head is the only
+# superseder, so an unrepaired-then-adopted band answers exactly as it did before.
 PREFIX dec: <https://w3id.org/iladub/dec#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?order ?judgement ?chosen ?rationale WHERE {
   {
     ?v1 dec:regarding ?region .
-    ?v2 dec:supersedes ?v1 ;
+    ?vN dec:supersedes+ ?v1 ;
         dec:regarding ?effective .
+    FILTER NOT EXISTS { ?later dec:supersedes ?vN }
   }
   UNION
   {

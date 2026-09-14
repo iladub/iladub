@@ -218,13 +218,21 @@ def test_corpus_apple_furnishes_what_it_escalates(tmp_path):
 
     print(f"\napple: adopted={rep.adopted!r} chose escalated={len(escalating)} "
           f"superseded={len(superseded)} requests={len(requests)}")
-    assert rep.adopted == ()
+    # RE-BASELINED 2026-09-14 (R225 arm B, D2) — apple swings to the OPPOSITE extreme of the one
+    # the docstring above describes, and the invariant is what survives the swing. The widened
+    # adoption gate takes page 2 (`adopted=(2,)`), whose five escalating decisions are ALL
+    # superseded by the grid's admission, so the withdrawal difference this test was written to
+    # measure is no longer zero on apple — it is total: `chose escalated=5, superseded=5,
+    # requests=0`. Measured, not predicted.
+    #
+    # The law underneath is the same one in both directions, and it is now stated as the law
+    # rather than as two hard-coded counts: a WITHDRAWN escalation furnishes no request, so what
+    # the document furnishes is exactly the LIVE remainder. At `4cfee38` that read 5 = 5 - 0;
+    # here it reads 0 = 5 - 5. A request lost between the two derivation sites still fails it.
+    assert rep.adopted == (2,)
     assert len(escalating) == 5
-    assert len(superseded) == 0
-    assert len(requests) == 5
-    # the invariant that survives the numbers: with nothing withdrawn, the document furnishes
-    # exactly what it escalates — a request lost between the two sites still fails here.
-    assert requests and len(requests) == len(escalating)
+    assert len(superseded) == 5
+    assert len(requests) == len(escalating) - len(superseded) == 0
 
 
 # ---------------------------------------------------------------- the carried vocabulary

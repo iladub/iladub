@@ -78,12 +78,24 @@ def test_p2_unruled_header_refuses_rather_than_dropping_ink():
 def test_document_scope_adoption_is_pre_empted_and_recorded():
     """Spec § 1.4: once p1's header band asserts, adoption-candidate.rq's NOT EXISTS tab:EntryCell
     gate refuses the page-1 datagrid adoption. adopted (1,) -> (). Raised as R160, not fixed here.
-    The score is printed, never asserted."""
+    The score is printed, never asserted.
+
+    RE-BASELINED 2026-09-14 (R225 arm B, D2), and THE CLAUSE THIS TEST WAS ABOUT NO LONGER EXISTS:
+    `adoption-candidate.rq`'s `NOT EXISTS tab:EntryCell` is deleted, so nothing is pre-empted by an
+    asserted cell any more. `adopted () -> (2,)`.
+
+    [[R160]]'s question — *is one asserted cell the right authority to refuse a page's grid* — is
+    answered NO for the pre-emption half, and page 1 is the case that shows the answer is not a
+    relaxation: p1 still adopts NOTHING, because it escalates nothing (`asserted=98, escalated=0`),
+    which is the honest reason. Page 2 adopts because it left 108 of its 114 booked tokens unread.
+    The gate now refuses on the reading, not on the presence of a cell.
+    """
     if not os.path.exists(APPLE):
         pytest.skip("apple corpus document not fetched")
     from iladub.etkl.document import compile_document
     rep = compile_document(APPLE)
     print(f"apple score {rep.score:.4f} adopted {rep.adopted}")
-    assert rep.adopted == ()
+    assert rep.adopted == (2,)
+    assert rep.pages[1].escalated == 0, "p1 is unadopted because it read everything, not by a gate"
     reasons = [r.reason for p in rep.pages for r in p.regions]
     assert reasons.count("MATRIX_AMBIGUOUS") == 1          # p2 band 2 only; p0's is now asserted

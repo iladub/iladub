@@ -400,7 +400,62 @@ def test_adoption_swaps_only_asserting_bands(tmp_path, monkeypatch):
     untouched — its pass-1 report (verdict, reason) stands, its pass-1 escalation
     record stays in the graph, it never enters `repaired_bands` (only ADOPTED bands
     do), and the refusal is recorded as a report note. Simulated by failing band 1's
-    pass-2 read at the driver's own seam (the /r2-scoped compile_tables call)."""
+    pass-2 read at the driver's own seam (the /r2-scoped compile_tables call).
+
+    BAND 0 NOW ENDS `superseded`, NOT `asserted` — RE-BASELINED 2026-09-14 (R225 D2), and
+    the ruling is recorded here rather than absorbed by flipping a string. This test was
+    written when adoption required `asserted_total == 0`: a band section repair had just
+    made ASSERT could never afterwards be adopted over, so `asserted` was the terminal
+    verdict. D2 widened the gate to "the page left ink unread", and this fixture is exactly
+    that page — band 0 repaired and asserting, band 1 still escalating — so the datagrid
+    gate opens on the escalated ink that remains, the grid re-reads the page, and band 0's
+    reading is REPLACED. `superseded` is the correct terminal verdict for a band whose
+    reading was replaced; asserting `asserted` here would now pin the absence of the very
+    behaviour D2 exists to produce.
+
+    THE ASSERTION IS STRENGTHENED, NOT WEAKENED, because a re-baseline that only records
+    what the code does pins nothing. Band 0 is now the corpus-free case where BOTH writers
+    of `dec:supersedes` reach one band — section repair at pass 2, then the grid's admission
+    — which is the collision `dec:SupersededOnceShape` refuses and the lineage ruling
+    resolves by CHAINING (v1 <- v2 <- admission). So the verdict check is paired with the
+    invariant underneath it: band 0's pass-1 verdict carries EXACTLY ONE incoming
+    `dec:supersedes`, and the chain head is the grid's admission rather than the pass-2
+    section reading.
+
+    WHAT THESE ASSERTIONS ACTUALLY CATCH — MEASURED, and the first draft of this paragraph was
+    WRONG. It claimed a fan-in regression would "fail here BEFORE the membrane is reached,
+    naming the cause instead of reporting `document-level facts failed dec: SHACL`".
+    Falsification case A (2026-09-14) refuted it: `compile_document` above validates, so
+    inverting the fix raises `MembraneRefusal` AT THAT CALL and these lines are never
+    evaluated. The membrane catches fan-in, and always would have; claiming otherwise was an
+    unmeasured assertion of exactly the kind plan rule 2 forbids.
+
+    The pin earns its place on the case the membrane CANNOT see: a chain that COLLAPSES TO ONE
+    HOP while its in-degree stays 1. Delete section repair's own `v2 supersedes v1` edge and
+    the admission attaches straight to the pass-1 verdict — in-degree 1, SHACL conforms, the
+    document is valid, and the lineage is silently wrong. Falsification case B measured
+    precisely that: the run failed on `not str(into_v1[0]).endswith("-admission")` with
+    `into_v1[0]` reading `.../p0/adopt#p0-datagrid-admission`. A membrane-valid graph with a
+    missing middle link is what these three assertions exist to refuse.
+
+    BAND 1 IS SUPERSEDED TOO, and the first draft of this re-baseline said otherwise. It
+    claimed "D2 moves band 0's fate, not band 1's" — written from reasoning, not measured, and
+    the run refuted it four lines later. Recorded here rather than quietly deleted, because it
+    is the same unmeasured-claim defect CLAUDE.md plan rule 2 exists to catch.
+
+    WHY SUPERSEDING BAND 1 IS CORRECT (maintainer ruling 2026-09-14): the grid re-reads the
+    WHOLE page, and band 1's escalated ink is precisely what opened the gate — `escalated_total
+    > 0` is the surviving half of the precondition. Its unread remainder is not lost but booked
+    as a DATAGRID_RESIDUE region carrying those tokens, so nothing the band left unread escapes
+    the ledger. A band whose reading was REPLACED is `superseded` whatever its pass-2 verdict
+    was; "still escalates" describes the re-read that was rejected, not the band's fate.
+
+    SO THE SUBJECT RE-POINTS TO WHAT ADOPTION DOES NOT TOUCH, which is where the original
+    contract actually lives: band 1's pass-1 REASON survives (`MATRIX_AMBIGUOUS`, never
+    overwritten by the simulated `SIMULATED_PASS2_FAIL`), it never enters `repaired_bands`
+    (only ADOPTED bands do), and the refusal is recorded as a report note. Those three are the
+    "left byte-untouched" this test was written to pin, and D2 changes none of them — only the
+    terminal verdict, which was always the grid's to set."""
     from dataclasses import replace as dc_replace
     from rdflib import URIRef
     import iladub.etkl.document as docmod
@@ -422,13 +477,49 @@ def test_adoption_swaps_only_asserting_bands(tmp_path, monkeypatch):
     rep = docmod.compile_document(str(pdf))
     assert rep.repaired_bands == ((0, 0),), rep.repaired_bands
     page = rep.pages[0]
-    assert page.regions[0].verdict == "asserted"
-    # band 1's PASS-1 report stands — the simulated pass-2 reason never leaks into it
-    assert page.regions[1].verdict == "escalated"
+    assert page.regions[0].verdict == "superseded", page.regions[0].verdict
+    # THE LINEAGE UNDERNEATH THAT VERDICT (R225 D2). Band 0 is superseded TWICE over in the
+    # informal sense — section repair re-read it, then the grid replaced that re-reading — and
+    # the ruling is that those judgements CHAIN rather than both pointing at the pass-1
+    # verdict. Counting the incoming edges is what tells the two apart: fan-in is 2 and is
+    # refused by dec:SupersededOnceShape; a chain is 1, at every node.
+    from rdflib import Namespace
+    DEC_NS = Namespace("https://w3id.org/iladub/dec#")
+    v1 = docmod._verdict_decision(rep.graph, docmod.page_doc_uri(0), 0)
+    assert v1 is not None, "band 0 has no pass-1 verdict decision to supersede"
+    into_v1 = list(rep.graph.subjects(DEC_NS.supersedes, v1))
+    assert len(into_v1) == 1, f"fan-in, not a chain: {len(into_v1)} superseders of {v1}"
+    # and the HEAD of the chain is the grid's admission, not the pass-2 section reading
+    head = docmod._effective_verdict(rep.graph, v1)
+    assert str(head).endswith("-admission"), f"chain head is not the admission: {head}"
+    # THE CHAIN IS TWO HOPS, AND THE MIDDLE LINK IS THE SECTION RE-READ. The first draft of
+    # this line was `head != into_v1[0] or str(into_v1[0]).endswith("-admission")`, which is a
+    # TAUTOLOGY at chain length 1 and pinned nothing: deleting it left this test passing
+    # (falsification case B, 2026-09-14). Rule 4 exists to catch exactly that, so it is
+    # replaced by the claim it was reaching for, in a form that can fail.
+    #
+    # v1 (pass-1 verdict, escalated) <- v2 (pass-2 section re-read) <- admission (the grid).
+    # The immediate superseder of v1 must therefore be the SECTION verdict, never the
+    # admission — if the admission were attached directly to v1 the chain would be one hop
+    # and `into_v1[0]` would end `-admission`, which is the fan-in this whole change removes.
+    assert not str(into_v1[0]).endswith("-admission"), (
+        f"the admission attached DIRECTLY to the pass-1 verdict — that is the one-hop "
+        f"fan-in shape, not a chain: {into_v1[0]}")
+    assert into_v1[0] != head, f"chain collapsed to one hop: {into_v1[0]} is already the head"
+    # ...and the middle link is itself superseded by exactly the head, closing the two hops.
+    into_v2 = list(rep.graph.subjects(DEC_NS.supersedes, into_v1[0]))
+    assert into_v2 == [head], f"v2 is not superseded by the head alone: {into_v2} vs {head}"
+    # Band 1's reading is replaced by the grid like every other band on the page (see the
+    # ruling in the docstring) — but its pass-1 REASON is what the simulated pass-2 failure
+    # must never overwrite, and that is this test's actual subject.
+    assert page.regions[1].verdict == "superseded", page.regions[1].verdict
     assert page.regions[1].reason == "MATRIX_AMBIGUOUS", page.regions[1].reason
+    assert "SIMULATED_PASS2_FAIL" not in {r.reason for r in page.regions}, \
+        "the simulated pass-2 reason leaked into the page report"
     assert any("band 1" in n and "still escalated" in n for n in rep.notes), rep.notes
-    cand1 = URIRef(f"{docmod.page_doc_uri(0)}#region1")
-    assert list(rep.graph.predicate_objects(cand1)), "pass-1 escalation must survive"
+    # ...and the band that merely FAILED its re-read never counts as repaired, which is the
+    # half of "untouched" adoption cannot take away: `repaired_bands` holds band 0 alone.
+    assert (0, 1) not in rep.repaired_bands, rep.repaired_bands
     cand0 = URIRef(f"{docmod.page_doc_uri(0)}#region0")
     assert not list(rep.graph.predicate_objects(cand0)), "adopted band's record withdrawn"
     # one section asserting alone cannot chain

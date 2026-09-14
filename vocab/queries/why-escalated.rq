@@ -12,20 +12,23 @@ SELECT ?order ?judgement ?chosen ?rationale ?supersededBy WHERE {
   ?d a dec:DecisionHolon ; dec:regarding ?region ; dec:order ?order ;
      rdfs:label ?judgement ; dec:rationale ?rationale .
   OPTIONAL { ?d dec:chosen/rdfs:label ?chosen }
-# AT-MOST-ONE-SUPERSESSION ASSUMPTION: the OPTIONAL below has ?v1 range over EVERY decision
-# regarding ?region, not just the verdict, joined to every ?v2 that supersedes it — an
-# unrestricted cross-product. If a region ever accumulated more than one incoming
-# dec:supersedes edge, every row of the chain would be multiplied, once per (?v1, ?v2) pair,
-# with differing ?supersededBy values; DISTINCT would not collapse that, since the rows would
-# carry genuinely different bindings. Unreachable today: document.py's section-repair
-# (~L1258-1284) runs pass 2 at most once per band per compile and links only the two verdict
-# decisions, so a region can gain at most one dec:supersedes edge. An iterative-repair
-# pipeline would break this assumption and needs to either restrict ?v1 to the verdict
-# decision or dedupe downstream.
+# ?supersededBy IS THE HEAD OF THE CHAIN, NOT THE NEXT LINK (2026-09-14, R225 D2). The
+# OPTIONAL below joins ?v1 — every decision regarding ?region — to the decisions that supersede
+# it TRANSITIVELY, and keeps only the one nothing supersedes. Binding the IMMEDIATE superseder
+# was correct only while a band could be superseded once: under D2 a band can be section-
+# repaired AND adopted over, so the immediate superseder is itself replaced, and a consumer
+# following it would be sent to a stale middle link — the same defect effective-chain.rq's
+# header describes from the other side.
+#
+# THE MULTIPLICATION THIS BLOCK USED TO WARN ABOUT IS NOW PREVENTED UPSTREAM, which is why the
+# cross-product is no longer the hazard it was. A second incoming dec:supersedes edge on one
+# verdict is refused by dec:SupersededOnceShape, and document.py's adoption site chains rather
+# than fanning in (`_effective_verdict`). A chain has exactly one head, so this yields one
+# ?supersededBy per superseded ?v1 rather than one per (?v1, ?v2) pair.
   OPTIONAL {
     ?v1 dec:regarding ?region .
-    ?v2 dec:supersedes ?v1 .
-    BIND(?v2 AS ?supersededBy)
+    ?supersededBy dec:supersedes+ ?v1 .
+    FILTER NOT EXISTS { ?later dec:supersedes ?supersededBy }
   }
 }
 ORDER BY ?order
