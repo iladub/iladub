@@ -62,12 +62,32 @@ measured and **refuted before implementation** — see spec § 4 D2, which now c
 - **D2 is two changes, not one clause.** `is_adoption_candidate` runs on the pass-1 graph *before
   any grid exists*, so `adoption-candidate.rq` can only widen narrowly; the comparison itself must
   be a new post-hoc refusal beside `document.py:1650` / `:1663`.
-- **OPEN DESIGN QUESTION, and the real blocker:** widening the gate falsifies a premise
-  `build_ledger` states about itself (`adoption.py:52-54` — *"an adopting page is by definition one
-  where `asserted_total == 0`"*). On a page whose bands genuinely assert, the grid's admitted lines
-  and the bands' asserted ink are the same ink on both sides — R73's double count from the other
-  direction. **D2 must revisit the ledger's contract or state why it survives. This is unsettled
-  and is the first thing to settle.**
+- **THE LEDGER CONTRACT IS SETTLED (2026-09-14) — spec § 1f carries the measurement and its
+  control.** The answer is **the premise does NOT survive**, and the mechanism is not the one this
+  bullet used to assert. It said the failure was double-counting; the measured failure is ink
+  **vanishing**: `escalated_bands` selects on `tokens_escalated > 0`, so a band that asserts and
+  does not escalate enters neither the residue term nor the untouched term, and its unadmitted ink
+  is booked by nobody. **0 of 2** control pages (genuine adopting, where the premise is stated to
+  hold) drop such ink; **5 of 12** population pages do — cbh p0 143 tokens, apple p0 46, apple p1
+  43, bfs p5 39, bfs p6 29.
+- **The revision is TWO terms with OPPOSITE treatments, not one line.** Touched bands: select the
+  residue term by ANY booked ink, so an assert-only band's unread lines become residue. Untouched
+  bands: their own reading stands and is not superseded, so their ink is **asserted by the band**
+  and belongs in `asserted_tokens` — widening only the residue term would book it as escalated and
+  understate the page.
+- **It can land BEFORE D2 and be verified inert.** On any page adopting under today's gate
+  `asserted_total == 0`, so every band has `tokens_asserted == 0` and the widened predicate is
+  *identically* the current one — the control row measures exactly that. Ship it first, prove the
+  corpus byte-identical, and D2's own effects stay separable from it. **This is the next task.**
+- **A SECOND obligation the ledger cannot discharge — spec § 1g.** `document.py:1672-1674`
+  withdraws only *superseded* bands, so an asserting band's table would survive beside a grid
+  region re-reading the same lines. Measured contested lines: graincorp-capacity p0 **27/27**
+  (475 tokens), graincorp-stem p0 57/57 (747), apple p0 31/31, who-wfa p0 25/25, bfs p6 29/32;
+  ons p4 is the one disjoint case. D2 must supersede those bands or refuse the adoption.
+- **Limits, stated rather than implied:** only **two** control pages exist in the corpus, so
+  "0 of 2" is thin; pages with no derivable grid, or where `len(reports) != len(bands)`, were
+  **skipped and are unmeasured, not clean**; and bfs p5 / ons p4 leave 33 and 19 tokens
+  unexplained (bands that both assert and escalate under-book), which is a separate open question.
 - **Cost bounds the widening** (`document.py:1621-1625`): each candidate page pays a full extra
   `compile_tables`, refusals included, plus whole-graph SHACL (41.3 s on the stem).
 
@@ -99,10 +119,14 @@ make those two measures agree. If it cannot be built, the fallback branch loses 
 
 ### 5d. What this hands over exposed
 
-- **The instruments live in the scratchpad, not the repo.** The probe (`probe_all.py`) and both
-  corpus snapshots are session-local and will be gone. The spec quotes their output, but a next
-  session wanting to re-measure must rebuild the probe from § 1a's description. Committing it as a
-  `scripts/` instrument was not done and no row tracks it.
+- **The instruments are now COMMITTED; the snapshots are not.** All three censuses the spec quotes
+  are in the repo and runnable from the root: `scripts/under_resolved_band_census.py` (§ 1a),
+  `scripts/ledger_contract_census.py` (§ 1f) and `scripts/grid_band_overlap_census.py` (§ 1g), each
+  carrying its § 8 PROCEDURAL classification. **The corpus snapshots remain session-local and will
+  be gone** — `snap-before` / `snap-after` / `snap-after2` under the scratchpad, which are the
+  before/after evidence for § 1b and for the relocation. A next session re-measuring must re-take
+  the baseline with `scripts/corpus_verdict_snapshot.py` against a clean tree before it can diff
+  anything. No row tracks that, and the figures in § 1b are the only surviving record of it.
 - [[R226]]'s row still reads *"nothing here has measured whether it would"* about ONS stitching,
   which the prior session measured **false** (`is_continuation(p7, p8)` is `False`, refused on
   origin agreement). The register is mutable; amend it rather than re-run the probe.

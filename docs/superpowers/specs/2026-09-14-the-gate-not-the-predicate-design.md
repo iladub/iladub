@@ -35,7 +35,7 @@ copy of the band: `infer_leaf_grid` short-circuits on `_rule_boundaries` (`grid.
 passing the band as-is would compare the author's marks against themselves.
 
 ```
-$ PYTHONPATH=src .venv/bin/python scratchpad/probe_all.py
+$ PYTHONPATH=src .venv/bin/python scripts/under_resolved_band_census.py
 document                    calls  border1  under
 apple-fy2026q3-stateme         17        0      0
 bfs-population-bilan-2         19        8     11
@@ -226,6 +226,87 @@ reads the table. D1 makes the band path agree with the grid path, so the fixture
 evaporates: the page now reads completely through bands (`RECORD_TABLE`, 20 cells, score 1.0) and
 has no need of a fallback. On the fixture D1 is the cure; on ONS p7 the same mechanism is the
 injury.
+
+### 1f. THE LEDGER CONTRACT — settled, 2026-09-14, by measurement with a control
+
+**Question:** does `build_ledger`'s stated premise (`adoption.py:52-54` — *"an adopting page is by
+definition one where `asserted_total == 0`"*) survive a widened adoption gate?
+
+**Answer: NO.** The premise is load-bearing, and widening the gate falsifies it.
+
+The ledger promises to account for every line "exactly once", but deliberately drops IGNORED
+bands' prose, so a raw conservation test cannot tell prose from a defect. The exact identity is
+`lost = (ink on UNADMITTED lines) − escalated_tokens`, so the unadmitted lines are split by the
+booking class of the band holding them — the same thing `build_ledger` itself selects on:
+
+```
+$ PYTHONPATH=src .venv/bin/python scripts/ledger_contract_census.py
+document                   pg              kind  lost  prose  escal ASSERT-ONLY outside
+graincorp-stem-2026-07-31   1 CONTROL(adopting)    24     24     44           0       0
+graincorp-stem-2026-07-31   2 CONTROL(adopting)    24     24     44           0       0
+cbh-stem-2026-08-03         0        population   148      5    261         143       0
+apple-fy2026q3-statements   0        population    68     22      0          46       0
+apple-fy2026q3-statements   1        population    64     21      0          43       0
+bfs-population-bilan-2023   5        population   215    143     75          39       0
+bfs-population-bilan-2023   6        population    46     17     54          29       0
+graincorp-capacity-2026-0   0        population    41     41      0           0       0
+ons-index-of-services-202   4        population   101     82     36           0       0
+who-wfa-boys-zscore-0-5   0/1/2      population    11     11     23           0       0
+
+control pages with ASSERT-ONLY ink dropped:    0
+population pages with ASSERT-ONLY ink dropped: 5
+```
+
+**The control is what makes this a finding rather than an anecdote:** on the two pages where the
+premise is *stated* to hold, the ledger drops exactly the prose and nothing else. On five pages
+whose bands assert, ink held by bands that assert and do **not** escalate is booked by nobody —
+`escalated_bands = [i for i, r in enumerate(reports) if r.tokens_escalated > 0]` admits them to
+neither the residue term nor the untouched term. The page would score higher than it read: the
+failure the docstring says token-selection exists to prevent, from the direction it did not
+consider.
+
+**THE REVISION D2 MUST MAKE, and it is NOT one line.** Two terms are wrong once the gate widens,
+and they need opposite treatments:
+
+1. **Touched bands** (the grid admitted some of their lines): select the residue term by **any
+   booked ink** (`tokens_asserted + tokens_escalated > 0`), not by escalated ink alone, so an
+   assert-only band's *unread* lines become residue.
+2. **Untouched bands** (the grid admitted nothing inside them): the band's own reading still
+   stands and is not superseded, so its ink is **asserted, by the band** — it belongs in
+   `asserted_tokens`, which today counts admitted lines only. Widening the residue term alone
+   would book this ink as escalated and understate the page.
+
+**Why the revision is safe to land BEFORE D2, and testable as inert:** on any page adopting under
+today's gate, `asserted_total == 0` and `tokens_asserted` is non-negative, so **every** band has
+`tokens_asserted == 0` and the widened predicate is *identically* the current one. The control row
+above measures that: `ASSERT-ONLY = 0` on both adopting pages. So the revision can ship first and
+be verified byte-identical on the whole corpus, which is the only way to separate it from D2's own
+effects.
+
+**Limits of this measurement, stated rather than left implied.** The corpus yields only **two**
+control pages, so "0 of 2" is a thin control, not a strong one. Pages where no grid derives, or
+where `len(reports) != len(bands)`, were **skipped and are unmeasured** — not clean. And on bfs p5
+and ons p4 the identity leaves 33 and 19 tokens unexplained: bands that both assert *and* escalate
+book fewer escalated tokens than they hold. That is a separate, smaller accounting question and is
+**not** settled here.
+
+### 1g. The second half: the graph, not the arithmetic
+
+`document.py:1672-1674` withdraws only **superseded** bands and then merges `rep_a.graph`
+wholesale. An asserting band is never superseded, so under a widened gate its table would survive
+beside a grid region re-reading the same lines. Measured as contested lines — admitted lines lying
+inside a band whose report asserted:
+
+```
+graincorp-capacity p0  27/27 admitted contested (475 tokens)    graincorp-stem p0  57/57 (747)
+apple p0               31/31 (225)                              who-wfa p0         25/25 (321)
+bfs p6                 29/32 (448)                              cbh p0              1/50 (16)
+ons p4                  0/25 — disjoint, the one clean case
+```
+
+So D2 must also **supersede the asserting bands whose lines the grid admits**, or refuse the
+adoption where it would only partially cover one. Ink conservation in the ledger does not save the
+graph: these are two separate obligations.
 
 ## 2. The defect, stated once
 
