@@ -436,3 +436,126 @@ judgement. The difference that remains is real — arm A would have widened the 
 41 bands misread, where arm B repairs the misreading and lets adoption's existing exact-withdrawal
 machinery do the adjudication — but the two are not the opposites the fork presented. That was not
 visible when the fork was written, and it is recorded here rather than quietly resolved.
+
+## 9. D2 EXECUTED (2026-09-14) — four sites, two latent defects, and a refuted prediction
+
+Appended, never rewritten: § 4's D2 bullet describes what was *designed*; this section records what
+was *built and measured*, including where the design above was wrong.
+
+### 9a. D2 is FOUR sites. § 1c names the third one without noticing it is a site
+
+§ 1c already measured that *"the same `asserted_total == 0` precondition guards both page-scope
+branches (`compile.py:1351` fallback, `compile.py:1428` adoption)"*. It draws the conclusion for the
+fallback and not for adoption — but the document driver adopts by RE-COMPILING the page with
+`datagrid_adopt=True`, so on a page whose bands assert anything, `compile.py:1428` refuses, no grid
+region is appended, and `document.py:1650` refuses with *"no data grid region on the re-compile"*.
+**Widening the `.rq` alone is a no-op.** The four sites are the `.rq`, that precondition, the ink
+comparison, and § 1g's withdrawal.
+
+### 9b. Where the ink comparison went, and why NOT beside `document.py:1650`
+
+§ 4 D2 places it there. It is instead inside `compile.py`'s adoption branch, immediately after
+`build_ledger`, because that is the one place where **both** quantities are already in hand —
+`escalated_total` (what the bands leave unread) and `_led.escalated_tokens` (what the adopted page
+would leave unread). Adopt iff the grid leaves **strictly** less; a tie refuses. One consequence is
+load-bearing and was measured, not reasoned: with the test there, a page that refuses produces no
+grid region, so the document driver's EXISTING refusal at `:1650` reports it and no second predicate
+is needed. bfs p6 exercises exactly that path in the corpus run below.
+
+### 9c. THREE LATENT DEFECTS, every one invisible until the gate widened
+
+Neither is a regression introduced by `7f365ce`; both are couplings it left, which only a widened
+gate can reach — every band on an adopting page had `tokens_asserted == 0` until now.
+
+1. **`compile.py`'s supersession predicate had to move with `build_ledger`'s.** Its own comment
+   says the two *"have to be"* the same predicate; the ledger's became `tokens_asserted +
+   tokens_escalated > 0` while this one stayed `tokens_escalated > 0`. A touched band that ASSERTED
+   would have kept its verdict and its `tokens_asserted` while the ledger had already handed that
+   ink to the grid, breaking I5 from the side nothing tests.
+2. **The grid region booked the PAGE's asserted total, not its own.** `RegionReport(...,
+   tokens_asserted=_led.asserted_tokens)` was correct only while the ledger's asserted term was
+   admitted-lines-only. Since the revision it also carries every UNTOUCHED booked band's asserted
+   ink — which those bands' own reports still book — so the grid region would have counted it a
+   second time. It now books `sum(len(_lines[j].words) for j in _led.admitted)`.
+3. **`cells` and `table_uri` had to go with the tokens — found by the new fixture, not by reasoning.**
+   A superseded band that asserted kept claiming its cells and naming its table, so `sum(r.cells)`
+   counted them beside the grid's (the cell-level form of the same double count) and the report
+   named a table that is in NO graph — the page rebuild discards it, and § 1g removes it at
+   document scope. **Nothing catches this:** the shipped I1/I2 oracle filters
+   `verdict == "asserted" and cells > 0` (`test_fallback_region_books_and_names.py:56`), so a
+   SUPERSEDED region is outside its population entirely. It is why § 9e's cell figures read as they
+   do: apple p2 reads **87**, not 90 (87 grid + 3 stale), and bfs p5 reads **404**, not 411 —
+   landing exactly on [[R225]]'s stated oracle. **The graph was never wrong, and that is its own
+   control:** sweeps taken before and after this change are byte-identical (6225 / 14197 triples,
+   scores equal to 10dp), so this is a REPORT repair with the graph holding still beneath it.
+
+Both are pinned by the sum identities I5 already names; `test_adoption_document.py`'s ledger test
+passes on apple p2 (`sum(tokens_asserted) == asserted`, `sum(tokens_escalated) == escalated`), which
+is the arithmetic those two defects would break.
+
+### 9d. § 1g: withdraw-or-refuse, decided before any mutation
+
+The rule built is: a superseded band that asserted a table has that table WITHDRAWN, but only when
+**nothing outside its own subgraph points into it** and no multi-member chain names it; otherwise
+the whole adoption is refused. The closure check replaces an enumeration of fact types (which would
+rot as facts are added); the chain check exists because a chain is a report field, not a triple, and
+the closure check cannot see it. The subgraph is computed from `pages[p].graph` — the page's own
+pass-1 graph, where `_band_subgraph`'s reachability is bounded as designed — and never from the
+merged graph, whose closure would reach the document node.
+
+Measured on apple p2, the live case: 2 of 29 admitted lines lie inside asserting band 6; `#table6`
+is the object of zero document-level triples and sits in a singleton chain; it is withdrawn and its
+chain entry dropped.
+
+### 9e. The corpus, before and after (`scripts/corpus_verdict_snapshot.py` + the new differ)
+
+```
+$ PYTHONPATH=src .venv/bin/python scripts/corpus_snapshot_diff.py snap-base snap-d2g
+apple-fy2026q3-statements      0.7187500000 -> 0.9302325581  triples   5157 ->   6225  CHANGED
+    adopted  [] -> [2]        chains 3 -> 2
+    p2: score 0.0526 -> 0.8537   cells     3 ->    87   asserted     6 ->  210   escalated 108 ->  36
+bfs-population-bilan-2023      0.4033149171 -> 0.8890554723  triples   9333 ->  14197  CHANGED
+    adopted  [] -> [5]        chains 7 -> 6
+    p5: score 0.0420 -> 0.9183   cells     7 ->   404   asserted    16 ->  910   escalated 365 ->  81
+    + note: page 6: adoption refused — no data grid region on the re-compile
+cbh-stem / graincorp-capacity / graincorp-stem / ons / who-wfa        IDENTICAL (canonical sha)
+2 of 7 documents changed
+```
+
+**§ 1g's own effect, isolated by a second sweep taken with it reverted:** apple 6318 → 6225 triples
+(−93) and bfs 14451 → 14197 (−254), **with every score, cell count and verdict unchanged**. That is
+the double-read being removed and nothing else — the five untouched documents are the control.
+
+### 9f. THE PREDICTION THIS LOOP RAN FIRST WAS REFUTED, and the refutation is the finding
+
+The handoff graded one claim PROPOSED and ordered it run before anything was built on it: *D2 alone
+is inert on the corpus.* **It is not.** Two documents move, and they move the way the row's oracle
+asked:
+
+- **bfs p5 adopts at 411 cells — R225's oracle is `≥ 404` — with D1 REVERTED.** The row costed this
+  gain as D1's; it is the gate's.
+- **ons is byte-identical**, so I2 holds without D1 having to be judged at all.
+
+§ 1b's title says *the predicate alone reproduces the refuted collapse*; § 9 completes the sentence:
+**the gate alone delivers the gain.** That is the strongest available form of this spec's claim, and
+it was available only by running the experiment in the order the maintainer ruled.
+
+**A second correction, small and worth not burying:** § 1a says five documents carry adjudicated
+`cor:scoreFloor` pins. Measured against the manifest, **three** do — graincorp-stem 0.95,
+graincorp-capacity 0.99, who-wfa 0.90 — and all three are byte-identical above. apple, which moved,
+carries no floor (its own manifest note says so explicitly), so no floor is at risk in either
+direction.
+
+### 9g. What is NOT done, stated rather than implied
+
+- **The 87 cells apple p2 now reads, and bfs p5's 411, are unverified against a transcript.** The
+  oracle here is ink conservation and the ledger identities, both of which hold; cell-level
+  correctness is unmeasured — as it was for the 3 cells apple p2 read before.
+- **D1 stays reverted.** Its placement is now judgeable on readings rather than on gate accidents,
+  which is what the maintainer's ruling asked for, and it is the next loop's subject.
+- **apple furnishes 0 requests** where it furnished 5 (`test_escalation_wiring`): all five escalating
+  decisions are now superseded. The residue candidate mints no decision (R69), so it furnishes
+  nothing — consistent, but whether a DATAGRID_RESIDUE should furnish is not settled here.
+- **[[R202]] bounds § 1g's instrument, not the repair**: where `len(reports) != len(bands)` the
+  contested-line probe abstains. The shipped code indexes `pages[p].regions[idx]` by the band index
+  the adoption contract already pins, so it does not depend on that probe.

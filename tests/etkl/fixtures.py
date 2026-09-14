@@ -2123,6 +2123,56 @@ def currency_marker_escalating_with_note_pdf(path: str) -> dict:
     return {"cols": xs, "n_rows": len(rows), "note": note}
 
 
+def currency_marker_escalating_with_asserting_table_pdf(path: str) -> dict:
+    """R225 D2 §1g — the escalating band, plus a band that ASSERTS a table the grid re-reads.
+
+    WHY A SIBLING AND NOT AN EDIT, for the third time on this shape and for the reason the
+    `_with_note` sibling gives: `currency_marker_escalating_pdf` and its note variant are named
+    in prose by `test_unit_marker.py`, `test_escalation_wiring.py` and six pins in
+    `test_adoption_document.py`, all of which describe their exact band inventory.
+
+    WHAT THIS ONE IS FOR. Until the adoption gate widened (2026-09-14), every superseded band had
+    ESCALATED, so withdrawing its escalation candidate was the whole job — a candidate is a leaf
+    proposition nothing points at. A band that ASSERTED carries a table instead, and the document
+    driver merges the grid beside it: the same lines would be read once by the band and again by
+    the grid. `document.py`'s withdraw-or-refuse rule exists for that case, and before this
+    fixture the ONLY page exercising it was apple p2 — corpus-gated, invisible to CI, which is
+    precisely the hole [[R224]] found in the fallback branch and had to author a fixture to close.
+
+    THE SHAPE. The escalating currency-marker table verbatim from the sibling above (so the gate
+    opens exactly as it does there), then a gap, then a clean two-column table that CLASSIFIES
+    and asserts. The page-wide data grid reads both, so the second band is touched, booked and
+    superseded — and its table is the one the withdrawal has to remove.
+    """
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    rows = [
+        ("Item",     "",  "Amount",  "",  ""),
+        ("Products", "$", "78,678",  "$", "272,629"),
+        ("Services", "",  "30,739",  "",  "91,728"),
+        ("Other",    "",  "11,729",  "",  "34,035"),
+        ("Overall",  "$", "121,146", "$", "398,392"),
+    ]
+    xs = [72.0, 220.0, 260.0, 380.0, 420.0]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, t in zip(xs, row):
+            if t:
+                c.drawString(x, y, t)
+    # The second table, in its own band: the 60pt gap is the sibling's, measured there against a
+    # 14pt line pitch and reused unchanged rather than re-tuned.
+    second = [("Region", "Units"), ("North", "1,204"), ("South", "3,318"), ("East", "2,257")]
+    sxs = [72.0, 220.0]
+    sy0 = y0 - len(rows) * 14.0 - 60.0
+    for i, row in enumerate(second):
+        y = sy0 - i * 14.0
+        for x, t in zip(sxs, row):
+            c.drawString(x, y, t)
+    c.save()
+    return {"cols": xs, "n_rows": len(rows), "second_cols": sxs, "second_rows": len(second)}
+
+
 def border_only_grid_pdf(path: str) -> dict:
     """R224's fixture — a page that asserts NOTHING, escalates NOTHING, and derives a grid.
 

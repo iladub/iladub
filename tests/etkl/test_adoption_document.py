@@ -31,7 +31,20 @@ one-line band that classifies NON_TABLE and therefore CANNOT be superseded
 on the same document, in the same run, in CI — at identical page arithmetic, which is why no pin
 above was re-baselined to get it.
 
-What stays on apple is what is still true of apple: that it adopts nothing, why, and the ledger
+RE-BASELINED AGAIN 2026-09-14 (R225 arm B, D2): **the branch has TWO live corpus fixtures now**,
+and the sentence above — "no live corpus fixture at all" — is the measurement that motivated the
+synthetic one, not a claim that survives this loop. The adoption gate no longer asks whether the
+page read NOTHING; it asks whether the grid leaves strictly less ink unread than the bands did.
+Measured over all seven documents (`scripts/corpus_verdict_snapshot.py`, before/after):
+apple `adopted=()->(2,)` and bfs `()->(5,)`; the other five are byte-identical by canonical graph
+hash, ons among them.
+
+The synthetic fixture is NOT retired by that. It stays the pin, for the reason this module has
+given since 2026-09-05: it runs in CI, where neither corpus document can. What apple gains is the
+opposite corroboration to the one it used to give — it now exercises a WITHDRAWN asserted table
+(§1g), which no synthetic fixture here has.
+
+What stays on apple is what is still true of apple: which pages adopt and why, and the ledger
 and query pins that never needed adoption.
 """
 import pytest
@@ -329,10 +342,33 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
     42 label words are now booked instead of dropped (`_book_recovered_ink`, compile.py:1051).
     98 IS the band's whole ink — measured, `scripts/unbooked_ink_census.py` — so this assertion
     is now strictly stronger than the one it replaces: it says the page read EVERYTHING it holds,
-    where `56` only said it read every data cell and said nothing about the other 42 words."""
-    assert apple_doc.adopted == (), apple_doc.adopted
+    where `56` only said it read every data cell and said nothing about the other 42 words.
+
+    RE-BASELINED 2026-09-14, `adopted () -> (2,)`, by R225 arm B's D2 — AND THE DETECTOR FIRED
+    EXACTLY AS THE PARAGRAPH ABOVE PROMISED IT WOULD. This test said: *if any apple page is ever
+    adopted again, this fails loudly.* It did, on a page it was not watching. The ruling is that
+    page 2's adoption is a REPAIR, and it is ruled on the reading rather than on the score:
+
+      * page 2 asserted **3 cells** of a page whose bands escalated **108 of its 114 booked
+        tokens** — the partial reading this loop exists to stop treating as a reading;
+      * the grid reads **87 cells / 210 tokens** there and leaves **36** unread, so the ink the
+        page fails to read falls 108 -> 36. That comparison IS the gate now (`compile.py`'s
+        adoption branch), not a number anyone chose;
+      * page 2's own `#table6` is withdrawn rather than left standing beside the grid (§1g), so
+        the 2 admitted lines lying inside band 6 are read ONCE.
+
+    The document score moves 0.7188 (the 2026-09-08 reading) -> 0.9302, measured 2026-09-14. It
+    is NOT cited as evidence — § 1.4's rule and [[R154]]'s closure row both say a score rise is
+    not a reading — the ink figures above are.
+
+    WHAT IS **NOT** RULED HERE, and is owed: nothing has checked those 87 cells against a
+    transcript. The page-scope oracle is ink conservation, and it holds; cell-level correctness
+    for apple p2 is unmeasured, as it was for the 3 cells it replaces."""
+    assert apple_doc.adopted == (2,), apple_doc.adopted
     p1 = apple_doc.pages[ADOPTED_PAGE]
     assert (p1.asserted, p1.escalated) == (98, 0), (p1.asserted, p1.escalated)
+    p2 = apple_doc.pages[2]
+    assert (p2.asserted, p2.escalated) == (210, 36), (p2.asserted, p2.escalated)
 
 
 # `test_an_adopted_page_never_scores_one_by_construction` STOOD HERE and was DELETED 2026-09-07,

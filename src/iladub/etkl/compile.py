@@ -1425,7 +1425,28 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # The move is behaviour-preserving for every other path: this branch's gate
     # (escalated_total > 0) and the fallback's (escalated_total == 0) are mutually exclusive,
     # so neither can now observe the other's writes any more than it could before.
-    if datagrid_adopt and asserted_total == 0 and escalated_total > 0:
+    # THE PRECONDITION WIDENED 2026-09-14 (R225 arm B, D2 — spec
+    # `2026-09-14-the-gate-not-the-predicate-design.md` § 2). It was
+    # `asserted_total == 0 and escalated_total > 0`: adoption only where the page read NOTHING.
+    # That absence test was an adequate proxy for "the bands failed" only while they failed
+    # TOTALLY — a page holding a PARTIAL band reading and a COMPLETE grid reading is excluded by
+    # the partial reading merely existing, which is the defect. `escalated_total > 0` STAYS: a
+    # page that left no ink unread has nothing for the grid to supersede, and it is what keeps
+    # the fallback's gate (`escalated_total == 0`) mutually exclusive with this one.
+    #
+    # ABSENCE IS REPLACED BY AN ORDINAL COMPARISON OF UNREAD INK, never by a cell count: the two
+    # paths SEGMENT cells differently (`:1334-1339`), so more cells is not a better reading —
+    # measured at baseline, a cell-count predicate fires on 12 pages including graincorp-capacity
+    # p0, which reads perfectly (spec § 4 D2). The quantity both sides agree on is the ink each
+    # leaves UNREAD: the bands leave `escalated_total`, the adopted page would leave
+    # `_led.escalated_tokens`. Adopt only when the grid leaves strictly less.
+    #
+    # Gate classification (CLAUDE.md §8): PROCEDURAL, and irreducible for the same reason
+    # `build_ledger` is — it is an exact integer comparison of two token counts this function has
+    # already derived, carrying no threshold, no tolerance and no tuned constant. STRICTLY less,
+    # so a tie refuses: a grid that reads no more of the unread ink than the bands did is not a
+    # better reader, and refusing on equality keeps adoption from churning a page for nothing.
+    if datagrid_adopt and escalated_total > 0:
         from .adoption import build_ledger
         from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
         _grid = _dg(pdf_path, page_number)
@@ -1433,6 +1454,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
                              if ln.words], key=lambda ln: ln.top)
             _led = build_ledger(_lines, _grid.rows, bands, reports)
+        else:
+            _led = None
+        if _led is not None and _led.escalated_tokens < escalated_total:
             # WHAT `rep.graph` IS AUTHORITATIVE FOR AT PAGE SCOPE (final review I2). The rebuild
             # discards every pass-1 escalation candidate on the page, including those of bands
             # the grid never TOUCHED — whose tokens `build_ledger` still books
@@ -1476,15 +1500,41 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # unread lines into residue, so leaving its own count standing would book that ink
             # twice. Keying on the verdict string here while the ledger keys on the tokens would
             # reopen the invariant sum(r.tokens_escalated) == escalated_total from the other side.
+            # WIDENED WITH THE LEDGER, 2026-09-14 (R225 D2), and the comment above says why it
+            # HAS to move: `build_ledger` now selects its booked bands by `tokens_asserted +
+            # tokens_escalated > 0` (`7f365ce`, spec § 1f), so a TOUCHED band that asserted has
+            # already had its unread lines turned into residue and its read lines handed to the
+            # grid. Leaving it labelled "asserted" with its own `tokens_asserted` standing would
+            # book that ink twice and break `sum(r.tokens_asserted) == asserted_total` from the
+            # side nothing tested — every band on an adopting page used to have
+            # `tokens_asserted == 0`, which is why the two predicates could differ and not show.
+            # `cells` AND `table_uri` GO WITH THE TOKENS, and the reason is the one this comment
+            # already gives for the ink: a superseded band's reading was REPLACED. Until the gate
+            # widened every superseded band had escalated, so both fields were already empty and
+            # the question could not arise. A superseded band that ASSERTED would otherwise keep
+            # claiming its cells — `sum(r.cells)` then counts them beside the grid's, the cell-level
+            # form of the double count this branch exists to prevent (apple p2 would read 90 = 87
+            # + 3, bfs p5 411 = 404 + 7) — and keep naming a table that is in NO graph: the page
+            # rebuild discards it here, and `document.py`'s §1g withdrawal removes it there. The
+            # `reason` and the `kind` STAY: those are history, not quantities, and the same
+            # distinction the ink half already draws.
             reports = [
-                _dc_replace(r, verdict="superseded", tokens_escalated=0)
-                if i in _led.touched and r.tokens_escalated > 0 else r
+                _dc_replace(r, verdict="superseded", tokens_asserted=0, tokens_escalated=0,
+                            cells=0, table_uri=None)
+                if i in _led.touched and (r.tokens_asserted + r.tokens_escalated) > 0 else r
                 for i, r in enumerate(reports)
             ]
+            # THE GRID REGION BOOKS THE ADMITTED LINES ONLY — never `_led.asserted_tokens`.
+            # The ledger's asserted term is the PAGE's (admitted lines PLUS the asserted ink of
+            # booked bands the grid never touched, whose own reports still carry it), so booking
+            # the page total here would count every untouched band's asserted ink twice. Inert
+            # until D2: before the gate widened, no band on an adopting page asserted anything,
+            # so the second term was identically zero and the two quantities were the same number.
+            _admitted_tokens = sum(len(_lines[j].words) for j in _led.admitted)
             reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
                                         None, str(TAB.DataGrid), "",
                                         table_uri=_grid_uri,
-                                        tokens_asserted=_led.asserted_tokens))
+                                        tokens_asserted=_admitted_tokens))
             if _led.residue:
                 _text = "\n".join(" ".join(w.text for w in _lines[j].words)
                                   for j in _led.residue)

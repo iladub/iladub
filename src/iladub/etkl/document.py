@@ -1666,11 +1666,63 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             # higher than it read, which is the failure this loop exists to prevent (§7).
             notes.append(f"page {p}: adoption refused — the grid superseded no escalated band")
             continue
+        # ---- §1g (R225 D2): A SUPERSEDED BAND THAT **ASSERTED** CARRIES A TABLE, AND THE MERGE
+        # WOULD LEAVE IT STANDING BESIDE THE GRID THAT RE-READ ITS LINES.
+        #
+        # Until the gate widened, every superseded band had escalated, so withdrawing its
+        # CANDIDATE was the whole job — a candidate is a leaf proposition nothing points at. An
+        # asserted table is not: it is the subject of a page reading and the potential object of
+        # document-level facts (`tab:continuesTable`, `_link_columns`, `tab:licenceRefused`,
+        # section totals), every one of which is asserted BEFORE this pass runs. Measured on
+        # apple p2, the one live case at baseline: 2 of 29 admitted lines lie inside band 6,
+        # whose `#table6` asserts 3 cells — read once by the band and again by the grid.
+        #
+        # THE RULE IS WITHDRAW-OR-REFUSE, DECIDED BEFORE ANY MUTATION. The subgraph is computed
+        # from `pages[p].graph` — the page's OWN pass-1 graph, where `_band_subgraph`'s outgoing
+        # reachability is bounded as its docstring describes — and NEVER from the merged graph,
+        # where the closure would reach the document node and sweep the document. A table is
+        # withdrawable only when NOTHING OUTSIDE its own subgraph points into it, which is a
+        # closure check rather than a list of fact types that would rot as facts are added, and
+        # only when no multi-member chain names it (a chain is a report field, not a triple, so
+        # the closure check cannot see it). Otherwise the page keeps its partial reading and the
+        # adoption is refused whole: a dangling `continuesTable` into a withdrawn table would be
+        # a worse graph than the double reading it repairs.
+        withdrawn: list[tuple[int, URIRef, Graph]] = []
+        blocked: str | None = None
+        for idx in superseded:
+            t = pages[p].regions[idx].table_uri
+            if t is None:
+                continue                  # an escalated band: its candidate is all there is
+            sub = _band_subgraph(pages[p].graph, t)
+            nodes = set(sub.subjects())
+            pointed = [pr for n in nodes for s, pr in graph.subject_predicates(n)
+                       if s not in nodes]
+            if pointed:
+                blocked = (f"band {idx} asserted a table that {len(pointed)} document-level "
+                           f"triple(s) point at ({pointed[0]})")
+                break
+            chain = next((c for c in chains if t in c), None)
+            if chain is not None and len(chain) > 1:
+                blocked = (f"band {idx} asserted a table that is a member of a "
+                           f"{len(chain)}-member chain")
+                break
+            withdrawn.append((idx, t, sub))
+        if blocked is not None:
+            notes.append(f"page {p}: adoption refused — {blocked}")
+            continue
         # Withdraw the escalation of every band the grid TOUCHED, then merge the adopted
         # page graph in. The residue candidate rides in with it, so the ledger and the graph
         # agree on what was left unread.
         for idx in superseded:
             _remove_escalation_record(graph, page_doc_uri(p), idx)
+        for _idx, _t, _sub in withdrawn:
+            graph -= _sub
+        if withdrawn:
+            # The report's `chains` was assembled BEFORE this pass, from the pass-1 table URIs,
+            # so a withdrawn table would keep a chain to itself in a document that no longer
+            # holds it. Only SINGLETON chains can be here — a longer one refused above.
+            _gone = {_t for _idx, _t, _sub in withdrawn}
+            chains = [c for c in chains if not (_gone & set(c))]
         graph += rep_a.graph
         # THE SUPERSESSION, made queryable — and it is a CALLER OBLIGATION, not a nicety:
         # `_remove_escalation_record` leaves the band's pass-1 judgement chain standing on

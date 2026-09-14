@@ -2,23 +2,38 @@
 #
 # THE ADOPTION GATE (spec 2026-08-09-adoption-at-document-scope §5.2, residue R73).
 #
-# Is this page a total reading failure — an escalation on the page's own holon, and not one
-# entry cell anywhere on it? Both variables (?page, ?doc) are supplied by the caller as data;
-# the query text carries no literal.
+# Is this page's reading INCOMPLETE — does its holon carry an escalation? Both variables
+# (?page, ?doc) are supplied by the caller as data; the query text carries no literal.
 #
-# CLOSURE. The NOT EXISTS is query-local and HOLON-SCOPED: it closes the world over ONE page
-# holon, which is the closure boundary (CLAUDE.md §8). The graph stays open — another page's
-# silence says nothing here, and this query never DERIVES a fact, it only answers whether the
-# document's last reader may be asked.
-PREFIX tab:    <https://w3id.org/iladub/tab#>
+# WIDENED 2026-09-14 (R225 arm B, D2 — spec `2026-09-14-the-gate-not-the-predicate-design.md`).
+# It used to ask whether the page was a TOTAL reading failure, by adding
+#
+#     FILTER NOT EXISTS { ?cell a tab:EntryCell ; tab:onPage ?page . }
+#
+# — one asserted cell anywhere on the page disqualified it. That absence test was an adequate
+# proxy for "the bands failed" only while they failed totally: a page may hold a PARTIAL band
+# reading and a COMPLETE grid reading at once, and the partial reading then excludes the complete
+# one merely by existing (spec § 1c measures it on ons p7 — 94 asserted cells blocking a 276-cell
+# reading). Absence is not the question; INSUFFICIENCY is.
+#
+# WHAT REPLACES IT IS NOT IN THIS QUERY, and that is deliberate. This gate runs on the PASS-1
+# graph, before any grid exists, so it cannot compare the two readings at all — it can only ask
+# whether there is anything to supersede. The comparison is an ordinal test on UNREAD INK and
+# lives at the one site where both quantities are in hand (`compile.py`'s adoption branch, which
+# refuses unless the grid leaves strictly less ink unread than the bands did). This query is now
+# a CHEAP PRE-FILTER over a costly branch, never the adjudication.
+#
+# CLOSURE. Page scope is carried by the candidate's own SourceRegion (`iladub:onPage`) and by
+# ?doc, the page-scoped document IRI every escalation on the page is derived from. With the
+# NOT EXISTS gone this query closes over nothing at all: it is a pure positive pattern, open
+# world throughout, and it DERIVES nothing — it only answers whether the document's last reader
+# may be asked. (CLAUDE.md §8: recovery is open-world; the membrane is closed-world.)
 PREFIX iladub: <https://w3id.org/iladub#>
 PREFIX prov:   <http://www.w3.org/ns/prov#>
 
 ASK {
   ?candidate a iladub:CandidateConcept ;
-             prov:wasDerivedFrom ?doc .
-  FILTER NOT EXISTS {
-    ?cell a tab:EntryCell ;
-          tab:onPage ?page .
-  }
+             prov:wasDerivedFrom ?doc ;
+             iladub:fromRegion ?region .
+  ?region iladub:onPage ?page .
 }
