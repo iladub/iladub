@@ -174,9 +174,44 @@ with § 1b's own figures: `test_run_merge_seam.py:331` pins bfs p5 at **12** reg
 p6 moving to **369**. D1 therefore reaches [[R210]]'s grid-donation ink ledgers and the run-merge
 seam, not only ONS.
 
-**Per-failure classification is NOT done.** Until it is, nothing here says which of these D2
-resolves and which are pinned figures that must be re-derived and re-justified — and § 4's task
-list is incomplete by exactly that amount.
+### 1e. The classification — and a DESIGN DEFECT in D1 that it exposes
+
+```
+$ .venv/bin/python -m pytest <the 11 failing node ids> --tb=line -q
+tests/etkl/test_header_confirmed_refinement.py:45: assert ['ID','Total'] == ['ID','Qty','Total','Unit']
+tests/etkl/test_run_merge_seam.py:85:  assert 369 == 267          # bfs p6 cells
+tests/etkl/test_run_merge_seam.py:248: bfs p5: 0 < 16  (score 0.0, asserted 0, escalated 882)
+tests/etkl/test_run_merge_seam.py:331: assert 14 == 12            # bfs p5 region count
+11 failed in 181.59s
+```
+
+**`test_header_confirmed_refinement` is not a moved figure. It is D1 being placed at the wrong
+site, and it falsifies part of § 1a's reasoning.**
+
+When D1 refuses, `relines` is empty, so `_build_ruled_band` takes the early return at
+`compile.py:151` — **before `refine_rule_columns` at `:155` is ever called.** That refinement, with
+`confirmed_boundaries`, is [[R13]]'s closure: the mechanism that recovers columns in exactly the
+case where the author's drawn rules are **coarser than the columns** (R13's closed row: GrainCorp
+15 → 17 header labels). The fixture here collapses 4 recovered columns to 2.
+
+So § 1a's third finding — that D1 also catches the "R13-shaped" `drawn=6, word=9` bands on bfs p6,
+offered there as *reach the naive guard lacked* — has the sign wrong. Those bands are the ones
+refinement exists to repair, and D1 as written **disables the repair instead of extending it**.
+
+**What this implies for § 4's D1, and it is a change of design, not a tuning:** the resolution
+comparison is being made against the RAW author marks (`xs`, `compile.py:111`), where
+`_rule_boundaries` — the shipped separator test D1 was modelled on — deliberately prefers the
+DERIVED boundaries (`band.column_xs`, `grid.py:71-74`). The comparison plausibly belongs *after*
+refinement, against `col_xs`, so a band whose rules under-resolve is first **refined** and only
+refused if it still under-resolves. **That is a proposition and is unbuilt** — it must be
+constructed and run, not adopted from this paragraph.
+
+**The rest, so far as this run shows them:** bfs p6 `267 → 369` and bfs p5 `12 → 14` regions are
+pinned figures moving with a changed reading; `test_run_merge_seam.py:248` is a **page-scope**
+regression (p5 asserts 0 of 16, escalating 882) which coexists with p5 adopting 404 at **document**
+scope — the two scopes are different quantities, as `compile.py:1402-1408` already records. The
+three `test_datagrid`, three `test_grid_donation_seam` and one `test_escalation_furnish` failures
+are **named but not yet diagnosed**; nothing here says which D2 resolves.
 
 **Those three** — the single failure and two errors in the two runs quoted at the top of this
 section, not the twelve above — break on a **fixture-drift precondition**, never on their substance

@@ -15,18 +15,28 @@ assertion-or-proposition so a reader can tell a mechanical step from a predictio
 
 ## 5. The next concrete action
 
-### 5a. ASSERTED: implement D2 — the comparative admission clause — and land it in the SAME change as D1.
+### 5a. RE-GRADED — was ASSERTED, is now **PROPOSED** in its first half: D1's placement must be settled BEFORE D2 is implemented.
 
-The maintainer ruled arm B on 2026-09-14, and the half that remains is fully specified: the clause
-to change is the closure in `vocab/queries/adoption-candidate.rq` (`FILTER NOT EXISTS { ?cell a
-tab:EntryCell ; tab:onPage ?page }`), the two post-hoc refusals that stay unchanged are
-`document.py:1650` and `:1663`, and the comparison neither of them makes — *does the grid read
-strictly more than the bands did* — is the thing to add. Keeping it in the `.rq` keeps the decision
-an AXIOM, holon-scoped, which is the § 8 default rather than something procedural to be earned.
+**This grading was changed after the fact, by the session that wrote it, and the reason is on the
+record rather than tidied away.** When 5a was written, classification had not been run, and the
+action read as mechanical. Spec § 1e then measured a design defect in D1 itself, so the premise
+under "nothing depends on evidence that does not yet exist" was false when written — the evidence
+simply had not been gathered yet.
 
-**Why asserted:** the site is named, the oracle is measured on both sides
-(`specs/2026-09-14-the-gate-not-the-predicate-design.md` § 1b), and nothing about the work depends
-on evidence that does not yet exist.
+**PROPOSED, and it must be RUN first:** that D1 belongs *after* `refine_rule_columns`, comparing
+against the derived `col_xs` rather than the raw `xs` of `compile.py:111`. Today D1's refusal
+returns at `compile.py:151` and skips refinement entirely, disabling [[R13]]'s closure. The
+proposed placement is unbuilt, and it may not work: D1's whole effect is to make the drawn and
+word measures agree, and refinement's candidates are judged by `confirmed_boundaries` on header
+ink, so a band may still under-resolve after refinement. **Build it, run the corpus pair and
+`test_header_confirmed_refinement`, and only then treat D1 as settled.**
+
+**STILL ASSERTED, and unchanged by the above:** the D2 clause itself. The site is named — the
+closure in `vocab/queries/adoption-candidate.rq` (`FILTER NOT EXISTS { ?cell a tab:EntryCell ;
+tab:onPage ?page }`) — the two post-hoc refusals that stay are `document.py:1650` and `:1663`, and
+the comparison neither makes (*does the grid read strictly more than the bands did*) is the thing
+to add. Keeping it in the `.rq` keeps the decision an AXIOM, holon-scoped, the § 8 default.
+**Sequence:** settle D1's placement, then D2, then land them together per 5b.
 
 ### 5b. ASSERTED: D1 must NOT merge alone, and CI will not stop it.
 
@@ -92,10 +102,17 @@ make those two measures agree. If it cannot be built, the fallback branch loses 
   § 1d, corrected in place. In short: D1 also moves bfs p5's region count (12 → 14, pinned at
   `test_run_merge_seam.py:331`) and bfs p6's donated entry count (267 → 369, pinned in
   `test_grid_donation_seam.py`), so it reaches [[R210]]'s ink ledgers and the run-merge seam, not
-  only ONS. **Per-failure classification — which failures D2 resolves, and which are pinned
-  figures that must be re-derived and re-justified — is NOT done, and is the first thing the next
-  session must establish before touching D2.** That inflates 5a's scope: it is no longer one
-  clause plus an oracle.
+  only ONS. **Classification was then RUN, and it found a DESIGN DEFECT in D1 — read spec § 1e
+  before touching 5a.** `test_header_confirmed_refinement` fails because D1's refusal leaves
+  `relines` empty, so `_build_ruled_band` returns at `compile.py:151` **before**
+  `refine_rule_columns` at `:155` — which is [[R13]]'s closure, the confirmed-boundary path that
+  recovers columns exactly when the author's rules are COARSER than the columns. A fixture's 4
+  recovered columns collapse to 2. This **falsifies part of spec § 1a**, which offered the bfs p6
+  `drawn=6, word=9` bands as D1's extra reach over the naive guard: those are refinement's own
+  cases, and D1 disables the repair instead of extending it. The likely correction — compare
+  AFTER refinement, against `col_xs`, rather than against the raw `xs` of `compile.py:111` — is a
+  **proposition and unbuilt**. The other seven failures (3 `test_datagrid`, 3
+  `test_grid_donation_seam`, 1 `test_escalation_furnish`) are named but **not diagnosed**.
   (The first attempt at this run passed `--timeout=1200`, which this repo has no plugin for:
   pytest answered `unrecognized arguments` and **exited 0 having run nothing** — a phantom green
   that would have shipped this understatement as verified.)
