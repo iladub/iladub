@@ -70,6 +70,25 @@ def _kind_refutations(chosen_name: str, reason: str | None) -> dict:
     return {name: reason for name in _KIND_REFUTED_BY_REASON.get(chosen_name, ())}
 
 
+def _word_column_count(sub) -> int | None:
+    """The band's OWN word structure as a column count — its gutter-profile leaf grid.
+
+    Taken on a RULES-FREE copy of the band deliberately: `infer_leaf_grid` short-circuits on
+    `_rule_boundaries` (grid.py:113) and would otherwise measure the author's drawn marks
+    against themselves, making any comparison with those same marks vacuous. The gutter path
+    is the only measure here that is independent of what was drawn.
+
+    None when the band carries no words (`infer_leaf_grid` raises ValueError), which is not a
+    refusal — a caller cannot compare against a measure that does not exist.
+    """
+    from .bands import Band
+    from .grid import infer_leaf_grid
+    try:
+        return infer_leaf_grid(Band(tuple(sub.lines), sub.top, sub.bottom)).ncols
+    except ValueError:
+        return None
+
+
 def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
     """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
@@ -130,7 +149,29 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
         sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
 
     band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    # R225 arm B — the author's marks may re-bucket this band only when they RESOLVE AT LEAST
+    # AS FINELY as the band's own word structure. `xs` of length 2 is an outer BOX, not a set of
+    # separators (`grid._rule_boundaries` already refuses exactly that shape for the leaf grid,
+    # "a frame is not a grid"), and re-bucketing on it can only FUSE, never split — contradicting
+    # this function's own docstring. Measured: 41 border-only bands corpus-wide lose every column.
+    # The comparison is ORDINAL, not a threshold, and carries no tuned constant — it is
+    # `datagrid.py:346`'s shape ("decoration wins only when it resolves at least as finely as
+    # alignment") applied at the one site that never consulted it.
+    #
+    # PLACEMENT (corrected 2026-09-14, spec § 1e). An earlier draft refused here and returned,
+    # which skipped `refine_rule_columns` below entirely — and that refinement IS [[R13]]'s
+    # closure, the confirmed-boundary path that recovers columns in exactly the case where the
+    # author's rules are COARSER than the columns. Refusing before it disabled the repair
+    # instead of extending it (measured: a fixture's 4 recovered columns collapsed to 2).
+    # So an under-resolving band is NOT returned here: it falls through with `relines` empty
+    # and is judged again below, against the DERIVED boundaries, which is the comparison
+    # `grid._rule_boundaries` itself makes (it prefers `band.column_xs` over the raw marks).
+    _word_cols = _word_column_count(sub)
+    _under_resolved = (_word_cols is not None and len(xs) >= 2
+                       and len(xs) - 1 < _word_cols)
+    relines = (rule_aware_lines(band_chars, xs)
+               if len(xs) >= 2 and not _under_resolved
+               else [])
     if relines:
         from .geometry import weld_hrule_boxes
         # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
@@ -148,9 +189,15 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
             if leading_hrule_box(sub_hrules, xs) is None:
                 weld_box = leading_box_y_fallback(sub_hrules)
         relines = weld_hrule_boxes(relines, sub_hrules, xs, box=weld_box)
-    if not relines:
-        return _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
-    band = Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules, captions=caption_lines)
+    # The word-based band is the fallback AND, for an under-resolved band, the evidence the
+    # refinement below is judged on: the rule-re-bucketed band is fused there (one column), so
+    # `recover_leaf_grid` would measure the fusion rather than the band and refuse at `ncols < 2`
+    # before any candidate could be confirmed.
+    word_band = _replace(sub, rules=sub_rules, hrules=sub_hrules, captions=caption_lines)
+    if not relines and not _under_resolved:
+        return word_band
+    band = (Band(tuple(relines), sub.top, sub.bottom, sub_rules, sub_hrules,
+                 captions=caption_lines) if relines else word_band)
 
     candidates = [x for x in refine_rule_columns(band_chars, xs) if x not in xs]
     if not candidates:
@@ -190,6 +237,13 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     if not confirmed:
         return band
     col_xs = sorted(set(xs) | confirmed)
+    # THE RESOLUTION TEST, applied to the DERIVED boundaries rather than the raw marks. A band
+    # whose author-drawn rules under-resolve may still be re-bucketed once refinement has
+    # recovered the interior boundaries the author left out — that is R13's case and it must
+    # keep working. It is refused only if even the refined set still resolves more coarsely than
+    # the band's own word structure, because re-bucketing on that can still only fuse.
+    if _word_cols is not None and len(col_xs) - 1 < _word_cols:
+        return band
     relines2 = rule_aware_lines(band_chars, col_xs)
     if not relines2:
         return band

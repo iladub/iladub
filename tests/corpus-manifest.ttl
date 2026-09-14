@@ -228,7 +228,18 @@
         cor:readAt "2026-09-05"^^xsd:date ; cor:readAt "2026-09-08"^^xsd:date ;
         cor:atCommit "9eb5cd0" ;
         cor:recordedIn "docs/superpowers/2026-09-05-r173-5a-rebaseline.md" ;
-        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] ;
+    # R225 D1 (the resolution test) landed 2026-09-14 under the maintainer's ruling that the
+    # DROP IS CORRECT. The reading falls because the repair stops CONCEALING ink: p7/p8's fused
+    # bands classified NON_TABLE and were IGNORED as prose, contributing 0 to both sides of the
+    # ratio, so 0.9720 was computed over a denominator that excluded 142 tokens. Unfused, those
+    # bands escalate honestly (p7 0->80, p8 0->62) and the denominator grows. THE READING IS NOT
+    # LOST: 571 cells, per-page identical, now arriving by ADOPTION rather than the fallback.
+    # This document carries no cor:scoreFloor and stays cor:Unadjudicated, so nothing is
+    # re-adjudicated here — only a new dated reading appended.
+    cor:reading [ a cor:Reading ; cor:value "0.7712418300653595"^^xsd:decimal ;
+        cor:readAt "2026-09-14"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] .
 
 <urn:iladub:corpus:bfs-population-bilan-2023>
     cor:reading [ a cor:Reading ; cor:value "0.3438"^^xsd:decimal ;
@@ -245,7 +256,20 @@
     cor:reading [ a cor:Reading ; cor:value "0.40331491712707185"^^xsd:decimal ;
         cor:readAt "2026-09-12"^^xsd:date ;
         cor:atCommit "b2bdbbe" ;
-        cor:recordedIn "docs/superpowers/2026-09-12-grid-donation-evidence.md" ] .
+        cor:recordedIn "docs/superpowers/2026-09-12-grid-donation-evidence.md" ] ;
+    # REGISTER REPAIR, found by measurement rather than by review: R225's D2 (the widened
+    # adoption gate, merged in 523e00b) moved this document 0.4033 -> 0.8891 and appended NO
+    # reading, so the newest recorded figure was three commits stale. Measured on main at
+    # e9f772f while taking this loop's before-side snapshot.
+    cor:reading [ a cor:Reading ; cor:value "0.889055472263868"^^xsd:decimal ;
+        cor:readAt "2026-09-14"^^xsd:date ;
+        cor:atCommit "e9f772f" ;
+        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] ;
+    # And after D1: p5 stays adopted at exactly 404 cells (R225's own oracle) and gains no
+    # zero-cell escalations (3 -> 3); the small fall is p5's escalated ink, 81 -> 87.
+    cor:reading [ a cor:Reading ; cor:value "0.8850746268656716"^^xsd:decimal ;
+        cor:readAt "2026-09-14"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
@@ -267,7 +291,17 @@
     cor:reading [ a cor:Reading ; cor:value "0.71875"^^xsd:decimal ;
         cor:readAt "2026-09-08"^^xsd:date ;
         cor:atCommit "9eb5cd0" ;
-        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+        cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] ;
+    # REGISTER REPAIR, same cause as bfs above: R225's D2 made p2 adopt (3 cells -> 87, unread
+    # ink 108 -> 36) and moved this document 0.71875 -> 0.9302 with no reading appended. Measured
+    # on main at e9f772f. D1 leaves this document BYTE-IDENTICAL by canonical graph hash
+    # (cabc69d718d6 both sides), which is why only one new reading appears here and not two —
+    # and apple was the document that had to be measured rather than inferred, since D2's
+    # adoption re-read is the one path by which D1 could have reached a floor-pinned document.
+    cor:reading [ a cor:Reading ; cor:value "0.9302325581395349"^^xsd:decimal ;
+        cor:readAt "2026-09-14"^^xsd:date ;
+        cor:atCommit "e9f772f" ;
+        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] .
 
 <urn:iladub:corpus:who-wfa-boys-zscore-0-5>
     cor:reading [ a cor:Reading ; cor:value "0.5597"^^xsd:decimal ;

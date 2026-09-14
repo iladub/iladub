@@ -38,6 +38,7 @@ from tests.etkl.fixtures import (
     row_grouped_table_pdf,
     simple_table_pdf,
     border_only_grid_pdf,
+    isolated_rows_grid_pdf,
     transposed_table_pdf,
 )
 
@@ -96,9 +97,46 @@ def test_no_band_books_ink_it_does_not_hold_on_the_fallback_page(tmp_path):
     BY DESIGN — its ink is prose (`compile.py:801`) — so `tokens == 0` there is not a tautology
     about this fixture but the exact statement the defect violated. Restoring the original
     statement order makes this fail with 24 booked on a band the reader never claimed to read.
+
+    RETIRED 2026-09-14 (R225 D1) — NOT re-pointed, and the distinction is the point.
+
+    Its two siblings in `test_fallback_region_books_and_names.py` (I1: a claiming region books
+    ink; I2: it names a table) were RE-POINTED at the adoption route, because those claims were
+    never about the fallback as such. **This one cannot follow them.** Its subject is the region
+    appended BEYOND the band loop at index `len(bands)` — the thing that made `reports = bands +
+    1` — and it pins that such a region's ink is not differenced onto the band below it. At
+    document scope there is no such region: the adopted page's report is REBUILT, and its regions
+    are the superseded bands, the grid and the residue, which are not band-paired at all
+    (measured on the adopting fixture: 4 regions over 2 bands). `zip(bands, rep.regions)` has no
+    meaning there, so the assertion has no subject rather than a moved one.
+
+    Nor can it keep its own fixture: `border_only_grid_pdf` reached the gate by BEING R225's
+    defect, so D1 repairs the page into a complete band reading (`RECORD_TABLE`, 20 cells, score
+    1.0, ONE region) and the fallback never opens. Four replacement shapes were drawn and none
+    reaches the gate, with a counting argument for why none can
+    (`docs/superpowers/2026-09-14-d1-post-d2-measured.md` § 3).
+
+    So the invariant is true and unreachable, and that is recorded as [[R228]] rather than left
+    silent — per the standing instruction in the loop's own spec § 7. The fallback branch itself
+    is deliberately NOT deleted (§ Producer-side guards: provable total coverage first; "no
+    instance today" is not that proof), and `border_only_grid_pdf` is kept for the same reason.
+
+    UN-RETIRED 2026-09-14, THE SAME DAY: the "no fixture can reach the gate" claim above is
+    REFUTED. That claim rested on four failed candidates plus a counting argument which read
+    `datagrid.py`'s "modal" row signature as majority-by-count; `:337` actually maximises
+    `len(s) * counts[s]`, so 8 two-run rows score 16 against 10 one-run rows' 10.
+    `isolated_rows_grid_pdf` exploits exactly that — one tall prose band supplying the small gaps
+    that set `detect_bands`' median, then 8 isolated single-line data bands — and it draws NO
+    rules, so D1's comparison never runs and cannot repair the mechanism out from under it the way
+    it did to `border_only_grid_pdf`.
+
+    So I3's subject EXISTS again: this page yields `bands + 1` regions, the appended one being the
+    grid's. What the retirement note said about DOCUMENT scope still stands and is why this rides
+    a page-scope fixture rather than `compile_document` — an adopted page's report is rebuilt and
+    its regions are not band-paired at all.
     """
-    p = tmp_path / "t.pdf"
-    border_only_grid_pdf(str(p))
+    p = tmp_path / "isolated_rows.pdf"
+    isolated_rows_grid_pdf(str(p))
     bands, rep = _bands_and_reports(p, datagrid_fallback=True)
     assert len(rep.regions) == len(bands) + 1, (
         "fixture drift: this page must reach the datagrid fallback, giving bands + 1 regions "

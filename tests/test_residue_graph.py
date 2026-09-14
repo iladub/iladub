@@ -85,7 +85,24 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     shows prose CONCEALING a status move by exactly cancelling it, so a reader must not take an
     unchanged count as evidence that no row changed status. [[R225]] stays out of the set for an
     unrelated reason, checked rather than assumed: it cites [[R44]], which is open. Measured by
-    recomputing `candidates` against the pre-edit tree and against this one."""
+    recomputing `candidates` against the pre-edit tree and against this one.
+    RE-MEASURED 2026-09-14 by the [[R225]] CLOSING loop: 91 -> 90, ADDED = [], REMOVED = [170] —
+    and the notable half is what did NOT move it. That loop closed TWO rows ([[R225]], [[R227]])
+    and raised TWO ([[R228]], [[R229]]), and not one of those four status changes altered any
+    row's candidacy: every row R225 neighbours still has another open neighbour, R227's only
+    neighbour R171 is open, and both new rows cite open rows so neither is structurally isolated.
+    The entire delta is [[R170]] leaving the set, and the cause is PROSE: R228's row cites R170
+    while recording that O3 — the standing detector for R170's 976 unguarded cells — was AMENDED
+    with measured `D1_MOVES` pins rather than loosened to `>=`. R170 was open and isolated (its
+    only other neighbour, R165, is closed) and gained an open neighbour by being mentioned. Third
+    instance of the mechanism the entries above call recurring — after R213 via R157 and R202 via
+    R224 — and the first where a loop's own NEW row de-candidates a row it merely CITED, rather
+    than an amendment doing it. **So a closing loop can move this count without closing anything,
+    and can close two rows without moving it at all**; read the delta by mechanism, never as
+    progress. Measured by recomputing `candidates` against `HEAD~2` (the tree before this loop
+    touched the register) and against this one, with the edge direction checked as well: R228's
+    row cites R170 and R170's does not cite R228, so the graph's undirected neighbour construction
+    is what carries it."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -99,4 +116,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 91
+    assert len(expected) == 90

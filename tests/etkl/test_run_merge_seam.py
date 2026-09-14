@@ -208,6 +208,37 @@ BASELINE_ASSERTED = {
 # EQUAL: `>=` alone would not catch a page that silently gained ink for the wrong reason.
 MERGE_MOVES = {("apple-fy2026q3-statements", 0), ("apple-fy2026q3-statements", 1)}
 
+# THE SECOND LEGITIMATE CAUSE OF A PAGE-SCOPE GAIN (R225 D1, 2026-09-14), kept as its own set
+# rather than folded into MERGE_MOVES, because the two causes are different claims and this
+# detector's whole value is telling them apart. D1 gives `_build_ruled_band` a resolution test, so
+# a band whose only intersecting rules are the page BORDERS is no longer re-bucketed into one
+# fused column — those bands now CLASSIFY, and a page that previously asserted nothing at page
+# scope asserts real ink.
+#
+# WHY NOT JUST RELAX THE EQUALITY TO `>=`. That is the easy edit and it destroys the test: the
+# equality clause is what catches a page silently gaining ink for the WRONG reason, which is the
+# standing hazard this test exists for ([[R170]] — `is_matrix_candidate` is the sole guard on 976
+# asserted cells it was never specified to guard). A detector that accepts every gain detects
+# nothing.
+#
+# MEASURED 2026-09-14 on branch `r225-d1-resolution-test` (D1 applied, guard verified), by
+# re-running O3's own 27-page table with `datagrid_fallback=False` exactly as the test does:
+# 3 of 27 pages move, all UP, and the other 24 are byte-equal on this counter.
+#
+#     bfs-population-bilan-2023 p5      16 -> 180     border-only bands now classify
+#     ons-index-of-services-2026-02 p7   0 -> 112     idem; the page also reports 216 escalated
+#     ons-index-of-services-2026-02 p8   0 ->  12     idem
+#
+# NB apple p0/p1 are NOT here although a naive sweep reports them rising (72 -> 172, 27 -> 98).
+# Their baselines are the PRE-MERGE readings (see the comment above BASELINE_ASSERTED: forced
+# `merged_run_admissible = False`), so 172/98 are the post-merge numbers that comment already
+# names, and MERGE_MOVES governs them. Adding them here would double-count one cause as two.
+D1_MOVES = {
+    ("bfs-population-bilan-2023", 5): 180,
+    ("ons-index-of-services-2026-02", 7): 112,
+    ("ons-index-of-services-2026-02", 8): 12,
+}
+
 # Every fragment compile.py mints, derived from its URIRef(f"{doc}#…") sites and
 # decisionlog.py's band prefix — NOT guessed. Longest alternatives first so `rhtable`
 # is not matched as `table`.
@@ -249,10 +280,19 @@ def test_o3_no_page_loses_asserted_ink_to_a_merge():
         if (stem, page) in MERGE_MOVES:
             assert rep.asserted > baseline, \
                 f"{stem} p{page}: the merge is supposed to move this page UP"
+        elif (stem, page) in D1_MOVES:
+            # R225 D1's three pages: pinned to their MEASURED figure, not merely allowed to
+            # rise. A `>` here would let any later gain through on a page that already has a
+            # licence to move, which is the hole the equality clause below exists to close.
+            assert rep.asserted == D1_MOVES[(stem, page)], \
+                f"{stem} p{page}: {rep.asserted} != {D1_MOVES[(stem, page)]} — this page's " \
+                f"gain is D1's (border-only bands now classify) and is pinned to its measured " \
+                f"value; a different number is a new cause, not this one"
         else:
             assert rep.asserted == baseline, \
-                f"{stem} p{page}: {rep.asserted} != {baseline} — the merge touches no " \
-                f"page but apple p0 and p1, so a change here is a defect, not a gain"
+                f"{stem} p{page}: {rep.asserted} != {baseline} — neither the merge (apple " \
+                f"p0/p1) nor D1 (see D1_MOVES) touches this page, so a change here is a " \
+                f"defect, not a gain"
 
 
 @corpus_only
