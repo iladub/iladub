@@ -37,19 +37,29 @@ from tests.etkl.fixtures import (
     crosstab_table_pdf,
     row_grouped_table_pdf,
     simple_table_pdf,
+    border_only_grid_pdf,
     transposed_table_pdf,
 )
 
 
-def _bands_and_reports(path, page=0):
+def _bands_and_reports(path, page=0, **compile_kw):
     """The band list `compile_tables` itself used, paired with the report it wrote for each.
 
-    `reports[i]` IS `bands[i]`: the compile loop appends exactly one report per band and derives
-    `tokens_*` by DIFFERENCING the running totals around each band's turn
-    (`src/iladub/etkl/compile.py:767-771`), so this pairing is an identity rather than an
+    `reports[i]` IS `bands[i]` FOR EVERY i < len(bands): the compile loop appends exactly one
+    report per band and derives `tokens_*` by DIFFERENCING the running totals around each band's
+    turn (`src/iladub/etkl/compile.py:767-771`), so this pairing is an identity rather than an
     alignment guess. The bands are CAPTURED from the compile call rather than re-derived, because
     `page_bands` takes `section_repair_bands` and a second independent call is only *probably* the
     same list.
+
+    PAIRED BY BAND INDEX, NOT BY EQUAL LENGTHS ([[R224]] I3, spec § 4). This helper used to assert
+    `len(bands) == len(rep.regions)`, which REFUSED the datagrid fallback's shape — reports =
+    bands + 1 — rather than checking it, and that refusal is one of the three reasons a defect
+    from 2026-08-09 survived to be found by measurement instead of by CI. The fallback appends ONE
+    region beyond the band loop, at index `len(bands)`, which by construction has NO band (this is
+    [[R202]]'s answer, and the band-index contract `document.py:1648` already relies on it). That
+    appended region is out of scope here and is checked by I1/I2 in
+    `test_fallback_region_books_and_names.py`; every caller below zips, so it is dropped.
     """
     from iladub.etkl import compile as C
 
@@ -57,16 +67,51 @@ def _bands_and_reports(path, page=0):
     real = C.page_bands
     C.page_bands = lambda *a, **kw: (lambda got: (seen.append(got), got)[1])(real(*a, **kw))
     try:
-        rep = C.compile_tables(str(path), page, validate_shapes=False)
+        rep = C.compile_tables(str(path), page, validate_shapes=False, **compile_kw)
     finally:
         C.page_bands = real
     assert len(seen) == 1, "expected exactly one page_bands call, saw %d" % len(seen)
-    assert len(seen[0]) == len(rep.regions)
+    assert len(rep.regions) in (len(seen[0]), len(seen[0]) + 1), (
+        "reports must be one per band, plus AT MOST the fallback's appended grid region: "
+        "%d bands, %d reports" % (len(seen[0]), len(rep.regions)))
     return seen[0], rep
 
 
 def _ink(band):
     return sum(len(ln.words) for ln in band.lines)
+
+
+def test_no_band_books_ink_it_does_not_hold_on_the_fallback_page(tmp_path):
+    """I3 ([[R224]], spec § 4) — the datagrid fallback must not book its grid's ink on a BAND.
+
+    THE DEFECT THIS PINS, measured on ons-index-of-services 2026-09-13: the branch added the
+    grid's tokens to `asserted_total` BEFORE appending its own `band_marks` entry, so the mark
+    that closes the LAST BAND's slot already contained them and the differencing at
+    `compile.py:1370` booked 285 words onto a 6-word IGNORED PROSE BAND (p8: 286 onto 4 words),
+    while the grid's own report booked 0. Totals were preserved exactly, which is why no score
+    moved and why the two sum identities (`test_datagrid.py:1149`,
+    `test_adoption_document.py:141`) stayed true throughout.
+
+    The IGNORED clause is the load-bearing one and it is two-sided. An ignored band books nothing
+    BY DESIGN — its ink is prose (`compile.py:801`) — so `tokens == 0` there is not a tautology
+    about this fixture but the exact statement the defect violated. Restoring the original
+    statement order makes this fail with 24 booked on a band the reader never claimed to read.
+    """
+    p = tmp_path / "t.pdf"
+    border_only_grid_pdf(str(p))
+    bands, rep = _bands_and_reports(p, datagrid_fallback=True)
+    assert len(rep.regions) == len(bands) + 1, (
+        "fixture drift: this page must reach the datagrid fallback, giving bands + 1 regions "
+        "(%d bands, %d reports)" % (len(bands), len(rep.regions)))
+    for i, (band, r) in enumerate(zip(bands, rep.regions)):
+        assert r.tokens_asserted + r.tokens_escalated <= _ink(band), (
+            "band %d books %d of the %d words it holds -- ink from the appended grid region "
+            "has been differenced onto it" % (i, r.tokens_asserted + r.tokens_escalated,
+                                              _ink(band)))
+        if r.verdict == "ignored":
+            assert r.tokens_asserted == 0 and r.tokens_escalated == 0, (
+                "band %d is IGNORED prose and must book nothing, but books %d+%d"
+                % (i, r.tokens_asserted, r.tokens_escalated))
 
 
 ASSERT_SITES = [

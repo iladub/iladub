@@ -1356,13 +1356,20 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                       if ln.words]
             _lines.sort(key=lambda ln: ln.top)
             _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
-            emit_data_grid(graph, _grid, _lines, doc, page_number)
+            _grid_uri = emit_data_grid(graph, _grid, _lines, doc, page_number)
             _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before
             _tokens = sum(len(_lines[i].words) for i in _grid.rows)
+            # CLOSE THE LAST BAND'S SLOT BEFORE this region's ink is added (R224 D2). The ledger
+            # snapshots at the TOP of each band's turn and differences, so the mark appended here
+            # is the one that closes band `len(bands)-1`; appending it AFTER `asserted_total +=
+            # _tokens` booked this grid's tokens onto that band — 285 words onto a 6-word ignored
+            # prose band on ons p7, 286 on p8 — while the grid's own report booked 0. Totals were
+            # preserved either way, which is why no score moved and no sum identity caught it.
+            band_marks.append((asserted_total, escalated_total))
             asserted_total += _tokens
             reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
-                                        None, str(TAB.DataGrid), ""))
-            band_marks.append((asserted_total, escalated_total))
+                                        None, str(TAB.DataGrid), "",
+                                        table_uri=_grid_uri))
 
     band_marks.append((asserted_total, escalated_total))
     from dataclasses import replace as _dc_replace
