@@ -75,10 +75,26 @@ measured and **refuted before implementation** — see spec § 4 D2, which now c
   bands: their own reading stands and is not superseded, so their ink is **asserted by the band**
   and belongs in `asserted_tokens` — widening only the residue term would book it as escalated and
   understate the page.
-- **It can land BEFORE D2 and be verified inert.** On any page adopting under today's gate
-  `asserted_total == 0`, so every band has `tokens_asserted == 0` and the widened predicate is
-  *identically* the current one — the control row measures exactly that. Ship it first, prove the
-  corpus byte-identical, and D2's own effects stay separable from it. **This is the next task.**
+- **DONE — the revision SHIPPED and was verified inert (`7f365ce`).** It landed ahead of D2 exactly
+  as argued, so D2's effects stay separable from it. Evidence: **7/7 corpus documents
+  byte-identical** to baseline by canonical graph hash (scores equal to 10dp); `test_adoption_ledger
+  .py` **9 passed** (7 existing + 2 new); and **falsification per term** — reverting `booked_bands`
+  to `tokens_escalated > 0` turns BOTH new tests red, while dropping only the untouched-asserted
+  term turns ONLY the second red, so each pins its own defect. After the change
+  `scripts/ledger_contract_census.py` shows `lost` falling to the prose floor on cbh p0 148→5,
+  apple p0 68→22, apple p1 64→21, ons p4 101→82; bfs p5/p6 retain 33 and 14 tokens, which is the
+  separately-recorded mixed assert-and-escalate under-booking, not this defect.
+  **The `_R` stub gained `tokens_asserted: int = 0` — a double restored to the production
+  `RegionReport` shape, NOT a weakened assertion:** on an escalate-only report both new terms are
+  identically zero, so every existing expectation is untouched. That the whole suite was
+  escalate-only is *why* this defect survived, so two assert-only tests were added rather than the
+  stub patched and the gap left standing.
+- **THE NEXT TASK IS NOW D2 PROPER**, in three parts, none of them started: narrowly widen the
+  closure in `vocab/queries/adoption-candidate.rq`; add the post-hoc **ink** refusal beside
+  `document.py:1650` / `:1663` (never a cell-count comparison — spec § 4 D2 records why that was
+  refuted on 12 pages, `graincorp-capacity` p0 among them at a perfect 1.0); and discharge § 1g by
+  superseding the contested asserting bands, or refusing the adoption where the grid would only
+  partly cover one. Only after all three is D1's placement re-judged, on readings.
 - **A SECOND obligation the ledger cannot discharge — spec § 1g.** `document.py:1672-1674`
   withdraws only *superseded* bands, so an asserting band's table would survive beside a grid
   region re-reading the same lines. Measured contested lines: graincorp-capacity p0 **27/27**
