@@ -24,9 +24,17 @@ from rdflib import RDF, URIRef
 
 from iladub.etkl.holon import TAB
 
-#: The pass-1 table of the ASSERTING band — minted under the page's own doc URI, which is the one
-#: the driver merged and therefore the one the withdrawal has to remove.
-BAND_TABLE = URIRef("https://example.org/etkl/doc#table1")
+#: The pass-1 table of the ASSERTING band, named the way the DRIVER mints it.
+#:
+#: IT WAS A HARD-CODED `https://example.org/etkl/doc#table1` FOR ONE COMMIT, AND THAT TEST PINNED
+#: NOTHING — the falsification run caught it (CLAUDE.md plan rule 4, whose own worked example is a
+#: test that passed with its subject deleted). That URI is what a PAGE-SCOPE `compile_tables` mints
+#: under the default doc URI; the document driver compiles each page under `page_doc_uri(p)`, so the
+#: name asserted-absent was a node that never existed in the merged graph under any behaviour, and
+#: removing the withdrawal left it passing.
+def _band_table(page=0):
+    from iladub.etkl.document import page_doc_uri
+    return URIRef(f"{page_doc_uri(page)}#table1")
 
 
 @pytest.fixture(scope="module")
@@ -52,12 +60,20 @@ def test_the_page_adopts_over_a_band_that_asserted(withdrawing_doc):
 def test_the_withdrawn_table_is_gone_from_the_document_graph(withdrawing_doc):
     """§1g's PIN. The asserting band's pass-1 table is not in the merged graph.
 
-    FALSIFICATION: delete the `graph -= _sub` loop in `document.py`'s adoption branch and this
-    fails with the table still present; restore it and it passes.
+    Stated TWICE on purpose, because the first form was vacuous (see `_band_table`): once by NAME,
+    and once as a POPULATION — the merged graph must hold no band table at all, the grid being
+    typed `tab:DataGrid` rather than `tab:RecordTable`. The population form is the one that cannot
+    go quietly vacuous if the driver's minting convention changes again.
+
+    FALSIFICATION (run 2026-09-14 in an isolated worktree): replace `graph -= _sub` with `pass` in
+    `document.py`'s adoption branch and BOTH assertions fail; restore it and they pass.
     """
     g = withdrawing_doc.graph
-    assert (BAND_TABLE, RDF.type, None) not in g, "the superseded band's table survived the merge"
-    assert not list(g.predicate_objects(BAND_TABLE)), list(g.predicate_objects(BAND_TABLE))
+    band_table = _band_table()
+    assert not list(g.predicate_objects(band_table)), list(g.predicate_objects(band_table))
+    survivors = sorted(set(g.subjects(RDF.type, TAB.RecordTable))
+                       | set(g.subjects(RDF.type, TAB.HierarchicalTable)))
+    assert not survivors, f"a band's table survived the merge beside the grid: {survivors}"
 
 
 def test_no_line_is_read_twice(withdrawing_doc):
