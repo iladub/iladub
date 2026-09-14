@@ -70,6 +70,25 @@ def _kind_refutations(chosen_name: str, reason: str | None) -> dict:
     return {name: reason for name in _KIND_REFUTED_BY_REASON.get(chosen_name, ())}
 
 
+def _word_column_count(sub) -> int | None:
+    """The band's OWN word structure as a column count — its gutter-profile leaf grid.
+
+    Taken on a RULES-FREE copy of the band deliberately: `infer_leaf_grid` short-circuits on
+    `_rule_boundaries` (grid.py:113) and would otherwise measure the author's drawn marks
+    against themselves, making any comparison with those same marks vacuous. The gutter path
+    is the only measure here that is independent of what was drawn.
+
+    None when the band carries no words (`infer_leaf_grid` raises ValueError), which is not a
+    refusal — a caller cannot compare against a measure that does not exist.
+    """
+    from .bands import Band
+    from .grid import infer_leaf_grid
+    try:
+        return infer_leaf_grid(Band(tuple(sub.lines), sub.top, sub.bottom)).ncols
+    except ValueError:
+        return None
+
+
 def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=False):
     """Construct the Band for a RULED sub-band. THE SEAM for the no-synthesised-Rule guard:
     tests call this directly, so the guard exercises production code, not a copy (attempt 1's
@@ -130,7 +149,18 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
         sub = _replace(sub, lines=kept_lines, top=kept_lines[0].top)
 
     band_chars = [c for c in page_chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
-    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
+    # R225 arm B — the author's marks may re-bucket this band only when they RESOLVE AT LEAST
+    # AS FINELY as the band's own word structure. `xs` of length 2 is an outer BOX, not a set of
+    # separators (`grid._rule_boundaries` already refuses exactly that shape for the leaf grid,
+    # "a frame is not a grid"), and re-bucketing on it can only FUSE, never split — contradicting
+    # this function's own docstring. Measured: 41 border-only bands corpus-wide lose every column.
+    # The comparison is ORDINAL, not a threshold, and carries no tuned constant — it is
+    # `datagrid.py:346`'s shape ("decoration wins only when it resolves at least as finely as
+    # alignment") applied at the one site that never consulted it.
+    _word_cols = _word_column_count(sub)
+    relines = (rule_aware_lines(band_chars, xs)
+               if len(xs) >= 2 and (_word_cols is None or len(xs) - 1 >= _word_cols)
+               else [])
     if relines:
         from .geometry import weld_hrule_boxes
         # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
