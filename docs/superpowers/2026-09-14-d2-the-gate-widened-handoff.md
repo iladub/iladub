@@ -101,6 +101,38 @@ belongs to the loop after this one, on readings.
 
 ---
 
+## FALSIFICATION — all five pins, and the one that pinned nothing
+
+CLAUDE.md plan rule 4, applied to this loop's own work. Each pin was inverted at its source, the
+CI-visible module re-run, and the source restored; the harness is
+`scratchpad/falsify.py` (session-local, and it restores in a `finally` so an interrupted run cannot
+leave inverted source behind).
+
+**Method, because the machine was busy:** the full `tests/etkl` suite was running in the main
+checkout, and every inversion patches a file it reads — the `.rq` especially, which is re-read from
+disk on *every* gate call. So the run happened in a **detached git worktree** at the commit under
+test, guarded by asserting that `iladub.etkl.compile.__file__` resolves *inside* the worktree: an
+editable install pointing at the main tree would have made every inversion invisible and every case
+report a false "still passes".
+
+| # | inverted | test | result |
+| --- | --- | --- | --- |
+| A | the `.rq`'s deleted `NOT EXISTS tab:EntryCell`, restored | `…adopts_over_a_band_that_asserted` | FAILS |
+| B | `compile.py`'s `asserted_total == 0` precondition, restored | same | FAILS |
+| C | the ordinal ink refusal, inverted (`<` → `>`) | same | FAILS |
+| D | § 1g's `graph -= _sub` replaced by `pass` | `…withdrawn_table_is_gone…` | FAILS *(see below)* |
+| E | the superseded band's zeroed `cells`/`table_uri`, restored | `…claims_no_cells_and_names_no_table` | FAILS |
+
+**CASE D FAILED TO FALSIFY ON THE FIRST RUN — "STILL PASSES — PINS NOTHING" — and that is the
+loop's own instance of the failure rule 4 exists to catch.** The test asserted the absence of
+`https://example.org/etkl/doc#table1`, which is what a PAGE-SCOPE `compile_tables` mints under the
+default doc URI; I had transcribed it from a page-scope probe. The driver compiles each page under
+`page_doc_uri(p)`, so the name asserted-absent existed in the merged graph under **no** behaviour and
+the assertion was true either way. Repaired in `91ff4cf` by naming the table through `page_doc_uri`
+**and** adding a population form — the graph must hold no `tab:RecordTable`/`tab:HierarchicalTable`
+at all — which cannot go vacuous if the minting convention moves again. The table above is the
+re-run against the repair.
+
 ## 1. Where the primaries are
 
 - **The spec** — `docs/superpowers/specs/2026-09-14-the-gate-not-the-predicate-design.md`; D2's
