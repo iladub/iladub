@@ -15,28 +15,66 @@ assertion-or-proposition so a reader can tell a mechanical step from a predictio
 
 ## 5. The next concrete action
 
-### 5a. RE-GRADED — was ASSERTED, is now **PROPOSED** in its first half: D1's placement must be settled BEFORE D2 is implemented.
+### 5a. D1 IS REVERTED AND ITS TWO PLACEMENTS ARE BOTH REFUTED. D2 comes first.
 
-**This grading was changed after the fact, by the session that wrote it, and the reason is on the
-record rather than tidied away.** When 5a was written, classification had not been run, and the
-action read as mechanical. Spec § 1e then measured a design defect in D1 itself, so the premise
-under "nothing depends on evidence that does not yet exist" was false when written — the evidence
-simply had not been gathered yet.
+**This section has been re-graded twice by the session that wrote it, and both corrections are
+left visible rather than tidied away.** It was first typed ASSERTED ("implement D2, it is
+mechanical"); then PROPOSED, when spec § 1e measured a design defect in D1; it is now a record of
+a *run* experiment, because the proposed placement was built and the corpus refuted it.
 
-**PROPOSED, and it must be RUN first:** that D1 belongs *after* `refine_rule_columns`, comparing
-against the derived `col_xs` rather than the raw `xs` of `compile.py:111`. Today D1's refusal
-returns at `compile.py:151` and skips refinement entirely, disabling [[R13]]'s closure. The
-proposed placement is unbuilt, and it may not work: D1's whole effect is to make the drawn and
-word measures agree, and refinement's candidates are judged by `confirmed_boundaries` on header
-ink, so a band may still under-resolve after refinement. **Build it, run the corpus pair and
-`test_header_confirmed_refinement`, and only then treat D1 as settled.**
+**BUILT AND REFUTED (`0e64a86`), so this is no longer a prediction.** Moving the resolution test
+onto the derived `col_xs`, so an under-resolving band reaches `refine_rule_columns` instead of
+returning at `compile.py:151`, **does** repair [[R13]]'s closure —
+`test_header_confirmed_refinement` goes green and the border-only fixture recovers four columns
+through that path. **The corpus refuted it anyway, worse than the placement it replaced:**
 
-**STILL ASSERTED, and unchanged by the above:** the D2 clause itself. The site is named — the
-closure in `vocab/queries/adoption-candidate.rq` (`FILTER NOT EXISTS { ?cell a tab:EntryCell ;
-tab:onPage ?page }`) — the two post-hoc refusals that stay are `document.py:1650` and `:1663`, and
-the comparison neither makes (*does the grid read strictly more than the bands did*) is the thing
-to add. Keeping it in the `.rq` keeps the decision an AXIOM, holon-scoped, the § 8 default.
-**Sequence:** settle D1's placement, then D2, then land them together per 5b.
+```
+                 base      first-D1   relocated
+  ons          0.9720       0.5407      0.1978     cells 571 / 389 / 118
+  bfs          0.4033       0.8435      0.4419     cells 274 / 773 / 423
+  (the five pinned documents are byte-identical under BOTH placements)
+```
+
+**And the failure mode was not the one this paragraph predicted.** It guessed bands might "still
+under-resolve after refinement". What actually happens: refinement confirms boundaries on ons p8
+and bfs p5, so those bands assert a *little* (p8: 6 cells; bfs p5: 156) instead of asserting
+**nothing** — and one asserted cell disqualifies the page from adoption. `adopted` goes `[8]`/`[5]`
+→ `[]`, and ons p8 falls 276 → 6 cells. The relocation **widens the very defect D2 exists to
+repair**, turning total reading failures (adoptable) into tiny partial readings (not adoptable).
+
+**Ruled 2026-09-14, reversing this section's original order: D2 FIRST.** Both placements are
+refuted *while D2 is absent*, and both through the same adoption clause, so iterating on D1
+measures gate accidents rather than readings. `compile.py` is back at its `10b09c5` state
+(`54c0edf`, verified: `_word_column_count` gone, 23 tests green); D1 is recoverable from `3ee9495`
+and `0e64a86`. Judge D1's placement **after** D2, on readings.
+
+**RE-GRADED AGAIN, 2026-09-14 (second correction): the D2 clause is NOT "still asserted".** It was
+typed ASSERTED on the strength of a predicate that had never been measured. It has since been
+measured and **refuted before implementation** — see spec § 4 D2, which now carries the evidence.
+
+- **The predicate was wrong.** *"The grid reads strictly more than the bands did"* has a baseline
+  population of **12 pages across every corpus document**, including all five with an adjudicated
+  `cor:scoreFloor` — `graincorp-capacity` p0 among them, which reads **perfectly (1.0)** today at
+  406 band cells against 432 grid cells. `compile.py:1334-1339` had already recorded why: the two
+  paths *segment* differently, and more cells is not a better reading.
+- **It must compare UNREAD INK**, which is what the gate already asks and what `build_ledger`
+  already computes.
+- **D2 is two changes, not one clause.** `is_adoption_candidate` runs on the pass-1 graph *before
+  any grid exists*, so `adoption-candidate.rq` can only widen narrowly; the comparison itself must
+  be a new post-hoc refusal beside `document.py:1650` / `:1663`.
+- **OPEN DESIGN QUESTION, and the real blocker:** widening the gate falsifies a premise
+  `build_ledger` states about itself (`adoption.py:52-54` — *"an adopting page is by definition one
+  where `asserted_total == 0`"*). On a page whose bands genuinely assert, the grid's admitted lines
+  and the bands' asserted ink are the same ink on both sides — R73's double count from the other
+  direction. **D2 must revisit the ledger's contract or state why it survives. This is unsettled
+  and is the first thing to settle.**
+- **Cost bounds the widening** (`document.py:1621-1625`): each candidate page pays a full extra
+  `compile_tables`, refusals included, plus whole-graph SHACL (41.3 s on the stem).
+
+**Sequence, per the maintainer's ruling of 2026-09-14 — this REVERSES what this paragraph used to
+say:** D2 **first**, measured alone against a baseline `compile.py` (already reverted, `54c0edf`),
+and only then is D1's placement judged on readings rather than on gate accidents. 5b still governs
+the merge: nothing lands until the pair passes the oracle together.
 
 ### 5b. ASSERTED: D1 must NOT merge alone, and CI will not stop it.
 
