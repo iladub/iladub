@@ -46,8 +46,28 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     `lines` is the page's own `text_lines(extract_words(...))` sequence, sorted by `top` — the
     SAME sequence `grid_rows` indexes into, which is what makes the join exact.
 
-    A band is ESCALATED here by what its report BOOKED — `tokens_escalated > 0` — never by the
-    verdict string that report carries. The string is not the authority: `compile.compile_tables`
+    A band is BOOKED here by what its report booked — `tokens_asserted + tokens_escalated > 0` —
+    never by the verdict string that report carries.
+
+    THE SELECTION WAS WIDENED 2026-09-14 (spec `2026-09-14-the-gate-not-the-predicate-design.md`
+    § 1f), from `tokens_escalated > 0` to any booked ink, because the narrower form rested on the
+    premise stated two paragraphs below and that premise does not survive a widened adoption gate.
+    MEASURED with a control (`scripts/ledger_contract_census.py`): a band that ASSERTS and does not
+    escalate entered neither the residue term nor the untouched term, so its unadmitted ink was
+    booked by NOBODY and the page scored higher than it read — 0 of 2 genuine adopting pages drop
+    such ink, against 5 of 12 pages whose bands assert (cbh p0 143 tokens, apple p0 46, apple p1
+    43, bfs p5 39, bfs p6 29).
+
+    The two terms need OPPOSITE treatments, which is why this is not one predicate change:
+    a TOUCHED band's unread lines become residue (escalated — the grid read part of it and the
+    band's record no longer describes what happened), while an UNTOUCHED band's reading still
+    stands and is superseded by nothing, so its asserted ink is ASSERTED BY THE BAND and is added
+    to `asserted_tokens`. Booking that ink as escalated instead would understate the page.
+
+    INERT UNDER TODAY'S GATE, which is how it ships ahead of the gate change and is verified
+    separately: an adopting page has `asserted_total == 0`, and `tokens_asserted` is non-negative,
+    so EVERY band on it has `tokens_asserted == 0` — the widened predicate is then identically the
+    old one and the added term is identically zero. The string is not the authority: `compile.compile_tables`
     has branches (its ruled-reading and row-role paths) that do
     `asserted_total += n; escalated_total += max(0, tokens - n)` while hard-coding the verdict to
     "asserted", and an adopting page is by definition one where `asserted_total == 0`, so any such
@@ -70,7 +90,8 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     """
     admitted = tuple(sorted(j for j in set(grid_rows) if 0 <= j < len(lines)))
     admitted_set = set(admitted)
-    escalated_bands = [i for i, r in enumerate(reports) if r.tokens_escalated > 0]
+    booked_bands = [i for i, r in enumerate(reports)
+                    if r.tokens_asserted + r.tokens_escalated > 0]
 
     def _inside(band, line):
         return band.top <= line.top <= band.bottom
@@ -83,13 +104,18 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     residue = tuple(
         j for j, ln in enumerate(lines)
         if j not in admitted_set
-        and any(i in touched and _inside(bands[i], ln) for i in escalated_bands)
+        and any(i in touched and _inside(bands[i], ln) for i in booked_bands)
     )
 
-    asserted_tokens = sum(len(lines[j].words) for j in admitted)
+    # An UNTOUCHED band keeps its own reading — nothing supersedes it — so ink it ASSERTED is
+    # asserted, by the band. Only its escalated half belongs on the other side.
+    asserted_tokens = (
+        sum(len(lines[j].words) for j in admitted)
+        + sum(reports[i].tokens_asserted for i in booked_bands if i not in touched)
+    )
     escalated_tokens = (
         sum(len(lines[j].words) for j in residue)
-        + sum(reports[i].tokens_escalated for i in escalated_bands if i not in touched)
+        + sum(reports[i].tokens_escalated for i in booked_bands if i not in touched)
     )
     return LineLedger(admitted, residue, touched, asserted_tokens, escalated_tokens)
 

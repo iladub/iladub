@@ -30,6 +30,12 @@ class _B:
 class _R:
     verdict: str
     tokens_escalated: int = 0
+    # Added 2026-09-14 with the ledger's widened band selection (spec § 1f). The production
+    # `RegionReport` has always carried both counters; this double carried only one, which is
+    # why every case below happens to be escalate-only and why an ASSERT-ONLY band's ink could
+    # vanish unnoticed. Defaulting to 0 leaves every existing expectation untouched — on a
+    # report that only escalates, both new terms are identically zero.
+    tokens_asserted: int = 0
 
 
 def _line(n_words, top):
@@ -130,3 +136,43 @@ def test_an_out_of_range_grid_row_is_dropped_not_aliased():
     assert led.admitted == (0,)
     assert led.asserted_tokens == 1
     assert led.escalated_tokens == 0
+
+
+# --- the ASSERT-ONLY band (spec 2026-09-14 § 1f). Every case above this line gives its
+# reports escalated ink, which is precisely why a band that ASSERTS and does not escalate
+# could lose its ink with nothing going red. Measured on the corpus before these were
+# written: 5 of 12 pages whose bands assert dropped such ink, against 0 of 2 genuine
+# adopting pages (scripts/ledger_contract_census.py).
+#
+# NB this is a DIFFERENT case from test_a_band_that_booked_escalated_ink_under_an_asserted
+# _verdict_still_counts above, which pins a band whose VERDICT STRING reads "asserted"
+# while its booked ink is escalated. Here the booked ink itself is asserted.
+
+def test_a_touched_assert_only_bands_unread_lines_become_residue():
+    """The grid read part of an ASSERTING band, so that band's record no longer describes
+    what happened to its ink — its unread lines are residue, exactly as an escalating
+    band's would be. Selecting bands by `tokens_escalated > 0` dropped them from residue
+    AND from the untouched term at once, and the page scored higher than it read."""
+    lines = [_line(2, 10.0), _line(3, 20.0)]
+    bands = [_B(0.0, 30.0)]
+    reports = [_R("asserted", 0, 5)]          # asserts 5, escalates nothing
+    led = build_ledger(lines, (0,), bands, reports)
+    assert led.touched == frozenset({0})
+    assert led.admitted == (0,)
+    assert led.residue == (1,), "the unread line of a touched ASSERTING band is residue"
+    assert led.asserted_tokens == 2           # the grid read line 0
+    assert led.escalated_tokens == 3          # line 1 went unread by anyone
+
+
+def test_an_untouched_assert_only_band_keeps_its_ink_on_the_ASSERTED_side():
+    """An untouched band is superseded by nothing, so its reading stands and its ink is
+    asserted BY THE BAND. Booking it as escalated would understate the page — the mirror
+    image of the defect above, and the reason the revision is two terms and not one."""
+    lines = [_line(2, 10.0), _line(3, 90.0)]
+    bands = [_B(0.0, 50.0), _B(80.0, 100.0)]
+    reports = [_R("escalated", 2), _R("asserted", 0, 7)]
+    led = build_ledger(lines, (0,), bands, reports)
+    assert led.touched == frozenset({0})
+    assert led.residue == ()
+    assert led.asserted_tokens == 2 + 7, "band 1's own asserted count carries, on the asserted side"
+    assert led.escalated_tokens == 0, "and none of it is booked as escalated"
