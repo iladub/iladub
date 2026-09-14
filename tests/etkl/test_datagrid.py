@@ -876,8 +876,11 @@ def test_effective_chain_binds_chosen_for_the_admission_verdict():
 ONS_P = os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")
 
 
-@pytest.mark.skipif(not os.path.exists(ONS_P), reason="corpus not fetched")
-def test_fallback_fires_only_where_the_page_produced_nothing_at_all():
+# NO corpus gate any more: re-pointed at `isolated_rows_grid_pdf` 2026-09-14, this runs on every
+# push. Keeping the old `skipif(not os.path.exists(ONS_P))` would have hidden in CI exactly the
+# coverage [[R228]] was raised about losing — the fallback branch had NO synthetic witness at all
+# between R224 authoring one and this fixture replacing it.
+def test_fallback_fires_only_where_the_page_produced_nothing_at_all(tmp_path):
     """ons page 7 asserted nothing AND escalated nothing — a degenerate 1.0 over an empty
     reading. The data grid gives it 276 real cells.
 
@@ -888,28 +891,43 @@ def test_fallback_fires_only_where_the_page_produced_nothing_at_all():
     escalation-path tests failed because a second region appeared where they had pinned
     exactly one.
 
-    RETIRED 2026-09-14 ([[R225]] D1, recorded as [[R228]]) — the premise is gone, not the claim.
+    RE-POINTED 2026-09-14 ([[R225]] D1, [[R228]]) — the WITNESS moved, the claim did not, and it
+    was RETIRED FOR HALF A DAY ON A CLAIM THAT TURNED OUT TO BE FALSE.
 
-    This test's subject is the fallback GATE, and its setup requires a page that produces
-    "nothing at all". ons p7 was that page only because [[R225]]'s fusion defect re-bucketed its
-    border-only bands into one column, so they classified `NON_TABLE / fewer than 2 columns` and
-    asserted nothing. D1 repairs the fusion: measured on this branch, ons p7 at page scope now
-    reads **112 asserted / 216 escalated**, so `off.asserted == 0` is false by construction and
-    the gate never opens.
+    ons p7 witnessed this only because [[R225]]'s fusion defect re-bucketed its border-only bands
+    into one column: they classified `NON_TABLE / fewer than 2 columns` and asserted nothing. D1
+    repairs the fusion, so ons p7 now reads 112 asserted / 216 escalated at page scope and the
+    gate cannot open there. Nor can the assertion follow [[R224]]'s I1 onto ADOPTION, which exists
+    only at document scope while this one is page scope.
 
-    IT CANNOT BE RE-POINTED the way [[R224]]'s I1 was. The surviving route is ADOPTION, which
-    exists only at DOCUMENT scope (`compile_document`), while this assertion is page scope
-    (`compile_tables`) — there is no adoption to observe here. Post-D1 the fallback has zero live
-    corpus instances and four candidate replacement fixtures all failed to reach the gate, with a
-    counting argument for why none can ([[R228]]).
-
-    The gate itself is deliberately NOT deleted (§ Producer-side guards vs the membrane: provable
-    total coverage first), so the claim stays true and untestable, and that is what [[R228]]
-    records.
+    SO IT WAS RETIRED — and the reason given was that NO fixture can reach the gate post-D1, on
+    four failed candidates plus a counting argument: the gate needs every >= 2-run row isolated in
+    a <= 1-line band, `datagrid.py:341` needs >= 2-run rows to be the "modal" signature, and
+    `bands.py:37-52` splits only above 1.8x the MEDIAN gap, whose small gaps can come only from
+    multi-line single-run bands. **That argument is REFUTED.** It read "modal" as majority-by-count;
+    `datagrid.py:337` maximises `len(s) * counts[s]`, so 8 two-run rows score 16 against 10
+    one-run rows' 10 and the two-column universe wins. `isolated_rows_grid_pdf` is the fifth shape
+    (one tall prose band supplying the small gaps, then 8 isolated data rows), it draws NO rules —
+    so D1's comparison never runs and cannot repair the mechanism out from under it — and it
+    reaches the gate. The argument was graded a proposition rather than a theorem precisely so
+    this could happen.
     """
-    pytest.skip("R228: D1 repairs ons p7's fused bands (112 asserted / 216 escalated), so the "
-                "fallback gate's 'nothing at all' premise no longer holds and no fixture "
-                "reaches it — see residues-open.md R228")
+    from iladub.etkl.compile import compile_tables
+    from tests.etkl.fixtures import isolated_rows_grid_pdf
+
+    p = tmp_path / "isolated_rows.pdf"
+    isolated_rows_grid_pdf(str(p))
+
+    off = compile_tables(str(p), 0, validate_shapes=False, datagrid_fallback=False)
+    on = compile_tables(str(p), 0, validate_shapes=False, datagrid_fallback=True)
+
+    assert off.asserted == 0 and off.escalated == 0, (
+        "fixture drift: the gate is NOTHING-AT-ALL, so this page must neither assert nor "
+        "escalate; got %d asserted / %d escalated" % (off.asserted, off.escalated))
+    assert sum(r.cells for r in off.regions) == 0
+    assert sum(r.cells for r in on.regions) == 16, (
+        "the fallback must supply the reading the bands did not: expected 16 cells, got %d"
+        % sum(r.cells for r in on.regions))
 
 
 @stem_only
@@ -958,18 +976,28 @@ def test_fallback_leaves_the_adjudicated_document_byte_identical():
     assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 586
 
 
-@corpus_only
-def test_fallback_output_passes_full_shacl_through_the_production_path():
+# `@corpus_only` DROPPED 2026-09-14 with the re-point: the subject is now a synthetic page, so the
+# SHACL-through-production claim holds the line on every push instead of only where the gitignored
+# corpus is present.
+def test_fallback_output_passes_full_shacl_through_the_production_path(tmp_path):
     """validate_shapes=True is the gate the pipeline applies to any asserted holon.
 
-    RETIRED 2026-09-14 ([[R225]] D1, recorded as [[R228]]), for the same reason as its sibling
-    above: it drives ons p7 through the page-scope fallback, which D1 shuts by making that page's
-    bands classify. The SHACL claim underneath is not lost — the adoption route carries the same
-    grid through `compile_document`, whose seal validates the merged graph
-    (`document.py` § THE SEAL), and ons p7/p8 still emit 276 cells each there.
+    RE-POINTED 2026-09-14 ([[R225]] D1, [[R228]]), for the same reason as its sibling above: ons
+    p7 no longer reaches the page-scope fallback, but `isolated_rows_grid_pdf` does — reaching it
+    by construction rather than by R225's defect, and drawing no rules so D1 cannot invalidate it.
+    Retired for half a day on the "no fixture can reach the gate" argument that the fifth shape
+    refuted; see the sibling's docstring for the mechanism (`len(s) * counts[s]`, not majority).
+
+    The adoption route's own SHACL is NOT this test's subject and is unaffected: that rides
+    `compile_document`'s seal, where ons p7/p8 still emit 276 cells each.
     """
-    pytest.skip("R228: the page-scope fallback route is unreachable post-D1; the grid's SHACL "
-                "now rides the adoption route's document seal — see residues-open.md R228")
+    from iladub.etkl.compile import compile_tables
+    from tests.etkl.fixtures import isolated_rows_grid_pdf
+
+    p = tmp_path / "isolated_rows_shacl.pdf"
+    isolated_rows_grid_pdf(str(p))
+    rep = compile_tables(str(p), 0, validate_shapes=True, datagrid_fallback=True)
+    assert sum(r.cells for r in rep.regions) == 16
 
 
 # --- R72: an empty reading must not score perfect ---------------------------------

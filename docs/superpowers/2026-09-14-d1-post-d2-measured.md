@@ -199,6 +199,38 @@ single-run bands. That requires #prose-lines > #large-gaps ~ #data-rows AND #dat
 #prose-lines at once. **This is a proposition**: it is a counting argument over three shipped
 mechanisms, not a proof, and one candidate outside these four could still refute it.
 
+> ## REFUTED THE SAME DAY, BY THE FIFTH SHAPE — and the grading is why it was cheap
+>
+> **The argument is WRONG, and precisely at the word "modal".** It read modal as
+> majority-by-count. `datagrid.py:337` maximises **`len(s) * counts[s]`** — runs times rows — so 8
+> two-run rows score **16** against 10 one-run rows' **10**, and the two-column universe wins
+> without the data rows being anywhere near a majority. The contradiction I derived (#prose-lines >
+> #data-rows *and* #data-rows > #prose-lines) simply does not bind.
+>
+> **Candidate E, measured, D1 applied:** one TALL prose band — 10 single-word lines at a 14pt pitch
+> — supplying NINE small gaps so `detect_bands`' median is 14 and its threshold 25.2; then 8 data
+> rows each behind a 60pt gap, so each becomes its own single-line band. Result: **9 bands, all
+> ignored** (prose band "fewer than 2 columns", each data band "fewer than 2 lines"),
+> `asserted=0 escalated=0` so **the gate opens**, `derive_data_grid` -> `rows=8 cols=2`, and with
+> the fallback on **10 regions = bands + 1** carrying **16 cells** on `…#p0-datagrid` — booking
+> **16** tokens, naming its table, with every ignored band booking **0**. `validate_shapes=True`
+> passes on the same shape. **It draws NO rules at all**, so `len(xs) >= 2` is false, D1's
+> comparison never runs, and the mechanism cannot be repaired out from under this fixture the way
+> it was from under `border_only_grid_pdf`.
+>
+> Shipped as `isolated_rows_grid_pdf`, with all ten of its docstring's claims verified against the
+> committed function (0 false). **Three tests come back off the retired list** — the fallback-gate
+> test, the SHACL-through-production test, and [[R224]]'s I3 — and both `test_datagrid` ones lose
+> their corpus gates, so they now hold the line on every push rather than only where the
+> gitignored corpus is present. **R72's witness A stays retired**: `page_has_table` is False on
+> this page and the corpus-wide sweep found no table page that reads nothing, which is a separate
+> and still-measured finding.
+>
+> **The lesson is about the grade, not the error.** This was labelled a proposition and ordered to
+> be run before anything was built on it; it cost one probe to refute and turned a permanent
+> coverage loss into restored CI coverage. Had it shipped as a theorem, [[R228]] would have
+> justified deleting a branch on reasoning that was wrong at one word.
+
 **[[R227]] 5b, argument half — CLOSED by reading, no corpus needed.** A third supersession hop is
 unreachable by construction: there are exactly two writers (`document.py:1563` section repair,
 `:1827` adoption); repair is the pass at `:1513` and adoption a strictly later pass at `:1665`;

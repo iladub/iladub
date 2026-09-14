@@ -2224,6 +2224,68 @@ def border_only_grid_pdf(path: str) -> dict:
     return {"cols": cols, "n_rows": len(rows), "n_cols": len(cols), "rule_xs": [54.0, 540.0]}
 
 
+def isolated_rows_grid_pdf(path: str) -> dict:
+    """[[R228]]'s replacement for `border_only_grid_pdf` — reaches the datagrid fallback WITHOUT
+    relying on [[R225]]'s fusion defect, so D1 cannot invalidate it.
+
+    WHY THE SIBLING ABOVE DIED. `border_only_grid_pdf` tripped `compile.py:1351` by BEING R225's
+    defect: two page-border verticals made `_build_ruled_band` fuse its rows into single tokens,
+    the band classified `NON_TABLE / fewer than 2 columns`, and nothing asserted. D1 (the
+    resolution test) repairs that fusion, so that page now reads completely through its bands
+    (`RECORD_TABLE`, 20 cells, score 1.0, ONE region) and the gate never opens. It is kept, not
+    deleted, because the branch it guards is kept.
+
+    HOW THIS ONE REACHES THE GATE, and it rests on no defect at all. **No rules are drawn**, so
+    `len(xs) >= 2` is false and D1's comparison never runs — the mechanism cannot be repaired out
+    from under this fixture the way it was from under its sibling. The page is then shaped so that
+    EVERY band is legitimately ignored while the PAGE-WIDE grid still reads:
+
+      * one TALL prose band — 10 single-word lines at a 14pt pitch — contributing NINE small gaps,
+        so `detect_bands`' median gap is 14 and its 1.8x threshold is 25.2 (`bands.py:37-52`);
+      * then 8 data rows, each preceded by a 60pt gap, so each exceeds 25.2 and becomes its OWN
+        single-line band.
+
+      Prose band -> `NON_TABLE / fewer than 2 columns`; each data band -> `NON_TABLE / fewer than
+      2 lines`. All ignored, so `asserted_total == 0 and escalated_total == 0` and the gate opens.
+
+    THE STEP THAT REFUTED THE "UNCONSTRUCTIBLE" ARGUMENT. R228 first claimed no such page could
+    exist, reasoning that the grid needs >= 2-run rows to be the *modal* row signature while the
+    median-gap split needs single-run prose lines to outnumber them. That treated "modal" as
+    majority-by-count; `datagrid.py:337` actually maximises `len(s) * counts[s]`, so 8 two-run rows
+    score **16** against 10 one-run rows' **10** and the two-column universe wins. The argument was
+    graded a proposition rather than a theorem, and this fixture is what refuted it.
+
+    MEASURED on this shape 2026-09-14 (D1 applied): 9 bands (10 + 1x8 lines); `derive_data_grid`
+    -> `rows=8 cols=2 universe=UniformGrid`; `datagrid_fallback=False` -> `asserted=0 escalated=0`,
+    9 regions, 0 cells, score 1.0; `datagrid_fallback=True` -> **10 regions = bands + 1**, the
+    appended region `RECORD_TABLE asserted cells=16 tokens=16` naming `…#p0-datagrid`, and EVERY
+    ignored band booking 0 of the ink it holds; `validate_shapes=True` passes on the same shape.
+
+    WHAT IT CANNOT WITNESS, measured rather than assumed: `page_has_table` is **False** here and
+    the page scores 1.0, so this is NOT a witness for [[R72]]'s "a table page that read nothing
+    must not score 1.0" direction. A corpus-wide sweep found NO such witness post-D1, and that
+    half stays retired under [[R228]].
+    """
+    prose = ("Overview", "Background", "Methodology", "Coverage", "Revisions",
+             "Definitions", "Sources", "Contact", "Notes", "Annex")
+    rows = [("2019", "101.4"), ("2020", "102.7"), ("2021", "103.9"), ("2022", "104.2"),
+            ("2023", "105.6"), ("2024", "106.1"), ("2025", "107.8"), ("2026", "108.3")]
+    cols = [80.0, 300.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    y = PAGE_H - 100.0
+    for word in prose:                      # the 9 small gaps that set the median
+        c.drawString(cols[0], y, word)
+        y -= 14.0
+    for a, b in rows:                        # each behind a gap > 1.8x that median
+        y -= 60.0
+        c.drawString(cols[0], y, a)
+        c.drawString(cols[1], y, b)
+    c.save()
+    return {"cols": cols, "n_prose": len(prose), "n_rows": len(rows),
+            "n_bands": 1 + len(rows), "n_cells": len(rows) * len(cols)}
+
+
 def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
     """R87 TASK 3 FIXTURE — the only synthetic shape that both ESCALATES and opens
     `document.py:1515`'s validation gate.
