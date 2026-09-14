@@ -178,7 +178,8 @@ seam, not only ONS.
 resolves and which are pinned figures that must be re-derived and re-justified — and § 4's task
 list is incomplete by exactly that amount.
 
-All three break on a **fixture-drift precondition**, never on their substance
+**Those three** — the single failure and two errors in the two runs quoted at the top of this
+section, not the twelve above — break on a **fixture-drift precondition**, never on their substance
 (`test_read_band_books_every_word.py:103`, `test_fallback_region_books_and_names.py:68`, both of
 the form *"this page must reach the datagrid fallback"*). The invariant underneath — no band books
 ink it does not hold — still passes.
