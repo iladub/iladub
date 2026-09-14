@@ -254,13 +254,55 @@ invariants, and the falsifying oracle.
   this is a comparison of two already-derived measures in procedural code, mirroring a shipped
   precedent — **the plan must state that classification explicitly and justify it against the
   AXIOM default**, or move it.
-- **D2 — the gate, re-derived.** The admission question becomes comparative rather than absolute:
-  a page whose grid reads **strictly more** than its bands did may be adopted, and the existing
-  post-hoc refusals at `document.py:1650` (no grid region) and `:1663` (superseded no band) stay
-  as they are. **Neither of those compares completeness**, so the comparison is new and must be
-  added beside them, not assumed from them. The clause to change is the closure in
-  `vocab/queries/adoption-candidate.rq`, which keeps the decision an **AXIOM, holon-scoped** —
-  the § 8 default — rather than moving it into Python.
+- **D2 — the gate, re-derived. THE FORM BELOW IS CORRECTED; the first draft of this bullet was
+  refuted by measurement before it was implemented.** It said: *a page whose grid reads strictly
+  more than its bands did may be adopted.* Measured at baseline, that predicate has a population
+  of **12 pages spanning every corpus document**, including all five that carry an adjudicated
+  `cor:scoreFloor`:
+
+  ```
+  cbh p0            13 -> 1000      graincorp-capacity p0   406 -> 432      (this page scores 1.0)
+  graincorp-stem p0 586 -> 855      apple p0/p1/p2          124->155, 56->84, 3->87
+  who-wfa p0/p1/p2  268->325 ...    bfs p5/p6               ons p4  19 -> 150
+  ```
+
+  **More cells is not a better reading, and the code already said so** before this spec was
+  written: `compile.py:1334-1339` records that the two paths *segment* cells differently (on the
+  stem, 441 shared, 59 old-only, 51 new-only) and that replacing wholesale "would churn the one
+  document with an adjudicated floor for no measured gain". A cell-count comparison would fire on
+  `graincorp-capacity` p0, which reads **perfectly today**.
+
+  **The predicate must be about UNREAD INK, not cell counts** — which is what the existing gate
+  actually asks ("did this page read *nothing*") and what `adoption.build_ledger` already computes
+  exactly (`admitted` / `residue` / `asserted_tokens` / `escalated_tokens`).
+
+  **D2 is therefore structurally TWO changes, not one clause.** `is_adoption_candidate` runs on
+  the pass-1 graph, **before any grid exists**, so it cannot compare against grid ink at all: the
+  closure in `vocab/queries/adoption-candidate.rq` can only be widened *narrowly*, and the actual
+  comparison must be a new post-hoc refusal beside `document.py:1650` and `:1663`, where the grid
+  and the ledger are both in hand. Neither existing refusal compares ink, so the comparison is new.
+
+  **COST, which constrains how far the candidate gate may widen** (`document.py:1621-1625`): every
+  candidate page pays one extra full `compile_tables`, *including pages that then refuse*, and an
+  adoption switches on whole-graph SHACL (41.3 s on the stem). Widening the candidate gate to the
+  12 pages above would add twelve page-compiles plus SHACL to every corpus run. The widening must
+  stay as narrow as the defect it repairs.
+
+  **AND IT BREAKS A PREMISE `build_ledger` STATES ABOUT ITSELF — read this before reusing it.**
+  Its docstring (`adoption.py:52-54`) says: *"an adopting page is by definition one where
+  `asserted_total == 0`, so any such band reached adoption with `n == 0` and carries real
+  escalated ink under an 'asserted' label."* That premise is **why** it selects `escalated_bands`
+  by `tokens_escalated > 0` rather than by the verdict string. Widening the candidate gate
+  **falsifies the premise**: on a page whose bands genuinely assert, the grid's `admitted` lines
+  and the bands' own asserted ink are the same ink counted on both sides — precisely the double
+  count R73 exists to prevent, arriving from the other direction. **D2 must therefore revisit the
+  ledger's contract in the same change, or state why it survives.** Not doing so is how this
+  repair becomes the defect it is repairing.
+
+  **Where each quantity comes from, since they are NOT in the same place.** `LineLedger` carries
+  `asserted_tokens` for the **grid** only. The band-side quantity is `RegionReport.tokens_asserted`
+  (`compile.py:491-507`), summed over the page's regions the way `document.py:1542` already does
+  it. An implementer reaching for the ledger alone will not find the number the comparison needs.
 - **D3 — a replacement fixture for the fallback branch,** since D1 destroys R224's. **Measured
   constraint, recorded because the obvious design is impossible:** a page whose bands are *all*
   one line cannot be built — `detect_bands` splits where a gap exceeds `1.8 ×` the **median** gap
