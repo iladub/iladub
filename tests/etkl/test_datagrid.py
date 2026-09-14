@@ -886,14 +886,30 @@ def test_fallback_fires_only_where_the_page_produced_nothing_at_all():
     escalation and double-counts the same tokens on both sides of the ratio. Both were
     measured: apple page 1 reported 0.5941 under the broader gate, and four
     escalation-path tests failed because a second region appeared where they had pinned
-    exactly one."""
-    from iladub.etkl.compile import compile_tables
+    exactly one.
 
-    off = compile_tables(ONS_P, 7, validate_shapes=False, datagrid_fallback=False)
-    on = compile_tables(ONS_P, 7, validate_shapes=False, datagrid_fallback=True)
-    assert off.asserted == 0 and off.escalated == 0
-    assert sum(r.cells for r in off.regions) == 0
-    assert sum(r.cells for r in on.regions) == 276
+    RETIRED 2026-09-14 ([[R225]] D1, recorded as [[R228]]) — the premise is gone, not the claim.
+
+    This test's subject is the fallback GATE, and its setup requires a page that produces
+    "nothing at all". ons p7 was that page only because [[R225]]'s fusion defect re-bucketed its
+    border-only bands into one column, so they classified `NON_TABLE / fewer than 2 columns` and
+    asserted nothing. D1 repairs the fusion: measured on this branch, ons p7 at page scope now
+    reads **112 asserted / 216 escalated**, so `off.asserted == 0` is false by construction and
+    the gate never opens.
+
+    IT CANNOT BE RE-POINTED the way [[R224]]'s I1 was. The surviving route is ADOPTION, which
+    exists only at DOCUMENT scope (`compile_document`), while this assertion is page scope
+    (`compile_tables`) — there is no adoption to observe here. Post-D1 the fallback has zero live
+    corpus instances and four candidate replacement fixtures all failed to reach the gate, with a
+    counting argument for why none can ([[R228]]).
+
+    The gate itself is deliberately NOT deleted (§ Producer-side guards vs the membrane: provable
+    total coverage first), so the claim stays true and untestable, and that is what [[R228]]
+    records.
+    """
+    pytest.skip("R228: D1 repairs ons p7's fused bands (112 asserted / 216 escalated), so the "
+                "fallback gate's 'nothing at all' premise no longer holds and no fixture "
+                "reaches it — see residues-open.md R228")
 
 
 @stem_only
@@ -944,11 +960,16 @@ def test_fallback_leaves_the_adjudicated_document_byte_identical():
 
 @corpus_only
 def test_fallback_output_passes_full_shacl_through_the_production_path():
-    """validate_shapes=True is the gate the pipeline applies to any asserted holon."""
-    from iladub.etkl.compile import compile_tables
+    """validate_shapes=True is the gate the pipeline applies to any asserted holon.
 
-    rep = compile_tables(ONS_P, 7, validate_shapes=True, datagrid_fallback=True)
-    assert sum(r.cells for r in rep.regions) == 276
+    RETIRED 2026-09-14 ([[R225]] D1, recorded as [[R228]]), for the same reason as its sibling
+    above: it drives ons p7 through the page-scope fallback, which D1 shuts by making that page's
+    bands classify. The SHACL claim underneath is not lost — the adoption route carries the same
+    grid through `compile_document`, whose seal validates the merged graph
+    (`document.py` § THE SEAL), and ons p7/p8 still emit 276 cells each there.
+    """
+    pytest.skip("R228: the page-scope fallback route is unreachable post-D1; the grid's SHACL "
+                "now rides the adoption route's document seal — see residues-open.md R228")
 
 
 # --- R72: an empty reading must not score perfect ---------------------------------
@@ -973,21 +994,60 @@ def test_an_unread_table_page_no_longer_scores_perfect():
 
     Now the grid gate decides: prose keeps 1.0 (nothing to read), a table that yielded no
     cells scores 0.0 (failed to read). Which is also what finally makes the data grid's
-    contribution visible as a score."""
+    contribution visible as a score.
+
+    RE-POINTED 2026-09-14 ([[R225]] D1). R72's claim is separable from the page that used to
+    witness it, and only the witness moved.
+
+    ons p7 was the witness because [[R225]]'s fusion defect left it reading nothing; D1 repairs
+    that (112 asserted / 216 escalated at page scope), so p7 can no longer play "a table page
+    that read nothing", and the two fallback assertions it used to carry are retired with their
+    siblings ([[R228]]). What survives, and is what R72 was actually about, is the GATE's two
+    directions — a table page that reads nothing must not score 1.0, and a prose page must.
+    ONLY THE PROSE HALF SURVIVES, and which half survives was MEASURED, not chosen. R72 is a
+    two-directional claim about the score gate, and the two directions need different witnesses:
+
+        A  page_has_table TRUE  + reads nothing  -> score 0.0   (a table nobody could read)
+        B  page_has_table FALSE + reads nothing  -> score 1.0   (prose, nothing to read)
+
+    Corpus-wide sweep of all 27 pages under D1 (`scratchpad/witness_search.py`, every page's
+    `page_has_table` / asserted / escalated printed):
+
+        WITNESS A: **NONE FOUND**
+        WITNESS B: 8 pages — bfs p1/p2/p3, ons p1/p2/p3/p5/p6, all scoring 1.0
+
+    So A's witness is gone with ons p7's repair and no other page replaces it: post-D1 every
+    corpus page that reads nothing is a page `page_has_table` calls prose. A's assertion is
+    therefore retired into [[R228]] with the fallback tests, and B is asserted below on ons p1 —
+    with a drift-guard, because a witness that stops witnessing must fail loudly rather than
+    quietly pass.
+
+    A DRAFT OF THIS DOCSTRING NAMED ons p5 AS WITNESS A, "measured", AND THAT WAS FABRICATED.
+    `page_has_table(ons, 5)` is False. The asserted/escalated halves of that claim came from the
+    O3 sweep; the `page_has_table` half was never run and was written from reasoning. It is
+    recorded here rather than silently corrected, because a test whose docstring asserts a
+    measurement nobody took is the defect CLAUDE.md § Plan authoring discipline rule 2 exists to
+    prevent, and it would have failed at its own precondition.
+    """
     from iladub.etkl.compile import compile_tables
+    from iladub.etkl.datagrid import page_has_table
 
     p = os.path.join(CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")
-    unread = compile_tables(p, 7, validate_shapes=False, datagrid_fallback=False)
-    assert unread.asserted == 0 and unread.escalated == 0
-    assert unread.score == 0.0, "a table page that read nothing must not score 1.0"
 
-    read = compile_tables(p, 7, validate_shapes=False, datagrid_fallback=True)
-    assert sum(r.cells for r in read.regions) == 276
-    assert read.score == 1.0
-
-    prose = compile_tables(p, 0, validate_shapes=False, datagrid_fallback=False)
-    assert prose.asserted == 0 and prose.escalated == 0
+    assert not page_has_table(p, 1), (
+        "witness drift: ons p1 must still be PROSE for the 1.0 half of R72 to mean anything")
+    prose = compile_tables(p, 1, validate_shapes=False, datagrid_fallback=False)
+    assert prose.asserted == 0 and prose.escalated == 0, (
+        "witness drift: ons p1 no longer reads nothing (%d asserted / %d escalated) — pick "
+        "another prose page from the sweep (bfs p1/p2/p3, ons p2/p3/p5/p6)"
+        % (prose.asserted, prose.escalated))
     assert prose.score == 1.0, "a prose page has nothing to read and is not a failure"
+
+    # ons p0 WAS this half's witness and no longer is — measured on this branch: it ESCALATES 16
+    # tokens and scores 0.0, so it is not a page that "reads nothing" at all. That is independent
+    # of D1 (p0's figures are identical at baseline); the original test simply asserted it as a
+    # standing fact. Its two assertions used to sit here and are deleted rather than re-pointed,
+    # because the sweep above supplies eight valid B witnesses and ons p1 is now the one asserted.
 
 
 # --- the fourth oracle: a page the pipeline ESCALATES ------------------------------

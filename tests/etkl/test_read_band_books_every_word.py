@@ -96,22 +96,36 @@ def test_no_band_books_ink_it_does_not_hold_on_the_fallback_page(tmp_path):
     BY DESIGN — its ink is prose (`compile.py:801`) — so `tokens == 0` there is not a tautology
     about this fixture but the exact statement the defect violated. Restoring the original
     statement order makes this fail with 24 booked on a band the reader never claimed to read.
+
+    RETIRED 2026-09-14 (R225 D1) — NOT re-pointed, and the distinction is the point.
+
+    Its two siblings in `test_fallback_region_books_and_names.py` (I1: a claiming region books
+    ink; I2: it names a table) were RE-POINTED at the adoption route, because those claims were
+    never about the fallback as such. **This one cannot follow them.** Its subject is the region
+    appended BEYOND the band loop at index `len(bands)` — the thing that made `reports = bands +
+    1` — and it pins that such a region's ink is not differenced onto the band below it. At
+    document scope there is no such region: the adopted page's report is REBUILT, and its regions
+    are the superseded bands, the grid and the residue, which are not band-paired at all
+    (measured on the adopting fixture: 4 regions over 2 bands). `zip(bands, rep.regions)` has no
+    meaning there, so the assertion has no subject rather than a moved one.
+
+    Nor can it keep its own fixture: `border_only_grid_pdf` reached the gate by BEING R225's
+    defect, so D1 repairs the page into a complete band reading (`RECORD_TABLE`, 20 cells, score
+    1.0, ONE region) and the fallback never opens. Four replacement shapes were drawn and none
+    reaches the gate, with a counting argument for why none can
+    (`docs/superpowers/2026-09-14-d1-post-d2-measured.md` § 3).
+
+    So the invariant is true and unreachable, and that is recorded as [[R228]] rather than left
+    silent — per the standing instruction in the loop's own spec § 7. The fallback branch itself
+    is deliberately NOT deleted (§ Producer-side guards: provable total coverage first; "no
+    instance today" is not that proof), and `border_only_grid_pdf` is kept for the same reason.
+
+    AN EXPLICIT SKIP, NOT AN EMPTY BODY. A test function whose body is only a docstring PASSES,
+    which would leave a green test pinning nothing — the exact failure CLAUDE.md plan rule 4
+    exists to catch. `pytest.skip` makes the retirement visible in every run instead.
     """
-    p = tmp_path / "t.pdf"
-    border_only_grid_pdf(str(p))
-    bands, rep = _bands_and_reports(p, datagrid_fallback=True)
-    assert len(rep.regions) == len(bands) + 1, (
-        "fixture drift: this page must reach the datagrid fallback, giving bands + 1 regions "
-        "(%d bands, %d reports)" % (len(bands), len(rep.regions)))
-    for i, (band, r) in enumerate(zip(bands, rep.regions)):
-        assert r.tokens_asserted + r.tokens_escalated <= _ink(band), (
-            "band %d books %d of the %d words it holds -- ink from the appended grid region "
-            "has been differenced onto it" % (i, r.tokens_asserted + r.tokens_escalated,
-                                              _ink(band)))
-        if r.verdict == "ignored":
-            assert r.tokens_asserted == 0 and r.tokens_escalated == 0, (
-                "band %d is IGNORED prose and must book nothing, but books %d+%d"
-                % (i, r.tokens_asserted, r.tokens_escalated))
+    pytest.skip("R228: the datagrid fallback is unreached post-D1 and this invariant has no "
+                "document-scope subject — see the docstring and residues-open.md R228")
 
 
 ASSERT_SITES = [
