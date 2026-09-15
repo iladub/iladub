@@ -1,7 +1,9 @@
 """Loop H — the author's hrules are the row delimiters (residue R4, de-fusion half).
 
 group_wrapped absorbs a line as a wrap-continuation when its columns are a proper subset of the
-anchor's, it is partial, and the gap < lead. A SUPPRESSED-KEY data row and a subtotal row are both
+anchor's, it is partial, and the gap is tighter than EVERY row boundary the band certifies
+(`gap < tightest_row_gap`; the `gap < lead` median gate was retired by R208, commit 0133362).
+A SUPPRESSED-KEY data row and a subtotal row are both
 proper-subset partial rows — the suppressed-key convention IS the false-absorption trigger
 (measured on a real report: three source lines fused into one record, '20,000 20,000 20,000' as
 one cell). But the author draws every real row boundary: 35/54 line pairs carry an hrule, and the

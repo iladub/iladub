@@ -90,10 +90,12 @@ def test_shipped_pivot_unaffected_by_a_proposer(tmp_path):
 def test_caption_wrap_report_escalates_without_a_proposer(tmp_path):
     # THE RED CONDITION for the whole NEURAL slice: a leaked date caption (row 0) whose two
     # words' symmetrized spans overlap (the level-0 overlap mechanism), plus a wrap-continuation
-    # fragment ('Unit') above the Ref column, over UNIFORM line spacing (header leading == body
-    # leading, defeating header_rows_of's adaptive `gap < lead` wrap-absorption -- the
-    # fixture-tuned `0.9 x lead` margin was already retired in B3, 2026-07-22, commit 947f6fa;
-    # here `lead` itself equals the gap, so even the adaptive gate cannot fire). Without a
+    # fragment ('Unit') above the Ref column, over UNIFORM line spacing (a wrap sitting at the
+    # same pitch as a certified row boundary, defeating header_rows_of's wrap-absorption -- the
+    # gate is `gap < tightest_row_gap`, the minimum over the band's certain pairs, since R208
+    # (commit 0133362); the `gap < lead` median gate and the `0.9 x lead` margin are retired.
+    # Here the certified gap equals the candidate gap, so the strict comparison cannot fire).
+    # Without a
     # proposer this must genuinely escalate MERGE_AMBIGUOUS -- proving the fixture actually
     # needs the slice.
     p = os.path.join(str(tmp_path), "caption_wrap.pdf")

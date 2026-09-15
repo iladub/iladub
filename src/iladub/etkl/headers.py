@@ -409,15 +409,22 @@ def header_rows_of(band: Band, grid: LeafGrid, body_line: int) -> list:
     governs the wrap-continuation threshold — correctly absorbing tight (SI) lines into their
     parent sub-header cells rather than producing a spurious extra level.
 
-    KNOWN LIMIT (the reason loop C exists): group_wrapped's wrap-continuation gate is the adaptive
-    median inter-line gap `gap < lead` (the fixture-tuned `0.9 x lead` margin was retired in B3,
-    2026-07-22, commit 947f6fa — see cells.group_wrapped's docstring). Even that adaptive gate
-    cannot fire when the header's leading EQUALS the body's leading (measured on the GrainCorp
-    report: header wrap gaps 6.6pt against a band `lead` of 6.48pt — `6.6 < 6.48` is false; the
-    synthetic fixture uses uniform 12pt spacing — `12 < 12` is false), so wrap-continuation rows survive as
-    separate rows. This is a reading judgment, not a threshold to tune further — which row is a
-    wrap fragment is decided by the NEURAL row-role proposer (rowrole.py) once the resulting tree
-    fails to tile.
+    KNOWN LIMIT (the reason loop C exists): group_wrapped's wrap-continuation gate is
+    `gap < tightest_row_gap` — the MINIMUM gap over the band's CERTAIN pairs, not a median
+    (R208, 2026-09-10, commit 0133362; the earlier `gap < lead` median gate, and the
+    fixture-tuned `0.9 x lead` margin before it, are BOTH retired — see cells.group_wrapped's
+    docstring for the derivation). The gate cannot fire when a wrap sits at the same pitch as a
+    row boundary the band itself certifies, because the comparison is strict: measured on the
+    GrainCorp report, header wrap gaps of 6.6pt against certified row gaps of 6.48pt; on the
+    synthetic fixture, uniform 12pt spacing; and LIVE on ons p4's boxhead, where the band's own
+    spanning→leaf boundary certifies 12.00pt and its wrap continuations sit at exactly 12.00pt, so
+    `12.00 < 12.00` is false. Wrap-continuation rows then survive as separate rows. That residual
+    is R208's own, accepted and named (spec 2026-09-10 § 4, HONEST LIMIT (b): "at uniform pitch a
+    noise floor remains") — a gap indistinguishable from a certified row boundary IS a row, so the
+    AXIOM declines rather than guesses. Which row is a wrap fragment is then a reading judgment,
+    not a threshold to tune, and is decided by the NEURAL row-role proposer (rowrole.py) once the
+    resulting tree fails to tile. NB that proposer is NOT always reached: on ons p4 the truncated
+    tree satisfies merge_tiling_ok, so the tiling failure that gates it never occurs (R234).
 
     Using row[0].top (not max) is safe because header rows are compact; if the first
     (leftmost-column) cell precedes body_top, the row is a header row.
