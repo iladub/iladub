@@ -119,23 +119,52 @@ top **and** inside the first body row's padded extent. The whole 25×6 table is 
 vertical placement of two stub words — and those two words are only ambiguous *because* the
 boxhead's last two lines were typed as body rows in the first place.
 
-## 5. The documented `gap < lead` limit is NOT the mechanism here
+## 5. CORRECTED IN-LOOP — the wrap gate IS the mechanism, and it fires at exactly equal pitch
 
-`header_rows_of`'s KNOWN LIMIT says wrap-continuation rows survive as separate rows when the
-header's leading equals the body's, because the adaptive gate `gap < lead` cannot fire (measured
-on GrainCorp: 6.6 against 6.48). **That condition does not hold on this band** — every boxhead gap
-is comfortably below lead:
+**This section originally claimed the documented limit was absent. That was wrong twice, and the
+correction is the finding.** It is corrected in place because the loop is not closed (PR #229 open,
+CI pending); nothing here was ever on `main`.
+
+**Error 1 — the wrong threshold.** `header_rows_of`'s KNOWN LIMIT (`headers.py:412-420`) names the
+gate as `gap < lead`. **That gate was retired** by [[R208]] (`0133362`, 2026-09-10): the operative
+gate is now `gap < tightest_row_gap`, the *minimum* gap over the band's CERTAIN pairs
+(`cells.py`, `group_wrapped`). The docstring is stale — raised as [[R235]].
+
+**Error 2 — the wrong gaps.** `group_wrapped` measures **top-to-top** (`tops[i+1] - tops[i]`). The
+figures first published here (`1.92`, `-4.08`, `1.92` against a `lead` of `10.32`) were
+bottom-to-top, a different statistic, and the `-4.08` is the tell: a negative "gap" is what you get
+subtracting a *composite* line's bottom, not a real overlap. The correct measurement:
 
 ```
-band lead (median positive inter-line gap) = 10.3200
-  line0 -> line1: gap=  1.9200   gap < lead ? True
-  line1 -> line2: gap= -4.0800   gap < lead ? True
-  line2 -> line3: gap=  1.9200   gap < lead ? True
-  line3 -> line4: gap= 10.3200   gap < lead ? False    <- boxhead ends, body pitch begins
-  body pitch (lines 4..8): [10.32, 10.32, 10.32, 10.32]
+TOP-TO-TOP lead=20.64   hrules=0
+certain pairs: 27 of 28   tightest_row_gap=12.00   (certified by pair j=1)
+
+  j=1 gap= 12.00 <tight? False | cols_j=[0..5] anchor=[2,3,4,5] | subset? False fewer? False | CERTAIN
+  j=2 gap= 12.00 <tight? False | cols_j=[2,3,4,5] anchor=[0..5] | subset? True  fewer? True  | candidate
+  j=3 gap= 12.00 <tight? False | cols_j=[2,3,4,5] anchor=[2,3,4,5]| subset? True fewer? False | CERTAIN
+  j=4 gap= 20.40 <tight? False | cols_j=[0..5] anchor=[2,3,4,5] | subset? False fewer? False | CERTAIN
 ```
 
-The gate's stated blocker is absent, and the wrap rows were still not absorbed:
+**So the documented limit is PRESENT, not absent — in its exact stated form.** The genuine wrap
+candidate is `j=2`: it passes condition 2 (`subset ✓`) and condition 3 (`fewer ✓`), so it is
+structurally a wrap. It is refused **only** by the gap test, and by nothing at all: its gap is
+`12.00` against a threshold of `12.00`, and `12.00 < 12.00` is false.
+
+**The threshold is set by the boxhead itself.** `tightest_row_gap` is certified by pair `j=1` — the
+boundary between the spanning row (`Sections G & I -…`, 4 columns) and the leaf row (`Date IoS…`,
+6 columns). That pair is CERTAIN by construction because line 1 tiles *more* columns than its
+anchor, so `partial_of` is false. The boxhead's own internal header/sub-header boundary therefore
+publishes a 12.00 row gap, and the wrap continuations sit at exactly that same 12.00 pitch.
+
+This is precisely the failure the stale docstring describes — *"the synthetic fixture uses uniform
+12pt spacing — `12 < 12` is false"* — and precisely the residual [[R208]]'s own spec § 4 accepted as
+HONEST LIMIT (b): *"At uniform pitch a noise floor remains."* **The AXIOM is behaving correctly by
+its own design:** a gap indistinguishable from a certified row boundary *is* a row, evidence-positive
+per CLAUDE.md § 8. It refuses to guess, which is right — and it means the composition can only come
+from the NEURAL proposer, which § 3 shows is locked out. **The two findings compose: the AXIOM
+correctly declines, and the NEURAL path that exists to take over cannot be reached.**
+
+The wrap rows were therefore not absorbed:
 
 ```
 group_wrapped -> 29 cell-rows for 29 lines        <- ZERO absorption
@@ -152,8 +181,8 @@ labels: with `split=4`, `header_rows_of` would keep rows 0-3 and `_tree_from_row
 labels for six columns, wrong in a new way. The labels are only recoverable by **composing** rows
 1-3 top-to-bottom, which is `build_row_reading`'s job, which § 3 shows is locked out.
 
-**Why `group_wrapped` absorbed nothing despite `gap < lead` holding on all three gaps is
-UNMEASURED.** It is the single most useful next measurement and this loop did not run it.
+**Why `group_wrapped` absorbed nothing is MEASURED, above:** the sole refusal is `12.00 < 12.00`
+being false, against a threshold the boxhead's own first pair certifies. No other condition failed.
 
 ## 6. Method, and the guard carried from the previous loop
 

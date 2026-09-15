@@ -59,14 +59,23 @@ siblings, so each lands in a header slot **and** in the first body row — viola
 of two stub words, and they are ambiguous only *because* the boxhead's last two lines were typed
 body in the first place.
 
-### 5c. PROPOSED — the next measurement is why `group_wrapped` absorbed nothing, and it is cheap
+### 5c. ANSWERED IN-LOOP — and it refuted this section's own first draft
 
-**Rests on a reading of one function's behaviour that may not survive contact.** `group_wrapped`
-returned **29 cell-rows for 29 lines** — zero absorption — although the documented blocker for its
-wrap gate is *absent* here: all three boxhead gaps (1.92, −4.08, 1.92) are well below the band
-lead (10.32), where `headers.py`'s KNOWN LIMIT describes failure when the gap *equals or exceeds*
-lead (GrainCorp: 6.6 against 6.48). **So the gate's stated condition is satisfied and it still did
-not group.** Why is unmeasured.
+**This was typed PROPOSED, the prediction was run before the loop closed, and it came back
+refuted.** The first draft claimed the documented wrap limit was *absent* here. It is **present, in
+its exact stated form**, and the draft was wrong twice: it cited `gap < lead`, a gate [[R208]]
+retired on 2026-09-10 (`0133362`) in favour of `gap < tightest_row_gap` — the stale docstring is
+raised as [[R235]] — and it measured bottom-to-top gaps when `group_wrapped` measures top-to-top.
+
+Measured correctly: `tightest_row_gap = 12.00`, certified by pair `j=1`. The genuine wrap candidate
+`j=2` **passes both structural conditions** (`subset ✓`, `fewer ✓`) and is refused by the gap test
+alone — `12.00 < 12.00` is false. The threshold is published by the boxhead's *own* spanning→leaf
+boundary, and the wrap continuations sit at exactly that pitch.
+
+**The AXIOM is correct by its own design** — a gap indistinguishable from a certified row boundary
+*is* a row ([[R208]] spec § 4 HONEST LIMIT (b), *"at uniform pitch a noise floor remains"*). It
+declines to guess. **So the two findings compose:** the AXIOM rightly refuses, and the NEURAL path
+built to take over from it (§ 5b) cannot be reached.
 
 This matters before any remedy, because it kills the obvious fix: **repairing the split alone
 would not work.** With `split=4`, `header_rows_of` keeps rows 0-3 and `_tree_from_rows` takes
@@ -123,8 +132,15 @@ inherited unchanged and **not re-derived** here.
 
 ## 3. Unverified or assumed
 
-- **§ 5c entirely**, per its grading. Nobody has measured why `group_wrapped` emits one row per
-  line on this band.
+- **§ 5c was typed PROPOSED and has since been RUN** (in-loop, pre-merge) — so it is no longer
+  unverified, and it refuted its own first draft. What that leaves unverified is narrower and
+  sharper: the at-pitch refusal is measured on **this band only**. Whether other documents carry a
+  boxhead whose own spanning→leaf boundary certifies the same pitch as its wrap continuations is
+  **unmeasured**, and [[R208]]'s spec measured 0 of 30 corpus candidates in the analogous window —
+  *absence on that corpus, not evidence of absence*.
+- **The AXIOM-is-correct reading is an interpretation, not a measurement.** That `12.00 < 12.00`
+  is false is measured; that refusing is the *right* behaviour rests on [[R208]]'s design argument,
+  which this loop read rather than re-derived.
 - **Single band, single page, single document.** Whether other documents carry stub labels set
   lower than their spanning siblings (§ 5b's mechanism) or boxheads `group_wrapped` declines to
   absorb (§ 5c) is unmeasured. *A repair measured on one page is a hypothesis about a corpus.*
