@@ -5,9 +5,12 @@ R44 (residues-open.md:39) records, from the 2026-08-04 corpus battery:
 
     2x KIND_NOT_SUPPORTED, 2x REGION_TILING_FAILED, 5x ROUND_TRIP_FAIL
     score 0.3438, chains [1,1,1,1,1,1,1], 8 RECORD_TABLE regions asserting
+    -- quoted verbatim; every figure in it was read 2026-08-20 at 820ab24
 
-Its score is ALREADY KNOWN STALE (bfs reads 0.4033 today), so every other figure on that row
-is suspect until re-measured. This prints today's reading field by field beside the row's.
+That 0.3438 is a reading of bfs-population-bilan-2023 taken 2026-08-20, and it is FOUR readings
+stale: the manifest records 0.4033149171270718 on 2026-09-08 and again on 2026-09-12, then
+0.889055472263868 and 0.8850746268656716 on 2026-09-14. Every other figure on that row is
+therefore suspect until re-measured. This prints today's reading field by field beside the row's.
 
 THE CONTROL, per the 2026-09-15 repair #3 (an instrument that cannot find a known positive is
 low-power and must say so). Three known positives recorded INDEPENDENTLY of this script: the score
@@ -18,10 +21,11 @@ non-zero. The control is not self-validating: every figure comes from a differen
 measurement, not from this file's own prose.
 
 THE SCORE LEG READS THE MANIFEST RATHER THAN A LITERAL, and that is a repair, not a preference.
-Its first version asserted a hard-coded 0.4033 and FAILED against a correct measurement, because
-that literal was two readings stale — the very defect `cor:reading` exists to prevent, committed
-inside the instrument built to catch that class. A control pinned to a literal goes stale exactly
-as the row it is checking did.
+Its first version asserted a hard-coded 0.4033 — a reading of bfs-population-bilan-2023 taken
+2026-09-08 and 2026-09-12 — and FAILED against a correct measurement, because that literal was two
+readings behind the 2026-09-14 pair. That is the very defect `cor:reading` exists to prevent,
+committed inside the instrument built to catch that class. A control pinned to a literal goes
+stale exactly as the row it is checking did.
 
 COUNTED BY VERDICT CLASS, and the split is the whole point. A first version counted
 `verdict == "escalated"` alone and reported ROUND_TRIP_FAIL as having fallen 5 -> 1. It has not:
@@ -69,10 +73,11 @@ BFS_SUBJECT = "urn:iladub:corpus:bfs-population-bilan-2023"
 def recorded_readings() -> list[tuple[str, str, str]]:
     """Every score this repo has RECORDED for bfs, newest last: (value, readAt, atCommit).
 
-    The score leg of this script's control read a hard-coded 0.4033 on its first run and FAILED
-    against a correct measurement, because that literal was two readings stale — the very defect
-    `cor:reading` exists to prevent (a figure carries its date). A control pinned to a literal
-    goes stale exactly as the row it is checking did, so it reads the refresh log instead.
+    The score leg of this script's control read a hard-coded 0.4033 on its first run — a reading
+    of bfs-population-bilan-2023 taken 2026-09-08 and 2026-09-12 — and FAILED against a correct
+    measurement, because that literal was two readings behind the 2026-09-14 pair. That is the
+    very defect `cor:reading` exists to prevent (a figure carries its date). A control pinned to a
+    literal goes stale exactly as the row it is checking did, so it reads the refresh log instead.
     """
     from rdflib import Graph, URIRef
 
