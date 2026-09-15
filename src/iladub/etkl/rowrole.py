@@ -7,11 +7,13 @@ only as a PromotionDecision proposition (§3).
 
 Why NEURAL and not geometry: loop B proved a leaked caption and a genuinely-ambiguous off-center
 merge are structurally identical (both are overlapping top rows), so no geometric peel is sound;
-and even headers.header_rows_of's adaptive `gap < lead` wrap gate (the tuned `0.9 x lead` margin
-was already retired in B3, 2026-07-22, commit 947f6fa) cannot fire when a document's header
-leading equals its body leading (measured on GrainCorp: 6.6pt wrap gaps vs a 6.48pt band `lead`,
-so `6.6 < 6.48` is false). Both are reading
-judgments — a threshold, adaptive or not, cannot decide them.
+and even headers.header_rows_of's wrap gate — `gap < tightest_row_gap`, the MINIMUM over the
+band's certain pairs (R208, 2026-09-10, commit 0133362; the earlier `gap < lead` median gate and
+the `0.9 x lead` margin before it are both retired) — cannot fire when a wrap sits at the same
+pitch as a row boundary the band itself certifies, the comparison being strict (measured on
+GrainCorp: 6.6pt wrap gaps against 6.48pt certified row gaps; and live on ons p4, where
+`12.00 < 12.00` is false). Both are reading
+judgments — a threshold, adaptive or derived, cannot decide them.
 
 The honest limit (spec §2 Finding 5): tiling CANNOT discriminate 'furniture' from 'continuation' —
 both readings tile, and both conserve (furniture text is carried as a caption). That residue is
