@@ -295,3 +295,114 @@ visible as a correction. Three statements above were true when written and are f
 **What is NOT corrected, deliberately.** § 5a's finding is still **6 of 6 sampled out of 28 real
 cuts**, and § 5d's arm (a) is still typed **PROPOSED** — the ruling chose it without running it. Those
 are limits of the evidence, not stale wording, and they must survive into the next loop.
+
+---
+
+## 8. THE PREDICTION WAS RUN — arm (a) is REFUTED, and the loop was re-ruled
+
+§ 6 ordered the prediction run before any spec, and said that a refuted arm means **revisiting the
+ruling rather than implementing**. It was run the same day. Both of § 6's questions came back
+**confirmed** — and the arm is dead anyway, for a reason neither question asked.
+
+### 8a. Both § 6 questions: CONFIRMED
+
+**Question 1 — does the refusal-set proposer propose `T=1` on ONS p4 band 0?** Yes, exactly:
+
+```
+ons p4 b0  lines=32  rules=0  T=1
+    cut line 31 (page idx 31) [unplaceable]  'Source: Index of Services estimate from the Office for National Statis…'
+```
+
+The walk stopped at 1, so it is the **only** trailing refusal there, as predicted.
+
+**Question 2 — does it refuse to cut the 12 live bands?** Yes, all 12:
+
+```
+who p0 b3,b4,b5 / p1 b3,b4,b5 / p2 b2   asserted   T=0  safe   ('1: 0 12 0.0644 9.6479 …' z-score rows)
+bfs p5 b9,b10,b11,b12                   escalated  T=0  safe   ('Thurgovie 289 650 2 750 …' canton rows)
+apple p2 b2                             escalated  T=0  safe
+```
+
+Only 2 live bands would be cut at all (`bfs p6 b1`, `ons p4 b2`), and both are `T == nlines`
+annihilations that the ≥2-keep guard (below) refuses. **Arm (a) is provably safe.**
+
+### 8b. And it is a NO-OP. That is the refutation
+
+```
+full band (today)                  lines=32  ncols=1  NON_TABLE          'fewer than 2 columns'
+TRAILING-ONLY  T=1   <- arm (a)    lines=31  ncols=1  NON_TABLE          'fewer than 2 columns'
+leading-only   L=6                 lines=26  ncols=3  UNSUPPORTED_TABLE
+BOTH  L=6, T=1                     lines=25  ncols=6  UNSUPPORTED_TABLE
+```
+
+A trailing-only cut changes **nothing** — same `ncols`, same kind, same reason, band still ignored.
+The leading furniture is what closes the gutters.
+
+**The error, named so it is not repeated:** census #1 reported p4's best cut as `(2,1)` and marked it
+*"trailing REQUIRED"*. § 5d and the ruling both read *required* as *sufficient*. **Required ≠
+sufficient.** The trailing cut is necessary and useless alone.
+
+### 8c. What survives, measured: the BOTH-ENDS refusal walk
+
+Cut the contiguous run of grid-REFUSED lines from **both** ends of a **rules-free** band, keeping
+**≥ 2 lines**. Corpus-wide:
+
+```
+BOTH-ENDS refusal walk, RULES-FREE only, >=2 lines kept
+ons p4 b0  lines=32  L=6 T=1   ncols 1->6   kind NON_TABLE->UNSUPPORTED_TABLE
+      FIRST KEPT LINE: 'Jan 2024 -0.1 -0.3 0.2 0.1 -0.2'
+rules-free bands cut by the BOTH-ENDS walk: 1
+```
+
+Exactly **one** band corpus-wide, deriving precisely the cut that works, with **no tuned constant**.
+Page-scope effect is already measured (§ 5a): `0.5278 → 0.8863`, region 0 ignored → asserted, 168
+cells.
+
+### 8d. Two corrections this run forces on earlier sections
+
+1. **§ 5a's "6 of 6 sampled" header-eating is NOT a property of the rule.** "Refused from the top"
+   and "first admitted row" are the **same bound** — every page line is either admitted or refused —
+   so the two are not alternatives at all. All six header-eating bands were **RULED** bands, outside
+   the design's rules-free scope. Within that scope the walk fires once and cuts no header anywhere.
+   § 5a's *measurement* stands; its implication for this design does not.
+2. **The ≥2-keep guard is load-bearing, not cosmetic.** Without it the walk annihilates **25 of 26**
+   rules-free bands it touches (whole-band deletions: `Apple Inc.`, `GRAINCORP SHIPPING STEM`,
+   `Notes`, `Page 5 of 7`). With it, 25 become abstentions and `apple p2 b2` (4 lines, `L=3`) is
+   saved from decapitation. **It is not a tuned constant** — `classify` already returns
+   NON_TABLE `"fewer than 2 lines"`, so a band below 2 has no grid by the pipeline's own definition.
+
+**Option B is refuted too, as unconstructible.** Bounding `L` by the derived boxhead is circular:
+`header_body_split(band, grid)` returns **`None`** at `ncols=1`, and `ncols=1` is the condition that
+makes the band need cutting. You need the grid to find the header and the header cut to get the grid.
+
+### 8e. RE-RULED 2026-09-15 — build the both-ends refusal walk
+
+The maintainer re-ruled after seeing 8a–8d: **build the both-ends refusal walk** (rules-free scope,
+≥2-keep guard). The population-of-one price was already accepted in § 6 and is unchanged; what
+changed is that the mechanism now demonstrably works.
+
+**NOT BUILT. No spec, no plan, no code** — this session is at ~3x the originating floor and a spec
+written here is a draft the next session re-derives. The build wants a cleared context.
+
+**What the next session inherits, and it is more than § 6 gave:** the mechanism is no longer a
+prediction. It is measured end to end — proposer, guard, scope, population, and page-scope effect.
+What remains genuinely unbuilt is the *wiring*: where in `page_bands` the walk runs (the rules-free
+branch at `compile.py:437-438` — the `if not sub_rules:` guard and the `bands.append(...)`
+it protects, re-measured AFTER this sentence was written rather than before — which today
+bypasses every peel), how the cut lines are carried
+(`Band.captions` books **zero** tokens, and p4 b0 is currently ignored so its ink is unbooked either
+way — but that must be re-checked, not inherited), and the regression pair
+(`tests/etkl/test_continuation_licence.py`, `tests/etkl/test_logical_arithmetic.py`), whose fixtures
+are ruled except `simple_table_pdf`.
+
+**Reproduce 8b in four lines** — no fixture needed:
+
+```python
+import dataclasses
+from iladub.etkl.compile import page_bands
+from iladub.etkl.grid import infer_leaf_grid
+P = "corpus/gov-stats/ons-index-of-services-2026-02.pdf"
+b0 = page_bands(P, 4)[0]; L = list(b0.lines)
+for nm, ls in [("full", L), ("T=1", L[:-1]), ("L=6", L[6:]), ("both", L[6:-1])]:
+    print(nm, infer_leaf_grid(dataclasses.replace(b0, lines=tuple(ls))).ncols)
+```
