@@ -132,3 +132,39 @@ self-validating**: "the mechanism does nothing" and "the mechanism never ran" pr
 numbers, and only a diagnostic that inspects the artifact distinguishes them. The previous loop's
 own lesson — *a repair measured on one page is a hypothesis about a corpus* — has a twin here: **a
 refutation measured through one seam is a hypothesis about the code.**
+
+---
+
+## 9. RULED — 2026-09-15, by the maintainer: the refutation is accepted, R234 is the next subject
+
+§ 5a put § 8e's re-ruling back to the maintainer, and § 2's table recorded the question as
+**undecided**. It is now decided: **the refutation is ACCEPTED. The both-ends refusal walk is NOT
+to be built**, and [[R234]] — the four-line wrapped boxhead — is the next subject.
+
+**Appended, not edited.** Evidence is append-only after loop close (CLAUDE.md § Documentation
+governance), so § 5a's "only the maintainer can close it" and § 2's "undecided" stay exactly as
+written. This section records that someone else closed it, which is the same shape the previous
+handoff used for its own § 6 and § 8.
+
+**What the ruling does NOT license.** § 5c is still typed **PROPOSED** and that grade survives the
+ruling — choosing the subject does not run its prediction. Nobody has measured whether a multi-line
+boxhead reader is constructible on this band, and the obvious route was already found circular
+(`header_body_split` returns `None` at `ncols=1`, § 8d Option B). `(2,1)` changes that starting
+condition without proving it.
+
+**The next session's order of work:**
+
+1. **RUN THE MEASUREMENT FIRST, before any spec** (§ 5c): with `ons p4 band 0` cut `(L,T)=(2,1)`,
+   does `header_body_split` return a split at all, and do the four header lines yield **6**
+   recoverable labels? If it abstains, [[R234]] is a different problem than it looks — **write that
+   and hand back; do not weaken the mechanism to make it pass.**
+2. Only then write the spec. The closing condition is on [[R234]]'s row: ons p4's 25x6 table
+   asserting under six **non-numeric** column labels, with a test pinning that no `tab:HeaderNode`
+   label on a p4 table is numeric.
+3. Inherit the two measured wiring facts in the evidence § 6 (the merge partition cannot be
+   perturbed; any such cut must precede `compile.py:447`), and translate by ink key, never
+   `offset + j` ([[R233]], now measured live).
+
+**NOT STARTED.** No spec, no plan, no code for [[R234]]. A loop is a session (CLAUDE.md § Loop &
+context hygiene) and this one is past the originating floor; the R234 loop wants a cleared context.
+This session recorded the ruling and stopped.
