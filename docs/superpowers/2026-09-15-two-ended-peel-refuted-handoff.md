@@ -218,3 +218,80 @@ draws four, below the window); a function-boundary parser then said `sectioned_r
 none (it delegates to `_draw_section`). Grepping for draw calls cannot answer it; only running
 `page_bands` and reading `band.rules` can. That is the run-vs-grep distinction in
 `enumerating-before-claiming`'s own last table row, hit twice in three turns.
+
+---
+
+## 6. RULING — 2026-09-15, by the maintainer: build arm (a), the TRAILING-ONLY peel
+
+§ 5d put three options and declined to choose. **The maintainer chose arm (a): a trailing-only peel
+whose proposer is the datagrid's REFUSAL set** — drop lines the grid explicitly refuses, from the
+bottom only, never bounding the leading end. § 5d's sentence *"This handoff does not choose"* stands
+as written: the handoff did not choose, and this section records that someone else did.
+
+**What the ruling accepts, stated so the next session does not rediscover it as an objection:** the
+arm changes exactly **one** band's reading corpus-wide (ONS p4 band 0, § 5b). That price was on the
+table when the choice was made. Do not re-litigate it; if it must be reopened, reopen it as a
+maintainer question, not as a loop's own finding.
+
+**What the ruling does NOT license.** Arm (a) was typed **PROPOSED** in § 5d and that grade survives
+the ruling — choosing an arm does not run its prediction. The mechanism has never been executed, and
+it may fail on its own terms.
+
+### The next session's order of work, and the first step is a measurement
+
+1. **RUN THE PREDICTION FIRST, before writing any spec.** Two questions, both cheap:
+   - Does the refusal-set proposer actually propose `T=1` on ONS p4 band 0 — i.e. is the trailing
+     `Source: Index of Services estimate from the Office for National Statistics` line carried in
+     `DataGrid.refusals`, and is it the *only* trailing refusal there?
+   - Does it refuse to cut the **12** live bands of § 5c? Those rows (WHO's z-scores, BFS p5's
+     cantons) are *admitted* by the grid, so the mechanism should never propose cutting them. **That
+     is the claim that makes arm (a) safe, and it is unverified.** If any of the 12 is proposed for a
+     cut, arm (a) is refuted and the ruling needs revisiting rather than implementing.
+2. **Only then write the spec.** If step 1 fails, write the refutation and hand back — do not weaken
+   the mechanism to make it pass, per CLAUDE.md § Plan authoring discipline (a plan-supplied test that
+   cannot be satisfied is a plan defect, not a personal failure).
+3. **Re-sample before resting on § 5a.** The leading-cut refutation is 6 of 6 *sampled* out of 28 real
+   cuts. Arm (a) does not depend on it — it abandons the leading cut entirely — so this is not
+   blocking, but any prose repeating "the leading cut removes the header" as a population claim must
+   re-sample first.
+
+### Constraints the implementation inherits (all measured, see § 3 and § 5c)
+
+- **Gate on what the line IS, never on whether `ncols` improves.** On 12 of 16 live rules-free bands
+  `T=1` leaves `ncols` unchanged while deleting a real data row.
+- **Translate by ink key, not offset arithmetic.** Reuse `donation._ink_key` + its `len(hits) == 1`
+  uniqueness guard; `offset + j` breaks on `ons p7 band15` / `p8 band8` ([[R233]]).
+- **The proposer is absent on 11 of 27 pages** (78 of 191 bands). Abstain there; do not invent a
+  fallback.
+- **Follow the lazy precedent** (`donation.py:112-115`): do not call `derive_data_grid` on a page where
+  no band could benefit. The cited cost is 4.6 s across 27 pages against 35.8 s of band-building, and
+  that figure is inherited, not re-measured.
+- **`Band.captions` books ZERO tokens** (`compile.py:254-274`). Peeling furniture off an *ignored*
+  band is harmless; peeling off an *asserted* band moves ink out of the denominator. ONS p4 band 0 is
+  ignored today, so the repair is upside — but the trailing-only mechanism will also fire on asserted
+  bands, and that case is **unmeasured**.
+- **The regression pair is `tests/etkl/test_continuation_licence.py` and
+  `tests/etkl/test_logical_arithmetic.py`** (modules, not functions). Their fixtures are ruled except
+  `simple_table_pdf`, so a rules-free peel can reach only that one.
+
+---
+
+## 7. Corrections to earlier sections of THIS file
+
+Appended rather than edited in place, so the original wording stays readable and the correction is
+visible as a correction. Three statements above were true when written and are false now.
+
+1. **§ 5e's "no residue row" is FALSE.** It was written before the rows existed and was not revised
+   when they were added minutes later, in the SAME commit (`077ccfc`). **[[R232]] and [[R233]] were
+   raised by this loop.** Everything else in § 5e stands: no code, no spec, no plan, no contract, no
+   instrument.
+2. **§ 2's row "undecided — § 5d puts it to the maintainer" is SUPERSEDED by § 6.** The maintainer
+   ruled on 2026-09-15: build arm (a), the trailing-only peel. The decision is recorded in § 6 and on
+   [[R232]]'s row, so it is no longer a decision living in one file only.
+3. **§ 1's "nothing else records it yet", said of the leading-half refutation, is SUPERSEDED.**
+   [[R232]] records it, with its measurement and its 6-of-6-sampled caveat intact. § 2's first three
+   rows are likewise no longer "this file only".
+
+**What is NOT corrected, deliberately.** § 5a's finding is still **6 of 6 sampled out of 28 real
+cuts**, and § 5d's arm (a) is still typed **PROPOSED** — the ruling chose it without running it. Those
+are limits of the evidence, not stale wording, and they must survive into the next loop.
