@@ -133,6 +133,94 @@ the pytest rule about piping into `tail`, committed again in a different shape.
 
 ---
 
-## 3. Results
+## 3. Results — the alignment universe, all seven documents
 
-**PENDING** — baseline in flight at the time § 1 and § 2 were written.
+**N1 (the separate null run) is still in flight as this section is written. If it fails, every
+figure here is void** and the section stands as the record of a harness that measured itself.
+N2 and P are both settled below and do not depend on it.
+
+### 3a. The controls
+
+**P — PASSES.** bfs changed. The patch demonstrably took, and this is corroborated independently
+by the instrument's own startup line, which `tail` withheld until exit:
+
+```
+universe=alignment  _boundaries_from_decoration=<function install.<locals>.<lambda> at 0x105ee6660>
+```
+
+**N2 — PASSES, 7 of 7 as predicted in § 2d, which was committed before bfs compiled** (`72faef7`):
+
+```
+apple-fy2026q3-statements        N2 control adopts=[2]      IDENTICAL  as predicted
+bfs-population-bilan-2023        PREDICTED MOVER            CHANGED    as predicted
+cbh-stem-2026-08-03              decor, not adopted         IDENTICAL  as predicted
+graincorp-capacity-2026-08-04    decor, not adopted         IDENTICAL  as predicted
+graincorp-stem-2026-07-31        N2 control adopts=[]       IDENTICAL  as predicted
+ons-index-of-services-2026-02    N2 control adopts=[7, 8]   IDENTICAL  as predicted
+who-wfa-boys-zscore-0-5          N2 control adopts=[]       IDENTICAL  as predicted
+```
+
+The two strongest rows are **apple** and **ons**: both *adopt* (so they exercise the path the
+mechanism runs through) while carrying no decoration page, and both are byte-identical. A patch
+that perturbed adoption generally would have moved them.
+
+### 3b. The corpus, by the shipped differ
+
+`scripts/corpus_snapshot_diff.py` is a separate code path from the ad-hoc comparison above and
+agrees with it exactly:
+
+```
+apple-fy2026q3-statements      0.9302325581 -> 0.9302325581  triples   6225 ->   6225  IDENTICAL
+bfs-population-bilan-2023      0.8850746269 -> 0.8850746269  triples  14251 ->  15354  CHANGED
+    p5: score 0.9127 -> 0.9127   cells   404 ->   496   asserted   910 ->   910   escalated    87 ->    87
+cbh-stem-2026-08-03            0.9095022624 -> 0.9095022624  triples  12839 ->  12839  IDENTICAL
+graincorp-capacity-2026-08-04  1.0000000000 -> 1.0000000000  triples   5859 ->   5859  IDENTICAL
+graincorp-stem-2026-07-31      0.9658886894 -> 0.9658886894  triples  32422 ->  32422  IDENTICAL
+ons-index-of-services-2026-02  0.7712418301 -> 0.7712418301  triples  12196 ->  12196  IDENTICAL
+who-wfa-boys-zscore-0-5        0.9156327543 -> 0.9156327543  triples  12292 ->  12292  IDENTICAL
+
+1 of 7 documents changed
+```
+
+### 3c. THE HEADLINE — the switch is free, and the score cannot see it
+
+**bfs carries 92 more cells and 1103 more triples, at a score identical to ten decimal places.**
+
+| | before | alignment |
+| --- | --- | --- |
+| document score | 0.8850746269 | **0.8850746269** |
+| p5 cells | 404 | **496** (+92) |
+| p5 asserted ink / escalated ink | 910 / 87 | **910 / 87** |
+| adopted | `[5]` | `[5]` |
+| p5 reason census | RT_FAIL 5, TILING 1, KIND 1, RESIDUE 1 | **identical** |
+| graph triples | 14251 | **15354** (+1103) |
+
+Only p5 moved; every other bfs page is unchanged. **Nothing was traded for the 92 cells** — no
+adoption lost, no escalation gained, no reason count moved, so the § 2b denominator trap
+([[R155]]'s score-rise-is-a-collapse) does not apply: this is not a rise at all.
+
+**Why the score is blind, measured rather than read off the formula.** The score is an ink-token
+ratio — `document.py:1582`, `score = 1.0 if (a + e) == 0 else a / (a + e)` — and cells appear
+nowhere in it. Verified against the snapshots on both sides:
+
+```
+before     sum_asserted=  1186 sum_escalated=  154  A/(A+E)=0.8850746269   recorded=0.8850746269  MATCH
+alignment  sum_asserted=  1186 sum_escalated=  154  A/(A+E)=0.8850746269   recorded=0.8850746269  MATCH
+```
+
+This is [[R238]]'s own mechanism confirmed end to end at compile scope: *the row is admitted
+BECAUSE of the outside ink, and the emitter never carries it.* The ink was always in the
+numerator; the cells were never emitted. **A defect that adds no escalated ink is invisible to
+this score by construction** — which is the most useful thing the gate produced, because four
+loops reasoned about this page with the score as their instrument.
+
+### 3d. What the 92 cells are — NOT MEASURED, and the probe that would settle it
+
+The alignment grid on bfs p5 is 12c × **46r** (PR #237 § 4), and 46 × 2 = 92 exactly. That is
+consistent with the row-label column and the final `%` column — [[R238]]'s two missing columns —
+being carried for every row. **It is arithmetic agreement, not a measurement**, and it is
+recorded as such: 15c × 46r = 690 and 12c × 46r = 552, while emitted cells are 404 → 496, so not
+every grid cell is emitted and the correspondence is not forced. The probe that settles it is to
+read the emitted `tab:EntryCell` texts for p5 column 0 and the last column under the patch and
+check they are the canton names and the `Variation en %` values. **Do not cite the 46 × 2 match
+as the answer until that has been run.**
