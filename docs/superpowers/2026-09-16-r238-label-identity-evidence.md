@@ -110,6 +110,106 @@ at `d653036` and proven by that loop's null control.
 
     PYTHONPATH=src:. .venv/bin/python scripts/r238_label_identity.py
 
-## 3. Results
+## 3. Results — identity HOLDS, 27 of 27 canton rows
 
-**NOT YET RUN.** This section is written after § 1 is committed.
+**The 92 cells are the right cells.** Every canton row's col-0 label is **that row's own** canton
+name and its col-11 value **that row's own** `en %`, and the total reconstruction is exact.
+
+### 3a. The controls — all three pass
+
+```
+### CONTROL P — reproduce PR #239 § 3d under alignment
+    12c/46r/496 cells, c0=46, c11=46  -> PASS
+### CONTROL U — the probe distinguishes the two universes
+    decoration c0=18 vs alignment c0=46  -> PASS
+### CONTROL S — a deliberately broken pairing must FAIL
+    shift null: 0 pass, 27 fail  -> PASS
+```
+
+**Control S is what earns the verdict**, and it earned it: pairing row *i*'s emitted cells
+against row *i+1*'s source words drives **C1 to 0/27**. The checker can fail, so its passing
+means something.
+
+**One detail of S worth keeping, because it shows why C1 and not C3 is load-bearing:** under the
+shift, **C3 still passes 2 of 27** — line 38 (`Schwyz`, last `1.5`) against `Obwald`'s `1.5`, and
+line 44 (`Soleure`, last `1.6`) against `Bâle-Ville`'s `1.6`. Adjacent cantons can share a growth
+rate, so a final-cell check alone would have called a knowingly broken pairing correct twice. The
+total sequence check does not have that weakness.
+
+### 3b. The two universes, side by side
+
+```
+=== universe=decoration: 15c 46r, 404 placed cells
+    col fill: c0:18  c1:46  c2:27  c3:19  c4:27  c5:19  c6:46  c7:46  c8:21
+              c9:25  c10:19 c11:27 c12:18 c13:27 c14:19
+    col 0 sample: ['7 415 102', '7 459 128', '7 508 739', '7 593 494']   <- DATA, not labels
+=== universe=alignment: 12c 46r, 496 placed cells
+    col fill: c0:46  c1:45  c2:38  c3:27  c4:46  c5:46  c6:46  c7:46  c8:46
+              c9:18  c10:46 c11:46
+    col 0 sample: ['2005', '2006', '2007', '2008']
+```
+
+### 3c. The verdict, per row class
+
+| | C1 reconstruction | C2 *as pre-registered* | C2' amended | C3 | C3' |
+| --- | --- | --- | --- | --- | --- |
+| **27 canton rows** | **27/27** | 24/27 | **27/27** | 27/27 | 27/27 |
+| **19 year rows (T1)** | **19/19** | 17/19 | **19/19** | 19/19 | 19/19 |
+
+C1 is exact word-sequence equality against `line.words` — every word, in order, no loss, no
+duplication, no reordering. On all 46 admitted rows it holds.
+
+### 3d. C2 AS PRE-REGISTERED WAS MIS-SPECIFIED — reported, not quietly replaced
+
+The three canton "failures" are **not** identity failures, and the run makes that unambiguous
+because C1 passed on every one of them:
+
+```
+line 33  C1ok C2FAIL C2'ok C3ok  label='Suisse 3'            truth[0]='Suisse'
+line 48  C1ok C2FAIL C2'ok C3ok  label='Appenzell Rh.-Ext.'  truth[0]='Appenzell'
+line 49  C1ok C2FAIL C2'ok C3ok  label='Appenzell Rh.-Int.'  truth[0]='Appenzell'
+```
+
+C2 compared a **cell** against the line's first **word**, but a cell legitimately holds a
+multi-word run. The cells are correct; the check was wrong. C2' is the threshold-free repair —
+the col-0 cell's words must be a **prefix** of the line's word sequence, the last cell's a
+**suffix** — and it reads 27/27.
+
+**Both forms stay in the instrument's output and in the table above.** Amending a check after
+seeing the numbers is precisely how a refuted claim gets rescued (PR #238 § 5's own lesson), and
+the only defence available is showing the original verdict beside the amended one.
+
+### 3e. THE PRE-REGISTERED PREDICTION IS REFUTED — right rows, wrong reason
+
+§ 1f predicted that if any canton row failed, it would be a long name — `Appenzell Rh.-Ext.`,
+`Appenzell Rh.-Int.`, `Bâle-Campagne`, `Saint-Gall` — whose run centre falls right of col 0's
+boundary, **truncated with its tail fused into col 1**.
+
+**That did not happen.** The long names are carried **whole** in col 0: `'Appenzell Rh.-Ext.'`
+is one cell, and `Bâle-Campagne` and `Saint-Gall` pass every check including the
+pre-registered C2. Two of the four names I named did flag — **for the checker's defect, not the
+placement's**. The prediction picked the right rows by the wrong mechanism, which is a refutation
+and is recorded as one rather than claimed as a hit.
+
+§ 1f's second expectation is **also refuted, in the opposite direction**: it said
+`absorb_unit_markers` may **drop** footnote marker glyphs. Measured, they are **kept and fused
+into the label cell** — `'Suisse 3'`, `'2010 2'`, `'2011 3'`. Raised as [[R242]].
+
+### 3f. What this does NOT establish — the column semantics are a different question
+
+C1 proves the **row-wise** reconstruction: every word lands in some column, in source order. It
+does **not** prove the interior column **boundaries are semantically right** — that the value in
+col 4 sits under *Naissances vivantes* rather than its neighbour. *"Whether alignment's 12
+columns are the RIGHT 12"* remains open, exactly as PR #237 and PR #239 left it.
+
+And the fills above show why that question is sharper than it looked: **col 3 is filled by the 27
+canton rows only and col 9 by 18 year rows only.** One 12-column universe spans **two different
+tables** — T1 (19 year rows) and T2 (27 canton rows) — so a column index means different things
+depending on which table the row belongs to. This **pre-exists the switch** (46 rows under both
+universes) and is not caused by it. Raised as [[R241]].
+
+## 4. What this loop did NOT do
+
+Per § 1g and the ruling: no remedy designed, no scope ruled, [[R240]] untouched. The switch is
+still **unbuilt** — `_boundaries_from_decoration` is patched by an instrument, not changed in
+shipped code — so [[R238]] stays **open**.

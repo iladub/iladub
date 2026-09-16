@@ -31,6 +31,14 @@ comparison is threshold-free and total: every word, in order.
       line's own word sequence exactly. This subsumes label identity — a label landing in the
       wrong column, or a name split across col 0 and col 1, shows up as a sequence mismatch.
   C2  EDGES. Col 0 must carry the line's leading ink and the last column its trailing ink.
+      **C2 AS PRE-REGISTERED WAS MIS-SPECIFIED, and both forms are reported rather than one
+      quietly replacing the other.** It compared the cell text to the line's first WORD, but a
+      cell legitimately holds a multi-word run: `Suisse 3` (name + footnote marker) and
+      `Appenzell Rh.-Ext.` are CORRECT cells that the first-word form calls failures. C2' is
+      the threshold-free repair — the col-0 cell's words must be a PREFIX of the line's word
+      sequence and the last cell's a SUFFIX. The original verdict stays in the output because
+      amending a check after seeing the numbers is how a refuted claim gets rescued, and the
+      only defence is showing both.
   C3  PAIRING. For each canton row the emitted label must be that row's own canton name and
       the final cell that row's own `en %` value.
 
@@ -128,35 +136,44 @@ def report(universe: str) -> dict:
             "placed_total": placed_total}
 
 
-def identity(rep: dict, shift: bool = False) -> tuple[int, int]:
-    """C1/C2/C3 over the canton rows. `shift` is the SHIFT NULL."""
+def identity(rep: dict, shift: bool = False, kind: str = "canton") -> dict:
+    """C1/C2/C2'/C3 over one row class. `shift` is the SHIFT NULL."""
     rows = rep["rows"]
     ncols = rep["ncols"]
-    cantons = [r for r in rows if r["canton"]]
+    sel = [r for r in rows if r["canton"] == (kind == "canton")]
     tag = "SHIFT NULL (row i's cells vs row i+1's source)" if shift else "IDENTITY"
-    print(f"\n--- {tag}: {len(cantons)} canton rows")
-    ok = bad = 0
-    for n, r in enumerate(cantons):
-        truth = cantons[(n + 1) % len(cantons)]["src"] if shift else r["src"]
+    print(f"\n--- {tag} [{kind}]: {len(sel)} rows")
+    tally = {"c1": 0, "c2": 0, "c2p": 0, "c3": 0, "c3p": 0, "all": 0, "allp": 0}
+    for n, r in enumerate(sel):
+        truth = sel[(n + 1) % len(sel)]["src"] if shift else r["src"]
         label = r["placed"].get(0, ("<none>",))[0]
         last = r["placed"].get(ncols - 1, ("<none>",))[0]
+        lab_w, last_w = label.split(), last.split()
         c1 = r["seq"] == truth
-        c2 = label == truth[0] if truth else False
-        c3 = last == truth[-1] if truth else False
-        good = c1 and c2 and c3
-        ok, bad = (ok + 1, bad) if good else (ok, bad + 1)
-        if not good or n < 3 or shift:
-            flags = f"C1{'ok' if c1 else 'FAIL'} C2{'ok' if c2 else 'FAIL'} " \
-                    f"C3{'ok' if c3 else 'FAIL'}"
-            print(f"    line {r['i']:<3} {flags}  label={label!r:24} "
-                  f"last={last!r:8} truth[0]={truth[0]!r:24} truth[-1]={truth[-1]!r}")
+        c2 = bool(truth) and label == truth[0]
+        c3 = bool(truth) and last == truth[-1]
+        # C2' / C3': threshold-free, and correct for a multi-word cell
+        c2p = bool(lab_w) and truth[:len(lab_w)] == lab_w
+        c3p = bool(last_w) and truth[-len(last_w):] == last_w
+        for key, val in (("c1", c1), ("c2", c2), ("c2p", c2p), ("c3", c3), ("c3p", c3p),
+                         ("all", c1 and c2 and c3), ("allp", c1 and c2p and c3p)):
+            tally[key] += 1 if val else 0
+        if not (c1 and c2p and c3p) or not c2 or n < 3 or shift:
+            flags = (f"C1{'ok' if c1 else 'FAIL'} C2{'ok' if c2 else 'FAIL'} "
+                     f"C2'{'ok' if c2p else 'FAIL'} C3{'ok' if c3 else 'FAIL'}")
+            print(f"    line {r['i']:<3} {flags}  label={label!r:22} "
+                  f"last={last!r:8} truth[0]={truth[0]!r:22} truth[-1]={truth[-1]!r}")
             if not c1:
                 miss = [w for w in truth if w not in r["seq"]]
                 extra = [w for w in r["seq"] if w not in truth]
                 print(f"         seq {len(r['seq'])} vs src {len(truth)}  "
                       f"missing={miss[:6]} extra={extra[:6]}")
-    print(f"    => {ok} pass, {bad} fail")
-    return ok, bad
+    n = len(sel)
+    print(f"    => C1 {tally['c1']}/{n}   C2(pre-registered) {tally['c2']}/{n}   "
+          f"C2' {tally['c2p']}/{n}   C3 {tally['c3']}/{n}   C3' {tally['c3p']}/{n}")
+    print(f"       ALL as pre-registered {tally['all']}/{n}   ALL amended {tally['allp']}/{n}")
+    tally["n"] = n
+    return tally
 
 
 def main() -> int:
@@ -174,15 +191,22 @@ def main() -> int:
     print(f"    decoration c0={dec['fill'].get(0, 0)} vs alignment c0="
           f"{ali['fill'].get(0, 0)}  -> {'PASS' if u_ok else 'FAIL'}")
 
-    ok, bad = identity(ali)
-    s_ok, s_bad = identity(ali, shift=True)
+    can = identity(ali, kind="canton")
+    yr = identity(ali, kind="year")
+    sh = identity(ali, shift=True, kind="canton")
 
     print("\n### CONTROL S — a deliberately broken pairing must FAIL")
-    print(f"    shift null: {s_ok} pass, {s_bad} fail  -> "
-          f"{'PASS' if s_bad > s_ok else 'FAIL (checker detects nothing)'}")
+    s_bad = sh["n"] - sh["allp"]
+    print(f"    shift null: {sh['allp']} pass, {s_bad} fail  -> "
+          f"{'PASS' if s_bad > sh['allp'] else 'FAIL (checker detects nothing)'}")
 
-    print(f"\n### VERDICT — canton-row identity under alignment: {ok} pass, {bad} fail")
-    if not (p_ok and u_ok and s_bad > s_ok):
+    print(f"\n### VERDICT — canton-row identity under alignment")
+    print(f"    C1 reconstruction (total, threshold-free): {can['c1']}/{can['n']}")
+    print(f"    ALL as pre-registered {can['all']}/{can['n']}   "
+          f"ALL amended (C2'/C3') {can['allp']}/{can['n']}")
+    print(f"    year rows (T1, split across source lines): C1 {yr['c1']}/{yr['n']}, "
+          f"ALL amended {yr['allp']}/{yr['n']}")
+    if not (p_ok and u_ok and s_bad > sh["allp"]):
         print("REFUSED: a control failed; the verdict above is VOID.")
         return 1
     return 0
