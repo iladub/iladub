@@ -81,6 +81,56 @@ scoped remedy (blanket vs. per-page vs. per-document) is a CLAUDE.md § 8 classi
 maintainer's call. If cbh's cost lands where grid scope says it will, **the blanket switch is
 refused and that is a finding, not a defeat.**
 
+### 2d. A PREDICTION, registered before the data that tests it existed
+
+**Written with the alignment run at 2 of 7 documents, before bfs — the deciding one — had
+compiled.** Committed at that moment on purpose, for the same reason § 2 was: a mechanism offered
+after the numbers are in is an explanation, and this repo does not let an explanation wear a
+measurement's clothes.
+
+The first two alignment snapshots (cbh, graincorp-capacity) came back **byte-identical** — same
+canonical hash, same score, same cells — although PR #237 measured **both** moving at *grid*
+scope (cbh 20c 50r → 16c 45r, a loss of 5 rows; graincorp-capacity 16c → 15c). Grid scope and
+compile scope disagree, and the mechanism is visible in the **baseline** alone:
+
+```
+document                                score     adopted  decor-page  CAN MOVE?
+apple-fy2026q3-statements        0.9302325581         [2]  -           no (no decor page)
+bfs-population-bilan-2023        0.8850746269         [5]  p5          yes
+cbh-stem-2026-08-03              0.9095022624          []  p0          no (decor page, not adopted)
+graincorp-capacity-2026-08-04    1.0000000000          []  p0          no (decor page, not adopted)
+graincorp-stem-2026-07-31        0.9658886894          []  -           no (no decor page)
+ons-index-of-services-2026-02    0.7712418301      [7, 8]  -           no (no decor page)
+who-wfa-boys-zscore-0-5          0.9156327543          []  -           no (no decor page)
+```
+
+**Adoption is what carries a grid reading into the emitted graph.** A decoration page whose grid
+is never adopted cannot change the graph by changing its universe — the grid is derived, loses
+the comparison, and is discarded. Crossing the three decoration pages against the `adopted`
+tuples leaves **exactly one document that can move at compile scope: bfs.** apple and ons adopt,
+but have no decoration page, so their grids already run on the alignment universe.
+
+**If this holds, PR #237's headline cost is an artefact of scope.** *"A blanket refusal is not
+available — cbh loses 5 rows"* is a **grid**-scope fact that does not survive to compile scope,
+because cbh's emitted reading is band-derived and never consults the grid at all. That would
+remove the stated obstacle to the bluntest remedy — but the removal is **not** this loop's to
+bank, and § 2c still binds.
+
+**Three ways this is falsified, named before bfs landed:**
+
+1. **bfs comes back byte-identical.** Then control P fails: the patch never installed, and every
+   figure in this run is void — including the two identities above, which would be identity by
+   inaction rather than by mechanism. This is the reading that must be ruled out first.
+2. **Any non-decoration document moves.** N2 fails: an unknown coupling, not the universe switch.
+3. **bfs moves but adoption is unchanged in kind** — e.g. p5 stays adopted at 404 cells with a
+   different hash. Then adoption is not the whole mechanism and the table above is too simple.
+
+**A flaw in this run, recorded rather than hidden:** the launch pipes the instrument through
+`tail -20`, so its `universe=alignment … <lambda>` confirmation line does not flush until exit.
+The patch's installation therefore cannot be confirmed until the run completes — which is why
+control P, and not a startup log line, is what will settle falsifier 1. It is the same mistake as
+the pytest rule about piping into `tail`, committed again in a different shape.
+
 ---
 
 ## 3. Results
