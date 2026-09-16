@@ -3,7 +3,7 @@
 **Topic:** The criterion ruled on 2026-09-16 is authored and its oracle ships RED-on-purpose. The
 arc now has one criterion whose oracle is **cells and triples**, not score. Nothing was built.
 
-**Serves:** prog:criterion:tab:11.
+**Serves:** prog:criterion:tab:11 — the carriage criterion this loop authors, `met false`, blocked by [[R238]].
 
 **Date:** 2026-09-16. **Tree:** branch `the-arc-can-see-carriage`, cut from `main` at `e394c34`.
 
