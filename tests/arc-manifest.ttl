@@ -1201,7 +1201,7 @@ prog:rung:tab prog:criterion
     prog:criterion:tab:01 , prog:criterion:tab:02 , prog:criterion:tab:03 ,
     prog:criterion:tab:04 , prog:criterion:tab:05 , prog:criterion:tab:06 ,
     prog:criterion:tab:07 , prog:criterion:tab:08 , prog:criterion:tab:09 ,
-    prog:criterion:tab:10 .
+    prog:criterion:tab:10 , prog:criterion:tab:11 .
 
 # --- the nine escalation reasons, in call-site order ------------------------------------
 #
@@ -1410,6 +1410,54 @@ prog:criterion:tab:10 a prog:Criterion ;
     prog:oracleArtifact "tests/etkl/test_vacuity_registry.py:87" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_every_idle_shape_is_registered" ;
     prog:oracleTest "tests/etkl/test_vacuity_registry.py::test_no_registered_shape_has_gone_live" .
+
+
+# --- the eleventh: CARRIAGE, which none of the other ten can see -------------------------
+#
+# Authored 2026-09-16 on the maintainer's ruling
+# (docs/superpowers/2026-09-16-ship-the-switch-ruling.md:144, which is this criterion's
+# prog:source). THE GAP IT FILLS, measured rather than asserted: criteria 01-10 count
+# escalation REASONS and the seven `etkl` criteria read the document SCORE, so nothing in
+# the arc measures CELLS CARRIED. PR #239 moved bfs page 5 from 404 placed cells to 496 and
+# the document from 14251 to 15354 triples while the score held at 0.8850746269 to ten
+# decimal places ([[R240]]) and the escalation-reason census came back IDENTICAL (RT_FAIL 5,
+# TILING 1, KIND 1, RESIDUE 1). A whole class of work is therefore invisible to this
+# denominator BY CONSTRUCTION — [[R240]] one level up.
+#
+# WHY THE `tab` RUNG AND NOT `etkl` — a DECISION, and it is forced, not preferred. The
+# `etkl` rung is in BIJECTION with the corpus register: test_arc_manifest.py:802
+# (`test_etkl_criteria_agree_with_the_corpus_manifest`) asserts
+# `set(asserted) == set(computed)` over cor:Document, so an eighth `etkl` criterion naming
+# no new document goes red the moment it is authored. `tab` is depth inside `etkl` (the
+# rungs-are-unordered note at the head of this file) and already hosts a criterion that is
+# not an escalation reason — criterion 10, widened past the nine reasons by D3. M6 forbids
+# a sixth rung, so the choice was between these two and only one of them admits the row.
+#
+# WHY [[R238]] BLOCKS IT, under this section's own rule (:1155 — an edge names a row WHOSE
+# CLOSURE WOULD ADVANCE THIS CRITERION, not a row that mentions the subject). Closing R238
+# IS this criterion being met: the row is the dropped row-label and final-% columns, and
+# the oracle below counts exactly the cells those two columns carry. The same ruling
+# REFUSED the symmetrical-looking edge from R238 to `etkl:05` and to tab:02/07/09, because
+# closing R238 advances none of them — the score and the reason census both held. R238
+# verified `| R238 | open |` and unparked in docs/superpowers/residues.md:409 on 2026-09-16.
+#
+# THE ORACLE IS RED ON PURPOSE AND THAT IS THE POINT. `prog:met false` is authored while
+# `_boundaries_from_decoration` is still consulted (src/iladub/etkl/datagrid.py:340-349), so
+# the first oracle test is a STRICT xfail: when the switch lands it XPASSes, which fails the
+# suite, and the loop that builds it must flip the marker and this prog:met together in one
+# reviewed act. Declared BEFORE it is claimed — the denominator moves before the numerator,
+# exactly as criterion etkl:01's note records for the first met document on that rung.
+prog:criterion:tab:11 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "gov-stats/bfs-population-bilan-2023.pdf page 5: the adopted data grid CARRIES the row-label column and the final % column — 496 placed cells on that page and 15354 triples in the document — while page 6 stays unmoved at 267 cells across 6 asserted regions. Counted as CELLS AND TRIPLES, never as the document score, which is an ink-token ratio blind to this defect." ;
+    prog:source "docs/superpowers/2026-09-16-ship-the-switch-ruling.md:144" ;
+    prog:declaredOn "2026-09-16"^^xsd:date ;
+    prog:met false ;
+    prog:retrospective false ;
+    prog:blockedBy "R238" ;
+    prog:oracleArtifact "tests/test_carriage.py" ;
+    prog:oracleTest "tests/test_carriage.py::test_bfs_p5_carries_the_row_label_and_percent_columns" ;
+    prog:oracleTest "tests/test_carriage.py::test_bfs_p6_carriage_is_untouched" .
 
 
 # ================================================== the dependency graph — authored 2026-08-22
