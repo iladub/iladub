@@ -103,3 +103,20 @@ the corpus register, so the criterion would have gone red on arrival. **The mani
 answered a design question I was about to answer from intuition**, which is the same shape as the
 ruling's other half: an edge that looked obviously right (R238 → `etkl:05`) was refused by the
 rung's own stated rule and by a measurement already in hand.
+
+### 4a. Addendum, appended 2026-09-16 after merge — this loop's own CI red
+
+**Appended, not edited** (§ Documentation governance: Evidence is append-only; the `Doc impact:`
+value above is unchanged). Full account: **evidence § 7**. The two findings a fresh session should
+carry, because both are about *how* the loop was checked rather than what it built:
+
+1. **Adding a handoff moves `tests/test_cockpit.py`.** `cockpit._loop_docs()` globs every dated
+   `*handoff*.md` and `_newest_loop_doc()` is `max()` by basename, so a **docs-only** file changes
+   which document that module reads — a test named nowhere in the diff. CI's only red was there:
+   this handoff declared `**Serves:** prog:criterion:tab:11.` and the trailing period made the
+   token `tab:11.`, which misses `_criterion_ids()` and is a **refusal, not a default**. **Run
+   `tests/test_cockpit.py` whenever a dated handoff or brief is added**, and write the value as
+   `**Serves:** prog:criterion:<rung>:<nn> — <why>` with no trailing punctuation.
+2. **zsh does not word-split unquoted variables**, so `pytest $files` passed one argument and the
+   citation lint reported a file `grep` had just listed as "not found" — a gate that never ran
+   while looking like it had. Treat that contradiction as a shell bug, never as a missing file.
