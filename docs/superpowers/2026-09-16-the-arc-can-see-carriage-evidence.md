@@ -125,3 +125,61 @@ The cockpit strip now reads `tab 1/11` and `frontier 14`.
 - **The known risk the ruling accepted stands**: this corpus holds no page whose decoration
   rectangle is both adopted and correct, so it cannot produce the counter-example that would refute
   a blanket refusal.
+
+## 7. What this loop cost — its own CI red, recorded rather than quietly fixed
+
+**APPENDED 2026-09-16, after PR #243 merged at `cf077fd`.** Under § Documentation governance this
+file is Evidence and append-only from `5743af3`: this section is an **addition**, nothing above it
+is edited, and the declared `Doc impact: none` is untouched. It is written because the loop's own
+failure is evidence, and a record that shows only the parts that went well is the kind of artifact
+[[R187]] exists to refuse.
+
+**The first CI run failed.** Run `35134737753`, head `d71ffe1`, job `test`, 14m44s:
+
+```
+1 failed, 1566 passed, 156 skipped, 1 xfailed, 3435 warnings in 884.86s (0:14:44)
+FAILED tests/test_cockpit.py::test_the_live_newest_handoff_declares_what_it_serves
+  - AssertionError: …-the-arc-can-see-carriage-handoff.md declares no readable `**Serves:**`
+```
+
+**The cause, read rather than guessed.** `cockpit._serves_of` (`scripts/cockpit.py:400-417`) takes
+the **first whitespace-delimited token** after the field. The handoff declared
+`**Serves:** prog:criterion:tab:11.` — with a trailing period — so the token carried the period,
+`cid` became `tab:11.`, and membership in `_criterion_ids()` (which holds `tab:11`) failed. A
+criterion token outside that set is a **refusal, not a default**, so `serves()` returned `None`.
+Repaired at `b807116` to the live form every other handoff on disk uses:
+`**Serves:** prog:criterion:<rung>:<nn> — <why>`.
+
+**The process defect is the part worth keeping, and it is not "I forgot a test".** The gates run
+before pushing were the ones this diff *names* — arc manifest/queries/landscape/ablation, doc
+governance, the new corpus oracle. `tests/test_cockpit.py` is named nowhere in the diff. But
+`cockpit._loop_docs()` (`:314-322`) globs **every** dated `*handoff*.md` and `_newest_loop_doc()`
+is `max()` by basename, so **adding a handoff silently changes which document that module reads**.
+A docs-only file moved a test that no reasoning about the code change could have reached.
+**The rule this yields: a change that adds a dated `*handoff*.md` or `*brief*.md` must run
+`tests/test_cockpit.py`.**
+
+**A second near-miss, caught only by a contradiction.** Locating that lint used
+`files=$(grep -rl … ); pytest $files` — and **zsh does not word-split unquoted variables**, so the
+whole string was passed as ONE argument and pytest reported `file or directory not found` for
+`tests/test_source_citations.py`, a file `grep` had just listed as existing. The gate never ran
+while appearing to have run. It was chased because "missing" and "just listed by grep" cannot both
+be true; run properly it is **8 passed**. A test runner reporting a file absent is a shell finding
+until proven otherwise.
+
+**The fix's verification, before the second push** — the omission above, repaired systematically by
+asking which modules *read* what this change writes (loop docs, the manifest, the register), not
+which ones it names:
+
+| gate | result |
+| --- | --- |
+| `tests/test_cockpit.py` (the missed module) | **24 passed** |
+| `cockpit.serves()` | **`tab:11`** |
+| `tests/test_source_citations.py` (the lint that had not run) | **8 passed** |
+| `tests/test_residue_register_integrity.py` + `test_first_seen.py` | **16 passed** |
+| `tests/test_docgov_extract.py` | **22 passed** |
+| `tests/test_doc_governance.py` | **7 passed** |
+
+Run `35137048063` (head `b807116`) completed **success**; PR #243 merged `2026-09-16T19:08:07Z` as
+`cf077fd`. **The four cited line ranges above were re-measured on the merged tree**, not carried
+from the session that wrote them.
