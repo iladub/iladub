@@ -15,9 +15,54 @@ compile scope.**
 
 ---
 
-*(§ 5, the next concrete action, is written when the N1 null control resolves — it is the one part
-of this document whose content depends on the outcome, and it is typed there as assertion or
-proposition per CLAUDE.md § "The handoff's next action is TYPED".)*
+## 5. The next concrete action
+
+### 5a. ASSERTED — nothing further needs MEASURING; the next action is a maintainer's ruling on scope
+
+Mechanical, and it is the whole reason this loop stopped where it did. The gate's question —
+*"what does the alignment universe cost a reading?"* — is answered for every document in the
+corpus: **nothing, and bfs gains 92 cells.** All three controls passed (§ 3a), and § 3d's one
+unmeasured item was measured before close. There is no remaining measurement whose result could
+change the scoping decision.
+
+What remains is **remedy design**, which CLAUDE.md § 8 makes a classification and § 2c of the
+evidence keeps out of this loop's hands: does the decoration universe get refused **blanket**
+(delete it), **per-page**, or **per-document**? Put the § 3 figures to the maintainer and get the
+ruling. Do not open a remedy PR first.
+
+### 5b. PROPOSED — a blanket refusal is now available at zero corpus cost
+
+**Rests on a generalisation this corpus cannot test, and that is why it is proposed.** The
+argument is: only three pages carry a decoration universe, only one of them is adopted, and the
+adopted one is strictly better without it. So deleting the decoration universe outright would
+change exactly one page in seven documents, for the better.
+
+**Why this may be wrong, stated before anyone builds on it:**
+
+- **The corpus has no page where the decoration rectangle is both adopted AND correct.** bfs p5 is
+  the only adopted decoration page in it, and it is the defective one. A document whose drawn
+  rectangle *is* the right column universe would be regressed by a blanket refusal, and **this
+  corpus cannot produce that counter-example** — the same unfalsifiable shape PR #238 § 5c
+  recorded, one layer up. If a blanket remedy is designed, this is the premise to attack first.
+- **Whether alignment's 12 columns are the RIGHT 12 is still unverified** — unchanged from PR
+  #237, checked on 3 of 27 rows, presence only.
+- **§ 3d measured cardinality and side, not identity.** The 46 labels are full and on the correct
+  side of the rectangle; that they are the *right* labels per row is not shown, and the sample
+  read years rather than the canton names [[R238]]'s symptom names.
+
+### 5c. ASSERTED — what NOT to do
+
+- **Do not re-run the gate.** It ran over all seven documents under three universes, with the
+  reading rule (`fc05357`) and the prediction (`72faef7`) each committed before the data that
+  tested them. Controls P, N1 and N2 all passed. Re-measuring is not caution, it is a fifth loop
+  of deferral.
+- **Do not use the document score as the oracle for this defect class.** It is an ink-token ratio
+  and is structurally blind to cell carriage — 92 cells appeared and it did not move a digit
+  ([[R240]]). Any future remedy here must be judged on cells and triples, not on score.
+- **Do not cite *"a blanket refusal is not available — cbh loses 5 rows"*.** That is PR #237's
+  **grid**-scope finding and it does not survive to compile scope; cbh adopts nothing and its
+  emitted reading never consults the grid. § 3b measured it byte-identical.
+- **Do not trust the `tab` rung's `file:line` citations or `FIRES n` counts** — [[R236]], [[R237]].
 
 ---
 

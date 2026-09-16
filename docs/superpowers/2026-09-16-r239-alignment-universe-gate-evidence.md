@@ -135,9 +135,8 @@ the pytest rule about piping into `tail`, committed again in a different shape.
 
 ## 3. Results — the alignment universe, all seven documents
 
-**N1 (the separate null run) is still in flight as this section is written. If it fails, every
-figure here is void** and the section stands as the record of a harness that measured itself.
-N2 and P are both settled below and do not depend on it.
+**All three controls pass.** N1 is settled below in § 3a; the paragraph that stood here while it
+was in flight said that if it failed every figure in this section would be void. It did not fail.
 
 ### 3a. The controls
 
@@ -214,13 +213,41 @@ numerator; the cells were never emitted. **A defect that adds no escalated ink i
 this score by construction** — which is the most useful thing the gate produced, because four
 loops reasoned about this page with the score as their instrument.
 
-### 3d. What the 92 cells are — NOT MEASURED, and the probe that would settle it
+### 3d. What the 92 cells are — MEASURED, and the arithmetic guess was right for a better reason
 
-The alignment grid on bfs p5 is 12c × **46r** (PR #237 § 4), and 46 × 2 = 92 exactly. That is
-consistent with the row-label column and the final `%` column — [[R238]]'s two missing columns —
-being carried for every row. **It is arithmetic agreement, not a measurement**, and it is
-recorded as such: 15c × 46r = 690 and 12c × 46r = 552, while emitted cells are 404 → 496, so not
-every grid cell is emitted and the correspondence is not forced. The probe that settles it is to
-read the emitted `tab:EntryCell` texts for p5 column 0 and the last column under the patch and
-check they are the canton names and the `Variation en %` values. **Do not cite the 46 × 2 match
-as the answer until that has been run.**
+This section first shipped reading *"NOT MEASURED"*, recording 46 × 2 = 92 as arithmetic
+agreement only and naming the probe. **The probe was then run, in this same loop**, and the text
+above is superseded by it. It is kept in the git history rather than silently replaced, because
+the guess and the measurement agreeing is only worth something if the order is visible.
+
+`_place_for_emit` over bfs p5's admitted rows, under both universes:
+
+```
+=== decoration (shipped): 15c 46r, 404 placed cells
+    col 0     :  18 cells  e.g. ["('7 415 102', 136.", "('7 459 128', 136.", ...]
+    col 14    :  19 cells  e.g. ["('44 026', 479.661", "('49 611', 479.659",  ...]
+=== alignment (patched): 12c 46r, 496 placed cells
+    col 0     :  46 cells  e.g. ["('2005', 72.117262", "('2006', 72.1201, ",  ...]
+    col 11    :  46 cells  e.g. ["('0.60', 514.22986", "('0.70', 514.22986",  ...]
+
+placed-cell delta: 404 -> 496  (= 92)
+```
+
+**The two new columns are exactly [[R238]]'s two missing ones, and their x-coordinates prove it.**
+The decoration rectangle is `124.3 .. 495.3`. Under alignment, col 0 sits at **x ≈ 72**, left of
+`124.3` — the row-label column — and col 11 at **x ≈ 514**, right of `495.3` — the
+`Variation en %` column. Both are **full at 46 of 46 rows**, where under decoration the
+corresponding edge columns held only 18 and 19 cells and contained data values (`'7 415 102'` at
+x ≈ 136), not labels.
+
+**The 46 × 2 = 92 correspondence is real, and the reason is sharper than the guess.** 46 + 46 = 92
+is the whole delta, which means the interior re-partition from **15 columns to 10** is
+**cell-count neutral at 404**: the same interior ink lands in fewer, wider columns without
+gaining or losing a single placed cell. The guess in the superseded text treated the match as
+possibly coincidental precisely because that neutrality was not established; it now is.
+
+**What is still NOT established:** that the 46 labels are the *right* labels for their rows. The
+sample above shows years (`2005`, `2006`) — the time-series rows at the top of the page — not the
+canton names [[R238]] names in its symptom (*"nothing says which row is Zurich"*). Those rows are
+further down and were not sampled. The narrow claim measured here is **cardinality and side of
+the rectangle**, not identity.
