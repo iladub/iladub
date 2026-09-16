@@ -1,5 +1,10 @@
 # Handoff — § 5c's fork resolved: reporting, not reading; and adoption has three defects of its own
 
+**Topic:** [[R44]] § 5c resolved — with adoption suppressed all four concealed `ROUND_TRIP_FAIL`
+return live, and the adopted grid reads 27 of 27 rows' values correctly, so the round-trip half is a
+**reporting** defect and must not be built as the prior handoff proposed. The reading defects are in
+adoption: [[R238]] and [[R239]].
+
 **Serves:** prog:criterion:etkl:05 — bfs. R44 gates it through tab:02, tab:07 and tab:09.
 
 **Date:** 2026-09-16. **Tree:** branch `r44-roundtrip-reporting-or-reading`, cut from `main` at
