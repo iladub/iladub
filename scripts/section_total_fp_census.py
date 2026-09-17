@@ -82,6 +82,12 @@ def columns(graph, table_uri):
 pdfs = sorted(pathlib.Path("corpus").rglob("*.pdf"))
 skipped, matches, pages_seen = [], [], 0
 
+# The OPPORTUNITY DENOMINATOR. The first version of this census printed the pairs that
+# MATCHED and never the pairs it EXAMINED -- so "false=2" could not be read as a rate.
+# These counters are report-only: they are incremented beside each existing filter and
+# change no branch, so the match figures must reproduce exactly (true=4 false=2).
+opp = {"tables": 0, "following": 0, "numeric": 0, "comparisons": 0, "comparisons_n1": 0}
+
 for pdf in pdfs:
     path, stem = str(pdf), pdf.stem
     t0 = time.time()
@@ -104,15 +110,20 @@ for pdf in pdfs:
         for i, r in enumerate(prep.regions):
             if r.verdict != "asserted" or r.table_uri is None or r.anchor == GRID:
                 continue
+            opp["tables"] += 1
             if i + 1 >= len(bands):
                 continue
+            opp["following"] += 1
             nxt = bands[i + 1]
             cands = [(w.text, as_decimal(w.text)) for ln in nxt.lines for w in ln.words]
             cands = [(t, d) for t, d in cands if d is not None]
             if not cands:
                 continue
-            for ci, (total, n, ordinal) in sorted(columns(rep.graph, r.table_uri).items(),
-                                                  key=lambda kv: str(kv[0])):
+            opp["numeric"] += 1
+            cols = sorted(columns(rep.graph, r.table_uri).items(), key=lambda kv: str(kv[0]))
+            opp["comparisons"] += len(cols) * len(cands)
+            opp["comparisons_n1"] += sum(len(cands) for _, (_, n, _) in cols if n == 1)
+            for ci, (total, n, ordinal) in cols:
                 for text, val in cands:
                     if val == total:
                         matches.append((stem, page, i, i + 1, text, ci, n,
@@ -129,6 +140,13 @@ if skipped:
         print(f"  {stem[:28]:<29} p{pg} {why}")
 else:
     print("NO PAGE SKIPPED -- the denominator is complete.")
+print()
+print("OPPORTUNITY DENOMINATOR -- the population every match below was drawn from:")
+print(f"  asserted non-grid table regions          {opp['tables']:>6}")
+print(f"  ... having a following band              {opp['following']:>6}")
+print(f"  ... whose following band prints a number {opp['numeric']:>6}  <- PAIRS EXAMINED")
+print(f"  exact-equality comparisons performed     {opp['comparisons']:>6}")
+print(f"  ... on a column of a SINGLE member       {opp['comparisons_n1']:>6}")
 print()
 print(f"{'cls':<6}{'document':<26}{'pg':>3}{'tbl':>5}{'nxt':>5}{'value':>12}"
       f"{'col':>5}{'mem':>5}{'ordinal':>9}{'nxt_ln':>7}")
