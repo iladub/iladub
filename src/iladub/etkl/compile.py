@@ -154,9 +154,12 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     # separators (`grid._rule_boundaries` already refuses exactly that shape for the leaf grid,
     # "a frame is not a grid"), and re-bucketing on it can only FUSE, never split — contradicting
     # this function's own docstring. Measured: 41 border-only bands corpus-wide lose every column.
-    # The comparison is ORDINAL, not a threshold, and carries no tuned constant — it is
-    # `datagrid.py:346`'s shape ("decoration wins only when it resolves at least as finely as
-    # alignment") applied at the one site that never consulted it.
+    # The comparison is ORDINAL, not a threshold, and carries no tuned constant — it is the
+    # shape `derive_data_grid` once selected its column universe with ("decoration wins only
+    # when it resolves at least as finely as alignment"), applied at the one site that never
+    # consulted it. THAT SELECTION WAS RETIRED 2026-09-17, when the decoration universe was
+    # refused blanket (R238/R239), so this site is now the only place the shape survives —
+    # which is why it is stated here rather than cited.
     #
     # PLACEMENT (corrected 2026-09-14, spec § 1e). An earlier draft refused here and returned,
     # which skipped `refine_rule_columns` below entirely — and that refinement IS [[R13]]'s
@@ -684,14 +687,14 @@ def _build_membrane():
     # ontology into the validated payload — pinned by
     # `test_subclass_closure_injects_no_ontology_triples`. So of the 160 triples the file
     # would add, the membrane consults 6 axioms, and every one of them is inert:
-    #   UniformGrid/MixedGrid <= DataGrid   already explicit — `datagrid.py:622-623` emits
+    #   UniformGrid/MixedGrid <= DataGrid   already explicit — `datagrid.py:641-642` emits
     #                                       `tab:DataGrid` AND `TAB[grid.grid_type]` on the
     #                                       same node, so the closure would re-derive a
     #                                       triple that is already there
     #   AggregatingGrid <= DataGrid         `tab:AggregatingGrid` is emitted nowhere in src/
     #   Decoration/AlignmentUniverse
     #                   <= ColumnUniverse   emitted as the OBJECT of `tab:universeSource`
-    #                                       (`datagrid.py:626`), never as an `rdf:type`, and
+    #                                       (`datagrid.py:645`), never as an `rdf:type`, and
     #                                       the closure fires on `rdf:type` triples only
     #   PivotFieldRepeatLabels
     #                   <= SuppressedRepeat emitted nowhere in src/

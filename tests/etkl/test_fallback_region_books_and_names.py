@@ -21,7 +21,7 @@ tokens and naming no table at all.
 claiming region names a table, and that URI is typed in the graph" — I2 cannot fail on this route:
 `document.py:1629` refuses adoption when the report carries no `table_uri`, and `document.py:1687`
 refuses it when the graph lacks `(grid_uri, rdf:type, tab:DataGrid)`. Both falsification attempts
-(nulling `table_uri` at `compile.py:1590`; deleting `datagrid.py:622-623`) stopped the page
+(nulling `table_uri` at `compile.py:1590`; deleting `datagrid.py:641-642`) stopped the page
 adopting, so the precondition collapsed and the tests ERRORED instead of the invariant FAILING.
 The property is true by construction, so the claim moved to the guard that constructs it. This is
 § Producer-side guards vs the membrane inverted: the TEST was the duplicate of two guards.
@@ -90,7 +90,7 @@ def adopting_doc(tmp_path_factory):
 
     AND NO REPLACEMENT REACHES THAT GATE. Four candidate shapes were drawn and run
     (`docs/superpowers/2026-09-14-d1-post-d2-measured.md` § 3): the gate needs every >= 2-run row
-    isolated in a <= 1-line band, `datagrid.py:341` needs >= 2-run rows to be the MODAL signature,
+    isolated in a <= 1-line band, `datagrid.py:363` needs >= 2-run rows to be the MODAL signature,
     and `bands.py:37-52` splits only above 1.8x the MEDIAN gap — whose small gaps can come only
     from multi-line single-run bands. Post-D1 the branch also has ZERO live corpus instances (ons
     p7/p8, its only two, now arrive adopt-scoped). Both facts are recorded as [[R228]]; the branch
@@ -156,7 +156,7 @@ def test_an_untyped_grid_is_not_adopted(tmp_path, monkeypatch):
 
     MEASURED, twice, while trying to falsify the old form: passing `table_uri=None` at the adopt
     twin (`compile.py:1590`), and removing both `rdf:type` triples for the grid
-    (`datagrid.py:622-623`), each made the page STOP ADOPTING — so `adopted == (0,)` collapsed and
+    (`datagrid.py:641-642`), each made the page STOP ADOPTING — so `adopted == (0,)` collapsed and
     the tests ERRORED in the fixture rather than FAILING on the invariant. A test whose subject is
     unreachable by any mutation pins nothing, which is the failure CLAUDE.md plan rule 4 exists to
     catch, and the shape it took here is the reverse of the usual one in § Producer-side guards vs
@@ -203,7 +203,7 @@ def test_the_adopted_grid_region_names_the_table_it_asserted(adopting_doc):
     `emit_data_grid` returns the grid's URI and it must reach the report.
 
     Pre-repair `compile.py:1359` discarded that return although it is declared `-> "URIRef"`
-    (`datagrid.py:599-600`), so the grid sat in the graph while the report pointed at nothing,
+    (`datagrid.py:618-619`), so the grid sat in the graph while the report pointed at nothing,
     and every consumer keyed on `table_uri is not None` skipped it — intra-page section
     stitching (`document.py:1554`), the adoption driver's grid check (`document.py:1648`) and
     the document's chain assembly. The adopt twin at `compile.py:1477` never had this defect,

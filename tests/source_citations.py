@@ -107,7 +107,8 @@ def citations(paths: Iterable[Path]) -> Graph:
     bare tokens in that paragraph inherit it. A code line, or a contentless `#` line, ends the
     paragraph and resets the referent — see `_ends_paragraph` for the measurement that forced the
     unit to be the paragraph and not the contiguous block. This is how a human reads the passage:
-    `datagrid.py:733` writes ``compile.py:878`` and then a bare ``:949``, and the second means
+    `datagrid.py`'s `(c) THE NO-CHANGE OPTION` comment writes ``compile.py:878`` and then a
+    bare ``:949``, and the second means
     compile.py, not datagrid.py.
 
     A range `:NNN-MMM` emits BOTH endpoints as separate nodes: an edit can invalidate either end.

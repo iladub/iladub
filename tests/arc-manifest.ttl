@@ -1433,28 +1433,37 @@ prog:criterion:tab:10 a prog:Criterion ;
 # not an escalation reason — criterion 10, widened past the nine reasons by D3. M6 forbids
 # a sixth rung, so the choice was between these two and only one of them admits the row.
 #
-# WHY [[R238]] BLOCKS IT, under this section's own rule (:1155 — an edge names a row WHOSE
+# WHY [[R238]] BLOCKED IT, under this section's own rule (:1155 — an edge names a row WHOSE
 # CLOSURE WOULD ADVANCE THIS CRITERION, not a row that mentions the subject). Closing R238
-# IS this criterion being met: the row is the dropped row-label and final-% columns, and
+# WAS this criterion being met: the row is the dropped row-label and final-% columns, and
 # the oracle below counts exactly the cells those two columns carry. The same ruling
 # REFUSED the symmetrical-looking edge from R238 to `etkl:05` and to tab:02/07/09, because
-# closing R238 advances none of them — the score and the reason census both held. R238
-# verified `| R238 | open |` and unparked in docs/superpowers/residues.md:409 on 2026-09-16.
+# closing R238 advances none of them — the score and the reason census both held. The edge
+# is gone because the row closed, which is M8: a met criterion may not be blocked.
 #
-# THE ORACLE IS RED ON PURPOSE AND THAT IS THE POINT. `prog:met false` is authored while
-# `_boundaries_from_decoration` is still consulted (src/iladub/etkl/datagrid.py:340-349), so
-# the first oracle test is a STRICT xfail: when the switch lands it XPASSes, which fails the
-# suite, and the loop that builds it must flip the marker and this prog:met together in one
-# reviewed act. Declared BEFORE it is claimed — the denominator moves before the numerator,
-# exactly as criterion etkl:01's note records for the first met document on that rung.
+# MET 2026-09-17, AND THE ORACLE'S RED WAS WHAT FORCED IT. `prog:met false` was authored
+# while `_boundaries_from_decoration` was still consulted by `derive_data_grid`, so the
+# first oracle test shipped as a STRICT xfail. When the blanket refusal landed it XPASSed —
+# observed as `[XPASS(strict)] 1 failed, 1 passed` — and an XPASS under a strict marker
+# fails the suite, so the switch could not ship while this prog:met stayed stale. Marker
+# and prog:met were flipped in one reviewed act. Declared BEFORE it was claimed: the
+# denominator moved before the numerator, exactly as criterion etkl:01's note records for
+# the first met document on that rung.
+#
+# `prog:metOn` IS THE DAY THE SWITCH LANDED (2026-09-17), NOT THE DAY IT WAS RULED
+# (2026-09-16, `prog:declaredOn`). The two fell either side of midnight by accident, and
+# the accident is worth a line because M4 refuses `metOn == declaredOn` with
+# `retrospective false` — it reads same-day as grandfathering. A same-day declare-then-build
+# is NOT grandfathering, and M4 cannot tell the two apart at day granularity. That near-miss
+# is recorded as [[R244]]; nothing here depends on it, because these dates differ.
 prog:criterion:tab:11 a prog:Criterion ;
     prog:ofRung "tab" ;
     prog:statement "gov-stats/bfs-population-bilan-2023.pdf page 5: the adopted data grid CARRIES the row-label column and the final % column — 496 placed cells on that page and 15354 triples in the document — while page 6 stays unmoved at 267 cells across 6 asserted regions. Counted as CELLS AND TRIPLES, never as the document score, which is an ink-token ratio blind to this defect." ;
     prog:source "docs/superpowers/2026-09-16-ship-the-switch-ruling.md:144" ;
     prog:declaredOn "2026-09-16"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-17"^^xsd:date ;
     prog:retrospective false ;
-    prog:blockedBy "R238" ;
     prog:oracleArtifact "tests/test_carriage.py" ;
     prog:oracleTest "tests/test_carriage.py::test_bfs_p5_carries_the_row_label_and_percent_columns" ;
     prog:oracleTest "tests/test_carriage.py::test_bfs_p6_carriage_is_untouched" .

@@ -337,16 +337,31 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
     modal_sig = max(recurring, key=lambda s: len(s) * counts[s])
     sig_seed = [i for i, s in enumerate(sigs) if s == modal_sig]
 
-    # --- the column universe, fixed ONCE.
+    # --- the column universe, fixed ONCE. tab:DecorationUniverse is REFUSED, BLANKET.
+    #
+    # `_boundaries_from_decoration` is no longer consulted. Until 2026-09-17 it won
+    # whenever it resolved at least as finely as alignment, and that ordinal comparison
+    # is what dropped bfs p5's row-label and `%` columns: a drawn rectangle is drawn
+    # around the numbers an author wants ruled, not around the table, so a column
+    # outside it cannot be carried at all (R238/R239 — one defect, two columns).
+    #
+    # Refused BLANKET rather than conditionally because no conditional shape has
+    # surviving measured support: the straddle discriminator was run against all 48
+    # interior boundaries of all 3 decoration pages and dropped nothing, and the reason
+    # was structural — carriers are 44-46 of 46 admitted rows, so a universal over
+    # nearly-everything of a minority property can only be false. Inventing a fresh one
+    # would be the tuned constant CLAUDE.md § 8 forbids, on a defect that IS a boundary
+    # decided by 0.04 pt. Ruled 2026-09-16, docs/superpowers/2026-09-16-ship-the-switch-ruling.md.
+    #
+    # MEASURED COST, accepted on the record by that ruling: 3 corpus pages read a
+    # decoration universe. bfs p5 gains its two columns (15c -> 12c, 404 -> 496 cells);
+    # graincorp-capacity p0 is unmoved at 27 rows; cbh p0 loses 5 of 50 grid rows — one
+    # vessel row and 3 of 4 panel totals (R243). No page here has a decoration rectangle
+    # that is both adopted AND correct, so this corpus CANNOT produce the counter-example
+    # that would refute the refusal; a document with a correctly-drawn rectangle would be
+    # regressed, and is the case that reopens the ruling.
     align = _boundaries_from_alignment([runs[i] for i in sig_seed])
-    decor = _boundaries_from_decoration(drawn_rules(pdf_path, page_number), runs)
-    # Decoration wins only when it resolves AT LEAST AS FINELY as alignment — an ordinal
-    # comparison, not a threshold. Preferring it unconditionally cost stem every row,
-    # because its three drawn marks are page borders giving 2 columns against 15.
-    if decor is not None and len(decor) >= len(align):
-        bounds, universe = decor, "decoration"
-    else:
-        bounds, universe = align, "alignment"
+    bounds, universe = align, "alignment"
     ncols = len(bounds) - 1
     if ncols < 2:
         return None
@@ -426,14 +441,18 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         return None
 
     # --- G0 tab:SeedFollowsUniverse: the seed is the modal class in WHATEVER universe
-    # supplied the columns. Seeding a decoration universe by signature cost capacity 19
-    # of its 27 rows: the seed must be modal in the space the columns came from.
-    if universe == "decoration":
-        key_occ = Counter(frozenset(h) for _, h in placed).most_common(1)[0][0]
-        seed_rows = [h for _, h in placed if frozenset(h) == key_occ]
-    else:
-        wanted = set(sig_seed)
-        seed_rows = [h for i, h in placed if i in wanted]
+    # supplied the columns — and with the decoration universe refused above, that is
+    # always the structural signature class of the alignment universe.
+    #
+    # The occupancy arm removed here (`Counter(frozenset(h) ...).most_common(1)`) became
+    # UNREACHABLE the moment `universe` lost the ability to hold "decoration". That was
+    # MEASURED before it was removed, not assumed: 3 corpus pages reached it — cbh p0,
+    # graincorp-capacity p0, bfs p5 — and 0 reach it now. It is recorded here rather than
+    # kept, because a revisit of the blanket refusal must restore BOTH halves together:
+    # seeding a decoration universe by signature instead of occupancy cost capacity 19 of
+    # its 27 rows, so the drawn-rule path needs the occupancy seed to be worth anything.
+    wanted = set(sig_seed)
+    seed_rows = [h for i, h in placed if i in wanted]
     if not seed_rows:
         return None
 

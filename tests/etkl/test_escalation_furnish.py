@@ -153,7 +153,7 @@ def test_it_is_idempotent():
 
 
 def test_a_decision_with_no_regarding_derives_nothing():
-    # The datagrid.py:695-697 shape: a dec:DecisionHolon minted without going through
+    # The datagrid.py:714-716 shape: a dec:DecisionHolon minted without going through
     # ReadingRecorder.record, carrying dec:chosen and NO dec:regarding. Measured to exist in
     # the code as it stands (grep for DEC.regarding in datagrid.py is empty), so this setup
     # is constructible rather than hypothetical.

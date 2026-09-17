@@ -605,7 +605,14 @@ def test_emitted_grid_answers_why_from_the_graph_alone():
 def test_emitted_aggregate_rows_reuse_the_loop_h_class():
     """No new class is minted: an aggregate row of the grid is typed with the SAME
     tab:DetectedAggregationRow the extraction path already uses, carrying its operands, so
-    tab:DetectedAggregationRowShape is satisfied as that shape already stands."""
+    tab:DetectedAggregationRowShape is satisfied as that shape already stands.
+
+    COUNTS RE-AUTHORED 2026-09-17, subject unchanged. This asserted four emitted aggregate
+    rows with operand counts [5, 10, 14, 16] — the four cbh panel totals. Refusing the
+    decoration universe leaves one witnessed total (panel 1, ten operands), so the numbers
+    move and the CLAIM does not: whatever aggregate rows are emitted are typed with the
+    existing class, carry `sum`, and name operands that are rows of THIS grid. The three
+    lost totals are R243, pinned by name in the panel-totals test above."""
     from rdflib import Graph, URIRef
     from iladub.etkl.datagrid import emit_data_grid
 
@@ -618,7 +625,7 @@ def test_emitted_aggregate_rows_reuse_the_loop_h_class():
     agg = set(g.subjects(
         URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
         URIRef("https://w3id.org/iladub/tab#DetectedAggregationRow")))
-    assert len(agg) == 4, f"expected the four panel totals, got {len(agg)}"
+    assert len(agg) == 1, f"expected panel 1's total, the one still witnessed, got {len(agg)}"
     for a in agg:
         assert (a, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 URIRef("https://w3id.org/iladub/tab#AggregationRow")) in g, (
@@ -631,7 +638,7 @@ def test_emitted_aggregate_rows_reuse_the_loop_h_class():
         assert all(str(o).startswith(str(uri) + "-r") for o in ops), ops
     counts = sorted(len(list(g.objects(a, URIRef("https://w3id.org/iladub/tab#aggregates"))))
                     for a in agg)
-    assert counts == [5, 10, 14, 16]
+    assert counts == [10]
 
 
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
@@ -721,7 +728,7 @@ def _synthetic_grid(n_rows, n_cols, refused=0):
     """A grid built by hand — because the refusal-FREE case cannot come off the corpus.
 
     `derive_data_grid` records a refusal for every page line it did not admit
-    (datagrid.py:582-583), so every derived grid refuses something and R81(c) — the
+    (datagrid.py:601-602), so every derived grid refuses something and R81(c) — the
     unconditional no-change option — stays invisible on real documents. The spec records it
     as unobserved for exactly this reason; this fixture is its only evidence."""
     cols = tuple(GridColumn(10.0 + 40 * k, 50.0 + 40 * k, "Numeric") for k in range(n_cols))
@@ -1270,10 +1277,20 @@ def test_adoption_never_touches_a_page_that_read_something():
     assert sum(r.cells for r in on.regions) == sum(r.cells for r in off.regions) == 124
 
 
-# --- the fifth oracle: cbh, a DECORATION-universe page with two tables --------------
-# cbh-stem-2026-08-03.pdf page 0, transcribed (85 lines). Chosen because it is the only
-# corpus page whose columns come from the DECORATION universe rather than alignment, so
-# the drawn-rule path had no oracle at all until now.
+# --- the fifth oracle: cbh, two tables on one page ----------------------------------
+# cbh-stem-2026-08-03.pdf page 0, transcribed (85 lines). Chosen because it WAS the only
+# corpus page whose columns came from the DECORATION universe rather than alignment, so
+# the drawn-rule path had no oracle at all until it was written.
+#
+# THAT UNIVERSE IS GONE. Ruled 2026-09-16 and shipped 2026-09-17, the decoration universe
+# is refused blanket (R238/R239; docs/superpowers/2026-09-16-ship-the-switch-ruling.md), and this page is
+# where that refusal is paid for. Measured on the switching tree, grid scope:
+#   before  decoration  20 columns  50 rows   aggregates {20: 10, 42: 16, 63: 14, 74: 5}
+#   after   alignment   16 columns  45 rows   aggregates {20: 10}
+# The 5 lost rows are vessel row 26, three of the four panel totals (42, 63, 74), and the
+# table-B leak at 75 — which STOPS leaking, so one of the five is a repair, not a cost.
+# The assertions below are re-authored to the measured reading and each names what moved;
+# none is relaxed to a weaker claim. The loss is recorded as R243, open.
 #
 # The page carries TWO tables:
 #   A  the ship roster — four port panels, each with a 3-line header and vessel rows
@@ -1290,15 +1307,21 @@ CBH_P0_METADATA = set(range(85)) - CBH_P0_DATA - CBH_P0_TABLE_B  # 30 lines
 
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_reads_all_four_panels_as_one_grid():
-    """The four panels are read as ONE grid — every vessel row across all four, from a
-    single page-wide decoration universe. This is the shipped answer to 'one grid or
-    four', and it needed no rejoin operation and no knowledge that the annotations name
-    ports."""
+    """The four panels are read as ONE grid — the vessel rows of all four, from a single
+    page-wide universe. This is the shipped answer to 'one grid or four', and it needed no
+    rejoin operation and no knowledge that the annotations name ports.
+
+    RE-AUTHORED 2026-09-17, not relaxed. This test asserted `universe == "decoration"` and
+    `not missed`; the blanket refusal makes the first unstateable and the second false by
+    exactly one row. `missed == [26]` is a PIN, not a weakening — it fails if any further
+    vessel row drops, and it fails again if row 26 comes back, because a silent recovery
+    is a change to this page's reading that must be read by a human too. Why row 26 in
+    particular is NOT explained here: it is measured, not understood, and is R243."""
     g = derive_data_grid(CBH, 0)
-    assert g is not None and g.universe == "decoration"
+    assert g is not None and g.universe == "alignment"
     admitted = set(g.rows)
     missed = sorted(CBH_P0_VESSEL_ROWS - admitted)
-    assert not missed, f"vessel rows missed: {missed}"
+    assert missed == [26], f"vessel rows missed: {missed} (R243 pins exactly [26])"
     assert len(CBH_P0_VESSEL_ROWS) == 45
 
 
@@ -1317,9 +1340,16 @@ def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
     'cbh's rectangle spans a stacked panel'; tab:StackedGrids is defined and not derived.
 
     Its measure is in fact table A's exact grand total (374,904 + 737,289 + 660,363 +
-    178,708 = 1,951,264 — spec 2026-08-09 §3.6), so the line carries two tables' ink."""
+    178,708 = 1,951,264 — spec 2026-08-09 §3.6), so the line carries two tables' ink.
+
+    THE LEAK STOPPED, 2026-09-17, and this test now pins its ABSENCE. Refusing the
+    decoration universe left line 75 outside the grid: the rectangle that spanned the
+    stacked panel was the drawn one. This is a REPAIR that fell out of a change aimed
+    elsewhere, so it is pinned rather than celebrated — and it does NOT close R74, which
+    is about `tab:StackedGrids` being defined and underived, not about this one line. One
+    page's leak closing by side effect is evidence for that row, not a disposal of it."""
     g = derive_data_grid(CBH, 0)
-    assert set(g.rows) & CBH_P0_TABLE_B == {75}, "the table-B leak changed"
+    assert set(g.rows) & CBH_P0_TABLE_B == set(), "the table-B leak changed"
 
 
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
@@ -1328,14 +1358,24 @@ def test_cbh_p0_admits_the_four_panel_totals_by_arithmetic():
     placement floor refused them as unplaceable. G8's aggregate witness admits them: each
     printed value is the EXACT Decimal sum of the rows it stands over.
 
-    No label text is read — 'Total' is never printed on these lines at all."""
+    No label text is read — 'Total' is never printed on these lines at all.
+
+    R75'S CLOSURE IS PARTLY REGRESSED, 2026-09-17, and this test says so rather than
+    dropping the claim. Under the blanket refusal of the decoration universe only panel
+    1's total is still witnessed: `{20: 10}`, where four totals were witnessed before.
+    The MECHANISM is untouched — the arithmetic still admits a total that reconciles
+    exactly, over the same ten members, reading no label — so what the test proves is
+    unchanged; what regressed is how many of this page's rows reach it. That is a real
+    cost of the switch, it was accepted on the record by the ruling, and it is open as
+    R243. Asserting the measured `{20: 10}` keeps the loss VISIBLE: if a later change
+    restores 42, 63 or 74, this test fails and the recovery gets read."""
     g = derive_data_grid(CBH, 0)
     admitted = set(g.rows)
     missed = sorted(CBH_P0_PANEL_TOTALS - admitted)
-    assert not missed, f"panel totals missed: {missed}"
-    # the member counts are the four panels' vessel-row counts, and they sum to 45
-    assert {k: len(v) for k, v in g.aggregates.items()} == {20: 10, 42: 16, 63: 14, 74: 5}
-    assert sum(len(v) for v in g.aggregates.values()) == len(CBH_P0_VESSEL_ROWS) == 45
-    # every entry row of table A, aggregates included
-    assert CBH_P0_DATA <= admitted, f"missed: {sorted(CBH_P0_DATA - admitted)}"
+    assert missed == [42, 63, 74], f"panel totals missed: {missed} (R243 pins these three)"
+    # panel 1's total is still witnessed by its ten vessel rows, exactly as R75 closed it
+    assert {k: len(v) for k, v in g.aggregates.items()} == {20: 10}
+    assert 20 in admitted and len(CBH_P0_VESSEL_ROWS) == 45
+    # the entry rows of table A that survive the switch: 49 transcribed, 45 admitted
+    assert sorted(CBH_P0_DATA - admitted) == [26, 42, 63, 74]
     assert len(CBH_P0_DATA) == 49
