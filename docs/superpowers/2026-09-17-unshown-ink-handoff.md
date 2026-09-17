@@ -1,5 +1,9 @@
 # Handoff — the ink the page does not show: the spec exists, attack it
 
+**Topic:** [[R213]]'s term is specified and no colour reaches `src/` — the cited-standard
+threshold was refuted on 858 visible glyphs, so the disposal is a disagreement between the text
+layer and a NEURAL reader of the render. A fresh session attacks the spec before planning it.
+
 **Serves:** prog:criterion:etkl:02 — graincorp-capacity. [[R250]] is blocked on [[R213]].
 
 **Date:** 2026-09-17. **Doc impact: none.**
