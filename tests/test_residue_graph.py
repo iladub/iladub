@@ -118,7 +118,18 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     `isinstance(v, Path)` when they are module-level STRINGS, so it rebound nothing, measured the
     same tree twice and would have reported ADDED = [] as a clean result. A rebinding that matches
     no attribute does not raise — so it must be proved to bite (the count must move) and to
-    release (restoring must return the original count) before its delta means anything."""
+    release (restoring must return the original count) before its delta means anything.
+    RE-MEASURED 2026-09-17 by the loop that re-stated R47/R50/R77 (branch
+    `section-total-is-in-its-own-band`): 92 -> 90, ADDED = [], REMOVED = [47, 50].
+    **A THIRD mechanism, and it is neither of the two above.** That loop CLOSED nothing and
+    RAISED nothing — it AMENDED three existing rows and shipped no code. R47 and R50 are open,
+    named by no criterion, and had no open neighbour; the amendments cite [[R77]] from R47's row
+    and [[R47]] from R50's, and R77 is open, so each gained its FIRST open neighbour and left the
+    set. The count therefore moves on a loop that changed no row's STATUS at all — the sharpest
+    form yet of this docstring's own warning to read the delta by mechanism and never as progress,
+    since here there is no progress to read either way. Controlled in both directions exactly as
+    the paragraph above requires: bite True (92 != 90), release True (restoring the three
+    module-level strings returns 90)."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -132,4 +143,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 92
+    assert len(expected) == 90

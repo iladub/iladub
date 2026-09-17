@@ -1,5 +1,8 @@
 # Handoff — the section total is in its own band ([[R47]] re-confirmed, [[R77]] re-stated)
 
+**Topic:** The section total is in its own band — [[R47]] re-confirmed at HEAD, [[R77]] re-stated
+as the second gate, no remedy designed.
+
 **Serves:** prog:criterion:tab:04 — [[R77]] is one of its three blockers
 
 **Date:** 2026-09-17. **Tree:** branch `section-total-is-in-its-own-band`, cut from `main` at
