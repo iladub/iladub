@@ -248,7 +248,13 @@ ground truth this thread has ever had.
 
 **O2, set identity on gcap.** Exactly the 110 cells type `tab:UnshownInk` — **the same 110, cell by
 cell, not a matching count.** R176 and R172 each turned out to be hiding a coinciding count, and
-R213's own amendment established its 110 by set identity for that reason.
+R213's own amendment established its 110 by set identity for that reason. **A second witness exists
+and costs nothing** (**E7**): every port on that page occupies a tonnage sub-column and a `Y`/`N`
+availability flag, and 110 of 110 hidden glyphs sit immediately left of an `N` while 0 of 80 `Y`
+flags have one. Use it to check O2 without running a worker — but **not as the rule**: the
+implication runs one way (5 `N` flags have no glyph at all), and no other corpus document has a flag
+column. A plan that quietly promotes this witness into the disposal has replaced a general reading
+with one table's contract.
 
 **O3, the six-document null.** graincorp-stem and who-wfa carry adjudication floors (0.95, 0.90) and
 have zero unshown glyphs under either instrument. Their compiled output must be **bit-identical**,

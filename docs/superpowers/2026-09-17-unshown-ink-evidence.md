@@ -181,15 +181,46 @@ $ grep -rn "non_stroking_color\|stroking_color" src --include='*.py'
 
 Confirms the handoff's § 5c. `page.rects` is used once, for geometry (`datagrid.py:184`).
 
+## E7 — the rendered pages, looked at, and a second witness on gcap
+
+The only ground truth this thread has ever had is a person looking at the page. Both contested
+populations were rendered at 220 dpi (`page.crop(...).to_image(...)`) and read:
+
+- **cbh-stem's pale-blue band** — the white-on-pale-blue glyphs are the port codes `ALB`, `ESP`,
+  `GER`, `KWI` in the row-label column of the stock table, beside tonnages of 129,183 / 25,013 /
+  160,198 / 170,878. **Low contrast and plainly legible.** They are load-bearing data, and WCAG's
+  3:1 line would have typed all 780 of them as unshown (E2).
+- **graincorp-capacity's dark cells** — **visually empty**, exactly as R213 records. The green `Y`
+  and black `N` in the flag sub-column beside them are crisp.
+
+Reading the render also exposes a signal that is on the page and needs no colour at all. Every port
+occupies two sub-columns — a tonnage and a `Y`/`N` availability flag — and:
+
+```
+hidden: 110   Y/N glyphs: 195
+hidden cell -> nearest Y/N to its right: {'N': 110}   no Y/N found: 0
+Y/N glyph -> a hidden glyph within 120pt to its left: {('Y', False): 80, ('N', True): 110, ('N', False): 5}
+```
+
+**110 of 110** hidden glyphs sit immediately left of an `N`, **0 of 80** `Y` flags have a hidden
+glyph beside them, and the implication runs **one way only**: 5 `N` flags have no hidden glyph
+beside them — the genuinely empty cells, of which R213 already names one (Fisherman Islands,
+2025/26, September 1st Half).
+
+This is a **second witness for the O2 set identity on this document, and it is not the general
+rule.** It is contract knowledge about one table's shape: cbh has no flag column, and neither does
+any other corpus document. Recorded because a reviewer will think of it, and because it makes gcap's
+110 checkable without running a worker at all — *hidden ⟹ N* is measured; *N ⟹ hidden* is false.
+
 ---
 
 ## What this evidence does NOT establish
 
 - **That a vision worker reads these pages correctly.** § 4 of the spec rests on it and nothing
   here tests it. cbh's 780 white-on-pale-blue glyphs are the named falsification.
-- **That the 110 are invisible to a human.** Every figure above is instrument output. The claim
-  rests on R213's own rendering check (`2026-09-11-etkl-02-waits-on-r166-handoff.md` § 2), which is
-  a person looking at the page, and that remains the only ground truth in this thread.
+- **That a render read by this session is a reader's judgement.** E7 is the closest thing here to
+  ground truth and it is still an agent looking at a raster. R213's own rendering check
+  (`2026-09-11-etkl-02-waits-on-r166-handoff.md` § 2) is the maintainer's, and it agrees.
 - **The cost of rendering pages.** Not measured; § 5 names it as the plan's first measurement.
 - **How many regions the corpus has**, and therefore the size of any per-region ask. Not measured
   here deliberately — the plan measures it at the call site (plan rule 3).
