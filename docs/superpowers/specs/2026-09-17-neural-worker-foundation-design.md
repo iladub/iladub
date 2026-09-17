@@ -224,3 +224,10 @@ harness's own test on a fixture with a known answer.
 | oracles | AXIOM | unchanged (`region_tiles`, `_grounds_to`, membership) |
 | async dispatch, cache, harness tally, null proposer | PROCEDURAL | orchestration and counting; they decide nothing about any document and carry no tolerance |
 | composed rationale | PROCEDURAL | string assembly from recorded facts |
+
+## 9. Review appended 2026-09-17
+
+Reviewed adversarially in `2026-09-17-neural-worker-spec-review.md`. **§ 1d.1 and § 3.4 are
+REFUTED as stated**: of 2,364 grounding asks, 2,215 can be admitted under no answer at all, and
+the other 149 are one column whose oracle is a number pattern ([[R249]]). Read the review before
+planning from this spec.

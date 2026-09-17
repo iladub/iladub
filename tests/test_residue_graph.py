@@ -134,7 +134,11 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     `neural-worker-foundation-spec`): 90 -> 91, ADDED = [248], REMOVED = []. The plain first
     mechanism: R248 was RAISED open, is named by no criterion, and its only link is [[R212]],
     which is closed — so it enters the set on arrival. Controlled: with the two register edits
-    stashed the count is 90, restored it is 91."""
+    stashed the count is 90, restored it is 91.
+    RE-MEASURED 2026-09-17 by the review of that spec (branch `neural-worker-spec-review`):
+    91 -> 90, ADDED = [], REMOVED = [248]. The prose mechanism: the new row R249 cites [[R248]]
+    and R249 is open, so R248 gained its first open neighbour and left the set; R249 itself cites
+    the open [[R213]] and never entered it."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -148,4 +152,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 91
+    assert len(expected) == 90

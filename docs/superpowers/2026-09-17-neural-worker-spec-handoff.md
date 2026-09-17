@@ -69,3 +69,11 @@ The rework is [[R248]], a separate loop. Row-role and span workers change no cor
 Measured the prior handoff's three seams plus a fourth (reach), with a positive control. Wrote the
 spec, raised R248, re-pinned `test_residue_graph.py`'s candidate count (90 → 91, R248 only). No
 production code touched.
+
+## Appended 2026-09-17, after the review
+
+- **§ 5b is resolved.** The key in `~/.zshrc` is valid (HTTP 200 from Haiku 4.5; BAML
+  `PingExtract` returned `ok=True`). The tool shell does not inherit it; prefix commands with
+  `ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"')`.
+- **§ 5a was run in this session, not a fresh one**, at the maintainer's request:
+  `2026-09-17-neural-worker-spec-review.md`. Its § 4 replaces this handoff's next action.
