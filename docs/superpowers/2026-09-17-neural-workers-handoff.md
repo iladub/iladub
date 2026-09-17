@@ -80,6 +80,36 @@ output saving has a price, and the spec must choose, not assume:
 **MEASURE before choosing:** which shapes require `dec:rationale` or a confidence on a
 `PromotionDecision`/`CandidateConcept`, and whether any test pins the model's sentence.
 
+### 5e. PROPOSED — beyond a prompt: a generic micro-agent whose tools are the AXIOM layer
+
+**Typed PROPOSED: raised by the maintainer after 5a–5d were written; nothing here was built or
+measured.** *"We can go beyond smart prompts and provide tools to produce generic and reusable
+micro agents."*
+
+The shape: instead of each proposer hand-rendering its whole context into one prompt, the model
+**asks** for evidence through typed tool calls and then returns the same closed answer. In BAML a
+tool is a class in a union return type (`GetColumnStack | RowText | SumRange | Final`), and the loop
+is host code — orchestration, not a decision, so it is a justified PROCEDURAL step.
+
+- **The tools are read-only SPARQL `SELECT`s over the ONE holon's evidence graph.** The derivations
+  already written become the tool belt; the holon stays the closure boundary (principle 8). Only a
+  promotion decision ever writes.
+- **The oracle is NOT in the tool belt.** An agent that may call the oracle can search until
+  something passes, and proposer and disposer stop being independent — with a weak oracle (R47's
+  arithmetic, which can hold by coincidence) it *will* find the coincidence. The oracle disposes
+  after the `Final`. Any retry is bounded (one, by default) and **each attempt is its own decision
+  holon** with a typed `dec:rejectedBecause`.
+- **It is the escalation, not the default.** Ladder: AXIOM → single-shot closed worker → micro-agent,
+  and only when the single shot was refused or the evidence is too large to push. A loop multiplies
+  calls, and the small tier is measurably weaker over several steps (evidence § 2: nano fails one).
+
+**THE SEAM TO MEASURE FIRST:** *does ONE tool belt actually serve different judgements?* Take two
+shipped proposers, list the evidence each prompt pushes today, and see whether the same three or
+four tools would have supplied both. If each judgement needs its own belt, the reuse is an illusion
+and this is five prompts with extra round trips.
+
+*If this is wrong, the next session finds out in an hour, on paper, before any agent is written.*
+
 ### 5d. ASSERTED — what must NOT be done
 
 - **Do not compress a shipped prompt's instructions** without the eval harness of 5a.4. Twice
