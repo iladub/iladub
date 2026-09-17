@@ -221,10 +221,10 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R44 | open | BFS gov-stats document: three escalation reasons with NO shared root cause (triage done 2026-09-15) — `ROUND_TRIP_FAIL` unmoved at 5 (1 live + 4 concealed by p5 adoption), `REGION_TILING_FAILED` 2, `KIND_NOT_SUPPORTED` 4 (this row's `2×` was always wrong), `DATAGRID_RESIDUE` 1 new; score 0.3438 → 0.8851 repaired none of them |
 | R45 | closed | CLOSED 2026-08-31 — `matrix._level_tops` deleted; a header level is a band line. WHO 0.5597 → 0.9096, 3 escalations → 0 |
 | R46 | open | Fetcher hardening — `_pdf_facts` crashes uncaught on non-PDF bytes at BOTH call sites |
-| R47 | open | Both the grid-region peel and the hrule-box weld are scoped LEADING-only — a trailing full-width strip is neither peeled nor welded |
+| R47 | open | Both the grid-region peel and the hrule-box weld are scoped LEADING-only — a trailing full-width strip is neither peeled nor welded ✎ **2026-09-17: the `gap_factor` arm is REFUTED** (cuts 5.24x-6.11x vs a 1.8x threshold — no value admits the total and keeps the panels apart) **and the remedy is CONSTRUCTIBLE** (col 13 sums exactly on 4/4 panels); shape is cbh-only, 4 corpus-wide |
 | R48 | open | `sectiongraph._leading_box_y`'s header-box-candidate selection can, on a document shape the interior-crossing test does not discriminate, locate a… |
 | R49 | open | Spec §4.2's GRAPH-level key form (`tab:DerivedRowGroup` covering a section's rows, `tab:hasLabel` → the source heading cell, `prov:wasDerivedFrom`… |
-| R50 | open | `document._confirm_section_total`'s totals oracle reads only the table's LAST row as the total candidate — several STACKED trailing lines below a s… |
+| R50 | open | `document._confirm_section_total`'s totals oracle reads only the table's LAST row as the total candidate — several STACKED trailing lines below a s… ✎ **2026-09-17: its remedy is INSUFFICIENT ALONE on the real specimen** — a walk-back stays inside the band, and cbh's total is in the NEXT band (y≈210 vs band end 199.1); see [[R47]] |
 | R51 | open | `document._band_subgraph`'s subject-collection licence leans on the `_index_suffix` URI-prefix minting convention holding everywhere a new subject… |
 | R52 | open | Class-level documentation debt: `tab:DetectedAggregationRow` (loop H), `tab:continuesTable` (loop M), and `tab:SectionTotal` (loop Q) ship with NO… |
 | R53 | open | `iladub:GroundedNodeShape` validates `groundsTo`'s PRESENCE only (`sh:minCount 1`), never its RESOLUTION — a `GroundedNode` whose `groundsTo` IRI r… |
@@ -247,7 +247,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R72 | closed | CLOSED (loop-data-grid, 2026-08-08) |
 | R74 | open | The cbh data grid leaks one row from a SECOND table on the same page |
 | R76 | open | Spec-writing discipline: proposal and disposal must come from DIFFERENT sources |
-| R77 | open | cbh's four panel totals are missed on the SCORE path too, for the identical no-label reason |
+| R77 | open | cbh's four panel totals are missed on the SCORE path too, for the identical no-label reason ✎ **2026-09-17: claim TRUE (0 SectionTotal/AggregationRow at document scope), mechanism RE-STATED as the SECOND gate** — the detector never receives the totals; masked by [[R47]]'s window gate, and its predicted score movement is impossible (ignored bands book 0/0 tokens) |
 | R78 | open | An unparseable member cell is summed as zero by `confirms_aggregate` |
 | R79 | open | An adopted page's unread structure is escalated as ONE page-level residue candidate |
 | R80 | open | apple p1's indent hierarchy is read by nobody |
