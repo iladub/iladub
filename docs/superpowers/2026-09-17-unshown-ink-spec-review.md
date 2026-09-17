@@ -359,3 +359,68 @@ strengthens it.
 What the spec must move: the term and the membrane from `tab:GridCell` to `tab:EntryCell` (RF1), the
 carriage from one crossing to two (RF2), and the null control from `tab:Blank` to the unpopulated
 grid position, with the spanning-column confounder stated (RF3).
+
+---
+
+## RF7 tested and CONFIRMED: the reader's answer, unenhanced, is exactly the disposal
+
+RF7 said the worker answered as an image analyst and that the prohibition it needs is *satisfiable
+but unenforceable*. The satisfiable half was not left as a proposition. A **second** blind reader was
+run on the same two crops with the question reframed — *which cells **appear empty to you***, you
+look at that place and see nothing — and with magnification, contrast adjustment and pixel sampling
+**explicitly forbidden**. It was told nothing about the first run, about hidden ink, or about what it
+was being tested for.
+
+It returned a 136-cell "appears empty" set for graincorp-capacity band 3. Graded against the
+pipeline:
+
+```
+reader says APPEARS EMPTY: 136 cells
+ground truth: 110 hidden-glyph cells + 26 unpopulated = 136 cells a reader should see as empty
+  reader set == hidden u unpopulated ?  True
+  reader only: []
+  missed:      []
+
+THE DISPOSAL: reader-says-empty AND text-layer-has-a-glyph
+  110 cells; identical to the 110 hidden cells? True
+  false positives: []   missed: []
+```
+
+**Exact, both ways.** The reader's unenhanced answer is the union of the hidden cells and the
+genuinely unpopulated ones — which is precisely what a reader of the page *should* say — and § 4.1's
+disagreement against the text layer resolves it to the 110 with no false positive and nothing missed.
+It correctly excluded **(0, 14)**, the one cell of column 14 that prints `14,000`, and correctly
+included **(1, 6)**, the navy cell with no glyph, without being told either existed.
+
+Three consequences:
+
+1. **§ 4.1's "a reader of the rendered page" is not a figure of speech, and it is achievable.** The
+   spec may ask for the reader's answer and get it. The enhancement route (run 1) and the reading
+   route (run 2) reach the same 110 here, but only the second is the one § 1.1 leaves standing.
+2. **The repaired null control comes free.** Run 2's answer *is* its own null control: the same set
+   carries all 26 unpopulated positions, so nothing separate has to be asked or refused. RF3's
+   repair and RF7's reframing are one change, not two.
+3. **The prohibition is still unenforceable from the answer alone** — run 1 and run 2 returned the
+   same 110 by different routes, so the output cannot distinguish them. What is now known is that the
+   *honest* route works, which was the open question. A spec can ask for it and test for it on a
+   control page where the two routes would diverge; it cannot detect a defector from one answer.
+
+### RF6 is reinforced: two blind runs disagree with the pipeline AND with each other
+
+Run 2 also rejected cbh's supplied grid, independently:
+
+> I see **16 horizontal bands** of cells and **20 columns**, not 18 × 16.
+
+Run 1 saw **13** bands and 20 columns; run 2 saw **16** bands and 20 columns; the pipeline reads 18
+lines and 16 columns. **Both readers agree the page draws 20 columns and neither agrees with the
+pipeline's 16, and they do not agree with each other on rows.** Run 2 named the likely cause without
+being asked — *"the column-header row is one band, but two lines of text tall … if you counted text
+lines rather than cell bands, this is where your extra rows most likely come from"*. A contract that
+takes `(row, col)` addresses from a worker, over a grid the worker does not accept, has no sound
+address space, and § 4.3's in-grid check cannot see it. On gcap, where the grid does match
+(*"27 rows × 16 columns matches what I see"*), both runs were exact — which is the same finding
+stated positively: **the address space is only shared when the pipeline's grid is the one the page
+draws, and the worker must be able to say when it is not.**
+
+O1 passes at reader grain too: run 2's cbh blanks are `Other Port/s` and the three
+`Loading`-completion columns, all genuinely blank, and it reported no hidden ink anywhere.

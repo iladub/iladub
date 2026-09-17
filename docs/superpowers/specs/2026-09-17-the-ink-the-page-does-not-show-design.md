@@ -48,8 +48,13 @@ left open by the ruling, and the disposal in § 4 has never been run.
 >   *"I only resolved them by magnifying 4× and stretching the contrast … I would not have reported
 >   them from the image as displayed"*, and blanks *"confirmed by pixel uniformity, not by eye"* —
 >   with the 1.09:1 ratio reported back. That is § 1.1's refuted colour instrument re-entering
->   through the worker. The constraint is satisfiable (the same run states the reader's answer
->   plainly) but § 4.3 does not ask for it, and cannot enforce it from the answer alone.
+>   through the worker. **TESTED AND CONFIRMED:** a SECOND blind reader, forbidden to magnify,
+>   stretch contrast or sample pixels and asked *which cells appear empty to you*, returned a
+>   136-cell set **identical to hidden ∪ unpopulated**, whose disagreement with the text layer is
+>   **exactly the 110 — no false positive, nothing missed** — correctly excluding `(0,14)` and
+>   including `(1,6)`. So § 4.1's *reader of the rendered page* is achievable, and RF3's repaired
+>   null control **comes free** in the same answer. The prohibition remains unenforceable from the
+>   answer alone (both routes return the same 110), which is what § 7 must admit.
 > - **RF8 — minor:** the worker returned `14,000`, a value on the page, against § 4.3's *"addresses,
 >   not values"*. The output shape must make that impossible rather than request it.
 >
