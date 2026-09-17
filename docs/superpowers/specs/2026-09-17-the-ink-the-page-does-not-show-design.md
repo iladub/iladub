@@ -107,7 +107,8 @@ datatype.** Three reasons, in decreasing strength:
 
 1. **A proposition would be the wrong register.** `iladub:CandidateConcept` quarantines content that
    cannot be **grounded in a vocabulary** — an unmatched *term*. The hidden `0` is not ungroundable:
-   `cbh:capacity` accepts a tonnage and `0` is a well-formed one. Its defect is **evidential**, not
+   `ship:capacity` accepts a tonnage and `0` is a well-formed one
+   (`examples/shipping/capacity-contract.ttl:39`, `ship:f-cap-capacity etkl:fillsProperty ship:capacity`). Its defect is **evidential**, not
    terminological. Filing 110 numbers in a register built for terms would also demand 110
    `iladub:PromotionDecision`s on one page, each weighing evidence that is already recorded on the
    cell — an accountable act with nothing to decide.
