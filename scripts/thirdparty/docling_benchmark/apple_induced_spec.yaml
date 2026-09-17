@@ -1,0 +1,233 @@
+module_docstring: 'Knowledge-graph template induced from 1 sample document(s): control_pos__apple_p0.pdf.'
+root: FinancialStatement
+enums: []
+models:
+- name: FinancialStatement
+  kind: root
+  docstring: A condensed consolidated statement of operations for Apple Inc. for specified
+    periods.
+  identity_fields:
+  - statement_title
+  max_instances: null
+  fields:
+  - name: statement_title
+    type: str
+    is_list: false
+    description: The document header names the statement.
+    examples:
+    - CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS (Unaudited)
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: company_name
+    type: str
+    is_list: false
+    description: LOOK FOR the company name at the top of the document.
+    examples:
+    - Apple Inc.
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: currency_unit
+    type: str
+    is_list: false
+    description: LOOK FOR the currency and units in the header or table note.
+    examples:
+    - In millions
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: periods_covered
+    type: str
+    is_list: true
+    description: LOOK FOR column headers indicating the periods covered.
+    examples:
+    - Three Months Ended - June 27, 2026
+    - Nine Months Ended - June 27, 2026
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: has_line_item
+    type: LineItem
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: CONTAINS_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - 'Net sales:'
+    - 'Cost of sales:'
+  - name: has_segment_sales
+    type: SegmentSales
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: CONTAINS_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - 'Net sales by reportable segment:'
+  - name: has_category_sales
+    type: CategorySales
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: CONTAINS_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - 'Net sales by category:'
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: control_pos__apple_p0.pdf'
+- name: LineItem
+  kind: component
+  docstring: A single financial metric or subtotal reported for one or more periods.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: name_label
+    type: str
+    is_list: false
+    description: LOOK FOR the row label in the leftmost column.
+    examples:
+    - 'Net sales:'
+    - Gross margin
+    - Operating income
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: values_by_period
+    type: str
+    is_list: true
+    description: LOOK FOR the numeric values in the row, one per period column.
+    examples:
+    - $ 109,417
+    - 54,770
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: control_pos__apple_p0.pdf'
+- name: SegmentSales
+  kind: component
+  docstring: Reported net sales for a geographic segment for each period.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: segment_name
+    type: str
+    is_list: false
+    description: LOOK FOR the segment name in the leftmost column under segment sales.
+    examples:
+    - Americas
+    - Europe
+    - Greater China
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: sales_by_period
+    type: str
+    is_list: true
+    description: LOOK FOR the numeric sales values for each period.
+    examples:
+    - $ 45,781
+    - 95,596
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: control_pos__apple_p0.pdf'
+- name: CategorySales
+  kind: component
+  docstring: Reported net sales for a product or service category for each period.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: category_name
+    type: str
+    is_list: false
+    description: LOOK FOR the category name in the leftmost column under category
+      sales.
+    examples:
+    - iPhone
+    - Mac
+    - Services
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: sales_by_period
+    type: str
+    is_list: true
+    description: LOOK FOR the numeric sales values for each period.
+    examples:
+    - $ 54,252
+    - 27,277
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: control_pos__apple_p0.pdf'
+needs_root_list_dedup:
+- periods_covered
+- has_line_item
+- has_segment_sales
+- has_category_sales
+generator:
+  tool: docling-graph templategen
+  path: from-docs
+  sources:
+  - control_pos__apple_p0.pdf
