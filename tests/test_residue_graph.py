@@ -146,7 +146,12 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     open, named by no criterion, and its full row cites only the closed [[R212]] and [[R249]]. Its
     INDEX line also cites the open [[R213]], and that changes nothing, because this graph reads
     links from the full rows and not from the index. Controlled: with the register edits stashed
-    the count is 90, restored it is 92."""
+    the count is 90, restored it is 92.
+    RE-MEASURED 2026-09-17 by the R250 measurement (branch `r250-measured`): 92 -> 91,
+    ADDED = [], REMOVED = [250]. The prose mechanism, on the row raised one loop earlier: the
+    measurement found that [[R213]]'s invisible zeros are 110 of R250's 149 asks, so R213 must ship
+    first, and the amendment now cites the open R213. R250 gained its first open neighbour and left
+    the set. Controlled: with the register edits stashed the count is 92, restored it is 91."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -160,4 +165,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 92
+    assert len(expected) == 91
