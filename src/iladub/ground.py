@@ -25,6 +25,10 @@ _EXACT_RULE = "urn:iladub:suggester/exact-match-rule"
 # this suggester, so a reader of the graph sees the same accountable rule at either grain.
 _UNIQUE_ADMITTING_FIELD_RULE = "urn:iladub:suggester/unique-admitting-field-rule"
 _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
+# [[R249]]: the quarantine a proposer could not have changed. No contract field's oracle admits the
+# concept's value, so every answer a proposer could give is refused by `_grounds_to` — the ask is
+# skipped and this rule, not a proposer, is the candidate's accountable suggester.
+_NO_ADMISSIBLE_FIELD_RULE = "urn:iladub:suggester/no-admissible-field-rule"
 
 # Value constraints (as opposed to cardinality/path) — presence of any means the contract
 # declares something the SHACL membrane can verify a proposed value against.
@@ -199,6 +203,30 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
         f"branch for a field that was proposed rather than exactly matched")
 
 
+def _admissible_fields(concept, contract, terms, contract_shapes, offer_uri, memo=None):
+    """The contract fields whose oracle would admit `concept` if a proposer named them — the set
+    `_grounds_to(is_exact=False)` can return a target for. Empty means every proposal is refused.
+
+    `memo`, when given, is keyed on (value, field IRI) and is only valid while contract, terms
+    and shapes stay fixed — so its owner is ONE `ground_document` call. The answer does not depend
+    on `offer_uri`: `_value_conforms` uses it only as the focus node of a scratch graph. Measured
+    2026-09-17 on graincorp-stem: without it the filter costs 1.2 s -> 8.6 s per grounding pass."""
+    out = []
+    for f in contract.fields:
+        key = (concept.value, f.iri)
+        if memo is None or key not in memo:
+            ok = _grounds_to(concept, f, terms, False, contract_shapes, offer_uri,
+                             contract.target_class)[0] is not None
+            if memo is None:
+                if ok:
+                    out.append(f)
+                continue
+            memo[key] = ok
+        if memo[key]:
+            out.append(f)
+    return out
+
+
 def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand, agent, confidence, rationale, datatype=None, admitted_because=None):
     pd = BNode()
     g.add((pd, RDF.type, ILADUB.PromotionDecision))
@@ -243,7 +271,7 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
 
 
 def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shapes, g,
-                   page_context: str | None = None) -> str:
+                   page_context: str | None = None, admissible_memo: dict | None = None) -> str:
     field = exact_field(concept, contract)
     if field is not None:
         suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
@@ -254,6 +282,15 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
                      f"exactly one contract field ({field.fills_property}); unique admission "
                      f"derives the field from the contract, no proposer asked.")
         is_exact = True                                     # the field is derived, not proposed
+    elif not _admissible_fields(concept, contract, terms, contract_shapes, offer_uri,
+                                admissible_memo):
+        # [[R249]] THE PRE-FILTER. §8: AXIOM — it asks the shipped oracle, per field, the question
+        # `_grounds_to` would ask of any proposal (is_exact=False), and decides nothing else. With
+        # the admitting set empty no proposal can be admitted, so asking one is a call whose answer
+        # cannot change the outcome: "no oracle, no worker" (CLAUDE.md principle 8). Measured
+        # 2026-09-17: 2,215 of the corpus battery's 2,364 asks (`scripts/grounding_oracle_power.py`).
+        suggester, confidence, anchor = _NO_ADMISSIBLE_FIELD_RULE, 1.0, _GIST_CATEGORY
+        field, is_exact = None, False
     else:
         # PASSED ONLY WHEN THERE IS ONE (plan DECISION F). The parameter is defaulted and this
         # call stays two-argument when no page was supplied, so a proposer written before the
