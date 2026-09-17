@@ -124,6 +124,9 @@ def test_a_proposer_returning_a_non_iri_suggester_refuses_at_the_public_seam():
     proposer = FakeGroundingProposer(
         GroundingProposal(None, str(TX) + "x", 0.1, "n/a", suggester_iri=BAD))
     with pytest.raises(AssertionError) as exc:
-        ground_concept(SurfaceConcept("mystery", "55%", "r3"), contract,
+        # "55", not "55%": since [[R249]]'s pre-filter a value NO field admits never reaches the
+        # proposer, so the bad suggester would never be handed over. 55 conforms to
+        # tx:ejectionFraction's decimal 0..100, so the proposer is asked, as this test requires.
+        ground_concept(SurfaceConcept("mystery", "55", "r3"), contract,
                        URIRef("urn:test:offer1"), proposer, terms, shapes, Graph())
     assert BAD in str(exc.value)

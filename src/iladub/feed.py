@@ -749,11 +749,12 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     # re-walk the graph 769 times on graincorp for one unchanging string.
     context = _page_context(graph)
     grounded = proposed = 0
+    admissible_memo = {}            # [[R249]]: valid for this call's fixed contract/terms/shapes
     for rec in records:
         subject = _record_uri(rec.row_id)
         for concept in rec.concepts:
             status = ground_concept(concept, contract, subject, proposer, terms, shapes, g,
-                                    page_context=context)
+                                    page_context=context, admissible_memo=admissible_memo)
             if status == "grounded":
                 grounded += 1
             else:

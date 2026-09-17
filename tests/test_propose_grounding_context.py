@@ -69,8 +69,12 @@ def test_the_page_context_reaches_the_proposer():
     from rdflib import URIRef
 
     rec = _Recorder()
-    ground_concept(SurfaceConcept("", "845870", "reg"), _contract(),
-                   URIRef("urn:iladub:record:a"), rec, Graph(), Graph(), Graph(),
+    # The real capacity shapes and a value they admit ("845,870"): since [[R249]]'s pre-filter a
+    # value no field admits never reaches the proposer, and with empty shapes nothing is admitted.
+    shapes = Graph().parse(os.path.join(ROOT, "examples", "shipping", "capacity-shapes.ttl"),
+                           format="turtle")
+    ground_concept(SurfaceConcept("", "845,870", "reg"), _contract(),
+                   URIRef("urn:iladub:record:a"), rec, Graph(), shapes, Graph(),
                    page_context="ELEVATION CAPACITY TABLE")
     assert rec.seen == ["ELEVATION CAPACITY TABLE"], rec.seen
 
