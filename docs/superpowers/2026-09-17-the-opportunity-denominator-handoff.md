@@ -43,6 +43,41 @@ known and small, and the fork becomes a decision the maintainer can rule rather 
 gap. Either outcome ends a three-loop deferral. Budget: greps plus one single-document compile
 (who-wfa, 50 s) — **not** a corpus pass.
 
+> **ANSWERED — added by a later PR, 2026-09-17. § 5a WAS RUN, AND ITS HOPED-FOR OUTCOME DID NOT
+> OCCUR: nothing refuses an ordinal-column `tab:SectionTotal`, so the guard question does NOT
+> dissolve.**
+>
+> - **The shape exists and cannot refuse.** `tab:SectionTotalShape`
+>   (`vocab/shapes/tab-shapes.ttl:323-326`) constrains exactly one thing — `tab:confirmsSection`
+>   `minCount 1`/`maxCount 1`. Nothing about which column was summed, nothing about ordinality,
+>   nothing about measure-vs-index.
+> - **And it is satisfied BY CONSTRUCTION.** The emitter adds the typing and its witness in the
+>   same unconditional branch (`document.py:1165-1166`), so a typing never ships without its
+>   witness and the shape's only constraint can never fire.
+> - **The subclass route is closed, deliberately.** `tab:SectionTotal ⊑ tab:AggregationRow`
+>   (`tab.ttl:551`) and pySHACL runs `inference="rdfs"`, so a shape targeting `tab:AggregationRow`
+>   would inherit onto it — but **no such shape exists**. The only aggregation-row shape targets
+>   `tab:DetectedAggregationRow` (`tab-shapes.ttl:308`), and `tab.ttl:548` records that the
+>   subclass exists *precisely so* the operand-requiring shape does not fire on bare
+>   `AggregationRow`s.
+> - **Validation reachability is NOT the obstacle.** `document.py:1632` sets
+>   `section_facts = section_facts or confirmed`, and `_legs_for_document` (`:1199`) turns the TAB
+>   leg on whenever `recognized or section_facts`. SHACL would run; it would find nothing to
+>   object to.
+>
+> **Consequence for § 5d's fork:** shipping the binding unguarded costs the 2 known bad triples on
+> who-wfa, refused by nothing. **The fork must be RULED, not dissolved by a membrane that already
+> exists.** Both prior deferral reasons are gone and this one is now gone too — what remains is a
+> maintainer's decision.
+>
+> **Incidental, and it sharpens [[R77]] rather than adding to it:** confirmation requires
+> `last in agg` (`document.py:1164`), so on the widen-the-window arm cbh's real totals are *still*
+> refused — a label-less total line has ONE occupied column and `is_aggregation_shaped` demands
+> two. Window gate first, shape predicate second, exactly as [[R77]] already records.
+>
+> This block **adds** to the record; no line above it has been altered, Evidence being append-only
+> after loop close. [[R47]]'s row carries the same finding.
+
 ### 5b. ASSERTED — the § 5b seam of the previous handoff is MEASURED, and it inverted
 
 The previous § 5b asked whether the section-total path can express a proposition today, and said
