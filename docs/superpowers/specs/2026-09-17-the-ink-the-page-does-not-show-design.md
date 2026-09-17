@@ -358,3 +358,278 @@ A score that rises is not by itself evidence — R155's "score-rise-is-a-collaps
    not about a stable one, and the plan must say how a re-run is compared.
 4. **The trichotomy may not be a trichotomy.** A fourth case — ink the page shows but places outside
    any cell — is not addressed and is not known to be empty.
+
+---
+
+## 8. RESPEC, 2026-09-17 — the amended sections
+
+**Appended, not edited in.** `docs/superpowers/**` is append-only after loop close (CLAUDE.md
+§ Documentation governance), so §§ 1.4, 2.3, 2.4, 3.1 and 4.3 above keep their text and their
+banner markers. **Where this section conflicts with the body above it, this section governs.**
+
+It absorbs RF1–RF8 of `2026-09-17-unshown-ink-spec-review.md` and executes that review's handoff
+§§ 5a–5c. Everything not named below stands unchanged and is **cited, never restated**: § 0 (the two
+rulings), §§ 1.1–1.3 (the colour instrument's refutation and what it retires), §§ 2.1–2.2 (the gap,
+and the fork resolved to a datatype), §§ 4.1–4.2 (the disagreement, and its § 8 classification),
+§ 6 (what the loop does not do).
+
+Three measurements were taken **for this respec** and are recorded inline per plan rule 2. One of
+them — **RS1** — blocks the review's own prescribed remedy, and one — **RS2** — is the load-bearing
+claim the whole re-attachment rests on.
+
+### 8.1 (replaces § 1.4) There are two crossings, and they live in different graphs
+
+Review RF2, measured there; not re-derived here.
+
+- **Crossing A — transient.** `headers._grid_cells` (`headers.py:66-81`) flattens each populated
+  grid position to `(r, c, " ".join(texts))`, with the `Word` in scope one line above the join;
+  `celltype.grid_evidence` (`celltype.py:138-160`) consumes those 3-tuples. This is where the
+  **abstention** belongs, because homogeneity is computed here — and only here.
+- **Crossing B — persisted.** The `tab:EntryCell` emitters mint the cells the contract actually
+  reads. A fact carried only through crossing A reaches the homogeneity vote and **dies before the
+  graph** (RF1: `tab:GridCell` is 0 of graincorp-capacity's 5859 compiled triples).
+
+`_grid_cells` re-derives its own cells from `band.lines` and never sees a `regions.Cell`; the two
+notions differ 10.0% vs 95.4% in reach corpus-wide (RF2). § 3.1 built the loop's only carriage on
+crossing A; § 8.6 below builds both.
+
+### 8.2 (replaces § 2.3) Where the term attaches: the lattice keeps the datatype, the persisted cell keeps the transcription
+
+`tab:UnshownInk a tab:CellDatatype ; tab:datatypeAbstains true` is **unchanged** — its five decisions
+in § 2.3 (it abstains; it is in no family; it is not a `tab:nilSpelling`; it names what the document
+does; `tab:Blank`'s comment cites it rather than restating the trichotomy) survive every finding.
+It stays on the **transient** side, which is where a datatype that must not vote has to abstain.
+
+Two amendments:
+
+1. **`tab:unshownText` has `rdfs:domain tab:EntryCell`**, not `tab:GridCell` (RF1). It carries the
+   transcription the text layer holds (`"0"`), on the class that reaches the graph with page
+   provenance, and its **presence is the assertion that this cell's ink is unshown**.
+2. **`tab:cellDatatype` is NOT written on the persisted cell**, and no other GridCell-domained
+   property is either. Measured hazard: `tab:cellDatatype rdfs:domain tab:GridCell`
+   (`vocab/ontology/tab.ttl:273`) and this repo validates with `inference="rdfs"` (CLAUDE.md
+   § Serialization), so asserting it on a `tab:EntryCell` **infers that cell into `tab:GridCell`** —
+   a class whose own published comment says *"never asserted into a holon"* (`tab.ttl:254`) — and
+   hands it to every GridCell-targeting shape. **R19 is the recorded precedent for exactly this
+   mechanism**, in this repo, on this vocabulary: writing `tab:onPage`/`tab:hasBBox` on a
+   proposition made it a `tab:Cell` and handed it to every cell shape (`src/iladub/etkl/holon.py:64-70`).
+   The datatype and the persisted marker are therefore two properties in two graphs, not one
+   property in two places.
+
+**The persisted cell's `tab:cellText` is EMPTY.** The transcription moves to `tab:unshownText`; the
+cell keeps its bbox, page, row, column and `prov:wasDerivedFrom`. The reason is fail-safe, and it is
+the difference between a design that needs one guard and one that needs a guard per consumer:
+
+```
+$ ./.venv/bin/python -c "from iladub.etkl.celltype import is_blank; print(is_blank(''), is_blank('0'))"
+True False
+```
+
+`feed.py:254-255`'s `if is_blank(txt): continue` — § 2.4's own named precedent — then refuses to
+ground the cell **with no new procedural code**, and every other reader of `tab:cellText`
+(`feed.py:246`, `denormalization.py:163`, `recipe.py:91`) gets the truthful answer, *the page shows
+nothing here*, by default. The alternative — keep `"0"` and add a skip at each grounding site —
+**fails open**: every consumer that does not yet know the new term grounds the tonnage, which is
+precisely the § 7 false assertion the ruling refused.
+
+### 8.3 RS1 — BLOCKING, new: an empty `tab:cellText` is refused today, by a shipped shape
+
+The review's remedy is not constructible as written. Measured here, on a hand-built pair:
+
+```
+$ ./.venv/bin/python scripts/unshown_ink_seam_census.py --shape
+   conforms: False   (c1 = unshown, c2 = ordinary ink)
+  Source Shape: tab:WrappedCellShape
+  Focus Node: <urn:c1>
+  Message: A tab:Cell with a hasBBox must have non-empty cellText (drop-continuation guard).
+```
+
+`c1` is a `tab:EntryCell` with `tab:cellText ""`, `tab:unshownText "0"` and a bbox; `c2` is an
+ordinary cell with `tab:cellText "10,000"` and a bbox. **Only the unshown one is refused.**
+
+`tab:WrappedCellShape` (`vocab/shapes/tab-physical-shapes.ttl:26-42`) refuses **any** `tab:Cell` with
+a bbox and no non-empty `tab:cellText`, because a textless bbox-carrying cell signals a dropped
+wrapped continuation. All 406 of graincorp-capacity's `tab:EntryCell`s carry `tab:hasBBox` (RF1's
+property census), so every unshown cell would hit it. `tab:EntryCellPhysicalShape`'s
+`sh:minCount 1` on `tab:cellText` is satisfied by an empty literal and does **not** fire; this is the
+one shape to amend.
+
+**The amendment: widen the guard's proof-of-carriage from one property to two** — a bbox-carrying
+cell must have a non-empty `tab:cellText` **or** a non-empty `tab:unshownText`. An unshown cell is
+not what the guard is for: a dropped continuation carries neither property, and is still refused.
+
+**The form matters, and the near-miss is refused.** Adding a separate exemption for *"cells carrying
+`tab:unshownText`"* would pass a cell carrying an **empty** `tab:unshownText` — carriage claimed and
+not delivered, which is the very thing the guard exists to catch. The disjunct keeps the shape's
+question (*does this cell carry its text somewhere?*) and only adds the second place the text may
+live.
+
+This is an amendment to a **published, shipped** shape, so it ships with a conforming example and a
+negative one that must fail (repo convention), and it is O6 in § 8.8.
+
+### 8.4 RS2 — measured, new: the two address spaces coincide on the region that matters — and only there is it measured
+
+The worker answers in grid space (`(row, col)` of the region's grid). The membrane and the contract
+read `tab:EntryCell`s. **Nothing in the review establishes that an address in one is an address in
+the other.** Measured, on graincorp-capacity:
+
+```
+$ ./.venv/bin/python scripts/unshown_ink_seam_census.py --address
+   band 1: 2 lines x 1 cols, 2 populated cells
+   band 3: 27 lines x 16 cols, 406 populated cells
+   grid-space cells whose joined text is '0': 110
+   EntryCells parsed: 406  unparsed IRI shape: 0
+   persisted cells whose cellText is '0': 110
+   table 3 vs band 3: |P|=110 |G|=110 identical=True  P-only=[] G-only=[]
+   ALL cells, table 3 vs band 3: 406 each, identical=True
+```
+
+The persisted `…#htable3-e{r}_{c}` indices **are** `_grid_cells`' `(r, c)` for band 3 — 406 of 406
+populated positions and 110 of 110 zeros, cell by cell, set identity and not a matching count
+(R176's and R172's lesson, which § 5 already applies to O2).
+
+**It is empirical, not structural, and the plan must treat it as such.** `holon.py:628` enumerates
+`region.rows` / `rb.cells` — a `regions.Cell` notion — while `_grid_cells` re-derives from
+`band.lines`, and RF2 measured those two notions differing 10.0% vs 95.4% corpus-wide. They coincide
+here; nothing says they coincide elsewhere. There are **five** minting sites — `holon.py:154`,
+`holon.py:214`, `holon.py:314` (all through `_emit_entry_cell`, `holon.py:41`), `holon.py:628`, and
+`datagrid.py:691`, which keys its IRI `…-r{r_i}c{k}` off a different counter entirely.
+
+**The invariant this buys:** the disposal's addresses are never resolved onto persisted cells by
+index arithmetic on trust. **Per region, the carriage refuses unless the two address spaces are
+checked to agree.** The cheapest check that fails closed is the populated-cell count (406 == 406 on
+gcap); the plan measures whether a per-address check costs more than that, and enumerates the five
+sites rather than assuming gcap's IRI shape generalises. This is O7 in § 8.8.
+
+### 8.5 (replaces § 2.4) The membrane, on the class that reaches the graph
+
+A new `sh:NodeShape` in `vocab/shapes/tab-shapes.ttl`, closed-world, over **`tab:EntryCell`**:
+
+- **Clause 1 (structural).** A `tab:EntryCell` carrying `tab:unshownText` carries it exactly once and
+  non-empty, and its `tab:cellText` is empty — a cell cannot simultaneously be read and not read.
+  This clause has a subject today: 406 `tab:EntryCell`s on the page in question, 110 of them the
+  ones at issue.
+- **Clause 2 (the one R213 exists for).** No asserted contract value may be sourced from such a cell.
+  **The seam the implementer MEASURES before writing it** (plan rule 3): whether the grounded node's
+  `prov:wasDerivedFrom` chain reaches the `tab:EntryCell` at all. `feed.py:257-258` derives its
+  `region` string from the cell's `prov:wasDerivedFrom` **object**, so the concept may carry the
+  region and not the cell — in which case **clause 2 has no subject in SHACL** and must not be
+  written as one. Its honest form is then the producer-side guard at the site that reads the cell
+  (CLAUDE.md § Producer-side guards vs the membrane), with § 8.2's empty `tab:cellText` making the
+  grounding structurally impossible and clause 1 carrying the membrane's half. **Measure, then
+  choose; do not invent a path.**
+- Ships with a conforming worked example and a negative example that must fail (repo convention).
+
+**No shape is written over `tab:GridCell`.** It is not in the compiled graph, `tab:MembraneValidation`
+never sees it, and its subject IRIs do not survive the call that mints them (RF1).
+
+### 8.6 (replaces § 3.1) Carriage — both crossings, and they must not disagree
+
+**Crossing A (transient, the abstention).** Unchanged from § 3.1 and cited, not restated: the
+`(r, c, text)` tuple widens or gains a side-map, `grid_evidence` accepts it, the six existing
+3-tuple call sites (`matrix.py:134`, `rowheaders.py:33`, `orientation.py:36,59`, `headers.py:111`,
+`unitmarker.py:59`) keep working, the implementer measures which shape is cheaper, and with no
+unshown facts supplied every cell types exactly as it does today.
+
+**Crossing B (persisted, the membrane's subject).** The unshown set must reach the emitter so the
+cell mints an empty `tab:cellText` and a `tab:unshownText`. **The seam to measure** (plan rule 3):
+whether the fact rides on the `cell` object the emitter already receives (`rb.cells` at
+`holon.py:626`, `cell` at `holon.py:41`) or on a per-region address set consulted at the emitter.
+Five sites, enumerated in § 8.4.
+
+**§ 8 class, both crossings: PROCEDURAL**, with the justification § 3.1 already states and the code
+must repeat — plumbing a fact decided elsewhere across a function boundary, taking no decision and
+reading no geometry.
+
+**New invariant: the two crossings may not disagree.** A cell that abstains in the transient graph
+and is asserted with non-empty `tab:cellText` in the persisted graph — or the reverse — is a defect,
+not a tolerance. § 8.4's per-region count identity is the check that sees it.
+
+### 8.7 (replaces § 4.3) The worker's contract — the reader's ask, and three refusals
+
+One ask **per region** (the cost gate, in R249 half (a)'s shape): 122 gridded regions corpus-wide,
+0.05–0.54 s per 220-dpi crop, and gcap band 3's crop is legible at region grain — all measured in
+the review, none of it to be re-measured.
+
+- **In:** the rendered crop of the region and its grid dimensions. **Never** the text layer's
+  transcriptions.
+- **The ask is a READER's, and enhancement is forbidden** (RF7). The question is *which cells appear
+  empty to you* — you look at that place and see nothing — at normal size, with magnification,
+  contrast stretching and pixel sampling **prohibited in the ask**. This is not aspirational: a
+  blind reader under exactly those terms returned a 136-cell set identical to hidden ∪ unpopulated,
+  whose disagreement with the text layer is **exactly the 110, zero false positives, nothing
+  missed** (review, final section). Without the prohibition a capable worker does image analysis —
+  run 1 magnified 4×, stretched contrast, and reported the 1.09:1 ratio back — and then every § 1.1
+  refutation applies to the worker instead of to the code.
+- **Out:** a closed shape that **cannot express a value on the page** (RF8). Addresses and
+  abstentions only; run 1 returned `14,000` because the shape let it.
+- **Refusal 1 — outside the grid.** Arithmetic, unchanged.
+- **Refusal 2 — "this is not the grid I see"** (RF6). The worker must be able to reject the supplied
+  dimensions, and that abstention **refuses the whole region**. It is not a hypothetical: on cbh two
+  independent blind readers both rejected 18 × 16, both counted 20 columns, and disagreed with each
+  other on rows (13 vs 16). Without it, an answer in a different address space is admitted in
+  silence, because every such address is *inside* the stated grid. A refused region types nothing —
+  § 4.2's AXIOM clause is open-world and evidence-positive, so a missing answer is not an absence
+  claim.
+- **Refusal 3 — the null control, which is the UNPOPULATED GRID POSITION and comes free** (RF3 folded
+  into RF7). `tab:Blank` is **not** the control: 358 corpus-wide, 357 of them in graincorp-stem,
+  118 of 122 gridded regions with none, **0 of 406** on gcap band 3 and **0 of 664** on cbh. The live
+  set is the text-layer-empty position — 26 on gcap band 3, 137 on cbh band 1 — and the reader's
+  "appears empty" answer already contains it, so nothing separate is asked. If the answer misses
+  those positions the worker is not reading the page and the region is refused.
+- **The confounder, stated rather than buried.** 25 of gcap band 3's 26 empty positions are column 0,
+  the spanning year label R211 establishes a reader reads as **one** cell. So refusal 3 is scoped to
+  *text-layer-empty positions not inside the extent of a spanning cell*: run 2 satisfies it (it
+  returned all 26, a superset), and a reader that instead reads the span as occupied is reading
+  correctly and must not be refused for it. **With the exemption, the non-degenerate control on the
+  region that matters is one cell — (1, 6).** That is the honest strength of the control on gcap,
+  and § 8.9 carries it as a weakness rather than a footnote.
+
+### 8.8 (amends § 5) The oracles, after the review
+
+**O1 and O2 are RUN and PASS, blind, and must not be re-run to establish anything** (review's run
+section). O1 did not fire on cbh's 2.96-ratio headings; O2 returned the 110 by set identity on the
+first attempt, plus `(1, 6)` unprompted. **Re-run O2 only as a regression against § 8.7's changed
+ask** — never to re-establish the number.
+
+**O3** (six-document null, bit-identical output), **O4** (the membrane's negative) and **O5** (gcap's
+score moves, with the direction stated before the run) stand exactly as § 5 writes them.
+
+Two new oracles, one per new finding:
+
+- **O6 — the widened guard still refuses.** A bbox-carrying cell with neither a non-empty
+  `tab:cellText` nor a non-empty `tab:unshownText` must still be refused by `tab:WrappedCellShape`,
+  and so must one whose `tab:unshownText` is empty. The guard is widened, not blinded. Falsification
+  per plan rule 4: show each test RED with its subject removed.
+- **O7 — the address spaces are checked, not assumed.** Per region, the populated grid-cell count
+  equals the `tab:EntryCell` count, or the carriage refuses. Its null: a region where they differ
+  must actually refuse, and the plan finds one or records that none exists in the corpus.
+
+### 8.9 (amends § 7) The weakest parts, after the review
+
+§ 7's four items stand. Item 1 is **partly discharged** — § 4's disposal has now been run twice,
+blind, and passes — and items 2 (crop legibility) and 3 (non-determinism) are updated:
+
+1. **The enhancement prohibition is unenforceable from the answer alone.** Run 1 (analysis) and run 2
+   (reading) returned the same 110 by different routes, so the output cannot tell a reader from a
+   defector. What is known is that the honest route works; detecting a defector is **not solved and
+   must not be claimed**. The instrument that would close it is a control page on which the two
+   routes diverge, and none exists.
+2. **How a re-run is compared is still unanswered** (§ 7.3). Two runs may type a cell differently;
+   O2's set identity is a claim about a disposed set, not a stable one. The plan must say what it
+   does when run *n*+1 differs.
+3. **The control's real strength on gcap is one cell**, not 26 (§ 8.7's confounder).
+4. **RS2's address identity is empirical.** Measured on one region of one document; five minting
+   sites, two cell notions differing tenfold in reach corpus-wide.
+5. **Emptying `tab:cellText` is a suppression whose consumer census has not been taken.** Three
+   readers are named in § 8.2 (`feed.py:246`, `denormalization.py:163`, `recipe.py:91`); a full
+   enumeration — every reader of `tab:cellText` in `src/`, in `vocab/queries/` and in
+   `vocab/shapes/` — is the plan's first measurement, and it is an `enumerating-before-claiming`
+   job, not a grep-and-glance.
+6. **`tab:EntryCell`'s coverage is established on graincorp-capacity only** (406/406). Whether every
+   region that can hold unshown ink mints `EntryCell`s is not known corpus-wide.
+7. **RF5's grain problem is untouched**: the disposal's grain is the cell, the phenomenon's is the
+   glyph. gcap's 110 are each alone in their cell; cbh already holds 8 cells mixing unshown and
+   ordinary ink that no per-cell question can answer.
+8. **The fourth case** — ink the page shows, placed outside any cell — is still unaddressed and still
+   not known to be empty.
