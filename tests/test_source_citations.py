@@ -87,7 +87,9 @@ def test_a_citation_past_the_files_own_end_is_not_refused(tmp_path):
     cross-file citation whose anchor the block scope did not carry.
 
     Live subjects on the real tree: `vocab/queries/arc-position.rq:65` cites `:139-146` and that
-    file is 84 lines; `src/iladub/etkl/datagrid.py:733` cites `:949` and that file is 790.
+    file is 84 lines; `datagrid.py`'s `(c) THE NO-CHANGE OPTION` comment cites `:949` and that
+    file is 812 lines. (Cited by SYMBOL, not by line: this anchor moved once already, when the
+    decoration universe was refused on 2026-09-17 and every line below it shifted by 19.)
     Both are correct cross-file citations and both are silent only because of this clause.
     """
     body = "\n".join(["# the other file's :400"] + ["x = 1"] * 10)

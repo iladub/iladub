@@ -60,9 +60,9 @@ Two properties of the definition are load-bearing and were each earned by a meas
 | Term | What it is |
 | --- | --- |
 | `tab:DrawnRule` | a mark that **contains no glyph centre**. A fill contains the text it sits behind; a rule contains nothing. Presence test, no thinness ratio — apple page 0 reports 678 "vertical rules" when fill edges are counted and exactly **2** when they are not |
-| `tab:DecorationUniverse` | columns between drawn rules, each ink-witnessed. Preferred **only when it resolves at least as finely as alignment** — an ordinal comparison. Preferring it unconditionally cost stem every row, since its three drawn marks are page borders |
-| `tab:AlignmentUniverse` | columns from the gaps between seed rows' run extents. Carries the whole load on borderless documents |
-| `tab:SeedFollowsUniverse` | the seed is the modal class in **whatever universe supplied the columns** — occupancy under decoration, signature under alignment. Getting this wrong cost capacity 19 of its 27 rows |
+| `tab:DecorationUniverse` | columns between drawn rules, each ink-witnessed. **REFUSED BLANKET since 2026-09-17 — no grid is derived from it any more.** It was preferred when it resolved at least as finely as alignment, and that ordinal comparison is what dropped bfs p5's row-label and final-`%` columns: a rectangle is drawn around the numbers an author wants ruled, not around the table, so a column outside it could not be carried at all |
+| `tab:AlignmentUniverse` | columns from the gaps between seed rows' run extents. Since the refusal above it carries **every** page, not only the borderless ones |
+| `tab:SeedFollowsUniverse` | the seed is the modal class in **whatever universe supplied the columns** — which, with decoration refused, is always the signature class of alignment. The occupancy arm is retired code, not a live branch; it mattered because seeding a decoration universe by signature cost capacity 19 of its 27 rows |
 
 ## The typology, decided from the data alone
 

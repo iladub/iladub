@@ -102,7 +102,23 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     progress. Measured by recomputing `candidates` against `HEAD~2` (the tree before this loop
     touched the register) and against this one, with the edge direction checked as well: R228's
     row cites R170 and R170's does not cite R228, so the graph's undirected neighbour construction
-    is what carries it."""
+    is what carries it.
+    RE-MEASURED 2026-09-17 by the loop that refused the decoration universe: 90 -> 92,
+    ADDED = [242, 243], REMOVED = []. That loop CLOSED one row ([[R238]]) and raised two
+    ([[R243]], [[R244]]), and the delta decomposes into the two kinds this list already knows —
+    neither of them "progress". [[R243]] is the RAISE kind: new, open, blocking no criterion, and
+    linking only to the now-CLOSED R238 that raised it, exactly as R218-R220 stood against the
+    closed R212. [[R242]] is the CLOSURE kind and is the one worth reading: it was raised days
+    earlier, changed nothing about itself, and entered this set only because its ONLY neighbour
+    was R238 — closing R238 removed its last open neighbour. [[R244]] adds nothing despite being
+    new, because its prose cites [[R188]], which is open — the same reason R225 stayed out against
+    R44. MEASURED and not reasoned, by recomputing `candidates` against the HEAD versions of the
+    three register files and against this tree. **The override was CONTROLLED in both directions**,
+    and that is new to this list: a first attempt discovered the module's three inputs by
+    `isinstance(v, Path)` when they are module-level STRINGS, so it rebound nothing, measured the
+    same tree twice and would have reported ADDED = [] as a clean result. A rebinding that matches
+    no attribute does not raise — so it must be proved to bite (the count must move) and to
+    release (restoring must return the original count) before its delta means anything."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -116,4 +132,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 90
+    assert len(expected) == 92

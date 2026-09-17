@@ -13,14 +13,16 @@ Gate classification (CLAUDE.md §8): PROCEDURAL. It compiles a document and comp
 integers. It decides nothing about any reading, carries no tolerance and no threshold —
 the two figures below are a RECORDED MEASUREMENT of a specific tree, not a tuned constant.
 
-WHY THE FIRST TEST IS A STRICT XFAIL. `_boundaries_from_decoration` is still consulted at
-`src/iladub/etkl/datagrid.py:340-349`, so page 5 reads 404 today and this test FAILS — as
-it should, because the criterion it serves is authored `prog:met false`. `strict=True` is
-the forcing function: the day the blanket refusal lands, this test XPASSes, and an XPASS
-under a strict marker is a SUITE FAILURE. The loop that ships the switch therefore cannot
-leave the marker or the criterion behind — it must flip both in one reviewed act, which is
-the only thing that keeps `prog:met` a reviewed assertion rather than a side effect
-(tests/arc-manifest.ttl, "CODE NEVER WRITES THIS FILE").
+THE STRICT XFAIL IS GONE, AND THAT IS THE RECORD OF THE BUILD. Until 2026-09-17 the first
+test below carried `@pytest.mark.xfail(strict=True)`: `_boundaries_from_decoration` was
+still consulted by `derive_data_grid`, page 5 read 404 cells / 14251 triples, and the
+criterion it serves was authored `prog:met false`. The marker was the forcing function —
+the day the blanket refusal landed the test XPASSed, and an XPASS under a strict marker is
+a SUITE FAILURE, so the switch could not ship while the criterion stayed stale. It was
+observed doing exactly that: `[XPASS(strict)] 1 failed, 1 passed` on the tree that first
+carried the refusal. Marker and `prog:met` were then flipped in one reviewed act, which is
+what keeps `prog:met` a reviewed assertion rather than a side effect (tests/arc-manifest.ttl,
+"CODE NEVER WRITES THIS FILE").
 
 Run locally (~5 min, one compile shared by both tests):
     ./.venv/bin/python -m pytest -m corpus tests/test_carriage.py -q
@@ -63,17 +65,6 @@ def _page_cells(rep, n):
     return sum(r.cells for r in rep.pages[n].regions)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "UNBUILT, not broken: the blanket refusal of the decoration universe is not "
-        "shipped, so page 5 reads 404 cells / 14251 triples. Ruled 2026-09-16 in "
-        "docs/superpowers/2026-09-16-ship-the-switch-ruling.md; serves "
-        "prog:criterion:tab:11, authored prog:met false. When the switch lands this "
-        "XPASSes, which under strict=True is a FAILURE — flip this marker and the "
-        "criterion's prog:met together, in the commit that builds it."
-    ),
-)
 def test_bfs_p5_carries_the_row_label_and_percent_columns(bfs):
     """The row-label column and the final `%` column are CARRIED, not dropped.
 

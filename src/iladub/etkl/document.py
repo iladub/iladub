@@ -1795,15 +1795,15 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # 2026-08-12. Dressing this holon as the effective VERDICT of the superseded bands is
         # what obliges it to name an agent (`vocab/shapes/dec-shapes.ttl:21` requires
         # `dec:decidedBy` minCount 1; CLAUDE.md §4 requires agent attribution for a
-        # membrane-crossing), and `datagrid.py:706` emits exactly that on exactly this subject:
-        # `datagrid.py:620` mints the same `{grid_uri}-admission` URI. It belongs there and not
+        # membrane-crossing), and `datagrid.py:725` emits exactly that on exactly this subject:
+        # `datagrid.py:639` mints the same `{grid_uri}-admission` URI. It belongs there and not
         # here because it must also cover the `datagrid_fallback` path, which this driver never
         # reaches. The agent is `decisionlog._READER_AGENT` — not a new actor, since the pass
         # that adopts the grid is a pass of the same automated reader that decided each
         # superseded band's verdict, so a distinct agent IRI would MISSTATE who decided.
         #
         # WHY THE DUPLICATE WAS WORTH DELETING even though RDF set semantics made it invisible:
-        # it MASKED the real emitter. With both lines present, deleting `datagrid.py:706` broke
+        # it MASKED the real emitter. With both lines present, deleting `datagrid.py:725` broke
         # no test — measured. With only one, `test_the_admission_verdict_names_its_agent` fails
         # the moment the real emitter goes, which is the whole point of having the test.
         admission = URIRef(f"{grid_uri}-admission")
