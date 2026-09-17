@@ -34,6 +34,25 @@ run it serially** — measured this loop: 27 pages, ~72 s/page worst case (`grai
 script is `fp_census_doc.py`, reproduced in evidence § 8's header; it is ~110 lines and is the only
 thing that needs editing.
 
+> **CORRECTION — added by a later PR, 2026-09-17. THE SCRIPT POINTER ABOVE IS WRONG.**
+> `fp_census_doc.py` is **not** *"reproduced in evidence § 8's header"*: § 8 carries the run
+> **output** only, and the script existed solely in the authoring session's scratchpad — so this
+> handoff, written by the loop that raised [[R245]] for an unreproducible measurement, was itself
+> unreproducible.
+>
+> Both instruments are now committed (PR #248), byte-identical to what produced the published
+> figures:
+> **`scripts/section_total_fp_census.py`** (the document-scope census behind `true=4 false=2`, zero
+> pages skipped — committed **AS RUN, without** the opportunity counter § 5a asks for, so this
+> section's edit starts from the version the evidence cites) and **`scripts/band_source_probe.py`**
+> (the raw-vs-`page_bands` probe behind evidence § 3).
+>
+> The page-scope variant is deliberately **not** committed: its `verdict == "asserted"` filter
+> silently excludes cbh's escalated rosters and returns `true=0`.
+>
+> This block **adds** to the record; no line above it has been altered, Evidence being append-only
+> after loop close. [[R245]]'s row carries the same correction.
+
 ### 5b. PROPOSED — the GUARD cannot be settled on this corpus, so the remedy should PROPOSE, not ASSERT
 
 **Typed PROPOSED because it rests on a claim about the code that this loop did NOT measure.**
