@@ -63,7 +63,7 @@ candidates. `grep` for readers of `suggestedBy` or the fake suggester IRIs acros
   - `test_suggester_guard.py` (R129's public-seam drive): `55%` → `55`.
   - `test_propose_grounding_context.py` (R211's page-context slot): empty shapes → the real
     `capacity-shapes.ttl`, and `845870` → `845,870`.
-  In each case the pre-filter would have made the test vacuous rather than red.
+  Both went red under the pre-filter (`DID NOT RAISE`; `AssertionError: []`) because the proposer was no longer reached.
 - Grounding set (10 files): 108 passed. Corpus and contract set
   (`test_corpus`, `test_stem_contract`, `test_cbh_contract`, `test_cbh_e2e`, `test_corpus_stem`):
   51 passed (808 s). Governance gates: 53 passed.
