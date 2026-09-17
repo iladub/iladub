@@ -51,9 +51,24 @@ def _strictify(node):
     return node
 
 
+def _bare_refs(node):
+    # SECOND defect, same normalizer, found on an induced template carrying an enum: OpenAI strict
+    # mode rejects a $ref with sibling keywords (description/default/examples). Same silent fallback.
+    if isinstance(node, list):
+        for item in node:
+            _bare_refs(item)
+    elif isinstance(node, dict):
+        if "$ref" in node:
+            for k in [k for k in node if k != "$ref"]:
+                del node[k]
+        for value in node.values():
+            _bare_refs(value)
+
+
 def _patched(schema, **kwargs):
     out = _orig(schema, **kwargs)
     _strictify(out.get("schema", out))
+    _bare_refs(out.get("schema", out))
     return out
 
 

@@ -140,6 +140,18 @@ migration plan at `docs/superpowers/plans/2026-07-01-semantic-architecture-migra
    justified PROCEDURAL step. Exemplars already shipped: see `docs/wiki/concepts/neurosymbolic-exemplars.md`
    (the loop-by-loop catalog of compliant AXIOM/NEURAL/PROCEDURAL code, with file paths).
 
+   **One geometric attempt, then NEURAL (ruled by the maintainer 2026-09-17).** A reading judgement
+   gets **at most one** geometric attempt. On its first refutation the next loop writes a NEURAL
+   proposer; it does not try a second heuristic. Zero-AI was never the constraint — *what is
+   necessary, as low as possible* is. **The effort goes into the oracles**, which are few and
+   bounded, not into heuristics, which are unbounded and pull the problem back to the machine's
+   view of the page instead of the reader's. A NEURAL worker answers one small question a human
+   answers at a glance, returns a **strongly typed, closed** shape, and never returns a value that
+   is on the page; non-determinism is tolerated at the proposal and nowhere else, because the
+   membrane admits the same class of thing either way. **No oracle, no worker** — where nothing can
+   dispose the answer, the oracle is the thing to build. Ruling and measurements:
+   `docs/superpowers/2026-09-17-neural-workers-handoff.md`.
+
 ### Producer-side guards vs the membrane (adopted 2026-08-17, R89)
 
 *Delete a producer-side guard only when the membrane provably validates **every** product of that

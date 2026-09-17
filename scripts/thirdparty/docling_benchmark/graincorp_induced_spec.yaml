@@ -1,0 +1,767 @@
+module_docstring: 'Knowledge-graph template induced from 2 sample document(s): graincorp_p1.pdf
+  [1/2], graincorp_p1.pdf [2/2].'
+root: ShippingSchedule
+enums:
+- name: ShipmentEventType
+  members:
+  - eta
+  - loading_commencement
+  - etd
+  - nomination_received
+  - nomination_accepted
+  - loading_completed
+  synonyms: {}
+  include_other: true
+models:
+- name: ShippingSchedule
+  kind: root
+  docstring: A tabular schedule listing grain shipments, nominations, and maintenance
+    events for various ports and months.
+  identity_fields:
+  - month
+  max_instances: null
+  fields:
+  - name: month
+    type: str
+    is_list: false
+    description: Each schedule section is labeled by a month or period in the first
+      column.
+    examples:
+    - GC Fin Year Port 2026/27 Oct 26 Mackay
+    - Nov 26 Mackay
+    - Dec 26 Mackay
+    - Portland Oct 26 Total
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: has_slot
+    type: Slot
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: CONTAINS_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Unique Slot Reference Number
+  - name: exporter
+    type: Exporter
+    is_list: true
+    description: Every Exporter the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_EXPORTER
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: ship
+    type: Ship
+    is_list: true
+    description: Every Ship the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_SHIP
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: port
+    type: Port
+    is_list: true
+    description: Every Port the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_PORT
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: commodity
+    type: Commodity
+    is_list: true
+    description: Every Commodity the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_COMMODITY
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: shipment_line
+    type: ShipmentLine
+    is_list: true
+    description: Every ShipmentLine the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_SHIPMENT_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: operator
+    type: Operator
+    is_list: true
+    description: Every Operator the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_OPERATOR
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: shipment_id
+    type: ShipmentID
+    is_list: true
+    description: Every ShipmentID the document describes.
+    examples: []
+    role: edge
+    edge_label: HAS_SHIPMENT_ID
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Slot
+  kind: entity
+  docstring: A unique shipment or maintenance slot, identified by a reference number,
+    representing a scheduled event at a port.
+  identity_fields:
+  - slot_reference_number
+  max_instances: null
+  fields:
+  - name: slot_reference_number
+    type: str
+    is_list: false
+    description: Each slot is uniquely identified by a reference number in the second
+      column.
+    examples:
+    - '59845'
+    - '60954'
+    - '59760'
+    - '61007'
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: status
+    type: str
+    is_list: false
+    description: LOOK FOR the value in the 'Status' column.
+    examples:
+    - Accepted
+    - Accepted Accepted
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: exporter
+    type: Exporter
+    is_list: false
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_EXPORTER
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Exporter
+  - name: ship
+    type: Ship
+    is_list: false
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_SHIP
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Name Of Ship
+  - name: commodity
+    type: Commodity
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMMODITY
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Commodity
+  - name: port
+    type: Port
+    is_list: false
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_PORT
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Month
+  - name: shipment_event
+    type: ShipmentEvent
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMPONENT
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Date ETA of Ship
+    - Date of Grain Loading Commencement
+  - name: quantity
+    type: Quantity
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMPONENT
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Total
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Exporter
+  kind: entity
+  docstring: A company or entity responsible for exporting the grain shipment.
+  identity_fields:
+  - exporter_name
+  max_instances: null
+  fields:
+  - name: exporter_name
+    type: str
+    is_list: false
+    description: Exporter names are listed verbatim in the 'Exporter' column.
+    examples:
+    - GCOP
+    - BUNGE
+    - EXPTG
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Ship
+  kind: entity
+  docstring: The vessel assigned to carry the grain shipment.
+  identity_fields:
+  - ship_name
+  max_instances: null
+  fields:
+  - name: ship_name
+    type: str
+    is_list: false
+    description: Ship names are listed in the 'Name Of Ship' column.
+    examples:
+    - TBA
+    - SHUTDOWN
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Port
+  kind: entity
+  docstring: A port location where grain is loaded, shipped, or maintained.
+  identity_fields:
+  - port_name
+  max_instances: null
+  fields:
+  - name: port_name
+    type: str
+    is_list: false
+    description: Port names appear in the 'Month' column and in slot groupings.
+    examples:
+    - Mackay
+    - Gladstone
+    - Portland
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Commodity
+  kind: entity
+  docstring: A type of grain or product being shipped or maintained.
+  identity_fields:
+  - commodity_name
+  max_instances: null
+  fields:
+  - name: commodity_name
+    type: str
+    is_list: false
+    description: Commodity names are listed in the 'Commodity' column.
+    examples:
+    - Chickpeas
+    - Wheat
+    - Peas
+    - SHUTDOWN
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: ShipmentEvent
+  kind: component
+  docstring: A date and/or time event related to a shipment slot, such as ETA, loading,
+    nomination, or completion.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: event_type
+    type: ShipmentEventType
+    is_list: false
+    description: LOOK FOR the column header for the event type (e.g., ETA, Loading
+      Commencement, Nomination Received).
+    examples:
+    - Date ETA of Ship
+    - Date Nomination Accepted
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: event_date
+    type: date
+    is_list: false
+    description: LOOK FOR the date value in the corresponding event column; use YYYY-MM-DD
+      format.
+    examples:
+    - 8/07/2026
+    - 10/07/2026
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: event_time
+    type: str
+    is_list: false
+    description: LOOK FOR the time value in the corresponding event column.
+    examples:
+    - 8:45:00 AM
+    - 3:05:00 PM
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Quantity
+  kind: component
+  docstring: A measurement of the total quantity of commodity for a slot, as listed
+    in the 'Total' columns.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: amount
+    type: str
+    is_list: false
+    description: LOOK FOR the value in the 'Total' columns; copy as shown, including
+      units or dashes.
+    examples:
+    - 15,000
+    - 10,000
+    - 40,000 -
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: tonnes
+    type: str
+    is_list: false
+    description: LOOK FOR the tonnage columns; copy as shown, including commas and
+      spaces.
+    examples:
+    - 15,000
+    - 30,000 35,000
+    - 70,000
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: ShipmentSchedule
+  kind: component
+  docstring: A schedule or summary table of grain shipments, showing ports, dates,
+    cargoes, and tonnages.
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: report_date
+    type: date
+    is_list: false
+    description: LOOK FOR a date in the document header or summary section; use DD/MM/YYYY
+      format.
+    examples:
+    - 6/07/2026
+    - 3/07/2026
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: has_shipment_line
+    type: str
+    is_list: true
+    description: The identity of the related ShipmentLine.
+    examples: []
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Gladstone 59768
+    - Jan 27 Mackay Mackay
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: ShipmentLine
+  kind: entity
+  docstring: A single row or entry in the shipment schedule, representing a shipment
+    or group of shipments.
+  identity_fields:
+  - shipment_line_label
+  max_instances: null
+  fields:
+  - name: shipment_line_label
+    type: str
+    is_list: false
+    description: Each line starts with a port or route label, sometimes with a date
+      or 'Total'.
+    examples:
+    - Gladstone 59768
+    - Jan 27 Mackay Mackay
+    - Portland Feb 27 Total
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: status
+    type: str
+    is_list: false
+    description: LOOK FOR the status column, typically 'Accepted' or blank.
+    examples:
+    - Accepted
+    - (blank)
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: has_cargo
+    type: Cargo
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: CONTAINS_LINE
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Chickpeas
+    - Wheat
+  - name: has_port
+    type: Port
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: LOCATED_AT
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - Gladstone
+    - Portland
+  - name: has_shipment_id
+    type: ShipmentID
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMPONENT
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - '59768'
+    - 59851 59852
+  - name: has_operator
+    type: Operator
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: OPERATES_IN
+    reference: true
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - GCOP
+    - CARG
+  - name: has_schedule
+    type: ScheduleDetail
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMPONENT
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - 6/07/2026
+    - 2:50:00 PM
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Cargo
+  kind: entity
+  docstring: A named commodity or grain type being shipped.
+  identity_fields:
+  - cargo_name
+  max_instances: null
+  fields:
+  - name: cargo_name
+    type: str
+    is_list: false
+    description: Cargo names are listed in the commodity column.
+    examples:
+    - Wheat
+    - Chickpeas
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: has_quantity
+    type: Quantity
+    is_list: true
+    description: ''
+    examples: []
+    role: edge
+    edge_label: HAS_COMPONENT
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence:
+    - 15,000
+    - 30,000 35,000
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: Operator
+  kind: entity
+  docstring: A named operator or company responsible for the shipment.
+  identity_fields:
+  - operator_code
+  max_instances: null
+  fields:
+  - name: operator_code
+    type: str
+    is_list: false
+    description: Operator codes are listed in the operator column.
+    examples:
+    - GCOP
+    - CARG
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: ShipmentID
+  kind: entity
+  docstring: A shipment or batch identifier, usually a 5-digit number.
+  identity_fields:
+  - shipment_id_number
+  max_instances: null
+  fields:
+  - name: shipment_id_number
+    type: str
+    is_list: false
+    description: Shipment IDs are 5-digit numbers in the shipment id column.
+    examples:
+    - '59768'
+    - '59851'
+    - '60555'
+    role: identity
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+- name: ScheduleDetail
+  kind: component
+  docstring: A set of scheduled dates and times for a shipment line (e.g., load, arrival,
+    completion).
+  identity_fields: []
+  max_instances: null
+  fields:
+  - name: load_date
+    type: date
+    is_list: false
+    description: LOOK FOR the load date column; use DD/MM/YYYY format.
+    examples:
+    - 6/07/2026
+    - 3/07/2026
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: load_time
+    type: str
+    is_list: false
+    description: LOOK FOR the load time column; copy as shown.
+    examples:
+    - 6:00:00 PM
+    - 2:50:00 PM
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: arrival_date
+    type: date
+    is_list: false
+    description: LOOK FOR the arrival date column; use DD/MM/YYYY format.
+    examples:
+    - 6/07/2026
+    - 10/07/2026
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  - name: arrival_time
+    type: str
+    is_list: false
+    description: LOOK FOR the arrival time column; copy as shown.
+    examples:
+    - 11:33:00 AM
+    - 3:05:00 PM
+    role: property
+    edge_label: null
+    reference: false
+    closed_catalog: false
+    normalizer: none
+    unit: null
+    evidence: []
+  canonical_home: null
+  provenance: induced
+  source_ref: 'induced from: graincorp_p1.pdf'
+needs_root_list_dedup: []
+generator:
+  tool: docling-graph templategen
+  path: from-docs
+  sources:
+  - graincorp_p1.pdf [1/2]
+  - graincorp_p1.pdf [2/2]
