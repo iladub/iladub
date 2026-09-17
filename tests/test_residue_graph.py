@@ -129,7 +129,12 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     form yet of this docstring's own warning to read the delta by mechanism and never as progress,
     since here there is no progress to read either way. Controlled in both directions exactly as
     the paragraph above requires: bite True (92 != 90), release True (restoring the three
-    module-level strings returns 90)."""
+    module-level strings returns 90).
+    RE-MEASURED 2026-09-17 by the NEURAL worker foundation spec loop (branch
+    `neural-worker-foundation-spec`): 90 -> 91, ADDED = [248], REMOVED = []. The plain first
+    mechanism: R248 was RAISED open, is named by no criterion, and its only link is [[R212]],
+    which is closed — so it enters the set on arrival. Controlled: with the two register edits
+    stashed the count is 90, restored it is 91."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -143,4 +148,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 90
+    assert len(expected) == 91
