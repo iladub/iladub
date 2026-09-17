@@ -12,6 +12,57 @@ new SHACL shape. No released term changes meaning.
 §§ 1–3 are **measured**. §§ 4–6 are **design and are PROPOSED**: the fork this spec resolves was
 left open by the ruling, and the disposal in § 4 has never been run.
 
+> **REVIEWED 2026-09-17, in a fresh session, per the handoff's § 5a — and three sections are
+> REFUTED.** `2026-09-17-unshown-ink-spec-review.md` carries the measurements. The **design**
+> survives: a disagreement between the text layer and a reader of the render is still the disposal.
+> **Where it attaches does not.**
+>
+> - **RF1 — § 2.3 and § 2.4 name `tab:GridCell`, which never reaches the compiled graph.** It is a
+>   transient classification class (0 in graincorp-capacity's 5859-triple output; `grid_evidence`
+>   mints positional IRIs 11 times per compile and discards them). The persisted class is
+>   `tab:EntryCell` — 406 on that page, **exactly 110 carrying `tab:cellText "0"`** — and the false
+>   assertion happens at `feed.py:246-256`, beside the `is_blank` `continue` that is its precedent.
+> - **RF2 — § 1.4's "exactly one narrow place to cross" is false: there are two.** `_grid_cells`
+>   re-derives its own cells from `band.lines` and never sees a `regions.Cell` (the two notions
+>   differ 10.0% vs 95.4% in reach). A fact carried only through it reaches the homogeneity vote and
+>   dies before the graph.
+> - **RF3 — § 4.3's null control is EMPTY where the disposal runs.** 358 `tab:Blank` cells corpus-
+>   wide, **357 of them in graincorp-stem**; 118 of 122 gridded regions have none; graincorp-capacity
+>   band 3 has **0 of 406** and cbh-stem **0 of 664**. The oracle reduces to "is the address in the
+>   grid?". *No oracle, no worker.* The live set is the **unpopulated grid position** (26 on gcap
+>   band 3, 137 on cbh band 1) — of which 25 of gcap's 26 are the spanning year-label column.
+> - **RF4 — the O1 control population is 828 white-on-GREY at ratio 2.9601**, the vessel tables'
+>   heading rows; only **24** are the pale-blue port codes at 1.6887. § 1.1's table row and § 5's
+>   argument name the 24's colour with the 828's count.
+> - **RF5 — a fifth weakness for § 7:** the disposal's grain is the cell, the phenomenon's is the
+>   glyph. gcap's 110 are each alone in their cell; cbh already holds 8 cells that mix unshown and
+>   ordinary ink, which a per-cell question cannot answer.
+>
+> - **RF6 — § 4.3's contract has no refusal for the case that actually fired.** On cbh the blind
+>   worker **rejected the supplied grid** (*"you described it as 18 × 16; what is actually drawn is
+>   20 columns … I cannot make 18 × 16 out of what is on the page"*) and answered by column NAME.
+>   Addresses in a different address space are all *inside* the stated grid, so the oracle admits
+>   them in silence. The worker needs a way to say *"this is not the grid I see"*, and that
+>   abstention must refuse the region.
+> - **RF7 — § 4.1's "a reader of the rendered page" was answered by an image analyst.** Unprompted:
+>   *"I only resolved them by magnifying 4× and stretching the contrast … I would not have reported
+>   them from the image as displayed"*, and blanks *"confirmed by pixel uniformity, not by eye"* —
+>   with the 1.09:1 ratio reported back. That is § 1.1's refuted colour instrument re-entering
+>   through the worker. The constraint is satisfiable (the same run states the reader's answer
+>   plainly) but § 4.3 does not ask for it, and cannot enforce it from the answer alone.
+> - **RF8 — minor:** the worker returned `14,000`, a value on the page, against § 4.3's *"addresses,
+>   not values"*. The output shape must make that impossible rather than request it.
+>
+> **§ 5's O1 AND O2 WERE RUN, BLIND, and both PASS.** A reader with no context, given only the two
+> 220-dpi crops and the grid dimensions: on cbh it called the 2.96-ratio headings *"plainly
+> legible"* and reported no hidden ink anywhere — **O1 did not fire**; on gcap it returned 110
+> addresses that are **IDENTICAL to the pipeline's 110 hidden cells, cell by cell, first attempt**,
+> and independently singled out **(1, 6)** as the one navy cell carrying no glyph — R213's own
+> recorded exception, which it was never told about. § 4's disposal is no longer only proposed.
+>
+> Also measured there, so the plan need not: **122 gridded regions** corpus-wide, **0.05–0.54 s** per
+> region crop at 220 dpi, and gcap band 3's crop **is legible** at region grain (§ 7.2 answered).
+
 ## 0. The ruling this spec executes, and the one it obeys
 
 **R213, ruled 2026-09-13 by the maintainer, option (c):** an invisible glyph is carried as a **typed
@@ -81,7 +132,7 @@ white-on-pale-blue glyphs **are** that specimen — they land inside the WCAG in
 region and outside the luminance instrument's — and they are in the corpus today. The prediction was
 right about the shape of the failure and wrong that the corpus could not show it.
 
-### 1.4 The seam a per-cell fact must cross
+### 1.4 The seam a per-cell fact must cross — **REFUTED (RF2): there are two seams**
 
 Measured at **E5**: a band cell already carries its `Word` objects (`regions.Cell.words`,
 `regions.py:34-41`) and loses them at exactly one place — `headers._grid_cells`
@@ -120,7 +171,7 @@ datatype.** Three reasons, in decreasing strength:
    (§ 5d) — is answered by not letting the datatype be the only carrier (§ 2.3), not by taking the
    other branch.
 
-### 2.3 `tab:UnshownInk`
+### 2.3 `tab:UnshownInk` — **AMEND (RF1): the domain is `tab:EntryCell`, not `tab:GridCell`**
 
 ```turtle
 tab:UnshownInk a tab:CellDatatype ; rdfs:label "Unshown ink"@en ;
@@ -156,7 +207,7 @@ Five decisions, each with its reason:
 restate the trichotomy — the `tab:nilSpelling` precedent, whose own comment exists because a rule
 written in two places drifts (R167).
 
-### 2.4 The membrane
+### 2.4 The membrane — **REFUTED (RF1): `tab:GridCell` is not in the compiled graph**
 
 A new `sh:NodeShape` in `vocab/shapes/tab-shapes.ttl`, closed-world, refusing what may cross:
 
@@ -170,7 +221,7 @@ Ships with a conforming worked example and a negative example that must fail (re
 
 ## 3. What the loop builds — interfaces and invariants, not bodies
 
-### 3.1 Carriage (PROCEDURAL — irreducible)
+### 3.1 Carriage (PROCEDURAL — irreducible) — **INCOMPLETE (RF2): covers one of two crossings**
 
 `headers._grid_cells` widens its tuple from `(r, c, text)` to carry a per-cell unshown flag and the
 suppressed transcription, and `celltype.grid_evidence` accepts it. **§ 8 class: PROCEDURAL**, and
@@ -221,7 +272,7 @@ No colour, no threshold, no palette. The rule generalises to § 5e's mid-grey-on
   A missing worker answer types nothing.
 - **The membrane (§ 2.4)** — SHACL, closed world, holon-scoped.
 
-### 4.3 The worker's contract
+### 4.3 The worker's contract — **the null control is REFUTED (RF3): its population is empty**
 
 One ask **per region**, not per cell — the cost gate, in the shape of R249 half (a) (skip the ask
 where no answer could be admitted). The question is closed and structural:

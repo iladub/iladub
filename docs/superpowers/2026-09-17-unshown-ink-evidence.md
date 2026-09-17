@@ -224,3 +224,25 @@ any other corpus document. Recorded because a reviewer will think of it, and bec
 - **The cost of rendering pages.** Not measured; § 5 names it as the plan's first measurement.
 - **How many regions the corpus has**, and therefore the size of any per-region ask. Not measured
   here deliberately — the plan measures it at the call site (plan rule 3).
+
+---
+
+## Correction, appended 2026-09-17 by the review (RF4)
+
+**E2's and E7's description of the cbh population is wrong**, and the review measured it:
+`2026-09-17-unshown-ink-spec-review.md` § RF4.
+
+```
+cbh low-contrast chars by (ink, backdrop, ratio):
+   ink=(1.0, 1.0, 1.0) on (0.588, 0.588, 0.588)  ratio=2.9601  ->  828 chars
+   ink=(1.0, 1.0, 1.0) on (0.6, 0.8, 1.0)        ratio=1.6887  ->   24 chars
+```
+
+**828 of 852 are white on GREY at ratio 2.9601** — the four vessel tables' column-heading rows
+(`VNA #`, `Vessel Name`, `Time Nominated`, …). Only **24** are the pale-blue port codes
+`ALB`/`ESP`/`GER`/`KWI` at **1.6887**. E2 printed a one-row *sample* — the pale-blue one — beside the
+count of the whole set, and E7 then narrated the whole set as the port codes.
+
+The arithmetic of E2 is unaffected: 858 glyphs still fall under WCAG's 3:1 line and every one is
+ordinary visible ink, so § 1.1's refutation of the colour-instrument class stands unchanged. What
+changes is which glyphs O1 actually tests, and at what contrast.
