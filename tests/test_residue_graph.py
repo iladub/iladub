@@ -138,7 +138,15 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     RE-MEASURED 2026-09-17 by the review of that spec (branch `neural-worker-spec-review`):
     91 -> 90, ADDED = [], REMOVED = [248]. The prose mechanism: the new row R249 cites [[R248]]
     and R249 is open, so R248 gained its first open neighbour and left the set; R249 itself cites
-    the open [[R213]] and never entered it."""
+    the open [[R213]] and never entered it.
+    RE-MEASURED 2026-09-17 by the R249 half (b) ruling (branch `r249-half-b-ruled`): 90 -> 92,
+    ADDED = [248, 250], REMOVED = []. Both known mechanisms at once. [[R248]] is the CLOSURE kind,
+    for the second time: closing [[R249]] removed its only open neighbour, so it re-enters the set it
+    left one loop earlier, exactly as [[R242]] did against R238. [[R250]] is the RAISE kind: new,
+    open, named by no criterion, and its full row cites only the closed [[R212]] and [[R249]]. Its
+    INDEX line also cites the open [[R213]], and that changes nothing, because this graph reads
+    links from the full rows and not from the index. Controlled: with the register edits stashed
+    the count is 90, restored it is 92."""
     rows, status, _label, parked = residue_graph.read_rows()
     assert parked == set()
     crit = residue_graph.read_criteria()
@@ -152,4 +160,4 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 90
+    assert len(expected) == 92
