@@ -109,3 +109,57 @@ def test_split_parts_reports_the_FALLBACK_branch_and_agrees_with_the_function():
     axiom, final = _MOD.split_parts(band, _GRID)
     assert axiom is None, "fixture is not discriminating: the AXIOM answered"
     assert final == header_body_split(band, _GRID)
+
+
+# --- [[R258]] arm B: which header block may the agreement oracle be scoped to? ----------------
+#
+# The ruled remedy admits a header-row address only where a second reading agrees, so it must
+# know which addresses are header rows. Two references exist and they are NOT the same set; the
+# three pins below are the whole of the circularity argument, stated on the fixture above.
+
+
+def test_the_RETURNED_split_is_a_circular_scope_it_excludes_its_own_collapsing_address():
+    """The circularity, in one line: the reading decides the scope of the check on itself.
+
+    Scope the oracle to the header block of the split the pipeline RETURNS, and on a band the
+    reading has already collapsed the block is row 0 alone — so `LABEL`, the address whose
+    abstention caused the collapse, sits outside the scope of the oracle that exists to catch it.
+    Measured the same way on cbh-stem band 1: 21 header addresses become 1 (evidence § 2).
+    """
+    free = header_body_split(_band(), _GRID)
+    collapsed = header_body_split(replace(_band(), unshown=(LABEL,)), _GRID)
+    assert LABEL[0] < free, "control: the address is in the header block before the collapse"
+    assert LABEL[0] >= collapsed, (
+        f"the collapsed split {collapsed!r} still scopes {LABEL} as a header address; "
+        "the circularity this test pins would not arise")
+
+
+def test_the_ABSTENTION_FREE_split_is_a_non_circular_scope_and_contains_the_address():
+    """Why arm B is buildable anyway: the reference is computable without the reading.
+
+    Same query, same evidence graph, `unshown = ()` — the floor of the lattice, available before
+    any reading is consumed and therefore not derived from the reading it scopes. It recovers the
+    pre-collapse block whatever the band carries.
+    """
+    carrying = replace(_band(), unshown=(LABEL,))
+    free = header_body_split(replace(carrying, unshown=()), _GRID)
+    assert free == 2 and LABEL[0] < free, (
+        f"the abstention-free split is {free!r}; arm B has no non-circular scope on this fixture")
+
+
+def test_a_collapsed_split_is_a_FIXED_POINT_no_further_address_moves_it():
+    """The collapse is one-way, so no second-order probe can detect it after the fact.
+
+    An oracle that asked *"does another address move this split?"* on the returned reading would
+    find nothing to report on exactly the bands that are already wrong. Measured on cbh-stem
+    band 1: 7 movers before the collapse, 0 after it (evidence § 3).
+    """
+    collapsed = replace(_band(), unshown=(LABEL,))
+    base = header_body_split(collapsed, _GRID)
+    assert base == 1, "control: the fixture is in the collapsed state"
+    for r in range(len(_ROWS)):
+        for c in range(2):
+            if (r, c) == LABEL:
+                continue
+            again = header_body_split(replace(collapsed, unshown=(LABEL, (r, c))), _GRID)
+            assert again == base, f"{(r, c)} moved the collapsed split to {again!r}"
