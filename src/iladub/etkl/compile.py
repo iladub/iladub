@@ -1579,7 +1579,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         if _grid is not None and _grid.rows:
             _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
                              if ln.words], key=lambda ln: ln.top)
-            _led = build_ledger(_lines, _grid.rows, bands, reports)
+            # THE GRID'S BOXHEAD (2026-09-18). `datagrid.py` derives entries and no header, so an
+            # adopted grid asserted cells with coordinates and no column identity — ons: 552 cells,
+            # 0 labels, and all 175 of its escalated tokens were header ink nothing read. The
+            # refused block above the first row is read by a NEURAL worker (recorded, replayed
+            # offline, disposed by the grid's own columns on every compile — `boxhead.py`). A
+            # header line READ IN FULL joins the admitted lines, so the line-granular ledger
+            # below books it exactly as it books a data row: its band is touched, its ink is
+            # asserted, anything unread beside it stays residue. With no recording and no live
+            # reader `_hdr` is empty and this is the identity.
+            from .boxhead import (carried_lines, default_reader, emit_boxhead, header_block,
+                                  read_grid_boxhead)
+            _block = header_block(_lines, _grid)
+            _boxhead = read_grid_boxhead(pdf_path, page_number, _lines, _grid, default_reader())
+            _hdr = carried_lines(_lines, _block, _boxhead)
+            _led = build_ledger(_lines, tuple(_grid.rows) + _hdr, bands, reports)
         else:
             _led = None
         if _led is not None and _led.escalated_tokens < escalated_total:
@@ -1611,6 +1625,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # apple p1 likewise. Registered as residue R83.
             graph = Graph()                   # withdrawal: the page graph is rebuilt
             _grid_uri = _emit(graph, _grid, _lines, doc, page_number)
+            emit_boxhead(graph, _grid_uri, _lines, _block, _boxhead, page_number)
             _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
             # THE LEDGER IS LINE-GRANULAR (spec §5.3). Zeroing `escalated_total` would score
             # the page 1.0000 whatever the grid missed; withdrawing band-by-band would count

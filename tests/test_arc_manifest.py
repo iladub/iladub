@@ -828,8 +828,11 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
         assert met == computed[f], (
             f"{iri} asserts prog:met {met} for {f}, but the corpus register computes "
             f"{computed[f]} — fix whichever is wrong by hand; nothing here writes either file")
-    assert sum(computed.values()) == 3, (
-        f"re-measured 2026-09-13: exactly three corpus documents are accepted; got {computed}")
+    # 3 -> 4 on 2026-09-18: ons-index-of-services accepted once its adopted grids carried their
+    # boxhead (src/iladub/etkl/boxhead.py). The pin is an equality on purpose — an acceptance
+    # nobody recorded here is the defect it exists to catch — so it moves by hand, with the date.
+    assert sum(computed.values()) == 4, (
+        f"re-measured 2026-09-18: exactly four corpus documents are accepted; got {computed}")
 
 
 def test_etkl_criterion_sources_point_at_the_document_they_name():

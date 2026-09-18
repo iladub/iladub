@@ -210,3 +210,113 @@ def read_grid_boxhead(pdf_path: str, page_number: int, lines, grid, reader,
     except Exception:
         return DisposedBoxhead(refused="the reader raised")
     return dispose_boxhead(reading, lines, block, grid)
+
+
+# ---------------------------------------------------------------------------------------------
+# RECORDED READINGS — a NEURAL proposal, kept, and disposed again on every compile
+# ---------------------------------------------------------------------------------------------
+#
+# A live reading costs money and differs run to run; a compile must be reproducible offline or no
+# score it produces can be pinned as a floor. So a reading is RECORDED once and replayed: the
+# recording is the PROPOSAL (addresses only, exactly what the reader returned), and
+# `dispose_boxhead` runs against it on every compile — the oracle never trusts the file.
+#
+# THE KEY IS THE QUESTION, not the pixels: sha256 of the column count and the numbered listing,
+# both derived from the text layer. A PNG hash would move with the renderer's version; the
+# listing moves only when the document's own header text or the grid's column count does, and
+# then the recording SHOULD miss, because it answers a question nobody is asking any more.
+
+import json
+import pathlib
+
+READINGS_DIR = pathlib.Path(__file__).resolve().parents[3] / "readings" / "boxhead"
+
+
+def question_key(ncols: int, listing: str) -> str:
+    return hashlib.sha256(f"{int(ncols)}\n{listing}".encode("utf-8")).hexdigest()
+
+
+def _to_json(r: BoxheadReading) -> dict:
+    return {"refuses_grid": r.refuses_grid, "cols_seen": r.cols_seen, "note": r.note,
+            "leaf_labels": [[c, [list(a) for a in ws]] for c, ws in r.leaf_labels],
+            "spanning_labels": [[a, b, [list(x) for x in ws]] for a, b, ws in r.spanning_labels],
+            "other_words": [list(a) for a in r.other_words]}
+
+
+def _from_json(d: dict) -> BoxheadReading:
+    t = lambda ws: tuple((int(a[0]), int(a[1])) for a in ws)             # noqa: E731
+    return BoxheadReading(
+        leaf_labels=tuple((int(c), t(ws)) for c, ws in d.get("leaf_labels", [])),
+        spanning_labels=tuple((int(a), int(b), t(ws)) for a, b, ws in d.get("spanning_labels", [])),
+        other_words=t(d.get("other_words", [])),
+        refuses_grid=bool(d.get("refuses_grid", False)), cols_seen=int(d.get("cols_seen", 0)),
+        note=str(d.get("note", "")))
+
+
+@dataclass
+class RecordedBoxheadReader:
+    """Replays a recorded reading; on a miss, asks `live` (if any) and — only when
+    `ILADUB_RECORD_READINGS=1` — writes the answer down. With no recording and no live reader it
+    returns None, which every caller already treats as NO CLAIM."""
+    live: "BoxheadReader | None" = None
+    directory: pathlib.Path = READINGS_DIR
+
+    def read_boxhead(self, crop_png, ncols, listing):
+        path = self.directory / f"{question_key(ncols, listing)}.json"
+        if path.exists():
+            return _from_json(json.loads(path.read_text(encoding="utf-8")))
+        if self.live is None:
+            return None
+        reading = self.live.read_boxhead(crop_png, ncols, listing)
+        if reading is not None and os.environ.get("ILADUB_RECORD_READINGS") == "1":
+            self.directory.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(_to_json(reading), indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8")
+        return reading
+
+
+def default_reader() -> RecordedBoxheadReader:
+    """Recorded first, live behind it only when `BAML_LIVE=1`."""
+    return RecordedBoxheadReader(live=BamlBoxheadReader() if baml_boxhead_available() else None)
+
+
+# ---------------------------------------------------------------------------------------------
+# CARRIAGE — the labels into the graph, and their ink into the ledger
+# ---------------------------------------------------------------------------------------------
+
+def carried_lines(lines, block, disposed: DisposedBoxhead) -> tuple[int, ...]:
+    """Page-line indices of the header lines that were READ IN FULL: every word of the line
+    belongs to a label that survived disposal. The adoption ledger is line-granular (spec §5.3),
+    so a line with one unread word — a spanner, a title, a dropped label — is not carried and
+    stays where the ledger already books it. Never rounds up."""
+    kept = {a for ws in disposed.labels.values() for a in ws}
+    return tuple(j for k, j in enumerate(block)
+                 if lines[j].words and all((k, i) in kept for i in range(len(lines[j].words))))
+
+
+def emit_boxhead(g, grid_uri, lines, block, disposed: DisposedBoxhead, page: int) -> int:
+    """One `tab:HeaderNode` + `tab:LabelCell` per disposed label, in the shape
+    `holon.assert_record_region` gives a record table's header: level 0, `tab:coversColumn` the
+    grid's own column node, the label's text read back from the TEXT LAYER by address, and a box
+    that is the union of its words (provenance to the page; the membrane requires the box of any
+    LabelCell that carries text — R179). Returns the number of labels emitted."""
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import RDF, XSD
+    from .holon import TAB, _bbox_node
+    words = {(k, i): w for k, j in enumerate(block) for i, w in enumerate(_ordered(lines[j]))}
+    for c, ws in sorted(disposed.labels.items()):
+        h, lc = URIRef(f"{grid_uri}-h{c}"), URIRef(f"{grid_uri}-lc{c}")
+        own = [words[a] for a in sorted(ws)]
+        g.add((h, RDF.type, TAB.HeaderNode))
+        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+        g.add((h, TAB.coversColumn, URIRef(f"{grid_uri}-c{c}")))
+        g.add((grid_uri, TAB.hasHeaderNode, h))
+        g.add((lc, RDF.type, TAB.LabelCell))
+        g.add((grid_uri, TAB.hasCell, lc))
+        g.add((lc, TAB.cellText, Literal(" ".join(w.text for w in own))))
+        g.add((lc, TAB.onPage, Literal(page, datatype=XSD.integer)))
+        g.add((lc, TAB.hasBBox, _bbox_node(g, SimpleNamespace(bbox=(
+            min(w.x0 for w in own), min(w.top for w in own),
+            max(w.x1 for w in own), max(w.bottom for w in own))))))
+        g.add((h, TAB.hasLabel, lc))
+    return len(disposed.labels)
