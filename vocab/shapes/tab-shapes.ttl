@@ -419,3 +419,41 @@ tab:InLogicalColumnDisciplineShape a sh:NodeShape ;
                 FILTER( !(sameTerm($this, ?y)) || NOT EXISTS { ?z tab:continuesColumn $this } )
             }
         """ ] .
+
+#################################################################
+#  Unshown ink (R213, spec 2026-09-17 § 8.5): a cell whose ink the
+#  page does not show carries its transcription in tab:unshownText
+#  and mints an EMPTY tab:cellText. A cell cannot simultaneously be
+#  read and not read.
+#################################################################
+
+# CLAUSE 1 ONLY, and the omission is measured rather than an oversight. § 8.5 states two clauses;
+# the second — "no asserted contract value may be sourced from such a cell" — HAS NO SUBJECT IN
+# SHACL. Measured (scripts/unshown_ink_prov_probe.py): the grounding membrane validates the
+# GROUNDED graph, which holds 0 tab: triples of any kind, while the 406 tab:EntryCells live in the
+# DOCUMENT graph; a shape over tab:EntryCell written into the grounding membrane has zero focus
+# nodes, forever. Its honest form is the producer-side guard at feed.py's grounding site (CLAUDE.md
+# § Producer-side guards vs the membrane). The two graphs are deliberately NOT unioned to give it a
+# subject: that would be a new coupling invented to serve one shape, and § 8.5 forbids inventing a
+# path.
+#
+# The target is tab:unshownText's subjects rather than every tab:EntryCell, because the property's
+# PRESENCE is the assertion (there is no separate flag) — so the shape has a focus node exactly
+# when the claim is made.
+tab:UnshownInkCellShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:unshownText ;
+    sh:class tab:EntryCell ;
+    sh:property [ sh:name "UnshownInkCellShape" ; sh:path tab:unshownText ;
+                  sh:minCount 1 ; sh:maxCount 1 ; sh:minLength 1 ;
+                  sh:message "A cell claiming unshown ink must carry tab:unshownText exactly once and non-empty — carriage claimed and not delivered is the defect this refuses." ] ;
+    sh:sparql [
+        sh:name "UnshownInkCellShape" ;
+        sh:message "A tab:EntryCell carrying tab:unshownText must have an EMPTY tab:cellText — a cell cannot simultaneously be read and not read." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:unshownText ?u .
+                $this tab:cellText ?t .
+                FILTER(strlen(str(?t)) > 0)
+            }
+        """ ] .

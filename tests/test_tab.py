@@ -352,3 +352,61 @@ def test_span_invented_child_fails_at_the_sibling_column():
     assert "UnambiguousAccessShape" in t
     assert "NoOverlapShape" not in t
     assert "ex:c1" in t, t
+
+
+# ---------------------------------------------------------------------------
+# R213 — ink the page does not show. tab:UnshownInk / tab:unshownText, the
+# widened tab:WrappedCellShape (T1, O6) and tab:UnshownInkCellShape (T2, O4).
+# ---------------------------------------------------------------------------
+
+UNSHOWN_EX = os.path.join(EX, "unshown-ink-conformant.ttl")
+
+
+def test_unshown_ink_terms_declared():
+    g = _g(TAB_TTL)
+    assert (TAB.UnshownInk, RDF.type, TAB.CellDatatype) in g
+    # It abstains: a cell whose ink no reader can see must neither vote nor mismatch.
+    assert (TAB.UnshownInk, TAB.datatypeAbstains, None) in g
+    # It is in NO family -- unshown ink is not a kind of quantity, whatever it transcribes.
+    assert (TAB.UnshownInk, TAB.inDatatypeFamily, None) not in g
+    # It is NOT a nil spelling of tab:Blank: the author wrote something, the reader sees nothing.
+    assert not any(str(o) for o in g.objects(TAB.UnshownInk, TAB.nilSpelling))
+    # The transcription rides on the PERSISTED cell, so its domain is tab:EntryCell -- never
+    # tab:GridCell, which is 0 triples in every compiled graph (RF1).
+    assert (TAB.unshownText, RDF.type, OWL.DatatypeProperty) in g
+    assert (TAB.unshownText, RDFS.domain, TAB.EntryCell) in g
+
+
+def test_unshown_conformant_passes_both_membranes():
+    """T1's blocking amendment: before it, RS1 measured this exact graph REFUSED."""
+    c, t = _vp(UNSHOWN_EX)
+    assert c, t
+
+
+def test_unshown_cell_with_nonempty_celltext_fails():
+    """O4: a cell cannot simultaneously be read and not read."""
+    c, t = _vp(os.path.join(TST, "tab-unshown-ink-leak.ttl"))
+    assert not c
+    assert "UnshownInkCellShape" in t
+    assert "must have an EMPTY tab:cellText" in t
+
+
+def test_wrapped_guard_still_refuses_a_cell_carrying_neither(
+):
+    """O6 arm (a): the guard is WIDENED, not blinded. A dropped continuation carries
+    neither property and is still refused -- this is tab-wrapped-leak.ttl unchanged."""
+    c, t = _vp(os.path.join(TST, "tab-wrapped-leak.ttl"))
+    assert not c
+    assert "WrappedCellShape" in t
+
+
+def test_wrapped_guard_still_refuses_an_empty_unshown_claim():
+    """O6 arm (b): carriage CLAIMED and not delivered. This is the arm that separates the
+    disjunct the spec required (§ 8.3) from the exemption it refused -- an exemption for
+    'cells carrying tab:unshownText' would pass this graph."""
+    c, t = _vp(os.path.join(TST, "tab-unshown-empty-leak.ttl"))
+    assert not c
+    assert "WrappedCellShape" in t
+    # And the claim itself is refused where it is made, not only at the carriage guard.
+    assert "UnshownInkCellShape" in t
+    assert "exactly once and non-empty" in t

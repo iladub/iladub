@@ -1,0 +1,42 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# R213 — the worked example for tab:unshownText and the widened tab:WrappedCellShape.
+#
+# One table, one row, two entry cells that differ in exactly one way: ex:eShown's ink is on the
+# page, ex:eUnshown's is in the text layer and the page does not show it. The unshown cell keeps
+# its geometry, its page and its row/column — it is fully carried, provenance to the page intact —
+# and mints an EMPTY tab:cellText, with its transcription in tab:unshownText. Every reader of
+# tab:cellText therefore gets the truthful answer, "the page shows nothing here", by default.
+#
+# Conformant with BOTH membranes:
+#   tab:WrappedCellShape      — the bbox-carrying cell proves its carriage through the SECOND
+#                               disjunct (non-empty tab:unshownText). Before the R213 amendment
+#                               this example was REFUSED (RS1, spec § 8.3).
+#   tab:UnshownInkCellShape   — tab:unshownText exactly once and non-empty, tab:cellText empty.
+ex:t a tab:HierarchicalTable ;
+    tab:hasLeafColumn ex:c0, ex:c1 ;
+    tab:hasLeafRow ex:r0 ;
+    tab:hasHeaderNode ex:hStub, ex:hCap ;
+    tab:hasCell ex:eShown, ex:eUnshown, ex:lStub, ex:lCap .
+
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn .
+ex:r0 a tab:LeafRow .
+
+ex:hStub a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 ; tab:hasLabel ex:lStub .
+ex:hCap  a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c1 ; tab:hasLabel ex:lCap .
+
+ex:lStub a tab:LabelCell ; tab:cellText "Port" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 60.0 ; tab:y0 690.0 ; tab:x1 110.0 ; tab:y1 700.0 ] .
+ex:lCap a tab:LabelCell ; tab:cellText "Capacity" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 160.0 ; tab:y0 690.0 ; tab:x1 230.0 ; tab:y1 700.0 ] .
+
+# ink the page shows
+ex:eShown a tab:EntryCell ; tab:atColumn ex:c0 ; tab:atRow ex:r0 ;
+    tab:cellText "Geelong" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 60.0 ; tab:y0 660.0 ; tab:x1 110.0 ; tab:y1 670.0 ] .
+
+# ink the page does NOT show: the text layer holds "0", no reader sees it
+ex:eUnshown a tab:EntryCell ; tab:atColumn ex:c1 ; tab:atRow ex:r0 ;
+    tab:cellText "" ; tab:unshownText "0" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 160.0 ; tab:y0 660.0 ; tab:x1 230.0 ; tab:y1 670.0 ] .
