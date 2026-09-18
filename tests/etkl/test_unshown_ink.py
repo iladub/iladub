@@ -356,6 +356,65 @@ def test_refusal_4_a_covered_position_that_HAS_a_glyph_refuses_the_region():
     assert dispose(r, _grid3x3(), 3, 3) == frozenset()
 
 
+class _CountingReader:
+    """A reader that records how many times it was actually asked."""
+
+    def __init__(self, reading):
+        self.reading, self.asks = reading, 0
+
+    def read_empty_cells(self, crop_png, nrows, ncols):
+        self.asks += 1
+        return self.reading
+
+
+def test_the_same_crop_is_asked_ONCE_however_many_passes_ask_for_it():
+    """R255/R256. `page_bands` runs twice per compile_document and three times on a section-
+    repaired page — measured 2026-09-18: bfs, 18 calls for 7 pages — and each pass re-asked the
+    reader about every region. One ask per distinct question, keyed on the crop's content."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+    inner = _CountingReader(Reading(empty_cells=frozenset({(0, 0)})))
+    reader = CachingRegionReader(inner, cache={})
+    for _ in range(3):
+        got = reader.read_empty_cells(b"same-crop-bytes", 27, 16)
+    assert inner.asks == 1, "three passes over one page must cost one ask"
+    assert got.empty_cells == frozenset({(0, 0)})
+
+
+def test_a_DIFFERENT_crop_or_grid_is_a_different_question_and_is_asked():
+    """The null control for the cache: it must still ask. A section-repaired partition draws
+    different extents, and that is a different question, not a cache hit."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+    inner = _CountingReader(Reading(empty_cells=frozenset()))
+    reader = CachingRegionReader(inner, cache={})
+    reader.read_empty_cells(b"crop-a", 27, 16)
+    reader.read_empty_cells(b"crop-b", 27, 16)          # different image
+    reader.read_empty_cells(b"crop-a", 13, 20)          # same image, different grid
+    assert inner.asks == 3
+
+
+def test_a_FAILURE_is_not_cached():
+    """An exception is not an answer. Caching one would turn a transient network failure into a
+    permanent silence for the rest of the process."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+
+    class _FailsOnce:
+        def __init__(self):
+            self.asks = 0
+
+        def read_empty_cells(self, crop_png, nrows, ncols):
+            self.asks += 1
+            if self.asks == 1:
+                raise RuntimeError("transient")
+            return Reading(empty_cells=frozenset({(1, 1)}))
+
+    inner = _FailsOnce()
+    reader = CachingRegionReader(inner, cache={})
+    with pytest.raises(RuntimeError):
+        reader.read_empty_cells(b"crop", 3, 3)
+    assert reader.read_empty_cells(b"crop", 3, 3).empty_cells == frozenset({(1, 1)})
+    assert inner.asks == 2
+
+
 def test_a_missing_answer_types_nothing_and_claims_nothing():
     """Open-world and evidence-positive (§ 4.2): a cell types unshown only where BOTH readings
     are PRESENT. No reader means no claim -- never 'therefore the ink is shown'."""
@@ -476,3 +535,22 @@ def test_the_pipeline_attaches_nothing_with_the_gate_off():
     from iladub.etkl.compile import page_bands
     assert os.environ.get("BAML_LIVE") != "1", "this test asserts the DEFAULT configuration"
     assert all(b.unshown == () for b in page_bands(GCAP, 0))
+
+
+@pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
+def test_a_reader_that_RAISES_makes_no_claim_and_does_not_abort_the_compile():
+    """Observed live 2026-09-18: a BAML cast of a model answer raised inside
+    `sync_client.b.ReadEmptyCells` and the exception propagated out of `page_bands` and killed
+    `compile_document`. One flaky call about one region would take a 27-page document with it.
+    The module's docstring already promised the opposite; the read was outside the guard."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.regions import classify
+    from iladub.etkl.unshownink import region_unshown
+
+    class _Raises:
+        def read_empty_cells(self, crop_png, nrows, ncols):
+            raise RuntimeError("the model answered something unparseable")
+
+    band = [b for b in page_bands(GCAP, 0) if classify(b).grid is not None][1]
+    grid = classify(band).grid
+    assert region_unshown(GCAP, 0, band, grid, _Raises()) == frozenset()

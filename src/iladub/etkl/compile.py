@@ -485,8 +485,13 @@ def page_bands(pdf_path: str, page_number: int = 0,
     from .unshownink import baml_reader_available
     if baml_reader_available():
         from .regions import classify as _classify
-        from .unshownink import BamlRegionReader, region_unshown
-        reader = BamlRegionReader()
+        from .unshownink import BamlRegionReader, CachingRegionReader, region_unshown
+        # One ask per distinct crop, not per call site: `page_bands` runs twice per
+        # `compile_document` and three times on a section-repaired page (measured 2026-09-18 —
+        # bfs, 18 calls for 7 pages), and every pass re-asked the reader about every region.
+        # R255/R256. The cache is process-wide and keyed on the crop's content, so a new
+        # `BamlRegionReader` per pass still hits it.
+        reader = CachingRegionReader(BamlRegionReader())
         for i, band in enumerate(bands):
             reg = _classify(band)
             if reg.grid is None:

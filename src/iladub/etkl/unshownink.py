@@ -43,9 +43,10 @@ because the membrane admits the same class of thing either way (the 2026-09-17 r
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 DPI = 220        # the render scale the spec measured legible at region grain (§ 8.7). It is a
@@ -86,6 +87,58 @@ def baml_reader_available() -> bool:
     run asks for a live reading."""
     return (os.environ.get("BAML_LIVE") == "1"
             and importlib.util.find_spec("baml_client") is not None)
+
+
+_READING_CACHE: dict[tuple[str, int, int], "Reading | None"] = {}
+
+
+def clear_reading_cache() -> None:
+    """Empty the process-wide reading cache. For tests and for a caller that deliberately wants a
+    second, independent reading of the same crop."""
+    _READING_CACHE.clear()
+
+
+@dataclass
+class CachingRegionReader:
+    """One ask per distinct QUESTION, not per call site — [[R255]], [[R256]].
+
+    THE WASTE, measured 2026-09-18 at `8d991fd` by counting `compile.page_bands` invocations
+    inside one `compile_document`:
+
+        graincorp-capacity   2 calls for 1 page
+        bfs-population       18 calls for 7 pages   (2 on three pages, 3 on four)
+
+    `page_bands` runs once in `document.compile_document` and again in `compile.compile_tables`,
+    and a third time on a section-repaired page. Each pass re-asks the reader about every gridded
+    region it sees, so a live compile of bfs pays **2.57x** the necessary model calls and throws
+    61% of the answers away. At ~50s and one image call each, that is the bill.
+
+    THE KEY IS THE CROP'S CONTENT, not the band object or the page number. Two passes over the
+    same page render byte-identical crops, so the question is literally the same question; a
+    genuinely different region (the section-repaired partition draws different extents) hashes
+    differently and is asked, which is correct. Cross-document collision is impossible for the
+    same reason — the key IS the image.
+
+    AND IT REMOVES A SECOND DEFECT, which is why the cache sits here rather than around
+    `page_bands`: the passes used to be INDEPENDENT readings of one page, so [[R253]]'s reader
+    variance could hand `compile_tables` a different `unshown` set than `compile_document` saw,
+    and the split that [[R258]] measures as one-address fragile is decided on one of them
+    arbitrarily. One answer per question makes the passes agree by construction.
+
+    A FAILURE IS NOT CACHED. An exception propagates and a retry is legitimate; only an answer
+    (including a refusal, which IS an answer) is remembered.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL. Memoisation on a content hash — no reading
+    judgment, no tolerance, no threshold.
+    """
+    inner: "RegionReader"
+    cache: dict = field(default_factory=lambda: _READING_CACHE)
+
+    def read_empty_cells(self, crop_png, nrows, ncols):
+        key = (hashlib.sha256(crop_png).hexdigest(), int(nrows), int(ncols))
+        if key not in self.cache:
+            self.cache[key] = self.inner.read_empty_cells(crop_png, nrows, ncols)
+        return self.cache[key]
 
 
 class BamlRegionReader:
@@ -213,4 +266,15 @@ def region_unshown(pdf_path, page_number, band, grid, reader,
         crop = render_region(pdf_path, page_number, band)
     except Exception:
         return frozenset()
-    return dispose(reader.read_empty_cells(crop, nrows, ncols), cells, nrows, ncols, spanned)
+    try:
+        # THE READ IS INSIDE THE GUARD, and it was not until 2026-09-18 — the docstring above
+        # promised "every failure path returns the empty set" while a reader exception went
+        # straight past it and aborted the whole `compile_document`. Observed live: a BAML cast
+        # of a model answer raised inside `sync_client.b.ReadEmptyCells`, and a 27-page document
+        # would have died on one flaky call about one region. R253 records an ABORTED live run
+        # whose traceback was never captured; this is that shape. Fail-closed: a reader that
+        # raises has made NO CLAIM, exactly as one that refuses or cannot be reached.
+        reading = reader.read_empty_cells(crop, nrows, ncols)
+    except Exception:
+        return frozenset()
+    return dispose(reading, cells, nrows, ncols, spanned)
