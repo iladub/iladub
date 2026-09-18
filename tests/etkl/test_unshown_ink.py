@@ -275,3 +275,86 @@ def test_a_cell_that_is_read_and_not_read_REFUSES_at_the_grounding_site():
         _read_table(g, t)
     assert "cannot simultaneously be read and not read" in str(exc.value)
     assert "urn:t-e0_0" in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# T6 — the NEURAL worker's disposal, and the three refusals
+# ---------------------------------------------------------------------------
+
+def _grid3x3():
+    """A 3x3 text layer with one hole at (1, 2): the position the page shows as genuinely empty."""
+    return [(r, c, "x") for r in range(3) for c in range(3) if (r, c) != (1, 2)]
+
+
+def _reading(empty, **kw):
+    from iladub.etkl.unshownink import Reading
+    return Reading(empty_cells=frozenset(empty), **kw)
+
+
+def test_the_disagreement_types_only_cells_that_have_a_glyph_and_show_no_mark():
+    from iladub.etkl.unshownink import dispose
+    # The reader sees nothing at (0,0) -- which HAS a glyph -- and at (1,2), which has none.
+    # Only the first is a disagreement; the second is an ordinary tab:Blank.
+    got = dispose(_reading({(0, 0), (1, 2)}), _grid3x3(), 3, 3)
+    assert got == frozenset({(0, 0)})
+
+
+def test_refusal_1_an_address_outside_the_grid_refuses_the_whole_region():
+    from iladub.etkl.unshownink import dispose
+    assert dispose(_reading({(0, 0), (1, 2), (9, 9)}), _grid3x3(), 3, 3) == frozenset()
+
+
+def test_refusal_2_this_is_not_the_grid_i_see_refuses_the_whole_region():
+    from iladub.etkl.unshownink import dispose
+    r = _reading({(0, 0), (1, 2)}, refuses_grid=True, rows_seen=13, cols_seen=20)
+    assert dispose(r, _grid3x3(), 3, 3) == frozenset()
+
+
+def test_refusal_3_a_reader_that_misses_a_genuinely_empty_cell_is_refused():
+    """The null control, and it FIRES -- a control that cannot fire is not a control. The
+    reader answers (0,0) but not (1,2), the one position the text layer already reads as empty,
+    so it is not reading the page and the region is refused."""
+    from iladub.etkl.unshownink import dispose
+    assert dispose(_reading({(0, 0)}), _grid3x3(), 3, 3) == frozenset()
+
+
+def test_refusal_3_is_scoped_to_positions_outside_a_spanning_cell():
+    """The confounder, stated in § 8.7 and honoured here: a reader who reads a spanning cell's
+    extent as OCCUPIED is reading correctly and must not be refused for it. 25 of gcap band 3's
+    26 text-layer-empty positions are the spanning year label's column."""
+    from iladub.etkl.unshownink import dispose
+    got = dispose(_reading({(0, 0)}), _grid3x3(), 3, 3, spanned=frozenset({(1, 2)}))
+    assert got == frozenset({(0, 0)})
+
+
+def test_a_missing_answer_types_nothing_and_claims_nothing():
+    """Open-world and evidence-positive (§ 4.2): a cell types unshown only where BOTH readings
+    are PRESENT. No reader means no claim -- never 'therefore the ink is shown'."""
+    from iladub.etkl.unshownink import dispose
+    assert dispose(None, _grid3x3(), 3, 3) == frozenset()
+
+
+def test_the_readings_are_never_merged():
+    """§ 8.9 item 2, answered by construction: there is no API to merge two runs. A union would
+    assert more than the evidence supports, an intersection would infer absence, and a majority
+    vote would need a run count that is a tuned constant in all but name."""
+    from iladub.etkl import unshownink
+    assert not [n for n in dir(unshownink)
+                if any(k in n.lower() for k in ("merge", "union", "vote", "consensus"))]
+
+
+def test_the_worker_shape_cannot_express_a_value_on_the_page():
+    """RF8, pinned against the generated client rather than against the .baml text: run 1 of the
+    blind disposal returned "14,000" -- a tonnage off the page -- because its shape allowed it.
+    The only string field is `note`, and the prompt forbids content there; every other field is
+    an int or a bool, so no address-shaped answer can smuggle a value."""
+    pytest.importorskip("baml_client")
+    from baml_client.types import EmptyCellAddress, UnshownInkReading
+    assert set(EmptyCellAddress.model_fields) == {"row", "col"}
+    ann = {k: str(v.annotation) for k, v in UnshownInkReading.model_fields.items()}
+    assert [k for k, v in ann.items() if "str" in v] == ["note"]
+
+
+def test_the_live_reader_is_env_gated_and_off_by_default():
+    from iladub.etkl.unshownink import baml_reader_available
+    assert not baml_reader_available() or os.environ.get("BAML_LIVE") == "1"
