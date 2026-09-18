@@ -38,15 +38,88 @@ def _region_uri(base: URIRef, kind: str, idx: int) -> URIRef:
     return URIRef(f"{base}-{kind}{idx}")
 
 
+class UnshownCarriageError(AssertionError):
+    """The two address spaces disagreed (R213, O7). Raised by the producer, at the call site
+    that built the bad value — never swallowed into a tolerance."""
+
+
+class _UnshownCarriage:
+    """R213 crossing B: carry the disposal's (row, col) addresses onto the PERSISTED cells.
+
+    Gate classification: PROCEDURAL, and the irreducibility is the same as crossing A's — it
+    plumbs a fact decided elsewhere (§ 4's disposal) to the emitter. It takes no decision, reads
+    no geometry and applies no threshold. What it adds beyond plumbing is a REFUSAL, not a rule.
+
+    WHY IT REFUSES. The worker answers in GRID space — headers._grid_cells' (r, c) — and the
+    membrane reads tab:EntryCells, whose index comes from a different producer at every one of
+    the SIX minting sites (holon.py's four _emit_entry_cell callers, holon.py's hier-region
+    emitter, and datagrid.py's, which keys its IRI off a different counter entirely). Spec § 8.4
+    measured the two spaces coinciding on ONE region of ONE document — 406/406 cells and 110/110
+    zeros by set identity — and said in terms that this is EMPIRICAL, not structural: regions.Cell
+    and _grid_cells are two different cell notions whose reach differs 10.0% vs 95.4% corpus-wide.
+
+    So an address is never resolved onto a persisted cell by index arithmetic on trust. Every
+    address the disposal supplied must be CONSUMED by a minted cell; one that is not means the
+    two spaces disagree on this region, and the carriage refuses the region rather than silently
+    writing tab:unshownText onto the wrong cell — or onto none. This is the per-address form of
+    O7, which is strictly stronger than the populated-count identity § 8.4 proposed as the
+    cheapest check: equal counts can still be a permutation, and R176/R172 are both cases where a
+    coinciding count hid a wrong join.
+
+    NOTE the spec's § 8.4 enumerates FIVE minting sites. There are six: assert_matrix_region has
+    its own _emit_entry_cell call (holon.py, "entries at (data column x leaf row)") that the
+    enumeration missed. Under-enumeration is exactly what this guard is insurance against.
+    """
+
+    __slots__ = ("wanted", "consumed")
+
+    def __init__(self, band):
+        self.wanted = frozenset(
+            (int(r), int(c)) for r, c in (getattr(band, "unshown", ()) or ()))
+        self.consumed: set[tuple[int, int]] = set()
+
+    def text_at(self, row: int, col: int, cell_text: str) -> str | None:
+        """The transcription to persist for this address, or None when its ink is shown.
+
+        The transcription IS the cell's own text: what the text layer holds and the page does
+        not show. Nothing is invented and nothing is read off the image (§ 6)."""
+        key = (int(row), int(col))
+        if key not in self.wanted:
+            return None
+        self.consumed.add(key)
+        return cell_text
+
+    def refuse_unless_complete(self, where: str) -> None:
+        missing = sorted(self.wanted - self.consumed)
+        if missing:
+            raise UnshownCarriageError(
+                f"{where}: {len(missing)} unshown address(es) reached no tab:EntryCell — the "
+                f"grid and persisted address spaces disagree on this region, so the carriage "
+                f"refuses rather than write the transcription onto the wrong cell. "
+                f"Unconsumed: {missing[:8]}{' …' if len(missing) > 8 else ''}")
+
+
 def _emit_entry_cell(g: Graph, table_uri: URIRef, doc_uri: URIRef, page: int,
-                     e_uri: URIRef, col_uri: URIRef, row_uri: URIRef, cell) -> None:
+                     e_uri: URIRef, col_uri: URIRef, row_uri: URIRef, cell,
+                     unshown_text: str | None = None) -> None:
     """Emit one tab:EntryCell with structural links + provenance. Shared by the
-    upright and transposed makers so provenance is single-sourced."""
+    upright and transposed makers so provenance is single-sourced.
+
+    `unshown_text` (R213): when given, this cell's ink is on the page's text layer and the page
+    does not SHOW it. The cell then mints an EMPTY tab:cellText and carries its transcription in
+    tab:unshownText. Emptying is fail-safe and deliberate (spec § 8.2): every reader of
+    tab:cellText gets the truthful answer, "the page shows nothing here", by default, instead of
+    each having to learn a new term. The cell keeps its bbox, page, row, column and provenance —
+    it is fully carried, nothing is dropped (§ 7)."""
     g.add((e_uri, RDF.type, TAB.EntryCell))
     g.add((table_uri, TAB.hasCell, e_uri))
     g.add((e_uri, TAB.atColumn, col_uri))
     g.add((e_uri, TAB.atRow, row_uri))
-    g.add((e_uri, TAB.cellText, Literal(cell.text)))
+    if unshown_text is None:
+        g.add((e_uri, TAB.cellText, Literal(cell.text)))
+    else:
+        g.add((e_uri, TAB.cellText, Literal("")))
+        g.add((e_uri, TAB.unshownText, Literal(unshown_text)))
     g.add((e_uri, TAB.onPage, Literal(page, datatype=XSD.integer)))
     g.add((e_uri, TAB.hasBBox, _bbox_node(g, cell)))
     x0, top, _, _ = cell.bbox
@@ -107,6 +180,7 @@ def _emit_roundtrip_fail_cell(g: Graph, doc_uri: URIRef, page: int,
 
 def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
                          doc_uri: URIRef, page: int) -> int:
+    unshown = _UnshownCarriage(region.band)          # R213 crossing B
     g.add((table_uri, RDF.type, TAB.RecordTable))
     ncols = region.grid.ncols
     cols = {i: _region_uri(table_uri, "c", i) for i in range(ncols)}
@@ -151,8 +225,10 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
             _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
             continue
         e = _region_uri(table_uri, f"e{cell.row}_", cell.col)
-        _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[cell.col], rows[cell.row], cell)
+        _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[cell.col], rows[cell.row], cell,
+                         unshown.text_at(cell.row, cell.col, cell.text))
         asserted += 1
+    unshown.refuse_unless_complete("assert_record_region")
     return asserted
 
 
@@ -167,6 +243,7 @@ def assert_transposed_region(g: Graph, region: ClassifiedRegion, table_uri: URIR
     round-trip on the ORIGINAL grid; straddling cells escalate ROUND_TRIP_FAIL.
     Returns the asserted EntryCell count.
     """
+    unshown = _UnshownCarriage(region.band)          # R213 crossing B
     g.add((table_uri, RDF.type, TAB.RecordTable))
     g.add((table_uri, TAB.sourceOrientation, Literal("transposed")))
     b = region.grid.boundaries
@@ -211,11 +288,13 @@ def assert_transposed_region(g: Graph, region: ClassifiedRegion, table_uri: URIR
                 continue
             if cell_round_trips(cell, b):
                 e = _region_uri(table_uri, f"e{m}_", k)
-                _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[k], rows[m], cell)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, cols[k], rows[m], cell,
+                                 unshown.text_at(m, k, cell.text))
                 asserted += 1
             else:
                 cc = _region_uri(table_uri, f"cc{m}_", k)
                 _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
+    unshown.refuse_unless_complete("assert_transposed_region")
     return asserted
 
 
@@ -227,6 +306,7 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
     entries both carry physical provenance.
     """
     from .regions import column_of
+    unshown = _UnshownCarriage(band)                 # R213 crossing B
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))
     b = rreg.grid.boundaries
 
@@ -311,11 +391,13 @@ def assert_row_hier_region(g: Graph, rreg, band, table_uri: URIRef,
             fits = all(b[c] - 0.5 <= w.x0 and w.x1 <= b[c + 1] + 0.5 for w in cell.words)
             if fits:
                 e = _region_uri(table_uri, f"e{i}_", c)
-                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], cell)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], cell,
+                                 unshown.text_at(i, c, cell.text))
                 asserted += 1
             else:
                 cc = _region_uri(table_uri, f"cc{i}_", c)
                 _emit_roundtrip_fail_cell(g, doc_uri, page, cc, cell)
+    unshown.refuse_unless_complete("assert_row_hier_region")
     return asserted
 
 
@@ -327,9 +409,11 @@ def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
     emission patterns; reuses the shared entry emitters. Both axes' LabelCells carry
     physical bbox/onPage. Returns the asserted entry count.
 
-    (band is accepted for signature symmetry with the other makers but is unused:
-    all column-label geometry is pre-computed on mreg.col_tree by classify_matrix.)"""
+    (band carried no column-label geometry — all of it is pre-computed on mreg.col_tree by
+    classify_matrix — and was accepted for signature symmetry alone until R213, which reads
+    Band.unshown off it. The "unused" note that stood here is therefore no longer true.)"""
     from .regions import column_of
+    unshown = _UnshownCarriage(band)                 # R213 crossing B
     g.add((table_uri, RDF.type, TAB.HierarchicalTable))
     b = mreg.grid.boundaries
 
@@ -406,11 +490,13 @@ def assert_matrix_region(g: Graph, mreg, band, table_uri: URIRef,
             fits = all(b[c] - 0.5 <= w.x0 and w.x1 <= b[c + 1] + 0.5 for w in sc.words)
             if fits:
                 e = _region_uri(table_uri, f"e{i}_", c)
-                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], sc)
+                _emit_entry_cell(g, table_uri, doc_uri, page, e, col_uris[c], row_uris[i], sc,
+                                 unshown.text_at(i, c, sc.text))
                 asserted += 1
             else:
                 cc = _region_uri(table_uri, f"cc{i}_", c)
                 _emit_roundtrip_fail_cell(g, doc_uri, page, cc, sc)
+    unshown.refuse_unless_complete("assert_matrix_region")
     return asserted
 
 
@@ -620,17 +706,23 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
 
     # Body entry cells
     b = region.grid.boundaries
+    unshown = _UnshownCarriage(band)                 # R213 crossing B
     asserted = 0
     for r, rb in enumerate(region.rows):
         row_uri = URIRef(f"{table_uri}-r{r}")
         for cell in rb.cells:
             col = column_of((cell.x0 + cell.x1) / 2.0, b)
             e = URIRef(f"{table_uri}-e{r}_{col}")
+            hidden = unshown.text_at(r, col, cell.text)
             g.add((e, RDF.type, TAB.EntryCell))
             g.add((table_uri, TAB.hasCell, e))
             g.add((e, TAB.atColumn, cols[col]))
             g.add((e, TAB.atRow, row_uri))
-            g.add((e, TAB.cellText, Literal(cell.text)))
+            if hidden is None:
+                g.add((e, TAB.cellText, Literal(cell.text)))
+            else:
+                g.add((e, TAB.cellText, Literal("")))
+                g.add((e, TAB.unshownText, Literal(hidden)))
             g.add((e, TAB.onPage, Literal(page, datatype=XSD.integer)))
             bb = BNode()
             g.add((bb, RDF.type, TAB.BBox))
@@ -650,4 +742,5 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
         from .rowgroups import derive_row_groups
         derive_row_groups(g, table_uri, agg)
 
+    unshown.refuse_unless_complete("assert_hier_region")
     return asserted

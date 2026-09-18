@@ -104,3 +104,174 @@ def test_band_carries_the_unshown_set_and_defaults_empty():
     b = Band(lines=(), top=0.0, bottom=1.0)
     assert b.unshown == ()
     assert Band(lines=(), top=0.0, bottom=1.0, unshown=((2, 1),)).unshown == ((2, 1),)
+
+
+# ---------------------------------------------------------------------------
+# crossing B — the persisted cell, and O7's refusal
+# ---------------------------------------------------------------------------
+
+import dataclasses                                                      # noqa: E402
+import pytest                                                           # noqa: E402
+
+pytest.importorskip("pdfplumber")
+pytest.importorskip("reportlab")
+
+from rdflib import Graph, Literal, Namespace, URIRef                    # noqa: E402
+
+TAB = Namespace("https://w3id.org/iladub/tab#")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ONT = os.path.join(ROOT, "vocab", "ontology", "tab.ttl")
+SHDIR = os.path.join(ROOT, "vocab", "shapes")
+
+
+def _shapes():
+    g = Graph()
+    g.parse(os.path.join(SHDIR, "tab-shapes.ttl"), format="turtle")
+    g.parse(os.path.join(SHDIR, "tab-physical-shapes.ttl"), format="turtle")
+    return g
+
+
+def _region(tmp_path, unshown=()):
+    """The shipped 3x3 record fixture, with an unshown set declared on its band."""
+    from tests.etkl.fixtures import simple_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.regions import classify
+    p = tmp_path / "x.pdf"
+    simple_table_pdf(str(p))
+    band = detect_bands(text_lines(extract_words(str(p))))[1]
+    reg = classify(dataclasses.replace(band, unshown=tuple(unshown)))
+    return reg
+
+
+def _cell_at(g, table, row, col):
+    return URIRef(f"{table}-e{row}_{col}")
+
+
+def test_persisted_unshown_cell_empties_celltext_and_carries_the_transcription(tmp_path):
+    from iladub.etkl.holon import assert_record_region
+    table, doc = URIRef("urn:t"), URIRef("urn:doc")
+
+    plain = Graph()
+    assert_record_region(plain, _region(tmp_path), table, doc, page=0)
+    victim = _cell_at(plain, table, 1, 1)
+    was = str(plain.value(victim, TAB.cellText))
+    assert was, "fixture is not discriminating: that cell was already textless"
+
+    g = Graph()
+    assert_record_region(g, _region(tmp_path, unshown=[(1, 1)]), table, doc, page=0)
+    assert str(g.value(victim, TAB.cellText)) == ""
+    assert str(g.value(victim, TAB.unshownText)) == was
+    # Nothing else is dropped: bbox, page, row and column all survive (§ 7, provenance-to-page).
+    for p in (TAB.onPage, TAB.hasBBox, TAB.atRow, TAB.atColumn):
+        assert g.value(victim, p) is not None, p
+    # And its neighbours are untouched -- the carriage is per-address, not per-row or per-column.
+    assert str(g.value(_cell_at(g, table, 1, 0), TAB.cellText)) == \
+        str(plain.value(_cell_at(plain, table, 1, 0), TAB.cellText))
+
+
+def test_the_persisted_unshown_cell_crosses_the_membrane(tmp_path):
+    """The whole point of T1: before the widened disjunct this graph was REFUSED."""
+    from pyshacl import validate
+    from iladub.etkl.holon import assert_record_region
+    g = Graph()
+    assert_record_region(g, _region(tmp_path, unshown=[(1, 1)]),
+                         URIRef("urn:t"), URIRef("urn:doc"), page=0)
+    conforms, _, text = validate(g, shacl_graph=_shapes(),
+                                 ont_graph=Graph().parse(ONT, format="turtle"),
+                                 inference="rdfs", advanced=True)
+    assert conforms, text
+
+
+def test_the_null_no_unshown_addresses_leaves_the_graph_identical(tmp_path):
+    from rdflib.compare import isomorphic
+    from iladub.etkl.holon import assert_record_region
+    a, b = Graph(), Graph()
+    assert_record_region(a, _region(tmp_path), URIRef("urn:t"), URIRef("urn:doc"), page=0)
+    assert_record_region(b, _region(tmp_path, unshown=()), URIRef("urn:t"), URIRef("urn:doc"), page=0)
+    # ISOMORPHIC, not set-equal: every bbox is a fresh BNode per emission, so set equality
+    # would compare blank-node labels and fail on two runs of identical code.
+    assert isomorphic(a, b)
+    assert not list(a.subjects(TAB.unshownText, None))
+
+
+def test_o7_an_address_that_reaches_no_cell_REFUSES(tmp_path):
+    """O7 (§ 8.8), in its per-address form. The grid address space and the persisted one
+    coincide on ONE region of ONE document, measured and EMPIRICAL (§ 8.4). An address the
+    disposal supplied that no minted cell consumed means they disagree here -- and the
+    carriage refuses the region rather than write the transcription onto the wrong cell,
+    or onto none at all while reporting success."""
+    from iladub.etkl.holon import assert_record_region, UnshownCarriageError
+    with pytest.raises(UnshownCarriageError) as exc:
+        assert_record_region(Graph(), _region(tmp_path, unshown=[(99, 99)]),
+                             URIRef("urn:t"), URIRef("urn:doc"), page=0)
+    assert "reached no tab:EntryCell" in str(exc.value)
+    assert "(99, 99)" in str(exc.value)
+
+
+def test_o7_refuses_rather_than_silently_half_carrying(tmp_path):
+    """The direction that matters: one good address and one bad one is still a refusal.
+    A carriage that wrote the good one and dropped the bad one would report success on a
+    region whose address spaces provably disagree."""
+    from iladub.etkl.holon import assert_record_region, UnshownCarriageError
+    with pytest.raises(UnshownCarriageError):
+        assert_record_region(Graph(), _region(tmp_path, unshown=[(1, 1), (99, 99)]),
+                             URIRef("urn:t"), URIRef("urn:doc"), page=0)
+
+
+# ---------------------------------------------------------------------------
+# T5 — clause 2's honest form: the producer-side guard at the grounding site
+# ---------------------------------------------------------------------------
+
+def _tiny_table(cell_text, unshown_text=None):
+    """One table, one row, one entry cell, with just enough structure for _read_table."""
+    from rdflib import RDF
+    g = Graph()
+    t, row, col, e = (URIRef("urn:t"), URIRef("urn:t-r0"),
+                      URIRef("urn:t-c0"), URIRef("urn:t-e0_0"))
+    h, lbl = URIRef("urn:t-h0"), URIRef("urn:t-hl0")
+    g.add((t, RDF.type, TAB.RecordTable))
+    g.add((t, TAB.hasCell, e))
+    g.add((h, TAB.headerLevel, Literal(0)))
+    g.add((h, TAB.coversColumn, col))
+    g.add((h, TAB.hasLabel, lbl))
+    g.add((lbl, TAB.cellText, Literal("Capacity")))
+    g.add((e, RDF.type, TAB.EntryCell))
+    g.add((e, TAB.atRow, row))
+    g.add((e, TAB.atColumn, col))
+    g.add((e, TAB.cellText, Literal(cell_text)))
+    if unshown_text is not None:
+        g.add((e, TAB.unshownText, Literal(unshown_text)))
+    bb = URIRef("urn:t-e0_0-bbox")
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((bb, TAB.x0, Literal(1.0)))
+    g.add((bb, TAB.y0, Literal(1.0)))
+    g.add((e, TAB.hasBBox, bb))
+    return g, t
+
+
+def test_an_unshown_cell_grounds_nothing():
+    """Clause 2 (§ 8.5): no asserted contract value may be sourced from a cell whose ink the
+    page does not show. The emptied tab:cellText makes that structural, and the guard makes the
+    refusal EXPLICIT and attributable rather than an is_blank coincidence."""
+    from iladub.feed import _read_table
+    shown, t = _tiny_table("14000")
+    ordered, rows, _ = _read_table(shown, t)
+    assert rows, "fixture is not discriminating: nothing grounds even when the ink is shown"
+    assert any(c.value == "14000" for cells in rows.values() for (_x, _y, c, _col) in cells)
+
+    hidden, t = _tiny_table("", unshown_text="14000")
+    _ordered, rows, _ = _read_table(hidden, t)
+    assert rows == {}, "a tonnage the page does not show reached the grounding path: %r" % rows
+
+
+def test_a_cell_that_is_read_and_not_read_REFUSES_at_the_grounding_site():
+    """The breach the guard exists to make loud: tab:unshownText present AND a non-empty
+    tab:cellText. tab:UnshownInkCellShape refuses this in the DOCUMENT membrane; the grounding
+    path never sees that membrane (the grounded graph holds 0 tab: triples), so the guard is the
+    only thing standing between a six-site emitting convention and a grounded falsehood."""
+    from iladub.feed import _read_table
+    g, t = _tiny_table("14000", unshown_text="14000")
+    with pytest.raises(AssertionError) as exc:
+        _read_table(g, t)
+    assert "cannot simultaneously be read and not read" in str(exc.value)
+    assert "urn:t-e0_0" in str(exc.value)

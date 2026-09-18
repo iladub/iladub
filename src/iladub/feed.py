@@ -251,6 +251,34 @@ def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
             continue          # a subtotal is not a record (§7): its cells mint no subject
         col = graph.value(e, TAB.atColumn)
         txt = str(graph.value(e, TAB.cellText))
+        unshown = graph.value(e, TAB.unshownText)
+        if unshown is not None:
+            # R213, § 8.5 clause 2 in its ONLY honest form. No asserted contract value may be
+            # sourced from a cell whose ink the page does not show: grounding it would assert a
+            # tonnage no reader of that page can see, the § 7 false assertion this term exists
+            # to refuse.
+            #
+            # WHY A PRODUCER-SIDE GUARD AND NOT SHACL. Measured, not supposed
+            # (scripts/unshown_ink_prov_probe.py): the grounding membrane validates the GROUNDED
+            # graph, which holds 0 tab: triples of any kind, while every tab:EntryCell lives in
+            # the DOCUMENT graph. A shape over tab:EntryCell written into the grounding membrane
+            # has zero focus nodes, forever — a green suite pinning nothing. The two graphs are
+            # deliberately not unioned to manufacture a subject (§ 8.5: do not invent a path).
+            # PROCEDURAL, and that is the irreducibility: no declarative constraint can see both
+            # ends of a join whose two halves are never in one graph.
+            #
+            # It is NOT a duplicate of the empty tab:cellText that already makes is_blank skip
+            # below. CLAUDE.md § Producer-side guards vs the membrane: a guard is deleted only on
+            # PROVABLE total coverage, and the emptying is a convention six minting sites must
+            # each honour, not a proof. This raise names the one site that broke it, with that
+            # site on the stack — where a silent is_blank skip would ground the value and say
+            # nothing.
+            if not is_blank(txt):
+                raise AssertionError(
+                    f"{e}: carries tab:unshownText {unshown!r} AND a non-empty tab:cellText "
+                    f"{txt!r} — a cell cannot simultaneously be read and not read. The two "
+                    f"crossings disagree (spec 2026-09-17 § 8.6); refusing to ground it.")
+            continue
         if is_blank(txt):
             continue          # loop K: a placeholder has no content to ground — dropping
                               # it also leaves the column OPEN for group-key injection
