@@ -14,6 +14,7 @@ reader measured to give three different answers to one crop ([[R253]]).
   ./.venv/bin/python scripts/unshown_ink_split_sensitivity.py --band cbh-stem 0 1
   ./.venv/bin/python scripts/unshown_ink_split_sensitivity.py --contrast
   ./.venv/bin/python scripts/unshown_ink_split_sensitivity.py --scope
+  ./.venv/bin/python scripts/unshown_ink_split_sensitivity.py --circularity
 
 WHAT IS PERTURBED, AND WHY THAT IS THE WHOLE SPACE. `unshownink.dispose` returns
 `reading.empty_cells & has_glyph`, so **every admissible reading is a subset of the band's
@@ -215,9 +216,68 @@ def scope(brackets=(("cbh-stem", 3.0), ("graincorp-capacity", 1.5))):
                   f"body-scoped split: {scoped}  {'HELD' if scoped == s else 'MOVED'}")
 
 
+def circularity(only=None):
+    """Is arm B's own scope circular? Two references are possible; they are not the same set.
+
+    [[R258]]'s ruled remedy admits a header-row address only where a second reading agrees, so it
+    needs to know WHICH addresses are header rows. Two candidates, and the whole question is which
+    one it may use:
+
+      `perturbed` — the split the pipeline actually returns, i.e. computed WITH the unshown
+        reading in hand. CIRCULAR by construction: the reading being checked decides the scope of
+        the check, and where that reading collapsed the split the header block it leaves behind is
+        the one row the collapse did not eat.
+      `free`      — the split computed with `unshown = ()`, the floor of the lattice. Available
+        before any reading is consumed (it is the same query over the same evidence graph, minus
+        the abstentions), so it is NOT derived from the reading it scopes. This column is the one
+        that decides whether arm B is buildable.
+
+    Printed per band: both header-block sizes, the movers, how many of them fall inside the FREE
+    header block, and the second-order sweep from a seeded collapse — every single address swept
+    again with the collapsing mover already abstaining, which says whether a collapsed split is a
+    fixed point or keeps moving.
+    """
+    print(f"{'document':30s} {'pg':>2s} {'b':>2s} {'ink':>5s} {'free':>4s} "
+          f"{'|hdrF|':>6s} {'|hdrP|':>6s} {'mov':>4s} {'inF':>4s} {'seed':>5s} {'mov2':>5s}")
+    bands = mov_tot = mov_in_free = fixed = seeded = 0
+    for path in sorted(glob.glob(CORPUS)):
+        if only and only not in path:
+            continue
+        name = os.path.basename(path)[:30]
+        for pn, bi, band, grid in gridded_bands(path):
+            base, _full, movers, addrs = sweep(band, grid)
+            if not movers:
+                continue
+            bands += 1
+            mov_tot += len(movers)
+            free = base[1]
+            hdr_free = [a for a in addrs if free is not None and a[0] < free]
+            in_free = [m for m in movers if free is not None and m[0][0] < free]
+            mov_in_free += len(in_free)
+            # The collapsing mover that moves the split furthest DOWN is the damaging one; seed it.
+            down = [m for m in movers if free is not None and m[2] is not None and m[2] < free]
+            seed_addr = min(down, key=lambda m: m[2])[0] if down else movers[0][0]
+            seed_parts = split_parts(band, grid, (seed_addr,))
+            hdr_pert = [a for a in addrs if seed_parts[1] is not None and a[0] < seed_parts[1]]
+            mov2 = [a for a in addrs
+                    if a != seed_addr
+                    and split_parts(band, grid, tuple(sorted({seed_addr, a})))[1] != seed_parts[1]]
+            seeded += 1
+            fixed += not mov2
+            print(f"{name:30s} {pn:2d} {bi:2d} {len(addrs):5d} {str(free):>4s} "
+                  f"{len(hdr_free):6d} {len(hdr_pert):6d} {len(movers):4d} {len(in_free):4d} "
+                  f"{str(seed_parts[1]):>5s} {len(mov2):5d}")
+    print(f"\n{bands} bands with at least one single-address mover; {mov_tot} movers, "
+          f"{mov_in_free} of them inside the FREE header block.")
+    print(f"{fixed} of {seeded} seeded collapses are fixed points — no further single address "
+          f"moves the split once it has collapsed.")
+
+
 def main():
     args = sys.argv[1:]
-    if args[:1] == ["--scope"]:
+    if args[:1] == ["--circularity"]:
+        circularity(args[1] if len(args) > 1 else None)
+    elif args[:1] == ["--scope"]:
         scope()
     elif args[:1] == ["--contrast"]:
         contrast()
