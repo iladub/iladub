@@ -30,7 +30,8 @@ def stub_data_split(band: Band, grid: LeafGrid) -> int | None:
     split = header_body_split(band, grid)
     if split is None:
         return None
-    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols,
+                               unshown=band.unshown)
     q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "stub-data-split.rq")
     return celltype.run_scalar(q, g, bindings={"split": Literal(split, datatype=XSD.integer)})
 

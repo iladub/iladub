@@ -135,7 +135,7 @@ def _emit_datatype_declarations(g):
         g.add(t)
 
 
-def grid_evidence(cells, ncols, body_starts_at=1):
+def grid_evidence(cells, ncols, body_starts_at=1, unshown=None):
     """Build the transient typed-cell evidence graph. `cells`: iterable of (row, col, text).
     Emits a tab:GridCell per cell (row/col/text/cellDatatype) + a column marker per index,
     and one tab:ClassifyBand carrying tab:bodyStartsAt.
@@ -145,15 +145,36 @@ def grid_evidence(cells, ncols, body_starts_at=1):
     hardcoded before this parameter existed — so every caller that does not pass it behaves
     exactly as before. Note header_body_split is itself a caller: it COMPUTES the split, so
     it must never be given one, and its query does not read this term.
+
+    `unshown` (R213) is the set of (row, col) grid addresses whose ink the PAGE DOES NOT SHOW —
+    text the layer holds that no reader looking at that place can see. Those cells type
+    tab:UnshownInk, which carries tab:datatypeAbstains true in vocab/ontology/tab.ttl and is
+    therefore read out of every homogeneity judgement by the same clause that already drops
+    tab:Blank and tab:ParenthesizedNumber; nothing here re-states the abstention. Their
+    tab:gridText is EMPTY, because gridText is what the region reads and the region reads
+    nothing there (spec 2026-09-17 § 2.3).
+
+    PROCEDURAL, and the irreducibility is: this plumbs a fact decided elsewhere (§ 4's disposal)
+    across a function boundary. It takes no decision, reads no geometry and applies no threshold
+    — the only thing it does that a query could not is put the fact in the graph the query reads.
+
+    It is a SIDE-MAP rather than a widened (row, col, text, unshown) tuple, and that was measured
+    rather than preferred: widening the tuple breaks 12 `for (r, c, t) in cells` unpack sites
+    (src/iladub/etkl/celltype.py:150, unitmarker.py:59, two in scripts/, eight in tests/), while
+    the keyword touches none. It DEFAULTS TO None, so with no unshown facts supplied every cell
+    types exactly as it did before this parameter existed (the null, § 3.1).
     """
     g = Graph()
+    unshown = frozenset() if unshown is None else frozenset(
+        (int(r), int(c)) for r, c in unshown)
     for i, (r, c, t) in enumerate(cells):
         u = _EV["cell-%d" % i]
+        hidden = (int(r), int(c)) in unshown
         g.add((u, RDF.type, TAB.GridCell))
         g.add((u, TAB.atGridRow, Literal(int(r), datatype=XSD.integer)))
         g.add((u, TAB.atGridColumn, Literal(int(c), datatype=XSD.integer)))
-        g.add((u, TAB.gridText, Literal(t)))
-        g.add((u, TAB.cellDatatype, _cell_datatype(t)))
+        g.add((u, TAB.gridText, Literal("" if hidden else t)))
+        g.add((u, TAB.cellDatatype, TAB.UnshownInk if hidden else _cell_datatype(t)))
     for c in range(ncols):
         g.add((_EV["col-%d" % c], TAB.columnIndex, Literal(c, datatype=XSD.integer)))
     g.add((_EV["band"], RDF.type, TAB.ClassifyBand))

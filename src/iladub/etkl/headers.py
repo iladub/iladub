@@ -108,7 +108,8 @@ def header_body_split(band: Band, grid: LeafGrid) -> int | None:
     """
     from . import celltype
     import os
-    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols,
+                               unshown=band.unshown)
     q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "header-body-split.rq")
     split = celltype.run_scalar(q, g)
     if split is not None:
