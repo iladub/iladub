@@ -517,12 +517,30 @@ def merge_bands(bands, first: int, last: int):
     second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
     prevent, and the script is committed evidence whose output must stay reproducible.
 
-    It covers ALL EIGHT of `Band`'s fields. A ninth would be silently defaulted here and nothing
-    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count."""
+    It covers ALL NINE of `Band`'s fields. A tenth would be silently defaulted here and nothing
+    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count --
+    and R213's `unshown` is the case that proves the pin works: it was added to `Band` and missed
+    here, and only that test said so.
+
+    `unshown` is the one field that cannot be concatenated, because it is ADDRESSED. Its members
+    are (row, col) in the band's OWN row space, and a run renumbers rows -- band `first+1`'s row
+    0 becomes row `len(bands[first].lines)` of the merge. Each constituent's addresses are
+    therefore OFFSET by the lines that precede it. Exact integer arithmetic over a count, with no
+    tolerance and nothing to tune.
+
+    In the shipped flow this is always the identity: `page_bands` attaches `unshown` AFTER the
+    splice, on the final partition, precisely so no address is ever expressed in a row space that
+    a later merge will renumber. The offset is here for the callers that do not go through
+    `page_bands` -- scripts/one_band_matrix_spike.py imports this constructor -- because a field
+    silently dropped is the defect this docstring already warns about."""
     from .bands import Band
     run = bands[first:last + 1]
     lines = tuple(ln for b in run for ln in b.lines)
     col_xs = next((b.column_xs for b in run if b.column_xs), ())
+    unshown, row0 = [], 0
+    for b in run:
+        unshown.extend((row0 + r, c) for r, c in b.unshown)
+        row0 += len(b.lines)
     return Band(
         lines=lines,
         top=min(b.top for b in run),
@@ -532,6 +550,7 @@ def merge_bands(bands, first: int, last: int):
         column_xs=col_xs,
         captions=tuple(c for b in run for c in b.captions),
         unit_markers=tuple(m for b in run for m in b.unit_markers),
+        unshown=tuple(sorted(unshown)),
     )
 
 

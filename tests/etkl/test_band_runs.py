@@ -171,12 +171,29 @@ def test_runs_are_disjoint_and_ascending_across_the_whole_corpus(as_proposed):
 
 
 def test_merge_bands_covers_every_field_of_band():
-    """A ninth Band field would be SILENTLY DEFAULTED by merge_bands, and nothing else
-    in the suite would notice. Band has 8 fields (bands.py:16-34). If this fails, a
-    field was added: decide how the merge carries it, then move this number."""
+    """A tenth Band field would be SILENTLY DEFAULTED by merge_bands, and nothing else
+    in the suite would notice. Band has 9 fields. If this fails, a field was added:
+    decide how the merge carries it, then move this number.
+
+    RE-MEASURED 2026-09-18 (R213): 8 -> 9, `Band.unshown`. THIS PIN DID ITS JOB -- the field
+    was added and merge_bands was not updated, and this is the only test that said so."""
     from iladub.etkl.bands import Band
 
-    assert len(dataclasses.fields(Band)) == 8, [f.name for f in dataclasses.fields(Band)]
+    assert len(dataclasses.fields(Band)) == 9, [f.name for f in dataclasses.fields(Band)]
+
+
+def test_merge_bands_OFFSETS_unshown_addresses_it_never_concatenates_them():
+    """`unshown` is the one Band field that cannot be concatenated, because it is ADDRESSED:
+    its members are (row, col) in the band's own row space, and a run RENUMBERS rows. Band
+    `first+1`'s row 0 is row len(bands[first].lines) of the merge."""
+    from iladub.etkl.compile import merge_bands
+
+    a = dataclasses.replace(_band([10.0], y=0.0), unshown=((0, 3),))
+    b = dataclasses.replace(_band([10.0], y=20.0), unshown=((0, 5),))
+    merged = merge_bands([a, b], 0, 1)
+    assert merged.unshown == ((0, 3), (len(a.lines), 5)), (
+        "a concatenation would have given ((0, 3), (0, 5)) and silently put b's address "
+        "on a's row")
 
 
 def test_column_xs_comes_from_the_first_carrier_and_is_never_unioned():

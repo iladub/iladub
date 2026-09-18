@@ -2,6 +2,12 @@
 
 **Serves:** prog:criterion:etkl:02 — graincorp-capacity. [[R250]] was blocked on [[R213]].
 
+**Topic:** [[R213]]'s term SHIPS — `tab:UnshownInk`, both crossings, both membranes and the NEURAL
+reader — but the loop does **not** close end-to-end on live input, and three oracle findings say
+where it stops: [[R252]] (the address spaces disagree on 6 of 7 documents), [[R253]] (no `spanned`
+set, so the live disposal types 0), [[R254]] (the reader is model-sensitive and the closed shape
+cannot catch it). The next subject is [[R253]], and its prediction must be RUN first.
+
 **Date:** 2026-09-18.
 
 ---

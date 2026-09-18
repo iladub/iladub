@@ -152,7 +152,7 @@ def grid_evidence(cells, ncols, body_starts_at=1, unshown=None):
     therefore read out of every homogeneity judgement by the same clause that already drops
     tab:Blank and tab:ParenthesizedNumber; nothing here re-states the abstention. Their
     tab:gridText is EMPTY, because gridText is what the region reads and the region reads
-    nothing there (spec 2026-09-17 § 2.3).
+    nothing there (spec 2026-09-17, the term's own section).
 
     PROCEDURAL, and the irreducibility is: this plumbs a fact decided elsewhere (§ 4's disposal)
     across a function boundary. It takes no decision, reads no geometry and applies no threshold
@@ -162,7 +162,8 @@ def grid_evidence(cells, ncols, body_starts_at=1, unshown=None):
     rather than preferred: widening the tuple breaks 12 `for (r, c, t) in cells` unpack sites
     (src/iladub/etkl/celltype.py:150, unitmarker.py:59, two in scripts/, eight in tests/), while
     the keyword touches none. It DEFAULTS TO None, so with no unshown facts supplied every cell
-    types exactly as it did before this parameter existed (the null, § 3.1).
+    types exactly as it did before this parameter existed (the null the spec's
+    carriage section states).
     """
     g = Graph()
     unshown = frozenset() if unshown is None else frozenset(
