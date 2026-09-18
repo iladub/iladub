@@ -491,7 +491,9 @@ def page_bands(pdf_path: str, page_number: int = 0,
             reg = _classify(band)
             if reg.grid is None:
                 continue
-            # `spanned` IS NOT SUPPLIED, AND THAT BLOCKS THE DISPOSAL — measured, not feared.
+            # `spanned` IS NOT SUPPLIED, AND THE READER NOW ANSWERS IT INSTEAD (2026-09-18).
+            # What follows is the state this call site shipped in, kept because it is the
+            # measurement that motivated the repair; the last paragraph says what changed.
             # § 8.7's refusal 3 is scoped to text-layer-empty positions NOT inside a spanning
             # cell's extent, because a reader who reads a span as occupied is reading correctly.
             # Nothing in the pipeline can hand that set over today: the span reading R211 built
@@ -501,6 +503,16 @@ def page_bands(pdf_path: str, page_number: int = 0,
             # returns 110 addresses, and `dispose` types 0. Fail-closed and correct: no claim,
             # never a false one. But it means this wiring types NOTHING end-to-end until the
             # spanned set exists, which is why it stays behind the gate. Raised as a residue.
+            #
+            # REPAIRED 2026-09-18. The set is not computable here — a merged cell's coverage is
+            # DRAWN, not written, and its label's word box is small — so it is asked, per
+            # CLAUDE.md § "One geometric attempt, then NEURAL": `ReadEmptyCells` returns
+            # `covered_cells` beside `empty_cells`, and `unshownink.dispose`'s refusal 3 accepts
+            # a text-layer-empty position accounted for in either. A live-shaped answer now types
+            # all 110 on gcap band 3, pinned by
+            # `tests/etkl/test_unshown_ink.py::test_the_answer_a_LIVE_reader_actually_gives_now_reaches_the_graph`.
+            # `spanned` stays a caller argument: supplying it narrows what the reader must
+            # account for, and nothing here supplies it yet.
             found = region_unshown(pdf_path, page_number, band, reg.grid, reader)
             if found:
                 bands[i] = _replace(band, unshown=tuple(sorted(found)))

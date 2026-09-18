@@ -59,6 +59,7 @@ class Reading:
     cannot carry a value that is on the page (§ 8.7 / RF8; run 1 of the blind disposal returned
     the string "14,000" because the shape it was given allowed it to)."""
     empty_cells: frozenset[tuple[int, int]]
+    covered_cells: frozenset[tuple[int, int]] = frozenset()
     refuses_grid: bool = False
     rows_seen: int = 0
     cols_seen: int = 0
@@ -99,6 +100,8 @@ class BamlRegionReader:
             nrows, ncols)
         return Reading(
             empty_cells=frozenset((int(a.row), int(a.col)) for a in r.empty_cells),
+            covered_cells=frozenset((int(a.row), int(a.col))
+                                    for a in getattr(r, "covered_cells", ())),
             refuses_grid=bool(r.refuses_grid),
             rows_seen=int(r.rows_you_see),
             cols_seen=int(r.cols_you_see),
@@ -159,6 +162,22 @@ def dispose(reading, grid_cells, nrows: int, ncols: int,
        reads as ONE cell, and a reader that reads the span as occupied is reading correctly.
        **The honest strength of this control on gcap is therefore ONE cell, (1, 6)** — recorded
        as a weakness, not a footnote (§ 8.9 item 3).
+
+       THE SCOPE IS NOW THE READER'S OWN, and that repairs a contradiction this function shipped
+       with (2026-09-18). The prompt tells the reader *"a position covered by a cell that SPANS
+       several rows or columns is not empty"*, and then refusal 3 refused it for obeying: nothing
+       in the pipeline could hand `spanned` over, so a live gcap run returned 110 correct
+       addresses and `dispose` typed 0. `compile.py`'s own comment recorded the wiring as typing
+       "NOTHING end-to-end until the spanned set exists". The set is not computable from the text
+       layer — a merged cell's coverage is drawn, not written, and its label's word box is small
+       — so it is ASKED, per CLAUDE.md § "One geometric attempt, then NEURAL": the reader returns
+       `covered_cells` beside `empty_cells` and every text-layer-empty position must appear in
+       one of them. Caller-supplied `spanned` still narrows the demand and is unchanged.
+
+    4. A covered position that the text layer says HAS a glyph. `covered_cells` is the one field a
+       reader could abuse to escape refusal 3 — claim everything is covered and the control is
+       vacuous — so the claim is itself disposed: the place a reader calls covered must be a place
+       the text layer also found empty. The escape is capped at exactly the positions in question.
     """
     if reading is None:
         return frozenset()
@@ -170,7 +189,9 @@ def dispose(reading, grid_cells, nrows: int, ncols: int,
     has_glyph = {(int(r), int(c)) for r, c, _t in grid_cells}
     all_positions = {(r, c) for r in range(nrows) for c in range(ncols)}
     text_layer_empty = (all_positions - has_glyph) - spanned
-    if not text_layer_empty <= reading.empty_cells:           # refusal 3
+    if reading.covered_cells & has_glyph:                     # refusal 4
+        return frozenset()
+    if not text_layer_empty <= (reading.empty_cells | reading.covered_cells):   # refusal 3
         return frozenset()
 
     return frozenset(reading.empty_cells & has_glyph)         # the disagreement
