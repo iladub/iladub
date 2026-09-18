@@ -831,8 +831,9 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
     # 3 -> 4 on 2026-09-18: ons-index-of-services accepted once its adopted grids carried their
     # boxhead (src/iladub/etkl/boxhead.py). The pin is an equality on purpose — an acceptance
     # nobody recorded here is the defect it exists to catch — so it moves by hand, with the date.
-    assert sum(computed.values()) == 4, (
-        f"re-measured 2026-09-18: exactly four corpus documents are accepted; got {computed}")
+    # 4 -> 5 later the same day: apple-fy2026q3 accepted by the same method (its p2 grid's boxhead).
+    assert sum(computed.values()) == 5, (
+        f"re-measured 2026-09-18: exactly five corpus documents are accepted; got {computed}")
 
 
 def test_etkl_criterion_sources_point_at_the_document_they_name():

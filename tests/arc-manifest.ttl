@@ -288,7 +288,8 @@ prog:criterion:etkl:06 a prog:Criterion ;
     prog:statement "financial/apple-fy2026q3-statements.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:127" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-09-18"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[financial/apple-fy2026q3-statements.pdf]" .
@@ -305,7 +306,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:144" ;
+    prog:source "tests/corpus-manifest.ttl:147" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-31"^^xsd:date ;
@@ -1746,23 +1747,17 @@ prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:09 .
    rdf:object  prog:criterion:tab:09 ;
    prog:dependencyRationale "reading: ROUND_TRIP_FAIL fires 5 times and ONLY on bfs (p5, region-level #htable{n}-rt URIs); its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:09 carries no prog:oracleArtifact)." .
 
-prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:02 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:02 ;
-   prog:dependencyRationale "reading: apple fires REGION_TILING_FAILED 8 times (p0 x4, p2 x4) — the largest single reason/document cell in the census — and its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:02 carries no prog:oracleArtifact)." .
 
-prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:05 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:05 ;
-   prog:dependencyRationale "reading: apple fires MATRIX_AMBIGUOUS twice (p0, p2 — the 'Three Months Ended / Nine Months Ended' double header) and its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:05 carries no prog:oracleArtifact)." .
-
-prog:criterion:etkl:06 prog:proposedDependsOn prog:criterion:tab:08 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:06 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:08 ;
-   prog:dependencyRationale "reading: DATAGRID_RESIDUE fires exactly once in the whole corpus and it is on apple p1, the adopted page (document.py:1473) — so apple is the only document whose acceptance can be blocked by it. Ungroundable: fails A1 (both ends unmet) and A2 (tab:08 carries no prog:oracleArtifact)." .
+# DELETED 2026-09-18 (apple boxhead loop): three proposed edges, prog:criterion:etkl:06
+# prog:proposedDependsOn prog:criterion:tab:02 / tab:05 / tab:08, on the 2026-08-31 precedent below.
+# tab:02 and tab:05 rested on the 2026-08-20 census — apple firing REGION_TILING_FAILED x8 and
+# MATRIX_AMBIGUOUS x2. MEASURED 2026-09-18: apple fires NEITHER (p0 asserts 124 cells and p1 56
+# through the band path; p2 87 through the adopted grid), so both readings are discharged. tab:08's
+# edge read DATAGRID_RESIDUE as standing between apple and acceptance. It still FIRES — once, p2,
+# 30 tokens — but it did not stand in the way: the accepting adjudication names that ink (title
+# block, a spanner, in-table section captions; no misread entry) and accepts over it. tab:08 stays
+# UNMET; what is withdrawn is the claim that etkl:06 waited on it. Leaving any of the three would
+# trip arc-shapes M15 (a met criterion depending on an unmet one). Recorded, not silently dropped.
 
 # DELETED 2026-08-31 (R45 loop): prog:criterion:etkl:07 prog:proposedDependsOn prog:criterion:tab:05.
 # Its rationale read "who-wfa fires MATRIX_AMBIGUOUS 3 times ... and nothing else; ... this is the
