@@ -485,13 +485,20 @@ def page_bands(pdf_path: str, page_number: int = 0,
     from .unshownink import baml_reader_available
     if baml_reader_available():
         from .regions import classify as _classify
-        from .unshownink import BamlRegionReader, region_unshown
-        reader = BamlRegionReader()
+        from .unshownink import BamlRegionReader, CachingRegionReader, region_unshown
+        # One ask per distinct crop, not per call site: `page_bands` runs twice per
+        # `compile_document` and three times on a section-repaired page (measured 2026-09-18 —
+        # bfs, 18 calls for 7 pages), and every pass re-asked the reader about every region.
+        # R255/R256. The cache is process-wide and keyed on the crop's content, so a new
+        # `BamlRegionReader` per pass still hits it.
+        reader = CachingRegionReader(BamlRegionReader())
         for i, band in enumerate(bands):
             reg = _classify(band)
             if reg.grid is None:
                 continue
-            # `spanned` IS NOT SUPPLIED, AND THAT BLOCKS THE DISPOSAL — measured, not feared.
+            # `spanned` IS NOT SUPPLIED, AND THE READER NOW ANSWERS IT INSTEAD (2026-09-18).
+            # What follows is the state this call site shipped in, kept because it is the
+            # measurement that motivated the repair; the last paragraph says what changed.
             # § 8.7's refusal 3 is scoped to text-layer-empty positions NOT inside a spanning
             # cell's extent, because a reader who reads a span as occupied is reading correctly.
             # Nothing in the pipeline can hand that set over today: the span reading R211 built
@@ -501,6 +508,16 @@ def page_bands(pdf_path: str, page_number: int = 0,
             # returns 110 addresses, and `dispose` types 0. Fail-closed and correct: no claim,
             # never a false one. But it means this wiring types NOTHING end-to-end until the
             # spanned set exists, which is why it stays behind the gate. Raised as a residue.
+            #
+            # REPAIRED 2026-09-18. The set is not computable here — a merged cell's coverage is
+            # DRAWN, not written, and its label's word box is small — so it is asked, per
+            # CLAUDE.md § "One geometric attempt, then NEURAL": `ReadEmptyCells` returns
+            # `covered_cells` beside `empty_cells`, and `unshownink.dispose`'s refusal 3 accepts
+            # a text-layer-empty position accounted for in either. A live-shaped answer now types
+            # all 110 on gcap band 3, pinned by
+            # `tests/etkl/test_unshown_ink.py::test_the_answer_a_LIVE_reader_actually_gives_now_reaches_the_graph`.
+            # `spanned` stays a caller argument: supplying it narrows what the reader must
+            # account for, and nothing here supplies it yet.
             found = region_unshown(pdf_path, page_number, band, reg.grid, reader)
             if found:
                 bands[i] = _replace(band, unshown=tuple(sorted(found)))
@@ -1562,7 +1579,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         if _grid is not None and _grid.rows:
             _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
                              if ln.words], key=lambda ln: ln.top)
-            _led = build_ledger(_lines, _grid.rows, bands, reports)
+            # THE GRID'S BOXHEAD (2026-09-18). `datagrid.py` derives entries and no header, so an
+            # adopted grid asserted cells with coordinates and no column identity — ons: 552 cells,
+            # 0 labels, and all 175 of its escalated tokens were header ink nothing read. The
+            # refused block above the first row is read by a NEURAL worker (recorded, replayed
+            # offline, disposed by the grid's own columns on every compile — `boxhead.py`). A
+            # header line READ IN FULL joins the admitted lines, so the line-granular ledger
+            # below books it exactly as it books a data row: its band is touched, its ink is
+            # asserted, anything unread beside it stays residue. With no recording and no live
+            # reader `_hdr` is empty and this is the identity.
+            from .boxhead import (carried_lines, default_reader, emit_boxhead, header_block,
+                                  read_grid_boxhead)
+            _block = header_block(_lines, _grid)
+            _boxhead = read_grid_boxhead(pdf_path, page_number, _lines, _grid, default_reader())
+            _hdr = carried_lines(_lines, _block, _boxhead)
+            _led = build_ledger(_lines, tuple(_grid.rows) + _hdr, bands, reports)
         else:
             _led = None
         if _led is not None and _led.escalated_tokens < escalated_total:
@@ -1594,6 +1625,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # apple p1 likewise. Registered as residue R83.
             graph = Graph()                   # withdrawal: the page graph is rebuilt
             _grid_uri = _emit(graph, _grid, _lines, doc, page_number)
+            emit_boxhead(graph, _grid_uri, _lines, _block, _boxhead, page_number)
             _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
             # THE LEDGER IS LINE-GRANULAR (spec §5.3). Zeroing `escalated_total` would score
             # the page 1.0000 whatever the grid missed; withdrawing band-by-band would count

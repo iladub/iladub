@@ -152,9 +152,9 @@ def test_the_figures_match_the_register_itself():
     assert 0 < closed < total
 
 
-def test_it_exits_zero_and_prints_two_lines_with_stdin_attached():
-    """Claude Code pipes session JSON in and reads the strip out. THIS PIN WAS ONE LINE AND IS NOW
-    TWO — a deliberate relaxation, and here is the evidence a reviewer needs to judge it.
+def test_it_exits_zero_and_prints_three_lines_with_stdin_attached():
+    """Claude Code pipes session JSON in and reads the strip out. THIS PIN WAS ONE LINE, THEN
+    TWO, AND IS NOW THREE — a deliberate relaxation, and here is the evidence a reviewer needs to judge it.
 
     WHAT IS DOCUMENTED: a multi-line `statusLine` is supported, and each printed line displays as
     a separate row. WHAT IS NOT: any limit on the number of rows, and whether an over-long row
@@ -170,14 +170,23 @@ def test_it_exits_zero_and_prints_two_lines_with_stdin_attached():
     compact SINGLE-line form with the fractions moved behind `--verbose`. It is **never** to
     abbreviate the rung names to make five fractions fit (decision 8): `etkl 1/7` is a figure a
     reader acts on and `e 1/7` is one they have to decode, and a status line nobody can read at a
-    glance has lost the only argument it had over a document you go and open."""
+    glance has lost the only argument it had over a document you go and open.
+
+    THE THIRD ROW, added 2026-09-18 on the maintainer's complaint *"I am looking at the TUI at the
+    bottom and nothing moves"*. It was a fair complaint and the evidence is worse than the wording:
+    on the day it was made, two loops shipped real reading changes and the strip moved BACKWARDS
+    (74/248 -> 74/250), because every figure it carried was about the REGISTER. The corpus line is
+    the first row that moves when the product improves. The same relaxation argument applies —
+    `3` is pinned, not `>= 2`."""
     p = subprocess.run([sys.executable, "scripts/cockpit.py", "--no-color", "--refresh"],
                        input='{"session":"x"}', capture_output=True, text=True, timeout=20)
     assert p.returncode == 0, p.stderr
     lines = p.stdout.strip().splitlines()
-    assert len(lines) == 2, f"the strip is a two-line render; got {len(lines)}: {lines}"
+    assert len(lines) == 3, f"the strip is a three-line render; got {len(lines)}: {lines}"
     assert lines[1].startswith("arc "), (
         f"the second row must be the arc line, or the first row grew a newline: {lines[1]!r}")
+    assert lines[2].startswith("corpus "), (
+        f"the third row must be the corpus line: {lines[2]!r}")
 
 
 def test_no_stuck_verdict_is_computed_anywhere():
@@ -434,3 +443,51 @@ def test_a_parked_row_is_counted_and_the_tally_does_not_move(tmp_path, monkeypat
     assert cockpit.parked() == 1
     line1 = _strip(cockpit.render(color=False)).splitlines()[0]
     assert "parked 1" in line1, line1
+
+
+def test_the_corpus_gauges_reading_equals_rdflibs_reading_of_the_same_file():
+    """§ TWO READERS OF ONE FACT, applied to the corpus line (added 2026-09-18).
+
+    `cockpit.corpus()` reads `tests/corpus-manifest.ttl` with a regex, because the performance
+    contract forbids rdflib in the status line. That makes it a second reader of a fact the repo
+    already has a reader for, and therefore a defect generator — the same hazard the arc line
+    carries, licensed the same way: by a test that runs both and demands they agree.
+
+    What is compared is what the gauge SHOWS: each document's newest recorded score, and whether
+    its `etkl` criterion is met. If they ever diverge, rdflib is right."""
+    rdflib = pytest.importorskip("rdflib")
+
+    COR = rdflib.Namespace("https://w3id.org/iladub/corpus#")
+    PROG = rdflib.Namespace("https://w3id.org/iladub/progress#")
+    g = rdflib.Graph().parse(cockpit.CORPUS_MANIFEST, format="turtle")
+    a = rdflib.Graph().parse(cockpit.ARC_MANIFEST, format="turtle")
+
+    met_by_file = {}
+    for c in a.subjects(rdflib.RDF.type, PROG.Criterion):
+        if str(a.value(c, PROG.ofRung)) != "etkl":
+            continue
+        statement = str(a.value(c, PROG.statement))
+        met_by_file[statement.split(":")[0].strip()] = bool(a.value(c, PROG.met))
+
+    truth = {}
+    for d in g.subjects(COR.file, None):
+        readings = sorted((str(g.value(r, COR.readAt)), float(g.value(r, COR.value)))
+                          for r in g.objects(d, COR.reading))
+        if not readings:
+            continue
+        truth[str(d).split(":")[-1]] = (readings[-1][1],
+                                        met_by_file.get(str(g.value(d, COR.file)), False))
+
+    seen = {}
+    for label, newest, _prev, accepted, _at in cockpit.corpus():
+        seen[label] = (newest, accepted)
+
+    assert len(seen) == len(truth), f"the gauge reports {len(seen)} documents, rdflib {len(truth)}"
+    for name, (score, accepted) in truth.items():
+        label = [l for l in seen if name.startswith(
+            {"gcap": "graincorp-capacity", "gstem": "graincorp-stem", "bfs": "bfs-population",
+             "who": "who-wfa", "cbh": "cbh-stem", "ons": "ons-index",
+             "apple": "apple-fy2026q3"}[l])]
+        assert len(label) == 1, f"{name} matched {label}"
+        assert seen[label[0]] == (score, accepted), (
+            f"{name}: gauge says {seen[label[0]]}, rdflib says {(score, accepted)}")

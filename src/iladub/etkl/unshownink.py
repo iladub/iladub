@@ -43,9 +43,10 @@ because the membrane admits the same class of thing either way (the 2026-09-17 r
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 DPI = 220        # the render scale the spec measured legible at region grain (§ 8.7). It is a
@@ -59,6 +60,7 @@ class Reading:
     cannot carry a value that is on the page (§ 8.7 / RF8; run 1 of the blind disposal returned
     the string "14,000" because the shape it was given allowed it to)."""
     empty_cells: frozenset[tuple[int, int]]
+    covered_cells: frozenset[tuple[int, int]] = frozenset()
     refuses_grid: bool = False
     rows_seen: int = 0
     cols_seen: int = 0
@@ -87,6 +89,58 @@ def baml_reader_available() -> bool:
             and importlib.util.find_spec("baml_client") is not None)
 
 
+_READING_CACHE: dict[tuple[str, int, int], "Reading | None"] = {}
+
+
+def clear_reading_cache() -> None:
+    """Empty the process-wide reading cache. For tests and for a caller that deliberately wants a
+    second, independent reading of the same crop."""
+    _READING_CACHE.clear()
+
+
+@dataclass
+class CachingRegionReader:
+    """One ask per distinct QUESTION, not per call site — [[R255]], [[R256]].
+
+    THE WASTE, measured 2026-09-18 at `8d991fd` by counting `compile.page_bands` invocations
+    inside one `compile_document`:
+
+        graincorp-capacity   2 calls for 1 page
+        bfs-population       18 calls for 7 pages   (2 on three pages, 3 on four)
+
+    `page_bands` runs once in `document.compile_document` and again in `compile.compile_tables`,
+    and a third time on a section-repaired page. Each pass re-asks the reader about every gridded
+    region it sees, so a live compile of bfs pays **2.57x** the necessary model calls and throws
+    61% of the answers away. At ~50s and one image call each, that is the bill.
+
+    THE KEY IS THE CROP'S CONTENT, not the band object or the page number. Two passes over the
+    same page render byte-identical crops, so the question is literally the same question; a
+    genuinely different region (the section-repaired partition draws different extents) hashes
+    differently and is asked, which is correct. Cross-document collision is impossible for the
+    same reason — the key IS the image.
+
+    AND IT REMOVES A SECOND DEFECT, which is why the cache sits here rather than around
+    `page_bands`: the passes used to be INDEPENDENT readings of one page, so [[R253]]'s reader
+    variance could hand `compile_tables` a different `unshown` set than `compile_document` saw,
+    and the split that [[R258]] measures as one-address fragile is decided on one of them
+    arbitrarily. One answer per question makes the passes agree by construction.
+
+    A FAILURE IS NOT CACHED. An exception propagates and a retry is legitimate; only an answer
+    (including a refusal, which IS an answer) is remembered.
+
+    Gate classification (CLAUDE.md §8): PROCEDURAL. Memoisation on a content hash — no reading
+    judgment, no tolerance, no threshold.
+    """
+    inner: "RegionReader"
+    cache: dict = field(default_factory=lambda: _READING_CACHE)
+
+    def read_empty_cells(self, crop_png, nrows, ncols):
+        key = (hashlib.sha256(crop_png).hexdigest(), int(nrows), int(ncols))
+        if key not in self.cache:
+            self.cache[key] = self.inner.read_empty_cells(crop_png, nrows, ncols)
+        return self.cache[key]
+
+
 class BamlRegionReader:
     """Live reader — calls the BAML `ReadEmptyCells` function. Lazy import, as `BamlProposer`."""
 
@@ -99,6 +153,8 @@ class BamlRegionReader:
             nrows, ncols)
         return Reading(
             empty_cells=frozenset((int(a.row), int(a.col)) for a in r.empty_cells),
+            covered_cells=frozenset((int(a.row), int(a.col))
+                                    for a in getattr(r, "covered_cells", ())),
             refuses_grid=bool(r.refuses_grid),
             rows_seen=int(r.rows_you_see),
             cols_seen=int(r.cols_you_see),
@@ -159,6 +215,22 @@ def dispose(reading, grid_cells, nrows: int, ncols: int,
        reads as ONE cell, and a reader that reads the span as occupied is reading correctly.
        **The honest strength of this control on gcap is therefore ONE cell, (1, 6)** — recorded
        as a weakness, not a footnote (§ 8.9 item 3).
+
+       THE SCOPE IS NOW THE READER'S OWN, and that repairs a contradiction this function shipped
+       with (2026-09-18). The prompt tells the reader *"a position covered by a cell that SPANS
+       several rows or columns is not empty"*, and then refusal 3 refused it for obeying: nothing
+       in the pipeline could hand `spanned` over, so a live gcap run returned 110 correct
+       addresses and `dispose` typed 0. `compile.py`'s own comment recorded the wiring as typing
+       "NOTHING end-to-end until the spanned set exists". The set is not computable from the text
+       layer — a merged cell's coverage is drawn, not written, and its label's word box is small
+       — so it is ASKED, per CLAUDE.md § "One geometric attempt, then NEURAL": the reader returns
+       `covered_cells` beside `empty_cells` and every text-layer-empty position must appear in
+       one of them. Caller-supplied `spanned` still narrows the demand and is unchanged.
+
+    4. A covered position that the text layer says HAS a glyph. `covered_cells` is the one field a
+       reader could abuse to escape refusal 3 — claim everything is covered and the control is
+       vacuous — so the claim is itself disposed: the place a reader calls covered must be a place
+       the text layer also found empty. The escape is capped at exactly the positions in question.
     """
     if reading is None:
         return frozenset()
@@ -170,7 +242,9 @@ def dispose(reading, grid_cells, nrows: int, ncols: int,
     has_glyph = {(int(r), int(c)) for r, c, _t in grid_cells}
     all_positions = {(r, c) for r in range(nrows) for c in range(ncols)}
     text_layer_empty = (all_positions - has_glyph) - spanned
-    if not text_layer_empty <= reading.empty_cells:           # refusal 3
+    if reading.covered_cells & has_glyph:                     # refusal 4
+        return frozenset()
+    if not text_layer_empty <= (reading.empty_cells | reading.covered_cells):   # refusal 3
         return frozenset()
 
     return frozenset(reading.empty_cells & has_glyph)         # the disagreement
@@ -192,4 +266,15 @@ def region_unshown(pdf_path, page_number, band, grid, reader,
         crop = render_region(pdf_path, page_number, band)
     except Exception:
         return frozenset()
-    return dispose(reader.read_empty_cells(crop, nrows, ncols), cells, nrows, ncols, spanned)
+    try:
+        # THE READ IS INSIDE THE GUARD, and it was not until 2026-09-18 — the docstring above
+        # promised "every failure path returns the empty set" while a reader exception went
+        # straight past it and aborted the whole `compile_document`. Observed live: a BAML cast
+        # of a model answer raised inside `sync_client.b.ReadEmptyCells`, and a 27-page document
+        # would have died on one flaky call about one region. R253 records an ABORTED live run
+        # whose traceback was never captured; this is that shape. Fail-closed: a reader that
+        # raises has made NO CLAIM, exactly as one that refuses or cannot be reached.
+        reading = reader.read_empty_cells(crop, nrows, ncols)
+    except Exception:
+        return frozenset()
+    return dispose(reading, cells, nrows, ncols, spanned)

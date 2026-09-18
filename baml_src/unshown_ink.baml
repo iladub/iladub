@@ -29,6 +29,7 @@ class UnshownInkReading {
   rows_you_see int @description("how many rows you actually see; 0 if you are not refusing")
   cols_you_see int @description("how many columns you actually see; 0 if you are not refusing")
   empty_cells EmptyCellAddress[] @description("every grid position where you see NOTHING at all — no digits, no letters, no dash, no mark of any kind")
+  covered_cells EmptyCellAddress[] @description("every grid position that shows no content of its OWN because a cell spanning several rows or columns covers it — the positions you did NOT report as empty for that reason")
   note string @description("one short sentence on how you read the table; NEVER any text, number or value that appears in it")
 }
 
@@ -52,6 +53,9 @@ function ReadEmptyCells(page: image, nrows: int, ncols: int) -> UnshownInkReadin
 
     A position covered by a cell that SPANS several rows or columns is not empty — you see that
     cell's content there. Report a position as empty only when the place itself shows nothing.
+    Report those covered positions in covered_cells instead, so that every position you do not
+    call empty has a reason. A position belongs in exactly one of the two lists or in neither
+    (because it shows content of its own).
 
     If the table you see is not {{ nrows }} by {{ ncols }}, say so: set refuses_grid to true,
     put the dimensions you actually see in rows_you_see and cols_you_see, leave empty_cells

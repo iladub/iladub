@@ -327,6 +327,94 @@ def test_refusal_3_is_scoped_to_positions_outside_a_spanning_cell():
     assert got == frozenset({(0, 0)})
 
 
+def test_refusal_3_accepts_a_position_the_READER_reports_as_covered():
+    """The repair of 2026-09-18. The prompt tells the reader that a position covered by a
+    spanning cell is not empty; refusal 3 then refused it for obeying, because nothing in the
+    pipeline could supply `spanned`. The reader now answers the scope itself: (1,2) is accounted
+    for as covered rather than left unmentioned, and the disagreement at (0,0) stands."""
+    from iladub.etkl.unshownink import dispose
+    got = dispose(_reading({(0, 0)}, covered_cells=frozenset({(1, 2)})), _grid3x3(), 3, 3)
+    assert got == frozenset({(0, 0)})
+
+
+def test_refusal_3_still_fires_when_a_position_is_in_NEITHER_list():
+    """The control survives the repair, which is the only thing that makes the repair admissible:
+    a reader must account for every text-layer-empty position as empty OR covered. Silence about
+    (1,2) is still a refusal, exactly as before."""
+    from iladub.etkl.unshownink import dispose
+    got = dispose(_reading({(0, 0)}, covered_cells=frozenset({(2, 2)})), _grid3x3(), 3, 3)
+    assert got == frozenset()
+
+
+def test_refusal_4_a_covered_position_that_HAS_a_glyph_refuses_the_region():
+    """`covered_cells` is the one field a reader could abuse to make the null control vacuous --
+    call everything covered and nothing is ever missed. The claim is therefore itself disposed:
+    a place the reader calls covered must be a place the text layer also found empty. (0,1) has
+    a glyph, so claiming it is covered by a span contradicts the evidence and refuses."""
+    from iladub.etkl.unshownink import dispose
+    r = _reading({(0, 0), (1, 2)}, covered_cells=frozenset({(0, 1)}))
+    assert dispose(r, _grid3x3(), 3, 3) == frozenset()
+
+
+class _CountingReader:
+    """A reader that records how many times it was actually asked."""
+
+    def __init__(self, reading):
+        self.reading, self.asks = reading, 0
+
+    def read_empty_cells(self, crop_png, nrows, ncols):
+        self.asks += 1
+        return self.reading
+
+
+def test_the_same_crop_is_asked_ONCE_however_many_passes_ask_for_it():
+    """R255/R256. `page_bands` runs twice per compile_document and three times on a section-
+    repaired page — measured 2026-09-18: bfs, 18 calls for 7 pages — and each pass re-asked the
+    reader about every region. One ask per distinct question, keyed on the crop's content."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+    inner = _CountingReader(Reading(empty_cells=frozenset({(0, 0)})))
+    reader = CachingRegionReader(inner, cache={})
+    for _ in range(3):
+        got = reader.read_empty_cells(b"same-crop-bytes", 27, 16)
+    assert inner.asks == 1, "three passes over one page must cost one ask"
+    assert got.empty_cells == frozenset({(0, 0)})
+
+
+def test_a_DIFFERENT_crop_or_grid_is_a_different_question_and_is_asked():
+    """The null control for the cache: it must still ask. A section-repaired partition draws
+    different extents, and that is a different question, not a cache hit."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+    inner = _CountingReader(Reading(empty_cells=frozenset()))
+    reader = CachingRegionReader(inner, cache={})
+    reader.read_empty_cells(b"crop-a", 27, 16)
+    reader.read_empty_cells(b"crop-b", 27, 16)          # different image
+    reader.read_empty_cells(b"crop-a", 13, 20)          # same image, different grid
+    assert inner.asks == 3
+
+
+def test_a_FAILURE_is_not_cached():
+    """An exception is not an answer. Caching one would turn a transient network failure into a
+    permanent silence for the rest of the process."""
+    from iladub.etkl.unshownink import CachingRegionReader, Reading
+
+    class _FailsOnce:
+        def __init__(self):
+            self.asks = 0
+
+        def read_empty_cells(self, crop_png, nrows, ncols):
+            self.asks += 1
+            if self.asks == 1:
+                raise RuntimeError("transient")
+            return Reading(empty_cells=frozenset({(1, 1)}))
+
+    inner = _FailsOnce()
+    reader = CachingRegionReader(inner, cache={})
+    with pytest.raises(RuntimeError):
+        reader.read_empty_cells(b"crop", 3, 3)
+    assert reader.read_empty_cells(b"crop", 3, 3).empty_cells == frozenset({(1, 1)})
+    assert inner.asks == 2
+
+
 def test_a_missing_answer_types_nothing_and_claims_nothing():
     """Open-world and evidence-positive (§ 4.2): a cell types unshown only where BOTH readings
     are PRESENT. No reader means no claim -- never 'therefore the ink is shown'."""
@@ -397,6 +485,49 @@ def test_region_unshown_renders_and_disposes_without_a_model():
 
 
 @pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
+def test_the_answer_a_LIVE_reader_actually_gives_now_reaches_the_graph():
+    """The 2026-09-18 repair, on the real region and in the real answer shape.
+
+    O2's live run returned the 110 unshown zeros plus (1, 6) -- and NOT the 25 column-0 positions
+    the spanning year label covers, because the prompt tells it not to. Against the shipped
+    disposal that answer typed ZERO: `spanned` was empty at the only call site
+    (`compile.py`), so refusal 3 demanded the 25 back. `compile.py`'s own comment recorded the
+    wiring as typing "NOTHING end-to-end until the spanned set exists".
+
+    The reader now reports them as covered, and the same answer types all 110. This is the test
+    the previous shape could not pass: the earlier end-to-end pin (above) fakes an answer that
+    reports the spanned positions as EMPTY, which is the one thing the live reader will not do."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.headers import _grid_cells
+    from iladub.etkl.regions import classify
+    from iladub.etkl.unshownink import FakeRegionReader, Reading, region_unshown
+
+    band = [b for b in page_bands(GCAP, 0) if classify(b).grid is not None][1]
+    grid = classify(band).grid
+    cells = _grid_cells(band, grid)
+    nrows, ncols = len(band.lines), grid.ncols
+    zeros = {(r, c) for r, c, t in cells if t.strip() == "0"}
+    empty_positions = {(r, c) for r in range(nrows) for c in range(ncols)} - {
+        (r, c) for r, c, _ in cells}
+
+    covered = {p for p in empty_positions if p[1] == 0}          # the spanning year label
+    assert len(covered) == 25, "fixture moved: the spanning column is no longer 25 positions"
+    assert empty_positions - covered == {(1, 6)}, \
+        "fixture moved: (1,6) is the ONE genuinely-empty position, the control's whole strength"
+
+    live_shaped = Reading(empty_cells=frozenset(zeros | {(1, 6)}),
+                          covered_cells=frozenset(covered))
+    got = region_unshown(GCAP, 0, band, grid, FakeRegionReader(live_shaped))
+    assert got == frozenset(zeros), "set identity, not a matching count (R176/R172)"
+    assert len(got) == 110
+
+    # FALSIFICATION, inline: the same answer WITHOUT the covered list is the state this repair
+    # found -- 110 correct addresses disposed to nothing.
+    mute = Reading(empty_cells=frozenset(zeros | {(1, 6)}))
+    assert region_unshown(GCAP, 0, band, grid, FakeRegionReader(mute)) == frozenset()
+
+
+@pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
 def test_the_pipeline_attaches_nothing_with_the_gate_off():
     """O3's null at its source: with BAML_LIVE unset, every band's `unshown` is () and the whole
     carriage is the identity. This is why the six-document null holds BY CONSTRUCTION rather than
@@ -404,3 +535,22 @@ def test_the_pipeline_attaches_nothing_with_the_gate_off():
     from iladub.etkl.compile import page_bands
     assert os.environ.get("BAML_LIVE") != "1", "this test asserts the DEFAULT configuration"
     assert all(b.unshown == () for b in page_bands(GCAP, 0))
+
+
+@pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
+def test_a_reader_that_RAISES_makes_no_claim_and_does_not_abort_the_compile():
+    """Observed live 2026-09-18: a BAML cast of a model answer raised inside
+    `sync_client.b.ReadEmptyCells` and the exception propagated out of `page_bands` and killed
+    `compile_document`. One flaky call about one region would take a 27-page document with it.
+    The module's docstring already promised the opposite; the read was outside the guard."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.regions import classify
+    from iladub.etkl.unshownink import region_unshown
+
+    class _Raises:
+        def read_empty_cells(self, crop_png, nrows, ncols):
+            raise RuntimeError("the model answered something unparseable")
+
+    band = [b for b in page_bands(GCAP, 0) if classify(b).grid is not None][1]
+    grid = classify(band).grid
+    assert region_unshown(GCAP, 0, band, grid, _Raises()) == frozenset()
