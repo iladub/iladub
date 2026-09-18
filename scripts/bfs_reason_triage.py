@@ -15,8 +15,8 @@ therefore suspect until re-measured. This prints today's reading field by field 
 THE CONTROL, per the 2026-09-15 repair #3 (an instrument that cannot find a known positive is
 low-power and must say so). Three known positives recorded INDEPENDENTLY of this script: the score
 must equal one of the `cor:reading` values the corpus manifest records for bfs (and the run says
-WHICH, and whether it is the newest), page 5 must be adopted, and page 5 must assert exactly 404
-cells — the latter two from the R224/R225 closure. It re-finds all three or prints FAIL and exits
+WHICH, and whether it is the newest), page 5 must be adopted, and page 5 must assert exactly 496
+cells (404 until 2026-09-18 — see the constant's own note). It re-finds all three or prints FAIL and exits
 non-zero. The control is not self-validating: every figure comes from a different loop's
 measurement, not from this file's own prose.
 
@@ -64,7 +64,15 @@ ROW_RECORD_TABLE_ASSERTED = 8
 
 # The control's structural legs, measured by the R224/R225 closure independently of this script.
 CONTROL_ADOPTED_PAGE = 5
-CONTROL_ADOPTED_CELLS = 404
+# RE-PINNED 2026-09-18 (was 404, from the R224/R225 closure). R238's decoration->alignment switch
+# added 92 cells to this page with the score identical to 10 dp — the gain R240's row records —
+# and 404 + 92 = 496, which is what a run at 2f3fc76 reports. The old literal failed this control
+# for a RECORDED reason while the tally above it was correct, i.e. the instrument printed
+# "do not trust" over a true reading. THIS PIN WILL GO STALE THE SAME WAY: it is a literal because
+# no committed source records the figure (R240 records it in prose), which is the subject of
+# docs/superpowers/specs/2026-09-18-a-firing-is-not-a-fact-design.md. The score leg below reads
+# cor:reading precisely because that figure IS recorded; this one has nothing to read.
+CONTROL_ADOPTED_CELLS = 496
 
 MANIFEST = "tests/corpus-manifest.ttl"
 BFS_SUBJECT = "urn:iladub:corpus:bfs-population-bilan-2023"
