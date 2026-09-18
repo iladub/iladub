@@ -104,6 +104,7 @@ INDEX = os.path.join(ROOT, "docs", "superpowers", "residues.md")
 CLOSED = os.path.join(ROOT, "docs", "superpowers", "residues-closed.md")
 OPEN = os.path.join(ROOT, "docs", "superpowers", "residues-open.md")
 ARC_MANIFEST = os.path.join(ROOT, "tests", "arc-manifest.ttl")
+CORPUS_MANIFEST = os.path.join(ROOT, "tests", "corpus-manifest.ttl")
 CACHE = os.path.join(ROOT, ".git", "cockpit-cache.json")   # inside .git: never tracked
 _TTL = 180
 _WINDOW = 7
@@ -452,6 +453,99 @@ def bar(frac: float, width: int = 8) -> str:
     return "▰" * filled + "▱" * (width - filled)
 
 
+_READING = re.compile(r"cor:reading\s*\[(.*?)\]", re.S)
+_VALUE = re.compile(r'cor:value\s+"([0-9.]+)"')
+_READ_AT = re.compile(r'cor:readAt\s+"(\d{4}-\d{2}-\d{2})"')
+_DOC_CHUNK = re.compile(r"<urn:iladub:corpus:([^>]+)>(.*?)(?=\n<urn:iladub:corpus:|\Z)", re.S)
+_COR_FILE = re.compile(r'cor:file\s+"([^"]+)"')
+
+
+def corpus() -> list[tuple[str, float | None, float | None, bool, str | None]]:
+    """(short name, newest score, previous score, accepted, newest readAt) per corpus document.
+
+    WHY THIS LINE EXISTS, and it is the maintainer's own complaint (2026-09-18): *"I am looking
+    at the TUI at the bottom and nothing moves."* They were right, and worse than they knew — on
+    the day it was said, two loops shipped real reading changes (a NEURAL worker's answer reaching
+    the graph where it had been discarded; the live ask count halved) and the strip moved
+    BACKWARDS, 74/248 to 74/250, because the only things it could see were register rows.
+
+    The register is not the product. **The product is seven documents compiling**, and the `etkl`
+    rung is one criterion per document — so `3/7` is the convergence figure and the four
+    unaccepted documents' scores are what move when the work works. Read from
+    `tests/corpus-manifest.ttl`'s `cor:reading` ladder, which is a DATED HAND-RECORDED
+    measurement, never a live compile: the age of the newest reading is printed for exactly that
+    reason. A stale gauge that says how stale it is beats a fresh-looking one that lies.
+
+    `accepted` is the document's `etkl` criterion carrying `prog:met true` — the score alone
+    never decides it (a floor is pinned under an adjudication that ACCEPTS the score; cbh sits
+    at .909 unaccepted and that is not an error).
+    """
+    src = _read(CORPUS_MANIFEST)
+    if not src:
+        return []
+    arc_src = _read(ARC_MANIFEST)
+    met_files = {}
+    for block in re.findall(r"prog:criterion:etkl:\d+ a prog:Criterion ;(.*?)\.\n", arc_src, re.S):
+        f = re.search(r'prog:statement\s+"([^"]+?\.pdf)', block)
+        if f:
+            met_files[f.group(1)] = "prog:met true" in block
+    docs, chunks = {}, {}
+    for name, body in _DOC_CHUNK.findall(src):
+        chunks.setdefault(name, []).append(body)
+    for name, bodies in chunks.items():
+        readings, path = [], None
+        for body in bodies:
+            f = _COR_FILE.search(body)
+            if f:
+                path = f.group(1)
+            for block in _READING.findall(body):
+                v, d = _VALUE.search(block), _READ_AT.search(block)
+                if v and d:
+                    readings.append((d.group(1), float(v.group(1))))
+        if not readings:
+            continue
+        readings.sort()
+        docs[name] = (readings[-1][1],
+                      readings[-2][1] if len(readings) > 1 else None,
+                      bool(met_files.get(path, False)),
+                      readings[-1][0])
+    short = {"graincorp-capacity": "gcap", "graincorp-stem": "gstem",
+             "bfs-population": "bfs", "who-wfa": "who", "cbh-stem": "cbh",
+             "ons-index": "ons", "apple-fy2026q3": "apple"}
+    out = []
+    for name, (newest, prev, accepted, at) in docs.items():
+        label = next((s for k, s in short.items() if name.startswith(k)), name[:6])
+        out.append((label, newest, prev, accepted, at))
+    return sorted(out, key=lambda r: (r[3], -(r[1] or 0)))
+
+
+def _corpus_line(c) -> str:
+    """The third line: what convergence looks like. Unaccepted documents first, worst last."""
+    rows = corpus()
+    if not rows:
+        return ""
+    accepted = sum(1 for _, _, _, a, _ in rows if a)
+    frac = accepted / len(rows)
+    tone = "good" if frac >= 0.6 else "warn" if frac >= 0.3 else "bad"
+    segs = []
+    for label, newest, prev, is_acc, _at in rows:
+        if is_acc:
+            continue
+        arrow = ""
+        if prev is not None:
+            arrow = (f"{c('good')}▲{c('off')}" if newest - prev > 0.005 else
+                     f"{c('bad')}▼{c('off')}" if prev - newest > 0.005 else "")
+        stone = "good" if newest >= 0.95 else "warn" if newest >= 0.85 else "bad"
+        segs.append(f"{c('dim')}{label}{c('off')} {c(stone)}{newest:.2f}{c('off')}{arrow}")
+    newest_at = max(r[4] for r in rows if r[4])
+    age = (_dt.date.today() - _dt.date.fromisoformat(newest_at)).days
+    atone = "mute" if age <= 7 else "warn"
+    return (f"{c('dim')}corpus{c('off')}  {c(tone)}{bar(frac, 4)}{c('off')} "
+            f"{c('bold')}{accepted}/{len(rows)}{c('off')} {c('dim')}accepted{c('off')}"
+            f"  {c('dim')}│{c('off')}  " + "  ".join(segs) +
+            f"  {c('dim')}│{c('off')}  {c('dim')}read{c('off')} {c(atone)}{age}d ago{c('off')}")
+
+
 def _arc_line(c) -> str:
     """The second line: five defensible fractions, then the two counts.
 
@@ -513,7 +607,7 @@ def render(color: bool = True) -> str:
         f"{c('dim')}7d{c('off')} {c(vtone)}{raised} raised {closed_7d} closed{c('off')}",
         f"{c('dim')}last close{c('off')} {c(itone)}"
         f"{'?' if idle is None else str(idle) + 'd ago'}{c('off')}",
-    ]) + "\n" + _arc_line(c)
+    ]) + "\n" + _arc_line(c) + ("\n" + _corpus_line(c) if _corpus_line(c) else "")
 
 
 def main() -> int:
