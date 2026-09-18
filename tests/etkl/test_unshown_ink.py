@@ -358,3 +358,49 @@ def test_the_worker_shape_cannot_express_a_value_on_the_page():
 def test_the_live_reader_is_env_gated_and_off_by_default():
     from iladub.etkl.unshownink import baml_reader_available
     assert not baml_reader_available() or os.environ.get("BAML_LIVE") == "1"
+
+
+# ---------------------------------------------------------------------------
+# The wiring — one ask per gridded region, gated off by default
+# ---------------------------------------------------------------------------
+
+GCAP = os.path.join(ROOT, "corpus", "ag-trade", "graincorp-capacity-2026-08-04.pdf")
+
+
+@pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
+def test_region_unshown_renders_and_disposes_without_a_model():
+    """`region_unshown` end-to-end on the real region, with the reader faked: the crop is
+    rendered from the page (PROCEDURAL raw extraction) and the disposal runs. Pins the wiring
+    that a live run would otherwise be the only exercise of."""
+    from iladub.etkl.compile import page_bands
+    from iladub.etkl.headers import _grid_cells
+    from iladub.etkl.regions import classify
+    from iladub.etkl.unshownink import FakeRegionReader, Reading, region_unshown
+
+    band = [b for b in page_bands(GCAP, 0) if classify(b).grid is not None][1]
+    grid = classify(band).grid
+    cells = _grid_cells(band, grid)
+    nrows, ncols = len(band.lines), grid.ncols
+    zeros = {(r, c) for r, c, t in cells if t.strip() == "0"}
+    assert len(zeros) == 110, "fixture moved: gcap band 3 no longer holds the 110"
+
+    # The honest answer a reader gives: the 110 unshown zeros PLUS every text-layer-empty
+    # position -- which is what both blind readers returned (spec § 8.8).
+    empty = {(r, c) for r in range(nrows) for c in range(ncols)} - {
+        (r, c) for r, c, _ in cells}
+    got = region_unshown(GCAP, 0, band, grid,
+                         FakeRegionReader(Reading(empty_cells=frozenset(zeros | empty))))
+    assert got == frozenset(zeros), "set identity, not a matching count (R176/R172)"
+
+    # And no reader at all is NO CLAIM -- never "therefore the ink is shown".
+    assert region_unshown(GCAP, 0, band, grid, None) == frozenset()
+
+
+@pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
+def test_the_pipeline_attaches_nothing_with_the_gate_off():
+    """O3's null at its source: with BAML_LIVE unset, every band's `unshown` is () and the whole
+    carriage is the identity. This is why the six-document null holds BY CONSTRUCTION rather than
+    by prediction -- a weaker control than § 5 assumed, and reported as such."""
+    from iladub.etkl.compile import page_bands
+    assert os.environ.get("BAML_LIVE") != "1", "this test asserts the DEFAULT configuration"
+    assert all(b.unshown == () for b in page_bands(GCAP, 0))

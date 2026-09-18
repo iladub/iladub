@@ -101,7 +101,10 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # first time. They name `ship:` and `etkl:` terms only; `ship:` is not an owned namespace, so
     # the declaration membrane's single-root filter passes over it exactly as it does for the
     # stem and cbh contracts beside them.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 163
+    # RE-MEASURED 2026-09-18 (R213): 163 -> 166 — the unshown-ink conformant example and its
+    # two negatives. Measured as a SET, not a count: added = exactly those three, removed = none.
+    # All three name `tab:` terms only, the namespace they exercise.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 166
 
 
 def test_each_file_gets_its_own_named_graph():

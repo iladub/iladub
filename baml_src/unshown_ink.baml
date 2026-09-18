@@ -33,7 +33,7 @@ class UnshownInkReading {
 }
 
 function ReadEmptyCells(page: image, nrows: int, ncols: int) -> UnshownInkReading {
-  client Claude
+  client ClaudeLongAnswer
   prompt #"
     {{ _.role("user") }}
     {{ page }}
