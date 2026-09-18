@@ -8,8 +8,10 @@ declaring a criterion met since 2026-09-13.
 more strongly than a live run could have. On **cbh-stem band 1, 7 of 151 addresses each move the
 header/body split on their own**, five of them collapsing it 7 → 1, and **every one is a column
 LABEL**. On graincorp-capacity — the only document every live trace in this thread was ever taken
-on — **0 of 406** move it. [[R255]]'s coherence half is now an observed effect; [[R258]] is raised
-for the one-address fragility itself, and one of its remedy arms is already refuted.
+on — **0 of 406** move it. Corpus-wide: **17 of 122 gridded bands, on 5 of the 7 documents.**
+[[R255]]'s coherence half is now an observed effect; [[R258]] is raised for the one-address
+fragility itself, one of its remedy arms is refuted, and **the maintainer ruled its direction the
+same day** — a defect, remedied by an agreement oracle.
 
 **Date:** 2026-09-18. **Branch:** `r255-does-the-split-move`, cut from `main` at `4db5f50`.
 
@@ -24,29 +26,32 @@ originating floor, so part 5 is graded per action, as CLAUDE.md requires.
 
 *(Part 5 first, per CLAUDE.md § "The handoff's next action is TYPED".)*
 
-### 5a. **ASSERTED** — put [[R258]]'s DIRECTION to the maintainer. It is a ruling, not a measurement.
+### 5a. **ASSERTED** — run arm B's circularity check. The direction is RULED; the construction is not.
 
-**The question, in one line:** *when the page genuinely does not show a column label, should the
-split stop counting that label — or is a header that collapses to one line a defect whatever the
-ink says?*
+**RULED by the maintainer 2026-09-18**, with all three arms priced in front of them: **the collapse
+is a DEFECT whatever the ink says**, and the remedy is **arm B** — a header-row address is admitted
+only where a second, independent reading agrees. Arm C (rule the collapse intended) and parking the
+row were declined.
 
-Nothing further can be measured until that is answered, and this is why: the measurement is
-finished. § 2 and § 4 of the evidence establish that one address does it, which addresses they are,
-and that they lie wholly inside the population the reader is asked about. What is not established
-is **which answer is correct**, and no instrument can supply that — it is a claim about what a
-header/body split MEANS when its evidence is invisible ink.
+**The action, and it must come before any oracle is written:** measure whether arm B's own scope is
+circular. If a first reading collapses cbh band 1's split from 7 to 1, **there is no header block
+left to scope the oracle to** — the oracle's population is decided by the reading it exists to
+check. Concretely: take the movers of the COLLAPSED partition (`unshown = {(6, 9)}`, split 1) and
+compare them with the movers of the original (split 7). Same instrument, same `--band` mode, no new
+machinery.
 
-Doing it is the work: the arms are already stated and one is already priced out.
+Why it is asserted: the outcome is unknown, but doing it *is* the work, and it is one command
+against a question whose answer decides whether arm B is buildable at all. **This is the same
+circularity that killed arm A**, one level up, and arm A took one command to refute.
 
 - **arm A — scope the abstention to body rows.** **REFUTED**, in the loop that proposed it
   (`--scope`): 7 → 6, 4 → 3, 5 → 4, 4 → 3 on cbh's four bands. *Which rows are body* is defined BY
   the split the scope protects, so the first body row is inside the scope by construction and its
   addresses still move it. **A scope cannot protect a boundary it is measured from.**
-- **arm B — an agreement oracle.** Admit a header-row address only where a second, independent
-  reading agrees. In CLAUDE.md's shape for a reading judgement: the effort goes into the disposal,
-  not the reader. UNPRICED — see 5b.
-- **arm C — rule the collapse intended**, and pin it. Cheapest, and not obviously wrong: if the
-  label is truly unshown, a reader looking at that page sees no header either.
+- **arm B — an agreement oracle.** **CHOSEN.** Admit a header-row address only where a second,
+  independent reading agrees — CLAUDE.md's shape for a reading judgement: the effort goes into the
+  disposal, not the reader. Its population is discussed in 5b; its buildability is 5a's subject.
+- **arm C — rule the collapse intended.** **DECLINED 2026-09-18.**
 
 ### 5b. **PROPOSED** — arm B's cost is bounded by the header, not by the band
 
@@ -54,14 +59,10 @@ Doing it is the work: the arms are already stated and one is already priced out.
 the split's own header block — **20 addresses against cbh band 1's 151**, an eighth of the band —
 and a second reading of a header strip is a smaller crop than the region reading already made.
 
-**Why it is PROPOSED and not asserted:** the population figure is arithmetic, but the claim
-underneath it is not. It assumes the movers stay in the header block once the block is re-derived
-under the second reading — and the second reading is precisely what may move the block. If the
-first reading collapses the split to 1, *there is no header block left to scope the oracle to*, and
-the oracle's own population is decided by the reading it exists to check. **That circularity is the
-same one that killed arm A**, one level up, and it must be checked before anything is built:
-measure whether the movers of the *collapsed* partition are still the movers of the original one.
-**Do not implement an oracle before running that.**
+**Why it is PROPOSED and not asserted:** the figure is arithmetic; the claim underneath it is not.
+It assumes the movers stay in the header block once the block is re-derived under the second
+reading, which is exactly what 5a measures. **Do not build on this figure before 5a runs** — if the
+circularity is real, the population is not 20-of-151, it is undefined.
 
 ### 5c. **After R258** — the arc, and it still has not moved
 
@@ -91,8 +92,9 @@ triage saying its three escalation reasons share no root cause, so it is three b
   unchanged and still unchosen — that is a design decision and nothing this loop found narrows it.
 - **[[R258]] raised** — the split is one-address fragile at the label row, and the fragile
   addresses are exactly the population [[R213]]'s reader is asked about (containment measured
-  TOTAL on four bands). Its direction is explicitly left to the maintainer; arm A is refuted in
-  the row itself.
+  TOTAL on four bands; corpus scale 17 of 122 bands on 5 of 7 documents). **Its direction was
+  RULED by the maintainer 2026-09-18 — a defect, remedy arm B**; arm A is refuted and arm C
+  declined, both recorded in the row.
 - **§ 5a of the previous handoff was NOT run as written**, and § 1 of the evidence says why in
   full: the live run it prescribed would have produced one sample of a reader that gives three
   answers to one crop, where the disposal's own `& has_glyph` makes the whole space of readings
@@ -104,10 +106,12 @@ triage saying its three escalation reasons share no root cause, so it is three b
 
 - **That the live reader ever proposes a cbh header label.** `dispose` refuses every cbh region
   today (refusal 2, the grid mismatch), so no live reading of these bands exists. § 4 is a BOUND.
-- **Whether the collapse is a defect at all.** Unruled, deliberately — 5a.
-- **The four documents after graincorp-stem in the corpus sweep** (apple, bfs, ons, who). The
-  sweep was still running when this branch was pushed; the evidence quotes completed rows only and
-  says so. graincorp-stem band 2 (61 × 17) has **3** movers, so the effect is not cbh-only.
+- **Arm B's buildability.** The direction is ruled; whether an agreement oracle can be scoped
+  without circularity is 5a's subject and is NOT answered here.
+- ~~The four documents after graincorp-stem in the corpus sweep.~~ **RESOLVED** — the sweep
+  completed: **17 of 122 gridded bands one-address fragile, on 5 of the 7 documents**; full
+  abstention moves 32 of 122 and removes the split entirely on six. apple is the only document
+  besides graincorp-capacity with no fragile band.
 - **Every cost and frequency figure in [[R255]]'s first clause.** No live run was made in this
   loop either.
 - **[[R251]], [[R252]], [[R254]], [[R256]], [[R257]] are untouched.**

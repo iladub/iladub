@@ -65,17 +65,48 @@ mechanism is not cbh arithmetic: a label is Text over a numeric column, so it is
 row that sets `s_col`; abstain it and the column is homogeneous from row 1 down, `s_col = 1`, and
 the outer MIN takes it.
 
-The same shape on all four of cbh's 16-column bands, from the corpus sweep:
+The corpus sweep completed after this was first written. **17 of 122 gridded bands are
+one-address fragile, on 5 of the 7 documents** — every band with a non-zero mover count, and
+graincorp-capacity's band 3 beneath them for contrast:
 
 ```
+$ ./.venv/bin/python scripts/unshown_ink_split_sensitivity.py --corpus
 document                           pg  b rows x cols   ink      none      full movers
-                                                  axiom/fin axiom/fin
+                                                           axiom/fin axiom/fin
 cbh-stem-2026-08-03.pdf             0  1   18 x 16     151    7/   7 None/   1      7
 cbh-stem-2026-08-03.pdf             0  3   21 x 16     222    4/   4 None/   1      7
 cbh-stem-2026-08-03.pdf             0  5   20 x 16     191    5/   5 None/   1      5
 cbh-stem-2026-08-03.pdf             0  7   10 x 16      82    4/   4 None/   1      6
+graincorp-stem-2026-07-31.pdf       0  2   61 x 17     612    4/   4 None/   1      3
+graincorp-stem-2026-07-31.pdf       1  1   80 x 17     850    3/   3 None/   3      3
+graincorp-stem-2026-07-31.pdf       2  1   71 x 17     766    3/   3 None/   3      4
+bfs-population-bilan-2023.pdf       4  0    4 x 2        5    1/   1 None/None      1
+ons-index-of-services-2026-02.pdf   0  1   11 x 4       16    1/   1 None/   4      1
+ons-index-of-services-2026-02.pdf   4  2    3 x 2        5    1/   1 None/None      1
+ons-index-of-services-2026-02.pdf   7 13    7 x 5       31    2/   2 None/None      4
+ons-index-of-services-2026-02.pdf   7 14   17 x 5       81    2/   2 None/None      4
+ons-index-of-services-2026-02.pdf   8  4   17 x 5       81    2/   2 None/None      4
+ons-index-of-services-2026-02.pdf   8  5   17 x 4       65    2/   2 None/None      3
+who-wfa-boys-zscore-0-5.pdf         0  2    9 x 11      89    2/   2 None/   1      9
+who-wfa-boys-zscore-0-5.pdf         1  2    8 x 11      78    2/   2 None/   1      9
+who-wfa-boys-zscore-0-5.pdf         2  1    8 x 11      78    2/   2 None/   1      9
+
 graincorp-capacity-2026-08-04.pdf   0  3   27 x 16     406    1/   1 None/   1      0
+
+122 gridded bands. Full abstention moves the returned split on 32; at least one SINGLE
+address moves it on 17.
 ```
+
+**Three things the totals say that cbh alone did not.**
+
+1. **It is not one document's quirk.** cbh, graincorp-stem, bfs, ons and who all carry fragile
+   bands; who's three z-score tables carry **9 movers each**.
+2. **graincorp-capacity's immunity is unusual, not typical.** Of the corpus's large gridded bands
+   it is among the few with zero movers — and it is the one every live trace was taken on.
+3. **A fourth outcome exists: the band stops having a split at all.** Where `full` reads
+   `None/None` (bfs 4/0, ons 4/2, 7/13, 7/14, 8/4, 8/5) the AXIOM goes silent AND no interior
+   horizontal rule answers, so `header_body_split` returns None and **the caller escalates** — a
+   different failure from a moved split, and invisible to any instrument reporting one number.
 
 So **R255's coherence half is no longer a mechanism.** Two readings of cbh band 1 differing by the
 single address `(6, 9)` — the exact grain by which gcap's two traced readings differed — produce
@@ -206,11 +237,15 @@ inversion, as they must — they assert what does NOT move.
 
 - **That the live reader ever proposes a cbh header label.** No live reading of a cbh band exists;
   refusal 2 rejects the region before any address is disposed. § 4 is a bound, not an observation.
-- **Whether abstaining a label is WRONG.** If a label's ink genuinely is not shown, a split that
-  stops counting it may be the right reading. This loop measures the sensitivity; it does not rule
-  on which answer is correct, and that ruling is the maintainer's.
-- **The five documents after graincorp-stem in the corpus sweep** — apple, bfs, ons, who — were
-  still running when this was written; § 2's corpus block is quoted from the completed rows only.
+- ~~Whether abstaining a label is WRONG.~~ **RULED by the maintainer 2026-09-18, after this
+  evidence was measured and put to them with the three arms priced: the collapse is a DEFECT
+  whatever the ink says, and the remedy is arm B — a header-row address is admitted only where a
+  second, independent reading agrees.** Arm C (rule the collapse intended) and parking the row
+  were both declined. What remains unverified is arm B's own construction, not its choice: see the
+  handoff § 5a for the circularity that must be measured before an oracle is built.
+- ~~The documents after graincorp-stem in the corpus sweep.~~ **RESOLVED** — the sweep completed
+  and § 2 now carries all 122 bands' totals. apple is the one document besides graincorp-capacity
+  with no fragile band at all.
 - **Every cost and frequency figure in [[R255]]'s first clause** is untouched by this loop.
 
 ---
