@@ -23,19 +23,37 @@ tab:EntryCellPhysicalShape a sh:NodeShape ;
 # assertion, so a textless bbox-carrying cell signals a dropped continuation.
 # This constraint fires ONLY when hasBBox is present (conditional via SPARQL)
 # so topology-only Cell instances without bbox are not affected.
+#
+# R213: the proof-of-carriage is TWO properties, not one — a bbox-carrying cell must have a
+# non-empty tab:cellText OR a non-empty tab:unshownText. A cell whose ink the page does not
+# show carries its transcription in the second place and mints an EMPTY cellText on purpose
+# (spec 2026-09-17 § 8.2), so before this disjunct every such cell was refused here (RS1,
+# § 8.3) — measured, not supposed: scripts/unshown_ink_seam_census.py --shape.
+#
+# THE FORM IS LOAD-BEARING (§ 8.3, cited not re-argued). It is a disjunct over the two places
+# the text may live, NEVER an exemption for cells *carrying* tab:unshownText: an exemption
+# would pass a cell whose tab:unshownText is EMPTY — carriage claimed and not delivered, the
+# very thing this guard exists to catch. A dropped continuation carries neither property and
+# is still refused (O6, § 8.8).
+#
+# Reach, measured on the compiled graph rather than read off the vocabulary: tab:Cell has
+# three declared subclasses (tab:EntryCell, tab:LabelCell, tab:AggregationCell) and under
+# inference="rdfs" the amendment reaches all three. graincorp-capacity p0 asserts 406
+# EntryCells and 9 LabelCells, 0 AggregationCells and 0 bare tab:Cells.
 tab:WrappedCellShape a sh:NodeShape ;
     sh:targetClass tab:Cell ;
     sh:property [ sh:name "WrappedCellShape" ; sh:path tab:hasBBox ; sh:maxCount 1 ] ;
     sh:sparql [
         sh:name "WrappedCellShape" ;
-        sh:message "A tab:Cell with a hasBBox must have non-empty cellText (drop-continuation guard)." ;
+        sh:message "A tab:Cell with a hasBBox must have non-empty cellText or non-empty unshownText (drop-continuation guard)." ;
         sh:select """
             PREFIX tab: <https://w3id.org/iladub/tab#>
             SELECT $this WHERE {
                 $this tab:hasBBox ?bbox .
                 FILTER NOT EXISTS {
-                    $this tab:cellText ?t .
-                    FILTER(strlen(str(?t)) > 0)
+                    { $this tab:cellText ?t .    FILTER(strlen(str(?t)) > 0) }
+                    UNION
+                    { $this tab:unshownText ?u . FILTER(strlen(str(?u)) > 0) }
                 }
             }
         """ ;

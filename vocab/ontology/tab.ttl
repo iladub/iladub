@@ -258,7 +258,7 @@ tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
     rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop. loop-quantity-typing adds tab:ParenthesizedNumber (a datatype that ABSTAINS from homogeneity judgements, via tab:datatypeAbstains) and the tab:CellDatatypeFamily grouping (via tab:inDatatypeFamily) that normalises tab:Numeric and tab:Currency into tab:Quantity."@en .
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;
-    rdfs:comment "A genuinely-missing cell: one carrying no ink at all, or one whose whole text is a MARKER the author writes to mean 'nothing here'. The markers are enumerated as tab:nilSpelling on this term rather than in this sentence, so that adding one is a triple and not an edit in two places (the tab:CellDatatypeFamily precedent). Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation."@en .
+    rdfs:comment "A genuinely-missing cell: one carrying no ink at all, or one whose whole text is a MARKER the author writes to mean 'nothing here'. The markers are enumerated as tab:nilSpelling on this term rather than in this sentence, so that adding one is a triple and not an edit in two places (the tab:CellDatatypeFamily precedent). Not a datum — excluded from a column's dominant type and treated as a wildcard by the header/body split derivation. The THIRD case — ink that is present and that the page does not show a reader — is NOT this term: it is tab:UnshownInk, cited here rather than restated so the trichotomy has one home (the tab:nilSpelling precedent: a rule written in two places drifts)."@en .
 tab:Numeric  a tab:CellDatatype ; rdfs:label "Numeric"@en .
 tab:Text     a tab:CellDatatype , tab:CellDatatypeFamily ; rdfs:label "Text"@en ;
     rdfs:comment """BOTH a datatype and its own family (R61, 2026-09-08). tab:columnFamily has
@@ -277,6 +277,39 @@ tab:columnIndex a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "co
 tab:ParenthesizedNumber a tab:CellDatatype ; rdfs:label "Parenthesized number"@en ;
     tab:datatypeAbstains true ;
     rdfs:comment "A number in parentheses — US accounting notation for a negative. FORMAT-IDENTICAL to a footnote marker ('(1)'), which no grammar can separate from a one-digit negative, so this datatype ABSTAINS from every homogeneity judgement exactly as tab:Blank does: it never votes in a modal computation and never counts as a mismatch. Separating the two readings would need context, not format, and guessing would need a digit-count threshold the neurosymbolic gate forbids. Measured on apple-fy2026q3: 34 negative-shaped cells, 3 footnote-shaped, all footnotes exactly '(1)'."@en .
+
+tab:UnshownInk a tab:CellDatatype ; rdfs:label "Unshown ink"@en ;
+    tab:datatypeAbstains true ;
+    rdfs:comment """Ink the text layer holds and the PAGE DOES NOT SHOW a reader: a glyph rendered so that
+no reader looking at that place at normal size sees it. It ABSTAINS from every homogeneity judgement
+(tab:Blank's and tab:ParenthesizedNumber's precedent) because it is neither a datum the column
+declares nor a marker the author wrote to mean 'nothing here' — it is a value the author chose not
+to show, and letting it vote would carry a reading no reader can make.
+
+It is deliberately NOT in a tab:CellDatatypeFamily: unshown ink is a fact about what the page
+DISPLAYS, not about what the text spells, so it normalises to nothing. It is deliberately NOT a
+tab:nilSpelling on tab:Blank either: a nil spelling is a whole-cell text an author WRITES to mean
+absence, and this cell's text is an ordinary value ("0") that is simply never displayed. Naming it
+tab:Blank would assert the author meant nothing here, which the ink does not support (§ 7).
+
+The transcription itself lives on the PERSISTED cell, as tab:unshownText — this datatype stays on
+the transient side, which is where a datatype that must not vote has to abstain."""@en .
+
+tab:unshownText a owl:DatatypeProperty ; rdfs:label "unshown text"@en ;
+    rdfs:domain tab:EntryCell ; rdfs:range rdfs:Literal ;
+    rdfs:comment """The transcription the text layer holds for a cell whose ink the page does not show.
+ITS PRESENCE IS THE ASSERTION that this cell's ink is unshown; there is no separate flag.
+
+Domain is tab:EntryCell, NOT tab:GridCell, because tab:GridCell is transient — 0 of graincorp-
+capacity's compiled triples — and a fact carried only there dies before the graph. For the same
+reason tab:cellDatatype is NOT written on a persisted cell: it is tab:GridCell-domained, and under
+inference="rdfs" asserting it would infer that cell into tab:GridCell, a class whose own comment
+says it is never asserted into a holon (R19 is the recorded precedent for this exact mechanism).
+
+A cell carrying this property mints an EMPTY tab:cellText, on purpose and fail-safe: every reader
+of tab:cellText then gets the truthful answer — the page shows nothing here — by default, instead
+of grounding a value no reader can see. tab:WrappedCellShape's drop-continuation guard is widened
+to accept this second place a cell's text may live (R213, spec 2026-09-17 § 8.2-§ 8.3)."""@en .
 
 tab:CellDatatypeFamily a owl:Class ; rdfs:label "Cell datatype family"@en ;
     rdfs:comment "A group of cell datatypes that count as THE SAME TYPE for homogeneity purposes. The grouping is declared here rather than repeated inside each query, so the rule is published with the ontology and a new member is one triple rather than five query edits."@en .

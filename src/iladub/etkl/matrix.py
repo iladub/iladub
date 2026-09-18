@@ -131,7 +131,8 @@ def matrix_body_start(band: Band, grid: LeafGrid, split: int, k: int) -> int | N
     from rdflib import Literal
     from rdflib.namespace import XSD
     import os
-    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols)
+    g = celltype.grid_evidence(_grid_cells(band, grid), grid.ncols,
+                               unshown=band.unshown)
     q = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab", "queries", "matrix-body-start.rq")
     return celltype.run_scalar(q, g, bindings={
         "split": Literal(split, datatype=XSD.integer),

@@ -32,6 +32,13 @@ class Band:
     # emitted at assert time as tab:hasUnitMarker on the neighbor column. Default empty
     # so every existing constructor stands (the Band.captions precedent).
     unit_markers: tuple = ()
+    # Grid addresses (row, col) — in headers._grid_cells' space — whose ink the PAGE DOES NOT
+    # SHOW: text the layer holds that no reader looking at that place can see (R213). The
+    # disposal that decides them is § 4's; this field only CARRIES them, to celltype.grid_evidence
+    # (crossing A, the abstention) and to the tab:EntryCell emitters (crossing B, the persisted
+    # tab:unshownText). Default empty so every existing constructor stands — the Band.captions
+    # and Band.unit_markers precedent above.
+    unshown: tuple[tuple[int, int], ...] = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

@@ -220,7 +220,11 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # RE-MEASURED AGAIN 2026-09-13, same loop: the `.ttl` population is **163** — the capacity
     # contract, terms and shapes (`examples/shipping/capacity-*.ttl`). The `.rq` population does
     # not move again: a contract is a declaration, not a derivation, so it authored no query.
-    assert len(vocab_nodes) == len(artifact_files()) == 163
+    # RE-MEASURED 2026-09-18 (R213): the `.ttl` population is **166** — the unshown-ink
+    # conformant example plus its two negative fixtures (`examples/tables/unshown-ink-conformant
+    # .ttl`, `tests/tab-unshown-{ink,empty}-leak.ttl`). The `.rq` population does not move: the
+    # disagreement is disposed in Python over two evidence sets, not by a new query.
+    assert len(vocab_nodes) == len(artifact_files()) == 166
     assert len(query_nodes) == len(query_files()) == 54
 
 

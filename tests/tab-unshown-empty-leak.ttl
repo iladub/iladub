@@ -1,0 +1,14 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# O6 arm (b) (spec § 8.8): a bbox-carrying cell whose tab:unshownText is EMPTY — carriage claimed
+# and not delivered. The widened tab:WrappedCellShape is a DISJUNCT over the two places a cell's
+# text may live, never an exemption for cells carrying tab:unshownText, so this is still refused;
+# an exemption would have let it through. tab:UnshownInkCellShape's sh:minLength refuses it too.
+ex:t a tab:HierarchicalTable ; tab:hasLeafColumn ex:c0 ; tab:hasLeafRow ex:r0 ;
+    tab:hasHeaderNode ex:h0 ; tab:hasCell ex:e0 .
+ex:c0 a tab:LeafColumn . ex:r0 a tab:LeafRow .
+ex:h0 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 .
+ex:e0 a tab:EntryCell ; tab:atColumn ex:c0 ; tab:atRow ex:r0 ;
+    tab:cellText "" ; tab:unshownText "" ; tab:onPage 0 ;
+    tab:hasBBox [ a tab:BBox ; tab:x0 1.0 ; tab:y0 1.0 ; tab:x1 2.0 ; tab:y1 2.0 ] .

@@ -471,6 +471,39 @@ def page_bands(pdf_path: str, page_number: int = 0,
     # Splice DESCENDING by first, so an earlier run's indices are not invalidated mid-splice.
     for first, last in sorted(accepted, reverse=True):
         bands[first:last + 1] = [merge_bands(bands, first, last)]
+
+    # R213 — ink the page does not show. LAST, on the FINAL partition, because the disposal
+    # answers in (row, col) of the band's own grid and a run-merge renumbers every row. One ask
+    # per gridded region, disposed by the three refusals in `unshownink.dispose`.
+    #
+    # Gated exactly as `propose.baml_proposer_available` gates every other NEURAL worker, so the
+    # corpus battery, the instruments and CI stay offline and deterministic. With the gate off
+    # this loop assigns nothing, Band.unshown stays () on every band, and the whole carriage is
+    # the identity — which is what makes O3's six-document null hold by construction rather than
+    # by prediction (and therefore a WEAKER control than § 5 assumed; the plan says to report it
+    # as such).
+    from .unshownink import baml_reader_available
+    if baml_reader_available():
+        from .regions import classify as _classify
+        from .unshownink import BamlRegionReader, region_unshown
+        reader = BamlRegionReader()
+        for i, band in enumerate(bands):
+            reg = _classify(band)
+            if reg.grid is None:
+                continue
+            # `spanned` IS NOT SUPPLIED, AND THAT BLOCKS THE DISPOSAL — measured, not feared.
+            # § 8.7's refusal 3 is scoped to text-layer-empty positions NOT inside a spanning
+            # cell's extent, because a reader who reads a span as occupied is reading correctly.
+            # Nothing in the pipeline can hand that set over today: the span reading R211 built
+            # is a HEADER reading, and gcap's confounder is a body-column year label spanning
+            # rows. With no scope the refusal demands the reader report the 25 positions the
+            # prompt tells it are covered, so it refuses gcap band 3 outright — a live O2 run
+            # returns 110 addresses, and `dispose` types 0. Fail-closed and correct: no claim,
+            # never a false one. But it means this wiring types NOTHING end-to-end until the
+            # spanned set exists, which is why it stays behind the gate. Raised as a residue.
+            found = region_unshown(pdf_path, page_number, band, reg.grid, reader)
+            if found:
+                bands[i] = _replace(band, unshown=tuple(sorted(found)))
     return bands
 
 
@@ -484,12 +517,30 @@ def merge_bands(bands, first: int, last: int):
     second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
     prevent, and the script is committed evidence whose output must stay reproducible.
 
-    It covers ALL EIGHT of `Band`'s fields. A ninth would be silently defaulted here and nothing
-    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count."""
+    It covers ALL NINE of `Band`'s fields. A tenth would be silently defaulted here and nothing
+    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count --
+    and R213's `unshown` is the case that proves the pin works: it was added to `Band` and missed
+    here, and only that test said so.
+
+    `unshown` is the one field that cannot be concatenated, because it is ADDRESSED. Its members
+    are (row, col) in the band's OWN row space, and a run renumbers rows -- band `first+1`'s row
+    0 becomes row `len(bands[first].lines)` of the merge. Each constituent's addresses are
+    therefore OFFSET by the lines that precede it. Exact integer arithmetic over a count, with no
+    tolerance and nothing to tune.
+
+    In the shipped flow this is always the identity: `page_bands` attaches `unshown` AFTER the
+    splice, on the final partition, precisely so no address is ever expressed in a row space that
+    a later merge will renumber. The offset is here for the callers that do not go through
+    `page_bands` -- scripts/one_band_matrix_spike.py imports this constructor -- because a field
+    silently dropped is the defect this docstring already warns about."""
     from .bands import Band
     run = bands[first:last + 1]
     lines = tuple(ln for b in run for ln in b.lines)
     col_xs = next((b.column_xs for b in run if b.column_xs), ())
+    unshown, row0 = [], 0
+    for b in run:
+        unshown.extend((row0 + r, c) for r, c in b.unshown)
+        row0 += len(b.lines)
     return Band(
         lines=lines,
         top=min(b.top for b in run),
@@ -499,6 +550,7 @@ def merge_bands(bands, first: int, last: int):
         column_xs=col_xs,
         captions=tuple(c for b in run for c in b.captions),
         unit_markers=tuple(m for b in run for m in b.unit_markers),
+        unshown=tuple(sorted(unshown)),
     )
 
 
