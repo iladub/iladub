@@ -165,4 +165,9 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
                 nb.setdefault(b, set()).add(a)
     expected = sorted(n for n in open_ if n not in front and not (nb.get(n, set()) & open_))
     assert residue_graph.candidates(rows, status, crit) == expected
-    assert len(expected) == 91
+    # RE-MEASURED 2026-09-18 (R213 executed, PR #265): 91 -> 93. R213 CLOSED, which removes it
+    # from `open_` and so leaves [[R250]] and [[R251]] -- both of which named it as their only
+    # open neighbour -- structurally parkable. The three rows R213 raised are NOT candidates:
+    # R252 <-> R253 and R254 -> R253 link them to each other, which is the point of linking a
+    # row to the one that blocks it (the register serves the arc).
+    assert len(expected) == 93
