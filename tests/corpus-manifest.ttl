@@ -289,7 +289,7 @@
     # fused into one band with the source line and two footnotes and is NOT read. An unread
     # entry row is a misread entry, and no floor is pinned over one.
     cor:reading [ a cor:Reading ; cor:value "0.897196261682243"^^xsd:decimal ;
-        cor:readAt "2026-09-18"^^xsd:date ;
+        cor:readAt "2026-09-19"^^xsd:date ;
         cor:recordedIn "readings/boxhead/README.txt" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
