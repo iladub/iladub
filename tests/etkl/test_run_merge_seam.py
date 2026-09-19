@@ -82,7 +82,10 @@ def test_o2_the_fallback_is_what_saves_the_ink():
 
     assert cells(STEM, 0) == 586
     assert cells(CAPACITY, 0) == 406
-    assert cells(BFS, 6) == 267
+    # 267 -> 285 on 2026-09-18: bfs p6's two LONE rows (`Total`, `Zurich`) are now read by
+    # `donation.offer_single_line`, 9 entries each. Same page, a different reading gained; the
+    # run-merge fallback this test is about is untouched.
+    assert cells(BFS, 6) == 285
     assert cells(APPLE, 2) == 3
 
 
@@ -233,7 +236,14 @@ MERGE_MOVES = {("apple-fy2026q3-statements", 0), ("apple-fy2026q3-statements", 1
 # Their baselines are the PRE-MERGE readings (see the comment above BASELINE_ASSERTED: forced
 # `merged_run_admissible = False`), so 172/98 are the post-merge numbers that comment already
 # names, and MERGE_MOVES governs them. Adding them here would double-count one cause as two.
+#
+# A THIRD CAUSE, 2026-09-18, recorded in the same table because the detector's question is the
+# same ("did this page's asserted ink move, and is the cause named?"): bfs p6 276 -> 312. The 36
+# tokens are the `Total` and `Zurich` rows (20 + 16), one-line bands that were IGNORED and are now
+# read under band 2's header by `donation.offer_single_line`. UP, like every other move here, and
+# pinned pointwise in tests/etkl/test_grid_donation_seam.py.
 D1_MOVES = {
+    ("bfs-population-bilan-2023", 6): 312,
     ("bfs-population-bilan-2023", 5): 180,
     ("ons-index-of-services-2026-02", 7): 112,
     ("ons-index-of-services-2026-02", 8): 12,
@@ -392,7 +402,13 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     residue = [r for r in regions if r.reason == "DATAGRID_RESIDUE"]
     assert len(grid) == 1, f"adoption appended no single grid region: {len(grid)}"
     assert len(residue) == 1, f"no DATAGRID_RESIDUE region: {len(residue)}"
-    assert grid[0].cells == 404, grid[0].cells
+    # 404 -> 496: STALE SINCE 2026-09-16, not moved today. R238's decoration->alignment switch
+    # added the row-label and `%` columns to this grid (+92 cells — R240's row, and the figure
+    # tests/test_carriage.py pins as P5_CELLS_WHEN_CARRIED). This assertion has failed on every
+    # local run since; CI never saw it because the corpus is gitignored there and the test skips.
+    # Found 2026-09-18 by sweeping the corpus-gated suite locally after the same blind spot let
+    # two PRs merge with stale pins.
+    assert grid[0].cells == 496, grid[0].cells
     assert residue[0].tokens_escalated > 0, "a residue region that books no unread ink"
 
     # ...and nothing else appeared: every remaining region is one of the merged page's bands

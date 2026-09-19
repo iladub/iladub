@@ -34,7 +34,11 @@ def test_bfs_p6_reads_267_entries_under_band_2s_labels():
     from iladub.etkl.compile import compile_tables
 
     rep = compile_tables(BFS, 6, validate_shapes=False)
-    assert sum(r.cells for r in rep.regions) == 267
+    # 267 -> 285 on 2026-09-18: the two LONE rows `Total` (band 3) and `Zurich` (band 7) are now
+    # offered the same donation (`donation.offer_single_line`), 9 entries each. The five
+    # multi-line continuations below are untouched, and they are what this test is about.
+    assert sum(r.cells for r in rep.regions) == 285
+    assert (rep.regions[3].cells, rep.regions[7].cells) == (9, 9)
     g = rep.graph
     doc = next(s for s in g.subjects(RDF.type, TAB.RecordTable) if str(s).endswith("#table2"))
     doc = URIRef(str(doc).rsplit("#", 1)[0])
@@ -57,7 +61,12 @@ def test_donation_moves_no_ink_between_the_ledgers():
     from iladub.etkl.compile import compile_tables
 
     rep = compile_tables(BFS, 6, validate_shapes=False)
-    assert (rep.asserted, rep.escalated) == (276, 25)
+    # asserted 276 -> 312 on 2026-09-18, and NOT because donation moved ink: the 36 tokens are
+    # the `Total` and `Zurich` rows (20 + 16), which were IGNORED — booked in neither ledger —
+    # and are now read. Escalated is unchanged at 25 and every continuation band below books
+    # exactly what it did at 808aa7a, which is the prediction this test pins.
+    assert (rep.asserted, rep.escalated) == (312, 25)
+    assert (rep.regions[3].tokens_asserted, rep.regions[7].tokens_asserted) == (20, 16)
     assert {i: (r.tokens_asserted, r.tokens_escalated) for i, r in enumerate(rep.regions)
             if i in (2, 4, 5, 6, 8, 9)} == {2: (15, 0), 4: (36, 0), 5: (54, 0), 6: (36, 0),
                                             8: (72, 0), 9: (63, 0)}
@@ -70,7 +79,9 @@ def test_an_accepted_donation_is_a_recorded_decision():
 
     g = compile_tables(BFS, 6, validate_shapes=False).graph
     labels = [str(o) for o in g.objects(None, RDFS.label)]
-    assert labels.count("grid_donation") == 5
+    # 5 -> 7 on 2026-09-18: the two lone-row donations are recorded decisions like any other,
+    # which is the point — a reading admitted without a decision holon would be the defect.
+    assert labels.count("grid_donation") == 7
 
 
 def test_a_refused_donation_leaves_the_page_isomorphic(tmp_path, monkeypatch):

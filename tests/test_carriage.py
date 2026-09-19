@@ -41,14 +41,23 @@ BFS = "gov-stats/bfs-population-bilan-2023.pdf"
 #: 27/27 canton rows). Cells are counted on the ONE adopted RECORD_TABLE region of page 5,
 #: which is where every placed cell on that page lives — measured 2026-09-16, `c9270bb`.
 P5_CELLS_WHEN_CARRIED = 496
-DOC_TRIPLES_WHEN_CARRIED = 15354
+#: 15354 -> 16147 on 2026-09-18, by two LATER readings and not by the switch this file pins:
+#: p5's adopted grid now carries its boxhead (11 column labels, replayed from
+#: readings/boxhead/) and p6's two lone rows are read (`donation.offer_single_line`). A whole-
+#: document triple count moves with every reading the document gains; P5_CELLS is the figure that
+#: says the SWITCH still holds, and it is unchanged at 496.
+DOC_TRIPLES_WHEN_CARRIED = 16147
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
 #: criterion asks for. Measured 2026-09-16 at `c9270bb`, on the same run as the figures
 #: above. A pointwise pin beside a total one is what caught PR #241's mis-specified C2.
-P6_CELLS = 267
-P6_ASSERTED_REGIONS = 6
+#: 267 -> 285 on 2026-09-18: `Total` and `Zurich`, one-line bands that were IGNORED, are now
+#: read under band 2's header (9 entries each). The six regions this control was measured on
+#: are untouched — what it guards against is the SWITCH moving page 6, and it did not.
+P6_CELLS = 285
+#: 6 -> 8 on 2026-09-18: the `Total` and `Zurich` lone rows are two more asserted regions.
+P6_ASSERTED_REGIONS = 8
 
 
 @pytest.fixture(scope="module")

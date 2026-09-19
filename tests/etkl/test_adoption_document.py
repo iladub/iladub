@@ -368,7 +368,11 @@ def test_apple_adopts_nothing_because_the_page_asserts_outright(apple_doc):
     p1 = apple_doc.pages[ADOPTED_PAGE]
     assert (p1.asserted, p1.escalated) == (98, 0), (p1.asserted, p1.escalated)
     p2 = apple_doc.pages[2]
-    assert (p2.asserted, p2.escalated) == (210, 36), (p2.asserted, p2.escalated)
+    # (210, 36) -> (216, 30) on 2026-09-18: the adopted grid carries its boxhead. The two header
+    # lines `June 27, June 28,` and `2026 2025` (6 tokens) are read in full as the labels of
+    # columns 1 and 2 and move escalated -> asserted through the line-granular ledger. The 87
+    # cells are unchanged. Replayed offline from readings/boxhead/.
+    assert (p2.asserted, p2.escalated) == (216, 30), (p2.asserted, p2.escalated)
 
 
 # `test_an_adopted_page_never_scores_one_by_construction` STOOD HERE and was DELETED 2026-09-07,
