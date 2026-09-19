@@ -421,6 +421,7 @@ def page_bands(pdf_path: str, page_number: int = 0,
     from .geometry import extract_rules, extract_chars, extract_hrules
     from dataclasses import replace as _replace
     from .segment import segment
+    from .trailing import cut_trailing_notes
     words = extract_words(pdf_path, page_number)
     page_rules = extract_rules(pdf_path, page_number)
     page_hrules = extract_hrules(pdf_path, page_number)
@@ -434,7 +435,10 @@ def page_bands(pdf_path: str, page_number: int = 0,
     # machinery still runs once.
     specs: list[tuple | None] = []
     for band in raw_bands:
-        for sub in segment(band):
+        # The notes below a table's last row get a band of their own (trailing.py, 2026-09-19):
+        # set at the row pitch they fuse with the row above them, and their full-width ink
+        # closes that row's gutters. The page datagrid's verdicts decide which lines they are.
+        for sub in cut_trailing_notes(segment(band), pdf_path, page_number):
             sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
             sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
             if not sub_rules:

@@ -251,7 +251,12 @@
     # OFFLINE from the recorded readings under readings/boxhead/.
     cor:reading [ a cor:Reading ; cor:value "0.8452535760728218"^^xsd:decimal ;
         cor:readAt "2026-09-18"^^xsd:date ;
-        cor:recordedIn "docs/superpowers/2026-09-18-the-score-counts-only-what-it-decided-evidence.md" ] .
+        cor:recordedIn "docs/superpowers/2026-09-18-the-score-counts-only-what-it-decided-evidence.md" ] ;
+    # NOTHING ON THIS DOCUMENT WAS FIXED (2026-09-19): trailing.cut_trailing_notes gives p7's stray
+    # `"` line a band of its own, where it is ignored instead of escalated — 52 -> 51 tokens.
+    cor:reading [ a cor:Reading ; cor:value "0.8463541666666666"^^xsd:decimal ;
+        cor:readAt "2026-09-19"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-19-tessin-trailing-notes-evidence.md" ] .
 
 <urn:iladub:corpus:bfs-population-bilan-2023>
     cor:reading [ a cor:Reading ; cor:value "0.3438"^^xsd:decimal ;
@@ -290,7 +295,14 @@
     # entry row is a misread entry, and no floor is pinned over one.
     cor:reading [ a cor:Reading ; cor:value "0.897196261682243"^^xsd:decimal ;
         cor:readAt "2026-09-19"^^xsd:date ;
-        cor:recordedIn "readings/boxhead/README.txt" ] .
+        cor:recordedIn "readings/boxhead/README.txt" ] ;
+    # `Tessin` is read (2026-09-19): the notes below a table's last row get a band of their own
+    # (trailing.py), so p6 reads all 32 entry rows. STILL cor:Unadjudicated, for a NEW reason:
+    # p5's one adopted grid spans TWO tables, and all 270 of T2's entries sit under T1's column
+    # labels. A misread column identity is a misread entry; no floor is pinned over one.
+    cor:reading [ a cor:Reading ; cor:value "0.9021428571428571"^^xsd:decimal ;
+        cor:readAt "2026-09-19"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-09-19-tessin-trailing-notes-evidence.md" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
