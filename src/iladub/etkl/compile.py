@@ -937,6 +937,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         brec.record("kind", _kind_options, region.kind.name, region.reason or "",
                     rejected=_kind_refutations(region.kind.name, region.reason))
 
+        if region.kind is RegionKind.NON_TABLE and len(band.lines) == 1 and donor_ev is not None:
+            # A LONE DATA ROW (2026-09-18, bfs p6: `Total`, `Zurich`, `Tessin`). A one-line band
+            # cannot hold a header and a body, so `classify` calls it NON_TABLE and it was
+            # ignored — three entries of the page's one table dropped with their ink booked
+            # nowhere. It is offered the reading its neighbours already get; the membrane
+            # disposes, and a refusal leaves it ignored exactly as before.
+            _lone = _donation.offer_single_line(bands, idx, donor_ev, page_number)
+            if _lone is not None:
+                region = _lone.region
+
         if region.kind is RegionKind.NON_TABLE:
             # C1 fix, extended by R212's carrier: an ignored band never contributed to the
             # score, so NOTHING on this path touches a counter. The one invariant that

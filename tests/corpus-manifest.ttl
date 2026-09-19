@@ -281,7 +281,16 @@
     # zero-cell escalations (3 -> 3); the small fall is p5's escalated ink, 81 -> 87.
     cor:reading [ a cor:Reading ; cor:value "0.8850746268656716"^^xsd:decimal ;
         cor:readAt "2026-09-14"^^xsd:date ;
-        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] .
+        cor:recordedIn "docs/superpowers/2026-09-14-d1-post-d2-measured.md" ] ;
+    # 2026-09-18: p5's adopted grid carries its boxhead (11 of 12 columns labelled, the stub
+    # correctly unlabelled; replayed OFFLINE from readings/boxhead/), and p6's two LONE rows —
+    # `Total` and `Zurich`, one-line bands that were IGNORED — are read under band 2's header
+    # (donation.offer_single_line). STILL cor:Unadjudicated, deliberately: p6's `Tessin` row is
+    # fused into one band with the source line and two footnotes and is NOT read. An unread
+    # entry row is a misread entry, and no floor is pinned over one.
+    cor:reading [ a cor:Reading ; cor:value "0.897196261682243"^^xsd:decimal ;
+        cor:readAt "2026-09-19"^^xsd:date ;
+        cor:recordedIn "readings/boxhead/README.txt" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;

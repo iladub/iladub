@@ -246,6 +246,41 @@ def offer(bands: Sequence[Band], idx: int, region: ClassifiedRegion, evidence: G
 #   `span_offer`           PROCEDURAL composition; uniqueness (DECISION E) and nothing else.
 # =============================================================================================
 
+def offer_single_line(bands: Sequence[Band], idx: int, evidence: Graph,
+                      page_number: int) -> Donation | None:
+    """`offer`, for a band of exactly ONE line — a data row the author set apart.
+
+    MEASURED 2026-09-18 on bfs p6: `Total`, `Zurich` and `Tessin` are each one row of the page's
+    single table, separated from their neighbours by the section spacing, so `detect_bands` hands
+    each back as a one-line band. `classify` answers NON_TABLE / "fewer than 2 lines" — a band
+    that cannot have a header AND a body — and the row is `ignored`: its ink books nowhere, so
+    the document score never sees three dropped entries. Every OTHER band of that table is read
+    by donation. The one-line band never reached `offer`, which requires a RECORD_TABLE region.
+
+    ITS OWN COLUMN COUNT IS NOT ASKED, and that is measured, not assumed: one line cannot resolve
+    a gutter profile — bfs p6's `Total` row reads 3 columns alone where its table has 9 — so the
+    equal-count clause `offer` binds (`?n`) finds no donor for it, ever. The count is left FREE:
+    the candidates are every band above that the derivation already qualifies as a donor (the
+    refused-header and rule-containment clauses are untouched), and `donated_region` reads the
+    row under the DONOR's grid, never its own.
+
+    What replaces the count as the guard is what was always the real judge: the donor must be
+    UNIQUE, and the shipped membrane disposes the reading (`donation_admissible`: `region_tiles`
+    and every data cell round-tripping into its own leaf column). A lone line of prose below a
+    table does not round-trip into that table's columns and stays ignored exactly as today."""
+    if len(bands[idx].lines) != 1:
+        return None
+    rows = evidence.query(GRID_DONATION_RQ.read_text(),
+                          initBindings={"b": Literal(idx, datatype=XSD.integer)})
+    donors = tuple(sorted({int(row.a) for row in rows}))
+    if len(donors) != 1:
+        return None
+    donated = donated_region(bands, donors[0], idx)
+    if not donation_admissible(donated, page_number):
+        return None
+    return Donation(donated, donors[0])
+
+
 SPAN_DONATION_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "span-donation.rq"
 
 

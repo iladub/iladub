@@ -20,3 +20,4 @@ no live reader the boxhead path is the identity.
 | --- | --- | --- | --- |
 | 2026-09-18 | gov-stats/ons-index-of-services-2026-02.pdf | 7, 8 | 6 of 6 columns labelled on each; 0.7712 → 0.8452535760728218 |
 | 2026-09-18 | financial/apple-fy2026q3-statements.pdf | 2 | `June 27, 2026`, `June 28, 2025`; 0.9302 → 0.9418604651162791 |
+| 2026-09-18 | gov-stats/bfs-population-bilan-2023.pdf | 5, 6 | p5: 11 of 12 columns labelled (stub unlabelled), none dropped; p6 read but NOT carried — the page does not adopt. 0.8851 → 0.897196261682243 together with p6's lone rows. Not accepted: `Tessin` is unread |

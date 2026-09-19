@@ -124,6 +124,24 @@ VACUITY_REGISTRY = {
     TAB.SectionTotalShape: (
         "corpus does not exercise it — measured 0 focus nodes on all 7 documents. RESIDUE: "
         "corpus gap or dead shape, not adjudicated here."),
+    # REGISTERED 2026-09-18, and ADJUDICATED: these two are LIVE-ONLY, not dead and not a corpus
+    # gap. `tab:unshownText` and the `tab:UnshownInk` typing are emitted only when a reader
+    # answers (`compile.page_bands`, gated on `BAML_LIVE`), and this registry measures the OFFLINE
+    # corpus compile, where `Band.unshown` is () by construction. The shapes are exercised by
+    # `tests/test_tab.py`'s fixtures and fire on graincorp-capacity under a live run (110 cells,
+    # measured 2026-09-18). They had been idle AND unregistered since R213 shipped on 2026-09-17:
+    # this test failed on every local run from then on, unseen, because CI has no corpus and
+    # skips it. WHAT MAKES THEM LIVE HERE: recording the unshown-ink reading the way boxhead
+    # readings are recorded (`readings/`), so the offline compile replays it. Until then, idle.
+    TAB.UnshownInkCellShape: (
+        "LIVE-ONLY, adjudicated 2026-09-18: 0 focus nodes on the offline corpus because "
+        "tab:UnshownInk is typed only when a reader answers (BAML_LIVE); fires on "
+        "graincorp-capacity under a live run (110 cells). Becomes live offline when the "
+        "unshown-ink reading is recorded under readings/."),
+    TAB.WrappedCellShape: (
+        "LIVE-ONLY body term, adjudicated 2026-09-18: 2203 focus nodes, and the one body term "
+        "absent from every offline graph is tab:unshownText, which is emitted only under "
+        "BAML_LIVE. The shape's other disjuncts are exercised on every document."),
 }
 
 
