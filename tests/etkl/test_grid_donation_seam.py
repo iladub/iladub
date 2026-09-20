@@ -37,8 +37,10 @@ def test_bfs_p6_reads_267_entries_under_band_2s_labels():
     # 267 -> 285 on 2026-09-18: the two LONE rows `Total` (band 3) and `Zurich` (band 7) are now
     # offered the same donation (`donation.offer_single_line`), 9 entries each. The five
     # multi-line continuations below are untouched, and they are what this test is about.
-    assert sum(r.cells for r in rep.regions) == 285
-    assert (rep.regions[3].cells, rep.regions[7].cells) == (9, 9)
+    # 285 -> 294 on 2026-09-19: `Tessin` (band 10) is cut free of the notes set below it
+    # (`trailing.cut_trailing_notes`) and is a third lone row read the same way.
+    assert sum(r.cells for r in rep.regions) == 294
+    assert (rep.regions[3].cells, rep.regions[7].cells, rep.regions[10].cells) == (9, 9, 9)
     g = rep.graph
     doc = next(s for s in g.subjects(RDF.type, TAB.RecordTable) if str(s).endswith("#table2"))
     doc = URIRef(str(doc).rsplit("#", 1)[0])
@@ -65,7 +67,9 @@ def test_donation_moves_no_ink_between_the_ledgers():
     # the `Total` and `Zurich` rows (20 + 16), which were IGNORED — booked in neither ledger —
     # and are now read. Escalated is unchanged at 25 and every continuation band below books
     # exactly what it did at 808aa7a, which is the prediction this test pins.
-    assert (rep.asserted, rep.escalated) == (312, 25)
+    # (312, 25) -> (327, 19) on 2026-09-19: `Tessin`'s 15 tokens are read, and 6 of them were
+    # escalated with the notes they were fused to. The continuation bands below are unchanged.
+    assert (rep.asserted, rep.escalated) == (327, 19)
     assert (rep.regions[3].tokens_asserted, rep.regions[7].tokens_asserted) == (20, 16)
     assert {i: (r.tokens_asserted, r.tokens_escalated) for i, r in enumerate(rep.regions)
             if i in (2, 4, 5, 6, 8, 9)} == {2: (15, 0), 4: (36, 0), 5: (54, 0), 6: (36, 0),
@@ -81,7 +85,8 @@ def test_an_accepted_donation_is_a_recorded_decision():
     labels = [str(o) for o in g.objects(None, RDFS.label)]
     # 5 -> 7 on 2026-09-18: the two lone-row donations are recorded decisions like any other,
     # which is the point — a reading admitted without a decision holon would be the defect.
-    assert labels.count("grid_donation") == 7
+    # 7 -> 8 on 2026-09-19: `Tessin`.
+    assert labels.count("grid_donation") == 8
 
 
 def test_a_refused_donation_leaves_the_page_isomorphic(tmp_path, monkeypatch):
@@ -134,8 +139,14 @@ def test_the_refusal_map_is_unused_when_no_band_owns_a_vector(tmp_path, monkeypa
     """M1's laziness, pinned at the seam rather than only in the unit: a page with no
     ruled band must not pay for derive_data_grid at all."""
     import iladub.etkl.datagrid as datagrid
+    import iladub.etkl.trailing as trailing
     from iladub.etkl.compile import compile_tables
 
+    # ISOLATED 2026-09-19. `trailing.cut_trailing_notes` is a SECOND reader of the datagrid and
+    # pays for it on any page with a multi-line band, ruled or not — its subject is a table's
+    # notes, not a donor's vector. This test pins the REFUSAL MAP's laziness, so that reader is
+    # switched off here rather than the pin loosened to "at most one call".
+    monkeypatch.setattr(trailing, "cut_trailing_notes", lambda subs, pdf, pg: list(subs))
     calls = []
     real = datagrid.derive_data_grid
     monkeypatch.setattr(datagrid, "derive_data_grid",

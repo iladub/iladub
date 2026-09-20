@@ -46,7 +46,8 @@ P5_CELLS_WHEN_CARRIED = 496
 #: readings/boxhead/) and p6's two lone rows are read (`donation.offer_single_line`). A whole-
 #: document triple count moves with every reading the document gains; P5_CELLS is the figure that
 #: says the SWITCH still holds, and it is unchanged at 496.
-DOC_TRIPLES_WHEN_CARRIED = 16147
+#: 16147 -> 16736 on 2026-09-19: p6's `Tessin` row is read (`trailing.cut_trailing_notes`).
+DOC_TRIPLES_WHEN_CARRIED = 16736
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
@@ -55,9 +56,11 @@ DOC_TRIPLES_WHEN_CARRIED = 16147
 #: 267 -> 285 on 2026-09-18: `Total` and `Zurich`, one-line bands that were IGNORED, are now
 #: read under band 2's header (9 entries each). The six regions this control was measured on
 #: are untouched — what it guards against is the SWITCH moving page 6, and it did not.
-P6_CELLS = 285
+#: 285 -> 294 on 2026-09-19: `Tessin` is cut free of the notes set below it and read (9 entries).
+P6_CELLS = 294
 #: 6 -> 8 on 2026-09-18: the `Total` and `Zurich` lone rows are two more asserted regions.
-P6_ASSERTED_REGIONS = 8
+#: 8 -> 9 on 2026-09-19: `Tessin`.
+P6_ASSERTED_REGIONS = 9
 
 
 @pytest.fixture(scope="module")

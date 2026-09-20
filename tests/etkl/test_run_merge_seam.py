@@ -85,7 +85,8 @@ def test_o2_the_fallback_is_what_saves_the_ink():
     # 267 -> 285 on 2026-09-18: bfs p6's two LONE rows (`Total`, `Zurich`) are now read by
     # `donation.offer_single_line`, 9 entries each. Same page, a different reading gained; the
     # run-merge fallback this test is about is untouched.
-    assert cells(BFS, 6) == 285
+    # 285 -> 294 on 2026-09-19: `Tessin`, cut free of its notes (trailing.cut_trailing_notes).
+    assert cells(BFS, 6) == 294
     assert cells(APPLE, 2) == 3
 
 
@@ -242,10 +243,20 @@ MERGE_MOVES = {("apple-fy2026q3-statements", 0), ("apple-fy2026q3-statements", 1
 # tokens are the `Total` and `Zurich` rows (20 + 16), one-line bands that were IGNORED and are now
 # read under band 2's header by `donation.offer_single_line`. UP, like every other move here, and
 # pinned pointwise in tests/etkl/test_grid_donation_seam.py.
+#
+# A FOURTH CAUSE, 2026-09-19: `trailing.cut_trailing_notes` cuts the notes set below a table's
+# last row into a band of their own. bfs p6 312 -> 327 (`Tessin`, 15 tokens, read as a lone row)
+# and bfs p5 180 -> 228 (the row blocks above T1's and T2's notes read without the notes' ink
+# closing their gutters). Both UP.
 D1_MOVES = {
-    ("bfs-population-bilan-2023", 6): 312,
-    ("bfs-population-bilan-2023", 5): 180,
-    ("ons-index-of-services-2026-02", 7): 112,
+    ("bfs-population-bilan-2023", 6): 327,
+    ("bfs-population-bilan-2023", 5): 228,
+    # 112 -> 105 on 2026-09-19, DOWN, and the 7 tokens were a MISREADING: the band [`2025 …` row,
+    # a stray `"`] asserted ONE cell — the data row read as a header over the `"`. The cut gives
+    # the `"` its own band; the row, alone, finds no donor on the band path and is ignored. The
+    # document reading is untouched: p7 adopts, and the grid reads that row either way (315
+    # asserted before and after).
+    ("ons-index-of-services-2026-02", 7): 105,
     ("ons-index-of-services-2026-02", 8): 12,
 }
 
@@ -346,17 +357,22 @@ def test_o5_a_forced_non_tail_merge_renumbers_consistently(monkeypatch):
 
     monkeypatch.setattr(
         compile_mod, "merged_run_admissible",
-        lambda merged, first, last, page_number: (first, last) == (2, 5))
+        lambda merged, first, last, page_number: (first, last) == (2, 6))
 
+    # 15 bands / run (2,5) / 12 -> 17 bands / run (2,6) / 13 on 2026-09-19.
+    # `trailing.cut_trailing_notes` gives the notes below T1 and below T2 a band each (15 -> 17),
+    # and T1's notes band is RULED with a subset of the run's rule positions, so band-run.rq now
+    # proposes 2..6 — five bands — where it proposed 2..5. Refused in production exactly as
+    # (2,5) was; forced here. 17 - 4 = 13.
     bands = page_bands(BFS, 5)
-    assert len(bands) == 12, "the run 2..5 — four bands — must become one"
+    assert len(bands) == 13, "the run 2..6 — five bands — must become one"
 
     rep = compile_tables(BFS, 5, validate_shapes=False)
-    assert len(rep.regions) == 12
+    assert len(rep.regions) == 13
     minted = {int(m.group(2)) for m in re.finditer(_FRAGMENT_RE,
                                                    rep.graph.serialize(format="nt"))}
     assert minted, "no fragment was minted at all — the regex is wrong, not the code"
-    assert max(minted) < 12, "a fragment index >= the band count means two index spaces"
+    assert max(minted) < 13, "a fragment index >= the band count means two index spaces"
 
 
 @corpus_only
@@ -390,18 +406,26 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
 
     monkeypatch.setattr(
         compile_mod, "merged_run_admissible",
-        lambda merged, first, last, page_number: (first, last) == (2, 5))
+        lambda merged, first, last, page_number: (first, last) == (2, 6))
 
     doc = compile_document(BFS, validate_shapes=False)
     regions = doc.pages[5].regions
     n_bands = len(page_bands(BFS, 5))
-    assert n_bands == 12, f"the run 2..5 must still merge four bands into one: {n_bands}"
+    # 12 -> 13 on 2026-09-19 (run 2..6 of 17 bands; see the sibling test above).
+    assert n_bands == 13, f"the run 2..6 must still merge five bands into one: {n_bands}"
 
     # the grid region adoption appends, and the residue region for what it left unread
     grid = [r for r in regions if r.table_uri and str(r.table_uri).endswith("p5-datagrid")]
     residue = [r for r in regions if r.reason == "DATAGRID_RESIDUE"]
     assert len(grid) == 1, f"adoption appended no single grid region: {len(grid)}"
-    assert len(residue) == 1, f"no DATAGRID_RESIDUE region: {len(residue)}"
+    # 1 -> 0 on 2026-09-19, and the decomposition below is what still holds. The forced run is
+    # now 2..6 and its fifth band is T1's NOTES (see the sibling test): their full-width ink
+    # closes every gutter of the merged band, so it classifies NON_TABLE / "fewer than 2 columns"
+    # and is IGNORED, where the forced 2..5 band escalated. The adoption ledger books residue
+    # only from bands that had booked escalated tokens, so this forced page now leaves none from
+    # T1 — and the UNFORCED page still carries its residue region (17 tokens, measured the same
+    # day). Pinned as "at most one, and if present it books ink" rather than dropped.
+    assert len(residue) <= 1, f"more than one DATAGRID_RESIDUE region: {len(residue)}"
     # 404 -> 496: STALE SINCE 2026-09-16, not moved today. R238's decoration->alignment switch
     # added the row-label and `%` columns to this grid (+92 cells — R240's row, and the figure
     # tests/test_carriage.py pins as P5_CELLS_WHEN_CARRIED). This assertion has failed on every
@@ -409,8 +433,8 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     # Found 2026-09-18 by sweeping the corpus-gated suite locally after the same blind spot let
     # two PRs merge with stale pins.
     assert grid[0].cells == 496, grid[0].cells
-    assert residue[0].tokens_escalated > 0, "a residue region that books no unread ink"
+    assert all(r.tokens_escalated > 0 for r in residue), "a residue region that books no unread ink"
 
     # ...and nothing else appeared: every remaining region is one of the merged page's bands
-    assert len(regions) == n_bands + 2, (
-        f"{len(regions)} regions for {n_bands} bands + grid + residue")
+    assert len(regions) == n_bands + 1 + len(residue), (
+        f"{len(regions)} regions for {n_bands} bands + grid + {len(residue)} residue")
