@@ -271,7 +271,8 @@ def emit_reading_evidence(g, table_uri, captions, source_cells):
             g.add((URIRef("%s-hl%d" % (table_uri, derived_into)), PROV.wasDerivedFrom, sc))
 
 
-def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, proposer):
+def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, proposer,
+                             header_extents=None):
     """NEURAL propose -> SHACL-oracle dispose -> promote for a header region whose geometric tree
     does not tile (loop C). The direct analogue of span.resolve_ambiguous_merge.
 
@@ -306,7 +307,8 @@ def resolve_header_row_roles(graph, hreg, band, table_uri, doc_uri, page, propos
     nodes, captions, source_cells = built
 
     scratch = Graph()
-    n = assert_hier_region(scratch, _replace(hreg, tree=nodes), band, table_uri, doc_uri, page)
+    n = assert_hier_region(scratch, _replace(hreg, tree=nodes), band, table_uri, doc_uri, page,
+                           header_extents)
     emit_reading_evidence(scratch, table_uri, captions, source_cells)
     if n <= 0 or not region_tiles(scratch):
         return None                            # illegal or lossy -> oracle refuses -> escalate

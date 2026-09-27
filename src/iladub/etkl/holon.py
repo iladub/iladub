@@ -609,8 +609,13 @@ def emit_ignored_band(g: Graph, doc_uri: URIRef, idx: int, band,
 
 
 def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
-                       doc_uri: URIRef, page: int) -> int:
+                       doc_uri: URIRef, page: int, header_extents: list | None = None) -> int:
     """Emit a tab:HierarchicalTable holon for a HierRegion; return asserted body-token count.
+
+    `header_extents`, when given, receives the `(x0, top, x1, bottom)` of every header node this
+    call emits WITH a box -- read off the nodes, never off the graph, which rounds to 2 dp. The
+    return value counts body tokens only, so this is how a caller books the header ink the same
+    call carried (`compile._book_hier_band`) instead of escalating it.
 
     Orphan promotion: any HeaderNode with parent=None is a root regardless of the
     syntactic level it appears at in the header-row sequence. Such nodes are emitted
@@ -679,6 +684,8 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
             g.add((bb, TAB.x1, Literal(Decimal(str(round(n.x1, 2))))))
             g.add((bb, TAB.y1, Literal(Decimal(str(round(n.bottom, 2))))))
             g.add((lc, TAB.hasBBox, bb))
+            if header_extents is not None:
+                header_extents.append((n.x0, n.top, n.x1, n.bottom))
         g.add((h, TAB.hasLabel, lc))
 
     # Parent links — using effective URIs (promotion doesn't affect parent-pointer logic)

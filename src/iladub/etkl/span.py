@@ -61,7 +61,8 @@ def flank_context(tree, node_idx, flank):
             "flank_label": flank_label, "flank_side": side}
 
 
-def resolve_ambiguous_merge(graph, hreg, band, table_uri, doc_uri, page, proposer):
+def resolve_ambiguous_merge(graph, hreg, band, table_uri, doc_uri, page, proposer,
+                            header_extents=None):
     """NEURAL propose -> SHACL-oracle dispose -> promote for a narrow-flank merge tie (B1.3).
 
     For each header node B1.2 flagged with an `ambiguous_flank`, ask the proposer for a reading,
@@ -94,7 +95,7 @@ def resolve_ambiguous_merge(graph, hreg, band, table_uri, doc_uri, page, propose
 
     reading = replace(hreg, tree=tree)
     scratch = Graph()
-    n = assert_hier_region(scratch, reading, band, table_uri, doc_uri, page)
+    n = assert_hier_region(scratch, reading, band, table_uri, doc_uri, page, header_extents)
     if n <= 0 or not region_tiles(scratch):
         return None                                  # illegal reading -> oracle refuses -> escalate
 

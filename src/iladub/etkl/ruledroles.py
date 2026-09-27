@@ -483,7 +483,8 @@ def emit_repeated_headers(g, table_uri, header_rows, matched, page):
             g.add((u, PROV.wasDerivedFrom, s))
 
 
-def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page, carried=None):
+def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page, carried=None,
+                              header_extents=None):
     """AXIOM derive (or loop-M CARRY) -> SHACL-oracle dispose -> assert, for a ruled header stack.
 
     The declarative sibling of rowrole.resolve_header_row_roles (which proposes NEURALLY where
@@ -538,7 +539,8 @@ def resolve_ruled_header_rows(graph, hreg, band, table_uri, doc_uri, page, carri
     nodes, captions, source_cells = built
 
     scratch = Graph()
-    n = assert_hier_region(scratch, _replace(hreg, tree=nodes), band, table_uri, doc_uri, page)
+    n = assert_hier_region(scratch, _replace(hreg, tree=nodes), band, table_uri, doc_uri, page,
+                           header_extents)
     emit_reading_evidence(scratch, table_uri, captions, source_cells)
     if matched is not None:
         emit_repeated_headers(scratch, table_uri, header_rows, matched, page)
