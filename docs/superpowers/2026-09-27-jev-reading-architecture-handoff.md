@@ -1,5 +1,7 @@
 # Handoff — Jev and a typed-only decision architecture for etkl (2026-09-27)
 
+**Topic:** jev-reading · **Date:** 2026-09-27 · **Branch:** `jev-reading-handoff`
+
 **Serves:** maintenance — the brainstorm that decides how etkl's reading decisions are re-architected around TypeSafe's Jev; it meets no criterion itself. The unmet ones it bears on are `etkl:03` (cbh) and `etkl:05` (bfs).
 
 Written at ~53,000 working tokens (just over the 50K originating floor) and completed at ~65,000, 1.3x the floor. **Part 5 was written first**, before the Jev measurements landed. Parts 1-4 are pointers and records.
