@@ -133,3 +133,17 @@ moves the score of cbh or bfs.
 - The upper bounds if everything in a class became asserted, computed only:
   - cbh 804 / 884 → 1.0 if its 80 header tokens are read;
   - bfs 1263 / 1400 → 0.928 (+36) or → 0.958 (+78).
+
+## Next action, superseding part 5 (written before the context was cleared)
+
+- **Asserted:** the role slice proposed in part 5 is refuted by the count above. Do not spec it.
+- **Proposed, for the maintainer to rule (recommended by this session, not yet ruled):**
+  - Section 4's first slice is **cbh's fused boxhead words**: 80 of 217 escalated tokens, and cbh
+    → 1.0 if read (computed).
+  - First, a short diagnosis that decides the tier:
+    - are the words fused in *extraction* (pdfplumber / the ruled re-extraction in
+      `_build_ruled_band`)? Then it is PROCEDURAL raw extraction, with no Jev.
+    - or are they intact words that the reader then mis-groups? Then it is a NEURAL judgement,
+      which needs an oracle first.
+  - Refute it quickly: dump cbh p0's raw `extract_words` for the boxhead lines and compare them with
+    the region's `ascii`.
