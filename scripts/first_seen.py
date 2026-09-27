@@ -101,7 +101,8 @@ def quotable_readings(repo: Path) -> dict[str, str]:
     return out
 
 
-def first_seen(repo: Path, values: list[str], rev: str = "HEAD") -> dict[str, tuple[str, str]]:
+def first_seen(repo: Path, values: list[str], rev: str = "HEAD",
+               paths: tuple[str, ...] = ()) -> dict[str, tuple[str, str]]:
     """value -> (short sha, ISO date) of the first commit reachable from `rev` that ADDS it.
 
     `rev` is `HEAD` — this tree's own history, mainline plus whatever branch you are
@@ -119,14 +120,18 @@ def first_seen(repo: Path, values: list[str], rev: str = "HEAD") -> dict[str, tu
     `test_every_quotable_reading_is_recoverable` could never go green until after the
     merge it is blocking. `HEAD` resolves in every checkout and includes the branch's
     own commits, which is also the honest answer to "when did this value enter the
-    tree" while a change is in flight."""
+    tree" while a change is in flight.
+
+    `paths` narrows the walk to those files. With the register alone it answers where a
+    reading's `readAt` was WRITTEN, which is what the invariant compares a self-sighted
+    reading against (`tests/test_first_seen.py::test_readat_never_predates_first_observation`)."""
     require_full_history(repo)
     if not values:
         return {}
     alternation = "|".join(re.escape(v) for v in sorted(values))
     out = subprocess.run(
         ["git", "log", "--reverse", "--date=short", "--format=" + _SEP_FORMAT,
-         "-G" + alternation, "-U0", "-p", rev],
+         "-G" + alternation, "-U0", "-p", rev, "--", *paths],
         cwd=repo, capture_output=True, text=True, check=True,
     ).stdout
     found: dict[str, tuple[str, str]] = {}
