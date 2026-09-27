@@ -88,3 +88,18 @@ an exact oracle still disposes). **Spike LANDED** (see `2026-09-27-jev-picks-ora
 - The author's box defines what an extent is (titles, footers or sources inside, totals outside,
   varying by author). Whether an extent = the author's box with Jev's roles carried inside it is
   **not ruled**.
+
+**RULED by the maintainer, 2026-09-27 — arm (a): a table's extent is WHATEVER THE AUTHOR BOXED.**
+Jev's line roles (caption, headings, data, group label, total, note, furniture) are carried *inside*
+the extent. A boxed title or footer is therefore a labelled line, not an error. The drawn box stays
+the only thing that decides admission. It was asked as (a) *extent = the author's box, roles
+carried inside* versus (b) *extent = headings + body, no caption/furniture variants offered*. The
+maintainer answered "a". This file is the only place the ruling is recorded.
+
+**Next action (for a fresh session; this one is at ~127K working tokens, over the originating floor):**
+- **Asserted:** brainstorm → spec for arm A with ruling (a). Start from
+  `2026-09-27-jev-picks-oracle-disposes-spike-evidence.md` and its script.
+- **Proposed, open to refutation:** under (a), the held-out yield rises from 3/24 to most of the 13
+  exact E extents. This rests on the refused extents differing from the box only by title and footer
+  lines. **Re-run the spike with the oracle scoring the box itself as the ground truth before building
+  on it** (minutes; the raw calls are in `internal/benchmarks/jev-2026-09-27/spike-A/`).
