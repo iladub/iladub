@@ -75,3 +75,8 @@ heavy deterministic geometry path, and settle how such decisions are disposed.
 - All earlier Jev figures rest on 5 pages, one run per condition.
 
 The lead-1/lead-2 result, if it lands, is appended below this line.
+
+**LANDED** (see `2026-09-27-extent-two-leads-evidence.md`):
+- **Lead 1 (reader agreement) is REFUTED as an oracle.** It refuses the correct side-by-side cbh answer, and any cut-off above 0 is a tuned constant.
+- **Lead 2 (marks the author drew: captions, ruled boxes, empty gutters) CAN dispose a proposal that carries its x-range.** It covers both cbh and bfs p5 exactly. It abstains on ons p4, where the page has no marks, and apple's interior rules make it a false positive there.
+- **For the brainstorm:** the answer must be word- and x-grained, because cbh line L75 holds three objects, so a line-range proposal from Jev cannot be right. The author's marks are exactly the kind of "deterministic reasoning piece" the maintainer's challenge describes, and an oracle besides.
