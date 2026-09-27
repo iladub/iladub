@@ -95,3 +95,11 @@ band's non-body words (lines above `body_line`) with the words lying exactly ins
 - Whether moving header ink to `a` changes any `cor:scoreFloor` pin or strict-xfail in the suite
   was not run. It would: cbh and who floors would now sit below their scores. That is expected,
   but it has not been measured.
+
+## Ruled
+
+**RULED 2026-09-27 by the maintainer: fix the booking.** Part 5's proposed remedy is taken as
+stated: `_book_recovered_ink` is applied against the `HeaderNode` extents at the
+`max(0, tokens - n)` sites, with TDD and falsification, and the floors that move are re-baselined.
+No separate spec is written, because this applies R176's already-ruled principle to the branches
+R176 did not reach.
