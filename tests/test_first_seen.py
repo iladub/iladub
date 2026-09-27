@@ -35,6 +35,18 @@ def resolved() -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
     return readings, first_seen(REPO, list(readings))
 
 
+@pytest.fixture(scope="module")
+def registered(resolved) -> dict[str, tuple[str, str]]:
+    """value -> the commit that first adds its reading ROW to the register — where its
+    `readAt` was written. Keyed on the row's own typed literal, not the bare digits: a
+    rationale on 2026-09-02 quotes `0.18950437317784258`, and the bare `0.1895` of the
+    2026-09-04 row is a substring of it."""
+    readings, _ = resolved
+    literal = {f'"{v}"^^xsd:decimal': v for v in readings}
+    found = first_seen(REPO, list(literal), paths=(str(REGISTER),))
+    return {literal[k]: hit for k, hit in found.items()}
+
+
 def test_every_quotable_reading_is_recoverable(resolved):
     """R198's blocking question, asked by the predecessor handoff's 5a BEFORE any
     design: is first observation recoverable for the readings already registered, or
@@ -100,23 +112,44 @@ def test_the_register_flags_what_the_derivation_drops(resolved):
     assert set(readings) == every - flagged
 
 
-def test_readat_never_predates_first_observation(resolved):
+def test_readat_never_predates_first_observation(resolved, registered):
     """SPEC §6, the falsifying oracle, in its committed form.
 
     A negative lag says the value was in the tree before the register claims anyone
     read it, which means the match is coincidental rather than provenantial — and a
     coincidental match would make the whole R198 measurement unsound. Positive lags
-    are the defect R198 names and are expected; ZERO is the healthy case."""
+    are the defect R198 names and are expected; ZERO is the healthy case.
+
+    SELF-SIGHTED READINGS ARE BOUNDED FROM THE OTHER SIDE (2026-09-27). When the first
+    commit on main that adds a value is the one that adds its OWN register row, main
+    holds no earlier sighting: the squash merge (§ Branch protection) erased the branch
+    commit where the value was read. Measured when `main` went red at `6d6631f`: ons
+    0.8463… and bfs 0.9021… were read and committed on 2026-09-19 (`50f67c0`) and
+    squashed onto main on 2026-09-20, so the old check compared `readAt` with the MERGE
+    date and failed for a PR merely open across midnight — 9 of 26 readings are
+    self-sighted and each was one late merge from the same failure. With no earlier
+    sighting there is no pickaxe noise to catch; what main CAN still refute is a
+    `readAt` written LATER than the commit that recorded it."""
     readings, seen = resolved
     reg = Graph().parse(REPO / REGISTER)
     read_at = {
         str(reg.value(n, COR.value)): min(str(d) for d in reg.objects(n, COR.readAt))
         for _, n in reg.subject_objects(COR.reading)
     }
-    early = {v: (read_at[v], seen[v][1]) for v in readings if read_at[v] < seen[v][1]}
+    self_sighted = {v for v in readings if seen[v][0] == registered[v][0]}
+    assert self_sighted and self_sighted != set(readings), (
+        "both arms must be populated, or one of the two assertions below proves nothing")
+    early = {v: (read_at[v], seen[v][1]) for v in set(readings) - self_sighted
+             if read_at[v] < seen[v][1]}
     assert not early, (
         "a reading is registered as read BEFORE its value first appears on main, so "
         f"the pickaxe is matching noise rather than provenance: {early}"
+    )
+    future = {v: (read_at[v], registered[v][1]) for v in self_sighted
+              if read_at[v] > registered[v][1]}
+    assert not future, (
+        "a reading's readAt is LATER than the commit that recorded it, so the date is "
+        f"hand-written wrong: {future}"
     )
 
 
