@@ -95,3 +95,41 @@ moves the score of cbh or bfs.
 - Only 2 of 7 documents were run. The breakdown for the others was not measured.
 - The recorded boxhead readings key on a listing hash. Asserted counts were unchanged in every
   arm, so no reading was lost to a hash change, but this was inferred, not logged.
+
+## Appended: the role-check count (same session, part 5's first proposed action)
+
+**Method.**
+- Each escalated region's lines were dumped from `page_bands`; the band word count equals
+  `tokens_escalated` for every region except p5's DATAGRID_RESIDUE, which has no band.
+- Caption labels were checked for references anywhere in the document (`pdfplumber` text,
+  `\bT1\b` etc.).
+- Note marks were checked for small-font characters (< 0.8 × the page's median char size) inside
+  the tables they would attach to.
+
+**Result.** 217 escalated tokens (cbh 80 + bfs 137):
+
+| class | tokens | exact check available | kind of check |
+|---|---|---|---|
+| boxhead words (cbh ×4 fused; bfs p5 table 2) | 80 + 20 = **100** | none — header reading, not a role | — |
+| footnotes (bfs p5: 34; bfs p6: 2 of the region's 3 merged words) | **36** | **yes**: every leading note digit (p5 1/2/3, p6 1/2) matches a small-font digit inside its table | independent: an author-drawn typographic mark |
+| source line (`Sources:` p5, 5; `Source:` p6, 1) | **6** | a lexical derivation | not independent: the pattern proposes and decides |
+| captions T3 (16), G1/G2 (20) | **36** | a label pattern only; **each label occurs exactly once in the document**, so there is no referent to match | not independent |
+| masthead / footer (p0: 6; p4: 4 + 12) | **22** | none exact: the lines differ across pages (`OFS` appended, page number) | — |
+| DATAGRID_RESIDUE (p5) | **17** | not diagnosed | — |
+
+**Reading it:**
+- An **independent oracle** covers 36 / 217 tokens (17%), all footnotes.
+- Adding the lexical derivations (sources, caption labels), which need no model at all, raises it
+  to 78 / 217 (36%).
+- The single largest block is **boxhead reading: 100 / 217 (46%)**, and 80 of those are cbh's
+  fused header words.
+- The roles that have no check (masthead, footer, 22 tokens) are exactly where "no oracle, no
+  worker" forbids a Jev worker.
+
+**Unverified:**
+- Whether a *carried* caption or note counts as asserted in `a/(a+e)` was not measured. If it
+  does not, carrying roles moves ink out of `e` without adding to `a`, and part of the gain is the
+  ignored-ink blindness described above.
+- The upper bounds if everything in a class became asserted, computed only:
+  - cbh 804 / 884 → 1.0 if its 80 header tokens are read;
+  - bfs 1263 / 1400 → 0.928 (+36) or → 0.958 (+78).
