@@ -28,9 +28,13 @@ def test_pivot_now_compiles_hierarchically(tmp_path):
     report = compile_tables(str(p))
     assert (None, None, TAB.HierarchicalTable) in report.graph, "pivot must compile to HierarchicalTable"
     assert report.score > 0.0, "must assert at least some body tokens"
-    assert report.score < 1.0, (
-        "pivot score must be < 1.0: header words (Current Visit, Prior Visit, sub-labels, (SI))"
-        " inflate the denominator so the ratio of asserted body tokens is strictly less than 1"
+    # Inverted 2026-09-27 (ruled; `docs/superpowers/2026-09-27-cbh-boxhead-is-bookkeeping-evidence.md`).
+    # This used to require < 1.0 because the header words were booked ESCALATED. They are carried
+    # header nodes, tiled and disposed, so they are booked asserted like R176's label cells, and a
+    # fully read pivot scores 1.0.
+    assert report.score == 1.0, (
+        "the pivot's header (Current Visit, Prior Visit, sub-labels, (SI)) is carried, so it is "
+        "booked asserted: %r" % report.score
     )
     # safety guard: never a wrong record assertion
     assert not any(r.kind is RegionKind.RECORD_TABLE for r in report.regions)
@@ -55,10 +59,10 @@ def test_report_serializes_and_reparses(tmp_path):
 def test_mixed_document_score_is_token_coherent(tmp_path):
     """A document with a record table + a pivot table exercises both compilation paths.
 
-    After Task 7: the pivot compiles as HierarchicalTable (not escalated), so the
-    score is the ratio of asserted body-words / total band words.  Header words in
-    the pivot band (Current Visit, Prior Visit, sub-labels) are not body cells and
-    count toward the denominator but not the numerator, so 0 < score < 1.
+    After Task 7: the pivot compiles as HierarchicalTable (not escalated). Its header words
+    (Current Visit, Prior Visit, sub-labels) used to count toward the denominator but not the
+    numerator, giving 0 < score < 1. Since 2026-09-27 carried header ink is booked asserted
+    (`test_hier_header_ink_is_asserted.py`), so both tables read in full score 1.0.
     """
     from iladub.etkl.holon import TAB
     p = tmp_path / "mixed.pdf"
@@ -70,10 +74,8 @@ def test_mixed_document_score_is_token_coherent(tmp_path):
     assert (None, None, TAB.RecordTable) in report.graph
     # hierarchical branch (pivot)
     assert (None, None, TAB.HierarchicalTable) in report.graph
-    # score is a coherent token ratio strictly inside (0, 1):
-    #   numerator  = record body words + pivot body words (both asserted)
-    #   denominator = above + pivot header words (not body cells)
-    assert 0.0 < report.score < 1.0, report.score
+    # numerator = denominator = record words + pivot body words + pivot carried header words
+    assert report.score == 1.0, report.score
 
 
 def test_transposed_now_compiles(tmp_path):

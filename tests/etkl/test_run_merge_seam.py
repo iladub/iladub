@@ -260,6 +260,26 @@ D1_MOVES = {
     ("ons-index-of-services-2026-02", 8): 12,
 }
 
+# A FIFTH CAUSE, 2026-09-27, and an ACCOUNTING one like R176's: the `#htable` assert branches book
+# the header ink their reading CARRIED as asserted instead of escalated (ruled; PR #281,
+# `docs/superpowers/2026-09-27-cbh-boxhead-is-bookkeeping-evidence.md`). MEASURED on this test's
+# own 27-page table (`datagrid_fallback=False`), main vs the branch: 5 pages move, all UP, and on
+# EVERY page `asserted + escalated` is byte-equal -- each gain is exactly that page's escalated
+# drop, so no ink was invented and none was read that was not read before.
+#
+#     graincorp-stem p0   586/26 -> 611/1    (the 1 is the `Friday, 31 July 2026` banner)
+#     ons p4               19/17 ->  36/0
+#     who p0/p1/p2        301/27 -> 327/1, 289/27 -> 315/1, 148/14 -> 161/1
+#
+# cbh p0 does not move HERE: at page scope without the driver its four tables escalate whole.
+HEADER_INK_MOVES = {
+    ("graincorp-stem-2026-07-31", 0): 611,
+    ("ons-index-of-services-2026-02", 4): 36,
+    ("who-wfa-boys-zscore-0-5", 0): 327,
+    ("who-wfa-boys-zscore-0-5", 1): 315,
+    ("who-wfa-boys-zscore-0-5", 2): 161,
+}
+
 # Every fragment compile.py mints, derived from its URIRef(f"{doc}#…") sites and
 # decisionlog.py's band prefix — NOT guessed. Longest alternatives first so `rhtable`
 # is not matched as `table`.
@@ -309,6 +329,10 @@ def test_o3_no_page_loses_asserted_ink_to_a_merge():
                 f"{stem} p{page}: {rep.asserted} != {D1_MOVES[(stem, page)]} — this page's " \
                 f"gain is D1's (border-only bands now classify) and is pinned to its measured " \
                 f"value; a different number is a new cause, not this one"
+        elif (stem, page) in HEADER_INK_MOVES:
+            assert rep.asserted == HEADER_INK_MOVES[(stem, page)], \
+                f"{stem} p{page}: {rep.asserted} != {HEADER_INK_MOVES[(stem, page)]} — this " \
+                f"page's gain is carried header ink booked asserted, pinned to its measured value"
         else:
             assert rep.asserted == baseline, \
                 f"{stem} p{page}: {rep.asserted} != {baseline} — neither the merge (apple " \

@@ -374,6 +374,23 @@ def _book_recovered_ink(band, booked, recovered_extents) -> tuple[int, int]:
     return a, e
 
 
+
+def _book_hier_band(band, n, header_extents) -> tuple[int, int]:
+    """The `#htable` assert branches' booking: body tokens `n`, plus the header ink the same
+    `assert_hier_region` call CARRIED, asserted; the rest of the band escalated.
+
+    Until 2026-09-27 these branches booked `max(0, tokens - n)` escalated, so a header the reading
+    had derived, emitted and tiled was counted as unread -- all of cbh's escalated ink, and all but
+    one or three words of graincorp-stem's and who's
+    (`docs/superpowers/2026-09-27-cbh-boxhead-is-bookkeeping-evidence.md`). The header words are
+    counted with R176's `_book_recovered_ink` against the emitted nodes' own boxes, with nothing
+    pre-booked: a header node's box is min/max over its own words, so it holds no body word and
+    the count is exact. Totals are unchanged -- ink only moves from `escalated` to `asserted`.
+    """
+    tokens = sum(len(ln.words) for ln in band.lines)
+    carried, _ = _book_recovered_ink(band, frozenset(), header_extents)
+    return n + carried, max(0, tokens - n - carried)
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -1344,17 +1361,18 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # LOOP M: the carried reading, present only for a band the continuation AXIOM
                     # recognized (see the parameter's docstring). `.get` is the whole guard —
                     # every other band, and every page the driver did not recognize, passes None.
+                    _hext = []
                     ruled_reading = resolve_ruled_header_rows(
                         ruled_scratch, hreg, band, table_uri, doc, page_number,
-                        carried=(carried_header_roles or {}).get(idx))
+                        carried=(carried_header_roles or {}).get(idx), header_extents=_hext)
                 if ruled_reading is not None:
                     n_ruled, reading = ruled_reading
                     graph += ruled_scratch
                     _emit_band_captions(graph, table_uri, band)
                     _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
-                    tokens = sum(len(ln.words) for ln in band.lines)
-                    asserted_total += n_ruled
-                    escalated_total += max(0, tokens - n_ruled)
+                    _a, _e = _book_hier_band(band, n_ruled, _hext)
+                    asserted_total += _a
+                    escalated_total += _e
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "asserted", "")
                     reports.append(RegionReport(region.kind, "asserted", n_ruled, None,
@@ -1363,24 +1381,28 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 elif hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
                     table_uri = URIRef(f"{doc}#htable{idx}")
                     resolved = None
+                    _hext = []
                     if span_proposer is not None:
                         from .span import resolve_ambiguous_merge
                         resolved = resolve_ambiguous_merge(
-                            graph, hreg, band, table_uri, doc, page_number, span_proposer)
+                            graph, hreg, band, table_uri, doc, page_number, span_proposer,
+                            _hext)
                     if resolved is None and row_role_proposer is not None:
                         # Loop C NEURAL slice. The narrow-flank resolver keeps priority: it fires
                         # on an explicit ambiguous_flank flag, a strictly narrower trigger. This
                         # handles the general tiling failure (caption / wrap-continuation rows).
                         from .rowrole import resolve_header_row_roles
+                        _hext = []                    # a refused span reading carried nothing
                         resolved = resolve_header_row_roles(
-                            graph, hreg, band, table_uri, doc, page_number, row_role_proposer)
+                            graph, hreg, band, table_uri, doc, page_number, row_role_proposer,
+                            _hext)
                     if resolved is not None:
                         n, _promos = resolved
                         _emit_band_captions(graph, table_uri, band)
                         _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
-                        tokens = sum(len(ln.words) for ln in band.lines)
-                        asserted_total += n
-                        escalated_total += max(0, tokens - n)
+                        _a, _e = _book_hier_band(band, n, _hext)
+                        asserted_total += _a
+                        escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
@@ -1408,7 +1430,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # Loop J closed R17: the record and transposed paths now carry the same gate.
                     from .tiling import region_tiles
                     scratch = Graph()
-                    n = assert_hier_region(scratch, hreg, band, table_uri, doc, page_number)
+                    _hext = []
+                    n = assert_hier_region(scratch, hreg, band, table_uri, doc, page_number,
+                                           _hext)
                     tiles = region_tiles(scratch) if n else None
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
@@ -1435,9 +1459,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         if n:
                             _emit_band_captions(graph, table_uri, band)
                             _emit_unit_markers(graph, table_uri, band, hreg.grid.boundaries)
-                        tokens = sum(len(ln.words) for ln in band.lines)
-                        asserted_total += n
-                        escalated_total += max(0, tokens - n)
+                        _a, _e = _book_hier_band(band, n, _hext)
+                        asserted_total += _a
+                        escalated_total += _e
                         # No escalate_region() call on this path (n == 0 short-circuits the
                         # gate above), so the honest rationale is "" even when the verdict
                         # itself is "escalated" (ROUND_TRIP_FAIL never reaches escalate_region).

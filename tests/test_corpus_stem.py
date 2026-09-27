@@ -373,8 +373,15 @@ def test_stem_document_is_byte_identical_under_adoption(stem_document):
     The pin went stale for a reason that is [[R173]]'s, not this test's: `20cc5b8` published
     the move in its own commit message (`gstem .96546->.96589`) and re-baselined the three
     pinned tests it moved -- all three NON-corpus. A test nothing runs cannot be re-baselined
-    by a careful author."""
-    assert stem_document.score == 0.9658886894075404, stem_document.score
+    by a careful author.
+
+    2026-09-27: moved 0.9658886894075404 -> 0.9995511669658886 (2152/2228 -> 2227/2228) by the
+    RULED header-ink booking (`docs/superpowers/2026-09-27-cbh-boxhead-is-bookkeeping-evidence.md`,
+    PR #281). The DENOMINATOR is unchanged at 2228; the numerator gains the 25+25+25 header words
+    the three tables' `#htable` readings already carried, which were booked escalated. The one
+    token still escalated is the `Friday, 31 July 2026` banner above. No cell was added: this is
+    booking, not reading, and must not be cited as a reading improvement either."""
+    assert stem_document.score == 0.9995511669658886, stem_document.score
     assert stem_document.adopted == (), stem_document.adopted
     assert len(stem_document.chains) == 1 and len(stem_document.chains[0]) == 3
 
