@@ -39,6 +39,14 @@ class Band:
     # tab:unshownText). Default empty so every existing constructor stands — the Band.captions
     # and Band.unit_markers precedent above.
     unshown: tuple[tuple[int, int], ...] = ()
+    # The bbox (x0, x1, top, bottom) of the ONE closed box the author drew that this band was cut
+    # from (box-split spec § 9). Provenance to the page, not a flag: `boxsplit.bands_to_split`
+    # (AXIOM) already decided that one closed frame holds one table, and `compile_tables` admits
+    # that mark in place of the multi-table gate's geometric proxy. Only `boxsplit._box_band` sets
+    # it; `compile.merge_bands` drops it BY DESIGN, because the frame answered for its box, not for
+    # a run that swallows it. Default None so every existing constructor stands (the
+    # Band.captions precedent above).
+    frame: tuple[float, float, float, float] | None = None
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

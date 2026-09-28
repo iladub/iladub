@@ -176,10 +176,14 @@ def test_merge_bands_covers_every_field_of_band():
     decide how the merge carries it, then move this number.
 
     RE-MEASURED 2026-09-18 (R213): 8 -> 9, `Band.unshown`. THIS PIN DID ITS JOB -- the field
-    was added and merge_bands was not updated, and this is the only test that said so."""
+    was added and merge_bands was not updated, and this is the only test that said so.
+
+    RE-MEASURED 2026-09-28 (box-split spec § 9): 9 -> 10, `Band.frame`. The pin fired again, and
+    this time the decision is that merge_bands does NOT carry the field: the frame answered for
+    its own box, not for a run that swallows it (§ 9.3). test_boxsplit.py's U8 pins that drop."""
     from iladub.etkl.bands import Band
 
-    assert len(dataclasses.fields(Band)) == 9, [f.name for f in dataclasses.fields(Band)]
+    assert len(dataclasses.fields(Band)) == 10, [f.name for f in dataclasses.fields(Band)]
 
 
 def test_merge_bands_OFFSETS_unshown_addresses_it_never_concatenates_them():

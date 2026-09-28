@@ -203,7 +203,9 @@ def _box_band(box: Box, words: Sequence[Word], title: Sequence[Word],
     `Rule(x=centre, top, bottom)`, its own horizontals as `HRule(y=centre, x0, x1)`, and the page
     glyphs clipped to the box's x- AND y-extent. No page-wide rule list is consulted. The title
     words become captions AFTER the build (I-3c): `_build_ruled_band` replaces `captions` on
-    every return path with its own peel, so they are prepended to what it returns.
+    every return path with its own peel, so they are prepended to what it returns. The band
+    carries `frame = _rect(box)` (spec § 9.3): the author's closed frame, which `compile_tables`
+    admits in place of the multi-table gate's proxy.
 
     PROCEDURAL — construction only. The centre of a painted extent is exact arithmetic on the
     mark itself, the same reduction `geometry.extract_rules` makes of a pdfplumber edge; it is
@@ -219,7 +221,9 @@ def _box_band(box: Box, words: Sequence[Word], title: Sequence[Word],
                        for h in box.horizontals)
     box_chars = [c for c in page_chars if _contains(_rect(box), c)]
     built = _build_ruled_band(sub, sub_rules, sub_hrules, box_chars, section_repair=False)
-    return replace(built, captions=tuple(text_lines(list(title))) + tuple(built.captions))
+    # `frame` (spec § 9.3): the box's own bbox, carried as read -- the ONLY site that sets it.
+    return replace(built, captions=tuple(text_lines(list(title))) + tuple(built.captions),
+                   frame=_rect(box))
 
 
 def _band_key(band: Band) -> tuple[float, float]:

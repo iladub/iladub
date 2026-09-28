@@ -396,3 +396,91 @@ def test_cbh_p0_band_9_splits_into_its_two_drawn_tables():
     # I-3a on the page that motivated the split, residue scope included: every glyph once.
     assert _glyphs(bands) == Counter(ch for w in extract_words(CBH, 0) for ch in w.text
                                      if not ch.isspace())
+
+
+# --- Task 3c: a box band carries its drawn frame and skips the multi-table gate (spec § 9) -------
+
+import dataclasses
+
+from rdflib import Literal, Namespace, URIRef
+from rdflib.namespace import RDFS
+
+from iladub.etkl.bands import Band
+from iladub.etkl.compile import compile_tables, merge_bands
+from iladub.etkl.segment import is_multi_table_ambiguous
+
+DEC = Namespace("https://w3id.org/iladub/dec#")
+
+
+def _gate_tripping_page(tmp_path):
+    """The two-box page with `F.GATE_TRIPPING_LEFT` as its left box: (path, left box band's
+    index in `page_bands`, that band)."""
+    p = str(tmp_path / "trip.pdf")
+    spec = F.two_boxes_one_band_pdf(p, left=F.GATE_TRIPPING_LEFT)
+    bands = page_bands(p, 0)
+    left = _box_band(bands, spec["left"]["rows"][0][0], spec["left"]["n_cols"])
+    return p, bands.index(left), left
+
+
+def _multi_table_judgement(graph, idx):
+    """(chosen option label, rationale) of band `idx`'s one `multi_table` decision holon."""
+    region = URIRef(f"{compile_mod._DOC}#region{idx}")
+    ds = [d for d in graph.subjects(DEC.regarding, region)
+          if graph.value(d, RDFS.label) == Literal("multi_table")]
+    assert len(ds) == 1, ds
+    return str(graph.value(graph.value(ds[0], DEC.chosen), RDFS.label)), \
+        str(graph.value(ds[0], DEC.rationale))
+
+
+def test_u6_a_framed_box_band_skips_the_multi_table_gate(tmp_path):
+    """U6 (spec § 9.5). PRECONDITION, measured here so the test pins something: the gate returns
+    True on this box band's content on today's tree. Past it: the band carries the bbox of the box
+    it was cut from, `compile_tables` does not escalate it MULTI_TABLE_AMBIGUOUS, and its
+    `multi_table` judgement records `single` with a rationale naming the drawn frame."""
+    p, idx, left = _gate_tripping_page(tmp_path)
+    assert is_multi_table_ambiguous(left) is True, "precondition: the gate trips on this content"
+    box = next(b for b in page_boxes(p, 0) if round(b.x0) == 40)
+    assert left.frame == (box.x0, box.x1, box.top, box.bottom)
+    report = compile_tables(p, 0)
+    assert report.regions[idx].reason != "MULTI_TABLE_AMBIGUOUS", report.regions[idx]
+    chosen, why = _multi_table_judgement(report.graph, idx)
+    assert chosen == "single"
+    assert "frame" in why, why
+
+
+def test_only_box_bands_carry_a_frame(tmp_path):
+    """I-9-2 on `page_bands`: both box bands carry their own box's bbox; the residue carries
+    none."""
+    p = str(tmp_path / "two.pdf")
+    spec = F.two_boxes_one_band_pdf(p)
+    bands, left, right = _two_box_bands(p, spec)
+    frames = {(b.x0, b.x1, b.top, b.bottom) for b in page_boxes(p, 0)}
+    assert left.frame in frames and right.frame in frames and left.frame != right.frame
+    assert [b.frame for b in bands if b is not left and b is not right] == [None]
+
+
+def test_u7_the_same_content_without_its_frame_still_escalates(tmp_path, monkeypatch):
+    """U7 (spec § 9.5, negative): the band U6 skips, with its frame cleared, meets the gate
+    exactly as today — escalated MULTI_TABLE_AMBIGUOUS, `multi_table` chosen `multi`."""
+    p, idx, _ = _gate_tripping_page(tmp_path)
+    real = compile_mod.page_bands
+    monkeypatch.setattr(compile_mod, "page_bands", lambda *a, **k: [
+        dataclasses.replace(b, frame=None) for b in real(*a, **k)])
+    report = compile_tables(p, 0)
+    assert report.regions[idx].verdict == "escalated"
+    assert report.regions[idx].reason == "MULTI_TABLE_AMBIGUOUS"
+    assert _multi_table_judgement(report.graph, idx)[0] == "multi"
+
+
+def test_u8_a_merged_run_carries_no_frame():
+    """U8 (spec § 9.3, I-9-2): the frame answered for its box, not for a run that swallows it.
+    `merge_bands` yields no frame even when every band of the run carries one."""
+    from iladub.etkl.geometry import Line, Word
+
+    def band(y, frame):
+        ln = Line(words=(Word("x", 10.0, 20.0, y, y + 9.0),), top=y, bottom=y + 9.0)
+        return Band(lines=(ln,), top=y, bottom=y + 9.0, frame=frame)
+
+    merged = merge_bands([band(0.0, (0.0, 30.0, 0.0, 9.0)), band(20.0, (0.0, 30.0, 20.0, 29.0))],
+                         0, 1)
+    assert merged.frame is None

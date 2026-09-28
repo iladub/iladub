@@ -2387,7 +2387,8 @@ def _line_grid(c, xs, y_top: float, n_rows: int) -> None:
         c.line(xs[0], y, xs[-1], y)
 
 
-def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = None) -> dict:
+def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = None,
+                           left: tuple | None = None) -> dict:
     """O1: two closed ruled boxes side by side in ONE text band, modelled on cbh-stem p0 band 9.
 
     Left: a 3-column grid, boxhead + 3 body rows (4 verticals, 5 horizontals). Right: 2 columns
@@ -2402,12 +2403,17 @@ def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = N
     `aside` (Task 3, the residue's scope) draws one extra word to the RIGHT of both boxes on the
     title line, outside every box and title bar — cbh-stem p0 band 9's `1,951,264`. It puts the
     residue's y-range across both boxes, so a residue built from page-scoped rules and glyphs
-    would re-read the boxes' ink."""
+    would re-read the boxes' ink.
+
+    `left` (Task 3c, spec § 9) replaces the left box's `(xs, rows)`; `GATE_TRIPPING_LEFT` is its
+    one caller's value. Default None draws the box above, so every existing caller stands."""
     y_top = PAGE_H - 192.0
     left_xs = [40.0, 120.0, 220.0, 340.0]
     right_xs = [400.0, 470.0, 560.0]
     left_rows = [("Site", "Alpha", "Beta"),
                  ("ALB", "10", "20"), ("ESP", "30", "40"), ("GER", "50", "60")]
+    if left is not None:
+        left_xs, left_rows = list(left[0]), list(left[1])
     right_rows = [("ALB", "1 - 15 Oct"), ("ESP", "2 - 9 Nov"), ("GER", "3 - 7 Dec")]
     left_title, right_title = "Stock at Port", "Shutdown Dates"
     note = "Note: figures are provisional"
@@ -2431,13 +2437,29 @@ def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = N
     c.save()
     return {
         "aside": aside,
-        "left": {"xs": left_xs, "n_cols": 3, "n_verticals": 4, "n_horizontals": 5,
-                 "rows": left_rows, "title": left_title, "boxhead": left_rows[0]},
+        "left": {"xs": left_xs, "n_cols": len(left_xs) - 1, "n_verticals": len(left_xs),
+                 "n_horizontals": len(left_rows) + 1, "rows": left_rows, "title": left_title, "boxhead": left_rows[0]},
         "right": {"xs": right_xs, "n_cols": 2, "n_verticals": 3, "n_horizontals": 4,
                   "rows": right_rows, "title": right_title, "boxhead": None},
         "note": note,
         "pitch": _BOX_PITCH,
     }
+
+
+# Task 3c (spec § 9.5, U6): a left box whose content, read WITHOUT its frame, trips
+# `segment.is_multi_table_ambiguous` -- cbh-stem p0 T1 in miniature (PORT | WHEAT | GRADES |
+# BARLEY | TOTAL): a wide WHEAT column puts the widest ink gutter before GRADES, and GRADES' text
+# codes give the right half its own stub. The blank TOTAL head leaves the right half one header
+# word short of its columns, so it classifies UNSUPPORTED (cbh T1's halves do the same) and
+# `find_table_gutter` declines the cut. That the gate returns True on the box band built from it
+# is MEASURED in the test that uses it, not assumed here.
+GATE_TRIPPING_LEFT = (
+    (40.0, 80.0, 170.0, 250.0, 290.0, 340.0),
+    (("PORT", "WHEAT", "GRADES", "BARLEY", ""),
+     ("ALB", "129,183", "APW1/ASW9", "27,023", "160,845"),
+     ("ESP", "25,013", "APW1/H2", "49,244", "82,850"),
+     ("GER", "160,198", "AWW1/ANW1", "3,406", "170,731")),
+)
 
 
 def two_boxes_stacked_pdf(path: str) -> dict:

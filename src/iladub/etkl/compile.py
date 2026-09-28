@@ -610,10 +610,12 @@ def merge_bands(bands, first: int, last: int):
     second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
     prevent, and the script is committed evidence whose output must stay reproducible.
 
-    It covers ALL NINE of `Band`'s fields. A tenth would be silently defaulted here and nothing
-    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count --
-    and R213's `unshown` is the case that proves the pin works: it was added to `Band` and missed
-    here, and only that test said so.
+    It covers NINE of `Band`'s ten fields. The tenth, `frame`, is dropped BY DESIGN (box-split
+    spec § 9.3): a run that swallows a box band is not a box band, so it meets the multi-table
+    gate exactly as before. Any further field would be silently defaulted here and nothing else in
+    the suite would notice, which is why tests/etkl/test_band_runs.py pins the count -- and R213's
+    `unshown` is the case that proves the pin works: it was added to `Band` and missed here, and
+    only that test said so.
 
     `unshown` is the one field that cannot be concatenated, because it is ADDRESSED. Its members
     are (row, col) in the band's OWN row space, and a run renumbers rows -- band `first+1`'s row
@@ -991,10 +993,23 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         band_marks.append((asserted_total, escalated_total))
         brec = recorder.band(idx)
         ascii_view = render_ascii(band)
-        multi_table = is_multi_table_ambiguous(band)
-        brec.record("multi_table", ["single", "multi"],
-                    "multi" if multi_table else "single",
-                    "MULTI_TABLE_AMBIGUOUS" if multi_table else "single table")
+        if band.frame is not None:
+            # Box-split spec § 9 (PROCEDURAL: it applies boxsplit.bands_to_split's AXIOM product,
+            # deciding nothing and carrying no constant). A box band was cut from ONE closed frame
+            # the author drew, so how many tables it holds is already answered, and the gate's
+            # geometric proxy must not overrule the mark. The skip is accounted for HERE, in the
+            # decision log. The frame is named in the rationale, not passed as `evidence`:
+            # dec:consideredEvidence is an owl:ObjectProperty ranged prov:Entity (dec.ttl), and a
+            # bbox is not a node.
+            multi_table = False
+            brec.record("multi_table", ["single", "multi"], "single",
+                        f"single table: cut from one closed frame the author drew, "
+                        f"bbox (x0, x1, top, bottom) = {band.frame}")
+        else:
+            multi_table = is_multi_table_ambiguous(band)
+            brec.record("multi_table", ["single", "multi"],
+                        "multi" if multi_table else "single",
+                        "MULTI_TABLE_AMBIGUOUS" if multi_table else "single table")
         if multi_table:
             cand_uri = URIRef(f"{doc}#region{idx}")
             escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
