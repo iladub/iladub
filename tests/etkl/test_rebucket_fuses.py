@@ -139,3 +139,50 @@ def test_u5_a_divider_dropped_by_a_straddling_word_keeps_the_refusal(tmp_path):
         "the re-bucket must FORM the fused cell, or U5 pins nothing"
     band = _build_ruled_band(sub, sub_rules, (), chars)
     _assert_refused_to_the_word_band(band, sub)
+
+
+# --- fix round 2: the witness judges the lines the accept path SHIPS, after the weld -------------
+# `geometry.weld_hrule_boxes` runs after the re-bucket and re-forms the welded header rows' cells
+# by centre over the UNEXTENDED author rules, sending a cell left of the first rule into the LAST
+# column. With interior-only rules and a two-line header in a leading full-width hrule box, the
+# re-bucket forms no fused cell (so a witness read before the weld is False), and the weld then
+# ships `PORT TOTAL NAME` spanning x 45 -> 325. Measured: 221087d shipped it; c68e437 refused
+# (count alone). Task 3b re-review, N1.
+
+def _ruled_sub_with_hrules(path):
+    """`_ruled_sub` plus the sub-band's hrules, filtered as `compile.page_bands` filters them."""
+    from iladub.etkl.geometry import extract_hrules
+    sub, sub_rules, chars = _ruled_sub(path)
+    sub_hrules = tuple(h for h in extract_hrules(path, 0) if sub.top <= h.y <= sub.bottom)
+    return sub, sub_rules, sub_hrules, chars
+
+
+def test_u4c_a_weld_that_joins_an_edge_cell_to_the_last_column_keeps_the_refusal(tmp_path):
+    from iladub.etkl.compile import _build_ruled_band
+    from iladub.etkl.geometry import rule_aware_lines
+    p = os.path.join(str(tmp_path), "u4c.pdf")
+    F.header_beside_body_ruled_pdf(p, rules=[110.0, 250.0, 330.0], welded_header=True)
+    sub, sub_rules, sub_hrules, chars = _ruled_sub_with_hrules(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, f"the count must refuse ({rule_cols} vs {word_cols}), or U4c pins nothing"
+    assert len(sub_hrules) >= 2, "the leading hrule box must reach the band, or nothing is welded"
+    xs = sorted({round(r.x, 2) for r in sub_rules})
+    band_chars = [c for c in chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
+    rel = rule_aware_lines(band_chars, xs)
+    assert [w.text for w in rel[0].words] == ["PORT", "MAIN WHEAT", "TOTAL"], \
+        "the re-bucket alone must form no fused header cell, or U4c does not isolate the weld"
+    band = _build_ruled_band(sub, sub_rules, sub_hrules, chars)
+    _assert_refused_to_the_word_band(band, sub)
+
+
+def test_u4c_control_a_licensed_weld_is_still_accepted(tmp_path):
+    """The same page with a left rule at 40: the weld joins each column's two header lines, which
+    is its licence (the wrapped header names), and no welded cell spans an uncovered point."""
+    from iladub.etkl.compile import _build_ruled_band
+    p = os.path.join(str(tmp_path), "u4c_ctl.pdf")
+    F.header_beside_body_ruled_pdf(p, welded_header=True)
+    sub, sub_rules, sub_hrules, chars = _ruled_sub_with_hrules(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, f"the count must refuse ({rule_cols} vs {word_cols}), or the control pins nothing"
+    band = _build_ruled_band(sub, sub_rules, sub_hrules, chars)
+    assert [w.text for w in band.lines[0].words] == ["PORT NAME", "MAIN WHEAT GRADES", "TOTAL"]

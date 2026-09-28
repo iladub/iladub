@@ -2652,7 +2652,8 @@ def wordless_separator_boxes_pdf(path: str) -> dict:
 
 
 def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
-                                 rules: list | None = None, extra_row: list | None = None) -> dict:
+                                 rules: list | None = None, extra_row: list | None = None,
+                                 welded_header: bool = False) -> dict:
     """Task 3b (box-split, spec § 8.4 U1/U2) — cbh T1's defect, synthetically.
 
     Four author verticals make THREE ruled cells. In the right-hand cell the header word
@@ -2670,9 +2671,19 @@ def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
     § 8.6 U4/U5). They build the two shapes where the re-bucket's formed cells are NOT the author
     intervals: an interior-only ruling (no left rule, so `rule_aware_lines` extends the edge column
     to the ink), and a body word straddling a rule (so `_row_dividers` drops it for that row).
+
+    `welded_header=True` (fix round 2, U4c) wraps the header over TWO lines (`PORT` / `NAME`,
+    `MAIN WHEAT` / `GRADES`, `TOTAL`) inside a leading box of full-width hrules drawn 40 -> 330,
+    so `geometry.weld_hrule_boxes` merges the two header rows after the re-bucket. With the
+    interior-only `rules=[110, 250, 330]`, the weld re-assigns the extended left-edge cells by
+    centre over the author rules and drops them into the LAST column (Task 3b re-review, N1).
     """
     rules = list(rules) if rules is not None else [40.0, 110.0, 250.0, 330.0]
     header = [(45.0, "PORT"), (115.0, "MAIN WHEAT GRADES"), (296.0, "TOTAL")]
+    header2 = []
+    if welded_header:
+        header = [(45.0, "PORT"), (115.0, "MAIN WHEAT"), (296.0, "TOTAL")]
+        header2 = [(45.0, "NAME"), (115.0, "GRADES")]
     rows = [
         [(45.0, "ALB"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "160,845")],
         [(45.0, "ESP"), (115.0, "APW1/H2/ASW9/AUH2X"), (255.0, "82,850")],
@@ -2686,15 +2697,23 @@ def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
     c = canvas.Canvas(str(path), pagesize=letter)
     top = PAGE_H - 120.0
     rh = 14.0
-    bottom = top - len(rows) * rh - 6.0
+    body_top = top - rh if header2 else top      # the last header line
+    bottom = body_top - len(rows) * rh - 6.0
     c.setLineWidth(0.7)
     for x in rules:
         c.line(x, top + 12, x, bottom)
     c.setFont("Helvetica", 9)
     for x, t in header:
         c.drawString(x, top, t)
+    for x, t in header2:
+        c.drawString(x, body_top, t)
     for i, row in enumerate(rows):
         for x, t in row:
-            c.drawString(x, top - (i + 1) * rh, t)
+            c.drawString(x, body_top - (i + 1) * rh, t)
+    if header2:
+        # full-width hrules: one through header line 1's glyphs (inside the band's y-range), one
+        # between header line 2 and the body, one at the bottom — the leading box holds both lines.
+        for y in (top + 4.0, body_top - 4.0, bottom):
+            c.line(40.0, y, 330.0, y)
     c.save()
     return {"rule_xs": rules, "header_cells": [t for _x, t in header]}

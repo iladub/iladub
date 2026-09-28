@@ -174,23 +174,22 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     # is a proxy for "can only fuse", and cbh T1 refuted it: a header word lying wholly beside
     # the body numbers of its own ruled cell adds a gutter the count reads as a column, though no
     # line has two words that gutter separates. So the refusal now also requires an exact FUSION
-    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): a cell the re-bucket
-    # actually FORMS whose extent holds a point no word of the band covers. It is read off
-    # `relines` itself, never a model of them (§ 8.6: the author-interval model of § 8.2 missed
-    # edge columns extended to the ink and dividers dropped per row by R154). Where none exists,
+    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): a cell the accept path
+    # would SHIP whose extent holds a point no word of the band covers. It is read off the lines
+    # themselves, never a model of them (§ 8.6: the author-interval model of § 8.2 missed edge
+    # columns extended to the ink and dividers dropped per row by R154). The lines judged are
+    # the LAST cell-forming stage before this band can be returned: the re-bucket AND the weld
+    # below, which re-assigns the welded rows' cells by centre over the author rules and so can
+    # itself join ink side by side (Task 3b re-review N1: an extended left-edge cell dropped into
+    # the last column). Hence the weld runs first, then the witness. Where no witness exists,
     # re-bucketing joins nothing the band's layout separates, and the refusal was never
-    # justified; the band is then built from the SAME `relines` the witness judged. The witness
-    # runs only when the count refuses (`and` short-circuits), and `relines` is computed exactly
-    # as before, so every band the count accepts is untouched. The post-refinement site below is
-    # NOT changed: it refused nothing in the spec's census (§ 8.2).
+    # justified; the band is then built from the SAME lines the witness judged. The witness
+    # runs only when the count refuses (`and` short-circuits); the re-bucket and the weld are
+    # pure and computed exactly as before, so every band the count accepts is untouched. The
+    # post-refinement site below is NOT changed: it refused nothing in the spec's census (§ 8.2).
     from .fusion import fusion_witness
     _word_cols = _word_column_count(sub)
     relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
-    _under_resolved = (_word_cols is not None and len(xs) >= 2
-                       and len(xs) - 1 < _word_cols
-                       and fusion_witness(sub.lines, relines))
-    if _under_resolved:
-        relines = []
     if relines:
         from .geometry import weld_hrule_boxes
         # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
@@ -208,6 +207,11 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
             if leading_hrule_box(sub_hrules, xs) is None:
                 weld_box = leading_box_y_fallback(sub_hrules)
         relines = weld_hrule_boxes(relines, sub_hrules, xs, box=weld_box)
+    _under_resolved = (_word_cols is not None and len(xs) >= 2
+                       and len(xs) - 1 < _word_cols
+                       and fusion_witness(sub.lines, relines))
+    if _under_resolved:
+        relines = []
     # The word-based band is the fallback AND, for an under-resolved band, the evidence the
     # refinement below is judged on: the rule-re-bucketed band is fused there (one column), so
     # `recover_leaf_grid` would measure the fusion rather than the band and refuse at `ncols < 2`
