@@ -2387,14 +2387,22 @@ def _line_grid(c, xs, y_top: float, n_rows: int) -> None:
         c.line(xs[0], y, xs[-1], y)
 
 
-def two_boxes_one_band_pdf(path: str) -> dict:
+def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = None) -> dict:
     """O1: two closed ruled boxes side by side in ONE text band, modelled on cbh-stem p0 band 9.
 
     Left: a 3-column grid, boxhead + 3 body rows (4 verticals, 5 horizontals). Right: 2 columns
     x 3 rows, no boxhead (3 verticals, 4 horizontals); its rows share text lines with the left
     box's first three rows, so row lines are not the unit of the split. Each box has a navy filled
     title bar above its top rule with its title inside. A note line sits one pitch below the left
-    box. Grid rules are stroked lines; title bars are fills."""
+    box. Grid rules are stroked lines; title bars are fills.
+
+    `titles=False` (Task 3, Review Focus 2) draws the same two boxes with NO title bar and no
+    title words: the split must still happen, with empty captions.
+
+    `aside` (Task 3, the residue's scope) draws one extra word to the RIGHT of both boxes on the
+    title line, outside every box and title bar — cbh-stem p0 band 9's `1,951,264`. It puts the
+    residue's y-range across both boxes, so a residue built from page-scoped rules and glyphs
+    would re-read the boxes' ink."""
     y_top = PAGE_H - 192.0
     left_xs = [40.0, 120.0, 220.0, 340.0]
     right_xs = [400.0, 470.0, 560.0]
@@ -2406,8 +2414,9 @@ def two_boxes_one_band_pdf(path: str) -> dict:
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setLineWidth(_BOX_LW)
     c.setFont("Helvetica", 8)
-    _title_bar(c, left_xs[0], left_xs[-1], y_top, left_title)
-    _title_bar(c, right_xs[0], right_xs[-1], y_top, right_title)
+    if titles:
+        _title_bar(c, left_xs[0], left_xs[-1], y_top, left_title)
+        _title_bar(c, right_xs[0], right_xs[-1], y_top, right_title)
     for i, row in enumerate(left_rows):
         for x, cell in zip(left_xs, row):
             c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
@@ -2415,16 +2424,55 @@ def two_boxes_one_band_pdf(path: str) -> dict:
         for x, cell in zip(right_xs, row):
             c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
     c.drawString(left_xs[0], _box_row_baseline(y_top, len(left_rows)), note)
+    if aside is not None:
+        c.drawString(right_xs[-1] + 16.0, _box_row_baseline(y_top, -1), aside)
     _line_grid(c, left_xs, y_top, len(left_rows))
     _line_grid(c, right_xs, y_top, len(right_rows))
     c.save()
     return {
+        "aside": aside,
         "left": {"xs": left_xs, "n_cols": 3, "n_verticals": 4, "n_horizontals": 5,
                  "rows": left_rows, "title": left_title, "boxhead": left_rows[0]},
         "right": {"xs": right_xs, "n_cols": 2, "n_verticals": 3, "n_horizontals": 4,
                   "rows": right_rows, "title": right_title, "boxhead": None},
         "note": note,
         "pitch": _BOX_PITCH,
+    }
+
+
+def two_boxes_stacked_pdf(path: str) -> dict:
+    """Task 3, Review Focus 3: two closed ruled boxes STACKED in ONE text band. The upper box
+    (3 columns, boxhead + 2 body rows) sits over the lower box (2 columns, 2 rows) at different
+    x-extents; the lower box's title bar starts exactly at the upper box's bottom rule, so every
+    text line on the page — both titles and all rows — falls at the one pitch `_BOX_PITCH` and
+    `detect_bands` keeps them in a single band (measured in the test, not assumed). The lower
+    title fill's TOP edge lies on the upper box's bottom rule; `boxes._title_bar` only accepts a
+    fill whose BOTTOM edge touches a box's TOP rule, so it is read as the lower box's bar only."""
+    up_top = PAGE_H - 192.0
+    up_xs = [40.0, 140.0, 240.0, 340.0]
+    up_rows = [("Grade", "Qty", "Price"), ("APW", "10", "300"), ("H2", "20", "310")]
+    lo_xs = [60.0, 180.0, 300.0]
+    lo_rows = [("Kwinana", "Open"), ("Albany", "Closed")]
+    up_title, lo_title = "Upper Stocks", "Lower Status"
+    up_bot = up_top - len(up_rows) * _BOX_PITCH
+    lo_top = up_bot - _BOX_PITCH                 # the lower title bar fills [lo_top, up_bot]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    _title_bar(c, up_xs[0], up_xs[-1], up_top, up_title)
+    _title_bar(c, lo_xs[0], lo_xs[-1], lo_top, lo_title)
+    for i, row in enumerate(up_rows):
+        for x, cell in zip(up_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(up_top, i), cell)
+    for i, row in enumerate(lo_rows):
+        for x, cell in zip(lo_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(lo_top, i), cell)
+    _line_grid(c, up_xs, up_top, len(up_rows))
+    _line_grid(c, lo_xs, lo_top, len(lo_rows))
+    c.save()
+    return {
+        "upper": {"xs": up_xs, "n_cols": 3, "rows": up_rows, "title": up_title},
+        "lower": {"xs": lo_xs, "n_cols": 2, "rows": lo_rows, "title": lo_title},
     }
 
 

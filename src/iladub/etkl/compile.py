@@ -445,29 +445,60 @@ def page_bands(pdf_path: str, page_number: int = 0,
     page_chars = extract_chars(pdf_path, page_number) if page_rules else []
     raw_bands = detect_bands(text_lines(words))
     bands = []
-    # Per index, the (sub, sub_rules, sub_hrules) a RULED band was built from, or None for an
-    # unruled one. Kept so a named band can be REBUILT with section_repair=True after the run
+    # Per index, the (sub, sub_rules, sub_hrules, chars) a RULED band was built from, or None for
+    # an unruled one (and for a box band, spec 2026-09-28-box-split-design.md § 3.6). Kept so a
+    # named band can be REBUILT with section_repair=True after the run
     # partition has been decided on the unrepaired list — that is invariant M1, and it costs
     # exactly +1 _build_ruled_band per named band: the page's extract_*/detect_bands/segment
     # machinery still runs once.
     specs: list[tuple | None] = []
-    for band in raw_bands:
-        # The notes below a table's last row get a band of their own (trailing.py, 2026-09-19):
-        # set at the row pitch they fuse with the row above them, and their full-width ink
-        # closes that row's gutters. The page datagrid's verdicts decide which lines they are.
-        for sub in cut_trailing_notes(segment(band), pdf_path, page_number):
-            sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
-            sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
-            if not sub_rules:
-                bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
-                specs.append(None)
-                continue
-            # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
-            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
-            # become columns only when the header confirms them (_build_ruled_band, the seam).
-            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
-                                           section_repair=False))
-            specs.append((sub, sub_rules, sub_hrules))
+
+    def _build_sub(sub, keep=None):
+        # One sub-band -> (its Band, its specs entry). The per-sub-band body this loop always had,
+        # factored out UNCHANGED so the box split's residue (boxsplit.split_band, I-3d) runs the
+        # identical code rather than a copy of it. `keep` (the residue's scope, split_band) admits
+        # only the rules, horizontals and glyphs outside every box band's regions; None — every
+        # band the split does not touch — reads the page's own lists, exactly as before.
+        rules, hrules, chars = page_rules, page_hrules, page_chars
+        if keep is not None:
+            rules = [r for r in page_rules if keep(r)]
+            hrules = [h for h in page_hrules if keep(h)]
+            chars = [c for c in page_chars if keep(c)]
+        sub_rules = tuple(r for r in rules if r.top <= sub.bottom and r.bottom >= sub.top)
+        sub_hrules = tuple(h for h in hrules if sub.top <= h.y <= sub.bottom)
+        if not sub_rules:
+            return (_replace(sub, hrules=sub_hrules) if sub_hrules else sub), None
+        # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
+        # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
+        # become columns only when the header confirms them (_build_ruled_band, the seam).
+        return (_build_ruled_band(sub, sub_rules, sub_hrules, chars, section_repair=False),
+                (sub, sub_rules, sub_hrules, chars))
+
+    # BOX SPLIT (spec 2026-09-28-box-split-design.md § 3.1-3.6): a raw band holding two or more
+    # of the author's closed ruled boxes is split before `segment` ever sees it. `bands_to_split`
+    # is the AXIOM decision over THIS `raw_bands` list (R2: its keys are indices into it) and the
+    # boxes exactly as `page_boxes` returns them; a band it does not select takes the unchanged
+    # path below (I-3f). Box bands carry the spec None (§ 3.6): `section_repair_bands` naming one
+    # rebuilds nothing. Looked up on the module so a test can disable the split outright.
+    from . import boxsplit as _boxsplit
+    from .boxes import page_boxes
+    to_split = _boxsplit.bands_to_split(raw_bands, page_boxes(pdf_path, page_number))
+    if to_split and not page_chars:
+        page_chars = extract_chars(pdf_path, page_number)   # a box band is built from glyphs
+    for i, band in enumerate(raw_bands):
+        if i in to_split:
+            built = _boxsplit.split_band(band, to_split[i], page_chars, pdf_path, page_number,
+                                         build_sub=_build_sub)
+        else:
+            # The notes below a table's last row get a band of their own (trailing.py,
+            # 2026-09-19): set at the row pitch they fuse with the row above them, and their
+            # full-width ink closes that row's gutters. The page datagrid's verdicts decide
+            # which lines they are.
+            built = [_build_sub(sub)
+                     for sub in cut_trailing_notes(segment(band), pdf_path, page_number)]
+        for b, spec in built:
+            bands.append(b)
+            specs.append(spec)
     from .unitmarker import absorb_unit_markers
     bands = [absorb_unit_markers(b) for b in bands]
 
@@ -484,9 +515,11 @@ def page_bands(pdf_path: str, page_number: int = 0,
     if section_repair_bands:
         for idx in sorted(section_repair_bands):
             if 0 <= idx < len(specs) and specs[idx] is not None:
-                sub, sub_rules, sub_hrules = specs[idx]
+                # The glyphs the band was first built from, so a scoped residue (box split) is
+                # rebuilt from its own scope; every other band carries `page_chars` itself.
+                sub, sub_rules, sub_hrules, sub_chars = specs[idx]
                 bands[idx] = absorb_unit_markers(
-                    _build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
+                    _build_ruled_band(sub, sub_rules, sub_hrules, sub_chars,
                                       section_repair=True))
 
     # Splice DESCENDING by first, so an earlier run's indices are not invalidated mid-splice.
