@@ -2651,7 +2651,8 @@ def wordless_separator_boxes_pdf(path: str) -> dict:
     return {"n_boxes": 2, "n_words_in_boxes": 0}
 
 
-def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False) -> dict:
+def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
+                                 rules: list | None = None, extra_row: list | None = None) -> dict:
     """Task 3b (box-split, spec § 8.4 U1/U2) — cbh T1's defect, synthetically.
 
     Four author verticals make THREE ruled cells. In the right-hand cell the header word
@@ -2664,8 +2665,13 @@ def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False) -> dict:
 
     `fusing_line=True` (U2) adds one body line with TWO words in the left cell across a gap no
     other line's ink covers: a genuine fusion witness, so the refusal must stand.
+
+    `rules` overrides the four verticals and `extra_row` appends one body line (fix round 1, spec
+    § 8.6 U4/U5). They build the two shapes where the re-bucket's formed cells are NOT the author
+    intervals: an interior-only ruling (no left rule, so `rule_aware_lines` extends the edge column
+    to the ink), and a body word straddling a rule (so `_row_dividers` drops it for that row).
     """
-    rules = [40.0, 110.0, 250.0, 330.0]
+    rules = list(rules) if rules is not None else [40.0, 110.0, 250.0, 330.0]
     header = [(45.0, "PORT"), (115.0, "MAIN WHEAT GRADES"), (296.0, "TOTAL")]
     rows = [
         [(45.0, "ALB"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "160,845")],
@@ -2675,6 +2681,8 @@ def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False) -> dict:
     ]
     if fusing_line:
         rows.append([(45.0, "AB"), (90.0, "CD"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "1,293")])
+    if extra_row is not None:
+        rows.append(list(extra_row))
     c = canvas.Canvas(str(path), pagesize=letter)
     top = PAGE_H - 120.0
     rh = 14.0

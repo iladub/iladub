@@ -86,3 +86,56 @@ def test_the_fusion_glue_carries_no_tolerance():
     import iladub.etkl.fusion as fusion
     body = _strip_comments(open(fusion.__file__, encoding="utf-8").read())
     assert not _FLOAT.search(body), "fusion.py (engine glue) must carry no numeric tolerance"
+
+
+# --- fix round 1 (spec § 8.6): the witness reads the cells the re-bucket FORMS ---------------------
+# § 8.2's witness modelled the re-bucket's cells as the author intervals, and `rule_aware_lines`
+# forms different ones. U4 and U5 are the two holes the Task 3b review built on U1's geometry. In
+# each, the count refuses on its own, the re-bucket FORMS a cell that joins two words across a gap
+# no word of the band covers, and the interval witness saw nothing, so db47fde accepted the band
+# and shipped the fused cell (measured). Both must stay refused.
+
+def _formed_cells(sub, sub_rules, chars):
+    """The cells the re-bucket would form — `compile._build_ruled_band`'s own `band_chars`
+    selection over the ruled sub-band, re-bucketed on its rule x's."""
+    from iladub.etkl.geometry import rule_aware_lines
+    xs = sorted({round(r.x, 2) for r in sub_rules})
+    band_chars = [c for c in chars if c.top >= sub.top - 0.5 and c.bottom <= sub.bottom + 0.5]
+    return [[w.text for w in ln.words] for ln in rule_aware_lines(band_chars, xs)]
+
+
+def _assert_refused_to_the_word_band(band, sub):
+    assert band.column_xs == ()
+    assert [[w.text for w in ln.words] for ln in band.lines] == \
+        [[w.text for w in ln.words] for ln in sub.lines], "a refused band is the word band"
+
+
+def test_u4_an_edge_column_formed_past_the_outer_rule_keeps_the_refusal(tmp_path):
+    """Interior-only rules [110, 250, 330]: `rule_aware_lines` extends the left column to the ink,
+    so `AB` and `CD` land in one formed cell although no author interval holds them."""
+    from iladub.etkl.compile import _build_ruled_band
+    p = os.path.join(str(tmp_path), "u4.pdf")
+    F.header_beside_body_ruled_pdf(p, fusing_line=True, rules=[110.0, 250.0, 330.0])
+    sub, sub_rules, chars = _ruled_sub(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, f"the count must refuse ({rule_cols} vs {word_cols}), or U4 pins nothing"
+    assert ["ABCD", "APW1/ASW9/AWW1/ANW1", "1,293"] in _formed_cells(sub, sub_rules, chars), \
+        "the re-bucket must FORM the fused cell, or U4 pins nothing"
+    band = _build_ruled_band(sub, sub_rules, (), chars)
+    _assert_refused_to_the_word_band(band, sub)
+
+
+def test_u5_a_divider_dropped_by_a_straddling_word_keeps_the_refusal(tmp_path):
+    """Rules [40, 110, 250, 330] with `STRADDLER` crossing x=110 beside `KWI`: `_row_dividers` drops
+    110 for that row (R154), so `KWI` and `STRADDLER` land in one formed cell although the
+    straddler lies wholly inside no author interval."""
+    from iladub.etkl.compile import _build_ruled_band
+    p = os.path.join(str(tmp_path), "u5.pdf")
+    F.header_beside_body_ruled_pdf(p, extra_row=[(45.0, "KWI"), (98.0, "STRADDLER"), (255.0, "1,293")])
+    sub, sub_rules, chars = _ruled_sub(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, f"the count must refuse ({rule_cols} vs {word_cols}), or U5 pins nothing"
+    assert ["KWISTRADDLER", "1,293"] in _formed_cells(sub, sub_rules, chars), \
+        "the re-bucket must FORM the fused cell, or U5 pins nothing"
+    band = _build_ruled_band(sub, sub_rules, (), chars)
+    _assert_refused_to_the_word_band(band, sub)

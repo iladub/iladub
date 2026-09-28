@@ -174,20 +174,23 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     # is a proxy for "can only fuse", and cbh T1 refuted it: a header word lying wholly beside
     # the body numbers of its own ruled cell adds a gutter the count reads as a column, though no
     # line has two words that gutter separates. So the refusal now also requires an exact FUSION
-    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): two words on one line,
-    # wholly inside one rule interval, with a point between them no word of the band covers.
-    # Where none exists, re-bucketing joins nothing the band's layout separates, and the refusal
-    # was never justified. The witness runs only when the count refuses (`and` short-circuits),
-    # so every band the count accepts is untouched. The post-refinement site below is NOT
-    # changed: it refused nothing in the spec's census (§ 8.2).
+    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): a cell the re-bucket
+    # actually FORMS whose extent holds a point no word of the band covers. It is read off
+    # `relines` itself, never a model of them (§ 8.6: the author-interval model of § 8.2 missed
+    # edge columns extended to the ink and dividers dropped per row by R154). Where none exists,
+    # re-bucketing joins nothing the band's layout separates, and the refusal was never
+    # justified; the band is then built from the SAME `relines` the witness judged. The witness
+    # runs only when the count refuses (`and` short-circuits), and `relines` is computed exactly
+    # as before, so every band the count accepts is untouched. The post-refinement site below is
+    # NOT changed: it refused nothing in the spec's census (§ 8.2).
     from .fusion import fusion_witness
     _word_cols = _word_column_count(sub)
+    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
     _under_resolved = (_word_cols is not None and len(xs) >= 2
                        and len(xs) - 1 < _word_cols
-                       and fusion_witness(sub.lines, xs))
-    relines = (rule_aware_lines(band_chars, xs)
-               if len(xs) >= 2 and not _under_resolved
-               else [])
+                       and fusion_witness(sub.lines, relines))
+    if _under_resolved:
+        relines = []
     if relines:
         from .geometry import weld_hrule_boxes
         # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
