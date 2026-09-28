@@ -2347,3 +2347,173 @@ def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
     _escalating(c)
     c.save()
     return {"cols": cols, "recognized_pages": (0, 1), "escalating_page": 2}
+
+
+# --- box-split (spec 2026-09-28-box-split-design.md § 5, O1 / N1 / N2) ---------------------------
+#
+# All three draw at one line pitch, so every text line on the page falls in ONE `detect_bands`
+# band: the boxes are side by side (or the ink is beside the box) inside a single band, which is
+# the shape the split exists for. Rules are 0.5pt strokes; title bars are non-black FILLS whose
+# bottom sits on the box's top rule, as cbh-stem p0 draws them.
+
+_BOX_PITCH = 14.0      # one text line per ruled row, title bar and note included
+_BOX_LW = 0.5          # stroke width of every drawn rule
+_TITLE_RGB = (0.0, 0.0, 0.502)   # cbh-stem p0's title-bar fill (navy)
+
+
+def _box_row_baseline(y_top: float, i: int) -> float:
+    """Baseline of the text in row `i` below a box's top rule (row -1 is the title bar)."""
+    return y_top - i * _BOX_PITCH - 10.0
+
+
+def _title_bar(c, x0: float, x1: float, y_top: float, title: str) -> None:
+    """A filled, unstroked title bar whose bottom edge is the box's top rule line, with its
+    title words inside it."""
+    c.setFillColorRGB(*_TITLE_RGB)
+    c.rect(x0, y_top, x1 - x0, _BOX_PITCH, stroke=0, fill=1)
+    c.setFillColorRGB(1.0, 1.0, 1.0)
+    c.drawString(x0 + 4.0, _box_row_baseline(y_top, -1), title)
+    c.setFillColorRGB(0.0, 0.0, 0.0)
+
+
+def _line_grid(c, xs, y_top: float, n_rows: int) -> None:
+    """A closed grid of STROKED LINES: a vertical at every x in `xs`, a horizontal at every row
+    boundary, each spanning the full grid."""
+    y_bot = y_top - n_rows * _BOX_PITCH
+    for x in xs:
+        c.line(x, y_top, x, y_bot)
+    for i in range(n_rows + 1):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, xs[-1], y)
+
+
+def two_boxes_one_band_pdf(path: str) -> dict:
+    """O1: two closed ruled boxes side by side in ONE text band, modelled on cbh-stem p0 band 9.
+
+    Left: a 3-column grid, boxhead + 3 body rows (4 verticals, 5 horizontals). Right: 2 columns
+    x 3 rows, no boxhead (3 verticals, 4 horizontals); its rows share text lines with the left
+    box's first three rows, so row lines are not the unit of the split. Each box has a navy filled
+    title bar above its top rule with its title inside. A note line sits one pitch below the left
+    box. Grid rules are stroked lines; title bars are fills."""
+    y_top = PAGE_H - 192.0
+    left_xs = [40.0, 120.0, 220.0, 340.0]
+    right_xs = [400.0, 470.0, 560.0]
+    left_rows = [("Site", "Alpha", "Beta"),
+                 ("ALB", "10", "20"), ("ESP", "30", "40"), ("GER", "50", "60")]
+    right_rows = [("ALB", "1 - 15 Oct"), ("ESP", "2 - 9 Nov"), ("GER", "3 - 7 Dec")]
+    left_title, right_title = "Stock at Port", "Shutdown Dates"
+    note = "Note: figures are provisional"
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    _title_bar(c, left_xs[0], left_xs[-1], y_top, left_title)
+    _title_bar(c, right_xs[0], right_xs[-1], y_top, right_title)
+    for i, row in enumerate(left_rows):
+        for x, cell in zip(left_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    for i, row in enumerate(right_rows):
+        for x, cell in zip(right_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.drawString(left_xs[0], _box_row_baseline(y_top, len(left_rows)), note)
+    _line_grid(c, left_xs, y_top, len(left_rows))
+    _line_grid(c, right_xs, y_top, len(right_rows))
+    c.save()
+    return {
+        "left": {"xs": left_xs, "n_cols": 3, "n_verticals": 4, "n_horizontals": 5,
+                 "rows": left_rows, "title": left_title, "boxhead": left_rows[0]},
+        "right": {"xs": right_xs, "n_cols": 2, "n_verticals": 3, "n_horizontals": 4,
+                  "rows": right_rows, "title": right_title, "boxhead": None},
+        "note": note,
+        "pitch": _BOX_PITCH,
+    }
+
+
+def one_box_with_title_pdf(path: str) -> dict:
+    """N1: ONE closed box with a title bar, plus a word outside every box on the same band
+    (roster-like: cbh's single boxes carry ink beside them). Must NOT split.
+
+    The box exercises all three rule kinds of spec § 2.1 at once: its frame is a STROKED RECT
+    (each edge a rule), its interior column separator a BLACK-FILLED thin rect, and its row
+    separators stroked lines — 3 verticals, 4 horizontals."""
+    y_top = PAGE_H - 192.0
+    xs = [40.0, 120.0, 220.0]
+    rows = [("ALB", "10"), ("ESP", "30"), ("GER", "50")]
+    title, outside = "Receivals", "OUTSIDE"
+    n = len(rows)
+    y_bot = y_top - n * _BOX_PITCH
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    _title_bar(c, xs[0], xs[-1], y_top, title)
+    for i, row in enumerate(rows):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.drawString(300.0, _box_row_baseline(y_top, 1), outside)
+    c.rect(xs[0], y_bot, xs[-1] - xs[0], y_top - y_bot, stroke=1, fill=0)     # the frame
+    c.rect(xs[1] - _BOX_LW / 2, y_bot, _BOX_LW, y_top - y_bot, stroke=0, fill=1)  # black fill
+    for i in range(1, n):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, xs[-1], y)
+    c.save()
+    return {"n_boxes": 1, "n_verticals": 3, "n_horizontals": 4, "title": title,
+            "outside": outside, "xs": xs}
+
+
+def open_lattices_pdf(path: str) -> dict:
+    """N2: two header-only lattices side by side (bfs p5/p6-like). Each has 2 horizontals (above
+    and below the header row) and 2 interior verticals touching both, so each is one touch
+    component with >= 2 H and >= 2 V — but neither draws a left or right OUTER vertical, so no
+    frame closes. Two unruled body lines follow. Must yield 0 boxes."""
+    y_top = PAGE_H - 192.0
+    lattices = [(40.0, [120.0, 220.0], 300.0, ("Canton", "2022", "2023")),
+                (330.0, [420.0, 500.0], 560.0, ("Region", "Men", "Women"))]
+    body = [(("ZH", "10", "11"), ("East", "5", "6")), (("BE", "12", "13"), ("West", "7", "8"))]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    for x0, inner, x1, head in lattices:
+        for x, cell in zip([x0] + inner, head):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, 0), cell)
+        c.line(x0, y_top, x1, y_top)
+        c.line(x0, y_top - _BOX_PITCH, x1, y_top - _BOX_PITCH)
+        for x in inner:
+            c.line(x, y_top, x, y_top - _BOX_PITCH)
+    for i, pair in enumerate(body, start=1):
+        for (x0, inner, _x1, _h), row in zip(lattices, pair):
+            for x, cell in zip([x0] + inner, row):
+                c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.save()
+    return {"n_boxes": 0, "n_components": 2}
+
+
+def sub_stroke_gap_box_pdf(path: str) -> dict:
+    """N3: a closed 2-column box whose RIGHT outer vertical is separated from the end of every
+    horizontal by a gap smaller than the stroke (spec § 2.2, R-c). Joined under the stroke-width
+    bound -> one box with 3 verticals; with the bound set to 0 the right vertical is its own
+    component and the frame's right side is open -> no box.
+
+    Why 0.01pt and not cbh's 2e-5: reportlab writes coordinates at 2 decimal places (measured
+    2026-09-28: a line drawn from x 100.24002 reads back at 100.24), so 2e-5 cannot be drawn
+    through its API. 0.01pt is the largest positive-width near-miss the corpus shows (§ 7.1).
+    Painted extents: horizontals end at x 219.75 (butt caps); the 0.48-wide vertical at x 220
+    paints [219.76, 220.24]."""
+    lw = 0.48
+    y_top = PAGE_H - 192.0
+    xs = [40.0, 120.0, 220.0]
+    h_end = 219.75
+    rows = [("ALB", "10"), ("ESP", "30"), ("GER", "50")]
+    n = len(rows)
+    y_bot = y_top - n * _BOX_PITCH
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(lw)
+    c.setFont("Helvetica", 8)
+    for i, row in enumerate(rows):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    for x in xs:
+        c.line(x, y_top + lw / 2, x, y_bot - lw / 2)
+    for i in range(n + 1):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, h_end, y)
+    c.save()
+    return {"n_verticals": 3, "n_horizontals": n + 1, "gap": 0.01, "stroke": lw}
