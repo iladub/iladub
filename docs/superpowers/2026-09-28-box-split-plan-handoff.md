@@ -58,3 +58,12 @@ widening R74.
 - **Whether reportlab can draw a sub-stroke gap for N3**: a 2e-5 gap, in whatever units
   pdfplumber reports back. This is unmeasured. The fixture has to be checked by reading it back
   with pdfplumber, not assumed.
+
+## Addendum (same day): the plan was written in this session
+
+At the maintainer's request ("Write here before handoff"), the plan was written in this session
+anyway, at 87,498 working tokens, with the override logged. It is at
+`docs/superpowers/plans/2026-09-28-box-split.md`, on PR #284. **Part 5 above is superseded.** The
+next action is to review the plan and execute it. Part 5's two proposed seams are now plan
+Task 0 Step 3 and Task 4 Step 5. The plan was authored over the floor, so review it as a
+proposition.
