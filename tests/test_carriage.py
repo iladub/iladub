@@ -194,6 +194,18 @@ def _record_tables(rep, uris):
     return [u for u in uris if (u, RDF.type, TAB.RecordTable) in g]
 
 
+def _o2_two_tables(cbh):
+    """THE gate (R5), factored so every O2 test calls it FIRST. Asserts exactly two
+    RecordTables in band 9's y-window before any content check, so removing the xfail
+    marker on ANY O2 test fails HERE, uniformly, on the table count — never on a KeyError
+    or a bad-query error further down (fix round 1 review finding 2 confirms this stays
+    true after this round's new assertions; see task-4-report.md's FALSIFICATION)."""
+    g = cbh.graph
+    tables = _record_tables(cbh, _yband_table_uris(cbh, 0, _Y_LO, _Y_HI))
+    assert len(tables) == 2, f"expected T1+T2 as two RecordTables, found {len(tables)}: {tables}"
+    return g, tables
+
+
 def _leaf_columns(g, table_uri):
     return list(g.objects(table_uri, TAB.hasLeafColumn))
 
@@ -253,12 +265,10 @@ def _caption_texts(g, table_uri):
 
 @pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_t1_reads_the_seven_column_boxhead(cbh):
-    """T1 — box-split spec § 1/§ 5. Every O2 test's FIRST assertion is "exactly two
-    RecordTables in the region" (R5): today's fused #table9 always fails it, so removing
-    the xfail marker fails HERE, on the table count, never on a KeyError further down."""
-    g = cbh.graph
-    tables = _record_tables(cbh, _yband_table_uris(cbh, 0, _Y_LO, _Y_HI))
-    assert len(tables) == 2, f"expected T1+T2 as two RecordTables, found {len(tables)}: {tables}"
+    """T1 — box-split spec § 1/§ 5. Every O2 test's FIRST call is `_o2_two_tables` (R5):
+    today's fused #table9 always fails its count assertion, so removing the xfail marker
+    fails HERE, on the table count, never on a KeyError further down."""
+    g, tables = _o2_two_tables(cbh)
     t1 = _table_by_ncols(g, tables, 7)
     assert _ordered_header_labels(g, t1) == [
         "PORT", "WHEAT", "MAIN WHEAT GRADES", "BARLEY", "CANOLA", "OTHER", "TOTAL",
@@ -277,10 +287,15 @@ def test_o2_t1_reads_the_seven_column_boxhead(cbh):
 @pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_t2_reads_the_two_column_no_boxhead(cbh):
     """T2 — box-split spec § 1/§ 5, named risk 1 (§ 4): T2 must carry ZERO column labels,
-    never read its first row (`ALB | 1 - 15 October`) as a boxhead. Gate-first, per R5."""
-    g = cbh.graph
-    tables = _record_tables(cbh, _yband_table_uris(cbh, 0, _Y_LO, _Y_HI))
-    assert len(tables) == 2, f"expected T1+T2 as two RecordTables, found {len(tables)}: {tables}"
+    never read its first row (`ALB | 1 - 15 October`) as a boxhead. Gate-first, per R5.
+
+    Fix round 1, finding 2 (controller ruling, promoted from the review's minor): spec §5's
+    own falsification line names the known failure mode as page-scoped `page_chars` leaking
+    left-box glyphs into T2's FIRST column (spec §7.3: 'PORTWHEATMAIN WHEAT GRADES…' when
+    page-scoped) — so this test also asserts T2's port-code column exactly, not only the
+    date column. Row order matches the fused pre-split dump (Task 0 evidence §1.3 r1-r4:
+    ALB/ESP/GER/KWI top to bottom), the SAME row order as `expected_dates` below."""
+    g, tables = _o2_two_tables(cbh)
     t2 = _table_by_ncols(g, tables, 2)
     assert len(list(g.objects(t2, TAB.hasHeaderNode))) == 0
     rows = sorted(g.objects(t2, TAB.hasLeafRow), key=_row_ordinal)
@@ -288,23 +303,54 @@ def test_o2_t2_reads_the_two_column_no_boxhead(cbh):
     expected_dates = [
         "1 - 15 October", "1 - 15 August", "24 August - 04 September", "1 - 15 September",
     ]
+    expected_ports = ["ALB", "ESP", "GER", "KWI"]
     col_values = [_column_values_ordered_by_row(g, t2, c) for c in _leaf_columns(g, t2)]
     assert expected_dates in col_values, f"no T2 column carries the date sequence: {col_values}"
+    assert expected_ports in col_values, (
+        f"no T2 column carries the exact port-code sequence (page-scoped-chars leak "
+        f"check, spec §7.3/§5): {col_values}"
+    )
     assert _caption_texts(g, t2) == ["PORT MAINTENANCE SHUTDOWN DATES - 2026"]
+
+
+#: Fix round 1, finding 1 (review): spec § 5 says "No cell of either table contains
+#: `Note:` OR THE NOTE PROSE" — the shipped test checked only the "Note:" substring, missing
+#: the three continuation lines. One DISTINCTIVE fragment per Task 0 evidence § 1.3's
+#: fused-#table9 dump, r6-r9 (the four-line Note block), short enough to be robust to
+#: whitespace/wrap cosmetics but specific enough that no other cell's real content could
+#: contain it by coincidence:
+#:   r6 "Note:"
+#:   r7 "Dates are based on Daily Transport capacity and assume total capacity is allocated
+#:       to grade types required. Dates are subject to change and are only a guide."
+#:   r8 "The information provided is only an estimate based on information currently to
+#:       hand and dates or order of loading are subject to change in accordance with the
+#:       Export Accumulation"
+#:   r9 "Guidelines, Port Queue Policy and matters beyond the control of CBH. Reliance on,
+#:       use or distribution of the information contained within is at the risk of the
+#:       recipient."
+_NOTE_FRAGMENTS = [
+    "Note:",                     # r6
+    "Daily Transport capacity",  # r7
+    "Export Accumulation",       # r8
+    "Port Queue Policy",         # r9
+]
 
 
 @pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_note_block_is_not_carried_as_a_cell(cbh):
-    """The Note block (spec § 1's third bullet) is not a cell of T1 or T2. Gate-first,
-    per R5, so removing the marker fails on the table count, not a KeyError."""
-    g = cbh.graph
-    tables = _record_tables(cbh, _yband_table_uris(cbh, 0, _Y_LO, _Y_HI))
-    assert len(tables) == 2, f"expected T1+T2 as two RecordTables, found {len(tables)}: {tables}"
+    """The Note block (spec § 1's third bullet; Task 0 evidence § 1.3's r6-r9, 4 lines) is
+    not a cell of T1 or T2 — not the `Note:` label alone, and not any of its three
+    continuation lines either (spec § 5: "or the note prose"). Gate-first, per R5, so
+    removing the marker fails on the table count, not a KeyError."""
+    g, tables = _o2_two_tables(cbh)
     for t in tables:
         for c in g.objects(t, TAB.hasCell):
             txt = g.value(c, TAB.cellText)
-            if txt is not None:
-                assert "Note:" not in str(txt), f"{t} carries a Note: cell: {txt!r}"
+            if txt is None:
+                continue
+            txt = str(txt)
+            for frag in _NOTE_FRAGMENTS:
+                assert frag not in txt, f"{t} carries a note-prose cell ({frag!r}): {txt!r}"
 
 
 #: C3's expected content, hardcoded from Task 0 evidence § 1.3 (`docs/superpowers/
