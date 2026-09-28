@@ -2,8 +2,9 @@
 
 **Serves:** prog:criterion:etkl:03 — measurement for Task 3b of the box-split loop.
 **Doc impact: none.** Follows `2026-09-28-box-split-t3b-measurements.md` (M1–M3). No source,
-test or spec was changed. The instrument is tracked at
-`.superpowers/sdd/2026-09-28-box-split/w1.py` (runner `w1.sh`, raw output `w1.jsonl`).
+test or spec was changed. The instrument is in the SDD workspace, which is gitignored and therefore NOT
+durable: `.superpowers/sdd/2026-09-28-box-split/w1.py` (runner `w1.sh`, raw output `w1.jsonl`).
+The witness definition below is complete enough to rebuild it.
 
 ## The question
 
