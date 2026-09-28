@@ -1,5 +1,7 @@
 # Handoff: box-split Task 3b — reviewed; one spec defect, one maintainer ruling (2026-09-28)
 
+**Topic:** box-split · **Date:** 2026-09-28
+
 **Serves:** prog:criterion:etkl:03 — cbh is not accepted until `#table9` compiles as the two tables the author drew.
 
 **Doc impact: none.** Authored at ~130K working tokens by the SDD controller: past the originating
