@@ -64,7 +64,8 @@ BAND_BOXES_RQ = Path(__file__).resolve().parents[3] / "vocab" / "queries" / "ban
 
 def _extent(item: Word | Char | Rule | HRule) -> tuple[float, float, float, float]:
     """(x0, x1, top, bottom) of a word, a glyph, a vertical `Rule` (a zero-width segment at x)
-    or an `HRule` (a zero-height segment at y) — each as its own coordinates state it."""
+    or an `HRule` (a zero-height segment at y) — each as its own coordinates state it.
+    PROCEDURAL: a coordinate projection, no arithmetic beyond reading the fields."""
     if isinstance(item, Rule):
         return (item.x, item.x, item.top, item.bottom)
     if isinstance(item, HRule):
@@ -153,6 +154,7 @@ def bands_to_split(bands: Sequence[Band], boxes: Sequence[Box]) -> dict[int, tup
 # --- Task 3: the split (spec § 3.3-3.6) — applies the decision above, decides nothing ------------
 
 def _rect(box: Box) -> tuple[float, float, float, float]:
+    """A box's painted bbox as (x0, x1, top, bottom). PROCEDURAL: a field projection only."""
     return (box.x0, box.x1, box.top, box.bottom)
 
 
@@ -219,7 +221,8 @@ def _box_band(box: Box, words: Sequence[Word], title: Sequence[Word],
 
 
 def _band_key(band: Band) -> tuple[float, float]:
-    """(top, x0) of a band (I-3e): its own top, and the leftmost x0 of its words."""
+    """(top, x0) of a band (I-3e): its own top, and the leftmost x0 of its words.
+    PROCEDURAL: exact min over the band's own coordinates; it orders, it decides nothing."""
     return (band.top, min(w.x0 for ln in band.lines for w in ln.words))
 
 
