@@ -87,6 +87,10 @@ def test_the_population_is_every_file_in_vocab_queries():
     `span-covers.rq` is the covering. Two queries because they answer different questions of
     different subjects: which earlier band may donate a spanning header (a band pair), and which
     recipient columns each of its labels heads (an interval and a column). The second is useless
-    without the first having named a donor."""
+    without the first having named a donor.
+
+    RE-MEASURED 2026-09-28 (box-split Task 2): 54 -> 55, `band-boxes.rq` — the derivation that
+    decides which text bands hold >= 2 of the author's closed ruled boxes (spec
+    `2026-09-28-box-split-design.md` § 3.2, ruling R-d)."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 54, len(query_files())
+    assert len(query_files()) == 55, len(query_files())

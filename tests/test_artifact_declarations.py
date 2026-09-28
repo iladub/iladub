@@ -224,8 +224,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # conformant example plus its two negative fixtures (`examples/tables/unshown-ink-conformant
     # .ttl`, `tests/tab-unshown-{ink,empty}-leak.ttl`). The `.rq` population does not move: the
     # disagreement is disposed in Python over two evidence sets, not by a new query.
+    # RE-MEASURED 2026-09-28 (box-split Task 2): the `.rq` population is **55** —
+    # `band-boxes.rq`, the derivation that decides which text bands hold >= 2 of the author's
+    # closed ruled boxes (spec `2026-09-28-box-split-design.md` § 3.2, ruling R-d). The two new
+    # `tab:` terms it names (`tab:ClosedBox`, `tab:boxBandIndex`) went into the EXISTING
+    # `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
     assert len(vocab_nodes) == len(artifact_files()) == 166
-    assert len(query_nodes) == len(query_files()) == 54
+    assert len(query_nodes) == len(query_files()) == 55
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

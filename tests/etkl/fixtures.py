@@ -2517,3 +2517,57 @@ def sub_stroke_gap_box_pdf(path: str) -> dict:
         c.line(xs[0], y, h_end, y)
     c.save()
     return {"n_verticals": 3, "n_horizontals": n + 1, "gap": 0.01, "stroke": lw}
+
+
+def straddling_box_pdf(path: str) -> dict:
+    """Task 2 falsification fixture (I-2a, spec § 3.2): ONE closed box whose three text rows
+    are NOT evenly spaced — row A and row B sit one normal pitch apart, but row B and row C are
+    separated by a gap far past `detect_bands`' gap_factor threshold, so the page's OWN text
+    lines split into two bands at exactly that point. The box's frame is unaffected (its rules
+    span its full height regardless of the internal text gap), so its bbox covers BOTH bands:
+    every word inside it is a word of band 0 (A, B) or band 1 (C), never all of one band alone.
+
+    Under I-2a's exact rule (`boxsplit._box_owner`) this box belongs to NEITHER band and is
+    correctly excluded from both — the population this fixture exists to move under the
+    WEAKENED "belongs by y-overlap alone" variant Step 3 falsifies: that variant assigns the
+    box to a band by bbox y-overlap, which is satisfied for band 0 (and, on overlap, band 1
+    too) regardless of which band's words are actually inside it."""
+    xs = [40.0, 120.0, 220.0]
+    h0 = PAGE_H - 192.0
+    h1 = h0 - 14.0
+    gap = 160.0
+    tall_top = h1 - gap
+    h2 = tall_top - 14.0
+    rows = [("A1", "A2"), ("B1", "B2"), ("C1", "C2")]
+    baselines = [h0 - 10.0, h1 - 10.0, tall_top - 10.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    for row, y in zip(rows, baselines):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, y, cell)
+    for x in xs:
+        c.line(x, h0, x, h2)
+    for y in (h0, h1, h2):
+        c.line(xs[0], y, xs[-1], y)
+    c.save()
+    return {"n_verticals": 3, "n_horizontals": 3, "box_top": h0, "box_bottom": h2,
+            "rows": rows, "gap": gap}
+
+
+def wordless_separator_boxes_pdf(path: str) -> dict:
+    """Stroked-rect commission negative (Task 1 review; I-2a's word-count clause): two THIN
+    STROKED rects (separator rules, not tables — each reads as a closed box under boxes.py's
+    touch machinery, Task 1's own measured commission) sit in the same band as two ordinary text
+    lines, but neither rect has a single word inside its bbox. I-2a's "a box containing no words
+    belongs to no band" must exclude both."""
+    y = PAGE_H - 192.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Helvetica", 8)
+    c.drawString(40.0, y, "Item One")
+    c.drawString(40.0, y - 14.0, "Item Two")
+    c.setLineWidth(_BOX_LW)
+    c.rect(300.0, y - 2.0, 200.0, 2.0, stroke=1, fill=0)
+    c.rect(300.0, y - 20.0, 200.0, 2.0, stroke=1, fill=0)
+    c.save()
+    return {"n_boxes": 2, "n_words_in_boxes": 0}

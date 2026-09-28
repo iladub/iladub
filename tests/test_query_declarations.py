@@ -145,10 +145,14 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
     fourth clause is a STRICT SUBSET of drawn boundaries where `grid-donation.rq` joins on equal
     leaf-column counts. The older query is narrowed by nothing and keeps its own null control;
     the two are mutually exclusive by construction, since a strict subset is never an equal
-    set."""
+    set.
+
+    RE-MEASURED 2026-09-28 (box-split Task 2): 54 -> 55, `band-boxes.rq`, the derivation that
+    decides which text bands hold >= 2 of the author's closed ruled boxes (spec
+    `2026-09-28-box-split-design.md` § 3.2, ruling R-d)."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 54, sorted(focus)
+    assert len(focus) == len(query_files()) == 55, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

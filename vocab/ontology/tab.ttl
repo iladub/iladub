@@ -707,3 +707,12 @@ tab:markerSymbol a owl:DatatypeProperty ; rdfs:label "marker symbol"@en ;
 tab:markerRegion a owl:ObjectProperty ; rdfs:label "marker region"@en ;
     rdfs:domain tab:UnitMarker ; rdfs:range tab:BBox ;
     rdfs:comment "Provenance to the page: the bounding box of one absorbed marker glyph. Deliberately NOT tab:hasBBox — that property's domain would RDFS-type the marker as tab:Cell and trip tab:WrappedCellShape at the gate (the R19 mechanism). STILL LIVE: [[R182]] measured the MEMBRANE (subclass-only closure) and concluded otherwise, emitted tab:hasBBox on a tab:HeaderSourceCell, and the closure differential's full-RDFS leg refused 26 nodes the membrane admitted. tab:sourceRegion is this property's sibling, minted for the same reason."@en .
+
+# --- box-split (spec 2026-09-28-box-split-design.md § 3.2, ruling R-d): transient evidence
+# for band-boxes.rq, deciding which text bands hold >= 2 author-drawn closed ruled boxes
+# (boxes.py's Box) and so must be split into their tables before segment/classification. ---
+tab:ClosedBox a owl:Class ; rdfs:label "Closed box (evidence)"@en ;
+    rdfs:comment "A transient node standing for one closed ruled box (boxes.Box) that BELONGS to a band (I-2a): every page word inside the box's painted bbox — exact containment, no tolerance — is a word of that band. Emitted by boxsplit.box_evidence ONLY for a box with an owner: a box containing no words, or whose words span more than one band (a box straddling a band boundary), belongs to none and emits no node at all — the honest abstain sectiongraph.run_evidence already makes for its own population, and the one this relation depends on entirely, since a node with no tab:boxBandIndex fact could join no group. It is deliberately NOT a tab:PageBand: a tab:PageBand node stands for a BAND, and this one stands for a BOX that a band OWNS — a different guarantee, hence tab:boxBandIndex rather than a reuse of tab:bandIndex (tab:bandRuleX's own precedent: mint a distinct term when the fact carries a different guarantee)."@en .
+tab:boxBandIndex a owl:DatatypeProperty ; rdfs:domain tab:ClosedBox ; rdfs:range xsd:integer ;
+    rdfs:label "box band index"@en ;
+    rdfs:comment "The 0-based index, in compile.page_bands' single per-page index space, of the ONE band this closed box belongs to (I-2a). band-boxes.rq groups its evidence by this fact and counts within each group (the holon-scoped HAVING clause) to decide which band indices hold two or more boxes and so must split (ruling R-d)."@en .

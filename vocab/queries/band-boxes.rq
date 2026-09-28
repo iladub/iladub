@@ -1,0 +1,32 @@
+# band-boxes.rq — which text bands hold >= 2 closed ruled boxes (spec
+# 2026-09-28-box-split-design.md § 3.2, ruling R-d).
+#
+# Open-world derivation over a per-call evidence graph (the closure boundary is one fresh
+# Graph() per boxsplit.box_evidence call, the same shape as band-run.rq/section-repeat.rq/
+# grid-donation.rq close within their own transient graphs): one tab:ClosedBox node per
+# closed ruled box that BELONGS to a band (I-2a — every page word inside the box's bbox is a
+# word of that band, computed by boxsplit._box_owner and carried as tab:boxBandIndex). A box
+# with no words, or whose words span more than one band, belongs to none and emits NOTHING —
+# the honest abstain sectiongraph.run_evidence already makes for its own population — so it
+# can never be counted here in either direction.
+#
+# THE COUNT CLOSES WITHIN THE BAND. GROUP BY groups the evidence by the band it belongs to,
+# and HAVING counts only that one group's own members — holon-scoped, the same idiom
+# band-run.rq's query-local NOT EXISTS uses to close within one band while the graph stays
+# open (CLAUDE.md §8).
+#
+# THE ONLY NUMERIC LITERAL IS 2 (I-2b), and it is not a tuned threshold: ruling R-d defines
+# "this band holds more than one table" AS "this band holds at least two closed boxes" — two
+# is the smallest count "more than one" admits, not a measured cutoff, and no other numeral
+# could stand in its place without changing what the ruling means.
+#
+# THIS DERIVATION ENUMERATES AND SETTLES NOTHING FURTHER: it names which band indices split.
+# boxsplit.bands_to_split re-derives, in Python, which boxes each selected band owns (the same
+# I-2a membership test the emitter already ran) to assemble the answer; Task 3's word
+# partition and band construction are what actually performs the split.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?band WHERE {
+  ?box a tab:ClosedBox ; tab:boxBandIndex ?band .
+}
+GROUP BY ?band
+HAVING (COUNT(?box) >= 2)
