@@ -91,3 +91,11 @@ The first two are recorded in the spec, the rest in the ledger only.
   see it.
 - **T2's diagnosis comes from the Task 3c report.** It has not been re-measured.
 - **The branch is pushed to PR #284 but is not mergeable.** § 8.0 blocks it.
+
+## Addendum — maintainer ruling (2026-09-28)
+
+**Ruled: keep O2 whole (option 2).** The criterion is not split. The fresh session runs the first
+part-5 action: MEASURE the three unmeasured facts (which path reads T2's row 0 as header; whether the
+ons boxhead reader's question and oracle fit a 2-column box band; what oracle disposes the answer),
+then authors spec § 10 under CLAUDE.md § 8 before any code. The "needs a MAINTAINER choice" action
+above is answered and void.
