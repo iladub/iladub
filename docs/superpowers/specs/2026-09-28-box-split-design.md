@@ -344,3 +344,156 @@ witness is added as a conjunct, evaluated only when the count is True.
   Task 5, not built.
 - No `section_repair=True` path is measured (M2's scope caveat). The census covers the default path
   only.
+
+### 8.6 Amendment — the witness reads the cells the re-bucket forms (fix round 1, 2026-09-28)
+
+**Written at ~40K working tokens, under the originating floor.** It records the controller ruling
+in the SDD ledger (Task 3b review, 2026-09-28) and supersedes § 8.2's witness definition. § 8.2 is
+left as written because it is the refuted claim.
+
+**What is refuted.** § 8.2 says "absence is a proof". It is false, because the witness modelled the
+re-bucket's cells as the author intervals, and `geometry.rule_aware_lines` forms different ones:
+(a) it extends the outer columns to the band's ink extent, (b) it drops per row any divider that
+cuts that row's ink (R154), and (c) it buckets by glyph centre. The Task 3b review built both holes
+on U1's geometry. Interior-only rules `[110, 250, 330]` fuse `AB` and `CD` into `ABCD`, and
+rules `[40, 110, 250, 330]` with a straddling word fuse `KWI` and `STRADDLER`. The count refuses
+both, no witness exists, and both are now accepted. The corpus flip set was unaffected. The defect
+is latent, and it is the spec's, not the implementer's.
+
+**The change.** The witness quantifies over the **output**, not a model of it. Compute
+`relines = rule_aware_lines(band_chars, xs)` first, and then:
+
+> A **fusion witness** is a formed cell `c` (a word of `relines`) whose extent `[c.x0, c.x1)`
+> contains a point covered by no word of any line of `sub`. A word `v` covers `p` iff
+> `v.x0 ≤ p < v.x1`.
+
+A formed cell's box is the extent of its own non-space glyphs (`_cell_text`), so a cell whose extent
+holds an uncovered point joins ink from both sides of a gap that the band's own words leave open.
+That is the fusion R225 arm B exists to stop. Nothing is assumed about how the cell was formed, so
+(a), (b) and (c) are covered by construction.
+
+**Its query form, stated once.** An uncovered point exists in `[c.x0, c.x1)` iff some candidate
+`e ∈ {c.x0} ∪ {w.x1 : w a word of sub}` has `c.x0 ≤ e < c.x1` and is uncovered. Proof: take the
+largest candidate `e* ≤ p`. A word covering `e*` ends past it, so either it ends at or before `p`
+and contradicts maximality, or it covers `p`. The converse is immediate. `c.x0` is a candidate so
+that a glyph belonging to no word cannot hide a gap. Such a glyph can only make the witness fire,
+which keeps today's refusal.
+
+**The guard stays a conjunction:** refuse iff the count refuses **and** a witness exists over
+`relines`. Where the guard accepts, the band is built from those same `relines`. The witness
+therefore judges exactly what ships.
+
+**Contract changes to § 8.4.** The seam, I-3b-1, I-3b-2, I-3b-3, U1–U3, the O2 status and the local
+sweep all stand. What changes:
+
+- **Transient terms.** `tab:RuleInterval` gives way to a formed-cell class carrying x0/x1. Line
+  identity on the layout word is no longer read. The names are the implementer's.
+- **U4 (CI, negative):** the review's interior-only case, rules `[110, 250, 330]`, with `AB` and
+  `CD` across an uncovered gap. **MEASURE that the count refuses it** and that `db47fde` accepts it.
+  After the change it is refused.
+- **U5 (CI, negative):** the review's straddler case, rules `[40, 110, 250, 330]`, with a body word
+  crossing x=110 beside `KWI`. The same MEASURE applies, and it is refused after the change.
+- **MEASURE (i), re-run:** the flip set against `c68e437` must be exactly `{cbh p0 T1}`. The
+  cross-check must now be computed from `relines`, not from intervals, or it shares the blind spot
+  the review found.
+- **Proposed, and it may fail:** that T1 stays witness-free. Its formed cells were measured as the 7
+  right header cells (M3), and `MAIN WHEAT GRADES`' inter-word gaps are covered by wider body words.
+  Neither claim has been run against the new definition.
+- **FALSIFICATION adds one arm:** restore the author-interval witness, and U4 and U5 fail.
+- **Minor 1 of the review is folded in:** parse the query once, at module level.
+
+## 9. Addendum — a box band skips the multi-table gate (2026-09-28)
+
+**Written at ~40K working tokens, under the originating floor.** It obeys a maintainer ruling
+(2026-09-28, recorded in the SDD ledger and the addendum to
+`docs/superpowers/2026-09-28-box-split-t3b-review-handoff.md`). § 8.0 applies unchanged: the branch
+does not merge until O2 XPASSes.
+
+### 9.1 The defect
+
+After Task 3b, T1 builds as one ruled band with 7 correct header cells. `compile_tables` then
+escalates it as `MULTI_TABLE_AMBIGUOUS`. `segment.is_multi_table_ambiguous` cuts T1 at its widest
+gutter (x≈140), sees an own stub on the right half, and calls it a second table. The gate is a
+geometric proxy for "how many tables does this band hold?". For a box band that question has
+already been answered. `boxsplit.bands_to_split` (AXIOM) cut the band from **one closed frame the
+author drew**, so it holds one table, and the proxy must not overrule the mark.
+
+### 9.2 Measured (2026-09-28, `2ac7732`, cbh p0; the probe patched `boxsplit._box_band` to tag its output)
+
+- **No carrier exists.** `page_bands` returns `bands` only (`compile.page_bands`, the final
+  `return bands`). The per-index `specs` list is local, and its `None` marks an unruled band as well
+  as a box band. So `compile_tables` cannot tell a box band from any other.
+- **Box bands on cbh p0:** two, final indices 10 (T1, 35 words) and 11 (T2, 8 words). The gate
+  returns `True` on T1 and `False` on T2. It returns `False` on the other ten bands.
+- **Run merge:** `merge_run_candidates` proposes no run on cbh p0 (`()`), so no box band is merged
+  there.
+- **What preserves a Band field:** `absorb_unit_markers` and the R213 `unshown` pass both use
+  `dataclasses.replace`, so a new field survives them. `merge_bands` constructs a fresh `Band(...)`,
+  field by field, so a new field is dropped there, falling back to its default.
+- **Consumers of the gate:** one call site, in `compile_tables`. `segment` exports it, and
+  `tests/etkl/test_segment.py` and `test_closing_slice.py` exercise it directly.
+
+### 9.3 The change
+
+- **Carry the frame.** Give `Band` one field holding the bbox of the closed box the band was cut
+  from, defaulting to "none" in the `Band.captions` precedent, so every existing constructor stands.
+  `boxsplit._box_band` sets it from the box it built. It is provenance to the page (CLAUDE.md
+  principle 6), not a flag: the frame is the author's mark, carried.
+- **Skip the gate on it.** In `compile_tables`, a band carrying a frame does not call
+  `is_multi_table_ambiguous`. The `multi_table` judgement is still recorded, choosing `single`, with
+  a rationale naming the drawn frame, and with the frame as evidence if `record`'s `evidence`
+  parameter admits it. Accountability for the skip lives in the decision log, not only in the code.
+- **A merged run is not a box band.** `merge_bands` drops the field by construction, so a run that
+  swallows a box band meets the gate exactly as today. That is correct: the frame answered for
+  itself, not for the run. It is stated here so that no one "fixes" it.
+
+### 9.4 Classification (CLAUDE.md § 8)
+
+| step | class | why |
+|---|---|---|
+| "one closed box = one table" | AXIOM, already shipped | `bands_to_split`'s query decided it. § 9 adds no decision. It consumes that one. |
+| the `Band` field and `_box_band` setting it | PROCEDURAL | Construction: it carries a mark as read, with no tolerance. |
+| the skip branch in `compile_tables` | PROCEDURAL | It applies the AXIOM's product, the `split_band` pattern. It decides nothing, and it carries no constant. |
+
+**Why this is not a second geometric attempt.** No heuristic replaces the gate. Evidence of a higher
+rank, the author's frame, is admitted where it exists, and the gate stands everywhere else. That
+includes every non-box band, which covers bfs, and every merged run.
+
+### 9.5 Task 3c — the contract (not the code)
+
+**Seam:** the `is_multi_table_ambiguous(band)` call in `compile_tables`, `boxsplit._box_band`, and
+the `Band` dataclass.
+
+**Invariants.**
+- I-9-1: on every band that carries no frame, `compile_tables`' behaviour is byte-identical,
+  including its decision log.
+- I-9-2: only `_box_band` sets the field. `merge_bands` yields no frame.
+- I-9-3: no tolerance and no numeric literal is added.
+
+**MEASURE before writing:** (i) whether any consumer compares `Band` by value or enumerates
+`dataclasses.fields(Band)`. A frozen dataclass's `__eq__` gains the field. Grep, and report the
+list. (ii) Whether `record`'s `evidence` accepts a bbox, or only nodes. If it is nodes only, the
+rationale names the frame and the evidence is omitted, and the report says so.
+
+**Oracles.**
+- **U6 (CI, synthetic):** a two-box page (Task 3's fixture family) in which one box's content trips
+  `is_multi_table_ambiguous`. **MEASURE that the gate returns True on that box band's content** on
+  today's tree, or the test pins nothing. `compile_tables` does not escalate it as
+  `MULTI_TABLE_AMBIGUOUS`, and its `multi_table` judgement records `single` with the frame
+  rationale.
+- **U7 (CI, negative):** the same band content with no frame, meaning the field is cleared. It
+  still escalates `MULTI_TABLE_AMBIGUOUS`.
+- **U8 (CI):** `merge_bands` over a run that contains a framed band returns a band with no frame.
+- **O2 (corpus, local):** XPASS. **Proposed, and it may fail:** § 4 risk 1 (T2's first row read as a
+  boxhead) is still live, and the path past the gate (classify, the leaf grid, the membrane) has not
+  been run on T1.
+- **Local sweep:** as in § 8.4.
+
+**FALSIFICATION (mandatory):** remove the skip, and U6 fails. Make the skip unconditional, and U7
+fails. Copy the field in `merge_bands`, and U8 fails. Restore, and show the suite green.
+
+### 9.6 What § 9 does not do
+
+- It does not change `is_multi_table_ambiguous` or `_widest_gutter_cut`, or touch any non-box band.
+  Whether the gate is also wrong elsewhere is not measured here.
+- It does not let a merged run inherit a frame.
