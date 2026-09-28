@@ -19,7 +19,7 @@ the hand-authored manifest, and CI fails unless the tracked bytes are exactly wh
 | renderer | `scripts/arc_depends.py` (PROCEDURAL — markdown is not a derivation) |
 | gate | `tests/test_arc_landscape.py` (regenerate-and-diff) |
 
-**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 44 criteria by a human and then graded by the membrane: 7 of its 24 edges are grounded by a two-sided ablation and 17 are propositions. This is a monitor, not a scheduler.
+**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 7 of its 24 edges are grounded by a two-sided ablation and 17 are propositions. This is a monitor, not a scheduler.
 
 ## §1 What can be started today — `arc-ready.rq`
 
@@ -29,7 +29,7 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**13 ready.**
+**14 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
@@ -46,6 +46,7 @@ there is no criterion this work is known to wait for.
 | `tab` | `tab:08` | DATAGRID_RESIDUE (compile.py:1145): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:09` | ROUND_TRIP_FAIL (holon.py:493, region-level; the cell-level emitter at holon.py:55 shares the label and is corpus-dead): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:10` | Every shape wired into the compile membrane is live, or registered idle with an adjudicated reason distinguishing corpus gap from dead shape; four VACUITY_REGISTRY rows still read 'corpus gap or dead shape, not adjudicated here'. |
+| `tab` | `tab:12` | cbh p0 compiles the region at y 681-761 as two tab:RecordTables per spec § 1, counted as CELLS, never the score. |
 
 ## §2 What must land first — `arc-depends.rq`
 
@@ -55,7 +56,7 @@ stops being grounded. A dependency reachable both by an asserted chain and by on
 containing a proposition is graded `asserted` — the grounded chain exists, and that is
 the fact.
 
-**15 of 44 criteria carry a closure**; for the other 29 no dependency has been read, which is not a claim that they have none.
+**15 of 45 criteria carry a closure**; for the other 30 no dependency has been read, which is not a claim that they have none.
 
 | criterion | asserted — grounded by ablation | proposed — read, not grounded |
 | --- | --- | --- |
