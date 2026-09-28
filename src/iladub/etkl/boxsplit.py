@@ -208,7 +208,9 @@ def _box_band(box: Box, words: Sequence[Word], title: Sequence[Word],
     PROCEDURAL — construction only. The centre of a painted extent is exact arithmetic on the
     mark itself, the same reduction `geometry.extract_rules` makes of a pdfplumber edge; it is
     not a tolerance."""
-    from .compile import _build_ruled_band          # late: compile imports this module's caller
+    # Imported at call time, so this module can be imported without loading compile. Nothing
+    # forces it today: compile.page_bands imports boxsplit lazily, inside the function.
+    from .compile import _build_ruled_band
     lines = text_lines(list(words))
     sub = Band(tuple(lines), min(ln.top for ln in lines), max(ln.bottom for ln in lines))
     sub_rules = tuple(Rule(x=(v.x0 + v.x1) / 2.0, top=v.top, bottom=v.bottom)
@@ -272,6 +274,11 @@ def split_band(band: Band, boxes: Sequence[Box], page_chars: Sequence[Char],
                        max(ln.bottom for ln in residue_lines))
 
         def keep(item) -> bool:
+            """True for a rule, horizontal or glyph outside every region a box band was built
+            from. KNOWN LIMIT: a residue word that STRADDLES a box edge (not wholly inside, so
+            the partition leaves it in the residue) keeps its words-path text but loses its
+            in-box glyphs on a chars rebuild (a ruled residue's `rule_aware_lines`). The corpus
+            has no such word."""
             return not any(_contains(rect, item) for rect in built_from)
 
         out.extend(build_sub(sub, keep)

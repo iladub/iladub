@@ -454,6 +454,8 @@ def page_bands(pdf_path: str, page_number: int = 0,
     specs: list[tuple | None] = []
 
     def _build_sub(sub, keep=None):
+        # PROCEDURAL (CLAUDE.md § 8): construction only. It filters page marks by exact interval
+        # overlap and calls the unchanged builders; it decides no table question of its own.
         # One sub-band -> (its Band, its specs entry). The per-sub-band body this loop always had,
         # factored out UNCHANGED so the box split's residue (boxsplit.split_band, I-3d) runs the
         # identical code rather than a copy of it. `keep` (the residue's scope, split_band) admits

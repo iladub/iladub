@@ -319,6 +319,11 @@ def test_a_residue_beside_the_boxes_does_not_reread_their_ink(tmp_path):
     assert len(residue) == 1
     assert [_text([ln]) for ln in residue[0].lines] == [spec["aside"], spec["note"]]
     assert residue[0].rules == () and residue[0].hrules == ()
+    # I-3e, where the sort is load-bearing: page_boxes' own order puts the residue (whose top is
+    # the aside's, on the title line) LAST, so only split_band's (top, x0) sort puts it first.
+    keys = [(round(b.top, 1), round(min(w.x0 for ln in b.lines for w in ln.words)))
+            for b in bands]
+    assert keys == [(181.7, 40), (195.7, 44), (195.7, 404)]
 
 
 @pytest.mark.parametrize("make", [F.one_box_with_title_pdf, F.open_lattices_pdf])
