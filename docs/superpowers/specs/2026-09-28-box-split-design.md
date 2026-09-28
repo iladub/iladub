@@ -315,7 +315,7 @@ witness is added as a conjunct, evaluated only when the count is True.
 
 **Oracles.**
 - **U1 (CI, synthetic):** a reportlab ruled grid with the T1 defect. In at least one ruled cell,
-  the header word sits wholly right of every body word. **MEASURE that the count refuses it on
+  the header word sits wholly right of every body word. It also has one multi-word header cell whose inter-word gaps are covered by a wider body word, as `MAIN WHEAT GRADES` is on T1, because the `NOT EXISTS` falsification below needs a pair to fire on. **MEASURE that the count refuses it on
   today's tree**, or the test pins nothing. After the change, `_build_ruled_band` returns a band
   whose header line re-buckets into one cell per rule interval.
 - **U2 (CI, negative):** the same grid plus one body line carrying two words in one rule interval,
