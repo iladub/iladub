@@ -265,3 +265,131 @@ $ grep -rn "#table999" tests/ src/ vocab/ docs/wiki/ readings/ scripts/ docs/sup
 The same `grep -rn` form finds the real citation and returns nothing for a deliberately absent
 one, which is what makes the "zero live references" verdict above a measurement rather than an
 assumption that the search terms happened not to match.
+
+## § 2. AMENDMENT (2026-09-28, fix round 1) — the census generalised past `#tableN`/`regions[N]`
+
+**§ 1.4's "zero live references" verdict was WRONG.** Task 0's review found a Critical finding:
+`tests/etkl/test_typing_equiv.py:16-44` is a live, index-KEYED reference to cbh raw band 9 that
+`grep -rnoE "#table[0-9]+"` structurally cannot catch, because it is not a `#tableN` citation at
+all — it is a **positional list literal**. `EXPECTED_VERDICTS["cbh"]` is a 10-element list;
+`test_band_verdicts_are_recorded_and_stable` calls `page_bands(path, 0)` directly and asserts the
+full ordered list equals this literal by `==`. List index 9 is exactly cbh page-0 band 9's
+pre-split verdict tuple. **This section does not rewrite § 1.4 (Evidence is append-only per
+CLAUDE.md § Documentation governance) — it corrects the verdict here, in place.**
+
+### 2.1 The corrected method
+
+§ 1.4's `grep` census answers "does anything cite cbh by `#tableN`/`regions[N]` string form" and
+nothing else — it is blind to any reference that is positional *by construction* (a Python list
+whose INDEX is never written as a literal `9` anywhere in the source) or count-based (a `len(...)`
+over `page_bands`'/`compile_tables`'/`compile_document`'s output). The corrected method:
+
+1. **Find every file that could possibly be affected** — every test/script/reading referencing
+   the cbh corpus path or ENTRIES key, case-insensitively: `grep -rlni "cbh" tests/ scripts/
+   readings/`. 39 files matched (11 in `scripts/`, 28 in `tests/`+`readings/`'s parent).
+2. **Narrow to files that actually run cbh page 0 through a band/region producer**
+   (`page_bands`, `compile_tables`, `compile_page`, or `compile_document` called on the cbh
+   corpus PDF specifically — not a synthetic fixture, not a docstring mention, not the "CBH" demo
+   *contract* namespace used by `test_cbh_contract.py`/`test_split_key_naming.py`, neither of
+   which compiles the corpus PDF at all). Read every candidate file's actual test bodies (not
+   just its `grep` hit line) to make this call — a file mentioning "cbh" in a comment or using a
+   different document as its fixture (`test_membrane_health.py`'s `bfs_report`,
+   `test_escalation_wiring.py`'s synthetic/`APPLE` fixtures, `test_grounding.py`'s synthetic
+   `ground_concept` calls) is excluded here, explicitly, having been checked rather than assumed
+   absent.
+3. **Within each surviving file, find every assertion that is positional or count-based over the
+   bands/regions that call returns**: list/tuple equality against a literal (`==`), `len(...)`
+   (over `page_bands(...)`, `rep.regions`, `rep.repaired_bands`, `rep.chains`), `[i]` indexing,
+   `zip` against an expected sequence, a per-region/per-band ordinal loop, or a snapshot keyed by
+   ordinal. A test that instead FILTERS regions by a property (`verdict == "asserted"`) and
+   asserts something about the filtered population, with no ordinal/count tying it to band 9
+   specifically, is not in this class — `enumerate()` alone does not make a loop positional; what
+   matters is whether the ASSERTION depends on band 9's ordinal position or on a count that
+   includes band 9's contribution.
+
+### 2.2 Control
+
+The method must find `test_typing_equiv.py`'s `EXPECTED_VERDICTS["cbh"]` — it does, by direct
+inspection (step 2/3 above are a reading method, not a grep pattern, so the "control" here is
+that the method's own worked application surfaces the exact finding the review reported):
+
+```
+tests/etkl/test_typing_equiv.py:36    "cbh": [
+tests/etkl/test_typing_equiv.py:38-44     8 more (NON_TABLE, None, None, None) elements
+tests/etkl/test_typing_equiv.py:53         ("RECORD_TABLE", 1, False, None),   ]   <- index 9
+tests/etkl/test_typing_equiv.py:103   def test_band_verdicts_are_recorded_and_stable(name, path):
+tests/etkl/test_typing_equiv.py:117       assert verdicts == EXPECTED_VERDICTS[name], (...)
+```
+
+Found — the control passes, and this is the SAME finding the review reported verbatim.
+
+### 2.3 The corrected list — every live positional/count-based cbh page-0 dependent
+
+| file:line | what it runs | what it asserts | at risk (N>=9 / count includes band 9) |
+|---|---|---|---|
+| `tests/etkl/test_typing_equiv.py:36-53,79-119` | `page_bands(cbh, 0)` directly, via `_band_verdicts` | `EXPECTED_VERDICTS["cbh"]`, a 10-element list, compared `==` to the live per-band `(kind, split, looks_transposed, coherent)` tuples; **index 9 is band 9's current fused `RECORD_TABLE` verdict** | **YES — certain.** The split changes what `page_bands` returns for band 9 (one band -> the split's box bands + residue), so both the LIST LENGTH and index 9 move. No `@pytest.mark.corpus` marker (self-skips only if the PDF is absent) — it runs in CI whenever the corpus is present locally and always runs here. |
+| `tests/etkl/test_run_merge_seam.py:145-150` (`test_m1_the_partition_does_not_depend_on_section_repair_bands`) | `page_bands(CBH, 0, None)` and `page_bands(CBH, 0, frozenset({1,3,5,7}))` | `len(...)` equality between the two calls | **Checked, NOT at risk by construction** — band 9 is not in the passed `section_repair_bands` set on EITHER side, so the split applies identically to both calls (it runs before section repair, § 3.1); the two lengths move by the same amount and stay equal. Included because it IS a live `len(page_bands(...))` count over cbh page 0 and must be re-run in Task 3/5, not because it is expected to fail. |
+| `tests/etkl/test_run_merge_seam.py:182,320-338` (`BASELINE_ASSERTED[("cbh-stem-2026-08-03", 0)] = 54`, used by `test_o3_no_page_loses_asserted_ink_to_a_merge`) | `compile_tables(cbh, 0, validate_shapes=False, datagrid_fallback=False)` | `rep.asserted == 54` (cbh is in none of `MERGE_MOVES`/`D1_MOVES`/`HEADER_INK_MOVES`, so it falls to the `else` branch's exact equality) | **AT RISK.** 54 is band 9's CURRENT total asserted-token count (all of it, per § 1.3's dump: `tokens_asserted=54, tokens_escalated=0`) — the only asserted band on this page under `compile_tables` (`datagrid_fallback=False`, no document driver). Whether the post-split T1+T2+residue reading still books all 54 tokens as `asserted` (vs. some moving to `escalated`/`ignored`, e.g. the Note residue) is exactly the open question spec § 4 leaves unsettled ("whether the residue reads as notes or `#ignored` is recorded"). **This test WILL need its baseline re-measured, not merely re-run.** |
+| `tests/test_cbh_e2e.py:107-117` (`test_cbh_sections_repaired_and_chained`) | `compile_document(cbh)` | `len(rep.repaired_bands) == 4`; `len({page for page, _ in rep.repaired_bands}) == 1`; `len(four_chains) == 1` where `four_chains = [c for c in rep.chains if len(c) == 4]` | **Checked, NOT at risk** — `repaired_bands`/`chains` concern the section-repair driver over bands **1, 3, 5, 7** (the four rosters, N < 9, § 1.3). Band 9 is not part of that repeating group and the split does not touch bands < 9. Included for completeness (it IS a live count-based cbh-page-0 dependent) though it is not expected to move. |
+
+**No other file in the 39-file case-insensitive `cbh` population compiles the cbh corpus PDF
+through a band/region producer AND asserts anything positional/count-based over its bands or
+regions.** Every other hit was checked and is one of: a docstring/comment-only mention
+(`test_ground_section_marker.py`, `test_escalation_wiring.py`, `test_hier_header_ink_is_asserted.py`,
+`test_corpus_stem.py`, `test_membrane_health.py`, `test_grounding.py`, `test_kind_gate_is_load_bearing.py`,
+`test_arc_manifest.py`, `test_artifact_terms.py`, `test_docgov_extract.py`); a test against pure
+functions with literal values copied off the page but never run through the compiler at all
+(`tests/etkl/test_datagrid.py`'s `CBH_PANEL1_MEMBERS`/`CBH_PANEL4_MEMBERS` — no `compile_document`/
+`compile_tables`/`page_bands` import in that file); a test against synthetic fixtures, not the
+corpus PDF (`test_ground_section_marker.py`, `test_escalation_wiring.py`,
+`test_fallback_region_books_and_names.py`'s CI-half fixture — its corpus-marked sweep
+(`test_every_claiming_region_books_ink_and_names_its_table`) does compile cbh but only FILTERS
+`_claiming_regions` and asserts a per-region property, never a count or index, so a region set
+that changes shape from 1 to 2/3 members is still checked correctly, member by member); a test
+keyed on section-repair region indices `#region0`/`#region1` (N < 9,
+`test_supersession_queries.py`); a whole-corpus SHACL focus-node/term-reachability count that is
+not band-ordinal (`test_vacuity_registry.py`); a document-level score/accepted comparison, the
+same class § 1.1's C2 already covers (`test_cockpit.py`); or a "CBH" demo *contract* namespace
+that never touches the corpus PDF (`test_cbh_contract.py`, `test_split_key_naming.py`). The 11
+`scripts/*.py` files matching the case-insensitive grep were also checked
+(`grep -n "assert " <file> | grep -i cbh`, all empty) — they are census/probe instruments with no
+gating assertion, not tests. `readings/boxhead/` (the only `readings/` subdirectory) contains no
+cbh reading at all (checked in § 1.4 already).
+
+### 2.4 Affected files run NOW, on today's (pre-split) tree — the "before" for Task 3's Step 3
+
+One file per process, foreground, serially (nothing else compiling concurrently):
+
+```
+$ PYTHONPATH=src .venv/bin/python -m pytest tests/etkl/test_typing_equiv.py -q -p no:cacheprovider
+6 passed in 38.56s
+
+$ PYTHONPATH=src .venv/bin/python -m pytest tests/etkl/test_run_merge_seam.py -q -p no:cacheprovider
+9 passed in 462.49s (0:07:42)
+
+$ PYTHONPATH=src .venv/bin/python -m pytest tests/test_cbh_e2e.py -q -p no:cacheprovider
+4 passed in 41.29s
+```
+
+**All three files pass in full on today's (pre-split) tree.** This is the "before" Task 3's Step
+3 diffs against: `test_typing_equiv.py`'s `EXPECTED_VERDICTS["cbh"]` and
+`test_run_merge_seam.py`'s `BASELINE_ASSERTED[("cbh-stem-2026-08-03", 0)]` are the two literals a
+later task must re-measure and update (never silently relax) once the split lands; the other two
+dependents (`test_m1`, `test_cbh_sections_repaired_and_chained`) are expected to keep passing
+unchanged and are re-run as a control on that expectation.
+
+### 2.5 Caveat on § 1.1/1.2's canonical hash (necessary, not sufficient, for C2)
+
+`scripts/corpus_verdict_snapshot.py`'s `_canonical_hash` normalises every blank-node label to the
+constant `_:b` before hashing (`_BNODE.sub("_:b", ln)`, per its own docstring: "two graphs
+differing ONLY in how blank nodes are SHARED would hash alike"). A blank node is exactly what
+every `tab:BBox` node is (`holon.py`'s `_bbox_node`/`_label` helpers mint a bare `BNode()`), and
+`tab:hasHeaderNode`/`tab:hasCell` targets are also blank in several emission paths. **A hash match
+between a before-snapshot and an after-snapshot in § 1.1 is therefore necessary but NOT
+sufficient evidence that the split preserved every bbox's sharing structure** — two graphs whose
+blank nodes are wired differently (e.g. two cells that used to share one `BBox` node now each
+minting their own, or vice versa) but whose normalised N-Triples are otherwise identical would
+still hash identically. Task 5's C2 should read this hash match as "no non-blank-node fact moved"
+and lean on § 1.3's content-keyed, non-hash comparison (and `corpus_snapshot_diff.py`'s per-page
+verdict/cell diff, which does not depend on blank-node identity at all) for the load-bearing
+claim that nothing else changed.
