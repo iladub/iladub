@@ -220,3 +220,127 @@ runs today: ()   runs with split: ()
 
 **7.4 `extract_rules` over-read** — handoff census (`cmp_repo.py`, not re-run this session):
 427/460 non-rules on graincorp-capacity, 678/413 on apple p0.
+
+---
+
+## 8. Addendum — Task 3b: the resolution guard refuses only what it can witness (2026-09-28)
+
+**Written at 66,455 working tokens, past the 50K originating floor, on the maintainer's explicit
+override (logged in plimslop's pre-flight log).** Treat this section as a proposition a reviewer
+must attack, not as settled design. Evidence: M1–M3 in
+`docs/superpowers/2026-09-28-box-split-t3b-measurements.md`, M4 in
+`docs/superpowers/2026-09-28-box-split-t3b-witness-census.md`.
+
+### 8.0 The ruling it obeys
+
+Maintainer, 2026-09-28, recorded in the SDD ledger: extend the loop with Task 3b. The plan's
+constraint "`_build_ruled_band` is not modified" is lifted for the R225 arm-B guard only. The branch
+does not merge until O2 XPASSes. `BASELINE_ASSERTED[("cbh-stem-2026-08-03",0)]` and
+`EXPECTED_VERDICTS["cbh"]` are not re-pinned before T1 reads.
+
+### 8.1 The defect
+
+The guard (`compile._build_ruled_band`, `_under_resolved`) refuses a re-bucket when the rules give
+fewer columns than `_word_column_count(sub)`. Its stated reason is that such a re-bucket "can only
+FUSE". The count is a proxy for that property, and cbh T1 refutes the proxy. It reads 9 columns
+against 7 rules because in the WHEAT and TOTAL cells the header word lies wholly right of the body
+numbers (M1). Yet no line of T1 has two words that those two extra gutters separate, so nothing
+would fuse. This is the one geometric attempt (§ 8 of CLAUDE.md, 2026-09-17), and it is refuted.
+The remedy below adds no second heuristic: it tests the property the guard already claims, exactly.
+
+### 8.2 The change
+
+**A fusion witness** over a band's lines and a set of rule xs is two words `a`, `b` on one line,
+both wholly inside the same consecutive rule interval, `a.x1 < b.x0`, such that some point of
+`(a.x1, b.x0)` is covered by no word of any line of the band.
+
+**Its query form, stated once.** No point-quantifier exists in SPARQL, so it is expressed through
+word right edges: a witness exists iff some word right edge `e` has `a.x1 ≤ e < b.x0` and no word
+`v` has `v.x0 ≤ e < v.x1`. This is equivalent. If an uncovered point `p` exists, the largest word
+right edge `≤ p` satisfies the condition. If some `e` satisfies it, the points just right of `e`
+are uncovered. The spans are closed, as in M4.
+
+**The guard becomes a conjunction:** refuse iff the count refuses **and** a witness exists over
+`(sub, xs)`. Where no witness exists, re-bucketing on `xs` joins no two words that the band's own
+layout separates. So absence is a proof, and the refusal it lifts was never justified. Where a
+witness exists, the refusal stands exactly as today.
+
+- **Scope, measured (M4):** of 100 `_build_ruled_band` calls, exactly one changes, cbh T1, from
+  refuse to accept. All 35 other refusals keep a witness. That includes the 8 bfs p6 bands with
+  T1's shape and the 27 outer-box bands R225 was raised for. The 64 accepts cannot change, because
+  the conjunction only relaxes.
+- **The post-refinement site** (`len(col_xs) - 1 < _word_cols`) is **not changed.** It refused
+  nothing in M4's census (fact 4), so changing it would ship an unexercised branch.
+- **The witness runs only when the count refuses.** On the refused population it costs one query
+  per band.
+
+### 8.3 Classification (CLAUDE.md § 8)
+
+| step | class | why |
+|---|---|---|
+| the witness (`vocab/queries/rebucket-fuses.rq`, an `ASK`) | AXIOM, derivation, open world | Evidence-positive: a refusal needs a witness *present*. Its one `NOT EXISTS` is closed within the band's own fresh graph, which is the closure boundary, as in `confirm-boundary.rq`. No numeric literal (`test_no_tuned_constant_in_rq_files`). |
+| emit the band's word + interval evidence graph, run the query | PROCEDURAL | Engine glue, the `boundary.py` pattern. It decides nothing. |
+| the count (`_word_column_count`) | unchanged | R225's shipped predicate, now a necessary condition only. Its gutter defaults are pre-existing and not re-opened here. |
+
+**Why not NEURAL.** The witness makes no reading judgement. Whether two words belong to one cell
+is exactly what it does *not* decide. It proves the one case where that question cannot matter,
+because nothing the layout separates gets joined, and it abstains everywhere else, where today's
+refusal stands. The judgement it leaves open is "is this gap a word space or a column gutter?".
+M4 fact 1 shows that question in the 52 phrase-level witnesses. It is the NEURAL question for the
+35 remaining refusals, and it is **not built here**. No oracle for it exists yet: no oracle, no
+worker.
+
+**New transient terms**, declared in `vocab/ontology/tab.ttl` beside `tab:HeaderGlyph` under a
+"(transient, pre-holon)" heading: a word class carrying line identity and x0/x1, and a rule-interval
+class carrying lo/hi. The names are the implementer's to choose. Never asserted into a holon.
+
+### 8.4 Task 3b — the contract (not the code)
+
+**Seam:** the `_under_resolved` assignment in `compile._build_ruled_band`. The count stays. The
+witness is added as a conjunct, evaluated only when the count is True.
+
+**Invariants.**
+- I-3b-1: the guard's refusal set is a subset of today's.
+- I-3b-2: `_build_ruled_band`'s behaviour is byte-identical on every band where the count does not
+  refuse, and on every band where a witness exists.
+- I-3b-3: the `.rq` carries no numeric literal, and the Python glue carries no tolerance.
+
+**MEASURE before writing:**
+- (i) Rebuild M4's census with the *query's* semantics. Containment is "wholly inside one
+  interval"; M4 used word centres. Show the flip set is exactly `{cbh p0 T1}`. A different set is
+  a finding: report it, never tune it away.
+- (ii) Confirm on T1 that `refine_rule_columns` confirms no candidate at 101.38 or 377.88 once the
+  band is accepted. `confirm-boundary.rq` needs header ink on both sides, and WHEAT/TOTAL sit on
+  one side only. Measure it; do not assume it.
+
+**Oracles.**
+- **U1 (CI, synthetic):** a reportlab ruled grid with the T1 defect. In at least one ruled cell,
+  the header word sits wholly right of every body word. **MEASURE that the count refuses it on
+  today's tree**, or the test pins nothing. After the change, `_build_ruled_band` returns a band
+  whose header line re-buckets into one cell per rule interval.
+- **U2 (CI, negative):** the same grid plus one body line carrying two words in one rule interval,
+  across a gap no other line covers. Still refused.
+- **U3 (CI, existing):** the R225 D1 tests M3 lists stay green.
+- **O2 (corpus, local):** XPASS is the loop's oracle. **Proposed, and it may fail:** it was measured
+  only that T1's header re-buckets to the 7 right cells (M3's control). The full path through
+  classify, compile and the membrane has not been run. § 4 risk 1 (T2's first row read as a
+  boxhead) is still live.
+- **Local sweep:** the three cbh tests red since Task 3 (handoff § 2), plus
+  `test_o3_no_page_loses_asserted_ink_to_a_merge`, plus `tests/test_cbh_e2e.py`. Re-pin cbh
+  literals only from a measured value after O2 XPASSes. One test file per process, from a `.sh`
+  under bash.
+
+**FALSIFICATION (mandatory):**
+- Drop the conjunct (count alone): U1 fails.
+- Make the witness always-false (the guard off): U2 fails.
+- Delete the `NOT EXISTS` from the query: U1 fails, because every inter-word gap becomes a witness.
+- Restore, and show the suite green.
+
+### 8.5 What 3b does not do
+
+- It does not change the count, its gutter defaults, or the post-refinement site.
+- It does not touch the 35 refusals that carry a witness, including bfs p6. Their "word space or
+  gutter" judgement is recorded as the NEURAL candidate above, to be raised as a register row at
+  Task 5, not built.
+- No `section_repair=True` path is measured (M2's scope caveat). The census covers the default path
+  only.
