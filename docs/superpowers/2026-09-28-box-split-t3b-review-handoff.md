@@ -51,3 +51,15 @@ Make O2 (`tab:12`) XPASS, so that the box split ships compiling.
 - Four cbh corpus test files are red and not re-pinned. `test_cbh_e2e`'s 3 failures predate 3b,
   per the implementer's baseline run.
 - The workspace (`.superpowers/`) is gitignored: the report, the review and the ledger are not durable.
+
+## Addendum — maintainer ruling on the O2 blocker (2026-09-28)
+
+**Ruled:** a box band skips `segment.is_multi_table_ambiguous`. A band cut from one closed box has
+already had "how many tables?" answered by the frame the author drew, so the gutter proxy must not
+overrule it. Scope: box bands only (2 calls corpus-wide, M2). Recorded in the ledger.
+
+The fresh session **authors spec § 9** for this, classified under CLAUDE.md § 8, before any code.
+**MEASURE, don't assume,** how `compile_tables` knows a band is a box band. `page_bands` returns
+bands, and whether a box band carries a marker of its origin has not been measured. Then it runs
+Task 3b's fix round 1 (the § 8.2 amendment above), then the § 9 task, then Task 4 Steps 4–5, then
+Tasks 5 and 6.
