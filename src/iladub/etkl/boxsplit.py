@@ -5,13 +5,29 @@ ruled boxes (spec 2026-09-28-box-split-design.md § 3.2, ruling R-d).
 which bands they belong to and which bands must split — nothing more. Task 3 performs the split
 (the word partition and band construction); it is not built here.
 
+BAND INDEX SPACE (R2, stated precisely because it is load-bearing): every index this module
+reads or returns — `bands`' own position, `tab:boxBandIndex`, `bands_to_split`'s dict keys — is
+an index into `compile.page_bands`' RAW band list, `detect_bands(text_lines(words))`, BEFORE
+`segment`, `cut_trailing_notes` and the ruled-run merge. It is explicitly NOT `tab:bandIndex`'s
+index space (`tab:PageBand`'s own property): that one names a band's position in whatever list
+`page_bands` ultimately RETURNS, after every one of those per-band rebuilds. The caller
+(`page_bands`' own `for band in raw_bands:` loop, Task 3's site) needs the pre-rebuild index, so
+reusing `tab:bandIndex` here would silently claim the wrong population — the same reasoning
+`tab:bandRuleX` already sets as precedent for this ontology.
+
 CLAUDE.md §8 CLASSIFICATION, per function:
 
 - `_box_owner` — PROCEDURAL, exact set membership (spec § 3.2, I-2a): "every page word inside
-  the box's bbox is a word of that band" is decidable by exact interval containment (no
-  tolerance, per spec § 8) over an already-partitioned word set (`bands` — `compile.page_bands`'
-  own `detect_bands` partitions every page word into exactly one band). It decides no table
-  question; it only answers a fact about geometry.
+  the box's bbox is a word of that band" is decidable by exact interval containment over each
+  word's and the box's own already-measured (x0, x1, top, bottom) — no threshold, no perceptual
+  judgement, nothing underdetermined, so it is irreducible to NEURAL and does not belong in
+  SPARQL either: AXIOM's open-world derivation presupposes an evidence graph of ALREADY-EMITTED
+  RDF facts to derive over (band-boxes.rq's own precondition), and producing that first fact from
+  raw coordinates is exactly the step that has none yet to read — the same reason
+  `sectiongraph._rule_xs_signature` computes its signature procedurally before `band-run.rq` ever
+  sees a triple. `bands` — `compile.page_bands`' own `detect_bands` output — is assumed to
+  partition every page word into exactly one band. It decides no table question; it only answers
+  a fact about geometry.
 - `box_evidence` — PROCEDURAL raw extraction: `_box_owner`'s facts, turned into typed RDF. It
   decides nothing further; the emitter's only judgement is I-2a's abstain, already made by
   `_box_owner` returning `None`.

@@ -7,15 +7,32 @@ builds its RAW band list (measured below, R2): `detect_bands(text_lines(extract_
 import os
 
 import pytest
+from rdflib import RDF
+from rdflib.namespace import XSD
 
+import iladub.etkl.boxsplit as boxsplit_mod
 from iladub.etkl.bands import detect_bands
 from iladub.etkl.boxes import page_boxes
-from iladub.etkl.boxsplit import _box_owner, bands_to_split, box_evidence
+from iladub.etkl.boxsplit import TAB, _box_owner, bands_to_split, box_evidence
 from iladub.etkl.geometry import extract_words, text_lines
 from tests.etkl import fixtures as F
 
 CORPUS = os.path.join(os.path.dirname(__file__), "..", "..", "corpus")
 CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")
+
+
+def _y_overlap_owner(box, bands):
+    """FALSIFICATION MUTANT — NOT SHIPPED. Belongs by bbox y-OVERLAP alone (the first band whose
+    [top, bottom] overlaps the box's), dropping I-2a's "every word inside" clause entirely. Used
+    only via `monkeypatch.setattr(boxsplit_mod, "_box_owner", _y_overlap_owner)`, which patches
+    the MODULE attribute `bands_to_split` resolves at call time — this test module's OWN already
+    -imported `_box_owner` name is a separate binding and is never touched, so only the
+    decision (`bands_to_split`) is observed under the mutant, exactly as fix round 1 finding 2/3
+    requires."""
+    for idx, band in enumerate(bands):
+        if box.top < band.bottom and box.bottom > band.top:
+            return idx
+    return None
 
 
 def _raw_bands(pdf_path: str, page_number: int = 0):
@@ -46,6 +63,29 @@ def test_two_boxes_one_band_selects_the_shared_band_with_both_boxes(tmp_path):
     # every word of the shared band is accounted for by exactly one of the two boxes or by
     # neither (I-2a): both boxes must actually resolve to the SAME band index.
     assert {_box_owner(b, bands) for b in selected} == {idx}
+
+
+def test_two_boxes_evidence_graph_has_exactly_two_closed_box_nodes(tmp_path):
+    """I-2c, positive (fix round 1 finding 4): the two-box fixture's evidence graph carries
+    exactly one `tab:ClosedBox` node per box (2 total — never one per word, never one per band),
+    each with exactly one canonical `xsd:integer` `tab:boxBandIndex`, both naming the SAME band
+    (the fixture's own contract: one shared band)."""
+    p = str(tmp_path / "two.pdf")
+    F.two_boxes_one_band_pdf(p)
+    bands = _raw_bands(p)
+    boxes = page_boxes(p, 0)
+    g = box_evidence(bands, boxes)
+    nodes = list(g.subjects(RDF.type, TAB.ClosedBox))
+    assert len(nodes) == 2
+    band_indices = set()
+    for n in nodes:
+        vals = list(g.objects(n, TAB.boxBandIndex))
+        assert len(vals) == 1, vals
+        lit = vals[0]
+        assert lit.datatype == XSD.integer, lit.datatype
+        assert str(lit) == str(int(str(lit))), "canonical lexical form, no leading zeros/sign"
+        band_indices.add(int(lit))
+    assert band_indices == {_box_owner(boxes[0], bands)}
 
 
 def test_n1_one_box_with_ink_outside_does_not_split(tmp_path):
@@ -82,6 +122,23 @@ def test_two_wordless_stroked_separators_do_not_split(tmp_path):
     assert bands_to_split(bands, boxes) == {}
 
 
+def test_falsification_wordless_separators_split_under_y_overlap_mutant(tmp_path, monkeypatch):
+    """DECISION-LEVEL falsification (fix round 1 finding 2/3): both separators sit INSIDE the
+    band's own y-range (the fixture's own measured contract), so a y-overlap-only membership
+    rule reaches count 2 for band 0 and WRONGLY splits it — proving the shipped `{}` above
+    depends on I-2a's word-count clause, not on a geometric accident that keeps the boxes from
+    ever overlapping the band in the first place."""
+    p = str(tmp_path / "wordless.pdf")
+    F.wordless_separator_boxes_pdf(p)
+    bands = _raw_bands(p)
+    boxes = page_boxes(p, 0)
+    monkeypatch.setattr(boxsplit_mod, "_box_owner", _y_overlap_owner)
+    mutant = boxsplit_mod.bands_to_split(bands, boxes)
+    assert mutant != {}, "the y-overlap mutant must WRONGLY split band 0"
+    assert set(mutant) == {0}
+    assert len(mutant[0]) == 2
+
+
 def test_a_wordless_box_emits_no_evidence_node_at_all():
     """I-2c: a box with no owner emits NOTHING into `box_evidence`'s graph — the query cannot
     defend against a node with no `tab:boxBandIndex` fact, so the emitter must never mint one."""
@@ -101,17 +158,37 @@ def test_a_wordless_box_emits_no_evidence_node_at_all():
 def test_a_box_straddling_two_bands_belongs_to_neither(tmp_path):
     """The fixture Step 3's falsification requires: a box whose frame covers two bands that
     `detect_bands` itself splits (an internal text-row gap past `gap_factor`). I-2a's exact
-    rule must refuse it — the population this repo's own "belong by y-overlap alone" variant
-    would move (recorded in the task report; not shipped, since I-2a is the spec)."""
+    rule must refuse it. A SECOND, genuine closed box (fix round 1 finding 3) sits in band 0
+    alone, so band 0's true count under I-2a is ONE (the straddler contributes nothing) —
+    `bands_to_split` must still return `{}`, not merely refuse the straddler in isolation."""
     p = str(tmp_path / "straddle.pdf")
     F.straddling_box_pdf(p)
     bands = _raw_bands(p)
     assert len(bands) == 2, "the fixture's own contract: the internal gap must split the page"
     boxes = page_boxes(p, 0)
-    assert len(boxes) == 1
-    box = boxes[0]
-    assert _box_owner(box, bands) is None
+    assert len(boxes) == 2, "the straddler plus the genuine box beside it"
+    straddler = max(boxes, key=lambda b: b.bottom - b.top)   # spans both bands; the other does not
+    genuine = next(b for b in boxes if b is not straddler)
+    assert _box_owner(straddler, bands) is None
+    assert _box_owner(genuine, bands) == 0
     assert bands_to_split(bands, boxes) == {}
+
+
+def test_falsification_straddle_splits_under_y_overlap_mutant(tmp_path, monkeypatch):
+    """DECISION-LEVEL falsification (fix round 1 finding 2/3): under the y-overlap-only mutant
+    the straddler resolves to band 0 too (the first band its bbox overlaps), joining the
+    genuine box there and pushing band 0's count to two — WRONGLY splitting it. Proves the
+    shipped `{}` above depends on I-2a's exact rule, not on the straddler being invisible to
+    band 0 under any rule."""
+    p = str(tmp_path / "straddle.pdf")
+    F.straddling_box_pdf(p)
+    bands = _raw_bands(p)
+    boxes = page_boxes(p, 0)
+    monkeypatch.setattr(boxsplit_mod, "_box_owner", _y_overlap_owner)
+    mutant = boxsplit_mod.bands_to_split(bands, boxes)
+    assert mutant != {}, "the y-overlap mutant must WRONGLY split band 0"
+    assert set(mutant) == {0}
+    assert len(mutant[0]) == 2
 
 
 # --- Step 4: the corpus preview (a preview of Task 4's C1) --------------------------------------

@@ -2531,8 +2531,19 @@ def straddling_box_pdf(path: str) -> dict:
     correctly excluded from both — the population this fixture exists to move under the
     WEAKENED "belongs by y-overlap alone" variant Step 3 falsifies: that variant assigns the
     box to a band by bbox y-overlap, which is satisfied for band 0 (and, on overlap, band 1
-    too) regardless of which band's words are actually inside it."""
+    too) regardless of which band's words are actually inside it.
+
+    A SECOND, GENUINE closed box (review fix round 1 finding 3) sits beside the straddler, at a
+    disjoint x-range, its frame spanning ONLY [h0, h1] (band 0's own row) and its one row of
+    words sharing row A's baseline (so it joins row A's own `Line` — no third band is created).
+    Under I-2a's exact rule this box belongs to band 0 alone, giving band 0 a count of ONE
+    (the straddler contributes nothing) — `bands_to_split` must therefore still return `{}`.
+    Only under the y-overlap-only variant does the straddler ALSO resolve to band 0 (the first
+    band its bbox overlaps), pushing band 0's count to two and wrongly splitting it: this second
+    box is what makes the DECISION-level assertion (not just `_box_owner` in isolation)
+    discriminate between the two rules."""
     xs = [40.0, 120.0, 220.0]
+    xs2 = [260.0, 320.0, 380.0]
     h0 = PAGE_H - 192.0
     h1 = h0 - 14.0
     gap = 160.0
@@ -2540,19 +2551,26 @@ def straddling_box_pdf(path: str) -> dict:
     h2 = tall_top - 14.0
     rows = [("A1", "A2"), ("B1", "B2"), ("C1", "C2")]
     baselines = [h0 - 10.0, h1 - 10.0, tall_top - 10.0]
+    second_row = ("D1", "D2")
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setLineWidth(_BOX_LW)
     c.setFont("Helvetica", 8)
     for row, y in zip(rows, baselines):
         for x, cell in zip(xs, row):
             c.drawString(x + 4.0, y, cell)
+    for x, cell in zip(xs2, second_row):
+        c.drawString(x + 4.0, baselines[0], cell)     # row A's own baseline -> same Line
     for x in xs:
         c.line(x, h0, x, h2)
     for y in (h0, h1, h2):
         c.line(xs[0], y, xs[-1], y)
+    for x in xs2:
+        c.line(x, h0, x, h1)
+    for y in (h0, h1):
+        c.line(xs2[0], y, xs2[-1], y)
     c.save()
     return {"n_verticals": 3, "n_horizontals": 3, "box_top": h0, "box_bottom": h2,
-            "rows": rows, "gap": gap}
+            "rows": rows, "gap": gap, "second_box_xs": xs2, "second_box_row": second_row}
 
 
 def wordless_separator_boxes_pdf(path: str) -> dict:
@@ -2560,7 +2578,19 @@ def wordless_separator_boxes_pdf(path: str) -> dict:
     STROKED rects (separator rules, not tables — each reads as a closed box under boxes.py's
     touch machinery, Task 1's own measured commission) sit in the same band as two ordinary text
     lines, but neither rect has a single word inside its bbox. I-2a's "a box containing no words
-    belongs to no band" must exclude both."""
+    belongs to no band" must exclude both.
+
+    BOTH SEPARATORS MUST FALL INSIDE THE BAND'S OWN Y-RANGE (review fix round 1 finding 2,
+    measured 2026-09-28): the band `detect_bands` builds from the two text lines spans y
+    [185.7, 207.7]. The first drawing (`y - 2.0`) reads back at [191.8, 194.2] — inside. The
+    second MUST NOT sit at `y - 20.0`, which reads back at [209.8, 212.2] — BELOW band.bottom
+    (207.7) entirely, so it never overlaps the band under ANY membership rule (exact or
+    y-overlap-only) and the test this fixture exists for would pass for the wrong reason: only
+    one separator ever reaches the band, so the count never reaches 2 regardless of which rule
+    decides membership. `y - 8.0` reads back at [197.8, 200.2] — inside the band, alongside the
+    first — so a y-overlap-only membership rule genuinely reaches count 2 here (and would
+    therefore wrongly split), which is what makes I-2a's word-count clause (not a geometry
+    accident) the thing the shipped `{}` result actually depends on."""
     y = PAGE_H - 192.0
     c = canvas.Canvas(str(path), pagesize=letter)
     c.setFont("Helvetica", 8)
@@ -2568,6 +2598,6 @@ def wordless_separator_boxes_pdf(path: str) -> dict:
     c.drawString(40.0, y - 14.0, "Item Two")
     c.setLineWidth(_BOX_LW)
     c.rect(300.0, y - 2.0, 200.0, 2.0, stroke=1, fill=0)
-    c.rect(300.0, y - 20.0, 200.0, 2.0, stroke=1, fill=0)
+    c.rect(300.0, y - 8.0, 200.0, 2.0, stroke=1, fill=0)
     c.save()
     return {"n_boxes": 2, "n_words_in_boxes": 0}
