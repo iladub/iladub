@@ -2649,3 +2649,44 @@ def wordless_separator_boxes_pdf(path: str) -> dict:
     c.rect(300.0, y - 8.0, 200.0, 2.0, stroke=1, fill=0)
     c.save()
     return {"n_boxes": 2, "n_words_in_boxes": 0}
+
+
+def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False) -> dict:
+    """Task 3b (box-split, spec § 8.4 U1/U2) — cbh T1's defect, synthetically.
+
+    Four author verticals make THREE ruled cells. In the right-hand cell the header word
+    `TOTAL` lies wholly RIGHT of every body number, so a rules-free gutter profile finds an
+    extra gutter between them and counts 4 word columns against 3 rule columns: the R225 arm-B
+    count (`compile._word_column_count`) refuses the re-bucket, although no line has two words
+    that gutter separates. The middle cell carries the multi-word header `MAIN WHEAT GRADES`,
+    whose two inter-word gaps are bridged by the wider body word under it, as on T1 — the pair
+    the `NOT EXISTS` falsification of `rebucket-fuses.rq` needs to fire on.
+
+    `fusing_line=True` (U2) adds one body line with TWO words in the left cell across a gap no
+    other line's ink covers: a genuine fusion witness, so the refusal must stand.
+    """
+    rules = [40.0, 110.0, 250.0, 330.0]
+    header = [(45.0, "PORT"), (115.0, "MAIN WHEAT GRADES"), (296.0, "TOTAL")]
+    rows = [
+        [(45.0, "ALB"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "160,845")],
+        [(45.0, "ESP"), (115.0, "APW1/H2/ASW9/AUH2X"), (255.0, "82,850")],
+        [(45.0, "GER"), (115.0, "AWW1/ASW9/ANW1/APW1"), (255.0, "170,731")],
+        [(45.0, "KWI"), (115.0, "AUH2/APWN/APW1/AGP1"), (255.0, "284,895")],
+    ]
+    if fusing_line:
+        rows.append([(45.0, "AB"), (90.0, "CD"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "1,293")])
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 120.0
+    rh = 14.0
+    bottom = top - len(rows) * rh - 6.0
+    c.setLineWidth(0.7)
+    for x in rules:
+        c.line(x, top + 12, x, bottom)
+    c.setFont("Helvetica", 9)
+    for x, t in header:
+        c.drawString(x, top, t)
+    for i, row in enumerate(rows):
+        for x, t in row:
+            c.drawString(x, top - (i + 1) * rh, t)
+    c.save()
+    return {"rule_xs": rules, "header_cells": [t for _x, t in header]}

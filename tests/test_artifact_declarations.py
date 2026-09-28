@@ -229,8 +229,12 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # closed ruled boxes (spec `2026-09-28-box-split-design.md` § 3.2, ruling R-d). The two new
     # `tab:` terms it names (`tab:ClosedBox`, `tab:boxBandIndex`) went into the EXISTING
     # `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
+    # RE-MEASURED 2026-09-28 (box-split Task 3b): the `.rq` population is **56** —
+    # `rebucket-fuses.rq`, the fusion witness the R225 resolution guard now requires beside its
+    # count (spec § 8.2). Its six transient `tab:` terms went into the EXISTING
+    # `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
     assert len(vocab_nodes) == len(artifact_files()) == 166
-    assert len(query_nodes) == len(query_files()) == 55
+    assert len(query_nodes) == len(query_files()) == 56
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

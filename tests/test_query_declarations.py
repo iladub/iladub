@@ -149,10 +149,14 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
 
     RE-MEASURED 2026-09-28 (box-split Task 2): 54 -> 55, `band-boxes.rq`, the derivation that
     decides which text bands hold >= 2 of the author's closed ruled boxes (spec
-    `2026-09-28-box-split-design.md` § 3.2, ruling R-d)."""
+    `2026-09-28-box-split-design.md` § 3.2, ruling R-d).
+
+    RE-MEASURED 2026-09-28 (box-split Task 3b): 55 -> 56, `rebucket-fuses.rq` — the fusion
+    witness the R225 resolution guard in `compile._build_ruled_band` now requires beside its
+    count (spec `2026-09-28-box-split-design.md` § 8.2)."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    assert len(focus) == len(query_files()) == 55, sorted(focus)
+    assert len(focus) == len(query_files()) == 56, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():

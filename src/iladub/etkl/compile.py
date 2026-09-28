@@ -169,9 +169,22 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     # So an under-resolving band is NOT returned here: it falls through with `relines` empty
     # and is judged again below, against the DERIVED boundaries, which is the comparison
     # `grid._rule_boundaries` itself makes (it prefers `band.column_xs` over the raw marks).
+    #
+    # THE COUNT IS NECESSARY, NOT SUFFICIENT (box-split Task 3b, spec 2026-09-28 § 8). The count
+    # is a proxy for "can only fuse", and cbh T1 refuted it: a header word lying wholly beside
+    # the body numbers of its own ruled cell adds a gutter the count reads as a column, though no
+    # line has two words that gutter separates. So the refusal now also requires an exact FUSION
+    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): two words on one line,
+    # wholly inside one rule interval, with a point between them no word of the band covers.
+    # Where none exists, re-bucketing joins nothing the band's layout separates, and the refusal
+    # was never justified. The witness runs only when the count refuses (`and` short-circuits),
+    # so every band the count accepts is untouched. The post-refinement site below is NOT
+    # changed: it refused nothing in the spec's census (§ 8.2).
+    from .fusion import fusion_witness
     _word_cols = _word_column_count(sub)
     _under_resolved = (_word_cols is not None and len(xs) >= 2
-                       and len(xs) - 1 < _word_cols)
+                       and len(xs) - 1 < _word_cols
+                       and fusion_witness(sub.lines, xs))
     relines = (rule_aware_lines(band_chars, xs)
                if len(xs) >= 2 and not _under_resolved
                else [])

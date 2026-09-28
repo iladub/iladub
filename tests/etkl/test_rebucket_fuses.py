@@ -1,0 +1,88 @@
+"""Task 3b (box-split, spec § 8) — the R225 arm-B resolution guard refuses only what it can witness.
+
+`compile._build_ruled_band` refuses to re-bucket a band on its author rules when the rules give
+fewer columns than the band's rules-free gutter count (`compile._word_column_count`), on the stated
+ground that such a re-bucket "can only FUSE". cbh T1 refuted the count as a proxy for fusion: its
+header words sit wholly beside the body numbers of the same ruled cell, so the gutter profile
+counts extra columns although nothing would fuse. The guard is now a conjunction — the count AND
+an exact fusion witness (`vocab/queries/rebucket-fuses.rq`, AXIOM). These tests pin both halves:
+
+* U1 — the T1 defect with no witness: the count refuses on its own (measured below, so the test
+  pins the guard and not a band the count never touched), and the band now re-buckets into one
+  header cell per rule interval. The middle cell's `MAIN WHEAT GRADES` is a multi-word cell whose
+  inter-word gaps a wider body word bridges; it is what a witness without its `NOT EXISTS` fires on.
+* U2 — the same grid plus one body line with two words in one rule interval across a gap no other
+  line covers: a genuine witness, so the refusal stands and the header stays word-level.
+* I-3b-3 — the Python glue carries no numeric tolerance (the `.rq` half is
+  `test_transform_gate.test_no_tuned_constant_in_rq_files`).
+"""
+import os
+
+import pytest
+
+pytest.importorskip("pdfplumber")
+pytest.importorskip("reportlab")
+
+from tests.etkl import fixtures as F
+from tests.etkl.test_transform_gate import _FLOAT, _strip_comments
+
+
+def _ruled_sub(path):
+    """The one ruled sub-band of the fixture page, with its rules and the page chars — the same
+    selection `compile.page_bands` makes before it calls `_build_ruled_band`."""
+    from iladub.etkl.bands import detect_bands
+    from iladub.etkl.geometry import extract_chars, extract_rules, extract_words, text_lines
+    from iladub.etkl.segment import segment
+
+    page_rules = extract_rules(path, 0)
+    found = []
+    for band in detect_bands(text_lines(extract_words(path, 0))):
+        for sub in segment(band):
+            sub_rules = tuple(r for r in page_rules
+                              if r.top <= sub.bottom and r.bottom >= sub.top)
+            if sub_rules:
+                found.append((sub, sub_rules))
+    assert len(found) == 1, f"fixture must yield exactly one ruled sub-band, got {len(found)}"
+    sub, sub_rules = found[0]
+    return sub, sub_rules, extract_chars(path, 0)
+
+
+def _count_refuses(sub, sub_rules):
+    """The R225 count, recomputed with the guard's own operands: True iff it refuses alone."""
+    from iladub.etkl.compile import _word_column_count
+    xs = sorted({round(r.x, 2) for r in sub_rules})
+    return len(xs) - 1 < _word_column_count(sub), len(xs) - 1, _word_column_count(sub)
+
+
+def test_u1_a_header_beside_its_body_rebuckets_one_cell_per_rule_interval(tmp_path):
+    from iladub.etkl.compile import _build_ruled_band
+    p = os.path.join(str(tmp_path), "u1.pdf")
+    truth = F.header_beside_body_ruled_pdf(p)
+    sub, sub_rules, chars = _ruled_sub(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, (f"the count must refuse this band on its own ({rule_cols} rule columns vs "
+                     f"{word_cols} word columns), or U1 pins nothing")
+    band = _build_ruled_band(sub, sub_rules, (), chars)
+    assert [w.text for w in band.lines[0].words] == truth["header_cells"]
+    assert len(band.lines[0].words) == len(truth["rule_xs"]) - 1
+
+
+def test_u2_a_real_fusion_witness_keeps_the_refusal(tmp_path):
+    from iladub.etkl.compile import _build_ruled_band
+    p = os.path.join(str(tmp_path), "u2.pdf")
+    F.header_beside_body_ruled_pdf(p, fusing_line=True)
+    sub, sub_rules, chars = _ruled_sub(p)
+    refuses, rule_cols, word_cols = _count_refuses(sub, sub_rules)
+    assert refuses, f"the count must refuse ({rule_cols} vs {word_cols}), or U2 pins nothing"
+    band = _build_ruled_band(sub, sub_rules, (), chars)
+    assert [w.text for w in band.lines[0].words] == ["PORT", "MAIN", "WHEAT", "GRADES", "TOTAL"]
+    assert band.column_xs == ()
+    assert [[w.text for w in ln.words] for ln in band.lines] == \
+        [[w.text for w in ln.words] for ln in sub.lines], "a refused band is the word band"
+
+
+def test_the_fusion_glue_carries_no_tolerance():
+    """I-3b-3, Python half: the glue emits evidence and runs the query; it decides nothing."""
+    import iladub.etkl.fusion as fusion
+    body = _strip_comments(open(fusion.__file__, encoding="utf-8").read())
+    assert not _FLOAT.search(body), "fusion.py (engine glue) must carry no numeric tolerance"

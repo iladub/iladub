@@ -1,0 +1,46 @@
+# rebucket-fuses.rq — box-split Task 3b (AXIOM: derivation, open world, evidence-positive).
+# Spec: docs/superpowers/specs/2026-09-28-box-split-design.md § 8.2.
+#
+# A FUSION WITNESS over a band's words and its author rule intervals: two words a, b on ONE line,
+# both wholly inside the same rule interval, a left of b, such that some point between them is
+# covered by no word of ANY line of the band. Re-bucketing the band on those rules would join a
+# and b into one cell although the band's own layout separates them all the way down.
+#
+# SPARQL has no point quantifier, so the uncovered point is reached through word right edges: an
+# uncovered point exists in (a.x1, b.x0) iff some word right edge e has a.x1 <= e < b.x0 and no
+# word v has v.x0 <= e < v.x1 (spans closed). The largest right edge at or left of an uncovered
+# point is such an e; conversely the points just right of such an e are uncovered.
+#
+# Used by compile._build_ruled_band as a CONJUNCT of the R225 count: the refusal stands only where
+# a witness is PRESENT (evidence-positive). Its one NOT EXISTS is closed within the band's own
+# fresh evidence graph, which is the closure boundary (as in confirm-boundary.rq). Threshold-free:
+# every bound is data; NO numeric literal (test_no_tuned_constant_in_rq_files).
+#
+# The two sub-selects are DISTINCT for EVALUATION COST, not meaning (ASK is true or false either
+# way). Without it rdflib joins them lazily and re-evaluates the second, NOT EXISTS included,
+# once per solution of the first: measured on a synthetic witness-free band of 17 lines x 8 words,
+# 257 s without DISTINCT, about 1 s with it. With it each side is evaluated once.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+    {
+        SELECT DISTINCT ?ax1 ?bx0 WHERE {
+            ?iv a tab:RuleInterval ; tab:ruleIntervalLo ?lo ; tab:ruleIntervalHi ?hi .
+            ?a a tab:LayoutWord ; tab:onLayoutLine ?line ;
+               tab:layoutWordX0 ?ax0 ; tab:layoutWordX1 ?ax1 .
+            FILTER(?ax0 >= ?lo && ?ax1 <= ?hi)
+            ?b a tab:LayoutWord ; tab:onLayoutLine ?line ;
+               tab:layoutWordX0 ?bx0 ; tab:layoutWordX1 ?bx1 .
+            FILTER(?bx0 >= ?lo && ?bx1 <= ?hi && ?ax1 < ?bx0)
+        }
+    }
+    {
+        SELECT DISTINCT ?edge WHERE {
+            ?e a tab:LayoutWord ; tab:layoutWordX1 ?edge .
+            FILTER NOT EXISTS {
+                ?v a tab:LayoutWord ; tab:layoutWordX0 ?vx0 ; tab:layoutWordX1 ?vx1 .
+                FILTER(?vx0 <= ?edge && ?edge < ?vx1)
+            }
+        }
+    }
+    FILTER(?edge >= ?ax1 && ?edge < ?bx0)
+}

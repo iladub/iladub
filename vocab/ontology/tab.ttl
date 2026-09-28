@@ -543,6 +543,18 @@ tab:intervalLo a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
 tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval hi"@en ;
     rdfs:comment "Right edge of that interval."@en .
 
+# --- re-bucket fusion evidence (transient, pre-holon; box-split Task 3b, spec 2026-09-28 § 8) ---
+tab:LayoutWord a owl:Class ; rdfs:label "Layout word"@en ;
+    rdfs:comment "A transient word of a ruled band as the band's own word layout places it: its line and its ink x-extent. Evidence for the fusion-witness derivation (rebucket-fuses.rq) that the R225 resolution guard in compile._build_ruled_band consults; never asserted into a holon."@en .
+tab:onLayoutLine a owl:DatatypeProperty ; rdfs:domain tab:LayoutWord ; rdfs:range xsd:integer ; rdfs:label "on layout line"@en ;
+    rdfs:comment "Zero-based index of the band line the word was read on. Two words fuse only if they share a line."@en .
+tab:layoutWordX0 a owl:DatatypeProperty ; rdfs:domain tab:LayoutWord ; rdfs:range xsd:double ; rdfs:label "layout word x0"@en .
+tab:layoutWordX1 a owl:DatatypeProperty ; rdfs:domain tab:LayoutWord ; rdfs:range xsd:double ; rdfs:label "layout word x1"@en .
+tab:RuleInterval a owl:Class ; rdfs:label "Rule interval"@en ;
+    rdfs:comment "A transient x-range between two consecutive author rules of a ruled band — one cell of the re-bucket the guard is judging. Evidence for rebucket-fuses.rq; never asserted into a holon. Distinct from tab:SpanInterval, which is an interval of a DIFFERENT (donor) band's vector."@en .
+tab:ruleIntervalLo a owl:DatatypeProperty ; rdfs:domain tab:RuleInterval ; rdfs:range xsd:double ; rdfs:label "rule interval lo"@en .
+tab:ruleIntervalHi a owl:DatatypeProperty ; rdfs:domain tab:RuleInterval ; rdfs:range xsd:double ; rdfs:label "rule interval hi"@en .
+
 # --- ruled header-row role evidence (transient, pre-holon; loop L) ---
 # The inputs to header-row-role.rq, the header-stack law. Every term is a PRESENCE fact over the
 # author's own ruled column grid — emitted by ruledroles.role_evidence, tested there with the
