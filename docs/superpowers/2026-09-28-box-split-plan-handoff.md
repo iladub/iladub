@@ -67,3 +67,10 @@ anyway, at 87,498 working tokens, with the override logged. It is at
 next action is to review the plan and execute it. Part 5's two proposed seams are now plan
 Task 0 Step 3 and Task 4 Step 5. The plan was authored over the floor, so review it as a
 proposition.
+
+**Execution method chosen by the maintainer (2026-09-28): subagent-driven**
+(`superpowers:subagent-driven-development`). It was handed to a fresh session because this one was
+at 122k of the 150K executing floor. The next session starts at plan Task 0, then runs Task 4
+Steps 1–3, then Tasks 1–3, then Task 4 Steps 4–5, then Tasks 5–6. Background git-writing agents
+need `isolation: worktree`. The corpus is gitignored, so it is absent from a fresh worktree:
+symlink or point it at the main checkout's `corpus/`.
