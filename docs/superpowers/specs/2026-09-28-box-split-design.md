@@ -5,8 +5,9 @@ tables; this loop also declares the carriage criterion `prog:criterion:tab:12` (
 
 **Date:** 2026-09-28. **Branch:** `box-split`, cut from `main` at `6eb80ca`.
 
-**Doc impact: none.** No published term changes; the split is compiler behaviour, and the new
-criterion lives in `tests/arc-manifest.ttl` (internal).
+**Doc impact: increment.** § 10 adds one published `tab:` property (`tab:boxheadAbsentBy`),
+two shapes and one guard on each of two existing shapes. §§ 1–9 change no published term: the
+split is compiler behaviour, and the new criterion lives in `tests/arc-manifest.ttl` (internal).
 
 **Provenance of the design.** § 1–4 below were presented section by section and approved by the
 maintainer in chat on 2026-09-28, with one ruling each (§ 0). The defect is recorded in
@@ -497,3 +498,299 @@ fails. Copy the field in `merge_bands`, and U8 fails. Restore, and show the suit
 - It does not change `is_multi_table_ambiguous` or `_widest_gutter_cut`, or touch any non-box band.
   Whether the gate is also wrong elsewhere is not measured here.
 - It does not let a merged run inherit a frame.
+
+## 10. Addendum — a table the author drew with no boxhead says so (2026-09-29)
+
+**DRAFTED OVER THE ORIGINATING FLOOR — REVIEW BEFORE PLANNING.** The session self-estimated about
+40K working tokens while writing it. The plimslop hook then measured **102,799**, about 2× the
+floor. So § 10 is a draft to re-derive, not a contract to execute. The census in § 10.2 is
+measurement and does not degrade. §§ 10.3–10.5 are the reasoning that does. It obeys two maintainer rulings (2026-09-29, in chat), recorded in the addendum to
+`docs/superpowers/2026-09-28-box-split-t2-measurements.md`:
+
+- **the form** is a positive, decision-produced no-boxhead statement;
+- **the decider** is NEURAL, disposed by a one-way oracle.
+
+The rulings are not re-argued here. § 8.0 applies unchanged: the branch does not merge until O2
+XPASSes as a whole.
+
+### 10.1 The defect
+
+- **Row 0 is a header by position, not by reading.** `classify-kind.rq` asks only whether line 0
+  has `ncols` words in `ncols` columns. `assert_record_region` then mints one level-0
+  `tab:HeaderNode` per column and turns row 0 into `tab:LabelCell`s, unconditionally (measurements
+  § 1). T1 is right by coincidence. T2 is wrong.
+- **The right answer has no admissible form.** A `tab:RecordTable` with leaf columns and 0 header
+  nodes is refused by `tab:CoverageShape` and `tab:UnambiguousAccessShape`, so even a correct
+  "no header" decision would escalate T2 (measurements § 3).
+- **The one geometric attempt is spent.** Using the style proxy as the decider is refuted on bfs p6
+  `#table2` (measurements § 4). By the 2026-09-17 ruling, the next decider is NEURAL.
+
+### 10.2 Measured (2026-09-29, `box-split` at `858c768`)
+
+**The oracle, run corpus-wide.** The probe wrapped `compile.assert_record_region`, compiled one
+document per process, serially, and evaluated § 10.3.2's witness in Python. It lives in the session
+scratchpad (`s10/probe.py`, not durable), so the output is quoted here. Each compile passes a table
+through the path several times (`p`, `r2`, `adopt` prefixes), and every pass gave the same answer.
+Only tables in the final graph are listed.
+
+Only tables in the final graph are listed; "donated" means `donation.offer` replaced the region
+before the wrap, so its row 0 is the donor's line.
+
+| document | table | rows × cols | witness features | row 0 (truncated) |
+|---|---|---|---|---|
+| cbh | p0 `#table10` (T1) | 5 × 7 | dtype (5 cols), font, glyph, fill | `PORT \| WHEAT \| MAIN WHEAT GRADES …` |
+| cbh | p0 `#table11` (T2) | 4 × 2 | **none** | `ALB \| 1 - 15 October` |
+| who | p0 `#table4`, p1 `#table4` | 6 × 13 | **none** | `1: \| 1 \| 13 \| 0.0563 …` (data) |
+| bfs | p6 `#table2` (not donated) | 4 × 9 | **none** | `Grandes régions \| Total \| 0-19 ans …`; row 1 `Cantons \| dépendance …` — a 4-line header, no numeric body |
+| bfs | p6 `#table3`–`#table10` (8, all donated) | 2–9 × 9 | dtype on all 8; plus font, or fill, on some | the donor's `Grandes régions \| Total …` |
+
+The same 13 tables as the measurements' § 4 census. graincorp-capacity and graincorp-stem reach this
+path with no table.
+
+**Tables that reach the path in some pass but are NOT in the final graph** are asked too, because
+the worker runs wherever the path runs:
+
+| document | table | witness | row 0 |
+|---|---|---|---|
+| bfs | p5 `#table3`, `#table4` | none | `2005 \| 7 415 102 …` (data) |
+| bfs | p5 `#table5` | dtype, col 8 — **a false witness** | `2020 \| 8 606 033 …` (data) |
+| ons | p7 `#table13` | none | `2024 \| Dec \| 102.4 …` (data) |
+| ons | p7 `#table4`, p8 `#table3` | dtype, font | `Section \| G-T \| …` |
+| apple | p2 `#table6` | fill | `Increase in cash, cash equivalents, …` |
+
+- **A witness does not imply a header.**
+  - bfs p5 `#table5`'s row 0 is data. Its column-8 `744` types Quantity, and the body's
+    space-thousands values (`1 168`) type Text, so the datatype half fires.
+  - A false witness refuses a `0`, which reproduces today's positional header. So it is **never
+    worse than today**, only no better.
+  - The cause is `celltype`'s typing of space-grouped thousands, not the oracle. Task 5 records it
+    as a register row.
+- **An answer of `0` on a non-final table can move a later pass.** ons p7 `#table13` and bfs p5 are
+  asked, and whether they survive `adopt` has not been measured with a headerless reading. That is
+  C2's job, and it is why C2 is total rather than scoped to cbh.
+
+- **The handoff's prediction holds on cbh and who.** T1's row 0 is witnessed on all four
+  features, including a text-over-quantity datatype witness in 5 of its 7 columns. T2 and both who
+  `#table4`s have no witness.
+- **Seams.** These are the input for the plan's enumeration, not a substitute for it.
+  - `assert_record_region` has two call sites: `compile.py:1284` (the RECORD `else` path) and
+    `donation.py:195` (the donation proposal membrane).
+  - On the RECORD path, `row == 0` / `row > 0` is tested at `holon.py:196`, `holon.py:205`,
+    `compile.py:1323` and `compile.py:1331`. The last two are the R176 ink mirror.
+  - `tab:hasHeaderNode` is read in 5 modules: `boxhead`, `denormalization`, `holon`, `document`
+    and `rowgroups`.
+- **The decision log is visible to the compile-scope membrane, and not to the region gate.**
+  - `ReadingRecorder` is built on the compiled `graph` (`compile.py:982`).
+  - `_validate` runs both legs, `tab` and `dec`, over that same graph (`compile.py:913`).
+  - `region_tiles` runs on a fresh scratch graph (`compile.py:1283-1285`), which holds no
+    decision.
+- **`Doc impact:` is read first-value-wins** (`tests/docgov_extract.py:112-114`). So this spec's
+  header now says `increment`. PR #284 has not merged and squashes to one introducing commit, so
+  this is not a later-PR edit of a frozen value.
+
+### 10.3 The change
+
+#### 10.3.1 The statement (vocabulary and shapes; the `increment`)
+
+- **The property.** `tab:boxheadAbsentBy` is an `owl:ObjectProperty` with domain
+  `tab:RecordTable`, and it is **rangeless**, following the `tab:namePromotedBy` precedent: `tab.ttl`
+  stays standalone.
+  - **Its presence IS the assertion** that the author drew no boxhead, following the
+    `tab:unshownText` precedent. There is no separate flag.
+  - Its object is the `dec:DecisionHolon` that chose it.
+- **The exemption.** `tab:CoverageShape` and `tab:UnambiguousAccessShape` each gain one guard: a
+  leaf column of a table that carries `tab:boxheadAbsentBy` is not selected. No other existing shape
+  changes.
+- **`tab:BoxheadAbsenceShape`** (`sh:targetSubjectsOf tab:boxheadAbsentBy`) refuses a table that
+  carries the statement and any `tab:hasHeaderNode`. It joins `_TILING_SHAPE_IRIS`, so the claim
+  and a header cannot co-exist even in scratch.
+- **`tab:BoxheadAbsenceDecidedShape`** (same target) refuses a statement whose object is not a
+  `dec:DecisionHolon` whose `dec:chosen` option is labelled `no_boxhead`.
+  - This shape is what keeps a proposition from passing as an assertion (CLAUDE.md § 3). The
+    worker's answer becomes a graph fact only as the product of a recorded decision.
+  - It is **not** in `_TILING_SHAPE_IRIS`, because scratch holds no decision (§ 10.2). It binds at
+    compile scope, where both legs see the log.
+
+#### 10.3.2 The oracle (one-way)
+
+`vocab/queries/row-zero-differs.rq` is an `ASK` over one region's fresh evidence graph.
+
+**It is true iff a witness exists:** a column *c* and a feature *f* such that all three hold:
+
+1. the row-0 cell of *c* has a value *v* of *f*;
+2. *c* has at least one body cell (row ≥ 1) with a value of *f*;
+3. no body cell of *c* has *v*.
+
+**The features:**
+- the datatype family, normalised by `tab:inDatatypeFamily` (abstaining datatypes contribute no
+  value);
+- glyph font name;
+- glyph fill colour;
+- the colour of every filled rect containing the cell's centre.
+
+**Why this is AXIOM, in its open-world form:**
+- A witness is a present value, so the query is evidence-positive.
+- Its one `NOT EXISTS` closes within one region's evidence graph, which is holon-scoped (§ 8's world
+  split).
+- Equality is exact and the query carries no numeric literal.
+
+**What it cannot see, stated so that nobody reads `false` as "data":**
+- a region with no body row (condition 2 never holds);
+- a header typed and styled exactly like its body.
+
+A `true` refutes "row 0 is data". A `false` refutes nothing. That asymmetry is the ruling's "one
+way".
+
+**The evidence.** The datatype comes from `celltype.grid_evidence`, unchanged. The three style facts
+are new, and they are PROCEDURAL raw extraction from pdfplumber, for the same reason
+`extract_words` is:
+- **glyphs:** the chars whose centre lies inside the cell bbox **on both axes**. § 7's trap is
+  `_build_ruled_band` filtering by y only, which leaks the left box's glyphs into the right box.
+- **fills:** the filled rects containing the bbox centre.
+
+They are carried as transient `tab:` terms on `tab:GridCell`, declared in the transient block, and
+never asserted into a holon. The plan measures the colour value type (tuple vs list), so that exact
+equality compares like with like.
+
+#### 10.3.3 The worker (NEURAL)
+
+- **The function.** BAML `CountHeaderLines(page: image, ncols: int, listing: string) ->
+  HeaderLines { header_lines int, note string }`.
+- **The question.** How many leading lines of this table are column headers: `0` if the first line
+  is already data.
+- **The listing.** Every line of the region, numbered, with its cells in column order joined by
+  ` | `. The body rows are part of the question.
+- **The image.** The region's extent, rendered by the same entry point as `read_grid_boxhead`'s
+  crop.
+- **Closed answer.** An answer outside `0..nlines` is no claim (the closed-answer check, PR #256).
+- **The note.** `note` never carries page text (the `ReadBoxhead` rule).
+- **Recorded readings** are stored in `readings/header_lines/`.
+  - The key is `sha256(ncols + listing)`. The listing holds every row, so the key is the whole
+    question, which the handoff required.
+  - A recorded reading is used first. The live reader runs only under `BAML_LIVE=1`.
+  - A miss with no live reader is no claim.
+- **The client** is `Claude` (Haiku 4.5), the smallest in `baml_src/clients.baml`: the question is
+  one a reader answers at a glance.
+
+#### 10.3.4 Where it is asked, and what each answer does
+
+It is asked on the RECORD `else` path in `compile_tables`, after the donation offer and before
+`assert_record_region`.
+
+- **Asked:** a region with `donated is None` whose oracle `ASK` is false.
+  - A donated region's row 0 is the donor's line, which the donation membrane already disposed.
+  - A witnessed region cannot be admitted as headerless, so asking it would buy nothing.
+- **Answer `0`:**
+  - `brec.record("header_lines", ["boxhead", "no_boxhead"], "no_boxhead", …)`. The rationale
+    carries the worker's note and the fact that the oracle found no witness.
+  - Then `assert_record_region(…, header_lines=0, absent_by=d)`:
+    - no `tab:HeaderNode` and no `tab:LabelCell`;
+    - every row, row 0 included, is a `tab:LeafRow` of entry cells;
+    - the statement triple is added.
+  - The region gate then runs unchanged. The R176 ink mirror follows the same count, so with 0
+    every cell is a data cell and no label ink is booked.
+- **Answer ≥ 1:** recorded with `boxhead` chosen, then today's emission. An answer above 1 adds no
+  header level (§ 10.6).
+- **No claim, witnessed, or donated:** nothing is recorded, and the output is byte-identical to
+  today's.
+
+### 10.4 Classification (CLAUDE.md § 8)
+
+| step | class | why |
+|---|---|---|
+| glyph and fill facts per grid cell | PROCEDURAL | Raw extraction: source marks become typed facts. It uses exact containment and no tolerance. |
+| `row-zero-differs.rq` | AXIOM (derivation) | An evidence-positive witness. `NOT EXISTS` is closed within one region's evidence graph. |
+| "how many leading lines are header" | NEURAL | A reading judgement, measured as underdetermined by style (§ 10.1). It returns a closed int, disposed one way by the AXIOM above. |
+| the statement's shapes | AXIOM (constraint) | A SHACL membrane, closed world. It decides whether a statement may cross, and derives nothing. |
+| the ask gate, and the emission branch | PROCEDURAL | It applies the decisions and decides nothing. It has no constant. |
+
+**Why this is not a second geometric attempt.** The style facts are evidence for an oracle, never a
+decider. No Python heuristic answers header-vs-data anywhere on the path.
+
+### 10.5 Task 3d — the contract (not the code)
+
+**Seams:**
+- the RECORD `else` path of `compile_tables`;
+- `holon.assert_record_region`;
+- `vocab/ontology/tab.ttl` and `vocab/shapes/tab-shapes.ttl`;
+- `tiling._TILING_SHAPE_IRIS`;
+- a new BAML function with its reader module, and `readings/header_lines/`.
+
+**Invariants.**
+- I-10-1: every region that is not asked compiles byte-identical: graph, decision log and ledger.
+- I-10-2: `assert_record_region`'s defaults are today's behaviour, and `donation.py:195` is untouched.
+- I-10-3: a table carries `tab:boxheadAbsentBy` iff a `header_lines` decision chose `no_boxhead` for
+  it, and such a table has 0 header nodes.
+- I-10-4: the `.rq` carries no numeric literal, and the extraction carries no tolerance.
+
+**MEASURE before writing:**
+- (i) What each `tab:hasHeaderNode` reader in the 5 modules of § 10.2 does with a RecordTable that
+  has none. Report the list. A reader that assumes at least one is a finding, not a patch-over.
+- (ii) That every `row == 0` / `row > 0` test on the RECORD path follows the count. Enumerate them;
+  the four in § 10.2 are the start, not the list.
+- (iii) The crop renderer `read_grid_boxhead` uses, and whether it takes a bbox.
+- (iv) The Python type of pdfplumber's colour values on cbh p0.
+- (v) Every test that pins `_TILING_SHAPE_IRIS` or the tab-shapes CBD count.
+
+**Oracles.**
+- **U9 (CI, synthetic, the oracle), on Task 3's fixture family:**
+  - a box with a filled, differently-fonted text header over a numeric body gives ASK true;
+  - a box whose row 0 is typed and styled as its body gives false;
+  - a one-line box gives false. This pins the stated blind spot.
+- **U10 (CI, shapes):**
+  - leaf columns, 0 header nodes and the statement: `region_tiles` returns True;
+  - the same without the statement: False, which is today's refusal;
+  - the statement plus one header node: False;
+  - at compile scope, a statement whose object is no `no_boxhead` decision is refused.
+- **U11 (CI, emission):**
+  - `header_lines=0` gives every row a LeafRow, row-0 entries, no LabelCell, and the statement;
+  - the default call stays byte-identical to today's on the same region.
+- **U12 (CI, placement, fake reader):**
+  - a witnessed region is never asked, and neither is a donated one;
+  - an answer of 0 gives a headerless table plus its decision;
+  - an answer of 1 gives today's table plus a `boxhead` decision;
+  - a reader that returns None, or an out-of-range answer, gives byte-identical output with no
+    decision.
+- **U13 (CI, worker):**
+  - a recorded reading replays by key;
+  - the key moves when one body cell's text moves.
+- **O2 (corpus, local): XPASS as a whole, with T2's recorded reading committed.**
+  - **Proposed, and it may fail:** no worker has answered T2 yet.
+  - It is recorded once, live: `source ~/.zshrc`, then `BAML_LIVE=1 ILADUB_RECORD_READINGS=1`.
+  - A wrong `1` on T2 is a finding about the worker. It is not a reason to lower the oracle.
+- **Census (corpus, local; in the task report):** the asked population, with each answer.
+  - **The prediction from § 10.2's two tables, as distinct questions:**
+    - cbh T2;
+    - who p0 and p1 `#table4`;
+    - bfs p6 `#table2`;
+    - bfs p5 `#table3` and `#table4`;
+    - ons p7 `#table13`.
+  - T1, every donated table and every witnessed table are not asked.
+  - A different set is a finding.
+- **C2 (corpus):**
+  - every document with no asked region compiles to the same canonical hash as before;
+  - on the others, the diff is confined to the asked tables' triples and their decisions.
+- **Local sweep:** as in § 8.4.
+
+**FALSIFICATION (mandatory):**
+- Drop the exemption guard: U10's first case fails, and O2 escalates T2.
+- Ask witnessed regions and admit their `0`: U12's first case fails.
+- Default `header_lines` to 0: U11's byte-identity fails.
+- Delete `tab:BoxheadAbsenceDecidedShape`: U10's compile-scope negative is admitted.
+- Key without the body rows: U13's second case fails.
+- Restore, and show the suite green.
+
+### 10.6 What § 10 does not do (and the rows Task 5 raises)
+
+- **A wrong `0` it cannot refute:** a body-less region, or a header typed and styled as its body.
+  bfs p6 `#table2` has that shape.
+  - **This becomes a register row**, with the recorded answer on bfs p6 `#table2` as its first
+    measurement.
+  - It is the ruling's accepted remainder, not a defect of this loop.
+- **A false witness from `celltype`'s space-thousands typing** (bfs p5 `#table5`, § 10.2): a register row. It never regresses today's behaviour.
+- **Answers above 1 add no header levels.** Multi-line boxheads stay on their existing paths.
+- **A witnessed region's header stays an unrecorded positional default.** No decision holon is
+  minted for it, because minting one would move every RECORD table's graph (I-10-1).
+- **Only the RECORD path is covered.** The transposed, hierarchical, matrix and data-grid paths are
+  not asked, and the ons boxhead reader is unchanged.
+- **`tab:12`'s flip and the cbh literal re-pin stay Task 4 Steps 4–5,** after O2 XPASSes.
