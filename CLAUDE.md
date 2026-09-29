@@ -353,7 +353,7 @@ ruling makes one falsifiable prediction: *the override rate falls below 54%.* If
 unit was never the problem. Full evidence, the premise that could sink it, and what is deliberately
 left open: `docs/superpowers/2026-08-26-context-regime-ruling.md`.
 
-**Enforced by plimslop** (github.com/Frosselet/plimslop), installed user-scope, not by anything in
+**Enforced by plimslop** (github.com/francois-rosselet/plimslop), installed user-scope, not by anything in
 this repo: it reads the true per-turn figure the API reports (`input + cache_read + cache_creation`),
 warns once per session past the floor, and logs every pre-flight decision — including overrides — to
 a local corpus, because a gate whose circumvention nobody can count is a gate that will be
