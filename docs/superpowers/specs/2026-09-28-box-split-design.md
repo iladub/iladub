@@ -885,3 +885,9 @@ R-1 is ruled.**
   (`compile.py:1813-1817`).
 - So `BoxheadAbsenceDecidedShape` binds wherever the statement is minted with validation on.
 - With `validate_shapes=False`, no shape binds at all, and the split is irrelevant.
+
+#### R-1 ruled (maintainer, 2026-09-29, in chat): remedy (a)
+
+- `_band_subgraph` does not traverse into a `dec:DecisionHolon`. It joins § 10.5's seams.
+- MEASURE (vi) and U14 join § 10.5's contract, as § 10.7 states them.
+- FALSIFICATION gains one line: remove the stop, and U14 fails.
