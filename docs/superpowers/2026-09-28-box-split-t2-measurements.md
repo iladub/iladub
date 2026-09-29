@@ -123,3 +123,17 @@ this myself:
      It refutes the wrong answer on T1 and cannot refute one on bfs p6 `#table2`.
    - Whether one-direction disposal is enough under "no oracle, no worker" is the question § 10 must
      answer.
+
+## Addendum — maintainer rulings (2026-09-29, in chat)
+
+- **Form: positive no-boxhead.** A table the author drew with no boxhead carries a decision-produced
+  statement that it has none, and that statement exempts it from `tab:CoverageShape` and
+  `tab:UnambiguousAccessShape`. O2's T2 test stands as written (0 header nodes). This is a `tab:`
+  vocabulary and shape change, so `Doc impact: increment`.
+- **Decider: NEURAL with a one-way oracle.**
+  - A worker answers how many leading lines are header, as a closed integer.
+  - The oracle refuses a "row 0 is data" answer when positive header evidence exists: row 0's
+    style or datatype differs from the body.
+  - A "header" answer keeps today's behaviour.
+  - The case it cannot refute (bfs p6 `#table2`'s shape) becomes a register row.
+  - who p0/p1 `#table4` are measured too.
