@@ -794,3 +794,94 @@ decider. No Python heuristic answers header-vs-data anywhere on the path.
 - **Only the RECORD path is covered.** The transposed, hierarchical, matrix and data-grid paths are
   not asked, and the ons boxhead reader is unchanged.
 - **`tab:12`'s flip and the cbh literal re-pin stay Task 4 Steps 4–5,** after O2 XPASSes.
+
+### 10.7 Adversarial review (2026-09-29, fresh session): one attack lands
+
+The review attacked the three points the s10 review handoff named. The attack that lands is next to
+the second one, and it was found by measuring, not by reading. **§ 10 must not be planned until
+R-1 is ruled.**
+
+#### R-1 (lands): the statement edge pulls the decision log into the table's subgraph
+
+- **The mechanism.** `document._band_subgraph` (the helper that both multi-pass merge sites use)
+  closes over *outgoing reachability* from the table's URI space. Its docstring assumes that objects
+  outside the band "have no outgoing triples". `tab:boxheadAbsentBy` breaks that assumption: its
+  object is a `dec:DecisionHolon`, and a decision points on to its band `dec:Process`, its page
+  `dec:Process` and the reader agent (`decisionlog.py:50-68`, `:98-109`).
+- **Measured, synthetic, with a null control** (scratchpad `probe_subgraph.py`: a `ReadingRecorder`
+  with two bands, and a table that does or does not carry the edge):
+
+  ```
+  NULL (no edge) | subgraph subjects: 1 | triples: 1  | pointed-into: 0
+  edge           | subgraph subjects: 7 | triples: 24 | pointed-into: 4
+      …#p5-reading   …#region3-d1   …#region3-d1-opt-boxhead   …#region3-d1-opt-no_boxhead
+      …#region3-reading   …#table3   https://w3id.org/iladub/etkl#reader
+  ```
+
+- **Where it bites: adoption's withdraw-or-refuse check** (`document.py:1733-1740`). That check
+  refuses the adoption *whole* if any triple outside the subgraph points into it. With the edge,
+  every other decision's `dec:decidedBy` and `dec:withinProcess` point in.
+  - **Measured on the corpus** (scratchpad `probe_adopt.py`, a spy on `_band_subgraph`, one document
+    per process, at `b5d7a73`). Today, adoption withdraws these tables through `:1733`:
+    - bfs p5 `#table3`, `#table4`, `#table5`;
+    - ons p7 `#table4`, `#table13`, and ons p8 `#table3`.
+  - § 10.5 predicts that three of them are **asked**: bfs p5 `#table3` and `#table4`, and ons p7
+    `#table13`. Their row 0 is data (§ 10.2), so the **correct** answer is `0`. A correct `0` mints the
+    edge, and the edge refuses adoption on bfs p5 and on ons p7.
+  - **ons is an accepted corpus document.** The worker being *right* regresses it.
+  - I-10-1 does not protect these tables, because they are asked. C2 would catch this only at the
+    end of Task 3d.
+- **Had the check passed, it would be worse.** `graph -= _sub` (`:1757`) would delete the reader
+  agent's and the page process's triples, which every decision on the page shares.
+- **The pass-2 merge** (`:1549`) drags the same nodes in from the pass-2 graph. This is probably
+  duplicative next to `_band_reading_subgraph`, but it is **not measured**.
+- **The precedent is not affected.** `tab:namePromotedBy` hangs off an `UnpivotOp`
+  (`promote.py:102`), not a band's table, so § 10 introduces this leak; it does not inherit it.
+
+**Remedies, for the maintainer to rule** (the form ruling of 2026-09-29 is not re-opened by either):
+
+- **(a) Recommended: bound the traversal at the log.** `_band_subgraph` does not traverse into a
+  `dec:DecisionHolon`. The statement triple (its subject is the table) still leaves with the table.
+  The decision stays in the log, as the band's other superseded judgements already do.
+  - This states the boundary the docstring assumed, instead of adding a special case for one
+    property. Every future edge from a table into the log is covered.
+  - The oracle it needs: the probe above as a CI test. With the edge, withdrawal gives
+    `pointed == 0` and leaves the log intact. The null control is kept.
+- **(b) Move the edge.** The decision points at the table, or the statement node is minted under the
+  table's URI space. This changes § 10.3.1's vocabulary and its shape targets, and helps only this
+  property.
+
+**Owed by the plan either way:**
+- Add a MEASURE (vi): *every* consumer of `_band_subgraph`, and of any other reachability closure
+  over a table, re-run against a table that carries the edge.
+- Add a U14 test: a table answered `0` is withdrawable by adoption exactly when it would be without
+  the edge.
+
+#### R-2 (does not land; the wording is amended): the ask gate is the ruling, applied first
+
+- **The ruling.** The oracle "refuses a 'row 0 is data' answer when positive header evidence
+  exists" (t2-measurements addendum).
+- **Why the gate matches it.** Not asking a witnessed region gives the same admitted outcome as
+  asking it and refusing its `0`. So the gate is not a vacuous oracle. It is the ruling's refusal,
+  applied before the question instead of after it.
+- **What the draft understates.** On the asked population the oracle is silent by construction. So
+  **every** asked answer is admitted undisposed, not only bfs p6 `#table2`'s shape.
+- **The amendment.** § 10.6's first register row covers the whole asked population, and the census
+  answers are its measurement.
+- **What the gate costs.** A refusal made by pre-emption leaves no record, which is R-3.
+
+#### R-3 (does not land as a defect; it becomes a register row): witnessed tables stay unrecorded
+
+- A witnessed table's row 0 remains the positional default of today (measurements § 1). No decision
+  is minted for it, and I-10-1 is the reason. § 10 introduces no new unaccountable assertion.
+- **What it leaves.** Header *absence* now needs a decision, but header *presence* does not. bfs p5
+  `#table5`'s false witness (§ 10.2) is one case where that asymmetry asserts a wrong header.
+- **Amended.** Task 5 raises this as a register row. § 10.6's bullet stays as scope.
+
+#### The handoff's second point, answered: compile scope is reached
+
+- Every pass (`document.py:1471`, `:1534` and `:1671`) calls `compile_tables` with the caller's
+  `validate_shapes`. `_validate` runs both legs over the page graph that holds the log
+  (`compile.py:1813-1817`).
+- So `BoxheadAbsenceDecidedShape` binds wherever the statement is minted with validation on.
+- With `validate_shapes=False`, no shape binds at all, and the split is irrelevant.
