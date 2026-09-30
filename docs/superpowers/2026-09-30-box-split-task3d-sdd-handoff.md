@@ -115,3 +115,32 @@ then Tasks 5 and 6, then the final whole-branch review.
 - On headerless tables the `kind` decision's rationale still says "flat single-level header" (Task 5 list).
 - `BAML_LIVE=1` also enables R213's region reader (Sonnet 5) and boxhead's live half. The plan's
   recipe does not say so.
+
+## Addendum 4 — session 12 (2026-10-01), written at ~124K working tokens
+
+**Next action (asserted):** Task 6's sweep and the final whole-branch review. Dispatch both from
+`848925a` or later. The sweep brief is `.superpowers/sdd/2026-09-28-box-split/task-6-sweep-brief.md`
+and expects **0 failed**. The final review goes to the most capable model and must triage the
+ledger's `minor (deferred)` lines. Two are flagged must-triage: Task 4 M1 and 3d.4 M1. After that:
+one fix wave, one scoped re-review, the PR corpus comment, and `finishing-a-development-branch`
+(PR #284).
+
+- **Done this session:**
+  - 3d.7 fix round re-reviewed clean.
+  - Task 4 Steps 4–5 (`14e4dab`, `4e04c29`, `9f50e03`): O2 flipped and `tab:12` met, the bfs pin
+    moved to 16778, and o3 was re-pinned 54→43 (accounted).
+  - Task 4 rulings (`d943519`, `8459473`, `caebd2b`): box title captions are `tab:RegionCaption`
+    only (spec § 1). The residue (`1,951,264` + Note) is accepted as escalated
+    KIND_NOT_SUPPORTED (spec § 4), and `typing_equiv` and furnish were re-pinned.
+  - Task 5 (`5bfcb77`, `848925a`): C1 = 1 band. C2: apple and graincorp×2 match Task 0, and
+    bfs/ons/who match the 3d.7 hashes. R261–R274 raised; R74 and R156 narrowed in place.
+- **Where decided:** the ledger's session-12 `Ruling:` lines (gitignored) and evidence § 5–§ 6
+  (tracked).
+- **Known-red now:** none expected. The sweep is what shows it.
+
+**Unverified:**
+- The full suite has not been run since `9891f79`, and the Task 4 `src/` change (`Band.title_captions`)
+  has only had targeted runs.
+- CLAUDE.md names only `residues.md` as a mutable Evidence exception, while § Deferred residues
+  prescribes in-place row edits in `residues-open.md`. This is a contract gap only the maintainer
+  can resolve (Task 5 review M1).
