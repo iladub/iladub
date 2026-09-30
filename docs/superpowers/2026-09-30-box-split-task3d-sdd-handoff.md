@@ -64,3 +64,28 @@ Task 3d executed and reviewed, 3d.0 → 3d.7, then Task 4 Steps 4–5, 5, 6.
   membrane runs before the document pass. One query on the final corpus graphs in 3d.7 settles it.
 - **Known-red corpus set** (not this task's): `test_o3…` cbh 43<54, `test_typing_equiv[cbh]`,
   furnish 5==4; vacuity red on 4 shapes by design until 3d.7.
+
+## Addendum 2 — session 11 (2026-09-30), written at ~113K working tokens
+
+**Next action (asserted):** if the ledger shows 3d.6 complete, dispatch 3d.7 from its brief (the brief
+now carries session-11 controller notes); else finish 3d.6's review loop first. Then the final
+whole-branch review.
+
+- **Done:** 3d.4 `adfe828` (review clean), 3d.5 `8bf083e` (review clean), 3d.6 `9891f79` (review
+  pending at time of writing). Every ruling and deferred minor is in the ledger, "Session 11" lines.
+- **Where decided:** ledger `.superpowers/sdd/2026-09-28-box-split/progress.md` (gitignored — the
+  commits above are the durable record); 3d.7's carried notes are appended to `task-3d.7-brief.md`.
+- **Known-red set corrected:** it is 9 tests, not 5 — add `test_carriage` O2 ×2 (XPASS strict
+  since Task 3c) and `test_cbh_e2e` ×2.
+- **One live Haiku call was made** during 3d.5's falsification run (a synthetic fixture, nothing
+  recorded). The tests were hardened afterwards. `ANTHROPIC_API_KEY` is set in the shell, so run
+  tests with `env -u ANTHROPIC_API_KEY -u BAML_LIVE`.
+
+**Unverified / proposed:**
+- 3d.6 reports that a table asked on `/adopt` never reaches the document graph (the adopt pass
+  rebuilds the page graph from the grid). If that holds, A6's merge-in exists only for `/r2`.
+  Reviewer verdict pending.
+- The reviewer's spec observation on 3d.4: condition 2 leaves rect fill blind to a shaded header
+  over an unshaded body. The controller ruled that the spec stands. This is for the maintainer.
+- `header_lines.baml`'s prompt ("count only") contradicts the required `note` field. 3d.7 must
+  reword it before the first live call.
