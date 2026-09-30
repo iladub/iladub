@@ -231,3 +231,119 @@ def test_u14_the_edge_leaves_with_the_table_and_the_log_stays():
         f"withdrawing the table deleted {len(log - set(g))} decision-log triple(s): the reader "
         "agent's and the page process's triples are shared by every decision on the page")
     assert (d, RDF.type, URIRef("https://w3id.org/iladub/dec#DecisionHolon")) in g
+
+
+# ------------------------------------------------------------------ U11, emission (3d.3)
+#
+# Spec § 10.3.4 / § 10.5 U11, as amended by plan A1: `assert_record_region(…, header_lines,
+# absent_by)`. The region is `test_holon._record_region`'s RECORD fixture (`simple_table_pdf`,
+# band 1: `Analyte | Value | Unit` over three data rows). The default-path identity is checked
+# against `u11-record-region-default.nt`, which the UNMODIFIED function produced once, at
+# `4e6a284` (`git diff 84827f5 4e6a284 -- src/iladub/etkl/holon.py` is empty) — not by this test.
+
+import os as _os
+
+_U11_REF = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                         "u11-record-region-default.nt")
+_U11_T = URIRef("https://example.org/u11/doc#table1")
+_U11_DOC = URIRef("https://example.org/u11/doc")
+_U11_D = URIRef("https://example.org/u11/doc#decision-header_lines")
+
+
+def _u11_region(tmp_path):
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    from tests.etkl.fixtures import simple_table_pdf
+    from iladub.etkl import extract_words, text_lines, detect_bands
+    from iladub.etkl.regions import classify
+    p = tmp_path / "x.pdf"; simple_table_pdf(str(p))
+    return classify(detect_bands(text_lines(extract_words(str(p))))[1])
+
+
+def _u11_emit(region, **kw):
+    from iladub.etkl.holon import assert_record_region
+    g = Graph()
+    n = assert_record_region(g, region, _U11_T, _U11_DOC, 0, **kw)
+    return g, n
+
+
+def test_u11_default_call_is_the_unmodified_functions_graph(tmp_path):
+    from rdflib.compare import isomorphic, graph_diff, to_isomorphic
+    ref = Graph().parse(_U11_REF, format="nt")
+    assert len(ref) == 175, "precondition: the committed reference is the 175-triple graph"
+    g, n = _u11_emit(_u11_region(tmp_path))
+    assert n == 9, "the default call still counts 3 data rows x 3 columns of entry cells"
+    if not isomorphic(g, ref):
+        _both, only_new, only_ref = graph_diff(to_isomorphic(g), to_isomorphic(ref))
+        raise AssertionError(
+            "the default call is no longer the unmodified function's graph (I-10-2). "
+            f"Only in the new graph: {sorted(map(str, only_new))[:6]}; "
+            f"only in the reference: {sorted(map(str, only_ref))[:6]}")
+
+
+def test_u11_headerless_emission(tmp_path):
+    from iladub.etkl.holon import TAB as HTAB
+    g, n = _u11_emit(_u11_region(tmp_path), header_lines=0, absent_by=_U11_D)
+    assert not list(g.subjects(RDF.type, HTAB.HeaderNode)), "no tab:HeaderNode with 0 header lines"
+    assert not list(g.objects(_U11_T, HTAB.hasHeaderNode))
+    assert not list(g.subjects(RDF.type, HTAB.LabelCell)), "no tab:LabelCell with 0 header lines"
+    assert (_U11_T, HTAB.boxheadAbsentBy, _U11_D) in g, "the statement triple is missing"
+
+    rows = set(g.objects(_U11_T, HTAB.hasLeafRow))
+    assert rows == {URIRef(f"{_U11_T}-r{r}") for r in range(4)}, (
+        f"one tab:LeafRow per row, row 0 included: {sorted(map(str, rows))}")
+    assert all((r, RDF.type, HTAB.LeafRow) in g for r in rows)
+
+    row0 = URIRef(f"{_U11_T}-r0")
+    row0_texts = {str(g.value(e, HTAB.cellText)) for e in g.subjects(HTAB.atRow, row0)
+                  if (e, RDF.type, HTAB.EntryCell) in g}
+    assert row0_texts == {"Analyte", "Value", "Unit"}, f"row 0's cells are entries: {row0_texts}"
+    assert n == 12, "the return value counts entry cells, and row 0's three are now entries"
+
+
+def test_u11_headerless_graph_tiles(tmp_path):
+    """The emitted headerless graph crosses the real scratch gate: it is exactly the shape the
+    3d.1 exemption guards admit (U10 case 1), produced by the emitter rather than written by hand."""
+    from iladub.etkl.tiling import region_tiles
+    g, _ = _u11_emit(_u11_region(tmp_path), header_lines=0, absent_by=_U11_D)
+    assert region_tiles(g) is True
+
+
+@pytest.mark.parametrize("kw", [
+    {"header_lines": 0},                                   # 0 without the decision
+    {"absent_by": _U11_D},                                 # a decision with today's header
+    {"header_lines": 1, "absent_by": _U11_D},
+    {"header_lines": 2},                                   # the caller maps >= 1 to 1 (§ 10.6)
+    {"header_lines": 2, "absent_by": _U11_D},
+    {"header_lines": -1, "absent_by": _U11_D},
+])
+def test_u11_guard_refuses_an_inconsistent_call(tmp_path, kw):
+    """The producer-side guard (CLAUDE.md § Producer-side guards): the membrane does not provably
+    cover every product, because `tab:BoxheadAbsenceDecidedShape` binds only at compile scope. It
+    fails fast, before any triple is written."""
+    from iladub.etkl.holon import assert_record_region
+    g = Graph()
+    with pytest.raises(ValueError):
+        assert_record_region(g, _u11_region(tmp_path), _U11_T, _U11_DOC, 0, **kw)
+    assert len(g) == 0, "the guard must refuse before the emitter writes anything"
+
+
+def test_u11_unshown_row_zero_address_is_consumed_when_headerless(tmp_path):
+    """Review Focus 3 (R213): with 0 header lines a row-0 address in `band.unshown` reaches an entry
+    cell, which carries `tab:unshownText` and an empty `tab:cellText`, and the carriage's
+    completeness check does not fire. The control is today's: with the default header, the same
+    address reaches no entry cell and the carriage refuses the region."""
+    from dataclasses import replace
+    from iladub.etkl.holon import TAB as HTAB, UnshownCarriageError
+    region = _u11_region(tmp_path)
+    region = replace(region, band=replace(region.band, unshown=((0, 1),)))
+
+    with pytest.raises(UnshownCarriageError):
+        _u11_emit(region)
+
+    g, _ = _u11_emit(region, header_lines=0, absent_by=_U11_D)
+    e = URIRef(f"{_U11_T}-e0_1")
+    assert (e, RDF.type, HTAB.EntryCell) in g
+    assert str(g.value(e, HTAB.unshownText)) == "Value"
+    assert str(g.value(e, HTAB.cellText)) == ""
+    carried = {(s, str(o)) for s, o in g.subject_objects(HTAB.unshownText)}
+    assert carried == {(e, "Value")}, f"exactly the one address is carried: {carried}"
