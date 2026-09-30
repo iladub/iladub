@@ -1393,3 +1393,108 @@ The corpus total of 9.09 s is Task 3b's figure and was not re-measured.
 rows gain their first open neighbour and leave the set. As a control, the count was 93 with the
 register edits stashed and 90 with them restored. `tests/test_residue_graph.py`'s pin moves from 93
 to 90, with a dated comment.
+
+### 6.5 Fix round 1 (2026-10-01): the four row figures, re-measured and quoted
+
+The Task 5 review found four register figures whose only record was a gitignored report, ledger or
+scratch graph. Each was **re-measured** at `5bfcb77`, not copied, in the same manner as § 4.9, so the
+rows can cite a tracked file. The runs were offline, one compile at a time, from a `.sh` under
+`bash`. The scratch scripts are in the session scratchpad and their output is quoted here. Every
+re-measurement agrees with its row, so no row needed a correction.
+
+**The probe for R271, R261 and R266.** It is a pass-through spy on the module global
+`iladub.etkl.document._band_subgraph`, which is called as a bare name, as in § 3.2. For each call it
+records the caller's line, the table, the subgraph size, and the number of triples with the table as
+subject in the graph passed. After each `compile_document` it runs three SPARQL queries on the
+final graph: a count of `tab:SectionTotal`/`tab:AggregationRow`/`tab:DetectedAggregationRow`
+nodes; the tables stating `tab:boxheadAbsentBy`; and, for each such table, the band's `-d1`
+decision (label `kind`), its `dec:chosen` label and its `dec:rationale`.
+
+```
+$ bash run65.sh        # compile_document(cbh), then compile_document(who)
+== cbh  triples=13427
+  _band_subgraph calls (caller line, table, |subgraph|, table-as-subject triples in the graph passed):
+    (1568, 'https://example.org/etkl/doc/p0/r2#htable1', 2598, 247)
+    (1568, 'https://example.org/etkl/doc/p0/r2#htable3', 3869, 348)
+    (1568, 'https://example.org/etkl/doc/p0/r2#htable5', 3350, 307)
+    (1568, 'https://example.org/etkl/doc/p0/r2#htable7', 1455, 153)
+    (1752, 'https://example.org/etkl/doc/p0/r2#htable1', 0, 0)
+  SectionTotal/AggregationRow/DetectedAggregationRow: 0
+  tables stating tab:boxheadAbsentBy: 1
+    p0#table11 p0#region11-d1 RECORD_TABLE 'flat single-level header'
+  notes: ['page 0: adoption refused — band 1 asserted a table that is a member of a 4-member chain']
+== who  triples=12274
+  _band_subgraph calls (caller line, table, |subgraph|, table-as-subject triples in the graph passed):
+  SectionTotal/AggregationRow/DetectedAggregationRow: 0
+  tables stating tab:boxheadAbsentBy: 2
+    p0#table4 p0#region4-d1 RECORD_TABLE 'flat single-level header'
+    p1#table4 p1#region4-d1 RECORD_TABLE 'flat single-level header'
+  notes: []
+```
+
+- **R271.** At the adoption site (`document.py:1752`), `_band_subgraph(pages[p].graph, p0/r2#htable1)`
+  returns **0 triples**, and the graph passed holds **0** triples with that table as subject. The
+  same table taken at the `/r2` merge site (`:1568`) from the pass-2 graph is 2598 triples. So the
+  adoption check reads the `/r2` table from a graph that does not hold it. The adoption is then
+  refused on the 4-member chain, as the note shows, which is the masking the row names.
+- **R261.** A fresh cbh graph holds **0** `SectionTotal`/`AggregationRow`/`DetectedAggregationRow`
+  nodes, so none of the four port totals or `1,951,264` is read as a total.
+- **R266.** **3 of 3**: cbh `p0#table11` and who `p0#table4` and `p1#table4` state
+  `tab:boxheadAbsentBy`, and each band's `-d1` is `kind`, chose `RECORD_TABLE`, and has the rationale
+  `'flat single-level header'`. These two documents are the whole population. The other five documents'
+  graphs hash identically to the 3d.7 replay graphs (§ 6.1), and
+  `grep -c boxheadAbsentBy internal/benchmarks/box-split-2026-09-30/3d7/replay/*.nt` gave 0 for
+  apple, bfs, graincorp-capacity, graincorp-stem and ons (§ 4.6 likewise: statements on cbh and
+  who only).
+
+**R273.** The manifest was mutated in the working tree only and restored byte-identical (`cmp` →
+identical). The five validators were run one file per process:
+
+```
+### (i) rung list only: 'prog:criterion:tab:11 , prog:criterion:tab:12 .' -> 'prog:criterion:tab:11 .'
+    prog:criterion:tab:10 , prog:criterion:tab:11 .          (tests/arc-manifest.ttl:1206)
+1                                                           (grep -c "prog:criterion:tab:12 a prog:Criterion")
+-- tests/test_arc_manifest.py    28 passed in 21.00s
+-- tests/test_arc_landscape.py    6 passed in 2.48s
+-- tests/test_arc_queries.py     23 passed in 1.01s
+-- tests/test_arc_ablation.py     9 passed in 67.10s
+-- tests/test_cockpit.py         25 passed in 1.51s
+### (ii) rung list entry AND block (lines 1483-1494) removed
+0                                                           (grep -c "prog:criterion:tab:12")
+-- tests/test_arc_landscape.py
+      tracked:   '… The graph was read off 45 criteria by a human …'
+      regenerated: '… The graph was read off 44 criteria by a human …'
+tests/test_arc_landscape.py:76: Failed: docs/superpowers/arc-dependency-landscape.md has DRIFTED from its source at line 22:
+1 failed, 5 passed in 2.44s
+```
+
+**R268's corpus figure** (9.09 s) is not re-measured here. Its tracked record is
+`docs/superpowers/2026-09-28-box-split-t3c-handoff.md:68` ("The whole corpus costs 9.09 s in
+total"). That handoff quotes the Task 3b ledger and gives no command.
+
+**R274 (raised in this round): no gate checks a row's raise-time tally snapshot.** R261's snapshot
+was changed from `(74/251 closed)` to `(74/250 closed)`, the figure R260 carries, in the working tree
+only:
+
+```
+$ grep -c '^| R261 (74/250 closed)' docs/superpowers/residues-open.md
+1
+$ pytest tests/test_residue_register_integrity.py tests/test_residue_graph.py tests/test_doc_governance.py -q
+17 passed, 2 warnings in 86.47s (0:01:26)
+restored-identical
+```
+
+The snapshots in the register show that the convention is read two ways. From R255 to R260, each
+row counts itself: `(74/245)` … `(74/250)`, one more per row. R252, R253 and R254 share one figure,
+`(73/241)`. That is measured by
+`grep -oE "^\| R2(5[0-9]|4[0-9]) \([0-9]+/[0-9]+ closed\)" docs/superpowers/residues-open.md`.
+
+### 6.6 Fix round 1: dispositions added to § 6.4's table
+
+| item | source | disposition |
+|---|---|---|
+| § 4.8 item 6: the `BAML_LIVE=1` recording recipe also switches on R213's region reader and the boxhead reader's live half | § 4.2, § 4.8 | **no row.** It is a process fact, recorded in § 4.2/§ 4.8 for anyone who records readings, not a residue of the compiled graph |
+| § 4.8 item 9: the five files 3d.7's sweep did not run | § 4.8 | **Task 6's full sweep** (T5-D). No row |
+| no gate checks a row's raise-time tally snapshot (Task 5 falsification (e)) | § 6.5 | **new R274**, cites R273 (same class: a register or manifest relation nothing checks) |
+| R268's corpus total 9.09 s | `2026-09-28-box-split-t3c-handoff.md:68` | **R268 amended in place** to cite it |
+| R261, R266, R271, R273 figures | § 6.5 | **amended in place** to cite § 6.5 |
