@@ -2739,3 +2739,68 @@ def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
             c.line(40.0, y, 330.0, y)
     c.save()
     return {"rule_xs": rules, "header_cells": [t for _x, t in header]}
+
+
+# --- box-split Task 3d.4 (spec § 10.3.2 / § 10.5 U9): does row 0 differ in style from its body ---
+#
+# One closed ruled box per page (a `_line_grid`, no title bar), so the page's one band reaches the
+# RECORD path of `compile_tables` as a single region. Every text run is drawn at `_BOX_PITCH`, and
+# the body is always Helvetica in the canvas's default fill colour, with no rect behind it. Row 0
+# varies in exactly the features a case names, so each case isolates one feature of the oracle.
+
+_STYLED_XS = [300.0, 380.0, 480.0]          # the box, right of where a neighbour box would sit
+_NEIGHBOUR_XS = [40.0, 120.0, 220.0]
+
+
+def styled_box_pdf(path: str, rows, *, head_font: str = "Helvetica",
+                   head_rgb: tuple | None = None, head_fill: tuple | None = None,
+                   box_fill: tuple | None = None, neighbour: bool = False) -> dict:
+    """One closed 2-column box holding `rows` (row 0 first).
+
+    - `head_font`: the font row 0 is drawn in (the body is always Helvetica).
+    - `head_rgb`: the glyph fill colour of row 0; None leaves the canvas default, the body's.
+    - `head_fill`: the RGB colour of a filled, unstroked rect behind row 0's cell area only
+      (painted before the text, exactly the grid's row-0 rectangle); None draws no rect.
+    - `box_fill`: the RGB colour of a filled, unstroked rect behind the WHOLE box, every row,
+      painted first; None draws no rect. With `head_fill` it gives the body a rect-fill value
+      of its own, which § 10.3.2's condition 2 requires before row 0's fill can witness.
+    - `neighbour=True` draws a SECOND closed box to the left, on the same rows, whose row 0 is
+      a Helvetica-Bold `Site | Alpha` header over a numeric body — cbh-stem p0 band 9's shape
+      (spec § 7.3). A glyph filter that reads by y alone leaks that bold header into this box's
+      row 0."""
+    y_top = PAGE_H - 192.0
+    n = len(rows)
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    if box_fill is not None:
+        c.setFillColorRGB(*box_fill)
+        c.rect(_STYLED_XS[0], y_top - n * _BOX_PITCH, _STYLED_XS[-1] - _STYLED_XS[0],
+               n * _BOX_PITCH, stroke=0, fill=1)
+        c.setFillColorRGB(0.0, 0.0, 0.0)
+    if head_fill is not None:
+        c.setFillColorRGB(*head_fill)
+        c.rect(_STYLED_XS[0], y_top - _BOX_PITCH, _STYLED_XS[-1] - _STYLED_XS[0], _BOX_PITCH,
+               stroke=0, fill=1)
+        c.setFillColorRGB(0.0, 0.0, 0.0)
+    for i, row in enumerate(rows):
+        if i == 0:
+            c.setFont(head_font, 8)
+            if head_rgb is not None:
+                c.setFillColorRGB(*head_rgb)
+        else:
+            c.setFont("Helvetica", 8)
+        for x, cell in zip(_STYLED_XS, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+        if i == 0 and head_rgb is not None:
+            c.setFillColorRGB(0.0, 0.0, 0.0)
+    _line_grid(c, _STYLED_XS, y_top, n)
+    if neighbour:
+        left = [("Site", "Alpha")] + [(f"S{i}", str(10 * i)) for i in range(1, n)]
+        for i, row in enumerate(left):
+            c.setFont("Helvetica-Bold" if i == 0 else "Helvetica", 8)
+            for x, cell in zip(_NEIGHBOUR_XS, row):
+                c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+        _line_grid(c, _NEIGHBOUR_XS, y_top, n)
+    c.save()
+    return {"rows": [tuple(r) for r in rows], "xs": list(_STYLED_XS),
+            "neighbour_xs": list(_NEIGHBOUR_XS) if neighbour else None}

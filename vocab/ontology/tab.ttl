@@ -271,6 +271,13 @@ tab:GridCell a owl:Class ; rdfs:label "Grid cell"@en ;
 tab:atGridRow a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid row"@en .
 tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid column"@en .
 tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
+# --- the cell's drawn style (transient; box-split spec 2026-09-28 § 10.3.2, the row-zero-differs oracle) ---
+tab:cellGlyphFont a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell glyph font"@en ;
+    rdfs:comment "The font name of a glyph whose centre lies inside the cell's bbox on BOTH axes, as the PDF names it. One value per distinct font; a glyph with no font name gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
+tab:cellGlyphFill a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell glyph fill"@en ;
+    rdfs:comment "The fill colour of a glyph whose centre lies inside the cell's bbox on BOTH axes, as its device colour components (rowzero.colour_literal). Equal components give equal literals; a glyph with no readable device colour gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
+tab:cellRectFill a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell rect fill"@en ;
+    rdfs:comment "The fill colour of a filled rect that contains the centre of the cell's bbox, in tab:cellGlyphFill's literal form. One value per distinct colour; a rect with no readable device colour gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
     rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop. loop-quantity-typing adds tab:ParenthesizedNumber (a datatype that ABSTAINS from homogeneity judgements, via tab:datatypeAbstains) and the tab:CellDatatypeFamily grouping (via tab:inDatatypeFamily) that normalises tab:Numeric and tab:Currency into tab:Quantity."@en .
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;

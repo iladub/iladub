@@ -1,7 +1,8 @@
 """Box-split § 10 (Task 3d): a table the author drew with no boxhead says so.
 
 Spec `docs/superpowers/specs/2026-09-28-box-split-design.md` § 10.3.1 / § 10.5. This file carries
-U9–U14 as Task 3d's sub-tasks land; 3d.1 contributes U10, the statement's shapes.
+U9–U14 as Task 3d's sub-tasks land; 3d.1 contributes U10, the statement's shapes. U9 (3d.4,
+the oracle) lives in `test_row_zero_differs.py`, split out at the plan's ~600-line mark.
 
 U10 — the statement `tab:boxheadAbsentBy` and its four shapes' worth of consequences:
 

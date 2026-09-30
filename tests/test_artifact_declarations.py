@@ -239,8 +239,11 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # tracked `.ttl` outside the fixture directory, HEAD vs index, added = exactly those two,
     # removed = none. The property and its shapes went into the EXISTING `tab.ttl` and
     # `tab-shapes.ttl`. The `.rq` population does not move.
+    # RE-MEASURED 2026-09-30 (box-split Task 3d.4): the `.rq` population is **57** —
+    # `row-zero-differs.rq`, the one-way oracle of spec § 10.3.2. Its three transient `tab:` style
+    # terms went into the EXISTING `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
     assert len(vocab_nodes) == len(artifact_files()) == 168
-    assert len(query_nodes) == len(query_files()) == 56
+    assert len(query_nodes) == len(query_files()) == 57
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():
