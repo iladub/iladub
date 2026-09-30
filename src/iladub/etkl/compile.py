@@ -429,9 +429,9 @@ def _header_lines_decision(region, pdf_path: str, page_number: int,
          above 1 adds no header level (§ 10.6): the emission gets 1.
 
     Every module is looked up at call time, so a test's patch reaches it (the `_donation.offer`
-    late binding). No `evidence=` is passed to the recorder: the decision points at no table or
-    cell, so `document._band_reading_subgraph`, which follows a decision's outgoing edges, never
-    walks from the log into a table (measured, task 3d.6 report).
+    late binding). No `evidence=` is passed: the decision points at no table or cell, so
+    `document._band_reading_subgraph` (outgoing edges from the log) never walks into a table
+    (measured: `docs/superpowers/2026-09-28-box-split-evidence.md` § 4.9; § 4.6, corpus).
 
     Gate classification (CLAUDE.md § 8, spec § 10.4): PROCEDURAL — the ask gate. It applies the
     oracle's verdict and the reader's answer and decides nothing itself: no Python here reads

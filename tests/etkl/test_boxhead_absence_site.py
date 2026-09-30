@@ -104,7 +104,7 @@ def _chosen(g, d):
 def _never_asked(monkeypatch, p, validate=True):
     """The page of a region that is never asked: the reader trips if it is reached, and the oracle
     witnesses every region. The reference for "byte-identical to today's" on synthetic input; the
-    whole-corpus snapshot against the pre-change tree is the task report's."""
+    whole-corpus comparison is C2, `docs/superpowers/2026-09-28-box-split-evidence.md` § 4.6."""
     from iladub.etkl import headerlines, rowzero
     with monkeypatch.context() as m:
         m.setattr(rowzero, "row_zero_differs", lambda region, pdf, page: True)
@@ -393,7 +393,7 @@ def test_rf5_a_one_line_region_answered_two_is_no_claim(tmp_path, reader, monkey
 # Review Focus 1 (A2, the site's half) and U14's merge-in case (controller ruling 2026-09-30)
 # ---------------------------------------------------------------------------------------------
 #
-# MEASURED (task report): of every fixture in `fixtures.py` that builds from a path alone, NONE
+# MEASURED (`docs/superpowers/2026-09-28-box-split-evidence.md` § 4.9): of every fixture in `fixtures.py` that builds from a path alone, NONE
 # reaches the ask site on more than one pass, and none reaches `/r2` or `/adopt` unwitnessed. The
 # two below are the fixtures whose RECORD regions reach those passes at all:
 #   * `currency_marker_escalating_with_asserting_table_pdf`: band 1 on `p0` and on `/adopt`;

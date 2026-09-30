@@ -1,0 +1,4 @@
+{
+ "header_lines": 0,
+ "note": "The first line presents data in the same format as subsequent lines, with a country code paired with a date range, making it a data row rather than a header."
+}
