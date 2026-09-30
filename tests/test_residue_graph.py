@@ -170,4 +170,10 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # open neighbour -- structurally parkable. The three rows R213 raised are NOT candidates:
     # R252 <-> R253 and R254 -> R253 link them to each other, which is the point of linking a
     # row to the one that blocks it (the register serves the arc).
-    assert len(expected) == 93
+    # RE-MEASURED 2026-09-30 (box-split Task 5): 93 -> 90, ADDED = [], REMOVED = [65, 243, 248].
+    # The RAISE kind in reverse: R261-R273 are open, named by no criterion, and every one cites an
+    # open row, so none enters the set; three of the rows they cite gain their first open
+    # neighbour and leave it -- R65 (cited by R265, same `celltype` module), R243 (by R261, the
+    # totals family) and R248 (by R263, the same "no oracle disposes the answer" class).
+    # Controlled: with the register edits stashed the count is 93, restored it is 90.
+    assert len(expected) == 90

@@ -1214,3 +1214,182 @@ producing no request:
 **No CI test withdraws an escalation through section repair (the `/r2` pass), which is cbh's own
 mechanism.** No section-repair test file reads `ExpansionRequest`. As the ruling directs, none is
 added; this is reported only.
+
+## § 6. Task 5 — controls, evidence, register (2026-09-30)
+
+**Serves:** prog:criterion:etkl:03 — the C1/C2 controls, cbh's facts, and the register rows for
+everything this loop deferred. Branch `box-split`, base `caebd2b`, `git status` clean before the
+runs. Every run was offline (`env -u ANTHROPIC_API_KEY -u BAML_LIVE -u ILADUB_RECORD_READINGS`), in
+the foreground, from a `.sh` under `bash`, one corpus compile at a time. Probes were throwaway
+scripts in the session scratchpad; their output is quoted here. Snapshot output is under
+`internal/benchmarks/box-split-2026-09-28/task5/` (gitignored — this section is the durable record).
+
+### 6.1 Step 2 — C2, judged per controller ruling T5-A
+
+```
+$ PYTHONPATH=src .venv/bin/python scripts/corpus_verdict_snapshot.py \
+    internal/benchmarks/box-split-2026-09-28/task5/plain            # 9 min 39 s
+cbh-stem-2026-08-03                    score=0.9103232533889468     triples= 13427 sha=109ef8d1c999
+graincorp-capacity-2026-08-04          score=1.0                    triples=  5859 sha=3b54f16194ca
+graincorp-stem-2026-07-31              score=0.9995511669658886     triples= 32422 sha=496c315f2fcc
+apple-fy2026q3-statements              score=0.9418604651162791     triples=  6255 sha=1dd90f432c5e
+bfs-population-bilan-2023              score=0.9021428571428571     triples= 16778 sha=d395c373c62b
+ons-index-of-services-2026-02          score=0.8684895833333334     triples= 12454 sha=5db3db9c29ed
+who-wfa-boys-zscore-0-5                score=0.9962779156327544     triples= 12274 sha=7532b4756f38
+```
+
+| document | judged against | reference hash | now | identical |
+|---|---|---|---|---|
+| apple | Task 0 (§ 1.1) | `1dd90f432c5e` | `1dd90f432c5e` | yes |
+| graincorp-capacity | Task 0 (§ 1.1) | `3b54f16194ca` | `3b54f16194ca` | yes |
+| graincorp-stem | Task 0 (§ 1.1) | `496c315f2fcc` | `496c315f2fcc` | yes |
+| bfs | 3d.7 (§ 4.6, § 4.8 item 8) | `d395c373c62b` | `d395c373c62b` | yes |
+| ons | 3d.7 (§ 4.6, § 4.8 item 8) | `5db3db9c29ed` | `5db3db9c29ed` | yes |
+| who | 3d.7 (§ 4.6, § 4.8 item 8) | `7532b4756f38` | `7532b4756f38` | yes |
+| cbh | facts only (T5-A) | Task 0 `ba056c0ed809` | `109ef8d1c999` | no, by design |
+
+`scripts/corpus_snapshot_diff.py` against the 3d.7 replay directory reports `1 of 14 documents
+changed`, and the one is cbh (the other seven entries are 3d.7's `.probe.json` side files, reported
+`MISSING on the after side`, not documents). Against Task 0 it reports bfs, cbh, ons and who
+changed, which § 4.6 already accounts for bfs/ons/who. **C2 holds: no unaccounted difference.**
+§ 2.5's caveat carries: the hash normalises blank-node labels, so a match is necessary, not
+sufficient.
+
+**cbh since 3d.7, accounted triple by triple.** 3d.7's replay graph (13429 triples) was diffed as a
+multiset of blank-node-normalised N-Triples against a fresh `compile_document(cbh)` (13427):
+
+```
+3d7 13429 now 13427
+- 1 <…/p0#table10-bandcap0> rdf:type tab:SectionCaption .
+- 1 <…/p0#table11-bandcap0> rdf:type tab:SectionCaption .
+```
+
+Exactly Task 4 Ruling 1 (§ 5.5): each box title bar is a `tab:RegionCaption` only. Nothing else
+moved.
+
+**cbh, Task 0 → now, as facts (never a verdict, spec § 5):**
+
+| | Task 0 (§ 1.1) | 3d.0 (§ 3.1) | now |
+|---|---|---|---|
+| score | `1.0` | `0.9103232533889468` | `0.9103232533889468` |
+| triples | 12839 | 13416 | 13427 |
+| hash | `ba056c0ed809` | `15b7da8ef677` | `109ef8d1c999` |
+| p0 cells / asserted / escalated | 763 / 884 / 0 | 784 / 873 / 86 | 786 / 873 / 86 |
+| chains | 2 | 3 | 3 |
+
+The adoption note `page 0: adoption refused — band 1 asserted a table that is a member of a
+4-member chain` and the third chain were already present at 3d.0 (the 3d.0 → now diff shows only
+triples and cells, `784 → 786`).
+
+### 6.2 Step 1 — C1
+
+A second whole-corpus snapshot ran with pass-through spies on `boxes.page_boxes` and
+`boxsplit.bands_to_split` (each returns the original's value unchanged). It recorded every band
+`bands_to_split` selected and the time spent in both functions:
+
+```
+cbh-stem-2026-08-03            … sha=109ef8d1c999 | page_boxes calls=4 0.88s boxes=24 bands_to_split calls=4 0.06s wall=61.0s | selections=4 distinct=[(0, 9, 683.46, 761.46, 2)]
+graincorp-capacity-2026-08-04  … sha=3b54f16194ca | page_boxes calls=2 0.23s boxes=2  bands_to_split calls=2 0.01s wall=17.6s | selections=0
+graincorp-stem-2026-07-31      … sha=496c315f2fcc | page_boxes calls=6 0.96s boxes=6  bands_to_split calls=6 0.04s wall=190.2s | selections=0
+apple-fy2026q3-statements      … sha=1dd90f432c5e | page_boxes calls=7 0.92s boxes=0  bands_to_split calls=7 0.05s wall=60.4s | selections=0
+bfs-population-bilan-2023      … sha=d395c373c62b | page_boxes calls=18 1.03s boxes=0 bands_to_split calls=18 0.12s wall=116.7s | selections=0
+ons-index-of-services-2026-02  … sha=5db3db9c29ed | page_boxes calls=21 0.60s boxes=0 bands_to_split calls=21 0.14s wall=63.8s | selections=0
+who-wfa-boys-zscore-0-5        … sha=7532b4756f38 | page_boxes calls=6 0.38s boxes=0  bands_to_split calls=6 0.08s wall=57.4s | selections=0
+```
+
+(`distinct` = (page, raw-band index, top, bottom, boxes).) The spies are shown to be pass-through:
+`corpus_snapshot_diff.py plain instr` reports `0 of 7 documents changed`.
+
+**C1 holds: exactly one band corpus-wide.** Per document: cbh 1 (p0, raw band 9, y 683.46–761.46,
+2 boxes, selected on each of the 4 `page_bands` calls); graincorp-capacity 0, graincorp-stem 0,
+apple 0, bfs 0, ons 0, who 0. The graincorps hold closed boxes (2 and 6), each alone in its band,
+so none is selected (spec § 4: boxes spanning several bands are untouched).
+
+**`page_boxes`'s corpus runtime (Task 3 minor, measured here):** 64 calls, 5.00 s in total; beside
+it `bands_to_split` costs 0.50 s over the same 64 calls. The seven compiles take 567 s by the same
+clock, so the box read costs about 0.9 % and the selection query about 0.1 %. (The per-document
+figures are `time.perf_counter`; the run's wall-clock elapsed was longer because the machine was
+suspended mid-run, which that clock does not count.) This minor is closed by the measurement, and
+no register row is raised for it.
+
+### 6.3 Step 3 — cbh facts
+
+- **Score:** § 6.1's table. It is a fact; the oracle is O2 (§ 5.2, 6 passed), never the score.
+- **Where the residue lands** (§ 5.4 (1) and (3); Ruling 2, § 5.5). `1,951,264` (x 811.8–835.7, top
+  683.5, on the title line outside both boxes) and the Note block form ONE residue band,
+  `p0#region9`. It reads `UNSUPPORTED_TABLE` (`header has 1 words but 2 columns`, `regions.py:96`)
+  and is escalated `KIND_NOT_SUPPORTED` (`compile.py:1622-1625`), the one live escalation on cbh.
+  Measured again on the graph at `caebd2b`: the literal `1,951,264` occurs in **no** triple; the four
+  roster port totals occur only as `etkl:bandText` of `p0#ignored2/4/6/8`. The residue's
+  proposition (`p0#region9 a iladub:CandidateConcept`) carries an `iladub:surfaceText` of
+  `"… 1,95\nNote:\nDaboDTrcaaastcaialgrtreDasutcaaoaguide.\n…"`: `roundtrip.render_ascii` draws the
+  band on an 80-column canvas where characters overwrite each other and are cut at the edge. The
+  total is cut to `1,95`, and the Note prose is interleaved. That is a new finding, raised as
+  [[R262]].
+- **T2's header outcome** (§ 4.4, § 4.6): asked, answered `0` (live, recorded), and `p0#table11`
+  states `tab:boxheadAbsentBy p0#region11-d4` with 0 header nodes. O2's T2 test passes (§ 5.2).
+- **The box title captions** are `tab:RegionCaption` only (Ruling 1, § 5.5; § 6.1's diff is its
+  whole graph effect).
+- **The fused table is gone:** `p0#table9` has 0 triples; `129,183` is a cell of `p0#table10` (T1),
+  `1 - 15 August` of `p0#table11` (T2).
+
+### 6.4 Step 4 — the register
+
+Tally before: `awk -F'|' '/^\| R[0-9]/ {print $3}' docs/superpowers/residues.md | sort | uniq -c`
+gave 74 closed, 174 + 2 qualified open, 250 rows. R260 reads `(74/250 closed)`, so a row's snapshot
+counts itself. Each new row's snapshot was computed by counting the index **after** that row was
+appended, and no neighbour's figure was copied: R261 `(74/251)` through R273 `(74/263)`. After:
+74 closed, 187 + 2 open, 263 rows.
+
+**R74, measured first.** Its pin, `tests/etkl/test_datagrid.py -k cbh_p0`, gave 4 passed: the
+data-grid leak has been absent since 2026-09-17 ([[R243]]). On the ruled path, this loop splits
+line 75 the way R74's amendment asks: the titles become box captions and the grand total goes to the
+residue. `grep -rn StackedGrids src/ vocab/` finds only the two declarations
+(`tab-datagrid.ttl:128,134`). R74's closure is that derivation, so R74 is **narrowed in place, not
+closed**. [[R156]] (the fused band 9 carrying `tab:RecordTable`) is narrowed in place for the same
+reason: its corpus instance is gone, but its kind-gate question survives for side-by-side tables that
+are not closed boxes.
+
+**Dispositions** (T5-C). Each item was first checked by grepping `residues.md` and
+`residues-open.md` for its mechanism and site. No open row covered any of them, so each one got a
+row, linked to the nearest open row that shares its mechanism:
+
+| item | source | disposition |
+|---|---|---|
+| totals family (plan Step 4), live witness = the residue's escalation | spec § 4, R-b; § 5.5 Ruling 2 | **new R261**, widens R74; cites R47, R77, R243 |
+| the residue's surfaceText is `1,95` + interleaved glyphs | § 6.3 (found here) | **new R262** |
+| § 4.8 item 1: every asked answer admitted undisposed | spec § 10.6, § 10.7 R-2 | **new R263**; cites R248 (same class) |
+| § 4.8 item 2: witnessed header is an unrecorded positional default | spec § 10.7 R-3 | **new R264**; cites R258, R265 |
+| § 4.8 item 3: `celltype` space-thousands false witness | spec § 10.6 | **new R265**; measured `'1 168'`/`'8 606 033'` → `tab:Text`; cites R65 |
+| § 4.8 item 4: kind rationale "flat single-level header" on headerless tables | § 4.8 | **new R266**; measured 3 of 3 statement-bearing tables |
+| § 4.8 item 5: rect fill under unshown, unmeasured under R213 | § 4.6 | **new R267**; cites R253 |
+| ledger, Task 3: `page_boxes` runtime | § 6.2 | **measured, no row**: 64 calls, 5.00 s ≈ 0.9 % |
+| ledger, Task 3b: witness query cost | re-measured below | **new R268** |
+| spec § 8.5: "word space or gutter" NEURAL candidate for the 35 refusals | spec § 8.3/§ 8.5 | **new R269**; cites R155, R225 |
+| ledger, Task 3b: `weld_hrule_boxes` left-edge cell → last column | 3b fix rounds 1–2 | **new R270**; cites R47 |
+| ledger, Task 3d.2: `/r2` table subgraph read from the pass-1 graph | 3d.2 report | **new R271**; cites R256 |
+| ledger, Task 4: no CI test for escalation withdrawal via `/r2` | § 5.5 | **new R272**; cites R271 |
+| ledger, Task 4: rung-list removal invisible to the validators | Task 4 falsification | **new R273**; cites R108 |
+| R74 | measured above | **narrowed in place** |
+| R156 | measured above | **narrowed in place** (not in the brief's list; the split removes its corpus instance) |
+
+Spec § 8.5 assigns the "word space or gutter" row to Task 5, but T5-C's list omits it. It is
+raised here so that the spec's assignment is not lost.
+
+**The witness query cost, re-measured** (scratch script, worst case: every cell one word, no
+witness, so the ASK scans everything):
+
+```
+10x10 words=100 witness=False 0.79s
+30x15 words=450 witness=False 15.37s
+60x20 words=1200 witness=False 112.60s
+```
+
+These reproduce Task 3b's 15.7 s and 113 s, and the growth is roughly quadratic in the word count.
+The corpus total of 9.09 s is Task 3b's figure and was not re-measured.
+
+**Structural candidates** (`scripts/residue_graph.py --candidates`): 93 → 90, ADDED = [], REMOVED =
+[65, 243, 248]. Every new row cites an open row, so none of them becomes a candidate. Three cited
+rows gain their first open neighbour and leave the set. As a control, the count was 93 with the
+register edits stashed and 90 with them restored. `tests/test_residue_graph.py`'s pin moves from 93
+to 90, with a dated comment.
