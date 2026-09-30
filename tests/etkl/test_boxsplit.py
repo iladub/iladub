@@ -548,3 +548,54 @@ def test_a_merged_run_keeps_its_box_titles():
     merged = merge_bands([a, b], 0, 1)
     assert merged.title_captions == a.title_captions + b.title_captions
     assert merged.captions == a.captions + b.captions
+
+
+# --- Final review fix wave (2026-10-01, Important 1): the CARRIED half of ruling 1 ---------------
+#
+# The two emission tests above cannot tell the carried rule (a caption is a title iff it is in
+# `band.title_captions`) from an inferred one read off `band.frame`: the box band has a frame and
+# the control band does not. Two behaviours only the carried rule gets right are pinned here,
+# PDF-free, on the emitter itself:
+#   (A) a caption `_build_ruled_band` peeled INSIDE a box band keeps both types;
+#   (B) a merged run keeps `title_captions` but drops `frame` (U8), and its titles stay titles.
+# Keyed by caption URI, never by text: `_caption_types` above overwrites repeated texts.
+
+
+def _emitted_caption_types(band):
+    """{caption URI: set of local type names} for one `_emit_band_captions` call on `band`."""
+    from rdflib import Graph, URIRef
+
+    from iladub.etkl.compile import _emit_band_captions
+    g = Graph()
+    table = URIRef("urn:test:table")
+    _emit_band_captions(g, table, band)
+    return {c: {str(ty).split("#")[1] for ty in g.objects(c, RDF.type)}
+            for c in g.objects(table, TAB.hasCaption)}
+
+
+def _title_and_peeled_band(frame):
+    """A band whose captions are (title, peeled): the title came from the box's bar, the peeled
+    line from inside the box. Emission order fixes the URIs: `-bandcap0` is the title."""
+    from iladub.etkl.geometry import Line, Word
+
+    def line(text, y):
+        return Line(words=(Word(text, 10.0, 60.0, y, y + 9.0),), top=y, bottom=y + 9.0)
+
+    title, peeled = line("TITLE", 0.0), line("PEELED", 12.0)
+    return Band(lines=(line("x", 30.0),), top=0.0, bottom=39.0, captions=(title, peeled),
+                title_captions=(title,), frame=frame)
+
+
+@pytest.mark.parametrize("frame", [(0.0, 70.0, 0.0, 39.0), None], ids=["box_band", "merged_run"])
+def test_a_title_is_typed_by_its_carried_origin_not_by_the_frame(frame):
+    """Case A (frame set): the title is `{RegionCaption}` and the peeled line is
+    `{RegionCaption, SectionCaption}`. Case B (frame None, a merged run's state after U8): the
+    title is STILL `{RegionCaption}`. A rule inferred from the frame fails one case or the other:
+    "a framed band's captions are titles" fails A's peeled line, "a frameless band's captions are
+    section keys" fails B's title."""
+    from rdflib import URIRef
+    types = _emitted_caption_types(_title_and_peeled_band(frame))
+    title, peeled = URIRef("urn:test:table-bandcap0"), URIRef("urn:test:table-bandcap1")
+    assert set(types) == {title, peeled}, types
+    assert types[title] == {"RegionCaption"}, types
+    assert types[peeled] == {"RegionCaption", "SectionCaption"}, types

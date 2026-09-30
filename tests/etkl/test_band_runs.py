@@ -171,8 +171,8 @@ def test_runs_are_disjoint_and_ascending_across_the_whole_corpus(as_proposed):
 
 
 def test_merge_bands_covers_every_field_of_band():
-    """A tenth Band field would be SILENTLY DEFAULTED by merge_bands, and nothing else
-    in the suite would notice. Band has 9 fields. If this fails, a field was added:
+    """A twelfth Band field would be SILENTLY DEFAULTED by merge_bands, and nothing else
+    in the suite would notice. Band has 11 fields. If this fails, a field was added:
     decide how the merge carries it, then move this number.
 
     RE-MEASURED 2026-09-18 (R213): 8 -> 9, `Band.unshown`. THIS PIN DID ITS JOB -- the field

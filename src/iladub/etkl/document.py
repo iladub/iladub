@@ -1126,9 +1126,9 @@ def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
     band and page `dec:Process` nodes and the reader agent into the subgraph: adoption's
     withdraw-or-refuse check then refuses the table (every other decision points into it), and
     had it passed, `graph -= sub` would have deleted the triples every decision on the page
-    shares. The stop states the boundary this docstring always assumed, so it covers every
-    future table-to-log edge rather than one property. A decision minted under the table's own
-    URI space is a ROOT, not a traversal target, and is unaffected. Pinned by U14
+    shares. The stop covers only nodes typed `dec:DecisionHolon` EXPLICITLY: an edge into a
+    `dec:Option`, a `dec:Process` or a subclass-typed decision is still traversed. A decision
+    minted under the table's own URI space is a ROOT, not a traversal target. Pinned by U14
     (`tests/etkl/test_boxhead_absence.py`).
 
     Gate classification (CLAUDE.md § 8): PROCEDURAL graph glue — a reachability closure over

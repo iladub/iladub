@@ -165,14 +165,33 @@ def test_u9_an_unshown_row_zero_cell_contributes_no_datatype(tmp_path):
 
 
 def test_u9_an_unshown_row_zero_cell_contributes_no_style(tmp_path):
-    """The style half of A5's reason: a glyph the page does not show has no font or fill a reader
-    sees, for the same reason its `tab:gridText` is empty. The font case, with both row-0
+    """The glyph half of A5's reason: a glyph the page does not show has no font or glyph colour a
+    reader sees, for the same reason its `tab:gridText` is empty. The font case, with both row-0
     addresses hidden, has no row-0 value left."""
     from dataclasses import replace
     from iladub.etkl.rowzero import row_zero_differs
     p, region = _u9_region(tmp_path, "font")
     hidden = replace(region, band=replace(region.band, unshown=((0, 0), (0, 1))))
     assert row_zero_differs(hidden, p, 0) is False
+
+
+def test_u9_an_unshown_row_zero_cell_keeps_its_covering_rect_fill(tmp_path):
+    """Final review, 2026-10-01, Important 2: an unshown address withholds its GLYPH facts only. A
+    filled rect covering the cell is drawn ink, and a reader sees a shaded row 0 whether or not its
+    text is shown. The rect_fill case, with both row-0 addresses hidden, still witnesses, and the
+    hidden cells still carry the fill but no glyph fact."""
+    from dataclasses import replace
+    from iladub.etkl.rowzero import row_zero_differs, row_zero_evidence
+    p, region = _u9_region(tmp_path, "rect_fill")
+    assert _u9_differs_only_in(p, region) == {"rect_fills"}, "precondition: only the rect fill"
+    hidden = replace(region, band=replace(region.band, unshown=((0, 0), (0, 1))))
+    g = row_zero_evidence(hidden, p, 0)
+    row0 = {n for n in g.subjects(RDF.type, TAB.GridCell) if int(g.value(n, TAB.atGridRow)) == 0}
+    assert len(row0) == 2
+    assert all(g.value(n, TAB.cellRectFill) is not None for n in row0), "the fill was withheld"
+    assert not any((n, pr, None) in g for n in row0
+                   for pr in (TAB.cellGlyphFont, TAB.cellGlyphFill)), "a hidden glyph leaked"
+    assert row_zero_differs(hidden, p, 0) is True
 
 
 def test_u9_a_missing_colour_or_font_gives_no_fact(tmp_path, monkeypatch):

@@ -173,7 +173,7 @@ def _row_ordinal(uri):
 
 def _yband_table_uris(rep, page_idx, y_lo, y_hi):
     """table_uris of ASSERTED regions on `page_idx` whose cells overlap `[y_lo, y_hi]`
-    (pt, PDF top-down: `tab:y0` is the top, `tab:y1` the bottom — holon.py:340-343).
+    (pt, PDF top-down: `tab:y0` is the top, `tab:y1` the bottom — `holon._bbox_node`).
 
     MEASURED predicate path (task-4-report.md): `tab:hasCell` / `tab:hasBBox` / `tab:y0` /
     `tab:y1` all return non-empty on today's pre-split `#table9` (16 cells, each with a

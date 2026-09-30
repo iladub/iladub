@@ -13,7 +13,7 @@ This module is the PROCEDURAL layer only (§ 10.4's table):
 - `row_zero_differs` — invokes the query.
 
 None of them decides header-vs-data, and none carries a constant or a tolerance (I-10-4).
-Nothing calls this module yet: the ask site that consults it is Task 3d.6.
+The ask site that consults it is `compile._header_lines_decision`.
 """
 from __future__ import annotations
 
@@ -162,14 +162,20 @@ def row_zero_evidence(region, pdf_path: str, page_number: int) -> Graph:
     the body, which is a false witness. `body_starts_at` is left at its default of 1, so row 0 is
     the head and every later row is body — the split the query reads from `tab:bodyStartsAt`.
 
-    An unshown cell also gets NO style facts, for the reason its `tab:gridText` is empty: the page
-    does not show that glyph, so no reader sees its font or its fill."""
+    An unshown cell withholds its GLYPH facts only (`cellGlyphFont`, `cellGlyphFill`), for the
+    reason its `tab:gridText` is empty: the page does not show that glyph, so no reader sees its
+    font or its colour. Its `cellRectFill` is kept. A filled rect covering the cell is drawn ink:
+    a reader sees a shaded row 0 whether or not its text is shown, and withholding that fill would
+    remove a witness, which is the unsafe direction for a one-way oracle (final review, 2026-10-01,
+    Important 2)."""
     from .orientation import _ncols, _region_cells
     unshown = tuple(getattr(region.band, "unshown", ()) or ())
     hidden = {(int(r), int(c)) for r, c in unshown}
     g = celltype.grid_evidence(_region_cells(region), _ncols(region), unshown=unshown)
-    shown = [c for c in region.cells if (int(c.row), int(c.col)) not in hidden]
-    _emit_cell_styles(g, cell_styles(pdf_path, page_number, shown))
+    styles = cell_styles(pdf_path, page_number, region.cells)
+    for key in hidden & styles.keys():
+        styles[key] = CellStyle(frozenset(), frozenset(), styles[key].rect_fills)
+    _emit_cell_styles(g, styles)
     return g
 
 
