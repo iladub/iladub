@@ -1036,7 +1036,8 @@ def _band_reading_subgraph(g: Graph, page_doc: URIRef, idx: int) -> Graph:
     `decisionlog` hangs the band process, its judgements and their options off
     `{page_doc}#region{idx}-` (`-reading`, `-d{n}`, `-d{n}-opt-{slug}`). The trailing hyphen is
     what keeps band 1 from swallowing band 10 — `region10-reading` does not start with
-    `region1-`. Closed over outgoing reachability exactly as `_band_subgraph` is, so the page
+    `region1-`. Closed over outgoing reachability as `_band_subgraph` is, but WITHOUT its stop
+    at a `dec:DecisionHolon`: this closure's roots ARE the log, so the page
     process (`dcterms:isPartOf`) and the reader agent (`dec:decidedBy`) ride along; the
     `dec:regarding` object is the band's own region node, which on an ASSERTED band has no
     outgoing triples and so contributes nothing. A COPY, never a mutation of `g`."""
@@ -1115,7 +1116,24 @@ def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
     ROUND_TRIP_FAIL `-cc{r}_{col}` propositions, which hang off no table edge), closed over
     outgoing reachability so BNode bboxes ride along. Objects outside the band (the pass-2 doc
     URI, provenance region URIs) have no outgoing triples in the page graph and contribute
-    nothing. A COPY, never a mutation of the pass-2 graph."""
+    nothing. A COPY, never a mutation of the pass-2 graph.
+
+    THE LOG IS A BOUNDARY (box-split spec § 10.7, R-1 remedy (a), ruled 2026-09-29). The
+    closure does not traverse INTO a node `g` types `dec:DecisionHolon`. The triple pointing at
+    it still leaves with the table — its subject is in the table's URI space — but the decision
+    stays in the log, as the band's other judgements already do. Without the stop, the first
+    edge from a table into the log (`tab:boxheadAbsentBy`) pulls the decision, its options, its
+    band and page `dec:Process` nodes and the reader agent into the subgraph: adoption's
+    withdraw-or-refuse check then refuses the table (every other decision points into it), and
+    had it passed, `graph -= sub` would have deleted the triples every decision on the page
+    shares. The stop states the boundary this docstring always assumed, so it covers every
+    future table-to-log edge rather than one property. A decision minted under the table's own
+    URI space is a ROOT, not a traversal target, and is unaffected. Pinned by U14
+    (`tests/etkl/test_boxhead_absence.py`).
+
+    Gate classification (CLAUDE.md § 8): PROCEDURAL graph glue — a reachability closure over
+    triples already in the graph, bounded by an `rdf:type` membership test. It decides nothing
+    about any document and carries no constant."""
     from rdflib import BNode
     out = Graph()
     prefix = str(table_uri) + "-"
@@ -1127,7 +1145,8 @@ def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
         s = frontier.pop()
         for pred, o in g.predicate_objects(s):
             out.add((s, pred, o))
-            if isinstance(o, (URIRef, BNode)) and o not in seen:
+            if isinstance(o, (URIRef, BNode)) and o not in seen \
+                    and (o, RDF.type, DEC.DecisionHolon) not in g:
                 seen.add(o)
                 frontier.append(o)
     return out

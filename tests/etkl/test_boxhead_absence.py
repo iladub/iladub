@@ -128,3 +128,92 @@ def test_u10_4_negative_a_statement_without_a_no_boxhead_decision_is_refused(eng
         f"refused — a proposition passing as an assertion (CLAUDE.md § 3)")
     assert "tab" in legs
     assert "no_boxhead decision" in text, f"[{engine}] refused for the wrong reason: {text}"
+
+
+# ------------------------------------------------------------------ U14, the log boundary (3d.2)
+#
+# Spec § 10.7 R-1, remedy (a), ruled 2026-09-29: `document._band_subgraph` does not traverse into
+# a node the graph types `dec:DecisionHolon`. The statement triple (its subject is the table)
+# still leaves with the table; the decision stays in the log. This is § 10.7's scratch probe
+# (`probe_subgraph.py`) rebuilt as a test: a `ReadingRecorder` with two bands, and a table that
+# does or does not carry the edge to one of its band's decisions. The merge-in half (the
+# statement's object reaches the document graph after `/r2` / `/adopt`) needs the ask site and
+# is written in 3d.6 (controller ruling, 2026-09-30).
+
+_U14_DOC = URIRef("https://example.org/u14/doc")
+_U14_T = URIRef("https://example.org/u14/doc#table3")
+
+
+def _u14_page(*, edge: bool):
+    """A page graph as `compile_tables` leaves it: the log (page process, two band processes,
+    their judgements, options and the reader agent) beside table 3's own triples.
+
+    Returns `(g, own, log, d)`. `own` is the exact set of triples minted under the table's URI
+    space plus its BNode bbox — the value the null control is pinned to, written out here rather
+    than snapshotted. `log` is every triple the recorder wrote. `d` is band 3's `header_lines`
+    decision, the statement's object when `edge` is set."""
+    from rdflib import BNode, XSD
+    from iladub.etkl.decisionlog import ReadingRecorder
+    g = Graph()
+    rec = ReadingRecorder(g, _U14_DOC, 0)
+    b3, b4 = rec.band(3), rec.band(4)
+    b3.record("kind", ["RECORD_TABLE", "NON_TABLE"], "RECORD_TABLE", "U14 fixture")
+    d = b3.record("header_lines", ["boxhead", "no_boxhead"], "no_boxhead", "U14 fixture")
+    b3.record("verdict", ["asserted", "escalated", "ignored"], "asserted", "")
+    b4.record("verdict", ["asserted", "escalated", "ignored"], "escalated", "U14 fixture")
+    log = set(g)
+
+    c0 = URIRef(f"{_U14_T}-c0")
+    bbox = BNode()
+    own = {
+        (_U14_T, RDF.type, TAB.RecordTable),
+        (_U14_T, TAB.hasLeafColumn, c0),
+        (c0, RDF.type, TAB.LeafColumn),
+        (c0, TAB.hasBBox, bbox),                    # a BNode must still ride along
+        (bbox, RDF.type, TAB.BBox),
+        (bbox, TAB.x0, Literal("1.5", datatype=XSD.decimal)),
+    }
+    for tr in own:
+        g.add(tr)
+    if edge:
+        g.add((_U14_T, TAB.boxheadAbsentBy, d))
+    return g, own, log, d
+
+
+def _u14_pointed_into(g, sub):
+    """Adoption's withdraw-or-refuse check (`compile_document`, the consumer of `_band_subgraph`
+    over a pass-1 page graph), verbatim in shape: triples outside the subgraph that point into it."""
+    nodes = set(sub.subjects())
+    return [(s, p, n) for n in nodes for s, p in g.subject_predicates(n) if s not in nodes]
+
+
+def test_u14_null_control_no_edge_is_pinned_by_value():
+    from iladub.etkl.document import _band_subgraph
+    g, own, _log, _d = _u14_page(edge=False)
+    sub = _band_subgraph(g, _U14_T)
+    assert set(sub) == own, (
+        "without the edge, _band_subgraph must return exactly the table's own triples and its "
+        f"BNode bbox — today's value. Extra: {set(sub) - own}; missing: {own - set(sub)}")
+    assert _u14_pointed_into(g, sub) == []
+
+
+def test_u14_the_edge_leaves_with_the_table_and_the_log_stays():
+    from iladub.etkl.document import _band_subgraph
+    g, own, log, d = _u14_page(edge=True)
+    sub = _band_subgraph(g, _U14_T)
+    statement = (_U14_T, TAB.boxheadAbsentBy, d)
+    assert set(sub) == own | {statement}, (
+        "with the edge, the subgraph must be the null control's value plus the statement triple "
+        "and nothing else — the closure traversed into the decision log. Extra: "
+        f"{sorted(map(str, {s for s, _, _ in set(sub) - own - {statement}}))}")
+    outside = {s for s in sub.subjects()
+               if isinstance(s, URIRef) and s != _U14_T and not str(s).startswith(f"{_U14_T}-")}
+    assert outside == set(), f"subjects outside the table's URI space: {sorted(map(str, outside))}"
+    assert _u14_pointed_into(g, sub) == [], (
+        "adoption refuses a table that anything outside its subgraph points into; with the edge "
+        "it must be withdrawable exactly when it is without it (spec § 10.7, U14)")
+    g -= sub
+    assert log <= set(g), (
+        f"withdrawing the table deleted {len(log - set(g))} decision-log triple(s): the reader "
+        "agent's and the page process's triples are shared by every decision on the page")
+    assert (d, RDF.type, URIRef("https://w3id.org/iladub/dec#DecisionHolon")) in g
