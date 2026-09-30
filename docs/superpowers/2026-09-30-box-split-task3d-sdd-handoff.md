@@ -89,3 +89,29 @@ whole-branch review.
   over an unshaded body. The controller ruled that the spec stands. This is for the maintainer.
 - `header_lines.baml`'s prompt ("count only") contradicts the required `note` field. 3d.7 must
   reword it before the first live call.
+
+## Addendum 3 — session 11 end (2026-09-30), written at ~148K working tokens
+
+**Next action (asserted):** dispatch the scoped re-review of 3d.7 fix round 1 (`fb3aca7..c65d545`,
+docs only; the finding is in `task-3d.7-review.md` "Important 1"). If it is ADDRESSED, write
+`Task 3d.7: complete` in the ledger, then continue SDD with Task 4 Steps 4–5 (O2 marker flip, cbh
+re-pins **and** the bfs `DOC_TRIPLES_WHEN_CARRIED` 16736→16778 re-pin — evidence § 4.8 item 7),
+then Tasks 5 and 6, then the final whole-branch review.
+
+- **Done this session:** 3d.4 `adfe828`, 3d.5 `8bf083e`, 3d.6 `9891f79` (all reviewed clean);
+  3d.7 `7fa2b22` + `fb3aca7` + fix `c65d545`. **T2 answered `0` live; O2's three tests XPASS(strict);
+  vacuity is green.** Census = § 10.5's seven questions. Record: `docs/superpowers/2026-09-28-box-split-evidence.md` § 4.
+- **Where decided:** ledger `Session 11` lines (gitignored); durable halves are in the evidence
+  file § 4.6/§ 4.8 and the commits above.
+- **Known-red now:** o3 cbh 43<54, typing_equiv[cbh], furnish 5==4, carriage O2 ×3 (XPASS strict,
+  Task 4 flips), cbh_e2e ×2, carriage bfs_p5 16778≠16736 (Task 4 re-pins).
+- **Controller rulings for the maintainer** (full list with costs in the ledger): the spec stands on
+  condition 2 (rect fill is blind to a shaded header over an unshaded body); A6's `/adopt` half is
+  empty by construction; 3d.7's sweep was cut to a targeted set (five files listed in § 4.8 item 9
+  must join the Task 5 sweep).
+
+**Unverified:**
+- The rect-fill-under-unshown count is 0 but VACUOUS: `band.unshown` is empty offline.
+- On headerless tables the `kind` decision's rationale still says "flat single-level header" (Task 5 list).
+- `BAML_LIVE=1` also enables R213's region reader (Sonnet 5) and boxhead's live half. The plan's
+  recipe does not say so.
