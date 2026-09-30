@@ -180,10 +180,14 @@ def test_merge_bands_covers_every_field_of_band():
 
     RE-MEASURED 2026-09-28 (box-split spec § 9): 9 -> 10, `Band.frame`. The pin fired again, and
     this time the decision is that merge_bands does NOT carry the field: the frame answered for
-    its own box, not for a run that swallows it (§ 9.3). test_boxsplit.py's U8 pins that drop."""
+    its own box, not for a run that swallows it (§ 9.3). test_boxsplit.py's U8 pins that drop.
+
+    RE-MEASURED 2026-09-30 (box-split Task 4, controller ruling 1): 10 -> 11,
+    `Band.title_captions`. merge_bands concatenates it like `captions`, of which it is a subset;
+    test_boxsplit.py's `test_a_merged_run_keeps_its_box_titles` pins that."""
     from iladub.etkl.bands import Band
 
-    assert len(dataclasses.fields(Band)) == 10, [f.name for f in dataclasses.fields(Band)]
+    assert len(dataclasses.fields(Band)) == 11, [f.name for f in dataclasses.fields(Band)]
 
 
 def test_merge_bands_OFFSETS_unshown_addresses_it_never_concatenates_them():

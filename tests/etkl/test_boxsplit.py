@@ -484,3 +484,67 @@ def test_u8_a_merged_run_carries_no_frame():
     merged = merge_bands([band(0.0, (0.0, 30.0, 0.0, 9.0)), band(20.0, (0.0, 30.0, 20.0, 29.0))],
                          0, 1)
     assert merged.frame is None
+
+
+# --- Task 4 fix (controller ruling 1, 2026-09-30): a box's title is not a section key ------------
+#
+# Spec § 1 carries each title-bar text as a `tab:RegionCaption` of its own table. Before this fix
+# the shared caption emitter typed EVERY band caption `tab:SectionCaption` too, and
+# `feed._table_captions` reads that type as section-key evidence, so on cbh T1's and T2's rows were
+# prefixed by their titles (tests/test_cbh_e2e.py's two section-port tests). The origin is carried
+# by `Band.title_captions`, set by `boxsplit._box_band`; nothing infers it.
+
+
+def _caption_types(graph):
+    """{caption text: set of local type names} over every `tab:hasCaption` in the graph."""
+    out = {}
+    for _t, c in graph.subject_objects(TAB.hasCaption):
+        out[str(graph.value(c, TAB.captionText))] = {
+            str(ty).split("#")[1] for ty in graph.objects(c, RDF.type)}
+    return out
+
+
+def test_a_box_title_is_a_region_caption_and_never_a_section_caption(tmp_path):
+    """Both box tables are asserted and carry their title. Each title is a `tab:RegionCaption`
+    and is NOT a `tab:SectionCaption`."""
+    p = str(tmp_path / "two.pdf")
+    spec = F.two_boxes_one_band_pdf(p)
+    report = compile_tables(p, 0)
+    asserted = [r for r in report.regions if r.verdict == "asserted"]
+    assert len(asserted) == 2, [(r.kind.name, r.verdict, r.reason) for r in report.regions]
+    types = _caption_types(report.graph)
+    for side in ("left", "right"):
+        title = spec[side]["title"]
+        assert title in types, (title, types)
+        assert types[title] == {"RegionCaption"}, (title, types[title])
+
+
+def test_control_a_peeled_caption_on_an_ordinary_band_is_still_a_section_caption(tmp_path):
+    """THE CONTROL. The sectioned ruled table's peeled strips (no box split on this page) keep
+    exactly today's typing, `tab:RegionCaption` AND `tab:SectionCaption`. A fix that dropped
+    `tab:SectionCaption` everywhere would pass the test above and fail this one."""
+    p = str(tmp_path / "section.pdf")
+    truth = F.sectioned_ruled_table_pdf(p)
+    report = compile_tables(p, 0)
+    types = _caption_types(report.graph)
+    assert truth["caption_texts"], "precondition: the fixture draws captions"
+    for text in truth["caption_texts"]:
+        hits = [ts for t, ts in types.items() if text in t]
+        assert hits, (text, types)
+        assert all(ts == {"RegionCaption", "SectionCaption"} for ts in hits), (text, hits)
+
+
+def test_a_merged_run_keeps_its_box_titles():
+    """`merge_bands` concatenates `title_captions` as it does `captions`, of which it is a
+    subset: a title stays a title inside a run (unlike `frame`, which U8 drops)."""
+    from iladub.etkl.geometry import Line, Word
+
+    def band(y, title):
+        ln = Line(words=(Word("x", 10.0, 20.0, y, y + 9.0),), top=y, bottom=y + 9.0)
+        cap = Line(words=(Word(title, 10.0, 20.0, y - 9.0, y),), top=y - 9.0, bottom=y)
+        return Band(lines=(ln,), top=y, bottom=y + 9.0, captions=(cap,), title_captions=(cap,))
+
+    a, b = band(0.0, "A"), band(20.0, "B")
+    merged = merge_bands([a, b], 0, 1)
+    assert merged.title_captions == a.title_captions + b.title_captions
+    assert merged.captions == a.captions + b.captions

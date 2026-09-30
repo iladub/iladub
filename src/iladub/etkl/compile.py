@@ -285,13 +285,21 @@ def _emit_band_captions(graph, table_uri, band):
     produces — and feed.py now reads ONLY tab:SectionCaption as candidate-key evidence.
     Loop C's row-role reading-furniture captions (rowrole.emit_reading_evidence, a
     print-timestamp/title line inside a header region) are a DIFFERENT emitter and stay
-    tab:RegionCaption only — untouched by this change, never a candidate key."""
+    tab:RegionCaption only — untouched by this change, never a candidate key.
+
+    A box band's TITLE-BAR lines (box-split spec § 1, 2026-09-30) are the one exception inside
+    this emitter. They are typed `tab:RegionCaption` only, because a table's title is not a
+    section key. The band says which lines they are (`Band.title_captions`, set by
+    `boxsplit._box_band`), and every other caption on every band keeps both types. PROCEDURAL:
+    emission of a fact the band already carries; it judges nothing about the page."""
     from rdflib import Literal, RDF, URIRef
     from rdflib.namespace import XSD
+    titles = getattr(band, "title_captions", ()) or ()
     for k, ln in enumerate(getattr(band, "captions", ()) or ()):
         cap = URIRef("%s-bandcap%d" % (table_uri, k))
         graph.add((cap, RDF.type, TAB.RegionCaption))
-        graph.add((cap, RDF.type, TAB.SectionCaption))
+        if ln not in titles:
+            graph.add((cap, RDF.type, TAB.SectionCaption))
         graph.add((cap, TAB.captionText, Literal(" ".join(w.text for w in ln.words))))
         graph.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
         graph.add((table_uri, TAB.hasCaption, cap))
@@ -654,7 +662,9 @@ def merge_bands(bands, first: int, last: int):
     second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
     prevent, and the script is committed evidence whose output must stay reproducible.
 
-    It covers NINE of `Band`'s ten fields. The tenth, `frame`, is dropped BY DESIGN (box-split
+    It covers TEN of `Band`'s eleven fields (`title_captions`, 2026-09-30, is concatenated
+    like `captions`, of which it is a subset: a title stays a title inside a run). The
+    eleventh, `frame`, is dropped BY DESIGN (box-split
     spec § 9.3): a run that swallows a box band is not a box band, so it meets the multi-table
     gate exactly as before. Any further field would be silently defaulted here and nothing else in
     the suite would notice, which is why tests/etkl/test_band_runs.py pins the count -- and R213's
@@ -688,6 +698,7 @@ def merge_bands(bands, first: int, last: int):
         hrules=tuple(h for b in run for h in b.hrules),
         column_xs=col_xs,
         captions=tuple(c for b in run for c in b.captions),
+        title_captions=tuple(c for b in run for c in b.title_captions),
         unit_markers=tuple(m for b in run for m in b.unit_markers),
         unshown=tuple(sorted(unshown)),
     )

@@ -222,7 +222,11 @@ def _box_band(box: Box, words: Sequence[Word], title: Sequence[Word],
     box_chars = [c for c in page_chars if _contains(_rect(box), c)]
     built = _build_ruled_band(sub, sub_rules, sub_hrules, box_chars, section_repair=False)
     # `frame` (spec § 9.3): the box's own bbox, carried as read -- the ONLY site that sets it.
-    return replace(built, captions=tuple(text_lines(list(title))) + tuple(built.captions),
+    # `title_captions` (spec § 1): the title-bar lines, known to be titles HERE and only here,
+    # so the origin is carried beside `captions` rather than inferred downstream. PROCEDURAL --
+    # construction only; it decides nothing about any reading.
+    titles = tuple(text_lines(list(title)))
+    return replace(built, captions=titles + tuple(built.captions), title_captions=titles,
                    frame=_rect(box))
 
 
