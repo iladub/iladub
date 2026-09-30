@@ -896,3 +896,212 @@ citations can point at a tracked file:
   (`p0` and `/adopt`, `table1`), `multi_section_ruled_pdf` (`/r2` only, `table0` and `table1`).
   On the corpus the unwitnessed multi-pass case exists (§ 4.3: cbh T2 on `p`/`r2`/`adopt`, bfs p5
   and p6 and ons p7 on `p`/`adopt`), and every pass asked the same key.
+
+## § 5. Task 4 Steps 4–5 (2026-09-30)
+
+**Serves:** prog:criterion:tab:12. Branch `box-split`, base `d6c2b5b`. Every run was offline
+(`env -u ANTHROPIC_API_KEY -u BAML_LIVE -u ILADUB_RECORD_READINGS`), one test file per process, in
+the foreground, serially, from a `.sh` under `bash`. Probes were throwaway scripts in the session
+scratchpad. Their output is quoted here.
+
+### 5.1 Step 4 — O2 XPASS(strict), recorded
+
+At `d6c2b5b`, before any edit:
+
+```
+$ bash one.sh tests/test_carriage.py -m corpus
+FAILED tests/test_carriage.py::test_bfs_p5_carries_the_row_label_and_percent_columns   (assert 16778 == 16736)
+FAILED tests/test_carriage.py::test_o2_t1_reads_the_seven_column_boxhead - [XPASS(strict)]
+FAILED tests/test_carriage.py::test_o2_t2_reads_the_two_column_no_boxhead - [XPASS(strict)]
+FAILED tests/test_carriage.py::test_o2_note_block_is_not_carried_as_a_cell - [XPASS(strict)]
+4 failed, 2 passed in 183.51s (0:03:03)
+```
+
+The forcing function works: all three O2 tests XPASS. It is the same result as § 4.5.
+
+### 5.2 Step 5 — the flip, and the bfs pin (R-A), in one commit
+
+Commit `14e4dab`:
+- the three `@pytest.mark.xfail(strict=True)` markers are removed, and the unused reason constant
+  is replaced by a comment that records it;
+- `prog:criterion:tab:12` carries `prog:met true ; prog:metOn "2026-09-30"^^xsd:date`;
+- `DOC_TRIPLES_WHEN_CARRIED` goes from 16736 to 16778. P5_CELLS stays 496.
+
+**The bfs pin was re-measured and not copied from § 4.5.** A probe compiled bfs and counted, for
+every `dec:DecisionHolon` labelled `header_lines` with a `dec:chosen`, the triples whose subject is
+the decision or one of its `dec:optionSpace` options:
+
+```
+total 16778
+https://example.org/etkl/doc/p5#region3-d4 chosen …p5#region3-d4-opt-no_boxhead triples(decision+opts) 14
+https://example.org/etkl/doc/p5#region4-d4 chosen …p5#region4-d4-opt-no_boxhead triples(decision+opts) 14
+https://example.org/etkl/doc/p6#region2-d4 chosen …p6#region2-d4-opt-boxhead    triples(decision+opts) 14
+header_lines decisions 3 triples 42 16736+ 42 = 16778
+```
+
+After the flip:
+
+```
+$ bash one.sh tests/test_carriage.py -m corpus
+6 passed in 176.43s (0:02:56)
+```
+
+The manifest validators were measured with `grep -rln "arc-manifest" tests/ --include="*.py"`. Two
+of the eight hits cite a manifest line but do not validate it: `tests/etkl/test_membrane_health.py`
+and `tests/source_citations.py`. Both cited lines (`:359` and `:644`) are above the edit, so they do
+not move. The six real validators were run with the manifest staged:
+
+```
+tests/test_arc_manifest.py    28 passed
+tests/test_arc_landscape.py    1 failed, 5 passed   (the regenerate-and-diff gate)
+tests/test_arc_queries.py     23 passed
+tests/test_arc_ablation.py     9 passed
+tests/test_cockpit.py         25 passed
+```
+
+`scripts/arc_depends.py` regenerated `docs/superpowers/arc-dependency-landscape.md`. It went from
+**14 ready** to **13 ready**, and the one row removed is `tab:12`, now met. That file is the
+generated cache. After staging it, `test_arc_landscape.py` gave 6 passed. The citation and
+governance gates also passed: `test_source_citations.py` 8 passed, `test_doc_governance.py` 7 passed.
+
+### 5.3 FALSIFICATION — the split's call site reverted
+
+`compile.page_bands`: `to_split = _boxsplit.bands_to_split(raw_bands, page_boxes(pdf_path,
+page_number))` was replaced by `to_split = {}` in the working tree only, and never committed. The
+xfail markers were already removed.
+
+```
+$ pytest tests/test_carriage.py -m corpus -k "o2 or c3" --tb=line
+tests/test_carriage.py:215: AssertionError: expected T1+T2 as two RecordTables, found 1: [URIRef('https://example.org/etkl/doc/p0#table9')]
+FAILED tests/test_carriage.py::test_o2_t1_reads_the_seven_column_boxhead - As...
+FAILED tests/test_carriage.py::test_o2_t2_reads_the_two_column_no_boxhead - A...
+FAILED tests/test_carriage.py::test_o2_note_block_is_not_carried_as_a_cell - ...
+3 failed, 1 passed, 2 deselected in 41.12s
+```
+
+All three O2 tests failed at `:215` with that message, on the table count (1, not 2): `grep -c` on
+a second run counted 3. C3 passed. After `compile.py` was restored (`git diff --stat src/` was
+empty), the run gave 6 passed in 178.21s.
+
+### 5.4 R-B — the five cbh reds, accounted
+
+Method: every figure below was measured on `box-split` with the split on (HEAD) and off, using
+`boxsplit.bands_to_split` monkeypatched to return `{}`. That is the module-level seam the call site
+looks up.
+
+**(1) `test_run_merge_seam::test_o3_no_page_loses_asserted_ink_to_a_merge`: 54 → 43. Accounted
+and RE-PINNED (`4e04c29`).** `compile_tables(cbh, 0, validate_shapes=False,
+datagrid_fallback=False)` was run with the split off and on. The "word" unit is `len(ln.words)` in
+the band, which the booking sums.
+
+```
+split off: band 9 RECORD_TABLE asserted tA 54 tE 0          page asserted 54  escalated 842
+  L0  3  Stock at Port (…) 29/07/2026 | PORT MAINTENANCE SHUTDOWN DATES - 2026 | 1,951,264
+  L1-L5 43  (per line: 7 T1 words + 2 T2 words; L5 has 7 T1 words)
+  L6-L9 8   Note: | 2 | 2 | 3 blobs
+split on:  band 9  UNSUPPORTED_TABLE escalated KIND_NOT_SUPPORTED tA 0 tE 86   (1,951,264 + Note, 1 + 85 words)
+           band 10 RECORD_TABLE #table10 (T1) asserted tA 35                     (7 x 5 lines)
+           band 11 RECORD_TABLE #table11 (T2) asserted tA 8                      (2 x 4 lines)
+           captions: band 10 'Stock at Port … 29/07/2026', band 11 'PORT MAINTENANCE SHUTDOWN DATES - 2026'
+                                                            page asserted 43  escalated 928
+```
+
+The 43 asserted after the split are the same 43 box words as L1–L5, text for text. The 11 that
+left the asserted count are:
+- the two title blobs, now captions (spec § 1);
+- `1,951,264`, now in the residue (spec § 4, R-b: where it lands is recorded);
+- the 8 Note-block words, now in the residue and not a cell (spec § 1).
+
+The 43 does not depend on the residue's verdict, which is a separate finding (items 2–3). The
+escalated count rose by 86 (842 → 928): the residue is escalated, and it counts the Note prose
+word by word, 85 words where the ruled band had 8 blobs. Falsification: with the call site reverted, `test_o3` fails with `cbh-stem-2026-08-03 p0: 54 != 43`. Restored, the file gave 9 passed in 537.82s.
+
+**(2) `test_typing_equiv::test_band_verdicts_are_recorded_and_stable[cbh]`: NOT re-pinned, because
+one unit is not accounted.** Measured value, 12 entries (it was 10):
+
+```
+0-8  unchanged (the rosters and separators, all < 9)
+9    ('UNSUPPORTED_TABLE', 1, False, None)   <- the residue: 1,951,264 + Note block
+10   ('RECORD_TABLE', 1, False, None)        <- T1
+11   ('RECORD_TABLE', 1, False, None)        <- T2
+```
+
+- **T1 at 10 is accounted.** It is a RECORD_TABLE with one header line (spec § 1).
+- **T2 at 11 is accounted.** Its `header_body_split = 1` is the positional default that spec § 10.1
+  names: row 0 is read as a header by position. This test calls `header_body_split` directly, so it
+  bypasses the recorded `header_lines` decision that turns T2 headerless at compile scope. The
+  compiled graph has 0 header nodes on T2, and O2's T2 test passes.
+- **The residue at 9 is NOT accounted.** Spec § 4 predicts that the residue "reads as notes or
+  `#ignored`". It reads as neither: it is an UNSUPPORTED_TABLE, which `compile_tables` escalates.
+  Item 3 is the same unit. Re-pinning this literal would make a disputed verdict the baseline, so
+  it is left red for a ruling.
+
+The literal to apply if the controller rules the residue verdict acceptable is the 12-entry list
+above: the ten old entries with index 9 replaced by these three.
+
+**(3) `test_escalation_furnish::test_corpus_a_wholly_superseded_document_furnishes_nothing`,
+`5 == 4`: diagnosed, not edited.**
+
+```
+split off: escalating 4, all superseded (p0#region1/3/5/7-d5 REGION_TILING_FAILED, each superseded by p0/r2#region{n}-d5)
+           region verdicts escalated 0, requests 0
+split on:  the same 4, superseded, plus p0#region9-d4 LIVE, rationale KIND_NOT_SUPPORTED, regarding p0#region9
+           region verdicts escalated [(0, 9, 'KIND_NOT_SUPPORTED')], requests 1
+```
+
+The fifth, live escalation is the residue band. The chain that produces it:
+1. `boxsplit.split_band` sends the residue through `cut_trailing_notes(segment(residue))`
+   (`src/iladub/etkl/boxsplit.py:289`). `segment` returns one sub-band, so the orphan title-line
+   total `1,951,264` (x 811.8–835.7, top 683.5) stays in one band with the four Note lines
+   (x from 39.4).
+2. `classify` builds a 2-column grid (boundaries 39.36 | 627.86 | 835.67) whose line 0 has 1 word,
+   so it reads UNSUPPORTED_TABLE with reason `header has 1 words but 2 columns`
+   (`src/iladub/etkl/regions.py:96`).
+3. `compile_tables`' not-hierarchical branch escalates it as `KIND_NOT_SUPPORTED`
+   (`src/iladub/etkl/compile.py:1611-1625`).
+4. No section repair or adoption supersedes it.
+
+A counterfactual probe classifies the same residue with its first line (`1,951,264`) removed. It
+reads NON_TABLE with 1 column, which becomes `ignored` ("fewer than 2 columns"). So the escalation
+comes from pairing R-b's deferred totals-family member with the Note block, not from the Note block
+itself. Before the split, the same words were absorbed as cells of the fused `#table9`, which is
+the defect spec § 1 removes.
+
+**(4) `test_cbh_e2e::test_cbh_every_sectioned_record_carries_its_section_port`: diagnosed, not
+edited.**
+
+```
+tests/test_cbh_e2e.py:190: AssertionError: ('Stock at Port (Main Storage Area) as at 29/07/2026 > p0 table10-r1', [])
+section-prefixed records: 57 across sections: ['ALBANY', 'ESPERANCE', 'GERALDTON', 'KWINANA',
+  'PORT MAINTENANCE SHUTDOWN DATES - 2026', 'Stock at Port (Main Storage Area) as at 29/07/2026']
+```
+
+**(5) `test_cbh_e2e::test_cbh_cascade_resolves_port`: diagnosed, not edited.** The prefix-marker
+set is the six texts above. The two titles admit no contract field, so arm 2's whole-set admission
+fails and the cascade calls the proposer (`tests/test_cbh_e2e.py:236` → `_RaisingProposer`).
+
+**One cause for (4) and (5).** A spy on `compile._emit_band_captions` shows the chain:
+1. It emits T1's and T2's titles from `compile.py:1378`, the RECORD path, on every pass (`p0`,
+   `p0/r2`, `p0/adopt`).
+2. The final `#table10`/`#table11` captions are typed `['RegionCaption', 'SectionCaption']`.
+3. `boxsplit._box_band` puts the title-bar lines into `band.captions`
+   (`src/iladub/etkl/boxsplit.py:225`).
+4. The shared emitter `compile._emit_band_captions` types every band caption
+   `tab:SectionCaption` as well as `tab:RegionCaption` (`src/iladub/etkl/compile.py:294`).
+5. `feed._table_captions` reads `tab:SectionCaption` as section-key evidence
+   (`src/iladub/feed.py:408`).
+6. `feed.table_records` then prefixes every T1 and T2 row id with that table's first caption
+   (`src/iladub/feed.py:556-562`).
+
+So T1's four rows and T2's four rows become "sectioned" records whose key is a table title, not a
+port. **Spec § 1 asks for each title as a `tab:RegionCaption`; the `tab:SectionCaption` type comes
+from the shared emitter and is not the split's intended effect.** A table title is not a section
+key. This is a finding for the controller to rule on. The test is not edited.
+
+| # | test | measured | verdict |
+|---|---|---|---|
+| 1 | `test_o3` cbh p0 | 43 (was 54) | accounted; re-pinned `4e04c29` |
+| 2 | `typing_equiv[cbh]` | 12 entries (was 10) | T1/T2 accounted; residue at 9 NOT accounted; not re-pinned |
+| 3 | `furnish` wholly-superseded | 5 escalating, 4 superseded | residue escalation `KIND_NOT_SUPPORTED`, `compile.py:1611-1625` via `regions.py:96`; finding |
+| 4 | `cbh_e2e` section port | T1/T2 rows prefixed by their titles | title caption typed `tab:SectionCaption`, `compile.py:294` via `boxsplit.py:225`, read at `feed.py:408`; finding |
+| 5 | `cbh_e2e` cascade | the two titles join the marker set | same cause as 4; finding |
