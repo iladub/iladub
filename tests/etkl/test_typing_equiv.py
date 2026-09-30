@@ -58,6 +58,21 @@ EXPECTED_VERDICTS = {
         # tab:RecordTable) plus four cellText FIDELITY REPAIRS ('Stock at Port ( Main Storage Area)
         # as at 29/07/2 026' -> '...29/07/2026', etc). The open question is the type triple alone,
         # and it belongs to the kind gate, not to cell extraction. See [[R156]].
+        #
+        # 2026-09-30, box split (spec 2026-09-28-box-split-design.md § 1, § 4): the fused band 9
+        # above is split, so this ONE entry becomes THREE, in page_bands' (top, x0) order:
+        #   9  the RESIDUE: `1,951,264` (the title line's orphan total, R-b's deferred totals
+        #      family) plus the four-line Note block. `1,951,264` far to the right makes a
+        #      2-column grid with a 1-word line 0, so it reads UNSUPPORTED_TABLE. Spec § 4 says
+        #      how the residue reads is "measured and recorded", not engineered. The controller
+        #      ACCEPTED this reading as the recorded outcome on 2026-09-30 (evidence
+        #      2026-09-28-box-split § 5.4 and § 5.5).
+        #  10  T1, the 7-column stock table: RECORD_TABLE with one header line (§ 1).
+        #  11  T2, the 2-column shutdown table: RECORD_TABLE with split 1. That 1 is the positional
+        #      default § 10.1 names. This test calls header_body_split directly, so it never sees
+        #      the recorded `header_lines` decision that makes T2 headerless at compile scope.
+        ("UNSUPPORTED_TABLE", 1, False, None),
+        ("RECORD_TABLE", 1, False, None),
         ("RECORD_TABLE", 1, False, None),
     ],
     "capacity": [

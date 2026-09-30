@@ -248,7 +248,8 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
     derivation blind to `dec:supersedes` furnishes 10 and fails here. bfs is now the only corpus
     document carrying live and withdrawn escalations AT ONCE (cbh-stem is wholly superseded, and
     the documents rejected above escalate nothing), so the mixed case has a fixture for the first
-    time.
+    time. (2026-09-30: since the box split, cbh-stem also has one live escalation, its residue;
+    see its test below.)
 
     What replaces the guard is non-vacuity on the same axis: `live > 0`. A document whose
     escalations are ALL withdrawn pins nothing here — that is cbh-stem's test, below.
@@ -270,19 +271,48 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
 
 @pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not populated")
-def test_corpus_a_wholly_superseded_document_furnishes_nothing():
-    """cbh-stem's region verdicts carry zero "escalated" while 4 decisions chose it — every
-    one withdrawn by section repair. The derivation must agree with the REGION verdict, or
-    it escalates four resolved matters to a human (G4: a moved escalation count is a defect).
+def test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue():
+    """cbh-stem: every escalation that section repair withdraws furnishes nothing, and the one
+    that stays live furnishes exactly one request. That one is the box split's residue.
+
+    RENAMED AND RE-PINNED 2026-09-30 (box-split Task 4, controller ruling 2). This test was
+    `test_corpus_a_wholly_superseded_document_furnishes_nothing`. Until the box split, cbh's
+    region verdicts held zero "escalated" while 4 decisions chose it, all withdrawn by section
+    repair, and the derivation furnished 0 requests. The split (spec
+    2026-09-28-box-split-design.md § 3.3) leaves one residue band beside T1 and T2 on page 0.
+    It holds `1,951,264`, the title line's orphan total (R-b: the totals family is deferred),
+    and the four-line Note block. That band reads UNSUPPORTED_TABLE and is escalated
+    KIND_NOT_SUPPORTED, and nothing supersedes it. Spec § 4 says how the residue reads is
+    "measured and recorded", not engineered, and the controller accepted this reading as the
+    recorded outcome (evidence 2026-09-28-box-split § 5.4, § 5.5).
+
+    WHAT IS STILL EXACT. The mechanism assertions do not loosen:
+    - the requests equal the escalated region verdicts;
+    - the live decisions (chose "escalated", not superseded) equal those verdicts too.
+    A derivation that ignored `dec:supersedes` would furnish 5 and fail. The one number that
+    moved is cbh's live count, 0 to 1, and it is pinned exactly at 1. That one region is named
+    structurally: the page-0 band holding `1,951,264`, with reason KIND_NOT_SUPPORTED.
     """
+    from iladub.etkl.compile import page_bands
     from iladub.etkl.document import compile_document
 
     rep = compile_document(CBH)
     escalating, _, superseded = _census(rep.graph)
-    region_escalations = [r for p in rep.pages for r in p.regions if r.verdict == "escalated"]
+    region_escalations = [(pi, i, r) for pi, p in enumerate(rep.pages)
+                          for i, r in enumerate(p.regions) if r.verdict == "escalated"]
     requests = set(_derive(rep.graph).subjects(RDF.type, DEC.ExpansionRequest))
 
     print(f"\ncbh-stem: chose escalated={len(escalating)} superseded={len(superseded)} "
           f"region verdicts escalated={len(region_escalations)} requests={len(requests)}")
-    assert len(escalating) == len(superseded), "cbh-stem's escalations are no longer all withdrawn"
-    assert len(requests) == len(region_escalations) == 0
+    assert len(requests) == len(region_escalations)
+    assert len(escalating) - len(superseded) == len(region_escalations), \
+        "a live escalating decision and the escalated region verdicts disagree"
+    assert len(region_escalations) == 1, region_escalations
+
+    # The one escalated region is the residue: the page-0 band that holds `1,951,264`.
+    residue = [i for i, b in enumerate(page_bands(CBH, 0))
+               if any(w.text == "1,951,264" for ln in b.lines for w in ln.words)]
+    assert len(residue) == 1, residue
+    page, idx, region = region_escalations[0]
+    assert (page, idx) == (0, residue[0]), (page, idx, residue)
+    assert region.reason == "KIND_NOT_SUPPORTED", region.reason
