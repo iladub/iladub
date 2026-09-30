@@ -233,7 +233,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # `rebucket-fuses.rq`, the fusion witness the R225 resolution guard now requires beside its
     # count (spec § 8.2). Its six transient `tab:` terms went into the EXISTING
     # `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
-    assert len(vocab_nodes) == len(artifact_files()) == 166
+    # RE-MEASURED 2026-09-30 (box-split Task 3d.1): the `.ttl` population is **168** — the two
+    # negative fixtures of `tab:boxheadAbsentBy`'s shapes (`tests/tab-boxhead-absent-{with-header,
+    # undecided}-leak.ttl`), which feed `test_membrane_equiv.py`'s leak battery. Measured as a SET:
+    # tracked `.ttl` outside the fixture directory, HEAD vs index, added = exactly those two,
+    # removed = none. The property and its shapes went into the EXISTING `tab.ttl` and
+    # `tab-shapes.ttl`. The `.rq` population does not move.
+    assert len(vocab_nodes) == len(artifact_files()) == 168
     assert len(query_nodes) == len(query_files()) == 56
 
 

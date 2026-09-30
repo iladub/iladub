@@ -19,6 +19,7 @@ tab:CoverageShape a sh:NodeShape ;
         sh:select """
             SELECT $this WHERE {
                 ?tbl tab:hasLeafColumn $this .
+                FILTER NOT EXISTS { ?tbl tab:boxheadAbsentBy ?any }
                 FILTER NOT EXISTS {
                     ?tbl tab:hasHeaderNode ?h .
                     ?h tab:coversColumn $this
@@ -132,6 +133,7 @@ tab:UnambiguousAccessShape a sh:NodeShape ;
         sh:select """
             SELECT $this WHERE {
                 ?tbl tab:hasLeafColumn $this .
+                FILTER NOT EXISTS { ?tbl tab:boxheadAbsentBy ?any }
                 {
                     SELECT ?tbl $this (COUNT(DISTINCT ?h) AS ?n) WHERE {
                         ?tbl tab:hasLeafColumn $this .
@@ -455,5 +457,58 @@ tab:UnshownInkCellShape a sh:NodeShape ;
                 $this tab:unshownText ?u .
                 $this tab:cellText ?t .
                 FILTER(strlen(str(?t)) > 0)
+            }
+        """ ] .
+
+#################################################################
+#  Box-split § 10.3.1: a table the author drew with no boxhead
+#  says so, through tab:boxheadAbsentBy. The property's PRESENCE
+#  is the assertion; these two shapes are what may carry it.
+#
+#  The exemption lives in tab:CoverageShape and
+#  tab:UnambiguousAccessShape (one FILTER NOT EXISTS each): a leaf
+#  column of a table carrying the statement is not selected. No
+#  other existing shape changes.
+#################################################################
+
+# In the tiling gate (tiling._TILING_SHAPE_IRIS): the claim and a header cannot co-exist, even
+# in a region's scratch graph. It needs only the tab: prefix, because the tiling gate carries
+# tab:prefixes and no other prefix node.
+tab:BoxheadAbsenceShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:boxheadAbsentBy ;
+    sh:sparql [
+        sh:message "A table stating that its author drew no boxhead (tab:boxheadAbsentBy) carries a header node — the statement and a header cannot co-exist." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:boxheadAbsentBy ?d .
+                $this tab:hasHeaderNode ?h .
+            }
+        """ ] .
+
+# NOT in the tiling gate: a region's scratch graph holds no decision (spec § 10.2), so this shape
+# would refuse every statement there. It binds at compile scope, where `compile._validate` runs
+# the tab leg over the page graph that also holds the decision log (`ReadingRecorder` is built on
+# it). This is what keeps a proposition from passing as an assertion (CLAUDE.md § 3): the worker's
+# answer becomes a graph fact only as the product of a recorded decision that chose no_boxhead.
+tab:boxheadPrefixes
+    sh:declare [ sh:prefix "tab"  ; sh:namespace "https://w3id.org/iladub/tab#"^^xsd:anyURI ] ,
+               [ sh:prefix "dec"  ; sh:namespace "https://w3id.org/iladub/dec#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] .
+
+tab:BoxheadAbsenceDecidedShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:boxheadAbsentBy ;
+    sh:sparql [
+        sh:message "A tab:boxheadAbsentBy statement is not the product of a no_boxhead decision: its object must be a dec:DecisionHolon whose dec:chosen option is labelled no_boxhead (a proposition must not pass as an assertion)." ;
+        sh:prefixes tab:boxheadPrefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:boxheadAbsentBy ?d .
+                FILTER NOT EXISTS {
+                    ?d a dec:DecisionHolon ;
+                       dec:chosen ?o .
+                    ?o rdfs:label ?l .
+                    FILTER(str(?l) = "no_boxhead")
+                }
             }
         """ ] .

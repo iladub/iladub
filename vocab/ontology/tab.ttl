@@ -240,6 +240,22 @@ tab:hasBaseFact a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:ran
 tab:namePromotedBy a owl:ObjectProperty ; rdfs:label "name promoted by"@en ;
     rdfs:comment "Links a reshape operation whose dimension name was GenAI-proposed to the promotion decision that admitted the name. Rangeless to keep this ontology standalone."@en .
 
+# --- box-split § 10: a table the author drew with no boxhead says so (rangeless, like
+#     tab:namePromotedBy above: its object is a dec:DecisionHolon, and naming that range here
+#     would pull dec: into an ontology that stays standalone) -------------------------------
+tab:boxheadAbsentBy a owl:ObjectProperty ; rdfs:label "boxhead absent by"@en ;
+    rdfs:domain tab:RecordTable ;
+    rdfs:comment """Links a record table the author drew WITHOUT a boxhead to the decision that read it so.
+ITS PRESENCE IS THE ASSERTION that the table has no header lines; there is no separate flag (the
+tab:unshownText precedent). Its object is the dec:DecisionHolon that chose the option labelled
+no_boxhead, and nothing else: tab:BoxheadAbsenceDecidedShape refuses a statement with any other
+object, so the reading becomes a graph fact only as the product of a recorded decision (a
+proposition never passes as an assertion). A table carrying it has zero tab:hasHeaderNode
+(tab:BoxheadAbsenceShape), and its leaf columns are exempt from tab:CoverageShape and
+tab:UnambiguousAccessShape, which would otherwise refuse the headerless table this states.
+
+Rangeless for the same reason as tab:namePromotedBy: this ontology stays standalone."""@en .
+
 # --- transient inference marks (recovery pass; not stored in a holon) ---
 tab:namesLevel a owl:DatatypeProperty ; rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
     rdfs:label "names level"@en ;

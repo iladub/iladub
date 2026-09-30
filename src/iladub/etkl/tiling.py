@@ -16,7 +16,7 @@ from rdflib import Graph, Namespace
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
-# The eleven tiling invariants: the original eight (loop C, 2026-07-16) + the ninth,
+# The twelve tiling invariants: the original eight (loop C, 2026-07-16) + the ninth,
 # tab:HeaderContentConservedShape, the header-content conservation oracle (loop C of the
 # GrainCorp push, 2026-07-26) + the tenth, tab:DetectedAggregationRowShape, the detected-
 # aggregation evidence oracle (loop H, 2026-07-30) + the eleventh, tab:DerivedRowGroupShape,
@@ -26,11 +26,17 @@ _VOCAB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "vocab")
 # four families; the conservation shape targets tab:HeaderSourceCell, the aggregation shape
 # targets tab:DetectedAggregationRow, and the row-group shape targets tab:DerivedRowGroup, none
 # of which any pre-existing region emits, so every previously-shipped region is unaffected.
+# The twelfth (box-split spec § 10.3.1, 2026-09-30): tab:BoxheadAbsenceShape, so a region that
+# states tab:boxheadAbsentBy AND carries a header node is refused here, in scratch, and not only
+# at compile scope. It targets the subjects of tab:boxheadAbsentBy, which no region emitted
+# before Task 3d, so every previously-shipped region is unaffected. Its sibling
+# tab:BoxheadAbsenceDecidedShape is deliberately NOT listed: it reads the decision log, which a
+# region's scratch graph never holds (spec § 10.2), so here it would refuse every statement.
 _TILING_SHAPE_IRIS = [TAB.CoverageShape, TAB.NoOverlapShape, TAB.RefinementShape,
                       TAB.RowCoverageShape, TAB.RowNoOverlapShape, TAB.RowRefinementShape,
                       TAB.UnambiguousAccessShape, TAB.UnambiguousRowAccessShape,
                       TAB.HeaderContentConservedShape, TAB.DetectedAggregationRowShape,
-                      TAB.DerivedRowGroupShape]
+                      TAB.DerivedRowGroupShape, TAB.BoxheadAbsenceShape]
 
 # R19 closure (2026-08-05): the TWO physical shapes join the gate. Measured activation:
 # apple-fy2026q3 p1#mtable4 (matrix cells with bbox + empty cellText) crashed compile at
@@ -52,10 +58,10 @@ _PHYSICAL_SHAPE_IRIS = [TAB.EntryCellPhysicalShape, TAB.WrappedCellShape,
 
 
 def _build_tiling_shapes():
-    """The eleven tiling invariants + the two physical shapes (R19) (the original eight +
+    """The twelve tiling invariants + the two physical shapes (R19) (the original eight +
     tab:HeaderContentConservedShape + tab:DetectedAggregationRowShape +
-    tab:DerivedRowGroupShape + tab:EntryCellPhysicalShape + tab:WrappedCellShape), extracted
-    from tab-shapes.ttl + tab-physical-shapes.ttl as CBDs (+ tab:prefixes, which the
+    tab:DerivedRowGroupShape + tab:BoxheadAbsenceShape + tab:EntryCellPhysicalShape +
+    tab:WrappedCellShape), extracted from tab-shapes.ttl + tab-physical-shapes.ttl as CBDs (+ tab:prefixes, which the
     sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file. Includes
     Unambiguous(Row)AccessShape: exactly one LEAF header per column/row — the leaf-partition
     invariant the retired exact-partition Python backstops enforced."""
@@ -72,11 +78,11 @@ _ONT = Graph().parse(os.path.join(_VOCAB, "ontology", "tab.ttl"), format="turtle
 
 
 def region_tiles(graph):
-    """True iff `graph` (one candidate region's RDF) conforms to the eleven tiling invariants
+    """True iff `graph` (one candidate region's RDF) conforms to the twelve tiling invariants
     + the two physical shapes (R19) (coverage / no-overlap / refinement / unambiguous-leaf-
     access, both axes, + header-content conservation + detected-aggregation evidence +
-    derived-row-group well-formedness + entry-cell/wrapped-cell physical well-formedness).
-    PROCEDURAL glue over the AXIOM shapes."""
+    derived-row-group well-formedness + no header beside a no-boxhead statement + entry-cell/
+    wrapped-cell physical well-formedness). PROCEDURAL glue over the AXIOM shapes."""
     from . import membrane
     conforms, _ = membrane.validate(graph, _TILING_SHAPES, _ONT)
     return conforms
