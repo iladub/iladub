@@ -176,4 +176,9 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # neighbour and leave it -- R65 (cited by R265, same `celltype` module), R243 (by R261, the
     # totals family) and R248 (by R263, the same "no oracle disposes the answer" class).
     # Controlled: with the register edits stashed the count is 93, restored it is 90.
-    assert len(expected) == 90
+    # RE-MEASURED 2026-10-01 (box-split final review fix wave): 90 -> 91, ADDED = [278],
+    # REMOVED = []. R275-R280 are open and named by no criterion; five cite an open row, and R278
+    # (a stroked title bar re-types a box's title `tab:SectionCaption`) cites none, because no
+    # open row shares its subject, so it enters the set. Controlled: the set computed over HEAD's
+    # register files is 90, over the staged ones 91.
+    assert len(expected) == 91

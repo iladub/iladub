@@ -1498,3 +1498,22 @@ row counts itself: `(74/245)` … `(74/250)`, one more per row. R252, R253 and R
 | no gate checks a row's raise-time tally snapshot (Task 5 falsification (e)) | § 6.5 | **new R274**, cites R273 (same class: a register or manifest relation nothing checks) |
 | R268's corpus total 9.09 s | `2026-09-28-box-split-t3c-handoff.md:68` | **R268 amended in place** to cite it |
 | R261, R266, R271, R273 figures | § 6.5 | **amended in place** to cite § 6.5 |
+
+## § 7. Final review fix wave (2026-10-01)
+
+**The residue-scoping amendment to spec § 3.3 item 2, recorded as ruling L76 required.** Spec
+§ 3.3 item 2 sends the words in no box and no title bar through `cut_trailing_notes(segment(residue))`
+"unchanged". Taken literally, "unchanged" re-reads every box's ink: the existing rebuild filters
+page rules, horizontals and glyphs by y alone, so a residue whose y-range crosses the boxes gets
+their marks back. On cbh p0, where `1,951,264` sits beside the boxes on the title line, the
+residue came back as the whole fused band, 10 lines and 26 rules, with every box glyph carried
+twice (Task 3, falsification (v); quoted from the `boxsplit.split_band` docstring, NOT re-measured
+in this wave). The shipped code therefore scopes the residue's INPUTS as well as its words:
+`split_band` hands `build_sub(sub, keep)` only the rules, horizontals and glyphs that lie inside no
+region a box band was built from (its bbox and its title bar), tested by the same `_contains` the
+word partition uses. This is spec § 3.4's own principle (every input is box-scoped) applied to the
+residue, and ruling L76 accepted it as an amendment to § 3.3 item 2. **Known limit**, stated in
+`split_band`'s inner `keep` docstring: a residue word that STRADDLES a box edge (not wholly inside,
+so the partition leaves it in the residue) keeps its words-path text but loses its in-box glyphs
+on a chars rebuild (a ruled residue's `rule_aware_lines`). The corpus has no such word; that
+absence is carried from Task 3's report and was not re-counted here.
