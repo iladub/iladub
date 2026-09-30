@@ -715,6 +715,14 @@ who  p0#region4, p1#region4: as cbh's region (+14; +1 -1 rationale)
   asked table's URI space. **C2 holds.** The table-space deltas are the § 10.3.4 emission: header
   nodes and label cells out, one more `tab:LeafRow` of entry cells in, and the statement.
 - § 2.5's caveat applies unchanged: blank-node sharing is invisible to this diff.
+- **The criterion applied is "an asked region's decisions", wider than the brief's "an asked
+  table's URI space or its `header_lines` decision"** (added in fix round 1). It also admits the
+  `region_tiles` rationale change and the `-d{n}` renumbering of the band's later decisions. The
+  spec admits both: § 10.5's C2 confines the diff to "the asked tables' triples and their
+  decisions", and those two are the same band's decisions. A `0` changes the entry count that
+  `region_tiles` validates (§ 10.3.4, "the region gate then runs unchanged" over the new
+  emission), and recording the decision before the gate is § 10.3.4's order, so the later
+  decision IRIs shift by construction. Neither reaches outside the asked region's own band.
 
 **U14's corpus side, A6 as corrected.** The six tables of § 3.2 were checked in the FINAL graph by
 direct URI membership (any triple with the URI as subject or object):
@@ -845,6 +853,25 @@ this task exists to trip (O2 T2); the other is a whole-document triple pin that 
 6. **Carried from § 4.2 as a process fact:** the `BAML_LIVE=1` recording recipe (plan Step 1, spec
    § 10.5 O2) also switches on R213's region reader and the boxhead reader's live half. A recording
    run for one worker has to switch the others off.
+7. **Owner for the bfs triple pin (fix round 1): Task 4, alongside the O2 flip.**
+   `tests/test_carriage.py`'s `DOC_TRIPLES_WHEN_CARRIED` (`= 16736`, at `:71` when measured) is red
+   at `16778`. The +42 is three `header_lines` decisions × 14 triples each (§ 4.5, § 4.6): bfs p5
+   `#region3`/`#region4` (`no_boxhead`, tables withdrawn by adoption) and p6 `#region2` (`boxhead`).
+   Task 4 Steps 4–5 name only the O2 flip and the `tab:12` manifest, so nothing else would re-pin
+   it. Re-pin to the measured 16778, with a dated comment in the file's own style
+   (`16736 -> 16778 on 2026-09-30: …`). `P5_CELLS_WHEN_CARRIED == 496` still holds and is not touched.
+8. **Task 5 Step 2's C2 must judge bfs, ons and who against § 4.6, not against Task 0's hashes**
+   (fix round 1). Task 5 Step 2 requires every non-cbh document to hash identically to Task 0 and
+   calls any difference a finding. After 3d.7, bfs (`d395c373c62b`), ons (`5db3db9c29ed`) and who
+   (`7532b4756f38`) differ from Task 0 BY DESIGN: the answered bands of § 4.4. The check for those
+   three is that the diff against the 3d.0 graph is exactly § 4.6's accounted deltas (with the
+   `-d{n}` rename). Any triple beyond them is the finding. apple, graincorp-capacity and
+   graincorp-stem still hash identically to Task 0 and keep the hash test.
+9. **The Task 5 / whole-branch sweep must include five files not run after the readings landed**
+   (fix round 1, reviewer M2). They read the re-recorded documents, and 3d.7's targeted sweep
+   (§ 4.7) did not run them: `tests/etkl/test_read_band_books_every_word.py`,
+   `tests/etkl/test_membrane_health.py`, `tests/etkl/test_grid_donation_seam.py`,
+   `tests/etkl/test_span_donation_seam.py`, `tests/test_cockpit.py`.
 
 ### 4.9 3d.6's measurements, carried into the record
 
