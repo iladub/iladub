@@ -42,8 +42,8 @@ function CountHeaderLines(page: image, ncols: int, listing: string) -> HeaderLin
     - If the first line names the columns and the rest are data, the answer is 1.
     - If the header wraps or stacks over several lines, count every one of them.
 
-    Answer with the count only. Never write any text, number or value that appears in the table —
-    not in note, not anywhere.
+    Give the count, and a note that quotes nothing from the table. Never write any text, number or
+    value that appears in the table — not in note, not anywhere.
     {{ ctx.output_format }}
   "#
 }
