@@ -61,10 +61,11 @@ def _build_tiling_shapes():
     """The twelve tiling invariants + the two physical shapes (R19) (the original eight +
     tab:HeaderContentConservedShape + tab:DetectedAggregationRowShape +
     tab:DerivedRowGroupShape + tab:BoxheadAbsenceShape + tab:EntryCellPhysicalShape +
-    tab:WrappedCellShape), extracted from tab-shapes.ttl + tab-physical-shapes.ttl as CBDs (+ tab:prefixes, which the
-    sh:sparql shapes reference). Keeps ONE source of the shapes — no duplicate file. Includes
-    Unambiguous(Row)AccessShape: exactly one LEAF header per column/row — the leaf-partition
-    invariant the retired exact-partition Python backstops enforced."""
+    tab:WrappedCellShape), extracted from tab-shapes.ttl + tab-physical-shapes.ttl as CBDs
+    (+ tab:prefixes, which the sh:sparql shapes reference). Keeps ONE source of the shapes —
+    no duplicate file. Includes Unambiguous(Row)AccessShape: exactly one LEAF header per
+    column/row — the leaf-partition invariant the retired exact-partition Python backstops
+    enforced."""
     full = Graph().parse(os.path.join(_VOCAB, "shapes", "tab-shapes.ttl"), format="turtle")
     full.parse(os.path.join(_VOCAB, "shapes", "tab-physical-shapes.ttl"), format="turtle")
     sub = Graph()

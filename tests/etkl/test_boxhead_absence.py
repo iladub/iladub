@@ -93,13 +93,13 @@ def test_u10_3_statement_plus_a_header_is_refused(engine):
 
 # ------------------------------------------------------------------ U10, compile scope
 
-def _logged(chosen):
-    """A compile-scope graph: a real ReadingRecorder's log holding one `header_lines` decision
-    that chose `chosen`, and a table whose statement points at it."""
+def _logged(chosen, judgement="header_lines"):
+    """A compile-scope graph: a real ReadingRecorder's log holding one decision named
+    `judgement` that chose `chosen`, and a table whose statement points at it."""
     from iladub.etkl.decisionlog import ReadingRecorder
     g = Graph()
     brec = ReadingRecorder(g, URIRef("https://example.org/u10/doc"), 0).band(3)
-    d = brec.record("header_lines", ["boxhead", "no_boxhead"], chosen,
+    d = brec.record(judgement, ["boxhead", "no_boxhead"], chosen,
                     "U10 fixture: the count the worker returned")
     _table(g, statement_to=d)
     return g, d
@@ -113,15 +113,29 @@ def test_u10_4_positive_a_no_boxhead_decision_is_admitted(engine):
     assert legs == ()
 
 
-@pytest.mark.parametrize("case", ["chose_boxhead", "not_a_decision"])
+@pytest.mark.parametrize("case", ["chose_boxhead", "not_a_decision", "another_judgement"])
 def test_u10_4_negative_a_statement_without_a_no_boxhead_decision_is_refused(engine, case):
+    """Each negative differs from the admitted positive in ONE conjunct of the shape, so each
+    pins that conjunct alone (review I1: a bare IRI with no triples was refused by the missing
+    `dec:chosen` first, and left the type test unpinned).
+
+    - `chose_boxhead`: the recorder's `header_lines` decision chose the other option.
+    - `not_a_decision`: the recorder's own decision, chose `no_boxhead`, with ONLY its
+      `rdf:type dec:DecisionHolon` triple removed.
+    - `another_judgement`: a real decision that chose an option labelled `no_boxhead`, but it is
+      not the `header_lines` judgement. `BandRecorder.record` names the judgement only through
+      the decision's `rdfs:label` (controller ruling on review M1: I-10-3 says "iff a
+      `header_lines` decision chose `no_boxhead`")."""
     from iladub.etkl import compile as compile_mod
+    from iladub.etkl.decisionlog import DEC
     if case == "chose_boxhead":
         g, _ = _logged("boxhead")
+    elif case == "not_a_decision":
+        g, d = _logged("no_boxhead")
+        assert (d, RDF.type, DEC.DecisionHolon) in g, "precondition: the recorder typed it"
+        g.remove((d, RDF.type, DEC.DecisionHolon))
     else:
-        g, _ = _logged("no_boxhead")
-        g.remove((EX.t, TAB.boxheadAbsentBy, None))
-        g.add((EX.t, TAB.boxheadAbsentBy, URIRef("https://example.org/u10#bare")))
+        g, _ = _logged("no_boxhead", judgement="row_role")
     ok, text, legs = compile_mod._validate(g)
     assert ok is False, (
         f"[{engine}] {case}: a statement whose object is not a no_boxhead decision must be "
