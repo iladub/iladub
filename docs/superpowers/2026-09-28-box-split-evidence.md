@@ -393,3 +393,122 @@ still hash identically. Task 5's C2 should read this hash match as "no non-blank
 and lean on § 1.3's content-keyed, non-hash comparison (and `corpus_snapshot_diff.py`'s per-page
 verdict/cell diff, which does not depend on blank-node identity at all) for the load-bearing
 claim that nothing else changed.
+
+## § 3. Task 3d.0 baseline (2026-09-30)
+
+**Serves:** prog:criterion:etkl:03 — same criterion as § 1; this is Task 3d.0's own "before",
+taken fresh because Tasks 3/3b/3c moved cbh since § 1.1 (plan `docs/superpowers/plans/
+2026-09-28-box-split.md`, Task 3d.0; brief `.superpowers/sdd/2026-09-28-box-split/
+task-3d.0-brief.md`). HEAD measured: `f41ff6d` (`git status` clean throughout; no `src/`
+change on this branch since the plan landed).
+
+### 3.1 Step 1 — whole-corpus verdict snapshot (C2's "before", re-taken)
+
+Same instrument and method as § 1.1 (Task 0 Step 1), re-run because § 1.1's own record is
+stale for cbh:
+
+```
+$ PYTHONPATH=src .venv/bin/python scripts/corpus_verdict_snapshot.py \
+    internal/benchmarks/box-split-2026-09-30/3d0/run1
+cbh-stem-2026-08-03                    score=0.9103232533889468     triples= 13416 sha=15b7da8ef677
+graincorp-capacity-2026-08-04          score=1.0                    triples=  5859 sha=3b54f16194ca
+graincorp-stem-2026-07-31              score=0.9995511669658886     triples= 32422 sha=496c315f2fcc
+apple-fy2026q3-statements              score=0.9418604651162791     triples=  6255 sha=1dd90f432c5e
+bfs-population-bilan-2023              score=0.9021428571428571     triples= 16736 sha=4fd251c0228f
+ons-index-of-services-2026-02          score=0.8684895833333334     triples= 12440 sha=8efa4def664e
+who-wfa-boys-zscore-0-5                score=0.9962779156327544     triples= 12292 sha=7e6038064128
+```
+
+Output saved at `internal/benchmarks/box-split-2026-09-30/3d0/run1/*.json` (gitignored — this
+table is the durable record).
+
+**Comparison against § 1.1's row (2026-09-28, HEAD `d5e07ca`):** 6 of 7 documents are
+IDENTICAL — `graincorp-capacity-2026-08-04`, `graincorp-stem-2026-07-31`,
+`apple-fy2026q3-statements`, `bfs-population-bilan-2023`, `ons-index-of-services-2026-02`,
+`who-wfa-boys-zscore-0-5` — same score, same triple count, same canonical hash, character for
+character. Only `cbh-stem-2026-08-03` moved: score `1.0` → `0.9103232533889468`, triples
+`12839` → `13416`, hash `ba056c0ed809` → `15b7da8ef677`. This is **expected**, per the brief:
+"Task 0's own record is not reusable: Tasks 3, 3b and 3c moved cbh since then" — it is not a
+finding, and the row above (not § 1.1's) is Task 3d's C2 "before" for every document,
+including cbh.
+
+### 3.2 Step 2 — adoption outcome of the six named tables (U14's corpus side, "before")
+
+**Instrument (scratch, not committed to `src/`):** a spy script monkeypatching the MODULE
+GLOBAL `iladub.etkl.document._band_subgraph`. Because `_band_subgraph(...)` is called as a bare
+name inside `compile_document` (resolved via the module's global namespace at call time),
+replacing the module attribute intercepts every call without touching `src/`. The wrapper
+records, per call: the exact `table_uri` argument, the caller's line number (via
+`sys._getframe(1).f_lineno`), and — only for calls from line 1733 — the caller frame's own
+`p`/`idx`/`pages` locals, from which `pages[p].regions[idx].verdict/.kind/.cells` is read
+**before** `document.py:1828`'s `pages[p] = rep_a` overwrites that page's report with the
+adoption re-compile's own (whose superseded-band entries carry `table_uri=None`, confirmed by
+direct inspection — see below).
+
+`_band_subgraph` has exactly two call sites in the unmodified file (confirmed by
+`grep -n "_band_subgraph(" src/iladub/etkl/document.py`): line 1549 (the pass-2 continuation
+merge, `graph += _band_subgraph(rep2.graph, r2.table_uri)`) and line 1733 (`sub =
+_band_subgraph(pages[p].graph, t)`, inside the adoption withdrawal loop's pointed-into check
+the task brief names as `document.py:1733-1740`). The caller line number alone disambiguates
+the two sites; no other function in the module calls `_band_subgraph`.
+
+**How each table was identified.** For each of the two documents, `compile_document` was run
+once (whole-document compile, exactly as Step 1) with the spy installed. The six target table
+URIs were then read directly off the CALL_LOG entries whose `caller_line == 1733` and whose
+`table_uri` ends with `/p<page>#table<N>` for the requested page/suffix — i.e. each URI is the
+**pass-1** table URI the withdrawal loop itself looked up (`t = pages[p].regions[idx].table_uri`
+at `document.py:1730`), not a guess from the final (post-adoption) report. A direct dump of the
+final `rep.pages[5/7/8]` regions (saved separately, not part of this record) confirms why the
+final report cannot be used for this lookup: after a successful adoption, `pages[p] = rep_a`
+(document.py:1828) replaces the whole page report, and `rep_a`'s own regions at the
+same indices carry `table_uri=None` for every superseded band (they never got a chance to
+assert their own table during the re-compile, having been pre-empted by the grid) — e.g. bfs
+`rep.pages[5].regions[3..5]` all show `kind=RECORD_TABLE verdict=superseded table_uri=None`
+post-compile, alongside a new `regions[17]` region typed `tab:DataGrid` at
+`.../p5/adopt#p5-datagrid` (496 cells, `verdict=asserted`) — the grid that replaced them.
+
+**Result** (full JSON at
+`internal/benchmarks/box-split-2026-09-30/3d0/adoption_outcome_final.json`, gitignored):
+
+| table | pass-1 verdict/kind/cells | called at `document.py:1733` | page has an "adoption refused" note | present in final graph |
+|---|---|---|---|---|
+| bfs p5 `#table3` | asserted / RECORD_TABLE / 48 | yes | no | **no** |
+| bfs p5 `#table4` | asserted / RECORD_TABLE / 108 | yes | no | **no** |
+| bfs p5 `#table5` | asserted / RECORD_TABLE / 36 | yes | no | **no** |
+| ons p7 `#table4` | asserted / RECORD_TABLE / 6 | yes | no | **no** |
+| ons p7 `#table13` | asserted / RECORD_TABLE / 86 | yes | no | **no** |
+| ons p8 `#table3` | asserted / RECORD_TABLE / 6 | yes | no | **no** |
+
+All six: asserted a `tab:RecordTable` at pass 1, were named as `superseded` candidates in the
+document's own adoption re-compile, went through the pointed-into check at `document.py:1733`
+(no document-level triple pointed into any of the six, and none is a member of a
+multi-table chain — otherwise `blocked` would have fired and the corresponding page would carry
+an "adoption refused" note, which none of the three pages (5, 7, 8) does), and are **absent**
+from the final merged graph — i.e. **withdrawn today, on the pre-3d tree**, and replaced by
+that page's adopted data grid (`bfs`: `.../p5/adopt#p5-datagrid`, 496 cells; `ons`:
+`.../p7/adopt#p7-datagrid` 276 cells and `.../p8/adopt#p8-datagrid` 276 cells — all three
+`verdict=asserted`). `rep.notes` for `bfs-population-bilan-2023` carries "adoption refused" only
+for pages 0, 4 and 6 (none of which is 5, 7 or 8); for `ons-index-of-services-2026-02` only for
+page 0 (not 7 or 8).
+
+**Reading against spec § 10.5/§ 10.7.** The spec predicts that once the boxhead-absence feature
+ships, three of these six (bfs p5 `#table3`/`#table4`, ons p7 `#table13`) are asked, answer `0`
+(row 0 is data), and that "a correct `0` mints the edge, and the edge refuses adoption on bfs p5
+and on ons p7" (spec lines 828-830). This record is the **pre-feature** state: no
+`tab:boxheadAbsentBy` edge exists yet, and — consistent with the spec's own framing of what
+changes — adoption today withdraws all six without exception. 3d.7's corpus run is expected to
+show bfs p5 and ons p7's adoption newly **refused** post-feature (the grid's read is now
+disqualified because the table it would supersede has no boxhead), while ons p8 `#table3` (not
+in the three named as "asked" at spec line 828) is expected to be **unaffected** — that
+divergence, if it holds, is 3d.7's own finding and is not measured here.
+
+### 3.3 Instrument note
+
+Both instruments above are PROCEDURAL (CLAUDE.md § 8): they read compile results (a snapshot
+script; a monkeypatch spy over an existing pure function) and decide nothing about any
+document's content, carry no tuned constant or tolerance, and are irreducible to AXIOM (no RDF
+evidence graph is being queried; the object under test is Python call structure, not asserted
+facts) or NEURAL (nothing here is underdetermined — every field read is either already computed
+by `compile_document` or is the literal call-site argument a monkeypatch observed). Neither
+script is committed to `src/`; both ran from the session's scratch directory, per the sub-task's
+own instruction not to add either to `src/`.
