@@ -29,7 +29,7 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**14 ready.**
+**13 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
@@ -46,7 +46,6 @@ there is no criterion this work is known to wait for.
 | `tab` | `tab:08` | DATAGRID_RESIDUE (compile.py:1145): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:09` | ROUND_TRIP_FAIL (holon.py:493, region-level; the cell-level emitter at holon.py:55 shares the label and is corpus-dead): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:10` | Every shape wired into the compile membrane is live, or registered idle with an adjudicated reason distinguishing corpus gap from dead shape; four VACUITY_REGISTRY rows still read 'corpus gap or dead shape, not adjudicated here'. |
-| `tab` | `tab:12` | cbh p0 compiles the region at y 681-761 as two tab:RecordTables per spec § 1, counted as CELLS, never the score. |
 
 ## §2 What must land first — `arc-depends.rq`
 

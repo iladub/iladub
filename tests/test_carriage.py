@@ -42,6 +42,13 @@ act, once the split (Task 3) lands and O2 is confirmed XPASS (Task 4 Step 4-5) �
 forcing-function discipline as `tab:11` above. C3 is the control: the four cbh rosters
 (`#htable1/3/5/7`, all index < 9, unaffected by the split's band-index shift) must keep
 identical cells BEFORE and AFTER, and ships with NO xfail — it passes today.
+
+O2's STRICT XFAIL IS GONE TOO (2026-09-30, Task 4 Steps 4-5). With the split (Tasks 3/3b/3c)
+and T2's recorded `header_lines` answer (Task 3d) landed, all three O2 tests were observed
+`[XPASS(strict)]` — `4 failed, 2 passed`, the fourth being the bfs triple pin below — and the
+markers were removed in the same commit that set `tab:12` `prog:met true`. Falsified with the
+split's call site reverted: O2 fails on the table count (evidence
+`docs/superpowers/2026-09-28-box-split-evidence.md` § 5).
 """
 import hashlib
 import json
@@ -68,7 +75,13 @@ P5_CELLS_WHEN_CARRIED = 496
 #: document triple count moves with every reading the document gains; P5_CELLS is the figure that
 #: says the SWITCH still holds, and it is unchanged at 496.
 #: 16147 -> 16736 on 2026-09-19: p6's `Tessin` row is read (`trailing.cut_trailing_notes`).
-DOC_TRIPLES_WHEN_CARRIED = 16736
+#: 16736 -> 16778 on 2026-09-30: three recorded `header_lines` decisions (box-split Task 3d),
+#: 14 triples each (the decision and its two options) = +42 — p5 `#region3-d4` and
+#: `#region4-d4` (`no_boxhead`; adoption withdraws their tables, the decisions stay in the log)
+#: and p6 `#region2-d4` (`boxhead`). Measured by a probe counting every `header_lines`
+#: decision's own and its options' triples: 3 decisions, 42 triples, 16736 + 42 = 16778
+#: (evidence 2026-09-28-box-split § 4.5, § 4.6, § 5). P5_CELLS is unchanged at 496.
+DOC_TRIPLES_WHEN_CARRIED = 16778
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
@@ -120,7 +133,7 @@ def test_bfs_p6_carriage_is_untouched(bfs):
     assert len(asserted) == P6_ASSERTED_REGIONS
 
 
-# =============================================== prog:criterion:tab:12 — O2 (xfail) + C3 ===
+# ================================== prog:criterion:tab:12 — O2 (flipped 2026-09-30) + C3 ===
 
 CBH = "ag-trade/cbh-stem-2026-08-03.pdf"
 
@@ -130,12 +143,9 @@ CBH = "ag-trade/cbh-stem-2026-08-03.pdf"
 #: (the four rosters sit at y0 105..656, all well above).
 _Y_LO, _Y_HI = 681, 761
 
-_TAB12_XFAIL_REASON = (
-    "prog:criterion:tab:12 (box-split spec 2026-09-28 §5): the split (Task 3) has not "
-    "landed yet. Today band 9 is ONE fused #table9 RecordTable; O2 needs two. Forcing "
-    "function per tab:11's precedent — flips to pass with the split, in one reviewed act "
-    "with prog:met."
-)
+#: The three O2 tests carried `@pytest.mark.xfail(strict=True)` from 2026-09-28 until
+#: 2026-09-30, reason: "the split (Task 3) has not landed yet. Today band 9 is ONE fused
+#: #table9 RecordTable; O2 needs two." Removed with `tab:12`'s `prog:met true` (module docstring).
 
 
 @pytest.fixture(scope="module")
@@ -263,7 +273,6 @@ def _caption_texts(g, table_uri):
     return [str(g.value(c, TAB.captionText)) for c in g.objects(table_uri, TAB.hasCaption)]
 
 
-@pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_t1_reads_the_seven_column_boxhead(cbh):
     """T1 — box-split spec § 1/§ 5. Every O2 test's FIRST call is `_o2_two_tables` (R5):
     today's fused #table9 always fails its count assertion, so removing the xfail marker
@@ -284,7 +293,6 @@ def test_o2_t1_reads_the_seven_column_boxhead(cbh):
     assert _caption_texts(g, t1) == ["Stock at Port (Main Storage Area) as at 29/07/2026"]
 
 
-@pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_t2_reads_the_two_column_no_boxhead(cbh):
     """T2 — box-split spec § 1/§ 5, named risk 1 (§ 4): T2 must carry ZERO column labels,
     never read its first row (`ALB | 1 - 15 October`) as a boxhead. Gate-first, per R5.
@@ -336,7 +344,6 @@ _NOTE_FRAGMENTS = [
 ]
 
 
-@pytest.mark.xfail(strict=True, reason=_TAB12_XFAIL_REASON)
 def test_o2_note_block_is_not_carried_as_a_cell(cbh):
     """The Note block (spec § 1's third bullet; Task 0 evidence § 1.3's r6-r9, 4 lines) is
     not a cell of T1 or T2 — not the `Note:` label alone, and not any of its three
