@@ -50,3 +50,17 @@ Task 3d executed and reviewed, 3d.0 → 3d.7, then Task 4 Steps 4–5, 5, 6.
   `test_o3_no_page_loses_asserted_ink_to_a_merge` (cbh 43 < 54), `test_typing_equiv[cbh]`.
 - Traps: implementers stall when they background pytest; corpus runs serial; `uv.lock` appears
   under `uv run`; two concurrent writers must never share this checkout.
+
+## Addendum — handed off at ~145K working tokens (2026-09-30)
+
+- **Done and reviewed clean:** 3d.0 (`84827f5`), 3d.1 (`bf7057f`, fix `b26457f`), 3d.2 (`8636883`,
+  A6 does not land), 3d.3 (`4e6a284`, `e8416fe`). Ledger "Session 10" block has every ruling and
+  deferred minor.
+- **Next action (asserted):** SDD 3d.4, then 3d.5 — sequentially, since both add tests; then 3d.6,
+  3d.7. Briefs exist; 3d.6 and 3d.7 carry appended controller notes (A6 case, the
+  `_band_reading_subgraph` seam, C1).
+- **Proposed, and it may fail — C1:** a table stated headerless could still carry a
+  `tab:DerivedRowGroup` header node from chain derivation; possibly unrefused because the per-page
+  membrane runs before the document pass. One query on the final corpus graphs in 3d.7 settles it.
+- **Known-red corpus set** (not this task's): `test_o3…` cbh 43<54, `test_typing_equiv[cbh]`,
+  furnish 5==4; vacuity red on 4 shapes by design until 3d.7.
