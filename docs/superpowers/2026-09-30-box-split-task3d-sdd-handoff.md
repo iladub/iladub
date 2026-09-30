@@ -144,3 +144,29 @@ one fix wave, one scoped re-review, the PR corpus comment, and `finishing-a-deve
 - CLAUDE.md names only `residues.md` as a mutable Evidence exception, while § Deferred residues
   prescribes in-place row edits in `residues-open.md`. This is a contract gap only the maintainer
   can resolve (Task 5 review M1).
+
+## Addendum 5 — session 12 end (2026-10-01), written at ~146K working tokens
+
+**Next action (asserted):** read two reports, then finish:
+- the fix-wave re-review: `.superpowers/sdd/2026-09-28-box-split/final-fix-rereview.md`;
+- the sweep: `…/task-6-sweep-report.md`, run at `66f7049`, expecting 0 failed.
+
+If both are clean:
+1. Merge branch `worktree-agent-a153dda8cf8224859` (`48f1504`, `73ed246`, on top of `66f7049`)
+   into `box-split`.
+2. Re-run the touched files in the main checkout, one per process, offline. Include the corpus half
+   of `tests/etkl/test_row_zero_differs.py`.
+3. Push.
+4. Post `…/task-6-pr-comment.md` on PR #284.
+5. List every ledger `Ruling:` line for the maintainer.
+6. Run `finishing-a-development-branch`.
+7. Remove the worktree and delete the SDD workspace.
+
+**Unverified:**
+- Whether the sweep is clean.
+- Whether R267 should be struck now that the fix wave repaired it. This is the re-reviewer's (f).
+- The maintainer's calls: spec condition 2 (row raised in the fix wave), and the CLAUDE.md
+  mutable-Evidence gap (Task 5 review M1).
+
+**Where decided:** in the ledger's session-12 `Ruling:` lines, and in `final-review.md`, which
+triages every deferred minor.
