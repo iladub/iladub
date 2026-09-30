@@ -1105,3 +1105,112 @@ key. This is a finding for the controller to rule on. The test is not edited.
 | 3 | `furnish` wholly-superseded | 5 escalating, 4 superseded | residue escalation `KIND_NOT_SUPPORTED`, `compile.py:1611-1625` via `regions.py:96`; finding |
 | 4 | `cbh_e2e` section port | T1/T2 rows prefixed by their titles | title caption typed `tab:SectionCaption`, `compile.py:294` via `boxsplit.py:225`, read at `feed.py:408`; finding |
 | 5 | `cbh_e2e` cascade | the two titles join the marker set | same cause as 4; finding |
+
+### 5.5 Controller rulings on the four open reds, carried out (2026-09-30)
+
+**Line numbers.** § 5.4's citations into `src/iladub/etkl/compile.py` and `boxsplit.py` were
+measured at `9f50e03`. Ruling 1's commit `d943519` moves them. At `d943519`:
+
+| § 5.4 citation | now |
+|---|---|
+| the RECORD-path emit `:1378` | `:1389` |
+| the SectionCaption line `:294` | the `if ln not in titles:` guard at `:301` |
+| the not-hierarchical escalation `:1611` | `:1622` |
+| `boxsplit.py:225` | `:229` |
+
+**Ruling 1 (items 4–5): a box's title bar is a `tab:RegionCaption` only.** Commit `d943519`.
+
+The corpus was measured first. Every page of the 7 corpus documents (27 pages) went through
+`page_bands` with `boxsplit._box_band` spied:
+
+```
+BOX BANDS 2
+  (('ag-trade/cbh-stem-2026-08-03.pdf', 0), 1, 0, ['PORT MAINTENANCE SHUTDOWN DATES - 2026'])
+  (('ag-trade/cbh-stem-2026-08-03.pdf', 0), 1, 0, ['Stock at Port (Main Storage Area) as at 29/07/2026'])
+    fields: (document, page), title captions, NON-title built.captions, caption texts
+```
+
+So no corpus box band has a non-title caption that `_build_ruled_band` peeled.
+
+The change:
+- `Band.title_captions` is a new field, default `()`. It holds the box's title-bar lines.
+- `boxsplit._box_band` sets it, and is the only site that does.
+- `compile._emit_band_captions` leaves `tab:SectionCaption` off exactly those lines. Every other
+  caption keeps both types.
+- `merge_bands` concatenates the field as it does `captions`.
+- The Band field-count pin in `test_band_runs.py` goes from 10 to 11.
+- Class: PROCEDURAL. It constructs and emits a fact the band carries; it judges nothing.
+
+A spy on the emitter before the fix saw T1's and T2's titles emitted from the RECORD path on
+three passes (`p0`, `p0/r2`, `p0/adopt`). All six emissions were typed `{RegionCaption,
+SectionCaption}` in the final graph.
+
+New CI tests in `tests/etkl/test_boxsplit.py`, all synthetic:
+- `test_a_box_title_is_a_region_caption_and_never_a_section_caption`, on `two_boxes_one_band_pdf`;
+- the control `test_control_a_peeled_caption_on_an_ordinary_band_is_still_a_section_caption`, on
+  `sectioned_ruled_table_pdf`;
+- `test_a_merged_run_keeps_its_box_titles`.
+
+FALSIFICATION:
+
+```
+(a) emitter ignores title_captions (today's behaviour):
+    test_boxsplit.py:519: AssertionError: ('Stock at Port', {'RegionCaption', 'SectionCaption'})   1 failed, 4 passed
+(b) SectionCaption dropped for every caption:
+    test_boxsplit.py:534: AssertionError: ('GERALDTON', [{'RegionCaption'}])                         1 failed, 4 passed
+(c) merge_bands does not carry title_captions:
+    test_boxsplit.py:549: AssertionError: assert () == (Line(...))                                     1 failed, 4 passed
+restored: 5 passed
+```
+
+Runs after the fix, one file per process:
+
+| file | result |
+|---|---|
+| `test_cbh_e2e` | 4 passed (was 2 failed) |
+| `test_boxsplit` | 28 passed |
+| `test_band_runs` | 13 passed |
+| `test_feed_section_keys` | 8 passed |
+| `test_grid_region` | 15 passed |
+| `test_section_repair` | 19 passed |
+| `test_source_citations` | 8 passed |
+| `test_carriage -m corpus` | 6 passed |
+| `test_run_merge_seam` | 9 passed; o3 stays 43 |
+
+**Ruling 2 (items 2–3): the residue is accepted as the recorded outcome.** Commit `8459473`.
+- **(a)** `EXPECTED_VERDICTS["cbh"]` is re-pinned to the § 5.4 literal: index 9 becomes three
+  entries. The dated comment cites spec § 1 and § 4 and names the residue.
+- **(b)** The furnish test is renamed
+  `test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue`.
+  - The mechanism stays exact: `len(requests) == len(region_escalations)`, and
+    `len(escalating) - len(superseded) == len(region_escalations)`.
+  - The live count is pinned at exactly 1.
+  - That region is identified as the page-0 band whose words include `1,951,264`, with reason
+    `KIND_NOT_SUPPORTED`.
+
+```
+cbh-stem: chose escalated=5 superseded=4 region verdicts escalated=1 requests=1
+typing_equiv 6 passed; escalation_furnish 10 passed
+```
+
+FALSIFICATION:
+
+```
+typing_equiv at the OLD 10-entry literal: test_typing_equiv.py:128: AssertionError: cbh: page-0 band verdicts moved …   1 failed
+furnish at the OLD count (== 0):          test_escalation_furnish.py:310: AssertionError: [(0, 9, RegionReport(… 'UNSUPPORTED_TABLE' … reason='K…', tokens_escalated=86))]   1 failed
+split call site reverted:                 typing_equiv[cbh] 1 failed; furnish test_escalation_furnish.py:310: AssertionError: []
+```
+
+Every edit was restored before the green runs.
+
+**CI coverage of "a wholly superseded document furnishes nothing".** Measured by grepping `tests/`
+for `ExpansionRequest|escalation-furnish|_requests(`. Two non-corpus tests cover supersession
+producing no request:
+- `tests/etkl/test_escalation_furnish.py::test_a_superseded_escalation_is_not_furnished`, at graph
+  scope, on a synthetic superseded pair;
+- `tests/etkl/test_escalation_wiring.py::test_the_adopting_path_furnishes_nothing`, at document
+  scope, on a synthetic page whose one escalation is withdrawn by adoption.
+
+**No CI test withdraws an escalation through section repair (the `/r2` pass), which is cbh's own
+mechanism.** No section-repair test file reads `ExpansionRequest`. As the ruling directs, none is
+added; this is reported only.
