@@ -411,6 +411,50 @@ def _book_hier_band(band, n, header_extents) -> tuple[int, int]:
     carried, _ = _book_recovered_ink(band, frozenset(), header_extents)
     return n + carried, max(0, tokens - n - carried)
 
+
+def _header_lines_decision(region, pdf_path: str, page_number: int,
+                           brec) -> tuple[int, "URIRef | None"]:
+    """The RECORD path's header-lines ask (box-split spec § 10.3.4): `(header_lines, absent_by)`
+    for `assert_record_region`.
+
+    The caller asks only for a region `classify` built — never for a donation — and this function
+    applies, in order:
+      1. `row-zero-differs.rq` (`rowzero.row_zero_differs`, AXIOM, one-way). A witness means the
+         region is not asked: the ruling's refusal of a `0`, applied before the question.
+      2. `headerlines.ask_header_lines` with `headerlines.default_reader()` (NEURAL — the reader
+         proposes). None — no reader, no recording, a raise, an answer outside `0..nlines` — is
+         no claim: nothing is recorded and today's positional header stands.
+      3. An answer is recorded as ONE `header_lines` decision, `no_boxhead` for `0` and `boxhead`
+         otherwise, before the caller emits, because `absent_by` is that decision. An answer
+         above 1 adds no header level (§ 10.6): the emission gets 1.
+
+    Every module is looked up at call time, so a test's patch reaches it (the `_donation.offer`
+    late binding). No `evidence=` is passed to the recorder: the decision points at no table or
+    cell, so `document._band_reading_subgraph`, which follows a decision's outgoing edges, never
+    walks from the log into a table (measured, task 3d.6 report).
+
+    Gate classification (CLAUDE.md § 8, spec § 10.4): PROCEDURAL — the ask gate. It applies the
+    oracle's verdict and the reader's answer and decides nothing itself: no Python here reads
+    header-vs-data, and there is no constant. Irreducible to AXIOM because it sequences a query,
+    a reader and a recorder that live outside any one graph."""
+    from . import headerlines as _hl
+    from . import rowzero as _rz
+    if _rz.row_zero_differs(region, pdf_path, page_number):
+        return 1, None
+    reading = _hl.ask_header_lines(region, pdf_path, page_number, _hl.default_reader())
+    if reading is None:
+        return 1, None
+    k = reading.header_lines
+    chosen = "no_boxhead" if k == 0 else "boxhead"
+    beyond = " (an answer above 1 adds no header level, spec § 10.6)" if k > 1 else ""
+    d = brec.record(
+        "header_lines", ["boxhead", "no_boxhead"], chosen,
+        f"the reader counted {k} leading header line(s) of {len(region.band.lines)}{beyond}; "
+        f"its note: {reading.note}; row-zero-differs.rq found no witness that row 0 differs from "
+        f"the body of its column (one-way: that silence refutes nothing)")
+    return (0, d) if k == 0 else (1, None)
+
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -1028,6 +1072,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         brec.record("kind", _kind_options, region.kind.name, region.reason or "",
                     rejected=_kind_refutations(region.kind.name, region.reason))
 
+        # Bound per band, so the RECORD path's header-lines ask (box-split § 10.3.4) can tell a
+        # lone-line donation from a `classify`-built region even where `offer` declines it.
+        _lone = None
         if region.kind is RegionKind.NON_TABLE and len(band.lines) == 1 and donor_ev is not None:
             # A LONE DATA ROW (2026-09-18, bfs p6: `Total`, `Zurich`, `Tessin`). A one-line band
             # cannot hold a header and a body, so `classify` calls it NON_TABLE and it was
@@ -1279,9 +1326,20 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.HierarchicalTable), ascii_view,
                                                     htable))
                         continue
+                    # BOX-SPLIT § 10.3.4: how many leading lines are header, asked of a reader
+                    # only for a region `classify` built — never for a donation, whose row 0 is
+                    # the donor's line, already disposed by the donation membrane, and whose rows
+                    # outrun its band (`donation.donated_region`). An answer is recorded BEFORE
+                    # the emission, because a `0` states its decision as `absent_by`.
+                    if donated is None and _lone is None:
+                        header_lines, absent_by = _header_lines_decision(
+                            region, pdf_path, page_number, brec)
+                    else:
+                        header_lines, absent_by = 1, None
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
-                    n = assert_record_region(scratch, region, table_uri, doc, page_number)
+                    n = assert_record_region(scratch, region, table_uri, doc, page_number,
+                                             header_lines=header_lines, absent_by=absent_by)
                     tiles = region_tiles(scratch) if n else None
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
@@ -1320,15 +1378,18 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         _emit_band_captions(graph, table_uri, band)
                         _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                         b = region.grid.boundaries
-                        data_cells = [c for c in region.cells if c.row > 0]
+                        data_cells = [c for c in region.cells if c.row >= header_lines]
                         asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
                         escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
-                        # R176: MIRRORS the emitter — assert_record_region turns every `row == 0`
-                        # cell into a tab:LabelCell and skips it from the entry count
-                        # (holon.py:128-140). 11 corpus bands dropped 102 words here.
+                        # R176: MIRRORS the emitter — assert_record_region turns every
+                        # `row < header_lines` cell into a tab:LabelCell and skips it from the
+                        # entry count (holon.py, `def assert_record_region`). 11 corpus bands
+                        # dropped 102 words here. The count, never the literal row 0 (box-split
+                        # § 10.3.4): with 0 header lines every cell is a data cell and no label
+                        # ink is booked; with 1 the two tests are today's `row > 0` / `row == 0`.
                         _a, _e = _book_recovered_ink(
                             band, {w for c in data_cells for w in c.words},
-                            (c.bbox for c in region.cells if c.row == 0))
+                            (c.bbox for c in region.cells if c.row < header_lines))
                         asserted_total += _a
                         escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
