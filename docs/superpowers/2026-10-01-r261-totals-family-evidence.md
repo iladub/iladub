@@ -368,3 +368,179 @@ for ln in nxt.lines:
             print('ALL-WORDS MATCH:', w.text, '-> cols', cols, 'line words:', [x.text for x in ln.words], 'n_words_in_line', len(ln.words))
 "
 ```
+
+---
+
+## § 6. Task 1 — P3 (total-of-totals wording, a proposition) and P1 re-run on the D7 crop (2026-10-01, append-only)
+
+**Serves:** prog:criterion:etkl:03, via Task 1's step in the plan
+(`.superpowers/sdd/2026-10-01-r261-totals-family/task-1-brief.md`).
+
+### 6.0 Decision rules — fixed in the task brief BEFORE any call, reproduced verbatim here
+
+Both rules were authored in the task brief handed to this loop, before any probe ran, and were
+not altered afterward. Reproduced here for the record, not re-derived:
+
+- **P3.** *"the grand total binds in this loop iff `1,951,264` gets yes ×3 AND none of the 4 null
+  asks (each port total asked the grand-total question) gets yes. If not: record, DO NOT reword,
+  state the loop drops the total-of-totals level."*
+- **P1 on the D7 crop.** *"Holds iff port totals yes ×3, `21` no, no null yes. If it does NOT
+  hold: STOP, record it, report DONE_WITH_CONCERNS with the numbers — do not restore the 8-line
+  crop."*
+
+### 6.1 Probe changes (`scripts/r261_total_question_probe.py`)
+
+- **D7 crops.** `crop()` (the old `tail_lines`-of-8 table crop) is replaced by `crop_table(path,
+  page, band, line)` — the whole previous (table) band, through the candidate's own line, no
+  tail-line constant — and a new `crop_union(path, page, lines)` — the union box of a set of
+  lines, used for the total-of-totals level (the four port-total lines plus the `1,951,264`
+  line). Both keep the probe's existing render `resolution=150` and the 4-unit padding.
+- **Closed output, no `note`.** `ask(png, prompt_text)` now returns one of `"yes" | "no" |
+  "cannot_tell" | "UNPARSED" | "HTTP<code>"`. A reply is accepted only if it parses as JSON whose
+  **only** key is `answer` with one of the three values; anything else (extra keys, a different
+  value, unparseable JSON) is recorded as `UNPARSED`. Applies to both wordings.
+- **Second wording, `PROMPT2`** — the brief's draft verbatim, with the same closed-JSON-only
+  instruction appended (no `note`), per the resolutions ("closed output... for BOTH wordings").
+  The worker is not given the operands' values; only `{value}` (the candidate under test) is
+  substituted.
+- The per-case tuple built in the `cases` loop now carries the candidate's own `Line` object
+  (`ln`) instead of the whole following band (`nxt`), so `crop_table` can crop through exactly
+  that line rather than the whole next band. **This does not change which cases are collected**
+  (verified below, § 6.2): still 12 candidates, 5 matches, same population as Addendum 2.
+
+### 6.2 Structural smoke test (`P1_REPEAT=1`, not the recorded evidence)
+
+Run first, to catch a crop/parsing defect before spending the 3-repeat budget:
+
+```
+ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"') \
+  P1_REPEAT=1 env -u BAML_LIVE .venv/bin/python scripts/r261_total_question_probe.py
+```
+
+```
+--- P3: total-of-totals wording, D7 union crop ---
+P3 grand  1,951,264 -> yes
+P3 null     374,904 -> yes
+P3 null     737,289 -> yes
+P3 null     660,363 -> no
+P3 null     178,708 -> cannot_tell
+--- P1 on the D7 table-level crop: 12 numeric candidates; 5 exact-sum matches ---
+MATCH cbh-     p0 t1      374,904 -> yes
+MATCH cbh-     p0 t3      737,289 -> yes
+MATCH cbh-     p0 t5      660,363 -> yes
+MATCH cbh-     p0 t7      178,708 -> yes
+null  who-wfa  p0 t2            7 -> no
+null  who-wfa  p0 t3            1 -> no
+null  who-wfa  p0 t4            7 -> no
+MATCH who-wfa  p0 t4           21 -> no
+null  who-wfa  p1 t2            7 -> no
+null  who-wfa  p1 t3            1 -> no
+null  who-wfa  p1 t4            7 -> no
+null  who-wfa  p2 t1            7 -> no
+```
+
+Population confirmed unchanged by the `ln`-vs-`nxt` refactor: 12 candidates, 5 matches (same as
+Addendum 2). Already visible here (n=1, not the decision evidence): two of the four P3 null asks
+answer `yes`.
+
+### 6.3 Recorded run (`P1_REPEAT=3`, the decision evidence)
+
+```
+ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"') \
+  P1_REPEAT=3 env -u BAML_LIVE .venv/bin/python scripts/r261_total_question_probe.py
+```
+
+```
+--- P3: total-of-totals wording, D7 union crop ---
+P3 grand  1,951,264 -> yes yes cannot_tell
+P3 null     374,904 -> yes yes yes
+P3 null     737,289 -> yes yes yes
+P3 null     660,363 -> yes yes no
+P3 null     178,708 -> cannot_tell cannot_tell cannot_tell
+--- P1 on the D7 table-level crop: 12 numeric candidates; 5 exact-sum matches ---
+MATCH cbh-     p0 t1      374,904 -> yes yes yes
+MATCH cbh-     p0 t3      737,289 -> yes yes yes
+MATCH cbh-     p0 t5      660,363 -> yes yes yes
+MATCH cbh-     p0 t7      178,708 -> yes yes yes
+null  who-wfa  p0 t2            7 -> no no no
+null  who-wfa  p0 t3            1 -> no no cannot_tell
+null  who-wfa  p0 t4            7 -> no no no
+MATCH who-wfa  p0 t4           21 -> no no no
+null  who-wfa  p1 t2            7 -> no no no
+null  who-wfa  p1 t3            1 -> no no no
+null  who-wfa  p1 t4            7 -> no no no
+null  who-wfa  p2 t1            7 -> no no no
+```
+
+Both runs (§ 6.2, § 6.3) were run serially, nothing else compiling at the same time
+(corpus-runs-are-serial); macOS has no `timeout` and none was used. `ANTHROPIC_API_KEY` was never
+printed; it was read via the prefix shown and passed only as the `x-api-key` HTTPS header inside
+`ask()`.
+
+### 6.4 P3 verdict — FAILS the decision rule; the total-of-totals level is DROPPED
+
+Applying § 6.0's rule to § 6.3's recorded answers:
+
+| requirement | measured | met? |
+|---|---|---|
+| `1,951,264` gets *yes* ×3 | `yes yes cannot_tell` | **NO** |
+| no null gets *yes* | `374,904` -> `yes yes yes`; `737,289` -> `yes yes yes`; `660,363` -> `yes yes no`; `178,708` -> `cannot_tell` ×3 | **NO** — 3 of 4 nulls draw at least one *yes*, two of them *yes* ×3 |
+
+Both conjuncts fail, not just one: the grand total itself is not stably *yes*, **and** three of
+the four port totals are themselves answered *yes* to "is {value} the grand total?" when shown
+the same union-box image. Per the rule, this is **not reworded**. The total-of-totals level is
+dropped from this loop: cbh's `1,951,264` is **not** bound by this loop's mechanism, and
+`tab:totalOf`/the total-of-totals matching branch (spec § 2.2 second bullet) is **not
+implemented** — only table-level `PrintedTotal` binding (the four port totals) proceeds to Tasks
+2-4. cbh is therefore **not accepted** by this loop (consistent with spec § 0's framing that
+acceptance was never guaranteed, and with task-1-brief step 2's "cbh is then not accepted by this
+loop (Task 7 records why)").
+
+**Reading, not a rule revision.** The failure mode is informative for whoever later tries a
+second wording: asked over an image that shows all five numbers at once, the model appears to
+answer "is {value} *a* total shown on the page" rather than "is {value} *the sum of* the totals
+shown on the page" — every port total scores close to the grand total itself (2 of 4 at a clean
+*yes* ×3, one split 2-1, only the smallest, `178,708`, drawing `cannot_tell` ×3 instead of a
+*yes*). This is a wording/discrimination problem, not an arithmetic one — arithmetic was never
+asked to do anything here; P3 tests the worker alone. No rewording was attempted in this loop
+(the rule forbids it).
+
+### 6.5 P1-on-D7 verdict — HOLDS
+
+Applying § 6.0's rule to § 6.3's recorded answers:
+
+| requirement | measured | met? |
+|---|---|---|
+| all 4 port totals *yes* ×3 | `374,904`->`yes yes yes`, `737,289`->`yes yes yes`, `660,363`->`yes yes yes`, `178,708`->`yes yes yes` | **YES** |
+| `21` gets *no* | `no no no` | **YES** |
+| no null gets *yes* | all 7 nulls: `no no no` / `no no cannot_tell` / `no no no` / `no no no` / `no no no` / `no no no` / `no no no` — zero `yes` across 21 asks | **YES** |
+
+**P1 holds on the D7 table-level crop** (the whole previous band through the candidate line,
+replacing the old 8-line-tail crop). The result reproduces Addendum 2's P1 finding (4/4 TRUE at
+*yes* ×3, the FALSE at *no* ×3, zero *yes* among the nulls) on the differently-cropped image, so
+the table-level wording and crop are not sensitive to the tail-line constant removal — the D7
+table-level crop is confirmed usable for Tasks 2-4, and the 8-line crop is **not** restored.
+
+### 6.6 CONTROL (in place of FALSIFICATION — a probe script, not src/, has nothing to falsify)
+
+The null asks ARE the control for both probes, by construction (brief step 2/3): a number that
+the arithmetic would never bind, asked the same question as a true candidate, to see whether the
+worker discriminates by reading or by surface pattern.
+
+- **P1's control (7 asks, D7 table crop):** every null — small counts and a percentage-column
+  member (`7`, `1`, `7`, `7`, `1`, `7`, `7` across who-wfa's three pages) — answers `no` or
+  `cannot_tell`, never `yes`, across 21 asks. The worker does not mistake an arbitrary number
+  standing near a table for that table's total.
+- **P3's control (4 asks, D7 union crop) is the one that FAILS**, and that failure is the
+  finding: the four port totals, each itself a true table-level total and each visible in the
+  same cropped image as `1,951,264`, are answered `yes` to "is {value} the grand total?" at a
+  combined 8 *yes* / 1 *no* / 3 `cannot_tell` across 12 asks — a higher *yes* rate than the
+  target `1,951,264` itself (`yes yes cannot_tell`, 2/3). The control is what shows the wording
+  does not discriminate "a total" from "the total of the totals" on this image.
+
+### 6.7 Doc impact of this section
+
+**None.** No vocabulary or published term changes; § 0's header `Doc impact: none` (set by Task
+0) continues to describe this whole evidence file, including this section — this task adds no
+`tab:` term, and the spec's `tab:totalOf`/total-of-totals vocabulary (design § 4) is not
+implemented in this loop (§ 6.4).
