@@ -1029,6 +1029,33 @@ def _remove_escalation_record(graph: Graph, page_doc: URIRef, idx: int) -> None:
         graph.remove((cand, None, None))
 
 
+def _printed_total_bands(g2: Graph, r2_doc: URIRef, tables: set, nbands: int) -> list[int]:
+    """R261 ruling R7: the pass-2 bands whose bound `tab:PrintedTotal` is `tab:totalOf` one of
+    `tables` — ascending.
+
+    KEYED BY THE GRAPH LINK, never by adjacency (an `i + 1` rule would be geometry, CLAUDE.md § 8):
+    a total joins its table by `tab:totalOf`, and joins its band by the decision that produced it,
+    `?d dec:produced ?pt`, whose URI is `decisionlog`'s own minting `{r2_doc}#region{j}-d{n}` —
+    read back exactly as `_verdict_decision` reads it (the trailing `-d` keeps band 1 from
+    matching band 10). Gate classification: PROCEDURAL graph glue over facts the compile already
+    decided; it decides nothing and carries no constant."""
+    out = set()
+    for pt, t in g2.subject_objects(TAB.totalOf):
+        if t not in tables:
+            continue
+        for d in g2.subjects(DEC.produced, pt):
+            for j in range(nbands):
+                if str(d).startswith(f"{r2_doc}#region{j}-d"):
+                    out.add(j)
+    return sorted(out)
+
+
+def _ignored_subjects(page_doc: URIRef, idx: int) -> tuple[URIRef, URIRef]:
+    """The two subjects `holon.emit_ignored_band` mints for band `idx` — OUR OWN minting."""
+    band = URIRef(f"{page_doc}#ignored{idx}")
+    return band, URIRef(f"{band}-source")
+
+
 def _band_reading_subgraph(g: Graph, page_doc: URIRef, idx: int) -> Graph:
     """ONE band's READING DECISION RECORD out of a whole-page compile (final-review C1).
 
@@ -1586,6 +1613,50 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             else:
                 notes.append(f"page {p} band {idx}: section-repair pass-2 re-read still "
                              f"escalated ({r2.reason}); pass-1 report kept")
+        # R261 RULING R7 — A TOTAL BOUND ONLY IN PASS 2 COMES WITH ITS TABLE. A printed total binds
+        # only against a table its previous band ASSERTED (`compile._bind_printed_totals`), so
+        # where pass 1 escalated that table (cbh: all four), the total can bind in pass 2 alone —
+        # and the loop above carries back the CANDIDATE bands only. Measured before this block:
+        # with an always-yes reader, cbh's pass 2 minted 4 tab:PrintedTotal and the document
+        # graph held 0. Each band whose pass-2 total is `tab:totalOf` a table adopted ABOVE is
+        # adopted the way a candidate is: its pass-1 record withdrawn (the escalation candidate
+        # and — the reviewer's seam (1) — the IgnoredBand, whose `etkl:bandText` carries the
+        # same number, so keeping it would carry that ink twice), its pass-2 reading log carried
+        # in (which brings the `printed_total` decision and, by `dec:produced`, the PrintedTotal
+        # itself), any pass-2 product of a non-empty remainder carried in, its report swapped,
+        # and its verdict superseding pass 1's — seam (2).
+        #
+        # REFUSED, with a note, where the withdrawal would not be clean: pass 1 asserted a TABLE
+        # in this band (withdrawing a table is § 1g's withdraw-or-refuse question, not this
+        # block's), or something points INTO its pass-1 IgnoredBand (a span donation names it).
+        # NOT added to `repaired`: that tuple names the bands section repair RE-READ, and a caller
+        # feeds it back as `section_repair_bands`, which this band was never part of.
+        adopted_tables = {rep2.regions[i].table_uri for i in candidates
+                          if new_regions[i] is rep2.regions[i]}
+        for j in _printed_total_bands(rep2.graph, r2_doc, adopted_tables, len(rep2.regions)):
+            if j in candidates or j >= len(new_regions):
+                continue
+            ign, ign_src = _ignored_subjects(page_doc_uri(p), j)
+            if pages[p].regions[j].table_uri is not None or any(graph.subjects(None, ign)):
+                notes.append(f"page {p} band {j}: pass-2 printed total not adopted — its pass-1 "
+                             f"reading cannot be withdrawn cleanly")
+                continue
+            _remove_escalation_record(graph, page_doc_uri(p), j)
+            graph.remove((ign, None, None))
+            graph.remove((ign_src, None, None))
+            graph += _band_reading_subgraph(rep2.graph, r2_doc, j)
+            r2j = rep2.regions[j]
+            if r2j.table_uri is not None:
+                graph += _band_subgraph(rep2.graph, r2j.table_uri)
+            for s in _ignored_subjects(r2_doc, j):
+                for pred, o in rep2.graph.predicate_objects(s):
+                    graph.add((s, pred, o))
+            v1 = _verdict_decision(graph, page_doc_uri(p), j)
+            v2 = _verdict_decision(rep2.graph, r2_doc, j)
+            if v1 is not None and v2 is not None:
+                graph.add((v2, DEC.supersedes, v1))
+            new_regions[j] = r2j
+            adopted_any = True
         if adopted_any:
             # the page's score is recomputed HONESTLY from the per-band token ledger the
             # compile now carries (RegionReport.tokens_*): the adopted bands' tokens moved

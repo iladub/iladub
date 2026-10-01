@@ -155,11 +155,10 @@ VACUITY_REGISTRY = {
         "mints tab:PrintedTotal ships in Tasks 3-4 of the same plan. Expected to go live on "
         "cbh-stem once the binding ships; deregister then. STILL IDLE AFTER TASK 4 (2026-10-01), "
         "measured: the emitter and binding ship, but (1) no reading is recorded until Task 5, "
-        "and with no recording the reader is no claim (ruling R3), so nothing binds offline; "
-        "and (2) on cbh p0 the port totals bind only in section repair's pass 2 (pass 1 "
-        "escalates the tables, REGION_TILING_FAILED), and document.compile_document carries "
-        "back only the repaired candidate bands, so with an always-yes reader pass 2 mints 4 "
-        "tab:PrintedTotal and the document graph holds 0. Deregister when a document-scope "
+        "and with no recording the reader is no claim (ruling R3), so nothing binds offline. "
+        "(A second cause, the cbh totals binding only in section repair's pass 2 and never "
+        "reaching the document graph, was closed by ruling R7 in fix round 1: with an "
+        "always-yes reader the cbh document graph now holds 4.) Deregister when a document-scope "
         "graph first holds one."),
 }
 

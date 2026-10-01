@@ -1782,7 +1782,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
 
 def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
                             bad_total_in: int | None = None,
-                            strip_separators: bool = False) -> dict:
+                            strip_separators: bool = False,
+                            lone_total_offset: float | None = None) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1894,6 +1895,12 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
             total_ry = grid_bot + 8
             c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
             c.drawString(cols[3] + 4, y(total_ry), total)
+        if lone_total_offset is not None:
+            # R261 fix round 1: the REAL cbh shape — the Volume sum printed ALONE (no "TOTAL"
+            # label), `lone_total_offset` pt below the grid's closing rule, so `detect_bands`
+            # gives it a band of its own after the section's. Default None: byte-identical.
+            total = f"{sum(int(r[3].replace(',', '')) for r in rows):,}"
+            c.drawString(cols[3] + 4, y(grid_bot + lone_total_offset), total)
         sections.append({"key": keys[i], "notice": notices[i], "rows": rows, "total": total})
     c.save()
     return {"sections": sections, "header_names": header_names, "cols": cols}
