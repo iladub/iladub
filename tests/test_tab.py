@@ -447,6 +447,13 @@ def test_printed_total_two_tables_fails():
     assert "PrintedTotalShape" in t
 
 
+def test_printed_total_totalof_not_table_fails():
+    """tab:totalOf sh:class tab:Table (ruling R9) — what it binds must be a tab:Table."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-totalof-not-table-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
 def test_printed_total_missing_bbox_fails():
     """tab:hasBBox sh:minCount 1 / sh:maxCount 1, sh:class tab:BBox."""
     c, t = _v(os.path.join(TST, "tab-printed-total-no-bbox-leak.ttl"))

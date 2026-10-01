@@ -123,19 +123,64 @@ def test_the_key_is_text_facts_only_and_namespaced_by_the_question():
     assert list(inspect.signature(P.question_key).parameters) == ["value", "listing"]
 
 
+def _band(texts):
+    """A minimal Band whose lines are one-word lines of `texts`, in order — for `listing_of`
+    tests that need a multi-line band without a full PDF compile."""
+    from iladub.etkl.bands import Band
+    from iladub.etkl.geometry import Line, Word
+    lines = tuple(Line((Word(t, 10.0, 60.0, 10.0 * i, 10.0 * i + 8.0),), 10.0 * i, 10.0 * i + 8.0)
+                 for i, t in enumerate(texts))
+    return Band(lines, 0.0, 10.0 * len(texts))
+
+
+def test_listing_includes_the_candidates_own_prior_band_lines():
+    """Final review finding, item 2: the crop spans `table_band.top` through `line.bottom` (D7),
+    so it shows the candidate's OWN band's lines before the candidate too, when the candidate sits
+    at `line_no > 0` in its own band — `listing_of` must include them, and the key must move when
+    one of them changes."""
+    table_band = _band(["Header"])
+    band = _band(["Note: subject to change", "2,700"])
+    line_no = 1
+    line = band.lines[line_no]
+    listing = P.listing_of(table_band, band, line_no, line)
+    assert listing.splitlines() == ["L0: Header", "L1: Note: subject to change", "L2: 2,700"]
+    key = P.question_key("2,700", listing)
+
+    other_band = _band(["Note: SUBJECT TO CHANGE", "2,700"])
+    other_listing = P.listing_of(table_band, other_band, line_no, other_band.lines[line_no])
+    assert P.question_key("2,700", other_listing) != key
+
+
+def test_listing_at_line_zero_is_unchanged_by_the_fix():
+    """The only case the corpus has recorded (cbh's 4 printed-total candidates are all at line
+    index 0, per the final review): `band.lines[:0]` is `()`, so the listing — and therefore the
+    key — is byte-identical to the pre-fix listing (`table_band.lines + [line]`). This is the
+    offline proof the final review asked for in place of a corpus recompile."""
+    table_band = _band(["Site Tonnes Grade", "Alpha 1,200 APW"])
+    band = _band(["2,700"])
+    line_no = 0
+    line = band.lines[line_no]
+    new_listing = P.listing_of(table_band, band, line_no, line)
+    pre_fix_listing = "\n".join(f"L{k}: {P._line_text(ln)}"
+                                for k, ln in enumerate(list(table_band.lines) + [line]))
+    assert new_listing == pre_fix_listing
+
+
 def test_a_recorded_reading_replays_and_an_out_of_set_one_is_no_claim(
         tmp_path, _fresh_cache_and_readings):
     pdf = _pdf(tmp_path, "printed_total_pdf")
     from iladub.etkl.compile import page_bands
     bands = page_bands(pdf, 0)
-    table, line = bands[2], bands[3].lines[0]
-    key = P.question_key("2,700", P.listing_of(table, line))
+    table, band, line_no = bands[2], bands[3], 0
+    line = band.lines[line_no]
+    key = P.question_key("2,700", P.listing_of(table, band, line_no, line))
     path = _fresh_cache_and_readings / f"{key}.json"
     path.write_text(json.dumps({"answer": "yes"}), encoding="utf-8")
-    got = P.ask_printed_total(pdf, 0, table, line, "2,700", P.default_reader())
+    got = P.ask_printed_total(pdf, 0, table, band, line_no, line, "2,700", P.default_reader())
     assert got == P.PrintedTotalReading(answer="yes")
     path.write_text(json.dumps({"answer": "probably"}), encoding="utf-8")
-    assert P.ask_printed_total(pdf, 0, table, line, "2,700", P.default_reader()) is None
+    assert P.ask_printed_total(pdf, 0, table, band, line_no, line, "2,700",
+                               P.default_reader()) is None
 
 
 def test_no_recording_and_not_live_is_no_claim_and_never_builds_the_live_reader(
@@ -147,7 +192,7 @@ def test_no_recording_and_not_live_is_no_claim_and_never_builds_the_live_reader(
     def _boom(*a, **k):
         raise AssertionError("the live reader was constructed")
     monkeypatch.setattr(P, "BamlPrintedTotalReader", _boom)
-    assert P.ask_printed_total(pdf, 0, bands[2], bands[3].lines[0], "2,700",
+    assert P.ask_printed_total(pdf, 0, bands[2], bands[3], 0, bands[3].lines[0], "2,700",
                                P.default_reader()) is None
 
 

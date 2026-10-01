@@ -1047,7 +1047,8 @@ def _bind_printed_totals(pdf_path: str, page_number: int, doc: URIRef, idx: int,
         if reader is None:
             reader = _pt.default_reader()
         word = line.words[0]
-        reading = _pt.ask_printed_total(pdf_path, page_number, table_band, line, word.text, reader)
+        reading = _pt.ask_printed_total(pdf_path, page_number, table_band, band, line_no, line,
+                                        word.text, reader)
         if reading is None:
             continue                                   # no claim (R3): nothing recorded
         facts = (f"table level: the {len(cells)} numeric entry cells of column {col} of "
@@ -1148,13 +1149,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             asserted_total += _pt_a
             escalated_total += _pt_e
             if not band.lines:
-                # D6: every line bound, so there is no band left to read. NO band node is minted
+                # D6: every line bound, so there is no band left to read. No TABLE node is minted
                 # (spec § 2.4); the band still records its one verdict (`document._verdict_decision`
                 # reads exactly one per band) and appends exactly ONE report, M2's invariant —
                 # `asserted` (its ink is carried, by the PrintedTotal) with `table_uri` None (it
                 # asserted no table, so nothing downstream may treat it as one: MEASURE (a)).
                 # Unit-marker ink is carried as the NON_TABLE branch carries it, touching no
-                # counter.
+                # counter — but WHEN unit_markers are present, `_emit_unit_markers` DOES write a
+                # `#region{idx}` node (as its `table_uri` argument, below): band and table are two
+                # different nodes, and only the latter stays unminted here (final review item 3 —
+                # the prior wording of this comment overstated "NO band node is minted").
                 if getattr(band, "unit_markers", ()):
                     _emit_unit_markers(graph, URIRef(f"{doc}#region{idx}"), band, None)
                 brec.record("verdict", ["asserted", "escalated", "ignored"], "asserted",

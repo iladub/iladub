@@ -159,3 +159,101 @@ def test_the_denominator_moves_by_exactly_the_two_bound_words(pdf, monkeypatch):
     after = _doc(monkeypatch, path, _Yes())
     b, a = before.pages[0], after.pages[0]
     assert (a.asserted - b.asserted, a.escalated - b.escalated) == (2, 0)
+
+
+# --------------------------------------------------------------------------------------- R7
+# REFUSAL: "pass 1 asserted a TABLE in this band" (document.py's R7 block, `if
+# pages[p].regions[j].table_uri is not None or any(graph.subjects(None, ign)): ... continue`,
+# first disjunct). Final review item 5.
+#
+# CONSTRUCTED, not assumed: a band whose SOLE content, read on its own, would be band 1's lone
+# total (R7's usual shape) is instead given extra ruled content directly below it, tight enough
+# that `detect_bands` keeps it ONE band. `_bind_printed_totals` runs only against an ASSERTED
+# previous band (compile.py:1027-1029), so in PASS 1 — where section 0's table ESCALATES
+# (REGION_TILING_FAILED, same as `pdf` above) — nothing tries to bind band 1's lone number, and
+# the WHOLE band (lone total + the extra rows) tiles as its OWN small table on its own merits,
+# asserting with a `table_uri`. In PASS 2, section 0's table is repaired and ASSERTS, so
+# `_bind_printed_totals` now runs FIRST for band 1 (compile.py:1140-1141, before classify), finds
+# the lone total, matches the arithmetic, and (with a yes reader) carves it out as a
+# `tab:PrintedTotal` — but `document.py`'s R7 adoption must refuse to carry that pass-2 reading
+# back, because pass 1's band 1 is not a candidate (its own table asserted there, not escalated)
+# and withdrawing it would destroy that table.
+def _dirty_total_band_pdf(path: str) -> None:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from tests.etkl.fixtures import _draw_section
+    H = letter[1]
+
+    def y(top):
+        return H - top
+
+    cols = [72, 172, 292, 392, 492]
+    rows0 = [("10097", "15:01", "Brahman", "30,000"), ("10076", "14:38", "CBH", "50,000"),
+             ("10118", "11:28", "Cargill", "48,904")]
+    rows1 = [("20011", "09:15", "Viterra", "40,000"), ("20032", "10:47", "CBH", "35,500"),
+             ("20050", "13:02", "GrainCorp", "52,600")]
+    c = canvas.Canvas(path, pagesize=letter)
+    c.setFont("Courier", 9)
+    STEP = 280.0
+    grid_bot0 = _draw_section(c, H, 0, "GERALDTON", "BERTH MAY BE UNAVAILABLE 2000HRS", rows0,
+                              cols, doubled_edges=True, extra_hrule_offsets=(22,))
+    vol_sum0 = sum(int(r[3].replace(",", "")) for r in rows0)
+    c.drawString(cols[3] + 4, y(grid_bot0 + 30), f"{vol_sum0:,}")
+    # the EXTRA ruled content, tight pitch (18pt) below the lone total -- same band, and
+    # enough for `classify` to tile band 1 as its own RECORD_TABLE (2 columns, 1 header row).
+    c.drawString(cols[0] + 4, y(grid_bot0 + 48), "Qty")
+    c.drawString(cols[1] + 4, y(grid_bot0 + 48), "Unit")
+    c.drawString(cols[0] + 4, y(grid_bot0 + 66), "999")
+    c.drawString(cols[1] + 4, y(grid_bot0 + 66), "APW")
+    grid_bot1 = _draw_section(c, H, STEP, "KWINANA", "VESSEL DELAYED PENDING SURVEY", rows1,
+                              cols, doubled_edges=True, extra_hrule_offsets=(22,))
+    vol_sum1 = sum(int(r[3].replace(",", "")) for r in rows1)
+    c.drawString(cols[3] + 4, y(grid_bot1 + 30), f"{vol_sum1:,}")
+    c.save()
+
+
+@pytest.fixture
+def dirty_pdf(tmp_path):
+    pytest.importorskip("pdfplumber"); pytest.importorskip("reportlab")
+    p = tmp_path / "dirty.pdf"
+    _dirty_total_band_pdf(str(p))
+    return str(p)
+
+
+def test_the_dirty_fixture_asserts_band_one_as_its_own_table_in_pass_one(dirty_pdf):
+    """The precondition, measured: band 0 escalates (REGION_TILING_FAILED, a repair candidate
+    exactly as `pdf`'s band 0 does) and band 1 — the lone total PLUS the extra ruled rows —
+    tiles and ASSERTS on its own, with a `table_uri`, because nothing tries to bind its total in
+    pass 1 (band 0 never asserted)."""
+    from iladub.etkl.compile import compile_tables
+    rep = compile_tables(dirty_pdf, 0)
+    regions = rep.regions
+    assert (regions[0].verdict, regions[0].reason) == ("escalated", "REGION_TILING_FAILED")
+    assert regions[1].verdict == "asserted" and regions[1].table_uri is not None
+    assert (regions[2].verdict, regions[2].reason) == ("escalated", "REGION_TILING_FAILED")
+
+
+def test_the_r7_refusal_keeps_band_one_a_table_and_mints_no_printed_total(dirty_pdf, monkeypatch):
+    """The refusal itself: section repair adopts band 0's table (candidate), and pass 2 binds
+    band 1's lone total against it — but band 1 is not a candidate (`pages[p].regions[1]`
+    already carries a `table_uri` from pass 1), so document.py's R7 block refuses to adopt it,
+    with a note, and band 1's pass-1 table survives UNTOUCHED: no `tab:PrintedTotal` is `totalOf`
+    band 0's table, no `dec:supersedes` edge lands on band 1's verdict, and its own `table_uri`
+    is unchanged. Band 3 (section 1's OWN lone total, which has no interfering content) binds
+    normally — the control that shows the refusal is specific to band 1, not a global stall."""
+    doc = _doc(monkeypatch, dirty_pdf, _Yes())
+    assert doc.repaired_bands == ((0, 0), (0, 2))        # only the two escalated tables repair
+    assert any("band 1: pass-2 printed total not adopted" in n for n in doc.notes), doc.notes
+    g = doc.graph
+    r0 = doc.pages[0].regions[0]
+    pts = list(g.subjects(RDF.type, URIRef(TAB + "PrintedTotal")))
+    assert pts and all(g.value(pt, URIRef(TAB + "totalOf")) != r0.table_uri for pt in pts)
+    r1 = doc.pages[0].regions[1]
+    assert r1.verdict == "asserted" and r1.table_uri is not None
+    v1 = _verdict(g, P0, 1)
+    assert v1 is not None and _chosen(g, v1) == "asserted"
+    assert not list(g.subjects(URIRef(DEC + "supersedes"), v1))
+    # band 1's own IgnoredBand was never minted (it asserted a table in pass 1) and the pass-2
+    # reading log for band 1 never rode in either.
+    assert (URIRef(f"{P0}#ignored1"), None, None) not in g
+    assert not list(g.subjects(None, URIRef(f"{R2}#region1")))

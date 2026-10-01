@@ -1,0 +1,21 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/tab-demo#> .
+
+# R261 negative for tab:PrintedTotalShape's tab:totalOf constraint (sh:class tab:Table, ruling R9):
+# a printed total that binds something that is not a tab:Table.
+ex:pt a tab:PrintedTotal ;
+    tab:cellText "374,904" ;
+    tab:aggregates ex:c1 , ex:c2 ;
+    tab:totalOf ex:notatable ;
+    tab:hasBBox ex:bbox ;
+    tab:onPage 3 .
+ex:bbox a tab:BBox .
+ex:notatable a tab:Cell .
+
+ex:d a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:pt ;
+    dec:chosen ex:opt-total .
+ex:opt-total rdfs:label "total" .

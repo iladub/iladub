@@ -753,3 +753,23 @@ diagnostic over a committed instrument's compile, not a committed instrument its
 
 **None.** No vocabulary or published term changes in this task; § 0's header `Doc impact: none`
 continues to describe this whole evidence file, including this section.
+
+### 7.8 ✎ 2026-10-01 (final whole-branch review, item 6) — the sweep script is now committed
+
+§ 7.2 and § 7.6 above are left untouched (this file is append-only after loop close); this section
+only corrects the record going forward. `scratchpad/r261_task6_sweep.py` — the script § 7.2's
+"disjointness control" measurement and § 7.6's command both ran — was untracked, and residue
+[[R283]] cited it as its sole evidence while the controller's own handoff marked the repo-root
+`scratchpad/` for deletion. A residue whose cited measurement lives only in a file about to be
+deleted is not reproducible, so the SAME script, byte-identical bar its docstring (which now notes
+the move), is committed at `scripts/r261_task6_sweep.py` and [[R283]] is repointed at it.
+
+**§ 7.2's own framing is also corrected here, not there.** "Disjointness control" reads as if a
+SHACL/membrane guard shipped and this section reports it holding; none did. There is no
+`tab:SectionTotal`/`tab:PrintedTotal` disjointness shape in `vocab/shapes/tab-shapes.ttl` —
+confirmed by `grep -n disjoint vocab/shapes/tab-shapes.ttl vocab/ontology/tab.ttl`, no match. What
+§ 7.2 measured is a PROPERTY of the two emitters' shared provenance-URI minting convention
+(`holon.py:126-127`, `holon.py:691-692`), checked by a standalone script, not enforced by any
+membrane constraint. [[R283]]'s own "what would close it" column already says the right thing — a
+document or fixture that gives the check something to refuse — but its opening sentence has read,
+uncorrected, as though a guard exists. See [[R283]] for the repointed citation.

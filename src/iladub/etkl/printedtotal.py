@@ -109,11 +109,16 @@ def _line_text(line) -> str:
     return " ".join(w.text for w in sorted(line.words, key=lambda w: w.x0))
 
 
-def listing_of(table_band, line) -> str:
-    """The question's text facts: every line the crop shows — the table band's lines, then the
-    candidate's — numbered `L<k>`, words left to right. PROCEDURAL — a rendering of the cropped
-    lines' own words; it decides nothing. It keys the recording; it is not sent to the model."""
-    lines = list(table_band.lines) + [line]
+def listing_of(table_band, band, line_no, line) -> str:
+    """The question's text facts: every line the crop shows — the table band's lines, THEN the
+    candidate's own band's lines 0..line_no-1 (the crop spans `table_band.top` through
+    `line.bottom`, so it shows them too when the candidate sits at `line_no > 0` in its own band),
+    THEN the candidate's line itself — numbered `L<k>`, words left to right. PROCEDURAL — a
+    rendering of the cropped lines' own words; it decides nothing. It keys the recording; it is not
+    sent to the model. `band.lines[:line_no]` is `()` when `line_no == 0`, so this reduces to the
+    pre-fix listing exactly in that case — the only case the corpus has recorded (final review
+    finding, item 2)."""
+    lines = list(table_band.lines) + list(band.lines[:line_no]) + [line]
     return "\n".join(f"L{k}: {_line_text(ln)}" for k, ln in enumerate(lines))
 
 
@@ -189,10 +194,13 @@ def default_reader() -> RecordedPrintedTotalReader:
         live=BamlPrintedTotalReader() if baml_printed_total_available() else None)
 
 
-def ask_printed_total(pdf_path: str, page_number: int, table_band, line, value: str,
+def ask_printed_total(pdf_path: str, page_number: int, table_band, band, line_no: int, line,
+                      value: str,
                       reader: "PrintedTotalReader | None") -> "PrintedTotalReading | None":
     """One ask per arithmetic match: the D7 crop, the printed value as the page prints it, and
-    the listing.
+    the listing. `band` is the candidate's OWN band (`totals.candidate_lines` was run over it) and
+    `line_no` is the candidate's index within `band.lines` — both needed so `listing_of` can
+    include the candidate band's own lines before the candidate (final review finding, item 2).
 
     Returns None — NO CLAIM, never a fallback (ruling R3) — in four cases: no reader; the reader
     (or the render) raised, which includes an answer outside the closed set, since
@@ -203,7 +211,7 @@ def ask_printed_total(pdf_path: str, page_number: int, table_band, line, value: 
         return None
     try:
         crop = crop_table(pdf_path, page_number, table_band, line)
-        reading = reader.ask(crop, value, listing_of(table_band, line))
+        reading = reader.ask(crop, value, listing_of(table_band, band, line_no, line))
     except Exception:
         return None
     if not isinstance(reading, PrintedTotalReading):

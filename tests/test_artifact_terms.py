@@ -116,7 +116,14 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # (D2), same pattern as the boxhead pair above. `tab:PrintedTotal` and `tab:totalOf` went
     # into the EXISTING `vocab/ontology/tab.ttl`, so this is the fixtures' count moving, not a
     # second source.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 176
+    # RE-MEASURED 2026-10-01 (final review, ruling R9): 176 -> 177 —
+    # `tests/tab-printed-total-totalof-not-table-leak.ttl`, the negative fixture for
+    # `tab:totalOf`'s new `sh:class tab:Table` constraint. Measured as a SET: added = exactly that
+    # one file, removed = none. It names `tab:` terms plus `dec:`/`rdfs:` full IRIs, same pattern
+    # as the other eight printed-total fixtures. The `sh:class tab:Table` triple went into the
+    # EXISTING `vocab/shapes/tab-shapes.ttl`, so this is the fixtures' count moving, not a second
+    # source.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 177
 
 
 def test_each_file_gets_its_own_named_graph():
