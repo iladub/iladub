@@ -544,3 +544,212 @@ worker discriminates by reading or by surface pattern.
 0) continues to describe this whole evidence file, including this section — this task adds no
 `tab:` term, and the spec's `tab:totalOf`/total-of-totals vocabulary (design § 4) is not
 implemented in this loop (§ 6.4).
+
+---
+
+## § 7. Task 6 — corpus sweep (2026-10-01, append-only)
+
+MEASURED at this branch's HEAD after Tasks 2-5, `8cf306e`. No `src/` change in this task.
+
+### 7.1 C2 — whole-corpus canonical-hash comparison, before vs after
+
+Instrument: identical to § 1.1, `scripts/r261_baseline.py --baseline`, re-run unmodified.
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python scripts/r261_baseline.py --baseline
+```
+
+Output:
+
+| document | score | triples | sha256(canonical NT) |
+|---|---|---|---|
+| cbh-stem-2026-08-03 | 0.9106957424714434 | 13624 | `8ab724dd0efb124ff22f70ad2829800e0f85ca09dcab5accf2ac9affc2bd479e` |
+| graincorp-capacity-2026-08-04 | 1.0 | 5859 | `4a7ffe8598fdb5d2b69f8e98cb228f85ea254132a62c2565ff4b1f0532984f68` |
+| graincorp-stem-2026-07-31 | 0.9995511669658886 | 32422 | `96436660c468a30fc92a7c14af95e8d25dc4dd1bf8b71054c7dc1e616bb3375f` |
+| apple-fy2026q3-statements | 0.9418604651162791 | 6255 | `f8c56e57e59947631d27def1caedaf6591683965af67abbd9dd3e01aeaee8bfc` |
+| bfs-population-bilan-2023 | 0.9021428571428571 | 16778 | `4a176ec3138f99cbcd61db4c736a4fb834ba226e2d6e0aeea5d1616c358a225a` |
+| ons-index-of-services-2026-02 | 0.8684895833333334 | 12454 | `4847d19fbd326488078653dbe1373d6f4d9634359b869f8b77eb6c319b336c08` |
+| who-wfa-boys-zscore-0-5 | 0.9962779156327544 | 12274 | `7931db4b52d368bf32338c5e6773e3c47f79e33919b948e6ea2dd8c7fe41ea18` |
+
+Diffed against § 1.1 line by line: **the other 6 rows are byte-identical** (score, triple count
+and the full 64-hex sha256 all match § 1.1 exactly). Only `cbh-stem-2026-08-03` moved:
+
+| | before (§ 1.1) | after (this task) | delta |
+|---|---|---|---|
+| score | 0.9103232533889468 | 0.9106957424714434 | +0.0003724890824966 |
+| triples | 13427 | 13624 | +197 |
+| sha256 | `f1f7cc6ac43fe62199900160d482d4f6909166300503b4779c56fb9bad136618` | `8ab724dd0efb124ff22f70ad2829800e0f85ca09dcab5accf2ac9affc2bd479e` | moved |
+
+**C2 HOLDS: only cbh moves.** Nothing else is a finding to diagnose. cbh's after-hash and triple
+count are identical to Task 5's own recorded replay figures (commit `8cf306e`: "13624 triples …
+score 0.9106957424714434"), so this sweep reproduces Task 5's result deterministically rather than
+drifting from it between tasks.
+
+### 7.2 Disjointness control — measured, not assumed
+
+No word may be both a `tab:SectionTotal` row cell and a `tab:PrintedTotal` (M3: `_confirm_section_
+total` sees the uncarved bands). Instrument: `scratchpad/r261_task6_sweep.py` (not committed, per
+§ 3's convention — a diagnostic over the committed compile, not a committed instrument itself),
+run over the same compile as § 7.1. For each document: every `tab:SectionTotal` row's `tab:Entry
+Cell`s (joined by `tab:atRow`) and every `tab:PrintedTotal`, both reduced to their own `prov:was
+DerivedFrom` word-provenance URI (`{doc}#p{page}-{int(x0)}-{int(top)}`) — the SAME minting
+convention in both `_emit_entry_cell` (`holon.py:126-127`) and `emit_printed_total`
+(`holon.py:691-692`), so it is the word's own identity key, not a coincidental string match.
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python scratchpad/r261_task6_sweep.py
+```
+
+| document | SectionTotal rows | SectionTotal cells | PrintedTotal nodes | overlap |
+|---|---|---|---|---|
+| cbh-stem-2026-08-03 | 0 | 0 | 4 | 0 |
+| graincorp-capacity-2026-08-04 | 0 | 0 | 0 | 0 |
+| graincorp-stem-2026-07-31 | 0 | 0 | 0 | 0 |
+| apple-fy2026q3-statements | 0 | 0 | 0 | 0 |
+| bfs-population-bilan-2023 | 0 | 0 | 0 | 0 |
+| ons-index-of-services-2026-02 | 0 | 0 | 0 | 0 |
+| who-wfa-boys-zscore-0-5 | 0 | 0 | 0 | 0 |
+
+TOTAL disjointness overlap across the corpus: **0**. TOTAL `tab:PrintedTotal` nodes: **4** (all
+cbh, § 7.4).
+
+**The control is vacuous on this corpus, and that vacuity is itself measured rather than assumed**:
+every one of the 7 documents carries **zero** `tab:SectionTotal` nodes at this HEAD (independently
+reproducing the 2026-09-17 "section-total-is-in-its-own-band" evidence's older `MATCHES=0` finding,
+now re-measured post-box-split, post-R261). With no `SectionTotal` row anywhere in the corpus, the
+two mechanisms have never had a row to collide on; the disjointness property holds by the corpus's
+current shape, not by a case this run actually exercised. It remains the correct control to ship
+(a future document that does carry a repeated-section total is exactly the case it guards), and it
+is reported as a fact, never as proof the two mechanisms are compatible on a case neither has met.
+
+### 7.3 Pins that move — the furnish pin, re-read and RUN, unmodified
+
+**The brief's § 5.4 text and the spec's § 5.4 were written before Task 1's P3 finding** (evidence
+§ 6.4) and predicted `test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_
+the_residue`'s live count would go 1 → 0 — on the assumption that the grand total `1,951,264`
+would bind at the total-of-totals level, turning the residue's `escalated` verdict into `asserted`.
+Task 1 REFUTED that wording (both P3 conjuncts failed: the grand total was not stably `yes`, and
+3 of 4 port totals themselves drew a `yes` to "is {value} the grand total?"), and controller ruling
+R4 dropped total-of-totals binding from this loop entirely (`printedtotal.py`'s docstring, `compile.
+py`'s `_bind_printed_totals` docstring). **Controller ruling R6, handed to this task, corrected the
+stale prediction**: the residue (`1,951,264` + the four-line Note, page-0 band 9,
+`KIND_NOT_SUPPORTED`) stays escalated, and the pin is expected NOT to move. This task follows R6,
+not the brief's superseded § 5.4 text.
+
+Re-read (quoted in full above, § "Context"), then run twice — once as CI would run it, once with
+`-s` to capture the printed facts — one file per process, under bash:
+
+```
+PYTHONPATH="$PWD" .venv/bin/python -m pytest -m corpus -v    tests/etkl/test_escalation_furnish.py
+PYTHONPATH="$PWD" .venv/bin/python -m pytest -m corpus -v -s tests/etkl/test_escalation_furnish.py
+```
+
+```
+tests/etkl/test_escalation_furnish.py::test_corpus_census_every_live_escalating_decision_is_furnished PASSED [ 50%]
+tests/etkl/test_escalation_furnish.py::test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue PASSED [100%]
+================= 2 passed, 8 deselected in 185.44s (0:03:05) ==================
+```
+
+With `-s`, the pin's own print lines:
+
+```
+bfs-population: B(chose escalated)=12 C(and dec:regarding)=12 B-C=0 superseded=6 live=6 requests=6
+cbh-stem: chose escalated=5 superseded=4 region verdicts escalated=1 requests=1
+```
+
+cbh: `chose escalated=5`, `superseded=4`, **`region verdicts escalated=1`, `requests=1`** — the
+live count is **1**, unmoved from Task 0 § 1.2's measurement of the same band. (bfs's own figures
+— `B=12 C=12 superseded=6 live=6 requests=6` — have grown since the test's docstring's
+2026-09-14 snapshot of `B=10 C=10 superseded=4 live=6 requests=6`: more decisions and
+escalations have accumulated in bfs from unrelated loops since, but `live` and `requests` both
+still hold at 6, and the test still passes; recorded here for the next reader, not a finding of
+this task.)
+
+**R6 HOLDS, measured: the pin is unchanged and was NOT re-pinned.** No edit was made to
+`tests/etkl/test_escalation_furnish.py` or to `tests/corpus-manifest.ttl`'s `cor:adjudication` for
+cbh (the latter is out of this task's scope per the task-6-brief's own 4-item checklist, which
+names only the furnish pin — not the adjudication hold; that is left for the acceptance task the
+spec's § 5.5 and this document's § 6 describe).
+
+### 7.4 cbh's cells, dumped before accepting (2026-09-28 rule)
+
+Instrument: `scratchpad/r261_task6_sweep.py`'s `dump_printed_totals` + a per-band `RegionReport`
+dump (Task 0 § 1.2's own method), over the same compile as § 7.1/§ 7.2.
+
+**4 `tab:PrintedTotal` nodes, all page 0, all table level** (`tab:totalOf` an `UNSUPPORTED_TABLE`
+region) — matching Task 0's census (§ 2.1) and Task 5's recorded readings exactly, operand count
+for operand count:
+
+| PrintedTotal | cellText | totalOf | operand (`tab:aggregates`) count | `prov:wasDerivedFrom` |
+|---|---|---|---|---|
+| `#printedtotal2-l0` | `374,904` | `#htable1` | 10 | `#p0-812-209` |
+| `#printedtotal4-l0` | `737,289` | `#htable3` | 16 | `#p0-812-394` |
+| `#printedtotal6-l0` | `660,363` | `#htable5` | 14 | `#p0-812-570` |
+| `#printedtotal8-l0` | `178,708` | `#htable7` | 5 | `#p0-812-666` |
+
+(full operand URI lists in the sweep's raw output, not reproduced here; each count matches Task 0
+§ 2.1's column-member counts exactly — `c13` n=10/16/14/5 — and each `wasDerivedFrom` shares the
+same `x0=812`, descending `top` down the page, consistent with four totals stacked beneath four
+side-by-side tables.)
+
+**Per-band `RegionReport`, page 0** (compare to Task 0 § 1.2 verbatim):
+
+| idx | kind | verdict: before → after | cells | tok_a | tok_e | table_uri |
+|---|---|---|---|---|---|---|
+| 0 | NON_TABLE | ignored → ignored (unchanged) | 0 | 0 | 0 | — |
+| 1 | UNSUPPORTED_TABLE | asserted → asserted (unchanged) | 170 | 190 | 0 | `#htable1` |
+| 2 | NON_TABLE | **ignored → asserted** | 0 | 1 | 0 | None |
+| 3 | UNSUPPORTED_TABLE | asserted → asserted (unchanged) | 268 | 288 | 0 | `#htable3` |
+| 4 | NON_TABLE | **ignored → asserted** | 0 | 1 | 0 | None |
+| 5 | UNSUPPORTED_TABLE | asserted → asserted (unchanged) | 228 | 248 | 0 | `#htable5` |
+| 6 | NON_TABLE | **ignored → asserted** | 0 | 1 | 0 | None |
+| 7 | UNSUPPORTED_TABLE | asserted → asserted (unchanged) | 84 | 104 | 0 | `#htable7` |
+| 8 | NON_TABLE | **ignored → asserted** | 0 | 1 | 0 | None |
+| 9 | UNSUPPORTED_TABLE | **escalated → escalated (UNCHANGED)** | 0 | 0 | 86 | None |
+| 10 | RECORD_TABLE | asserted → asserted (unchanged) | 28 | 35 | 0 | `#table10` |
+| 11 | RECORD_TABLE | asserted → asserted (unchanged) | 8 | 8 | 0 | `#table11` |
+
+Bands 2/4/6/8 — the four port-total lines — flip from `ignored` (Task 0's baseline) to `asserted`
+with `cells=0`, exactly the plan's D6 invariant: the carved word moves into `tokens_asserted` (1
+token each, one lone-numeric-line candidate per band) and `table_uri` stays `None` — nothing was
+built *in* this band; the `PrintedTotal` it produced is carried under the PREVIOUS table's region
+(§ "D5 Binding site" / ruling R7's `tab:totalOf` + `dec:produced` graph links), as the dump above
+shows.
+
+**Where the Note landed.** Band 9 — holding `1,951,264` and the four-line Note — is **byte-for-
+byte identical** to Task 0 § 1.2's row: `escalated`, `cells=0`, `tok_a=0`, `tok_e=86`,
+`table_uri=None`. The Note is not read or carried by this loop (spec § 6, "What is not done"): the
+≈85 gained tokens the spec's § 5.5 names as its concern are still entirely inside this one
+escalated band, ignored rather than read, exactly as the spec's own rationale text states it would
+remain.
+
+### 7.5 Scores, recorded as facts (never an oracle, spec § 5.5)
+
+cbh: **0.9103232533889468 → 0.9106957424714434**. All 6 other documents: scores unchanged
+(identical to § 1.1, down to the last digit — see § 7.1's table). No scoreFloor in
+`tests/corpus-manifest.ttl` is pinned for cbh (`cor:expectedVerdict cor:Unadjudicated`, no
+`cor:scoreFloor` triple — confirmed by reading the manifest entry directly), so no scoreFloor gate
+is at risk from either document's score.
+
+### 7.6 Commands run, in order (corpus-runs-are-serial; `pgrep` checked clear before each)
+
+```
+# C2 -- whole-corpus "after" hash
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python scripts/r261_baseline.py --baseline
+
+# disjointness control + cbh dump
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python scratchpad/r261_task6_sweep.py
+
+# furnish pin, one file per process, under bash -- run twice (plain, then -s for the facts)
+PYTHONPATH="$PWD" .venv/bin/python -m pytest -m corpus -v    tests/etkl/test_escalation_furnish.py
+PYTHONPATH="$PWD" .venv/bin/python -m pytest -m corpus -v -s tests/etkl/test_escalation_furnish.py
+```
+
+All four ran to completion with nothing else compiling at the same time; macOS has no `timeout`
+and none was used. `scratchpad/r261_task6_sweep.py` is NOT committed, per § 3's convention (a
+diagnostic over a committed instrument's compile, not a committed instrument itself).
+
+### 7.7 Doc impact of this section
+
+**None.** No vocabulary or published term changes in this task; § 0's header `Doc impact: none`
+continues to describe this whole evidence file, including this section.
