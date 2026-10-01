@@ -19,7 +19,7 @@ the hand-authored manifest, and CI fails unless the tracked bytes are exactly wh
 | renderer | `scripts/arc_depends.py` (PROCEDURAL — markdown is not a derivation) |
 | gate | `tests/test_arc_landscape.py` (regenerate-and-diff) |
 
-**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 44 criteria by a human and then graded by the membrane: 7 of its 24 edges are grounded by a two-sided ablation and 17 are propositions. This is a monitor, not a scheduler.
+**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 7 of its 24 edges are grounded by a two-sided ablation and 17 are propositions. This is a monitor, not a scheduler.
 
 ## §1 What can be started today — `arc-ready.rq`
 
@@ -55,7 +55,7 @@ stops being grounded. A dependency reachable both by an asserted chain and by on
 containing a proposition is graded `asserted` — the grounded chain exists, and that is
 the fact.
 
-**15 of 44 criteria carry a closure**; for the other 29 no dependency has been read, which is not a claim that they have none.
+**15 of 45 criteria carry a closure**; for the other 30 no dependency has been read, which is not a claim that they have none.
 
 | criterion | asserted — grounded by ablation | proposed — read, not grounded |
 | --- | --- | --- |

@@ -1203,7 +1203,7 @@ prog:rung:tab prog:criterion
     prog:criterion:tab:01 , prog:criterion:tab:02 , prog:criterion:tab:03 ,
     prog:criterion:tab:04 , prog:criterion:tab:05 , prog:criterion:tab:06 ,
     prog:criterion:tab:07 , prog:criterion:tab:08 , prog:criterion:tab:09 ,
-    prog:criterion:tab:10 , prog:criterion:tab:11 .
+    prog:criterion:tab:10 , prog:criterion:tab:11 , prog:criterion:tab:12 .
 
 # --- the nine escalation reasons, in call-site order ------------------------------------
 #
@@ -1469,6 +1469,29 @@ prog:criterion:tab:11 a prog:Criterion ;
     prog:oracleArtifact "tests/test_carriage.py" ;
     prog:oracleTest "tests/test_carriage.py::test_bfs_p5_carries_the_row_label_and_percent_columns" ;
     prog:oracleTest "tests/test_carriage.py::test_bfs_p6_carriage_is_untouched" .
+
+# tab:12 — box-split spec 2026-09-28 § 5 (O2), R-e. Declared `met false` with its corpus
+# oracle under `@pytest.mark.xfail(strict=True)`, the SAME forcing-function shape as tab:11:
+# the strict marker is a SUITE FAILURE the day the split (Task 3) lands and O2 XPASSes, so
+# the criterion cannot stay stale. `prog:oracleTest` names O2 only (three tests, one per
+# assertion the spec lists under O2) — NOT C3, which is a control, not this criterion's
+# oracle (R4). Task 4 Steps 1-3 (this declaration + O2/C3 shipped XFAIL/pass) run right
+# after Task 0, before Task 1 — Steps 4-5 (the flip to `met true`) run after Task 3.
+# FLIPPED 2026-09-30 (Task 4 Steps 4-5): after Tasks 3/3b/3c/3d all three O2 tests were
+# observed `[XPASS(strict)]` (evidence § 5), so the markers were removed and `met` set true
+# in ONE reviewed act, as tab:11 was.
+prog:criterion:tab:12 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "cbh p0 compiles the region at y 681-761 as two tab:RecordTables per spec § 1, counted as CELLS, never the score." ;
+    prog:source "docs/superpowers/specs/2026-09-28-box-split-design.md" ;
+    prog:declaredOn "2026-09-28"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-09-30"^^xsd:date ;
+    prog:retrospective false ;
+    prog:oracleArtifact "tests/test_carriage.py" ;
+    prog:oracleTest "tests/test_carriage.py::test_o2_t1_reads_the_seven_column_boxhead" ;
+    prog:oracleTest "tests/test_carriage.py::test_o2_t2_reads_the_two_column_no_boxhead" ;
+    prog:oracleTest "tests/test_carriage.py::test_o2_note_block_is_not_carried_as_a_cell" .
 
 
 # ================================================== the dependency graph — authored 2026-08-22

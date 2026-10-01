@@ -2347,3 +2347,460 @@ def recognized_pair_plus_escalating_page_pdf(path: str) -> dict:
     _escalating(c)
     c.save()
     return {"cols": cols, "recognized_pages": (0, 1), "escalating_page": 2}
+
+
+# --- box-split (spec 2026-09-28-box-split-design.md § 5, O1 / N1 / N2) ---------------------------
+#
+# All three draw at one line pitch, so every text line on the page falls in ONE `detect_bands`
+# band: the boxes are side by side (or the ink is beside the box) inside a single band, which is
+# the shape the split exists for. Rules are 0.5pt strokes; title bars are non-black FILLS whose
+# bottom sits on the box's top rule, as cbh-stem p0 draws them.
+
+_BOX_PITCH = 14.0      # one text line per ruled row, title bar and note included
+_BOX_LW = 0.5          # stroke width of every drawn rule
+_TITLE_RGB = (0.0, 0.0, 0.502)   # cbh-stem p0's title-bar fill (navy)
+
+
+def _box_row_baseline(y_top: float, i: int) -> float:
+    """Baseline of the text in row `i` below a box's top rule (row -1 is the title bar)."""
+    return y_top - i * _BOX_PITCH - 10.0
+
+
+def _title_bar(c, x0: float, x1: float, y_top: float, title: str) -> None:
+    """A filled, unstroked title bar whose bottom edge is the box's top rule line, with its
+    title words inside it."""
+    c.setFillColorRGB(*_TITLE_RGB)
+    c.rect(x0, y_top, x1 - x0, _BOX_PITCH, stroke=0, fill=1)
+    c.setFillColorRGB(1.0, 1.0, 1.0)
+    c.drawString(x0 + 4.0, _box_row_baseline(y_top, -1), title)
+    c.setFillColorRGB(0.0, 0.0, 0.0)
+
+
+def _line_grid(c, xs, y_top: float, n_rows: int) -> None:
+    """A closed grid of STROKED LINES: a vertical at every x in `xs`, a horizontal at every row
+    boundary, each spanning the full grid."""
+    y_bot = y_top - n_rows * _BOX_PITCH
+    for x in xs:
+        c.line(x, y_top, x, y_bot)
+    for i in range(n_rows + 1):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, xs[-1], y)
+
+
+def two_boxes_one_band_pdf(path: str, titles: bool = True, aside: str | None = None,
+                           left: tuple | None = None) -> dict:
+    """O1: two closed ruled boxes side by side in ONE text band, modelled on cbh-stem p0 band 9.
+
+    Left: a 3-column grid, boxhead + 3 body rows (4 verticals, 5 horizontals). Right: 2 columns
+    x 3 rows, no boxhead (3 verticals, 4 horizontals); its rows share text lines with the left
+    box's first three rows, so row lines are not the unit of the split. Each box has a navy filled
+    title bar above its top rule with its title inside. A note line sits one pitch below the left
+    box. Grid rules are stroked lines; title bars are fills.
+
+    `titles=False` (Task 3, Review Focus 2) draws the same two boxes with NO title bar and no
+    title words: the split must still happen, with empty captions.
+
+    `aside` (Task 3, the residue's scope) draws one extra word to the RIGHT of both boxes on the
+    title line, outside every box and title bar — cbh-stem p0 band 9's `1,951,264`. It puts the
+    residue's y-range across both boxes, so a residue built from page-scoped rules and glyphs
+    would re-read the boxes' ink.
+
+    `left` (Task 3c, spec § 9) replaces the left box's `(xs, rows)`; `GATE_TRIPPING_LEFT` is its
+    one caller's value. Default None draws the box above, so every existing caller stands."""
+    y_top = PAGE_H - 192.0
+    left_xs = [40.0, 120.0, 220.0, 340.0]
+    right_xs = [400.0, 470.0, 560.0]
+    left_rows = [("Site", "Alpha", "Beta"),
+                 ("ALB", "10", "20"), ("ESP", "30", "40"), ("GER", "50", "60")]
+    if left is not None:
+        left_xs, left_rows = list(left[0]), list(left[1])
+    right_rows = [("ALB", "1 - 15 Oct"), ("ESP", "2 - 9 Nov"), ("GER", "3 - 7 Dec")]
+    left_title, right_title = "Stock at Port", "Shutdown Dates"
+    note = "Note: figures are provisional"
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    if titles:
+        _title_bar(c, left_xs[0], left_xs[-1], y_top, left_title)
+        _title_bar(c, right_xs[0], right_xs[-1], y_top, right_title)
+    for i, row in enumerate(left_rows):
+        for x, cell in zip(left_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    for i, row in enumerate(right_rows):
+        for x, cell in zip(right_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.drawString(left_xs[0], _box_row_baseline(y_top, len(left_rows)), note)
+    if aside is not None:
+        c.drawString(right_xs[-1] + 16.0, _box_row_baseline(y_top, -1), aside)
+    _line_grid(c, left_xs, y_top, len(left_rows))
+    _line_grid(c, right_xs, y_top, len(right_rows))
+    c.save()
+    return {
+        "aside": aside,
+        "left": {"xs": left_xs, "n_cols": len(left_xs) - 1, "n_verticals": len(left_xs),
+                 "n_horizontals": len(left_rows) + 1, "rows": left_rows, "title": left_title, "boxhead": left_rows[0]},
+        "right": {"xs": right_xs, "n_cols": 2, "n_verticals": 3, "n_horizontals": 4,
+                  "rows": right_rows, "title": right_title, "boxhead": None},
+        "note": note,
+        "pitch": _BOX_PITCH,
+    }
+
+
+# Task 3c (spec § 9.5, U6): a left box whose content, read WITHOUT its frame, trips
+# `segment.is_multi_table_ambiguous` -- cbh-stem p0 T1 in miniature (PORT | WHEAT | GRADES |
+# BARLEY | TOTAL): a wide WHEAT column puts the widest ink gutter before GRADES, and GRADES' text
+# codes give the right half its own stub. The blank TOTAL head leaves the right half one header
+# word short of its columns, so it classifies UNSUPPORTED (cbh T1's halves do the same) and
+# `find_table_gutter` declines the cut. That the gate returns True on the box band built from it
+# is MEASURED in the test that uses it, not assumed here.
+GATE_TRIPPING_LEFT = (
+    (40.0, 80.0, 170.0, 250.0, 290.0, 340.0),
+    (("PORT", "WHEAT", "GRADES", "BARLEY", ""),
+     ("ALB", "129,183", "APW1/ASW9", "27,023", "160,845"),
+     ("ESP", "25,013", "APW1/H2", "49,244", "82,850"),
+     ("GER", "160,198", "AWW1/ANW1", "3,406", "170,731")),
+)
+
+
+def two_boxes_stacked_pdf(path: str) -> dict:
+    """Task 3, Review Focus 3: two closed ruled boxes STACKED in ONE text band. The upper box
+    (3 columns, boxhead + 2 body rows) sits over the lower box (2 columns, 2 rows) at different
+    x-extents; the lower box's title bar starts exactly at the upper box's bottom rule, so every
+    text line on the page — both titles and all rows — falls at the one pitch `_BOX_PITCH` and
+    `detect_bands` keeps them in a single band (measured in the test, not assumed). The lower
+    title fill's TOP edge lies on the upper box's bottom rule; `boxes._title_bar` only accepts a
+    fill whose BOTTOM edge touches a box's TOP rule, so it is read as the lower box's bar only."""
+    up_top = PAGE_H - 192.0
+    up_xs = [40.0, 140.0, 240.0, 340.0]
+    up_rows = [("Grade", "Qty", "Price"), ("APW", "10", "300"), ("H2", "20", "310")]
+    lo_xs = [60.0, 180.0, 300.0]
+    lo_rows = [("Kwinana", "Open"), ("Albany", "Closed")]
+    up_title, lo_title = "Upper Stocks", "Lower Status"
+    up_bot = up_top - len(up_rows) * _BOX_PITCH
+    lo_top = up_bot - _BOX_PITCH                 # the lower title bar fills [lo_top, up_bot]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    _title_bar(c, up_xs[0], up_xs[-1], up_top, up_title)
+    _title_bar(c, lo_xs[0], lo_xs[-1], lo_top, lo_title)
+    for i, row in enumerate(up_rows):
+        for x, cell in zip(up_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(up_top, i), cell)
+    for i, row in enumerate(lo_rows):
+        for x, cell in zip(lo_xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(lo_top, i), cell)
+    _line_grid(c, up_xs, up_top, len(up_rows))
+    _line_grid(c, lo_xs, lo_top, len(lo_rows))
+    c.save()
+    return {
+        "upper": {"xs": up_xs, "n_cols": 3, "rows": up_rows, "title": up_title},
+        "lower": {"xs": lo_xs, "n_cols": 2, "rows": lo_rows, "title": lo_title},
+    }
+
+
+def one_box_with_title_pdf(path: str) -> dict:
+    """N1: ONE closed box with a title bar, plus a word outside every box on the same band
+    (roster-like: cbh's single boxes carry ink beside them). Must NOT split.
+
+    The box exercises all three rule kinds of spec § 2.1 at once: its frame is a STROKED RECT
+    (each edge a rule), its interior column separator a BLACK-FILLED thin rect, and its row
+    separators stroked lines — 3 verticals, 4 horizontals."""
+    y_top = PAGE_H - 192.0
+    xs = [40.0, 120.0, 220.0]
+    rows = [("ALB", "10"), ("ESP", "30"), ("GER", "50")]
+    title, outside = "Receivals", "OUTSIDE"
+    n = len(rows)
+    y_bot = y_top - n * _BOX_PITCH
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    _title_bar(c, xs[0], xs[-1], y_top, title)
+    for i, row in enumerate(rows):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.drawString(300.0, _box_row_baseline(y_top, 1), outside)
+    c.rect(xs[0], y_bot, xs[-1] - xs[0], y_top - y_bot, stroke=1, fill=0)     # the frame
+    c.rect(xs[1] - _BOX_LW / 2, y_bot, _BOX_LW, y_top - y_bot, stroke=0, fill=1)  # black fill
+    for i in range(1, n):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, xs[-1], y)
+    c.save()
+    return {"n_boxes": 1, "n_verticals": 3, "n_horizontals": 4, "title": title,
+            "outside": outside, "xs": xs}
+
+
+def open_lattices_pdf(path: str) -> dict:
+    """N2: two header-only lattices side by side (bfs p5/p6-like). Each has 2 horizontals (above
+    and below the header row) and 2 interior verticals touching both, so each is one touch
+    component with >= 2 H and >= 2 V — but neither draws a left or right OUTER vertical, so no
+    frame closes. Two unruled body lines follow. Must yield 0 boxes."""
+    y_top = PAGE_H - 192.0
+    lattices = [(40.0, [120.0, 220.0], 300.0, ("Canton", "2022", "2023")),
+                (330.0, [420.0, 500.0], 560.0, ("Region", "Men", "Women"))]
+    body = [(("ZH", "10", "11"), ("East", "5", "6")), (("BE", "12", "13"), ("West", "7", "8"))]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    for x0, inner, x1, head in lattices:
+        for x, cell in zip([x0] + inner, head):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, 0), cell)
+        c.line(x0, y_top, x1, y_top)
+        c.line(x0, y_top - _BOX_PITCH, x1, y_top - _BOX_PITCH)
+        for x in inner:
+            c.line(x, y_top, x, y_top - _BOX_PITCH)
+    for i, pair in enumerate(body, start=1):
+        for (x0, inner, _x1, _h), row in zip(lattices, pair):
+            for x, cell in zip([x0] + inner, row):
+                c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    c.save()
+    return {"n_boxes": 0, "n_components": 2}
+
+
+def sub_stroke_gap_box_pdf(path: str) -> dict:
+    """N3: a closed 2-column box whose RIGHT outer vertical is separated from the end of every
+    horizontal by a gap smaller than the stroke (spec § 2.2, R-c). Joined under the stroke-width
+    bound -> one box with 3 verticals; with the bound set to 0 the right vertical is its own
+    component and the frame's right side is open -> no box.
+
+    Why 0.01pt and not cbh's 2e-5: reportlab writes coordinates at 2 decimal places (measured
+    2026-09-28: a line drawn from x 100.24002 reads back at 100.24), so 2e-5 cannot be drawn
+    through its API. 0.01pt is the largest positive-width near-miss the corpus shows (§ 7.1).
+    Painted extents: horizontals end at x 219.75 (butt caps); the 0.48-wide vertical at x 220
+    paints [219.76, 220.24]."""
+    lw = 0.48
+    y_top = PAGE_H - 192.0
+    xs = [40.0, 120.0, 220.0]
+    h_end = 219.75
+    rows = [("ALB", "10"), ("ESP", "30"), ("GER", "50")]
+    n = len(rows)
+    y_bot = y_top - n * _BOX_PITCH
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(lw)
+    c.setFont("Helvetica", 8)
+    for i, row in enumerate(rows):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+    for x in xs:
+        c.line(x, y_top + lw / 2, x, y_bot - lw / 2)
+    for i in range(n + 1):
+        y = y_top - i * _BOX_PITCH
+        c.line(xs[0], y, h_end, y)
+    c.save()
+    return {"n_verticals": 3, "n_horizontals": n + 1, "gap": 0.01, "stroke": lw}
+
+
+def straddling_box_pdf(path: str) -> dict:
+    """Task 2 falsification fixture (I-2a, spec § 3.2): ONE closed box whose three text rows
+    are NOT evenly spaced — row A and row B sit one normal pitch apart, but row B and row C are
+    separated by a gap far past `detect_bands`' gap_factor threshold, so the page's OWN text
+    lines split into two bands at exactly that point. The box's frame is unaffected (its rules
+    span its full height regardless of the internal text gap), so its bbox covers BOTH bands:
+    every word inside it is a word of band 0 (A, B) or band 1 (C), never all of one band alone.
+
+    Under I-2a's exact rule (`boxsplit._box_owner`) this box belongs to NEITHER band and is
+    correctly excluded from both — the population this fixture exists to move under the
+    WEAKENED "belongs by y-overlap alone" variant Step 3 falsifies: that variant assigns the
+    box to a band by bbox y-overlap, which is satisfied for band 0 (and, on overlap, band 1
+    too) regardless of which band's words are actually inside it.
+
+    A SECOND, GENUINE closed box (review fix round 1 finding 3) sits beside the straddler, at a
+    disjoint x-range, its frame spanning ONLY [h0, h1] (band 0's own row) and its one row of
+    words sharing row A's baseline (so it joins row A's own `Line` — no third band is created).
+    Under I-2a's exact rule this box belongs to band 0 alone, giving band 0 a count of ONE
+    (the straddler contributes nothing) — `bands_to_split` must therefore still return `{}`.
+    Only under the y-overlap-only variant does the straddler ALSO resolve to band 0 (the first
+    band its bbox overlaps), pushing band 0's count to two and wrongly splitting it: this second
+    box is what makes the DECISION-level assertion (not just `_box_owner` in isolation)
+    discriminate between the two rules."""
+    xs = [40.0, 120.0, 220.0]
+    xs2 = [260.0, 320.0, 380.0]
+    h0 = PAGE_H - 192.0
+    h1 = h0 - 14.0
+    gap = 160.0
+    tall_top = h1 - gap
+    h2 = tall_top - 14.0
+    rows = [("A1", "A2"), ("B1", "B2"), ("C1", "C2")]
+    baselines = [h0 - 10.0, h1 - 10.0, tall_top - 10.0]
+    second_row = ("D1", "D2")
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    c.setFont("Helvetica", 8)
+    for row, y in zip(rows, baselines):
+        for x, cell in zip(xs, row):
+            c.drawString(x + 4.0, y, cell)
+    for x, cell in zip(xs2, second_row):
+        c.drawString(x + 4.0, baselines[0], cell)     # row A's own baseline -> same Line
+    for x in xs:
+        c.line(x, h0, x, h2)
+    for y in (h0, h1, h2):
+        c.line(xs[0], y, xs[-1], y)
+    for x in xs2:
+        c.line(x, h0, x, h1)
+    for y in (h0, h1):
+        c.line(xs2[0], y, xs2[-1], y)
+    c.save()
+    return {"n_verticals": 3, "n_horizontals": 3, "box_top": h0, "box_bottom": h2,
+            "rows": rows, "gap": gap, "second_box_xs": xs2, "second_box_row": second_row}
+
+
+def wordless_separator_boxes_pdf(path: str) -> dict:
+    """Stroked-rect commission negative (Task 1 review; I-2a's word-count clause): two THIN
+    STROKED rects (separator rules, not tables — each reads as a closed box under boxes.py's
+    touch machinery, Task 1's own measured commission) sit in the same band as two ordinary text
+    lines, but neither rect has a single word inside its bbox. I-2a's "a box containing no words
+    belongs to no band" must exclude both.
+
+    BOTH SEPARATORS MUST FALL INSIDE THE BAND'S OWN Y-RANGE (review fix round 1 finding 2,
+    measured 2026-09-28): the band `detect_bands` builds from the two text lines spans y
+    [185.7, 207.7]. The first drawing (`y - 2.0`) reads back at [191.8, 194.2] — inside. The
+    second MUST NOT sit at `y - 20.0`, which reads back at [209.8, 212.2] — BELOW band.bottom
+    (207.7) entirely, so it never overlaps the band under ANY membership rule (exact or
+    y-overlap-only) and the test this fixture exists for would pass for the wrong reason: only
+    one separator ever reaches the band, so the count never reaches 2 regardless of which rule
+    decides membership. `y - 8.0` reads back at [197.8, 200.2] — inside the band, alongside the
+    first — so a y-overlap-only membership rule genuinely reaches count 2 here (and would
+    therefore wrongly split), which is what makes I-2a's word-count clause (not a geometry
+    accident) the thing the shipped `{}` result actually depends on."""
+    y = PAGE_H - 192.0
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Helvetica", 8)
+    c.drawString(40.0, y, "Item One")
+    c.drawString(40.0, y - 14.0, "Item Two")
+    c.setLineWidth(_BOX_LW)
+    c.rect(300.0, y - 2.0, 200.0, 2.0, stroke=1, fill=0)
+    c.rect(300.0, y - 8.0, 200.0, 2.0, stroke=1, fill=0)
+    c.save()
+    return {"n_boxes": 2, "n_words_in_boxes": 0}
+
+
+def header_beside_body_ruled_pdf(path: str, fusing_line: bool = False,
+                                 rules: list | None = None, extra_row: list | None = None,
+                                 welded_header: bool = False) -> dict:
+    """Task 3b (box-split, spec § 8.4 U1/U2) — cbh T1's defect, synthetically.
+
+    Four author verticals make THREE ruled cells. In the right-hand cell the header word
+    `TOTAL` lies wholly RIGHT of every body number, so a rules-free gutter profile finds an
+    extra gutter between them and counts 4 word columns against 3 rule columns: the R225 arm-B
+    count (`compile._word_column_count`) refuses the re-bucket, although no line has two words
+    that gutter separates. The middle cell carries the multi-word header `MAIN WHEAT GRADES`,
+    whose two inter-word gaps are bridged by the wider body word under it, as on T1 — the pair
+    the `NOT EXISTS` falsification of `rebucket-fuses.rq` needs to fire on.
+
+    `fusing_line=True` (U2) adds one body line with TWO words in the left cell across a gap no
+    other line's ink covers: a genuine fusion witness, so the refusal must stand.
+
+    `rules` overrides the four verticals and `extra_row` appends one body line (fix round 1, spec
+    § 8.6 U4/U5). They build the two shapes where the re-bucket's formed cells are NOT the author
+    intervals: an interior-only ruling (no left rule, so `rule_aware_lines` extends the edge column
+    to the ink), and a body word straddling a rule (so `_row_dividers` drops it for that row).
+
+    `welded_header=True` (fix round 2, U4c) wraps the header over TWO lines (`PORT` / `NAME`,
+    `MAIN WHEAT` / `GRADES`, `TOTAL`) inside a leading box of full-width hrules drawn 40 -> 330,
+    so `geometry.weld_hrule_boxes` merges the two header rows after the re-bucket. With the
+    interior-only `rules=[110, 250, 330]`, the weld re-assigns the extended left-edge cells by
+    centre over the author rules and drops them into the LAST column (Task 3b re-review, N1).
+    """
+    rules = list(rules) if rules is not None else [40.0, 110.0, 250.0, 330.0]
+    header = [(45.0, "PORT"), (115.0, "MAIN WHEAT GRADES"), (296.0, "TOTAL")]
+    header2 = []
+    if welded_header:
+        header = [(45.0, "PORT"), (115.0, "MAIN WHEAT"), (296.0, "TOTAL")]
+        header2 = [(45.0, "NAME"), (115.0, "GRADES")]
+    rows = [
+        [(45.0, "ALB"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "160,845")],
+        [(45.0, "ESP"), (115.0, "APW1/H2/ASW9/AUH2X"), (255.0, "82,850")],
+        [(45.0, "GER"), (115.0, "AWW1/ASW9/ANW1/APW1"), (255.0, "170,731")],
+        [(45.0, "KWI"), (115.0, "AUH2/APWN/APW1/AGP1"), (255.0, "284,895")],
+    ]
+    if fusing_line:
+        rows.append([(45.0, "AB"), (90.0, "CD"), (115.0, "APW1/ASW9/AWW1/ANW1"), (255.0, "1,293")])
+    if extra_row is not None:
+        rows.append(list(extra_row))
+    c = canvas.Canvas(str(path), pagesize=letter)
+    top = PAGE_H - 120.0
+    rh = 14.0
+    body_top = top - rh if header2 else top      # the last header line
+    bottom = body_top - len(rows) * rh - 6.0
+    c.setLineWidth(0.7)
+    for x in rules:
+        c.line(x, top + 12, x, bottom)
+    c.setFont("Helvetica", 9)
+    for x, t in header:
+        c.drawString(x, top, t)
+    for x, t in header2:
+        c.drawString(x, body_top, t)
+    for i, row in enumerate(rows):
+        for x, t in row:
+            c.drawString(x, body_top - (i + 1) * rh, t)
+    if header2:
+        # full-width hrules: one through header line 1's glyphs (inside the band's y-range), one
+        # between header line 2 and the body, one at the bottom — the leading box holds both lines.
+        for y in (top + 4.0, body_top - 4.0, bottom):
+            c.line(40.0, y, 330.0, y)
+    c.save()
+    return {"rule_xs": rules, "header_cells": [t for _x, t in header]}
+
+
+# --- box-split Task 3d.4 (spec § 10.3.2 / § 10.5 U9): does row 0 differ in style from its body ---
+#
+# One closed ruled box per page (a `_line_grid`, no title bar), so the page's one band reaches the
+# RECORD path of `compile_tables` as a single region. Every text run is drawn at `_BOX_PITCH`, and
+# the body is always Helvetica in the canvas's default fill colour, with no rect behind it. Row 0
+# varies in exactly the features a case names, so each case isolates one feature of the oracle.
+
+_STYLED_XS = [300.0, 380.0, 480.0]          # the box, right of where a neighbour box would sit
+_NEIGHBOUR_XS = [40.0, 120.0, 220.0]
+
+
+def styled_box_pdf(path: str, rows, *, head_font: str = "Helvetica",
+                   head_rgb: tuple | None = None, head_fill: tuple | None = None,
+                   box_fill: tuple | None = None, neighbour: bool = False) -> dict:
+    """One closed 2-column box holding `rows` (row 0 first).
+
+    - `head_font`: the font row 0 is drawn in (the body is always Helvetica).
+    - `head_rgb`: the glyph fill colour of row 0; None leaves the canvas default, the body's.
+    - `head_fill`: the RGB colour of a filled, unstroked rect behind row 0's cell area only
+      (painted before the text, exactly the grid's row-0 rectangle); None draws no rect.
+    - `box_fill`: the RGB colour of a filled, unstroked rect behind the WHOLE box, every row,
+      painted first; None draws no rect. With `head_fill` it gives the body a rect-fill value
+      of its own, which § 10.3.2's condition 2 requires before row 0's fill can witness.
+    - `neighbour=True` draws a SECOND closed box to the left, on the same rows, whose row 0 is
+      a Helvetica-Bold `Site | Alpha` header over a numeric body — cbh-stem p0 band 9's shape
+      (spec § 7.3). A glyph filter that reads by y alone leaks that bold header into this box's
+      row 0."""
+    y_top = PAGE_H - 192.0
+    n = len(rows)
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setLineWidth(_BOX_LW)
+    if box_fill is not None:
+        c.setFillColorRGB(*box_fill)
+        c.rect(_STYLED_XS[0], y_top - n * _BOX_PITCH, _STYLED_XS[-1] - _STYLED_XS[0],
+               n * _BOX_PITCH, stroke=0, fill=1)
+        c.setFillColorRGB(0.0, 0.0, 0.0)
+    if head_fill is not None:
+        c.setFillColorRGB(*head_fill)
+        c.rect(_STYLED_XS[0], y_top - _BOX_PITCH, _STYLED_XS[-1] - _STYLED_XS[0], _BOX_PITCH,
+               stroke=0, fill=1)
+        c.setFillColorRGB(0.0, 0.0, 0.0)
+    for i, row in enumerate(rows):
+        if i == 0:
+            c.setFont(head_font, 8)
+            if head_rgb is not None:
+                c.setFillColorRGB(*head_rgb)
+        else:
+            c.setFont("Helvetica", 8)
+        for x, cell in zip(_STYLED_XS, row):
+            c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+        if i == 0 and head_rgb is not None:
+            c.setFillColorRGB(0.0, 0.0, 0.0)
+    _line_grid(c, _STYLED_XS, y_top, n)
+    if neighbour:
+        left = [("Site", "Alpha")] + [(f"S{i}", str(10 * i)) for i in range(1, n)]
+        for i, row in enumerate(left):
+            c.setFont("Helvetica-Bold" if i == 0 else "Helvetica", 8)
+            for x, cell in zip(_NEIGHBOUR_XS, row):
+                c.drawString(x + 4.0, _box_row_baseline(y_top, i), cell)
+        _line_grid(c, _NEIGHBOUR_XS, y_top, n)
+    c.save()
+    return {"rows": [tuple(r) for r in rows], "xs": list(_STYLED_XS),
+            "neighbour_xs": list(_NEIGHBOUR_XS) if neighbour else None}

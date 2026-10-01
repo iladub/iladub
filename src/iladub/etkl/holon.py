@@ -179,21 +179,56 @@ def _emit_roundtrip_fail_cell(g: Graph, doc_uri: URIRef, page: int,
 
 
 def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
-                         doc_uri: URIRef, page: int) -> int:
+                         doc_uri: URIRef, page: int, *,
+                         header_lines: int = 1, absent_by: URIRef | None = None) -> int:
+    """Emit one RECORD region as a `tab:RecordTable`; return the count of entry cells.
+
+    `header_lines` is how many leading region rows are the boxhead: 1 (the default, today's
+    positional reading — row 0 is the one header line) or 0 (the author drew no boxhead, spec
+    § 10.3.4). An answer above 1 is mapped to 1 by the caller (§ 10.6), so only {0, 1} reach
+    here. With 0 there is no `tab:HeaderNode` and no `tab:LabelCell`; every row, row 0 included,
+    is a `tab:LeafRow` of entry cells, and the statement `(table, tab:boxheadAbsentBy,
+    absent_by)` is added — its object is the `header_lines` decision that chose `no_boxhead`.
+    Every row test below reads `header_lines`, never the literal row 0, so the R213 carriage
+    (`_UnshownCarriage`) consumes a row-0 address on an entry cell when there is no header.
+
+    Gate classification (CLAUDE.md § 8, spec § 10.4): PROCEDURAL — the emission branch. It
+    applies a decision taken elsewhere (the worker proposes, `row-zero-differs.rq` disposes, the
+    call site records) and decides nothing; it carries no constant.
+
+    THE GUARD. `header_lines == 0` requires `absent_by`, `absent_by` requires `header_lines == 0`,
+    and any other count is refused, with `ValueError`, before a triple is written. This is a
+    producer-side guard and not a duplicate of the membrane (CLAUDE.md § Producer-side guards):
+    `tab:BoxheadAbsenceDecidedShape` binds only at compile scope — it is not in
+    `tiling._TILING_SHAPE_IRIS`, because a region's scratch graph holds no decision — so the
+    membrane does not provably cover every product of this function.
+    """
+    if header_lines not in (0, 1):
+        raise ValueError(f"assert_record_region: header_lines must be 0 or 1, got "
+                         f"{header_lines!r} (the caller maps any answer >= 1 to 1)")
+    if (header_lines == 0) != (absent_by is not None):
+        raise ValueError(
+            f"assert_record_region: header_lines={header_lines!r} with absent_by={absent_by!r} — "
+            f"a headerless table is stated only as the product of its no_boxhead decision, and "
+            f"a decision states nothing about a table that keeps its header")
     unshown = _UnshownCarriage(region.band)          # R213 crossing B
     g.add((table_uri, RDF.type, TAB.RecordTable))
+    if absent_by is not None:
+        g.add((table_uri, TAB.boxheadAbsentBy, absent_by))
     ncols = region.grid.ncols
     cols = {i: _region_uri(table_uri, "c", i) for i in range(ncols)}
     for i, c in cols.items():
         g.add((c, RDF.type, TAB.LeafColumn))
         g.add((table_uri, TAB.hasLeafColumn, c))
+        if not header_lines:
+            continue
         h = _region_uri(table_uri, "h", i)
         g.add((h, RDF.type, TAB.HeaderNode))
         g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
         g.add((h, TAB.coversColumn, c))
         g.add((table_uri, TAB.hasHeaderNode, h))
 
-    data_rows = sorted({cell.row for cell in region.cells if cell.row > 0})
+    data_rows = sorted({cell.row for cell in region.cells if cell.row >= header_lines})
     rows = {r: _region_uri(table_uri, "r", r) for r in data_rows}
     for r in rows.values():
         g.add((r, RDF.type, TAB.LeafRow))
@@ -202,13 +237,13 @@ def assert_record_region(g: Graph, region: ClassifiedRegion, table_uri: URIRef,
     asserted = 0
     b = region.grid.boundaries
     for cell in region.cells:
-        if cell.row == 0:
+        if cell.row < header_lines:
             # header label: carry its text + geometry (context is not discarded)
             # and link it to its column's HeaderNode. LabelCells are structural, and
             # they are NOT entries — `asserted` below counts entry cells only, and
             # that is unchanged. What DID change (R176, 2026-09-07): their ink is no
             # longer absent from the score. The caller books it, by mirroring this
-            # `cell.row == 0` test — see `_book_recovered_ink` in compile.py. An
+            # `cell.row < header_lines` test — see `_book_recovered_ink` in compile.py. An
             # earlier form of this comment read "not scored facts", which stopped
             # being true when a band that drops 10% of its ink stopped being able to
             # claim it had read the band.

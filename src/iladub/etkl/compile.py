@@ -169,12 +169,27 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
     # So an under-resolving band is NOT returned here: it falls through with `relines` empty
     # and is judged again below, against the DERIVED boundaries, which is the comparison
     # `grid._rule_boundaries` itself makes (it prefers `band.column_xs` over the raw marks).
+    #
+    # THE COUNT IS NECESSARY, NOT SUFFICIENT (box-split Task 3b, spec 2026-09-28 § 8). The count
+    # is a proxy for "can only fuse", and cbh T1 refuted it: a header word lying wholly beside
+    # the body numbers of its own ruled cell adds a gutter the count reads as a column, though no
+    # line has two words that gutter separates. So the refusal now also requires an exact FUSION
+    # WITNESS (`fusion.fusion_witness`, the rebucket-fuses.rq AXIOM): a cell the accept path
+    # would SHIP whose extent holds a point no word of the band covers. It is read off the lines
+    # themselves, never a model of them (§ 8.6: the author-interval model of § 8.2 missed edge
+    # columns extended to the ink and dividers dropped per row by R154). The lines judged are
+    # the LAST cell-forming stage before this band can be returned: the re-bucket AND the weld
+    # below, which re-assigns the welded rows' cells by centre over the author rules and so can
+    # itself join ink side by side (Task 3b re-review N1: an extended left-edge cell dropped into
+    # the last column). Hence the weld runs first, then the witness. Where no witness exists,
+    # re-bucketing joins nothing the band's layout separates, and the refusal was never
+    # justified; the band is then built from the SAME lines the witness judged. The witness
+    # runs only when the count refuses (`and` short-circuits); the re-bucket and the weld are
+    # pure and computed exactly as before, so every band the count accepts is untouched. The
+    # post-refinement site below is NOT changed: it refused nothing in the spec's census (§ 8.2).
+    from .fusion import fusion_witness
     _word_cols = _word_column_count(sub)
-    _under_resolved = (_word_cols is not None and len(xs) >= 2
-                       and len(xs) - 1 < _word_cols)
-    relines = (rule_aware_lines(band_chars, xs)
-               if len(xs) >= 2 and not _under_resolved
-               else [])
+    relines = rule_aware_lines(band_chars, xs) if len(xs) >= 2 else []
     if relines:
         from .geometry import weld_hrule_boxes
         # Loop Q Task 4 — the WELD half of the §4.0 repair ("peel leading non-grid strips
@@ -192,6 +207,11 @@ def _build_ruled_band(sub, sub_rules, sub_hrules, page_chars, section_repair=Fal
             if leading_hrule_box(sub_hrules, xs) is None:
                 weld_box = leading_box_y_fallback(sub_hrules)
         relines = weld_hrule_boxes(relines, sub_hrules, xs, box=weld_box)
+    _under_resolved = (_word_cols is not None and len(xs) >= 2
+                       and len(xs) - 1 < _word_cols
+                       and fusion_witness(sub.lines, relines))
+    if _under_resolved:
+        relines = []
     # The word-based band is the fallback AND, for an under-resolved band, the evidence the
     # refinement below is judged on: the rule-re-bucketed band is fused there (one column), so
     # `recover_leaf_grid` would measure the fusion rather than the band and refuse at `ncols < 2`
@@ -265,13 +285,21 @@ def _emit_band_captions(graph, table_uri, band):
     produces — and feed.py now reads ONLY tab:SectionCaption as candidate-key evidence.
     Loop C's row-role reading-furniture captions (rowrole.emit_reading_evidence, a
     print-timestamp/title line inside a header region) are a DIFFERENT emitter and stay
-    tab:RegionCaption only — untouched by this change, never a candidate key."""
+    tab:RegionCaption only — untouched by this change, never a candidate key.
+
+    A box band's TITLE-BAR lines (box-split spec § 1, 2026-09-30) are the one exception inside
+    this emitter. They are typed `tab:RegionCaption` only, because a table's title is not a
+    section key. The band says which lines they are (`Band.title_captions`, set by
+    `boxsplit._box_band`), and every other caption on every band keeps both types. PROCEDURAL:
+    emission of a fact the band already carries; it judges nothing about the page."""
     from rdflib import Literal, RDF, URIRef
     from rdflib.namespace import XSD
+    titles = getattr(band, "title_captions", ()) or ()
     for k, ln in enumerate(getattr(band, "captions", ()) or ()):
         cap = URIRef("%s-bandcap%d" % (table_uri, k))
         graph.add((cap, RDF.type, TAB.RegionCaption))
-        graph.add((cap, RDF.type, TAB.SectionCaption))
+        if ln not in titles:
+            graph.add((cap, RDF.type, TAB.SectionCaption))
         graph.add((cap, TAB.captionText, Literal(" ".join(w.text for w in ln.words))))
         graph.add((cap, TAB.captionRow, Literal(k, datatype=XSD.integer)))
         graph.add((table_uri, TAB.hasCaption, cap))
@@ -391,6 +419,50 @@ def _book_hier_band(band, n, header_extents) -> tuple[int, int]:
     carried, _ = _book_recovered_ink(band, frozenset(), header_extents)
     return n + carried, max(0, tokens - n - carried)
 
+
+def _header_lines_decision(region, pdf_path: str, page_number: int,
+                           brec) -> tuple[int, "URIRef | None"]:
+    """The RECORD path's header-lines ask (box-split spec § 10.3.4): `(header_lines, absent_by)`
+    for `assert_record_region`.
+
+    The caller asks only for a region `classify` built — never for a donation — and this function
+    applies, in order:
+      1. `row-zero-differs.rq` (`rowzero.row_zero_differs`, AXIOM, one-way). A witness means the
+         region is not asked: the ruling's refusal of a `0`, applied before the question.
+      2. `headerlines.ask_header_lines` with `headerlines.default_reader()` (NEURAL — the reader
+         proposes). None — no reader, no recording, a raise, an answer outside `0..nlines` — is
+         no claim: nothing is recorded and today's positional header stands.
+      3. An answer is recorded as ONE `header_lines` decision, `no_boxhead` for `0` and `boxhead`
+         otherwise, before the caller emits, because `absent_by` is that decision. An answer
+         above 1 adds no header level (§ 10.6): the emission gets 1.
+
+    Every module is looked up at call time, so a test's patch reaches it (the `_donation.offer`
+    late binding). No `evidence=` is passed: the decision points at no table or cell, so
+    `document._band_reading_subgraph` (outgoing edges from the log) never walks into a table
+    (measured: `docs/superpowers/2026-09-28-box-split-evidence.md` § 4.9; § 4.6, corpus).
+
+    Gate classification (CLAUDE.md § 8, spec § 10.4): PROCEDURAL — the ask gate. It applies the
+    oracle's verdict and the reader's answer and decides nothing itself: no Python here reads
+    header-vs-data, and there is no constant. Irreducible to AXIOM because it sequences a query,
+    a reader and a recorder that live outside any one graph."""
+    from . import headerlines as _hl
+    from . import rowzero as _rz
+    if _rz.row_zero_differs(region, pdf_path, page_number):
+        return 1, None
+    reading = _hl.ask_header_lines(region, pdf_path, page_number, _hl.default_reader())
+    if reading is None:
+        return 1, None
+    k = reading.header_lines
+    chosen = "no_boxhead" if k == 0 else "boxhead"
+    beyond = " (an answer above 1 adds no header level, spec § 10.6)" if k > 1 else ""
+    d = brec.record(
+        "header_lines", ["boxhead", "no_boxhead"], chosen,
+        f"the reader counted {k} leading header line(s) of {len(region.band.lines)}{beyond}; "
+        f"its note: {reading.note}; row-zero-differs.rq found no witness that row 0 differs from "
+        f"the body of its column (one-way: that silence refutes nothing)")
+    return (0, d) if k == 0 else (1, None)
+
+
 def page_bands(pdf_path: str, page_number: int = 0,
                section_repair_bands: frozenset[int] | None = None):
     """The page's bands, exactly as compile_tables reads them (band i here IS band i there).
@@ -445,29 +517,62 @@ def page_bands(pdf_path: str, page_number: int = 0,
     page_chars = extract_chars(pdf_path, page_number) if page_rules else []
     raw_bands = detect_bands(text_lines(words))
     bands = []
-    # Per index, the (sub, sub_rules, sub_hrules) a RULED band was built from, or None for an
-    # unruled one. Kept so a named band can be REBUILT with section_repair=True after the run
+    # Per index, the (sub, sub_rules, sub_hrules, chars) a RULED band was built from, or None for
+    # an unruled one (and for a box band, spec 2026-09-28-box-split-design.md § 3.6). Kept so a
+    # named band can be REBUILT with section_repair=True after the run
     # partition has been decided on the unrepaired list — that is invariant M1, and it costs
     # exactly +1 _build_ruled_band per named band: the page's extract_*/detect_bands/segment
     # machinery still runs once.
     specs: list[tuple | None] = []
-    for band in raw_bands:
-        # The notes below a table's last row get a band of their own (trailing.py, 2026-09-19):
-        # set at the row pitch they fuse with the row above them, and their full-width ink
-        # closes that row's gutters. The page datagrid's verdicts decide which lines they are.
-        for sub in cut_trailing_notes(segment(band), pdf_path, page_number):
-            sub_rules = tuple(r for r in page_rules if r.top <= sub.bottom and r.bottom >= sub.top)
-            sub_hrules = tuple(h for h in page_hrules if sub.top <= h.y <= sub.bottom)
-            if not sub_rules:
-                bands.append(_replace(sub, hrules=sub_hrules) if sub_hrules else sub)
-                specs.append(None)
-                continue
-            # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
-            # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
-            # become columns only when the header confirms them (_build_ruled_band, the seam).
-            bands.append(_build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
-                                           section_repair=False))
-            specs.append((sub, sub_rules, sub_hrules))
+
+    def _build_sub(sub, keep=None):
+        # PROCEDURAL (CLAUDE.md § 8): construction only. It filters page marks by exact interval
+        # overlap and calls the unchanged builders; it decides no table question of its own.
+        # One sub-band -> (its Band, its specs entry). The per-sub-band body this loop always had,
+        # factored out UNCHANGED so the box split's residue (boxsplit.split_band, I-3d) runs the
+        # identical code rather than a copy of it. `keep` (the residue's scope, split_band) admits
+        # only the rules, horizontals and glyphs outside every box band's regions; None — every
+        # band the split does not touch — reads the page's own lists, exactly as before.
+        rules, hrules, chars = page_rules, page_hrules, page_chars
+        if keep is not None:
+            rules = [r for r in page_rules if keep(r)]
+            hrules = [h for h in page_hrules if keep(h)]
+            chars = [c for c in page_chars if keep(c)]
+        sub_rules = tuple(r for r in rules if r.top <= sub.bottom and r.bottom >= sub.top)
+        sub_hrules = tuple(h for h in hrules if sub.top <= h.y <= sub.bottom)
+        if not sub_rules:
+            return (_replace(sub, hrules=sub_hrules) if sub_hrules else sub), None
+        # RULED band: re-extract cells by the ruled columns (splits pdfplumber-merged blobs at
+        # the author's exact boundaries) — else keep pdfplumber's words. Candidate boundaries
+        # become columns only when the header confirms them (_build_ruled_band, the seam).
+        return (_build_ruled_band(sub, sub_rules, sub_hrules, chars, section_repair=False),
+                (sub, sub_rules, sub_hrules, chars))
+
+    # BOX SPLIT (spec 2026-09-28-box-split-design.md § 3.1-3.6): a raw band holding two or more
+    # of the author's closed ruled boxes is split before `segment` ever sees it. `bands_to_split`
+    # is the AXIOM decision over THIS `raw_bands` list (R2: its keys are indices into it) and the
+    # boxes exactly as `page_boxes` returns them; a band it does not select takes the unchanged
+    # path below (I-3f). Box bands carry the spec None (§ 3.6): `section_repair_bands` naming one
+    # rebuilds nothing. Looked up on the module so a test can disable the split outright.
+    from . import boxsplit as _boxsplit
+    from .boxes import page_boxes
+    to_split = _boxsplit.bands_to_split(raw_bands, page_boxes(pdf_path, page_number))
+    if to_split and not page_chars:
+        page_chars = extract_chars(pdf_path, page_number)   # a box band is built from glyphs
+    for i, band in enumerate(raw_bands):
+        if i in to_split:
+            built = _boxsplit.split_band(band, to_split[i], page_chars, pdf_path, page_number,
+                                         build_sub=_build_sub)
+        else:
+            # The notes below a table's last row get a band of their own (trailing.py,
+            # 2026-09-19): set at the row pitch they fuse with the row above them, and their
+            # full-width ink closes that row's gutters. The page datagrid's verdicts decide
+            # which lines they are.
+            built = [_build_sub(sub)
+                     for sub in cut_trailing_notes(segment(band), pdf_path, page_number)]
+        for b, spec in built:
+            bands.append(b)
+            specs.append(spec)
     from .unitmarker import absorb_unit_markers
     bands = [absorb_unit_markers(b) for b in bands]
 
@@ -484,9 +589,11 @@ def page_bands(pdf_path: str, page_number: int = 0,
     if section_repair_bands:
         for idx in sorted(section_repair_bands):
             if 0 <= idx < len(specs) and specs[idx] is not None:
-                sub, sub_rules, sub_hrules = specs[idx]
+                # The glyphs the band was first built from, so a scoped residue (box split) is
+                # rebuilt from its own scope; every other band carries `page_chars` itself.
+                sub, sub_rules, sub_hrules, sub_chars = specs[idx]
                 bands[idx] = absorb_unit_markers(
-                    _build_ruled_band(sub, sub_rules, sub_hrules, page_chars,
+                    _build_ruled_band(sub, sub_rules, sub_hrules, sub_chars,
                                       section_repair=True))
 
     # Splice DESCENDING by first, so an earlier run's indices are not invalidated mid-splice.
@@ -555,10 +662,14 @@ def merge_bands(bands, first: int, last: int):
     second copy of the constructor is exactly the drift `page_bands`' own docstring exists to
     prevent, and the script is committed evidence whose output must stay reproducible.
 
-    It covers ALL NINE of `Band`'s fields. A tenth would be silently defaulted here and nothing
-    else in the suite would notice, which is why tests/etkl/test_band_runs.py pins the count --
-    and R213's `unshown` is the case that proves the pin works: it was added to `Band` and missed
-    here, and only that test said so.
+    It covers TEN of `Band`'s eleven fields (`title_captions`, 2026-09-30, is concatenated
+    like `captions`, of which it is a subset: a title stays a title inside a run). The
+    eleventh, `frame`, is dropped BY DESIGN (box-split
+    spec § 9.3): a run that swallows a box band is not a box band, so it meets the multi-table
+    gate exactly as before. Any further field would be silently defaulted here and nothing else in
+    the suite would notice, which is why tests/etkl/test_band_runs.py pins the count -- and R213's
+    `unshown` is the case that proves the pin works: it was added to `Band` and missed here, and
+    only that test said so.
 
     `unshown` is the one field that cannot be concatenated, because it is ADDRESSED. Its members
     are (row, col) in the band's OWN row space, and a run renumbers rows -- band `first+1`'s row
@@ -587,6 +698,7 @@ def merge_bands(bands, first: int, last: int):
         hrules=tuple(h for b in run for h in b.hrules),
         column_xs=col_xs,
         captions=tuple(c for b in run for c in b.captions),
+        title_captions=tuple(c for b in run for c in b.title_captions),
         unit_markers=tuple(m for b in run for m in b.unit_markers),
         unshown=tuple(sorted(unshown)),
     )
@@ -936,10 +1048,23 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         band_marks.append((asserted_total, escalated_total))
         brec = recorder.band(idx)
         ascii_view = render_ascii(band)
-        multi_table = is_multi_table_ambiguous(band)
-        brec.record("multi_table", ["single", "multi"],
-                    "multi" if multi_table else "single",
-                    "MULTI_TABLE_AMBIGUOUS" if multi_table else "single table")
+        if band.frame is not None:
+            # Box-split spec § 9 (PROCEDURAL: it applies boxsplit.bands_to_split's AXIOM product,
+            # deciding nothing and carrying no constant). A box band was cut from ONE closed frame
+            # the author drew, so how many tables it holds is already answered, and the gate's
+            # geometric proxy must not overrule the mark. The skip is accounted for HERE, in the
+            # decision log. The frame is named in the rationale, not passed as `evidence`:
+            # dec:consideredEvidence is an owl:ObjectProperty ranged prov:Entity (dec.ttl), and a
+            # bbox is not a node.
+            multi_table = False
+            brec.record("multi_table", ["single", "multi"], "single",
+                        f"single table: cut from one closed frame the author drew, "
+                        f"bbox (x0, x1, top, bottom) = {band.frame}")
+        else:
+            multi_table = is_multi_table_ambiguous(band)
+            brec.record("multi_table", ["single", "multi"],
+                        "multi" if multi_table else "single",
+                        "MULTI_TABLE_AMBIGUOUS" if multi_table else "single table")
         if multi_table:
             cand_uri = URIRef(f"{doc}#region{idx}")
             escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
@@ -958,6 +1083,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         brec.record("kind", _kind_options, region.kind.name, region.reason or "",
                     rejected=_kind_refutations(region.kind.name, region.reason))
 
+        # Bound per band, so the RECORD path's header-lines ask (box-split § 10.3.4) can tell a
+        # lone-line donation from a `classify`-built region even where `offer` declines it.
+        _lone = None
         if region.kind is RegionKind.NON_TABLE and len(band.lines) == 1 and donor_ev is not None:
             # A LONE DATA ROW (2026-09-18, bfs p6: `Total`, `Zurich`, `Tessin`). A one-line band
             # cannot hold a header and a body, so `classify` calls it NON_TABLE and it was
@@ -1209,9 +1337,20 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                                     str(TAB.HierarchicalTable), ascii_view,
                                                     htable))
                         continue
+                    # BOX-SPLIT § 10.3.4: how many leading lines are header, asked of a reader
+                    # only for a region `classify` built — never for a donation, whose row 0 is
+                    # the donor's line, already disposed by the donation membrane, and whose rows
+                    # outrun its band (`donation.donated_region`). An answer is recorded BEFORE
+                    # the emission, because a `0` states its decision as `absent_by`.
+                    if donated is None and _lone is None:
+                        header_lines, absent_by = _header_lines_decision(
+                            region, pdf_path, page_number, brec)
+                    else:
+                        header_lines, absent_by = 1, None
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
-                    n = assert_record_region(scratch, region, table_uri, doc, page_number)
+                    n = assert_record_region(scratch, region, table_uri, doc, page_number,
+                                             header_lines=header_lines, absent_by=absent_by)
                     tiles = region_tiles(scratch) if n else None
                     if tiles is not None:
                         brec.record("region_tiles", ["tiles", "does_not_tile"],
@@ -1250,15 +1389,18 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         _emit_band_captions(graph, table_uri, band)
                         _emit_unit_markers(graph, table_uri, band, region.grid.boundaries)
                         b = region.grid.boundaries
-                        data_cells = [c for c in region.cells if c.row > 0]
+                        data_cells = [c for c in region.cells if c.row >= header_lines]
                         asserted_total += sum(len(c.words) for c in data_cells if cell_round_trips(c, b))
                         escalated_total += sum(len(c.words) for c in data_cells if not cell_round_trips(c, b))
-                        # R176: MIRRORS the emitter — assert_record_region turns every `row == 0`
-                        # cell into a tab:LabelCell and skips it from the entry count
-                        # (holon.py:128-140). 11 corpus bands dropped 102 words here.
+                        # R176: MIRRORS the emitter — assert_record_region turns every
+                        # `row < header_lines` cell into a tab:LabelCell and skips it from the
+                        # entry count (holon.py, `def assert_record_region`). 11 corpus bands
+                        # dropped 102 words here. The count, never the literal row 0 (box-split
+                        # § 10.3.4): with 0 header lines every cell is a data cell and no label
+                        # ink is booked; with 1 the two tests are today's `row > 0` / `row == 0`.
                         _a, _e = _book_recovered_ink(
                             band, {w for c in data_cells for w in c.words},
-                            (c.bbox for c in region.cells if c.row == 0))
+                            (c.bbox for c in region.cells if c.row < header_lines))
                         asserted_total += _a
                         escalated_total += _e
                         brec.record("verdict", ["asserted", "escalated", "ignored"],

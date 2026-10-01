@@ -1,0 +1,15 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# Box-split § 10.3.1's negative for tab:BoxheadAbsenceShape: a table states that its author drew no
+# boxhead (tab:boxheadAbsentBy) AND carries a header node. The one header covers every leaf column,
+# so no coverage or access shape has anything to say; the claim and the header cannot co-exist.
+# Its object is a decision (the recorder's own shape of one), so the refusal is not
+# tab:BoxheadAbsenceDecidedShape's.
+ex:t a tab:RecordTable ; tab:hasLeafColumn ex:c0 , ex:c1 ; tab:hasHeaderNode ex:h0 ;
+    tab:boxheadAbsentBy ex:d .
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn .
+ex:h0 a tab:HeaderNode ; tab:headerLevel 0 ; tab:coversColumn ex:c0 , ex:c1 .
+ex:d a <https://w3id.org/iladub/dec#DecisionHolon> ;
+    <https://w3id.org/iladub/dec#chosen> ex:d-opt-no_boxhead .
+ex:d-opt-no_boxhead <http://www.w3.org/2000/01/rdf-schema#label> "no_boxhead" .

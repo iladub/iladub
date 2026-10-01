@@ -1,0 +1,11 @@
+@prefix tab: <https://w3id.org/iladub/tab#> .
+@prefix ex:  <https://example.org/tab-demo#> .
+
+# Box-split § 10.3.1's negative for tab:BoxheadAbsenceDecidedShape: a headerless table carries the
+# no-boxhead statement, but its object is a decision that chose the OTHER option. The worker's
+# answer would be passing as an assertion without the decision that admits it (CLAUDE.md § 3).
+ex:t a tab:RecordTable ; tab:hasLeafColumn ex:c0 , ex:c1 ; tab:boxheadAbsentBy ex:d .
+ex:c0 a tab:LeafColumn . ex:c1 a tab:LeafColumn .
+ex:d a <https://w3id.org/iladub/dec#DecisionHolon> ;
+    <https://w3id.org/iladub/dec#chosen> ex:d-opt-boxhead .
+ex:d-opt-boxhead <http://www.w3.org/2000/01/rdf-schema#label> "boxhead" .

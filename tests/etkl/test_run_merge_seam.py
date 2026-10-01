@@ -179,7 +179,14 @@ def test_m1_the_partition_does_not_depend_on_section_repair_bands():
 #       print([C.compile_tables(APPLE, p, validate_shapes=False, \
 #              datagrid_fallback=False).asserted for p in (0, 1)])"
 BASELINE_ASSERTED = {
-    ("cbh-stem-2026-08-03", 0): 54,
+    # 54 -> 43 on 2026-09-30, by the box split (spec 2026-09-28-box-split-design.md § 1, § 4),
+    # not by a merge. All 54 were fused band 9's words: 43 box words (T1 35, T2 8), 3 on the
+    # title line (the two title bars and `1,951,264`) and 8 Note-block words. After the split
+    # the SAME 43 words, text for text, are asserted by T1 (`#table10`) and T2 (`#table11`). The
+    # 11 that left are the titles, now `tab:RegionCaption`s (§ 1), plus `1,951,264` and the Note
+    # block, now the residue band (§ 1, § 4). The 43 holds whatever verdict that residue gets.
+    # Measured with the split on and off (evidence 2026-09-28-box-split § 5).
+    ("cbh-stem-2026-08-03", 0): 43,
     ("graincorp-capacity-2026-08-04", 0): 406,
     ("graincorp-stem-2026-07-31", 0): 586,
     ("graincorp-stem-2026-07-31", 1): 0,

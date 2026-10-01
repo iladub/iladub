@@ -1,0 +1,50 @@
+# rebucket-fuses.rq — box-split Task 3b (AXIOM: derivation, open world, evidence-positive).
+# Spec: docs/superpowers/specs/2026-09-28-box-split-design.md § 8.6 (supersedes § 8.2's witness).
+#
+# A FUSION WITNESS over a ruled band: a cell c the rule re-bucket actually FORMS (a word of
+# geometry.rule_aware_lines' output, at the extent of its own non-space glyphs) whose extent
+# [c.x0, c.x1) contains a point covered by no word of any line of the band's own word layout
+# (a word v covers p iff v.x0 <= p < v.x1). Such a cell joins ink from both sides of a gap the
+# band's words leave open: re-bucketing on those rules would FUSE what the layout separates. The
+# witness quantifies over the OUTPUT, not a model of it, so how the cell was formed (edge columns
+# extended to the ink, dividers dropped per row by R154, bucketing by glyph centre) is covered by
+# construction.
+#
+# SPARQL has no point quantifier, so the uncovered point is reached through a finite candidate
+# set: an uncovered point exists in [c.x0, c.x1) iff some candidate e in {c.x0} U {w.x1 : w a
+# layout word} has c.x0 <= e < c.x1 and is uncovered. Take the largest candidate e* <= p: a word
+# covering e* ends past it, so either it ends at or before p (contradicting maximality) or it
+# covers p. c.x0 is a candidate so that a glyph belonging to no word cannot hide a gap (it can only
+# make the witness fire, which keeps the refusal). Below, EVERY formed cell's x0 is a candidate
+# for every cell: that only adds points of the band, and any uncovered point inside c's extent is
+# a witness by definition, so the answer is unchanged.
+#
+# Used by compile._build_ruled_band as a CONJUNCT of the R225 count: the refusal stands only where
+# a witness is PRESENT (evidence-positive). Its one NOT EXISTS is closed within the band's own
+# fresh evidence graph, which is the closure boundary (as in confirm-boundary.rq). Threshold-free:
+# every bound is data; NO numeric literal (test_no_tuned_constant_in_rq_files).
+#
+# The two sub-selects are DISTINCT for EVALUATION COST, not meaning (ASK is true or false either
+# way). Without it rdflib joins them lazily and re-evaluates the second, NOT EXISTS included,
+# once per solution of the first (measured on § 8.2's form: 257 s without DISTINCT on a synthetic
+# 17 x 8 band, about 1 s with it). With it each side is evaluated once.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+    {
+        SELECT DISTINCT ?cx0 ?cx1 WHERE {
+            ?c a tab:FormedCell ; tab:formedCellX0 ?cx0 ; tab:formedCellX1 ?cx1 .
+        }
+    }
+    {
+        SELECT DISTINCT ?edge WHERE {
+            { ?k a tab:FormedCell ; tab:formedCellX0 ?edge . }
+            UNION
+            { ?w a tab:LayoutWord ; tab:layoutWordX1 ?edge . }
+            FILTER NOT EXISTS {
+                ?v a tab:LayoutWord ; tab:layoutWordX0 ?vx0 ; tab:layoutWordX1 ?vx1 .
+                FILTER(?vx0 <= ?edge && ?edge < ?vx1)
+            }
+        }
+    }
+    FILTER(?cx0 <= ?edge && ?edge < ?cx1)
+}

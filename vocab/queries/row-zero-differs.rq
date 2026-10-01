@@ -1,0 +1,97 @@
+# row-zero-differs.rq — does row 0 of a region differ from the body of its column?
+# Box-split spec 2026-09-28 § 10.3.2 (the one-way oracle). Asked by rowzero.row_zero_differs over
+# ONE region's transient evidence graph: celltype.grid_evidence's typed cells plus the three style
+# facts rowzero.cell_styles extracts (tab:cellGlyphFont, tab:cellGlyphFill, tab:cellRectFill).
+#
+# TRUE iff a WITNESS exists: a column ?c and a feature f such that
+#   1. the row-0 cell of ?c has a value ?v of f;
+#   2. ?c has at least one body cell with a value of f;
+#   3. no body cell of ?c has ?v.
+# One UNION branch per feature. Each branch restates its own ?s / ?h / ?c bindings rather than
+# sharing them with the others, because a UNION operand is a group evaluated on its own: a
+# binding made outside it would not reach its FILTERs (the scoping looks-transposed.rq records).
+#
+# The features:
+#   - the datatype FAMILY (tab:inDatatypeFamily; a datatype with no family is its own), with
+#     abstaining datatypes (tab:datatypeAbstains — Blank, ParenthesizedNumber, UnshownInk) giving
+#     no value on either side;
+#   - glyph font name; glyph fill colour; the colour of each filled rect containing the cell's
+#     centre. These three are compared as the literals rowzero.colour_literal spells, by RDF term
+#     identity (a bound ?v in a triple pattern), so equality is exact.
+#
+# ROW 0 and BODY are read from the evidence, not written here: the head is the rows before
+# tab:bodyStartsAt, the body the rows at or after it. rowzero passes grid_evidence's default
+# split, so the head is exactly row 0. This keeps the query free of numeric literals (I-10-4).
+#
+# AXIOM, open-world derivation (CLAUDE.md § 8): a witness is a PRESENT value, so the query is
+# evidence-positive. Its NOT EXISTS closes only within this one region's evidence graph — the
+# holon-scoped closure. ONE-WAY: TRUE refutes "row 0 is data"; FALSE refutes nothing. A region
+# with no body row never meets condition 2, and a header typed and styled as its body is silent.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+ASK {
+  {
+    # --- the datatype family ---
+    ?band tab:bodyStartsAt ?s .
+    ?h tab:atGridColumn ?c ; tab:atGridRow ?hr ; tab:cellDatatype ?hraw .
+    FILTER(?hr < ?s)
+    FILTER NOT EXISTS { ?hraw tab:datatypeAbstains true }
+    OPTIONAL { ?hraw tab:inDatatypeFamily ?hfam }
+    BIND(COALESCE(?hfam, ?hraw) AS ?v)
+    FILTER EXISTS {
+      ?b tab:atGridColumn ?c ; tab:atGridRow ?br ; tab:cellDatatype ?braw .
+      FILTER(?br >= ?s)
+      FILTER NOT EXISTS { ?braw tab:datatypeAbstains true }
+    }
+    FILTER NOT EXISTS {
+      ?n tab:atGridColumn ?c ; tab:atGridRow ?nr ; tab:cellDatatype ?nraw .
+      FILTER(?nr >= ?s)
+      OPTIONAL { ?nraw tab:inDatatypeFamily ?nfam }
+      FILTER(sameTerm(COALESCE(?nfam, ?nraw), ?v))
+    }
+  }
+  UNION
+  {
+    # --- the glyph font ---
+    ?band tab:bodyStartsAt ?s .
+    ?h tab:atGridColumn ?c ; tab:atGridRow ?hr ; tab:cellGlyphFont ?v .
+    FILTER(?hr < ?s)
+    FILTER EXISTS {
+      ?b tab:atGridColumn ?c ; tab:atGridRow ?br ; tab:cellGlyphFont ?any .
+      FILTER(?br >= ?s)
+    }
+    FILTER NOT EXISTS {
+      ?n tab:atGridColumn ?c ; tab:atGridRow ?nr ; tab:cellGlyphFont ?v .
+      FILTER(?nr >= ?s)
+    }
+  }
+  UNION
+  {
+    # --- the glyph fill ---
+    ?band tab:bodyStartsAt ?s .
+    ?h tab:atGridColumn ?c ; tab:atGridRow ?hr ; tab:cellGlyphFill ?v .
+    FILTER(?hr < ?s)
+    FILTER EXISTS {
+      ?b tab:atGridColumn ?c ; tab:atGridRow ?br ; tab:cellGlyphFill ?any .
+      FILTER(?br >= ?s)
+    }
+    FILTER NOT EXISTS {
+      ?n tab:atGridColumn ?c ; tab:atGridRow ?nr ; tab:cellGlyphFill ?v .
+      FILTER(?nr >= ?s)
+    }
+  }
+  UNION
+  {
+    # --- the rect fill ---
+    ?band tab:bodyStartsAt ?s .
+    ?h tab:atGridColumn ?c ; tab:atGridRow ?hr ; tab:cellRectFill ?v .
+    FILTER(?hr < ?s)
+    FILTER EXISTS {
+      ?b tab:atGridColumn ?c ; tab:atGridRow ?br ; tab:cellRectFill ?any .
+      FILTER(?br >= ?s)
+    }
+    FILTER NOT EXISTS {
+      ?n tab:atGridColumn ?c ; tab:atGridRow ?nr ; tab:cellRectFill ?v .
+      FILTER(?nr >= ?s)
+    }
+  }
+}

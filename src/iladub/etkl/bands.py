@@ -39,6 +39,22 @@ class Band:
     # tab:unshownText). Default empty so every existing constructor stands — the Band.captions
     # and Band.unit_markers precedent above.
     unshown: tuple[tuple[int, int], ...] = ()
+    # The bbox (x0, x1, top, bottom) of the ONE closed box the author drew that this band was cut
+    # from (box-split spec § 9). Provenance to the page, not a flag: `boxsplit.bands_to_split`
+    # (AXIOM) already decided that one closed frame holds one table, and `compile_tables` admits
+    # that mark in place of the multi-table gate's geometric proxy. Only `boxsplit._box_band` sets
+    # it; `compile.merge_bands` drops it BY DESIGN, because the frame answered for its box, not for
+    # a run that swallows it. Default None so every existing constructor stands (the
+    # Band.captions precedent above).
+    frame: tuple[float, float, float, float] | None = None
+    # The box's TITLE-BAR lines (box-split spec § 1, § 2.4): the subset of `captions` that
+    # `boxsplit._box_band` took from the filled bar above the box, as opposed to anything
+    # `_build_ruled_band` peeled inside it. Carried from where the origin is known by
+    # construction, never inferred later. `compile._emit_band_captions` types these
+    # `tab:RegionCaption` only: a table's title is not a section key (§ 1). Only `_box_band`
+    # sets it. `compile.merge_bands` concatenates it with `captions`, because a title stays a
+    # title inside a run. Default empty so every existing constructor stands.
+    title_captions: tuple[Line, ...] = ()
 
 
 def detect_bands(lines: list[Line], gap_factor: float = 1.8) -> list[Band]:

@@ -104,7 +104,11 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # RE-MEASURED 2026-09-18 (R213): 163 -> 166 — the unshown-ink conformant example and its
     # two negatives. Measured as a SET, not a count: added = exactly those three, removed = none.
     # All three name `tab:` terms only, the namespace they exercise.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 166
+    # RE-MEASURED 2026-09-30 (box-split Task 3d.1): 166 -> 168 — the two negative fixtures of
+    # `tab:boxheadAbsentBy`'s shapes (`tests/tab-boxhead-absent-{with-header,undecided}-leak.ttl`).
+    # Measured as a SET: added = exactly those two, removed = none. Both name `tab:` terms, plus
+    # `dec:` and `rdfs:` terms written as full IRIs for the decision the statement points at.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 168
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -163,6 +167,15 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     does: `source-citation-shapes.ttl` writes full IRIs inside its `sh:select` rather than
     declaring an `sh:namespace`, so no `xsd:anyURI` twin exists.
 
+    RE-MEASURED 2026-09-30 (box-split Task 3d.1), which declares one more `sh:prefixes` node in
+    `tab-shapes.ttl` (`tab:boxheadPrefixes`, for `tab:BoxheadAbsenceDecidedShape`'s body, which
+    joins into the decision log and so names `dec:` and `rdfs:` terms beside `tab:`):
+
+        occurrences 24   distinct values 9   [168 artifacts]
+
+    +2 occurrences, both `xsd:anyURI` (`tab#` and `dec#`); the file's owned `sh:namespace` count
+    goes 1 -> 3. No new distinct value: both strings were already carried.
+
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
     floor — a floor cannot detect the guard silently collecting fewer, which is the failure
@@ -171,7 +184,7 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 22
+    assert len(occurrences) == 24
     assert len({str(o) for o in occurrences}) == 9
     assert not any(isinstance(o, URIRef) for o in occurrences)
 

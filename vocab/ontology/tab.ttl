@@ -240,6 +240,22 @@ tab:hasBaseFact a owl:ObjectProperty ; rdfs:domain tab:NormalizedBase ; rdfs:ran
 tab:namePromotedBy a owl:ObjectProperty ; rdfs:label "name promoted by"@en ;
     rdfs:comment "Links a reshape operation whose dimension name was GenAI-proposed to the promotion decision that admitted the name. Rangeless to keep this ontology standalone."@en .
 
+# --- box-split § 10: a table the author drew with no boxhead says so (rangeless, like
+#     tab:namePromotedBy above: its object is a dec:DecisionHolon, and naming that range here
+#     would pull dec: into an ontology that stays standalone) -------------------------------
+tab:boxheadAbsentBy a owl:ObjectProperty ; rdfs:label "boxhead absent by"@en ;
+    rdfs:domain tab:RecordTable ;
+    rdfs:comment """Links a record table the author drew WITHOUT a boxhead to the decision that read it so.
+ITS PRESENCE IS THE ASSERTION that the table has no header lines; there is no separate flag (the
+tab:unshownText precedent). Its object is the dec:DecisionHolon that chose the option labelled
+no_boxhead, and nothing else: tab:BoxheadAbsenceDecidedShape refuses a statement with any other
+object, so the reading becomes a graph fact only as the product of a recorded decision (a
+proposition never passes as an assertion). A table carrying it has zero tab:hasHeaderNode
+(tab:BoxheadAbsenceShape), and its leaf columns are exempt from tab:CoverageShape and
+tab:UnambiguousAccessShape, which would otherwise refuse the headerless table this states.
+
+Rangeless for the same reason as tab:namePromotedBy: this ontology stays standalone."""@en .
+
 # --- transient inference marks (recovery pass; not stored in a holon) ---
 tab:namesLevel a owl:DatatypeProperty ; rdfs:domain tab:HeaderNode ; rdfs:range xsd:integer ;
     rdfs:label "names level"@en ;
@@ -255,6 +271,13 @@ tab:GridCell a owl:Class ; rdfs:label "Grid cell"@en ;
 tab:atGridRow a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid row"@en .
 tab:atGridColumn a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range xsd:integer ; rdfs:label "at grid column"@en .
 tab:gridText a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "grid text"@en .
+# --- the cell's drawn style (transient; box-split spec 2026-09-28 § 10.3.2, the row-zero-differs oracle) ---
+tab:cellGlyphFont a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell glyph font"@en ;
+    rdfs:comment "The font name of a glyph whose centre lies inside the cell's bbox on BOTH axes, as the PDF names it. One value per distinct font; a glyph with no font name gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
+tab:cellGlyphFill a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell glyph fill"@en ;
+    rdfs:comment "The fill colour of a glyph whose centre lies inside the cell's bbox on BOTH axes, as its device colour components (rowzero.colour_literal). Equal components give equal literals; a glyph with no readable device colour gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
+tab:cellRectFill a owl:DatatypeProperty ; rdfs:domain tab:GridCell ; rdfs:range rdfs:Literal ; rdfs:label "cell rect fill"@en ;
+    rdfs:comment "The fill colour of a filled rect that contains the centre of the cell's bbox, in tab:cellGlyphFill's literal form. One value per distinct colour; a rect with no readable device colour gives no value. Transient evidence for row-zero-differs.rq; never asserted into a holon."@en .
 tab:CellDatatype a owl:Class ; rdfs:label "Cell datatype"@en ;
     rdfs:comment "An OPEN lattice of recovered cell datatypes. Loop A: tab:Blank | tab:Numeric | tab:Text. Loop B2b extends it with tab:Date and tab:Currency; Boolean/Code are planned for a later loop. loop-quantity-typing adds tab:ParenthesizedNumber (a datatype that ABSTAINS from homogeneity judgements, via tab:datatypeAbstains) and the tab:CellDatatypeFamily grouping (via tab:inDatatypeFamily) that normalises tab:Numeric and tab:Currency into tab:Quantity."@en .
 tab:Blank    a tab:CellDatatype ; rdfs:label "Blank"@en ;
@@ -543,6 +566,16 @@ tab:intervalLo a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs
 tab:intervalHi a owl:DatatypeProperty ; rdfs:domain tab:CandidateBoundary ; rdfs:range xsd:double ; rdfs:label "interval hi"@en ;
     rdfs:comment "Right edge of that interval."@en .
 
+# --- re-bucket fusion evidence (transient, pre-holon; box-split Task 3b, spec 2026-09-28 § 8.6) ---
+tab:LayoutWord a owl:Class ; rdfs:label "Layout word"@en ;
+    rdfs:comment "A transient word of a ruled band as the band's own word layout places it: its ink x-extent. Its x-ranges are what COVERS a point of the band. Evidence for the fusion-witness derivation (rebucket-fuses.rq) that the R225 resolution guard in compile._build_ruled_band consults; never asserted into a holon."@en .
+tab:layoutWordX0 a owl:DatatypeProperty ; rdfs:domain tab:LayoutWord ; rdfs:range xsd:double ; rdfs:label "layout word x0"@en .
+tab:layoutWordX1 a owl:DatatypeProperty ; rdfs:domain tab:LayoutWord ; rdfs:range xsd:double ; rdfs:label "layout word x1"@en .
+tab:FormedCell a owl:Class ; rdfs:label "Formed cell"@en ;
+    rdfs:comment "A transient cell the rule re-bucket actually FORMS (one word of geometry.rule_aware_lines' output), at the ink extent of its own non-space glyphs. The re-bucket the guard judges is these cells, not a model of them (spec 2026-09-28 § 8.6). Evidence for rebucket-fuses.rq; never asserted into a holon."@en .
+tab:formedCellX0 a owl:DatatypeProperty ; rdfs:domain tab:FormedCell ; rdfs:range xsd:double ; rdfs:label "formed cell x0"@en .
+tab:formedCellX1 a owl:DatatypeProperty ; rdfs:domain tab:FormedCell ; rdfs:range xsd:double ; rdfs:label "formed cell x1"@en .
+
 # --- ruled header-row role evidence (transient, pre-holon; loop L) ---
 # The inputs to header-row-role.rq, the header-stack law. Every term is a PRESENCE fact over the
 # author's own ruled column grid — emitted by ruledroles.role_evidence, tested there with the
@@ -707,3 +740,12 @@ tab:markerSymbol a owl:DatatypeProperty ; rdfs:label "marker symbol"@en ;
 tab:markerRegion a owl:ObjectProperty ; rdfs:label "marker region"@en ;
     rdfs:domain tab:UnitMarker ; rdfs:range tab:BBox ;
     rdfs:comment "Provenance to the page: the bounding box of one absorbed marker glyph. Deliberately NOT tab:hasBBox — that property's domain would RDFS-type the marker as tab:Cell and trip tab:WrappedCellShape at the gate (the R19 mechanism). STILL LIVE: [[R182]] measured the MEMBRANE (subclass-only closure) and concluded otherwise, emitted tab:hasBBox on a tab:HeaderSourceCell, and the closure differential's full-RDFS leg refused 26 nodes the membrane admitted. tab:sourceRegion is this property's sibling, minted for the same reason."@en .
+
+# --- box-split (spec 2026-09-28-box-split-design.md § 3.2, ruling R-d): transient evidence
+# for band-boxes.rq, deciding which text bands hold >= 2 author-drawn closed ruled boxes
+# (boxes.py's Box) and so must be split into their tables before segment/classification. ---
+tab:ClosedBox a owl:Class ; rdfs:label "Closed box (evidence)"@en ;
+    rdfs:comment "A transient node standing for one closed ruled box (boxes.Box) that BELONGS to a band (I-2a): every page word inside the box's painted bbox — exact containment, no tolerance — is a word of that band. Emitted by boxsplit.box_evidence ONLY for a box with an owner: a box containing no words, or whose words span more than one band (a box straddling a band boundary), belongs to none and emits no node at all — the honest abstain sectiongraph.run_evidence already makes for its own population, and the one this relation depends on entirely, since a node with no tab:boxBandIndex fact could join no group. It is deliberately NOT a tab:PageBand: a tab:PageBand node stands for a BAND, and this one stands for a BOX that a band OWNS — a different guarantee, hence tab:boxBandIndex rather than a reuse of tab:bandIndex (tab:bandRuleX's own precedent: mint a distinct term when the fact carries a different guarantee)."@en .
+tab:boxBandIndex a owl:DatatypeProperty ; rdfs:domain tab:ClosedBox ; rdfs:range xsd:integer ;
+    rdfs:label "box band index"@en ;
+    rdfs:comment "The 0-based index, into compile.page_bands' RAW band list — detect_bands(text_lines(words)), BEFORE segment/cut_trailing_notes/the run merge (R2) — of the ONE band this closed box belongs to (I-2a). This is explicitly NOT tab:bandIndex's index space: tab:bandIndex (tab:PageBand's own property) names a band's position in whatever list page_bands ultimately RETURNS, after every one of those per-band rebuilds and after ruled runs have been merged, while boxsplit.bands_to_split must key on the pre-rebuild raw list so its answer can drive page_bands' own per-raw-band loop (`for band in raw_bands:`), which is why it is a distinct property rather than a reuse of tab:bandIndex on a foreign population (tab:bandRuleX's own precedent). band-boxes.rq groups its evidence by this fact and counts within each group (the holon-scoped HAVING clause) to decide which RAW band indices hold two or more boxes and so must split (ruling R-d)."@en .
