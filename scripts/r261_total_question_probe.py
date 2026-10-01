@@ -56,17 +56,9 @@ total of those tables' totals — a grand total? Answer exactly one of: yes / no
 Reply with JSON only: {{"answer": "yes" | "no" | "cannot_tell"}}"""
 
 
-def crop_table(pdf_path, page_no, band, line):
-    """D7 table level: the whole previous (table) band through the candidate's own line. No
-    tail-line constant (supersedes the old `tail_lines=8` crop)."""
-    with pdfplumber.open(pdf_path) as pdf:
-        page = pdf.pages[page_no]
-        words = [w for ln in band.lines for w in ln.words] + list(line.words)
-        top, bot = band.top, line.bottom
-        box = (max(0, min(w.x0 for w in words) - 4), max(0, top - 4),
-               min(float(page.width), max(w.x1 for w in words) + 4), min(float(page.height), bot + 4))
-        im = page.crop(box).to_image(resolution=150)
-        buf = io.BytesIO(); im.original.save(buf, format="PNG"); return buf.getvalue()
+# D7 table level: MOVED to `iladub.etkl.printedtotal.crop_table` (controller ruling R2 — one
+# crop source); imported, not copied, so the production worker sees the image P1 measured.
+from iladub.etkl.printedtotal import crop_table  # noqa: E402
 
 
 def crop_union(pdf_path, page_no, lines):

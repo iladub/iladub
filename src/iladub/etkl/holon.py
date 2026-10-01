@@ -643,6 +643,57 @@ def emit_ignored_band(g: Graph, doc_uri: URIRef, idx: int, band,
     g.add((region_uri, PROV.wasDerivedFrom, doc_uri))
 
 
+def emit_printed_total(g: Graph, doc_uri: URIRef, idx: int, line_no: int, word, page: int,
+                       value_text: str, operands, table_uri: URIRef,
+                       decision: URIRef) -> URIRef:
+    """Emit one bound `tab:PrintedTotal` — a total printed beneath its table, outside the grid
+    (R261 spec § 4) — and return its URI.
+
+    Gate classification (CLAUDE.md § 8): PROCEDURAL raw extraction, source -> typed RDF facts.
+    THE EMITTER DECIDES NOTHING: whether the number is a total was settled upstream by the
+    conjunction (`compile._bind_printed_totals`: the exact sum, then the reader's *yes*), and
+    `decision` is the `printed_total` decision holon that recorded it. Every value written here is
+    passed in or read off `word`'s own extent.
+
+    What it writes is exactly what `tab:PrintedTotalShape` requires, no more:
+      * `tab:cellText` — the value as the page prints it (`word.text`), never re-formatted;
+      * `tab:aggregates` — the matched column's numeric entry cells (`operands`, >= 2 by
+        `totals.match_table`'s own guard);
+      * `tab:totalOf` — the table it totals. TABLE LEVEL ONLY (controller ruling R4): the
+        total-of-totals level was refuted by P3, so `table_uri` is required, not optional, and no
+        bound-total operand form is ever written;
+      * a box and a page (CLAUDE.md principle 6), and `prov:wasDerivedFrom` the page region, as
+        `_emit_entry_cell` writes them;
+      * `decision dec:produced` this node — the link `tab:PrintedTotalShape`'s SPARQL check reads
+        (plan D2).
+
+    THE URI is `{doc_uri}#printedtotal{idx}-l{line_no}`: `idx` is the band's index and `line_no`
+    the line's index IN THE UNCARVED BAND. MEASURED (M3): every per-band URI the compile mints
+    hangs off `doc_uri`, which `document.compile_document` passes PAGE-SCOPED
+    (`document.page_doc_uri` -> `{doc}/p{n}`; pass 2 adds `/r2`), so two pages never collide.
+    The name is disjoint from every table URI space (`{table_uri}-…`) by construction — a table
+    is `#table{n}`/`#htable{n}`/…, never `#printedtotal{n}` — so `document._band_subgraph` of the
+    table it totals never roots at it."""
+    pt = URIRef(f"{doc_uri}#printedtotal{idx}-l{line_no}")
+    g.add((pt, RDF.type, TAB.PrintedTotal))
+    g.add((pt, TAB.cellText, Literal(value_text)))
+    for o in operands:
+        g.add((pt, TAB.aggregates, o))
+    g.add((pt, TAB.totalOf, table_uri))
+    g.add((pt, TAB.onPage, Literal(int(page), datatype=XSD.integer)))
+    bb = BNode()
+    g.add((bb, RDF.type, TAB.BBox))
+    g.add((bb, TAB.x0, Literal(Decimal(str(round(word.x0, 2))))))
+    g.add((bb, TAB.y0, Literal(Decimal(str(round(word.top, 2))))))
+    g.add((bb, TAB.x1, Literal(Decimal(str(round(word.x1, 2))))))
+    g.add((bb, TAB.y1, Literal(Decimal(str(round(word.bottom, 2))))))
+    g.add((pt, TAB.hasBBox, bb))
+    g.add((pt, PROV.wasDerivedFrom,
+           URIRef(f"{doc_uri}#p{page}-{int(word.x0)}-{int(word.top)}")))
+    g.add((decision, DEC.produced, pt))
+    return pt
+
+
 def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
                        doc_uri: URIRef, page: int, header_extents: list | None = None) -> int:
     """Emit a tab:HierarchicalTable holon for a HierRegion; return asserted body-token count.
