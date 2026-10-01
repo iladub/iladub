@@ -101,3 +101,78 @@ symbols.
   from 2026-09-28 (*"dump the tables' cells before accepting"*) still applies at adjudication time.
 - **Trap:** `ANTHROPIC_API_KEY` is in the shell, and `BAML_LIVE=1` also turns on the R213 region
   reader and the boxhead live half. Run offline work under `env -u ANTHROPIC_API_KEY -u BAML_LIVE`.
+
+## Addendum 1 — P2 measured, census re-run, P1 blocked (2026-10-01, session 2)
+
+Authored at ~55K working tokens (plimslop hook: 52,037 when it first fired; preflight logged
+`handoff`). The spec was again **not** started. Part 5 below is graded per action and supersedes
+part 5 above only where it says so.
+
+### 5. Next actions (written first)
+
+- **Asserted, and BLOCKED on the maintainer:** P1 cannot run. Every call to the Anthropic API
+  returned `HTTP 400 invalid_request_error: "Your credit balance is too low"` (12 asks × 3
+  repeats, all refused). Nothing was answered, so **P1 is unmeasured, not failed**. Once credit
+  is restored the probe is one command from the repo root (~3 min, then 36 paid Haiku calls):
+  `P1_REPEAT=3 env -u BAML_LIVE .venv/bin/python scripts/r261_total_question_probe.py`.
+- **Proposed, and it may fail — P1 as specified above, with two additions.** (a) The probe now
+  carries a **null control**: the first non-matching number of each table→following-band pair on
+  cbh and who-wfa, so 7 nulls beside the 5 matches. A *yes* on a null is a finding, even though
+  arithmetic would refuse it, because it says the question is answered by layout rather than by
+  reading. (b) The question wording under test is the `PROMPT` constant in the probe. It is a
+  **draft**. The spec owns the wording and must cite what P1 measured against it.
+- **Asserted:** after P1, resume `superpowers:brainstorming` at *"propose 2–3 approaches"*. P2
+  below **settles the scope fork** raised in part 5 above.
+
+### P2 — where `1,951,264` sits (measured, offline, `5e33652`)
+
+Offline `compile_document(cbh)` plus `page_bands(…, section_repair_bands={1,3,5,7})`, page 0:
+
+| band | kind / verdict | tokens a/e | content |
+| --- | --- | --- | --- |
+| 1, 3, 5, 7 | `UNSUPPORTED_TABLE` asserted (`#htable1/3/5/7`) | 190/288/248/104 | the four port rosters |
+| 2, 4, 6, 8 | `NON_TABLE` ignored, *fewer than 2 lines* | 0/0 | `374,904` / `737,289` / `660,363` / `178,708`, x 813–832 |
+| 9 | `UNSUPPORTED_TABLE` escalated, `KIND_NOT_SUPPORTED` | 0/86 | line 0 `1,951,264` (x 812–836, y 683); lines 1–4 the Note (x 39–216, y 733–756) |
+| 10 | `RECORD_TABLE` asserted `#table10` | 35/0 | PORT/WHEAT/…/TOTAL. Its TOTAL column sums to 699,321, not a rival |
+
+What follows from it:
+
+1. **`1,951,264` = 374,904 + 737,289 + 660,363 + 178,708 exactly.** It is a total of the four port
+   totals, not of any one table's column. So its arithmetic needs the four port totals to be
+   **bound first**. It is the same mechanism one level up, as part 5 above guessed. Its operands
+   are totals, though, not cells.
+2. **The grand total is NOT deferrable. This settles part 5's P2 fork.** The 2026-08-20 hold in
+   `tests/corpus-manifest.ttl` (cbh `cor:adjudication`) is lifted by *"a reading of WHERE those 86
+   tokens went and whether losing them loses anything the page asserts"*. The answer is now
+   measured. 1 token is an asserted figure (`1,951,264`) and the rest are the prose Note. A loop
+   that carries the port totals and defers the grand total leaves the only asserted content in
+   the 86 unread.
+3. **The concern from part 5 is now QUANTIFIED.** The port totals are booked 0/0 today, so binding
+   them moves the score by about +4 asserted tokens (873/959 = 0.9103 → about 877/963 = 0.9107).
+   Essentially all of any score gain comes from band 9, and most of band 9 is the Note. Whatever
+   the spec does with the Note's tokens decides the score. Binding the totals does not. The spec
+   must state the Note's fate as its own decision, not as a side effect. *Assumed, not measured:*
+   the remainder reads `NON_TABLE` → ignored once line 0 is carved out. That is box-split evidence
+   § 5.4 (3)'s counterfactual, measured on the residue *without* `1,951,264`, not on a carved band.
+4. **Band 9 and band 10 interleave in y** (band 9: y 683–756, band 10: y 692–724). Band 9 is
+   therefore not a contiguous strip. Any carve of line 0 out of band 9 must not assume one.
+
+### Census re-run (`scripts/section_total_fp_census.py`, `5e33652`, this session)
+
+It reproduces part 4 above exactly: 27 pages, 0 skipped, 32 → 29 → **24 pairs**, 5,775 comparisons,
+**5 matches = 4 TRUE (cbh p0 t1/3/5/7, col 13) + 1 FALSE (who-wfa p0 t4 `21`, col 1, 6 members,
+ordinal, 6-line following band)**. The part-4 figures are now reproduced in two sessions. Why
+who-wfa's old p1 false positive and `20` vanished is **still unasked**.
+
+### 3. Decided this session, and where recorded
+
+- **The grand total is in scope** (P2, point 2). It is recorded only in this addendum, and it is a
+  reading of the hold's own wording, not a maintainer ruling. The spec's § 0 should carry it for
+  the maintainer to confirm.
+
+### 4. Unverified or assumed
+
+- P1 entirely: no answer has been observed.
+- That the carved band-9 remainder reads `NON_TABLE` (point 3).
+- Whether binding a word *inside* an escalated band has any precedent seam. Nobody has looked at
+  `donation.offer_single_line` or `_book_recovered_ink` for this case yet.
