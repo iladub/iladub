@@ -28,14 +28,12 @@ from __future__ import annotations
 
 import hashlib
 import pathlib
-import re
 import sys
 from decimal import Decimal
 
 sys.path.insert(0, "src")
 
 CORPUS = pathlib.Path("corpus")
-_BNODE = re.compile(r"_:[A-Za-z0-9]+")
 
 
 def _canonical_hash(graph) -> tuple[str, int]:
@@ -97,13 +95,20 @@ def run_census():
     matches = []          # (stem, page, i, text, value, [matching cols], n_cols_matched)
     nomatches_zero = 0
     who_wfa_21_lone = None
+    skipped = []           # region/band mismatch guard -- section_total_fp_census.py:101-104
 
     for pdf in pdfs:
         path, stem = str(pdf), pdf.stem
         rep = compile_document(path, validate_shapes=False)
+        adopted = set(rep.adopted)
         for page, prep in enumerate(rep.pages):
             repair = frozenset(i for pg, i in rep.repaired_bands if pg == page)
             bands = page_bands(path, page, section_repair_bands=repair)
+            extra = len(prep.regions) - len(bands)
+            if extra != 0 and page not in adopted:
+                skipped.append((stem, page, f"UNEXPECTED bands={len(bands)} "
+                                             f"regions={len(prep.regions)}"))
+                continue
             for i, r in enumerate(prep.regions):
                 if r.verdict != "asserted" or r.table_uri is None or r.anchor == GRID:
                     continue
@@ -117,9 +122,9 @@ def run_census():
                 for ln in nxt.lines:
                     if len(ln.words) == 1 and is_numeric(ln.words[0].text):
                         lone.append(ln.words[0].text)
-                    if stem.startswith("who-wfa") and page == 0 and ln.words \
-                            and any(w.text.strip() == "21" for w in ln.words):
-                        who_wfa_21_lone = (len(ln.words) == 1)
+                    if who_wfa_21_lone is None and stem.startswith("who-wfa") and page == 0 \
+                            and ln.words and any(w.text.strip() == "21" for w in ln.words):
+                        who_wfa_21_lone = (len(ln.words) == 1)   # first hit only
 
                 if not lone:
                     continue
@@ -136,6 +141,13 @@ def run_census():
                         nomatches_zero += 1
         print(f"[{stem}] done", flush=True)
 
+    print()
+    if skipped:
+        print(f"SKIPPED {len(skipped)} page(s) -- the denominator is incomplete:")
+        for stem, pg, why in skipped:
+            print(f"  {stem[:28]:<29} p{pg} {why}")
+    else:
+        print("SKIPPED 0 -- the denominator is complete.")
     print()
     print(f"asserted non-grid table regions         {opp['tables']:>6}")
     print(f"... having a following band              {opp['following']:>6}")

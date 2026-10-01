@@ -201,3 +201,170 @@ env -u BAML_LIVE -u ILADUB_RECORD_READINGS .venv/bin/python scripts/r261_baselin
 Both run serially, one process at a time (corpus-runs-are-serial). macOS has no `timeout`; the
 first `--baseline` run exceeded the default 120s foreground window and was moved to background by
 the harness, then read on completion — no `timeout` wrapper was used or needed.
+
+---
+
+## § 5. Review fix round 1 (2026-10-01, append-only — nothing above this line is edited)
+
+### 5.1 The committed census dropped the region/band mismatch guard
+
+`scripts/section_total_fp_census.py:101-104` carries a guard the §§ 1–2 run of
+`scripts/r261_baseline.py --census` did not: `extra = len(prep.regions) - len(bands); if extra !=
+0 and page not in adopted: skip, counted as SKIPPED`. The committed script has now been fixed
+(`run_census`: `adopted = set(rep.adopted)` per document, the same `extra`/`skip` test before the
+per-region loop, a `skipped` list, and a printed `SKIPPED <n>` line) so the "same population filter
+as `scripts/section_total_fp_census.py`" claim in the module docstring (§ 2, "Instrument") is now
+true of the code. **Per instruction, the corpus was NOT re-run for this fix** — §§ 1–2's figures
+above (4 pairs, 4 candidates, 4 matches, 32/29 tables/following) are **not** retroactively
+corrected and are **not** claimed to already reflect the guard.
+
+**Precedent figure, cited rather than re-measured for this run:** the identical skip condition, run
+over the full 27-page corpus, found **`SKIPPED 0`**
+(`docs/superpowers/2026-09-17-the-false-positive-denominator-evidence.md:115`: *"A page-scope
+census over all 27 pages returned `PAGES SEEN 27 SKIPPED 0 MATCHES 2`"*). The handoff this task
+restates from records the same figure at **document** scope, the scope §§ 1–2 above use:
+`docs/superpowers/2026-10-01-r261-totals-family-spec-handoff.md` Addendum 2's census re-run states
+*"27 pages, 0 skipped"* for `scripts/section_total_fp_census.py` itself, run at `5e33652`.
+
+**This is an inference, not a measurement, for the run that produced §§ 1–2 above.** The guard was
+absent from the code at the time that run executed, so nothing in §§ 1–2 demonstrates `SKIPPED 0`
+for *this* script's population — it is inferred from the cited precedent (same guard, same
+document-scope call shape, same corpus, run close in time) holding at 0 in every prior measurement
+anyone has taken of it. The next time `--census` is run (Task 3 or later), its own `SKIPPED` line
+is the first actual measurement of this script's own population under the restored guard, and
+should be read as superseding this inference.
+
+### 5.2 Minor fixes to the committed script
+
+- Removed the unused `import re` and `_BNODE` (dead code left from the `corpus_verdict_snapshot.py`
+  pattern this script was built from; `_canonical_hash` uses `rdflib.compare.to_canonical_graph`'s
+  own blank-node canonicalisation, never a regex normalisation).
+- `who_wfa_21_lone` now takes the **first** hit only (`if who_wfa_21_lone is None and ...`), not the
+  last line scanned that happens to contain `21`. On this corpus the result is unchanged (`False`),
+  since who-wfa p0 table idx 4's following band has exactly one line containing `21` among its six
+  lines (§ 1.2/§ 2.3's dump), but the prior code's last-hit semantics were an unintended artifact of
+  iteration order, not a stated design.
+
+### 5.3 The exact diagnostic commands behind §§ 2.2 and 2.3
+
+§ 3 above says these were "reproduced above" — they were paraphrased, not pasted verbatim. The
+actual commands run (both inline, not committed, per § 3's reasoning) are reproduced here in full.
+
+**§ 2.2's parser-vs-lone-line attribution** (10 lone lines total / 4 `is_numeric` / 0 lost to the
+parser):
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS .venv/bin/python3 -c "
+import sys; sys.path.insert(0,'src')
+from decimal import Decimal, InvalidOperation
+from iladub.etkl.classifygraph import TAB
+from iladub.etkl.compile import page_bands
+from iladub.etkl.document import compile_document
+from iladub.etkl.headers import is_numeric
+import pathlib
+
+def as_decimal(text):
+    if text is None: return None
+    s = str(text).strip().replace(',', '').replace('%','').replace('\$','').strip()
+    if s in ('', '-', '.'): return None
+    neg = s.startswith('(') and s.endswith(')')
+    if neg: s = s[1:-1].strip()
+    try:
+        d = Decimal(s)
+    except InvalidOperation:
+        return None
+    return -d if neg else d
+
+GRID=str(TAB.DataGrid)
+pdfs = sorted(pathlib.Path('corpus').rglob('*.pdf'))
+lone_line_total=0
+lone_line_isnumeric_true=0
+lone_line_isnumeric_false_but_asdecimal_true=0
+examples=[]
+for pdf in pdfs:
+    path=str(pdf)
+    rep = compile_document(path, validate_shapes=False)
+    for page, prep in enumerate(rep.pages):
+        repair = frozenset(i for pg,i in rep.repaired_bands if pg==page)
+        bands = page_bands(path, page, section_repair_bands=repair)
+        for i,r in enumerate(prep.regions):
+            if r.verdict!='asserted' or r.table_uri is None or r.anchor==GRID: continue
+            if i+1>=len(bands): continue
+            nxt=bands[i+1]
+            for ln in nxt.lines:
+                if len(ln.words)==1:
+                    lone_line_total+=1
+                    w=ln.words[0].text
+                    if is_numeric(w):
+                        lone_line_isnumeric_true+=1
+                    elif as_decimal(w) is not None:
+                        lone_line_isnumeric_false_but_asdecimal_true+=1
+                        examples.append((pdf.stem, page, i, w))
+print('total lone lines in all following bands:', lone_line_total)
+print('is_numeric True (M6):', lone_line_isnumeric_true)
+print('is_numeric False but as_decimal True (parser-only loss):', lone_line_isnumeric_false_but_asdecimal_true)
+for e in examples[:20]:
+    print(' ', e)
+"
+```
+
+**Caveat on this diagnostic, not on § 2.2's conclusion:** like the pre-fix `--census`, this inline
+command carries no region/band mismatch guard either — it is a one-off explanatory script, not the
+committed instrument, and § 5.1's `SKIPPED 0` inference applies to it the same way.
+
+**§ 2.3's CONTROL** (who-wfa p0 table idx 4, all-words variant finds `21 -> col 1`, the line has 13
+words):
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS .venv/bin/python3 -c "
+import sys; sys.path.insert(0,'src')
+from decimal import Decimal, InvalidOperation
+from iladub.etkl.classifygraph import TAB
+from iladub.etkl.compile import page_bands
+from iladub.etkl.document import compile_document, _index_suffix
+import glob
+
+def as_decimal(text):
+    if text is None: return None
+    s = str(text).strip().replace(',', '').replace('%','').replace('\$','').strip()
+    if s in ('', '-', '.'): return None
+    neg = s.startswith('(') and s.endswith(')')
+    if neg: s = s[1:-1].strip()
+    try:
+        d = Decimal(s)
+    except InvalidOperation:
+        return None
+    return -d if neg else d
+
+path = glob.glob('corpus/**/who-wfa*.pdf', recursive=True)[0]
+rep = compile_document(path, validate_shapes=False)
+page=0
+prep = rep.pages[page]
+repair = frozenset(i for pg,i in rep.repaired_bands if pg==page)
+bands = page_bands(path, page, section_repair_bands=repair)
+GRID=str(TAB.DataGrid)
+i=4
+r = prep.regions[i]
+print('verdict', r.verdict, 'table_uri', r.table_uri, 'anchor==GRID', r.anchor==GRID)
+nxt = bands[i+1]
+per_col={}
+for entry in rep.graph.objects(r.table_uri, TAB.hasCell):
+    col = rep.graph.value(entry, TAB.atColumn)
+    if col is None: continue
+    val = as_decimal(rep.graph.value(entry, TAB.cellText))
+    if val is None: continue
+    try:
+        ci=_index_suffix(col, r.table_uri,'c')
+    except Exception:
+        ci=str(col)
+    per_col.setdefault(ci, []).append(val)
+sums = {ci: sum(v, Decimal(0)) for ci,v in per_col.items()}
+print('col sums', sums)
+for ln in nxt.lines:
+    for w in ln.words:
+        d = as_decimal(w.text)
+        if d is not None and d in sums.values():
+            cols = [ci for ci,s in sums.items() if s==d]
+            print('ALL-WORDS MATCH:', w.text, '-> cols', cols, 'line words:', [x.text for x in ln.words], 'n_words_in_line', len(ln.words))
+"
+```
