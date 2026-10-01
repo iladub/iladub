@@ -152,7 +152,7 @@ def _emit_cell_styles(g: Graph, styles: dict[tuple[int, int], CellStyle]) -> Non
 
 def row_zero_evidence(region, pdf_path: str, page_number: int) -> Graph:
     """The evidence graph `row-zero-differs.rq` asks: `grid_evidence` over the region's cells,
-    plus each shown cell's style facts.
+    plus each cell's style facts (glyph facts for shown cells only).
 
     PROCEDURAL assembly; it decides nothing.
 
