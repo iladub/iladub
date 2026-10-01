@@ -142,6 +142,18 @@ VACUITY_REGISTRY = {
         "LIVE-ONLY body term, adjudicated 2026-09-18: 2203 focus nodes, and the one body term "
         "absent from every offline graph is tab:unshownText, which is emitted only under "
         "BAML_LIVE. The shape's other disjuncts are exercised on every document."),
+    # REGISTERED 2026-10-01 (R261 plan Task 2): vocabulary and membrane ship before the binding
+    # that mints tab:PrintedTotal (Tasks 3-4 of the same plan). Measured 0 focus nodes on all 7
+    # corpus documents (criterion 1) -- no compile path emits tab:PrintedTotal yet, so this is
+    # neither dead nor a corpus gap, it is sequencing. ADJUDICATED LIVE-ONLY-AFTER, same class
+    # as tab:UnshownInkCellShape above: expected to go live on cbh-stem once the printed_total
+    # worker + binding ship (spec § 2.2, D4) and must be DEregistered at that point --
+    # test_no_registered_shape_has_gone_live will then fail and name it.
+    TAB.PrintedTotalShape: (
+        "LIVE-ONLY-AFTER, registered 2026-10-01 (R261 plan Task 2): 0 focus nodes on all 7 "
+        "corpus documents -- the vocabulary and membrane ship in this task, the binding that "
+        "mints tab:PrintedTotal ships in Tasks 3-4 of the same plan. Expected to go live on "
+        "cbh-stem once the binding ships; deregister then."),
 }
 
 

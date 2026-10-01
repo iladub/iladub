@@ -410,3 +410,69 @@ def test_wrapped_guard_still_refuses_an_empty_unshown_claim():
     # And the claim itself is refused where it is made, not only at the carriage guard.
     assert "UnshownInkCellShape" in t
     assert "exactly once and non-empty" in t
+
+
+# ---------------------------------------------------------------------------
+# tab:PrintedTotal / tab:PrintedTotalShape (R261 — totals printed outside the
+# grid, bound only as the product of a printed_total decision). Task 2 of the
+# 2026-10-01 r261-totals-family plan, spec § 4.
+# ---------------------------------------------------------------------------
+
+PRINTED_TOTAL_CONFORMANT = os.path.join(TST, "tab-printed-total-conformant.ttl")
+
+
+def test_printed_total_conformant_passes():
+    c, t = _v(PRINTED_TOTAL_CONFORMANT)
+    assert c, t
+
+
+def test_printed_total_missing_celltext_fails():
+    """tab:cellText sh:minCount 1 / sh:maxCount 1."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-no-celltext-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_one_operand_fails():
+    """tab:aggregates sh:minCount 2 — a one-member 'total' is not a total."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-one-aggregate-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_two_tables_fails():
+    """tab:totalOf sh:maxCount 1."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-two-totalof-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_missing_bbox_fails():
+    """tab:hasBBox sh:minCount 1 / sh:maxCount 1, sh:class tab:BBox."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-no-bbox-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_missing_onpage_fails():
+    """tab:onPage sh:minCount 1 / sh:maxCount 1, sh:datatype xsd:integer."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-no-onpage-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_wrong_chosen_option_fails():
+    """D2's SPARQL constraint: the decision is a printed_total judgement but chose not_total —
+    a proposition the worker refused must not pass as an assertion (CLAUDE.md § 3)."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-not-total-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_wrong_judgement_fails():
+    """D2's SPARQL constraint: dec:chosen is labelled total, but the producing decision's own
+    judgement is not printed_total (the I-10-3 mechanism, reused from
+    tab:BoxheadAbsenceDecidedShape)."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-wrong-judgement-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t

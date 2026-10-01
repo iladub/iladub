@@ -1,0 +1,23 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/tab-demo#> .
+
+# R261 negative for tab:PrintedTotalShape's SPARQL constraint (D2): dec:chosen is labelled
+# total, but the producing decision's OWN judgement is not printed_total — a future judgement
+# that happens to reuse an option labelled "total" must not carry this statement (same
+# mechanism as tab:BoxheadAbsenceDecidedShape's I-10-3 guard).
+ex:pt a tab:PrintedTotal ;
+    tab:cellText "374,904" ;
+    tab:aggregates ex:c1 , ex:c2 ;
+    tab:totalOf ex:tbl ;
+    tab:hasBBox ex:bbox ;
+    tab:onPage 3 .
+ex:bbox a tab:BBox .
+ex:tbl a tab:Table .
+
+ex:d a dec:DecisionHolon ;
+    rdfs:label "some_other_judgement" ;
+    dec:produced ex:pt ;
+    dec:chosen ex:opt-total .
+ex:opt-total rdfs:label "total" .

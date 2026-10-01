@@ -154,9 +154,33 @@ tab:AggregationColumn a owl:Class ; rdfs:subClassOf tab:LeafColumn ; rdfs:label 
 tab:aggregationFunction a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "aggregation function"@en ;
     rdfs:comment "sum | mean | count | min | max | product."@en .
 tab:aggregates a owl:ObjectProperty ; rdfs:label "aggregates"@en ;
-    rdfs:comment "An operand this aggregation is computed from: an EntryCell when the subject is an AggregationCell (denormalization's cell-level operands), or a LeafRow when the subject is a DetectedAggregationRow (loop H's row-level operands). Domain/range deliberately left undeclared: either would rdfs-entail the OTHER usage's subject/object into a foreign class (e.g. a LeafRow inferred AggregationCell), tripping that class's shape at full validation — see tests/etkl/test_aggregation_rows.py's landmine test."@en .
+    rdfs:comment "An operand this aggregation is computed from: an EntryCell when the subject is an AggregationCell (denormalization's cell-level operands), a LeafRow when the subject is a DetectedAggregationRow (loop H's row-level operands), or -- a third usage, R261 -- a column EntryCell (table level) or a bound tab:PrintedTotal (total-of-totals level) when the subject is a tab:PrintedTotal, a total printed outside the grid. Domain/range deliberately left undeclared: any one of these would rdfs-entail another usage's subject/object into a foreign class (e.g. a LeafRow inferred AggregationCell, or a tab:PrintedTotal inferred AggregationCell), tripping that class's shape at full validation — see tests/etkl/test_aggregation_rows.py's landmine test."@en .
 tab:overAxis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "over axis"@en ;
     rdfs:comment "row | column — the axis the aggregation runs along (a grand total carries both)."@en .
+
+# --- printed totals: a total printed OUTSIDE the grid (R261) -----------------
+tab:PrintedTotal a owl:Class ; rdfs:subClassOf tab:Cell ; rdfs:label "Printed total"@en ;
+    rdfs:comment """A total printed outside its table's grid -- a caption-line or footer figure,
+never a grid cell. NOT a tab:AggregationCell (a seam measured, not assumed, M10 of the R261
+plan): tab:AggregationCellShape requires aggregationFunction, aggregates AND overAxis, a shape
+written for a cell that sits IN the grid; a printed total has none of the grid position an
+AggregationCell presumes. It is tab:Cell ⊑ tab:PageLocated instead, carrying the same
+provenance-to-the-page every carried cell carries (CLAUDE.md principle 6). Bound only when a
+reading worker answers yes AND exact Decimal arithmetic over its tab:aggregates operands holds
+-- a producer-side PROCEDURAL check that is the SOLE enforcement of the sum property (CLAUDE.md
+§ Producer-side guards, R89): tab:cellText's range is xsd:string, and only tab:BaseFact's
+tab:measureValue is xsd:decimal, so the membrane cannot re-check the arithmetic without
+reopening the float/Decimal engine split ([[R92]]-[[R94]]). Every asserted instance must be the
+product of a printed_total decision holon -- see tab:PrintedTotalShape, which is the only
+place this requirement is enforced."""@en .
+tab:totalOf a owl:ObjectProperty ; rdfs:label "total of"@en ;
+    rdfs:comment """Links a tab:PrintedTotal to the tab:Table it totals (R261), at table level
+only -- the total-of-totals level is not wired to emit this property in this loop (controller
+ruling R4); tab:PrintedTotalShape's sh:maxCount 1 holds for either level regardless. Domain and
+range deliberately left undeclared (R261 plan M10/spec § 4), the same convention as
+tab:aggregates above: the typing a reader needs -- subject a tab:PrintedTotal, object a
+tab:Table -- is enforced by tab:PrintedTotalShape's sh:targetClass and the property's own
+sh:class, not by rdfs:domain/rdfs:range."""@en .
 
 # --- 3NF base facts (denormalisation slice ③) --------------------------------
 tab:BaseFact a owl:Class ; rdfs:label "Base fact"@en ;

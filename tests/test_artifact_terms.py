@@ -108,7 +108,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # `tab:boxheadAbsentBy`'s shapes (`tests/tab-boxhead-absent-{with-header,undecided}-leak.ttl`).
     # Measured as a SET: added = exactly those two, removed = none. Both name `tab:` terms, plus
     # `dec:` and `rdfs:` terms written as full IRIs for the decision the statement points at.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 168
+    # RE-MEASURED 2026-10-01 (R261 plan Task 2): 168 -> 176 — `tab:PrintedTotalShape`'s positive
+    # and its seven negatives (`tests/tab-printed-total-{conformant,no-celltext-leak,
+    # one-aggregate-leak,two-totalof-leak,no-bbox-leak,no-onpage-leak,not-total-leak,
+    # wrong-judgement-leak}.ttl`). Measured as a SET: added = exactly those eight, removed =
+    # none. All eight name `tab:` terms plus `dec:`/`rdfs:` full IRIs for the decision link
+    # (D2), same pattern as the boxhead pair above. `tab:PrintedTotal` and `tab:totalOf` went
+    # into the EXISTING `vocab/ontology/tab.ttl`, so this is the fixtures' count moving, not a
+    # second source.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 176
 
 
 def test_each_file_gets_its_own_named_graph():

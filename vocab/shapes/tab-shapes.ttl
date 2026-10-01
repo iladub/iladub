@@ -517,3 +517,45 @@ tab:BoxheadAbsenceDecidedShape a sh:NodeShape ;
                 }
             }
         """ ] .
+
+#################################################################
+#  Printed total (R261): a total printed OUTSIDE its table's grid,
+#  bound only as the product of a printed_total decision. Closed-
+#  world membrane (spec § 4) -- every constraint ships a negative
+#  fixture that must fail, in tests/test_tab.py.
+#################################################################
+
+tab:PrintedTotalShape a sh:NodeShape ;
+    sh:targetClass tab:PrintedTotal ;
+    sh:property [ sh:name "PrintedTotalShape" ; sh:path tab:cellText ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A printed total must carry exactly one cellText." ] ;
+    sh:property [ sh:name "PrintedTotalShape" ; sh:path tab:aggregates ;
+        sh:minCount 2 ;
+        sh:message "A printed total needs at least two operands -- a one-member total is not a total." ] ;
+    sh:property [ sh:name "PrintedTotalShape" ; sh:path tab:totalOf ;
+        sh:maxCount 1 ;
+        sh:message "A printed total binds at most one table." ] ;
+    sh:property [ sh:name "PrintedTotalShape" ; sh:path tab:hasBBox ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class tab:BBox ;
+        sh:message "A printed total must carry exactly one hasBBox (provenance to the page, CLAUDE.md principle 6)." ] ;
+    sh:property [ sh:name "PrintedTotalShape" ; sh:path tab:onPage ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+        sh:message "A printed total must carry exactly one onPage, typed xsd:integer." ] ;
+    sh:sparql [
+        sh:name "PrintedTotalShape" ;
+        sh:message "A tab:PrintedTotal is not the product of a printed_total decision: some dec:DecisionHolon must dec:produced this node, be labelled printed_total, and its dec:chosen option must be labelled total (a proposition must not pass as an assertion)." ;
+        sh:prefixes tab:boxheadPrefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS {
+                    ?d dec:produced $this ;
+                       a dec:DecisionHolon ;
+                       rdfs:label ?j ;
+                       dec:chosen ?o .
+                    FILTER(str(?j) = "printed_total")
+                    ?o rdfs:label ?l .
+                    FILTER(str(?l) = "total")
+                }
+            }
+        """ ] .
