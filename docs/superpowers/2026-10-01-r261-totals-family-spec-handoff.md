@@ -176,3 +176,40 @@ who-wfa's old p1 false positive and `20` vanished is **still unasked**.
 - That the carved band-9 remainder reads `NON_TABLE` (point 3).
 - Whether binding a word *inside* an escalated band has any precedent seam. Nobody has looked at
   `donation.offer_single_line` or `_book_recovered_ink` for this case yet.
+
+## Addendum 2 — P1 RUN, the prediction HELD (2026-10-01, session 2, after the credit top-up)
+
+`P1_REPEAT=3 env -u BAML_LIVE .venv/bin/python scripts/r261_total_question_probe.py` at `d026cc6`,
+Haiku 4.5, the draft `PROMPT` in the probe, 36 calls:
+
+| case | value | answers (3 repeats) |
+| --- | --- | --- |
+| MATCH cbh p0 t1 / t3 / t5 / t7 | the four port totals | yes yes yes, all four |
+| MATCH who-wfa p0 t4 (the census FALSE) | `21` | **no no no** |
+| null who-wfa p0 t2 / t3 / t4 | `7` / `1` / `7` | cannot_tell no cannot_tell · no no no · no no cannot_tell |
+| null who-wfa p1 t2 / t3 / t4 | `7` / `1` / `7` | no no no · no no no · cannot_tell ×3 |
+| null who-wfa p2 t1 | `7` | cannot_tell no no |
+
+**The conjunction (worker *yes* AND exact sum) binds 4 of 4 TRUE and 0 of 1 FALSE on the 24-pair
+population.** No null drew a *yes* in 21 asks. The ruling's footing holds on the only instances
+the corpus has.
+
+Findings the spec must carry. None of them is a pass/fail of P1.
+
+1. **The `note` field LEAKS page values.** Two of the shown notes quote `737,289`, `178,708` and
+   `21`, against the `ReadBoxhead` rule that a note never carries page text. A closed answer
+   cannot hold the note to that rule. The spec either drops the note or disposes it, for example
+   by refusing an answer whose note contains a page token.
+2. **The null control is thin and one-sided.** All 7 nulls are small integers in who-wfa. cbh's
+   following bands hold no non-matching number. Nothing here tests a large, total-looking number
+   that does not sum. Arithmetic refuses that case anyway, but the worker's specificity on it is
+   **unmeasured**.
+3. **n is 5.** That is the corpus, not a sample of it. The spec should cite it as such, not as a
+   rate.
+4. **The grand total was NOT asked.** `1,951,264` is not in any table→following-band pair, since
+   band 9 follows band 8, a `NON_TABLE`. Its question ("the total of the totals above") is a
+   different question, and **P1 says nothing about it.** If the spec keeps it in scope (Addendum 1,
+   P2 point 2), its wording needs its own probe.
+
+**5. Next action (asserted):** resume `superpowers:brainstorming` at *"propose 2–3 approaches"* in
+a FRESH session. P1 and P2 are both measured.
