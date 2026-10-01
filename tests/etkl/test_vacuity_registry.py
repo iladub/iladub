@@ -142,24 +142,14 @@ VACUITY_REGISTRY = {
         "LIVE-ONLY body term, adjudicated 2026-09-18: 2203 focus nodes, and the one body term "
         "absent from every offline graph is tab:unshownText, which is emitted only under "
         "BAML_LIVE. The shape's other disjuncts are exercised on every document."),
-    # REGISTERED 2026-10-01 (R261 plan Task 2): vocabulary and membrane ship before the binding
-    # that mints tab:PrintedTotal (Tasks 3-4 of the same plan). Measured 0 focus nodes on all 7
-    # corpus documents (criterion 1) -- no compile path emits tab:PrintedTotal yet, so this is
-    # neither dead nor a corpus gap, it is sequencing. ADJUDICATED LIVE-ONLY-AFTER, same class
-    # as tab:UnshownInkCellShape above: expected to go live on cbh-stem once the printed_total
-    # worker + binding ship (spec § 2.2, D4) and must be DEregistered at that point --
-    # test_no_registered_shape_has_gone_live will then fail and name it.
-    TAB.PrintedTotalShape: (
-        "LIVE-ONLY-AFTER, registered 2026-10-01 (R261 plan Task 2): 0 focus nodes on all 7 "
-        "corpus documents -- the vocabulary and membrane ship in this task, the binding that "
-        "mints tab:PrintedTotal ships in Tasks 3-4 of the same plan. Expected to go live on "
-        "cbh-stem once the binding ships; deregister then. STILL IDLE AFTER TASK 4 (2026-10-01), "
-        "measured: the emitter and binding ship, but (1) no reading is recorded until Task 5, "
-        "and with no recording the reader is no claim (ruling R3), so nothing binds offline. "
-        "(A second cause, the cbh totals binding only in section repair's pass 2 and never "
-        "reaching the document graph, was closed by ruling R7 in fix round 1: with an "
-        "always-yes reader the cbh document graph now holds 4.) Deregister when a document-scope "
-        "graph first holds one."),
+    # DELETED 2026-10-01 (R261 plan Task 5): TAB.PrintedTotalShape. Registered idle in Task 2 as
+    # LIVE-ONLY-AFTER (sequencing: the vocabulary and membrane shipped before the binding that
+    # mints tab:PrintedTotal), and still idle after Task 4 because no printed_total reading was
+    # recorded, so the offline reader was no claim (ruling R3). Task 5 recorded the four cbh-stem
+    # readings under readings/printed_total/ (all "yes", each equal to Task 1's P1 majority). With
+    # them tracked, this test's other arm named it: test_no_registered_shape_has_gone_live failed
+    # with exactly `tab#PrintedTotalShape` stale. MEASURED at this commit, offline replay of
+    # cbh-stem: 4 tab:PrintedTotal in the document graph, score 0.9106957424714434.
 }
 
 
