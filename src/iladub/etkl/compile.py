@@ -1040,8 +1040,8 @@ def _bind_printed_totals(pdf_path: str, page_number: int, doc: URIRef, idx: int,
     `table_uri`; its table band is `bands[idx - 1]` (plan D2).
       1. THE ARITHMETIC, first. `totals.match_table` over the table's column sums. It is the SOLE
          enforcement of the sum property — a PROCEDURAL producer-side guard the membrane cannot
-         repeat, because `tab:cellText` is an `xsd:string` (spec § 4; CLAUDE.md § Producer-side
-         guards, R89). No match: nothing is asked and nothing is recorded.
+         repeat, because `tab:cellText` is an `rdfs:Literal`, never `xsd:decimal` (spec § 4;
+         CLAUDE.md § Producer-side guards, R89). No match: nothing is asked or recorded.
       2. THE READER, only on a match (`printedtotal.ask_printed_total`, NEURAL, closed answer).
          None — no reader, no recording, a raise, an answer outside the closed set — is NO CLAIM:
          nothing is recorded and nothing binds (ruling R3).
