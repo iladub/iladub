@@ -123,7 +123,16 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # as the other eight printed-total fixtures. The `sh:class tab:Table` triple went into the
     # EXISTING `vocab/shapes/tab-shapes.ttl`, so this is the fixtures' count moving, not a second
     # source.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 177
+    # RE-MEASURED 2026-10-02 (R261 loop (b) Task 2, grand total): 177 -> 180 —
+    # `tests/tab-printed-total-grand-{conformant,aggregates-cell-leak}.ttl` and
+    # `tests/tab-printed-total-table-aggregates-total-leak.ttl`, the positive and two negatives for
+    # the total-of-totals level (`tab:PrintedTotalShape`'s two new `sh:sparql` halves). Measured as
+    # a SET: added = exactly those three files, removed = none. All three name `tab:` terms plus
+    # `dec:`/`rdfs:` full IRIs, same pattern as the existing printed-total fixtures. No new term was
+    # declared in `vocab/ontology/tab.ttl` (only comments changed) and the new constraints went into
+    # the EXISTING `vocab/shapes/tab-shapes.ttl`, so this is the fixtures' count moving, not a second
+    # source.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 180
 
 
 def test_each_file_gets_its_own_named_graph():

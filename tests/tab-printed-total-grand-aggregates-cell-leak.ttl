@@ -1,0 +1,35 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/tab-demo#> .
+
+# R261 spec § 4 negative, half 1: a PrintedTotal with no tab:totalOf (a grand total)
+# that aggregates a non-PrintedTotal cell. ex:t1 is itself a fully conformant
+# table-level PrintedTotal so the only violation is ex:gt's leaked cell operand.
+ex:t1 a tab:PrintedTotal ;
+    tab:cellText "100" ;
+    tab:aggregates ex:c1 , ex:c2 ;
+    tab:totalOf ex:tbl1 ;
+    tab:hasBBox ex:bbox1 ;
+    tab:onPage 1 .
+ex:gt a tab:PrintedTotal ;
+    tab:cellText "300" ;
+    tab:aggregates ex:t1 , ex:leak-cell ;
+    tab:hasBBox ex:bbox-gt ;
+    tab:onPage 3 .
+
+ex:bbox1 a tab:BBox .
+ex:bbox-gt a tab:BBox .
+ex:tbl1 a tab:Table .
+
+ex:d1 a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:t1 ;
+    dec:chosen ex:opt-total1 .
+ex:opt-total1 rdfs:label "total" .
+
+ex:dgt a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:gt ;
+    dec:chosen ex:opt-total-gt .
+ex:opt-total-gt rdfs:label "total" .

@@ -1,0 +1,37 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/tab-demo#> .
+
+# R261 spec § 4 negative, half 2: a PrintedTotal WITH tab:totalOf (table level) that
+# aggregates a PrintedTotal. ex:inner is itself a fully conformant table-level
+# PrintedTotal so the only violation is ex:t's leaked PrintedTotal operand.
+ex:inner a tab:PrintedTotal ;
+    tab:cellText "100" ;
+    tab:aggregates ex:c1 , ex:c2 ;
+    tab:totalOf ex:tbl-inner ;
+    tab:hasBBox ex:bbox-inner ;
+    tab:onPage 1 .
+ex:t a tab:PrintedTotal ;
+    tab:cellText "300" ;
+    tab:aggregates ex:inner , ex:c3 ;
+    tab:totalOf ex:tbl ;
+    tab:hasBBox ex:bbox-t ;
+    tab:onPage 2 .
+
+ex:bbox-inner a tab:BBox .
+ex:bbox-t a tab:BBox .
+ex:tbl-inner a tab:Table .
+ex:tbl a tab:Table .
+
+ex:d-inner a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:inner ;
+    dec:chosen ex:opt-total-inner .
+ex:opt-total-inner rdfs:label "total" .
+
+ex:d-t a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:t ;
+    dec:chosen ex:opt-total-t .
+ex:opt-total-t rdfs:label "total" .

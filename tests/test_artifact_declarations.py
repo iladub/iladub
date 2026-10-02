@@ -253,7 +253,15 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # `tab:totalOf`'s new `sh:class tab:Table` constraint. Measured as a SET: added = exactly that
     # one file, removed = none. The `sh:class tab:Table` triple went into the EXISTING
     # `tab-shapes.ttl`. The `.rq` population does not move.
-    assert len(vocab_nodes) == len(artifact_files()) == 177
+    # RE-MEASURED 2026-10-02 (R261 loop (b) Task 2, grand total): the `.ttl` population is **180**
+    # — `tests/tab-printed-total-grand-{conformant,aggregates-cell-leak}.ttl` and
+    # `tests/tab-printed-total-table-aggregates-total-leak.ttl`, the positive and two negatives for
+    # the total-of-totals level feeding `test_tab.py`'s new shape battery. Measured as a SET: added
+    # = exactly those three files, removed = none. The two new `sh:sparql` halves on
+    # `tab:PrintedTotalShape` went into the EXISTING `tab-shapes.ttl`; no new term was declared.
+    # The `.rq` population does not move: both halves are closed-world membrane constraints
+    # (CLAUDE.md § 8), not derivations, so neither authored a query.
+    assert len(vocab_nodes) == len(artifact_files()) == 180
     assert len(query_nodes) == len(query_files()) == 57
 
 
