@@ -1,5 +1,7 @@
 # Handoff: R261 loop (b) — the grand total's question HOLDS; write the spec (2026-10-02)
 
+**Topic:** r261-totals-family · **Date:** 2026-10-02
+
 **Serves:** prog:criterion:etkl:03 — loop (b) of the R261 totals family; the role question ran
 before any spec, as ordered, and held.
 
