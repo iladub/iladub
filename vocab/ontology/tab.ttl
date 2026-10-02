@@ -168,8 +168,8 @@ AggregationCell presumes. It is tab:Cell ⊑ tab:PageLocated instead, carrying t
 provenance-to-the-page every carried cell carries (CLAUDE.md principle 6). Bound only when a
 reading worker answers yes AND exact Decimal arithmetic over its tab:aggregates operands holds
 -- a producer-side PROCEDURAL check that is the SOLE enforcement of the sum property (CLAUDE.md
-§ Producer-side guards, R89): tab:cellText's range is xsd:string, and only tab:BaseFact's
-tab:measureValue is xsd:decimal, so the membrane cannot re-check the arithmetic without
+§ Producer-side guards, R89): tab:cellText's range is rdfs:Literal, never xsd:decimal, and only
+tab:BaseFact's tab:measureValue is xsd:decimal, so the membrane cannot re-check the sum without
 reopening the float/Decimal engine split ([[R92]]-[[R94]]). Every asserted instance must be the
 product of a printed_total decision holon -- see tab:PrintedTotalShape, which is the only
 place this requirement is enforced."""@en .

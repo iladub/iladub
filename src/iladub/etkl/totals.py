@@ -7,8 +7,8 @@ candidate's value, no tolerance). Neither is a reading judgement — "is this nu
 what is above it" is the NEURAL worker's question (spec § 3.2, `printedtotal.py`); this module
 supplies only the arithmetic a worker's *yes* is checked against, and is the SOLE enforcement of
 that property (CLAUDE.md § Producer-side guards, R89: a producer-side guard the membrane cannot
-also check, because `tab:cellText`'s range is `xsd:string`, spec § 4). One parser throughout —
-`headers.is_numeric` + `rows._numeric_token_sum` (M6) — never a second one.
+also check, because `tab:cellText`'s range is `rdfs:Literal`, never `xsd:decimal`, spec § 4).
+One parser throughout — `headers.is_numeric` + `rows._numeric_token_sum` (M6) — never a second.
 """
 from __future__ import annotations
 
@@ -130,8 +130,8 @@ def table_level_totals(graph: Graph) -> list[tuple[URIRef, URIRef, Decimal]]:
 
     Irreducible to AXIOM: the value must go through this ONE parser (`_numeric_token_sum` via
     `headers.is_numeric`), which must not be duplicated as a second implementation in SPARQL —
-    and it could not be anyway, since `tab:cellText`'s range is `xsd:string` (`tab.ttl`), so a
-    membrane arithmetic check over it would reopen the float/Decimal engine split R92-R94 found
+    and it could not be anyway: `tab:cellText`'s range is `rdfs:Literal` (`tab.ttl`), never
+    `xsd:decimal`, so a membrane arithmetic check over it would reopen the R92-R94 engine split
     (CLAUDE.md § Producer-side guards, R89). Irreducible to NEURAL because nothing in it is
     underdetermined — the triples are read back exactly as the emitter wrote them."""
     out: list[tuple[URIRef, URIRef, Decimal]] = []

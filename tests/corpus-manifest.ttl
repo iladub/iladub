@@ -357,3 +357,16 @@
         cor:readAt "2026-09-08"^^xsd:date ;
         cor:atCommit "9eb5cd0" ;
         cor:recordedIn "docs/superpowers/specs/2026-09-08-a-figure-carries-its-date-design.md" ] .
+
+#################################################################
+#  cbh-stem — the maintainer's 2026-10-02 ruling. A SEPARATE statement about the same subject,
+#  appended at the end of the file for two reasons: the two cbh notes in the document block
+#  above are not touched by a single character (their closing ` ] .` included), and no line
+#  moves, so every arc-manifest prog:source line pointer into this file stays valid
+#  (tests/test_arc_manifest.py::test_etkl_criterion_sources_point_at_the_document_they_name).
+#  Turtle reads it as one more cor:adjudication on the same document.
+#################################################################
+
+<urn:iladub:corpus:cbh-stem-2026-08-03>
+    cor:adjudication [ cor:by "the ruling is the maintainer's, François Rosselet, 2026-10-02; composed by Claude Opus 5.5 (agent) in the cbh-hold-kept maintenance PR; the accountable human sign-off is François Rosselet's review and merge of the commit that carries this node" ; cor:on "2026-10-02"^^xsd:date ;
+        cor:rationale "HOLD KEPT, by the maintainer's ruling. cor:expectedVerdict stays cor:Unadjudicated, no cor:scoreFloor is pinned, and prog:criterion:etkl:03 stays unmet. This note does not supersede the 2026-08-20 or 2026-10-01 notes on this document, which are not repaired in place. WHAT MOVED (docs/superpowers/2026-10-02-r261-grand-total-evidence.md § 7): R261 loop (b) (PR #294) binds the grand total. `1,951,264` is now a total-of-totals tab:PrintedTotal (`…/p0/r2#printedtotal9-l0`) carrying no tab:totalOf, whose tab:aggregates are the four table-level PrintedTotals, produced by a decision gated on the worker's total_of_totals AND the exact Decimal sum 374904 + 737289 + 660363 + 178708 = 1951264 (§ 7.4). The escalation-furnish pin now reads 0 live escalations: 5 chose escalated, 5 superseded, 0 requests (§ 7.3). It was renamed in this change from test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue, the name the 2026-10-01 note cites, to tests/etkl/test_escalation_furnish.py::test_corpus_cbh_furnishes_no_request_its_residue_escalation_is_withdrawn_as_ignored. cbh's score moves 0.9107 -> 1.0 (0.9106957424714434 -> 1.0, § 7.1). WHY THE HOLD IS KEPT: of that +0.0893, only +0.0010 is the binding (one token moves from escalated to asserted, 877/963 -> 878/963). The other +0.0883 is the four-line Note leaving the denominator: once `1,951,264` is carved out of band 9, the remainder classifies NON_TABLE and lands in `…/p0/r2#ignored9`, classified rather than read ([[R288]]). The Note is the caveat the page prints on its four tables ('Dates are subject to change and are only a guide … only an estimate'). Discarding it violates CLAUDE.md core principle 5, context is carried, not discarded, so a 1.0 bought by dropping the page's own caveat is not an acceptance. NEXT: [[R288]], reading the Note as context carried on the tables it qualifies." ] .

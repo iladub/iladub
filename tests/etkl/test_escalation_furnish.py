@@ -272,9 +272,11 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
 
 @pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not populated")
-def test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue():
-    """cbh-stem: every escalation that section repair withdraws furnishes nothing, and the one
-    that stays live furnishes exactly one request. That one is the box split's residue.
+def test_corpus_cbh_furnishes_no_request_its_residue_escalation_is_withdrawn_as_ignored():
+    """cbh-stem: every escalation that section repair withdraws furnishes nothing, and since
+    2026-10-02 none stays live: the box split's residue is withdrawn by a decision choosing
+    `ignored`, so cbh furnishes no request. (Until then the residue stayed live and furnished
+    exactly one; the history follows.)
 
     RENAMED AND RE-PINNED 2026-09-30 (box-split Task 4, controller ruling 2). This test was
     `test_corpus_a_wholly_superseded_document_furnishes_nothing`. Until the box split, cbh's
@@ -294,10 +296,14 @@ def test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_th
     moved is cbh's live count, 0 to 1, and it is pinned exactly at 1. That one region is named
     structurally: the page-0 band holding `1,951,264`, with reason KIND_NOT_SUPPORTED.
 
-    RE-READ AND RE-PINNED 2026-10-02 (R261 loop (b), Task 7): live count 1 -> 0. The name is
-    kept, now historical, because `tests/corpus-manifest.ttl`'s cbh hold rationale and the
-    append-only evidence cite it. The re-read: loop (b) binds `1,951,264` in the section-repair
-    pass (`/r2`) as a total-of-totals `tab:PrintedTotal` (four table-level PrintedTotals as
+    RE-READ AND RE-PINNED 2026-10-02 (R261 loop (b), Task 7): live count 1 -> 0. RENAMED the
+    same day (maintenance PR `cbh-hold-kept`) from
+    `test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_the_residue`,
+    which no longer said what the test pins. The manifest's 2026-10-01 cbh note and the
+    append-only evidence still cite the old name, as history.
+
+    The re-read: loop (b) binds `1,951,264` in the section-repair pass (`/r2`) as a
+    total-of-totals `tab:PrintedTotal` (four table-level PrintedTotals as
     `tab:aggregates`, no `tab:totalOf`). It does so on the worker's `total_of_totals` AND the
     exact Decimal sum, carves the line out of band 9, and the remaining Note classifies
     `NON_TABLE` and is `ignored` (spec 2026-10-02-r261-grand-total-design.md § 0 concern 2,
