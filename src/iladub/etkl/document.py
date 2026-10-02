@@ -1030,19 +1030,33 @@ def _remove_escalation_record(graph: Graph, page_doc: URIRef, idx: int) -> None:
 
 
 def _printed_total_bands(g2: Graph, r2_doc: URIRef, tables: set, nbands: int) -> list[int]:
-    """R261 ruling R7: the pass-2 bands whose bound `tab:PrintedTotal` is `tab:totalOf` one of
-    `tables` — ascending.
+    """R261 ruling R7, extended by loop (b) spec § 5: the pass-2 bands whose bound
+    `tab:PrintedTotal` either (a) is `tab:totalOf` one of `tables`, or (b) `tab:aggregates` a
+    PrintedTotal that is `tab:totalOf` one of `tables` — ascending, deduplicated.
+
+    THE EXTENSION (b) IS ONE GRAPH HOP, NEVER ADJACENCY: a grand total carries no `tab:totalOf`
+    of its own (vocab/ontology/tab.ttl's total-of-totals usage) — the ONLY link from a page's
+    grand total to an adopted table is through the table-level total it aggregates, so without
+    this hop a grand total bound in section-repair pass 2 has no `tables` membership at all and
+    R7's loop (a) never finds it (measured: cbh-shaped fixture, pass 2 binds `257,004` as
+    `#printedtotal4-l0` with `tab:aggregates` the two table totals and no `tab:totalOf`; the
+    document graph held neither it nor the two table totals before this extension reached it via
+    a candidate table's adoption). PROCEDURAL graph glue, irreducible to AXIOM for the same reason
+    as loop (a): `tables`/`nbands` are Python values from THIS compile's reports, not a standing
+    RDF fact a SPARQL query could join against on its own — it decides nothing (which band holds
+    a grand total is already decided by `_bind_printed_totals`) and carries no constant.
 
     KEYED BY THE GRAPH LINK, never by adjacency (an `i + 1` rule would be geometry, CLAUDE.md § 8):
-    a total joins its table by `tab:totalOf`, and joins its band by the decision that produced it,
-    `?d dec:produced ?pt`, whose URI is `decisionlog`'s own minting `{r2_doc}#region{j}-d{n}` —
-    read back exactly as `_verdict_decision` reads it (the trailing `-d` keeps band 1 from
-    matching band 10). Gate classification: PROCEDURAL graph glue over facts the compile already
-    decided; it decides nothing and carries no constant."""
+    a total joins its table by `tab:totalOf` (or a table-level total by `tab:aggregates`), and
+    joins its band by the decision that produced it, `?d dec:produced ?pt`, whose URI is
+    `decisionlog`'s own minting `{r2_doc}#region{j}-d{n}` — read back exactly as
+    `_verdict_decision` reads it (the trailing `-d` keeps band 1 from matching band 10). Gate
+    classification: PROCEDURAL graph glue over facts the compile already decided; it decides
+    nothing and carries no constant."""
+    table_totals = {pt for pt, t in g2.subject_objects(TAB.totalOf) if t in tables}
+    grand_totals = {gt for gt, pt in g2.subject_objects(TAB.aggregates) if pt in table_totals}
     out = set()
-    for pt, t in g2.subject_objects(TAB.totalOf):
-        if t not in tables:
-            continue
+    for pt in table_totals | grand_totals:
         for d in g2.subjects(DEC.produced, pt):
             for j in range(nbands):
                 if str(d).startswith(f"{r2_doc}#region{j}-d"):

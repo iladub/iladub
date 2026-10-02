@@ -1783,7 +1783,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
 def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
                             bad_total_in: int | None = None,
                             strip_separators: bool = False,
-                            lone_total_offset: float | None = None) -> dict:
+                            lone_total_offset: float | None = None,
+                            grand_total: str | None = None) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1838,6 +1839,13 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     earlier draft of this fix made the extra hrule unconditional. Scoped to an opt-in
     parameter, every existing caller (every OTHER test in this file) is unaffected.
 
+    grand_total (R261 loop (b), task 5, default None: byte-identical to before this parameter
+    existed): one more line, the printed string VERBATIM (never computed here — the caller states
+    the truth of what is drawn, as every other total string in this fixture does), placed 60pt
+    below the LAST section's own total line (whichever of `with_totals`'s "TOTAL" line or
+    `lone_total_offset`'s lone line was drawn last; the grid's closing rule if neither), far enough
+    that `detect_bands` gives it a band of its own after every section band.
+
     Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
     """
     from reportlab.lib.pagesizes import letter
@@ -1880,12 +1888,14 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     # splits sections into distinct raw bands) — same drawing, shifted down the page.
     STEP = 190.0
     sections = []
+    last_total_y = None
     for i in range(n_sections):
         y_off = i * STEP
         rows = row_sets[i]
         grid_bot = _draw_section(c, H, y_off, keys[i], notices[i], rows, cols,
                                   doubled_edges=True,
                                   extra_hrule_offsets=(22,) if strip_separators else ())
+        last_total_y = grid_bot
         total = None
         if with_totals:
             vol_sum = sum(int(r[3].replace(",", "")) for r in rows)
@@ -1895,13 +1905,20 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
             total_ry = grid_bot + 8
             c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
             c.drawString(cols[3] + 4, y(total_ry), total)
+            last_total_y = total_ry
         if lone_total_offset is not None:
             # R261 fix round 1: the REAL cbh shape — the Volume sum printed ALONE (no "TOTAL"
             # label), `lone_total_offset` pt below the grid's closing rule, so `detect_bands`
             # gives it a band of its own after the section's. Default None: byte-identical.
             total = f"{sum(int(r[3].replace(',', '')) for r in rows):,}"
-            c.drawString(cols[3] + 4, y(grid_bot + lone_total_offset), total)
+            lone_y = grid_bot + lone_total_offset
+            c.drawString(cols[3] + 4, y(lone_y), total)
+            last_total_y = lone_y
         sections.append({"key": keys[i], "notice": notices[i], "rows": rows, "total": total})
+    if grand_total is not None:
+        # R261 loop (b) task 5: the page's grand total, printed alone 60pt below the last
+        # section's own total line — see the docstring's `grand_total` paragraph.
+        c.drawString(cols[3] + 4, y(last_total_y + 60.0), grand_total)
     c.save()
     return {"sections": sections, "header_names": header_names, "cols": cols}
 
