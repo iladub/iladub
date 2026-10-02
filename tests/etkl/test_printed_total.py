@@ -576,6 +576,11 @@ def test_an_operand_table_band_is_resolved_only_when_unique():
     assert _operand_table_band([rep(URIRef(f"{DOC}#table0")), rep(None)], t) is None
     assert _operand_table_band([], t) is None
     assert _operand_table_band([rep(t), rep(None), rep(t)], t) is None
+    # `table_uri=None` (a table-less report) must never match: `None` means "no table",
+    # not "any table". A SINGLE such report is the case that actually exercises the guard —
+    # without it, the equality `None == None` is the unique hit and the function would
+    # wrongly return `0`.
+    assert _operand_table_band([rep(None)], None) is None
 
 
 def test_an_unresolved_operand_table_band_is_no_ask_no_record_no_bind(tmp_path, monkeypatch):

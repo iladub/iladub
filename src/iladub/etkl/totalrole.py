@@ -120,6 +120,9 @@ class BamlTotalRoleReader:
 
 
 def _line_text(line) -> str:
+    """One line's words, left to right. PROCEDURAL — a rendering of words the extractor already
+    placed, reused (not imported, module docstring) from `printedtotal.py`'s precedent; it decides
+    nothing and carries no constant."""
     return " ".join(w.text for w in sorted(line.words, key=lambda w: w.x0))
 
 
@@ -197,8 +200,10 @@ def listing_of(operands: "list[Operand]", band, line_no: int, line) -> str:
     """The question's text facts, in operand order (D6, a caller concern — this function takes
     `operands` already ordered): each operand's table-band lines, THEN that operand's own total text
     (its `tab:cellText`, since the total LINE itself is carved away and has no `Line` to render) —
-    for every operand in turn — THEN the candidate's own band's lines `0..line_no-1` (the crop shows
-    them too, the `printedtotal.listing_of` fix carried here), THEN the candidate line itself —
+    for every operand in turn — THEN the candidate's own band's lines `0..line_no-1` (the LISTING
+    carries them too, the `printedtotal.listing_of` fix carried here — NOT the crop: `crop_box`
+    never includes their x extent, so over-listing only makes the recording key stricter, never
+    the image wider), THEN the candidate line itself —
     numbered `L<k>`, words left to right. PROCEDURAL — a rendering of the cropped lines' own words;
     it decides nothing. It keys the recording; it is not sent to the model."""
     lines_text: list[str] = []

@@ -11,8 +11,7 @@ measured:** `019b0ed`.
 **Doc impact: none.** Measurement only; no `src/` change, no vocabulary or published term changes.
 
 Plan: `docs/superpowers/plans/2026-10-02-r261-grand-total.md` (§§ "Measured seams", "Decisions
-this plan takes where the spec is silent"). Task brief:
-`.superpowers/sdd/2026-10-02-r261-grand-total/task-0-brief.md`.
+this plan takes where the spec is silent"). Task brief: plan Task 0.
 
 This task is MEASUREMENT ONLY: no `src/` change. Three scratch scripts were written and run from
 the scratchpad directory (not committed, per the prior loop's § 3 convention — a diagnostic over a
@@ -231,8 +230,8 @@ and handed to Task 6 Step 3 as instructed, not treated as a defect in D1 or in t
 
 ## § 1. Task 1 — does `AskTotalRole` through BAML reproduce P4b? (2026-10-02)
 
-**Serves:** prog:criterion:etkl:03 — Task 1 of
-`.superpowers/sdd/2026-10-02-r261-grand-total/task-1-brief.md`: a PROPOSITION, run before any spec.
+**Serves:** prog:criterion:etkl:03 — plan Task 1
+(`docs/superpowers/plans/2026-10-02-r261-grand-total.md`): a PROPOSITION, run before any spec.
 
 **Built:** `baml_src/total_role.baml` — `enum TotalRoleAnswer`, `class TotalRoleVerdict`, `function
 AskTotalRole(page: image, value: string) -> TotalRoleVerdict`, client `Claude`. The prompt is
@@ -306,7 +305,8 @@ case for case, including its one known miss.
 
 ## § 6. Task 6 — record the readings, and the instrument parity (2026-10-02)
 
-**Serves:** prog:criterion:etkl:03 — Task 6 of `.superpowers/sdd/2026-10-02-r261-grand-total/task-6-brief.md`.
+**Serves:** prog:criterion:etkl:03 — plan Task 6
+(`docs/superpowers/plans/2026-10-02-r261-grand-total.md`).
 
 Scratch script (not committed, per § 0's convention): `r261_task6_compile_hash.py` (scratchpad),
 compiles cbh via `compile_document(CBH)` (the same call `scripts/r261_baseline.py` and
@@ -465,8 +465,9 @@ PYTHONPATH="$PWD" .venv/bin/python -m pytest tests/etkl/test_printed_total.py \
 
 ## § 7 Task 7 — corpus sweep and cbh: only cbh moves; the Note lands in `#ignored9` (2026-10-02)
 
-**Serves:** prog:criterion:etkl:03 — Task 7 of `.superpowers/sdd/2026-10-02-r261-grand-total/task-7-brief.md`
-(spec §§ 6.3, 6.4). HEAD measured: `75c570d`. Every compile below used the recorded readers
+**Serves:** prog:criterion:etkl:03 — plan Task 7
+(`docs/superpowers/plans/2026-10-02-r261-grand-total.md`, spec §§ 6.3, 6.4). HEAD measured:
+`75c570d`. Every compile below used the recorded readers
 (`BAML_LIVE` and `ILADUB_RECORD_READINGS` unset), run serially with nothing else compiling.
 
 Scratch scripts (not committed, per § 0's convention): `r261_task7_cbh_dump.py`,
@@ -677,8 +678,10 @@ table-level spec's ruling R-d, taken knowingly and disclosed here, not adjudicat
 Lifting the hold is the maintainer's call.**
 
 **The S5 prediction now rests on this run.** A CI fixture's Note remainder measured `escalated`, not
-`ignored` (Task 4 report, `.superpowers/sdd/2026-10-02-r261-grand-total/task-4-report.md`; ruled to assert the measured `escalated`). On cbh, at whole-document scope, the remainder is `ignored`. That is measured
-here and nowhere else.
+`ignored` (plan Task 4 Step 1's `remainder` bullet,
+`docs/superpowers/plans/2026-10-02-r261-grand-total.md`; ruled to assert the measured `escalated`).
+On cbh, at whole-document scope, the remainder is `ignored`. That is measured here and nowhere
+else.
 
 ### § 7.5 Step 4 — register
 

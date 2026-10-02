@@ -17,8 +17,8 @@ R261 loop (b), task 5 (spec § 5): the SAME fixture plus `grand_total="257,004"`
 `tab:aggregates` link to the two table-level totals bound at bands 1 and 3. MEASURED (scratch,
 PYTHONPATH="$PWD" .venv/bin/python, both readers patched to always claim): in pass 1 every one of
 bands 1/3/4 is `ignored` ("fewer than 2 lines") — the totals level needs >= 2 table-level operands
-(`totals.match_totals`), and pass 1's tables never assert, so `totals_level_totals` is empty and
-`match_totals` never matches; in pass 2 (`section_repair_bands={0, 2}`) the tables at bands 0/2
+(`totals.match_totals`), and pass 1's tables never assert, so `totals.table_level_totals` is empty
+and `match_totals` never matches; in pass 2 (`section_repair_bands={0, 2}`) the tables at bands 0/2
 assert, bands 1/3 bind their table-level totals as before, and band 4 then binds `#printedtotal4-
 l0` — `tab:totalOf` None, `tab:aggregates` {`#printedtotal1-l0`, `#printedtotal3-l0`} — exactly
 task 5's `_bind_printed_totals` totals level. BEFORE the fix: `compile_document`'s document graph
@@ -306,10 +306,12 @@ def test_with_no_role_claim_the_document_holds_only_the_table_totals(grand_pdf, 
 # `tab:aggregates` operands was `tab:totalOf` an adopted table, not every one. On a mixed page
 # (one operand's table adopted, the other's not) that ships a `tab:aggregates` edge to a
 # PrintedTotal the adopting loop never merged into the document graph — a dangling reference
-# `tab:PrintedTotalShape` half 1 (every `tab:aggregates` object is `tab:totalOf` a table IN THIS
-# GRAPH) would refuse at the document membrane. RULING: the hop must be UNIVERSAL — adopt a grand
-# total only when EVERY one of its `tab:aggregates` operands is `tab:totalOf` an adopted table
-# (and it has at least one operand).
+# `tab:PrintedTotalShape`'s grand-total half (a totalOf-less PrintedTotal's every `tab:aggregates`
+# object must itself be `a tab:PrintedTotal` — `vocab/shapes/tab-shapes.ttl`'s second sh:sparql
+# block) would refuse at the document membrane, because the un-merged operand is absent from the
+# graph entirely and so cannot be typed `tab:PrintedTotal` in it. RULING: the hop must be
+# UNIVERSAL — adopt a grand total only when EVERY one of its `tab:aggregates` operands is
+# `tab:totalOf` an adopted table (and it has at least one operand).
 #
 # UNIT-LEVEL, over a constructed graph (the brief's preferred seam: `_printed_total_bands` takes
 # a graph, a doc URI, the adopted-tables set and the band count — no PDF, reader or compile

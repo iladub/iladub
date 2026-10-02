@@ -1,4 +1,4 @@
-"""R261 loop (b) Task 6 Step 3 (plan `.superpowers/sdd/2026-10-02-r261-grand-total/task-6-brief.md`,
+"""R261 loop (b) Task 6 Step 3 (plan `docs/superpowers/plans/2026-10-02-r261-grand-total.md`,
 spec `docs/superpowers/specs/2026-10-02-r261-grand-total-design.md` § 3 "the crop"): production's
 `totalrole.crop_box` for cbh's grand-total candidate (`1,951,264`) equals the probe's `derived_box`
 (`scripts/r261_grand_total_role_probe.py`, measured by Task 0 § 0.3,

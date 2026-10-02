@@ -646,8 +646,9 @@ def emit_ignored_band(g: Graph, doc_uri: URIRef, idx: int, band,
 def emit_printed_total(g: Graph, doc_uri: URIRef, idx: int, line_no: int, word, page: int,
                        value_text: str, operands, table_uri: URIRef | None,
                        decision: URIRef) -> URIRef:
-    """Emit one bound `tab:PrintedTotal` — a total printed beneath its table, outside the grid
-    (R261 spec § 4) — and return its URI.
+    """Emit one bound `tab:PrintedTotal` — a total printed outside the grid (R261 spec § 4): a
+    table-level total beneath its table when `table_uri` is given, or a grand total summing
+    other PrintedTotals when it is None (R261 loop (b) spec § 2) — and return its URI.
 
     Gate classification (CLAUDE.md § 8): PROCEDURAL raw extraction, source -> typed RDF facts.
     THE EMITTER DECIDES NOTHING: whether the number is a total was settled upstream by the

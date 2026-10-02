@@ -1,6 +1,6 @@
 """R261 Task 3 — `totals.py` (PROCEDURAL): candidates and operands.
 
-Plan `.superpowers/sdd/2026-10-01-r261-totals-family/task-3-brief.md` Step 1. Hand-built bands
+Plan `docs/superpowers/plans/2026-10-01-r261-totals-family.md` Task 3 Step 1. Hand-built bands
 (`geometry.Word`/`Line`, `bands.Band`) and a hand-built `rdflib.Graph` carrying the same
 `tab:hasCell`/`tab:atColumn`/`tab:cellText` triples `holon.py`'s entry-cell emitters write
 (measured: `holon.py:114-121`) — no PDF, no compile.

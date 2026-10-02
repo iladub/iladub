@@ -992,22 +992,29 @@ def _operand_table_band(reports: "list[RegionReport]", table_uri: URIRef) -> int
     report names `table_uri` (`reports[j]` is band `j`'s, one report per band, M2). Zero or several
     such `j` is None: the operand's table band cannot be resolved, so the derived crop cannot be
     built and the caller makes no claim (ruling R3) — never a band guessed from the total's own
-    position (`j - 1`), because a table URI's index need not be its band's (the grid-donation path
-    names its donor's index, plan N3).
+    position (`j - 1`). THE REAL REASON is this uniqueness refusal itself, not any one cause of a
+    mismatch: a table URI's index need not be its band's at all, of which the grid-donation path
+    (naming its donor's index, plan N3) is the cited example, not the whole justification.
 
     PROCEDURAL raw extraction: an exact lookup over the reports the compile already wrote, no
     judgement and no constant. Irreducible to AXIOM because `RegionReport` is a Python record of
     the band loop, not an RDF fact; irreducible to NEURAL because nothing in it is underdetermined."""
+    if table_uri is None:
+        return None
     hits = [j for j, r in enumerate(reports) if r.table_uri == table_uri]
     return hits[0] if len(hits) == 1 else None
 
 
-def _total_operand(graph: Graph, pt: URIRef, table_band):
+def _total_operand(graph: Graph, pt: URIRef, table_band) -> "Operand | None":
     """One `totalrole.Operand` for the table-level PrintedTotal `pt`: its table band (resolved by
     the caller, D1), its `tab:cellText`, and its `tab:hasBBox` extent `(x0, y0, x1, y1)` as
     `holon.emit_printed_total` wrote it (2 dp, N4). None when either is absent — then no crop can be
-    built and the caller makes no claim. PROCEDURAL raw extraction: it reads back triples, no
-    judgement."""
+    built and the caller makes no claim.
+
+    PROCEDURAL raw extraction: it reads back triples the emitter already wrote, no judgement and no
+    constant. Irreducible to AXIOM because the product is a Python `Operand` the crop/render
+    functions consume, not a graph fact a SPARQL `CONSTRUCT` could produce; irreducible to NEURAL
+    because nothing in it is underdetermined."""
     from .totalrole import Operand
     text = graph.value(pt, TAB.cellText)
     bb = graph.value(pt, TAB.hasBBox)
@@ -1223,9 +1230,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         # R261 (spec § 2, D5): a total printed beneath the previous band's table — or, at the
         # totals level (loop (b) spec § 2), a grand total summing the page's table totals — binds
         # BEFORE this band is read, so the line it sat on is carved out and the remainder is
-        # classified on its own. Here, after `band_marks` took this band's opening totals, so the carved word
-        # is booked to band `idx`; and before `classify` and the lone-line donation hook, so a
-        # bound line is never offered for donation (Review Focus 5).
+        # classified on its own. Here, after `band_marks` took this band's opening totals, so the
+        # carved word is booked to band `idx`; and before `classify` and the lone-line donation
+        # hook, so a bound line is never offered for donation (Review Focus 5).
         _carved, _pt_a, _pt_e = _bind_printed_totals(
             pdf_path, page_number, doc, idx, band, bands, reports, graph, brec)
         if _carved is not band:

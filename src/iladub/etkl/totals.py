@@ -105,7 +105,10 @@ _PT_FRAGMENT = re.compile(r"#printedtotal(\d+)-l(\d+)$")
 def _band_order(pt: URIRef) -> tuple[int, int, int, str]:
     """D6's sort key: the (band index, line index) `holon.emit_printed_total` minted into the
     PrintedTotal's own URI fragment (`#printedtotal{idx}-l{line_no}`), read back exactly. A URI not
-    of that form (never minted by the emitter) sorts after every minted one, by its text."""
+    of that form (never minted by the emitter) sorts after every minted one, by its text.
+
+    PROCEDURAL raw extraction: a regex read of a URI fragment the emitter already minted, no
+    judgement and no constant."""
     m = _PT_FRAGMENT.search(str(pt))
     if m is None:
         return (1, 0, 0, str(pt))
@@ -123,7 +126,14 @@ def table_level_totals(graph: Graph) -> list[tuple[URIRef, URIRef, Decimal]]:
     `holon.emit_printed_total` wrote, with no judgement. `value` is the ONE parser's
     `_numeric_token_sum` of the node's `tab:cellText` (M6). A table-level PrintedTotal whose text
     does not parse cannot have been emitted (its line passed `candidate_lines`), so one raises
-    rather than silently shrinking the whole set to a subset (R-f: never a subset)."""
+    rather than silently shrinking the whole set to a subset (R-f: never a subset).
+
+    Irreducible to AXIOM: the value must go through this ONE parser (`_numeric_token_sum` via
+    `headers.is_numeric`), which must not be duplicated as a second implementation in SPARQL —
+    and it could not be anyway, since `tab:cellText`'s range is `xsd:string` (`tab.ttl`), so a
+    membrane arithmetic check over it would reopen the float/Decimal engine split R92-R94 found
+    (CLAUDE.md § Producer-side guards, R89). Irreducible to NEURAL because nothing in it is
+    underdetermined — the triples are read back exactly as the emitter wrote them."""
     out: list[tuple[URIRef, URIRef, Decimal]] = []
     for pt in graph.subjects(RDF.type, TAB.PrintedTotal):
         table = graph.value(pt, TAB.totalOf)
