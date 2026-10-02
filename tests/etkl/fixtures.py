@@ -1783,7 +1783,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
 def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
                             bad_total_in: int | None = None,
                             strip_separators: bool = False,
-                            lone_total_offset: float | None = None) -> dict:
+                            lone_total_offset: float | None = None,
+                            grand_total: str | None = None) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1838,6 +1839,13 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     earlier draft of this fix made the extra hrule unconditional. Scoped to an opt-in
     parameter, every existing caller (every OTHER test in this file) is unaffected.
 
+    grand_total (R261 loop (b), task 5, default None: byte-identical to before this parameter
+    existed): one more line, the printed string VERBATIM (never computed here — the caller states
+    the truth of what is drawn, as every other total string in this fixture does), placed 60pt
+    below the LAST section's own total line (whichever of `with_totals`'s "TOTAL" line or
+    `lone_total_offset`'s lone line was drawn last; the grid's closing rule if neither), far enough
+    that `detect_bands` gives it a band of its own after every section band.
+
     Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
     """
     from reportlab.lib.pagesizes import letter
@@ -1880,12 +1888,14 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     # splits sections into distinct raw bands) — same drawing, shifted down the page.
     STEP = 190.0
     sections = []
+    last_total_y = None
     for i in range(n_sections):
         y_off = i * STEP
         rows = row_sets[i]
         grid_bot = _draw_section(c, H, y_off, keys[i], notices[i], rows, cols,
                                   doubled_edges=True,
                                   extra_hrule_offsets=(22,) if strip_separators else ())
+        last_total_y = grid_bot
         total = None
         if with_totals:
             vol_sum = sum(int(r[3].replace(",", "")) for r in rows)
@@ -1895,13 +1905,20 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
             total_ry = grid_bot + 8
             c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
             c.drawString(cols[3] + 4, y(total_ry), total)
+            last_total_y = total_ry
         if lone_total_offset is not None:
             # R261 fix round 1: the REAL cbh shape — the Volume sum printed ALONE (no "TOTAL"
             # label), `lone_total_offset` pt below the grid's closing rule, so `detect_bands`
             # gives it a band of its own after the section's. Default None: byte-identical.
             total = f"{sum(int(r[3].replace(',', '')) for r in rows):,}"
-            c.drawString(cols[3] + 4, y(grid_bot + lone_total_offset), total)
+            lone_y = grid_bot + lone_total_offset
+            c.drawString(cols[3] + 4, y(lone_y), total)
+            last_total_y = lone_y
         sections.append({"key": keys[i], "notice": notices[i], "rows": rows, "total": total})
+    if grand_total is not None:
+        # R261 loop (b) task 5: the page's grand total, printed alone 60pt below the last
+        # section's own total line — see the docstring's `grand_total` paragraph.
+        c.drawString(cols[3] + 4, y(last_total_y + 60.0), grand_total)
     c.save()
     return {"sections": sections, "header_names": header_names, "cols": cols}
 
@@ -2814,7 +2831,9 @@ def styled_box_pdf(path: str, rows, *, head_font: str = "Helvetica",
 
 
 def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str = "2,700",
-                      grand_total: str = "7,800", note_lines: int = 2) -> dict:
+                      grand_total: str = "7,800", note_lines: int = 2,
+                      grand_note_lines: int = 0, grand_gap: float | None = None,
+                      after_grand: tuple[str, ...] = ()) -> dict:
     """R261 spec § 5.2: two tables, each with a total printed beneath it OUTSIDE its grid, then a
     total-of-totals line. Unruled, Courier 10, so the band layout is the word geometry's alone.
 
@@ -2825,6 +2844,16 @@ def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str =
       2  table B — 2 body rows; Tonnes sums to 2,700
       3  `second_total`, alone
       4  `grand_total`, alone — directly after band 3, so its previous report is band 3's
+
+    R261 loop (b) parameters (each MEASURED with `compile.page_bands`, 2026-10-02; the defaults
+    draw nothing extra, so the default PDF is byte-identical to before — compared under
+    `reportlab.rl_config.invariant = 1`, sha256 equal for the default and three existing variants):
+      `grand_note_lines=2` — band 4 becomes `grand_total` + the two Note lines (one band), every
+        other band unchanged.
+      `grand_gap=14.0` (the gap between `second_total` and `grand_total`, default 60) — band 3
+        becomes `second_total` + `grand_total` (one band, lines 0 and 1) and there is no band 4.
+      `after_grand=("15,600",)` — one more lone line 60 below the grand total: band 5 = `15,600`
+        alone, bands 0-4 unchanged.
     """
     cols = [72.0, 240.0, 400.0]
     c = canvas.Canvas(str(path), pagesize=letter)
@@ -2840,16 +2869,24 @@ def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str =
                ("Bravo", "3,400", "H2"), ("Charlie", "500", "AUH2")], PAGE_H - 100.0)
     y -= 50.0
     c.drawString(150.0, y, first_total)
-    note = ["Note: tonnages are estimates as at the date shown",
-            "and are subject to change without notice."][:note_lines]
+    full_note = ["Note: tonnages are estimates as at the date shown",
+                 "and are subject to change without notice."]
+    note = full_note[:note_lines]
     for k, text in enumerate(note, start=1):
         c.drawString(72.0, y - 14.0 * k, text)
     y -= 14.0 * len(note) + 60.0
     y = table([("Site", "Tonnes", "Grade"), ("Delta", "2,000", "APW"), ("Echo", "700", "H2")], y)
     y -= 50.0
     c.drawString(240.0, y, second_total)
-    y -= 60.0
+    y -= 60.0 if grand_gap is None else grand_gap
     c.drawString(240.0, y, grand_total)
+    grand_note = full_note[:grand_note_lines]
+    for k, text in enumerate(grand_note, start=1):
+        c.drawString(72.0, y - 14.0 * k, text)
+    y -= 14.0 * len(grand_note)
+    for text in after_grand:
+        y -= 60.0
+        c.drawString(240.0, y, text)
     c.save()
     return {"note": note}
 

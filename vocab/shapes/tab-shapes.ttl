@@ -558,4 +558,26 @@ tab:PrintedTotalShape a sh:NodeShape ;
                     FILTER(str(?l) = "total")
                 }
             }
+        """ ] ;
+    sh:sparql [
+        sh:name "PrintedTotalShape" ;
+        sh:message "A grand total (no tab:totalOf) may aggregate only tab:PrintedTotal operands -- this one aggregates at least one operand that is not a printed total." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS { $this tab:totalOf ?any }
+                $this tab:aggregates ?o .
+                FILTER NOT EXISTS { ?o a tab:PrintedTotal }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:name "PrintedTotalShape" ;
+        sh:message "A table-level total (tab:totalOf a table) may not aggregate another tab:PrintedTotal -- that is the grand-total level only." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this tab:totalOf ?t .
+                $this tab:aggregates ?o .
+                ?o a tab:PrintedTotal .
+            }
         """ ] .

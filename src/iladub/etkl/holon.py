@@ -644,24 +644,28 @@ def emit_ignored_band(g: Graph, doc_uri: URIRef, idx: int, band,
 
 
 def emit_printed_total(g: Graph, doc_uri: URIRef, idx: int, line_no: int, word, page: int,
-                       value_text: str, operands, table_uri: URIRef,
+                       value_text: str, operands, table_uri: URIRef | None,
                        decision: URIRef) -> URIRef:
-    """Emit one bound `tab:PrintedTotal` — a total printed beneath its table, outside the grid
-    (R261 spec § 4) — and return its URI.
+    """Emit one bound `tab:PrintedTotal` — a total printed outside the grid (R261 spec § 4): a
+    table-level total beneath its table when `table_uri` is given, or a grand total summing
+    other PrintedTotals when it is None (R261 loop (b) spec § 2) — and return its URI.
 
     Gate classification (CLAUDE.md § 8): PROCEDURAL raw extraction, source -> typed RDF facts.
     THE EMITTER DECIDES NOTHING: whether the number is a total was settled upstream by the
-    conjunction (`compile._bind_printed_totals`: the exact sum, then the reader's *yes*), and
-    `decision` is the `printed_total` decision holon that recorded it. Every value written here is
-    passed in or read off `word`'s own extent.
+    conjunction (`compile._bind_printed_totals`: at the table level the exact column sum and the
+    reader's *yes*; at the totals level the exact sum of the page's table-level PrintedTotals and
+    `AskTotalRole`'s `total_of_totals`), and `decision` is the `printed_total` decision holon that
+    recorded it. Every value written here is passed in or read off `word`'s own extent.
 
     What it writes is exactly what `tab:PrintedTotalShape` requires, no more:
       * `tab:cellText` — the value as the page prints it (`word.text`), never re-formatted;
-      * `tab:aggregates` — the matched column's numeric entry cells (`operands`, >= 2 by
-        `totals.match_table`'s own guard);
-      * `tab:totalOf` — the table it totals. TABLE LEVEL ONLY (controller ruling R4): the
-        total-of-totals level was refuted by P3, so `table_uri` is required, not optional, and no
-        bound-total operand form is ever written;
+      * `tab:aggregates` — `operands`, >= 2 by the matcher's own guard: at the table level the
+        matched column's numeric entry cells (`totals.match_table`); at the totals level the
+        table-level PrintedTotals it sums (`totals.match_totals`, R261 loop (b) spec § 2);
+      * `tab:totalOf` — the table it totals, written IFF `table_uri` is not None. A table-level
+        total passes its table; a grand total (the totals level, R261 loop (b) ruling R-h) passes
+        None and carries no `tab:totalOf` at all — its level follows from that absence and from
+        what it aggregates, which `tab:PrintedTotalShape`'s two level halves enforce;
       * a box and a page (CLAUDE.md principle 6), and `prov:wasDerivedFrom` the page region, as
         `_emit_entry_cell` writes them;
       * `decision dec:produced` this node — the link `tab:PrintedTotalShape`'s SPARQL check reads
@@ -679,7 +683,8 @@ def emit_printed_total(g: Graph, doc_uri: URIRef, idx: int, line_no: int, word, 
     g.add((pt, TAB.cellText, Literal(value_text)))
     for o in operands:
         g.add((pt, TAB.aggregates, o))
-    g.add((pt, TAB.totalOf, table_uri))
+    if table_uri is not None:
+        g.add((pt, TAB.totalOf, table_uri))
     g.add((pt, TAB.onPage, Literal(int(page), datatype=XSD.integer)))
     bb = BNode()
     g.add((bb, RDF.type, TAB.BBox))

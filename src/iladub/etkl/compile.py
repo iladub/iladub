@@ -987,19 +987,57 @@ def _refusal_message(subject: str, legs: tuple[str, ...], text: str) -> str:
     return f"{subject} failed {', '.join(legs)}: SHACL:\n{text}"
 
 
+def _operand_table_band(reports: "list[RegionReport]", table_uri: URIRef) -> int | None:
+    """R261 loop (b) plan D1: the band index of an operand total's table — the UNIQUE `j` whose
+    report names `table_uri` (`reports[j]` is band `j`'s, one report per band, M2). Zero or several
+    such `j` is None: the operand's table band cannot be resolved, so the derived crop cannot be
+    built and the caller makes no claim (ruling R3) — never a band guessed from the total's own
+    position (`j - 1`). THE REAL REASON is this uniqueness refusal itself, not any one cause of a
+    mismatch: a table URI's index need not be its band's at all, of which the grid-donation path
+    (naming its donor's index, plan N3) is the cited example, not the whole justification.
+
+    PROCEDURAL raw extraction: an exact lookup over the reports the compile already wrote, no
+    judgement and no constant. Irreducible to AXIOM because `RegionReport` is a Python record of
+    the band loop, not an RDF fact; irreducible to NEURAL because nothing in it is underdetermined."""
+    if table_uri is None:
+        return None
+    hits = [j for j, r in enumerate(reports) if r.table_uri == table_uri]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _total_operand(graph: Graph, pt: URIRef, table_band) -> "Operand | None":
+    """One `totalrole.Operand` for the table-level PrintedTotal `pt`: its table band (resolved by
+    the caller, D1), its `tab:cellText`, and its `tab:hasBBox` extent `(x0, y0, x1, y1)` as
+    `holon.emit_printed_total` wrote it (2 dp, N4). None when either is absent — then no crop can be
+    built and the caller makes no claim.
+
+    PROCEDURAL raw extraction: it reads back triples the emitter already wrote, no judgement and no
+    constant. Irreducible to AXIOM because the product is a Python `Operand` the crop/render
+    functions consume, not a graph fact a SPARQL `CONSTRUCT` could produce; irreducible to NEURAL
+    because nothing in it is underdetermined."""
+    from .totalrole import Operand
+    text = graph.value(pt, TAB.cellText)
+    bb = graph.value(pt, TAB.hasBBox)
+    if text is None or bb is None:
+        return None
+    box = tuple(graph.value(bb, p) for p in (TAB.x0, TAB.y0, TAB.x1, TAB.y1))
+    if any(c is None for c in box):
+        return None
+    return Operand(table_band=table_band, total_text=str(text),
+                   total_box=tuple(c.toPython() for c in box))
+
+
 def _bind_printed_totals(pdf_path: str, page_number: int, doc: URIRef, idx: int, band,
-                         table_band, prev_report: "RegionReport | None", graph: Graph,
+                         bands: list, reports: "list[RegionReport]", graph: Graph,
                          brec) -> tuple[object, int, int]:
-    """R261 spec § 2 / D5: bind the lone numbers of `band` that are the previous band's table
-    total. Returns `(remainder, asserted_delta, escalated_delta)`; the remainder IS `band` (the
-    same object) when nothing bound.
+    """R261 spec § 2 / D5, and loop (b) spec § 2 (`2026-10-02-r261-grand-total-design.md`): bind
+    the lone numbers of `band` that are a printed total. Returns `(remainder, asserted_delta,
+    escalated_delta)`; the remainder IS `band` (the same object) when nothing bound.
 
-    TABLE LEVEL ONLY (controller ruling R4 — P3 refuted the total-of-totals question): a candidate
-    is tried only when `prev_report` — band `idx - 1`'s report, M2 — ASSERTED with a `table_uri`.
-    Anything else binds nothing, which includes a lone number directly after a bound total (that
-    band's report is `asserted` with `table_uri` None, D6). `totals.match_totals` stays unwired.
+    TWO LEVELS, per candidate line (`totals.candidate_lines`), in order (plan D3):
 
-    For each candidate line (`totals.candidate_lines`), in order:
+    THE TABLE LEVEL — tried only when band `idx - 1`'s report (`reports[-1]`, M2) ASSERTED with a
+    `table_uri`; its table band is `bands[idx - 1]` (plan D2).
       1. THE ARITHMETIC, first. `totals.match_table` over the table's column sums. It is the SOLE
          enforcement of the sum property — a PROCEDURAL producer-side guard the membrane cannot
          repeat, because `tab:cellText` is an `xsd:string` (spec § 4; CLAUDE.md § Producer-side
@@ -1008,10 +1046,29 @@ def _bind_printed_totals(pdf_path: str, page_number: int, doc: URIRef, idx: int,
          None — no reader, no recording, a raise, an answer outside the closed set — is NO CLAIM:
          nothing is recorded and nothing binds (ruling R3).
       3. `yes` binds: one `printed_total` decision chosen `total`, the `tab:PrintedTotal` it
-         produced, and the word booked asserted through `_book_recovered_ink` against its own
-         extent. `no` / `cannot_tell` records the decision chosen `not_total` and binds nothing.
-    The rationale is built from the arithmetic (the level, the column, its member count) and the
-    closed answer, never from model text (spec § 2.4).
+         produced (with `tab:totalOf` the table), and the word booked asserted through
+         `_book_recovered_ink` against its own extent. `no` / `cannot_tell` records the decision
+         chosen `not_total` and binds nothing.
+
+    THE TOTALS LEVEL — tried on every line the table level did not BIND, NOT gated by the table
+    level's guard (loop (b) spec § 2: a grand total's previous band is typically a carved total band,
+    asserted with `table_uri` None, which that guard turns away). A line the table level recorded
+    `not_total` may still be tried here; each level records its own decision.
+      1. THE OPERANDS are `totals.table_level_totals(graph)` — every PrintedTotal carrying
+         `tab:totalOf` on this page's graph (N2) AT THIS LINE, so a total bound on an earlier line
+         of this band is one (Review Focus 1); a grand total never is (ruling R-f).
+      2. THE ARITHMETIC, first: `totals.match_totals` — the whole set, at least 2, exact `Decimal`
+         sum equal to the value. No match: nothing is asked and nothing is recorded.
+      3. THE CROP needs each operand's table band: `_operand_table_band` (plan D1). Any operand
+         unresolved is NO CLAIM — no ask, no record (Review Focus 2).
+      4. THE READER (`totalrole.ask_total_role`, NEURAL, closed answer); no claim as above.
+      5. `total_of_totals` binds: one `printed_total` decision chosen `total`, the PrintedTotal
+         with NO `tab:totalOf` whose `tab:aggregates` are the operand PrintedTotals (ruling R-h),
+         and the word booked and carved exactly as the table level does. `table_total` / `other` /
+         `cannot_tell` records `not_total` and binds nothing (plan D5).
+
+    Every rationale is built from the arithmetic (the level, what was summed, how many) and the
+    closed answer, never from model text (spec § 2.4; loop (b) spec § 2 step 4).
 
     THE CARVE removes bound lines by their index in the uncarved band — never a y-strip, because a
     band's lines can interleave in y with another band's (spec § 3.1). The remainder keeps the
@@ -1019,54 +1076,90 @@ def _bind_printed_totals(pdf_path: str, page_number: int, doc: URIRef, idx: int,
     lines to bands by interval containment on them, so a carved word must stay inside the extent
     of the band whose report booked it (measured for the task-4 report, MEASURE (c)).
 
-    Every module is looked up at call time, so a test's patch of `printedtotal.default_reader`
-    reaches it. Gate classification (CLAUDE.md § 8, spec § 7): PROCEDURAL — the bind gate. It
-    sequences an exact-arithmetic oracle, a reader and a recorder that live outside any one graph,
-    and applies their verdicts; no Python here judges whether a number is a total, and there is no
-    constant."""
-    if prev_report is None or table_band is None or prev_report.verdict != "asserted" \
-            or prev_report.table_uri is None:
-        return band, 0, 0
+    Every module is looked up at call time, so a test's patch of `printedtotal.default_reader` or
+    `totalrole.default_reader` reaches it. Gate classification (CLAUDE.md § 8, spec § 7, loop (b)
+    spec § 9): PROCEDURAL — the bind gate. It sequences exact-arithmetic oracles, readers and a
+    recorder that live outside any one graph, and applies their verdicts; no Python here judges
+    whether a number is a total or what role it plays, and there is no constant."""
     from dataclasses import replace as _replace
     from . import printedtotal as _pt
+    from . import totalrole as _tr
     from . import totals as _tot
     from .holon import emit_printed_total
     cands = _tot.candidate_lines(band)
     if not cands:
         return band, 0, 0
-    table_uri = prev_report.table_uri
-    operands = _tot.column_operands(graph, table_uri)
-    reader = None
+    table_band = bands[idx - 1] if idx else None
+    prev_report = reports[-1] if reports else None
+    table_uri = None
+    if table_band is not None and prev_report is not None and prev_report.verdict == "asserted":
+        table_uri = prev_report.table_uri
+    operands = _tot.column_operands(graph, table_uri) if table_uri is not None else {}
+    reader = role_reader = None
     carved: set[int] = set()
     a_delta = e_delta = 0
-    for line_no, line, value in cands:
-        hit = _tot.match_table(value, operands)       # the arithmetic: sole enforcement (R89)
-        if hit is None:
-            continue
-        col, cells = hit
-        if reader is None:
-            reader = _pt.default_reader()
-        word = line.words[0]
-        reading = _pt.ask_printed_total(pdf_path, page_number, table_band, band, line_no, line,
-                                        word.text, reader)
-        if reading is None:
-            continue                                   # no claim (R3): nothing recorded
-        facts = (f"table level: the {len(cells)} numeric entry cells of column {col} of "
-                 f"{table_uri} sum exactly (Decimal) to the printed value")
-        if reading.answer != "yes":
-            brec.record("printed_total", ["total", "not_total"], "not_total",
-                        f"{facts}; the reader answered {reading.answer}, so the conjunction "
-                        f"is not met")
-            continue
-        d = brec.record("printed_total", ["total", "not_total"], "total",
-                        f"{facts}; the reader answered yes")
-        emit_printed_total(graph, doc, idx, line_no, word, page_number, word.text, cells,
-                           table_uri, d)
+
+    def _bind(line_no, line, word, aggregates, total_of, decision):
+        nonlocal a_delta, e_delta
+        emit_printed_total(graph, doc, idx, line_no, word, page_number, word.text, aggregates,
+                           total_of, decision)
         a, e = _book_recovered_ink(_replace(band, lines=(line,)), frozenset(),
                                    [(word.x0, word.top, word.x1, word.bottom)])
         a_delta += a
         e_delta += e
         carved.add(line_no)
+
+    for line_no, line, value in cands:
+        word = line.words[0]
+        # ---- the table level
+        hit = _tot.match_table(value, operands) if table_uri is not None else None
+        if hit is not None:                            # the arithmetic: sole enforcement (R89)
+            col, cells = hit
+            if reader is None:
+                reader = _pt.default_reader()
+            reading = _pt.ask_printed_total(pdf_path, page_number, table_band, band, line_no,
+                                            line, word.text, reader)
+            if reading is not None:                    # None is no claim (R3): nothing recorded
+                facts = (f"table level: the {len(cells)} numeric entry cells of column {col} of "
+                         f"{table_uri} sum exactly (Decimal) to the printed value")
+                if reading.answer == "yes":
+                    d = brec.record("printed_total", ["total", "not_total"], "total",
+                                    f"{facts}; the reader answered yes")
+                    _bind(line_no, line, word, cells, table_uri, d)
+                    continue
+                brec.record("printed_total", ["total", "not_total"], "not_total",
+                            f"{facts}; the reader answered {reading.answer}, so the conjunction "
+                            f"is not met")
+        # ---- the totals level (D3: only a line the table level did not bind)
+        bound = _tot.table_level_totals(graph)
+        members = _tot.match_totals(value, [(pt, v) for pt, _t, v in bound])
+        if members is None:                            # the arithmetic: sole enforcement (R89)
+            continue
+        role_operands = []
+        for pt, t, _v in bound:
+            j = _operand_table_band(reports, t)
+            op = None if j is None else _total_operand(graph, pt, bands[j])
+            if op is None:
+                break
+            role_operands.append(op)
+        if len(role_operands) != len(bound):
+            continue                                   # D1: no crop, no claim — nothing recorded
+        if role_reader is None:
+            role_reader = _tr.default_reader()
+        reading = _tr.ask_total_role(pdf_path, page_number, role_operands, band, line_no, line,
+                                     word.text, role_reader)
+        if reading is None:
+            continue                                   # no claim (R3): nothing recorded
+        facts = (f"totals level: the {len(members)} table-level PrintedTotals on this page "
+                 f"({', '.join(str(m) for m in members)}) sum exactly (Decimal) to {word.text}")
+        if reading.answer != "total_of_totals":
+            brec.record("printed_total", ["total", "not_total"], "not_total",
+                        f"{facts}; the reader answered {reading.answer}, so the conjunction "
+                        f"is not met")
+            continue
+        d = brec.record("printed_total", ["total", "not_total"], "total",
+                        f"{facts}; the reader answered total_of_totals")
+        _bind(line_no, line, word, members, None, d)
     if not carved:
         return band, 0, 0
     remainder = _replace(band, lines=tuple(ln for k, ln in enumerate(band.lines)
@@ -1134,14 +1227,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     for idx, band in enumerate(bands):
         band_marks.append((asserted_total, escalated_total))
         brec = recorder.band(idx)
-        # R261 (spec § 2, D5): a total printed beneath the previous band's table binds BEFORE
-        # this band is read, so the line it sat on is carved out and the remainder is classified
-        # on its own. Here, after `band_marks` took this band's opening totals, so the carved word
-        # is booked to band `idx`; and before `classify` and the lone-line donation hook, so a
-        # bound line is never offered for donation (Review Focus 5).
+        # R261 (spec § 2, D5): a total printed beneath the previous band's table — or, at the
+        # totals level (loop (b) spec § 2), a grand total summing the page's table totals — binds
+        # BEFORE this band is read, so the line it sat on is carved out and the remainder is
+        # classified on its own. Here, after `band_marks` took this band's opening totals, so the
+        # carved word is booked to band `idx`; and before `classify` and the lone-line donation
+        # hook, so a bound line is never offered for donation (Review Focus 5).
         _carved, _pt_a, _pt_e = _bind_printed_totals(
-            pdf_path, page_number, doc, idx, band, bands[idx - 1] if idx else None,
-            reports[-1] if reports else None, graph, brec)
+            pdf_path, page_number, doc, idx, band, bands, reports, graph, brec)
         if _carved is not band:
             # D8: the loop's list as well as the local name — `donation` and `span_*` read
             # `bands[idx]` directly (M3).

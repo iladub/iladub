@@ -483,3 +483,32 @@ def test_printed_total_wrong_judgement_fails():
     c, t = _v(os.path.join(TST, "tab-printed-total-wrong-judgement-leak.ttl"))
     assert not c
     assert "PrintedTotalShape" in t
+
+
+# ---------------------------------------------------------------------------
+# Grand total (total-of-totals level, spec § 4): a tab:PrintedTotal with no
+# tab:totalOf whose tab:aggregates are themselves tab:PrintedTotal.
+# ---------------------------------------------------------------------------
+
+PRINTED_TOTAL_GRAND_CONFORMANT = os.path.join(TST, "tab-printed-total-grand-conformant.ttl")
+
+
+def test_printed_total_grand_conformant_passes():
+    c, t = _v(PRINTED_TOTAL_GRAND_CONFORMANT)
+    assert c, t
+
+
+def test_printed_total_grand_aggregates_cell_fails():
+    """Half 1: no tab:totalOf (a grand total) but one tab:aggregates operand is not a
+    tab:PrintedTotal."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-grand-aggregates-cell-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
+
+
+def test_printed_total_table_aggregates_total_fails():
+    """Half 2: a tab:totalOf (table level) but one tab:aggregates operand is a
+    tab:PrintedTotal -- that is the grand-total level only."""
+    c, t = _v(os.path.join(TST, "tab-printed-total-table-aggregates-total-leak.ttl"))
+    assert not c
+    assert "PrintedTotalShape" in t
