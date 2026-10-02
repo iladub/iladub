@@ -169,11 +169,11 @@ def test_the_denominator_moves_by_exactly_the_two_bound_words(pdf, monkeypatch):
 # CONSTRUCTED, not assumed: a band whose SOLE content, read on its own, would be band 1's lone
 # total (R7's usual shape) is instead given extra ruled content directly below it, tight enough
 # that `detect_bands` keeps it ONE band. `_bind_printed_totals` runs only against an ASSERTED
-# previous band (compile.py:1027-1029), so in PASS 1 — where section 0's table ESCALATES
+# previous band (`compile._bind_printed_totals`' table level), so in PASS 1 — where section 0's table ESCALATES
 # (REGION_TILING_FAILED, same as `pdf` above) — nothing tries to bind band 1's lone number, and
 # the WHOLE band (lone total + the extra rows) tiles as its OWN small table on its own merits,
 # asserting with a `table_uri`. In PASS 2, section 0's table is repaired and ASSERTS, so
-# `_bind_printed_totals` now runs FIRST for band 1 (compile.py:1142-1144, before classify), finds
+# `_bind_printed_totals` now runs FIRST for band 1 (its call in `compile.compile_tables`' band loop, before classify), finds
 # the lone total, matches the arithmetic, and (with a yes reader) carves it out as a
 # `tab:PrintedTotal` — but `document.py`'s R7 adoption must refuse to carry that pass-2 reading
 # back, because pass 1's band 1 is not a candidate (its own table asserted there, not escalated)

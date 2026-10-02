@@ -13,7 +13,8 @@ from rdflib import Graph, Namespace, RDF, URIRef, Literal
 
 from iladub.etkl.bands import Band
 from iladub.etkl.geometry import Line, Word
-from iladub.etkl.totals import candidate_lines, column_operands, match_table, match_totals
+from iladub.etkl.totals import (candidate_lines, column_operands, match_table, match_totals,
+                                 table_level_totals)
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 EX = Namespace("urn:iladub:test:")
@@ -133,6 +134,43 @@ def test_match_totals_subset_sum_matches_but_whole_does_not_refuses():
     bound = [(EX.t1, Decimal("100")), (EX.t2, Decimal("200")), (EX.t3, Decimal("1"))]
     # the subset {t1, t2} sums to 300, equal to `value`; the WHOLE set sums to 301.
     assert match_totals(Decimal("300"), bound) is None
+
+
+# ------------------------------------------------------------------ table_level_totals (R-f)
+
+
+def _pt(g, uri, text, table=None):
+    g.add((uri, RDF.type, TAB.PrintedTotal))
+    g.add((uri, TAB.cellText, Literal(text)))
+    if table is not None:
+        g.add((uri, TAB.totalOf, table))
+
+
+def test_table_level_totals_excludes_a_grand_total_and_orders_by_band():
+    """R261 loop (b) R-f + D6: only PrintedTotals CARRYING `tab:totalOf` are operands — a grand
+    total (no `tab:totalOf`) in the graph is excluded — returned as (pt, table, value) in ascending
+    band index (numerically: band 10 after band 3, not before it as a string sort would put it)."""
+    g = Graph()
+    doc = "urn:iladub:test:doc"
+    pt10 = URIRef(f"{doc}#printedtotal10-l0")
+    pt3 = URIRef(f"{doc}#printedtotal3-l1")
+    pt3a = URIRef(f"{doc}#printedtotal3-l0")
+    grand = URIRef(f"{doc}#printedtotal11-l0")
+    _pt(g, pt10, "1,000", EX.table9)
+    _pt(g, pt3, "250", EX.table2)
+    _pt(g, pt3a, "2,700", EX.table2b)
+    _pt(g, grand, "3,950")
+    g.add((grand, TAB.aggregates, pt10))
+    g.add((grand, TAB.aggregates, pt3))
+    assert table_level_totals(g) == [
+        (pt3a, EX.table2b, Decimal("2700")),
+        (pt3, EX.table2, Decimal("250")),
+        (pt10, EX.table9, Decimal("1000")),
+    ]
+
+
+def test_table_level_totals_empty_graph():
+    assert table_level_totals(Graph()) == []
 
 
 # ------------------------------------------------------------------ Step 2: corpus oracle

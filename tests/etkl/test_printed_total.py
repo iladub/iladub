@@ -2,16 +2,22 @@
 
 A lone number printed beneath a table binds as its `tab:PrintedTotal` only under the CONJUNCTION
 (ruling R-a): exact `Decimal` arithmetic over one of the table's columns holds AND a reader answers
-`yes`. TABLE LEVEL ONLY — the total-of-totals question was refuted by P3 (controller ruling R4), so
-a total-of-totals line is never bound and stays in its band.
+`yes`. R261 loop (b) (`docs/superpowers/specs/2026-10-02-r261-grand-total-design.md` §§ 2, 6.2) adds
+the TOTALS LEVEL beside it: a lone number binds as a grand total — a `tab:PrintedTotal` with no
+`tab:totalOf`, aggregating the page's table-level PrintedTotals — only when their exact sum equals it
+(`totals.match_totals`, the whole set, at least 2, R-f) AND `AskTotalRole` answers
+`total_of_totals`. The table-level wording P3 refuted (ruling R4) is not reused; the totals level
+asks its own question (`totalrole.py`), and with no role reading the grand total stays in its band.
 
 Fixtures (`tests/etkl/fixtures.py`, band layout measured there):
   `printed_total_pdf` — band 0 table A (Tonnes = 5,100); band 1 `5,100` + a prose Note; band 2
-  table B (Tonnes = 2,700); band 3 `2,700` alone; band 4 `7,800` (= 5,100 + 2,700) alone.
+  table B (Tonnes = 2,700); band 3 `2,700` alone; band 4 `7,800` (= 5,100 + 2,700) alone. Its
+  loop (b) parameters (`grand_note_lines`, `grand_gap`, `after_grand`) are measured there too.
   `percent_total_pdf` — a Share column 25% / 35% / 40% and `100%` alone beneath it.
 
-No case touches the network: the isolation fixture below is `test_header_lines.py`'s (M9), and every
-compile reads its reader through a monkeypatched `printedtotal.default_reader`.
+No case touches the network: the isolation fixture below is `test_header_lines.py`'s (M9), applied
+to BOTH reader stacks, and every compile reads its readers through a monkeypatched
+`printedtotal.default_reader` (and, for the totals level, `totalrole.default_reader`).
 """
 import json
 
@@ -20,6 +26,7 @@ from rdflib import Literal, URIRef
 from rdflib.namespace import RDF, RDFS
 
 from iladub.etkl import printedtotal as P
+from iladub.etkl import totalrole as R
 
 TAB_NS = "https://w3id.org/iladub/tab#"
 DEC_NS = "https://w3id.org/iladub/dec#"
@@ -40,9 +47,13 @@ def _fresh_cache_and_readings(monkeypatch, tmp_path):
     every test reads recordings from its own empty directory; and NO CASE MAY REACH THE MODEL —
     the key is removed and the generated function is a tripwire."""
     P._PRINTED_TOTAL_CACHE.clear()
+    R._TOTAL_ROLE_CACHE.clear()
     d = tmp_path / "readings"
     d.mkdir()
     monkeypatch.setattr(P, "READINGS_DIR", d)
+    role_dir = tmp_path / "role_readings"
+    role_dir.mkdir()
+    monkeypatch.setattr(R, "READINGS_DIR", role_dir)
     monkeypatch.delenv("BAML_LIVE", raising=False)
     monkeypatch.delenv("ILADUB_RECORD_READINGS", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -54,8 +65,13 @@ def _fresh_cache_and_readings(monkeypatch, tmp_path):
         def _tripwire(*a, **k):
             raise AssertionError("a printed-total test reached the live AskPrintedTotal")
         monkeypatch.setattr(sync_client.b, "AskPrintedTotal", _tripwire, raising=True)
+
+        def _role_tripwire(*a, **k):
+            raise AssertionError("a printed-total test reached the live AskTotalRole")
+        monkeypatch.setattr(sync_client.b, "AskTotalRole", _role_tripwire, raising=True)
     yield d
     P._PRINTED_TOTAL_CACHE.clear()
+    R._TOTAL_ROLE_CACHE.clear()
 
 
 class _Reader:
@@ -307,13 +323,17 @@ def test_every_uncarved_word_is_booked_exactly_once(tmp_path, monkeypatch):
     assert (rep.regions[1].tokens_asserted, rep.regions[3].tokens_asserted) == (1, 1)
 
 
-# ------------------------------------------------------------------ total-of-totals (ruling R4)
+# ------------------------------------------------------------------ the totals level, no reading
 
-def test_a_total_of_totals_line_is_never_bound_and_stays_in_its_band(tmp_path, monkeypatch):
-    """Review Focus 3 + R4: band 4's `7,800` sums the two bound totals exactly, and sits directly
-    after a bound total whose report is `asserted` with `table_uri` None (D6). There is no table
-    level for it and no total-of-totals level at all, so the reader — who would say yes — is never
-    asked, and the line is read in its own band exactly as today."""
+def test_with_no_role_reading_the_grand_total_is_not_bound_and_stays_in_its_band(
+        tmp_path, monkeypatch):
+    """N11: this test's R4 premise ("there is no total-of-totals level at all") is now false — loop
+    (b) adds one. Its assertions stand unchanged under the new premise: band 4's `7,800` sums the two
+    bound totals exactly and sits directly after a bound total whose report is `asserted` with
+    `table_uri` None (D6), so the TABLE-level reader — who would say yes — is never asked about it.
+    The totals level does ask, but the role reader here is the default one over an empty recordings
+    directory with no live reader: NO CLAIM (ruling R3). So nothing is recorded, nothing binds, and
+    the line is read in its own band exactly as before the loop."""
     pdf = _pdf(tmp_path, "printed_total_pdf")
     reader = _Reader(default="yes")
     rep = _compile(monkeypatch, pdf, reader)
@@ -397,3 +417,248 @@ def test_the_graph_conforms_under_the_production_membrane_and_the_shape_is_live(
     ok, text, legs = _validate(g2)
     assert not ok and "tab" in legs
     assert "non-empty cellText or non-empty unshownText (drop-continuation guard)" in text
+
+
+# ================================================================== R261 loop (b): the totals level
+#
+# Spec `docs/superpowers/specs/2026-10-02-r261-grand-total-design.md` § 6.2's table, row by row, on
+# `printed_total_pdf`'s band 4. The table-level `_Reader` answers `yes` on the two table totals, so
+# `#printedtotal1-l0` (5,100) and `#printedtotal3-l0` (2,700) are bound before band 4 is reached;
+# the role reader `_RoleReader` answers by value and records what it was asked.
+
+PT1 = URIRef(f"{DOC}#printedtotal1-l0")
+PT3 = URIRef(f"{DOC}#printedtotal3-l0")
+GRAND = URIRef(f"{DOC}#printedtotal4-l0")
+
+
+class _RoleReader:
+    """The totals-level twin of `_Reader`: answers by printed value from the closed
+    `table_total | total_of_totals | other | cannot_tell` set; records every value it was asked
+    about. A value absent from `answers` gets `default` (None = no claim). `raises` makes every
+    ask raise (Review Focus 3)."""
+
+    def __init__(self, answers=None, default=None, raises=False):
+        self.answers = dict(answers or {})
+        self.default = default
+        self.raises = raises
+        self.asked: list[str] = []
+
+    def ask(self, crop_png, value, listing):
+        self.asked.append(value)
+        assert crop_png[:8] == b"\x89PNG\r\n\x1a\n", "the role reader must be handed the crop"
+        if self.raises:
+            raise RuntimeError("the role reader failed")
+        a = self.answers.get(value, self.default)
+        return None if a is None else R.TotalRoleReading(answer=a)
+
+
+_TABLE_YES = {"5,100": "yes", "2,700": "yes"}
+
+
+def _compile_levels(monkeypatch, pdf, role_reader, table_answers=None, **kw):
+    """Compile with the table-level `_Reader` answering `yes` on the two table totals and
+    `role_reader` patched onto `totalrole.default_reader` (looked up at call time)."""
+    monkeypatch.setattr(R, "default_reader", lambda: role_reader)
+    return _compile(monkeypatch, pdf, _Reader(_TABLE_YES if table_answers is None
+                                              else table_answers), **kw)
+
+
+@pytest.mark.parametrize("answer, grand, bound", [
+    ("total_of_totals", "7,800", True),    # role + arithmetic   -> bound
+    ("total_of_totals", "7,801", False),   # role, no arithmetic -> NOT bound, role never asked
+    ("table_total", "7,800", False),       # arithmetic, no role -> NOT bound: one not_total
+    ("other", "7,800", False),
+    ("cannot_tell", "7,800", False),
+])
+def test_the_totals_level_conjunction_binds_band_4(tmp_path, monkeypatch, answer, grand, bound):
+    pdf = _pdf(tmp_path, "printed_total_pdf", grand_total=grand)
+    role = _RoleReader({grand: answer})
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    assert {PT1, PT3} <= set(_printed_totals(g))          # both table totals bound first
+    holds = grand == "7,800"
+    # Arithmetic first: the role reader is asked about band 4's number only when the sum holds.
+    assert role.asked == ([grand] if holds else [])
+    r4 = rep.regions[4]
+    chosen = [c for _, c in _decisions(g, 4, "printed_total")]
+    if bound:
+        assert (GRAND, RDF.type, T("PrintedTotal")) in g
+        assert g.value(GRAND, T("cellText")) == Literal("7,800")
+        assert (GRAND, T("totalOf"), None) not in g
+        assert set(g.objects(GRAND, T("aggregates"))) == {PT1, PT3}
+        assert chosen == ["total"]
+        assert (r4.verdict, r4.table_uri, r4.cells, r4.tokens_asserted, r4.tokens_escalated) \
+            == ("asserted", None, 0, 1, 0)
+    else:
+        assert (GRAND, None, None) not in g
+        assert not [p for p in _printed_totals(g) if "#printedtotal4" in str(p)]
+        assert (r4.verdict, r4.reason) == ("ignored", "fewer than 2 lines")
+        assert chosen == (["not_total"] if holds else [])
+
+
+def test_with_one_table_total_bound_the_role_reader_is_not_asked(tmp_path, monkeypatch):
+    """§ 6.2 row 4: `5,101` fails table A's arithmetic, so only `2,700` binds at table level;
+    `match_totals` needs >= 2 operands, so band 4's `2,700` (equal to the one bound total) is never
+    put to the role reader, and nothing is recorded for it."""
+    pdf = _pdf(tmp_path, "printed_total_pdf", first_total="5,101", grand_total="2,700")
+    role = _RoleReader(default="total_of_totals")
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    assert _printed_totals(g) == [PT3]
+    assert role.asked == []
+    assert _decisions(g, 4, "printed_total") == []
+    assert (rep.regions[4].verdict, rep.regions[4].reason) == ("ignored", "fewer than 2 lines")
+
+
+def test_a_bound_grand_total_is_never_an_operand_of_a_later_one(tmp_path, monkeypatch):
+    """R-f / Review Focus 4: `15,600` = 5,100 + 2,700 + 7,800 — the sum of every PrintedTotal on the
+    page once the grand total has bound. The operands are the TABLE-LEVEL totals only (those carrying
+    `tab:totalOf`), whose sum is 7,800, so `15,600` never matches and is never asked."""
+    pdf = _pdf(tmp_path, "printed_total_pdf", after_grand=("15,600",))
+    role = _RoleReader(default="total_of_totals")
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    assert (GRAND, RDF.type, T("PrintedTotal")) in g
+    assert role.asked == ["7,800"]
+    assert not [p for p in _printed_totals(g) if "#printedtotal5" in str(p)]
+    assert _decisions(g, 5, "printed_total") == []
+    assert (rep.regions[5].verdict, rep.regions[5].reason) == ("ignored", "fewer than 2 lines")
+
+
+def test_the_grand_totals_carved_remainder_is_classified_alone(tmp_path, monkeypatch):
+    """Spec § 2 step 4 (concern 2's shape): `grand_note_lines=2` puts the Note in band 4 beside
+    `7,800`. The grand total binds and is carved; the Note is read on its own — the same two lines
+    band 1's carved remainder holds, and classified exactly as `test_the_carved_remainder_is_
+    classified_alone` measures band 1's (escalated KIND_NOT_SUPPORTED, 16 words), with the bound
+    total booked asserted to the same band."""
+    pdf = _pdf(tmp_path, "printed_total_pdf", grand_note_lines=2)
+    role = _RoleReader(default="total_of_totals")
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    assert (GRAND, RDF.type, T("PrintedTotal")) in g
+    r1, r4 = rep.regions[1], rep.regions[4]
+    assert (r4.verdict, r4.reason, r4.tokens_asserted, r4.tokens_escalated) == \
+        ("escalated", "KIND_NOT_SUPPORTED", 1, 16)
+    assert (r4.verdict, r4.reason, r4.tokens_escalated) == \
+        (r1.verdict, r1.reason, r1.tokens_escalated)               # the same Note, read alike
+    assert "7,800" not in r4.ascii and "Note:" in r4.ascii
+
+
+def test_a_grand_total_beneath_the_last_table_total_in_the_same_band_binds(tmp_path, monkeypatch):
+    """Review Focus 1 / D3: `grand_gap=14.0` puts `7,800` in band 3 as line 1, beneath `2,700` on
+    line 0. Line 0 binds at table level first, so by line 1 it is in the graph and is an operand:
+    both bind, and the grand total aggregates `#printedtotal3-l0`."""
+    pdf = _pdf(tmp_path, "printed_total_pdf", grand_gap=14.0)
+    role = _RoleReader(default="total_of_totals")
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    grand = URIRef(f"{DOC}#printedtotal3-l1")
+    assert set(_printed_totals(g)) == {PT1, PT3, grand}
+    assert (grand, T("totalOf"), None) not in g
+    assert set(g.objects(grand, T("aggregates"))) == {PT1, PT3}
+    assert role.asked == ["7,800"]
+    assert [c for _, c in _decisions(g, 3, "printed_total")] == ["total", "total"]
+    r3 = rep.regions[3]
+    assert (r3.verdict, r3.table_uri, r3.cells, r3.tokens_asserted, r3.tokens_escalated) \
+        == ("asserted", None, 0, 2, 0)
+
+
+def test_an_operand_table_band_is_resolved_only_when_unique():
+    """Review Focus 2 / D1: the operand's table band is the UNIQUE `j` whose report names the table
+    — zero or two matching reports is no band (so no crop, no ask), never a guess from `j - 1`."""
+    from iladub.etkl.compile import RegionKind, RegionReport, _operand_table_band
+    t = URIRef(f"{DOC}#table2")
+
+    def rep(table_uri):
+        return RegionReport(RegionKind.NON_TABLE, "asserted", 0, None, None, "",
+                            table_uri=table_uri)
+    assert _operand_table_band([rep(None), rep(None), rep(t), rep(None)], t) == 2
+    assert _operand_table_band([rep(URIRef(f"{DOC}#table0")), rep(None)], t) is None
+    assert _operand_table_band([], t) is None
+    assert _operand_table_band([rep(t), rep(None), rep(t)], t) is None
+
+
+def test_an_unresolved_operand_table_band_is_no_ask_no_record_no_bind(tmp_path, monkeypatch):
+    """Review Focus 2 at the compile: the binding takes each operand's table band from
+    `_operand_table_band` (D1) and from nothing else — when it resolves no band the arithmetic still
+    holds, but no crop can be built, so the role reader (who would say `total_of_totals`) is never
+    asked, nothing is recorded and nothing binds. On this fixture every operand's table sits directly
+    above its total, so a `j - 1` guess would build the same crop: only this patch can show that the
+    call site consults the resolver rather than a position."""
+    from iladub.etkl import compile as C
+    monkeypatch.setattr(C, "_operand_table_band", lambda reports, table_uri: None)
+    pdf = _pdf(tmp_path, "printed_total_pdf")
+    role = _RoleReader(default="total_of_totals")
+    rep = _compile_levels(monkeypatch, pdf, role)
+    g = rep.graph
+    assert set(_printed_totals(g)) == {PT1, PT3}
+    assert role.asked == []
+    assert _decisions(g, 4, "printed_total") == []
+    assert (rep.regions[4].verdict, rep.regions[4].reason) == ("ignored", "fewer than 2 lines")
+
+
+@pytest.mark.parametrize("role_reader", [
+    None,                                   # no reader at all
+    _RoleReader(default=None),              # the reader returns no claim
+    _RoleReader(raises=True),               # the reader raises
+], ids=["no-reader", "returns-none", "raises"])
+def test_no_role_claim_records_nothing_and_binds_nothing(tmp_path, monkeypatch, role_reader):
+    """Review Focus 3 / ruling R3: a role reader that is absent, returns None or raises is NO
+    CLAIM — no `printed_total` decision on band 4, nothing bound, the band read as today."""
+    pdf = _pdf(tmp_path, "printed_total_pdf")
+    rep = _compile_levels(monkeypatch, pdf, role_reader)
+    g = rep.graph
+    assert set(_printed_totals(g)) == {PT1, PT3}
+    assert _decisions(g, 4, "printed_total") == []
+    assert (rep.regions[4].verdict, rep.regions[4].reason) == ("ignored", "fewer than 2 lines")
+    if role_reader is not None:
+        assert role_reader.asked == ["7,800"]
+
+
+def test_the_grand_total_graph_conforms_and_both_shape_halves_are_live(tmp_path, monkeypatch):
+    """The compile ran with `validate_shapes=True` (the default) and did not raise; the membrane is
+    run explicitly, then with each half of `tab:PrintedTotalShape`'s level constraint broken on the
+    COMPILED grand total: a `tab:totalOf` added (a table-level total may not aggregate a
+    PrintedTotal), and a non-PrintedTotal operand added (a grand total aggregates only
+    PrintedTotals)."""
+    from iladub.etkl.compile import _validate
+    pdf = _pdf(tmp_path, "printed_total_pdf")
+    rep = _compile_levels(monkeypatch, pdf, _RoleReader(default="total_of_totals"))
+    g = rep.graph
+    assert (GRAND, RDF.type, T("PrintedTotal")) in g
+    ok, text, _ = _validate(g)
+    assert ok, text
+
+    g1 = g.__class__(); g1 += g
+    g1.add((GRAND, T("totalOf"), URIRef(f"{DOC}#table2")))
+    ok, text, legs = _validate(g1)
+    assert not ok and "tab" in legs
+    assert "may not aggregate another tab:PrintedTotal" in text
+
+    g2 = g.__class__(); g2 += g
+    g2.add((GRAND, T("aggregates"), next(iter(g.objects(PT3, T("aggregates"))))))
+    ok, text, legs = _validate(g2)
+    assert not ok and "tab" in legs
+    assert "may aggregate only tab:PrintedTotal operands" in text
+
+
+def test_every_uncarved_word_is_booked_exactly_once_with_the_grand_total_bound(
+        tmp_path, monkeypatch):
+    """`test_every_uncarved_word_is_booked_exactly_once`, with the totals level binding band 4."""
+    pdf = _pdf(tmp_path, "printed_total_pdf", grand_note_lines=2)
+    rep = _compile_levels(monkeypatch, pdf, _RoleReader(default="total_of_totals"))
+    from iladub.etkl.compile import page_bands
+    bands = page_bands(pdf, 0)
+    g = rep.graph
+    assert (GRAND, RDF.type, T("PrintedTotal")) in g
+    assert len(rep.regions) == len(bands)
+    for i, (b, r) in enumerate(zip(bands, rep.regions)):
+        words = sum(len(ln.words) for ln in b.lines)
+        ignored = g.value(URIRef(f"{DOC}#ignored{i}"),
+                          URIRef("https://w3id.org/iladub/etkl#bandText"))
+        ignored_words = len(str(ignored).split()) if ignored is not None else 0
+        assert r.tokens_asserted + r.tokens_escalated + ignored_words == words, (i, r)
+    assert rep.asserted == sum(r.tokens_asserted for r in rep.regions)
+    assert rep.escalated == sum(r.tokens_escalated for r in rep.regions)
+    assert [r.tokens_asserted for r in rep.regions][1::2] == [1, 1]   # bands 1 and 3
+    assert rep.regions[4].tokens_asserted == 1

@@ -2814,7 +2814,9 @@ def styled_box_pdf(path: str, rows, *, head_font: str = "Helvetica",
 
 
 def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str = "2,700",
-                      grand_total: str = "7,800", note_lines: int = 2) -> dict:
+                      grand_total: str = "7,800", note_lines: int = 2,
+                      grand_note_lines: int = 0, grand_gap: float | None = None,
+                      after_grand: tuple[str, ...] = ()) -> dict:
     """R261 spec § 5.2: two tables, each with a total printed beneath it OUTSIDE its grid, then a
     total-of-totals line. Unruled, Courier 10, so the band layout is the word geometry's alone.
 
@@ -2825,6 +2827,16 @@ def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str =
       2  table B — 2 body rows; Tonnes sums to 2,700
       3  `second_total`, alone
       4  `grand_total`, alone — directly after band 3, so its previous report is band 3's
+
+    R261 loop (b) parameters (each MEASURED with `compile.page_bands`, 2026-10-02; the defaults
+    draw nothing extra, so the default PDF is byte-identical to before — compared under
+    `reportlab.rl_config.invariant = 1`, sha256 equal for the default and three existing variants):
+      `grand_note_lines=2` — band 4 becomes `grand_total` + the two Note lines (one band), every
+        other band unchanged.
+      `grand_gap=14.0` (the gap between `second_total` and `grand_total`, default 60) — band 3
+        becomes `second_total` + `grand_total` (one band, lines 0 and 1) and there is no band 4.
+      `after_grand=("15,600",)` — one more lone line 60 below the grand total: band 5 = `15,600`
+        alone, bands 0-4 unchanged.
     """
     cols = [72.0, 240.0, 400.0]
     c = canvas.Canvas(str(path), pagesize=letter)
@@ -2840,16 +2852,24 @@ def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str =
                ("Bravo", "3,400", "H2"), ("Charlie", "500", "AUH2")], PAGE_H - 100.0)
     y -= 50.0
     c.drawString(150.0, y, first_total)
-    note = ["Note: tonnages are estimates as at the date shown",
-            "and are subject to change without notice."][:note_lines]
+    full_note = ["Note: tonnages are estimates as at the date shown",
+                 "and are subject to change without notice."]
+    note = full_note[:note_lines]
     for k, text in enumerate(note, start=1):
         c.drawString(72.0, y - 14.0 * k, text)
     y -= 14.0 * len(note) + 60.0
     y = table([("Site", "Tonnes", "Grade"), ("Delta", "2,000", "APW"), ("Echo", "700", "H2")], y)
     y -= 50.0
     c.drawString(240.0, y, second_total)
-    y -= 60.0
+    y -= 60.0 if grand_gap is None else grand_gap
     c.drawString(240.0, y, grand_total)
+    grand_note = full_note[:grand_note_lines]
+    for k, text in enumerate(grand_note, start=1):
+        c.drawString(72.0, y - 14.0 * k, text)
+    y -= 14.0 * len(grand_note)
+    for text in after_grand:
+        y -= 60.0
+        c.drawString(240.0, y, text)
     c.save()
     return {"note": note}
 

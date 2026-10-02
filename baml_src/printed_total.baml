@@ -11,9 +11,11 @@
 // closed answer cannot hold a free note to the never-quote rule. `iladub.etkl.printedtotal`
 // binds only on `yes` AND the exact sum (spec § 2.4); every other answer binds nothing.
 //
-// ONE QUESTION, TABLE LEVEL ONLY. The total-of-totals wording was probed (P3) and REFUTED
-// (`docs/superpowers/2026-10-01-r261-totals-family-evidence.md` § 6.4), so no second function
-// exists here (controller ruling R4).
+// ONE QUESTION, TABLE LEVEL ONLY. The total-of-totals wording OF THIS QUESTION was probed (P3)
+// and REFUTED (`docs/superpowers/2026-10-01-r261-totals-family-evidence.md` § 6.4), so no second
+// function exists here (controller ruling R4). The totals level is asked a different question,
+// "what role does this number play", in `total_role.baml` (`AskTotalRole`, R261 loop (b) spec § 3,
+// reproduced through BAML in that loop's Task 1).
 //
 // THE WORDING is P1's, measured on the D7 crop (evidence § 6.5: 4/4 true totals `yes` x3, the
 // false `21` `no` x3, no `yes` in 21 null asks; n = 5 is the corpus, not a sample). One line

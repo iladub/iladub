@@ -4,8 +4,11 @@ R261 spec § 3.2 (`docs/superpowers/specs/2026-10-01-r261-totals-family-design.m
 printed beneath a table binds as its total only under a CONJUNCTION (ruling R-a): exact `Decimal`
 arithmetic over one of the table's columns holds (`totals.py`, PROCEDURAL, the sole enforcement of
 the sum, R89) AND a reader answers *yes* to a closed question. Arithmetic runs first; this module is
-asked only on a match. TABLE LEVEL ONLY: the total-of-totals wording was refuted by P3 (evidence
-§ 6.4, controller ruling R4), so there is one question and no `level` anywhere in this module.
+asked only on a match. This module asks the TABLE-LEVEL question only: the total-of-totals wording
+of it was refuted by P3 (evidence § 6.4, controller ruling R4), so there is no `level` anywhere in
+this module. The totals level (R261 loop (b), `docs/superpowers/specs/2026-10-02-r261-grand-total-
+design.md`) asks a different, separately measured question in its own stack, `totalrole.py`
+(`AskTotalRole`), which imports nothing from here.
 
 § 8 CLASSIFICATION (spec § 7), part by part:
 
@@ -37,8 +40,8 @@ from typing import Literal, Protocol
 
 ANSWERS = ("yes", "no", "cannot_tell")
 
-# The BAML function's name. It namespaces `question_key`, so a future question over the same
-# (value, listing) — a total-of-totals wording, should one ever pass its probe — cannot replay
+# The BAML function's name. It namespaces `question_key`, so another question over the same
+# (value, listing) — `totalrole.QUESTION`, the totals level's `AskTotalRole` — cannot replay
 # this question's recordings.
 QUESTION = "AskPrintedTotal"
 

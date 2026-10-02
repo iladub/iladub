@@ -12,9 +12,10 @@ also check, because `tab:cellText`'s range is `xsd:string`, spec § 4). One pars
 """
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 
-from rdflib import Graph, URIRef
+from rdflib import RDF, Graph, URIRef
 
 from .bands import Band
 from .classifygraph import TAB
@@ -86,8 +87,9 @@ def match_totals(
     value: Decimal, bound: list[tuple[URIRef, Decimal]]
 ) -> list[URIRef] | None:
     """Total-of-totals match (spec § 2.2 step 2): decidable exact `Decimal` arithmetic over the
-    WHOLE set of `PrintedTotal`s bound so far on the page — never a subset (spec § 2.2: "subsets
-    breed spurious matches"). Binds iff `bound` has >= 2 members AND their exact sum equals
+    WHOLE set of `PrintedTotal`s passed — never a subset (spec § 2.2: "subsets breed spurious
+    matches"). The caller passes `table_level_totals`, the table-level totals only (R261 loop (b)
+    ruling R-f), so a bound grand total never sums into a later one. Binds iff `bound` has >= 2 members AND their exact sum equals
     `value`; returns the bound totals' URIs in that case, else `None`."""
     if len(bound) < 2:
         return None
@@ -95,3 +97,44 @@ def match_totals(
     if total != value:
         return None
     return [uri for uri, _ in bound]
+
+
+_PT_FRAGMENT = re.compile(r"#printedtotal(\d+)-l(\d+)$")
+
+
+def _band_order(pt: URIRef) -> tuple[int, int, int, str]:
+    """D6's sort key: the (band index, line index) `holon.emit_printed_total` minted into the
+    PrintedTotal's own URI fragment (`#printedtotal{idx}-l{line_no}`), read back exactly. A URI not
+    of that form (never minted by the emitter) sorts after every minted one, by its text."""
+    m = _PT_FRAGMENT.search(str(pt))
+    if m is None:
+        return (1, 0, 0, str(pt))
+    return (0, int(m.group(1)), int(m.group(2)), str(pt))
+
+
+def table_level_totals(graph: Graph) -> list[tuple[URIRef, URIRef, Decimal]]:
+    """The totals level's operand set (R261 loop (b), spec § 2 step 2, ruling R-f): every
+    `tab:PrintedTotal` in `graph` CARRYING `tab:totalOf` — the table-level totals, the whole set —
+    as `(printed_total, table, value)`, ordered by ascending band index then line index (plan D6),
+    so the listing, the rationale and `tab:aggregates` are deterministic. A grand total (no
+    `tab:totalOf`) is never returned, so a bound grand total never sums into a later one.
+
+    PROCEDURAL raw extraction over the already-asserted graph: it reads back the triples
+    `holon.emit_printed_total` wrote, with no judgement. `value` is the ONE parser's
+    `_numeric_token_sum` of the node's `tab:cellText` (M6). A table-level PrintedTotal whose text
+    does not parse cannot have been emitted (its line passed `candidate_lines`), so one raises
+    rather than silently shrinking the whole set to a subset (R-f: never a subset)."""
+    out: list[tuple[URIRef, URIRef, Decimal]] = []
+    for pt in graph.subjects(RDF.type, TAB.PrintedTotal):
+        table = graph.value(pt, TAB.totalOf)
+        if table is None:
+            continue
+        text = graph.value(pt, TAB.cellText)
+        value = _numeric_token_sum(str(text)) if text is not None and is_numeric(str(text)) \
+            else None
+        if value is None:
+            raise ValueError(f"table-level PrintedTotal {pt} carries no parseable cellText: "
+                             f"{text!r}")
+        out.append((pt, table, value))
+    out.sort(key=lambda t: _band_order(t[0]))
+    return out
