@@ -20,6 +20,13 @@ Run from the repo root (the API key is read the way the R261 probes read it; nev
 
     ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"') \\
       CROP=derived REPEAT=3 PYTHONPATH="$PWD" .venv/bin/python scripts/r261_grand_total_role_probe.py
+
+R261 loop (b) Task 1 adds `VIA=baml` (default `http`, byte-identical to the run above): the same
+crop, red box and six cases, answered through `AskTotalRole` (`baml_src/total_role.baml`) instead
+of the raw HTTP call — does the production reading path reproduce P4b?
+
+    ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"') \\
+      CROP=derived VIA=baml REPEAT=3 PYTHONPATH="$PWD" .venv/bin/python scripts/r261_grand_total_role_probe.py
 """
 import base64, glob, io, json, os, sys, urllib.request, urllib.error
 sys.path.insert(0, "src")
@@ -28,11 +35,17 @@ import pdfplumber
 MODEL = "claude-haiku-4-5-20251001"
 REPEAT = int(os.environ.get("REPEAT", "3"))
 CROP = os.environ.get("CROP", "derived")
+VIA = os.environ.get("VIA", "http")  # "http" (default, byte-identical to before) | "baml"
 GRAND = "1,951,264"
 PORTS = ["374,904", "737,289", "660,363", "178,708"]
 CELL = "22,858"  # last Volume cell of ESPERANCE: a value inside a table, expected `other`
 STRIP = (600, 60, 1000, 700)
 ALLOWED = ("table_total", "total_of_totals", "other", "cannot_tell")
+# The generated `TotalRoleAnswer(str, Enum)` member VALUES are the uppercase NAMES
+# (`baml_client/types.py`), not the `@alias(...)` the prompt renders — same shape as
+# `printedtotal.py`'s `_FROM_BAML`. Translate before comparing against ALLOWED.
+_FROM_BAML = {"TABLE_TOTAL": "table_total", "TOTAL_OF_TOTALS": "total_of_totals",
+              "OTHER": "other", "CANNOT_TELL": "cannot_tell"}
 PROMPT = """The image shows part of a page. One number is marked with a red box: {value}.
 
 READ IT AS A PERSON READS THE PAGE. What is the number in the red box?
@@ -46,9 +59,21 @@ Answer exactly one of:
 Reply with JSON only: {{"answer": "table_total" | "total_of_totals" | "other" | "cannot_tell"}}"""
 
 
-def ask(png, text):
-    """One of ALLOWED, or "UNPARSED" / "HTTP<code>". Closed: any reply that is not exactly
-    {"answer": one of ALLOWED} is UNPARSED."""
+def ask(png, text, value):
+    """One of ALLOWED, or "UNPARSED" / "HTTP<code>" (VIA=http, the default — byte-identical to
+    before VIA existed) / "ERROR:<type>" (VIA=baml, a BAML call that raised or parsed outside
+    ALLOWED). Closed: any reply that is not exactly one of ALLOWED is UNPARSED."""
+    if VIA == "baml":
+        try:
+            from baml_py import Image
+            from baml_client import sync_client
+            r = sync_client.b.AskTotalRole(
+                Image.from_base64("image/png", base64.b64encode(png).decode()), value)
+            raw = str(getattr(r.answer, "value", r.answer))
+            a = _FROM_BAML.get(raw, raw)
+            return a if a in ALLOWED else "UNPARSED"
+        except Exception as e:
+            return f"ERROR:{type(e).__name__}"
     body = {"model": MODEL, "max_tokens": 300, "messages": [{"role": "user", "content": [
         {"type": "image", "source": {"type": "base64", "media_type": "image/png",
                                      "data": base64.b64encode(png).decode()}},
@@ -98,7 +123,7 @@ path = glob.glob("corpus/**/cbh*.pdf", recursive=True)[0]
 with pdfplumber.open(path) as pdf:
     page = pdf.pages[0]
     box = STRIP if CROP == "strip" else derived_box(path, page)
-    print(f"--- CROP={CROP} {[round(c) for c in box]} ---", flush=True)
+    print(f"--- CROP={CROP} VIA={VIA} {[round(c) for c in box]} ---", flush=True)
     crop = page.crop(box)
     words = page.extract_words()
     for kind, v in [("target", GRAND)] + [("null", p) for p in PORTS] + [("null", CELL)]:
@@ -111,5 +136,5 @@ with pdfplumber.open(path) as pdf:
         im.draw_rect((w["x0"] - 2, w["top"] - 2, w["x1"] + 2, w["bottom"] + 2), fill=None,
                      stroke="red", stroke_width=2)
         buf = io.BytesIO(); im.annotated.save(buf, format="PNG")
-        answers = [ask(buf.getvalue(), PROMPT.format(value=v)) for _ in range(REPEAT)]
+        answers = [ask(buf.getvalue(), PROMPT.format(value=v), v) for _ in range(REPEAT)]
         print(f"{kind:<6} {v:>10} -> " + " ".join(answers), flush=True)
