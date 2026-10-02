@@ -301,3 +301,162 @@ case for case, including its one known miss.
   `baml_src/total_role.baml` and the regenerated `baml_client/` together" — CI regenerates it from
   `baml_src` on every run, and no other `.baml` function's generated client is tracked either).
   Only `baml_src/total_role.baml` is committed.
+
+---
+
+## § 6. Task 6 — record the readings, and the instrument parity (2026-10-02)
+
+**Serves:** prog:criterion:etkl:03 — Task 6 of `.superpowers/sdd/2026-10-02-r261-grand-total/task-6-brief.md`.
+
+Scratch script (not committed, per § 0's convention): `r261_task6_compile_hash.py` (scratchpad),
+compiles cbh via `compile_document(CBH)` (the same call `scripts/r261_baseline.py` and
+`tests/test_cbh_e2e.py`/`tests/test_corpus.py` use — no re-implementation) and prints the
+canonical-hash summary `_canonical_hash` computes the same way `r261_baseline.py` does
+(`to_canonical_graph`, sha256 over sorted N-Triples lines), plus a listing of
+`readings/total_role/*.json`.
+
+### § 6.1 Step 1 — live compile, recorded
+
+```
+ANTHROPIC_API_KEY=$(zsh -c 'source ~/.zshrc >/dev/null 2>&1; printf %s "$ANTHROPIC_API_KEY"') \
+  BAML_LIVE=1 ILADUB_RECORD_READINGS=1 PYTHONPATH="$PWD" .venv/bin/python \
+  <scratchpad>/r261_task6_compile_hash.py
+```
+
+Output (BAML log trimmed to the one `AskTotalRole` call):
+
+```
+2026-10-02T14:58:35.538 [BAML INFO] Function AskTotalRole:
+    Client: Claude (claude-haiku-4-5-20251001) - 1641ms. StopReason: end_turn. Tokens(in/out): 1745/76
+    ---LLM REPLY---
+    {
+      "answer": "total_of_totals"
+    }
+    The number 1,951,264 in the red box appears to be a grand total that sums the subtotals
+    from the multiple tables shown on the page (the volumes from the KWINANA section, ALBANY
+    section, and ESPERANCE section).
+    ---Parsed Response (class TotalRoleVerdict)---
+    {
+      "answer": "TOTAL_OF_TOTALS"
+    }
+score=1.0 triples=13698 sha256=354196bff8b614e203159ed490df43086e597a790930a1da850e86684616106d
+readings/total_role/*.json -> 1 file(s): ['1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json']
+  1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json: {
+ "answer": "total_of_totals"
+}
+```
+
+**Exactly one reading, as the brief expected, answer `total_of_totals`** — matching the one call
+BAML's own log shows (`AskTotalRole` invoked once for the whole compile). Committed:
+`readings/total_role/1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json`.
+
+**Finding, out of this step's scope but recorded as a fact (Task 7's to diagnose):** cbh's score
+moved from Task 0's baseline `0.9106957424714434` (13624 triples) to **`1.0`** (13698 triples,
++74) now that the grand total binds and (per spec § 7 S5) the Note classifies on its own. This is
+exactly the shape Task 7 Step 1 predicts ("only cbh may move") and Task 7 Step 3 is scoped to dump
+— not re-litigated here.
+
+### § 6.2 Step 2 — replay, both env vars unset
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS -u ANTHROPIC_API_KEY PYTHONPATH="$PWD" .venv/bin/python \
+  <scratchpad>/r261_task6_compile_hash.py
+```
+
+Output:
+
+```
+score=1.0 triples=13698 sha256=354196bff8b614e203159ed490df43086e597a790930a1da850e86684616106d
+readings/total_role/*.json -> 1 file(s): ['1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json']
+  1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json: {
+ "answer": "total_of_totals"
+}
+```
+
+**Identical** score, triple count and sha256 to § 6.1, with `ANTHROPIC_API_KEY` itself unset (not
+merely `BAML_LIVE`) — no live path could have run even if attempted. The one recorded
+`total_role` reading is what drove the replay: `baml_total_role_available()` requires
+`BAML_LIVE == "1"`, so `RecordedTotalRoleReader.live` was `None` and the only way `ask_total_role`
+could answer is the on-disk recording from § 6.1.
+
+### § 6.3 Step 3 — crop-box parity (corpus, local)
+
+New test: `tests/etkl/test_total_role_crop_parity.py`. It does **not** `import
+r261_grand_total_role_probe`: that script has no `if __name__ == "__main__":` guard, and its
+module-level code (from `path = glob.glob("corpus/**/cbh*.pdf", ...)` to EOF, lines 122-140)
+unconditionally opens the PDF, builds a crop and — under the default `VIA=http` — reads
+`ANTHROPIC_API_KEY` and makes a live HTTP call per case. A plain `import` from a local pytest
+would therefore attempt network calls on every run. Instead the test execs the probe's own source,
+**truncated** at that line (everything above it — docstring, constants, `ask`, `derived_box` —
+reads no env var and touches no network), into an isolated namespace and takes the `derived_box`
+function object the exec produced: the committed function, byte for byte, never re-implemented.
+Production's box is obtained by spying on `totalrole.crop_box` (save/restore the module attribute
+around one real `compile_document(CBH)` call) and capturing what it was actually called with and
+returned — the production code path, not a re-implementation.
+
+```
+PYTHONPATH="$PWD" .venv/bin/python -m pytest tests/etkl/test_total_role_crop_parity.py -m corpus -q
+```
+
+```
+.                                                                        [100%]
+1 passed in 95.31s (0:01:35)
+```
+
+`totalrole.crop_box` was called **exactly once** compiling cbh, with the production box
+`(45.68, 101.43999999999994, 1147.8860000000002, 693.4599999999999)` — **bit-for-bit equal** to
+the probe's `derived_box` output for the same page. This is the full-precision form of Task 0
+§ 0.3's rounded `[45.68, 101.44, 1147.886, 693.46]`: **zero divergence**, not merely sub-0.01 pt —
+confirming § 0.3's finding that no port-total word supplies an extremal of this box, so N4's 2 dp
+`tab:hasBBox` rounding never has a chance to show up in it on cbh's current geometry. No tolerance
+was needed in the assertion (`==` on the two 4-tuples).
+
+**FALSIFICATION**, run and recorded (not merely described): `totalrole.crop_box`'s margin changed
+4 → 5 pt at `src/iladub/etkl/totalrole.py:173-174` (both the `- 4`/`+ 4` pairs):
+
+```
+> assert production_box == probe_box, (production_box, probe_box)
+E       AssertionError: ((44.68, 100.43999999999994, 1148.8860000000002, 694.4599999999999), (45.68, 101.43999999999994, 1147.8860000000002, 693.4599999999999))
+E       At index 0 diff: 44.68 != 45.68
+1 failed in 91.59s (0:01:31)
+```
+
+— RED, every coordinate shifted exactly ±1 pt on the production side (the probe side, read from
+its own unmodified source, is unchanged). Restored to 4 pt (`git diff` on `totalrole.py` empty
+after restore):
+
+```
+.                                                                        [100%]
+1 passed in 94.53s (0:01:34)
+```
+
+— GREEN. The test pins the 4 pt margin.
+
+**Sanity (not corpus-marked; confirms the margin edit/restore cycle left no regression):**
+
+```
+PYTHONPATH="$PWD" .venv/bin/python -m pytest tests/etkl/test_printed_total.py \
+  tests/etkl/test_printed_total_repair.py tests/etkl/test_totals.py -m "not corpus" -q
+```
+```
+57 passed, 1 deselected in 141.51s (0:02:21)
+```
+
+### § 6.4 Step 4 — recorded answer vs Task 1's majority
+
+§ 6.1's recorded reading is `total_of_totals` for `1,951,264`, exactly Task 1's (§ 1) majority
+(`total_of_totals` ×3 on the live BAML probe). **No finding: they agree.**
+
+### Files changed
+
+- `readings/total_role/1cabff2081bf6dc127217110cbb2f72247026befb133d031b00564bbe4a08905.json` (new).
+- `tests/etkl/test_total_role_crop_parity.py` (new).
+- `src/iladub/etkl/totalrole.py`: touched only transiently for the FALSIFICATION round-trip
+  (4 → 5 → 4 pt); `git diff` against the Task 5 HEAD is empty.
+
+### Concerns
+
+- cbh's score moved to `1.0` (§ 6.1's finding) — flagged for Task 7, not investigated here; Task 6
+  is scoped to recording and parity, not the corpus sweep.
+- The parity test's single `compile_document(CBH)` call costs ~90 s locally (full SHACL
+  validation); run once per FALSIFICATION state as evidence requires, not iterated further.
