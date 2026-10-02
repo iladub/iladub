@@ -249,7 +249,8 @@ def test_corpus_census_every_live_escalating_decision_is_furnished():
     document carrying live and withdrawn escalations AT ONCE (cbh-stem is wholly superseded, and
     the documents rejected above escalate nothing), so the mixed case has a fixture for the first
     time. (2026-09-30: since the box split, cbh-stem also has one live escalation, its residue;
-    see its test below.)
+    see its test below. 2026-10-02: R261 loop (b) withdraws that residue, so cbh-stem is wholly
+    superseded again.)
 
     What replaces the guard is non-vacuity on the same axis: `live > 0`. A document whose
     escalations are ALL withdrawn pins nothing here — that is cbh-stem's test, below.
@@ -292,27 +293,52 @@ def test_corpus_cbh_furnishes_exactly_one_request_for_its_one_live_escalation_th
     A derivation that ignored `dec:supersedes` would furnish 5 and fail. The one number that
     moved is cbh's live count, 0 to 1, and it is pinned exactly at 1. That one region is named
     structurally: the page-0 band holding `1,951,264`, with reason KIND_NOT_SUPPORTED.
+
+    RE-READ AND RE-PINNED 2026-10-02 (R261 loop (b), Task 7): live count 1 -> 0. The name is
+    kept, now historical, because `tests/corpus-manifest.ttl`'s cbh hold rationale and the
+    append-only evidence cite it. The re-read: loop (b) binds `1,951,264` in the section-repair
+    pass (`/r2`) as a total-of-totals `tab:PrintedTotal` (four table-level PrintedTotals as
+    `tab:aggregates`, no `tab:totalOf`). It does so on the worker's `total_of_totals` AND the
+    exact Decimal sum, carves the line out of band 9, and the remaining Note classifies
+    `NON_TABLE` and is `ignored` (spec 2026-10-02-r261-grand-total-design.md § 0 concern 2,
+    § 7 S5). R7 adopts that pass-2 band, so `/r2`'s band-9 verdict decision `dec:supersedes`
+    the pass-1 `escalated` one: cbh is WHOLLY SUPERSEDED again (5 chose escalated, 5
+    superseded, measured in evidence 2026-10-02-r261-grand-total-evidence.md § 7). The
+    mechanism assertions stay exact. A derivation that ignored `dec:supersedes` would furnish
+    5 and fail. The residue is still named structurally, and it is now pinned as WITHDRAWN:
+    its pass-1 escalation is superseded by a decision that chose `ignored`. The Note is
+    ignored, not read; this test records that, it does not endorse it.
     """
     from iladub.etkl.compile import page_bands
     from iladub.etkl.document import compile_document
 
     rep = compile_document(CBH)
-    escalating, _, superseded = _census(rep.graph)
+    g = rep.graph
+    escalating, _, superseded = _census(g)
     region_escalations = [(pi, i, r) for pi, p in enumerate(rep.pages)
                           for i, r in enumerate(p.regions) if r.verdict == "escalated"]
-    requests = set(_derive(rep.graph).subjects(RDF.type, DEC.ExpansionRequest))
+    requests = set(_derive(g).subjects(RDF.type, DEC.ExpansionRequest))
 
     print(f"\ncbh-stem: chose escalated={len(escalating)} superseded={len(superseded)} "
           f"region verdicts escalated={len(region_escalations)} requests={len(requests)}")
     assert len(requests) == len(region_escalations)
     assert len(escalating) - len(superseded) == len(region_escalations), \
         "a live escalating decision and the escalated region verdicts disagree"
-    assert len(region_escalations) == 1, region_escalations
+    assert len(region_escalations) == 0, region_escalations
+    # Non-vacuity: cbh still escalates in pass 1; every escalation is withdrawn, none absent.
+    assert len(escalating) > 0 and superseded == escalating, (escalating, superseded)
 
-    # The one escalated region is the residue: the page-0 band that holds `1,951,264`.
+    # The residue — the page-0 band that holds `1,951,264` — is withdrawn, not merely absent:
+    # its region now reads `ignored` (the Note), and its pass-1 `escalated` verdict decision is
+    # superseded by one that chose `ignored`.
     residue = [i for i, b in enumerate(page_bands(CBH, 0))
                if any(w.text == "1,951,264" for ln in b.lines for w in ln.words)]
     assert len(residue) == 1, residue
-    page, idx, region = region_escalations[0]
-    assert (page, idx) == (0, residue[0]), (page, idx, residue)
-    assert region.reason == "KIND_NOT_SUPPORTED", region.reason
+    assert rep.pages[0].regions[residue[0]].verdict == "ignored", rep.pages[0].regions[residue[0]]
+    withdrawn = [d for d in superseded
+                 if any(str(r).endswith(f"/p0#region{residue[0]}")
+                        for r in g.objects(d, DEC.regarding))]
+    assert len(withdrawn) == 1, withdrawn
+    superseders = list(g.subjects(DEC.supersedes, withdrawn[0]))
+    assert [str(lbl) for s in superseders for o in g.objects(s, DEC.chosen)
+            for lbl in g.objects(o, RDFS.label)] == ["ignored"], superseders

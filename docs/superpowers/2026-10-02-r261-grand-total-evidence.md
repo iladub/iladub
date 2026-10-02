@@ -460,3 +460,245 @@ PYTHONPATH="$PWD" .venv/bin/python -m pytest tests/etkl/test_printed_total.py \
   is scoped to recording and parity, not the corpus sweep.
 - The parity test's single `compile_document(CBH)` call costs ~90 s locally (full SHACL
   validation); run once per FALSIFICATION state as evidence requires, not iterated further.
+
+---
+
+## § 7 Task 7 — corpus sweep and cbh: only cbh moves; the Note lands in `#ignored9` (2026-10-02)
+
+**Serves:** prog:criterion:etkl:03 — Task 7 of `.superpowers/sdd/2026-10-02-r261-grand-total/task-7-brief.md`
+(spec §§ 6.3, 6.4). HEAD measured: `75c570d`. Every compile below used the recorded readers
+(`BAML_LIVE` and `ILADUB_RECORD_READINGS` unset), run serially with nothing else compiling.
+
+Scratch scripts (not committed, per § 0's convention): `r261_task7_cbh_dump.py`,
+`r261_task7_new_subjects.py`, `run_corpus_tests.sh` (scratchpad).
+
+### § 7.1 Step 1 — whole-corpus canonical hash, after vs § 0's before
+
+Same instrument and invocation as § 0:
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python scripts/r261_baseline.py --baseline
+```
+
+| document | score before (§ 0) | score after | triples before → after | sha256 after | moved? |
+|---|---|---|---|---|---|
+| cbh-stem-2026-08-03 | 0.9106957424714434 | **1.0** | 13624 → **13698** | `354196bff8b614e203159ed490df43086e597a790930a1da850e86684616106d` | **yes** |
+| graincorp-capacity-2026-08-04 | 1.0 | 1.0 | 5859 → 5859 | `4a7ffe8598fdb5d2b69f8e98cb228f85ea254132a62c2565ff4b1f0532984f68` | no |
+| graincorp-stem-2026-07-31 | 0.9995511669658886 | 0.9995511669658886 | 32422 → 32422 | `96436660c468a30fc92a7c14af95e8d25dc4dd1bf8b71054c7dc1e616bb3375f` | no |
+| apple-fy2026q3-statements | 0.9418604651162791 | 0.9418604651162791 | 6255 → 6255 | `f8c56e57e59947631d27def1caedaf6591683965af67abbd9dd3e01aeaee8bfc` | no |
+| bfs-population-bilan-2023 | 0.9021428571428571 | 0.9021428571428571 | 16778 → 16778 | `4a176ec3138f99cbcd61db4c736a4fb834ba226e2d6e0aeea5d1616c358a225a` | no |
+| ons-index-of-services-2026-02 | 0.8684895833333334 | 0.8684895833333334 | 12454 → 12454 | `4847d19fbd326488078653dbe1373d6f4d9634359b869f8b77eb6c319b336c08` | no |
+| who-wfa-boys-zscore-0-5 | 0.9962779156327544 | 0.9962779156327544 | 12274 → 12274 | `7931db4b52d368bf32338c5e6773e3c47f79e33919b948e6ea2dd8c7fe41ea18` | no |
+
+**Only cbh moves.** All six other sha256s are byte-identical to § 0. The totals level is inert on
+every other corpus page, as spec § 6.3 predicted. cbh's after-hash equals § 6.1/§ 6.2's
+`354196bf…`.
+
+### § 7.2 Step 2 — corpus test files, one per process
+
+The files were found with `grep -rl "pytest.mark.corpus\|mark.corpus" tests/`, giving 17. Each was
+run as
+`env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python -m pytest <file> -q -m corpus -rs`
+from a `bash` script, serially:
+
+| file | result |
+|---|---|
+| `tests/etkl/test_adoption_document.py` | 4 passed, 8 deselected |
+| `tests/etkl/test_apple_statement_headers.py` | 4 passed |
+| `tests/etkl/test_band_runs.py` | 5 passed, 8 deselected |
+| `tests/etkl/test_boxes.py` | 3 passed, 8 deselected |
+| `tests/etkl/test_boxsplit.py` | 2 passed, 28 deselected |
+| `tests/etkl/test_escalation_furnish.py` | **1 failed**, 1 passed, 8 deselected (the cbh pin, § 7.3) |
+| `tests/etkl/test_escalation_wiring.py` | 1 passed, 6 deselected |
+| `tests/etkl/test_fallback_region_books_and_names.py` | 7 passed, 3 deselected |
+| `tests/etkl/test_membrane_health.py` | 2 passed, 17 deselected |
+| `tests/etkl/test_row_zero_differs.py` | 1 passed, 16 deselected |
+| `tests/etkl/test_total_role_crop_parity.py` | 1 passed |
+| `tests/etkl/test_totals.py` | 1 passed, 13 deselected |
+| `tests/etkl/test_vacuity_registry.py` | 5 passed, 4 deselected |
+| `tests/test_carriage.py` | 6 passed |
+| `tests/test_cbh_e2e.py` | 4 passed |
+| `tests/test_corpus.py` | 11 passed |
+| `tests/test_corpus_stem.py` | 13 passed |
+
+No skips were reported.
+
+**`tests/etkl/test_printed_total_repair.py` carries no cbh corpus pin**, although the table-level
+spec § 5.4 and this task's brief both name one there. Measured: every `def test_` in the file runs
+on a synthetic `tmp_path` PDF (`grep -n "def test_\|corpus\|\.pdf"`, lines 111–423). Its only "cbh"
+hits are prose in the module docstring (line 3) and the word `"CBH"` in the fixture's row data
+(lines 378, 380). It is not corpus-marked, so it has no pin here that could move.
+
+### § 7.3 The pin that moved — `test_escalation_furnish.py`'s cbh live count, re-read
+
+```
+>       assert len(region_escalations) == 1, region_escalations
+E       AssertionError: []
+E       assert 0 == 1
+cbh-stem: chose escalated=5 superseded=5 region verdicts escalated=0 requests=0
+```
+
+**The re-read.** The two mechanism assertions above it still pass:
+`requests == region_escalations`, and `escalating − superseded == region_escalations`, at 0 = 0 and
+5 − 5 = 0. Only the count pin fails. The fifth supersession is new. `p0/r2#region9-d3`, the
+section-repair pass's band-9 verdict decision, chose `ignored` and `dec:supersedes` `p0#region9-d4`,
+pass 1's `escalated` decision (rationale `KIND_NOT_SUPPORTED`, `dec:regarding p0#region9`). That
+is R7 adopting the pass-2 band once the grand total binds in it (spec § 5). The live count of 1 was
+cbh's residue, and this loop's binding withdraws it, which is exactly the move the table-level spec
+§ 5.4 and R261's "what would close it" column foresaw. **Explained by this loop: re-pinned at 0,
+with the residue still named structurally and now pinned as withdrawn:**
+
+- the band holding `1,951,264` reads `ignored`;
+- exactly one superseded escalating decision is `dec:regarding` that band;
+- its superseder chose `ignored`;
+- plus a non-vacuity guard: `len(escalating) > 0 and superseded == escalating`.
+
+The test name is kept. `tests/corpus-manifest.ttl`'s hold rationale and the append-only evidence
+cite it, and this task may not touch the manifest. After the edit:
+
+```
+bfs-population: B(chose escalated)=12 C(and dec:regarding)=12 B-C=0 superseded=6 live=6 requests=6
+cbh-stem: chose escalated=5 superseded=5 region verdicts escalated=0 requests=0
+2 passed, 8 deselected in 168.85s (0:02:48)
+```
+
+**FALSIFICATION.** (1) The old pin value fails against the new graph: the RED run above, `assert 0 == 1`.
+(2) The new structural pin can fail. With the superseder's expected label flipped
+`["ignored"]` → `["escalated"]`:
+
+```
+E       AssertionError: [rdflib.term.URIRef('https://example.org/etkl/doc/p0/r2#region9-d3')]
+E       assert ['ignored'] == ['escalated']
+1 failed in 55.04s
+```
+
+The label was restored by the inverse `sed`, giving the byte-identical file the GREEN run above was
+taken on.
+
+### § 7.4 Step 3 — cbh's cells, dumped
+
+```
+env -u BAML_LIVE -u ILADUB_RECORD_READINGS PYTHONPATH="$PWD" .venv/bin/python <scratchpad>/r261_task7_cbh_dump.py
+```
+
+`score=1.0 triples=13698 sha256=354196bf…` (= § 7.1).
+
+**Per-band `RegionReport`, page 0** (before = table-level evidence § 7.4, after = now):
+
+| idx | kind before → after | verdict before → after | cells | tok_a before → after | tok_e before → after | table_uri |
+|---|---|---|---|---|---|---|
+| 0 | NON_TABLE | ignored | 0 | 0 | 0 | — |
+| 1 | UNSUPPORTED_TABLE | asserted | 170 | 190 | 0 | `…/p0/r2#htable1` |
+| 2 | NON_TABLE | asserted | 0 | 1 | 0 | — |
+| 3 | UNSUPPORTED_TABLE | asserted | 268 | 288 | 0 | `…/p0/r2#htable3` |
+| 4 | NON_TABLE | asserted | 0 | 1 | 0 | — |
+| 5 | UNSUPPORTED_TABLE | asserted | 228 | 248 | 0 | `…/p0/r2#htable5` |
+| 6 | NON_TABLE | asserted | 0 | 1 | 0 | — |
+| 7 | UNSUPPORTED_TABLE | asserted | 84 | 104 | 0 | `…/p0/r2#htable7` |
+| 8 | NON_TABLE | asserted | 0 | 1 | 0 | — |
+| 9 | **UNSUPPORTED_TABLE → NON_TABLE** | **escalated → ignored** | 0 | **0 → 1** | **86 → 0** | — |
+| 10 | RECORD_TABLE | asserted | 28 | 35 | 0 | `…/p0#table10` |
+| 11 | RECORD_TABLE | asserted | 8 | 8 | 0 | `…/p0#table11` |
+
+Band 9's `reason` is now `fewer than 2 columns`, the same as band 0.
+
+**Every table** (subjects of `tab:hasCell`):
+
+| table | type | `tab:hasCell` |
+|---|---|---|
+| `…/p0/r2#htable1` | HierarchicalTable | 190 |
+| `…/p0/r2#htable3` | HierarchicalTable | 288 |
+| `…/p0/r2#htable5` | HierarchicalTable | 248 |
+| `…/p0/r2#htable7` | HierarchicalTable | 104 |
+| `…/p0#table10` | RecordTable | 35 |
+| `…/p0#table11` | RecordTable | 8 |
+
+**Every `tab:PrintedTotal`.** The level shown follows from the links; it is not stored:
+
+| PrintedTotal | cellText | `tab:totalOf` | `tab:aggregates` | level | `dec:produced` by | exact Decimal |
+|---|---|---|---|---|---|---|
+| `…/p0/r2#printedtotal2-l0` | `374,904` | `#htable1` | 10 cells | table | `#region2-d0` | 374904 = 374904 |
+| `…/p0/r2#printedtotal4-l0` | `737,289` | `#htable3` | 16 cells | table | `#region4-d0` | 737289 = 737289 |
+| `…/p0/r2#printedtotal6-l0` | `660,363` | `#htable5` | 14 cells | table | `#region6-d0` | 660363 = 660363 |
+| `…/p0/r2#printedtotal8-l0` | `178,708` | `#htable7` | 5 cells | table | `#region8-d0` | 178708 = 178708 |
+| **`…/p0/r2#printedtotal9-l0`** | **`1,951,264`** | **none** | **the 4 PrintedTotals above** | **total of totals** | `…/p0/r2#region9-d0` | 374904 + 737289 + 660363 + 178708 = **1951264** = 1951264 |
+
+`printedtotal9-l0` carries `prov:wasDerivedFrom …/p0/r2#p0-811-683`, `tab:onPage 0` and a
+`tab:hasBBox`. Its producing decision `p0/r2#region9-d0` chose `total` and states both halves in
+its rationale: *"totals level: the 4 table-level PrintedTotals on this page (…) sum exactly
+(Decimal) to 1,951,264; the reader answered total_of_totals"*. `1,951,264` occurs as a `tab:cellText`
+on `printedtotal9-l0` and inside that rationale, and in no other literal. Before this loop it
+occurred in no triple (R261's row).
+
+**Where the Note landed: `…/p0/r2#ignored9`**, as § 7 S5 predicted (an `etkl:IgnoredBand`,
+`etkl:bandIndex 9`, `etkl:ignoredBecause "fewer than 2 columns"`):
+
+```
+etkl:bandText 'Note:\nDates are based on Daily Transport capacity and assume total capacity is allocated to
+grade types required. Dates are subject to change and are only a guide.\nThe information provided is only an
+estimate based on information currently to hand and dates or order of loading are subject to change '
+```
+
+It is the **only** node in cbh's graph carrying the Note's text. A scan for every literal containing
+`Note`, `estimate` or `Daily` finds `p0/r2#ignored9`'s `bandText`, plus `p0#ignored0`'s title
+`Daily Ship Roster` (pre-existing). cbh now carries **0** `iladub:CandidateConcept`; before, it
+carried `#region9`'s.
+
+**Where the +74 triples come from** (`r261_task7_new_subjects.py`, triples whose subject is a
+band-9 node):
+
+- 170 triples in all;
+- pass 1's `p0#region9-d0…d4` decision log (with `-reading`/`-source`) stays, now superseded;
+- the new `p0/r2#region9-d0…d3` decision log (`d0` = the totals-level choice `total`/`not_total`);
+- `p0/r2#printedtotal9-l0` (9);
+- `p0/r2#ignored9` + `-source` (9);
+- removed: the pass-1 escalation record, `#region9`'s `CandidateConcept`, which
+  `_remove_escalation_record` withdraws on adoption.
+
+The net is +74. This is an accounting of the after-graph only; no before-graph diff was taken.
+
+#### Spec § 0 concern 2, beside the dump
+
+**The Note is ignored, not read.** The arithmetic of the score, recorded as a fact:
+
+| | asserted tokens | escalated tokens | score |
+|---|---|---|---|
+| before (§ 0) | 877 | 86 (`1,951,264` + the Note's 85) | 877/963 = 0.9106957424714434 |
+| if only the binding had happened (the Note still escalated) | 878 | 85 | 878/963 = 0.9117341640706127 |
+| after | 878 | 0 | 878/878 = **1.0** |
+
+The binding itself is worth **+0.0010** (one token moved from escalated to asserted). The other
+**+0.0883** is the Note's 85 tokens **leaving the denominator**, because the carved remainder
+classifies `NON_TABLE` and is `ignored`. The page's caveat (*"Dates are subject to change and are
+only a guide … only an estimate …"*) is dropped as prose, like every other prose band in the corpus.
+It is not carried as context on the four tables it qualifies (CLAUDE.md principle 5). This is the
+table-level spec's ruling R-d, taken knowingly and disclosed here, not adjudicated. **cbh's
+`cor:adjudication` hold (`tests/corpus-manifest.ttl`) and `etkl:03`'s `prog:met` are untouched.
+Lifting the hold is the maintainer's call.**
+
+**The S5 prediction now rests on this run.** A CI fixture's Note remainder measured `escalated`, not
+`ignored` (Task 4 report, `.superpowers/sdd/2026-10-02-r261-grand-total/task-4-report.md`; ruled to assert the measured `escalated`). On cbh, at whole-document scope, the remainder is `ignored`. That is measured
+here and nowhere else.
+
+### § 7.5 Step 4 — register
+
+- **✎ R261** (index line and full row): loop (b)'s result. The grand total binds; the Note lands in
+  `#ignored9`; the score decomposition; only cbh moves; the furnish pin re-read. The row is not
+  closed: the hold is the maintainer's.
+- **✎ R287** (index line and full row): the shipped worker carries its miss unchanged. BAML
+  reproduces `22,858` → `table_total` ×3 (§ 1); the production crop equals the probe's (§ 6.3); on cbh
+  the worker is asked once, about `1,951,264` only; the corpus still offers no coincidence class.
+- **No row raised for the Note.** The brief said the table-level loop's row covers it, and asked
+  for that row to be measured and cited. **Measured: no such row exists.**
+  `git grep -n -i "uncarried table context"`, run before this task's register edits, matches only
+  `specs/2026-10-01-r261-totals-family-design.md:34,201` and
+  `plans/2026-10-01-r261-totals-family.md:452`, the instruction to raise it, and no residue file.
+  The table-level loop dropped its grand total (table-level evidence § 6.4), so its Note stayed
+  escalated and the row was never raised. Searches of `residues*.md` for `games the score`,
+  `ignored, not read` and `caveat` find no row about cbh's Note either. Per the brief, no new row was
+  raised. The gap is stated in the ✎ R261 entry and handed to the controller as a concern.
+
+### § 7.6 Doc impact of this section
+
+None. This section is measurement. Its one test change re-pins a corpus count that this loop's own
+binding moved.
