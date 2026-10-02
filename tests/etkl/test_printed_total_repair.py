@@ -300,6 +300,54 @@ def test_with_no_role_claim_the_document_holds_only_the_table_totals(grand_pdf, 
     assert (URIRef(f"{P0}#ignored4"), None, None) in g           # pass-1 record untouched
 
 
+# --------------------------------------------------------------------- R261 loop (b), task 5, fix 1
+# THE FINDING (controller's review of commit 09f3f32): the `tab:aggregates` hop in
+# `_printed_total_bands` was EXISTENTIAL — it adopted a grand total when ANY ONE of its
+# `tab:aggregates` operands was `tab:totalOf` an adopted table, not every one. On a mixed page
+# (one operand's table adopted, the other's not) that ships a `tab:aggregates` edge to a
+# PrintedTotal the adopting loop never merged into the document graph — a dangling reference
+# `tab:PrintedTotalShape` half 1 (every `tab:aggregates` object is `tab:totalOf` a table IN THIS
+# GRAPH) would refuse at the document membrane. RULING: the hop must be UNIVERSAL — adopt a grand
+# total only when EVERY one of its `tab:aggregates` operands is `tab:totalOf` an adopted table
+# (and it has at least one operand).
+#
+# UNIT-LEVEL, over a constructed graph (the brief's preferred seam: `_printed_total_bands` takes
+# a graph, a doc URI, the adopted-tables set and the band count — no PDF, reader or compile
+# needed to pin the join's universal/existential distinction).
+
+def test_a_grand_total_with_one_unadopted_operand_is_not_adopted():
+    """`table_b` is NOT in `tables` (not adopted) even though `table_a` is: the grand total at
+    band 4 aggregates `pt1` (totalOf the ADOPTED `table_a`) and `pt3` (totalOf the UNADOPTED
+    `table_b`). The universal hop must adopt band 1 (pt1's own table-level total, unaffected by
+    this fix) but refuse band 4 (the grand total) and band 3 (pt3's table-level total, whose own
+    table was never adopted) — never shipping a dangling `tab:aggregates` edge to a PrintedTotal
+    the document graph does not hold."""
+    from rdflib import Graph
+    from iladub.etkl.document import _printed_total_bands
+
+    g = Graph()
+    r2_doc = URIRef(R2)
+    TABns, DECns = URIRef(TAB), URIRef(DEC)
+    table_a = URIRef(f"{r2_doc}#table-a")
+    table_b = URIRef(f"{r2_doc}#table-b")                     # deliberately NOT in `tables` below
+    pt1 = URIRef(f"{r2_doc}#printedtotal1-l0")                # totalOf the adopted table
+    pt3 = URIRef(f"{r2_doc}#printedtotal3-l0")                # totalOf the UNADOPTED table
+    grand = URIRef(f"{r2_doc}#printedtotal4-l0")              # aggregates {pt1, pt3}
+    g.add((pt1, URIRef(TAB + "totalOf"), table_a))
+    g.add((pt3, URIRef(TAB + "totalOf"), table_b))
+    g.add((grand, URIRef(TAB + "aggregates"), pt1))
+    g.add((grand, URIRef(TAB + "aggregates"), pt3))
+    # the `dec:produced` -> band-index join `_printed_total_bands` itself reads back, keyed by
+    # decisionlog's own minting convention (`{r2_doc}#region{j}-d{n}`, read in the function body).
+    g.add((URIRef(f"{r2_doc}#region1-d0"), URIRef(DEC + "produced"), pt1))
+    g.add((URIRef(f"{r2_doc}#region3-d0"), URIRef(DEC + "produced"), pt3))
+    g.add((URIRef(f"{r2_doc}#region4-d0"), URIRef(DEC + "produced"), grand))
+
+    out = _printed_total_bands(g, r2_doc, {table_a}, 5)
+    assert out == [1]                     # band 1 only — not band 3 (unadopted table), not band 4
+                                           # (grand total has an unadopted operand)
+
+
 # --------------------------------------------------------------------------------------- R7
 # REFUSAL: "pass 1 asserted a TABLE in this band" (document.py's R7 block, `if
 # pages[p].regions[j].table_uri is not None or any(graph.subjects(None, ign)): ... continue`,

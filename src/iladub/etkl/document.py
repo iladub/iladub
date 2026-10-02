@@ -1030,9 +1030,10 @@ def _remove_escalation_record(graph: Graph, page_doc: URIRef, idx: int) -> None:
 
 
 def _printed_total_bands(g2: Graph, r2_doc: URIRef, tables: set, nbands: int) -> list[int]:
-    """R261 ruling R7, extended by loop (b) spec § 5: the pass-2 bands whose bound
-    `tab:PrintedTotal` either (a) is `tab:totalOf` one of `tables`, or (b) `tab:aggregates` a
-    PrintedTotal that is `tab:totalOf` one of `tables` — ascending, deduplicated.
+    """R261 ruling R7, extended by loop (b) spec § 5, tightened by fix round 1: the pass-2 bands
+    whose bound `tab:PrintedTotal` either (a) is `tab:totalOf` one of `tables`, or (b)
+    `tab:aggregates` ONLY PrintedTotals that are `tab:totalOf` one of `tables` (every operand,
+    never just one) — ascending, deduplicated.
 
     THE EXTENSION (b) IS ONE GRAPH HOP, NEVER ADJACENCY: a grand total carries no `tab:totalOf`
     of its own (vocab/ontology/tab.ttl's total-of-totals usage) — the ONLY link from a page's
@@ -1046,6 +1047,14 @@ def _printed_total_bands(g2: Graph, r2_doc: URIRef, tables: set, nbands: int) ->
     RDF fact a SPARQL query could join against on its own — it decides nothing (which band holds
     a grand total is already decided by `_bind_printed_totals`) and carries no constant.
 
+    UNIVERSAL, NOT EXISTENTIAL (fix round 1, review finding): the first-shipped hop adopted a
+    grand total when ANY ONE of its `tab:aggregates` operands was `tab:totalOf` an adopted table —
+    on a mixed page (one operand's table adopted, the other's not) that ships a `tab:aggregates`
+    edge to a PrintedTotal the adopting loop never merged into the document graph, which
+    `tab:PrintedTotalShape` half 1 would refuse at the document membrane. The operand set is the
+    WHOLE set (rule R-f): a grand total is adopted only when it has at least one operand and
+    EVERY operand is `tab:totalOf` one of `tables` — never a partial match.
+
     KEYED BY THE GRAPH LINK, never by adjacency (an `i + 1` rule would be geometry, CLAUDE.md § 8):
     a total joins its table by `tab:totalOf` (or a table-level total by `tab:aggregates`), and
     joins its band by the decision that produced it, `?d dec:produced ?pt`, whose URI is
@@ -1054,7 +1063,10 @@ def _printed_total_bands(g2: Graph, r2_doc: URIRef, tables: set, nbands: int) ->
     classification: PROCEDURAL graph glue over facts the compile already decided; it decides
     nothing and carries no constant."""
     table_totals = {pt for pt, t in g2.subject_objects(TAB.totalOf) if t in tables}
-    grand_totals = {gt for gt, pt in g2.subject_objects(TAB.aggregates) if pt in table_totals}
+    operands: dict = {}
+    for gt, pt in g2.subject_objects(TAB.aggregates):
+        operands.setdefault(gt, set()).add(pt)
+    grand_totals = {gt for gt, ops in operands.items() if ops and ops <= table_totals}
     out = set()
     for pt in table_totals | grand_totals:
         for d in g2.subjects(DEC.produced, pt):
