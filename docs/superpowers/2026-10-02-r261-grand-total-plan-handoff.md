@@ -54,3 +54,11 @@ Turn the approved loop (b) design into a written spec, and get it reviewed befor
   the spec. Re-measure them; do not trust them as recorded facts.
 - **The context figure** comes from the hook: 50,406 working tokens at the last prompt, plus this
   writing.
+
+## Addendum — the spec is APPROVED (2026-10-02)
+
+The maintainer approved the written spec in session on 2026-10-02 (*"approved"*), including the
+three seam-forced wording changes listed in part 3. That clears brainstorming's HARD-GATE for the
+plan. Part 5's first asserted action is done. **START:** a fresh session runs
+`managing-context-budget`, then `superpowers:writing-plans` from the spec. The planning session
+did not start here because the session stood at 61K working tokens, 1.2× the originating floor.
