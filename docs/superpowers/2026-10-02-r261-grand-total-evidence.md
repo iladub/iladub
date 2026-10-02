@@ -702,3 +702,19 @@ here and nowhere else.
 
 None. This section is measurement. Its one test change re-pins a corpus count that this loop's own
 binding moved.
+
+### § 7.7 Fix round 1 — a row for the Note, by controller ruling (2026-10-02)
+
+Nothing above this subsection is edited. § 7.5 recorded that no row was raised for the Note, as the
+brief instructed. **A controller ruling overrides that instruction.** The brief's premise, that the
+table-level loop's row covers the Note, was measured false in § 7.5. Ruling R-d requires the Note's
+fate to be disclosed, and a +0.0883 score gain from ink leaving the denominator unread had no row to
+disclose it.
+
+**Raised: [[R288]]** in `residues.md` (index line) and `residues-open.md` (full row). Its tally
+snapshot, `(76/278 closed)`, was measured from the index at raise time:
+
+- 277 rows, 76 of them closed;
+- R288 counts itself, as R287's `(76/277 closed)` did.
+
+R261 gains a second ✎ in both files citing R288. The first ✎ from `0f3617b` is left as it is.
