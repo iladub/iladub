@@ -1,0 +1,20 @@
+@prefix tab:  <https://w3id.org/iladub/tab#> .
+@prefix dec:  <https://w3id.org/iladub/dec#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/tab-demo#> .
+
+# R261 negative for tab:PrintedTotalShape's tab:cellText constraint (exactly 1): no cellText at
+# all.
+ex:pt a tab:PrintedTotal ;
+    tab:aggregates ex:c1 , ex:c2 ;
+    tab:totalOf ex:tbl ;
+    tab:hasBBox ex:bbox ;
+    tab:onPage 3 .
+ex:bbox a tab:BBox .
+ex:tbl a tab:Table .
+
+ex:d a dec:DecisionHolon ;
+    rdfs:label "printed_total" ;
+    dec:produced ex:pt ;
+    dec:chosen ex:opt-total .
+ex:opt-total rdfs:label "total" .

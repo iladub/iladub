@@ -181,4 +181,11 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # (a stroked title bar re-types a box's title `tab:SectionCaption`) cites none, because no
     # open row shares its subject, so it enters the set. Controlled: the set computed over HEAD's
     # register files is 90, over the staged ones 91.
-    assert len(expected) == 91
+    # RE-MEASURED 2026-10-01 (R261 Task 7, adjudication and register): 91 -> 93, ADDED = [281, 282],
+    # REMOVED = []. Closing R77 removes it from `open_`, but no row had it as an only open
+    # neighbour, so nothing re-enters the set through that door (R47, R283 and R261's own row all
+    # keep OTHER open neighbours). The delta is the RAISE kind alone: R281 and R282 are open, named
+    # by no criterion, and cite no other row, so each enters on arrival; R283 cites the open
+    # [[R47]] and stays out. Controlled: the set computed over HEAD's register files is 91, over
+    # the staged ones 93.
+    assert len(expected) == 93

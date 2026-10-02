@@ -1782,7 +1782,8 @@ def sectioned_ruled_table_pdf(path, trailing_total=False):
 
 def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = True,
                             bad_total_in: int | None = None,
-                            strip_separators: bool = False) -> dict:
+                            strip_separators: bool = False,
+                            lone_total_offset: float | None = None) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1894,6 +1895,12 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
             total_ry = grid_bot + 8
             c.drawString(cols[0] + 4, y(total_ry), "TOTAL")
             c.drawString(cols[3] + 4, y(total_ry), total)
+        if lone_total_offset is not None:
+            # R261 fix round 1: the REAL cbh shape — the Volume sum printed ALONE (no "TOTAL"
+            # label), `lone_total_offset` pt below the grid's closing rule, so `detect_bands`
+            # gives it a band of its own after the section's. Default None: byte-identical.
+            total = f"{sum(int(r[3].replace(',', '')) for r in rows):,}"
+            c.drawString(cols[3] + 4, y(grid_bot + lone_total_offset), total)
         sections.append({"key": keys[i], "notice": notices[i], "rows": rows, "total": total})
     c.save()
     return {"sections": sections, "header_names": header_names, "cols": cols}
@@ -2804,3 +2811,61 @@ def styled_box_pdf(path: str, rows, *, head_font: str = "Helvetica",
     c.save()
     return {"rows": [tuple(r) for r in rows], "xs": list(_STYLED_XS),
             "neighbour_xs": list(_NEIGHBOUR_XS) if neighbour else None}
+
+
+def printed_total_pdf(path: str, first_total: str = "5,100", second_total: str = "2,700",
+                      grand_total: str = "7,800", note_lines: int = 2) -> dict:
+    """R261 spec § 5.2: two tables, each with a total printed beneath it OUTSIDE its grid, then a
+    total-of-totals line. Unruled, Courier 10, so the band layout is the word geometry's alone.
+
+    Measured band layout (`compile.page_bands`, default arguments):
+      0  table A — Site | Tonnes | Grade, 3 body rows; Tonnes sums to 5,100
+      1  `first_total` at x=150 (inside the note's x-extent, so `segment` keeps them one band)
+         + `note_lines` prose lines — cbh band 9's shape: a total sharing its band with a Note
+      2  table B — 2 body rows; Tonnes sums to 2,700
+      3  `second_total`, alone
+      4  `grand_total`, alone — directly after band 3, so its previous report is band 3's
+    """
+    cols = [72.0, 240.0, 400.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+
+    def table(rows, y):
+        for i, row in enumerate(rows):
+            for x, v in zip(cols, row):
+                c.drawString(x, y - i * 18.0, v)
+        return y - (len(rows) - 1) * 18.0
+
+    y = table([("Site", "Tonnes", "Grade"), ("Alpha", "1,200", "APW"),
+               ("Bravo", "3,400", "H2"), ("Charlie", "500", "AUH2")], PAGE_H - 100.0)
+    y -= 50.0
+    c.drawString(150.0, y, first_total)
+    note = ["Note: tonnages are estimates as at the date shown",
+            "and are subject to change without notice."][:note_lines]
+    for k, text in enumerate(note, start=1):
+        c.drawString(72.0, y - 14.0 * k, text)
+    y -= 14.0 * len(note) + 60.0
+    y = table([("Site", "Tonnes", "Grade"), ("Delta", "2,000", "APW"), ("Echo", "700", "H2")], y)
+    y -= 50.0
+    c.drawString(240.0, y, second_total)
+    y -= 60.0
+    c.drawString(240.0, y, grand_total)
+    c.save()
+    return {"note": note}
+
+
+def percent_total_pdf(path: str, total: str = "100%") -> dict:
+    """R261 Review Focus 4: a column of percentages with `total` printed alone beneath it. The
+    one numeric parse drops the `%` (M6), so 25% + 35% + 40% sums to `100%`'s value exactly."""
+    cols = [72.0, 240.0, 400.0]
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 10)
+    rows = [("Grade", "Share", "Port"), ("APW", "25%", "Kwinana"),
+            ("H2", "35%", "Albany"), ("AUH2", "40%", "Esperance")]
+    y = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        for x, v in zip(cols, row):
+            c.drawString(x, y - i * 18.0, v)
+    c.drawString(240.0, y - 3 * 18.0 - 50.0, total)
+    c.save()
+    return {}

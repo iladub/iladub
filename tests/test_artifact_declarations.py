@@ -242,7 +242,18 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # RE-MEASURED 2026-09-30 (box-split Task 3d.4): the `.rq` population is **57** —
     # `row-zero-differs.rq`, the one-way oracle of spec § 10.3.2. Its three transient `tab:` style
     # terms went into the EXISTING `vocab/ontology/tab.ttl`, so the `.ttl` population does not move.
-    assert len(vocab_nodes) == len(artifact_files()) == 168
+    # RE-MEASURED 2026-10-01 (R261 plan Task 2): the `.ttl` population is **176** —
+    # `tab:PrintedTotalShape`'s positive fixture and its seven negatives
+    # (`tests/tab-printed-total-*.ttl`), which feed `tests/test_tab.py`'s new shape battery.
+    # Measured as a SET: added = exactly those eight, removed = none. `tab:PrintedTotal` and
+    # `tab:totalOf` went into the EXISTING `tab.ttl`, and `tab:PrintedTotalShape` into the
+    # EXISTING `tab-shapes.ttl`. The `.rq` population does not move.
+    # RE-MEASURED 2026-10-01 (final review, ruling R9): the `.ttl` population is **177** —
+    # `tests/tab-printed-total-totalof-not-table-leak.ttl`, the negative fixture for
+    # `tab:totalOf`'s new `sh:class tab:Table` constraint. Measured as a SET: added = exactly that
+    # one file, removed = none. The `sh:class tab:Table` triple went into the EXISTING
+    # `tab-shapes.ttl`. The `.rq` population does not move.
+    assert len(vocab_nodes) == len(artifact_files()) == 177
     assert len(query_nodes) == len(query_files()) == 57
 
 

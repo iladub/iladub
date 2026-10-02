@@ -261,11 +261,18 @@ prog:criterion:etkl:03 a prog:Criterion ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/cbh-stem-2026-08-03.pdf]" .
+# prog:met stays false and prog:source stays :78, unchanged by the 2026-10-01 R261 Task 7
+# adjudication pass (ruling R5): a new cor:adjudication was APPENDED inside this entry, after
+# its subject line, so :78 still names it; the hold is not lifted either. That append added 2
+# lines to the file, which pushed every subject line BELOW this entry down by 2 — see the four
+# re-pointed prog:source values on etkl:04/05/06/07 below (94/114/127/147 -> 96/116/129/149),
+# re-measured the same way the etkl:07 "apple pushed it" comment below already documents for an
+# earlier push (a same-file citation by SYMBOL, not line, per CLAUDE.md plan-rule 7).
 
 prog:criterion:etkl:04 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/ons-index-of-services-2026-02.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:94" ;
+    prog:source "tests/corpus-manifest.ttl:96" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-09-18"^^xsd:date ;
@@ -276,7 +283,7 @@ prog:criterion:etkl:04 a prog:Criterion ;
 prog:criterion:etkl:05 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "gov-stats/bfs-population-bilan-2023.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:114" ;
+    prog:source "tests/corpus-manifest.ttl:116" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
@@ -286,7 +293,7 @@ prog:criterion:etkl:05 a prog:Criterion ;
 prog:criterion:etkl:06 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "financial/apple-fy2026q3-statements.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:127" ;
+    prog:source "tests/corpus-manifest.ttl:129" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-09-18"^^xsd:date ;
@@ -306,7 +313,7 @@ prog:criterion:etkl:06 a prog:Criterion ;
 prog:criterion:etkl:07 a prog:Criterion ;
     prog:ofRung "etkl" ;
     prog:statement "health/who-wfa-boys-zscore-0-5.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
-    prog:source "tests/corpus-manifest.ttl:147" ;
+    prog:source "tests/corpus-manifest.ttl:149" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-08-31"^^xsd:date ;

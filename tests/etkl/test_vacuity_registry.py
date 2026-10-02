@@ -142,6 +142,14 @@ VACUITY_REGISTRY = {
         "LIVE-ONLY body term, adjudicated 2026-09-18: 2203 focus nodes, and the one body term "
         "absent from every offline graph is tab:unshownText, which is emitted only under "
         "BAML_LIVE. The shape's other disjuncts are exercised on every document."),
+    # DELETED 2026-10-01 (R261 plan Task 5): TAB.PrintedTotalShape. Registered idle in Task 2 as
+    # LIVE-ONLY-AFTER (sequencing: the vocabulary and membrane shipped before the binding that
+    # mints tab:PrintedTotal), and still idle after Task 4 because no printed_total reading was
+    # recorded, so the offline reader was no claim (ruling R3). Task 5 recorded the four cbh-stem
+    # readings under readings/printed_total/ (all "yes", each equal to Task 1's P1 majority). With
+    # them tracked, this test's other arm named it: test_no_registered_shape_has_gone_live failed
+    # with exactly `tab#PrintedTotalShape` stale. MEASURED at this commit, offline replay of
+    # cbh-stem: 4 tab:PrintedTotal in the document graph, score 0.9106957424714434.
 }
 
 
