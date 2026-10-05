@@ -14,8 +14,9 @@ Written at ~51K working tokens, just past the 50K originating floor. Part 5 was 
   § 4 (labels, ons p4, the truth list). Write `truth.json` in the census output directory as a JSON
   list of `[doc_stem, page, band]`. Then run `scripts/r288_scope_probe.py live`. It prints `VERDICT:
   HOLDS | REFUTED` under the rule fixed in § 3, before any call. The prediction is that the
-  composite admits exactly the notes whose qualified tables are asserted. § 4 items 1 and 2 were
-  ruled after this part was written; see § 3.
+  composite admits exactly the notes whose qualified tables are asserted. § 4 items 1, 2, 3 and 6
+  were ruled after this part was written (see § 3), so the next session writes `truth.json` from
+  § 3 and runs `live`. It does not re-open the design.
 
 ## 1. Goal
 
@@ -59,6 +60,15 @@ reading-order equality, admits exactly the table notes. Then R288 gets a reader 
 - **ons p4 b1/b2 go in the must-refuse set**, consistent with option (a): a note whose referent
   table is unasserted (R230) cannot be bound. Maintainer, in session; recorded only here.
 
+- **The truth list is approved** (maintainer, in session; recorded only here). `truth.json` is
+  exactly these 8 bands: `cbh-stem-2026-08-03` p0 b9; `graincorp-capacity-2026-08-04` p0 b4;
+  `graincorp-stem-2026-07-31` p0 b3, p1 b2, p2 b2; `bfs-population-bilan-2023` p5 b6;
+  `ons-index-of-services-2026-02` p7 b16, p8 b8. Every other candidate, and every null, must be
+  refused. Band indices are the census's at `f10dcfe`. Re-run the census, and if an index or text
+  has moved, stop and re-confirm with the maintainer rather than re-mapping silently.
+- **The worker prompt is approved as written** (the `PROMPT` constant at `f10dcfe`; maintainer, in
+  session).
+
 ## 4. Unverified or assumed
 
 1. ~~**Label collision, undecided.**~~ Ruled, see § 3. bfs p5 has the author's own `T1`/`T2`, and the probe draws
@@ -68,12 +78,12 @@ reading-order equality, admits exactly the table notes. Then R288 gets a reader 
    page's only asserted table is the numbered Notes list, and the real Table 1 (band 0, 241 words)
    is ignored. That is R230. The "Source:" line's referent is unasserted, so the oracle refuses it
    by construction. Ruled, see § 3.
-3. **Truth list not re-judged.** Only ons p4 was viewed. From text heads, the candidates are cbh p0
+3. ~~**Truth list not re-judged.**~~ Approved by the maintainer, see § 3. Only ons p4 was viewed. From text heads, the candidates are cbh p0
    b9, graincorp-capacity p0 b4, graincorp-stem p0 b3 / p1 b2 / p2 b2, bfs p5 b6, ons p7 b16, and
    ons p8 b8. Every one needs its rendered page looked at before it enters `truth.json`.
 4. **Grid boxes and label placement on grid pages were never viewed.** bfs p5, ons p7, ons p8 and
    apple p2 are the pages that matter most.
 5. **Grids get no null control** (their last line is not one band's). The null set covers band
    tables only.
-6. **The prompt is a draft.** It is the `PROMPT` constant in the script, and the maintainer has not
+6. ~~**The prompt is a draft.**~~ Approved, see § 3. It is the `PROMPT` constant in the script, and the maintainer has not
    seen it.
