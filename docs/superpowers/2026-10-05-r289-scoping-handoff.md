@@ -2,6 +2,8 @@
 
 **Serves:** prog:criterion:etkl:03 — R289 is the named blocker on lifting cbh's hold.
 
+**Topic:** r289-header-line-as-body · **Date:** 2026-10-05
+
 **Doc impact: none.**
 
 Written at about 86K working tokens, past the 50K originating floor. Parts 1–4 are pointers. Part 5's
