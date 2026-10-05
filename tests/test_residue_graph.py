@@ -200,4 +200,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # tokens are on the page, and [[R262]] is the `surfaceText` renderer. Closing R291 frees no
     # row, because R265 keeps [[R65]]. Controlled: the set over HEAD's register files is 92, over
     # the edited ones 93.
-    assert len(expected) == 93
+    # RE-MEASURED 2026-10-05 (R265 closed, same branch): 93 -> 94, ADDED = [65], REMOVED = [].
+    # R265 was [[R65]]'s only open neighbour (same `celltype` module, recorded in the 2026-09-30
+    # entry above), so closing it returns R65 to the set. Controlled: the set over HEAD's register
+    # files is 93, over the edited ones 94.
+    assert len(expected) == 94

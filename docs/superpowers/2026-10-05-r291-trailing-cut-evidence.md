@@ -115,3 +115,21 @@ Restored: 10 of 10 pass.
 - Code: `src/iladub/etkl/trailing.py` (`trailing_refused_in_grids`, `cut_trailing_notes`).
 - Instrument: `scripts/carried_token_census.py` (takes an N-Triples directory or compiles `corpus/`).
 - Commit `f1f876f` (the fix and tests).
+
+## 6. Addendum, same session: the sweep ran, R265 closes (part 5 item 1 done)
+
+The local sweep over the 47 corpus-referencing test files (one file per process, `-x`) finished:
+**45 green, 2 red**, and both red files were the predicted pins.
+
+| file | measured | re-pinned to |
+|---|---|---|
+| `tests/etkl/test_run_merge_seam.py::test_o5_…` | `grid[0].cells` 270; with -x, the decomposition below it never ran | two grid regions, `[270, 226]`; decomposition `n_bands + len(grid) + residue` (1 passed) |
+| `tests/test_carriage.py` | `len(bfs.graph)` 16940 ≠ 16778. **`P5_CELLS_WHEN_CARRIED = 496` held**: `_page_cells` sums both grids | `DOC_TRIPLES_WHEN_CARRIED = 16940` (6 passed) |
+
+Part 4's prediction that both 496 pins "will read 270" was half wrong: only the per-region pin moved.
+The 16778 → 16940 delta has **0** triples outside `p5/adopt#` subjects in either direction (canonical
+diff). `test_corpus.py` passed (11), and the compile's `DocumentReport` reads `score=0.9021428571428571`.
+
+**R265 is closed** on its own condition: the witness is `False` (§ 2.5), the graphs were diffed (§ 2.4),
+and the sweep is green. Closing it returns [[R65]] to the parkable set (93 → 94, `tests/test_residue_graph.py`).
+Part 5 item 2 (R292, proposed) stands as the next subject. #303 can leave draft once CI's `test` is green.
