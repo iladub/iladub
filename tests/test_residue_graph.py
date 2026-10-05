@@ -188,4 +188,10 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # by no criterion, and cite no other row, so each enters on arrival; R283 cites the open
     # [[R47]] and stays out. Controlled: the set computed over HEAD's register files is 91, over
     # the staged ones 93.
-    assert len(expected) == 93
+    # RE-MEASURED 2026-10-05 (R289 typing-not-scope, PR #302): 93 -> 92, ADDED = [], REMOVED =
+    # [242]. R289's row now cites [[R242]], whose fused footnote markers are the dirty cells of the
+    # one bfs fragment the R289 candidate rule still regresses, so R242 gains its first open
+    # neighbour and leaves the set. That link is the point: R242 may block R289's spec. R265 was
+    # already out (it cites R65). Controlled: the set computed over main's register files is 93,
+    # over the branch's 92.
+    assert len(expected) == 92

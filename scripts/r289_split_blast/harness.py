@@ -16,7 +16,10 @@ One document per process, documents strictly one at a time (corpus compiles are 
 import hashlib
 import json
 import os
+import re
 import sys
+
+import rdflib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -33,6 +36,23 @@ SHIPPED_RQ = os.path.join(REPO, "vocab", "queries", "header-body-split.rq")
 PERCOL = os.path.join(HERE, "header-body-split-percol.rq")
 DATACOLS = os.path.join(HERE, "header-body-split-datacols.rq")
 CELLS = os.path.join(HERE, "cells.rq")
+
+DIRTY = os.environ.get("R289_DIRTY", "any")
+TEXT = rdflib.URIRef("https://w3id.org/iladub/tab#Text")
+DIRTY_CELLS = []
+# COUNTERFACTUAL ONLY (never shipped): R265's remedy approximated as a text normalisation applied
+# before typing — a sign written apart from its digits is closed up, and a digit group separator
+# (space, NBSP, narrow NBSP) between 3-digit groups is removed, U+2212 read as '-'. Computes
+# OLD' (shipped .rq) and NEW' (candidate rule) on the retyped grid beside OLD/NEW.
+_SPACED_SIGN = re.compile(r"^([-\u2212])\s+(?=\d)")
+_GROUPED = re.compile(r"^-?\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?$")
+
+
+def r265(t):
+    u = _SPACED_SIGN.sub(r"\1", t.strip()).replace("\u2212", "-")
+    if _GROUPED.match(u):
+        return re.sub(r"[ \u00a0\u202f]", "", u)
+    return u if u != t.strip() and re.fullmatch(r"-\d+(?:[.,]\d+)?", u) else t
 
 DOC = sys.argv[1]
 OUT = open(sys.argv[2], "w")
@@ -55,7 +75,12 @@ def new_split(g):
     dirty = set()
     for row, col, ct in cells:
         if col in dsets and ct not in dsets[col]:
+            # R289_DIRTY=text narrows "dirty" to a tab:Text cell in a non-Text data column
+            # (2026-10-05 scoping handoff part 5 action 1); the default is the § 2.4 rule.
+            if DIRTY == "text" and ct != TEXT:
+                continue
             dirty.add(row)
+            DIRTY_CELLS.append((row, col, str(ct).rsplit("#", 1)[-1]))
     cands = sorted({s for _, _, s, _ in percol})
     old_mirror = cands[0] if cands else None
     new = next((s for s in cands if s not in dirty), None)
@@ -64,7 +89,8 @@ def new_split(g):
 
 def wrapper(band, grid):
     old = REAL(band, grid)
-    g = celltype.grid_evidence(headers._grid_cells(band, grid), grid.ncols, unshown=band.unshown)
+    gcells = headers._grid_cells(band, grid)
+    g = celltype.grid_evidence(gcells, grid.ncols, unshown=band.unshown)
     old_rq = celltype.run_scalar(SHIPPED_RQ, g)
     rec = {"doc": DOC, "old_final": old, "old_rq": old_rq}
     pages = sorted({w.page for ln in band.lines for w in ln.words})
@@ -73,10 +99,23 @@ def wrapper(band, grid):
     rec["nlines"] = len(texts)
     rec["band_key"] = hashlib.sha1(("|".join(texts) + repr(pages)).encode()).hexdigest()[:12]
     if old_rq is not None:
+        DIRTY_CELLS.clear()
         om, new, cands, dirty, percol = new_split(g)
+        rec["dirty_mode"] = DIRTY
+        ctext = {(r, c): t for r, c, t in gcells}
+        rec["dirty_cells"] = [(r, c, ct, ctext.get((r, c))) for r, c, ct in DIRTY_CELLS]
         rec.update(old_mirror=om, new=new, cands=cands, dirty=dirty,
                    percol=[(c, str(d).rsplit("#", 1)[-1], s, mr) for c, d, s, mr in percol])
         rec["lines"] = texts
+        g2 = celltype.grid_evidence([(r, c, r265(t)) for r, c, t in gcells], grid.ncols,
+                                    unshown=band.unshown)
+        rec["old_r265"] = celltype.run_scalar(SHIPPED_RQ, g2)
+        if rec["old_r265"] is not None:
+            DIRTY_CELLS.clear()
+            rec["new_r265"] = new_split(g2)[1]
+            rec["dirty_cells_r265"] = [(r, c, ct, ctext.get((r, c))) for r, c, ct in DIRTY_CELLS]
+        else:
+            rec["new_r265"] = None
     OUT.write(json.dumps(rec) + "\n")
     OUT.flush()
     return old
