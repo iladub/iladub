@@ -434,7 +434,9 @@ def _header_lines_decision(region, pdf_path: str, page_number: int,
          no claim: nothing is recorded and today's positional header stands.
       3. An answer is recorded as ONE `header_lines` decision, `no_boxhead` for `0` and `boxhead`
          otherwise, before the caller emits, because `absent_by` is that decision. An answer
-         above 1 adds no header level (§ 10.6): the emission gets 1.
+         above 1 is returned as it is, and the caller ESCALATES the region: the record path
+         carries one header level, so asserting lines 2..k as entries would assert what this
+         reader called header (revises § 10.6; `2026-10-05-r293-p6-adopts.md` § 2.4).
 
     Every module is looked up at call time, so a test's patch reaches it (the `_donation.offer`
     late binding). No `evidence=` is passed: the decision points at no table or cell, so
@@ -454,13 +456,14 @@ def _header_lines_decision(region, pdf_path: str, page_number: int,
         return 1, None
     k = reading.header_lines
     chosen = "no_boxhead" if k == 0 else "boxhead"
-    beyond = " (an answer above 1 adds no header level, spec § 10.6)" if k > 1 else ""
+    beyond = (" (more header lines than the record path carries: the region is escalated)"
+              if k > 1 else "")
     d = brec.record(
         "header_lines", ["boxhead", "no_boxhead"], chosen,
         f"the reader counted {k} leading header line(s) of {len(region.band.lines)}{beyond}; "
         f"its note: {reading.note}; row-zero-differs.rq found no witness that row 0 differs from "
         f"the body of its column (one-way: that silence refutes nothing)")
-    return (0, d) if k == 0 else (1, None)
+    return (0, d) if k == 0 else (k, None)
 
 
 def page_bands(pdf_path: str, page_number: int = 0,
@@ -1563,6 +1566,30 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                             region, pdf_path, page_number, brec)
                     else:
                         header_lines, absent_by = 1, None
+                    # A BOXHEAD DEEPER THAN THE RECORD PATH CARRIES (R293). The reader counted k > 1
+                    # header lines and `assert_record_region` takes 0 or 1, so emitting would
+                    # assert lines 2..k as entries — measured on bfs p6 `#table2`: `Cantons`,
+                    # `dépendance`, `des jeunes 1` … asserted as `tab:EntryCell`s. The region is
+                    # proposed instead, exactly as a tiling failure is, and a reader that can carry
+                    # the boxhead (the page's data grid, via adoption) is left free to supersede it.
+                    # Gate classification (CLAUDE.md §8): PROCEDURAL, the ask gate's other arm. It
+                    # applies the reader's recorded answer and compares it to the path's one header
+                    # level; no constant, no geometry.
+                    if header_lines > 1:
+                        cand_uri = URIRef(f"{doc}#region{idx}")
+                        escalate_region(graph, cand_uri, doc, ascii_view,
+                                        "BOXHEAD_EXCEEDS_RECORD", TAB.RecordTable, 0.4,
+                                        page_number)
+                        if getattr(band, "unit_markers", ()):
+                            _emit_unit_markers(graph, cand_uri, band, None)
+                            escalated_total += _marker_word_count(band)
+                        escalated_total += sum(len(ln.words) for ln in band.lines)
+                        brec.record("verdict", ["asserted", "escalated", "ignored"],
+                                    "escalated", "BOXHEAD_EXCEEDS_RECORD")
+                        reports.append(RegionReport(region.kind, "escalated", 0,
+                                                    "BOXHEAD_EXCEEDS_RECORD",
+                                                    str(TAB.RecordTable), ascii_view))
+                        continue
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
                     n = assert_record_region(scratch, region, table_uri, doc, page_number,
