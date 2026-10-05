@@ -14,7 +14,7 @@ import pytest
 
 from iladub.etkl.bands import Band
 from iladub.etkl.geometry import Line, Word
-from iladub.etkl.trailing import trailing_refused
+from iladub.etkl.trailing import trailing_refused, trailing_refused_in_grids
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BFS = os.path.join(ROOT, "corpus", "gov-stats", "bfs-population-bilan-2023.pdf")
@@ -67,6 +67,31 @@ def test_a_line_whose_ink_matches_two_page_lines_ends_the_walk():
     keys = KEYS + ["1note"]
     assert trailing_refused(_band("row1", "row2", "Source: X", "1 note"), keys,
                             _grid(rows=(0, 1), refused=(2, 3, 4))) == 0
+
+
+def test_the_notes_are_cut_under_the_grid_whose_row_they_trail_r291():
+    """bfs p5 under R265: the page reads two grids, and the seed winner (the canton table) is not
+    the table these notes trail. The year table admits the rows; the canton grid had them refused
+    until `derive_data_grids` struck lines another grid admitted. Read under the first grid alone,
+    the band is never cut, and the ruled rebuild fuses `2020` into `8 606 033` (R291)."""
+    band = _band("row1", "row2", "Source: X", "1 note")
+    cantons = _grid(rows=(), refused=(2, 3))
+    years = _grid(rows=(0, 1), refused=(2, 3))
+    assert trailing_refused(band, KEYS, cantons) == 0
+    assert trailing_refused_in_grids(band, KEYS, (cantons, years)) == 2
+    assert trailing_refused_in_grids(band, KEYS, (years,)) == trailing_refused(band, KEYS, years)
+    assert trailing_refused_in_grids(band, KEYS, ()) == 0
+
+
+@needs_corpus
+def test_bfs_p5_year_rows_are_cut_from_their_notes_r291():
+    """The R291 witness: no ruled band on bfs p5 carries a year fused to the next number."""
+    from iladub.etkl.bands import band_text
+    from iladub.etkl.compile import page_bands
+    texts = [band_text(b) for b in page_bands(BFS, 5)]
+    assert not any(t in x.split() for x in texts for t in ("20208", "20218", "20228", "20238"))
+    years = [x for x in texts if x.startswith("2020 ")]
+    assert len(years) == 1 and "Sources:" not in years[0]
 
 
 @needs_corpus

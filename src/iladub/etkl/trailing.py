@@ -68,28 +68,43 @@ def trailing_refused(band: Band, page_keys: Sequence[str], grid) -> int:
     return t
 
 
+def trailing_refused_in_grids(band: Band, page_keys: Sequence[str], grids) -> int:
+    """`trailing_refused` under the page's grids (R291): the cut the grid whose row the notes
+    trail supports, or 0.
+
+    A page can hold more than one grid (R290), and the seed winner need not be the table a
+    band's notes trail. bfs p5 under R265 is the measured case: the canton grid outbids the year
+    grid, admits none of the year rows, and the year band's `Sources:` lines were never cut. The
+    ruled rebuild then read rows and notes as one band, and `2020` fused into `8 606 033`.
+
+    At most one grid fires. The line above the cut must be a row of the firing grid, and
+    `derive_data_grids` strikes a line another grid admitted from every other grid's refusals,
+    which ends that grid's walk at the same line. With one grid this is `trailing_refused`."""
+    return max((trailing_refused(band, page_keys, g) for g in grids), default=0)
+
+
 def cut_trailing_notes(subs: Sequence[Band], pdf_path: str, page_number: int) -> list[Band]:
     """`subs` with every band `trailing_refused` fires on replaced by two: its rows, then its
     notes. The notes keep a band of their own, so their ink is classified and booked exactly as
     any other band's is — nothing is dropped.
 
     LAZY: the datagrid is derived only when some band has a second line to cut."""
-    from .datagrid import derive_data_grid
+    from .datagrid import derive_data_grids
     from .donation import _ink_key
     from .geometry import extract_words, text_lines
     from .segment import _band_from_lines
 
     if not any(len(b.lines) >= 2 for b in subs):
         return list(subs)
-    grid = derive_data_grid(pdf_path, page_number)
-    if grid is None:
+    grids = derive_data_grids(pdf_path, page_number)
+    if not grids:
         return list(subs)
-    # EXACTLY `derive_data_grid`'s own line list: its verdicts are keyed by position in it.
+    # EXACTLY `derive_data_grid`'s own line list: every grid's verdicts are keyed by position in it.
     keys = [_ink_key(l) for l in sorted(text_lines(extract_words(pdf_path, page_number)),
                                         key=lambda l: l.top) if l.words]
     out: list[Band] = []
     for b in subs:
-        t = trailing_refused(b, keys, grid)
+        t = trailing_refused_in_grids(b, keys, grids)
         if t == 0:
             out.append(b)
             continue
