@@ -86,7 +86,11 @@ P5_CELLS_WHEN_CARRIED = 496
 #: R291 fix cuts the year table's notes into a band of their own. The whole delta is under
 #: `p5/adopt#…` subjects (canonical N-Triples diff against `4379fbe`, evidence
 #: 2026-10-05-r291-trailing-cut-evidence.md § 2.4).
-DOC_TRIPLES_WHEN_CARRIED = 16940
+#: 16940 -> 17076 on 2026-10-05, measured by a run: the canton grid's recorded boxhead. +153 / -17,
+#: every subject on p5: `#p5-datagrid-h0..h9` and `-lc0..lc9` (40 + 40), their boxes and the grid's
+#: own links; out go `p5#region8` (REGION_TILING_FAILED, now the grid's header lines) and its
+#: decision. P5_CELLS is unchanged at 496 (evidence 2026-10-05-bfs-canton-boxhead.md § 2).
+DOC_TRIPLES_WHEN_CARRIED = 17076
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
