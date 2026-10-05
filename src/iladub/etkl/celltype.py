@@ -29,6 +29,14 @@ _CURRENCY = re.compile(r"^-?[$€£¥]\s?-?[\d,]+(\.\d+)?$|^-?[\d,]+(\.\d+)?\s?[
 # ("(,,,)") no longer matches — was `[\d,]+`. _CURRENCY keeps the wider (pre-existing)
 # form; see docs/superpowers/residues.md for that residue.
 _PAREN_NUMBER = re.compile(r"^\(\s*-?\d[\d,]*(\.\d+)?\s*\)$")
+# R265: the SI/ISO 31-0 number format — 3-digit groups set apart by a space, NBSP or narrow NBSP
+# ("8 606 033"), a sign that may be set apart from its digits ("- 939"), and U+2212 MINUS SIGN.
+# The group width is the convention's, not a tolerance: a 4-digit leading group or a short
+# trailing group ("2010 2", R242's fused footnote marker) is not this format and stays Text.
+_GROUPED_NUMBER = re.compile(
+    r"^[-\u2212]?[ \u00a0\u202f]?\d{1,3}(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?$"
+    r"|^[-\u2212][ \u00a0\u202f]?\d+(?:[.,]\d+)?$"
+)
 
 
 def is_date(s):
@@ -53,6 +61,16 @@ def is_date(s):
 def is_currency(s):
     """A recognized currency symbol ($ € £ ¥) adjacent to a numeric body. PROCEDURAL raw typing."""
     return bool(_CURRENCY.match(s.strip()))
+
+
+def is_grouped_number(s):
+    """A number in the SI/ISO 31-0 grouping, or with a sign set apart from its digits or written
+    as U+2212 (R265). PROCEDURAL raw typing — a format grammar like is_date/is_currency, with no
+    context and no tuned constant. Deliberately NOT folded into `headers.is_numeric`: that is the
+    one parser `rows._numeric_token_sum` sums with, token by token, and a widened gate there would
+    read '3 465' as 3 + 465. This only types the cell; it asserts no value."""
+    t = s.strip()
+    return bool(_GROUPED_NUMBER.match(t)) and not is_numeric(t)
 
 
 def is_paren_number(s):
@@ -87,7 +105,7 @@ def _cell_datatype(t):
     types, else Text."""
     if is_blank(t):
         return TAB.Blank
-    if is_numeric(t):
+    if is_numeric(t) or is_grouped_number(t):
         return TAB.Numeric
     if is_paren_number(t):
         return TAB.ParenthesizedNumber
