@@ -1,0 +1,89 @@
+## cbh: score=1.0 calls=37 axiom_calls=34 distinct_axiom_bands=9 OLD!=NEW calls=28 trigger_bands=8 mirror_mismatch=0 final!=rq=3 new_None=0
+   callers: {'iladub.etkl.compile._build_ruled_band': 3, 'iladub.etkl.document.leaf_block': 6, 'iladub.etkl.matrix.is_matrix_candidate': 8, 'iladub.etkl.rowheaders.stub_data_split': 12, 'iladub.etkl.hierarchical.classify_hierarchical': 8}
+   TRIGGER 4d0cfbb8e0aa pages(word)=[0] page_number/encl=[(0, 'compile_document'), (0, 'compile_tables')] nlines=18 OLD=7 NEW=8 ncalls=4
+      callers=['document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10097 HAI PHUONG STAR 15:01 15/06/2026 15:20 15/06/2026 Brahman 12:18 15/07/2026 12:35 30/07/2026 19:00 31/07/2026 30,000 10.00 Wheat Completed 31/07/2026 16:45'
+      dirty@OLD=[[7, 5, 'Text', 'Accepted'], [7, 18, 'Text', 'Completed']]
+   TRIGGER a7a8512c93e7 pages(word)=[0] page_number/encl=[(0, 'compile_document'), (0, 'compile_tables')] nlines=21 OLD=4 NEW=5 ncalls=4
+      callers=['document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10167 YM COURAGE 10:59 06/07/2026 11:31 06/07/2026 Bunge Australia 18:30 30/07/2026 07:30 31/07/2026 22:00 31/07/2026 21,511 10.00 ex ALBANY Canola Completed 31/07/2026 20:00'
+      dirty@OLD=[[4, 5, 'Text', 'Accepted'], [4, 18, 'Text', 'Completed']]
+   TRIGGER 1d17e5619654 pages(word)=[0] page_number/encl=[(0, 'compile_document'), (0, 'compile_tables')] nlines=20 OLD=5 NEW=6 ncalls=4
+      callers=['document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10152 INCE TOKYO 11:51 30/06/2026 13:57 30/06/2026 Bunge Australia 14:20 20/07/2026 07:30 07/08/2026 23:30 10/08/2026 47,363 10.00 Wheat'
+      dirty@OLD=[[5, 5, 'Text', 'Accepted']]
+   TRIGGER 6a1d74210485 pages(word)=[0] page_number/encl=[(0, 'compile_document'), (0, 'compile_tables')] nlines=10 OLD=4 NEW=5 ncalls=4
+      callers=['document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10187 SASEBO ACE 13:34 08/07/2026 15:40 08/07/2026 CBH Grain 15:00 16/08/2026 07:30 17/08/2026 23:30 19/08/2026 54,000 10.00 Barley'
+      dirty@OLD=[[4, 5, 'Text', 'Accepted']]
+   TRIGGER e474e0be9dc7 pages(word)=[0] page_number/encl=[(0, 'compile_tables')] nlines=13 OLD=2 NEW=3 ncalls=3
+      callers=['hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10097 HAI PHUONG STAR 15:01 15/06/2026 15:20 15/06/2026 Brahman 12:18 15/07/2026 12:35 30/07/2026 19:00 31/07/2026 30,000 10.00 Wheat Completed 31/07/2026 16:45'
+      dirty@OLD=[[2, 5, 'Text', 'Accepted'], [2, 18, 'Text', 'Completed']]
+   TRIGGER 7a177c2dd96d pages(word)=[0] page_number/encl=[(0, 'compile_tables')] nlines=19 OLD=2 NEW=3 ncalls=3
+      callers=['hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10167 YM COURAGE 10:59 06/07/2026 11:31 06/07/2026 Bunge Australia 18:30 30/07/2026 07:30 31/07/2026 22:00 31/07/2026 21,511 10.00 ex ALBANY Canola Completed 31/07/2026 20:00'
+      dirty@OLD=[[2, 5, 'Text', 'Accepted'], [2, 18, 'Text', 'Completed']]
+   TRIGGER d78b2d09990c pages(word)=[0] page_number/encl=[(0, 'compile_tables')] nlines=17 OLD=2 NEW=3 ncalls=3
+      callers=['hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10152 INCE TOKYO 11:51 30/06/2026 13:57 30/06/2026 Bunge Australia 14:20 20/07/2026 07:30 07/08/2026 23:30 10/08/2026 47,363 10.00 Wheat'
+      dirty@OLD=[[2, 5, 'Text', 'Accepted']]
+   TRIGGER 15238084bcfa pages(word)=[0] page_number/encl=[(0, 'compile_tables')] nlines=8 OLD=2 NEW=3 ncalls=3
+      callers=['hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='Accepted Accepted Completed Completed'
+      L[NEW]='10187 SASEBO ACE 13:34 08/07/2026 15:40 08/07/2026 CBH Grain 15:00 16/08/2026 07:30 17/08/2026 23:30 19/08/2026 54,000 10.00 Barley'
+      dirty@OLD=[[2, 5, 'Text', 'Accepted']]
+## gstem: score=0.9995511669658886 calls=22 axiom_calls=22 distinct_axiom_bands=7 OLD!=NEW calls=0 trigger_bands=0 mirror_mismatch=0 final!=rq=0 new_None=0
+   callers: {'iladub.etkl.compile._build_ruled_band': 6, 'iladub.etkl.matrix.is_matrix_candidate': 5, 'iladub.etkl.rowheaders.stub_data_split': 5, 'iladub.etkl.document.leaf_block': 3, 'iladub.etkl.hierarchical.classify_hierarchical': 3}
+## gcap: score=1.0 calls=7 axiom_calls=6 distinct_axiom_bands=2 OLD!=NEW calls=0 trigger_bands=0 mirror_mismatch=0 final!=rq=0 new_None=0
+   callers: {'iladub.etkl.matrix.is_matrix_candidate': 2, 'iladub.etkl.rowheaders.stub_data_split': 3, 'iladub.etkl.document.leaf_block': 2}
+## ons: score=0.8684895833333334 calls=161 axiom_calls=105 distinct_axiom_bands=14 OLD!=NEW calls=40 trigger_bands=4 mirror_mismatch=0 final!=rq=0 new_None=0
+   callers: {'iladub.etkl.compile._build_ruled_band': 63, 'iladub.etkl.matrix.is_matrix_candidate': 23, 'iladub.etkl.rowheaders.stub_data_split': 26, 'iladub.etkl.matrix.classify_matrix': 3, 'iladub.etkl.document.leaf_block': 21, 'iladub.etkl.hierarchical.classify_hierarchical': 21, 'iladub.etkl.rowheaders.looks_row_grouped': 4}
+   TRIGGER 32db6e618358 pages(word)=[7] page_number/encl=[(7, 'compile_document'), (7, 'compile_tables'), (7, 'page_bands')] nlines=7 OLD=1 NEW=2 ncalls=10
+      callers=['compile._build_ruled_band:242', 'document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='S222 S243 KI77 KI7G KI7O'
+      L[NEW]='2021 9.8 12.8 8.9 5.8 14.7'
+      dirty@OLD=[[1, 1, 'Text', 'S222'], [1, 2, 'Text', 'S243'], [1, 3, 'Text', 'KI77'], [1, 4, 'Text', 'KI7G'], [1, 5, 'Text', 'KI7O']]
+   TRIGGER 2dae894ad9d7 pages(word)=[7] page_number/encl=[(7, 'compile_document'), (7, 'compile_tables'), (7, 'page_bands')] nlines=17 OLD=1 NEW=2 ncalls=10
+      callers=['compile._build_ruled_band:242', 'document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='S26Q S28R KI7A KI7I KI7Q'
+      L[NEW]='2024 Dec 2.7 2.1 5.3 1.9 3.3'
+      dirty@OLD=[[1, 2, 'Text', 'S26Q'], [1, 3, 'Text', 'S28R'], [1, 4, 'Text', 'KI7A'], [1, 5, 'Text', 'KI7I'], [1, 6, 'Text', 'KI7Q']]
+   TRIGGER 66dbd785a266 pages(word)=[8] page_number/encl=[(8, 'compile_document'), (8, 'compile_tables'), (8, 'page_bands')] nlines=17 OLD=1 NEW=2 ncalls=10
+      callers=['compile._build_ruled_band:242', 'document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='S222 S243 KI77 KI7G KI7O'
+      L[NEW]='2024 Dec 0.5 0.7 0.3 0.6 0.1'
+      dirty@OLD=[[1, 2, 'Text', 'S222'], [1, 3, 'Text', 'S243'], [1, 4, 'Text', 'KI77'], [1, 5, 'Text', 'KI7G'], [1, 6, 'Text', 'KI7O']]
+   TRIGGER 03498b04f663 pages(word)=[8] page_number/encl=[(8, 'compile_document'), (8, 'compile_tables'), (8, 'page_bands')] nlines=17 OLD=1 NEW=2 ncalls=10
+      callers=['compile._build_ruled_band:242', 'document.leaf_block:328', 'hierarchical.classify_hierarchical:38', 'matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='S2G6 S2I7 KI7C KI7J KI7R'
+      L[NEW]='2024 Dec 2.2 0.3 5.7 2 2.3'
+      dirty@OLD=[[1, 2, 'Text', 'S2G6'], [1, 3, 'Text', 'S2I7'], [1, 4, 'Text', 'KI7C'], [1, 5, 'Text', 'KI7J'], [1, 6, 'Text', 'KI7R']]
+## bfs: score=0.9021428571428571 calls=163 axiom_calls=114 distinct_axiom_bands=25 OLD!=NEW calls=14 trigger_bands=3 mirror_mismatch=0 final!=rq=20 new_None=0
+   callers: {'iladub.etkl.hierarchical.classify_hierarchical': 22, 'iladub.etkl.compile._build_ruled_band': 42, 'iladub.etkl.matrix.is_matrix_candidate': 23, 'iladub.etkl.rowheaders.stub_data_split': 47, 'iladub.etkl.document.leaf_block': 17, 'iladub.etkl.rowheaders.looks_row_grouped': 12}
+   TRIGGER eb6668518cbf pages(word)=[5] page_number/encl=[(5, 'compile_tables'), (5, 'page_bands')] nlines=11 OLD=1 NEW=2 ncalls=3
+      callers=['compile._build_ruled_band:242']
+      L[OLD]='2011 3 7 870 134 80 808 62 091 18 717 164 612 96 494 68 118 - 2 307 7 954 662 84 528 1.07'
+      L[NEW]='2012 7 954 662 82 164 64 173 17 991 175 008 103 881 71 127 - 4 720 8 039 060 84 398 1.06'
+      dirty@OLD=[[1, 0, 'Text', '2011 3']]
+   TRIGGER ee5a083ef386 pages(word)=[0, 5] page_number/encl=[(5, 'compile_tables'), (5, 'page_bands')] nlines=4 OLD=2 NEW=3 ncalls=6
+      callers=['matrix.is_matrix_candidate:154', 'rowheaders.stub_data_split:30']
+      L[OLD]='au 1er janvier vivantes naturel international 1 intercantonal 31 décembre absolus'
+      L[NEW]='Suisse 3 8 815 385 80 024 71 822 8 202 139 118 0 8 962 258 146 873 1.7'
+      dirty@OLD=[[2, 6, 'Text', 'intercantonal']]
+   TRIGGER bc099aefff2a pages(word)=[0] page_number/encl=[(5, 'compile_document'), (5, 'compile_tables')] nlines=11 OLD=1 NEW=2 ncalls=5
+      callers=['document.leaf_block:328', 'rowheaders.looks_row_grouped:62', 'rowheaders.stub_data_split:30']
+      L[OLD]='2011 3 7 870 134 80 808 62 091 18 717 164 612 96 494 68 118 - 2 307 7 954 662 84 528 1.07'
+      L[NEW]='2012 7 954 662 82 164 64 173 17 991 175 008 103 881 71 127 - 4 720 8 039 060 84 398 1.06'
+      dirty@OLD=[[1, 0, 'Text', '2011 3']]
+## apple: score=0.9418604651162791 calls=97 axiom_calls=97 distinct_axiom_bands=18 OLD!=NEW calls=0 trigger_bands=0 mirror_mismatch=0 final!=rq=0 new_None=0
+   callers: {'iladub.etkl.compile._build_ruled_band': 24, 'iladub.etkl.matrix.is_matrix_candidate': 19, 'iladub.etkl.rowheaders.stub_data_split': 29, 'iladub.etkl.matrix.classify_matrix': 8, 'iladub.etkl.document.leaf_block': 7, 'iladub.etkl.hierarchical.classify_hierarchical': 8, 'iladub.etkl.rowheaders.looks_row_grouped': 2}
+## who: score=0.9962779156327544 calls=40 axiom_calls=40 distinct_axiom_bands=10 OLD!=NEW calls=0 trigger_bands=0 mirror_mismatch=0 final!=rq=0 new_None=0
+   callers: {'iladub.etkl.compile._build_ruled_band': 6, 'iladub.etkl.document.leaf_block': 3, 'iladub.etkl.matrix.is_matrix_candidate': 8, 'iladub.etkl.rowheaders.stub_data_split': 13, 'iladub.etkl.matrix.classify_matrix': 3, 'iladub.etkl.hierarchical.classify_hierarchical': 5, 'iladub.etkl.rowheaders.looks_row_grouped': 2}
