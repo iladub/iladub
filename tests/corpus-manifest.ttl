@@ -305,6 +305,11 @@
     cor:reading [ a cor:Reading ; cor:value "0.9021428571428571"^^xsd:decimal ;
         cor:readAt "2026-09-19"^^xsd:date ;
         cor:recordedIn "docs/superpowers/2026-09-19-tessin-trailing-notes-evidence.md" ] .
+# RE-READ 2026-10-05 at 81a2ca6, score unchanged at 0.9021428571428571. The 09-19 reason above is
+# FIXED: #303 split p5 into a canton grid (270) and a year grid (226). STILL cor:Unadjudicated, for
+# THREE reasons: p6 asserts its boxhead's lines 2-4 as six entry cells and labels c7/c8 both
+# `Rapport de` (R293); p5's 2015 row leaves its two population figures unread (R294); p5's canton
+# grid carries no column labels. See docs/superpowers/2026-10-05-bfs-hold-reread.md.
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
