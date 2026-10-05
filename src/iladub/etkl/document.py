@@ -1922,25 +1922,33 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
         # it MASKED the real emitter. With both lines present, deleting `datagrid.py:725` broke
         # no test — measured. With only one, `test_the_admission_verdict_names_its_agent` fails
         # the moment the real emitter goes, which is the whole point of having the test.
-        admission = URIRef(f"{grid_uri}-admission")
-        graph.add((admission, DEC.regarding, grid_uri))
-        graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
-        graph.add((admission, RDFS.label, Literal("verdict")))
-        # THE RATIONALE STATES WHAT THE GATE NOW ASKS. It read "the page asserted nothing",
-        # which was the OLD precondition and is FALSE under D2 on every page this branch newly
-        # admits (apple p2 and bfs p5 both assert). A rationale is the decision's own account of
-        # itself and is read back by `effective-chain.rq`, so leaving the old sentence standing
-        # would have put a false claim in the graph that no diff of the code would surface.
-        graph.add((admission, DEC.rationale, Literal(
-            f"the data grid read {len(superseded)} of the page's bands and left strictly less "
-            f"ink unread than they did; its reading was adopted (spec 2026-08-09, R73; gate "
-            f"widened 2026-09-14, R225 D2)")))
-        # ATTACH TO THE READING THAT STANDS, never to the pass-1 verdict — see
-        # `_effective_verdict` for the ruling and for why the pass-1 lookup cannot find v2.
-        for idx in superseded:
-            v1 = _verdict_decision(graph, page_doc_uri(p), idx)
-            if v1 is not None:
-                graph.add((admission, DEC.supersedes, _effective_verdict(graph, v1)))
+        # ONE ADMISSION PER GRID (R290). A page can carry more than one grid, appended from
+        # `grid_idx` in derivation order. Each grid's admission supersedes the bands THAT grid
+        # re-read (`RegionReport.supersedes`), never every band the page lost.
+        for _gr in rep_a.regions[grid_idx:]:
+            if _gr.table_uri is None or (_gr.table_uri, RDF.type, TAB.DataGrid) \
+                    not in rep_a.graph:
+                continue
+            admission = URIRef(f"{_gr.table_uri}-admission")
+            graph.add((admission, DEC.regarding, _gr.table_uri))
+            graph.add((admission, DEC.order, Literal(0, datatype=XSD.integer)))
+            graph.add((admission, RDFS.label, Literal("verdict")))
+            # THE RATIONALE STATES WHAT THE GATE NOW ASKS. It read "the page asserted nothing",
+            # which was the OLD precondition and is FALSE under D2 on every page this branch
+            # newly admits (apple p2 and bfs p5 both assert). A rationale is the decision's own
+            # account of itself and is read back by `effective-chain.rq`, so leaving the old
+            # sentence standing would have put a false claim in the graph that no diff of the
+            # code would surface.
+            graph.add((admission, DEC.rationale, Literal(
+                f"the data grid read {len(_gr.supersedes)} of the page's bands and left "
+                f"strictly less ink unread than they did; its reading was adopted (spec "
+                f"2026-08-09, R73; gate widened 2026-09-14, R225 D2)")))
+            # ATTACH TO THE READING THAT STANDS, never to the pass-1 verdict — see
+            # `_effective_verdict` for the ruling and for why the pass-1 lookup cannot find v2.
+            for idx in _gr.supersedes:
+                v1 = _verdict_decision(graph, page_doc_uri(p), idx)
+                if v1 is not None:
+                    graph.add((admission, DEC.supersedes, _effective_verdict(graph, v1)))
         pages[p] = rep_a
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run

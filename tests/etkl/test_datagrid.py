@@ -1379,3 +1379,67 @@ def test_cbh_p0_admits_the_four_panel_totals_by_arithmetic():
     # the entry rows of table A that survive the switch: 49 transcribed, 45 admitted
     assert sorted(CBH_P0_DATA - admitted) == [26, 42, 63, 74]
     assert len(CBH_P0_DATA) == 49
+
+
+# --- R290: a page carries as many grids as it has tables ----------------------------
+
+def _two_table_page(tmp_path):
+    """Two tables on one page, each in its own column layout. Table A (top) is a 3-column
+    register, 6 rows x 3 runs = 18. Table B (below) is 4 rows of 5 quantities = 20, so B
+    wins the seed, which is the bfs p5 shape: the table that wins the seed is not the first
+    one on the page."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    path = str(tmp_path / "two-tables.pdf")
+    c = canvas.Canvas(path, pagesize=A4)
+    c.setFont("Helvetica", 10)
+    c.drawString(60, 790, "TABLE A")
+    # The stub labels are wider than table B's first column, so an A row straddles B's
+    # boundaries and cannot be absorbed into B's universe.
+    for i, (name, a, b) in enumerate([("North-western territory", "120", "130"),
+                                      ("South-eastern territory", "240", "250"),
+                                      ("East coast and islands", "360", "370"),
+                                      ("West central uplands", "480", "490"),
+                                      ("Centre and the capital", "510", "520"),
+                                      ("Coast and the far south", "610", "620")]):
+        y = 770 - i * 18
+        c.drawString(60, y, name)
+        c.drawString(260, y, a)
+        c.drawString(420, y, b)
+    c.drawString(60, 620, "TABLE B")
+    for i, year in enumerate(("2020", "2021", "2022", "2023")):
+        y = 600 - i * 18
+        c.drawString(60, y, year)
+        for k, v in enumerate((11 + i, 12 + i, 13 + i, 14 + i)):
+            c.drawString(130 + k * 70, y, f"{v}.5")
+    c.save()
+    return path
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_a_page_with_two_tables_yields_two_grids_r290(tmp_path):
+    """R290. `derive_data_grid` reads ONE rectangle; the page holds two. Before
+    `derive_data_grids` re-seeded over the lines no grid admitted, table A's six rows came
+    back `unplaceable` beside table B's grid, which is what lowered bfs p5 once R265
+    typed its numbers correctly."""
+    from iladub.etkl.datagrid import derive_data_grids
+
+    path = _two_table_page(tmp_path)
+    lines = sorted((l for l in text_lines(extract_words(path, 0)) if l.words),
+                   key=lambda l: l.top)
+    text = [" ".join(w.text for w in l.words) for l in lines]
+    a_rows = {i for i, t in enumerate(text) if t.split()[0].split("-")[0] in
+              ("North", "South", "East", "West", "Centre", "Coast")}
+    b_rows = {i for i, t in enumerate(text) if t.split()[0] in ("2020", "2021", "2022", "2023")}
+    assert len(a_rows) == 6 and len(b_rows) == 4
+
+    grids = derive_data_grids(path, 0)
+    assert [set(g.rows) for g in grids] == [b_rows, a_rows], (
+        f"expected B (seed winner) then A, got {[g.rows for g in grids]}")
+    assert [len(g.columns) for g in grids] == [5, 3]
+    # A row another grid admitted is not a refusal of this one.
+    assert not (set(grids[0].refusals) & a_rows)
+    assert not (set(grids[1].refusals) & b_rows)
+    # The single-grid API is unchanged: it still returns the seed winner alone.
+    assert set(derive_data_grid(path, 0).rows) == b_rows
