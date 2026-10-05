@@ -446,9 +446,12 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     assert n_bands == 13, f"the run 2..6 must still merge five bands into one: {n_bands}"
 
     # the grid region adoption appends, and the residue region for what it left unread
-    grid = [r for r in regions if r.table_uri and str(r.table_uri).endswith("p5-datagrid")]
+    # 1 -> 2 grid regions on 2026-10-05 (R290): the page reads the canton table and the year table
+    # as two grids, `#p5-datagrid` and `#p5-datagrid-2`.
+    grid = [r for r in regions if r.table_uri and "p5-datagrid" in str(r.table_uri)
+            and not str(r.table_uri).endswith("-residue")]
     residue = [r for r in regions if r.reason == "DATAGRID_RESIDUE"]
-    assert len(grid) == 1, f"adoption appended no single grid region: {len(grid)}"
+    assert len(grid) == 2, f"adoption appended not one region per grid: {len(grid)}"
     # 1 -> 0 on 2026-09-19, and the decomposition below is what still holds. The forced run is
     # now 2..6 and its fifth band is T1's NOTES (see the sibling test): their full-width ink
     # closes every gutter of the merged band, so it classifies NON_TABLE / "fewer than 2 columns"
@@ -463,9 +466,13 @@ def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     # local run since; CI never saw it because the corpus is gitignored there and the test skips.
     # Found 2026-09-18 by sweeping the corpus-gated suite locally after the same blind spot let
     # two PRs merge with stale pins.
-    assert grid[0].cells == 496, grid[0].cells
+    # 496 -> 270 + 226 on 2026-10-05, measured by a run. R265 types `8 606 033` as Numeric, so the
+    # canton table wins the seed (270 cells) and R290 reads the year table as a second grid (226;
+    # the 2015 row leaves two columns empty). The page total is unchanged at 496, which is what
+    # tests/test_carriage.py's P5_CELLS_WHEN_CARRIED sums.
+    assert [r.cells for r in grid] == [270, 226], [r.cells for r in grid]
     assert all(r.tokens_escalated > 0 for r in residue), "a residue region that books no unread ink"
 
     # ...and nothing else appeared: every remaining region is one of the merged page's bands
-    assert len(regions) == n_bands + 1 + len(residue), (
-        f"{len(regions)} regions for {n_bands} bands + grid + {len(residue)} residue")
+    assert len(regions) == n_bands + len(grid) + len(residue), (
+        f"{len(regions)} regions for {n_bands} bands + {len(grid)} grids + {len(residue)} residue")

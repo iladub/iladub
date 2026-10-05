@@ -383,6 +383,25 @@ def test_cell_datatype_detectors():
     assert not is_numeric("$10") and not is_numeric("2024-01-15")
 
 
+def test_grouped_number_types_numeric_r265():
+    """R265: the SI/ISO 31-0 digit-group separator (space, NBSP, narrow NBSP between 3-digit
+    groups), a sign set apart from its digits, and U+2212 MINUS SIGN are number formats, so the
+    cell is tab:Numeric — measured on bfs p5 (`3 465`, `- 939`, `- 1 651`, `8 606 033`)."""
+    from iladub.etkl.celltype import _cell_datatype
+    TAB = __import__("rdflib").Namespace("https://w3id.org/iladub/tab#")
+    for s in ["3 465", "8 606 033", "- 939", "- 3 178", "- 1 651", "−939", "− 1 651",
+              "1 168", "1 168", "12 345,5", "12 345.5"]:
+        assert _cell_datatype(s) == TAB.Numeric, s
+    # NOT grouped numbers: a footnote marker fused onto a year (R242), a 4-digit leading group,
+    # a group that is not 3 digits, a bare sign, two signs, words.
+    for s in ["2010 2", "2011 3", "1234 567", "1 23", "12 3456", "-", "- -939", "en %", "1 168 x"]:
+        assert _cell_datatype(s) != TAB.Numeric, s
+    # the one parser that SUMS values is untouched: `is_numeric` still refuses the grouped form,
+    # so `rows._numeric_token_sum` never reads '3 465' as 3 + 465 through a widened gate.
+    from iladub.etkl.headers import is_numeric
+    assert not is_numeric("3 465") and not is_numeric("- 939")
+
+
 def test_grid_evidence_types_date_and_currency():
     from iladub.etkl import celltype
     from rdflib import RDF

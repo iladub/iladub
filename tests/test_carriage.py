@@ -81,7 +81,12 @@ P5_CELLS_WHEN_CARRIED = 496
 #: and p6 `#region2-d4` (`boxhead`). Measured by a probe counting every `header_lines`
 #: decision's own and its options' triples: 3 decisions, 42 triples, 16736 + 42 = 16778
 #: (evidence 2026-09-28-box-split § 4.5, § 4.6, § 5). P5_CELLS is unchanged at 496.
-DOC_TRIPLES_WHEN_CARRIED = 16778
+#: 16778 -> 16940 on 2026-10-05, measured by a run: R265 + R290 + R291. p5 reads two grids
+#: (`#p5-datagrid`, 270 cells, and `#p5-datagrid-2`, 226), so P5_CELLS still sums to 496. The
+#: R291 fix cuts the year table's notes into a band of their own. The whole delta is under
+#: `p5/adopt#…` subjects (canonical N-Triples diff against `4379fbe`, evidence
+#: 2026-10-05-r291-trailing-cut-evidence.md § 2.4).
+DOC_TRIPLES_WHEN_CARRIED = 16940
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the

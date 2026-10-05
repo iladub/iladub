@@ -777,6 +777,10 @@ class RegionReport:
     # (the page aggregates alone cannot be split back into per-band contributions).
     tokens_asserted: int = 0
     tokens_escalated: int = 0
+    # On an ADOPTED data-grid region only: the band indices THIS grid superseded. A page can
+    # carry more than one grid (R290), and the document driver must attach each superseded
+    # band to the grid that actually re-read its lines, not to whichever grid comes first.
+    supersedes: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1867,14 +1871,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # Found by the suite, not by reasoning: four escalation-path tests failed because a
     # second region appeared on a page they had pinned to exactly one.
     if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
-        from .datagrid import derive_data_grid, emit_data_grid
-        _grid = derive_data_grid(pdf_path, page_number)
-        if _grid is not None and _grid.rows:
-            _lines = [ln for ln in text_lines(extract_words(pdf_path, page_number))
-                      if ln.words]
-            _lines.sort(key=lambda ln: ln.top)
+        from .datagrid import derive_data_grids, emit_data_grid
+        _lines = [ln for ln in text_lines(extract_words(pdf_path, page_number))
+                  if ln.words]
+        _lines.sort(key=lambda ln: ln.top)
+        # Every grid on the page (R290), each its own region; numbered as adoption numbers them.
+        for _k, _grid in enumerate(derive_data_grids(pdf_path, page_number), start=1):
             _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
-            _grid_uri = emit_data_grid(graph, _grid, _lines, doc, page_number)
+            _grid_uri = emit_data_grid(graph, _grid, _lines, doc, page_number,
+                                       URIRef(f"{doc}#p{page_number}-datagrid-{_k}")
+                                       if _k > 1 else None)
             _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before
             _tokens = sum(len(_lines[i].words) for i in _grid.rows)
             # CLOSE THE LAST BAND'S SLOT BEFORE this region's ink is added (R224 D2). The ledger
@@ -1966,9 +1972,9 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # better reader, and refusing on equality keeps adoption from churning a page for nothing.
     if datagrid_adopt and escalated_total > 0:
         from .adoption import build_ledger
-        from .datagrid import derive_data_grid as _dg, emit_data_grid as _emit
-        _grid = _dg(pdf_path, page_number)
-        if _grid is not None and _grid.rows:
+        from .datagrid import derive_data_grids as _dgs, emit_data_grid as _emit
+        _grids = _dgs(pdf_path, page_number)
+        if _grids:
             _lines = sorted([ln for ln in text_lines(extract_words(pdf_path, page_number))
                              if ln.words], key=lambda ln: ln.top)
             # THE GRID'S BOXHEAD (2026-09-18). `datagrid.py` derives entries and no header, so an
@@ -1980,12 +1986,22 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # below books it exactly as it books a data row: its band is touched, its ink is
             # asserted, anything unread beside it stays residue. With no recording and no live
             # reader `_hdr` is empty and this is the identity.
+            #
+            # EVERY GRID ON THE PAGE (R290). Each grid reads its own boxhead and carries its own
+            # header lines; the ledger books their union, so a line is counted once whichever
+            # grid read it. Each grid's OWN ledger names the bands that grid touched, which is
+            # what the document driver attributes supersession by.
             from .boxhead import (carried_lines, default_reader, emit_boxhead, header_block,
                                   read_grid_boxhead)
-            _block = header_block(_lines, _grid)
-            _boxhead = read_grid_boxhead(pdf_path, page_number, _lines, _grid, default_reader())
-            _hdr = carried_lines(_lines, _block, _boxhead)
-            _led = build_ledger(_lines, tuple(_grid.rows) + _hdr, bands, reports)
+            _reader = default_reader()
+            _read = []                                   # (grid, block, boxhead, read lines)
+            for _grid in _grids:
+                _block = header_block(_lines, _grid)
+                _boxhead = read_grid_boxhead(pdf_path, page_number, _lines, _grid, _reader)
+                _read.append((_grid, _block, _boxhead,
+                              tuple(_grid.rows) + carried_lines(_lines, _block, _boxhead)))
+            _led = build_ledger(_lines, tuple(j for *_, rl in _read for j in rl),
+                                bands, reports)
         else:
             _led = None
         if _led is not None and _led.escalated_tokens < escalated_total:
@@ -2016,9 +2032,18 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # all 44 of them the grid's OWN residue candidate, which the rebuild does emit.
             # apple p1 likewise. Registered as residue R83.
             graph = Graph()                   # withdrawal: the page graph is rebuilt
-            _grid_uri = _emit(graph, _grid, _lines, doc, page_number)
-            emit_boxhead(graph, _grid_uri, _lines, _block, _boxhead, page_number)
-            _cells = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+            # The first grid keeps the URI a one-grid page has always had; a further grid is
+            # numbered from 2, so no single-grid page mints a different triple.
+            _emitted = []                                # (uri, cells, read lines)
+            for _k, (_grid, _block, _boxhead, _rl) in enumerate(_read, start=1):
+                _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
+                _grid_uri = _emit(graph, _grid, _lines, doc, page_number,
+                                  URIRef(f"{doc}#p{page_number}-datagrid-{_k}")
+                                  if _k > 1 else None)
+                emit_boxhead(graph, _grid_uri, _lines, _block, _boxhead, page_number)
+                _emitted.append((_grid_uri,
+                                 len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before,
+                                 _rl))
             # THE LEDGER IS LINE-GRANULAR (spec §5.3). Zeroing `escalated_total` would score
             # the page 1.0000 whatever the grid missed; withdrawing band-by-band would count
             # the read lines twice (0.594). Only the line is a unit both sides agree on.
@@ -2051,6 +2076,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # rebuild discards it here, and `document.py`'s §1g withdrawal removes it there. The
             # `reason` and the `kind` STAY: those are history, not quantities, and the same
             # distinction the ink half already draws.
+            reports_before_adoption = reports
             reports = [
                 _dc_replace(r, verdict="superseded", tokens_asserted=0, tokens_escalated=0,
                             cells=0, table_uri=None)
@@ -2063,11 +2089,22 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # the page total here would count every untouched band's asserted ink twice. Inert
             # until D2: before the gate widened, no band on an adopting page asserted anything,
             # so the second term was identically zero and the two quantities were the same number.
-            _admitted_tokens = sum(len(_lines[j].words) for j in _led.admitted)
-            reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
-                                        None, str(TAB.DataGrid), "",
-                                        table_uri=_grid_uri,
-                                        tokens_asserted=_admitted_tokens))
+            # With more than one grid, each region books the admitted lines IT read: the union
+            # partitions `_led.admitted`, because the grids' rows are disjoint by construction
+            # (`derive_data_grids`) and a carried header line sits above its own grid's body.
+            _superseded_now = {i for i in _led.touched
+                               if (reports_before_adoption[i].tokens_asserted
+                                   + reports_before_adoption[i].tokens_escalated) > 0}
+            for _grid_uri, _cells, _rl in _emitted:
+                _own = set(_rl) & set(_led.admitted)
+                _mine = build_ledger(_lines, _rl, bands, reports_before_adoption).touched
+                reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
+                                            None, str(TAB.DataGrid), "",
+                                            table_uri=_grid_uri,
+                                            tokens_asserted=sum(len(_lines[j].words)
+                                                                for j in _own),
+                                            supersedes=tuple(sorted(
+                                                set(_mine) & _superseded_now))))
             if _led.residue:
                 _text = "\n".join(" ".join(w.text for w in _lines[j].words)
                                   for j in _led.residue)

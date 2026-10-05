@@ -316,13 +316,19 @@ def _boundaries_from_decoration(rules: list[float], page_runs: list[list[Run]]
     return [good[0][0]] + [g[1] for g in good]
 
 
-def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
-    """Derive the page's data grid, or None when no rectangle is admissible."""
+def derive_data_grid(pdf_path: str, page_number: int = 0,
+                     exclude: frozenset = frozenset()) -> DataGrid | None:
+    """Derive one data grid on the page, or None when no rectangle is admissible.
+
+    `exclude` names page lines another rectangle has already admitted. They keep their
+    index, so `rows` still indexes the page's full line list, but they carry no ink here:
+    they neither seed, nor place, nor receive a refusal. `derive_data_grids` is the caller."""
     lines = [l for l in sorted(text_lines(extract_words(pdf_path, page_number)),
                                key=lambda l: l.top) if l.words]
     if not lines:
         return None
-    runs = [absorb_unit_markers(ink_runs(l)) for l in lines]
+    runs = [[] if i in exclude else absorb_unit_markers(ink_runs(l))
+            for i, l in enumerate(lines)]
 
     # --- the seed: the recurring row signature accounting for the most ink.
     # NOT the most frequent one: wrapped continuation fragments are the most numerous
@@ -599,7 +605,7 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
     rows.sort()
 
     for i in range(len(lines)):
-        refusals.setdefault(i, "unplaceable") if i not in set(rows) else None
+        refusals.setdefault(i, "unplaceable") if i not in set(rows) and i not in exclude else None
 
     return DataGrid(
         rows=tuple(rows),
@@ -610,6 +616,48 @@ def derive_data_grid(pdf_path: str, page_number: int = 0) -> DataGrid | None:
         refusals=refusals,
         aggregates=aggregates,
     )
+
+
+def derive_data_grids(pdf_path: str, page_number: int = 0) -> tuple[DataGrid, ...]:
+    """Every data grid on the page, in derivation order (R290).
+
+    A data grid is a MAXIMAL rectangle (§8.1), and a page can hold more than one. Until
+    2026-10-05 the page was read for ONE: the seed is the recurring signature with the most
+    ink, so a second table on the page lost the seed and every one of its rows came back
+    `unplaceable`. Measured on bfs p5 once R265 typed `8 606 033` and `- 939` correctly: the
+    canton table (27 rows x 10 runs) outbids the year table (18 x 12), and all 19 year rows
+    were refused.
+
+    So the same derivation is run again over the lines no earlier grid admitted, until no
+    rectangle is admissible. Nothing new decides anything: every grid passes the same seed,
+    the same G0-G8 axioms and the same NonDegeneracy floor as the first, and no constant is
+    added. Each grid's admitted rows are removed before the next seed, so the loop ends. A
+    later grid cannot take a row from an earlier one.
+
+    Across the 7-document corpus, measured: one page yields a second grid (bfs p5, the
+    19 x 12 year table). No other page yields any.
+
+    A line another grid admitted is struck from this grid's refusals. It is not a line this
+    rectangle failed to read; it belongs to another one. Left in, it would also extend
+    `boxhead.header_block` upward through the other table's body.
+
+    Gate classification (CLAUDE.md §8): AXIOM, the module's own class. This is the
+    maximality clause of the definition applied to the page, not a second reading heuristic.
+    """
+    grids: list[DataGrid] = []
+    taken: frozenset = frozenset()
+    while True:
+        g = derive_data_grid(pdf_path, page_number, exclude=taken)
+        if g is None or not g.rows:
+            break
+        grids.append(g)
+        taken = taken | frozenset(g.rows)
+    if len(grids) < 2:
+        return tuple(grids)
+    from dataclasses import replace
+    return tuple(replace(g, refusals={i: r for i, r in g.refusals.items()
+                                      if i not in taken or i in g.rows})
+                 for g in grids)
 
 
 # ------------------------------------------------------------------------------ EMISSION
