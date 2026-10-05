@@ -14,9 +14,8 @@ Written at ~51K working tokens, just past the 50K originating floor. Part 5 was 
   § 4 (labels, ons p4, the truth list). Write `truth.json` in the census output directory as a JSON
   list of `[doc_stem, page, band]`. Then run `scripts/r288_scope_probe.py live`. It prints `VERDICT:
   HOLDS | REFUTED` under the rule fixed in § 3, before any call. The prediction is that the
-  composite admits exactly the notes whose qualified tables are asserted. One hazard from reading
-  only: bfs labels its own tables `T1`/`T2`, and so do the probe's overlays. Decide § 4 item 1
-  before the first paid call, not after.
+  composite admits exactly the notes whose qualified tables are asserted. § 4 items 1 and 2 were
+  ruled after this part was written; see § 3.
 
 ## 1. Goal
 
@@ -55,16 +54,20 @@ reading-order equality, admits exactly the table notes. Then R288 gets a reader 
   leaves cbh band 9's carried text without `1,951,264`, so the candidate is now the band's lines
   that the carried text holds.
 
+- **Overlay labels are neutral letters (`A`, `B`, …), not `T1`…**, because bfs prints its own
+  `T1`/`T2`. Maintainer, in session after this handoff was first written; the script carries it.
+- **ons p4 b1/b2 go in the must-refuse set**, consistent with option (a): a note whose referent
+  table is unasserted (R230) cannot be bound. Maintainer, in session; recorded only here.
+
 ## 4. Unverified or assumed
 
-1. **Label collision, undecided.** bfs p5 has the author's own `T1`/`T2`, and the probe draws
+1. ~~**Label collision, undecided.**~~ Ruled, see § 3. bfs p5 has the author's own `T1`/`T2`, and the probe draws
    `T1`… too. Options: neutral letters (`A`, `B`, …), or keep `T` and accept the confound. Not
    measured.
 2. **ons p4 cannot be scored as the old truth list assumed.** Seen on the rendered page: the
    page's only asserted table is the numbered Notes list, and the real Table 1 (band 0, 241 words)
    is ignored. That is R230. The "Source:" line's referent is unasserted, so the oracle refuses it
-   by construction. Proposed: put ons p4 b1/b2 in the must-refuse set, which is consistent with
-   option (a). Not ruled.
+   by construction. Ruled, see § 3.
 3. **Truth list not re-judged.** Only ons p4 was viewed. From text heads, the candidates are cbh p0
    b9, graincorp-capacity p0 b4, graincorp-stem p0 b3 / p1 b2 / p2 b2, bfs p5 b6, ons p7 b16, and
    ons p8 b8. Every one needs its rendered page looked at before it enters `truth.json`.

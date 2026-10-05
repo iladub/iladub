@@ -42,7 +42,7 @@ def bbox(band):
 
 
 def render(path, page_no, tables, target, out_png):
-    """The page, asserted tables outlined in blue and labelled T1..Tn in band order, the
+    """The page, asserted tables outlined in blue and labelled A, B, ... in band order, the
     candidate outlined in red."""
     with pdfplumber.open(path) as pdf:
         page = pdf.pages[page_no]
@@ -102,7 +102,7 @@ def census(out):
                 tables.append({"band": pos, "uri": str(r.table_uri), "bbox": box})
             tables.sort(key=lambda t: t["band"])
             for k, t in enumerate(tables):
-                t["label"] = f"T{k + 1}"
+                t["label"] = chr(ord("A") + k)   # neutral letters: bfs prints its own T1/T2
             if not tables:
                 continue
             for i, r in enumerate(regions[:len(bands)]):
