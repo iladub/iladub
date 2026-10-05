@@ -1,0 +1,45 @@
+# header-body-split-percol.rq — SCRATCH COPY of vocab/queries/header-body-split.rq (014f84e):
+# identical per-column computation and R41 filter; projects per-(col,D) s_col rows instead of MIN.
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?col ?D ?s_col ?maxrow WHERE {
+  {
+    SELECT ?col ?D (MAX(?diffrow) AS ?maxdiff) (MAX(?bodyrow) AS ?maxbody) WHERE {
+      # D = modal non-abstaining NORMALISED datatype for ?col, over rows below the first (row>=1)
+      # — argmax of per-type counts, so the single label row (row 0) cannot out-vote the body.
+      # (A header that wraps into rows 1,2,... is NOT excluded here — that is deferred Loop B,
+      # see the header note.)
+      {
+        SELECT ?col ?D WHERE {
+          { SELECT ?col ?D (COUNT(*) AS ?n) WHERE {
+              ?c tab:atGridColumn ?col ; tab:cellDatatype ?Draw ; tab:atGridRow ?cr .
+              FILTER NOT EXISTS { ?Draw tab:datatypeAbstains true }
+              OPTIONAL { ?Draw tab:inDatatypeFamily ?Dfam }
+              BIND(COALESCE(?Dfam, ?Draw) AS ?D)
+              FILTER(?cr >= 1)
+          } GROUP BY ?col ?D }
+          { SELECT ?col (MAX(?n2) AS ?maxn) WHERE {
+              { SELECT ?col ?d2 (COUNT(*) AS ?n2) WHERE {
+                  ?c2 tab:atGridColumn ?col ; tab:cellDatatype ?d2raw ; tab:atGridRow ?cr2 .
+                  FILTER NOT EXISTS { ?d2raw tab:datatypeAbstains true }
+                  OPTIONAL { ?d2raw tab:inDatatypeFamily ?d2fam }
+                  BIND(COALESCE(?d2fam, ?d2raw) AS ?d2)
+                  FILTER(?cr2 >= 1)
+              } GROUP BY ?col ?d2 }
+          } GROUP BY ?col }
+          FILTER(?n = ?maxn)
+        }
+      }
+      FILTER(?D != tab:Text)
+      ?cell tab:atGridColumn ?col ; tab:atGridRow ?crow ; tab:cellDatatype ?ctraw .
+      FILTER NOT EXISTS { ?ctraw tab:datatypeAbstains true }   # abstaining cells are wildcards
+      OPTIONAL { ?ctraw tab:inDatatypeFamily ?ctfam }
+      BIND(COALESCE(?ctfam, ?ctraw) AS ?ct)
+      BIND(IF(?ct != ?D, ?crow, -1) AS ?diffrow)
+      BIND(IF(?crow >= 1, ?crow, -1) AS ?bodyrow)
+    } GROUP BY ?col ?D
+  }
+  { SELECT (MAX(?anyrow) AS ?maxrow) WHERE { ?anycell tab:atGridRow ?anyrow } }
+  BIND(IF(?maxdiff >= 0, ?maxdiff + 1, 1) AS ?s_cand)
+  BIND(IF(?maxbody >= 1, ?s_cand, -1) AS ?s_col)     # -1 => no non-abstaining body cell, excluded
+  FILTER(?s_col >= 1 && ?s_col <= ?maxrow)           # R41: a split must leave >=1 body row
+}
