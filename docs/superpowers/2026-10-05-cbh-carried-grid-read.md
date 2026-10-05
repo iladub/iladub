@@ -66,3 +66,17 @@ There are two `etkl:IgnoredBand`s, both "fewer than 2 columns": `p0#ignored0` (`
 - `records=57` including the four header rows is inferred from the sum, not traced.
 - The measurement scripts lived in a session scratchpad and are gone. Re-measuring R289 takes no script: `grep -c 'atRow <…#htable1-r0>'` on a compile, or the row counts in § 2.1. A spec for R289 should make the row-count check (vessel rows on the page = carried rows) a test, not a probe.
 - Whether the other three rosters' header boxes have the same 0.8 pt overhang is not measured. Only the first roster's rules were read.
+
+## 7. The same role check on the five ACCEPTED documents (appended, same session)
+
+R289 was invisible to coverage and visible only to a row count. So the row count was run on the five accepted documents. It was a read-only subagent at src = `4d07b7c`, compiling one document at a time, and its page reading was pdfplumber `extract_words()` only. **Controls:** dropping one carried capacity row is reported as exactly one uncovered data line. Injecting a fake row made of capacity's label cells is reported as covering no data line (plus 9 label-word hits). Compiling cbh reproduces R289 independently.
+
+| document | verdict | finding (measured) | already in the register? |
+|---|---|---|---|
+| graincorp-stem | clean | p0/p1/p2: 57/57, 77/77, 68/68 rows to data lines | — |
+| graincorp-capacity | clean | 27/27 | — |
+| who-wfa | **defect** | 5 data rows are carried as `tab:LabelCell` column headers of the table below them: `p0#htable3` (`0: 7 … 11.4`), `p0#htable5` (`1: 7 …`), `p1#htable3`, `p1#htable5` and `p2#htable2`. Checked here: `p0#htable3`'s 12 labels are `0: 7, 7, 0.1134, 8.2970, 0.10902, 5.9 … 11.4`. Each of those tables' entries sits under a data value as its column label. | **Partly.** [[R166]] (a headerless band asserts its first data row as its header) names `who p0 band 4` and `who p1 band 4`. Five tables were found here. Whether R166's two are among these five is **not reconciled**. |
+| ons-index-of-services | **defect** | p4 Table 1 (25 rows × 6 columns) is `p4#ignored0`, "fewer than 2 columns". The p4 footnotes are carried as `p4#htable3`, with a wrapped word misplaced. p7/p8 are clean at 46/46. | **Yes:** [[R230]]. |
+| apple | **defect** | p1 `mtable2`: the wrapped "Common stock …" stub is carried as 3 rows (`r31`, `r32` with no entries; `r33` "respectively" holds `100,702`, `93,568`). | **Partly:** [[R80]] lists this wrap among the adopted residue's unread lines. It does not record it as a 3-row split on the asserted path. |
+
+**What this says:** *accepted* has meant "the score clears its floor under a recorded rationale". It has not meant "every carried row is a page row". Coverage-based acceptance checks cannot see role errors. **Not decided here:** whether the three acceptances stand. That is the maintainer's call. **Unverified:** the subagent's line classifier is its own (a numeric token that is not a bare year marks a data line), and every non-clean row above was checked against the printed line by that agent, not by this session. Its scripts are in a session scratchpad and are not kept.
