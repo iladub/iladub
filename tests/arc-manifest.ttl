@@ -257,7 +257,8 @@ prog:criterion:etkl:03 a prog:Criterion ;
     prog:statement "ag-trade/cbh-stem-2026-08-03.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:78" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-05"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[ag-trade/cbh-stem-2026-08-03.pdf]" .
@@ -268,6 +269,9 @@ prog:criterion:etkl:03 a prog:Criterion ;
 # re-pointed prog:source values on etkl:04/05/06/07 below (94/114/127/147 -> 96/116/129/149),
 # re-measured the same way the etkl:07 "apple pushed it" comment below already documents for an
 # earlier push (a same-file citation by SYMBOL, not line, per CLAUDE.md plan-rule 7).
+# MET 2026-10-05 by the maintainer's acceptance ruling, appended at the end of
+# tests/corpus-manifest.ttl; the verdict and floor were set line-neutrally on the subject's block,
+# so :78 and every prog:source below it still name the same lines.
 
 prog:criterion:etkl:04 a prog:Criterion ;
     prog:ofRung "etkl" ;
@@ -1798,18 +1802,14 @@ prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:09 .
 # arc-shapes M15 (a met criterion depending on an unmet one). Recorded here rather than silently
 # dropped — the edge existed, and why it stopped being true is the auditable part.
 
-# cbh fires NOTHING, and the two edges below are the case where zero is not absence. R74 and
-# R77 both measure cbh places where table structure goes unread WITHOUT any reason firing, and
-# this manifest already carries them as tab:01's and tab:04's blocking rows. An accepting
-# adjudication for cbh has to confront those readings; a HOLD is what it has today.
-prog:criterion:etkl:03 prog:proposedDependsOn prog:criterion:tab:01 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:03 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:01 ;
-   prog:dependencyRationale "reading: MULTI_TABLE_AMBIGUOUS is corpus-dead, and tab:01's own note says R74 measures the cbh data grid leaking one row from a SECOND table on the same page — 'this reason's exact subject matter, and therefore a corpus place where its silence may be FALSE silence'. cbh cannot be accepted on a silence its own blocking row calls into question. Ungroundable: fails A1 (both ends unmet) and A2 (tab:01 carries no prog:oracleArtifact); and this reading travels through a register row rather than through an oracle consuming an artifact, which is a second reason it is not assertable." .
-
-prog:criterion:etkl:03 prog:proposedDependsOn prog:criterion:tab:04 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:03 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:04 ;
-   prog:dependencyRationale "reading: ROW_GROUP_AMBIGUOUS is corpus-dead and tab:04's note names R74 (the cbh leaked row) and R77 (cbh's four panel totals missed for the no-label reason) as two corpus places where row-group structure goes unread without this reason firing. Both are cbh. Ungroundable: fails A1 (both ends unmet) and A2 (tab:04 carries no prog:oracleArtifact); and, as with tab:01, the reading runs through the register rather than through artifact consumption." .
+# DELETED 2026-10-05 (accept-cbh, approved by the maintainer): prog:criterion:etkl:03
+# prog:proposedDependsOn prog:criterion:tab:01 and prog:criterion:tab:04. Both rationales rested
+# on cbh readings that no longer stand between cbh and acceptance. The tab:01 edge rested on R74's
+# "the cbh data grid leaks one row from a second table": that premise was measured FALSE at HEAD
+# (docs/superpowers/2026-10-05-cbh-carried-grid-read.md), and the maintainer ruled R74 out of
+# cbh's acceptance the same day (tests/corpus-manifest.ttl, cbh's R74 adjudication). The tab:04
+# edge rested on R74 and on R77, and R77 is closed (cbh's 2026-10-01 adjudication). R74 stays
+# open in the register on its own terms. Leaving the edges would trip arc-shapes M15 (a met
+# criterion depending on an unmet one) once etkl:03 is met by the maintainer's 2026-10-05
+# acceptance ruling. As with the etkl:07 deletion above, the edges are recorded here rather than
+# silently dropped.
