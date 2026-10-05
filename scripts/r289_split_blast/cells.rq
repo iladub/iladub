@@ -1,0 +1,8 @@
+# cells.rq — SCRATCH: every non-abstaining cell with its NORMALISED type (same normalisation as the split query)
+PREFIX tab: <https://w3id.org/iladub/tab#>
+SELECT ?row ?col ?ct WHERE {
+  ?cell tab:atGridColumn ?col ; tab:atGridRow ?row ; tab:cellDatatype ?ctraw .
+  FILTER NOT EXISTS { ?ctraw tab:datatypeAbstains true }
+  OPTIONAL { ?ctraw tab:inDatatypeFamily ?ctfam }
+  BIND(COALESCE(?ctfam, ?ctraw) AS ?ct)
+}
