@@ -112,3 +112,15 @@ preference for the printed ones. The contract did its job: it refused rather tha
    R238/R239 row-as-table family, and they were not examined further.
 4. The census and live outputs lived in a session scratchpad and are gone. The lines quoted above
    are the record.
+
+## 6. Ruling (2026-10-05, appended after § 5 was written)
+
+François Rosselet ruled on § 5's choice in the same session that recorded it:
+
+1. **R288 closes by arm (b).** Ignoring cbh's Note is acceptable for `etkl:03`, at +0.0883. This is
+   recorded as cbh's 2026-10-05 `cor:adjudication` at the end of `tests/corpus-manifest.ttl`. R288
+   is struck and moved to `residues-closed.md`. Arm (a), designing a *whether* oracle, is parked
+   until a second document style needs it.
+2. **The hold is not lifted.** That is a separate ruling. Closing R288 removes the only reason the
+   2026-10-02 adjudication gave for the hold, but [[R74]] (the leaked row) is open, and no dated
+   note records cbh's carried grid read against the page. Lifting the hold is its own loop.
