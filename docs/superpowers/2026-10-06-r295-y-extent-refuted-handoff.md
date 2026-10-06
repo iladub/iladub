@@ -107,7 +107,14 @@ role, which is loop 2's subject (the boxhead).
 
 - **The y-extent remedy is refuted.** Recorded here only. R295's full row in `residues-open.md` is
   Evidence and append-only, so it was not edited.
-- **The fork in part 5 is NOT decided.** It is the maintainer's ruling.
+- ~~**The fork in part 5 is NOT decided.**~~ **RULED by the maintainer, 2026-10-06, in
+  conversation (recorded only here): arm (b).** A table's extent is the widest contiguous run of
+  lines that the author's rules, drawn within that run, tile. The ruling followed § 2.3, after
+  the maintainer asked whether arm (a) could run on Jev. Under arm (a), Jev would only pick among
+  spans the oracle cannot tell apart. **Jev moves to loop 2**: line roles inside the extent, once a
+  role oracle exists. This is read as consistent with the 2026-09-17 ruling, not as an exception
+  to it. Arm (b) adds no heuristic: it is the oracle itself, searched. Supersedes part 5 item 1's
+  recommendation of (a).
 - No blast-radius census was run (previous handoff, item 2). It only applies to a change to
   `_rule_boundaries`, and neither arm in part 5 changes that function's test.
 
