@@ -90,6 +90,19 @@ overlaps the span (strict overlap), with `column_xs` cleared. The test is then t
 The page-2 misread disappears once the span is right. The header's word count is one short of the
 column count on every page, which is loop 2's subject (Caltrain's header via the boxhead method).
 
+### 2.3 The blind side, measured (part 5, item 3): the oracle admits every narrower span
+
+The same construction was run over spans *lo*..*hi* for *lo* in 0..7 and *hi* in {30, 36, 37}.
+On all four pages the oracle admits **every** span with 4 ≤ *lo* and *hi* ≤ 36: 4..36, 5..36 (no
+header row), 7..30, and so on. It refuses every span that starts at line 3 or earlier, or ends at
+line 37. So the oracle fixes the **outer** bound exactly and is blind to everything inside it.
+
+This weakens part 5's recommendation. Under arm (a), the only choice a worker could make that the
+oracle does not already make is a span *inside* 4..36, and nothing disposes that choice, so
+*"no oracle, no worker"* forbids it. The widest admitted span, 4..36, is the right extent on all
+four pages, and it is arm (b)'s answer. Whether a header row belongs inside the table is a line
+role, which is loop 2's subject (the boxhead).
+
 ## 3. What was decided, and where it is recorded
 
 - **The y-extent remedy is refuted.** Recorded here only. R295's full row in `residues-open.md` is
@@ -100,8 +113,7 @@ column count on every page, which is loop 2's subject (Caltrain's header via the
 
 ## 4. Unverified or assumed
 
-- **The oracle's blind side (part 5, item 3).** A span that omits the header row, or that stops
-  short of the last data row, probably still tiles. This was reasoned, not run.
+- ~~**The oracle's blind side (part 5, item 3).**~~ **Measured afterwards: § 2.3.**
 - **Arm (b) absorbing furniture.** A footnote line that happens to fit within one rule interval
   would be absorbed by the widest-tiling-span search. Not observed on Caltrain, where the footer
   fails the outer bound. Not checked on the seven.
