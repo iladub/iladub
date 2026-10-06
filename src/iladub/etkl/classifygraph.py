@@ -15,7 +15,7 @@ from rdflib import Graph, Namespace, Literal, RDF
 from rdflib.namespace import XSD
 
 from .bands import Band
-from .grid import LeafGrid
+from .grid import LeafGrid, widest_tiling_span
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 _EV = Namespace("urn:iladub:evidence:")
@@ -49,6 +49,12 @@ def classify_evidence(band: Band, grid: LeafGrid | None) -> Graph:
     g.add((b, TAB.lineCount, Literal(len(band.lines), datatype=XSD.integer)))
     ncols = grid.ncols if grid is not None else 0
     g.add((b, TAB.gridColumnCount, Literal(int(ncols), datatype=XSD.integer)))
+    span = widest_tiling_span(band)
+    if span is not None:
+        lo, hi, k = span
+        g.add((b, TAB.ruledSpanFirstLine, Literal(lo, datatype=XSD.integer)))
+        g.add((b, TAB.ruledSpanLastLine, Literal(hi, datatype=XSD.integer)))
+        g.add((b, TAB.ruledSpanColumnCount, Literal(k, datatype=XSD.integer)))
     if grid is not None and band.lines:
         header = band.lines[0]
         for i, w in enumerate(sorted(header.words, key=lambda w: w.x0)):
@@ -63,8 +69,14 @@ def classify_evidence(band: Band, grid: LeafGrid | None) -> Graph:
 
 def run_kind(rq_path, graph):
     """Run classify-kind.rq; return (kind_iri: str, nhw: int, first_bad: int | None)."""
+    return run_kind_ex(rq_path, graph)[:3]
+
+
+def run_kind_ex(rq_path, graph):
+    """`run_kind`, plus whether the kind is the R295 under-resolution escalation (bool)."""
     q = Path(rq_path).read_text(encoding="utf-8")
     for row in graph.query(q):
         fb = row.firstBad
-        return (str(row.kind), int(row.nhw), None if fb is None else int(fb))
-    return (str(TAB.NonTableKind), 0, None)  # defensive: empty graph (no band)
+        return (str(row.kind), int(row.nhw), None if fb is None else int(fb),
+                bool(row.underResolved is not None and row.underResolved.toPython()))
+    return (str(TAB.NonTableKind), 0, None, False)  # defensive: empty graph (no band)

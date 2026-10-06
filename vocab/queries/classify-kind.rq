@@ -1,13 +1,20 @@
 PREFIX tab: <https://w3id.org/iladub/tab#>
-SELECT ?kind ?nhw ?firstBad WHERE {
+SELECT ?kind ?nhw ?firstBad ?underResolved WHERE {
   ?b a tab:ClassifyBand ; tab:lineCount ?nl ; tab:gridColumnCount ?nc .
+  OPTIONAL { ?b tab:ruledSpanColumnCount ?rsc }
   { SELECT (COUNT(?hw) AS ?nhw) WHERE { ?hw a tab:HeaderWord } }
   BIND(EXISTS {
       ?w a tab:HeaderWord ; tab:headerWordOrder ?o .
       FILTER NOT EXISTS { ?w tab:strictlyInColumn ?o }
   } AS ?mis)
   BIND(IF(?nl < 2 || ?nc < 2, tab:NonTableKind,
-       IF(?nhw = ?nc && !?mis, tab:RecordTableKind, tab:UnsupportedTableKind)) AS ?kind)
+       IF(?nhw = ?nc && !?mis, tab:RecordTableKind, tab:UnsupportedTableKind)) AS ?base)
+  # R295 arm (e), ruled 2026-10-06: the author's rules tile a run of this band's lines into MORE
+  # columns than the band's grid reads, so the reading under-resolves what the author drew. Such a
+  # band is neither asserted nor ignored: it escalates. Ordinal, no constant. A band that already
+  # escalates keeps its own reason, so the guard only ever refuses; it never rewrites.
+  BIND(BOUND(?rsc) && ?rsc > ?nc && ?base != tab:UnsupportedTableKind AS ?underResolved)
+  BIND(IF(?underResolved, tab:UnsupportedTableKind, ?base) AS ?kind)
   OPTIONAL {
     SELECT (MIN(?o2) AS ?firstBad) WHERE {
       ?w2 a tab:HeaderWord ; tab:headerWordOrder ?o2 .
