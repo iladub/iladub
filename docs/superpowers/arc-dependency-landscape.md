@@ -19,7 +19,7 @@ the hand-authored manifest, and CI fails unless the tracked bytes are exactly wh
 | renderer | `scripts/arc_depends.py` (PROCEDURAL — markdown is not a derivation) |
 | gate | `tests/test_arc_landscape.py` (regenerate-and-diff) |
 
-**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 7 of its 22 edges are grounded by a two-sided ablation and 15 are propositions. This is a monitor, not a scheduler.
+**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 7 of its 19 edges are grounded by a two-sided ablation and 12 are propositions. This is a monitor, not a scheduler.
 
 ## §1 What can be started today — `arc-ready.rq`
 
@@ -55,7 +55,7 @@ stops being grounded. A dependency reachable both by an asserted chain and by on
 containing a proposition is graded `asserted` — the grounded chain exists, and that is
 the fact.
 
-**14 of 45 criteria carry a closure**; for the other 31 no dependency has been read, which is not a claim that they have none.
+**13 of 45 criteria carry a closure**; for the other 32 no dependency has been read, which is not a claim that they have none.
 
 | criterion | asserted — grounded by ablation | proposed — read, not grounded |
 | --- | --- | --- |
@@ -67,7 +67,6 @@ the fact.
 | `dec:13` | — | `dec:11` |
 | `dec:15` | — | `dec:14` |
 | `dec:16` | `holon:01` | `dec:07`, `dec:10`, `holon:03`, `holon:04` |
-| `etkl:05` | — | `tab:02`, `tab:07`, `tab:09` |
 | `holon:03` | `holon:01` | — |
 | `holon:04` | `dec:07`, `dec:10`, `holon:01` | `holon:03` |
 | `holon:05` | `holon:01` | — |
@@ -87,11 +86,11 @@ not a recommendation; which residue to close is a judgment and stays the reader'
 
 | residue | unmet criteria gated |
 | --- | --- |
-| `R44` | 4 |
-| `R62` | 3 |
-| `R71` | 3 |
-| `R43` | 2 |
+| `R44` | 3 |
+| `R62` | 2 |
+| `R71` | 2 |
 | `R74` | 2 |
+| `R43` | 1 |
 | `R77` | 1 |
 | `R79` | 1 |
 | `R80` | 1 |

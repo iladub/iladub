@@ -289,10 +289,14 @@ prog:criterion:etkl:05 a prog:Criterion ;
     prog:statement "gov-stats/bfs-population-bilan-2023.pdf: this document compiles via compile_document to cor:CompilesAbove with a pinned cor:scoreFloor, under a cor:adjudication whose rationale accepts that score — not one that holds it." ;
     prog:source "tests/corpus-manifest.ttl:116" ;
     prog:declaredOn "2026-08-04"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-05"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleArtifact "tests/corpus-manifest.ttl" ;
     prog:oracleTest "tests/test_corpus.py::test_expected_verdict[gov-stats/bfs-population-bilan-2023.pdf]" .
+# MET 2026-10-05 by the maintainer's acceptance ruling, appended at the end of
+# tests/corpus-manifest.ttl; the verdict and floor were set line-neutrally on the subject's block,
+# so :116 and every prog:source below it still name the same lines.
 
 prog:criterion:etkl:06 a prog:Criterion ;
     prog:ofRung "etkl" ;
@@ -1763,23 +1767,17 @@ prog:criterion:substrate:03 prog:proposedDependsOn prog:criterion:dec:14 .
 # manifest's own tab header measures ons at zero records of any reason and calls the row stale —
 # an edge resting on a row the file already flags as stale would be worse than no edge.
 
-prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:02 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:02 ;
-   prog:dependencyRationale "reading: bfs fires REGION_TILING_FAILED twice (p4, p5) and its 2026-08-20 adjudication NAMES the reason and HOLDs; an accepting adjudication for bfs cannot be written while that hold stands. Ungroundable: fails A1 (both ends unmet) and A2 (tab:02 carries no prog:oracleArtifact)." .
-
-prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:07 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:07 ;
-   prog:dependencyRationale "reading: KIND_NOT_SUPPORTED fires 3 times and ONLY on bfs (p0 masthead, p6 x2); its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:07 carries no prog:oracleArtifact)." .
-
-prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:09 .
-[] a rdf:Statement ;
-   rdf:subject prog:criterion:etkl:05 ; rdf:predicate prog:proposedDependsOn ;
-   rdf:object  prog:criterion:tab:09 ;
-   prog:dependencyRationale "reading: ROUND_TRIP_FAIL fires 5 times and ONLY on bfs (p5, region-level #htable{n}-rt URIs); its adjudication names it and HOLDs. Ungroundable: fails A1 (both ends unmet) and A2 (tab:09 carries no prog:oracleArtifact)." .
+# DELETED 2026-10-05 (accept-bfs, on the maintainer's acceptance ruling): three proposed edges,
+# prog:criterion:etkl:05 prog:proposedDependsOn prog:criterion:tab:02 / tab:07 / tab:09, on the
+# 2026-09-18 apple precedent below. Each rested on the 2026-08-20 census and on bfs's HOLD naming
+# the reason. MEASURED 2026-10-05 at c410604 (scripts/bfs_reason_triage.py, control passed):
+# ROUND_TRIP_FAIL fires NOWHERE live on bfs; all six firings are superseded by p5's adoption, so
+# tab:09's reading is discharged. REGION_TILING_FAILED (p4 chart captions, p6 footnotes) and
+# KIND_NOT_SUPPORTED (p0 masthead, p5 source and footnotes, p6 title) still FIRE live, but they
+# do not stand in the way: the accepting adjudication names that ink (no table entry in any of it)
+# and accepts over it. tab:02 and tab:07 stay UNMET; what is withdrawn is the claim that etkl:05
+# waited on them. Leaving any of the three would trip arc-shapes M15 (a met criterion depending on
+# an unmet one). Recorded, not silently dropped.
 
 
 # DELETED 2026-09-18 (apple boxhead loop): three proposed edges, prog:criterion:etkl:06

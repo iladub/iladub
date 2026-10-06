@@ -832,8 +832,10 @@ def test_etkl_criteria_agree_with_the_corpus_manifest():
     # boxhead (src/iladub/etkl/boxhead.py). The pin is an equality on purpose — an acceptance
     # nobody recorded here is the defect it exists to catch — so it moves by hand, with the date.
     # 4 -> 5 later the same day: apple-fy2026q3 accepted by the same method (its p2 grid's boxhead).
-    assert sum(computed.values()) == 6, (
-        f"re-measured 2026-10-05: exactly six corpus documents are accepted; got {computed}")
+    # 6 -> 7 on 2026-10-05, after cbh the same day: bfs-population-bilan accepted by ruling once
+    # p6 adopted its grid (R293), with R294 recorded as a defect. Every corpus document is accepted.
+    assert sum(computed.values()) == 7, (
+        f"re-measured 2026-10-05: exactly seven corpus documents are accepted; got {computed}")
 
 
 def test_etkl_criterion_sources_point_at_the_document_they_name():
