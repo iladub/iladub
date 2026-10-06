@@ -165,3 +165,20 @@ def test_download_sends_browser_ua(monkeypatch):
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
     assert _download("https://example.org/x.pdf") == b"pdf"
     assert seen["ua"] == USER_AGENT
+
+
+def test_main_reads_the_held_out_register_into_its_own_root(tmp_path, monkeypatch):
+    """The held-out register (docs/superpowers/2026-10-06-held-out-corpus.md § 2) is a second
+    manifest whose documents must land OUTSIDE corpus/ — corpus_verdict_snapshot.py rglobs
+    corpus/, so a held-out PDF there would join every seven-document sweep."""
+    data = _pdf_bytes(tmp_path)
+    repo = tmp_path / "repo"
+    (repo / "tests").mkdir(parents=True)
+    pin = f'; cor:sha256 "{hashlib.sha256(data).hexdigest()}" '
+    (repo / "tests" / "held-out-manifest.ttl").write_text(ENTRY.format(pin=pin))
+    monkeypatch.setattr(fetch_corpus, "REPO", repo)
+
+    assert main(download=lambda url: data, manifest="tests/held-out-manifest.ttl",
+                root="held-out") == 0
+    assert (repo / "held-out" / "fam" / "doc.pdf").read_bytes() == data
+    assert not (repo / "corpus").exists()

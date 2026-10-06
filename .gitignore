@@ -50,6 +50,9 @@ htmlcov/
 
 # Real third-party document corpus — fetched by scripts/fetch_corpus.py, never committed
 corpus/
+# Held-out documents (docs/superpowers/2026-10-06-held-out-corpus.md) — fetched, never committed,
+# and kept OUT of corpus/ so corpus_verdict_snapshot.py's rglob never sweeps them into the seven
+held-out/
 
 # Third-party agent skills — installed at USER scope (~/.claude/skills), never vendored here.
 # `npx skills add` defaults to project scope and drops all three of these into the repo;

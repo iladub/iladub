@@ -261,7 +261,12 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # `tab:PrintedTotalShape` went into the EXISTING `tab-shapes.ttl`; no new term was declared.
     # The `.rq` population does not move: both halves are closed-world membrane constraints
     # (CLAUDE.md § 8), not derivations, so neither authored a query.
-    assert len(vocab_nodes) == len(artifact_files()) == 180
+    # RE-MEASURED 2026-10-06 (held-out corpus loop): 180 -> 181 — `tests/held-out-manifest.ttl`,
+    # the held-out document register, kept apart from `tests/corpus-manifest.ttl` so it never
+    # joins the etkl bijection. Measured as a SET against HEAD's tracked `.ttl` files: added =
+    # exactly that one file, removed = none. It uses only `cor:` terms the corpus register
+    # already uses; no term was declared.
+    assert len(vocab_nodes) == len(artifact_files()) == 181
     assert len(query_nodes) == len(query_files()) == 57
 
 
