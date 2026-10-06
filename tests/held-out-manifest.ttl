@@ -1,0 +1,57 @@
+# tests/held-out-manifest.ttl — the HELD-OUT document register (2026-10-06).
+# Same cor: fields as tests/corpus-manifest.ttl, and deliberately a different file: every
+# cor:Document in the corpus register must map one-to-one onto an etkl criterion
+# (tests/test_arc_manifest.py::test_etkl_criteria_agree_with_the_corpus_manifest), so a document
+# measured here would become a benchmark row there. Nothing that computes the benchmark parses
+# this file. Documents are FETCHED into held-out/ (gitignored, outside corpus/), never committed:
+#     .venv/bin/python scripts/fetch_corpus.py tests/held-out-manifest.ttl held-out
+# Selection, prediction and readings: docs/superpowers/2026-10-06-held-out-corpus.md.
+# cor:Unadjudicated throughout: a held-out reading is a measurement, not an acceptance.
+@prefix cor: <https://w3id.org/iladub/corpus#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:held-out:fed-h41-2025-01-02> a cor:Document ;
+    cor:file "fed-h41-2025-01-02.pdf" ;
+    cor:url "https://www.federalreserve.gov/releases/h41/20250102/h41.pdf" ;
+    cor:family "financial" ;
+    cor:series "fed-h41" ;
+    cor:producer "Aspose.Words for .NET 21.3.0" ;
+    cor:fetched "2026-10-06"^^xsd:date ;
+    cor:sha256 "51273fa7646de7f1af281943d1a7ea3e1ea2f71bf5ca4503e27c02275be522e1" ;
+    cor:pages 11 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:held-out:arxiv-1706.03762v7> a cor:Document ;
+    cor:file "arxiv-1706.03762v7.pdf" ;
+    cor:url "https://arxiv.org/pdf/1706.03762v7" ;
+    cor:family "scientific" ;
+    cor:series "arxiv-paper" ;
+    cor:producer "pdfTeX-1.40.25" ;
+    cor:fetched "2026-10-06"^^xsd:date ;
+    cor:sha256 "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697" ;
+    cor:pages 15 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+# The URL is undated: Caltrain replaces the timetable in place, so a later re-fetch will report
+# CHECKSUM MISMATCH. The sha256 pins the edition measured on 2026-10-06.
+<urn:iladub:held-out:caltrain-weekend-timetable> a cor:Document ;
+    cor:file "caltrain-weekend-timetable.pdf" ;
+    cor:url "https://www.caltrain.com/media/31602/download" ;
+    cor:family "transit" ;
+    cor:series "caltrain-timetable" ;
+    cor:producer "Adobe PDF Library 17.0" ;
+    cor:fetched "2026-10-06"^^xsd:date ;
+    cor:sha256 "b032b73a7ded38dfaafd2a2f96da0d4799995aa99225ae30e51c8a9792f11237" ;
+    cor:pages 4 ;
+    cor:expectedVerdict cor:Unadjudicated .
+
+<urn:iladub:held-out:who-covid-sitrep-41> a cor:Document ;
+    cor:file "who-covid-sitrep-41.pdf" ;
+    cor:url "https://www.who.int/docs/default-source/coronaviruse/situation-reports/20200301-sitrep-41-covid-19.pdf" ;
+    cor:family "health" ;
+    cor:series "who-covid-sitrep" ;
+    cor:producer "Microsoft® Word 2016" ;
+    cor:fetched "2026-10-06"^^xsd:date ;
+    cor:sha256 "93ef725f9d04526cfd18c680308d482afee8e3069de26c4b12b4a58aa1cbdbcf" ;
+    cor:pages 7 ;
+    cor:expectedVerdict cor:Unadjudicated .

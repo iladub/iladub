@@ -132,7 +132,12 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # declared in `vocab/ontology/tab.ttl` (only comments changed) and the new constraints went into
     # the EXISTING `vocab/shapes/tab-shapes.ttl`, so this is the fixtures' count moving, not a second
     # source.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 180
+    # RE-MEASURED 2026-10-06 (held-out corpus loop): 180 -> 181 — `tests/held-out-manifest.ttl`,
+    # the held-out document register, kept apart from `tests/corpus-manifest.ttl` so it never
+    # joins the etkl bijection. Measured as a SET against HEAD's tracked `.ttl` files: added =
+    # exactly that one file, removed = none. It uses only `cor:` terms the corpus register
+    # already uses; no term was declared.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 181
 
 
 def test_each_file_gets_its_own_named_graph():

@@ -69,7 +69,7 @@ def fetch_one(g: Graph, doc, corpus_root: Path, download=_download) -> str:
     got = hashlib.sha256(data).hexdigest()
     if want is None:
         producer, pages = _pdf_facts(dest)
-        print("  FIRST FETCH — pin these in tests/corpus-manifest.ttl "
+        print("  FIRST FETCH — pin these in the manifest "
               "(a deliberate edit, never automatic):")
         print(f'    cor:producer "{producer}" ;')
         print(f'    cor:fetched "{datetime.date.today().isoformat()}"^^xsd:date ;')
@@ -85,14 +85,18 @@ def fetch_one(g: Graph, doc, corpus_root: Path, download=_download) -> str:
     return "fetched"
 
 
-def main(download=_download) -> int:
+def main(download=_download, manifest: str = "tests/corpus-manifest.ttl",
+         root: str = "corpus") -> int:
     """`download` is a minimal testability seam (default is the real network
-    fetch); CLI behavior is unchanged."""
-    g = Graph().parse(REPO / "tests" / "corpus-manifest.ttl", format="turtle")
-    outcomes = [fetch_one(g, doc, REPO / "corpus", download=download)
+    fetch). `manifest` and `root` default to the corpus register; the held-out register
+    passes `tests/held-out-manifest.ttl held-out`, a root OUTSIDE corpus/ on purpose
+    (docs/superpowers/2026-10-06-held-out-corpus.md § 2)."""
+    g = Graph().parse(REPO / manifest, format="turtle")
+    outcomes = [fetch_one(g, doc, REPO / root, download=download)
                 for doc in g.subjects(RDF.type, COR.Document)]
     return 1 if any(o in ("mismatch", "failed", "pin") for o in outcomes) else 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys
+    raise SystemExit(main(*([_download] + sys.argv[1:3])))
