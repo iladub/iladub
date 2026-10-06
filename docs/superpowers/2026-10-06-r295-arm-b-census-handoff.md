@@ -169,3 +169,12 @@ Every claim below carries the measurement it rests on, and § 7's next action is
    that is a line-role question with no oracle yet (`2026-09-27-jev-boxhead-spike-evidence.md`). Check the ons boxhead
    reader (`baml_src/boxhead.baml`) against Caltrain's lines 2 to 4 first. If it cannot tell the
    legend "6XX Local" from a header, the role oracle is the thing to build.
+
+## 8. The local sweep (appended after § 6)
+
+- **236 test files, one per process: 234 clean.** Two files fail 2 tests each:
+  `test_grid_donation_seam.py` (the two bfs p6 pins) and `test_run_merge_seam.py` (O2, O3).
+- **All four predate this PR.** Each file was re-run on the tree before arm (e) (worktree at
+  `c23d232`), and the same tests failed there. Raised as [[R296]]. The cause was not measured;
+  the suspect is R293's bfs p6 adoption (#310). O3 is [[R170]]'s standing detector, so it is blind
+  until R296 is closed.
