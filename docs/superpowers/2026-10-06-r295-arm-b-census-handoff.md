@@ -109,8 +109,9 @@ not touch them. This was counted by reading the census rows. It is not a run of 
 
 ## 3. What was decided, and where it is recorded
 
-- **Arm (b) is refuted on the seven and the held-out four.** Recorded here only. It is still the
-  maintainer's ruling until it is re-ruled.
+- **Arm (b) is refuted on the seven and the held-out four.** Recorded here only.
+- **RULED by the maintainer, 2026-10-06, in conversation (recorded here and in the commit that
+  implements it): arm (e).** It supersedes arm (b). Implemented in this same PR: see § 6.
 - **No `src/` change was made**, because the ruled arm failed its census before any code was written.
 
 ## 4. Unverified or assumed
@@ -123,3 +124,48 @@ not touch them. This was counted by reading the census rows. It is not a run of 
 - **arxiv p13 escalating a figure** is fail-safe under the score, but it is not a correct reading.
 - Ties: the census found a unique widest span wherever the width is at least 2, except who-covid p2's
   second band (width 1, many ties), which both gates exclude.
+
+## 6. Arm (e), built after the ruling (same PR)
+
+Written at about 115K working tokens, past the originating floor and under the executing floor.
+Every claim below carries the measurement it rests on, and § 7's next action is graded.
+
+- **Code:** `grid.widest_tiling_span` (evidence, PROCEDURAL: the unmodified `_rule_boundaries` searched
+  over contiguous runs of at least 2 lines, rules scoped by y-overlap). `classifygraph` emits it as
+  `tab:ruledSpanFirstLine`/`LastLine`/`ColumnCount` (`vocab/ontology/tab.ttl`).
+  `vocab/queries/classify-kind.rq` derives `?underResolved` and escalates (AXIOM, ordinal, no
+  constant). `regions.classify` only names the evidence in the reason:
+  *"author rules tile lines lo..hi into k columns but the band grid has n"*.
+- **Tests:** `tests/etkl/test_ruled_span_escalates.py`, 9 tests on synthetic fixtures. FALSIFICATION,
+  three ways, each restored afterwards:
+  - (1) `?kind` bound to `?base`: `test_titled_band_escalates_and_names_the_span` FAILS.
+  - (2) the evidence emission replaced by `span = None`: the same test FAILS.
+  - (3) the `?base != tab:UnsupportedTableKind` clause dropped:
+    `test_an_already_escalated_band_keeps_its_reason` FAILS.
+
+  After restoring, 9/9 pass.
+- **Population** (`page_bands` + `classify` over every page of all eleven documents): **9 bands,
+  all held-out.** Caltrain p0 to p3 give *"lines 4..36 into 18/19/18/19 columns"*, which is the hand
+  span from `2026-10-06-r295-y-extent-refuted-handoff.md` § 2.2, exactly. The others are who-covid p4
+  b0 and arxiv p12 b1, p13 b1, p13 b2, p14 b2. The arxiv bands are attention figures: a fail-safe
+  escalation, not a correct reading. § 2.3 predicted 6 bands. The difference is all arxiv, because
+  the census read sub-bands and this run reads the final bands.
+- **The seven:** `corpus_verdict_snapshot.py` was run before (worktree at `c23d232`) and after
+  (`cc30648`), then compared with `corpus_snapshot_diff.py`: **0 of 7 documents changed.** Every score
+  and every canonical graph hash is identical.
+- **Caltrain** (`snapshot()` on the held-out PDF): before, score **1.0**, with p0, p1 and p3
+  `ignored` (*fewer than 2 columns*) and p2 `asserted` (28 cells, the 2-column misread). After, score
+  **0.0**, with all four pages `escalated` (`KIND_NOT_SUPPORTED`). This is loop 1's definition of
+  done: the pages enter the denominator, the misread is gone, and the score falls from a hollow 1.0.
+
+## 7. Next concrete action (after this PR)
+
+1. **ASSERTED.** Loop 2, Caltrain's header, as the maintainer ordered (`2026-10-06-r295-grid-scope-handoff.md`
+   § 3). Its input now exists: the escalation reason carries the run *lines 4..36*, the run the
+   hand construction used.
+2. **PROPOSED.** That run's **top edge is not the table's extent.** On Caltrain it happens to be,
+   because the header row "Train No." tiles. On apple p0, bfs p5 and who-covid p2 a spanner row lies
+   above the run (§ 2.2). Loop 2 has to decide which lines above the run belong to the boxhead, and
+   that is a line-role question with no oracle yet (`2026-09-27-jev-boxhead-spike-evidence.md`). Check the ons boxhead
+   reader (`baml_src/boxhead.baml`) against Caltrain's lines 2 to 4 first. If it cannot tell the
+   legend "6XX Local" from a header, the role oracle is the thing to build.
