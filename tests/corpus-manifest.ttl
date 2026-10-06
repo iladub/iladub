@@ -304,12 +304,22 @@
     # labels. A misread column identity is a misread entry; no floor is pinned over one.
     cor:reading [ a cor:Reading ; cor:value "0.9021428571428571"^^xsd:decimal ;
         cor:readAt "2026-09-19"^^xsd:date ;
-        cor:recordedIn "docs/superpowers/2026-09-19-tessin-trailing-notes-evidence.md" ] .
+        cor:recordedIn "docs/superpowers/2026-09-19-tessin-trailing-notes-evidence.md" ] ;
 # RE-READ 2026-10-05 at 81a2ca6, score unchanged at 0.9021428571428571. The 09-19 reason above is
 # FIXED: #303 split p5 into a canton grid (270) and a year grid (226). STILL cor:Unadjudicated, for
 # THREE reasons: p6 asserts its boxhead's lines 2-4 as six entry cells and labels c7/c8 both
 # `Rapport de` (R293); p5's 2015 row leaves its two population figures unread (R294); p5's canton
 # grid carries no column labels. See docs/superpowers/2026-10-05-bfs-hold-reread.md.
+    # The canton grid's boxhead is RECORDED (2026-10-05): 10 of 10 columns labelled, all three
+    # spanners read, the year table's footnotes and T2's title set aside; disposed with nothing
+    # dropped. The score FALLS 0.9021 -> 0.8984 and that is the ledger being honest: p5 asserts +11
+    # (header line L7, read in full) and escalates +7 (L5/L6, whose spanner words the line-granular
+    # ledger does not carry). STILL cor:Unadjudicated. RULED by the maintainer 2026-10-05: fix R293
+    # (c7/c8 share one label, a column-identity defect), then accept with R294 recorded as a defect.
+    cor:reading [ a cor:Reading ; cor:value "0.8984485190409027"^^xsd:decimal ;
+        cor:readAt "2026-10-05"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-10-05-bfs-canton-boxhead.md" ;
+        cor:recordedIn "readings/boxhead/README.txt" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;
