@@ -279,12 +279,12 @@ def test_u12_answer_zero_gives_a_headerless_table_and_its_decision(tmp_path, rea
     assert (rep.regions[0].tokens_asserted, rep.regions[0].tokens_escalated) == (8, 0)
 
 
-@pytest.mark.parametrize("k", [1, 2, 4])
+@pytest.mark.parametrize("k", [1])
 def test_u12_an_answer_of_one_or_more_gives_todays_table_and_a_boxhead_decision(
         tmp_path, reader, monkeypatch, k):
-    """§ 10.5 case 3, and § 10.6: an answer above 1 (up to `nlines`, 4 here) adds no header
-    level. The TABLE is today's; the page differs from today's only by the decision (whose
-    insertion renumbers the band's later judgements, so the comparison is table to table)."""
+    """§ 10.5 case 3. The TABLE is today's; the page differs from today's only by the decision
+    (whose insertion renumbers the band's later judgements, so the comparison is table to table).
+    An answer above 1 used to land here too (§ 10.6); since R293 it escalates — the next test."""
     from iladub.etkl.document import _band_subgraph
     p = _box(tmp_path, _ALL_NUMBERS)
     today = _never_asked(monkeypatch, p)
@@ -298,6 +298,29 @@ def test_u12_an_answer_of_one_or_more_gives_todays_table_and_a_boxhead_decision(
     assert _chosen(rep.graph, d) == "boxhead"
     assert f"{k}" in str(rep.graph.value(d, DEC.rationale))
     assert not list(rep.graph.subject_objects(TAB.boxheadAbsentBy))
+
+
+@pytest.mark.parametrize("k", [2, 4])
+def test_r293_an_answer_above_one_escalates_the_region_and_asserts_no_entry(
+        tmp_path, reader, monkeypatch, k):
+    """R293 (`2026-10-05-r293-p6-adopts.md` § 2.4): the record path carries ONE header level, so
+    a reader's answer of k > 1 cannot be emitted without asserting lines 2..k as entries — on bfs
+    p6 that put `Cantons` and `des jeunes 1` in `tab:EntryCell`s. The region is proposed instead:
+    no entry cell at all, every token of the band escalated, and the decision still recorded."""
+    p = _box(tmp_path, _ALL_NUMBERS)
+    today = _never_asked(monkeypatch, p)
+    fake = reader(k)
+    rep = _compile(p)
+    assert len(fake.calls) == 1
+    assert today.regions[0].verdict == "asserted" and today.escalated == 0
+    assert rep.regions[0].verdict == "escalated"
+    assert rep.regions[0].reason == "BOXHEAD_EXCEEDS_RECORD"
+    assert rep.regions[0].table_uri is None
+    assert list(rep.graph.subjects(RDF.type, TAB.EntryCell)) == []
+    assert (rep.asserted, rep.escalated) == (0, today.asserted + today.escalated)
+    [d] = _decisions(rep.graph)
+    assert _chosen(rep.graph, d) == "boxhead"
+    assert f"{k} leading header line" in str(rep.graph.value(d, DEC.rationale))
 
 
 @pytest.mark.parametrize("k", [None, -1, 5])

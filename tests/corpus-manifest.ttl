@@ -319,7 +319,14 @@
     cor:reading [ a cor:Reading ; cor:value "0.8984485190409027"^^xsd:decimal ;
         cor:readAt "2026-10-05"^^xsd:date ;
         cor:recordedIn "docs/superpowers/2026-10-05-bfs-canton-boxhead.md" ;
-        cor:recordedIn "readings/boxhead/README.txt" ] .
+        cor:recordedIn "readings/boxhead/README.txt" ] ;
+    # R293 FIXED (2026-10-05): p6 adopts its data grid. The record path no longer asserts a boxhead
+    # deeper than it carries (the reader's k = 3 on #table2 now escalates), and per-line placement
+    # admits `80 ans ou plus`. 9 of 9 columns labelled, c7/c8 distinct, no header word asserted as
+    # an entry, all 288 entries unchanged. Every other corpus graph hash unchanged.
+    cor:reading [ a cor:Reading ; cor:value "0.907350216182829"^^xsd:decimal ;
+        cor:readAt "2026-10-05"^^xsd:date ;
+        cor:recordedIn "docs/superpowers/2026-10-05-r293-p6-adopts.md" ] .
 
 <urn:iladub:corpus:apple-fy2026q3-statements>
     cor:reading [ a cor:Reading ; cor:value "0.06068601583113457"^^xsd:decimal ;

@@ -33,10 +33,15 @@ THE DISPOSAL — two whole-reading refusals and one per-label one:
   2. TOTAL ACCOUNTING — the null control, and it comes free. Every listed word must appear in
      exactly one list. A reader that skips a word or uses one twice is not reading the header,
      and the reading is refused. Silence is never read as "not a header".
-  3. PLACEMENT, per label. A leaf label stands only if EVERY one of its words has its centre
-     inside the claimed column's own interval — `column_of(centre)`, the assignment rule this
-     codebase uses for every cell. A label that fails is DROPPED, the rest stand: two independent
-     readings (the reader's, the text layer's geometry) must agree, label by label.
+  3. PLACEMENT, per label. A leaf label stands only if, on EVERY line it occupies, the centre of
+     its ink there (`min x0`..`max x1` of its words on that line) lies inside the claimed column's
+     own interval — `column_of(centre)`, the assignment rule this codebase uses for every cell, and
+     a cell is a run of ink, not a word. A label that fails is DROPPED, the rest stand: two
+     independent readings (the reader's, the text layer's geometry) must agree, label by label.
+     Until R293 each WORD was placed, and bfs p6's `80 ans ou plus` was dropped because `80`
+     alone straddles its column's derived edge (centre 386.9 against 389.1). The line's centre
+     lies between its first and last word's centres, so this admits every label the per-word
+     rule admitted (`docs/superpowers/2026-10-05-r293-p6-adopts.md` § 2.3).
 
 A spanning label's geometry is NOT disposed beyond range and order: a spanner is typically
 centred over its group and its ink covers a fraction of it, so extent proves nothing. Spanners
@@ -177,7 +182,11 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
     labels, dropped = {}, []
     for c, ws in reading.leaf_labels:
         col = grid.columns[c]
-        if ws and all(col.x0 <= (words[a].x0 + words[a].x1) / 2.0 < col.x1 for a in ws):
+        frags = {}
+        for a in ws:
+            lo, hi = frags.get(a[0], (words[a].x0, words[a].x1))
+            frags[a[0]] = (min(lo, words[a].x0), max(hi, words[a].x1))
+        if ws and all(col.x0 <= (lo + hi) / 2.0 < col.x1 for lo, hi in frags.values()):
             labels[c] = tuple(sorted(ws))
         else:
             dropped.append(c)

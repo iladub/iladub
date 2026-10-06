@@ -90,7 +90,11 @@ P5_CELLS_WHEN_CARRIED = 496
 #: every subject on p5: `#p5-datagrid-h0..h9` and `-lc0..lc9` (40 + 40), their boxes and the grid's
 #: own links; out go `p5#region8` (REGION_TILING_FAILED, now the grid's header lines) and its
 #: decision. P5_CELLS is unchanged at 496 (evidence 2026-10-05-bfs-canton-boxhead.md § 2).
-DOC_TRIPLES_WHEN_CARRIED = 17076
+#: 17076 -> 15611 on 2026-10-05, measured by a whole-corpus snapshot: R293. p6 adopts its data grid
+#: (nine record tables superseded by one 32 x 9 grid with nine column labels), and every other
+#: corpus document's graph hash is unchanged (evidence 2026-10-05-r293-p6-adopts.md § 5).
+#: P5_CELLS is unchanged at 496.
+DOC_TRIPLES_WHEN_CARRIED = 15611
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
@@ -100,10 +104,15 @@ DOC_TRIPLES_WHEN_CARRIED = 17076
 #: read under band 2's header (9 entries each). The six regions this control was measured on
 #: are untouched — what it guards against is the SWITCH moving page 6, and it did not.
 #: 285 -> 294 on 2026-09-19: `Tessin` is cut free of the notes set below it and read (9 entries).
-P6_CELLS = 294
+#: 294 -> 288 on 2026-10-05, by R293 and not by the switch: p6 adopts its data grid. The 288 are
+#: the 294 minus exactly the six boxhead words the band path asserted as entries (`Cantons`,
+#: `dépendance`, `dépendance des`, `des jeunes 1`, `personnes`, `âgées 2`); no value moved
+#: (multiset diff, evidence 2026-10-05-r293-p6-adopts.md § 2.5).
+P6_CELLS = 288
 #: 6 -> 8 on 2026-09-18: the `Total` and `Zurich` lone rows are two more asserted regions.
 #: 8 -> 9 on 2026-09-19: `Tessin`.
-P6_ASSERTED_REGIONS = 9
+#: 9 -> 1 on 2026-10-05 (R293): the nine record tables are superseded by the one adopted grid.
+P6_ASSERTED_REGIONS = 1
 
 
 @pytest.fixture(scope="module")

@@ -103,6 +103,44 @@ def test_check_3_a_misplaced_label_is_DROPPED_and_the_rest_stand():
     assert sorted(got.labels) == [0] and got.dropped == (1, 2)
 
 
+def _straddling_lines():
+    """L0 is a two-line boxhead's top: `Period`, then `80 ans` whose `80` (92-104, centre 98)
+    sits left of column 1's edge at 100 while the run (92-150, centre 121) is inside column 1 —
+    bfs p6's `80 ans ou plus` in miniature. L1 is that label's second line, `ou plus` (110-160)."""
+    return [SimpleNamespace(words=[_w("Period", 10, 60), _w("80", 92, 104), _w("ans", 110, 150),
+                                   _w("Retail", 220, 280)], top=0, bottom=1),
+            SimpleNamespace(words=[_w("ou", 110, 125), _w("plus", 130, 160)], top=2, bottom=3),
+            SimpleNamespace(words=[_w("2025", 10, 40), _w("1.0", 130, 150), _w("2.0", 230, 250)],
+                            top=4, bottom=5),
+            SimpleNamespace(words=[_w("2026", 10, 40), _w("1.1", 130, 150), _w("2.1", 230, 250)],
+                            top=6, bottom=7)]
+
+
+def test_r293_a_label_is_placed_by_its_run_on_each_line_not_by_each_word():
+    """R293 (`2026-10-05-r293-p6-adopts.md` § 2.3): `80`'s own centre is in column 0, but the
+    label's ink on that line is one run centred in column 1, and so is its second line. It
+    stands. Under the per-word rule it was dropped."""
+    r = BoxheadReading(leaf_labels=((0, ((0, 0),)), (1, ((0, 1), (0, 2), (1, 0), (1, 1))),
+                                    (2, ((0, 3),))), other_words=())
+    got = dispose_boxhead(r, _straddling_lines(), (0, 1), _grid(rows=(2, 3), refusals=(0, 1)))
+    assert got.refused is None
+    assert sorted(got.labels) == [0, 1, 2] and got.dropped == ()
+
+
+def test_r293_control_a_label_whose_run_on_one_line_sits_in_another_column_is_still_dropped():
+    """The control, and it separates per-LINE from a pooled box: the label's line-0 run is `ans`
+    (110-150, column 1) and its line-1 run is `ou plus` moved to 210-290 (column 2). Pooled, the
+    box 110-290 is centred at 200, inside column 2, and would stand. Per line, the line-0 run is in
+    column 1, so the label claimed by column 2 is dropped: a far-off line is not averaged in."""
+    lines = _straddling_lines()
+    lines[1] = SimpleNamespace(words=[_w("ou", 210, 240), _w("plus", 250, 290)], top=2, bottom=3)
+    r = BoxheadReading(leaf_labels=((0, ((0, 0),)), (2, ((0, 2), (1, 0), (1, 1)))),
+                       other_words=((0, 1), (0, 3)))
+    got = dispose_boxhead(r, lines, (0, 1), _grid(rows=(2, 3), refusals=(0, 1)))
+    assert got.refused is None
+    assert sorted(got.labels) == [0] and got.dropped == (2,)
+
+
 def test_a_refusing_reader_and_a_missing_one_label_nothing():
     assert dispose_boxhead(BoxheadReading(refuses_grid=True, cols_seen=5),
                            _lines(), (0, 1), _grid()).labels == {}

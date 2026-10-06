@@ -204,4 +204,9 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # R265 was [[R65]]'s only open neighbour (same `celltype` module, recorded in the 2026-09-30
     # entry above), so closing it returns R65 to the set. Controlled: the set over HEAD's register
     # files is 93, over the edited ones 94.
-    assert len(expected) == 94
+    # RE-MEASURED 2026-10-05 (R293 closed, branch r293-p6-adopts): 94 -> 95, ADDED = [294],
+    # REMOVED = []. R293 was [[R294]]'s only open neighbour (both raised by the same bfs re-read),
+    # so closing it makes R294 a candidate. That is a structural fact, not a parking proposal: the
+    # maintainer ruled R294 recorded as a defect at bfs's acceptance. Controlled: the set over
+    # HEAD's register files is 94, over the edited ones 95.
+    assert len(expected) == 95
