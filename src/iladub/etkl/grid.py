@@ -89,6 +89,43 @@ def _rule_boundaries(band: Band) -> list[float] | None:
     return kept if len(kept) >= 3 else None
 
 
+def widest_tiling_span(band: Band) -> tuple[int, int, int] | None:
+    """`(lo, hi, ncols)`: the widest proper run of the band's lines that the author's rules,
+    drawn within that run, tile; None when the whole band tiles, when it carries no rules, or
+    when no run of at least 2 lines tiles. R295 arm (e), ruled 2026-10-06.
+
+    The oracle is `_rule_boundaries` itself, unmodified, on the sub-band `lines[lo..hi]` holding
+    only the rules whose y-extent overlaps that run (the predicate `compile.page_bands` uses to
+    give a sub-band its rules), with `column_xs` left empty: the derived boundaries belong to the
+    whole band, and only the author's marks are evidence for a part of it.
+
+    PROCEDURAL (CLAUDE.md § 8), and why it is irreducible: it is the existing exact tiling test
+    evaluated over the finite set of contiguous runs, widest first. There is no constant in it.
+    The 2-line floor is `classify`'s own definition of a table (a <2-line band is NON_TABLE),
+    not a tolerance.
+
+    It reports evidence and decides nothing. The run it names is NOT the table's extent: a
+    spanner header row crosses the leaf rules by design, so it never tiles, and the widest
+    tiling run stops below it (measured 2026-10-06 on apple p0, bfs p5, who-covid p2). That is
+    why the caller only escalates on this evidence and never cuts the band at it.
+    """
+    if not band.rules or len(band.lines) < 3 or _rule_boundaries(band) is not None:
+        return None
+    lines = band.lines
+    n = len(lines)
+    for width in range(n - 1, 1, -1):
+        for lo in range(n - width + 1):
+            hi = lo + width - 1
+            top, bottom = lines[lo].top, lines[hi].bottom
+            rules = tuple(r for r in band.rules if r.top <= bottom and r.bottom >= top)
+            if not rules:
+                continue
+            rb = _rule_boundaries(Band(lines[lo:hi + 1], top, bottom, rules))
+            if rb is not None:
+                return lo, hi, len(rb) - 1
+    return None
+
+
 def infer_leaf_grid(band: Band, gutter_pct: float = 0.98,
                     min_gutter_bins: int = 3, sample_target: int = 4) -> LeafGrid:
     """Column grid from the vertical whitespace profile of the band.

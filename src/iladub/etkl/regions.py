@@ -20,8 +20,8 @@ from typing import Sequence
 
 from .bands import Band
 from .geometry import Word, COORD_EPS
-from .grid import LeafGrid, infer_leaf_grid
-from .classifygraph import classify_evidence, run_kind, CLASSIFY_KIND_RQ, TAB
+from .grid import LeafGrid, infer_leaf_grid, widest_tiling_span
+from .classifygraph import classify_evidence, run_kind_ex, CLASSIFY_KIND_RQ, TAB
 
 
 class RegionKind(Enum):
@@ -103,8 +103,15 @@ def classify(band: Band) -> ClassifiedRegion:
     # infer_leaf_grid is undefined on a <2-line band and today's NON_TABLE(<2 lines)
     # branch returns grid=None. The KIND is still derived from tab:lineCount in SPARQL.
     grid = infer_leaf_grid(band) if len(band.lines) >= 2 else None
-    kind_iri, nhw, first_bad = run_kind(str(CLASSIFY_KIND_RQ), classify_evidence(band, grid))
+    kind_iri, nhw, first_bad, under_resolved = run_kind_ex(
+        str(CLASSIFY_KIND_RQ), classify_evidence(band, grid))
     kind = _KIND[kind_iri]
-    reason = _reason(kind, band, grid, nhw, first_bad)
+    if under_resolved:
+        # R295 arm (e): the kind was derived in classify-kind.rq; this only names its evidence.
+        lo, hi, k = widest_tiling_span(band)
+        reason = (f"author rules tile lines {lo}..{hi} into {k} columns "
+                  f"but the band grid has {grid.ncols}")
+    else:
+        reason = _reason(kind, band, grid, nhw, first_bad)
     cells = assign_cells(band, grid) if kind is RegionKind.RECORD_TABLE else ()
     return ClassifiedRegion(kind, band, grid, cells, reason)

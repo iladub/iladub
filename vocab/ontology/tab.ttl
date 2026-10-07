@@ -391,6 +391,12 @@ tab:ClassifyBand a owl:Class ; rdfs:label "Classify band"@en ;
 tab:lineCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "line count"@en .
 tab:gridColumnCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "grid column count"@en ;
     rdfs:comment "grid.ncols from infer_leaf_grid; 0 when the band has fewer than 2 lines (grid undefined)."@en .
+tab:ruledSpanColumnCount a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "ruled span column count"@en ;
+    rdfs:comment "Columns into which the author's rules tile the widest proper run of at least 2 of the band's lines (grid.widest_tiling_span), emitted only when the whole band does not tile. Evidence that the band's grid under-resolves the author's own rules when it exceeds tab:gridColumnCount. It names no extent: a spanner header row never tiles the leaf rules, so the run can stop below the table's header (R295, 2026-10-06)."@en .
+tab:ruledSpanFirstLine a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "ruled span first line"@en ;
+    rdfs:comment "0-based index of the first line of the run tab:ruledSpanColumnCount counts."@en .
+tab:ruledSpanLastLine a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "ruled span last line"@en ;
+    rdfs:comment "0-based index of the last line (inclusive) of the run tab:ruledSpanColumnCount counts."@en .
 tab:bodyStartsAt a owl:DatatypeProperty ; rdfs:domain tab:ClassifyBand ; rdfs:range xsd:integer ; rdfs:label "body starts at"@en ;
     rdfs:comment "First grid ROW that is body rather than header, as derived by header_body_split (headers.py) from the typed-cell evidence. 1 when the header is a single physical line — the assumption the transposition oracles previously hardcoded. A multi-row WRAPPED column header makes it >1; without it, header rows are read as data and destroy the column type-homogeneity looks_transposed tests for."@en .
 tab:HeaderWord a owl:Class ; rdfs:label "Header word"@en ;
