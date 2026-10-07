@@ -209,4 +209,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # so closing it makes R294 a candidate. That is a structural fact, not a parking proposal: the
     # maintainer ruled R294 recorded as a defect at bfs's acceptance. Controlled: the set over
     # HEAD's register files is 94, over the edited ones 95.
-    assert len(expected) == 95
+    # RE-MEASURED 2026-10-07 (R299 raised, PR #316): 95 -> 96, ADDED = [299], REMOVED = []. The
+    # RAISE kind: R299 (a heading whose only blank cell sits in a measure column is admitted as a
+    # data row) is open, named by no criterion, and its full row cites no other row. Controlled:
+    # the set over main's register files is 95, over the branch's 96.
+    assert len(expected) == 96
