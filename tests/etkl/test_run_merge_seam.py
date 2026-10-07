@@ -86,7 +86,9 @@ def test_o2_the_fallback_is_what_saves_the_ink():
     # `donation.offer_single_line`, 9 entries each. Same page, a different reading gained; the
     # run-merge fallback this test is about is untouched.
     # 285 -> 294 on 2026-09-19: `Tessin`, cut free of its notes (trailing.cut_trailing_notes).
-    assert cells(BFS, 6) == 294
+    # 294 -> 288 on 2026-10-06 (R293, ab75542; stale until R296 2026-10-07): the six boxhead
+    # words band 2 asserted as entries are escalated (BOXHEAD_EXCEEDS_RECORD).
+    assert cells(BFS, 6) == 288
     assert cells(APPLE, 2) == 3
 
 
@@ -256,7 +258,11 @@ MERGE_MOVES = {("apple-fy2026q3-statements", 0), ("apple-fy2026q3-statements", 1
 # and bfs p5 180 -> 228 (the row blocks above T1's and T2's notes read without the notes' ink
 # closing their gutters). Both UP.
 D1_MOVES = {
-    ("bfs-population-bilan-2023", 6): 327,
+    # 327 -> 312 on 2026-10-06, DOWN, and an ACCOUNTING move (R293, ab75542; stale until R296
+    # 2026-10-07): band 2's 15 tokens were boxhead lines 2-4 asserted as entries, and are now
+    # escalated (BOXHEAD_EXCEEDS_RECORD). asserted + escalated holds at 346, so no ink was lost.
+    # Still above this page's 276 baseline, and no merge is involved.
+    ("bfs-population-bilan-2023", 6): 312,
     ("bfs-population-bilan-2023", 5): 228,
     # 112 -> 105 on 2026-09-19, DOWN, and the 7 tokens were a MISREADING: the band [`2025 …` row,
     # a stray `"`] asserted ONE cell — the data row read as a header over the `"`. The cut gives
