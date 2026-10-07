@@ -39,20 +39,47 @@ def test_bfs_p6_reads_267_entries_under_band_2s_labels():
     # multi-line continuations below are untouched, and they are what this test is about.
     # 285 -> 294 on 2026-09-19: `Tessin` (band 10) is cut free of the notes set below it
     # (`trailing.cut_trailing_notes`) and is a third lone row read the same way.
-    assert sum(r.cells for r in rep.regions) == 294
+    # 294 -> 288 on 2026-10-06 (R293, ab75542; stale until R296 2026-10-07): the donor band 2's
+    # six entries were boxhead lines 2-4 (`Cantons` … `âgées 2`) asserted as data. A header_lines
+    # answer above 1 now escalates the region (BOXHEAD_EXCEEDS_RECORD). No other band moved.
+    assert sum(r.cells for r in rep.regions) == 288
     assert (rep.regions[3].cells, rep.regions[7].cells, rep.regions[10].cells) == (9, 9, 9)
     g = rep.graph
-    doc = next(s for s in g.subjects(RDF.type, TAB.RecordTable) if str(s).endswith("#table2"))
+    doc = next(s for s in g.subjects(RDF.type, TAB.RecordTable) if str(s).endswith("#table4"))
     doc = URIRef(str(doc).rsplit("#", 1)[0])
+    # SUBSTITUTED 2026-10-07 (R296): the donor used to be `#table2`, a record table whose own
+    # labels were the oracle. Since R293 the donor band escalates (BOXHEAD_EXCEEDS_RECORD) and
+    # mints `#region2`, a proposition with no labels, so the donated labels are pinned to the
+    # donor's line 0 as the page prints it (its surfaceText is a column-clipped render,
+    # `0-19 an…`, so it cannot serve). c7 and c8 are both `Rapport de`: the line-0 donation
+    # cannot carry the boxhead's lower lines (R297). Where the link points is R298's subject,
+    # pinned by the strict xfail below.
     donor = URIRef(f"{doc}#table2")
-    want = _labels(g, donor)
-    assert want[0] == "Grandes régions", want
+    want = _labels(g, URIRef(f"{doc}#table4"))
+    assert want == ["Grandes régions", "Total", "0-19 ans", "20-39 ans", "40-64 ans",
+                    "65-79 ans", "80 ans ou plus", "Rapport de", "Rapport de"], want
     for idx, cells in {4: 36, 5: 54, 6: 36, 8: 72, 9: 63}.items():
         t = URIRef(f"{doc}#table{idx}")
         assert rep.regions[idx].cells == cells, idx
         assert _labels(g, t) == want, idx
         assert (t, TAB.headerDonatedBy, donor) in g, idx
     assert (donor, TAB.headerDonatedBy, None) not in g
+
+
+@corpus_only
+@pytest.mark.xfail(strict=True, reason=(
+    "R298: since R293 the donor band 2 escalates and mints #region2, but the eight "
+    "tab:headerDonatedBy links still name #table2, which has no triples. Pointing them at "
+    "#region2 un-adopts p6 at document scope (bfs 0.9074 -> 0.8879), so the dangling link is "
+    "load-bearing and the repair is a design question."))
+def test_every_donation_link_on_bfs_p6_resolves():
+    from iladub.etkl.compile import compile_tables
+
+    g = compile_tables(BFS, 6, validate_shapes=False).graph
+    objects = set(g.objects(None, TAB.headerDonatedBy))
+    assert objects
+    for o in objects:
+        assert (o, RDF.type, None) in g, o
 
 
 @corpus_only
@@ -69,10 +96,13 @@ def test_donation_moves_no_ink_between_the_ledgers():
     # exactly what it did at 808aa7a, which is the prediction this test pins.
     # (312, 25) -> (327, 19) on 2026-09-19: `Tessin`'s 15 tokens are read, and 6 of them were
     # escalated with the notes they were fused to. The continuation bands below are unchanged.
-    assert (rep.asserted, rep.escalated) == (327, 19)
+    # (327, 19) -> (312, 34) on 2026-10-06 (R293, ab75542; stale until R296 2026-10-07): the
+    # donor band 2's 15 boxhead tokens move from asserted to escalated (BOXHEAD_EXCEEDS_RECORD).
+    # The page total holds at 346, and the continuation bands are unchanged.
+    assert (rep.asserted, rep.escalated) == (312, 34)
     assert (rep.regions[3].tokens_asserted, rep.regions[7].tokens_asserted) == (20, 16)
     assert {i: (r.tokens_asserted, r.tokens_escalated) for i, r in enumerate(rep.regions)
-            if i in (2, 4, 5, 6, 8, 9)} == {2: (15, 0), 4: (36, 0), 5: (54, 0), 6: (36, 0),
+            if i in (2, 4, 5, 6, 8, 9)} == {2: (0, 15), 4: (36, 0), 5: (54, 0), 6: (36, 0),
                                             8: (72, 0), 9: (63, 0)}
 
 
