@@ -58,6 +58,21 @@ def is_date(s):
     return False
 
 
+_CLOCK_TIME = re.compile(
+    r"^(?:0?[1-9]|1[0-2]):[0-5]\d\s?(?:[ap]m?|[ap]\.m\.)$"
+    r"|^(?:[01]\d|2[0-3]):[0-5]\d$",
+    re.I,
+)
+
+
+def is_clock_time(s):
+    """A time of day: 12-hour WITH its meridiem ('6:51a', '12:26 pm', '9:05 p.m.'), or 24-hour
+    zero-padded ('07:30'). PROCEDURAL raw typing — a format grammar like is_date, with no context
+    and no tuned constant. Conservative for is_date's reason: an unpadded 'H:MM' with no meridiem
+    is also a ratio, a score or a years:months age, so it stays Text."""
+    return bool(_CLOCK_TIME.match(s.strip()))
+
+
 def is_currency(s):
     """A recognized currency symbol ($ € £ ¥) adjacent to a numeric body. PROCEDURAL raw typing."""
     return bool(_CURRENCY.match(s.strip()))
@@ -111,6 +126,8 @@ def _cell_datatype(t):
         return TAB.ParenthesizedNumber
     if is_date(t):
         return TAB.Date
+    if is_clock_time(t):
+        return TAB.ClockTime
     if is_currency(t):
         return TAB.Currency
     return TAB.Text
