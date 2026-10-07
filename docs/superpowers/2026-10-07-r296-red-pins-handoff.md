@@ -1,6 +1,6 @@
 # Handoff: R296. Four red pins were R293's own move, and behind them is a dangling link the reading depends on (2026-10-07)
 
-**Serves:** maintenance. Step (1) of the maintainer's "go in order" (2026-10-07), before loop 2
+**Serves:** maintenance — step (1) of the maintainer's "go in order" (2026-10-07), before loop 2
 (Caltrain's header).
 
 **Topic:** compile · **Date:** 2026-10-07
