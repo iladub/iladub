@@ -854,7 +854,7 @@ _TAB_SHAPE_FILES = ("tab-shapes.ttl", "tab-physical-shapes.ttl")
 # found it on 2026-08-31, inside the sentence explaining that such a citation rots. The call is
 # `grep -n 'conforms, text, legs = _validate'`. While the furnishing runs at document
 # scope only — measured: page-scope furnishing raises 4 spurious expansion requests on
-# cbh-stem and 5 on apple, because no page graph ever carries a `dec:supersedes` edge.
+# cbh-stem and 5 on apple: page graphs never carry section repair's or adoption's supersedes.
 # So `dec:EscalationShape` binds rows on the document leg and none on the page leg. Task 5's
 # vacuity registry has to be able to say that; a registry keyed on shape name alone cannot.
 #

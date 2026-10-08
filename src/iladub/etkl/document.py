@@ -1128,10 +1128,10 @@ def _verdict_decision(g: Graph, page_doc: URIRef, idx: int):
 def _effective_verdict(g: Graph, v: URIRef) -> URIRef:
     """The HEAD of `v`'s supersession chain — `v` itself when nothing supersedes it.
 
-    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). `dec:supersedes` has four writers:
-    section repair, the R261 printed-total adoption and datagrid adoption in `compile_document`,
-    and R301's `ruleguard.mint_refusal` in the PAGE compile, which runs before all three. Each
-    one's object is this walk's head. Before D2 at most one writer reached a verdict, so
+    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). In the compile, `dec:supersedes` has
+    four writers: section repair, R261's printed-total and datagrid adoptions in `compile_document`,
+    and R301's `ruleguard.mint_refusal` in the PAGE compile, which runs before all
+    three. Each one's object is this walk's head. Before D2 at most one writer reached a verdict, so
     `_verdict_decision`'s pass-1 answer was always the one that still stood. D2 admits a band
     that ASSERTED, which is exactly the band section repair has already re-read, so attaching
     the admission to the PASS-1 verdict gives that verdict TWO incoming edges and
@@ -1302,10 +1302,10 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     #
     # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
     # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
-    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges — section
-    # repair and datagrid adoption, which `grep -n "DEC.supersedes"` on this file shows are the
-    # only two (re-measured 2026-08-31; BY GREP, not by line, per plan-rule 7) — write into THIS
-    # graph and into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
+    # a withdrawal where the `dec:supersedes` edges are. Three writers of those edges (section
+    # repair, R261's printed total and datagrid adoption: `grep -n "DEC.supersedes"` on this file)
+    # write into THIS graph only; the fourth, `ruleguard.mint_refusal`, writes a PAGE graph merged
+    # here. 0 repair/adoption edges were observed in 13 page graphs (measured 2026-08-15).
     # A page-scope site is therefore not merely early, it is permanently blind:
     # `compile_tables` returns before the driver has anything to link, and the link is then
     # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
