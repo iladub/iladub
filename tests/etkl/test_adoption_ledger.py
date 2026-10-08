@@ -36,7 +36,7 @@ class _R:
     # vanish unnoticed. Defaulting to 0 leaves every existing expectation untouched — on a
     # report that only escalates, both new terms are identically zero.
     tokens_asserted: int = 0
-    # Added R301 Task 2 (spec § 2.4 e). Only an APPENDED region (index >= len(bands)) ever
+    # Added R301 I2 (spec § 2.4 e). Only an APPENDED region (index >= len(bands)) ever
     # carries this; every band-indexed report above leaves it at the default, which is why
     # every existing case is unaffected.
     line_indices: tuple = ()
@@ -182,7 +182,7 @@ def test_an_untouched_assert_only_band_keeps_its_ink_on_the_ASSERTED_side():
     assert led.escalated_tokens == 0, "and none of it is booked as escalated"
 
 
-# --- an APPENDED region (R301 Task 2, spec § 2.4 e, G3). `touched` ranged over
+# --- an APPENDED region (R301 I2, spec § 2.4 e, G3). `touched` ranged over
 # `range(len(bands))` only, so an appended region (index >= len(bands)) could never be
 # marked touched even when the grid re-read exactly the lines it recorded in
 # `line_indices` — its own booked ink would then be double counted beside the lines the
@@ -202,3 +202,20 @@ def test_an_appended_region_the_grid_rereads_is_touched_not_double_booked():
     assert led.residue == ()
     assert (led.asserted_tokens, led.escalated_tokens) == (7, 0)
     assert led.asserted_tokens + led.escalated_tokens <= sum(len(l.words) for l in lines)
+
+
+def test_an_appended_regions_unread_line_is_residue_not_dropped():
+    """R301 I2's RESIDUE half (final review F6). The cover join must reach the residue term as
+    well as `touched`: an appended region the grid re-read only PART of loses its own booking, so
+    the line it recorded in `line_indices` and the grid did not admit has to come back as residue.
+    Restrict the residue term to band indices and that line's 4 words are booked by nobody."""
+    lines = [_line(2, 0.0), _line(3, 10.0), _line(4, 20.0)]           # 9 tokens on the page
+    bands = [_B(0.0, 1.5)]                                             # band 0 covers line 0 only
+    reports = [_R("ignored"),                                          # booked nothing
+               _R("escalated", tokens_escalated=7, line_indices=(1, 2))]   # appended, lines 1-2
+    led = build_ledger(lines, (1,), bands, reports)                    # the grid reads line 1
+    assert led.touched == frozenset({1})
+    assert led.admitted == (1,)
+    assert led.residue == (2,)
+    # line 1's 3 words asserted, line 2's 4 escalated; region 1's own 7 are superseded, not added
+    assert (led.asserted_tokens, led.escalated_tokens) == (3, 4)

@@ -107,7 +107,7 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
 
     def _covers(i, j):
         # i < len(bands): the band's own bounds. i >= len(bands): an APPENDED region, covered
-        # by the exact lines it recorded in `line_indices` when it was minted (R301 Task 1).
+        # by the exact lines it recorded in `line_indices` when it was minted (R301).
         if i < len(bands):
             return _inside(bands[i], lines[j])
         return j in reports[i].line_indices
