@@ -76,13 +76,22 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     at once, and the page would score higher than it read. Selecting by the tokens cannot: a band
     that booked nothing (every "ignored" band) still contributes nothing to either side.
 
-    A band is TOUCHED when the grid admitted at least one line inside it. Touched bands lose
-    their escalation (part of their ink has been read, so their record no longer describes what
-    happened) and contribute their UNREAD lines as residue. Untouched bands keep their own
-    token count verbatim.
+    A region is TOUCHED when the grid admitted at least one line its COVER names. Touched
+    regions lose their escalation (part of their ink has been read, so their record no longer
+    describes what happened) and contribute their UNREAD lines as residue. Untouched regions
+    keep their own token count verbatim.
 
-    The band↔line join is interval containment on the author's own band bounds — the idiom
-    `page_bands` already uses for hrules — never a coordinate tolerance.
+    COVER is region-kind-dependent (R301 I2, spec § 2.4 e): for `i < len(bands)` it is interval
+    containment on the author's own band bounds — the idiom `page_bands` already uses for
+    hrules, never a coordinate tolerance — and for an APPENDED region (`i >= len(bands)`, a
+    fallback grid region the producer guard may escalate) it is the exact line set the region
+    recorded in `reports[i].line_indices` when it was minted. `touched` used to range only over
+    `range(len(bands))`, an asymmetry with `booked_bands` below (which already ranges over every
+    report): an appended region the grid re-read could never be marked touched, so its own
+    booked tokens sat beside the very lines `admitted` was already counting — the double count
+    this join exists to prevent, moved to the one region kind the old range excluded. With no
+    appended region `i < len(bands)` always, so the cover join is identical to the band-only
+    form for every input the existing tests pin.
 
     Indices outside `range(len(lines))` are dropped rather than aliased or phantom-admitted,
     so a caller whose grid indexes a different line sequence loses that row instead of silently
@@ -96,15 +105,22 @@ def build_ledger(lines, grid_rows, bands, reports) -> LineLedger:
     def _inside(band, line):
         return band.top <= line.top <= band.bottom
 
+    def _covers(i, j):
+        # i < len(bands): the band's own bounds. i >= len(bands): an APPENDED region, covered
+        # by the exact lines it recorded in `line_indices` when it was minted (R301 Task 1).
+        if i < len(bands):
+            return _inside(bands[i], lines[j])
+        return j in reports[i].line_indices
+
     touched = frozenset(
-        i for i in range(len(bands))
-        if any(_inside(bands[i], lines[j]) for j in admitted)
+        i for i in range(len(reports))
+        if any(_covers(i, j) for j in admitted)
     )
 
     residue = tuple(
-        j for j, ln in enumerate(lines)
+        j for j in range(len(lines))
         if j not in admitted_set
-        and any(i in touched and _inside(bands[i], ln) for i in booked_bands)
+        and any(i in touched and _covers(i, j) for i in booked_bands)
     )
 
     # An UNTOUCHED band keeps its own reading — nothing supersedes it — so ink it ASSERTED is

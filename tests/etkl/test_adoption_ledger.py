@@ -36,6 +36,10 @@ class _R:
     # vanish unnoticed. Defaulting to 0 leaves every existing expectation untouched — on a
     # report that only escalates, both new terms are identically zero.
     tokens_asserted: int = 0
+    # Added R301 Task 2 (spec § 2.4 e). Only an APPENDED region (index >= len(bands)) ever
+    # carries this; every band-indexed report above leaves it at the default, which is why
+    # every existing case is unaffected.
+    line_indices: tuple = ()
 
 
 def _line(n_words, top):
@@ -176,3 +180,25 @@ def test_an_untouched_assert_only_band_keeps_its_ink_on_the_ASSERTED_side():
     assert led.residue == ()
     assert led.asserted_tokens == 2 + 7, "band 1's own asserted count carries, on the asserted side"
     assert led.escalated_tokens == 0, "and none of it is booked as escalated"
+
+
+# --- an APPENDED region (R301 Task 2, spec § 2.4 e, G3). `touched` ranged over
+# `range(len(bands))` only, so an appended region (index >= len(bands)) could never be
+# marked touched even when the grid re-read exactly the lines it recorded in
+# `line_indices` — its own booked ink would then be double counted beside the lines the
+# grid admits. The fix joins a region's cover to `line_indices` once its index runs past
+# the bands, instead of to `_inside(bands[i], ...)`.
+
+def test_an_appended_region_the_grid_rereads_is_touched_not_double_booked():
+    """R301 I2 (spec § 2.4 e, G3). A fallback grid region appended after the bands, whose ink the
+    guard has since escalated, is re-read by adoption's grid. The ledger must touch it through its
+    OWN lines, never book its tokens beside the lines the grid admits."""
+    lines = [_line(2, 0.0), _line(3, 10.0), _line(4, 20.0)]           # 9 tokens on the page
+    bands = [_B(0.0, 1.5)]                                             # band 0 covers line 0 only
+    reports = [_R("ignored"),                                          # booked nothing
+               _R("escalated", tokens_escalated=7, line_indices=(1, 2))]   # appended, lines 1-2
+    led = build_ledger(lines, (1, 2), bands, reports)
+    assert led.touched == frozenset({1})
+    assert led.residue == ()
+    assert (led.asserted_tokens, led.escalated_tokens) == (7, 0)
+    assert led.asserted_tokens + led.escalated_tokens <= sum(len(l.words) for l in lines)
