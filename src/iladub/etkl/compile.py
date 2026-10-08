@@ -784,6 +784,12 @@ class RegionReport:
     # carry more than one grid (R290), and the document driver must attach each superseded
     # band to the grid that actually re-read its lines, not to whichever grid comes first.
     supersedes: tuple[int, ...] = ()
+    # On an APPENDED (fallback) data-grid region only (R301 Task 1): the indices into the
+    # page's `_lines` — the fallback's `text_lines(...)` filtered on `ln.words` and sorted by
+    # `top` — that THIS region read. Set to `tuple(grid.rows)` where the region is minted;
+    # every band report leaves it at the default. R301's producer guard (Task 3) joins an
+    # escalated appended region back to the lines it read without re-deriving the grid.
+    line_indices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1899,6 +1905,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # second region appeared on a page they had pinned to exactly one.
     if datagrid_fallback and asserted_total == 0 and escalated_total == 0:
         from .datagrid import derive_data_grids, emit_data_grid
+        from .bands import Band
         _lines = [ln for ln in text_lines(extract_words(pdf_path, page_number))
                   if ln.words]
         _lines.sort(key=lambda ln: ln.top)
@@ -1918,9 +1925,16 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # preserved either way, which is why no score moved and no sum identity caught it.
             band_marks.append((asserted_total, escalated_total))
             asserted_total += _tokens
+            # R301 TASK 1: this region's own lines (`_grid.rows`) and their rendered text, so
+            # the producer guard (Task 3) can escalate THIS region without re-deriving the
+            # grid, and Task 2's build_ledger can join it back to the page's `_lines`.
+            _grid_lines = tuple(_lines[i] for i in _grid.rows)
+            _ascii = render_ascii(Band(lines=_grid_lines,
+                                        top=_grid_lines[0].top, bottom=_grid_lines[-1].bottom))
             reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
-                                        None, str(TAB.DataGrid), "",
-                                        table_uri=_grid_uri))
+                                        None, str(TAB.DataGrid), _ascii,
+                                        table_uri=_grid_uri,
+                                        line_indices=tuple(_grid.rows)))
 
     band_marks.append((asserted_total, escalated_total))
     from dataclasses import replace as _dc_replace
