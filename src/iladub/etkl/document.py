@@ -1128,10 +1128,10 @@ def _verdict_decision(g: Graph, page_doc: URIRef, idx: int):
 def _effective_verdict(g: Graph, v: URIRef) -> URIRef:
     """The HEAD of `v`'s supersession chain — `v` itself when nothing supersedes it.
 
-    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). Until D2 widened the adoption
-    gate a band could be superseded at most once per compile, so the two writers of
-    `dec:supersedes` — section repair (`graph.add((v2, DEC.supersedes, v1))`) and datagrid
-    adoption (the admission site below) — could never both reach one verdict, and
+    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). `dec:supersedes` has four writers:
+    section repair, the R261 printed-total adoption and datagrid adoption in `compile_document`,
+    and R301's `ruleguard.mint_refusal` in the PAGE compile, which runs before all three. Each
+    one's object is this walk's head. Before D2 at most one writer reached a verdict, so
     `_verdict_decision`'s pass-1 answer was always the one that still stood. D2 admits a band
     that ASSERTED, which is exactly the band section repair has already re-read, so attaching
     the admission to the PASS-1 verdict gives that verdict TWO incoming edges and
@@ -1436,8 +1436,8 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
 # what that outcome means at `compile_tables`' adoption gate, and nothing it does not record.
 # A KeyError on a fifth value is deliberate: an outcome nobody named must not get a cause.
 _ADOPTION_CAUSE = {
-    "not_opened": "the re-compile's adoption gate did not open (nothing escalated, or no data "
-                  "grid derived)",
+    "not_opened": "the re-compile adopted nothing: nothing escalated, or no data grid was "
+                  "derived",
     "ledger_refused": "the data grid left no less ink unread than the bands did",
     "guard_refused": "a data grid it would install carries rule-separated ink",
 }
@@ -1639,12 +1639,12 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                 # dec:DecisionHolon, which is why the link joins the two judgements and NOT the
                 # two dec:Process containers) keeps both readings and makes the supersession
                 # queryable: a chain whose verdict decision is the object of a `dec:supersedes`
-                # is history, and the one that is not is the effective verdict.
+                # is history. The edge lands on the chain's HEAD: R301's guard may stand on v1.
                 graph += _band_reading_subgraph(rep2.graph, r2_doc, idx)
                 v1 = _verdict_decision(graph, page_doc_uri(p), idx)
                 v2 = _verdict_decision(rep2.graph, r2_doc, idx)
                 if v1 is not None and v2 is not None:
-                    graph.add((v2, DEC.supersedes, v1))
+                    graph.add((v2, DEC.supersedes, _effective_verdict(graph, v1)))
                 new_regions[idx] = r2
                 repaired.append((p, idx))
                 adopted_any = True
@@ -1692,7 +1692,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             v1 = _verdict_decision(graph, page_doc_uri(p), j)
             v2 = _verdict_decision(rep2.graph, r2_doc, j)
             if v1 is not None and v2 is not None:
-                graph.add((v2, DEC.supersedes, v1))
+                graph.add((v2, DEC.supersedes, _effective_verdict(graph, v1)))
             new_regions[j] = r2j
             adopted_any = True
         if adopted_any:

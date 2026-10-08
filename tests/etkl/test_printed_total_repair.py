@@ -446,3 +446,32 @@ def test_the_r7_refusal_keeps_band_one_a_table_and_mints_no_printed_total(dirty_
     # reading log for band 1 never rode in either.
     assert (URIRef(f"{P0}#ignored1"), None, None) not in g
     assert not list(g.subjects(None, URIRef(f"{R2}#region1")))
+
+
+def test_the_r261_adoption_supersedes_the_head_a_page_guard_left(pdf, monkeypatch):
+    """R301 final review F1, at the REAL R261 printed-total adoption site: the twin of
+    `test_section_repair.py::test_section_repair_supersedes_the_head_a_page_guard_left`. The
+    guard's pass-1 write is simulated with `ruleguard.mint_refusal` on band 1's verdict in the
+    page graph (no synthetic page makes the guard refuse a band this block then adopts); the
+    adoption's `v2` must supersede that refusal, the chain's head, and never `v1` a second time."""
+    from iladub.etkl import document as D
+    from iladub.etkl.ruleguard import mint_refusal
+    path, _ = pdf
+    real = D.compile_tables
+
+    def pass_one_guarded(*a, **k):
+        rep = real(*a, **k)
+        if (k.get("doc_uri") == URIRef(P0) and not k.get("section_repair_bands")
+                and not k.get("datagrid_adopt")):
+            mint_refusal(rep.graph, URIRef(P0), 1, _verdict(rep.graph, P0, 1), "simulated")
+        return rep
+
+    monkeypatch.setattr(D, "compile_tables", pass_one_guarded)
+    doc = _doc(monkeypatch, path, _Yes())
+    g = doc.graph
+    assert doc.pages[0].regions[1].verdict == "asserted"     # the R261 block adopted band 1
+    v1, v2 = _verdict(g, P0, 1), _verdict(g, R2, 1)
+    refusal = URIRef(f"{P0}#region1-refusal")
+    assert None not in (v1, v2)
+    assert set(g.subjects(URIRef(DEC + "supersedes"), v1)) == {refusal}
+    assert set(g.subjects(URIRef(DEC + "supersedes"), refusal)) == {v2}
