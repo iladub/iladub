@@ -67,6 +67,12 @@ def test_o1_every_other_page_is_the_baseline_region_by_region(doc):
              for p in range(len(doc.pages))
              if p not in MOVED and _regions(doc.pages[p]) != base["pages"][p]["regions"]}
     assert moved == {}
+    # The page totals too: a region list can match while the page books a region it does not
+    # list (an appended region's tokens are in the page total only through its report).
+    totals = {p: ((doc.pages[p].asserted, doc.pages[p].escalated),
+                  (base["pages"][p]["asserted"], base["pages"][p]["escalated"]))
+              for p in range(len(doc.pages)) if p not in MOVED}
+    assert {p: t for p, t in totals.items() if t[0] != t[1]} == {}
 
 
 # ---------------------------------------------------------------- O2 (§ 8 S3)
@@ -82,6 +88,14 @@ def _refusals(g):
     return out
 
 
+def _withdrawn(doc):
+    """The region IRIs whose report the guard escalated (`ruleguard`'s RULE_SEPARATED_INK)."""
+    from iladub.etkl.document import page_doc_uri
+    return {URIRef(f"{page_doc_uri(p)}#region{i}")
+            for p, rep in enumerate(doc.pages) for i, r in enumerate(rep.regions)
+            if r.reason == "RULE_SEPARATED_INK"}
+
+
 def test_o2_no_rule_separated_cell_remains(doc):
     from iladub.etkl.ruleguard import rule_separated_cells
     assert rule_separated_cells(doc.graph) == frozenset()
@@ -93,6 +107,12 @@ def test_o2_each_withdrawn_region_has_one_refusal_and_it_ends_the_chain(doc):
     print("\nO2 refused regions:", sorted(str(r) for r in refusals))
     assert refusals, "no refusal decision in the document graph: nothing was withdrawn"
     assert {r: len(ds) for r, ds in refusals.items() if len(ds) != 1} == {}
+    # EVERY withdrawn table has its refusal, not only every refusal its region: the regions a
+    # refusal regards are exactly the regions whose report the guard re-booked. Keyed by the
+    # PAGE doc URI because the merged graph keeps pass 1's decision log for a band adoption did
+    # not supersede; an adopted page's report (`doc.pages[p]` is then the re-compile's) carries
+    # the same band index.
+    assert set(refusals) == _withdrawn(doc)
     q = (QDIR / "effective-chain.rq").read_text(encoding="utf-8")
     for region, (d,) in refusals.items():
         assert str(region).rsplit("#", 1)[1].startswith("region")

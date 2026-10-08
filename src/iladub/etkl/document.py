@@ -1803,19 +1803,23 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                                carried_header_roles=carried_by_page.get(p),
                                datagrid_adopt=True)
         # DID THE ADOPTION BRANCH ACTUALLY FIRE? The page compile SAYS so (R301, spec § 2.5):
-        # `rep_a.adoption` records what its gate did, and the note states that observed cause
-        # instead of inferring one from a missing region. The inference was false on fed-h41 p7
-        # (F3): its re-compile derived a grid, the guard refused it, and the note blamed a
-        # missing grid region because the index it looked at was not the grid's.
+        # `rep_a.adoption` records what its gate did, and the note states that observed cause.
+        # It used to be inferred from the grid region being absent, which it is on EVERY
+        # re-compile that installed no grid, whatever stopped it: on fed-h41 that note read "no
+        # data grid region" for a guard refusal (p7, F3), three ledger refusals and a gate that
+        # never opened. This check, not the region index below, is what repairs F3.
         if rep_a.adoption != "adopted":
             notes.append(f"page {p}: adoption refused — {_ADOPTION_CAUSE[rep_a.adoption]}")
             continue
-        # The appended grid region sits at index `len(bands)` (the band-index contract), and
-        # `band_lists[p]` is `page_bands(pdf_path, p)` with the same arguments the re-compile
-        # reads its bands with — so this is the RE-COMPILE's band count. It used to be
-        # `len(pages[p].regions)`, which also counts the regions page p's own compile APPENDED
-        # (a `datagrid_fallback` grid, its residue) and so pointed past the grid (F3).
-        grid_idx = len(band_lists[p])
+        # PASS 1's REGION COUNT, not the band count. `compile_tables`' adoption branch keeps
+        # EVERY pre-adoption report (its `reports = [... for i, r in enumerate(reports)]`
+        # rewrite preserves the length) and only then appends its grids, so the first grid sits
+        # after any `datagrid_fallback` region the page also appends — at `len(bands) + k`, not
+        # `len(bands)` (fed-h41 p7: 3 bands, the fallback region at 3, the grid at 4). Pass 1
+        # reads the same page with the same carried reading and adoption off, so it appends the
+        # same pre-adoption regions; its count is the grid's index. The `grid_idx < len(...)`
+        # guard below still turns any disagreement into a refusal note, never an IndexError.
+        grid_idx = len(pages[p].regions)
         grid_uri = (rep_a.regions[grid_idx].table_uri
                     if grid_idx < len(rep_a.regions) else None)
         if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
@@ -1824,8 +1828,8 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             notes.append(f"page {p}: adoption refused — no data grid region on the re-compile")
             continue
         # AFTER the refusal above, never before (final review m2): `rep_a.regions[idx]` over
-        # `range(grid_idx)` is unguarded — a re-compile that returned fewer regions than the
-        # band count would raise IndexError here, which is the very case the
+        # `range(grid_idx)` is unguarded — a re-compile that returned fewer regions than pass 1
+        # would raise IndexError here, which is the very case the
         # `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
         superseded = [idx for idx in range(grid_idx)
                       if rep_a.regions[idx].verdict == "superseded"]
