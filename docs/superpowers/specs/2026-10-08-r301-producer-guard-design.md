@@ -241,3 +241,45 @@ appended regions as well (F3). The plan measures where the band count is availab
   stops: that is a spec change.
 
 **R301 closes** when O1 to O3 and O5 hold on `main`, with O4 run and recorded.
+
+## 8. Addendum: S1–S3, ruled by the maintainer in chat on 2026-10-08
+
+The plan's first measurements (`docs/superpowers/2026-10-08-r301-plan-seams-handoff.md`, PR #323)
+found three places where this spec was wrong or left something open. The maintainer accepted all
+three proposed remedies. **This section overrides any earlier sentence it contradicts.** The plan
+cites this section and does not re-derive it.
+
+**S1. The extent of a withdrawal (amends § 2.2).**
+- The handoff measured that the roots rule `t`, or anything starting `t-`, also matches
+  `…#p{n}-datagrid-2…` (a sibling grid, R290) and `…#p{n}-datagrid-residue…`.
+- **Roots now exclude three kinds of subject:**
+  - any root in the URI space of **another** report's `table_uri` `u`, meaning the root equals `u`
+    or starts with `u-`;
+  - any root in the residue's URI space, `{doc}#p{page}-datagrid-residue` or anything starting
+    with that plus `-`;
+  - as before, every root explicitly typed `dec:DecisionHolon`.
+- The closure is unchanged: outgoing edges, followed into blank nodes only.
+
+**S2. The refusal decision's identity (amends § 2.3).** The refusal is **not** minted through
+`ReadingRecorder`/`BandRecorder`. A second `recorder.band(i)` restarts at `-d0` and overwrites the
+band's existing decision, and the recorder is bound to the graph from before adoption. Instead the
+refusal is written directly, and it has five fixed properties:
+- **IRI:** `{doc}#region{i}-refusal`, deterministic and outside the `-d{n}` space.
+- **`rdfs:label`:** `"refusal"`, never `"verdict"`. So `document._verdict_decision`, which returns
+  the first `"verdict"` under `#region{i}-d`, still finds the original.
+- **`dec:order`:** one past the superseded head's `dec:order`. **Interpretation for the plan,
+  flagged rather than ruled:** a fallback-path `{t}-admission` head carries no `dec:order` (handoff
+  M9), and there the refusal's order is `0`.
+- **`dec:regarding`:** `{doc}#region{i}`, plus `dec:rationale` and `dec:decidedBy etkl:reader`.
+- **Option space and choice:** two `dec:Option`s labelled `admit` and `refuse`, with
+  `dec:chosen` → `refuse`.
+
+`dec:supersedes` → the head, and the raise-on-missing-head rule of § 2.3 stand.
+
+**S3. Oracle O2 (amends § 5).** `effective-chain.rq` returns `dec:chosen/rdfs:label`. So for each
+withdrawn table's `{doc}#region{i}`, O2 now reads:
+- the chain's **last row is the refusal**, with judgement `refusal` and chosen `refuse`;
+- each withdrawn table has exactly one such decision;
+- refused cells in the document graph go from 13 to 0.
+
+The option is **not** relabelled to fit the oracle. "Returns `escalated`" in § 5 is withdrawn.
