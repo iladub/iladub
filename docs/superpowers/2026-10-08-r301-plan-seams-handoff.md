@@ -170,7 +170,14 @@ delegated to two subagents. Authorship was not delegated. The preflight was logg
 
 ## 3. What was decided
 
-Nothing. S1–S3 are proposals recorded only in this file, so they are reversible.
+Nothing at the time of writing; S1–S3 were proposals.
+
+**RULED later the same day:** the maintainer accepted all three proposed remedies in chat on
+2026-10-08. They are recorded in the spec's § 8 addendum (`8fa08fc`, on PR #322's branch),
+which overrides the spec sentences they amend. § 5 item 1 is therefore done. **The next action
+is § 5 item 2:** write the plan in a fresh session, from spec §§ 2–8 and § 1 of this file.
+§ 8's `dec:order = 0` for an admission head is flagged there as the plan's interpretation, not
+a ruling.
 
 ## 4. Unverified
 
