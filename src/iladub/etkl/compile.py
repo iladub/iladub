@@ -2158,6 +2158,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
         from .datagrid import page_has_table
         score = 0.0 if page_has_table(pdf_path, page_number) else 1.0
 
+    # Spec 2026-10-08-rule-separated-ink-design.md § 2: carry the author's vertical rules and each
+    # cell's glyph extents into the page graph, so tab:RuleSeparatedInkShape can refuse a cell whose
+    # ink a rule separates. One seam for every producer (each cell emitter writes tab:onPage beside
+    # tab:hasBBox). Runs whether or not shapes are validated, so the returned graph does not depend
+    # on the flag; adds nothing on a page with no rule.
+    from .ruleink import carry_from_pdf
+    carry_from_pdf(graph, str(doc), pdf_path)
+
     if validate_shapes and (
         any(graph.subjects(RDF.type, TAB.RecordTable))
         or any(graph.subjects(RDF.type, TAB.HierarchicalTable))

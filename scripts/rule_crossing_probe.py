@@ -15,6 +15,10 @@ usage: python scripts/rule_crossing_probe.py <pdf> <out.json>
    min(y1, rule.bottom) - max(y0, rule.top) > 0 (positive-length). Touching-only: x strict inside
    and that intersection == 0 exactly. Full-height: rule.top <= y0 and rule.bottom >= y1.
    No tolerance is applied anywhere.
+5. (2026-10-08, spec 2026-10-08-rule-separated-ink-design.md § 1) Each crossing example also
+   carries `glyph_side`: the cell's glyphs are the page's non-space chars whose centre lies inside
+   the 2dp bbox (inclusive); `fires` iff one lies wholly left of the rule (x1 <= rule.x) AND one
+   wholly right (x0 >= rule.x). A glyph across the rule counts on neither side.
 """
 import sys, json, collections, time
 import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
@@ -77,6 +81,27 @@ def rules_for(page):
         rules_cache[page] = extract_rules(pdf, page)
     return rules_cache[page]
 
+import pdfplumber
+_pdf = pdfplumber.open(pdf)
+chars_cache = {}
+def chars_for(page):
+    if page not in chars_cache:
+        chars_cache[page] = [c for c in _pdf.pages[page].chars if c["text"].strip()]
+    return chars_cache[page]
+def glyph_side(page, x0, y0, x1, y1, r):
+    # glyphs of the cell: centre inside the (2dp) cell bbox, inclusive
+    gl = [c for c in chars_for(page)
+          if x0 <= (c["x0"]+c["x1"])/2 <= x1 and y0 <= (c["top"]+c["bottom"])/2 <= y1]
+    left = [c for c in gl if c["x1"] <= r.x]
+    right = [c for c in gl if c["x0"] >= r.x]
+    straddle = [c for c in gl if c["x0"] < r.x < c["x1"]]
+    def yov(c): return min(c["bottom"], r.bottom) - max(c["top"], r.top) > 0
+    return {"n_glyphs": len(gl), "left": len(left), "right": len(right), "straddle": len(straddle),
+            "fires": bool(left) and bool(right),
+            "fires_glyph_yov": any(yov(c) for c in left) and any(yov(c) for c in right),
+            "straddle_text": "".join(c["text"] for c in straddle),
+            "right_text": "".join(c["text"] for c in right)[:40]}
+
 tables = []
 examples = []
 for t in sorted(graph_tables, key=str):
@@ -109,8 +134,9 @@ for t in sorted(graph_tables, key=str):
                 rec["crossings"] += 1
                 full = r.top <= y0 and r.bottom >= y1
                 rec["full_height" if full else "partial"] += 1
+                gs = glyph_side(page, x0, y0, x1, y1, r)
                 if len(examples) < 2000:
-                    examples.append({"page_index": page, "table": str(t), "cell": str(c), "cell_type": ctype,
+                    examples.append({"glyph_side": gs, "page_index": page, "table": str(t), "cell": str(c), "cell_type": ctype,
                                      "text": str(g.value(c, TAB.cellText)), "bbox": [x0, y0, x1, y1],
                                      "rule": {"x": round(r.x, 3), "top": round(r.top, 3), "bottom": round(r.bottom, 3)},
                                      "full_height": full})

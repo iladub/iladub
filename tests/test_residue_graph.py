@@ -213,4 +213,9 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RAISE kind: R299 (a heading whose only blank cell sits in a measure column is admitted as a
     # data row) is open, named by no criterion, and its full row cites no other row. Controlled:
     # the set over main's register files is 95, over the branch's 96.
-    assert len(expected) == 96
+    # RE-MEASURED 2026-10-08 (R301 raised, branch rule-separated-ink): 96 -> 97, ADDED = [301],
+    # REMOVED = []. The RAISE kind again: R301 (a rule-separated cell aborts its page instead of
+    # escalating) is open, named by no criterion, and its only cited row, [[R73]], is closed.
+    # Controlled: `scripts/residue_graph.py --candidates` over main's register files is 96, over
+    # the branch's 97.
+    assert len(expected) == 97
