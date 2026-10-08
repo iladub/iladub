@@ -4,7 +4,7 @@ rule separates (spec 2026-10-08-r301-producer-guard-design.md §§ 2.2, 2.3, § 
 Synthetic graphs only. The page is the shape's own one-cell fixture (`_page`), imported, so the
 guard is exercised on exactly the evidence `tab:RuleSeparatedInkShape` is pinned on."""
 import os
-from dataclasses import astuple
+from dataclasses import astuple, replace
 
 import pytest
 from rdflib import BNode, Graph, Literal, RDF, RDFS, URIRef
@@ -110,6 +110,9 @@ def test_extent_excludes_a_sibling_grid_the_residue_and_decisions():
     g.add((t, TAB.hasDataCell, own_cell))
     g.add((own_cell, TAB.cellText, Literal("63,061-")))
     g.add((own_cell, TAB.hasBBox, bbox))
+    # a URIRef edge out of the withdrawn space: the closure follows blank nodes ONLY, so the
+    # edge itself goes (its subject is a root) and the sibling's cell stays whole.
+    g.add((own_cell, RDFS.seeAlso, sib_cell))
     g.add((bbox, TAB.x0, Literal(1)))
     g.add((sib, RDF.type, TAB.DataGrid))
     g.add((sib, TAB.hasDataCell, sib_cell))
@@ -132,7 +135,8 @@ def test_extent_excludes_a_sibling_grid_the_residue_and_decisions():
     ext = ruleguard.withdrawal_extent(g, t, [sib], residue)
 
     assert set(ext.subjects()) == {t, own_cell, bbox, refuse_page}
-    assert len(ext) == 6
+    assert len(ext) == 7
+    assert not set(ext.triples((sib_cell, None, None)))
     assert _ntriples(g) == before, "withdrawal_extent must not mutate its graph"
 
 
@@ -189,13 +193,33 @@ def test_an_admission_head_without_order_gives_order_zero_and_branch_b_reads_it(
     assert conforms, text
 
 
+# ---------------------------------------------------------------- 4b. the head is WALKED to
+
+def test_a_superseded_verdict_is_walked_to_its_head_and_the_refusal_chains():
+    """v1 <- v2 (section repair's pass-2 re-read). The refusal must supersede v2, the reading
+    that STANDS; superseding v1 would give it a second superseder and
+    `dec:SupersededOnceShape` refuses (the 2026-09-14 lineage ruling: chain, never fan in)."""
+    g, v1 = _banded_page()
+    v2 = _decision(g, URIRef(DOC + "/pass2#region0-d1"), "verdict", 1,
+                   regarding=URIRef(DOC + "/pass2#region0"))
+    g.add((v2, DEC.supersedes, v1))
+
+    head = ruleguard.chain_head(g, D, 0, T)
+    assert head == v2
+    r = ruleguard.mint_refusal(g, D, 0, head, "tab:RuleSeparatedInkShape crosses <c>")
+
+    assert (r, DEC.supersedes, v2) in g and (r, DEC.supersedes, v1) not in g
+    conforms, text, _ = C._validate(g, legs=("dec",))
+    assert conforms, text
+
+
 # ---------------------------------------------------------------- 5. no head: raise
 
 def test_no_standing_decision_raises_naming_the_table_and_index():
     g = _page(80, 90, rule_x=85)
     with pytest.raises(RuntimeError) as e:
-        ruleguard.chain_head(g, D, 0, T)
-    assert str(T) in str(e.value) and "0" in str(e.value)
+        ruleguard.chain_head(g, D, 7, T)
+    assert str(T) in str(e.value) and "region index 7" in str(e.value)
 
 
 # ---------------------------------------------------------------- 6. ambiguous owner: identity
@@ -242,3 +266,17 @@ def test_the_guard_withdraws_refuses_escalates_and_moves_the_tokens():
     assert "tab:RuleSeparatedInkShape" in rationale and str(cell) in rationale
     conforms, text, _ = C._validate(g, legs=("dec",))
     assert conforms, text
+
+
+def test_the_escalated_report_carries_no_header_reading_and_others_keep_theirs():
+    """A refused table's reading must not be carried onto the next page (document driver):
+    its row sources live in the withdrawn space."""
+    g, _, _ = _minted_page()
+    owner = replace(_report(tokens=5), header_reading="owner-reading")
+    other = replace(_report(table_uri=URIRef(DOC + "#other"), tokens=3),
+                    header_reading="other-reading")
+
+    out, _, _ = ruleguard.guard(g, [owner, other], 8, 0, D, 0)
+
+    assert out[0].verdict == "escalated" and out[0].header_reading is None
+    assert out[1] == other

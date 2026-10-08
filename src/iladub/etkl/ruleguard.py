@@ -185,7 +185,7 @@ def guard(graph: Graph, reports, asserted_total: int, escalated_total: int,
             continue                    # R89: left to the membrane, which refuses loudly
         i = named[0]
         r = reports[i]
-        head = chain_head(graph, doc, i, t)     # raises BEFORE anything is mutated
+        head = chain_head(graph, doc, i, t)     # raises before anything for THIS owner is mutated
         crossing = sorted(str(c) for c in cells
                           if any((t, p, c) in graph for p in _CELL_PREDS))
         others = [u for j, u in enumerate(table_uris) if j != i and u is not None]
@@ -200,8 +200,12 @@ def guard(graph: Graph, reports, asserted_total: int, escalated_total: int,
         escalate_region(graph, URIRef(f"{doc}#region{i}"), doc, r.ascii, _REASON, anchor,
                         0.0, page_number)
         moved = r.tokens_asserted
+        # header_reading=None as on every other escalated branch: the driver carries a report's
+        # reading onto the next page (`document.py`, `.header_reading` read off the previous
+        # page's region), and a refused table's reading has row sources inside the withdrawn space.
         reports[i] = replace(r, verdict="escalated", reason=_REASON, cells=0, table_uri=None,
-                             tokens_asserted=0, tokens_escalated=r.tokens_escalated + moved)
+                             header_reading=None, tokens_asserted=0,
+                             tokens_escalated=r.tokens_escalated + moved)
         asserted_total -= moved
         escalated_total += moved
     return reports, asserted_total, escalated_total
