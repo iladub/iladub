@@ -156,3 +156,24 @@ inside the query, not a blank focus node, but the fixture must pass and fail ide
   typed facts) plus decidable exact arithmetic. Nothing is judged and no constant is tuned.
 - **The refusal:** AXIOM, Constraint → SHACL, closed world. The membrane decides what may cross.
   Nothing is derived from absence: a cell with no glyph facts is simply not a target.
+
+## 9. Acceptance, as run (2026-10-08)
+
+A whole-corpus snapshot on `main` (`b421ad8`) and on the branch, one document per process,
+serially. The branch's graph was hashed twice: in full, and with the § 2 facts stripped.
+
+| document | score (both trees) | verdicts, adoptions | stripped hash | added triples, all § 2 facts |
+|---|---|---|---|---|
+| apple | 0.9419 | identical | equal | +9393 (1735 rules) |
+| bfs | 0.9074 | identical | equal | +2588 (192) |
+| cbh-stem | 1.0 | identical | equal | +2456 (142) |
+| graincorp-capacity | 1.0 | identical | equal | +3445 (523) |
+| graincorp-stem | 0.9996 | identical | equal | +12867 (1705) |
+| ons | 0.8685 | identical | equal | +1448 (64) |
+| who-wfa | 0.9963 | identical | equal | +3681 (423) |
+| who-covid (held out) | 0.5617 | identical | equal | +5845 (981) |
+| fed-h41 (held out) | main 0.8530 | **branch raises `MembraneRefusal`**, rule-separated ink, focus `p5#htable3-hl0` | – | – |
+
+fed-h41 stops at p5, the first refused page, so p7's 12 cells are never validated. The suite found
+one more refused cell: the synthetic spanner of `spanner_with_space_ruled_pdf`, asserted as the label
+of one leaf column while its ink spans a rule (handoff § 3).

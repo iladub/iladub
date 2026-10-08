@@ -67,4 +67,5 @@ Ship tab:RuleSeparatedInkShape as a membrane-only guard (ruled 2026-10-08), with
   (covered columns on both sides of the rule), not a tolerance.
 - The glyph-to-cell assignment (centre in the 2dp bbox) can share a glyph between overlapping cells.
   No instrument checks it.
-- The stripped-hash comparison of item 3 had not finished when this was written.
+- (Superseded in this loop) item 3 of § 5 RAN: see spec § 9. All seven plus who-covid are identical
+  with the facts stripped; fed-h41 refuses at p5; the carriage pin moved 15611 → 18199 and passes.
