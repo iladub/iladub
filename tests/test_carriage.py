@@ -94,7 +94,12 @@ P5_CELLS_WHEN_CARRIED = 496
 #: (nine record tables superseded by one 32 x 9 grid with nine column labels), and every other
 #: corpus document's graph hash is unchanged (evidence 2026-10-05-r293-p6-adopts.md § 5).
 #: P5_CELLS is unchanged at 496.
-DOC_TRIPLES_WHEN_CARRIED = 15611
+#: 15611 -> 18199 on 2026-10-08, measured by a whole-corpus snapshot on main and the branch: the
+#: rule-separated-ink facts (spec 2026-10-08-rule-separated-ink-design.md). All +2588 are
+#: `tab:RuleSpan` (192 rules) and `tab:firstGlyphEnd`/`tab:lastGlyphStart` triples; with them
+#: stripped, bfs's canonical hash equals main's, and so does every other corpus document's.
+#: P5_CELLS is unchanged at 496.
+DOC_TRIPLES_WHEN_CARRIED = 18199
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the

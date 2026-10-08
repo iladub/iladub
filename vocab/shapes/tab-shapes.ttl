@@ -581,3 +581,38 @@ tab:PrintedTotalShape a sh:NodeShape ;
                 ?o a tab:PrintedTotal .
             }
         """ ] .
+
+
+#################################################################
+#  Rule-separated ink (spec 2026-10-08-rule-separated-ink-design.md):
+#  a cell may not hold ink that an author-drawn vertical rule on its
+#  page separates — some glyph wholly left of the rule AND some glyph
+#  wholly right of it, with a positive vertical overlap between the
+#  rule and the cell's box. A glyph painted ACROSS a rule (a last digit
+#  overrunning the rule that closes its column) counts on neither side.
+#  Closed world, holon-scoped: the facts are carried in by
+#  ruleink.carry_rule_ink; a cell without them is not a target.
+#################################################################
+
+tab:RuleSeparatedInkShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:firstGlyphEnd ;
+    sh:sparql [
+        sh:name "RuleSeparatedInkShape" ;
+        sh:message "A vertical rule the author drew separates this cell's ink: some glyph lies wholly left of it and some wholly right (rule-separated ink)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this tab:firstGlyphEnd ?fe ;
+                      tab:lastGlyphStart ?ls ;
+                      tab:onPage ?p ;
+                      tab:hasBBox ?b .
+                ?b tab:y0 ?y0 ; tab:y1 ?y1 .
+                ?r a tab:RuleSpan ;
+                   tab:onPage ?p ;
+                   tab:ruleX ?value ;
+                   tab:ruleTop ?rt ;
+                   tab:ruleBottom ?rb .
+                FILTER (?fe <= ?value && ?value <= ?ls)
+                FILTER ((IF(?y1 < ?rb, ?y1, ?rb)) - (IF(?y0 > ?rt, ?y0, ?rt)) > 0)
+            }
+        """ ] .
