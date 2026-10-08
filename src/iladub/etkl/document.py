@@ -1431,6 +1431,18 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
             _refusal_message("document-level facts", refusing, text), graph, refusing)
 
 
+# The adoption pass's refusal note, one fixed cause per outcome the page compile REPORTS
+# (`CompilationReport.adoption`, R301 spec § 2.5) other than "adopted". Each sentence restates
+# what that outcome means at `compile_tables`' adoption gate, and nothing it does not record.
+# A KeyError on a fifth value is deliberate: an outcome nobody named must not get a cause.
+_ADOPTION_CAUSE = {
+    "not_opened": "the re-compile's adoption gate did not open (nothing escalated, or no data "
+                  "grid derived)",
+    "ledger_refused": "the data grid left no less ink unread than the bands did",
+    "guard_refused": "a data grid it would install carries rule-separated ink",
+}
+
+
 def compile_document(pdf_path: str, validate_shapes: bool = True,
                      span_proposer=None, row_role_proposer=None) -> DocumentReport:
     """Compile a whole document: every page under its own page-scoped document URI, merged into
@@ -1790,27 +1802,31 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                                doc_uri=adopt_doc,
                                carried_header_roles=carried_by_page.get(p),
                                datagrid_adopt=True)
-        # DID THE ADOPTION BRANCH ACTUALLY FIRE? `rep_a.asserted != 0` does not answer that:
-        # the re-compile can assert through the ordinary band path or through
-        # `datagrid_fallback`, in which case `compile.py`'s adoption gate never ran, no band
-        # was superseded and no grid region exists — and merging that report would silently
-        # add a SECOND whole compile of the page beside the driver's. Ask instead for the two
-        # things adoption itself produces: the appended grid region (at index `len(bands)`,
-        # the band-index contract Task 3 pins) and at least one superseded band.
-        grid_idx = len(pages[p].regions)          # == the page's band count
+        # DID THE ADOPTION BRANCH ACTUALLY FIRE? The page compile SAYS so (R301, spec § 2.5):
+        # `rep_a.adoption` records what its gate did, and the note states that observed cause
+        # instead of inferring one from a missing region. The inference was false on fed-h41 p7
+        # (F3): its re-compile derived a grid, the guard refused it, and the note blamed a
+        # missing grid region because the index it looked at was not the grid's.
+        if rep_a.adoption != "adopted":
+            notes.append(f"page {p}: adoption refused — {_ADOPTION_CAUSE[rep_a.adoption]}")
+            continue
+        # The appended grid region sits at index `len(bands)` (the band-index contract), and
+        # `band_lists[p]` is `page_bands(pdf_path, p)` with the same arguments the re-compile
+        # reads its bands with — so this is the RE-COMPILE's band count. It used to be
+        # `len(pages[p].regions)`, which also counts the regions page p's own compile APPENDED
+        # (a `datagrid_fallback` grid, its residue) and so pointed past the grid (F3).
+        grid_idx = len(band_lists[p])
         grid_uri = (rep_a.regions[grid_idx].table_uri
                     if grid_idx < len(rep_a.regions) else None)
         if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
-            # WHAT IS OBSERVED, not why (final review m4). This branch also fires when
-            # `compile.py:945`'s own gate never opened at all (the re-compile asserted through
-            # the ordinary band path, or through `datagrid_fallback`), in which case no grid was
-            # ever derived and "the grid read nothing" states a cause that was never tested.
+            # WHAT IS OBSERVED, not why (final review m4). The compile reported "adopted", so
+            # this is the region contract failing, not a gate that never opened.
             notes.append(f"page {p}: adoption refused — no data grid region on the re-compile")
             continue
         # AFTER the refusal above, never before (final review m2): `rep_a.regions[idx]` over
-        # `range(grid_idx)` is unguarded, and `grid_idx` is the DRIVER's band count — a
-        # re-compile that returned fewer regions would raise IndexError here, which is the very
-        # case the `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
+        # `range(grid_idx)` is unguarded — a re-compile that returned fewer regions than the
+        # band count would raise IndexError here, which is the very case the
+        # `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
         superseded = [idx for idx in range(grid_idx)
                       if rep_a.regions[idx].verdict == "superseded"]
         if not superseded:
