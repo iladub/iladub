@@ -24,11 +24,19 @@ from tests.etkl.test_read_band_books_every_word import _bands_and_reports, _ink
 
 # Every CI fixture measured 2026-09-27 to reach an asserted `#htable` band that booked escalated
 # ink before the repair.
+#
+# `spanner_with_space_ruled_pdf` is WITHDRAWN 2026-10-08 (R301, spec
+# 2026-10-08-r301-producer-guard-design.md § 2.2): its label cell's ink straddles the rule at
+# x=110, so the producer guard now withdraws and escalates the WHOLE table before this file's
+# `#htable` assert branch ever runs — pinned on the same fixture by
+# `tests/etkl/test_header_stack.py::test_genuine_spanner_is_never_demoted_or_welded`. There is no
+# longer an asserted `#htable` band here to check (measured: `checked == 0`, where this test's own
+# closing assertion names that exact condition a fixture-drift failure).
 FIXTURES = [
     "all_text_hier_ruled_pdf", "bordered_two_level_header_ruled_pdf", "cut_group_two_page_pdf",
     "left_aligned_parent_ruled_pdf", "page_local_group_two_page_pdf", "partial_merge_report_pdf",
     "pivoted_table_pdf", "record_and_pivot_pdf", "region_pivot_pdf",
-    "spanner_with_space_ruled_pdf", "stacked_banner_ruled_pdf", "subtotal_hier_table_pdf",
+    "stacked_banner_ruled_pdf", "subtotal_hier_table_pdf",
     "unequal_width_merge_report_pdf",
 ]
 

@@ -1943,6 +1943,21 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                            tokens_escalated=band_marks[i + 1][1] - band_marks[i][1])
                for i, r in enumerate(reports)]
 
+    # R301 (spec 2026-10-08-r301-producer-guard-design.md § 2.1 steps 3-4): the PRODUCER now
+    # withdraws and escalates a table whose cell an author's rule separates, before the adoption
+    # gate below ever sees it — the membrane used to be the first and only place this was caught,
+    # raising `MembraneRefusal` well after the per-band totals (and `tokens_asserted`/
+    # `tokens_escalated` above) had already been fixed. `carry_from_pdf` runs here (idempotent,
+    # G4) so the guard's select — read from `tab:RuleSeparatedInkShape` itself (`ruleguard._select`)
+    # — has the rule-ink facts it reads on THIS graph, not only on the one the later, unconditional
+    # call at the bottom of this function carries them onto. Imported function-locally: `ruleguard`
+    # imports `document`, which imports this module at top level (handoff U4).
+    from .ruleink import carry_from_pdf
+    from .ruleguard import guard
+    carry_from_pdf(graph, str(doc), pdf_path)
+    reports, asserted_total, escalated_total = guard(
+        graph, reports, asserted_total, escalated_total, doc, page_number)
+
     # --- ADOPTION (R73). A page that read NOTHING and escalated everything is a total
     # failure of the shipped reader, and where the data grid reads it completely the
     # escalation is superseded rather than supplemented. Withdrawal is exact: the page's
