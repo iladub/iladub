@@ -802,6 +802,12 @@ class CompilationReport:
     # from per-page ratios (loop M).
     asserted: int = 0
     escalated: int = 0
+    # R301 (spec 2026-10-08-r301-producer-guard-design.md § 2.5): what the adoption gate DID, so a
+    # caller reads the cause instead of inferring one from a missing region (F3). Exactly one of
+    # "not_opened" (adoption off, nothing escalated, or no grid derived — the last is the plan's
+    # flagged reading: no ledger was built, so nothing was compared), "ledger_refused",
+    # "guard_refused" or "adopted". Last and defaulted, so the positional constructor stands.
+    adoption: str = "not_opened"
 
     def to_turtle(self) -> str:
         return self.graph.serialize(format="turtle")
@@ -2026,6 +2032,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
     # already derived, carrying no threshold, no tolerance and no tuned constant. STRICTLY less,
     # so a tie refuses: a grid that reads no more of the unread ink than the bands did is not a
     # better reader, and refusing on equality keeps adoption from churning a page for nothing.
+    adoption = "not_opened"                # § 2.5: overwritten only where the gate opens
     if datagrid_adopt and escalated_total > 0:
         from .adoption import build_ledger
         from .datagrid import derive_data_grids as _dgs, emit_data_grid as _emit
@@ -2087,19 +2094,39 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # `ignored` at 0 escalated tokens — leaving 1025 asserted / 44 escalated at 0.9588,
             # all 44 of them the grid's OWN residue candidate, which the rebuild does emit.
             # apple p1 likewise. Registered as residue R83.
-            graph = Graph()                   # withdrawal: the page graph is rebuilt
+            #
+            # BUILT UNDER A LOCAL NAME, INSTALLED ONLY AFTER THE GUARD (R301, spec § 2.1 step 5).
+            # `graph = Graph()` used to be the install itself, so nothing could refuse the rebuild
+            # once it had begun. `_new` is the page graph rebuilt from the grids alone; `graph`,
+            # `reports` and both totals keep their pre-adoption values until the select is empty.
+            _new = Graph()                    # withdrawal: the page graph is rebuilt
             # The first grid keeps the URI a one-grid page has always had; a further grid is
             # numbered from 2, so no single-grid page mints a different triple.
             _emitted = []                                # (uri, cells, read lines)
             for _k, (_grid, _block, _boxhead, _rl) in enumerate(_read, start=1):
-                _before = len(list(graph.subjects(RDF.type, TAB.EntryCell)))
-                _grid_uri = _emit(graph, _grid, _lines, doc, page_number,
+                _before = len(list(_new.subjects(RDF.type, TAB.EntryCell)))
+                _grid_uri = _emit(_new, _grid, _lines, doc, page_number,
                                   URIRef(f"{doc}#p{page_number}-datagrid-{_k}")
                                   if _k > 1 else None)
-                emit_boxhead(graph, _grid_uri, _lines, _block, _boxhead, page_number)
+                emit_boxhead(_new, _grid_uri, _lines, _block, _boxhead, page_number)
                 _emitted.append((_grid_uri,
-                                 len(list(graph.subjects(RDF.type, TAB.EntryCell))) - _before,
+                                 len(list(_new.subjects(RDF.type, TAB.EntryCell))) - _before,
                                  _rl))
+            # THE ADOPTION SITE'S GUARD: the same select the pre-adoption guard and the membrane
+            # run (`ruleguard.rule_separated_cells`, read from `tab:RuleSeparatedInkShape`), over
+            # the NEW graph once `carry_from_pdf` has given it the rule-ink facts the select joins
+            # on. Any cell refuses the adoption WHOLE, never grid by grid: the ledger was computed
+            # once over every grid (R290), so withdrawing one would void the comparison the gate
+            # made (spec § 2.1; grid by grid is § 7). AXIOM consumer (spec § 3) — the select
+            # decides; this line only records it. Called through the module so the guard and this
+            # site resolve one name.
+            from . import ruleguard as _rg
+            carry_from_pdf(_new, str(doc), pdf_path)
+            adoption = "guard_refused" if _rg.rule_separated_cells(_new) else "adopted"
+        elif _led is not None:
+            adoption = "ledger_refused"
+        if adoption == "adopted":
+            graph = _new
             # THE LEDGER IS LINE-GRANULAR (spec §5.3). Zeroing `escalated_total` would score
             # the page 1.0000 whatever the grid missed; withdrawing band-by-band would count
             # the read lines twice (0.594). Only the line is a unit both sides agree on.
@@ -2229,4 +2256,5 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             raise membrane.MembraneRefusal(
                 _refusal_message("asserted holon", legs, text), graph, legs)
 
-    return CompilationReport(score, tuple(reports), graph, asserted_total, escalated_total)
+    return CompilationReport(score, tuple(reports), graph, asserted_total, escalated_total,
+                             adoption=adoption)
