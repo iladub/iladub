@@ -25,6 +25,12 @@ change this loop makes.
 Run it from the repo root:
 
     PYTHONPATH=src .venv/bin/python scripts/corpus_verdict_snapshot.py <out-dir>
+    PYTHONPATH=src .venv/bin/python scripts/corpus_verdict_snapshot.py <out-dir> --pdf <path>
+
+The second form (R301, 2026-10-08) snapshots ONE document — any PDF, not only `corpus/**`'s
+seven — into `<out-dir>/<stem>.json` instead of rglobbing the whole corpus, so a held-out
+document can be read one process at a time without touching `CORPUS`. It calls the same
+`snapshot()` the whole-corpus loop below calls; no second reading path exists.
 
 Gate classification (CLAUDE.md §8): PROCEDURAL. It READS compile results and writes them down.
 It decides nothing about any document, changes no reading, and carries no tolerance — the only
@@ -90,8 +96,32 @@ def snapshot(pdf_path: str) -> dict:
 
 
 def main(argv):
-    out = pathlib.Path(argv[1])
+    # `--pdf <path>` is additive (R301): the single positional argument is still the out-dir,
+    # wherever `--pdf` and its value sit relative to it. No-flag callers (e.g.
+    # `r239_alignment_universe_gate.py:78`'s `main([argv[0], out])`) are unaffected — `pdf`
+    # stays None and the loop below runs exactly as before.
+    args = list(argv[1:])
+    pdf = None
+    positional = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--pdf":
+            pdf = args[i + 1]
+            i += 2
+        else:
+            positional.append(args[i])
+            i += 1
+    out = pathlib.Path(positional[0])
     out.mkdir(parents=True, exist_ok=True)
+
+    if pdf is not None:
+        name = pathlib.Path(pdf).stem
+        snap = snapshot(pdf)
+        (out / f"{name}.json").write_text(json.dumps(snap, indent=2, sort_keys=True))
+        print(f"{name:38} score={snap['score']!r:22} triples={snap['graph_triples']:6} "
+              f"sha={snap['graph_sha256'][:12]}", flush=True)
+        return
+
     pdfs = sorted(str(p) for p in CORPUS.rglob("*.pdf"))
     if not pdfs:
         raise SystemExit("no corpus PDFs found — corpus/ is gitignored; run from a checkout "
