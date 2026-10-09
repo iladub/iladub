@@ -227,4 +227,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-09 (R303 closed, branch r303-refusal-furnished): R303's close removes it,
     # and nothing is raised. Net: 98 -> 97, ADDED = [], REMOVED = [303]. Controlled:
     # `scripts/residue_graph.py --candidates` over `main`'s register files is 98, over the branch's 97.
-    assert len(expected) == 97
+    # RE-MEASURED 2026-10-09 (R302 closed, branch r302-grid-idx-pinned): R302's close removes it,
+    # and nothing is raised. Net: 97 -> 96, ADDED = [], REMOVED = [302]. Controlled:
+    # `scripts/residue_graph.py --candidates` over `main`'s register files is 97, over the branch's 96.
+    assert len(expected) == 96

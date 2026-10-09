@@ -209,14 +209,46 @@ BFS = os.path.join(ROOT, "corpus", "gov-stats", "bfs-population-bilan-2023.pdf")
 CBH = os.path.join(ROOT, "corpus", "ag-trade", "cbh-stem-2026-08-03.pdf")
 
 
+# The query's EVIDENCE SET (`escalation-furnish.rq`, R303), restated here rather than read from it
+# so the census stays an oracle independent of the query it checks. Aligned 2026-10-09 by ruling:
+# with "escalated" alone, a document carrying a guard refusal fails `requests == live`.
+_EVIDENCE = ("escalated", "refuse")
+
+
 def _census(g):
     escalating = {d for d in g.subjects(RDF.type, DEC.DecisionHolon)
-                  if any(str(lbl) == "escalated"
+                  if any(str(lbl) in _EVIDENCE
                          for o in g.objects(d, DEC.chosen)
                          for lbl in g.objects(o, RDFS.label))}
     return (escalating,
             {d for d in escalating if list(g.objects(d, DEC.regarding))},
             {d for d in escalating if list(g.subjects(DEC.supersedes, d))})
+
+
+def test_census_counts_a_guard_refusal_as_the_query_does(tmp_path):
+    """The census on a SYNTHETIC document carrying a refusal, so its evidence set is pinned in CI and
+    not only on the corpus. `isolated_rows_grid_pdf(ruled_cell=True)`: R301's guard withdraws the
+    fallback's grid and mints a refusal, which is the region's only live decision (R302's fixture).
+    Falsified by `_EVIDENCE = ("escalated",)`: live = 0 against requests = 1."""
+    pytest.importorskip("pdfplumber")
+    pytest.importorskip("reportlab")
+    from iladub.etkl.document import compile_document
+    from tests.etkl.fixtures import isolated_rows_grid_pdf
+
+    p = tmp_path / "ruled-fallback.pdf"
+    isolated_rows_grid_pdf(str(p), ruled_cell=True)
+    g = compile_document(str(p), validate_shapes=False).graph
+    escalating, with_regarding, superseded = _census(g)
+    live = with_regarding - superseded
+    requests = set(_derive(g).subjects(RDF.type, DEC.ExpansionRequest))
+    # The precondition is read without `_census`, so a narrowed evidence set fails the claim below
+    # and not this guard.
+    refusals = {d for d in g.subjects(RDF.type, DEC.DecisionHolon)
+                if not list(g.subjects(DEC.supersedes, d))
+                for o in g.objects(d, DEC.chosen)
+                for lbl in g.objects(o, RDFS.label) if str(lbl) == "refuse"}
+    assert refusals, "the fixture no longer carries a live refusal; the test pins nothing"
+    assert len(requests) == len(live)
 
 
 @pytest.mark.corpus

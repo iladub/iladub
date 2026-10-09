@@ -2248,7 +2248,7 @@ def border_only_grid_pdf(path: str) -> dict:
     return {"cols": cols, "n_rows": len(rows), "n_cols": len(cols), "rule_xs": [54.0, 540.0]}
 
 
-def isolated_rows_grid_pdf(path: str) -> dict:
+def isolated_rows_grid_pdf(path: str, ruled_cell: bool = False) -> dict:
     """[[R228]]'s replacement for `border_only_grid_pdf` — reaches the datagrid fallback WITHOUT
     relying on [[R225]]'s fusion defect, so D1 cannot invalidate it.
 
@@ -2289,6 +2289,13 @@ def isolated_rows_grid_pdf(path: str) -> dict:
     the page scores 1.0, so this is NOT a witness for [[R72]]'s "a table page that read nothing
     must not score 1.0" direction. A corpus-wide sweep found NO such witness post-D1, and that
     half stays retired under [[R228]].
+
+    `ruled_cell=True` ([[R302]]) draws ONE vertical rule through the ink of the first data row's
+    "101.4" and nothing else, so R301's producer guard escalates the fallback's appended region
+    (`RULE_SEPARATED_INK`) — the only route from the fallback gate (`escalated_total == 0`) to the
+    adoption gate (`escalated_total > 0`) inside one compile. MEASURED 2026-10-09: adopt off ->
+    10 regions, `[9]` escalated, `asserted=0 escalated=16`; adopt on -> **`guard_refused`**, same
+    regions. Without the rule the page is byte-for-byte the shape measured above.
     """
     prose = ("Overview", "Background", "Methodology", "Coverage", "Revisions",
              "Definitions", "Sources", "Contact", "Notes", "Annex")
@@ -2301,10 +2308,13 @@ def isolated_rows_grid_pdf(path: str) -> dict:
     for word in prose:                      # the 9 small gaps that set the median
         c.drawString(cols[0], y, word)
         y -= 14.0
-    for a, b in rows:                        # each behind a gap > 1.8x that median
+    for k, (a, b) in enumerate(rows):        # each behind a gap > 1.8x that median
         y -= 60.0
         c.drawString(cols[0], y, a)
         c.drawString(cols[1], y, b)
+        if ruled_cell and k == 0:            # between "101.4"'s first and last glyph
+            c.setLineWidth(0.5)
+            c.line(cols[1] + 12.0, y - 3.0, cols[1] + 12.0, y + 10.0)
     c.save()
     return {"cols": cols, "n_prose": len(prose), "n_rows": len(rows),
             "n_bands": 1 + len(rows), "n_cells": len(rows) * len(cols)}
