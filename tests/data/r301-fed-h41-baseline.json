@@ -1,0 +1,655 @@
+{
+  "adopted": [
+    2,
+    3,
+    5,
+    8,
+    10
+  ],
+  "asserted": 2902,
+  "escalated": 500,
+  "pages": [
+    {
+      "asserted": 285,
+      "escalated": 31,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 18,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 13,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 276,
+          "reason": null,
+          "tokens_asserted": 285,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        }
+      ]
+    },
+    {
+      "asserted": 472,
+      "escalated": 28,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 13,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 105,
+          "reason": null,
+          "tokens_asserted": 114,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 15,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 342,
+          "reason": null,
+          "tokens_asserted": 358,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        }
+      ]
+    },
+    {
+      "asserted": 72,
+      "escalated": 133,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 31,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "ROUND_TRIP_FAIL",
+          "tokens_asserted": 0,
+          "tokens_escalated": 93,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 54,
+          "reason": null,
+          "tokens_asserted": 72,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "DATAGRID_RESIDUE",
+          "tokens_asserted": 0,
+          "tokens_escalated": 9,
+          "verdict": "escalated"
+        }
+      ]
+    },
+    {
+      "asserted": 307,
+      "escalated": 33,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": null,
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "ROUND_TRIP_FAIL",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 199,
+          "reason": null,
+          "tokens_asserted": 218,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 80,
+          "reason": null,
+          "tokens_asserted": 89,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "DATAGRID_RESIDUE",
+          "tokens_asserted": 0,
+          "tokens_escalated": 33,
+          "verdict": "escalated"
+        }
+      ]
+    },
+    {
+      "asserted": 265,
+      "escalated": 61,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 15,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 8,
+          "reason": null,
+          "tokens_asserted": 13,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 63,
+          "reason": null,
+          "tokens_asserted": 86,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "MATRIX_AMBIGUOUS",
+          "tokens_asserted": 0,
+          "tokens_escalated": 46,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 146,
+          "reason": null,
+          "tokens_asserted": 166,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        }
+      ]
+    },
+    {
+      "asserted": 213,
+      "escalated": 38,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 12,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 18,
+          "reason": null,
+          "tokens_asserted": 26,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 129,
+          "reason": null,
+          "tokens_asserted": 187,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "DATAGRID_RESIDUE",
+          "tokens_asserted": 0,
+          "tokens_escalated": 26,
+          "verdict": "escalated"
+        }
+      ]
+    },
+    {
+      "asserted": 353,
+      "escalated": 121,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 101,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 20,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 337,
+          "reason": null,
+          "tokens_asserted": 353,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        }
+      ]
+    },
+    {
+      "asserted": 137,
+      "escalated": 0,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 126,
+          "reason": null,
+          "tokens_asserted": 137,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        }
+      ]
+    },
+    {
+      "asserted": 231,
+      "escalated": 31,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "KIND_NOT_SUPPORTED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 19,
+          "verdict": "escalated"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": null,
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 210,
+          "reason": null,
+          "tokens_asserted": 231,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "DATAGRID_RESIDUE",
+          "tokens_asserted": 0,
+          "tokens_escalated": 12,
+          "verdict": "escalated"
+        }
+      ]
+    },
+    {
+      "asserted": 431,
+      "escalated": 0,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 406,
+          "reason": null,
+          "tokens_asserted": 431,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 columns",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        }
+      ]
+    },
+    {
+      "asserted": 136,
+      "escalated": 24,
+      "regions": [
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 0,
+          "reason": "REGION_TILING_FAILED",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "superseded"
+        },
+        {
+          "cells": 0,
+          "reason": "fewer than 2 lines",
+          "tokens_asserted": 0,
+          "tokens_escalated": 0,
+          "verdict": "ignored"
+        },
+        {
+          "cells": 36,
+          "reason": null,
+          "tokens_asserted": 52,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 22,
+          "reason": null,
+          "tokens_asserted": 84,
+          "tokens_escalated": 0,
+          "verdict": "asserted"
+        },
+        {
+          "cells": 0,
+          "reason": "DATAGRID_RESIDUE",
+          "tokens_asserted": 0,
+          "tokens_escalated": 24,
+          "verdict": "escalated"
+        }
+      ]
+    }
+  ],
+  "pdf": "held-out/fed-h41-2025-01-02.pdf",
+  "score": 0.8530276308054086
+}

@@ -1128,10 +1128,10 @@ def _verdict_decision(g: Graph, page_doc: URIRef, idx: int):
 def _effective_verdict(g: Graph, v: URIRef) -> URIRef:
     """The HEAD of `v`'s supersession chain — `v` itself when nothing supersedes it.
 
-    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). Until D2 widened the adoption
-    gate a band could be superseded at most once per compile, so the two writers of
-    `dec:supersedes` — section repair (`graph.add((v2, DEC.supersedes, v1))`) and datagrid
-    adoption (the admission site below) — could never both reach one verdict, and
+    THE LINEAGE RULE (maintainer ruling 2026-09-14, R225 D2). In the compile, `dec:supersedes` has
+    four writers: section repair, R261's printed-total and datagrid adoptions in `compile_document`,
+    and R301's `ruleguard.mint_refusal` in the PAGE compile, which runs before all
+    three. Each one's object is this walk's head. Before D2 at most one writer reached a verdict, so
     `_verdict_decision`'s pass-1 answer was always the one that still stood. D2 admits a band
     that ASSERTED, which is exactly the band section repair has already re-read, so attaching
     the admission to the PASS-1 verdict gives that verdict TWO incoming edges and
@@ -1302,10 +1302,10 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
     #
     # WHY HERE AND NOT IN `compile_tables`, which is where a page's escalations are
     # RECORDED. The derivation refuses to furnish a WITHDRAWN reading, and it can only see
-    # a withdrawal where the `dec:supersedes` edges are. Both writers of those edges — section
-    # repair and datagrid adoption, which `grep -n "DEC.supersedes"` on this file shows are the
-    # only two (re-measured 2026-08-31; BY GREP, not by line, per plan-rule 7) — write into THIS
-    # graph and into no page graph: 0 edges were observed in 13 page graphs (measured 2026-08-15).
+    # a withdrawal where the `dec:supersedes` edges are. Three writers of those edges (section
+    # repair, R261's printed total and datagrid adoption: `grep -n "DEC.supersedes"` on this file)
+    # write into THIS graph only; the fourth, `ruleguard.mint_refusal`, writes a PAGE graph merged
+    # here. 0 repair/adoption edges were observed in 13 page graphs (measured 2026-08-15).
     # A page-scope site is therefore not merely early, it is permanently blind:
     # `compile_tables` returns before the driver has anything to link, and the link is then
     # made to a COPY of what it returned. Measured cost of siting it there: 4 spurious
@@ -1429,6 +1429,18 @@ def _seal(graph: Graph, legs: tuple[str, ...], validate_shapes: bool) -> None:
         # tuple the old code passed under the rebound name `legs`.
         raise MembraneRefusal(
             _refusal_message("document-level facts", refusing, text), graph, refusing)
+
+
+# The adoption pass's refusal note, one fixed cause per outcome the page compile REPORTS
+# (`CompilationReport.adoption`, R301 spec § 2.5) other than "adopted". Each sentence restates
+# what that outcome means at `compile_tables`' adoption gate, and nothing it does not record.
+# A KeyError on a fifth value is deliberate: an outcome nobody named must not get a cause.
+_ADOPTION_CAUSE = {
+    "not_opened": "the re-compile adopted nothing: nothing escalated, or no data grid was "
+                  "derived",
+    "ledger_refused": "the data grid left no less ink unread than the bands did",
+    "guard_refused": "a data grid it would install carries rule-separated ink",
+}
 
 
 def compile_document(pdf_path: str, validate_shapes: bool = True,
@@ -1627,12 +1639,12 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                 # dec:DecisionHolon, which is why the link joins the two judgements and NOT the
                 # two dec:Process containers) keeps both readings and makes the supersession
                 # queryable: a chain whose verdict decision is the object of a `dec:supersedes`
-                # is history, and the one that is not is the effective verdict.
+                # is history. The edge lands on the chain's HEAD: R301's guard may stand on v1.
                 graph += _band_reading_subgraph(rep2.graph, r2_doc, idx)
                 v1 = _verdict_decision(graph, page_doc_uri(p), idx)
                 v2 = _verdict_decision(rep2.graph, r2_doc, idx)
                 if v1 is not None and v2 is not None:
-                    graph.add((v2, DEC.supersedes, v1))
+                    graph.add((v2, DEC.supersedes, _effective_verdict(graph, v1)))
                 new_regions[idx] = r2
                 repaired.append((p, idx))
                 adopted_any = True
@@ -1680,7 +1692,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             v1 = _verdict_decision(graph, page_doc_uri(p), j)
             v2 = _verdict_decision(rep2.graph, r2_doc, j)
             if v1 is not None and v2 is not None:
-                graph.add((v2, DEC.supersedes, v1))
+                graph.add((v2, DEC.supersedes, _effective_verdict(graph, v1)))
             new_regions[j] = r2j
             adopted_any = True
         if adopted_any:
@@ -1790,27 +1802,35 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                                doc_uri=adopt_doc,
                                carried_header_roles=carried_by_page.get(p),
                                datagrid_adopt=True)
-        # DID THE ADOPTION BRANCH ACTUALLY FIRE? `rep_a.asserted != 0` does not answer that:
-        # the re-compile can assert through the ordinary band path or through
-        # `datagrid_fallback`, in which case `compile.py`'s adoption gate never ran, no band
-        # was superseded and no grid region exists — and merging that report would silently
-        # add a SECOND whole compile of the page beside the driver's. Ask instead for the two
-        # things adoption itself produces: the appended grid region (at index `len(bands)`,
-        # the band-index contract Task 3 pins) and at least one superseded band.
-        grid_idx = len(pages[p].regions)          # == the page's band count
+        # DID THE ADOPTION BRANCH ACTUALLY FIRE? The page compile SAYS so (R301, spec § 2.5):
+        # `rep_a.adoption` records what its gate did, and the note states that observed cause.
+        # It used to be inferred from the grid region being absent, which it is on EVERY
+        # re-compile that installed no grid, whatever stopped it: on fed-h41 that note read "no
+        # data grid region" for a guard refusal (p7, F3), three ledger refusals and a gate that
+        # never opened. This check, not the region index below, is what repairs F3.
+        if rep_a.adoption != "adopted":
+            notes.append(f"page {p}: adoption refused — {_ADOPTION_CAUSE[rep_a.adoption]}")
+            continue
+        # PASS 1's REGION COUNT, not the band count. `compile_tables`' adoption branch keeps
+        # EVERY pre-adoption report (its `reports = [... for i, r in enumerate(reports)]`
+        # rewrite preserves the length) and only then appends its grids, so the first grid sits
+        # after any `datagrid_fallback` region the page also appends — at `len(bands) + k`, not
+        # `len(bands)` (fed-h41 p7: 3 bands, the fallback region at 3, the grid at 4). Pass 1
+        # reads the same page with the same carried reading and adoption off, so it appends the
+        # same pre-adoption regions; its count is the grid's index. The `grid_idx < len(...)`
+        # guard below still turns any disagreement into a refusal note, never an IndexError.
+        grid_idx = len(pages[p].regions)
         grid_uri = (rep_a.regions[grid_idx].table_uri
                     if grid_idx < len(rep_a.regions) else None)
         if grid_uri is None or (grid_uri, RDF.type, TAB.DataGrid) not in rep_a.graph:
-            # WHAT IS OBSERVED, not why (final review m4). This branch also fires when
-            # `compile.py:945`'s own gate never opened at all (the re-compile asserted through
-            # the ordinary band path, or through `datagrid_fallback`), in which case no grid was
-            # ever derived and "the grid read nothing" states a cause that was never tested.
+            # WHAT IS OBSERVED, not why (final review m4). The compile reported "adopted", so
+            # this is the region contract failing, not a gate that never opened.
             notes.append(f"page {p}: adoption refused — no data grid region on the re-compile")
             continue
         # AFTER the refusal above, never before (final review m2): `rep_a.regions[idx]` over
-        # `range(grid_idx)` is unguarded, and `grid_idx` is the DRIVER's band count — a
-        # re-compile that returned fewer regions would raise IndexError here, which is the very
-        # case the `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
+        # `range(grid_idx)` is unguarded — a re-compile that returned fewer regions than pass 1
+        # would raise IndexError here, which is the very case the
+        # `grid_idx < len(rep_a.regions)` guard two lines up exists to catch.
         superseded = [idx for idx in range(grid_idx)
                       if rep_a.regions[idx].verdict == "superseded"]
         if not superseded:

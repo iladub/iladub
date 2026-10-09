@@ -218,4 +218,10 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # escalating) is open, named by no criterion, and its only cited row, [[R73]], is closed.
     # Controlled: `scripts/residue_graph.py --candidates` over main's register files is 96, over
     # the branch's 97.
-    assert len(expected) == 97
+    # RE-MEASURED 2026-10-08 (R301 closed, R302 raised, R303 raised, branch
+    # r301-producer-guard-impl): R301's close removes it (it is no longer open, so no longer a
+    # candidate), and R302 and R303 are each open, named by no criterion, and each cites no other
+    # row — the RAISE kind twice over. Net: 97 -> 98, ADDED = [302, 303], REMOVED = [301].
+    # Controlled: `scripts/residue_graph.py --candidates` over `main`'s register files is 97 (R301
+    # still open there), over the branch's 98.
+    assert len(expected) == 98

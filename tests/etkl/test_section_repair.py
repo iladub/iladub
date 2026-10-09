@@ -577,3 +577,40 @@ def test_without_totals_nothing_associates_and_stitch_only_path_chains(tmp_path)
     assert not list(rep.graph.subjects(RDF.type, TAB.SectionTotal))
     assert not rep.notes, rep.notes
     assert any(len(c) == 2 for c in rep.chains), rep.chains
+
+
+def test_section_repair_supersedes_the_head_a_page_guard_left(tmp_path, monkeypatch):
+    """R301 final review F1, at the REAL section-repair site. R301's producer guard writes
+    `#region{i}-refusal dec:supersedes v1` inside the PAGE compile, before section repair runs,
+    so section repair's `v2` must supersede the chain's head (`_effective_verdict`), not `v1`:
+    two superseders of `v1` and `dec:SupersededOnceShape` refuses the whole document.
+
+    No synthetic page makes the guard refuse a band that pass 2 then asserts, so the guard's
+    write is SIMULATED with its own minting function (`ruleguard.mint_refusal`) on pass 1's
+    page graph, exactly where the guard writes it. Everything after that is the real driver."""
+    from rdflib import URIRef
+    from iladub.etkl import document as D
+    from iladub.etkl.decisionlog import DEC
+    from iladub.etkl.ruleguard import mint_refusal
+    pdf = tmp_path / "multi.pdf"
+    multi_section_ruled_pdf(str(pdf))
+    p0 = D.page_doc_uri(0)
+    real = D.compile_tables
+
+    def pass_one_guarded(*a, **k):
+        rep = real(*a, **k)
+        if (k.get("doc_uri") == p0 and not k.get("section_repair_bands")
+                and not k.get("datagrid_adopt")):
+            mint_refusal(rep.graph, p0, 0, D._verdict_decision(rep.graph, p0, 0), "simulated")
+        return rep
+
+    monkeypatch.setattr(D, "compile_tables", pass_one_guarded)
+    rep = D.compile_document(str(pdf))
+    assert (0, 0) in rep.repaired_bands, rep.repaired_bands
+    g = rep.graph
+    v1 = D._verdict_decision(g, p0, 0)
+    v2 = D._verdict_decision(g, URIRef(f"{p0}/r2"), 0)
+    refusal = URIRef(f"{p0}#region0-refusal")
+    assert None not in (v1, v2)
+    assert set(g.subjects(DEC.supersedes, v1)) == {refusal}     # chain, never fan in
+    assert set(g.subjects(DEC.supersedes, refusal)) == {v2}

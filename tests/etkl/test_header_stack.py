@@ -230,15 +230,14 @@ def test_genuine_spanner_is_never_demoted_or_welded(tmp_path, chop_mid_word):
     roles = derive_row_roles(band, header_rows_of(band, hreg.grid, hreg.body_line), hreg.grid)
     assert roles is None or all(r == "level" for r in roles), roles   # no reading is claimed
 
-    # 2026-10-08 (spec 2026-10-08-rule-separated-ink-design.md): the default compile now RAISES.
-    # This page asserts 'Arrivals Total' as the label of ONE leaf column while its ink sits on both
-    # sides of the rule at x=110 — the docstring above already says the region should escalate,
-    # not assert — and tab:RuleSeparatedInkShape refuses that label cell. The A/B below is about
-    # the READING (loop L must not demote or weld), so it compiles with the membrane off; the
-    # refusal itself is pinned here.
-    from iladub.etkl.membrane import MembraneRefusal
-    with pytest.raises(MembraneRefusal, match="rule-separated ink"):
-        compile_tables(pdf)
+    # R301 (spec 2026-10-08-r301-producer-guard-design.md): the PRODUCER now escalates the table the
+    # membrane used to refuse. Same page, same rule at x=110; the shape is unchanged, the guard runs
+    # its select first. Feeding the shape's own fixture to the producer is the spec § 5 pin.
+    rep = compile_tables(pdf)
+    assert any(r.verdict == "escalated" and r.reason == "RULE_SEPARATED_INK"
+               for r in rep.regions), [(r.verdict, r.reason) for r in rep.regions]
+    from iladub.etkl.ruleguard import rule_separated_cells
+    assert rule_separated_cells(rep.graph) == frozenset()
     fix = compile_tables(pdf, validate_shapes=False)
     real = ruledroles.resolve_ruled_header_rows
     ruledroles.resolve_ruled_header_rows = lambda *a, **k: None       # BASE
