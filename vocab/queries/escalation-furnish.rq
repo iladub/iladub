@@ -51,6 +51,12 @@
 #   reading, so no transitive walk is needed here — a chain's every non-final link carries an
 #   incoming edge and is excluded on its own account.
 #
+# EVIDENCE SET. Two chosen-option labels mean the region stands unread at reader scope:
+# "escalated", a verdict where the reader declined to read, and "refuse", a refusal where the
+# producer guard (ruleguard.mint_refusal) withdrew a reading it had made. The refusal's option
+# is never relabelled to fit this query (spec R301 § 8 S3), so the query names both, once,
+# in VALUES. It is a closed enumeration of evidence labels, not a tolerance (R303).
+#
 # ?req is a FUNCTION of ?d (not a blank node, not minted fresh), so the derivation is a pure
 # function of the graph and running it twice adds nothing: idempotence is structural rather
 # than asserted. A blank node would also be safe against the membrane (it skolemizes the
@@ -80,7 +86,9 @@ WHERE {
   # THE LABEL, never the option URI's suffix: `{d}-opt-{slug}` is decisionlog.py's private
   # spelling (:59) and no query may depend on it. Nor the call site — 17 sites record a
   # verdict and not all of them can choose "escalated"; the chosen option is the evidence.
-  ?o rdfs:label "escalated" .
+  # TWO LABELS ARE EVIDENCE — see EVIDENCE SET above.
+  VALUES ?label { "escalated" "refuse" }
+  ?o rdfs:label ?label .
   # REQUIRED, never OPTIONAL: this join is invariant 5's guard. A decision carrying no
   # dec:regarding derives NOTHING AT ALL, rather than a request with no subject matter.
   # Live rather than vacuous — datagrid.py mints decision holons and emits no dec:regarding.

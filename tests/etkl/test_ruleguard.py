@@ -268,6 +268,25 @@ def test_the_guard_withdraws_refuses_escalates_and_moves_the_tokens():
     assert conforms, text
 
 
+def test_the_refused_region_is_furnished_for_escalation_by_its_refusal():
+    """R303: the withdrawn region reaches a human through a `dec:ExpansionRequest`. The furnish
+    reads the refusal's chosen `"refuse"` (never relabelled: R301 § 8 S3), and the verdict the
+    refusal supersedes is a withdrawn reading, so exactly one decision escalates."""
+    from iladub.etkl import interpret
+    from iladub.etkl.document import ESCALATION_FURNISH_RQ, _escalation_vocab
+    g, _, _ = _minted_page()
+    ruleguard.guard(g, [_report(tokens=5)], 5, 2, D, 0)
+
+    g += interpret.run(ESCALATION_FURNISH_RQ, g, _escalation_vocab())
+
+    refusal = URIRef(DOC + "#region0-refusal")
+    assert list(g.subject_objects(DEC.escalatedTo)) == [(refusal,
+                                                          URIRef(f"{refusal}-expansion"))]
+    assert g.value(URIRef(f"{refusal}-expansion"), DEC.regarding) == REGION0
+    conforms, text, _ = C._validate(g, legs=("dec",))
+    assert conforms, text
+
+
 def test_the_escalated_report_carries_no_header_reading_and_others_keep_theirs():
     """A refused table's reading must not be carried onto the next page (document driver):
     its row sources live in the withdrawn space."""

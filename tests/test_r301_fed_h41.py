@@ -138,3 +138,20 @@ def test_o6_p7_states_the_guard_as_its_cause(doc):
     assert any(n.startswith("page 7: adoption refused") and "rule-separated ink" in n
                for n in p7), p7
     assert not any("no data grid region" in n for n in p7), p7
+
+
+# ---------------------------------------------------------------- R303 O1
+
+def test_r303_each_withdrawn_region_is_furnished_by_its_refusal(doc):
+    """R303 (spec 2026-10-09-r303-a-refusal-is-furnished-design.md § 5 O1): the two tables the
+    guard withdrew reach a human like every other escalated band, through the refusal."""
+    from iladub.etkl.decisionlog import DEC
+    g = doc.graph
+    requests = set(g.subjects(RDF.type, DEC.ExpansionRequest))
+    regarded = {g.value(q, DEC.regarding) for q in requests}
+    print("\nR303 O1 requests:", len(requests), "regions:", len(regarded))
+    for region, (d,) in _refusals(g).items():
+        mine = [q for q in requests if g.value(q, DEC.regarding) == region]
+        assert mine == [g.value(d, DEC.escalatedTo)], (region, mine)
+    assert set(_refusals(g)) == _withdrawn(doc) and len(_withdrawn(doc)) == 2
+    assert (len(requests), len(regarded)) == (14, 14)
