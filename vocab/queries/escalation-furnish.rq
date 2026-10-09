@@ -55,7 +55,12 @@
 # "escalated", a verdict where the reader declined to read, and "refuse", a refusal where the
 # producer guard (ruleguard.mint_refusal) withdrew a reading it had made. The refusal's option
 # is never relabelled to fit this query (spec R301 § 8 S3), so the query names both, once,
-# in VALUES. It is a closed enumeration of evidence labels, not a tolerance (R303).
+# in the FILTER below. It is a closed enumeration of evidence labels, not a tolerance (R303).
+#   A FILTER, NOT A VALUES BLOCK, because the WHERE must stay ONE basic graph pattern. MEASURED
+#   2026-10-09: a VALUES mid-group splits it, rdflib evaluates the second half unbound, and
+#   `?o rdfs:label ?label` x `?d dec:regarding ?r` share no variable. That is a cartesian product
+#   (synthetic N=300: 220 s against 0.10 s), and arxiv's compile ran past 40 min. Pinned by
+#   tests/etkl/test_escalation_furnish_plan.py.
 #
 # ?req is a FUNCTION of ?d (not a blank node, not minted fresh), so the derivation is a pure
 # function of the graph and running it twice adds nothing: idempotence is structural rather
@@ -87,8 +92,8 @@ WHERE {
   # spelling (:59) and no query may depend on it. Nor the call site — 17 sites record a
   # verdict and not all of them can choose "escalated"; the chosen option is the evidence.
   # TWO LABELS ARE EVIDENCE — see EVIDENCE SET above.
-  VALUES ?label { "escalated" "refuse" }
   ?o rdfs:label ?label .
+  FILTER (?label IN ("escalated", "refuse"))
   # REQUIRED, never OPTIONAL: this join is invariant 5's guard. A decision carrying no
   # dec:regarding derives NOTHING AT ALL, rather than a request with no subject matter.
   # Live rather than vacuous — datagrid.py mints decision holons and emits no dec:regarding.
