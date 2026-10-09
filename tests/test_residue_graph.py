@@ -224,4 +224,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # row — the RAISE kind twice over. Net: 97 -> 98, ADDED = [302, 303], REMOVED = [301].
     # Controlled: `scripts/residue_graph.py --candidates` over `main`'s register files is 97 (R301
     # still open there), over the branch's 98.
-    assert len(expected) == 98
+    # RE-MEASURED 2026-10-09 (R303 closed, branch r303-refusal-furnished): R303's close removes it,
+    # and nothing is raised. Net: 98 -> 97, ADDED = [], REMOVED = [303]. Controlled:
+    # `scripts/residue_graph.py --candidates` over `main`'s register files is 98, over the branch's 97.
+    assert len(expected) == 97
