@@ -12,7 +12,10 @@ originated no design: the remedy is the previous handoff's § 5.2.
 
 1. **PROPOSED — no subject is chosen; the maintainer picks.** The open candidates this loop knows
    of are R299 (caltrain's heading admitted as a data row), R295 (held-out caltrain), R304 (raised
-   here: R300's page-scope twin) and R83 (no longer dormant on fed-h41, see § 4). None is ordered
+   here: R300's page-scope twin), R83 (no longer dormant on fed-h41, see § 4) and R305 (raised here
+   at the maintainer's request: the committed corpus snapshot baseline). In this session Claude
+   recommended R305 first, because it makes every later loop cheaper. The maintainer asked for the row
+   to be raised and did not choose the next subject. None is ordered
    over the others by anything measured here. Read `residues.md`'s index and ask.
 2. **ASSERTED, whichever subject is picked — R304 is not a one-line fix.** Do not "just name the
    pass-1 table" at page scope: page scope has no pass-1 graph to name. R83's comment in
@@ -57,7 +60,11 @@ who-wfa, caltrain, who-covid and arxiv. On fed-h41 the two asserted untouched re
 p10 r3. Their pass-1 table is in the document graph, and the re-compile's `…/adopt#` name is in neither graph.
 So the refusal branch of `_untouched_from_pass_one` is reached by no document. It is pinned in CI only.
 
-_Blast radius: pending._
+**Blast radius (`corpus_verdict_snapshot.snapshot()`, `validate_shapes=True`, serial, `main` worktree
+at `e26948d` against `393107a`): all eleven canonical graph hashes are equal.** The only differing field
+on any document is fed-h41 `pages[3].regions[7].table` and `pages[10].regions[3].table`, both moving
+from `…/adopt#` to the name the graph holds. Dangling asserted reports: 2 → 0 on fed-h41, 0 → 0 on
+the other ten. The diff script and both readings are in this session's scratchpad only.
 
 ## 3. What was decided, and where it is recorded
 
@@ -66,6 +73,8 @@ _Blast radius: pending._
   a refusal note), and nothing measured reaches it. Reversible: it is this loop's call, not a
   maintainer ruling.
 - **R304 is raised, not fixed.** As the previous handoff's § 5.4 asked.
+- **R305 is raised at the maintainer's request** (2026-10-10, this session): the ratio of testing
+  time to development time. Recorded in the register row itself.
 
 ## 4. Unverified, assumed, or found on the way
 
