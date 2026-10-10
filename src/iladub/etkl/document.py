@@ -1205,6 +1205,40 @@ def _band_subgraph(g: Graph, table_uri: URIRef) -> Graph:
     return out
 
 
+def _untouched_from_pass_one(pass1: tuple, recompiled: tuple, grid_idx: int) -> tuple | None:
+    """The adopted page's regions: the re-compile's, with PASS 1's report installed for every
+    band the grid did not supersede — or None when the two compiles disagree on such a band.
+
+    WHY PASS 1's (R300). The document driver merges only what the adoption re-compile REBUILT
+    (the grids, the residue) and withdraws only the superseded bands, so every untouched band
+    keeps pass 1's subgraph under `page_doc_uri(p)`. The re-compile's report for that band names
+    the table it minted under `…/adopt`, which is in no graph: the page graph it came from was
+    rebuilt from the grids alone. Pass 1's report names the table the graph holds, and so do the
+    `chains` and section-total facts built from it before the adoption loop runs.
+
+    WHY EQUALITY MODULO THE URI IS REQUIRED, not assumed. Swapping the report is only a renaming
+    if the two compiles read the band the same way: same carried reading, adoption off in pass 1,
+    and `compile_tables` keeps every pre-adoption report in place (the premise `grid_idx` already
+    rests on). If any untouched band differs in anything but `table_uri`, the page's totals (the
+    re-compile's ledger) and its regions (pass 1's) would describe two different readings. The
+    caller turns None into a refusal note, as it does every other disagreement between the two
+    compiles, before it mutates anything. Measured 2026-10-10: no untouched band on any of the
+    eleven documents differs.
+
+    Gate classification (CLAUDE.md § 8): PROCEDURAL bookkeeping. An index walk and a dataclass
+    equality over two reports this driver already holds; it decides nothing about the page."""
+    from dataclasses import replace
+    out = list(recompiled)
+    for idx in range(grid_idx):
+        r = recompiled[idx]
+        if r.verdict == "superseded":
+            continue
+        if replace(r, table_uri=pass1[idx].table_uri) != pass1[idx]:
+            return None
+        out[idx] = pass1[idx]
+    return tuple(out)
+
+
 def _confirm_section_total(graph: Graph, table_uri: URIRef, band) -> tuple[bool, str | None]:
     """Associate a section table's printed trailing total with the table — or refuse.
 
@@ -1839,6 +1873,13 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
             # higher than it read, which is the failure this loop exists to prevent (§7).
             notes.append(f"page {p}: adoption refused — the grid superseded no escalated band")
             continue
+        # R300: the untouched bands keep pass 1's subgraph below, so they keep pass 1's report.
+        # Decided here, before any mutation, because a disagreement refuses the page.
+        installed = _untouched_from_pass_one(pages[p].regions, rep_a.regions, grid_idx)
+        if installed is None:
+            notes.append(f"page {p}: adoption refused — the re-compile read an untouched band "
+                         f"differently from pass 1")
+            continue
         # ---- §1g (R225 D2): A SUPERSEDED BAND THAT **ASSERTED** CARRIES A TABLE, AND THE MERGE
         # WOULD LEAVE IT STANDING BESIDE THE GRID THAT RE-READ ITS LINES.
         #
@@ -1969,7 +2010,7 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
                 v1 = _verdict_decision(graph, page_doc_uri(p), idx)
                 if v1 is not None:
                     graph.add((admission, DEC.supersedes, _effective_verdict(graph, v1)))
-        pages[p] = rep_a
+        pages[p] = _dc_replace(rep_a, regions=installed)
         adopted.append(p)
         section_facts = True          # document-level facts changed: validation must run
 
