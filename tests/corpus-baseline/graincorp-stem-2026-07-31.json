@@ -1,0 +1,130 @@
+{
+  "adopted": [],
+  "chains": [
+    [
+      "https://example.org/etkl/doc/p0#htable2",
+      "https://example.org/etkl/doc/p1#htable1",
+      "https://example.org/etkl/doc/p2#htable1"
+    ]
+  ],
+  "graph_sha256": "11df02b09453be20750776380a8ffd21fb54c8b76ff6d93996d0333bb3ce1b2a",
+  "graph_triples": 45289,
+  "notes": [],
+  "pages": [
+    {
+      "asserted": 611,
+      "escalated": 1,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 586,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#htable2",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.9983660130718954
+    },
+    {
+      "asserted": 850,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 825,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p1#htable1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    },
+    {
+      "asserted": 766,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 741,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p2#htable1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    }
+  ],
+  "pdf": "corpus/ag-trade/graincorp-stem-2026-07-31.pdf",
+  "recognized": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ]
+  ],
+  "refused_licences": [],
+  "repaired_bands": [],
+  "score": 0.9995511669658886
+}

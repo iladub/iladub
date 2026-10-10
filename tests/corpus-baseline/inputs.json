@@ -1,0 +1,60 @@
+{
+  "documents": [
+    {
+      "path": "corpus/ag-trade/cbh-stem-2026-08-03.pdf",
+      "sha256": "3f180e23c397c3703b75fa104f2fdf1510edb45be25d737232c8ac060c6e1612"
+    },
+    {
+      "path": "corpus/ag-trade/graincorp-capacity-2026-08-04.pdf",
+      "sha256": "ac66b478e20e82d4adede719c04a85f2071d5d5f005876b04851b94a76da2021"
+    },
+    {
+      "path": "corpus/ag-trade/graincorp-stem-2026-07-31.pdf",
+      "sha256": "3bda68331024dbc802ad7d965dd114aeaff138c65c0571cc4d0a90d2a8b64eee"
+    },
+    {
+      "path": "corpus/financial/apple-fy2026q3-statements.pdf",
+      "sha256": "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5"
+    },
+    {
+      "path": "corpus/gov-stats/bfs-population-bilan-2023.pdf",
+      "sha256": "4d1796d1ba90788f01c163ad636d5ac57a4461bb46dbbbbbc3327db11e113fb0"
+    },
+    {
+      "path": "corpus/gov-stats/ons-index-of-services-2026-02.pdf",
+      "sha256": "c90a6ae01cd6cad6deef61ef1a2916f975ec3599b6c83a279a08f2471f633018"
+    },
+    {
+      "path": "corpus/health/who-wfa-boys-zscore-0-5.pdf",
+      "sha256": "ca6437e29134dee2951736f25905b8d60a07255c987b28fce7a6a639fca24ab8"
+    },
+    {
+      "path": "held-out/arxiv-1706.03762v7.pdf",
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+    },
+    {
+      "path": "held-out/caltrain-weekend-timetable.pdf",
+      "sha256": "b032b73a7ded38dfaafd2a2f96da0d4799995aa99225ae30e51c8a9792f11237"
+    },
+    {
+      "path": "held-out/fed-h41-2025-01-02.pdf",
+      "sha256": "51273fa7646de7f1af281943d1a7ea3e1ea2f71bf5ca4503e27c02275be522e1"
+    },
+    {
+      "path": "held-out/who-covid-sitrep-41.pdf",
+      "sha256": "93ef725f9d04526cfd18c680308d482afee8e3069de26c4b12b4a58aa1cbdbcf"
+    }
+  ],
+  "environment": {
+    "distributions": {
+      "numpy": "2.5.0",
+      "pdfminer.six": "20260107",
+      "pdfplumber": "0.11.10",
+      "pyshacl": "0.40.1",
+      "pyyaml": "6.0.3",
+      "rdflib": "7.6.0"
+    },
+    "python": "3.12.0"
+  },
+  "fingerprint": "e3c8f238c42527e059a31d840d26f24627b4d4114792d032bc44548c2f58dc41"
+}

@@ -1,0 +1,1703 @@
+{
+  "adopted": [],
+  "chains": [
+    [
+      "https://example.org/etkl/doc/p0#table5"
+    ],
+    [
+      "https://example.org/etkl/doc/p4#table8"
+    ],
+    [
+      "https://example.org/etkl/doc/p4#table10"
+    ],
+    [
+      "https://example.org/etkl/doc/p5#table1"
+    ],
+    [
+      "https://example.org/etkl/doc/p7#table2"
+    ],
+    [
+      "https://example.org/etkl/doc/p8#table1"
+    ],
+    [
+      "https://example.org/etkl/doc/p8#table4"
+    ],
+    [
+      "https://example.org/etkl/doc/p8#mtable5"
+    ],
+    [
+      "https://example.org/etkl/doc/p9#table1"
+    ],
+    [
+      "https://example.org/etkl/doc/p10#table0"
+    ],
+    [
+      "https://example.org/etkl/doc/p10#table4"
+    ],
+    [
+      "https://example.org/etkl/doc/p10#ttable13"
+    ],
+    [
+      "https://example.org/etkl/doc/p11#table0"
+    ],
+    [
+      "https://example.org/etkl/doc/p11#table7"
+    ],
+    [
+      "https://example.org/etkl/doc/p11#table8"
+    ],
+    [
+      "https://example.org/etkl/doc/p11#table11"
+    ]
+  ],
+  "graph_sha256": "cf7bd71d0a0e08a6a860a5a9ca574005dae7b84ed98fb9be1dd324665a1d23a1",
+  "graph_triples": 17526,
+  "notes": [
+    "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 3: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 4: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 6: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 7: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 8: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 9: adoption refused \u2014 the data grid left no less ink unread than the bands did",
+    "page 10: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 11: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 12: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 13: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 14: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
+  ],
+  "pages": [
+    {
+      "asserted": 70,
+      "escalated": 29,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 15,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#table5",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.7070707070707071
+    },
+    {
+      "asserted": 0,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 20,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "MERGE_AMBIGUOUS",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 25,
+      "escalated": 32,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 4,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p4#table8",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 4,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p4#table10",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.43859649122807015
+    },
+    {
+      "asserted": 23,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 17,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p5#table1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 4,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 8,
+      "escalated": 40,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "MERGE_AMBIGUOUS",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 4,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p7#table2",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.16666666666666666
+    },
+    {
+      "asserted": 64,
+      "escalated": 34,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 10,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p8#table1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "ROUND_TRIP_FAIL",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 4,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p8#table4",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 20,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p8#mtable5",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "ROUND_TRIP_FAIL",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.6530612244897959
+    },
+    {
+      "asserted": 39,
+      "escalated": 35,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 36,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p9#table1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.527027027027027
+    },
+    {
+      "asserted": 15,
+      "escalated": 156,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 2,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p10#table0",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 1,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p10#table4",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 3,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p10#ttable13",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.08771929824561403
+    },
+    {
+      "asserted": 23,
+      "escalated": 144,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 1,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p11#table0",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 2,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p11#table7",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 2,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p11#table8",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 1,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p11#table11",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.1377245508982036
+    },
+    {
+      "asserted": 0,
+      "escalated": 261,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 341,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 343,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.0
+    }
+  ],
+  "pdf": "held-out/arxiv-1706.03762v7.pdf",
+  "recognized": [
+    [
+      12,
+      13
+    ]
+  ],
+  "refused_licences": [
+    [
+      12,
+      13
+    ]
+  ],
+  "repaired_bands": [],
+  "score": 0.15650644783118406
+}

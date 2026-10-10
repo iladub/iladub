@@ -1,0 +1,79 @@
+{
+  "adopted": [],
+  "chains": [],
+  "graph_sha256": "4cf6a861e0c68e26312528fe740877879a1219698f1599a59590ba46944f877a",
+  "graph_triples": 415,
+  "notes": [
+    "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 1: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 2: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
+    "page 3: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
+  ],
+  "pages": [
+    {
+      "asserted": 0,
+      "escalated": 440,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 462,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 438,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        }
+      ],
+      "score": 0.0
+    },
+    {
+      "asserted": 0,
+      "escalated": 462,
+      "regions": [
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "KIND_NOT_SUPPORTED",
+          "table": null,
+          "verdict": "escalated"
+        }
+      ],
+      "score": 0.0
+    }
+  ],
+  "pdf": "held-out/caltrain-weekend-timetable.pdf",
+  "recognized": [],
+  "refused_licences": [],
+  "repaired_bands": [],
+  "score": 0.0
+}

@@ -1,0 +1,147 @@
+{
+  "adopted": [],
+  "chains": [
+    [
+      "https://example.org/etkl/doc/p0/r2#htable1",
+      "https://example.org/etkl/doc/p0/r2#htable3",
+      "https://example.org/etkl/doc/p0/r2#htable5",
+      "https://example.org/etkl/doc/p0/r2#htable7"
+    ],
+    [
+      "https://example.org/etkl/doc/p0#table10"
+    ],
+    [
+      "https://example.org/etkl/doc/p0#table11"
+    ]
+  ],
+  "graph_sha256": "dc345942f4c1fa3db8a92f5400352a2c54857d5d387b49134bb2adcf767bb56f",
+  "graph_triples": 16154,
+  "notes": [],
+  "pages": [
+    {
+      "asserted": 878,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 170,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0/r2#htable1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#PrintedTotal",
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": null,
+          "table": null,
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 268,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0/r2#htable3",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#PrintedTotal",
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": null,
+          "table": null,
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 228,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0/r2#htable5",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#PrintedTotal",
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": null,
+          "table": null,
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 84,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0/r2#htable7",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#PrintedTotal",
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": null,
+          "table": null,
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 28,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#table10",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 8,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#table11",
+          "verdict": "asserted"
+        }
+      ],
+      "score": 1.0
+    }
+  ],
+  "pdf": "corpus/ag-trade/cbh-stem-2026-08-03.pdf",
+  "recognized": [],
+  "refused_licences": [],
+  "repaired_bands": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      0,
+      5
+    ],
+    [
+      0,
+      7
+    ]
+  ],
+  "score": 1.0
+}

@@ -1,0 +1,65 @@
+{
+  "adopted": [],
+  "chains": [
+    [
+      "https://example.org/etkl/doc/p0#htable3"
+    ]
+  ],
+  "graph_sha256": "284b10c5dae39e79ce1bec629ad1644d9745915a30b49160703294778393e0f3",
+  "graph_triples": 9304,
+  "notes": [],
+  "pages": [
+    {
+      "asserted": 406,
+      "escalated": 0,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 406,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#htable3",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 1.0
+    }
+  ],
+  "pdf": "corpus/ag-trade/graincorp-capacity-2026-08-04.pdf",
+  "recognized": [],
+  "refused_licences": [],
+  "repaired_bands": [],
+  "score": 1.0
+}
