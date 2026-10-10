@@ -230,4 +230,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-09 (R302 closed, branch r302-grid-idx-pinned): R302's close removes it,
     # and nothing is raised. Net: 97 -> 96, ADDED = [], REMOVED = [302]. Controlled:
     # `scripts/residue_graph.py --candidates` over `main`'s register files is 97, over the branch's 96.
-    assert len(expected) == 96
+    # RE-MEASURED 2026-10-10 (R300 closed, R304 and R305 raised, branch r300-install-pass1):
+    # 96 -> 97, ADDED = [305], REMOVED = []. R300 was never a candidate (it cites [[R298]], open),
+    # R304 cites R83, which is open, and R305 cites no row: the RAISE kind. Controlled:
+    # `scripts/residue_graph.py --candidates` over `main`'s register files is 96, over the branch's 97.
+    assert len(expected) == 97

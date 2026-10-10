@@ -2197,6 +2197,62 @@ def currency_marker_escalating_with_asserting_table_pdf(path: str) -> dict:
     return {"cols": xs, "n_rows": len(rows), "second_cols": sxs, "second_rows": len(second)}
 
 
+def currency_marker_escalating_with_untouched_table_pdf(path: str) -> dict:
+    """[[R300]] — the escalating band, plus a band that ASSERTS a table NO grid admits.
+
+    WHY A SIBLING AND NOT AN EDIT: the reason `currency_marker_escalating_with_asserting_table_pdf`
+    gives, and this is that fixture with one thing changed. Its second table is numeric, so the
+    page-wide grid admits its rows and supersedes the band. This one is all text (`Code`/`Name`),
+    which no grid on the page admits, so the band stays ASSERTED beside the grid: the third
+    property R300's criterion asks for, which no fixture had before this one.
+
+    WHAT IT IS FOR. The document driver re-compiles an adopting page under `…/pN/adopt` and keeps
+    PASS 1's subgraph for every band the grid did not touch. Before the R300 fix it installed the
+    re-compile's report for those bands too, so this band's report named `p0/adopt#table1`, a table
+    in no graph, while the graph held `p0#table1`.
+
+    MEASURED 2026-10-10 at document scope, `validate_shapes=False`, before the fix:
+
+        adopted=(0,)
+        region0 superseded UNSUPPORTED_TABLE REGION_TILING_FAILED  cells=0  a=0  e=0
+        region1 asserted   RECORD_TABLE                            cells=6  a=8  e=0
+                uri=p0/adopt#table1, 0 subject triples in the document graph
+        region2 asserted   RECORD_TABLE (the grid) supersedes=(0,) cells=12 a=16 e=0
+        region3 escalated  UNSUPPORTED_TABLE DATAGRID_RESIDUE      cells=0  a=0  e=2
+
+    Four second tables were tried, each above and below the escalating one. Only one was
+    superseded: rows with four distinct type signatures (`Units`, `1,204`, `12%`, `2025-01-02`) at
+    x = 72, 220. The same rows offset to x = 300, 470, and the all-text table at either position,
+    stay asserted beside the grid with 0 triples. This one keeps the sibling's x-positions.
+    """
+    c = canvas.Canvas(str(path), pagesize=letter)
+    c.setFont("Courier", 9)
+    rows = [
+        ("Item",     "",  "Amount",  "",  ""),
+        ("Products", "$", "78,678",  "$", "272,629"),
+        ("Services", "",  "30,739",  "",  "91,728"),
+        ("Other",    "",  "11,729",  "",  "34,035"),
+        ("Overall",  "$", "121,146", "$", "398,392"),
+    ]
+    xs = [72.0, 220.0, 260.0, 380.0, 420.0]
+    y0 = PAGE_H - 100.0
+    for i, row in enumerate(rows):
+        y = y0 - i * 14.0
+        for x, t in zip(xs, row):
+            if t:
+                c.drawString(x, y, t)
+    # The sibling's 60pt gap and x-positions, unchanged; only the second table's text differs.
+    second = [("Code", "Name"), ("CH", "Switzerland"), ("FR", "France"), ("DE", "Germany")]
+    sxs = [72.0, 220.0]
+    sy0 = y0 - len(rows) * 14.0 - 60.0
+    for i, row in enumerate(second):
+        y = sy0 - i * 14.0
+        for x, t in zip(sxs, row):
+            c.drawString(x, y, t)
+    c.save()
+    return {"cols": xs, "n_rows": len(rows), "second_cols": sxs, "second_rows": len(second)}
+
+
 def border_only_grid_pdf(path: str) -> dict:
     """R224's fixture — a page that asserts NOTHING, escalates NOTHING, and derives a grid.
 

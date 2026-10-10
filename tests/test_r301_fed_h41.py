@@ -155,3 +155,16 @@ def test_r303_each_withdrawn_region_is_furnished_by_its_refusal(doc):
         assert mine == [g.value(d, DEC.escalatedTo)], (region, mine)
     assert set(_refusals(g)) == _withdrawn(doc) and len(_withdrawn(doc)) == 2
     assert (len(requests), len(regarded)) == (14, 14)
+
+
+# ---------------------------------------------------------------- R300
+
+def test_r300_every_asserted_report_names_a_table_in_the_graph(doc):
+    """[[R300]] on the document that raised it. Before the fix p3 `htable7` and p10 `htable3`
+    were reported under `…/adopt#` with 0 subject triples (handoff 2026-10-09 § 2, probe A)."""
+    dangling = [(p, i, r.table_uri)
+                for p, page in enumerate(doc.pages)
+                for i, r in enumerate(page.regions)
+                if r.verdict == "asserted" and r.table_uri is not None
+                and (URIRef(r.table_uri), None, None) not in doc.graph]
+    assert dangling == []
