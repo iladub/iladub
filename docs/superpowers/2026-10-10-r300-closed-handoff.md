@@ -1,6 +1,6 @@
 # Handoff: R300 closed — an adopted page reports pass 1's reading of every band the grid left alone (2026-10-10)
 
-**Serves:** maintenance. R300 was picked by the maintainer 2026-10-09; this loop executes the remedy
+**Serves:** maintenance — R300 was picked by the maintainer 2026-10-09; this loop executes the remedy
 in `2026-10-09-r300-cause-measured-handoff.md` § 5.
 
 **Topic:** compile · **Date:** 2026-10-10
