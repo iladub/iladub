@@ -1,6 +1,6 @@
 # Spec: a committed corpus baseline, so a blast-radius check is one pass (R305)
 
-**Serves:** maintenance. This is [[R305]], picked by the maintainer on 2026-10-10 from the
+**Serves:** maintenance — This is [[R305]], picked by the maintainer on 2026-10-10 from the
 candidates in `docs/superpowers/2026-10-10-r300-closed-handoff.md` § 5.1.
 
 **Date:** 2026-10-10. **Branch:** `r305-snapshot-baseline`, cut from `main` at `554979f`.

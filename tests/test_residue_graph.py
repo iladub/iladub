@@ -234,4 +234,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # 96 -> 97, ADDED = [305], REMOVED = []. R300 was never a candidate (it cites [[R298]], open),
     # R304 cites R83, which is open, and R305 cites no row: the RAISE kind. Controlled:
     # `scripts/residue_graph.py --candidates` over `main`'s register files is 96, over the branch's 97.
-    assert len(expected) == 97
+    # RE-MEASURED 2026-10-10 (R305 closed, branch r305-snapshot-baseline): 97 -> 96, ADDED = [],
+    # REMOVED = [305]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
+    # `main`'s register files is 97, over the branch's 96.
+    assert len(expected) == 96
