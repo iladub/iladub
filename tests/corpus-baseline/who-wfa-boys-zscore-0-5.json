@@ -1,0 +1,220 @@
+{
+  "adopted": [],
+  "chains": [
+    [
+      "https://example.org/etkl/doc/p0#mtable2"
+    ],
+    [
+      "https://example.org/etkl/doc/p0#htable3"
+    ],
+    [
+      "https://example.org/etkl/doc/p0#table4"
+    ],
+    [
+      "https://example.org/etkl/doc/p0#htable5"
+    ],
+    [
+      "https://example.org/etkl/doc/p1#mtable2"
+    ],
+    [
+      "https://example.org/etkl/doc/p1#htable3"
+    ],
+    [
+      "https://example.org/etkl/doc/p1#table4"
+    ],
+    [
+      "https://example.org/etkl/doc/p1#htable5"
+    ],
+    [
+      "https://example.org/etkl/doc/p2#mtable1"
+    ],
+    [
+      "https://example.org/etkl/doc/p2#htable2"
+    ]
+  ],
+  "graph_sha256": "048dcd7d5607d81c37ba46d8812f18fd277942075c706c237743d149515bc9c9",
+  "graph_triples": 15955,
+  "notes": [],
+  "pages": [
+    {
+      "asserted": 327,
+      "escalated": 1,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 77,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#mtable2",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 63,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#htable3",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 78,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#table4",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 63,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p0#htable5",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.9969512195121951
+    },
+    {
+      "asserted": 315,
+      "escalated": 1,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 66,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p1#mtable2",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 63,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p1#htable3",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#RecordTable",
+          "cells": 78,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p1#table4",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 63,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p1#htable5",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.9968354430379747
+    },
+    {
+      "asserted": 161,
+      "escalated": 1,
+      "regions": [
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 columns",
+          "table": null,
+          "verdict": "ignored"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 66,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p2#mtable1",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
+          "cells": 63,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p2#htable2",
+          "verdict": "asserted"
+        },
+        {
+          "anchor": null,
+          "cells": 0,
+          "kind": "RegionKind.NON_TABLE",
+          "reason": "fewer than 2 lines",
+          "table": null,
+          "verdict": "ignored"
+        }
+      ],
+      "score": 0.9938271604938271
+    }
+  ],
+  "pdf": "corpus/health/who-wfa-boys-zscore-0-5.pdf",
+  "recognized": [
+    [
+      1,
+      2
+    ]
+  ],
+  "refused_licences": [
+    [
+      1,
+      2
+    ]
+  ],
+  "repaired_bands": [],
+  "score": 0.9962779156327544
+}
