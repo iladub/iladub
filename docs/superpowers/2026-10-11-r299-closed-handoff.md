@@ -33,6 +33,9 @@ executing floor. It is graded per action for that reason.
    removes a circularity in G1 instead of adding a criterion. The case against: three variants is
    the unbounded pattern the ruling names. The maintainer decides. If the ruling goes against it,
    the remedy is reverted and `tab:ClockTime` goes back on hold.
+   **RULED 2026-10-11 by the maintainer: it stands.** The rule is a typed constraint with no
+   constant, not a geometric heuristic. It is recorded as the last non-NEURAL attempt on this
+   judgement: the next refutation of it goes to a proposer, not to a fourth variant.
 2. **PROPOSED: no subject is chosen.** Candidates on record: R295, R304, R83.
 3. **ASSERTED: R295's row is stale as evidence.** It measures Caltrain scoring 1.0 with 3 of 4
    pages ignored. Caltrain now adopts all 4 pages at 0.9031 (`tests/corpus-baseline/`). Re-measure
@@ -91,7 +94,8 @@ The four formerly red tests were not edited. Their five consumer files pass: `te
 
 ## 3. What was decided, and where it is recorded
 
-Nothing was ruled this session. § 5.1 is the open ruling.
+One ruling, 2026-10-11: the row rule stands under the 2026-09-17 ruling. It is recorded in § 5.1
+above and in R299's row in `docs/superpowers/residues-closed.md`.
 
 ## 4. Unverified, assumed, or found on the way
 
