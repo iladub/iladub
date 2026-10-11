@@ -497,11 +497,42 @@ def derive_data_grid(pdf_path: str, page_number: int = 0,
     if not measures:                              # G1b tab:NonDegeneracy
         return None
     key_col = min(k for k in range(ncols) if columns[k].family is not None)
-    addressable = [h for _, h in placed if key_col in h and (measures & set(h))]
     # A column that the addressable rows contradict has no agreed family, and a column
-    # with no agreed family refuses nobody.
-    refusing = {k: c.family for k, c in enumerate(_type(addressable))} if addressable \
-        else {k: c.family for k, c in enumerate(columns)}
+    # with no agreed family refuses nobody. (Which rows may do that: `relaxing`, below.)
+
+    def contradicts_every_measure(h: dict) -> bool:
+        """The row disagrees with the seed's family in EVERY measure column it occupies."""
+        occupied = measures & set(h)
+        return bool(occupied) and all(
+            not is_blank(h[k]) and columns[k].family
+            and columns[k].family not in _ABSTAIN
+            and family_of(h[k]) not in _ABSTAIN
+            and family_of(h[k]) != columns[k].family
+            for k in occupied)
+
+    # A row is not evidence for its own admission (R299). Until 2026-10-11 the refusing
+    # families were typed over every addressable row, the row under test included, so a
+    # row that contradicts a column nulled that column's family and then passed the check
+    # it should have failed.
+    # Two rows may not relax a refusal: the row being judged, and a row the universal
+    # below refuses as a header. Both halves are needed, and both were measured on
+    # held-out caltrain (2026-10-11): its direction heading carries one nil glyph, so the
+    # universal does not catch it; leaving the heading out alone changes nothing, because
+    # the train-number row (refused by the universal, yet addressable) nulls the same
+    # columns. Rows that relax a column for ONE ANOTHER still do: graincorp-stem p1 keeps
+    # its six shutdown rows (77 rows before and after). No count, no tolerance.
+    relaxing = {i: h for i, h in placed
+                if key_col in h and (measures & set(h)) and not contradicts_every_measure(h)}
+
+    def agrees_somewhere(h: dict) -> bool:
+        return any(not is_blank(h[k]) and family_of(h[k]) == columns[k].family
+                   for k in measures & set(h))
+
+    def refusing_without(i: int) -> dict:
+        own = relaxing.get(i)
+        leave_out = own is not None and not agrees_somewhere(own)
+        others = [h for j, h in relaxing.items() if not (leave_out and j == i)]
+        return {k: c.family for k, c in enumerate(_type(others) if others else columns)}
 
     # --- G2 tab:RowAddressability + G1 compatibility.
     #
@@ -537,15 +568,10 @@ def derive_data_grid(pdf_path: str, page_number: int = 0,
         # when ons was transcribed those extra rows turned out to BE the leaks — its
         # title and two footnotes each occupy exactly one measure column and contradict
         # it. Row counts on unverified pages are not evidence.
-        occupied = measures & set(h)
-        if occupied and all(
-                not is_blank(h[k]) and columns[k].family
-                and columns[k].family not in _ABSTAIN
-                and family_of(h[k]) not in _ABSTAIN
-                and family_of(h[k]) != columns[k].family
-                for k in occupied):
+        if contradicts_every_measure(h):
             refusals[i] = "HeterogeneousColumn/every-measure"
             continue
+        refusing = refusing_without(i)
         clash = next((k for k, t in h.items()
                       if not is_blank(t) and refusing.get(k)
                       and refusing[k] not in _ABSTAIN

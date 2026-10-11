@@ -317,6 +317,8 @@ tab-datagrid.ttl already asserts in prose -- 'tab:Text IS a legal family. This i
 that made the definition universal.' Only the declaration was missing. Contrast tab:Quantity,
 which is a family WITHOUT being a datatype: it normalises Numeric and Currency."""@en .
 tab:Date     a tab:CellDatatype ; rdfs:label "Date"@en .
+tab:ClockTime a tab:CellDatatype ; rdfs:label "Clock time"@en ;
+    rdfs:comment "A time of day, in one of two format-decidable spellings: a 12-hour time carrying its meridiem ('6:51a', '12:26 pm', '9:05 p.m.'), or a zero-padded 24-hour time ('07:30', '23:59'). An unpadded time with no meridiem ('4:11') is NOT this datatype: the same spelling is a ratio, a score or a years:months age, and only context could tell them apart. Like tab:Date it stays outside tab:Quantity, because a column of departure times is not a column of amounts. Raised by a timetable whose every data cell was typed tab:Text, which left its grid with no measure column (held-out caltrain-weekend-timetable, 2026-10-07)."@en .
 tab:Currency a tab:CellDatatype ; rdfs:label "Currency"@en .
 tab:CurrencyGlyph a tab:CellDatatype ; rdfs:label "Currency glyph"@en ;
     rdfs:comment "A cell that is exactly one currency symbol; emitted only by the unit-marker evidence (unitmarker.py), deliberately absent from the shared celltype lattice."@en .
