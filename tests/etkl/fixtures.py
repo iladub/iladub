@@ -1784,7 +1784,8 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
                             bad_total_in: int | None = None,
                             strip_separators: bool = False,
                             lone_total_offset: float | None = None,
-                            grand_total: str | None = None) -> dict:
+                            grand_total: str | None = None,
+                            time_only: bool = False) -> dict:
     """The CBH multi-section shape (spec 2026-08-04 §4.0 CORRECTION): N repeated CBH
     sections (see `_draw_section`), each drawn with the real CBH's DOUBLED-EDGE border
     (`doubled_edges=True` — see `_draw_section`'s docstring), stacked on one page, same
@@ -1846,6 +1847,16 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
     `lone_total_offset`'s lone line was drawn last; the grid's closing rule if neither), far enough
     that `detect_bands` gives it a band of its own after every section band.
 
+    time_only (R299, 2026-10-11, default False): col 1 is drawn as the real CBH draws it, a time
+    AND its date in one cell ('15:01 15/06/2026', measured on corpus/ag-trade/cbh-stem p0: 45 such
+    cells per time column), which types `tab:Text`. Until `tab:ClockTime` existed this fixture drew
+    the time alone ('15:01') and nothing could tell the difference, because both typed Text. A lone
+    time now types ClockTime, col 1 becomes a data column with the Text Client column after it, the
+    data columns stop being a contiguous suffix (`stub-data-split.rq`), the band leaves matrix
+    candidacy, and the hierarchical path ASSERTS it at pass 1: no escalation, so no section repair.
+    True draws that earlier, invented spelling, for the one test that pins that route
+    (`test_a_lone_time_column_asserts_at_pass_one_and_is_never_repaired`).
+
     Returns {"sections": [{"key", "notice", "rows", "total"}, ...], "header_names", "cols"}.
     """
     from reportlab.lib.pagesizes import letter
@@ -1864,19 +1875,21 @@ def multi_section_ruled_pdf(path: str, n_sections: int = 2, with_totals: bool = 
         "CHANNEL DEPTH RESTRICTED NEAP TIDE",
     ]
     row_sets = [
-        [("10097", "15:01", "Brahman", "30,000"),
-         ("10076", "14:38", "CBH", "50,000"),
-         ("10118", "11:28", "Cargill", "48,904")],
-        [("20011", "09:15", "Viterra", "40,000"),
-         ("20032", "10:47", "CBH", "35,500"),
-         ("20050", "13:02", "GrainCorp", "52,600")],
-        [("30014", "07:22", "Bunge", "25,300"),
-         ("30028", "12:05", "CBH", "31,750"),
-         ("30041", "16:40", "Viterra", "22,900")],
-        [("40019", "08:50", "GrainCorp", "44,200"),
-         ("40033", "11:15", "Bunge", "38,600"),
-         ("40058", "14:29", "CBH", "29,750")],
+        [("10097", "15:01 15/06/2026", "Brahman", "30,000"),
+         ("10076", "14:38 09/06/2026", "CBH", "50,000"),
+         ("10118", "11:28 22/06/2026", "Cargill", "48,904")],
+        [("20011", "09:15 03/07/2026", "Viterra", "40,000"),
+         ("20032", "10:47 06/07/2026", "CBH", "35,500"),
+         ("20050", "13:02 11/07/2026", "GrainCorp", "52,600")],
+        [("30014", "07:22 14/07/2026", "Bunge", "25,300"),
+         ("30028", "12:05 17/07/2026", "CBH", "31,750"),
+         ("30041", "16:40 20/07/2026", "Viterra", "22,900")],
+        [("40019", "08:50 23/07/2026", "GrainCorp", "44,200"),
+         ("40033", "11:15 27/07/2026", "Bunge", "38,600"),
+         ("40058", "14:29 30/07/2026", "CBH", "29,750")],
     ]
+    if time_only:
+        row_sets = [[(i, t.split()[0], cl, v) for i, t, cl, v in rs] for rs in row_sets]
     if n_sections > len(keys):
         raise ValueError(f"multi_section_ruled_pdf supports at most {len(keys)} sections")
 

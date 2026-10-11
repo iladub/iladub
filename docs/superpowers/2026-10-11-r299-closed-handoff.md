@@ -10,21 +10,22 @@ executing floor. It is graded per action for that reason.
 
 ## 5. The next concrete action, typed
 
-0. **ASSERTED, and it blocks this PR: CI is red, and the cause is the held `tab:ClockTime` commit,
-   not the row rule.** Run 38115897575 failed four synthetic tests
-   (`test_boxhead_absence_site.py::test_u14_…`, and three in `test_section_repair.py`), all on
-   `rep.repaired_bands == ()`. They fail identically with `main`'s `datagrid.py` restored, and pass
-   with `main`'s `celltype.py` restored. Measured on `multi_section_ruled_pdf`
-   (`ID | Time Nom Accepted | Client | Volume`, times `15:01`): on `main` pass 1 escalates both
-   bands `MATRIX_AMBIGUOUS` (0 asserted, 23 and 22 escalated) and section repair then reads two
-   record tables, 18 tokens each, score 1.0. With `15:01` typed `ClockTime`, pass 1 ASSERTS both
-   bands as `tab:HierarchicalTable` (19 asserted, 4 and 3 escalated, 14 cells), nothing escalates,
-   so section repair never runs: score 0.8444. The held commit was never put through CI; "seven
-   accepted documents byte-identical" was true and did not cover this fixture. **R299's closure in
-   this branch is therefore premature**: its criterion requires `tab:ClockTime` to ship. Next step,
-   PROPOSED: find why a second measure column disambiguates the matrix reading, and whether the
-   14-cell hierarchical reading is wrong or the fixture's expectation is. Unmeasured. Until then
-   this PR is a draft.
+0. **ASSERTED, done in this branch: the four red tests were a fixture precondition, not a wrong
+   reading.** The first version of this item proposed finding "why a second measure column
+   disambiguates the matrix reading". Measured, that framing was wrong: nothing is disambiguated.
+   `stub-data-split.rq` needs the data columns to be a contiguous suffix. With `15:01` typed Text
+   the only data column was Volume, the band was a matrix candidate, a one-column matrix did not
+   tile, and the band escalated. Typed `ClockTime`, col 1 is a data column with the Text Client
+   column after it, there is no suffix, `is_matrix_candidate` is false, and the hierarchical path
+   asserts the band at pass 1. The two readings carry the same 28 entry cells, four labels, chain
+   and aggregation rows; they differ in table type, route and score (0.8444 against 1.0).
+   The real CBH draws that column as time AND date in one cell (`15:01 15/06/2026`, 45 cells per
+   time column on p0), which types Text. The fixture's lone `15:01` was an invention that nothing
+   could tell apart until this branch. `multi_section_ruled_pdf` now draws the real spelling, the
+   four tests pass unchanged, and `time_only=True` keeps the old drawing for one pin
+   (`test_a_lone_time_column_asserts_at_pass_one_and_is_never_repaired`). What is left open is
+   R306: whether a flat record table should be typed hierarchical, and why that route books
+   notice words escalated while also emitting them as captions.
 1. **PROPOSED, and awaiting a ruling: whether this remedy stands under the 2026-09-17 ruling** (one
    geometric attempt, then NEURAL). The shipped rule is the third variant tried on one role
    judgement (is this line a heading or a data row), after 2026-10-07's blank-as-wildcard. The case
@@ -76,6 +77,17 @@ Each run against `tests/etkl/test_clock_time.py`, then restored (21 passed):
 - every row left out (`leave_out = True`): `test_a_lone_exception_that_agrees_elsewhere_is_kept`
   fails. Its first fixture did NOT fail here, because the heading's own word nulled the column;
   the exception cell was moved to the heading's nil-glyph column to make the test pin something.
+
+For `test_a_lone_time_column_asserts_at_pass_one_and_is_never_repaired`, each then restored
+(22 passed):
+
+- the 24-hour arm of `_CLOCK_TIME` made unmatchable: fails on `((0, 0), (0, 1)) == ()`, the
+  bands escalate and are repaired, as on `main`;
+- the fixture ignoring `time_only`: fails the same way.
+
+The four formerly red tests were not edited. Their five consumer files pass: `test_section_repair`
+20, `test_boxhead_absence_site` 17, `test_boxsplit` 30, `test_grid_region` 15,
+`test_printed_total_repair` 10.
 
 ## 3. What was decided, and where it is recorded
 

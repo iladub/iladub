@@ -119,3 +119,32 @@ def test_a_lone_row_that_agrees_nowhere_is_refused(tmp_path):
     # that column. (A refused row can still relax a column for OTHERS; the heading would here.)
     g = _grid(tmp_path, [("Zeta", "closed", "–", "–")])
     assert g.refusals.get(6, "").startswith("HeterogeneousColumn/col")
+
+
+def test_a_lone_time_column_asserts_at_pass_one_and_is_never_repaired(tmp_path):
+    """What typing a time changed OUTSIDE the data grid, pinned so it is not rediscovered in CI.
+
+    `multi_section_ruled_pdf(time_only=True)` is ID | time | Client | Volume. While '15:01' typed
+    Text the only data column was Volume, the band was a matrix candidate, the matrix did not
+    tile, both bands escalated MATRIX_AMBIGUOUS and section repair read two record tables. Typed
+    ClockTime, col 1 is a data column with a Text column after it, `stub-data-split.rq` finds no
+    contiguous data suffix, and the hierarchical path asserts the band at pass 1. The CELLS are
+    the same either way; the table type and the route are not, and four section-repair tests
+    relied on the escalation (CI run 38115897575)."""
+    from rdflib import RDF
+
+    from iladub.etkl.document import compile_document
+    from tests.etkl.fixtures import multi_section_ruled_pdf
+    pdf = tmp_path / "multi.pdf"
+    truth = multi_section_ruled_pdf(str(pdf), time_only=True)
+    rep = compile_document(str(pdf))
+    assert rep.repaired_bands == ()
+    assert [(r.verdict, r.anchor) for r in rep.pages[0].regions] == [
+        ("asserted", str(TAB.HierarchicalTable))] * 2
+    drawn = sorted(c for s in truth["sections"] for row in s["rows"] for c in row)
+    assert all(_cell_datatype(row[1]) == TAB.ClockTime
+               for s in truth["sections"] for row in s["rows"])
+    read = sorted(str(t) for e in rep.graph.subjects(RDF.type, TAB.EntryCell)
+                  for t in rep.graph.objects(e, TAB.cellText))
+    assert [t for t in read if t != "TOTAL" and t not in {s["total"] for s in truth["sections"]}] \
+        == drawn
