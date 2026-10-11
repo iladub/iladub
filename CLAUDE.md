@@ -307,6 +307,30 @@ level: there is no role dropdown and admin is not grantable to a collaborator at
 account has it. Any future session hitting a 404 on a protection endpoint should stop there and hand
 the action to the owner rather than look for a permission to escalate.
 
+## Corpus baseline — the blast radius is a committed diff (ruled 2026-10-10)
+
+**A PR that changes a compile input carries a regenerated corpus baseline, or CI's `test` job
+fails. The gate is blocking.** Ruled by the maintainer 2026-10-10 (R305, PR #333); a local-only
+staleness check was weighed and rejected.
+
+- **The inputs** are every tracked path under `src/`, `vocab/`, `readings/`, plus `pyproject.toml`,
+  `scripts/corpus_baseline.py` and `scripts/corpus_verdict_snapshot.py`. `tests/corpus-baseline/`
+  holds one snapshot per document (seven `corpus/`, four `held-out/`) and `inputs.json`, the
+  fingerprint of the inputs it was generated from.
+- **What a loop does:** after the *last* input edit, and after `git add` of any new input file (it
+  refuses on untracked inputs), run `PYTHONPATH=src .venv/bin/python scripts/corpus_baseline.py
+  regenerate` — one serial pass, about 24 minutes, unattended. Do not edit inputs while it runs.
+  `git diff -- tests/corpus-baseline/` **is** the blast radius; commit it with the change.
+- **Never run a "before" pass on `main` again.** The committed files are the before.
+- **What the gate proves, at its true strength.** CI runs `check`: the baseline was regenerated from
+  these inputs. It does **not** prove the committed bytes are what those inputs produce, because the
+  corpus is third-party and never reaches CI. Byte-equality is `corpus_baseline.py verify`, locally.
+  Two further gaps are recorded, not closed: dependency versions are written to `inputs.json` but
+  gated by nothing, and under `strict: false` two input-touching PRs on one base can each pass and
+  leave `main` stale until its next CI run.
+
+Design, oracles and the unverified list: `docs/superpowers/specs/2026-10-10-r305-corpus-baseline-design.md`.
+
 ## Naming discipline (a hard-won lesson)
 
 Before claiming any name, verify across **PyPI + GitHub (repo collision) + a web
