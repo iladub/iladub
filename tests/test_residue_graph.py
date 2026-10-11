@@ -240,4 +240,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-11 (R299 closed, branch r299-row-cannot-relax-itself): 96 -> 95, ADDED = [],
     # REMOVED = [299]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
     # `main`'s register files is 96, over the branch's 95.
-    assert len(expected) == 95
+    # RE-MEASURED 2026-10-11, same branch (R306 raised): 95 -> 96, ADDED = [306], REMOVED = []. The
+    # RAISE kind: R306 is open, blocks no criterion and links to no row. Controlled: `--candidates`
+    # over the previous commit's register files is 95, over this tree's 96, and the diff is R306.
+    assert len(expected) == 96
