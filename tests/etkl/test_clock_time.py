@@ -6,7 +6,8 @@ Raised by the held-out timetable `caltrain-weekend-timetable` (2026-10-07): ever
 "Northbound – WEEKEND SERVICE …" carries an en dash, a tab:nilSpelling, in one measure column,
 and the every-measure refusal counted that blank as AGREEMENT, so the title was admitted as
 the grid's first row and the "Train No." boxhead fell outside the header block. That second seam
-is open (R299) and pinned below as a strict xfail.
+(R299) is closed: a row may not relax a column's refusal for itself, and a row refused as a
+header relaxes nothing.
 """
 from __future__ import annotations
 
@@ -39,7 +40,7 @@ def test_the_ontology_declares_it():
     assert (TAB.ClockTime, RDF.type, TAB.CellDatatype) in _ONT
 
 
-def _timetable_page(tmp_path):
+def _timetable_page(tmp_path, extra=()):
     """Stations down, trains across. A direction heading above the train-number row puts one
     nil glyph (an en dash) in a time column and words in the other two."""
     from reportlab.lib.pagesizes import A4
@@ -60,7 +61,7 @@ def _timetable_page(tmp_path):
     for i, cells in enumerate([("Alpha", "6:51a", "7:51a", "8:51a"),
                                ("Beta", "6:56a", "7:26a", "7:56a"),
                                ("Gamma", "7:03a", "7:33a", "8:03a"),
-                               ("Delta", "7:08a", "", "8:08a")]):
+                               ("Delta", "7:08a", "", "8:08a"), *extra]):
         row(720 - i * 20, cells)
     c.save()
     return path
@@ -75,11 +76,6 @@ def test_a_timetable_derives_a_grid_of_clock_times(tmp_path):
     assert {2, 3, 4, 5} <= set(g.rows), "every station row is a data row"
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "R299: the heading's en dash (a tab:nilSpelling) rescues it from the every-measure refusal, "
-    "and the heading relaxes its own columns' refusal (it is in `addressable`). Counting a blank "
-    "as a wildcard fixes this page and refuses graincorp-stem p1's six shutdown rows "
-    "(77 -> 71), so that remedy was refuted on 2026-10-07."))
 def test_a_nil_glyph_does_not_admit_the_heading(tmp_path):
     pytest.importorskip("reportlab")
     from iladub.etkl.boxhead import header_block
@@ -87,7 +83,39 @@ def test_a_nil_glyph_does_not_admit_the_heading(tmp_path):
     from iladub.etkl.geometry import extract_words, text_lines
     path = _timetable_page(tmp_path)
     g = derive_data_grid(path, 0)
-    assert g.refusals.get(0) == "HeterogeneousColumn/every-measure"
+    # Not the every-measure universal (the en dash exempts it): the heading clashes with a
+    # column family it is no longer allowed to null for itself.
+    assert g.refusals.get(0, "").startswith("HeterogeneousColumn/col")
     lines = [ln for ln in sorted(text_lines(extract_words(path, 0)), key=lambda ln: ln.top)
              if ln.words]
     assert header_block(lines, g) == (0, 1), "the train-number row heads the grid"
+
+
+def _grid(tmp_path, extra):
+    pytest.importorskip("reportlab")
+    from iladub.etkl.datagrid import derive_data_grid
+    return derive_data_grid(_timetable_page(tmp_path, extra), 0)
+
+
+def test_a_lone_exception_that_agrees_elsewhere_is_kept(tmp_path):
+    """cbh p0's vessel row, in miniature: one contradicting cell, and measure cells that agree.
+    It has its own evidence of belonging to the grid, so it may relax the column for itself."""
+    g = _grid(tmp_path, [("Epsilon", "TBA", "7:45a", "8:15a")])
+    assert 6 in g.rows
+    assert g.refusals.get(0, "").startswith("HeterogeneousColumn/col"), "the heading is still refused"
+
+
+def test_rows_that_agree_nowhere_relax_a_column_for_one_another(tmp_path):
+    """graincorp-stem p1's shutdown rows, in miniature: the only non-blank measure cell is a word."""
+    g = _grid(tmp_path, [("Zeta", "closed", "–", "–"), ("Eta", "closed", "–", "–")])
+    assert {6, 7} <= set(g.rows)
+    assert g.refusals.get(0, "").startswith("HeterogeneousColumn/col"), "the heading is still refused"
+
+
+def test_a_lone_row_that_agrees_nowhere_is_refused(tmp_path):
+    """The known cost, pinned so it is not rediscovered: one such row has no peer and no agreeing
+    cell, so nothing distinguishes it from a heading. It is refused and escalated, never dropped."""
+    # The word sits in the column where the heading holds its nil glyph, so no other row nulls
+    # that column. (A refused row can still relax a column for OTHERS; the heading would here.)
+    g = _grid(tmp_path, [("Zeta", "closed", "–", "–")])
+    assert g.refusals.get(6, "").startswith("HeterogeneousColumn/col")

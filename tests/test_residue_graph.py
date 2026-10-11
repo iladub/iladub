@@ -237,4 +237,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-10 (R305 closed, branch r305-snapshot-baseline): 97 -> 96, ADDED = [],
     # REMOVED = [305]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
     # `main`'s register files is 97, over the branch's 96.
-    assert len(expected) == 96
+    # RE-MEASURED 2026-10-11 (R299 closed, branch r299-row-cannot-relax-itself): 96 -> 95, ADDED = [],
+    # REMOVED = [299]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
+    # `main`'s register files is 96, over the branch's 95.
+    assert len(expected) == 95
