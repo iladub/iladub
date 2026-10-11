@@ -10,6 +10,21 @@ executing floor. It is graded per action for that reason.
 
 ## 5. The next concrete action, typed
 
+0. **ASSERTED, and it blocks this PR: CI is red, and the cause is the held `tab:ClockTime` commit,
+   not the row rule.** Run 38115897575 failed four synthetic tests
+   (`test_boxhead_absence_site.py::test_u14_…`, and three in `test_section_repair.py`), all on
+   `rep.repaired_bands == ()`. They fail identically with `main`'s `datagrid.py` restored, and pass
+   with `main`'s `celltype.py` restored. Measured on `multi_section_ruled_pdf`
+   (`ID | Time Nom Accepted | Client | Volume`, times `15:01`): on `main` pass 1 escalates both
+   bands `MATRIX_AMBIGUOUS` (0 asserted, 23 and 22 escalated) and section repair then reads two
+   record tables, 18 tokens each, score 1.0. With `15:01` typed `ClockTime`, pass 1 ASSERTS both
+   bands as `tab:HierarchicalTable` (19 asserted, 4 and 3 escalated, 14 cells), nothing escalates,
+   so section repair never runs: score 0.8444. The held commit was never put through CI; "seven
+   accepted documents byte-identical" was true and did not cover this fixture. **R299's closure in
+   this branch is therefore premature**: its criterion requires `tab:ClockTime` to ship. Next step,
+   PROPOSED: find why a second measure column disambiguates the matrix reading, and whether the
+   14-cell hierarchical reading is wrong or the fixture's expectation is. Unmeasured. Until then
+   this PR is a draft.
 1. **PROPOSED, and awaiting a ruling: whether this remedy stands under the 2026-09-17 ruling** (one
    geometric attempt, then NEURAL). The shipped rule is the third variant tried on one role
    judgement (is this line a heading or a data row), after 2026-10-07's blank-as-wildcard. The case
