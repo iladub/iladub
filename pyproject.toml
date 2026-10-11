@@ -68,6 +68,7 @@ ocr = [
 ]
 dev = [
     "pytest>=8",
+    "pytest-xdist>=3.6",
     "ruff>=0.6",
     "reportlab>=4.0",
     "pyrudof==0.3.7",
@@ -98,4 +99,5 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "corpus: real third-party documents (gitignored corpus/; run with -m corpus)",
+    "serial: reads a wall-clock ratio, so it runs alone and never beside other workers (R307)",
 ]
