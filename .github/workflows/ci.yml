@@ -23,7 +23,15 @@ jobs:
       - name: Generate baml_client (gitignored; 6 test modules import it)
         run: baml-cli generate --from baml_src
       - name: Tests (incl. doc-governance lint)
-        run: pytest -q
+        run: |
+          nproc; free -m
+          pytest -q --junitxml=junit.xml
+      - name: Upload per-test timings (R307 measurement)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit
+          path: junit.xml
       - name: Site builds strict, internal trees excluded
         run: |
           mkdocs build --strict
