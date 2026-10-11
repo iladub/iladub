@@ -62,5 +62,4 @@ Nothing was decided. The maintainer asked for the row and this handoff; the row 
   The last eight green runs are 17 to 23 minutes. That file is Contract class and is edited only
   on explicit request; it was not edited.
 - **Runner core count and memory were not read.**
-- This branch is stacked on `r299-row-cannot-relax-itself` (PR #335, a draft awaiting a ruling),
-  because R306 lives there and the register numbers rows in order.
+- This branch was first stacked on PR #335 and rebased onto `main` after it merged (`7bb7798`).
