@@ -25,7 +25,8 @@ jobs:
       - name: Tests (incl. doc-governance lint)
         run: |
           nproc; free -m
-          pytest -q --junitxml=junit.xml
+          pip install -q pytest-xdist
+          pytest -q -n 4 --dist load --junitxml=junit.xml
       - name: Upload per-test timings (R307 measurement)
         if: always()
         uses: actions/upload-artifact@v4
