@@ -243,4 +243,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-11, same branch (R306 raised): 95 -> 96, ADDED = [306], REMOVED = []. The
     # RAISE kind: R306 is open, blocks no criterion and links to no row. Controlled: `--candidates`
     # over the previous commit's register files is 95, over this tree's 96, and the diff is R306.
-    assert len(expected) == 96
+    # RE-MEASURED 2026-10-11 (R307 raised, branch r307-test-time): 96 -> 97, ADDED = [307], REMOVED =
+    # []. The RAISE kind: R307 is open, blocks no criterion and links only to the closed R305.
+    # Controlled: `--candidates` is 96 before the two register lines and 97 after, last row R307.
+    assert len(expected) == 97
