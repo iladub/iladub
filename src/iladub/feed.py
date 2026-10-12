@@ -920,14 +920,29 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     cell grounded via the shipped ground_concept oracle (unchanged). Populates `g` with grounded
     nodes + promotion decisions + propositions; returns the grounded/proposed tally.
 
+    A contract that declares a cell-value field (`etkl:fieldRole etkl:CellValue`) is read one
+    subject per CELL instead: see `table_records`' `per_cell`.
+
     `validate_shapes=True` puts `g` through the grounding membrane before returning, raising
     `AssertionError` with the report rather than handing back a graph that violates the
     promotion invariant. It defaults to False so every existing positional call site is
     unchanged; the corpus battery and the contracted paths pass it explicitly.
     """
-    from .ground import ground_concept
+    from .ground import ROLE_CELL_VALUE, ground_concept
 
-    records = table_records(graph)
+    # Spec 2026-10-12-a-matrix-cell-is-an-observation § 3.3 THE SWITCH. §8: AXIOM — whether a
+    # document is read one record per cell is DECLARED by the contract, in the one field whose
+    # role is `etkl:CellValue`, and read here. Nothing about the document is inspected to decide
+    # it, and a contract that declares no role reads exactly as it did. `etkl:ContractRoleShape`
+    # guarantees a role contract has that field, so its presence is the whole test.
+    #
+    # The role-less call passes NO keyword, so it is the call this function always made: a
+    # caller that substitutes a one-argument `table_records` keeps working
+    # (`tests/test_concept_feed.py::test_feed_is_load_bearing_red_check` does).
+    if any(f.role == ROLE_CELL_VALUE for f in contract.fields):
+        records = table_records(graph, per_cell=True)
+    else:
+        records = table_records(graph)
     # The page's own furniture, read ONCE per document and handed to every proposal (Task 6).
     # It is the same text for every concept of the document, so building it per concept would
     # re-walk the graph 769 times on graincorp for one unchanging string.

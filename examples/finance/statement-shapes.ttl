@@ -1,0 +1,34 @@
+# Value membrane for the statement contract (closed world: what may cross into the clean
+# holon). Both patterns are CONTRACT-AUTHOR DECLARATIONS, as stem-shapes.ttl states for its own
+# fields: the contract owns per-field verification strength.
+# CC-BY-4.0 — François Rosselet, 2026. Part of the ET(K)L method, https://w3id.org/iladub/etkl.
+#
+# BOTH ARE WRITTEN AGAINST THE TEXT AS THE FEED DELIVERS IT: a key is its header path's labels
+# joined by one space, and a figure is the cell's text, unchanged.
+#
+# `fin:period` — a printed period: a month name, a day and a four-digit year, optionally led by
+# a duration (`Three Months Ended March 31, 2026`, `December 31, 2025`). Nothing is normalised;
+# the pattern only says what a period looks like on the page. It refuses a line-item label, so
+# a row label read into the wrong position does not ground as a period.
+#
+# `fin:value` — a printed numeral: digits in comma-grouped thousands with an optional decimal
+# part, optionally wrapped in parentheses (the statement's way of printing a negative), and
+# optionally led by `$ `. THE CURRENCY SIGN IS ADMITTED BECAUSE IT IS INSIDE THE CELL'S TEXT on
+# the first and total lines of a statement, and the value is carried as printed: stripping it
+# would be this contract editing the author's ink, and refusing it would quarantine exactly the
+# headline figures. It is not read as a unit (spec § 6). The pattern refuses a flag (`Y`), a
+# blank and a word.
+#
+# `fin:lineItem` carries no value constraint: its SKOS scheme membership IS its oracle.
+#
+# Brackets stand in for backslash escapes (`[$]`, `[(]`, `[.]`) so the Turtle string and the
+# regular expression read the same.
+@prefix fin: <https://example.org/finance#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+fin:StatementFigureShape a sh:NodeShape ;
+    sh:targetClass fin:StatementFigure ;
+    sh:property [ sh:path fin:period ;
+        sh:pattern "^((Three|Six|Nine|Twelve) Months Ended )?(January|February|March|April|May|June|July|August|September|October|November|December) [0-9]{1,2}, [0-9]{4}$" ] ;
+    sh:property [ sh:path fin:value ;
+        sh:pattern "^([$] )?([0-9]{1,3}(,[0-9]{3})*([.][0-9]+)?|[(][0-9]{1,3}(,[0-9]{3})*([.][0-9]+)?[)])$" ] .

@@ -135,6 +135,17 @@
     cor:fetched "2026-08-04"^^xsd:date ;
     cor:sha256 "dc0cf747ad18bb340f48a3a79038aaf6f005f3aacab3aa0ba3960ab5370e5aa5" ;
     cor:pages 3 ;
+    # 2026-10-12, the matrix-cell loop (spec 2026-10-12-a-matrix-cell-is-an-observation-design.md
+    # § 4): the first ROLE contract in this register. It declares an `etkl:CellValue` field, so
+    # `feed.ground_document` reads this document one record per cell, and
+    # tests/test_corpus.py::test_grounding_where_contracted parametrizes it from here on. The
+    # contract is a generic statement contract, not this issuer's: its scheme is short on purpose
+    # and most row labels quarantine. The counts are pinned in tests/test_corpus_apple_contract.py
+    # and are not repeated here. The two matrices on pages 0 and 1 are what it reads; the page-2
+    # data grid contributes no record, as before.
+    cor:contract "examples/finance/statement-contract.ttl" ;
+    cor:terms "examples/finance/statement-terms.ttl" ;
+    cor:shapes "examples/finance/statement-shapes.ttl" ;
     cor:expectedVerdict cor:CompilesAbove ;
     cor:scoreFloor "0.94"^^xsd:decimal ;
     cor:adjudication [ cor:by "composed by Claude Opus 5 (agent), task 5 of the 2026-08-20 arc-denominator loop; the accountable human sign-off is François Rosselet's review and merge of the commit that carries this node" ; cor:on "2026-08-20"^^xsd:date ;

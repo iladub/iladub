@@ -147,7 +147,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # went into the EXISTING `vocab/ontology/etkl.ttl` and `vocab/shapes/etkl-shapes.ttl`, so no
     # vocabulary FILE joined the population. The census pins below (67, 72, 21) were re-run in the
     # same change and did not move: every new term is declared where it is used.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 182
+    # RE-MEASURED 2026-10-12 (matrix-cell Task 4, the worked example): 182 -> 185 —
+    # `examples/finance/statement-{contract,terms,shapes}.ttl`, the role contract's worked example
+    # (spec § 4). Measured as a SET against HEAD's tracked `.ttl` files: added = exactly those
+    # three files, removed = none (`git ls-files "*.ttl"` = 187 minus the 2 carved). NOT carved
+    # out: they name declared `etkl:` terms only (`etkl:fieldRole` and its three individuals, all
+    # declared in Task 1), plus `fin:` terms under `https://example.org/finance#`, outside the
+    # owned root exactly as the shipping examples' `ship:` terms are. No term was declared. The
+    # census pins below (67, 72, 21) were re-run in the same change and did not move.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 185
 
 
 def test_each_file_gets_its_own_named_graph():

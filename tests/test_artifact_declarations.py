@@ -272,7 +272,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # exactly that one file, removed = none. The five new `etkl:` terms and the two role shapes
     # went into the EXISTING `etkl.ttl` and `etkl-shapes.ttl`. The `.rq` population does not move:
     # the role shapes are closed-world membrane constraints (CLAUDE.md § 8), not derivations.
-    assert len(vocab_nodes) == len(artifact_files()) == 182
+    # RE-MEASURED 2026-10-12 (matrix-cell Task 4, the worked example): the `.ttl` population is
+    # **185** — `examples/finance/statement-{contract,terms,shapes}.ttl`, the role contract's
+    # worked example. Measured as a SET against HEAD's tracked `.ttl` files: added = exactly those
+    # three files, removed = none. They use declared `etkl:` terms and `fin:` terms outside the
+    # owned root; no term was declared. The `.rq` population does not move: the example's two
+    # patterns are closed-world value constraints (CLAUDE.md § 8), not derivations.
+    assert len(vocab_nodes) == len(artifact_files()) == 185
     assert len(query_nodes) == len(query_files()) == 57
 
 

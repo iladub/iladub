@@ -1,0 +1,33 @@
+# Illustrative semantic data contract for a financial statement read as a matrix
+# (spec 2026-10-12-a-matrix-cell-is-an-observation-design.md § 4).
+# CC-BY-4.0 — François Rosselet, 2026. Part of the ET(K)L method, https://w3id.org/iladub/etkl.
+# Synthetic: the line items are generic statement lines and no figure of any issuer appears.
+#
+# THREE FIELDS, ONE PER STRUCTURAL ROLE. A statement prints one figure per (line, period): the
+# row label says which line, the column header path says which period, the cell is the figure.
+# So the contract declares what each POSITION means, with `etkl:fieldRole`, and no field is
+# found by matching a label to a field name. That is what turns the per-cell reading on:
+# `feed.ground_document` reads one record per cell exactly when a field declares `etkl:CellValue`.
+#
+# EACH FIELD HAS ITS OWN ORACLE, and the role is none of them. The role picks the field; what may
+# ground is decided by the field's scheme (`lineItem`) or by its value constraint in
+# statement-shapes.ttl (`period`, `value`).
+#
+# WHAT IS NOT DECLARED, and why (spec § 6): no measure name and no unit. A statement's heading
+# may say "in millions, except per-share amounts", so no one unit is true of every cell; the
+# figure is carried as printed and the line item says what it measures. No period is normalised
+# either: the period is the text the column header prints.
+@prefix fin:  <https://example.org/finance#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+fin:statement-contract a etkl:SemanticDataContract ;
+    rdfs:label "Statement figure, by line item and period"@en ;
+    etkl:targetClass fin:StatementFigure ;
+    etkl:requiresKnowledge fin:scheme-line-item ;
+    etkl:hasField fin:f-line-item , fin:f-period , fin:f-value .
+
+fin:f-line-item a etkl:Field ; etkl:fillsProperty fin:lineItem ; etkl:fieldRole etkl:RowKey ;
+    etkl:admissibleScheme fin:scheme-line-item .
+fin:f-period    a etkl:Field ; etkl:fillsProperty fin:period ;   etkl:fieldRole etkl:ColumnKey .
+fin:f-value     a etkl:Field ; etkl:fillsProperty fin:value ;    etkl:fieldRole etkl:CellValue .
