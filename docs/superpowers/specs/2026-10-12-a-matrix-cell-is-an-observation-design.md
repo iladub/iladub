@@ -213,3 +213,64 @@ matrix with one repeated row label, built in the test.
   graincorp's precedent. Whether who-wfa's 19 well-labelled records have row header paths was
   not measured.
 - **`src/iladub/contract.py` was not opened.** If it also loads contracts, § 3.2 has a second site.
+
+## 9. Seams ruled before the plan (appended 2026-10-12)
+
+Measured in `docs/superpowers/2026-10-12-matrix-cell-plan-seams-handoff.md` § 2a (S1–S8). The
+maintainer ruled the three recommendations of its § 5 in session on 2026-10-12 with "go ahead".
+Recorded here and nowhere else. **This section overrides any earlier sentence it contradicts.**
+It was written at about 67K working tokens, over the originating floor (override logged); the
+wording of each rule below is this session's and is graded where it goes beyond the ruling.
+
+### 9.1 A key's region is its label cell, named by page (overrides § 3.3's region column, closes § 8 item 1)
+
+No header label cell carries `prov:wasDerivedFrom` (S1), so there is no region to read. A row key's
+and a column key's `region` names the label cell itself: the cell's `tab:onPage` value and the
+cell's own IRI fragment. Both are RDF reads. The compile-side fact is raised as [[R309]] and is
+not repaired here.
+
+- **Invariant:** no two key concepts of one document that come from different label cells carry
+  the same `region`, and no key concept's `region` equals an entry cell's.
+- **Oracle on apple:** the distinct key regions number 59 row-side at most and 6 column-side, and
+  none of the 42 cross-page fragment collisions survives.
+- **Graded, this session's:** the exact string that joins page and fragment is not ruled. The
+  plan names the seam (what `tab:onPage` holds on a label cell, measured against the page) and
+  the implementer chooses a form the invariant holds for.
+- **`_spanning_keys` is not changed.** Its fallback has the same defect on a multi-page document;
+  that is [[R309]]'s, and graincorp-capacity is one page.
+
+### 9.2 A shared row label is refused by rule (overrides § 3.4's "with no role")
+
+A role-less concept reaches the proposer, and a proposer that names the line-item field gets it
+grounded by scheme membership (S2). So:
+
+- The role field on `SurfaceConcept` takes a value for a shared row key that **no contract can
+  declare**: it is not an `etkl:FieldRole` individual and `load_contract` never produces it.
+- `ground_concept` gains a second branch, beside § 3.5's and tried before `exact_field`: such a
+  concept is emitted as a candidate under a new rule suggester IRI and returns `proposed`. No
+  proposer is asked and `_admissible_fields` is not consulted.
+- **Gate (§ 3.6 gains a row):** AXIOM. Nothing can dispose a proposal here, because the scheme
+  admits the label and that admission is the defect. No oracle, no worker.
+- **P3 is restated:** exactly 52 row-key concepts carry the shared value, and none grounds
+  **under a proposer that names the row-key field**, with the label in the scheme. The
+  abstaining arm proves nothing (S2) and is not the test. Falsified by deleting the branch: the
+  concept grounds.
+- As § 6 already says, the refused concept gets a candidate and no decision holon.
+
+### 9.3 The shared-label count is per logical table, over the row header path (overrides § 3.4's reuse clause)
+
+"Shared" means: two or more rows of one logical table (a head and its `tab:continuesTable` chain)
+have equal row header paths. The clause "reuses the multiplicity `table_records` already
+computes" is withdrawn: that count spans every table of the document and is keyed on the row id,
+which carries the section-caption prefix (S3). Record ids keep using it, unchanged.
+
+- **Oracle on apple:** 11 rows on p0 and 4 on p1, as M4.
+- **Not constructed:** a document where the two scopes differ. The CI arm of § 5 carries it: two
+  tables, one label unique in each and present in both, and both row keys keep their role.
+
+### 9.4 What § 8 still leaves open
+
+Items 2 to 4 of § 8 stand. Item 5 is answered for who-wfa (S7) and item 6 is closed (S4): only
+`ground.load_contract` builds a `ContractField`. For § 4's numeral pattern, S8 lists the seven
+digit shapes of apple's 180 cells; 40 carry `$ ` inside the cell text, and whether the pattern
+admits them is the example author's choice, to be stated beside P4's count.

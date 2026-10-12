@@ -92,3 +92,9 @@ the shared rows are 11 on p0 at four periods and 4 on p1 at two, which is 52.
   `splitkey.py:136` with a fixed name.
 - **who-wfa under a role contract (S7)** would also carry its split spanner (`Z-scores (weight in`
   / `kg)`) into six column keys. Seen, not chased.
+
+## 6. Afterwards, same day
+
+The maintainer ruled items 2, 3 and 4 of § 5 as recommended ("go ahead", in session). They are
+recorded in the spec's § 9, and the compile-side fact behind S1 is raised as [[R309]]. What
+remains is § 5 item 5, **ASSERTED**: write the plan in a fresh session from the spec, § 9 first.
