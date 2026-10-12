@@ -274,3 +274,63 @@ Items 2 to 4 of § 8 stand. Item 5 is answered for who-wfa (S7) and item 6 is cl
 `ground.load_contract` builds a `ContractField`. For § 4's numeral pattern, S8 lists the seven
 digit shapes of apple's 180 cells; 40 carry `$ ` inside the cell text, and whether the pattern
 admits them is the example author's choice, to be stated beside P4's count.
+
+## 10. Corrections recorded at execution (appended 2026-10-12)
+
+Four corrections the executing session made while building this spec, on branch
+`matrix-cell-is-an-observation` (`4c0191a..bab6edc`). **Each is the executing session's ruling, not
+the maintainer's**, and each stands until the maintainer rules otherwise. Nothing above this
+section was edited; where an item differs from §§ 3 to 9, this section says which line it
+corrects.
+
+### 10.1 The shared-label count is PROCEDURAL, not AXIOM (corrects § 3.6, fourth row) — 2026-10-12
+
+§ 3.6's row "a shared row label is not a key — **AXIOM**, holon-scoped count" is implemented as
+**PROCEDURAL: decidable exact arithmetic, holon-scoped** (the holon is the logical table). The
+irreducibility reason, quoted from the comment in `feed.table_records` above `row_keys` as it
+stands at `bab6edc`:
+
+> PROCEDURAL: decidable exact arithmetic (CLAUDE.md § 8), scoped to one holon, the
+> logical table. It is exact string equality, with no tolerance and no normalisation,
+> over the paths `_header_parts` has ALREADY selected procedurally (deepest cover, then
+> its tie-break), and over nothing else. That is why it is not a query: a SELECT would
+> need either a second selection of the covering header, which could disagree with
+> the first and is what the region rule forbids, or the Python-selected paths
+> materialised into a throwaway graph only to be counted back.
+>
+> What it is NOT: it derives no fact into the graph and infers nothing from absence.
+> It marks a key, and the portal then refuses that key by rule (spec § 9.2).
+
+Executing session's ruling (Task 2, fix round 1). Cost if the maintainer wants it declarative: a
+few lines in `feed.py` and a transient evidence graph.
+
+### 10.2 "Shared" is counted on the delivered key text, not the label tuple (refines § 9.3) — 2026-10-12
+
+§ 9.3 defines shared as "equal row header paths". The count is taken on the **delivered key
+text**: the labels of the row header path joined by one space, empty labels dropped, which is the
+string the row-key concept carries and the portal grounds. Two paths that differ as sequences and
+join to one text (`("Total", "current assets")` and `("Total current", "assets")`, or `("A", "")`
+and `("A",)`) are shared. Equal sequences join to equal text, so every row shared under § 9.3's
+wording is still shared; on apple's flat row tree the two counts coincide (52 cells, 44 on p0 and
+8 on p1, unmoved). Executing session's ruling on final review finding I-1. Cost if wrong: two rows
+with distinct paths and equal joined text are quarantined where they might have grounded.
+
+### 10.3 `marker_field` does not offer a role-declaring field (narrow form) — 2026-10-12
+
+A field that declares `etkl:fieldRole` is not offered to a section marker or a split key by
+`ground.marker_field`. This closes the proposer-free path by which a role-less rider (a section
+caption carried onto every cell record, plan D2) grounded as the row-key property. Executing
+session's ruling on final review finding I-2, which the reviewer marked as needing a maintainer
+ruling; the **narrow** form was taken. The **wider** form, "a role field is filled only by a
+concept read in that role", applied to `exact_field`, `_admissible_fields` and a proposer's
+answer, is **not built and is left open**: see [[R310]].
+
+### 10.4 The rejection reason for a role-picked concept on an unconstrained field names the role — 2026-10-12
+
+When the role branch of `ground.ground_concept` grounds a concept on a field that declares neither
+a scheme nor a value constraint, the recorded `dec:rejectedBecause` on the option not taken says
+that the contract declares the field for the role the concept was read in, that no label was
+matched and no proposer was asked, and that field identity is the oracle. Before the Task 3 fix
+it said the concept's label exactly identified the field, which was false under the role branch.
+Every other caller's text is unchanged. Executing session's ruling (Task 3, fix round 1). Whether
+a role field may be left without an oracle at all is not decided here: see [[R311]].
