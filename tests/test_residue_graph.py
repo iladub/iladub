@@ -249,4 +249,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-11 (R307 closed, branch r307-measure-ci-durations): 97 -> 96, ADDED = [],
     # REMOVED = [307]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
     # `main`'s register files is 97, over the branch's 96.
-    assert len(expected) == 96
+    # RE-MEASURED 2026-10-12 (R308 raised, branch contracts-candidate-measured): 96 -> 95, ADDED = [],
+    # REMOVED = [214]. R308 is open and links to the open R166 and R214, so it is no candidate
+    # itself and R214 gains an open neighbour. Controlled: `--candidates` is 96 before the two
+    # register lines and 95 after, and the diff is R214.
+    assert len(expected) == 95
