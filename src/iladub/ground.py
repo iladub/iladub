@@ -42,6 +42,12 @@ ROLE_CELL_VALUE = str(ETKL.CellValue)
 # `etkl:FieldRoleShape`'s closed list refuses a contract that names it and `load_contract` never
 # returns it. Only a `SurfaceConcept` carries it.
 SHARED_ROW_KEY = "urn:iladub:role/shared-row-key"
+# Spec § 3.5 (plan D6): ONE rule for the three declared roles. The contract field that declares
+# the role a concept was read in is that concept's field; which role it was is in the rationale.
+_DECLARED_ROLE_RULE = "urn:iladub:suggester/declared-role-rule"
+# Spec § 9.2: the quarantine of a row label several rows of one table share. The rule, not a
+# proposer, is the candidate's accountable suggester — as `_NO_ADMISSIBLE_FIELD_RULE` is above.
+_SHARED_ROW_LABEL_RULE = "urn:iladub:suggester/shared-row-label-rule"
 
 _ETKL_SHAPES = Path(__file__).resolve().parents[2] / "vocab" / "shapes" / "etkl-shapes.ttl"
 # The two shapes `load_contract` runs, out of the whole file. A contract file is a declaration,
@@ -329,8 +335,29 @@ def _emit_grounded(g, concept, offer_uri, target_class, field, grounds_to, cand,
 
 def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shapes, g,
                    page_context: str | None = None, admissible_memo: dict | None = None) -> str:
-    field = exact_field(concept, contract)
-    if field is not None:
+    if concept.role == SHARED_ROW_KEY:
+        # Spec § 9.2 THE REFUSAL BY RULE. §8: AXIOM — the feed's holon-scoped count already said
+        # this label is shared by several rows of its table, so it identifies none of them. No
+        # worker and no oracle is asked, because nothing could dispose the answer: the row-key
+        # field's scheme ADMITS the label, and that admission is the defect. A proposer naming
+        # that field would get the concept grounded by scheme membership, so the refusal is taken
+        # here, before any field is looked for. A quarantined candidate, no decision holon.
+        _emit_candidate(g, concept, _GIST_CATEGORY, _SHARED_ROW_LABEL_RULE, 1.0)
+        return "proposed"
+    role_field = (next((f for f in contract.fields if f.role == concept.role), None)
+                  if concept.role is not None else None)
+    if role_field is not None:
+        # Spec § 3.5 GROUNDING BY ROLE. §8: AXIOM — which field a keyed concept belongs to is
+        # DECLARED in the contract (`etkl:fieldRole`) and read here, not inferred from the
+        # concept's text and not proposed. The role picks the field and admits nothing: the
+        # value is disposed below by `_grounds_to`, unchanged, exactly as an exact match's is.
+        field = role_field
+        suggester, confidence, anchor = _DECLARED_ROLE_RULE, 1.0, _GIST_CATEGORY
+        rationale = (f"Declared role: the concept was read as {concept.role} and the contract "
+                     f"declares {field.fills_property} as its field of that role; the field is "
+                     f"read from the contract, no proposer asked.")
+        is_exact = True                                     # the field is declared, not proposed
+    elif (field := exact_field(concept, contract)) is not None:
         suggester, confidence, rationale, anchor = _EXACT_RULE, 1.0, "Exact contract-field match.", _GIST_CATEGORY
         is_exact = True
     elif (field := marker_field(concept, contract, terms)) is not None:   # R207: a section marker
