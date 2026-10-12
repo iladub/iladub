@@ -306,3 +306,113 @@ def test_an_empty_key_under_an_unconstrained_role_field_grounds_by_field_identit
     assert "label exactly identifies" not in rejected[0]
     conforms, report = _validate_grounding(g)
     assert conforms, report
+
+
+# --- a role field is not filled by a section-marker rider (final review I-2) ---------------
+
+RIDER_TEXT = "Total net sales"                  # a prefLabel of the line-item scheme
+# The rider's proposer abstains: with `marker_field` out of the way the rider reaches the
+# proposer (the scheme admits it, so the pre-filter does not skip the ask), and what a proposer
+# that NAMES the row-key field would do is the wider question the fix leaves open.
+ABSTAINS = FakeGroundingProposer(GroundingProposal(
+    None, str(EX.anchor), 0.1, "n/a", "urn:iladub:suggester/fake"))
+ROLE_CONTRACT = Contract(str(EX.Observation), (LINE_ITEM, PERIOD, AMOUNT))
+# The control: the same three fields, the scheme-bound one declaring NO role.
+BARE_LINE_ITEM = ContractField(LINE_ITEM.iri, LINE_ITEM.fills_property, LINE_ITEM.scheme)
+CONTROL_CONTRACT = Contract(str(EX.Observation), (BARE_LINE_ITEM, PERIOD, AMOUNT))
+
+
+def _statement_under_a_caption():
+    """A 2x2 matrix, rows "Net sales" and "Products", columns "2023" and "2022", under one
+    `tab:SectionCaption` reading "Total net sales". The feed carries the caption onto every cell
+    record as a role-less section marker (plan D2)."""
+    from tests.test_feed_matrix_cell import M0, TAB, _matrix
+    g = _matrix(Graph(), M0, 0, [("2023",), ("2022",)],
+                [("Net sales", {0: "100", 1: "90"}), ("Products", {0: "40", 1: "35"})])
+    cap = URIRef(f"{M0}-cap0")
+    g.add((M0, TAB.hasCaption, cap))
+    g.add((cap, RDF.type, TAB.RegionCaption))
+    g.add((cap, RDF.type, TAB.SectionCaption))
+    g.add((cap, TAB.captionText, Literal(RIDER_TEXT)))
+    g.add((cap, TAB.captionRow, Literal(0)))
+    return g
+
+
+def _ground_statement(contract, monkeypatch):
+    """`ground_document` over the statement, through the membrane, with every `marker_field`
+    call for a section marker recorded as `(concept, field it returned)`."""
+    from iladub.feed import ground_document
+    asked = []
+    real = ground.marker_field
+
+    def _spy(concept, contract_, terms):
+        field = real(concept, contract_, terms)
+        if concept.is_section_marker:
+            asked.append((concept, field))
+        return field
+    monkeypatch.setattr(ground, "marker_field", _spy)
+    g = Graph()
+    result = ground_document(_statement_under_a_caption(), contract, ABSTAINS, _terms(),
+                             _shapes(), g, validate_shapes=True)
+    return result, g, asked
+
+
+def _line_items(g):
+    out = {}
+    for s, o in g.subject_objects(EX.lineItem):
+        out.setdefault(str(s), []).append(str(o))
+    return out
+
+
+def test_a_section_marker_rider_does_not_fill_the_row_key_field(monkeypatch):
+    from iladub.feed import table_records
+    # THE SETUP REACHES `marker_field`, measured rather than assumed: every record carries the
+    # rider as a role-less section marker, no field is NAMED "Total net sales", and the scheme
+    # of the row-key field carries it.
+    recs = table_records(_statement_under_a_caption(), per_cell=True)
+    assert len(recs) == 4
+    for r in recs:
+        (rider,) = [c for c in r.concepts if c.is_section_marker]
+        assert (rider.text, rider.value, rider.role) == (RIDER_TEXT, RIDER_TEXT, None)
+        assert ground.exact_field(rider, ROLE_CONTRACT) is None
+        assert [c.role for c in r.concepts if c is not rider] == [
+            ROLE_ROW_KEY, ROLE_COLUMN_KEY, ROLE_CELL_VALUE]
+    assert ground.scheme_member(RIDER_TEXT, LINE_ITEM.scheme, _terms()) is not None
+
+    result, g, asked = _ground_statement(ROLE_CONTRACT, monkeypatch)
+    # `marker_field` WAS asked about the rider, once per record, and offered no field
+    assert [(c.value, f) for c, f in asked] == [(RIDER_TEXT, None)] * 4
+    # each record: row key, column key and cell grounded; the rider quarantined
+    assert (result.records, result.grounded, result.proposed) == (4, 12, 4)
+    riders = [c for c in g.subjects(RDF.type, ILA.CandidateConcept)
+              if g.value(c, ILA.surfaceText) == Literal(RIDER_TEXT)]
+    assert len(riders) == 4
+    for cand in riders:
+        assert g.value(cand, ILA.status) == ILA.proposed
+        assert g.value(cand, ILA.suggestedBy) == URIRef("urn:iladub:suggester/fake")
+        assert list(g.subjects(ILA.reviews, cand)) == []        # no decision reviews it
+    # no decision was taken on the rider: every promotion's rule is the declared-role rule
+    assert {g.value(pd, DEC.decidedBy) for pd in _decisions(g)} == {
+        URIRef(ground._DECLARED_ROLE_RULE)}
+    assert len(_decisions(g)) == 12
+    # ONE line item per subject, and it is the row's own
+    items = _line_items(g)
+    assert len(items) == 4
+    assert sorted(map(tuple, items.values())) == [("Net sales",)] * 2 + [("Products",)] * 2
+
+
+def test_the_same_rider_still_grounds_on_a_scheme_field_that_declares_no_role(monkeypatch):
+    """The positive control. The contract is the one above with the role taken off the
+    scheme-bound field: `marker_field` offers it, and the rider grounds as it always did."""
+    result, g, asked = _ground_statement(CONTROL_CONTRACT, monkeypatch)
+    assert [(c.value, f) for c, f in asked] == [(RIDER_TEXT, BARE_LINE_ITEM)] * 4
+    items = _line_items(g)
+    assert len(items) == 4
+    assert all(v == [RIDER_TEXT] for v in items.values())
+    by_rule = {}
+    for pd in _decisions(g):
+        rule = str(g.value(pd, DEC.decidedBy))
+        by_rule[rule] = by_rule.get(rule, 0) + 1
+    assert by_rule == {ground._UNIQUE_ADMITTING_FIELD_RULE: 4, ground._DECLARED_ROLE_RULE: 8}
+    # the row keys have no field of their role here, are not markers, and the proposer abstains
+    assert (result.records, result.grounded, result.proposed) == (4, 12, 4)

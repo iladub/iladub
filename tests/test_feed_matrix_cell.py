@@ -390,3 +390,58 @@ def test_a_blank_cell_mints_nothing():
     recs = table_records(g, per_cell=True)
     assert sorted(c.value for c in _keys(recs, ROLE_CELL_VALUE)) == ["100", "35", "40"]
     assert len(recs) == 3
+
+
+# --- shared is counted on the key the row DELIVERS (final review I-1) ---------------------
+
+def _nest(g, table, r, text, name):
+    """Put row `r`'s header one level down, under a new parent header labelled `text`: the
+    row's path becomes `(text, <its own label>)`."""
+    parent = URIRef(f"{table}-rp{name}")
+    g.add((parent, RDF.type, TAB.HeaderNode))
+    g.add((table, TAB.hasHeaderNode, parent))
+    g.add((parent, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+    g.add((parent, TAB.coversRow, URIRef(f"{table}-r{r}")))
+    g.add((parent, TAB.hasLabel, _label(g, table, f"rpl{name}", text, 0)))
+    leaf = URIRef(f"{table}-rh{r}")
+    g.add((leaf, TAB.parentHeader, parent))
+    g.set((leaf, TAB.headerLevel, Literal(1, datatype=XSD.integer)))
+    return g
+
+
+def _two_paths_one_text():
+    """Rows whose paths are ('Total', 'current assets') and ('Total current', 'assets')."""
+    g = _two_by_two(rows=(("current assets", {0: "10", 1: "9"}),
+                          ("assets", {0: "20", 1: "19"})))
+    _nest(g, M0, 0, "Total", "a")
+    return _nest(g, M0, 1, "Total current", "b")
+
+
+def _an_empty_label_on_the_path():
+    """Rows whose paths are ('A', '') and ('A',): the join drops the empty label."""
+    g = _two_by_two(rows=(("", {0: "10", 1: "9"}),
+                          ("A", {0: "20", 1: "19"})))
+    return _nest(g, M0, 0, "A", "a")
+
+
+def test_two_paths_that_join_to_one_text_are_shared():
+    """The paths differ as label sequences, and the default reading keeps them apart by id. The
+    KEY each row delivers is the labels joined by one space, and that is one string for both:
+    it is what the portal grounds, so it is what must be counted."""
+    g = _two_paths_one_text()
+    assert [r.row_id for r in table_records(g)] == ["Total > current assets",
+                                                   "Total current > assets"]
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 4
+    assert [c.text for c in _keys(recs, SHARED_ROW_KEY)] == ["Total current assets"] * 4
+    assert _keys(recs, ROLE_ROW_KEY) == []
+    assert len({r.row_id for r in recs}) == 4
+
+
+def test_a_path_with_an_empty_label_is_shared_with_the_row_it_reads_as():
+    g = _an_empty_label_on_the_path()
+    assert [r.row_id for r in table_records(g)] == ["A > ", "A"]
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 4
+    assert [c.text for c in _keys(recs, SHARED_ROW_KEY)] == ["A"] * 4
+    assert _keys(recs, ROLE_ROW_KEY) == []

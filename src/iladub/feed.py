@@ -548,18 +548,28 @@ def table_records(graph: Graph, *, per_cell: bool = False) -> list[Record]:
         _inject_group_keys(graph, members, rows, row_cols, owner)
         _inject_section_captions(graph, members, rows, owner)
         row_path = _logical_row_paths(graph, members)
-        # Per-cell only (spec § 9.3): each row's header path as its LABELS and its deepest
-        # node, and whether another row of this logical table has the same labels. The count
-        # runs over every row the path map holds, including a row that mints no record (all
-        # its cells blank, or an aggregation row): the label is the author's on that row too,
-        # and it does not identify the row that does mint. It is NOT `multiplicity`, which
-        # spans every table of the document and is keyed on the row id with its caption
-        # prefix.
+        # Per-cell only (spec § 9.3): each row's KEY TEXT, the labels of its header path joined
+        # by one space, with the path's deepest node, and whether another row of this logical
+        # table delivers the same text. The count runs over every row the path map holds,
+        # including a row that mints no record (all its cells blank, or an aggregation row):
+        # the label is the author's on that row too, and it does not identify the row that
+        # does mint. It is NOT `multiplicity`, which spans every table of the document and is
+        # keyed on the row id with its caption prefix.
+        #
+        # WHAT IS COUNTED IS THE DELIVERED TEXT, not the label sequence (final review I-1).
+        # The text is the string the row-key concept carries and the portal grounds, so it is
+        # what must identify the row. Two paths that differ as sequences can join to one
+        # text: ("Total", "current assets") and ("Total current", "assets"), or ("A", "") and
+        # ("A",), since the join drops an empty label. Counted as sequences, both rows would
+        # keep the role and ground one line item twice. The text is built ONCE, here, and
+        # the minting branch below takes it from `row_keys`, so the string counted and the
+        # string delivered cannot differ. Equal sequences join to equal text, so every row
+        # shared by its sequence is still shared.
         #
         # PROCEDURAL: decidable exact arithmetic (CLAUDE.md § 8), scoped to one holon, the
-        # logical table. It is exact equality of label tuples, with no tolerance, over the
-        # paths `_header_parts` has ALREADY selected procedurally (deepest cover, then its
-        # tie-break), and over nothing else. That is why it is not a query: a SELECT would
+        # logical table. It is exact string equality, with no tolerance and no normalisation,
+        # over the paths `_header_parts` has ALREADY selected procedurally (deepest cover, then
+        # its tie-break), and over nothing else. That is why it is not a query: a SELECT would
         # need either a second selection of the covering header, which could disagree with
         # the first and is what the region rule forbids, or the Python-selected paths
         # materialised into a throwaway graph only to be counted back.
@@ -569,11 +579,13 @@ def table_records(graph: Graph, *, per_cell: bool = False) -> list[Record]:
         row_keys: dict = {}
         if per_cell:
             parts = _header_parts(graph, tuple(members), TAB.coversRow)
-            seen_paths: dict = {}
-            for labels, _node in parts.values():
-                seen_paths[labels] = seen_paths.get(labels, 0) + 1
-            row_keys = {r: (labels, node, seen_paths[labels] > 1)
-                        for r, (labels, node) in parts.items()}
+            key_text = {r: " ".join(lb for lb in labels if lb)
+                        for r, (labels, _node) in parts.items()}
+            seen_texts: dict = {}
+            for text in key_text.values():
+                seen_texts[text] = seen_texts.get(text, 0) + 1
+            row_keys = {r: (key_text[r], node, seen_texts[key_text[r]] > 1)
+                        for r, (_labels, node) in parts.items()}
         # Loop Q §4.2: a captioned member's FIRST caption (positionally) prefixes every one of
         # ITS OWN rows' identity — "GERALDTON > p0 table0-r0" — before anything has decided
         # what to CALL that value (§4.3's cascade names the field later; attribution never
@@ -660,8 +672,7 @@ def table_records(graph: Graph, *, per_cell: bool = False) -> list[Record]:
                 # validate; and to NEURAL because no judgement is taken.
                 #
                 # A table WITH spanning keys never reaches here: it keeps the key split.
-                labels, node, shared = row_keys[row]
-                text = " ".join(lb for lb in labels if lb)
+                text, node, shared = row_keys[row]
                 row_key = SurfaceConcept(text, text, _key_region(node),
                                          role=SHARED_ROW_KEY if shared else ROLE_ROW_KEY)
                 # A concept that is no cell (an injected group key, a section caption) rides

@@ -205,8 +205,17 @@ def marker_field(concept: SurfaceConcept, contract: Contract, terms: Graph) -> C
     while leaving its text unchanged, which is how a pin rots into a rubber stamp."""
     if not (concept.is_section_marker or concept.is_split_key):
         return None
+    # A FIELD THAT DECLARES A ROLE IS NOT OFFERED (final review I-2). §8: AXIOM — the contract
+    # declared that field for a role (`etkl:fieldRole`), and a concept that was not read in that
+    # role is not that field's. This is read from the declaration, not inferred from the value:
+    # a marker is a caption or a spanning header, never a matrix row's label, so its membership
+    # of the row-key field's scheme says nothing about which row it keys. Offered, it grounded
+    # as the row-key property on every cell record it rides on (`feed.table_records` carries it
+    # role-less onto each), and one subject carried two values of that property. A contract that
+    # declares no role has no such field, so its `admitting` list is what it was.
     admitting = [f for f in contract.fields
-                 if f.scheme is not None and scheme_member(concept.value, f.scheme, terms)]
+                 if f.role is None
+                 and f.scheme is not None and scheme_member(concept.value, f.scheme, terms)]
     return admitting[0] if len(admitting) == 1 else None
 
 
