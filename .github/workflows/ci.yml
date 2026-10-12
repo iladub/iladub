@@ -23,7 +23,9 @@ jobs:
       - name: Generate baml_client (gitignored; 6 test modules import it)
         run: baml-cli generate --from baml_src
       - name: Tests (incl. doc-governance lint)
-        run: pytest -q
+        run: pytest -q -n auto -m "not serial"
+      - name: Tests that read a wall-clock ratio, alone (R307)
+        run: pytest -q -m serial
       - name: Site builds strict, internal trees excluded
         run: |
           mkdocs build --strict

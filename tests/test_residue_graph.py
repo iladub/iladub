@@ -246,4 +246,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-11 (R307 raised, branch r307-test-time): 96 -> 97, ADDED = [307], REMOVED =
     # []. The RAISE kind: R307 is open, blocks no criterion and links only to the closed R305.
     # Controlled: `--candidates` is 96 before the two register lines and 97 after, last row R307.
-    assert len(expected) == 97
+    # RE-MEASURED 2026-10-11 (R307 closed, branch r307-measure-ci-durations): 97 -> 96, ADDED = [],
+    # REMOVED = [307]. Nothing is raised. Controlled: `scripts/residue_graph.py --candidates` over
+    # `main`'s register files is 97, over the branch's 96.
+    assert len(expected) == 96

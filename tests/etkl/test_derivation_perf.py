@@ -29,6 +29,12 @@ from rdflib.namespace import XSD
 
 from iladub.etkl import celltype
 
+# R307 (2026-10-11): CI runs the suite across workers. T(2N)/T(N) cancels machine SPEED, not
+# contention that differs between the two measurements: under 4 workers the known-quadratic
+# transpose-coherent case below XPASSED (run 38157447771), i.e. the ratio stopped discriminating.
+# So this file is collected in a separate, single-process invocation.
+pytestmark = pytest.mark.serial
+
 QDIR = os.path.join(os.path.dirname(celltype.__file__), "..", "..", "..", "vocab", "queries")
 
 # The discriminator. Doubling the rows doubles LINEAR row work (ratio -> 2.0) and quadruples
