@@ -295,6 +295,14 @@ def test_an_empty_key_under_an_unconstrained_role_field_grounds_by_field_identit
     assert status == "grounded"
     assert list(g.objects(OBS, EX.unshaped)) == [Literal("")]
     rejected = [str(o) for o in g.objects(None, DEC.rejectedBecause)]
-    assert len(rejected) == 1 and "field identity is the oracle" in rejected[0]
+    # The record says what identified the field: the contract's declaration of the role. No
+    # label did (the key's label is empty), and the sentence an exact NAME match earns is absent.
+    assert len(rejected) == 1
+    assert rejected[0] == (
+        f"the contract declares {EX.unshaped} as its field of role {ROLE_COLUMN_KEY}, the role "
+        f"the concept was read in; no label was matched and no proposer was asked, and the field "
+        f"declares neither a scheme nor a value constraint, so field identity is the oracle; "
+        f"quarantine is the branch for a field that was proposed rather than declared")
+    assert "label exactly identifies" not in rejected[0]
     conforms, report = _validate_grounding(g)
     assert conforms, report

@@ -228,7 +228,8 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class):
+def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class,
+                declared_role=None):
     """`(target, admitted_because)` — the grounding TARGET for iladub:groundsTo and the ORACLE
     that admitted it, or `(None, None)` if REJECTED (→ quarantine).
 
@@ -242,7 +243,13 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
     quarantine branch as the option NOT taken, and `dec:rejectedBecause` must name *which* of the
     three refusal paths above would have applied. Deriving that at the call site would duplicate
     this function's branch and let the two drift; the branch that decides is the only place that
-    can name its own refusal without re-deciding it."""
+    can name its own refusal without re-deciding it.
+
+    `declared_role` is the role the field was picked BY, when `ground_concept`'s role branch
+    picked it; `None` on every other path. It decides nothing — no branch below reads it to admit
+    or refuse — and changes one recorded sentence: on the field-identity path the reason must say
+    what identified the field, and for a role-picked concept that was the contract's declaration,
+    not the concept's label (a cell's label is empty)."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         if not term:
@@ -260,6 +267,13 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
             f"{field.fills_property}; quarantine is the branch for a value the membrane refuses")
     if not is_exact:
         return None, None
+    if declared_role is not None:
+        return URIRef(field.fills_property), (
+            f"the contract declares {field.fills_property} as its field of role {declared_role}, "
+            f"the role the concept was read in; no label was matched and no proposer was asked, "
+            f"and the field declares neither a scheme nor a value constraint, so field identity "
+            f"is the oracle; quarantine is the branch for a field that was proposed rather than "
+            f"declared")
     return URIRef(field.fills_property), (
         f"the concept's label exactly identifies contract field {field.fills_property}, which "
         f"declares no value constraint, so field identity is the oracle; quarantine is the "
@@ -344,6 +358,8 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
         # here, before any field is looked for. A quarantined candidate, no decision holon.
         _emit_candidate(g, concept, _GIST_CATEGORY, _SHARED_ROW_LABEL_RULE, 1.0)
         return "proposed"
+    # First match: at most one field per role is `etkl:ContractRoleShape`'s guarantee, which
+    # holds only for a contract that came through `load_contract`.
     role_field = (next((f for f in contract.fields if f.role == concept.role), None)
                   if concept.role is not None else None)
     if role_field is not None:
@@ -390,8 +406,9 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
     if field is None:                                       # novel → quarantined proposition
         return "proposed"
-    grounds_to, admitted_because = _grounds_to(concept, field, terms, is_exact, contract_shapes,
-                                               offer_uri, contract.target_class)
+    grounds_to, admitted_because = _grounds_to(
+        concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class,
+        declared_role=concept.role if role_field is not None else None)
     if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
     ps = _property_shape(contract_shapes, field.fills_property)
