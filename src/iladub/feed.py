@@ -552,11 +552,20 @@ def table_records(graph: Graph, *, per_cell: bool = False) -> list[Record]:
         # node, and whether another row of this logical table has the same labels. The count
         # runs over every row the path map holds, including a row that mints no record (all
         # its cells blank, or an aggregation row): the label is the author's on that row too,
-        # and it does not identify the row that does mint. It is NOT `multiplicity` below,
-        # which spans every table of the document and is keyed on the row id with its caption
-        # prefix. AXIOM by class, a holon-scoped count over asserted paths with string equality
-        # and no tolerance; it is written here and not as a query because its one consumer is
-        # this in-memory reading.
+        # and it does not identify the row that does mint. It is NOT `multiplicity`, which
+        # spans every table of the document and is keyed on the row id with its caption
+        # prefix.
+        #
+        # PROCEDURAL: decidable exact arithmetic (CLAUDE.md § 8), scoped to one holon, the
+        # logical table. It is exact equality of label tuples, with no tolerance, over the
+        # paths `_header_parts` has ALREADY selected procedurally (deepest cover, then its
+        # tie-break), and over nothing else. That is why it is not a query: a SELECT would
+        # need either a second selection of the covering header, which could disagree with
+        # the first and is what the region rule forbids, or the Python-selected paths
+        # materialised into a throwaway graph only to be counted back.
+        #
+        # What it is NOT: it derives no fact into the graph and infers nothing from absence.
+        # It marks a key, and the portal then refuses that key by rule (spec § 9.2).
         row_keys: dict = {}
         if per_cell:
             parts = _header_parts(graph, tuple(members), TAB.coversRow)
