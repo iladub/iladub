@@ -43,6 +43,46 @@ etkl:FieldShape a sh:NodeShape ;
     sh:property [ sh:path etkl:fillsProperty ; sh:minCount 1 ;
         sh:message "A contract field must declare the property it fills." ] .
 
+#  A field carries at most one structural role, and it is one of the three declared ones.
+#  Targets the SUBJECTS of etkl:fieldRole, not the class etkl:Field: a field written without
+#  its type is still read by `ground.load_contract`, and the membrane's subclass-only closure
+#  does not type it from the property's domain.
+etkl:FieldRoleShape a sh:NodeShape ;
+    sh:targetSubjectsOf etkl:fieldRole ;
+    sh:property [ sh:path etkl:fieldRole ; sh:maxCount 1 ;
+        sh:message "A contract field carries at most one etkl:fieldRole." ] ;
+    sh:property [ sh:path etkl:fieldRole ;
+        sh:in ( etkl:RowKey etkl:ColumnKey etkl:CellValue ) ;
+        sh:message "A field role is etkl:RowKey, etkl:ColumnKey or etkl:CellValue." ] .
+
+#  A contract that declares ANY role declares the whole matrix reading: exactly one
+#  etkl:CellValue field and at most one field per key role. A contract with no role-carrying
+#  field is untouched (the first arm of the sh:or). Targets the subjects of etkl:hasField as
+#  well as the class, for the reason given on etkl:FieldRoleShape.
+#
+#  `ground.load_contract` runs this shape and etkl:FieldRoleShape, and refuses the contract
+#  they refuse. Run alone because a contract file is a declaration, not a pipeline: the shipped
+#  examples/shipping contracts declare no target shape, which etkl:SemanticDataContractShape
+#  requires of a conformant ET(K)L pipeline.
+etkl:ContractRoleShape a sh:NodeShape ;
+    sh:targetClass etkl:SemanticDataContract ;
+    sh:targetSubjectsOf etkl:hasField ;
+    sh:or (
+        [ sh:path ( etkl:hasField etkl:fieldRole ) ; sh:maxCount 0 ]
+        [ sh:path etkl:hasField ;
+          sh:qualifiedValueShape [ sh:path etkl:fieldRole ; sh:hasValue etkl:CellValue ] ;
+          sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ]
+    ) ;
+    sh:message "A contract that declares a field role must declare exactly one etkl:CellValue field." ;
+    sh:property [ sh:path etkl:hasField ;
+        sh:qualifiedValueShape [ sh:path etkl:fieldRole ; sh:hasValue etkl:RowKey ] ;
+        sh:qualifiedMaxCount 1 ;
+        sh:message "A contract declares at most one etkl:RowKey field." ] ;
+    sh:property [ sh:path etkl:hasField ;
+        sh:qualifiedValueShape [ sh:path etkl:fieldRole ; sh:hasValue etkl:ColumnKey ] ;
+        sh:qualifiedMaxCount 1 ;
+        sh:message "A contract declares at most one etkl:ColumnKey field." ] .
+
 #################################################################
 #  Membrane opacity: a document projection may carry ONLY concepts —
 #  never an interior term (candidate concept / promotion decision /

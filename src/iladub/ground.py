@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from decimal import Decimal
+from functools import lru_cache
+from pathlib import Path
 
 from rdflib import RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import SKOS
@@ -29,6 +31,23 @@ _GIST_CATEGORY = "https://w3id.org/semanticarts/ns/ontology/gist/Category"
 # concept's value, so every answer a proposer could give is refused by `_grounds_to` — the ask is
 # skipped and this rule, not a proposer, is the candidate's accountable suggester.
 _NO_ADMISSIBLE_FIELD_RULE = "urn:iladub:suggester/no-admissible-field-rule"
+
+# A contract field's structural role in a matrix (spec 2026-10-12-a-matrix-cell-is-an-observation
+# § 3.1): the three `etkl:FieldRole` individuals, as the strings `ContractField.role` carries.
+ROLE_ROW_KEY = str(ETKL.RowKey)
+ROLE_COLUMN_KEY = str(ETKL.ColumnKey)
+ROLE_CELL_VALUE = str(ETKL.CellValue)
+# Spec § 9.2: the role of a row label shared by several rows of one table, which is therefore
+# not a key. NO CONTRACT CAN DECLARE IT: it is not an `etkl:FieldRole` individual, so
+# `etkl:FieldRoleShape`'s closed list refuses a contract that names it and `load_contract` never
+# returns it. Only a `SurfaceConcept` carries it.
+SHARED_ROW_KEY = "urn:iladub:role/shared-row-key"
+
+_ETKL_SHAPES = Path(__file__).resolve().parents[2] / "vocab" / "shapes" / "etkl-shapes.ttl"
+# The two shapes `load_contract` runs, out of the whole file. A contract file is a declaration,
+# not a pipeline: the shipped `examples/shipping/*-contract.ttl` declare no `etkl:hasTargetShape`,
+# which `etkl:SemanticDataContractShape` requires, so running the whole file would refuse them.
+_ROLE_SHAPES = (str(ETKL.ContractRoleShape), str(ETKL.FieldRoleShape))
 
 # Value constraints (as opposed to cardinality/path) — presence of any means the contract
 # declares something the SHACL membrane can verify a proposed value against.
@@ -66,6 +85,15 @@ class SurfaceConcept:
     # that compare SurfaceConcepts BY VALUE still compare equal — measured: both sides of
     # `tests/test_federation.py`'s `in concepts` checks carry False.
     is_split_key: bool = False
+    # Spec 2026-10-12-a-matrix-cell-is-an-observation § 3.3, § 9.2: the structural role the
+    # concept was READ in — `ROLE_ROW_KEY`, `ROLE_COLUMN_KEY` or `ROLE_CELL_VALUE` for a concept
+    # minted from a matrix cell under a role contract, `SHARED_ROW_KEY` for a row label several
+    # rows of one table share, `None` for every concept read without roles. Not set by this
+    # module: it is carried here for the feed to set and for grounding to branch on.
+    #
+    # Defaulted, so every existing construction site is untouched and the sites that compare
+    # SurfaceConcepts BY VALUE still compare equal: both sides carry None.
+    role: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,6 +101,10 @@ class ContractField:
     iri: str
     fills_property: str
     scheme: str | None
+    # The field's `etkl:fieldRole`, as one of `ROLE_ROW_KEY` / `ROLE_COLUMN_KEY` /
+    # `ROLE_CELL_VALUE`; `None` for a field that declares none. Defaulted, so every
+    # three-argument construction site is untouched.
+    role: str | None = None
 
 
 @dataclass(frozen=True)
@@ -85,15 +117,40 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", s.lower())
 
 
+@lru_cache(maxsize=1)
+def _etkl_shapes() -> Graph:
+    """`etkl-shapes.ttl`, parsed once per process: `load_contract` is called per test and per
+    compile, and the shapes file does not change under it."""
+    return Graph().parse(str(_ETKL_SHAPES), format="turtle")
+
+
 def load_contract(contract_path: str) -> Contract:
+    """The contract at `contract_path`, in memory. Raises `ValueError` naming the path for a
+    contract the role shapes refuse.
+
+    CONSTRAINT → SHACL (CLAUDE.md § 8). What a role contract must declare — one role per field,
+    one of three; exactly one cell-value field; at most one field per key role — is stated once,
+    in `etkl:ContractRoleShape` and `etkl:FieldRoleShape`, and this function RUNS them. It does
+    not count roles itself: a Python recount would be a second statement of the membrane that
+    could drift from the first. The read below therefore takes the single `etkl:fieldRole` a
+    conforming field has and does not check it again.
+    """
+    from .validate import validate
     g = Graph().parse(contract_path, format="turtle")
+    verdict = validate(g, _etkl_shapes(), Graph(), use_shapes=list(_ROLE_SHAPES))
+    if not verdict.conforms:
+        raise ValueError(
+            f"contract {contract_path} declares field roles the contract-role shape refuses:\n"
+            f"{verdict.report_text}")
     contract = next(g.subjects(ETKL.targetClass, None), None)
     target = g.value(contract, ETKL.targetClass)
     fields = []
     for f in g.objects(contract, ETKL.hasField):
         prop = g.value(f, ETKL.fillsProperty)
         scheme = g.value(f, ETKL.admissibleScheme)
-        fields.append(ContractField(str(f), str(prop), str(scheme) if scheme else None))
+        role = g.value(f, ETKL.fieldRole)
+        fields.append(ContractField(str(f), str(prop), str(scheme) if scheme else None,
+                                    str(role) if role else None))
     return Contract(str(target), tuple(fields))
 
 

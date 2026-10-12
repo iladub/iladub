@@ -137,7 +137,17 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # joins the etkl bijection. Measured as a SET against HEAD's tracked `.ttl` files: added =
     # exactly that one file, removed = none. It uses only `cor:` terms the corpus register
     # already uses; no term was declared.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 181
+    # RE-MEASURED 2026-10-12 (matrix-cell Task 1, the field role): 181 -> 182 —
+    # `tests/etkl-contract-two-cell-values-leak.ttl`, the negative fixture for
+    # `etkl:ContractRoleShape`. Measured as a SET against HEAD's tracked `.ttl` files: added =
+    # exactly that one file, removed = none (`git ls-files "*.ttl"` = 184 minus the 2 carved).
+    # NOT carved out, for the reason every negative above is not: it names declared `etkl:` terms
+    # only, plus `ex:` terms outside the owned root. The five new terms (`etkl:FieldRole`,
+    # `etkl:fieldRole`, `etkl:RowKey`, `etkl:ColumnKey`, `etkl:CellValue`) and the two role shapes
+    # went into the EXISTING `vocab/ontology/etkl.ttl` and `vocab/shapes/etkl-shapes.ttl`, so no
+    # vocabulary FILE joined the population. The census pins below (67, 72, 21) were re-run in the
+    # same change and did not move: every new term is declared where it is used.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 182
 
 
 def test_each_file_gets_its_own_named_graph():
