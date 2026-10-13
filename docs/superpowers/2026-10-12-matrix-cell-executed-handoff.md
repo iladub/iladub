@@ -128,3 +128,31 @@ is also in spec § 10 or a register row, and none is the maintainer's.
 - **The apple counts come from single compiles.**
 - **Falsification of the switch on the corpus arm ran on an earlier spelling of it**; the final
   spelling was re-falsified on the CI arm only.
+
+## 6. Appended 2026-10-13: part 5's two runnable predictions, run
+
+**Action 4 (the stem's budget overrun predates this branch): CONFIRMED.** Four serial stem
+compiles, alternating refs, one process each, `compile_document` timed alone:
+
+| ref | HEAD | seconds | 1-min load at end |
+| --- | --- | --- | --- |
+| `main` | `f976a82` | 318.2 | 2.2 |
+| this branch | `6211cd8` | 324.2 | 3.6 |
+| `main` | `f976a82` | 324.8 | 1.5 |
+| this branch | `6211cd8` | 320.4 | 4.3 |
+
+`main` averages 321.5 s and the branch 322.3 s; the spread within a ref (6.6 s on `main`) is
+larger than the gap between refs (0.8 s). The stem straddles `BUDGET_S = 320` on `main`, so
+`test_expected_verdict[graincorp-stem]` passes or fails there by run. No register row covers
+this; R39 names the dominant cost and not the budget. Not raised here: whether to raise a row is
+the maintainer's.
+
+**Action 2(a) (the wide form leaves `test_ground_section_marker.py` and the key-split arms
+unedited): CONFIRMED on a prototype, reverted.** One guard in `ground_concept` after the field is
+chosen and before `_emit_candidate` (a field that declares a role is dropped unless the concept
+carries that role) covers the `exact_field`, `marker_field` and proposer doors at one seam. The
+twelve `tests/test_{contract_roles,feed_*,finance_contract,ground_*,grounding*}.py` files read
+165 passed, 1 failed; the one failure is the control arm R310 names,
+`test_ground_field_role.py::test_a_shared_row_key_is_refused_whatever_the_proposer_says`
+(`'proposed' == 'grounded'`). Unmeasured: the corpus arm, and `_admissible_fields`, which the
+prototype did not touch.
