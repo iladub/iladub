@@ -66,6 +66,10 @@ etkl:Field a owl:Class ;
     rdfs:label "Field"@en ;
     rdfs:comment "A contract field: binds a target property to an extractable value, optionally constrained to an admissible terminology scheme. Read by the knowledge-guided (BAML) extractor."@en .
 
+etkl:FieldRole a owl:Class ;
+    rdfs:label "Field role"@en ;
+    rdfs:comment "The structural role a contract field plays in a matrix the author drew: the key its row carries, the key its column carries, or the value printed where they cross. Its members are the three individuals etkl:RowKey, etkl:ColumnKey and etkl:CellValue. A field that declares no role is read as it was before roles existed."@en .
+
 etkl:DocumentProjection a owl:Class ;
     rdfs:label "Document projection"@en ;
     rdfs:comment "A clean document holon's outward-facing concept surface: the promoted grounded concepts it exposes for others to ground against (a SKOS scheme). The Projection aspect made concrete. A compiled holon that becomes a provided terminology for the next compile. Carries ONLY concepts — never the interior (regions, candidate concepts, promotion decisions)."@en .
@@ -117,6 +121,22 @@ etkl:fillsProperty a owl:ObjectProperty ;
 etkl:admissibleScheme a owl:ObjectProperty ;
     rdfs:label "admissible scheme"@en ; rdfs:domain etkl:Field ;
     rdfs:comment "A SKOS concept scheme the field's value must ground to. A field WITH an admissible scheme must resolve (else the value becomes an iladub:CandidateConcept); a field WITHOUT one is asserted as a free literal."@en .
+
+etkl:fieldRole a owl:ObjectProperty ;
+    rdfs:label "field role"@en ; rdfs:domain etkl:Field ; rdfs:range etkl:FieldRole ;
+    rdfs:comment "The structural role this field plays in a matrix: etkl:RowKey, etkl:ColumnKey or etkl:CellValue. A field carries at most one. A contract that declares any role declares exactly one etkl:CellValue field and at most one field per key role (etkl:ContractRoleShape)."@en .
+
+etkl:RowKey a etkl:FieldRole ;
+    rdfs:label "Row key"@en ;
+    rdfs:comment "The role of the field filled by a matrix row's label: the author's row header path, carried as written."@en .
+
+etkl:ColumnKey a etkl:FieldRole ;
+    rdfs:label "Column key"@en ;
+    rdfs:comment "The role of the field filled by a matrix column's label: the author's column header path, carried as written."@en .
+
+etkl:CellValue a etkl:FieldRole ;
+    rdfs:label "Cell value"@en ;
+    rdfs:comment "The role of the field filled by the value printed in a matrix cell, where one row key and one column key cross."@en .
 
 #################################################################
 #  Governance / Projection properties

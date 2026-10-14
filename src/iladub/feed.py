@@ -30,7 +30,8 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
 from .etkl.celltype import is_blank
-from .ground import SurfaceConcept
+from .ground import (ROLE_CELL_VALUE, ROLE_COLUMN_KEY, ROLE_ROW_KEY, SHARED_ROW_KEY,
+                     SurfaceConcept)
 
 TAB = Namespace("https://w3id.org/iladub/tab#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
@@ -220,6 +221,19 @@ def _logical_column(graph: Graph, col):
     return col
 
 
+class _CellEntry(tuple):
+    """One read entry cell: the `(x0, y0, concept, col)` tuple `_read_table` has always
+    appended, which also remembers the `tab:EntryCell` it was read from (`.cell`).
+
+    The per-cell reading needs the cell's own IRI: two cells of one row share the row's IRI, so
+    only the cell's can settle an id they would otherwise share (`table_records`, pass 3). It
+    rides as an attribute and not as a fifth field because every reader of these tuples unpacks
+    four, in this module and in `tests/etkl/test_unshown_ink.py`, and none of them needs it.
+    An INJECTED concept (a group key, a section caption) is appended as a plain tuple and has no
+    `.cell`: that absence is how the per-cell reading tells a cell from a rider."""
+    cell = None
+
+
 def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
     """One table's CELL reading: `(ordered_rows, {row: [(x0, y0, concept)]},
     {row: {logical_column}})`.
@@ -290,7 +304,9 @@ def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
         # per-record cell list is precisely what a key split cannot work from: deciding which
         # record a cell belongs to is a question about its COLUMN. Nothing reads it unless the
         # table carries spanning keys, so every other table's reading is untouched.
-        rows.setdefault(row, []).append((x0, y0, concept, col))
+        entry = _CellEntry((x0, y0, concept, col))
+        entry.cell = e
+        rows.setdefault(row, []).append(entry)
         row_cols.setdefault(row, set()).add(_logical_column(graph, col))
     ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _, _ in rows[r]))
     return ordered, rows, row_cols
@@ -482,7 +498,7 @@ def _inject_section_captions(graph: Graph, members, rows: dict, owner: dict) -> 
                              None))
 
 
-def table_records(graph: Graph) -> list[Record]:
+def table_records(graph: Graph, *, per_cell: bool = False) -> list[Record]:
     """Each asserted tab:RecordTable OR tab:HierarchicalTable -> one Record per data row; each data
     cell -> a SurfaceConcept (text=its column's HEADER PATH, value=cell text, region=cell provenance).
     For a flat RecordTable the path reduces to the single column label (backward compatible). RDF
@@ -498,6 +514,12 @@ def table_records(graph: Graph) -> list[Record]:
     THE IDENTITY INVARIANT, enforced in three passes rather than argued: no two rows of the
     document ever mint the same record id. Pass 3 is what makes that a guarantee instead of a
     property of the emitter's naming — see there.
+
+    `per_cell` (default off; spec 2026-10-12-a-matrix-cell-is-an-observation § 3.3, § 9): a row
+    that has a row header path, in a table with no spanning key, mints one record PER ENTRY CELL
+    instead of one per row. Each carries the row key, the column key where the column has a
+    header path, and the cell, each with its `role`. Every other row keeps the branch it had.
+    With the keyword off nothing below differs from what it was.
     """
     out: list[Record] = []
     tables = (set(graph.subjects(RDF.type, TAB.RecordTable))
@@ -526,6 +548,44 @@ def table_records(graph: Graph) -> list[Record]:
         _inject_group_keys(graph, members, rows, row_cols, owner)
         _inject_section_captions(graph, members, rows, owner)
         row_path = _logical_row_paths(graph, members)
+        # Per-cell only (spec § 9.3): each row's KEY TEXT, the labels of its header path joined
+        # by one space, with the path's deepest node, and whether another row of this logical
+        # table delivers the same text. The count runs over every row the path map holds,
+        # including a row that mints no record (all its cells blank, or an aggregation row):
+        # the label is the author's on that row too, and it does not identify the row that
+        # does mint. It is NOT `multiplicity`, which spans every table of the document and is
+        # keyed on the row id with its caption prefix.
+        #
+        # WHAT IS COUNTED IS THE DELIVERED TEXT, not the label sequence (final review I-1).
+        # The text is the string the row-key concept carries and the portal grounds, so it is
+        # what must identify the row. Two paths that differ as sequences can join to one
+        # text: ("Total", "current assets") and ("Total current", "assets"), or ("A", "") and
+        # ("A",), since the join drops an empty label. Counted as sequences, both rows would
+        # keep the role and ground one line item twice. The text is built ONCE, here, and
+        # the minting branch below takes it from `row_keys`, so the string counted and the
+        # string delivered cannot differ. Equal sequences join to equal text, so every row
+        # shared by its sequence is still shared.
+        #
+        # PROCEDURAL: decidable exact arithmetic (CLAUDE.md § 8), scoped to one holon, the
+        # logical table. It is exact string equality, with no tolerance and no normalisation,
+        # over the paths `_header_parts` has ALREADY selected procedurally (deepest cover, then
+        # its tie-break), and over nothing else. That is why it is not a query: a SELECT would
+        # need either a second selection of the covering header, which could disagree with
+        # the first and is what the region rule forbids, or the Python-selected paths
+        # materialised into a throwaway graph only to be counted back.
+        #
+        # What it is NOT: it derives no fact into the graph and infers nothing from absence.
+        # It marks a key, and the portal then refuses that key by rule (spec § 9.2).
+        row_keys: dict = {}
+        if per_cell:
+            parts = _header_parts(graph, tuple(members), TAB.coversRow)
+            key_text = {r: " ".join(lb for lb in labels if lb)
+                        for r, (labels, _node) in parts.items()}
+            seen_texts: dict = {}
+            for text in key_text.values():
+                seen_texts[text] = seen_texts.get(text, 0) + 1
+            row_keys = {r: (key_text[r], node, seen_texts[key_text[r]] > 1)
+                        for r, (_labels, node) in parts.items()}
         # Loop Q §4.2: a captioned member's FIRST caption (positionally) prefixes every one of
         # ITS OWN rows' identity — "GERALDTON > p0 table0-r0" — before anything has decided
         # what to CALL that value (§4.3's cascade names the field later; attribution never
@@ -562,7 +622,7 @@ def table_records(graph: Graph) -> list[Record]:
             rid_of[row] = f"{key} > {base}" if key is not None else base
         for rid in rid_of.values():
             multiplicity[rid] = multiplicity.get(rid, 0) + 1
-        per_logical.append((ordered, rows, rid_of, owner))
+        per_logical.append((ordered, rows, rid_of, owner, row_keys))
     # Pass 2: mint ids using the GLOBAL (cross-table) multiplicity — collision guard
     # (loop I; closes the PR #59 recorded minor): two rows sharing a header path, whether
     # in the same table or across tables, must never mint the same record subject — each
@@ -572,9 +632,25 @@ def table_records(graph: Graph) -> list[Record]:
     # carrying spanning keys mints one record PER KEY instead of one. A table with no spanning
     # key takes the `if not keys` branch and reads exactly as it did before — which is every
     # table of six of the seven corpus documents, and every table of all seven before Layer A.
-    minted: list[tuple] = []
+    minted: list[tuple] = []           # (row, rid, concepts, what pass 3 settles a tie by)
     keys_cache: dict = {}
-    for ordered, rows, rid_of, owner in per_logical:
+    col_parts: dict = {}               # per-cell: a table's column paths, as labels and node
+    region_of: dict = {}               # per-cell: label cell -> the region its keys carry
+    region_taken: dict = {}            # per-cell: region -> the label cell that holds it
+
+    def _key_region(node) -> str:
+        """`_label_region`, made a guarantee: no two label cells of one call share a region.
+        The readable form names a page and a fragment, which is the emitter's naming; a second
+        label cell that reads the same takes its own IRI instead."""
+        cell, region = _label_region(graph, node)
+        if cell not in region_of:
+            if region_taken.setdefault(region, cell) != cell:
+                region = str(cell)
+                region_taken[region] = cell
+            region_of[cell] = region
+        return region_of[cell]
+
+    for ordered, rows, rid_of, owner, row_keys in per_logical:
         for row in ordered:
             entries = sorted(rows[row], key=lambda kc: kc[0])
             rid = rid_of[row]
@@ -584,8 +660,48 @@ def table_records(graph: Graph) -> list[Record]:
             if own not in keys_cache:
                 keys_cache[own] = _spanning_keys(graph, own) if own is not None else ()
             keys = keys_cache[own]
+            if not keys and row in row_keys:
+                # ONE RECORD PER CELL (spec § 3.3, § 9.1, § 9.3).
+                #
+                # PROCEDURAL, and it decides nothing (CLAUDE.md § 8; spec § 3.6, last row).
+                # Which cells are entries, which header node covers a row or a column, and
+                # what the paths are were all asserted at compile. This reads those triples
+                # into the feed's in-memory `Record`, the same class of step as the key split
+                # below. It is irreducible to AXIOM because its product is not RDF: nothing is
+                # stored in the graph, so there is no CONSTRUCT to write and no shape to
+                # validate; and to NEURAL because no judgement is taken.
+                #
+                # A table WITH spanning keys never reaches here: it keeps the key split.
+                text, node, shared = row_keys[row]
+                row_key = SurfaceConcept(text, text, _key_region(node),
+                                         role=SHARED_ROW_KEY if shared else ROLE_ROW_KEY)
+                # A concept that is no cell (an injected group key, a section caption) rides
+                # on every record of the row, role-less, as the key split carries a caption
+                # onto every key's record.
+                riders = tuple(en[2] for en in entries if getattr(en, "cell", None) is None)
+                if own not in col_parts:
+                    col_parts[own] = _header_parts(graph, (own,), TAB.coversColumn)
+                for en in entries:
+                    cell = getattr(en, "cell", None)
+                    if cell is None:
+                        continue
+                    _x, _y, concept, col = en
+                    concepts = riders + (row_key,)
+                    cid = rid
+                    if col in col_parts[own]:
+                        clabels, cnode = col_parts[own][col]
+                        ctext = " ".join(lb for lb in clabels if lb)
+                        concepts += (SurfaceConcept(ctext, ctext, _key_region(cnode),
+                                                    role=ROLE_COLUMN_KEY),)
+                        cid = f"{rid} > {' > '.join(clabels)}"
+                    # A column no header covers gives the record no column key and adds
+                    # nothing to its id: there is no label to add. Two such cells of one row
+                    # then share the id, and pass 3 settles it by the cell.
+                    concepts += (_replace(concept, text="", role=ROLE_CELL_VALUE),)
+                    minted.append((row, cid, concepts, cell))
+                continue
             if not keys:
-                minted.append((row, rid, tuple(c for _, _, c, _ in entries)))
+                minted.append((row, rid, tuple(c for _, _, c, _ in entries), row))
                 continue
             covered = {c for _, _, cols in keys for c in cols}
             for label, region, cols in keys:
@@ -603,7 +719,7 @@ def table_records(graph: Graph) -> list[Record]:
                         concept = _replace(concept, text="")
                     cells.append(concept)
                 cells.append(SurfaceConcept(label, label, region, is_split_key=True))
-                minted.append((row, f"{rid} > {label}", tuple(cells)))
+                minted.append((row, f"{rid} > {label}", tuple(cells), row))
     # Pass 3: the guarantee (F1). Everything above is READABILITY — a header path, a page, a
     # fragment — and every one of them is the emitter's naming, which the feed does not control
     # and must not trust: appending a discriminator that EQUALS the id it disambiguates is a
@@ -611,11 +727,22 @@ def table_records(graph: Graph) -> list[Record]:
     # onto one subject (measured on the case-1 fixture). So any id two rows still share is
     # settled by the row's own IRI, which RDF guarantees unique. A collision here means the
     # readable forms ran out, never that a record is lost.
+    #
+    # PER RECORD, not per row. A row record and a key-split record are settled by the row's
+    # IRI, as before. A per-cell record is settled by its CELL's IRI: two cells of one row
+    # share the row's, so appending it would leave them on one id.
+    #
+    # Under `per_cell` the tie is counted on the SUBJECT, not the id string. `_record_uri`
+    # maps every run of non-alphanumerics to '_', so two different ids can name one subject
+    # ('A > B C' and 'A B > C'), and a per-cell id is long and punctuated. Counting the slug
+    # catches every tie the string count catches, because equal ids have equal slugs. With the
+    # keyword off the count is on the id, as it has always been.
+    tie = _record_uri if per_cell else (lambda rid: rid)
     residual: dict = {}
-    for _row, rid, _cells in minted:
-        residual[rid] = residual.get(rid, 0) + 1
-    for row, rid, cells in minted:
-        out.append(Record(f"{rid} > {row}" if residual[rid] > 1 else rid, cells))
+    for _row, rid, _cells, _by in minted:
+        residual[tie(rid)] = residual.get(tie(rid), 0) + 1
+    for _row, rid, cells, by in minted:
+        out.append(Record(f"{rid} > {by}" if residual[tie(rid)] > 1 else rid, cells))
     return out
 
 
@@ -655,6 +782,20 @@ def _header_path(graph: Graph, tables, cover_pred) -> dict:
     first (label, node) wins. Which one wins carries NO meaning — neither group is more the row's
     header than the other — but it is now the same one every time, everywhere. The §5 loss itself
     stands as R18 describes it."""
+    return {u: " > ".join(labels)
+            for u, (labels, _node) in _header_parts(graph, tables, cover_pred).items()}
+
+
+def _header_parts(graph: Graph, tables, cover_pred) -> dict:
+    """`_header_path` before the join: each target mapped to `(labels, node)`, where `labels`
+    is the path's labels root to leaf and `node` is the deepest header node the selection
+    chose. `_header_path` is this with the labels joined; the selection and its tie-break are
+    stated there and happen once, here.
+
+    The per-cell reading needs both halves the joined string loses. The labels as a sequence,
+    because a key's text joins them with a space and a label may itself contain ' > ', so the
+    joined string cannot be split back. And the node, because the key's region is that node's
+    label cell (`_label_region`) and must come from this selection, not from a second one."""
     label: dict = {}
     parent: dict = {}
     best: dict = {}                                 # target -> (level, header_node)
@@ -677,8 +818,34 @@ def _header_path(graph: Graph, tables, cover_pred) -> dict:
         while cur is not None:
             parts.append(label.get(cur, ""))
             cur = parent.get(cur)
-        paths[u] = " > ".join(reversed(parts))
+        paths[u] = (tuple(reversed(parts)), h)
     return paths
+
+
+def _label_region(graph: Graph, node) -> tuple:
+    """`(label cell, region)` for a header node whose label is a row key or a column key
+    (spec § 9.1): the label cell named by its `tab:onPage` and its own IRI fragment.
+
+    No header label cell carries `prov:wasDerivedFrom` ([[R309]]; measured on apple, 0 of 90),
+    so there is no provenance region to read, and the fragment alone names different cells on
+    different pages (42 of apple's 48 distinct label fragments occur on both). Both parts are
+    RDF reads: the page is the `tab:onPage` literal, the fragment is the opaque tail of the
+    IRI, used whole as `_row_discriminator` uses a row's.
+
+    THE FORM is `p<page>#<fragment>`. The '#' is what keeps a key's region out of the entry
+    cells' space by construction: every entry region, and every injected concept's, is the
+    text after the LAST '#' of an IRI, so none contains one.
+
+    A label cell that records NO page takes its whole IRI. The fragment would not do: unpaged
+    label cells of two page-scoped tables share it. A header node with no label cell at all is
+    named the same way, by the node."""
+    cell = graph.value(node, TAB.hasLabel)
+    if cell is None:
+        cell = node
+    page = graph.value(cell, TAB.onPage)
+    if page is None:
+        return cell, str(cell)
+    return cell, f"p{int(page)}#{str(cell).split('#')[-1]}"
 
 
 def _column_header_path(graph: Graph, table) -> dict:
@@ -764,14 +931,29 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     cell grounded via the shipped ground_concept oracle (unchanged). Populates `g` with grounded
     nodes + promotion decisions + propositions; returns the grounded/proposed tally.
 
+    A contract that declares a cell-value field (`etkl:fieldRole etkl:CellValue`) is read one
+    subject per CELL instead: see `table_records`' `per_cell`.
+
     `validate_shapes=True` puts `g` through the grounding membrane before returning, raising
     `AssertionError` with the report rather than handing back a graph that violates the
     promotion invariant. It defaults to False so every existing positional call site is
     unchanged; the corpus battery and the contracted paths pass it explicitly.
     """
-    from .ground import ground_concept
+    from .ground import ROLE_CELL_VALUE, ground_concept
 
-    records = table_records(graph)
+    # Spec 2026-10-12-a-matrix-cell-is-an-observation § 3.3 THE SWITCH. §8: AXIOM — whether a
+    # document is read one record per cell is DECLARED by the contract, in the one field whose
+    # role is `etkl:CellValue`, and read here. Nothing about the document is inspected to decide
+    # it, and a contract that declares no role reads exactly as it did. `etkl:ContractRoleShape`
+    # guarantees a role contract has that field, so its presence is the whole test.
+    #
+    # The role-less call passes NO keyword, so it is the call this function always made: a
+    # caller that substitutes a one-argument `table_records` keeps working
+    # (`tests/test_concept_feed.py::test_feed_is_load_bearing_red_check` does).
+    if any(f.role == ROLE_CELL_VALUE for f in contract.fields):
+        records = table_records(graph, per_cell=True)
+    else:
+        records = table_records(graph)
     # The page's own furniture, read ONCE per document and handed to every proposal (Task 6).
     # It is the same text for every concept of the document, so building it per concept would
     # re-walk the graph 769 times on graincorp for one unchanging string.

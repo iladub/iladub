@@ -1,0 +1,22 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/roles#> .
+
+#  NON-CONFORMANT: a contract that declares field roles and names TWO fields as the cell value.
+#  A matrix cell prints one value, so a role contract declares exactly one etkl:CellValue field
+#  (etkl:ContractRoleShape). Everything else about this contract is in order — it declares a
+#  target shape and a knowledge module, and each field fills a property and carries one role —
+#  so the role shape is the ONLY shape that refuses it.
+
+ex:two-cell-values-contract a etkl:SemanticDataContract ;
+    rdfs:label "Role contract with two cell-value fields (illegal)"@en ;
+    etkl:targetClass ex:Observation ;
+    etkl:hasTargetShape ex:ObservationShape ;
+    etkl:requiresKnowledge ex:scheme-line-item ;
+    etkl:hasField ex:f-line-item , ex:f-period , ex:f-amount , ex:f-restated .
+
+ex:f-line-item a etkl:Field ; etkl:fillsProperty ex:lineItem ; etkl:fieldRole etkl:RowKey ;
+    etkl:admissibleScheme ex:scheme-line-item .
+ex:f-period    a etkl:Field ; etkl:fillsProperty ex:period   ; etkl:fieldRole etkl:ColumnKey .
+ex:f-amount    a etkl:Field ; etkl:fillsProperty ex:amount   ; etkl:fieldRole etkl:CellValue .
+ex:f-restated  a etkl:Field ; etkl:fillsProperty ex:restated ; etkl:fieldRole etkl:CellValue .

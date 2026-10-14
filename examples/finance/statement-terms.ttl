@@ -1,0 +1,36 @@
+# Illustrative SKOS terminology for the statement contract
+# (spec 2026-10-12-a-matrix-cell-is-an-observation-design.md § 4).
+# CC-BY-4.0 — François Rosselet, 2026. Part of the ET(K)L method, https://w3id.org/iladub/etkl.
+#
+# Generic statement lines, as any income statement or balance sheet may print them. Synthetic:
+# this is not any issuer's chart of accounts and it is not a reporting taxonomy.
+#
+# SHORT ON PURPOSE. A statement prints many lines this scheme does not carry, and each of those
+# quarantines as a proposition while its period and its figure still ground. One document then
+# shows both halves of assert/propose.
+#
+# MEMBERSHIP IS EXACT. A row label grounds when it equals a prefLabel, character for character.
+# A label printed with a footnote marker (`Total net sales (1)`) is a different text and does
+# not ground through `Total net sales`: nothing here strips the marker.
+#
+# `Total net sales` IS HERE DELIBERATELY. A statement may print that label on more than one row
+# of one table, once per breakdown. The scheme admits it, and that admission is exactly why a
+# shared row label is refused by rule before any field is looked for (spec § 9.2): two figures
+# would otherwise ground under one line item and one period with nothing to tell them apart.
+@prefix fin:  <https://example.org/finance#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+fin:scheme-line-item a skos:ConceptScheme ; skos:prefLabel "Statement line items"@en .
+fin:li-total-net-sales           a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total net sales"@en .
+fin:li-gross-margin              a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Gross margin"@en .
+fin:li-total-operating-expenses  a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total operating expenses"@en .
+fin:li-operating-income          a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Operating income"@en .
+fin:li-provision-for-income-taxes a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Provision for income taxes"@en .
+fin:li-net-income                a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Net income"@en .
+fin:li-cash-and-cash-equivalents a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Cash and cash equivalents"@en .
+fin:li-inventories               a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Inventories"@en .
+fin:li-total-current-assets      a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total current assets"@en .
+fin:li-total-assets              a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total assets"@en .
+fin:li-accounts-payable          a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Accounts payable"@en .
+fin:li-total-current-liabilities a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total current liabilities"@en .
+fin:li-total-liabilities         a skos:Concept ; skos:inScheme fin:scheme-line-item ; skos:prefLabel "Total liabilities"@en .

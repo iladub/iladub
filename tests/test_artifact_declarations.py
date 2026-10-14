@@ -266,7 +266,19 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # joins the etkl bijection. Measured as a SET against HEAD's tracked `.ttl` files: added =
     # exactly that one file, removed = none. It uses only `cor:` terms the corpus register
     # already uses; no term was declared.
-    assert len(vocab_nodes) == len(artifact_files()) == 181
+    # RE-MEASURED 2026-10-12 (matrix-cell Task 1, the field role): the `.ttl` population is
+    # **182** — `tests/etkl-contract-two-cell-values-leak.ttl`, the negative fixture for
+    # `etkl:ContractRoleShape`. Measured as a SET against HEAD's tracked `.ttl` files: added =
+    # exactly that one file, removed = none. The five new `etkl:` terms and the two role shapes
+    # went into the EXISTING `etkl.ttl` and `etkl-shapes.ttl`. The `.rq` population does not move:
+    # the role shapes are closed-world membrane constraints (CLAUDE.md § 8), not derivations.
+    # RE-MEASURED 2026-10-12 (matrix-cell Task 4, the worked example): the `.ttl` population is
+    # **185** — `examples/finance/statement-{contract,terms,shapes}.ttl`, the role contract's
+    # worked example. Measured as a SET against HEAD's tracked `.ttl` files: added = exactly those
+    # three files, removed = none. They use declared `etkl:` terms and `fin:` terms outside the
+    # owned root; no term was declared. The `.rq` population does not move: the example's two
+    # patterns are closed-world value constraints (CLAUDE.md § 8), not derivations.
+    assert len(vocab_nodes) == len(artifact_files()) == 185
     assert len(query_nodes) == len(query_files()) == 57
 
 

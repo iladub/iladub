@@ -14,14 +14,19 @@ class ValidationResult:
     report_graph: Graph
 
 
-def validate(data: Graph, shapes: Graph, knowledge: Graph) -> ValidationResult:
-    """Validate ``data`` against ``shapes`` with ``knowledge`` as the ontology graph."""
+def validate(data: Graph, shapes: Graph, knowledge: Graph, *,
+             use_shapes: list[str] | None = None) -> ValidationResult:
+    """Validate ``data`` against ``shapes`` with ``knowledge`` as the ontology graph.
+
+    ``use_shapes`` names the shapes of ``shapes`` to run, by IRI; the default runs them all.
+    """
     conforms, report_graph, report_text = _pyshacl_validate(
         data,
         shacl_graph=shapes,
         ont_graph=knowledge,
         inference="rdfs",
         advanced=True,
+        use_shapes=use_shapes,
     )
     return ValidationResult(conforms=conforms, report_text=report_text,
                             report_graph=report_graph)
