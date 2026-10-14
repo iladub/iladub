@@ -483,3 +483,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R312 | open | **`feed._record_uri` is lossy, and only `per_cell` settles a slug tie** — default mode can put two record ids on one subject. Read, not constructed; see [[R308]] |
 | R313 | open | **The two role shapes run on pySHACL only at contract load, and no test pins engine parity for them.** Checked once by hand on one clause; see [[R311]] |
 | R314 | open | **A role contract over a row covered only by a `tab:DerivedRowGroup` refuses that row's key as shared.** Read from the code, exercised by no corpus document; see [[R308]] |
+| R315 | open | **graincorp-stem compiles in ~320 s on `main`, straddling `BUDGET_S = 320`** — its two budgeted corpus tests pass or fail by run. Measured four times, 318–325 s; see [[R39]] |

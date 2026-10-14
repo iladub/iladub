@@ -253,4 +253,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # REMOVED = [214]. R308 is open and links to the open R166 and R214, so it is no candidate
     # itself and R214 gains an open neighbour. Controlled: `--candidates` is 96 before the two
     # register lines and 95 after, and the diff is R214.
-    assert len(expected) == 95
+    # RE-MEASURED 2026-10-14 (R315 raised, branch r315-stem-budget): 95 -> 94, ADDED = [],
+    # REMOVED = [39]. R315 is open and links to the open R39, so it is no candidate itself and R39
+    # gains an open neighbour. Controlled: `--candidates` is 95 before the two register lines and 94
+    # after, and the diff is R39.
+    assert len(expected) == 94
