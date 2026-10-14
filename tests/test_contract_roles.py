@@ -33,7 +33,12 @@ _HEAD = """\
 
 # The spec § 4 shape of a role contract: one field per role. It carries a target shape and a
 # knowledge module so it conforms to the WHOLE of etkl-shapes.ttl, not only to the role shapes.
+# The target shape is in the same graph because `etkl:RoleFieldOracleShape` reads the contract
+# and its value shapes together ([[R311]]): the two scheme-less role fields have their oracle
+# there, as the shipped finance contract's have theirs in `statement-shapes.ttl`.
 ROLE_CONTRACT = _HEAD + """
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
 ex:contract a etkl:SemanticDataContract ;
     etkl:targetClass ex:Observation ;
     etkl:hasTargetShape ex:ObservationShape ;
@@ -44,6 +49,11 @@ ex:f-line-item a etkl:Field ; etkl:fillsProperty ex:lineItem ; etkl:fieldRole et
     etkl:admissibleScheme ex:scheme-line-item .
 ex:f-period    a etkl:Field ; etkl:fillsProperty ex:period   ; etkl:fieldRole etkl:ColumnKey .
 ex:f-amount    a etkl:Field ; etkl:fillsProperty ex:amount   ; etkl:fieldRole etkl:CellValue .
+
+ex:ObservationShape a sh:NodeShape ;
+    sh:targetClass ex:Observation ;
+    sh:property [ sh:path ex:period ; sh:pattern "^[0-9]{4}$" ] ;
+    sh:property [ sh:path ex:amount ; sh:pattern "^[0-9,]+$" ] .
 """
 
 TWO_ROLES = ROLE_CONTRACT.replace(
@@ -243,3 +253,92 @@ def test_load_contract_cannot_be_handed_the_shared_row_key(tmp_path):
         "etkl:fieldRole etkl:RowKey", f"etkl:fieldRole <{ground.SHARED_ROW_KEY}>")
     with pytest.raises(ValueError):
         load_contract(_write(tmp_path, text))
+
+
+# --- [[R311]]: a role field declares an oracle for its value ---------------------------------
+
+NO_ORACLE = os.path.join(ROOT, "tests", "etkl-contract-role-without-oracle-leak.ttl")
+FINANCE = os.path.join(ROOT, "examples", "finance")
+ORACLE_SHAPE = [ETKL.RoleFieldOracleShape]
+
+
+def test_the_oracle_parameter_is_declared():
+    ont = Graph().parse(ONT, format="turtle")
+    OWL = Namespace("http://www.w3.org/2002/07/owl#")
+    RDFS = Namespace("http://www.w3.org/2000/01/rdf-schema#")
+    assert (ETKL.valueConstraintParameter, RDF.type, OWL.ObjectProperty) in ont
+    assert ont.value(ETKL.valueConstraintParameter, RDFS.label) is not None
+    assert ont.value(ETKL.valueConstraintParameter, RDFS.comment) is not None
+
+
+def test_the_shipped_finance_contract_has_an_oracle_on_every_role_field():
+    """The worked example that conforms: the finance contract with its own shapes file. Alone,
+    its two scheme-less role fields have no oracle in view, and the shape says so: the check is
+    over the union, which is why `load_contract` cannot run it."""
+    contract = Graph().parse(os.path.join(FINANCE, "statement-contract.ttl"), format="turtle")
+    shapes = Graph().parse(os.path.join(FINANCE, "statement-shapes.ttl"), format="turtle")
+    conforms, results, text = _report(contract + shapes, use_shapes=ORACLE_SHAPE)
+    assert conforms, text
+    conforms, results, _ = _report(contract, use_shapes=ORACLE_SHAPE)
+    assert not conforms
+    assert sorted(focus for focus, _ in results) == [
+        "https://example.org/finance#f-period", "https://example.org/finance#f-value"]
+
+
+def test_a_role_field_with_no_oracle_is_refused():
+    """The negative fixture, against the WHOLE file: one result, on the column-key field, and it
+    is the oracle shape's — the fixture is refused by that shape and by nothing else."""
+    conforms, results, text = _report(Graph().parse(NO_ORACLE, format="turtle"))
+    assert not conforms
+    assert len(results) == 1, text
+    focus, message = results[0]
+    assert focus == str(EX["f-period"])
+    assert "declares an oracle for its value" in message
+
+
+def test_require_role_oracles_runs_the_shape(tmp_path):
+    """The refusal is the shape's verdict, at the one place that holds both graphs. The fixture
+    LOADS — `load_contract` sees no shapes and cannot refuse it — and is refused here."""
+    g = Graph().parse(NO_ORACLE, format="turtle")
+    with pytest.raises(ValueError) as refused:
+        ground.require_role_oracles(load_contract(NO_ORACLE), g)
+    assert str(EX["f-period"]) in str(refused.value)
+    assert str(EX["f-amount"]) not in str(refused.value)
+    ground.require_role_oracles(load_contract(_write(tmp_path, ROLE_CONTRACT)), _ttl(ROLE_CONTRACT))
+
+
+@pytest.mark.parametrize("param", sorted(ground._value_constraints(), key=str))
+def test_each_declared_parameter_is_an_oracle_and_the_code_agrees(param):
+    """The list is stated once, on the shape; the grounding code reads it from there. Each
+    parameter alone satisfies the shape, and `_has_value_constraint` says the same of it."""
+    shapes = Graph()
+    ps = URIRef("urn:test:ps")
+    shapes.add((ps, SH.path, EX.period))
+    shapes.add((ps, param, EX.anything))
+    shapes.add((URIRef("urn:test:ps2"), SH.path, EX.amount))
+    shapes.add((URIRef("urn:test:ps2"), SH.pattern, EX.anything))
+    contract = Graph().parse(data=ROLE_CONTRACT.split("ex:ObservationShape a")[0], format="turtle")
+    conforms, _, text = _report(contract + shapes, use_shapes=ORACLE_SHAPE)
+    assert conforms, text
+    assert ground._has_value_constraint(shapes, ps)
+
+
+def test_a_cardinality_is_not_an_oracle_and_the_code_agrees():
+    shapes = Graph()
+    ps = URIRef("urn:test:ps")
+    shapes.add((ps, SH.path, EX.period))
+    shapes.add((ps, SH.minCount, EX.anything))
+    shapes.add((URIRef("urn:test:ps2"), SH.path, EX.amount))
+    shapes.add((URIRef("urn:test:ps2"), SH.pattern, EX.anything))
+    contract = Graph().parse(data=ROLE_CONTRACT.split("ex:ObservationShape a")[0], format="turtle")
+    conforms, results, text = _report(contract + shapes, use_shapes=ORACLE_SHAPE)
+    assert not conforms
+    assert [focus for focus, _ in results] == [str(EX["f-period"])], text
+    assert not ground._has_value_constraint(shapes, ps)
+
+
+def test_the_parameter_list_is_the_nine_value_constraints():
+    """What `ground._VALUE_CONSTRAINTS` held before the list moved into the vocabulary."""
+    assert ground._value_constraints() == frozenset(
+        SH[p] for p in ("datatype", "in", "pattern", "minInclusive", "maxInclusive",
+                        "minExclusive", "maxExclusive", "minLength", "maxLength"))

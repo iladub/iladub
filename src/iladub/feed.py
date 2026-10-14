@@ -939,7 +939,11 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     promotion invariant. It defaults to False so every existing positional call site is
     unchanged; the corpus battery and the contracted paths pass it explicitly.
     """
-    from .ground import ROLE_CELL_VALUE, ground_concept
+    from .ground import ROLE_CELL_VALUE, ground_concept, require_role_oracles
+
+    # [[R311]]: a role field must declare an oracle, and the contract and its value shapes first
+    # meet HERE. Refused before any record is read.
+    require_role_oracles(contract, shapes)
 
     # Spec 2026-10-12-a-matrix-cell-is-an-observation § 3.3 THE SWITCH. §8: AXIOM — whether a
     # document is read one record per cell is DECLARED by the contract, in the one field whose

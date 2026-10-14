@@ -83,6 +83,42 @@ etkl:ContractRoleShape a sh:NodeShape ;
         sh:qualifiedMaxCount 1 ;
         sh:message "A contract declares at most one etkl:ColumnKey field." ] .
 
+#  [[R311]], ruled 2026-10-14: a field that declares a role declares an ORACLE for its value — an
+#  etkl:admissibleScheme, or a value constraint on its property's shape. Field identity is not
+#  one: the role reaches the field for every key of that role, the empty key included, so it
+#  could refuse nothing.
+#
+#  Reads the contract AND its value shapes, so it validates their UNION and is not one of the
+#  shapes `ground.load_contract` runs over the contract alone: the value constraint lives in the
+#  shapes file (examples/finance/statement-shapes.ttl), which `ground_document` holds and
+#  `load_contract` never receives. `ground.require_role_oracles` runs it there.
+#
+#  The constraint parameters that count as a value constraint are stated ONCE, on
+#  etkl:FieldValueOracle in the etkl ONTOLOGY (vocab/ontology/etkl.ttl), and read from there by
+#  this query and by `ground._value_constraints`. The query sees them because pySHACL mixes the
+#  ontology graph into the data graph; run without the ontology, no parameter binds and every
+#  scheme-less role field is refused: it fails closed.
+etkl:RoleFieldOracleShape a sh:NodeShape ;
+    sh:targetSubjectsOf etkl:fieldRole ;
+    sh:sparql [
+        sh:message "A field that declares a role declares an oracle for its value: an etkl:admissibleScheme, or a value constraint on its property's shape." ;
+        sh:prefixes etkl:prefixes-role-oracle ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS { $this etkl:admissibleScheme ?scheme }
+                FILTER NOT EXISTS {
+                    $this etkl:fillsProperty ?p .
+                    ?ps sh:path ?p ; ?param ?v .
+                    etkl:FieldValueOracle etkl:valueConstraintParameter ?param .
+                }
+            }
+        """ ;
+    ] .
+
+etkl:prefixes-role-oracle
+    sh:declare [ sh:prefix "etkl" ; sh:namespace "https://w3id.org/iladub/etkl#"^^xsd:anyURI ] ,
+               [ sh:prefix "sh" ; sh:namespace "http://www.w3.org/ns/shacl#"^^xsd:anyURI ] .
+
 #################################################################
 #  Membrane opacity: a document projection may carry ONLY concepts —
 #  never an interior term (candidate concept / promotion decision /

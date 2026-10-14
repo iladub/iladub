@@ -204,14 +204,15 @@ def test_a_shared_row_key_is_refused_whatever_the_proposer_says():
     shared = SurfaceConcept("Products", "Products", "p0#mtable2-rhl5", role=SHARED_ROW_KEY)
     assert ground.scheme_member("Products", LINE_ITEM.scheme, _terms()) is not None
     # The control, and it is what the rule prevents: the same label with no role, under a
-    # proposer that names the row-key field, grounds.
+    # proposer that names the scheme-bound field, grounds — on a field that declares no role.
+    # (On the row-key field itself it cannot: R310, `test_a_proposer_cannot_name_a_role_field`.)
     names_row_key = FakeGroundingProposer(GroundingProposal(
         LINE_ITEM.iri, str(EX.anchor), 0.9, "a line item", "urn:iladub:suggester/fake"))
     status, _ = _ground(SurfaceConcept("Products", "Products", "p0#mtable2-rhl5"),
-                        proposer=names_row_key)
+                        proposer=names_row_key, contract=CONTROL_CONTRACT)
     assert status == "grounded"
 
-    status, g = _ground(shared, proposer=names_row_key)
+    status, g = _ground(shared, proposer=names_row_key, contract=CONTROL_CONTRACT)
     assert status == "proposed"
     _quarantined_under(g, ground._SHARED_ROW_LABEL_RULE)
     # and the proposer was never asked: one that raises does not raise
@@ -280,40 +281,45 @@ def test_an_empty_key_is_quarantined_by_the_oracle_of_its_field():
         _quarantined_under(g, ground._DECLARED_ROLE_RULE)
 
 
-def test_an_empty_key_under_an_unconstrained_role_field_grounds_by_field_identity():
-    """MEASURED, NOT ENDORSED. A role field that declares neither a scheme nor a value constraint
-    has field identity as its only oracle (`_grounds_to`, as for any exact match), and field
-    identity cannot refuse anything — the empty key included: the record asserts the property
-    with an empty literal, and the membrane conforms on it. The refusal available today is the
-    contract's (declare a scheme or a pattern on a role field), as the test above shows. Pinned
-    so that a change to this — a shape that requires a constraint on a role field, or a feed
-    that mints no empty key — is a visible diff here rather than a silent one."""
-    unshaped = ContractField(str(EX["f-unshaped"]), str(EX.unshaped), None, ROLE_COLUMN_KEY)
-    contract = Contract(str(EX.Observation), (LINE_ITEM, unshaped, AMOUNT))
-    status, g = _ground(SurfaceConcept("", "", "p0#mtable2-ch7", role=ROLE_COLUMN_KEY),
-                        contract=contract)
-    assert status == "grounded"
-    assert list(g.objects(OBS, EX.unshaped)) == [Literal("")]
-    rejected = [str(o) for o in g.objects(None, DEC.rejectedBecause)]
-    # The record says what identified the field: the contract's declaration of the role. No
-    # label did (the key's label is empty), and the sentence an exact NAME match earns is absent.
-    assert len(rejected) == 1
-    assert rejected[0] == (
-        f"the contract declares {EX.unshaped} as its field of role {ROLE_COLUMN_KEY}, the role "
-        f"the concept was read in; no label was matched and no proposer was asked, and the field "
-        f"declares neither a scheme nor a value constraint, so field identity is the oracle; "
-        f"quarantine is the branch for a field that was proposed rather than declared")
-    assert "label exactly identifies" not in rejected[0]
-    conforms, report = _validate_grounding(g)
-    assert conforms, report
+UNSHAPED = ContractField(str(EX["f-unshaped"]), str(EX.unshaped), None, ROLE_COLUMN_KEY)
+UNSHAPED_CONTRACT = Contract(str(EX.Observation), (LINE_ITEM, UNSHAPED, AMOUNT))
+
+
+def test_field_identity_is_not_an_oracle_for_a_role_field():
+    """[[R311]], ruled 2026-10-14: a role field declares an oracle — a scheme or a value
+    constraint. Field identity is not one, because the role reaches the field for every key of
+    that role, the empty key included. Before the ruling this test pinned the empty key GROUNDING
+    here, with an empty literal the source did not print. A caller that skips `ground_document`'s
+    contract check still gets the quarantine: `_grounds_to` has no field-identity path for a
+    role-picked field."""
+    for value in ("", "2023", "n/m"):
+        status, g = _ground(SurfaceConcept("", value, "p0#mtable2-ch7", role=ROLE_COLUMN_KEY),
+                            contract=UNSHAPED_CONTRACT)
+        assert status == "proposed", value
+        _quarantined_under(g, ground._DECLARED_ROLE_RULE)
+
+
+def test_ground_document_refuses_a_role_field_with_no_oracle():
+    """[[R311]]: the contract is refused where the contract and its shapes first meet, before
+    any record is read, and the refusal names the field."""
+    import pytest
+    from iladub.feed import ground_document
+    with pytest.raises(ValueError) as refused:
+        ground_document(_statement_under_a_caption(), UNSHAPED_CONTRACT, _Raises(), _terms(),
+                        _shapes(), Graph())
+    assert str(EX["f-unshaped"]) in str(refused.value)
+    # the two other role fields carry an oracle each, and are not named
+    assert str(EX["f-line-item"]) not in str(refused.value)
+    assert str(EX["f-amount"]) not in str(refused.value)
 
 
 # --- a role field is not filled by a section-marker rider (final review I-2) ---------------
 
 RIDER_TEXT = "Total net sales"                  # a prefLabel of the line-item scheme
-# The rider's proposer abstains: with `marker_field` out of the way the rider reaches the
-# proposer (the scheme admits it, so the pre-filter does not skip the ask), and what a proposer
-# that NAMES the row-key field would do is the wider question the fix leaves open.
+# The rider's proposer abstains. Under `ROLE_CONTRACT` it is not asked at all: the only field
+# whose scheme admits the rider declares a role, so the pre-filter finds nothing to propose
+# ([[R310]]). Under `CONTROL_CONTRACT` it is asked about the row keys, which have no field of
+# their role there. A proposer that NAMES the row-key field: the R310 tests at the end.
 ABSTAINS = FakeGroundingProposer(GroundingProposal(
     None, str(EX.anchor), 0.1, "n/a", "urn:iladub:suggester/fake"))
 ROLE_CONTRACT = Contract(str(EX.Observation), (LINE_ITEM, PERIOD, AMOUNT))
@@ -389,7 +395,8 @@ def test_a_section_marker_rider_does_not_fill_the_row_key_field(monkeypatch):
     assert len(riders) == 4
     for cand in riders:
         assert g.value(cand, ILA.status) == ILA.proposed
-        assert g.value(cand, ILA.suggestedBy) == URIRef("urn:iladub:suggester/fake")
+        # no proposer was asked: the only admitting field declares a role ([[R310]])
+        assert g.value(cand, ILA.suggestedBy) == URIRef(ground._NO_ADMISSIBLE_FIELD_RULE)
         assert list(g.subjects(ILA.reviews, cand)) == []        # no decision reviews it
     # no decision was taken on the rider: every promotion's rule is the declared-role rule
     assert {g.value(pd, DEC.decidedBy) for pd in _decisions(g)} == {
@@ -416,3 +423,78 @@ def test_the_same_rider_still_grounds_on_a_scheme_field_that_declares_no_role(mo
     assert by_rule == {ground._UNIQUE_ADMITTING_FIELD_RULE: 4, ground._DECLARED_ROLE_RULE: 8}
     # the row keys have no field of their role here, are not markers, and the proposer abstains
     assert (result.records, result.grounded, result.proposed) == (4, 12, 4)
+
+
+# --- [[R310]]: a role field is filled only by a concept read in that role, at every door ----
+#
+# Ruled by the maintainer 2026-10-14. `marker_field` was the first door closed (above); these
+# are the other three: `exact_field`, the proposer's answer, and the pre-filter that decides
+# whether a proposer is asked at all.
+
+NAMES_ROW_KEY = FakeGroundingProposer(GroundingProposal(
+    LINE_ITEM.iri, str(EX.anchor), 0.9, "a line item", "urn:iladub:suggester/fake"))
+
+
+def test_exact_field_does_not_name_a_role_field_for_a_concept_of_another_role():
+    """A role-less concept whose TEXT normalises to the row-key field's name ("Line item" →
+    `lineItem`): `exact_field` would take the field by name."""
+    named = SurfaceConcept("Line item", "Net sales", "p0#cap1")
+    assert ground.exact_field(named, ROLE_CONTRACT) is None
+    # ... and a concept read in a different role does not take it either
+    assert ground.exact_field(SurfaceConcept("Line item", "2023", "r", role=ROLE_COLUMN_KEY),
+                              Contract(str(EX.Observation), (LINE_ITEM, AMOUNT))) is None
+    # the role-less field of the same name is still found: the rule reads the role, not the name
+    assert ground.exact_field(named, CONTROL_CONTRACT) == BARE_LINE_ITEM
+    status, g = _ground(named, contract=ROLE_CONTRACT)
+    assert status == "proposed"
+    assert (OBS, EX.lineItem, None) not in g
+
+
+def test_a_role_field_is_not_admissible_to_a_concept_of_another_role():
+    """The pre-filter. "Products" is in the row-key field's scheme, and no other field of
+    `ROLE_CONTRACT` admits it: offered the role field, the pre-filter would ask a proposer whose
+    answer could not be admitted ("no oracle, no worker")."""
+    products = SurfaceConcept("Products", "Products", "p0#mtable2-rhl5")
+    assert ground._admissible_fields(products, ROLE_CONTRACT, _terms(), _shapes(), OBS) == []
+    assert ground._admissible_fields(products, CONTROL_CONTRACT, _terms(), _shapes(), OBS) == [
+        BARE_LINE_ITEM]
+    # so a proposer that raises is never asked
+    status, g = _ground(products, proposer=_Raises(), contract=ROLE_CONTRACT)
+    assert status == "proposed"
+    _quarantined_under(g, ground._NO_ADMISSIBLE_FIELD_RULE)
+
+
+def test_a_proposer_cannot_name_a_role_field():
+    """The proposer door. The ask is reached through a role-less field whose scheme admits the
+    value too, so the pre-filter does not skip it, and the proposer names the ROLE field."""
+    bare = ContractField(str(EX["f-bare"]), str(EX.bare), LINE_ITEM.scheme)
+    contract = Contract(str(EX.Observation), (LINE_ITEM, PERIOD, AMOUNT, bare))
+    products = SurfaceConcept("Products", "Products", "p0#mtable2-rhl5")
+    assert ground._admissible_fields(products, contract, _terms(), _shapes(), OBS) == [bare]
+    status, g = _ground(products, proposer=NAMES_ROW_KEY, contract=contract)
+    assert status == "proposed"
+    assert _decisions(g) == []
+    assert (OBS, EX.lineItem, None) not in g
+    cand = _one_candidate(g)                    # the proposer WAS asked, and its answer refused
+    assert g.value(cand, ILA.suggestedBy) == URIRef("urn:iladub:suggester/fake")
+    # a concept read in ANOTHER role, falling through for want of a field of its own, cannot
+    # take the row-key field from a proposer either
+    col = Contract(str(EX.Observation), (LINE_ITEM, AMOUNT, bare))
+    status, g = _ground(SurfaceConcept("Products", "Products", "r", role=ROLE_COLUMN_KEY),
+                        proposer=NAMES_ROW_KEY, contract=col)
+    assert status == "proposed"
+    assert (OBS, EX.lineItem, None) not in g
+
+
+def test_the_rider_does_not_fill_the_row_key_field_under_a_naming_proposer(monkeypatch):
+    """The R310 setup, under the proposer the earlier test could only abstain with. The rider's
+    value is in the row-key scheme; nothing but the role keeps it out."""
+    from iladub.feed import ground_document
+    g = Graph()
+    result = ground_document(_statement_under_a_caption(), ROLE_CONTRACT, NAMES_ROW_KEY,
+                             _terms(), _shapes(), g, validate_shapes=True)
+    assert (result.records, result.grounded, result.proposed) == (4, 12, 4)
+    items = _line_items(g)
+    assert sorted(map(tuple, items.values())) == [("Net sales",)] * 2 + [("Products",)] * 2
+    assert {g.value(pd, DEC.decidedBy) for pd in _decisions(g)} == {
+        URIRef(ground._DECLARED_ROLE_RULE)}

@@ -1,0 +1,27 @@
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://example.org/roles#> .
+
+#  NON-CONFORMANT ([[R311]], ruled 2026-10-14): a role contract whose column-key field declares
+#  no oracle for its value — no etkl:admissibleScheme, and its property's shape carries only a
+#  cardinality, which can refuse no value. Field identity would admit every column key, the empty
+#  one included. The row key has a scheme and the cell value a pattern, so ex:f-period is the
+#  ONE focus etkl:RoleFieldOracleShape refuses, and nothing else in etkl-shapes.ttl refuses it.
+
+ex:role-without-oracle-contract a etkl:SemanticDataContract ;
+    rdfs:label "Role contract with a column key that has no oracle (illegal)"@en ;
+    etkl:targetClass ex:Observation ;
+    etkl:hasTargetShape ex:ObservationShape ;
+    etkl:requiresKnowledge ex:scheme-line-item ;
+    etkl:hasField ex:f-line-item , ex:f-period , ex:f-amount .
+
+ex:f-line-item a etkl:Field ; etkl:fillsProperty ex:lineItem ; etkl:fieldRole etkl:RowKey ;
+    etkl:admissibleScheme ex:scheme-line-item .
+ex:f-period    a etkl:Field ; etkl:fillsProperty ex:period   ; etkl:fieldRole etkl:ColumnKey .
+ex:f-amount    a etkl:Field ; etkl:fillsProperty ex:amount   ; etkl:fieldRole etkl:CellValue .
+
+ex:ObservationShape a sh:NodeShape ;
+    sh:targetClass ex:Observation ;
+    sh:property [ sh:path ex:period ; sh:minCount 1 ] ;
+    sh:property [ sh:path ex:amount ; sh:pattern "^[0-9,]+$" ] .

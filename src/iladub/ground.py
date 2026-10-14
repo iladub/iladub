@@ -55,11 +55,8 @@ _ETKL_SHAPES = Path(__file__).resolve().parents[2] / "vocab" / "shapes" / "etkl-
 # which `etkl:SemanticDataContractShape` requires, so running the whole file would refuse them.
 _ROLE_SHAPES = (str(ETKL.ContractRoleShape), str(ETKL.FieldRoleShape))
 
-# Value constraints (as opposed to cardinality/path) — presence of any means the contract
-# declares something the SHACL membrane can verify a proposed value against.
-_VALUE_CONSTRAINTS = (SH.datatype, SH["in"], SH.pattern,
-                      SH.minInclusive, SH.maxInclusive, SH.minExclusive, SH.maxExclusive,
-                      SH.minLength, SH.maxLength)
+_ETKL_ONT = Path(__file__).resolve().parents[2] / "vocab" / "ontology" / "etkl.ttl"
+_ROLE_ORACLE_SHAPE = ETKL.RoleFieldOracleShape
 
 
 @dataclass(frozen=True)
@@ -130,6 +127,56 @@ def _etkl_shapes() -> Graph:
     return Graph().parse(str(_ETKL_SHAPES), format="turtle")
 
 
+@lru_cache(maxsize=1)
+def _etkl_ontology() -> Graph:
+    """`etkl.ttl`, parsed once per process, for the same reason as `_etkl_shapes`."""
+    return Graph().parse(str(_ETKL_ONT), format="turtle")
+
+
+@lru_cache(maxsize=1)
+def _value_constraints() -> frozenset:
+    """The SHACL parameters that make a property shape a VALUE constraint (as opposed to
+    cardinality/path) — presence of any means the contract declares something the SHACL membrane
+    can verify a proposed value against. Read from `etkl:FieldValueOracle` in the ontology, where
+    the list is stated once ([[R311]]): `etkl:RoleFieldOracleShape` asks the same question of a
+    role field from the same triples, and a second copy here could drift from it."""
+    return frozenset(_etkl_ontology().objects(ETKL.FieldValueOracle,
+                                              ETKL.valueConstraintParameter))
+
+
+def require_role_oracles(contract: Contract, contract_shapes: Graph) -> None:
+    """Raise `ValueError` naming each field that declares a role and no oracle for its value
+    ([[R311]], ruled 2026-10-14).
+
+    CONSTRAINT → SHACL (CLAUDE.md § 8): this RUNS `etkl:RoleFieldOracleShape` and decides nothing
+    itself. The shape reads the contract and its value shapes together, and this is where the two
+    first meet: `load_contract` never receives the shapes. The contract is read back to RDF from
+    `contract` rather than re-parsed, so a contract built in memory is checked exactly as a loaded
+    one is. Only the three properties the shape reads are written, so the scratch graph says
+    nothing the contract did not; the parameter list reaches the query through the etkl ontology,
+    passed as the ontology graph."""
+    from .validate import validate
+    if not any(f.role is not None for f in contract.fields):
+        # The shape targets the subjects of `etkl:fieldRole`; with none, it targets nothing.
+        # Skipped rather than run empty: one pySHACL pass per document is not free ([[R315]]).
+        return
+    data = Graph()
+    data += contract_shapes
+    for f in contract.fields:
+        node = URIRef(f.iri)
+        data.add((node, ETKL.fillsProperty, URIRef(f.fills_property)))
+        if f.scheme is not None:
+            data.add((node, ETKL.admissibleScheme, URIRef(f.scheme)))
+        if f.role is not None:
+            data.add((node, ETKL.fieldRole, URIRef(f.role)))
+    verdict = validate(data, _etkl_shapes(), _etkl_ontology(),
+                       use_shapes=[str(_ROLE_ORACLE_SHAPE)])
+    if not verdict.conforms:
+        raise ValueError(
+            "contract declares a role field with no oracle for its value (no etkl:admissibleScheme "
+            f"and no value constraint on its property):\n{verdict.report_text}")
+
+
 def load_contract(contract_path: str) -> Contract:
     """The contract at `contract_path`, in memory. Raises `ValueError` naming the path for a
     contract the role shapes refuse.
@@ -160,10 +207,19 @@ def load_contract(contract_path: str) -> Contract:
     return Contract(str(target), tuple(fields))
 
 
+def _fills(field: ContractField, concept: SurfaceConcept) -> bool:
+    """[[R310]], ruled 2026-10-14: a field that declares a role is filled only by a concept read
+    in that role. §8: AXIOM — read from the contract's `etkl:fieldRole` and the role the feed
+    read the concept in, never from the value. Applied at every door a field is chosen by:
+    `exact_field`, `marker_field`, `_admissible_fields` and the proposer's answer. A field that
+    declares no role is open to every concept, so a role-less contract is untouched."""
+    return field.role is None or field.role == concept.role
+
+
 def exact_field(concept: SurfaceConcept, contract: Contract) -> ContractField | None:
     key = _norm(concept.text)
     for f in contract.fields:
-        if _norm(f.fills_property.split("#")[-1].split("/")[-1]) == key:
+        if _fills(f, concept) and _norm(f.fills_property.split("#")[-1].split("/")[-1]) == key:
             return f
     return None
 
@@ -212,9 +268,11 @@ def marker_field(concept: SurfaceConcept, contract: Contract, terms: Graph) -> C
     # of the row-key field's scheme says nothing about which row it keys. Offered, it grounded
     # as the row-key property on every cell record it rides on (`feed.table_records` carries it
     # role-less onto each), and one subject carried two values of that property. A contract that
-    # declares no role has no such field, so its `admitting` list is what it was.
+    # declares no role has no such field, so its `admitting` list is what it was. The rule is
+    # `_fills`, the one every door applies ([[R310]]); a marker carries no role, so it reads as
+    # "declares no role" here.
     admitting = [f for f in contract.fields
-                 if f.role is None
+                 if _fills(f, concept)
                  and f.scheme is not None and scheme_member(concept.value, f.scheme, terms)]
     return admitting[0] if len(admitting) == 1 else None
 
@@ -237,8 +295,7 @@ def _emit_candidate(g, concept, anchor_iri, suggester_iri, confidence):
     return cand, agent
 
 
-def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class,
-                declared_role=None):
+def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, target_class):
     """`(target, admitted_because)` — the grounding TARGET for iladub:groundsTo and the ORACLE
     that admitted it, or `(None, None)` if REJECTED (→ quarantine).
 
@@ -246,19 +303,14 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
     Non-scheme field that declares a value constraint: the SHACL value membrane is the oracle — the
     value MUST conform, whether the field was identified by exact label match OR by a model proposal
     (legality gates admission uniformly). Non-scheme field WITHOUT a value constraint: an exact label
-    match grounds (field-identity is the oracle); a bare proposal has no oracle → None (quarantine).
+    match grounds (field-identity is the oracle); a bare proposal has no oracle → None (quarantine),
+    and neither has a field that declares a role ([[R311]]).
 
     WHY THE ORACLE IS RETURNED FROM HERE (spec 2026-08-10 §5.3): `_emit_grounded` records the
     quarantine branch as the option NOT taken, and `dec:rejectedBecause` must name *which* of the
     three refusal paths above would have applied. Deriving that at the call site would duplicate
     this function's branch and let the two drift; the branch that decides is the only place that
-    can name its own refusal without re-deciding it.
-
-    `declared_role` is the role the field was picked BY, when `ground_concept`'s role branch
-    picked it; `None` on every other path. It decides nothing — no branch below reads it to admit
-    or refuse — and changes one recorded sentence: on the field-identity path the reason must say
-    what identified the field, and for a role-picked concept that was the contract's declaration,
-    not the concept's label (a cell's label is empty)."""
+    can name its own refusal without re-deciding it."""
     if field.scheme is not None:
         term = scheme_member(concept.value, field.scheme, terms)
         if not term:
@@ -274,15 +326,12 @@ def _grounds_to(concept, field, terms, is_exact, contract_shapes, offer_uri, tar
         return URIRef(field.fills_property), (
             f"{concept.value!r} conforms to the contract's SHACL value constraint on "
             f"{field.fills_property}; quarantine is the branch for a value the membrane refuses")
-    if not is_exact:
+    if not is_exact or field.role is not None:
+        # [[R311]], ruled 2026-10-14: field identity is not an oracle for a ROLE field — the role
+        # reaches it for every key of that role, the empty key included, so it could refuse
+        # nothing. Such a contract is refused whole by `etkl:RoleFieldOracleShape`
+        # (`require_role_oracles`); a caller that grounds without that check quarantines here.
         return None, None
-    if declared_role is not None:
-        return URIRef(field.fills_property), (
-            f"the contract declares {field.fills_property} as its field of role {declared_role}, "
-            f"the role the concept was read in; no label was matched and no proposer was asked, "
-            f"and the field declares neither a scheme nor a value constraint, so field identity "
-            f"is the oracle; quarantine is the branch for a field that was proposed rather than "
-            f"declared")
     return URIRef(field.fills_property), (
         f"the concept's label exactly identifies contract field {field.fills_property}, which "
         f"declares no value constraint, so field identity is the oracle; quarantine is the "
@@ -299,6 +348,12 @@ def _admissible_fields(concept, contract, terms, contract_shapes, offer_uri, mem
     2026-09-17 on graincorp-stem: without it the filter costs 1.2 s -> 8.6 s per grounding pass."""
     out = []
     for f in contract.fields:
+        if not _fills(f, concept):
+            # [[R310]]: a proposal naming this field could not be admitted, so it does not count
+            # toward asking one. Measured 2026-10-14: without this, a role-less "Products" in the
+            # row-key scheme put a proposer to a question whose answer the rule refuses. Outside
+            # the memo, whose key carries no role.
+            continue
         key = (concept.value, f.iri)
         if memo is None or key not in memo:
             ok = _grounds_to(concept, f, terms, False, contract_shapes, offer_uri,
@@ -410,14 +465,15 @@ def ground_concept(concept, contract, offer_uri, proposer, terms, contract_shape
                 if page_context is not None
                 else proposer.propose_grounding(concept, contract.fields))
         anchor, confidence, rationale, suggester = prop.anchor_iri, prop.confidence, prop.rationale, prop.suggester_iri
-        field = next((f for f in contract.fields if f.iri == prop.field_iri), None) if prop.field_iri else None
+        # [[R310]]: a proposer naming a field the concept cannot fill named no field.
+        field = (next((f for f in contract.fields if f.iri == prop.field_iri and _fills(f, concept)),
+                      None) if prop.field_iri else None)
         is_exact = False
     cand, agent = _emit_candidate(g, concept, anchor, suggester, confidence)
     if field is None:                                       # novel → quarantined proposition
         return "proposed"
     grounds_to, admitted_because = _grounds_to(
-        concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class,
-        declared_role=concept.role if role_field is not None else None)
+        concept, field, terms, is_exact, contract_shapes, offer_uri, contract.target_class)
     if grounds_to is None:                                  # unverifiable / rejected → quarantine
         return "proposed"
     ps = _property_shape(contract_shapes, field.fills_property)
@@ -439,7 +495,7 @@ def _property_shape(shapes, property_iri):
 
 def _has_value_constraint(shapes, ps):
     """True iff the property shape declares any value constraint (not just cardinality/path)."""
-    return any((ps, p, None) in shapes for p in _VALUE_CONSTRAINTS)
+    return any((ps, p, None) in shapes for p in _value_constraints())
 
 
 def _value_conforms(offer_uri, target_class, property_iri, value, shapes):
