@@ -257,4 +257,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # REMOVED = [39]. R315 is open and links to the open R39, so it is no candidate itself and R39
     # gains an open neighbour. Controlled: `--candidates` is 95 before the two register lines and 94
     # after, and the diff is R39.
-    assert len(expected) == 94
+    # RE-MEASURED 2026-10-14 (R310 + R311 closed, branch role-field-oracle): 94 -> 95, ADDED = [313],
+    # REMOVED = []. R313 links only to R311, its one open neighbour until R311 closed. Controlled:
+    # `--candidates` over `main`'s register files is 94, over the branch's 95, and the diff is R313.
+    assert len(expected) == 95

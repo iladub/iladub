@@ -155,7 +155,11 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # declared in Task 1), plus `fin:` terms under `https://example.org/finance#`, outside the
     # owned root exactly as the shipping examples' `ship:` terms are. No term was declared. The
     # census pins below (67, 72, 21) were re-run in the same change and did not move.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 185
+    # RE-MEASURED 2026-10-14 ([[R311]], branch role-field-oracle): 185 -> 186 —
+    # `tests/etkl-contract-role-without-oracle-leak.ttl`, the new shape's negative fixture (CI's
+    # report: 188 tracked minus 2 carved). Not carved out: it names declared `etkl:` terms and
+    # `ex:` terms outside the owned root, as the two-cell-values fixture beside it does.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 186
 
 
 def test_each_file_gets_its_own_named_graph():
