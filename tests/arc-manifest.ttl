@@ -526,8 +526,10 @@ prog:criterion:holon:06 a prog:Criterion ;
     prog:statement "A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only)." ;
     prog:source "docs/holonic-interaction.md:165-166" ;
     prog:declaredOn "2026-06-23"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-15"^^xsd:date ;
     prog:retrospective false ;
+    prog:oracleArtifact "examples/raw-to-clean-traversal.ttl" ;
     prog:oracleTest "tests/test_hga_alignment.py::test_raw_to_clean_traversal_conformant" .
 
 
@@ -1679,12 +1681,10 @@ prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:04 .
 # holon:05's edge WAS here, with the same shape of rationale, until 2026-08-25. It is not any
 # more, and the reason is recorded in the ASSERTED block above rather than deleted with it.
 
-prog:criterion:holon:06 prog:proposedDependsOn prog:criterion:holon:01 .
-[] a rdf:Statement ;
-   rdf:subject   prog:criterion:holon:06 ;
-   rdf:predicate prog:proposedDependsOn ;
-   rdf:object    prog:criterion:holon:01 ;
-   prog:dependencyRationale "reading: a full RawDocumentHolon -> portal -> CleanDocumentHolon traversal example can only be typed out of etkl-holons.ttl:47,62,67, which declares all three. Ungroundable: fails A1 (holon:06 unmet) and A2 (no prog:oracleArtifact; the named test is a target)." .
+# holon:06 flipped to met 2026-10-15 and repaired the grounds that kept this edge a proposition
+# (A1: both ends met; A2: holon:06 now carries examples/raw-to-clean-traversal.ttl), so M17
+# forces the assertion and CI's ablation (M19) is left to refute the reading if it is wrong.
+prog:criterion:holon:06 prog:dependsOn prog:criterion:holon:01 .
 
 # The promotion pipeline, inside one shape file. examples/promotion.ttl:12 has the promotion
 # `iladub:reviews ex:cand-wirkstoffspiegel`, a subject that exists only in examples/proposal.ttl:9

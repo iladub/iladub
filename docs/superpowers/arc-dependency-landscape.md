@@ -19,7 +19,7 @@ the hand-authored manifest, and CI fails unless the tracked bytes are exactly wh
 | renderer | `scripts/arc_depends.py` (PROCEDURAL — markdown is not a derivation) |
 | gate | `tests/test_arc_landscape.py` (regenerate-and-diff) |
 
-**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 7 of its 19 edges are grounded by a two-sided ablation and 12 are propositions. This is a monitor, not a scheduler.
+**Absence of an edge is absence of a READING, never evidence of independence.** The graph was read off 45 criteria by a human and then graded by the membrane: 8 of its 19 edges are grounded by a two-sided ablation and 11 are propositions. This is a monitor, not a scheduler.
 
 ## §1 What can be started today — `arc-ready.rq`
 
@@ -29,11 +29,10 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**13 ready.**
+**12 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
-| `holon` | `holon:06` | A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only). |
 | `substrate` | `substrate:01` | The membrane is enforced at runtime by an immutable event ledger (memory): the holon's history is kept by the substrate itself, not reconstructed by the compiler process. |
 | `substrate` | `substrate:02` | The membrane is enforced at runtime by validation-at-write (sensory): a non-conforming write is refused AT THE WRITE ENDPOINT, not inside the process that produced it. |
 | `substrate` | `substrate:03` | The membrane is enforced at runtime by in-engine policy (motor): access policy is evaluated by the engine on every read and write, not held in a template this repo only parses. |
@@ -70,7 +69,7 @@ the fact.
 | `holon:03` | `holon:01` | — |
 | `holon:04` | `dec:07`, `dec:10`, `holon:01` | `holon:03` |
 | `holon:05` | `holon:01` | — |
-| `holon:06` | — | `holon:01` |
+| `holon:06` | `holon:01` | — |
 | `substrate:03` | — | `dec:14` |
 
 ## §3 How much of the arc each residue holds up — `arc-reach.rq`

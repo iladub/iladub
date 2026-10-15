@@ -162,8 +162,9 @@ holon types and its grounding portal are defined in the `iladub`/`dec` namespace
 
 ## Planned work (not done yet)
 
-- A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon
-  (the current example covers the grounding-governance crossing only).
+- None outstanding. The raw→clean traversal (RawDocumentHolon → portal → CleanDocumentHolon)
+  now ships as `examples/raw-to-clean-traversal.ttl`, derived by
+  `vocab/queries/raw-to-clean-traversal.rq`.
 
 ## Sources
 
