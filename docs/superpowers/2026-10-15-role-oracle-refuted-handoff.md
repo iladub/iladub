@@ -1,6 +1,6 @@
 # Handoff: the band-role oracle is refuted; tab:07 goes by adjudication (2026-10-15)
 
-**Serves:** prog:criterion:tab:07. Verify it is still `prog:met false` before starting.
+**Serves:** prog:criterion:tab:07 — verify it is still `prog:met false` before starting.
 
 **Topic:** compile · **Date:** 2026-10-15
 
