@@ -283,8 +283,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # `etkl:RoleFieldOracleShape`; added = exactly that file, removed = none. The shape and its one
     # declared term went into the EXISTING `etkl-shapes.ttl` and `etkl.ttl`. The `.rq` population
     # does not move: the shape is a closed-world membrane constraint, not a derivation.
+    # RE-MEASURED 2026-10-15 (holon:06 Task 2, the raw→clean traversal): the `.rq` population is
+    # **58** — `vocab/queries/raw-to-clean-traversal.rq`, the AXIOM derivation of the grounding
+    # portal and Clean holon from present promotions. Measured as a SET against HEAD's
+    # `vocab/queries/*.rq`: added = exactly that one file, removed = none. Every `etkl:` term it
+    # names was declared in `etkl-holons.ttl` (Task 1). The `.ttl` population does not move.
     assert len(vocab_nodes) == len(artifact_files()) == 186
-    assert len(query_nodes) == len(query_files()) == 57
+    assert len(query_nodes) == len(query_files()) == 58
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():
