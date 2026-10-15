@@ -408,12 +408,14 @@ def test_non_degeneracy_is_a_redundant_backstop(tmp_path):
 
 # --- the oracle -------------------------------------------------------------------
 
+@pytest.mark.corpus
 @corpus_only
 def test_drawn_rules_exclude_fills():
     """apple page 0 has 2 drawn vertical rules, not the 678 an edge-based reader sees."""
     assert len(drawn_rules(APPLE, 0)) == 2
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p0_admits_no_metadata():
     """SOUNDNESS: not one transcribed metadata line may enter the grid.
@@ -427,6 +429,7 @@ def test_apple_p0_admits_no_metadata():
     assert not leaked, f"metadata admitted as data: lines {leaked}"
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p0_recall_against_the_transcription():
     """COMPLETENESS, measured against the oracle and PINNED at what is achieved today.
@@ -462,6 +465,7 @@ STEM_P0_LINES = 65
 STEM_P0_DATA = set(range(STEM_P0_LINES)) - STEM_P0_METADATA   # 57 rows
 
 
+@pytest.mark.corpus
 @stem_only
 def test_stem_p0_admits_no_metadata():
     """SOUNDNESS on the reference document — the one with an adjudicated 0.95 floor."""
@@ -471,6 +475,7 @@ def test_stem_p0_admits_no_metadata():
     assert not leaked, f"metadata admitted as data: lines {leaked}"
 
 
+@pytest.mark.corpus
 @stem_only
 def test_stem_p0_recall_against_the_transcription():
     """COMPLETE: all 57 entry rows, including the month and season totals whose label
@@ -501,6 +506,7 @@ ONS_P7_LINES = 68
 ONS_P7_DATA = set(range(ONS_P7_LINES)) - ONS_P7_METADATA   # 46 rows
 
 
+@pytest.mark.corpus
 @ons_only
 def test_ons_p7_admits_no_metadata():
     """This transcription found three REAL leaks on a page previously reported as fine:
@@ -513,6 +519,7 @@ def test_ons_p7_admits_no_metadata():
     assert not leaked, f"metadata admitted as data: lines {leaked}"
 
 
+@pytest.mark.corpus
 @ons_only
 def test_ons_p7_recall_against_the_transcription():
     """COMPLETE: all 46 entry rows, once the stub is read as an addressing axis with
@@ -526,6 +533,7 @@ def test_ons_p7_recall_against_the_transcription():
 CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_repeated_headers_are_not_data():
     """A PARTIAL oracle: cheap soundness without a full transcription.
@@ -545,6 +553,7 @@ def test_cbh_repeated_headers_are_not_data():
     assert not leaked, f"repeated header rows admitted as data: {leaked}"
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p0_shape():
     g = derive_data_grid(APPLE, 0)
@@ -555,6 +564,7 @@ def test_apple_p0_shape():
 
 # --- emission: the grid as an asserted object with an auditable admission ----------
 
+@pytest.mark.corpus
 @corpus_only
 def test_emitted_grid_answers_why_from_the_graph_alone():
     """The record François asked for: 'I found the data grid because it conforms to this,
@@ -601,6 +611,7 @@ def test_emitted_grid_answers_why_from_the_graph_alone():
     assert "https://w3id.org/iladub/tab#UniformGrid" in kinds
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_emitted_aggregate_rows_reuse_the_loop_h_class():
     """No new class is minted: an aggregate row of the grid is typed with the SAME
@@ -641,6 +652,7 @@ def test_emitted_aggregate_rows_reuse_the_loop_h_class():
     assert counts == [10]
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_emitted_aggregate_rows_satisfy_their_shape():
     """The closed-world membrane: pySHACL over the emitted grid, against the shipped
@@ -659,6 +671,7 @@ def test_emitted_aggregate_rows_satisfy_their_shape():
     assert conforms, text
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_emission_carries_every_refused_line_with_its_reason():
     """§5: context is carried, not discarded. A refused line keeps its provenance."""
@@ -680,6 +693,7 @@ def test_emission_carries_every_refused_line_with_its_reason():
     assert all(str(r[2]).startswith("urn:test:stem#p0-line") for r in rows)
 
 
+@pytest.mark.corpus
 @corpus_only
 @pytest.mark.parametrize("path,page", [
     (APPLE, 0),
@@ -937,6 +951,7 @@ def test_fallback_fires_only_where_the_page_produced_nothing_at_all(tmp_path):
         % sum(r.cells for r in on.regions))
 
 
+@pytest.mark.corpus
 @stem_only
 def test_fallback_never_masks_an_escalation():
     """graincorp-stem page 1 escalates and asserts NOTHING. The fallback must leave it alone —
@@ -970,6 +985,7 @@ def test_fallback_never_masks_an_escalation():
     assert len(on.regions) == len(off.regions)
 
 
+@pytest.mark.corpus
 @stem_only
 def test_fallback_leaves_the_adjudicated_document_byte_identical():
     """The stem carries the corpus's only adjudicated verdict (cor:CompilesAbove, floor
@@ -1009,6 +1025,7 @@ def test_fallback_output_passes_full_shacl_through_the_production_path(tmp_path)
 
 # --- R72: an empty reading must not score perfect ---------------------------------
 
+@pytest.mark.corpus
 @corpus_only
 def test_grid_gate_separates_prose_from_table_pages():
     """The page-level verdict the score consults: 17 of 27 corpus pages carry a table."""
@@ -1021,6 +1038,7 @@ def test_grid_gate_separates_prose_from_table_pages():
         assert page_has_table(bfs, 6)
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(os.path.join(
     CORPUS, "gov-stats", "ons-index-of-services-2026-02.pdf")), reason="corpus not fetched")
 def test_an_unread_table_page_no_longer_scores_perfect():
@@ -1102,6 +1120,7 @@ APPLE_P1_METADATA = {0, 1, 2, 3, 4, 5, 6, 14, 21, 22, 29, 34, 35, 36, 37}
 APPLE_P1_DATA = set(range(43)) - APPLE_P1_METADATA          # 28 rows
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p1_is_complete_and_sound():
     """The page the pipeline escalates: the data grid reads all 28 entry rows, none of
@@ -1115,6 +1134,7 @@ def test_apple_p1_is_complete_and_sound():
         f"missed {sorted(APPLE_P1_DATA - admitted)}")
 
 
+@pytest.mark.corpus
 @stem_only
 def test_the_pipeline_escalates_the_page_the_grid_reads_completely():
     """The R73 gap, stated as a test: the shipped reader asserts zero cells on a page the
@@ -1152,6 +1172,7 @@ def test_the_pipeline_escalates_the_page_the_grid_reads_completely():
 
 # --- R73: adoption, and what it may and may not withdraw ---------------------------
 
+@pytest.mark.corpus
 @stem_only
 def test_adoption_is_off_by_default_at_page_scope():
     """Page scope is not where the decision belongs (spec 2026-08-09 §5.1).
@@ -1190,6 +1211,7 @@ def test_adoption_is_off_by_default_at_page_scope():
         "off-by-default says nothing unless ON differs on this very page", adopted.score)
 
 
+@pytest.mark.corpus
 @stem_only
 def test_adoption_withdraws_only_the_escalation_of_ink_it_READ():
     """Line-granular, both directions pinned (spec §5.3).
@@ -1222,6 +1244,7 @@ def test_adoption_withdraws_only_the_escalation_of_ink_it_READ():
     assert grid_cells == 811, "77 ragged entry rows over 15 columns"
 
 
+@pytest.mark.corpus
 @stem_only
 def test_adoption_keeps_the_band_index_contract():
     """Region report index IS band index (page_bands' pinned enumeration contract). The
@@ -1249,6 +1272,7 @@ def test_adoption_keeps_the_band_index_contract():
     assert all(r.tokens_escalated == 0 for r in on.regions if r.verdict == "superseded")
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_adoption_never_touches_a_page_that_read_something():
     """apple page 0 asserts 48 cells. A partial reading is not a total failure, and
@@ -1305,6 +1329,7 @@ CBH_P0_DATA = CBH_P0_VESSEL_ROWS | CBH_P0_PANEL_TOTALS          # 49 rows
 CBH_P0_METADATA = set(range(85)) - CBH_P0_DATA - CBH_P0_TABLE_B  # 30 lines
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_reads_all_four_panels_as_one_grid():
     """The four panels are read as ONE grid — the vessel rows of all four, from a single
@@ -1325,6 +1350,7 @@ def test_cbh_p0_reads_all_four_panels_as_one_grid():
     assert len(CBH_P0_VESSEL_ROWS) == 45
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_admits_no_metadata():
     """SOUNDNESS: no title, notice, port annotation or reprinted header may enter."""
@@ -1333,6 +1359,7 @@ def test_cbh_p0_admits_no_metadata():
     assert not leaked, f"metadata admitted as data: {leaked}"
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
     """LEAK, still open as R74: line 75 belongs to the SECOND table on the page (stock at
@@ -1352,6 +1379,7 @@ def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
     assert set(g.rows) & CBH_P0_TABLE_B == set(), "the table-B leak changed"
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_admits_the_four_panel_totals_by_arithmetic():
     """R75 CLOSED. The four per-panel volume totals carry a measure and no key, so the

@@ -254,6 +254,7 @@ def test_a_plain_data_cell_is_still_not_admitted_to_the_marker_oracle():
     assert status == "proposed", status
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_p0_splits_27_rows_into_one_record_per_port():
     """The document. 27 rows x 7 ports = 189 records, each carrying Year, Elevation Period and

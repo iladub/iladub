@@ -185,6 +185,7 @@ def test_the_production_legs_refuse_the_forbidden_form():
 
 # ---------- the invariant, on a real compiled page ----------
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 def test_no_float_valued_decimal_survives_a_real_compile():
     from iladub.etkl import compile_tables
@@ -195,6 +196,7 @@ def test_no_float_valued_decimal_survives_a_real_compile():
         f"{len(bad)} float-valued xsd:decimal literals in a compiled page; first: {bad[0]}")
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 def test_a_real_page_survives_typed_coordinates_under_both_engines():
     """The end of R92: the constraint the register said could not be added, added."""

@@ -142,6 +142,7 @@ def test_a_refused_span_donation_leaves_the_page_isomorphic(tmp_path, monkeypatc
 
 # --- the corpus -------------------------------------------------------------------------
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_p0_reads_nine_spanning_labels():
     """The document this was built for: the nine labels the author printed, over sixteen leaf
@@ -158,6 +159,7 @@ def test_graincorp_p0_reads_nine_spanning_labels():
     assert str(next(rep.graph.objects(table, TAB.spanHeaderDonatedBy))).endswith("#ignored2")
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_p0_ledger_is_unmoved():
     """THE INVARIANT. 406 is the figure tests/etkl/test_run_merge_seam.py already pins for
@@ -171,6 +173,7 @@ def test_graincorp_p0_ledger_is_unmoved():
     assert rep.escalated == 0, rep.escalated
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_still_compiles_and_seals_at_document_scope():
     """`test_expected_verdict` requires, for cor:Unadjudicated, that compile RETURN at all. The

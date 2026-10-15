@@ -104,6 +104,7 @@ def test_both_closures_agree_on_every_committed_leak(path):
 STEM = os.path.join(ROOT, "corpus", "ag-trade", "graincorp-stem-2026-07-31.pdf")
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 def test_both_closures_agree_on_a_real_page_graph():
     """VERDICT PARITY ONLY. The real stem page conforms under both closures, so both
@@ -119,6 +120,7 @@ def test_both_closures_agree_on_a_real_page_graph():
     assert full_ok == sub_ok is True, f"full={full_ok} sub={sub_ok} on the real stem page"
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 def test_both_closures_agree_on_a_mutated_real_page_graph():
     """The load-bearing leg-2 evidence: take the real compiled page, strip one EntryCell's

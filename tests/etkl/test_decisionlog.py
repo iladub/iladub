@@ -233,6 +233,7 @@ def apple_p2_graph():
     return compile_tables(APPLE, page_number=2).graph
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_every_band_carries_a_chain(apple_graph):
     """No region may end without a record of how it got there (spec §6).
@@ -252,6 +253,7 @@ def test_every_band_carries_a_chain(apple_graph):
         assert judgements, f"band {b} has no judgement decisions"
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_the_kind_rejection_is_recorded_for_band_3(apple_p2_graph):
     """Spec §5's honest limit, made concrete: a band rejected RECORD_TABLE because the
@@ -266,6 +268,7 @@ def test_the_kind_rejection_is_recorded_for_band_3(apple_p2_graph):
         f"the kind rejection is not in the record; got {rejections[:5]}"
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_band_4_records_transposed_before_coherence(apple_p2_graph):
     """THE R55 QUESTION. The register claimed coherence failed 'solely' because of
@@ -292,6 +295,7 @@ def test_band_4_records_transposed_before_coherence(apple_p2_graph):
     assert orders["transposed"] < orders["transpose_coherent"]
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_rationale_is_not_a_restatement_of_chosen(apple_graph):
     """Fix round 1: transpose_coherent / row_grouped / matrix_candidate / hierarchical /
@@ -318,6 +322,7 @@ def test_rationale_is_not_a_restatement_of_chosen(apple_graph):
                    "region_tiles judgement was recorded at all")
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_region_tiles_rationale_names_the_real_unit(apple_p2_graph):
     """Fix round 2: `n` is an EntryCell count (asserted += 1) on the
@@ -380,6 +385,7 @@ def test_region_tiles_rationale_names_the_real_unit(apple_p2_graph):
         "region_tiles path — cannot assert the unit fix on this fixture"
 
 
+@pytest.mark.corpus
 @needs_apple
 def test_recording_does_not_change_the_verdicts(apple_report):
     """This slice records; it does not decide.

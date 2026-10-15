@@ -111,6 +111,7 @@ def test_offer_accepts_a_unique_donor_and_refuses_two(tmp_path):
     assert offer(two, j, classify(two[j]), donor_evidence(two, {k: EVERY_MEASURE for k in dd}), 0) is None
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_bfs_p6_the_refusal_map_names_band_2_and_no_other_band_every_measure():
     """Evidence doc § 1 row 5, through the shipped function: band 2's line 0 is the one
@@ -123,6 +124,7 @@ def test_bfs_p6_the_refusal_map_names_band_2_and_no_other_band_every_measure():
     assert [k for k, v in got.items() if v == EVERY_MEASURE] == [2], got
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_bfs_p6_the_five_donations_are_admissible_with_the_spikes_entry_counts():
     """The oracle numbers of handoff 2026-09-10-the-donated-reading-tiles § 2, through the

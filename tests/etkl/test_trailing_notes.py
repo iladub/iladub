@@ -83,6 +83,7 @@ def test_the_notes_are_cut_under_the_grid_whose_row_they_trail_r291():
     assert trailing_refused_in_grids(band, KEYS, ()) == 0
 
 
+@pytest.mark.corpus
 @needs_corpus
 def test_bfs_p5_year_rows_are_cut_from_their_notes_r291():
     """The R291 witness: no ruled band on bfs p5 carries a year fused to the next number."""
@@ -94,6 +95,7 @@ def test_bfs_p5_year_rows_are_cut_from_their_notes_r291():
     assert len(years) == 1 and "Sources:" not in years[0]
 
 
+@pytest.mark.corpus
 @needs_corpus
 def test_tessin_is_read_and_its_notes_are_not():
     from iladub.etkl.compile import compile_tables
@@ -106,6 +108,7 @@ def test_tessin_is_read_and_its_notes_are_not():
     assert notes.verdict != "asserted" and notes.cells == 0
 
 
+@pytest.mark.corpus
 @needs_corpus
 def test_FALSIFICATION_without_the_cut_tessin_is_not_read(monkeypatch):
     from iladub.etkl import trailing

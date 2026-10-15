@@ -8,7 +8,7 @@ DEC = Namespace("https://w3id.org/iladub/dec#")
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 QDIR = os.path.join(ROOT, "vocab", "queries")
 APPLE = os.path.join(ROOT, "corpus", "financial", "apple-fy2026q3-statements.pdf")
-pytestmark = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus doc not fetched")
+pytestmark = [pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus doc not fetched"), pytest.mark.corpus]
 
 
 @pytest.fixture(scope="module")

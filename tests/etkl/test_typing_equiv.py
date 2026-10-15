@@ -115,6 +115,7 @@ def _band_verdicts(path, page=0):
     return out
 
 
+@pytest.mark.corpus
 @pytest.mark.parametrize("name,path", DOCS, ids=[d[0] for d in DOCS])
 def test_band_verdicts_are_recorded_and_stable(name, path):
     """Runs every corpus document's page-0 bands through the four homogeneity judgements,
@@ -134,6 +135,7 @@ def test_band_verdicts_are_recorded_and_stable(name, path):
     )
 
 
+@pytest.mark.corpus
 def test_apple_band_4_is_no_longer_seen_as_transposed():
     """The loop's target, pinned. Measured before the change: looks_transposed=True and
     transpose_is_coherent=False, so the band escalated TRANSPOSED. The CURRENCY half of this

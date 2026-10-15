@@ -147,6 +147,7 @@ def test_a_refusing_reader_and_a_missing_one_label_nothing():
     assert dispose_boxhead(None, _lines(), (0, 1), _grid()).labels == {}
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(ONS), reason="corpus not fetched")
 def test_ons_p7_has_a_header_block_that_covers_every_grid_column():
     """The real page. The grid derives 6 columns and admits its first row at page line 8; the 8
@@ -161,6 +162,7 @@ def test_ons_p7_has_a_header_block_that_covers_every_grid_column():
     assert "[0]Section" in listing_of(lines, block).splitlines()[-1]
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(ONS), reason="corpus not fetched")
 def test_a_reader_that_RAISES_labels_nothing_and_does_not_propagate():
     from iladub.etkl import extract_words, text_lines
