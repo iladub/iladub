@@ -2,6 +2,8 @@
 
 **Serves:** prog:criterion:tab:07 — R44's live surface is mostly `KIND_NOT_SUPPORTED`, and tab:07 is the criterion R44 blocks with the widest corpus reach.
 
+**Topic:** compile · **Date:** 2026-10-15
+
 **Doc impact: none.** A handoff; the spec the next session writes carries any increment.
 
 Part 5 drafted first, at about 45K working tokens, under the 50K originating floor; revised after the census. Subject selection and the
