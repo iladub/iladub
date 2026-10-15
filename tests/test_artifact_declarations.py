@@ -288,7 +288,11 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # portal and Clean holon from present promotions. Measured as a SET against HEAD's
     # `vocab/queries/*.rq`: added = exactly that one file, removed = none. Every `etkl:` term it
     # names was declared in `etkl-holons.ttl` (Task 1). The `.ttl` population does not move.
-    assert len(vocab_nodes) == len(artifact_files()) == 186
+    # RE-MEASURED 2026-10-15 (holon:06 Task 3, the Clean holon's membrane): the `.ttl` population
+    # is **188** — `vocab/shapes/etkl-holon-shapes.ttl` and `tests/raw-to-clean-traversal-leak.ttl`;
+    # added = exactly those two, removed = none (set-measured after `git add`). The `.rq`
+    # population does not move: the shape is a closed-world constraint, not a derivation.
+    assert len(vocab_nodes) == len(artifact_files()) == 188
     assert len(query_nodes) == len(query_files()) == 58
 
 

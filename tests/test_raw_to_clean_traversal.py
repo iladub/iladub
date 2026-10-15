@@ -101,3 +101,29 @@ def test_two_semantic_holons_one_portal():
 def test_traversal_refuses_unusable_identity(raw, sem):
     with pytest.raises(ValueError):
         Traversal(raw, sem)
+
+
+def _membrane(g):
+    from iladub.feed import _validate_grounding
+    return _validate_grounding(g)
+
+
+def test_leak_fixture_refused_on_both_focus_nodes():
+    """spec § 5 item 2: no throughPortal on one Clean holon; a portal whose source is not
+    the other Clean holon's wasDerivedFrom. Each violation on its own focus node."""
+    import os
+    g = Graph().parse(os.path.join(os.path.dirname(__file__),
+                                   "raw-to-clean-traversal-leak.ttl"), format="turtle")
+    conforms, report = _membrane(g)
+    assert not conforms
+    assert "https://example.org/leak/no-portal#clean" in report
+    assert "https://example.org/leak/wrong-source#clean" in report
+
+
+def test_grounding_membrane_runs_the_clean_shape():
+    """The shape is IN the membrane validate_shapes=True runs (spec § 3.4), not only in a
+    file a test loads by hand."""
+    g = _offer()
+    g.remove((URIRef(str(RAW) + "#clean"), ETKL.throughPortal, None))
+    conforms, report = _membrane(g)
+    assert not conforms and "CleanDocumentHolon" in report

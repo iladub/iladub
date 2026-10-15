@@ -931,7 +931,7 @@ _GROUND_ONT = None
 # `dec-shapes.ttl` is what makes that decision accountable rather than a bare link. The
 # ontology carries `iladub:PromotionDecision rdfs:subClassOf dec:DecisionHolon`, without which
 # the dec shapes target nothing.
-_GROUND_SHAPE_FILES = ("iladub-shapes.ttl", "dec-shapes.ttl")
+_GROUND_SHAPE_FILES = ("iladub-shapes.ttl", "dec-shapes.ttl", "etkl-holon-shapes.ttl")
 _GROUND_ONT_FILES = ("iladub.ttl", "dec.ttl")
 
 
