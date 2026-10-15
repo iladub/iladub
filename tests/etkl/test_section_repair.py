@@ -289,14 +289,14 @@ def test_grid_region_ink_query_has_no_numeric_literal():
 def _report_signature(rep):
     """Every DETERMINISTIC, non-BNode-bearing field of a CompilationReport, for a
     byte-identity comparison across two separate `compile_tables` calls.
-    `r.ascii` is included after verifying empirically (review round 1 F1: not
+    `r.text` is included after verifying empirically (review round 1 F1: not
     assumed) that it renders identically across both calls on all three fixtures
     this pin exercises. `r.table_uri`/`r.header_reading` are deliberately NOT
     listed here: `table_uri` is a plain URIRef (no BNode), so any mismatch there
     would already break `rep.graph`'s isomorphism check below; `header_reading`
     is an opaque object with no `__eq__` worth pinning on its own."""
     return (
-        [(r.kind, r.verdict, r.reason, r.cells, r.ascii) for r in rep.regions],
+        [(r.kind, r.verdict, r.reason, r.cells, r.text) for r in rep.regions],
         rep.score, rep.asserted, rep.escalated,
     )
 

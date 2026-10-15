@@ -554,7 +554,7 @@ def _suggester_uri(reason: str) -> URIRef:
     return suggester_agent(f"urn:iladub:suggester/{slug}-rule")
 
 
-def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str,
+def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, surface_text: str,
                     reason: str, anchor: URIRef, confidence: float, page: int) -> None:
     """Emit an escalated region as a PROPOSITION — never as a decision (R69).
 
@@ -577,11 +577,15 @@ def escalate_region(g: Graph, cand_uri: URIRef, doc_uri: URIRef, ascii_text: str
     an optional page would be dropped silently by any future call site and the SourceRegion
     would decay into the typed-but-empty stub that provenance-to-the-page (§6) exists to
     prevent. All twelve call sites have it in scope (measured 2026-08-10).
+
+    `surface_text` is `bands.band_text` over the escalated region's lines (R318): the
+    extractor's words in reading order, never a positional render, which overwrites colliding
+    words and clips long lines. It is exact to the extractor, not to the printed page.
     """
     region_uri = URIRef(f"{cand_uri}-source")
 
     g.add((cand_uri, RDF.type, ILADUB.CandidateConcept))
-    g.add((cand_uri, ILADUB.surfaceText, Literal(ascii_text)))
+    g.add((cand_uri, ILADUB.surfaceText, Literal(surface_text)))
     g.add((cand_uri, ILADUB.suggestedAnchor, anchor))
     # xsd:decimal via Decimal, NOT via a float: Literal(Decimal(str(round(x, 2))))
     # builds a literal whose Python value is a float, which pySHACL reads as ill-typed
@@ -718,12 +722,12 @@ def assert_hier_region(g: Graph, region, band, table_uri: URIRef,
     If region_round_trips is False, escalates the whole region (ROUND_TRIP_FAIL)
     and returns 0.
     """
-    from .roundtrip import region_round_trips, render_region_ascii
+    from .roundtrip import region_round_trips
     from .regions import column_of
 
     if not region_round_trips(region, band):
         rt_uri = URIRef(f"{table_uri}-rt")
-        escalate_region(g, rt_uri, doc_uri, render_region_ascii(region),
+        escalate_region(g, rt_uri, doc_uri, band_text(band),
                         "ROUND_TRIP_FAIL", TAB.HierarchicalTable, 0.3, page)
         return 0
 

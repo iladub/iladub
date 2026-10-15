@@ -72,7 +72,7 @@ def census(pdf: str, page: int, graph, regions, bands) -> list[str]:
             else:
                 hr = header_rows_of(bands[i], h.grid, h.body_line)
                 line += f" header_rows={[[c.text for c in row] for row in hr]}"
-        line += " | " + (r.ascii.splitlines()[0][:50] if r.ascii else "")
+        line += " | " + (r.text.splitlines()[0][:50] if r.text else "")
         out.append(line)
     return out
 

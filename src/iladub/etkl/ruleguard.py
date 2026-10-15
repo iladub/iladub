@@ -197,7 +197,7 @@ def guard(graph: Graph, reports, asserted_total: int, escalated_total: int,
         anchor = URIRef(r.anchor) if r.anchor is not None else TAB.DataGrid
         # 0.0: the reading was refuted and no confidence is claimed — holon.py's round-trip
         # refusal precedent (module docstring), not a tuned value.
-        escalate_region(graph, URIRef(f"{doc}#region{i}"), doc, r.ascii, _REASON, anchor,
+        escalate_region(graph, URIRef(f"{doc}#region{i}"), doc, r.text, _REASON, anchor,
                         0.0, page_number)
         moved = r.tokens_asserted
         # header_reading=None as on every other escalated branch: the driver carries a report's

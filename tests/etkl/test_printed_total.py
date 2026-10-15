@@ -275,7 +275,7 @@ def test_the_carved_remainder_is_classified_alone(tmp_path, monkeypatch):
     # on its own: 16 words, and the bound total is booked asserted to the same band.
     assert (r1.verdict, r1.reason, r1.tokens_asserted, r1.tokens_escalated) == \
         ("escalated", "KIND_NOT_SUPPORTED", 1, 16)
-    assert "5,100" not in r1.ascii and "Note:" in r1.ascii
+    assert "5,100" not in r1.text and "Note:" in r1.text
     cand = URIRef(f"{DOC}#region1")
     texts = [str(o) for o in g.objects(cand, None) if isinstance(o, Literal)]
     assert texts and not any("5,100" in t for t in texts)
@@ -541,7 +541,7 @@ def test_the_grand_totals_carved_remainder_is_classified_alone(tmp_path, monkeyp
         ("escalated", "KIND_NOT_SUPPORTED", 1, 16)
     assert (r4.verdict, r4.reason, r4.tokens_escalated) == \
         (r1.verdict, r1.reason, r1.tokens_escalated)               # the same Note, read alike
-    assert "7,800" not in r4.ascii and "Note:" in r4.ascii
+    assert "7,800" not in r4.text and "Note:" in r4.text
 
 
 def test_a_grand_total_beneath_the_last_table_total_in_the_same_band_binds(tmp_path, monkeypatch):

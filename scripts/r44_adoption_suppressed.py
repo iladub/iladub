@@ -32,7 +32,7 @@ JOIN laid over them. That is the generalisable defect, and the guard below is it
 join REFUSES ITSELF unless every key it uses is unique within each run. A key that collides is
 reported as a refusal, never silently cross-produced.
 
-The join key is `RegionReport.ascii` — the region as rendered, which is content and not
+The join key is `RegionReport.text` (`ascii` before R318) — the region's text, which is content and not
 position. The shipped `corpus_verdict_snapshot.snapshot()` drops that field, which is the only
 reason this file extracts the report itself instead of reusing it; every other field here is
 read exactly as that instrument reads it.
@@ -100,7 +100,7 @@ def rich_snapshot(pdf_path: str) -> dict:
                 "escalated": p.escalated,
                 "regions": [
                     {"kind": str(r.kind), "verdict": r.verdict, "cells": r.cells,
-                     "reason": r.reason, "anchor": r.anchor, "ascii": r.ascii,
+                     "reason": r.reason, "anchor": r.anchor, "ascii": r.text,
                      "table": str(r.table_uri) if r.table_uri else None}
                     for r in p.regions
                 ],

@@ -14,9 +14,9 @@ from decimal import Decimal
 from rdflib import Graph, URIRef, RDF
 
 from .geometry import extract_words, text_lines
-from .bands import detect_bands
+from .bands import band_text, detect_bands
 from .regions import classify, RegionKind, column_of
-from .roundtrip import cell_round_trips, render_ascii
+from .roundtrip import cell_round_trips
 from .holon import assert_record_region, escalate_region, emit_ignored_band, TAB
 
 _DOC = URIRef("https://example.org/etkl/doc")
@@ -762,7 +762,7 @@ class RegionReport:
     cells: int                 # asserted entry-cell count (0 otherwise)
     reason: str | None
     anchor: str | None
-    ascii: str
+    text: str
     # The URI of the table holon this band was compiled into, or None when nothing was asserted
     # (escalated/ignored bands have no table). Loop M's document driver reads it to link
     # continuation chains without having to guess the URI a branch happened to mint.
@@ -1278,7 +1278,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                 reports.append(RegionReport(RegionKind.NON_TABLE, "asserted", 0, None,
                                             str(TAB.PrintedTotal), ""))
                 continue
-        ascii_view = render_ascii(band)
+        surface_text = band_text(band)
         if band.frame is not None:
             # Box-split spec § 9 (PROCEDURAL: it applies boxsplit.bands_to_split's AXIOM product,
             # deciding nothing and carrying no constant). A box band was cut from ONE closed frame
@@ -1298,7 +1298,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         "MULTI_TABLE_AMBIGUOUS" if multi_table else "single table")
         if multi_table:
             cand_uri = URIRef(f"{doc}#region{idx}")
-            escalate_region(graph, cand_uri, doc, ascii_view, "MULTI_TABLE_AMBIGUOUS",
+            escalate_region(graph, cand_uri, doc, surface_text, "MULTI_TABLE_AMBIGUOUS",
                             TAB.HierarchicalTable, 0.4, page_number)
             if getattr(band, "unit_markers", ()):
                 _emit_unit_markers(graph, cand_uri, band, None)
@@ -1307,7 +1307,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             brec.record("verdict", ["asserted", "escalated", "ignored"],
                         "escalated", "MULTI_TABLE_AMBIGUOUS")
             reports.append(RegionReport(RegionKind.UNSUPPORTED_TABLE, "escalated", 0,
-                                        "MULTI_TABLE_AMBIGUOUS", str(TAB.HierarchicalTable), ascii_view))
+                                        "MULTI_TABLE_AMBIGUOUS", str(TAB.HierarchicalTable), surface_text))
             continue
         region = classify(band)
         _kind_options = ["RECORD_TABLE", "UNSUPPORTED_TABLE", "NON_TABLE"]
@@ -1341,7 +1341,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             emit_ignored_band(graph, doc, idx, band, page_number, region.reason)
             brec.record("verdict", ["asserted", "escalated", "ignored"], "ignored", "")
             reports.append(RegionReport(region.kind, "ignored", 0,
-                                        region.reason, None, ascii_view))
+                                        region.reason, None, surface_text))
             continue
 
         if region.kind is RegionKind.RECORD_TABLE:
@@ -1376,7 +1376,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     _tiles_rationale(tiles, n, "entries"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view,
+                        escalate_region(graph, cand_uri, doc, surface_text,
                                         "REGION_TILING_FAILED", TAB.RecordTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
@@ -1386,7 +1386,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     "escalated", "REGION_TILING_FAILED")
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "REGION_TILING_FAILED",
-                                                    str(TAB.RecordTable), ascii_view))
+                                                    str(TAB.RecordTable), surface_text))
                     else:
                         graph += scratch
                         _emit_band_captions(graph, table_uri, band)
@@ -1412,12 +1412,12 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.RecordTable), ascii_view,
+                                                    str(TAB.RecordTable), surface_text,
                                                     table_uri))
                 else:
                     # detected but not confidently compilable — escalate (Loop 3 behaviour)
                     cand_uri = URIRef(f"{doc}#region{idx}")
-                    escalate_region(graph, cand_uri, doc, ascii_view, "TRANSPOSED",
+                    escalate_region(graph, cand_uri, doc, surface_text, "TRANSPOSED",
                                     TAB.TransposedTable, 0.4, page_number)
                     if getattr(band, "unit_markers", ()):
                         _emit_unit_markers(graph, cand_uri, band, None)
@@ -1426,7 +1426,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "escalated", "TRANSPOSED")
                     reports.append(RegionReport(region.kind, "escalated", 0, "TRANSPOSED",
-                                                str(TAB.TransposedTable), ascii_view))
+                                                str(TAB.TransposedTable), surface_text))
             else:
                 is_row_grouped = looks_row_grouped(region)
                 brec.record("row_grouped", ["flat", "row_grouped"],
@@ -1479,11 +1479,11 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.HierarchicalTable), ascii_view,
+                                                    str(TAB.HierarchicalTable), surface_text,
                                                     table_uri))
                     else:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view, "ROW_GROUP_AMBIGUOUS",
+                        escalate_region(graph, cand_uri, doc, surface_text, "ROW_GROUP_AMBIGUOUS",
                                         TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
@@ -1492,7 +1492,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "escalated", "ROW_GROUP_AMBIGUOUS")
                         reports.append(RegionReport(region.kind, "escalated", 0, "ROW_GROUP_AMBIGUOUS",
-                                                    str(TAB.HierarchicalTable), ascii_view))
+                                                    str(TAB.HierarchicalTable), surface_text))
                 else:
                     # ---- existing RECORD_TABLE assert logic ----
                     from .tiling import region_tiles
@@ -1565,7 +1565,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.HierarchicalTable), ascii_view,
+                                                    str(TAB.HierarchicalTable), surface_text,
                                                     htable))
                         continue
                     # BOX-SPLIT § 10.3.4: how many leading lines are header, asked of a reader
@@ -1589,7 +1589,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     # level; no constant, no geometry.
                     if header_lines > 1:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view,
+                        escalate_region(graph, cand_uri, doc, surface_text,
                                         "BOXHEAD_EXCEEDS_RECORD", TAB.RecordTable, 0.4,
                                         page_number)
                         if getattr(band, "unit_markers", ()):
@@ -1600,7 +1600,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     "escalated", "BOXHEAD_EXCEEDS_RECORD")
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "BOXHEAD_EXCEEDS_RECORD",
-                                                    str(TAB.RecordTable), ascii_view))
+                                                    str(TAB.RecordTable), surface_text))
                         continue
                     # R17 gate (loop J): see the transposed branch above.
                     scratch = Graph()
@@ -1613,7 +1613,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     _tiles_rationale(tiles, n, "entries"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view,
+                        escalate_region(graph, cand_uri, doc, surface_text,
                                         "REGION_TILING_FAILED", TAB.RecordTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
@@ -1623,7 +1623,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     "escalated", "REGION_TILING_FAILED")
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "REGION_TILING_FAILED",
-                                                    str(TAB.RecordTable), ascii_view))
+                                                    str(TAB.RecordTable), surface_text))
                     else:
                         graph += scratch
                         if donated is not None:
@@ -1661,7 +1661,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.RecordTable), ascii_view,
+                                                    str(TAB.RecordTable), surface_text,
                                                     table_uri))
         else:  # UNSUPPORTED_TABLE
             from .matrix import is_matrix_candidate
@@ -1717,11 +1717,11 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "asserted", "")
                     reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                str(TAB.HierarchicalTable), ascii_view,
+                                                str(TAB.HierarchicalTable), surface_text,
                                                 table_uri))
                 else:
                     cand_uri = URIRef(f"{doc}#region{idx}")
-                    escalate_region(graph, cand_uri, doc, ascii_view, "MATRIX_AMBIGUOUS",
+                    escalate_region(graph, cand_uri, doc, surface_text, "MATRIX_AMBIGUOUS",
                                     TAB.HierarchicalTable, 0.4, page_number)
                     if getattr(band, "unit_markers", ()):
                         _emit_unit_markers(graph, cand_uri, band, None)
@@ -1730,7 +1730,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "escalated", "MATRIX_AMBIGUOUS")
                     reports.append(RegionReport(region.kind, "escalated", 0, "MATRIX_AMBIGUOUS",
-                                                str(TAB.HierarchicalTable), ascii_view))
+                                                str(TAB.HierarchicalTable), surface_text))
             else:
                 # ---- existing Loop 2 hierarchical path, UNCHANGED ----
                 from .hierarchical import classify_hierarchical
@@ -1773,7 +1773,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                     brec.record("verdict", ["asserted", "escalated", "ignored"],
                                 "asserted", "")
                     reports.append(RegionReport(region.kind, "asserted", n_ruled, None,
-                                                str(TAB.HierarchicalTable), ascii_view,
+                                                str(TAB.HierarchicalTable), surface_text,
                                                 table_uri, reading))
                 elif hreg is not None and not merge_tiling_ok(hreg.tree, hreg.grid):
                     table_uri = URIRef(f"{doc}#htable{idx}")
@@ -1803,11 +1803,11 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "asserted", "")
                         reports.append(RegionReport(region.kind, "asserted", n, None,
-                                                    str(TAB.HierarchicalTable), ascii_view,
+                                                    str(TAB.HierarchicalTable), surface_text,
                                                     table_uri))
                     else:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view, "MERGE_AMBIGUOUS",
+                        escalate_region(graph, cand_uri, doc, surface_text, "MERGE_AMBIGUOUS",
                                         TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
@@ -1816,7 +1816,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                         brec.record("verdict", ["asserted", "escalated", "ignored"],
                                     "escalated", "MERGE_AMBIGUOUS")
                         reports.append(RegionReport(region.kind, "escalated", 0, "MERGE_AMBIGUOUS",
-                                                    str(TAB.HierarchicalTable), ascii_view))
+                                                    str(TAB.HierarchicalTable), surface_text))
                 elif hreg is not None:
                     table_uri = URIRef(f"{doc}#htable{idx}")
                     # THE MEMBRANE BACKSTOP (loop G attempt 2): assert into a SCRATCH graph and
@@ -1837,7 +1837,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     _tiles_rationale(tiles, n, "body tokens"))
                     if n and not tiles:
                         cand_uri = URIRef(f"{doc}#region{idx}")
-                        escalate_region(graph, cand_uri, doc, ascii_view,
+                        escalate_region(graph, cand_uri, doc, surface_text,
                                         "REGION_TILING_FAILED", TAB.HierarchicalTable, 0.4, page_number)
                         if getattr(band, "unit_markers", ()):
                             _emit_unit_markers(graph, cand_uri, band, None)
@@ -1847,7 +1847,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                     "escalated", "REGION_TILING_FAILED")
                         reports.append(RegionReport(region.kind, "escalated", 0,
                                                     "REGION_TILING_FAILED",
-                                                    str(TAB.HierarchicalTable), ascii_view))
+                                                    str(TAB.HierarchicalTable), surface_text))
                     else:
                         # n == 0 keeps main's behavior byte-identical: assert_hier_region already
                         # wrote its ROUND_TRIP_FAIL escalation into scratch; merge and report as
@@ -1870,13 +1870,13 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                             n,
                             None if n else "ROUND_TRIP_FAIL",
                             str(TAB.HierarchicalTable),
-                            ascii_view,
+                            surface_text,
                             table_uri if n else None,
                         ))
                 else:
                     # Not hierarchical — escalate whole region in-band
                     cand_uri = URIRef(f"{doc}#region{idx}")
-                    escalate_region(graph, cand_uri, doc, ascii_view,
+                    escalate_region(graph, cand_uri, doc, surface_text,
                                     reason="KIND_NOT_SUPPORTED",
                                     anchor=TAB.HierarchicalTable, confidence=0.4, page=page_number)
                     if getattr(band, "unit_markers", ()):
@@ -1888,7 +1888,7 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                 "escalated", "KIND_NOT_SUPPORTED")
                     reports.append(RegionReport(region.kind, "escalated", 0,
                                                 "KIND_NOT_SUPPORTED",
-                                                str(TAB.HierarchicalTable), ascii_view))
+                                                str(TAB.HierarchicalTable), surface_text))
 
     # --- DATA-GRID FALLBACK (spec 2026-08-08-data-grid-types-elements-axioms.md §8.18)
     #
@@ -1931,14 +1931,14 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # preserved either way, which is why no score moved and no sum identity caught it.
             band_marks.append((asserted_total, escalated_total))
             asserted_total += _tokens
-            # R301: this region's own lines (`_grid.rows`) and their rendered text, so the
+            # R301: this region's own lines (`_grid.rows`) and their exact text (R318), so the
             # producer guard (`ruleguard.guard`) can escalate THIS region without re-deriving the
             # grid, and `adoption.build_ledger` can join it back to the page's `_lines`.
             _grid_lines = tuple(_lines[i] for i in _grid.rows)
-            _ascii = render_ascii(Band(lines=_grid_lines,
+            _grid_text = band_text(Band(lines=_grid_lines,
                                         top=_grid_lines[0].top, bottom=_grid_lines[-1].bottom))
             reports.append(RegionReport(RegionKind.RECORD_TABLE, "asserted", _cells,
-                                        None, str(TAB.DataGrid), _ascii,
+                                        None, str(TAB.DataGrid), _grid_text,
                                         table_uri=_grid_uri,
                                         line_indices=tuple(_grid.rows)))
 
