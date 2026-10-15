@@ -202,6 +202,7 @@ def test_the_reading_passes_the_shipped_membrane_and_mints_no_new_shape():
 
 # --- the corpus ---------------------------------------------------------------------------
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_p0_reads_nine_spanning_labels_over_sixteen_columns():
     """The document this relation was built for. Nine labels, the measured partition
@@ -222,6 +223,7 @@ def test_graincorp_p0_reads_nine_spanning_labels_over_sixteen_columns():
     assert all(n.level == 0 and n.parent is None for n in tree)
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_graincorp_p0_moves_no_ink():
     """THE INVARIANT (plan, stated once): span donation changes which columns the author's
@@ -241,6 +243,7 @@ def test_graincorp_p0_moves_no_ink():
     assert region_tiles(g)
 
 
+@pytest.mark.corpus
 @bfs_only
 def test_bfs_p6_seven_strict_subset_pairs_stay_refused():
     """THE CORPUS NEGATIVE THAT MUST NOT MOVE. bfs p6 carries seven strict-subset pairs --

@@ -102,6 +102,7 @@ def test_leak_battery_is_not_empty():
 STEM = os.path.join(ROOT, "corpus", "ag-trade", "graincorp-stem-2026-07-31.pdf")
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 def test_both_engines_admit_a_real_page_graph():
     from iladub.etkl import compile_tables
@@ -145,6 +146,7 @@ def _mutations(g, seed):
     return outs
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(STEM), reason="corpus document not fetched")
 @pytest.mark.parametrize("seed", [11, 23, 37])
 def test_both_engines_catch_every_injected_violation(seed):

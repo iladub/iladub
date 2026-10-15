@@ -15,7 +15,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BFS = os.path.join(ROOT, "corpus", "gov-stats", "bfs-population-bilan-2023.pdf")
 
-pytestmark = pytest.mark.skipif(not os.path.exists(BFS), reason="corpus not fetched")
+pytestmark = [pytest.mark.skipif(not os.path.exists(BFS), reason="corpus not fetched"), pytest.mark.corpus]
 
 
 def _first(report):

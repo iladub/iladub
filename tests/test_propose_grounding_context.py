@@ -90,6 +90,7 @@ def test_a_proposer_written_before_this_parameter_still_works():
     assert status == "proposed", status
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_the_slot_is_FILLED_for_a_real_compiled_document():
     """THE ASSERTION THIS FILE EXISTS FOR. Not "the parameter exists" — that is what the two

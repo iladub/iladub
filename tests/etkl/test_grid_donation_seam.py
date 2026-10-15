@@ -27,6 +27,7 @@ def _labels(g, table):
     return [t for _, t in sorted(out)]
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_bfs_p6_reads_267_entries_under_band_2s_labels():
     """The headline (handoff 2026-09-10-the-donated-reading-tiles § 2): 222 -> 267 entries,
@@ -66,6 +67,7 @@ def test_bfs_p6_reads_267_entries_under_band_2s_labels():
     assert (donor, TAB.headerDonatedBy, None) not in g
 
 
+@pytest.mark.corpus
 @corpus_only
 @pytest.mark.xfail(strict=True, reason=(
     "R298: since R293 the donor band 2 escalates and mints #region2, but the eight "
@@ -82,6 +84,7 @@ def test_every_donation_link_on_bfs_p6_resolves():
         assert (o, RDF.type, None) in g, o
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_donation_moves_no_ink_between_the_ledgers():
     """DECISION D's prediction, measured: the donor's label bboxes hold none of the
@@ -106,6 +109,7 @@ def test_donation_moves_no_ink_between_the_ledgers():
                                             8: (72, 0), 9: (63, 0)}
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_an_accepted_donation_is_a_recorded_decision():
     from iladub.etkl.compile import compile_tables

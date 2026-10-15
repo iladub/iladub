@@ -455,6 +455,7 @@ def test_the_live_reader_is_env_gated_and_off_by_default():
 GCAP = os.path.join(ROOT, "corpus", "ag-trade", "graincorp-capacity-2026-08-04.pdf")
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
 def test_region_unshown_renders_and_disposes_without_a_model():
     """`region_unshown` end-to-end on the real region, with the reader faked: the crop is
@@ -484,6 +485,7 @@ def test_region_unshown_renders_and_disposes_without_a_model():
     assert region_unshown(GCAP, 0, band, grid, None) == frozenset()
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
 def test_the_answer_a_LIVE_reader_actually_gives_now_reaches_the_graph():
     """The 2026-09-18 repair, on the real region and in the real answer shape.
@@ -527,6 +529,7 @@ def test_the_answer_a_LIVE_reader_actually_gives_now_reaches_the_graph():
     assert region_unshown(GCAP, 0, band, grid, FakeRegionReader(mute)) == frozenset()
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
 def test_the_pipeline_attaches_nothing_with_the_gate_off():
     """O3's null at its source: with BAML_LIVE unset, every band's `unshown` is () and the whole
@@ -537,6 +540,7 @@ def test_the_pipeline_attaches_nothing_with_the_gate_off():
     assert all(b.unshown == () for b in page_bands(GCAP, 0))
 
 
+@pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(GCAP), reason="corpus not fetched")
 def test_a_reader_that_RAISES_makes_no_claim_and_does_not_abort_the_compile():
     """Observed live 2026-09-18: a BAML cast of a model answer raised inside

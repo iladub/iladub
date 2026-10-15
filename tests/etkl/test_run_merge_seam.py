@@ -16,6 +16,7 @@ CBH = os.path.join(CORPUS, "ag-trade", "cbh-stem-2026-08-03.pdf")
 corpus_only = pytest.mark.skipif(not os.path.exists(APPLE), reason="corpus not fetched")
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p0_reads_as_one_band_and_the_merge_is_what_did_it():
     """The headline. apple p0's eight bands become three; the merged band occupies
@@ -32,6 +33,7 @@ def test_apple_p0_reads_as_one_band_and_the_merge_is_what_did_it():
     assert rep.score == 1.0
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_apple_p1_reads_as_one_band():
     from iladub.etkl.compile import compile_tables, page_bands
@@ -42,6 +44,7 @@ def test_apple_p1_reads_as_one_band():
     assert rep.score == 1.0
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_o2_the_fallback_is_what_saves_the_ink():
     """O2. Four documents propose a run the membrane REFUSES, and every one of them
@@ -92,6 +95,7 @@ def test_o2_the_fallback_is_what_saves_the_ink():
     assert cells(APPLE, 2) == 3
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_a_refused_run_leaves_the_page_byte_identical():
     """§ 3.2: 'a refusal must cost nothing observable: no triple, no decision-log node,
@@ -136,6 +140,7 @@ def test_a_refused_run_leaves_the_page_byte_identical():
     assert with_proposal.score == suppressed.score
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_m1_the_partition_does_not_depend_on_section_repair_bands():
     """INVARIANT M1 (§ 3.1). The partition is a pure function of the unrepaired build.
@@ -307,6 +312,7 @@ def _pdf_for(stem):
     raise AssertionError(f"no corpus PDF for {stem}")
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_o3_no_page_loses_asserted_ink_to_a_merge():
     """O3, and the STANDING DETECTOR for R170 (is_matrix_candidate is the sole guard on
@@ -353,6 +359,7 @@ def test_o3_no_page_loses_asserted_ink_to_a_merge():
                 f"defect, not a gain"
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_o4_every_minted_fragment_index_names_its_report_position():
     """O4, SUBSTITUTED (spike § Q-B B2). The spec states O4 over `tab:bandIndex`, and that
@@ -378,6 +385,7 @@ def test_o4_every_minted_fragment_index_names_its_report_position():
         assert ("mtable", 2) in minted
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_o5_a_forced_non_tail_merge_renumbers_consistently(monkeypatch):
     """O5. bfs p5 has 15 bands and produces runs (2,5) and (7,8) — both NON-TAIL, both
@@ -412,6 +420,7 @@ def test_o5_a_forced_non_tail_merge_renumbers_consistently(monkeypatch):
     assert max(minted) < 13, "a fragment index >= the band count means two index spaces"
 
 
+@pytest.mark.corpus
 @corpus_only
 def test_o5_document_scope_completes_with_a_forced_non_tail_merge(monkeypatch):
     """The second half of O5: a document-scope compile over bfs completes, and adoption's

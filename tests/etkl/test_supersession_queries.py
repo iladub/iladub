@@ -12,7 +12,7 @@ from rdflib import URIRef
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 QDIR = os.path.join(ROOT, "vocab", "queries")
 CBH = os.path.join(ROOT, "corpus", "ag-trade", "cbh-stem-2026-08-03.pdf")
-pytestmark = pytest.mark.skipif(not os.path.exists(CBH), reason="corpus doc not fetched")
+pytestmark = [pytest.mark.skipif(not os.path.exists(CBH), reason="corpus doc not fetched"), pytest.mark.corpus]
 
 REPAIRED = 1        # in repaired_bands ((0,1),(0,3),(0,5),(0,7))
 UNREPAIRED = 0      # the control

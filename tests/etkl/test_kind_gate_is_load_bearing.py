@@ -58,7 +58,7 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STEM = os.path.join(ROOT, "corpus", "ag-trade", "graincorp-stem-2026-07-31.pdf")
-pytestmark = pytest.mark.skipif(not os.path.exists(STEM), reason="corpus doc not fetched")
+pytestmark = [pytest.mark.skipif(not os.path.exists(STEM), reason="corpus doc not fetched"), pytest.mark.corpus]
 
 # (page, band index) of the two suppressed-positive bands, measured corpus-wide.
 SUPPRESSED_POSITIVE = ((0, 2), (2, 1))
