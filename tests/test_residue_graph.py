@@ -260,4 +260,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-14 (R310 + R311 closed, branch role-field-oracle): 94 -> 95, ADDED = [313],
     # REMOVED = []. R313 links only to R311, its one open neighbour until R311 closed. Controlled:
     # `--candidates` over `main`'s register files is 94, over the branch's 95, and the diff is R313.
-    assert len(expected) == 95
+    # RE-MEASURED 2026-10-15 (R318 closed, branch r318-impl): 95 -> 97, ADDED = [319, 320],
+    # REMOVED = []. R319 and R320 were raised by the R318 spec and cite only [[R318]], their one
+    # open neighbour until it closed. Controlled: `--candidates` over the register files before the
+    # close is 95, after it 97, and the diff is exactly R319 and R320.
+    assert len(expected) == 97
