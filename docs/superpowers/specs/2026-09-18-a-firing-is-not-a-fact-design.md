@@ -218,3 +218,51 @@ three controls still PASS. That is the loop's end-to-end close: 6 dangling ids b
 ---
 
 *Author: François Rosselet. © 2026. Spec — CC-BY-4.0 with the rest of `docs/`.*
+
+---
+
+## 8. Amendment, 2026-10-15: firings are derived from the corpus baseline, not authored
+
+**Ruled by the maintainer 2026-10-15, in-session.** Two rulings, recorded here and in
+`docs/superpowers/2026-10-15-firing-from-baseline-handoff.md` § 3:
+
+1. **§ 2.3's fork is settled in favour of typed `cor:disposes`.** D2 stands, and the prose sentinel
+   is not built.
+2. **§ 2.1's authored `cor:Firing` record and § 3's I3 are withdrawn.** This spec predates
+   [[R305]]'s corpus baseline (2026-10-10). `tests/corpus-baseline/<doc>.json` is a **generated
+   cache** (CLAUDE.md § Corpus baseline; § Documentation governance names this exception). It
+   records each region's `reason` and `verdict`, it is committed, and CI's `check` gates it. An
+   authored firing record beside it would be a second copy of a fact that already has a gated one,
+   and the drift this spec exists to stop would come back.
+
+**Measured 2026-10-15 at `ff2c0de`.** Counted from `tests/corpus-baseline/*.json`, regions whose
+`reason` is an upper-case constant, grouped by `(reason, verdict)`. The baseline reproduces the
+figure the 2026-10-15 role-oracle handoff carried, which a live compile had produced:
+`KIND_NOT_SUPPORTED` is **bfs 3 escalated** and **ons 2 escalated + 2 superseded**. It does not fire
+on the other five `corpus/` documents. The verdict values seen are `escalated`, `superseded`,
+`asserted` and `ignored`. Non-constant reasons (`"fewer than 2 lines"`, `"fewer than 2 columns"`)
+carry verdict `ignored` and are not escalation reasons.
+
+**What changes:**
+
+- `cor:Firing` survives as a **term**, never as authored triples. The oracle lifts it **in memory**
+  from the baseline JSON, one firing per (document, reason): `cor:live` = count of verdict
+  `escalated`, `cor:superseded` = count of verdict `superseded`. The lift is PROCEDURAL raw
+  extraction: JSON to typed RDF, no judgment, no tolerance. The tests then validate D1 and D2 with
+  SHACL over manifest ∪ lifted firings (AXIOM, closed world).
+- **The scope is the 7 `corpus/` documents only.** That is the criteria's own denominator. The baseline's
+  `pdf` field (`corpus/…` vs `held-out/…`) is the discriminator, and it is read, not hard-coded.
+- **The join key** between a manifest `cor:Document` and its baseline file must be measured, not
+  assumed (seam for the plan).
+- **I3 and O4 are replaced** by the existing `corpus_baseline.py regenerate`/`check`/`verify`.
+  A changed firing profile now shows up as a committed baseline diff in the PR that caused it.
+- **D2 gets stronger:** disposing a reason that fires zero live times on that document is refused,
+  even if it has superseded firings. *Superseded is not repaired* (§ 2.1), and a disposal names live
+  ink. **PROPOSED, not measured:** whether any existing adjudication would trip this.
+- **§ 7's D3a worry is moot:** the oracle reads committed JSON and the manifest, never the corpus,
+  so it collects in CI and **must not** be tagged `corpus` (the untagged-form guard from `9d3c73c`, #345; measure its exact
+  name in `tests/`).
+- **What is still NOT done (§ 6 stands):** no reason is disposed and no `prog:met` moves.
+
+**O5 is unchanged** and is still the close: `oracle_test_census.py` reports the shared node id as no
+longer dangling.
