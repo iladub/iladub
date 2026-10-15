@@ -164,7 +164,12 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # (its negative fixture). Measured as a SET against HEAD's tracked `.ttl` files after `git add`:
     # added = exactly those two, removed = none (190 tracked minus 2 carved). Not carved out: both
     # name declared `etkl:` terms only (portalSource/portalTarget declared in Task 1).
-    assert len(artifact_files()) == len(tracked) - len(carved) == 188
+    # RE-MEASURED 2026-10-15 (holon:06 Task 4, the generated worked example): 188 -> 189 —
+    # `examples/raw-to-clean-traversal.ttl`, written by `scripts/raw_to_clean_example.py`. Measured
+    # as a SET against HEAD's tracked `.ttl` files after `git add`: added = exactly that one file,
+    # removed = none (191 tracked minus 2 carved). Not carved out: it names declared `etkl:` terms
+    # and `ex:`/`tx:` terms outside the owned root, as the shipping examples do.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 189
 
 
 def test_each_file_gets_its_own_named_graph():
