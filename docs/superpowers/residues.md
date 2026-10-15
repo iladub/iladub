@@ -486,3 +486,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R315 | open | **graincorp-stem compiles in ~320 s on `main`, straddling `BUDGET_S = 320`** — its two budgeted corpus tests pass or fail by run. Measured four times, 318–325 s; see [[R39]] |
 | R316 | open | **The compile names every document with one constant IRI**, so the Raw holon of the raw→clean traversal must be named by the caller. See [[R315]] |
 | R317 | open | **The Clean holon carries no membrane health** — `membrane-health.rq` is scoped to `etkl:CompiledDocumentHolon`. See [[R316]] |
+| R318 | open | **An escalated region's `surfaceText` is a lossy 80-column layout render** — 59 of 71 live K/R regions lose text. Being closed; see [[R44]] |
+| R319 | open | **An escalation books Word objects, not words** — a ruled band under-counts (bfs p6r11: 3 for 38). See [[R318]] |
+| R320 | open | **Extractor drops interword spaces on arxiv and shatters rotated text** — upstream of `band_text`. See [[R318]] |
