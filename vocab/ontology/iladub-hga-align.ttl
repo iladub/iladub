@@ -55,6 +55,12 @@ etkl:SemanticHolon      rdfs:subClassOf holon:DataHolon .
 #  transform — that extension is iladub's, not inherited from HGA.
 etkl:GroundingPortal    rdfs:subClassOf holon:Portal .
 
+#  Portal endpoints (spec 2026-10-15 § 3.2). Source: both are object properties, so a
+#  subPropertyOf is sound. Target: holon:portalTarget is a DatatypeProperty over xsd:anyURI while
+#  etkl:portalTarget is an ObjectProperty, so subPropertyOf would mix property kinds — seeAlso only.
+etkl:portalSource rdfs:subPropertyOf holon:sourceHolon .
+etkl:portalTarget rdfs:seeAlso holon:portalTarget .
+
 #################################################################
 #  Grounding-model alignment (informative)
 #  HGA's holon:GroundingRecord already carries sourceString /

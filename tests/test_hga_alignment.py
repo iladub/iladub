@@ -88,3 +88,19 @@ def test_dec_provenance_axioms_present():
     assert (DEC.consideredEvidence, RDFS.subPropertyOf, PROV.used) in g
     assert (DEC.decidedBy, RDFS.subPropertyOf, PROV.wasAssociatedWith) in g
     assert (DEC.produced, RDFS.subPropertyOf, PROV.generated) in g
+
+
+def test_portal_property_alignment():
+    """spec § 3.2: source aligns by subPropertyOf (both object properties); target only by
+    seeAlso, because holon:portalTarget is a DatatypeProperty over xsd:anyURI."""
+    from rdflib import OWL, RDF
+    g = _g(os.path.join(ONT, "iladub-hga-align.ttl"))
+    src, tgt = URIRef(ETKL + "portalSource"), URIRef(ETKL + "portalTarget")
+    assert (src, RDFS.subPropertyOf, URIRef(HOLON + "sourceHolon")) in g
+    assert (tgt, RDFS.seeAlso, URIRef(HOLON + "portalTarget")) in g
+    assert (tgt, RDFS.subPropertyOf, URIRef(HOLON + "portalTarget")) not in g
+    h = _g(os.path.join(ONT, "etkl-holons.ttl"))
+    for p, rng in ((src, "RawDocumentHolon"), (tgt, "SemanticHolon")):
+        assert (p, RDF.type, OWL.ObjectProperty) in h
+        assert (p, RDFS.domain, URIRef(ETKL + "GroundingPortal")) in h
+        assert (p, RDFS.range, URIRef(ETKL + rng)) in h
