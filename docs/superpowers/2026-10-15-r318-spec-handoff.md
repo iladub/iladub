@@ -14,7 +14,7 @@ measurement and narrow one invariant to match it, and they add no design. Grade 
 ## 5. The next concrete action, typed
 
 1. **ASSERTED:** implement `docs/superpowers/specs/2026-10-15-escalation-carries-exact-text-design.md`
-   § 3 on this branch (`r318-exact-surface-text`). The change is small and PROCEDURAL. Whether a plan
+   § 3 on a new branch from `main` (this spec merged as #347). The change is small and PROCEDURAL. Whether a plan
    is needed or the spec is enough is the implementer's call; CLAUDE.md § Plan authoring applies if
    one is written.
 2. **PROPOSED, and may fail in minutes:** the spec's § 4.1 test seam. Can a constructed `Band`
@@ -41,9 +41,9 @@ close R318.
 - (a) before (b): the maintainer, in session. Recorded in the spec § 2.
 - The invariant is "exact to the extractor", not "exact to the page": spec § 3.1, from the § 1.5
   measurement.
-- `RegionReport.ascii` is renamed `text`: spec § 3.2. The maintainer was told this costs about 8
-  probe-script edits and was offered keeping the name. **No answer has been recorded, so this is
-  reversible.**
+- `RegionReport.ascii` is renamed `text`, and the probe scripts are renamed with it: spec § 3.2.
+  The maintainer confirmed this on 2026-10-15, in session, after being told it costs about 8
+  probe-script edits. Recorded here.
 
 ## 4. Unverified or assumed
 
