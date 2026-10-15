@@ -20,3 +20,14 @@ ex:f-line-item a etkl:Field ; etkl:fillsProperty ex:lineItem ; etkl:fieldRole et
 ex:f-period    a etkl:Field ; etkl:fillsProperty ex:period   ; etkl:fieldRole etkl:ColumnKey .
 ex:f-amount    a etkl:Field ; etkl:fillsProperty ex:amount   ; etkl:fieldRole etkl:CellValue .
 ex:f-restated  a etkl:Field ; etkl:fillsProperty ex:restated ; etkl:fieldRole etkl:CellValue .
+
+#  The target shape the contract names, carrying a value constraint for each scheme-less role
+#  field: etkl:RoleFieldOracleShape reads the contract and its value shapes together, and
+#  without these it would refuse the fixture too ([[R311]]).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+ex:ObservationShape a sh:NodeShape ;
+    sh:targetClass ex:Observation ;
+    sh:property [ sh:path ex:period ; sh:pattern "^[0-9]{4}$" ] ;
+    sh:property [ sh:path ex:amount ; sh:pattern "^[0-9,]+$" ] ;
+    sh:property [ sh:path ex:restated ; sh:pattern "^[0-9,]+$" ] .

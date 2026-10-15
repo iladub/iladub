@@ -155,7 +155,11 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # declared in Task 1), plus `fin:` terms under `https://example.org/finance#`, outside the
     # owned root exactly as the shipping examples' `ship:` terms are. No term was declared. The
     # census pins below (67, 72, 21) were re-run in the same change and did not move.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 185
+    # RE-MEASURED 2026-10-14 ([[R311]], branch role-field-oracle): 185 -> 186 —
+    # `tests/etkl-contract-role-without-oracle-leak.ttl`, the new shape's negative fixture (CI's
+    # report: 188 tracked minus 2 carved). Not carved out: it names declared `etkl:` terms and
+    # `ex:` terms outside the owned root, as the two-cell-values fixture beside it does.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 186
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -223,6 +227,13 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     +2 occurrences, both `xsd:anyURI` (`tab#` and `dec#`); the file's owned `sh:namespace` count
     goes 1 -> 3. No new distinct value: both strings were already carried.
 
+    RE-MEASURED 2026-10-14 ([[R311]]), which declares one more `sh:prefixes` node in
+    `etkl-shapes.ttl` (`etkl:prefixes-role-oracle`, for `etkl:RoleFieldOracleShape`'s body):
+
+        occurrences 25   distinct values 9
+
+    +1 occurrence, `xsd:anyURI` (`etkl#`); its `sh#` twin is not owned. No new distinct value.
+
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
     floor — a floor cannot detect the guard silently collecting fewer, which is the failure
@@ -231,7 +242,7 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 24
+    assert len(occurrences) == 25
     assert len({str(o) for o in occurrences}) == 9
     assert not any(isinstance(o, URIRef) for o in occurrences)
 

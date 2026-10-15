@@ -278,7 +278,12 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # three files, removed = none. They use declared `etkl:` terms and `fin:` terms outside the
     # owned root; no term was declared. The `.rq` population does not move: the example's two
     # patterns are closed-world value constraints (CLAUDE.md § 8), not derivations.
-    assert len(vocab_nodes) == len(artifact_files()) == 185
+    # RE-MEASURED 2026-10-14 ([[R311]], branch role-field-oracle): **186** —
+    # `tests/etkl-contract-role-without-oracle-leak.ttl`, the negative fixture for
+    # `etkl:RoleFieldOracleShape`; added = exactly that file, removed = none. The shape and its one
+    # declared term went into the EXISTING `etkl-shapes.ttl` and `etkl.ttl`. The `.rq` population
+    # does not move: the shape is a closed-world membrane constraint, not a derivation.
+    assert len(vocab_nodes) == len(artifact_files()) == 186
     assert len(query_nodes) == len(query_files()) == 57
 
 

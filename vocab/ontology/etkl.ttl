@@ -8,6 +8,7 @@
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix prov:   <http://www.w3.org/ns/prov#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
 
 #################################################################
 #  Ontology metadata
@@ -125,6 +126,17 @@ etkl:admissibleScheme a owl:ObjectProperty ;
 etkl:fieldRole a owl:ObjectProperty ;
     rdfs:label "field role"@en ; rdfs:domain etkl:Field ; rdfs:range etkl:FieldRole ;
     rdfs:comment "The structural role this field plays in a matrix: etkl:RowKey, etkl:ColumnKey or etkl:CellValue. A field carries at most one. A contract that declares any role declares exactly one etkl:CellValue field and at most one field per key role (etkl:ContractRoleShape)."@en .
+
+etkl:valueConstraintParameter a owl:ObjectProperty ;
+    rdfs:label "value constraint parameter"@en ;
+    rdfs:comment "A SHACL constraint parameter (sh:datatype, sh:pattern, sh:in, ...) that, declared on the property shape of a field's property, is an oracle for that field's value: it can refuse a value the source printed. Its values are stated once, on etkl:FieldValueOracle."@en .
+
+etkl:FieldValueOracle a owl:NamedIndividual ;
+    rdfs:label "field value oracle"@en ;
+    rdfs:comment "The SHACL parameters that make a property shape a VALUE constraint, as opposed to a cardinality or a path. A contract field without an admissible scheme has an oracle for its value only if its property's shape carries one of these. Read by etkl:RoleFieldOracleShape, which requires such an oracle of every field that declares a role, and by the grounding code, which asks the same question of every field."@en ;
+    etkl:valueConstraintParameter sh:datatype , sh:in , sh:pattern ,
+        sh:minInclusive , sh:maxInclusive , sh:minExclusive , sh:maxExclusive ,
+        sh:minLength , sh:maxLength .
 
 etkl:RowKey a etkl:FieldRole ;
     rdfs:label "Row key"@en ;
