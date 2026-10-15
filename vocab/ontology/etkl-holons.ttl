@@ -112,6 +112,16 @@ etkl:refusingLeg a owl:DatatypeProperty ;
 #  Interaction properties
 #################################################################
 
+etkl:portalSource a owl:ObjectProperty ;
+    rdfs:label "portal source"@en ;
+    rdfs:domain etkl:GroundingPortal ; rdfs:range etkl:RawDocumentHolon ;
+    rdfs:comment "The RawDocumentHolon on the source side of this grounding portal."@en .
+
+etkl:portalTarget a owl:ObjectProperty ;
+    rdfs:label "portal target"@en ;
+    rdfs:domain etkl:GroundingPortal ; rdfs:range etkl:SemanticHolon ;
+    rdfs:comment "A SemanticHolon (provided ontology / terminology) on the target side of this grounding portal."@en .
+
 etkl:throughPortal a owl:ObjectProperty ;
     rdfs:label "through portal"@en ;
     rdfs:domain etkl:CleanDocumentHolon ; rdfs:range etkl:GroundingPortal ;

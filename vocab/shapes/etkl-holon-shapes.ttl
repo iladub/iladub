@@ -1,0 +1,48 @@
+# etkl-holon-shapes.ttl — the membrane of the Clean document holon (holon:06).
+#
+# Licence: CC-BY-4.0 (vocabulary / spec). Author: François Rosselet. © 2026.
+# Namespace: https://w3id.org/iladub/etkl
+#
+# Spec 2026-10-15-raw-to-clean-traversal-design § 3.5. Gate class (CLAUDE.md § 8): AXIOM,
+# CONSTRAINT — closed world, derives nothing. It validates what the grounding derivation
+# (vocab/queries/raw-to-clean-traversal.rq) built; it never infers a portal by absence.
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+etkl:holonShapesPrefixes
+    sh:declare [ sh:prefix "etkl" ; sh:namespace "https://w3id.org/iladub/etkl#"^^xsd:anyURI ] ,
+               [ sh:prefix "prov" ; sh:namespace "http://www.w3.org/ns/prov#"^^xsd:anyURI ] .
+
+etkl:CleanDocumentHolonShape a sh:NodeShape ;
+    sh:targetClass etkl:CleanDocumentHolon ;
+    sh:property [ sh:path etkl:throughPortal ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:class etkl:GroundingPortal ;
+        sh:message "A CleanDocumentHolon must be reached through exactly one GroundingPortal." ;
+        # Along etkl:throughPortal: the portal's own obligations (spec § 3.5).
+        sh:node [ a sh:NodeShape ;
+            sh:property [ sh:path etkl:portalSource ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:class etkl:RawDocumentHolon ;
+                sh:message "The portal of a CleanDocumentHolon must name exactly one RawDocumentHolon as its source." ] ;
+            sh:property [ sh:path etkl:portalTarget ; sh:minCount 1 ;
+                sh:class etkl:SemanticHolon ;
+                sh:message "The portal of a CleanDocumentHolon must name at least one SemanticHolon as its target." ] ;
+            sh:property [ sh:path etkl:reconciles ; sh:minCount 1 ;
+                sh:class iladub:SourceRegion ;
+                sh:message "The portal of a CleanDocumentHolon must reconcile at least one source region." ] ] ] ;
+    sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ;
+        sh:class etkl:RawDocumentHolon ;
+        sh:message "A CleanDocumentHolon must be derived from a RawDocumentHolon." ] ;
+    # sh:equals cannot span a path (it compares value sets of two paths from the SAME focus node),
+    # so "the portal's source is the holon this one was derived from" is a SPARQL constraint.
+    sh:sparql [ a sh:SPARQLConstraint ;
+        sh:prefixes etkl:holonShapesPrefixes ;
+        sh:message "The CleanDocumentHolon's portal source is not the holon it was derived from." ;
+        sh:select """
+            SELECT $this WHERE {
+              $this etkl:throughPortal ?portal .
+              ?portal etkl:portalSource ?src .
+              FILTER NOT EXISTS { $this prov:wasDerivedFrom ?src }
+            }""" ] .

@@ -1,0 +1,48 @@
+# vocab/queries/raw-to-clean-traversal.rq
+#
+# THE RAW→CLEAN TRAVERSAL (spec 2026-10-15-raw-to-clean-traversal-design § 3.3, criterion holon:06).
+#
+# Gate class (CLAUDE.md § 8): AXIOM, DERIVATION — open world, evidence-positive. It grows the graph
+# from promotions that are PRESENT: a source region is reconciled by the grounding portal only when
+# a `iladub:PromotionDecision` reviewed a candidate from that region AND `dec:produced` a
+# `iladub:GroundedNode`. A quarantined candidate has no decision (`ground.py::ground_concept`
+# returns "proposed" before `_emit_grounded` mints one), so its region matches nothing here.
+#
+# EVIDENCE-POSITIVE BY CONSTRUCTION. Every triple below, the portal's and the Clean holon's
+# included, is instantiated from a solution of the ONE promotion pattern in WHERE. Zero promotions
+# in scope ⇒ zero solutions ⇒ zero triples: no portal and no Clean holon is derived from absence.
+# There is no NOT EXISTS and no COUNT; the query closes over nothing.
+#
+# SCOPE is not this query's business: the caller runs it over the triples ONE `ground_document`
+# call produced (spec § 3.3 "Invariant (scope)"; `feed.py::_derive_traversal`), never over a
+# caller's accumulated graph.
+#
+# BINDINGS, supplied by the caller as data (`initBindings`): ?raw, the Raw document holon's IRI,
+# and ?sem, ONE Semantic holon's IRI. Several Semantic holons are several executions; their
+# triples merge on the portal IRI, which is minted from ?raw alone (spec § 3.3: `#grounding-portal`,
+# `#clean`), so the executions converge on one portal with one `portalTarget` per Semantic holon.
+PREFIX iladub: <https://w3id.org/iladub#>
+PREFIX etkl:   <https://w3id.org/iladub/etkl#>
+PREFIX dec:    <https://w3id.org/iladub/dec#>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+  ?raw    a etkl:RawDocumentHolon .
+  ?sem    a etkl:SemanticHolon .
+  ?portal a etkl:GroundingPortal ;
+          etkl:portalSource ?raw ;
+          etkl:portalTarget ?sem ;
+          etkl:reconciles   ?region .
+  ?clean  a etkl:CleanDocumentHolon ;
+          etkl:throughPortal   ?portal ;
+          prov:wasDerivedFrom  ?raw .
+}
+WHERE {
+  ?decision a iladub:PromotionDecision ;
+            iladub:reviews ?candidate ;
+            dec:produced   ?grounded .
+  ?grounded a iladub:GroundedNode .
+  ?candidate iladub:fromRegion ?region .
+  BIND (IRI(CONCAT(STR(?raw), "#grounding-portal")) AS ?portal)
+  BIND (IRI(CONCAT(STR(?raw), "#clean"))            AS ?clean)
+}

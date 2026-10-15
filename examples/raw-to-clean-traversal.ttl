@@ -1,0 +1,246 @@
+@prefix dec: <https://w3id.org/iladub/dec#> .
+@prefix etkl: <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tx: <https://example.org/transplant#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/demo/offer-table#clean> a etkl:CleanDocumentHolon ;
+    prov:wasDerivedFrom <https://example.org/demo/offer-table> ;
+    etkl:throughPortal <https://example.org/demo/offer-table#grounding-portal> .
+
+<urn:iladub:record:p0_table0-r1> a tx:OrganOffer ;
+    tx:aboGroup "O"^^xsd:string ;
+    tx:ejectionFraction 60.0 ;
+    tx:organ "Heart" .
+
+<urn:iladub:record:p0_table0-r2> a tx:OrganOffer ;
+    tx:aboGroup "A"^^xsd:string ;
+    tx:ejectionFraction 55.0 ;
+    tx:organ "Liver" .
+
+<https://example.org/demo/offer-table#grounding-portal> a etkl:GroundingPortal ;
+    etkl:portalSource <https://example.org/demo/offer-table> ;
+    etkl:portalTarget <https://example.org/demo/transplant-terms> ;
+    etkl:reconciles <urn:iladub:region:p0-200-109>,
+        <urn:iladub:region:p0-200-127>,
+        <urn:iladub:region:p0-320-109>,
+        <urn:iladub:region:p0-320-127>,
+        <urn:iladub:region:p0-72-109>,
+        <urn:iladub:region:p0-72-127> .
+
+<https://example.org/demo/transplant-terms> a etkl:SemanticHolon .
+
+<urn:iladub:region:p0-440-109> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-440-127> a iladub:SourceRegion .
+
+<https://example.org/demo/offer-table> a etkl:RawDocumentHolon .
+
+<urn:iladub:region:p0-200-109> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-200-127> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-320-109> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-320-127> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-72-109> a iladub:SourceRegion .
+
+<urn:iladub:region:p0-72-127> a iladub:SourceRegion .
+
+<urn:iladub:suggester/no-admissible-field-rule> a iladub:Suggester .
+
+<urn:iladub:suggester/exact-match-rule> a iladub:Suggester .
+
+<urn:iladub:suggester/fake> a iladub:Suggester .
+
+[] a iladub:CandidateConcept ;
+    rdfs:label "COD" ;
+    iladub:confidence 1.0 ;
+    iladub:fromRegion <urn:iladub:region:p0-440-109> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor <https://w3id.org/semanticarts/ns/ontology/gist/Category> ;
+    iladub:suggestedBy <urn:iladub:suggester/no-admissible-field-rule> ;
+    iladub:surfaceText "MVA" .
+
+[] a iladub:CandidateConcept ;
+    rdfs:label "COD" ;
+    iladub:confidence 1.0 ;
+    iladub:fromRegion <urn:iladub:region:p0-440-127> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor <https://w3id.org/semanticarts/ns/ontology/gist/Category> ;
+    iladub:suggestedBy <urn:iladub:suggester/no-admissible-field-rule> ;
+    iladub:surfaceText "CVA" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b10 a iladub:GroundedNode ;
+    iladub:groundsTo tx:abo-O ;
+    iladub:status iladub:asserted ;
+    iladub:wasPromotedBy [ a iladub:PromotionDecision ;
+            iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b12 ;
+            dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b13 ;
+            dec:confidence 0.8 ;
+            dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b12 ;
+            dec:decidedBy <urn:iladub:suggester/fake> ;
+            dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b13,
+                [ a dec:Option ;
+                    rdfs:label "quarantine as a proposition" ;
+                    dec:rejectedBecause "'O' is a member of the admissible scheme https://example.org/transplant#scheme-abo; quarantine is the branch for a value no concept in that scheme carries as a prefLabel" ] ;
+            dec:produced _:nadbef5e4a096462cb03b2eedfe92a1a0b10 ;
+            dec:rationale "abo" ] .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b15 a iladub:PromotionDecision ;
+    iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b16 ;
+    dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b17 ;
+    dec:confidence 0.8 ;
+    dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b16 ;
+    dec:decidedBy <urn:iladub:suggester/fake> ;
+    dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b17,
+        [ a dec:Option ;
+            rdfs:label "quarantine as a proposition" ;
+            dec:rejectedBecause "'A' is a member of the admissible scheme https://example.org/transplant#scheme-abo; quarantine is the branch for a value no concept in that scheme carries as a prefLabel" ] ;
+    dec:produced [ a iladub:GroundedNode ;
+            iladub:groundsTo tx:abo-A ;
+            iladub:status iladub:asserted ;
+            iladub:wasPromotedBy _:nadbef5e4a096462cb03b2eedfe92a1a0b15 ] ;
+    dec:rationale "abo" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b19 a dec:Option ;
+    rdfs:label "quarantine as a proposition" ;
+    dec:rejectedBecause "'Heart' is a member of the admissible scheme https://example.org/transplant#scheme-organ; quarantine is the branch for a value no concept in that scheme carries as a prefLabel" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b20 a iladub:PromotionDecision ;
+    iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b21 ;
+    dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b22 ;
+    dec:confidence 0.9 ;
+    dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b21 ;
+    dec:decidedBy <urn:iladub:suggester/fake> ;
+    dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b22,
+        [ a dec:Option ;
+            rdfs:label "quarantine as a proposition" ;
+            dec:rejectedBecause "'55' conforms to the contract's SHACL value constraint on https://example.org/transplant#ejectionFraction; quarantine is the branch for a value the membrane refuses" ] ;
+    dec:produced [ a iladub:GroundedNode ;
+            iladub:groundsTo tx:ejectionFraction ;
+            iladub:status iladub:asserted ;
+            iladub:wasPromotedBy _:nadbef5e4a096462cb03b2eedfe92a1a0b20 ] ;
+    dec:rationale "ef [grounded via SHACL value-constraint admissibility, weaker than scheme-identity]" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b25 a iladub:GroundedNode ;
+    iladub:groundsTo tx:ejectionFraction ;
+    iladub:status iladub:asserted ;
+    iladub:wasPromotedBy [ a iladub:PromotionDecision ;
+            iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b27 ;
+            dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b28 ;
+            dec:confidence 0.9 ;
+            dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b27 ;
+            dec:decidedBy <urn:iladub:suggester/fake> ;
+            dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b28,
+                [ a dec:Option ;
+                    rdfs:label "quarantine as a proposition" ;
+                    dec:rejectedBecause "'60' conforms to the contract's SHACL value constraint on https://example.org/transplant#ejectionFraction; quarantine is the branch for a value the membrane refuses" ] ;
+            dec:produced _:nadbef5e4a096462cb03b2eedfe92a1a0b25 ;
+            dec:rationale "ef [grounded via SHACL value-constraint admissibility, weaker than scheme-identity]" ] .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b29 a iladub:PromotionDecision ;
+    iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b30 ;
+    dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b31 ;
+    dec:confidence 1.0 ;
+    dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b30 ;
+    dec:decidedBy <urn:iladub:suggester/exact-match-rule> ;
+    dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b19,
+        _:nadbef5e4a096462cb03b2eedfe92a1a0b31 ;
+    dec:produced [ a iladub:GroundedNode ;
+            iladub:groundsTo tx:organ-heart ;
+            iladub:status iladub:asserted ;
+            iladub:wasPromotedBy _:nadbef5e4a096462cb03b2eedfe92a1a0b29 ] ;
+    dec:rationale "Exact contract-field match." .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b3 a iladub:PromotionDecision ;
+    iladub:reviews _:nadbef5e4a096462cb03b2eedfe92a1a0b4 ;
+    dec:chosen _:nadbef5e4a096462cb03b2eedfe92a1a0b5 ;
+    dec:confidence 1.0 ;
+    dec:consideredEvidence _:nadbef5e4a096462cb03b2eedfe92a1a0b4 ;
+    dec:decidedBy <urn:iladub:suggester/exact-match-rule> ;
+    dec:optionSpace _:nadbef5e4a096462cb03b2eedfe92a1a0b5,
+        [ a dec:Option ;
+            rdfs:label "quarantine as a proposition" ;
+            dec:rejectedBecause "'Liver' is a member of the admissible scheme https://example.org/transplant#scheme-organ; quarantine is the branch for a value no concept in that scheme carries as a prefLabel" ] ;
+    dec:produced [ a iladub:GroundedNode ;
+            iladub:groundsTo tx:organ-liver ;
+            iladub:status iladub:asserted ;
+            iladub:wasPromotedBy _:nadbef5e4a096462cb03b2eedfe92a1a0b3 ] ;
+    dec:rationale "Exact contract-field match." .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b12 a iladub:CandidateConcept ;
+    rdfs:label "ABO" ;
+    iladub:confidence 0.8 ;
+    iladub:fromRegion <urn:iladub:region:p0-320-109> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor tx:Category ;
+    iladub:suggestedBy <urn:iladub:suggester/fake> ;
+    iladub:surfaceText "O" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b13 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#abo-O" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b16 a iladub:CandidateConcept ;
+    rdfs:label "ABO" ;
+    iladub:confidence 0.8 ;
+    iladub:fromRegion <urn:iladub:region:p0-320-127> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor tx:Category ;
+    iladub:suggestedBy <urn:iladub:suggester/fake> ;
+    iladub:surfaceText "A" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b17 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#abo-A" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b21 a iladub:CandidateConcept ;
+    rdfs:label "LVEF" ;
+    iladub:confidence 0.9 ;
+    iladub:fromRegion <urn:iladub:region:p0-200-127> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor tx:Magnitude ;
+    iladub:suggestedBy <urn:iladub:suggester/fake> ;
+    iladub:surfaceText "55" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b22 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#ejectionFraction" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b27 a iladub:CandidateConcept ;
+    rdfs:label "LVEF" ;
+    iladub:confidence 0.9 ;
+    iladub:fromRegion <urn:iladub:region:p0-200-109> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor tx:Magnitude ;
+    iladub:suggestedBy <urn:iladub:suggester/fake> ;
+    iladub:surfaceText "60" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b28 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#ejectionFraction" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b30 a iladub:CandidateConcept ;
+    rdfs:label "Organ" ;
+    iladub:confidence 1.0 ;
+    iladub:fromRegion <urn:iladub:region:p0-72-109> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor <https://w3id.org/semanticarts/ns/ontology/gist/Category> ;
+    iladub:suggestedBy <urn:iladub:suggester/exact-match-rule> ;
+    iladub:surfaceText "Heart" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b31 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#organ-heart" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b4 a iladub:CandidateConcept ;
+    rdfs:label "Organ" ;
+    iladub:confidence 1.0 ;
+    iladub:fromRegion <urn:iladub:region:p0-72-127> ;
+    iladub:status iladub:proposed ;
+    iladub:suggestedAnchor <https://w3id.org/semanticarts/ns/ontology/gist/Category> ;
+    iladub:suggestedBy <urn:iladub:suggester/exact-match-rule> ;
+    iladub:surfaceText "Liver" .
+
+_:nadbef5e4a096462cb03b2eedfe92a1a0b5 a dec:Option ;
+    rdfs:label "ground to https://example.org/transplant#organ-liver" .
+

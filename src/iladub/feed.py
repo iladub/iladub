@@ -25,6 +25,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, replace as _replace
+from pathlib import Path
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
@@ -885,6 +886,44 @@ class FeedResult:
     proposed: int
 
 
+@dataclass(frozen=True)
+class Traversal:
+    """The caller-supplied identities of the raw→clean traversal (spec 2026-10-15 § 3.4).
+
+    The Raw and Semantic holon IRIs are the caller's because no evidence in the graph names them
+    (spec § 1 items 3-4, § 3.6 last row). Both refusals are producer-side guards (CLAUDE.md
+    § Producer-side guards): an empty `semantic` would derive a portal with no `portalTarget`, and
+    a `raw` already carrying a fragment would mint `…#x#clean`, which is not an IRI — each would
+    otherwise surface far from this call site, at the membrane or at serialisation."""
+    raw: URIRef
+    semantic: tuple[URIRef, ...]
+
+    def __post_init__(self):
+        if not self.semantic:
+            raise ValueError("Traversal.semantic must name at least one Semantic holon")
+        if "#" in str(self.raw):
+            raise ValueError(f"Traversal.raw must carry no fragment, got {self.raw}: the portal "
+                             f"and Clean holon IRIs are minted as fragments of it")
+
+
+def _derive_traversal(scope, traversal: Traversal) -> Graph:
+    """Run `raw-to-clean-traversal.rq` over `scope` — the triples ONE `ground_document` call
+    produced — once per Semantic holon, and return the union of what it constructs.
+
+    CLAUDE.md § 8: PROCEDURAL engine glue, like `etkl/membrane.py`. Every decision — which region
+    is reconciled, whether a portal and Clean holon exist at all — is the query's (spec § 3.6).
+    Irreducible: a query must be invoked from somewhere, and the invocation decides nothing. One
+    execution per Semantic IRI because `initBindings` binds one value per variable; the portal
+    IRI is minted from ?raw alone, so the executions' triples land on one portal."""
+    from .etkl.compile import _repo_vocab       # the walk-up locator, as _build_ground_membrane
+    q = Path(_repo_vocab(), "queries", "raw-to-clean-traversal.rq").read_text()
+    out = Graph()
+    for sem in traversal.semantic:
+        out += scope.query(q, initBindings={"raw": URIRef(str(traversal.raw)),
+                                            "sem": URIRef(str(sem))}).graph
+    return out
+
+
 _GROUND_SHAPES = None
 _GROUND_ONT = None
 
@@ -893,7 +932,7 @@ _GROUND_ONT = None
 # `dec-shapes.ttl` is what makes that decision accountable rather than a bare link. The
 # ontology carries `iladub:PromotionDecision rdfs:subClassOf dec:DecisionHolon`, without which
 # the dec shapes target nothing.
-_GROUND_SHAPE_FILES = ("iladub-shapes.ttl", "dec-shapes.ttl")
+_GROUND_SHAPE_FILES = ("iladub-shapes.ttl", "dec-shapes.ttl", "etkl-holon-shapes.ttl")
 _GROUND_ONT_FILES = ("iladub.ttl", "dec.ttl")
 
 
@@ -926,7 +965,8 @@ def _validate_grounding(g) -> tuple[bool, str]:
 
 
 def ground_document(graph, contract, proposer, terms, shapes, g,
-                    validate_shapes: bool = False) -> FeedResult:
+                    validate_shapes: bool = False, *,
+                    traversal: Traversal | None = None) -> FeedResult:
     """Ground a compiled document's record tables against a contract: one subject per row, each
     cell grounded via the shipped ground_concept oracle (unchanged). Populates `g` with grounded
     nodes + promotion decisions + propositions; returns the grounded/proposed tally.
@@ -938,6 +978,9 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     `AssertionError` with the report rather than handing back a graph that violates the
     promotion invariant. It defaults to False so every existing positional call site is
     unchanged; the corpus battery and the contracted paths pass it explicitly.
+
+    `traversal`, when given, also derives this call's GroundingPortal and CleanDocumentHolon
+    (spec 2026-10-15 § 3.4) into `g`, before the membrane runs. `None` runs no query.
     """
     from .ground import ROLE_CELL_VALUE, ground_concept, require_role_oracles
 
@@ -964,15 +1007,28 @@ def ground_document(graph, contract, proposer, terms, shapes, g,
     context = _page_context(graph)
     grounded = proposed = 0
     admissible_memo = {}            # [[R249]]: valid for this call's fixed contract/terms/shapes
+    # THE TRAVERSAL'S SCOPE (spec 2026-10-15 § 3.3 "Invariant (scope)"): only THIS call's records.
+    # With a traversal the call grounds into a fresh graph, merged into `g` afterwards. Sound
+    # because `g` is WRITE-ONLY on the grounding path: `ground_concept` touches it only through
+    # `_emit_candidate` and `_emit_grounded`, and both only `g.add` (measured 2026-10-15, task-2
+    # report seam 1). Not a before/after set difference over `g`: that holds this call's
+    # promotions today only because `_emit_candidate`/`_emit_grounded` mint FRESH BNodes per call,
+    # so scope would silently ride on an identity choice made for other reasons, and it costs a
+    # copy of all of `g`. The fresh graph IS this call's output, whatever its node identities.
+    out = Graph() if traversal is not None else g
     for rec in records:
         subject = _record_uri(rec.row_id)
         for concept in rec.concepts:
-            status = ground_concept(concept, contract, subject, proposer, terms, shapes, g,
+            status = ground_concept(concept, contract, subject, proposer, terms, shapes, out,
                                     page_context=context, admissible_memo=admissible_memo)
             if status == "grounded":
                 grounded += 1
             else:
                 proposed += 1
+    if traversal is not None:
+        derived = _derive_traversal(out, traversal)
+        g += out
+        g += derived                # before the membrane, so validate_shapes checks it (§ 3.4)
     if validate_shapes:
         conforms, report = _validate_grounding(g)
         assert conforms, f"grounded graph violates the promotion membrane:\n{report}"

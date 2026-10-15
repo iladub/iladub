@@ -1,0 +1,24 @@
+# Negative fixture for etkl:CleanDocumentHolonShape (holon:06 spec § 5 item 2).
+# Licence: CC-BY-4.0. Author: François Rosselet. © 2026.
+# Two Clean holons, each wrong in exactly one way; everything else is well-formed.
+@prefix etkl:   <https://w3id.org/iladub/etkl#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+
+# 1. No etkl:throughPortal.
+<https://example.org/leak/no-portal#raw>   a etkl:RawDocumentHolon .
+<https://example.org/leak/no-portal#clean> a etkl:CleanDocumentHolon ;
+    prov:wasDerivedFrom <https://example.org/leak/no-portal#raw> .
+
+# 2. The portal's source is not the holon the Clean one was derived from.
+<https://example.org/leak/wrong-source#raw>   a etkl:RawDocumentHolon .
+<https://example.org/leak/wrong-source#other> a etkl:RawDocumentHolon .
+<https://example.org/leak/wrong-source#sem>   a etkl:SemanticHolon .
+<https://example.org/leak/wrong-source#region> a iladub:SourceRegion .
+<https://example.org/leak/wrong-source#portal> a etkl:GroundingPortal ;
+    etkl:portalSource <https://example.org/leak/wrong-source#other> ;
+    etkl:portalTarget <https://example.org/leak/wrong-source#sem> ;
+    etkl:reconciles   <https://example.org/leak/wrong-source#region> .
+<https://example.org/leak/wrong-source#clean> a etkl:CleanDocumentHolon ;
+    etkl:throughPortal  <https://example.org/leak/wrong-source#portal> ;
+    prov:wasDerivedFrom <https://example.org/leak/wrong-source#raw> .

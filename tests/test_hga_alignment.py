@@ -88,3 +88,58 @@ def test_dec_provenance_axioms_present():
     assert (DEC.consideredEvidence, RDFS.subPropertyOf, PROV.used) in g
     assert (DEC.decidedBy, RDFS.subPropertyOf, PROV.wasAssociatedWith) in g
     assert (DEC.produced, RDFS.subPropertyOf, PROV.generated) in g
+
+
+def test_portal_property_alignment():
+    """spec § 3.2: source aligns by subPropertyOf (both object properties); target only by
+    seeAlso, because holon:portalTarget is a DatatypeProperty over xsd:anyURI."""
+    from rdflib import OWL, RDF
+    g = _g(os.path.join(ONT, "iladub-hga-align.ttl"))
+    src, tgt = URIRef(ETKL + "portalSource"), URIRef(ETKL + "portalTarget")
+    assert (src, RDFS.subPropertyOf, URIRef(HOLON + "sourceHolon")) in g
+    assert (tgt, RDFS.seeAlso, URIRef(HOLON + "portalTarget")) in g
+    assert (tgt, RDFS.subPropertyOf, URIRef(HOLON + "portalTarget")) not in g
+    h = _g(os.path.join(ONT, "etkl-holons.ttl"))
+    for p, rng in ((src, "RawDocumentHolon"), (tgt, "SemanticHolon")):
+        assert (p, RDF.type, OWL.ObjectProperty) in h
+        assert (p, RDFS.domain, URIRef(ETKL + "GroundingPortal")) in h
+        assert (p, RDFS.range, URIRef(ETKL + rng)) in h
+
+
+TRAVERSAL_SHAPES = [os.path.join(SH, f) for f in
+                    ("iladub-shapes.ttl", "dec-shapes.ttl", "etkl-holon-shapes.ttl",
+                     "iladub-hga-shapes.ttl")]
+TRAVERSAL_ONTS = ONTS + [os.path.join(ONT, "dec.ttl")]
+TRAVERSAL_EX = os.path.join(EX, "raw-to-clean-traversal.ttl")
+
+
+def test_raw_to_clean_traversal_conformant():
+    """holon:06's oracle (tests/arc-manifest.ttl): the compiler-produced example conforms and
+    spans Raw → portal → Clean (spec § 5 item 1)."""
+    from rdflib import RDF
+    c, t = _v([TRAVERSAL_EX], TRAVERSAL_SHAPES, TRAVERSAL_ONTS)
+    assert c, t
+    g = _g(TRAVERSAL_EX)
+    count = lambda cls: len(set(g.subjects(RDF.type, URIRef(ETKL + cls))))
+    assert (count("CleanDocumentHolon"), count("GroundingPortal"),
+            count("RawDocumentHolon")) == (1, 1, 1)
+    assert count("SemanticHolon") >= 1
+    clean, portal, raw = (next(iter(g.subjects(RDF.type, URIRef(ETKL + k)))) for k in
+                          ("CleanDocumentHolon", "GroundingPortal", "RawDocumentHolon"))
+    assert (clean, URIRef(ETKL + "throughPortal"), portal) in g
+    assert (portal, URIRef(ETKL + "portalSource"), raw) in g
+
+
+def test_raw_to_clean_example_is_what_the_compiler_emits():
+    """spec § 4: regenerate and compare by graph isomorphism (decisions are blank nodes)."""
+    import importlib.util
+    import pytest
+    from rdflib.compare import isomorphic
+    pytest.importorskip("pdfplumber")
+    pytest.importorskip("reportlab")
+    spec = importlib.util.spec_from_file_location(
+        "raw_to_clean_example", os.path.join(ROOT, "scripts", "raw_to_clean_example.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert isomorphic(mod.build(), _g(TRAVERSAL_EX)), \
+        "examples/raw-to-clean-traversal.ttl is stale: run scripts/raw_to_clean_example.py"
