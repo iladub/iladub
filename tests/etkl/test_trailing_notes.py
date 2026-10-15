@@ -100,7 +100,7 @@ def test_bfs_p5_year_rows_are_cut_from_their_notes_r291():
 def test_tessin_is_read_and_its_notes_are_not():
     from iladub.etkl.compile import compile_tables
     regions = compile_tables(BFS, page_number=6, validate_shapes=True).regions
-    first = lambda r: ((r.ascii or "").strip().splitlines() or [""])[0].split()[:1]
+    first = lambda r: ((r.text or "").strip().splitlines() or [""])[0].split()[:1]
     tessin = [r for r in regions if first(r) == ["Tessin"]]
     assert len(tessin) == 1
     assert tessin[0].verdict == "asserted" and tessin[0].cells == 9
@@ -115,5 +115,5 @@ def test_FALSIFICATION_without_the_cut_tessin_is_not_read(monkeypatch):
     from iladub.etkl.compile import compile_tables
     monkeypatch.setattr(trailing, "cut_trailing_notes", lambda subs, pdf, pg: list(subs))
     regions = compile_tables(BFS, page_number=6, validate_shapes=True).regions
-    assert not any(r.verdict == "asserted" and (r.ascii or "").lstrip().startswith("Tessin")
+    assert not any(r.verdict == "asserted" and (r.text or "").lstrip().startswith("Tessin")
                    for r in regions)

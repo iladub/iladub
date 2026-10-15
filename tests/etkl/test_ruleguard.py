@@ -253,7 +253,7 @@ def test_the_guard_withdraws_refuses_escalates_and_moves_the_tokens():
     assert (r.verdict, r.reason, r.cells, r.table_uri) == ("escalated", "RULE_SEPARATED_INK",
                                                            0, None)
     assert (r.tokens_asserted, r.tokens_escalated) == (0, 5)
-    assert (r.kind, r.anchor, r.ascii, r.line_indices) == (rep.kind, rep.anchor, rep.ascii,
+    assert (r.kind, r.anchor, r.text, r.line_indices) == (rep.kind, rep.anchor, rep.text,
                                                            rep.line_indices)
     assert (a, e) == (0, 7)
     assert (REGION0, RDF.type, ILADUB.CandidateConcept) in g

@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.skipif(not os.path.exists(BFS), reason="corpus not fet
 
 
 def _first(report):
-    lines = (report.ascii or "").strip().splitlines()
+    lines = (report.text or "").strip().splitlines()
     return lines[0].split()[0] if lines else ""
 
 

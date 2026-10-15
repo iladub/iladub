@@ -136,7 +136,8 @@ def render_region_ascii(region, width: int = 80) -> str:
 
 def render_ascii(band: Band, width: int = 80) -> str:
     """Render the band's words to a monospace canvas positioned by x, so a human
-    (and a diff) can see the measured layout. Used as escalation surface text."""
+    (and a diff) can see the measured layout. A diagnostic only: colliding words overwrite
+    each other and long lines are clipped, so it is never escalation surface text (R318)."""
     words = [w for ln in band.lines for w in ln.words]
     if not words:
         return ""

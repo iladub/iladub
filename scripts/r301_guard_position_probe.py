@@ -46,7 +46,7 @@ def hook(pos, g, reports, A, E, doc, page, pdf):
         i = idx[0]; r = reports[i]
         sub = closure(g, t)
         g -= sub
-        escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.ascii or "(grid rows)",
+        escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.text or "(grid rows)",
                         "RULE_SEPARATED_INK", URIRef(r.anchor) if r.anchor else TAB.DataGrid, 0.0, page)
         reports[i] = replace(r, verdict="escalated", reason="RULE_SEPARATED_INK", cells=0, table_uri=None,
                              tokens_asserted=0, tokens_escalated=r.tokens_escalated + r.tokens_asserted)

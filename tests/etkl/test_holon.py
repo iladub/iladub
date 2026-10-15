@@ -54,7 +54,7 @@ def test_asserted_entry_has_text_and_bbox(tmp_path):
 def test_escalate_produces_candidate():
     g = Graph()
     escalate_region(g, URIRef("urn:reg"), URIRef("urn:doc"),
-                    ascii_text="Current Visit  Prior Visit",
+                    surface_text="Current Visit  Prior Visit",
                     reason="KIND_NOT_SUPPORTED", anchor=TAB.HierarchicalTable,
                     confidence=0.4, page=0)
     assert (URIRef("urn:reg"), RDF.type, ILADUB.CandidateConcept) in g

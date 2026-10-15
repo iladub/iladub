@@ -152,7 +152,7 @@ for i, pg in enumerate(rep.pages):
         regions.append({"page_idx": i, "kind": str(r.kind), "verdict": r.verdict, "cells": r.cells,
                         "reason": r.reason, "anchor": r.anchor,
                         "table_uri": str(getattr(r, "table_uri", None)),
-                        "ascii0": (r.ascii or "").splitlines()[:1]})
+                        "ascii0": (r.text or "").splitlines()[:1]})
 alltables = sorted({str(t) for t in G.subjects(TAB.hasCell, None)})
 json.dump({"baseline": BASELINE, "score": rep.score, "tables": tables, "log": LOG,
            "regions": regions, "alltables": alltables,

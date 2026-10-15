@@ -53,7 +53,7 @@ def guarded(pdf, page_number=0, **kw):
         nodes = set(sub.subjects())
         inbound = [(s, p) for n in nodes for s, p in g.subject_predicates(n) if s not in nodes]
         g -= sub
-        escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.ascii or "(grid rows)",
+        escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.text or "(grid rows)",
                         "RULE_SEPARATED_INK", URIRef(r.anchor) if r.anchor else TAB.DataGrid, 0.0, page_number)
         regions[i] = replace(r, verdict="escalated", reason="RULE_SEPARATED_INK", cells=0, table_uri=None,
                              tokens_asserted=0, tokens_escalated=r.tokens_escalated + r.tokens_asserted)

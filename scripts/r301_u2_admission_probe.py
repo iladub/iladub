@@ -101,7 +101,7 @@ def validate(tag, gg):
 validate("withdrawn, no escalation", g)
 i = gi[0]
 r = rep.regions[i]
-escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.ascii or "(grid rows)", "RULE_SEPARATED_INK",
+escalate_region(g, URIRef(f"{doc}#region{i}"), doc, r.text or "(grid rows)", "RULE_SEPARATED_INK",
                 TAB.DataGrid, 0.0, PAGE)
 validate("withdrawn + escalate_region(region%d)" % i, g)
 print(f"\ntotal {time.time()-t0:.0f}s")

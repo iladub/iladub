@@ -19,8 +19,7 @@ universe=UniformGrid`; `datagrid_fallback=True` -> 10 regions = 9 bands + 1 appe
 """
 from __future__ import annotations
 
-from iladub.etkl import roundtrip
-from iladub.etkl.bands import Band
+from iladub.etkl.bands import Band, band_text
 from iladub.etkl.compile import compile_tables
 from iladub.etkl.datagrid import derive_data_grids
 from iladub.etkl.geometry import extract_words, text_lines
@@ -66,12 +65,12 @@ def test_appended_region_carries_its_lines_and_its_text(tmp_path):
     # _lines — the join Task 2's build_ledger needs.
     assert appended.line_indices == grid.rows
 
-    # Its ascii is render_ascii over exactly those lines (render_ascii reads only
-    # band.lines — roundtrip.py:137-150 — so top/bottom are immaterial to this comparison).
-    expected_ascii = roundtrip.render_ascii(
+    # Its text is band_text over exactly those lines (R318: the field was `ascii`, a positional
+    # render; band_text reads only band.lines, so top/bottom are immaterial to this comparison).
+    expected_text = band_text(
         Band(lines=tuple(lines[i] for i in grid.rows), top=0.0, bottom=0.0))
-    assert appended.ascii != ""
-    assert appended.ascii == expected_ascii
+    assert appended.text != ""
+    assert appended.text == expected_text
 
     # Every band report (never an appended one) carries the untouched default.
     for r in band_reports:
