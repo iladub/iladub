@@ -2,6 +2,8 @@
 
 **Serves:** prog:criterion:holon:06 — the raw→clean traversal, compiler-produced.
 
+**Topic:** the holon fabric · **Date:** 2026-10-15 · **Branch:** `holon-06-traversal`, on `main` at `e01384c`.
+
 **Doc impact: none.** A handoff; the spec it points at carries the increment.
 
 Written at ~63K working tokens, over the 50K originating floor, which is why the plan is not in
