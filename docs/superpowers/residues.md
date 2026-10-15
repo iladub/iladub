@@ -489,3 +489,5 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R318 | closed | **An escalated region's `surfaceText` was a lossy 80-column layout render.** Closed 2026-10-15: every `escalate_region` site carries `band_text`; sha moved on exactly the 5 predicted documents. See [[R44]] |
 | R319 | open | **An escalation books Word objects, not words** — a ruled band under-counts (bfs p6r11: 3 for 38). See [[R318]] |
 | R320 | open | **Extractor drops interword spaces on arxiv and shatters rotated text** — upstream of `band_text`. See [[R318]] |
+| R321 | open | **No oracle disposes an escalated band's role from extracted text**, so no role worker yet; two oracle candidates refuted with a control. See [[R259]] |
+| R322 | open | **fed-h41 p6's data table never compiles**; its body rows escalate as REGION_TILING_FAILED, and p1's totals row is cut off from `htable2`. See [[R321]] |
