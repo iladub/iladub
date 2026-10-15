@@ -11,8 +11,8 @@ this session. Part 5 was written first.
 
 1. **ASSERTED: write the implementation plan** for
    `docs/superpowers/specs/2026-10-15-raw-to-clean-traversal-design.md` (approved by the maintainer,
-   2026-10-15, in session), via `superpowers:writing-plans`, in a fresh session on branch
-   `holon-06-traversal`. The spec is the contract; the plan cites it and does not re-derive it
+   2026-10-15, in session), via `superpowers:writing-plans`, in a fresh session on a new
+   branch from `main` (the spec and this handoff merge first). The spec is the contract; the plan cites it and does not re-derive it
    (CLAUDE.md plan rule 6).
 2. **PROPOSED, and run before the plan fixes the query's input — minutes to refute:** spec § 3.3's
    scope seam. Grep every `ground_document(` call site for a `g` that is non-empty on entry
