@@ -1674,7 +1674,8 @@ prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:04 .
    rdf:object    prog:criterion:holon:04 ;
    prog:dependencyRationale "reading: dec:16's 'ships a worked example that conforms AND a negative test that must fail' is satisfied by exactly the two files holon:04 declares — examples/holon-grounding-conformant.ttl and tests/holon-grounding-leak.ttl. Ungroundable: fails A3 (both oracle tests shared) and A6 (both example files shared)." .
 
-# The ONE unmet holon criterion left in this block is stated in vocabulary etkl-holons.ttl
+# [Corrected 2026-10-15: holon:06 is now met, so no holon criterion is left unmet in this block.]
+# It WAS the ONE unmet holon criterion left in this block, stated in vocabulary etkl-holons.ttl
 # declares. MEASURED at vocab/ontology/etkl-holons.ttl:47,62,67 — DocumentHolon,
 # CleanDocumentHolon and GroundingPortal are all there.
 #
