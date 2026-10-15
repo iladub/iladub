@@ -25,6 +25,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, replace as _replace
+from pathlib import Path
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
@@ -915,7 +916,7 @@ def _derive_traversal(scope, traversal: Traversal) -> Graph:
     execution per Semantic IRI because `initBindings` binds one value per variable; the portal
     IRI is minted from ?raw alone, so the executions' triples land on one portal."""
     from .etkl.compile import _repo_vocab       # the walk-up locator, as _build_ground_membrane
-    q = open(os.path.join(_repo_vocab(), "queries", "raw-to-clean-traversal.rq")).read()
+    q = Path(_repo_vocab(), "queries", "raw-to-clean-traversal.rq").read_text()
     out = Graph()
     for sem in traversal.semantic:
         out += scope.query(q, initBindings={"raw": URIRef(str(traversal.raw)),

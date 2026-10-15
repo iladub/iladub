@@ -21,11 +21,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = URIRef("https://example.org/demo/offer-table")
 SEMANTIC = URIRef("https://example.org/demo/transplant-terms")
 OUT = os.path.join(ROOT, "examples", "raw-to-clean-traversal.ttl")
+PREFIXES = {"iladub": "https://w3id.org/iladub#", "etkl": "https://w3id.org/iladub/etkl#",
+            "dec": "https://w3id.org/iladub/dec#", "prov": "http://www.w3.org/ns/prov#",
+            "tx": "https://example.org/transplant#"}
 
 
 def build() -> Graph:
     """The grounding graph of spec § 4 (decisions are blank nodes; compare by isomorphism)."""
-    if ROOT not in sys.path:
+    added = ROOT not in sys.path
+    if added:
         sys.path.insert(0, ROOT)
     cwd = os.getcwd()
     os.chdir(ROOT)  # the fixture helpers load their inputs by repo-relative path
@@ -38,10 +42,15 @@ def build() -> Graph:
                         validate_shapes=True, traversal=Traversal(RAW, (SEMANTIC,)))
     finally:
         os.chdir(cwd)
+        if added:
+            sys.path.remove(ROOT)
     # Return the graph AS THE FILE READS IT BACK: Turtle writes xsd:decimal 55 as `55.0`, and
     # isomorphism compares lexical forms, so the in-memory graph would never equal its own file.
     # Measured 2026-10-15: the only difference is the two ejectionFraction lexicals (55 vs 55.0).
-    return Graph().parse(data=g.serialize(format="turtle"), format="turtle")
+    out = Graph().parse(data=g.serialize(format="turtle"), format="turtle")
+    for prefix, ns in PREFIXES.items():        # readable prefixes; isomorphism ignores them
+        out.bind(prefix, ns)
+    return out
 
 
 if __name__ == "__main__":

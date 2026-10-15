@@ -79,11 +79,15 @@ def test_preseeded_graph_regions_not_reconciled():
     g = Graph()
     res = ground_document(_compiled_hier_graph(), c, hier_proposer, terms, shapes, g)
     assert res.grounded > 0                                 # the pre-seed holds promotions
+    seeded = {o for o in g.objects() if str(o).startswith("urn:iladub:region:")}
+    assert seeded and not seeded & GROUNDED                 # a leak would be visible, not masked
     g = _offer(g)
     assert set(g.objects(None, ETKL.reconciles)) == GROUNDED
 
 
 def test_second_grounding_into_same_graph_still_reconciles():
+    # REGRESSION GUARD only: grounding mints fresh blank nodes per call, so this passes under the
+    # fresh-local-graph design AND under a set-difference delta — it does not choose between them.
     g = _offer(traversal=None)
     g = _offer(g)
     assert set(g.objects(None, ETKL.reconciles)) == GROUNDED

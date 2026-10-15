@@ -124,6 +124,10 @@ def test_raw_to_clean_traversal_conformant():
     assert (count("CleanDocumentHolon"), count("GroundingPortal"),
             count("RawDocumentHolon")) == (1, 1, 1)
     assert count("SemanticHolon") >= 1
+    clean, portal, raw = (next(iter(g.subjects(RDF.type, URIRef(ETKL + k)))) for k in
+                          ("CleanDocumentHolon", "GroundingPortal", "RawDocumentHolon"))
+    assert (clean, URIRef(ETKL + "throughPortal"), portal) in g
+    assert (portal, URIRef(ETKL + "portalSource"), raw) in g
 
 
 def test_raw_to_clean_example_is_what_the_compiler_emits():

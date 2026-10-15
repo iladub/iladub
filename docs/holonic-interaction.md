@@ -159,12 +159,14 @@ holon types and its grounding portal are defined in the `iladub`/`dec` namespace
   of evidence both PRESENT in the graph** — the `etkl:MembraneValidation` act the membrane
   minted, and the propositions still **held** at that boundary. Never from an absence, and
   never from the compilation score.
+- `vocab/queries/raw-to-clean-traversal.rq` + `examples/raw-to-clean-traversal.ttl` — the full
+  raw→clean traversal, RawDocumentHolon → grounding portal → CleanDocumentHolon, derived from
+  the promotions one grounding call produced and checked at the membrane by
+  `etkl:CleanDocumentHolonShape`; exercised by `tests/test_hga_alignment.py`.
 
 ## Planned work (not done yet)
 
-- None outstanding. The raw→clean traversal (RawDocumentHolon → portal → CleanDocumentHolon)
-  now ships as `examples/raw-to-clean-traversal.ttl`, derived by
-  `vocab/queries/raw-to-clean-traversal.rq`.
+- None outstanding.
 
 ## Sources
 

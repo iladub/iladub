@@ -524,7 +524,7 @@ prog:criterion:holon:05 a prog:Criterion ;
 prog:criterion:holon:06 a prog:Criterion ;
     prog:ofRung "holon" ;
     prog:statement "A full raw→clean traversal example spanning RawDocumentHolon → portal → CleanDocumentHolon (the current example covers the grounding-governance crossing only)." ;
-    prog:source "docs/holonic-interaction.md:165-166" ;
+    prog:source "docs/holonic-interaction.md:162-165" ;
     prog:declaredOn "2026-06-23"^^xsd:date ;
     prog:met true ;
     prog:metOn "2026-10-15"^^xsd:date ;
@@ -1675,8 +1675,8 @@ prog:criterion:dec:16 prog:proposedDependsOn prog:criterion:holon:04 .
    prog:dependencyRationale "reading: dec:16's 'ships a worked example that conforms AND a negative test that must fail' is satisfied by exactly the two files holon:04 declares — examples/holon-grounding-conformant.ttl and tests/holon-grounding-leak.ttl. Ungroundable: fails A3 (both oracle tests shared) and A6 (both example files shared)." .
 
 # [Corrected 2026-10-15: holon:06 is now met, so no holon criterion is left unmet in this block.]
-# It WAS the ONE unmet holon criterion left in this block, stated in vocabulary etkl-holons.ttl
-# declares. MEASURED at vocab/ontology/etkl-holons.ttl:47,62,67 — DocumentHolon,
+# It WAS the ONE unmet holon criterion left in this block, stated in vocabulary that
+# etkl-holons.ttl declares. MEASURED at vocab/ontology/etkl-holons.ttl:47,62,67 — DocumentHolon,
 # CleanDocumentHolon and GroundingPortal are all there.
 #
 # holon:05's edge WAS here, with the same shape of rationale, until 2026-08-25. It is not any
