@@ -98,7 +98,9 @@ def main():
         owners = [(i, m) for i, m, x in rows if x == t]
         if not (REPO / t.split("::")[0]).exists():
             absent_module.append((t, owners))
-        elif t not in present:
+        # M5b's rule (`_collects` in tests/test_arc_manifest.py): a bare id is present if it
+        # collects exactly OR any collected id is `t + "["...` (a parametrised oracle).
+        elif not (t in present or any(i.startswith(t + "[") for i in present)):
             dangling.append((t, owners))
 
     print(f"{len(rows)} declarations, {len(named)} distinct node ids, "
