@@ -266,3 +266,49 @@ carry verdict `ignored` and are not escalation reasons.
 
 **O5 is unchanged** and is still the close: `oracle_test_census.py` reports the shared node id as no
 longer dangling.
+
+### 8.3 Amendment, 2026-10-16: § 2.2 is withdrawn, and four seams are measured
+
+**Ruled by the maintainer 2026-10-16, in-session: § 2.2's closed reason list is withdrawn.**
+
+- **Why the derivation fails.** § 2.2 derives the `sh:in` list from
+  `git grep -ho '"[A-Z][A-Z_]\{4,\}"' -- src/iladub/etkl/`. At `04f2a72` that returns **21** strings,
+  not 14. They include environment variables (`BAML_LIVE`, `ILADUB_RECORD_READINGS`,
+  `ILADUB_MEMBRANE`), region kinds (`RECORD_TABLE`, `NON_TABLE`, `UNSUPPORTED_TABLE`) and BAML answer
+  tokens (`CANNOT_TELL`, `OTHER`, `TABLE_TOTAL`, `TOTAL_OF_TOTALS`). The reasons are bare positional
+  literals, for example `src/iladub/etkl/compile.py:1880` and `src/iladub/etkl/ruleguard.py:34`.
+  There is no enum, so there is nothing to derive the list from, and filtering the grep would be a
+  hand-kept exclusion list.
+- **Why nothing is lost.** Under § 8 the firings are lifted from the baseline, so the only authored
+  reason string left is a `cor:disposes` value. The strengthened D2 refuses any `cor:disposes "X"`
+  whose document has no lifted firing of `X` with `cor:live` > 0, so a misspelt reason is refused by
+  D2. **O1 becomes:** `cor:disposes "NOT_A_REASON"` on a corpus document is refused by D2.
+- **D1 shrinks to the lift's own cardinalities.** Each lifted firing has exactly one `cor:reason`,
+  one `cor:live` and one `cor:superseded`, and one `cor:recordedIn`, which is the baseline file's
+  repo-relative path. `cor:readAt` and `cor:atCommit` are dropped, because `inputs.json` carries the
+  fingerprint.
+
+**Four seams, measured at `04f2a72` for the plan:**
+
+1. **Join key.** For all 7 manifest documents, `"corpus/" + cor:file` equals the baseline's `pdf`
+   (`tests/corpus-manifest.ttl:25,47,79,101,117,130,161`). The 4 `held-out/` files have no manifest
+   entry. Part 5.2 of the firing-from-baseline handoff holds.
+2. **No adjudication can trip the strengthened D2.** `git grep "cor:disposes"` over `tests vocab src
+   scripts` returns nothing.
+3. **The node id lives in a corpus-tagged module.** `tests/test_corpus.py:22` reads
+   `pytestmark = pytest.mark.corpus`. CI runs `pytest -m "not serial"` (`.github/workflows/ci.yml:26`),
+   so a tagged oracle would still collect there. The local gate `-m "not corpus"` would deselect it,
+   though, which is R173's defect turned inside out. The tag therefore moves from the module onto the
+   three tests that read the corpus.
+4. **The census does not resolve a parametrised oracle cited bare.** `scripts/oracle_test_census.py:79`
+   matches collected ids exactly, and `--collect-only -q` prints `…::name[param]`. M5b already
+   resolves both forms (`tests/test_arc_manifest.py:232-236`). Unless the census adopts M5b's rule,
+   D3a's parametrisation would leave the id dangling and O5 could never close.
+
+**What the firing profile is at `04f2a72`** (live/superseded, `corpus/` only; constant reasons only):
+apple `DATAGRID_RESIDUE` 1/0, `MATRIX_AMBIGUOUS` 0/1, `REGION_TILING_FAILED` 0/4; bfs
+`BOXHEAD_EXCEEDS_RECORD` 0/1, `DATAGRID_RESIDUE` 2/0, `KIND_NOT_SUPPORTED` 3/0, `REGION_TILING_FAILED`
+2/1, `ROUND_TRIP_FAIL` 0/6; ons `DATAGRID_RESIDUE` 2/0, `KIND_NOT_SUPPORTED` 2/2,
+`REGION_TILING_FAILED` 0/2, `ROUND_TRIP_FAIL` 0/4. cbh, both graincorp files and who-wfa fire none.
+That gives **six live pairs**, which are D3's parameters. bfs's `ROUND_TRIP_FAIL` is 0 live and 6
+superseded, so the strengthened D2 refuses a disposal of it, and it is not a D3 parameter.
