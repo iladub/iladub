@@ -73,3 +73,17 @@ cor:ReadingShape a sh:NodeShape ;
             $this a cor:Reading .
             FILTER(NOT EXISTS { $this cor:atCommit ?c } &&
                    NOT EXISTS { $this cor:recordedIn ?p }) }""" ] .
+
+# A firing is a LIFTED fact (spec 2026-09-18 § 8): "reason R fired on this document, N times
+# live and M superseded", read out of the committed corpus baseline and never authored in any
+# tracked .ttl. Two counts, never one — a superseded firing is not a repaired one (§ 2.1) — so
+# both are required and both are non-negative integers; a negative count is a lift defect.
+# recordedIn makes it traceable to the baseline file it was lifted from (D1, closed world).
+cor:FiringShape a sh:NodeShape ;
+    sh:targetObjectsOf cor:firing ;
+    sh:property [ sh:path cor:reason ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cor:live ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cor:superseded ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path cor:recordedIn ; sh:minCount 1 ] .

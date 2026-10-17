@@ -86,3 +86,32 @@ def test_refuses_reading_without_a_value():
 def test_refuses_untraceable_reading():
     """No commit and no path: the value cannot be checked, only believed."""
     _neg(READING % ('cor:value "0.5"^^xsd:decimal ; cor:readAt "2026-09-08"^^xsd:date'))
+
+
+FIRING = ('<urn:x> a cor:Document ; cor:file "f.pdf" ; cor:url "https://example.org/f" ; '
+          'cor:series "s" ; cor:family "health" ; cor:expectedVerdict cor:Unadjudicated ; '
+          'cor:firing [ %s ] .')
+OK_FIRING = ('cor:reason "KIND_NOT_SUPPORTED" ; cor:live "3"^^xsd:nonNegativeInteger ; '
+             'cor:superseded "0"^^xsd:nonNegativeInteger ; '
+             'cor:recordedIn "tests/corpus-baseline/f.json"')
+
+
+def test_admits_a_well_formed_firing():
+    ok, report = _conforms(Graph().parse(data=PREFIXES + FIRING % OK_FIRING, format="turtle"))
+    assert ok, report
+
+
+def test_refuses_firing_without_live_count():
+    _neg(FIRING % OK_FIRING.replace('cor:live "3"^^xsd:nonNegativeInteger ; ', ''))
+
+
+def test_refuses_firing_with_a_negative_count():
+    _neg(FIRING % OK_FIRING.replace('"0"^^xsd:nonNegativeInteger', '"-1"^^xsd:integer'))
+
+
+def test_refuses_firing_with_two_reasons():
+    _neg(FIRING % (OK_FIRING + ' ; cor:reason "DATAGRID_RESIDUE"'))
+
+
+def test_refuses_untraceable_firing():
+    _neg(FIRING % OK_FIRING.replace(' ; cor:recordedIn "tests/corpus-baseline/f.json"', ''))
