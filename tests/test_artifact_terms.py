@@ -438,8 +438,10 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     # 71 / 77 since R259 task 1: cor:firing, :reason, :live, :superseded are demanded by
     # `tests/corpus-shapes.ttl` (FiringShape), INSIDE the tree, and declared in the internal
     # `vocab/internal/corpus.ttl` — both numbers move by four, the surplus is unchanged.
-    assert len(_census_over(_pre_loop_artifacts())) == 71
-    assert len(_census()) == 77
+    # 72 / 78 since R259 task 3: cor:disposes is demanded by `tests/corpus-shapes.ttl`
+    # (DisposalShape) and declared in the same internal vocabulary — both move by one.
+    assert len(_census_over(_pre_loop_artifacts())) == 72
+    assert len(_census()) == 78
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -524,8 +526,9 @@ def test_the_path_traversal_adds_exactly_two_terms():
     67, not 66, since 2026-09-09: `docgov:SourceFile` joined the same tree the same way the
     drain terms did — demanded by a shape inside it, declared in an internal vocabulary. The
     two terms this test is about are still asserted by name and still unaffected.
-    71 since R259 task 1 (four cor: firing terms, same way)."""
-    assert len(_census_over(_pre_loop_artifacts())) == 71
+    71 since R259 task 1 (four cor: firing terms, same way); 72 since R259 task 3
+    (cor:disposes, demanded by DisposalShape, same way)."""
+    assert len(_census_over(_pre_loop_artifacts())) == 72
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 

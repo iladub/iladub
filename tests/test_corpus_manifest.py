@@ -7,9 +7,14 @@ from pathlib import Path
 from pyshacl import validate
 from rdflib import Graph
 
+from tests.corpus_firings import lift_firings
+
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = REPO / "tests" / "corpus-manifest.ttl"
 SHAPES = REPO / "tests" / "corpus-shapes.ttl"
+BASELINE = REPO / "tests" / "corpus-baseline"
+BFS = "urn:iladub:corpus:bfs-population-bilan-2023"
+ONS = "urn:iladub:corpus:ons-index-of-services-2026-02"
 
 PREFIXES = """@prefix cor: <https://w3id.org/iladub/corpus#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -32,7 +37,12 @@ def _neg(ttl: str):
 
 
 def test_manifest_conforms():
-    ok, report = _conforms(Graph().parse(MANIFEST, format="turtle"))
+    """The manifest is validated TOGETHER with the firings lifted from the committed baseline
+    (R259 task 3): cor:DisposalShape joins an authored cor:disposes to a lifted cor:firing, so
+    validating the manifest alone would refuse the first real disposal."""
+    g = Graph().parse(MANIFEST, format="turtle")
+    g += lift_firings(g, BASELINE)
+    ok, report = _conforms(g)
     assert ok, report
 
 
@@ -115,3 +125,54 @@ def test_refuses_firing_with_two_reasons():
 
 def test_refuses_untraceable_firing():
     _neg(FIRING % OK_FIRING.replace(' ; cor:recordedIn "tests/corpus-baseline/f.json"', ''))
+
+
+# D2 (spec 2026-09-18 § 3 as strengthened by § 8): a disposal names a reason that fires LIVE on
+# the very document that holds the adjudication. The negatives inject into the REAL manifest's
+# bfs / ons documents, with the REAL lifted firings beside them.
+
+def _with_disposal(doc_iri: str, reason: str) -> Graph:
+    g = Graph().parse(MANIFEST, format="turtle")
+    g += lift_firings(g, BASELINE)
+    g.parse(data=PREFIXES + f'<{doc_iri}> cor:adjudication [ cor:by "t" ; '
+            f'cor:on "2026-10-16"^^xsd:date ; cor:rationale "t" ; cor:disposes {reason} ] .',
+            format="turtle")
+    return g
+
+
+def test_admits_disposal_of_a_live_firing():          # positive control (Review Focus 4)
+    ok, report = _conforms(_with_disposal(BFS, '"KIND_NOT_SUPPORTED"'))
+    assert ok, report
+
+
+def test_admits_disposal_typed_xsd_string():
+    """RDF 1.1: "X" and "X"^^xsd:string are one term, so the join admits either spelling."""
+    ok, report = _conforms(_with_disposal(BFS, '"KIND_NOT_SUPPORTED"^^xsd:string'))
+    assert ok, report
+
+
+def test_refuses_disposal_of_an_unfired_reason():     # spec O2
+    ok, _ = _conforms(_with_disposal(BFS, '"TRANSPOSED"'))
+    assert not ok
+
+
+def test_refuses_disposal_of_a_misspelt_reason():     # spec § 8.3, O1 as amended
+    ok, _ = _conforms(_with_disposal(BFS, '"NOT_A_REASON"'))
+    assert not ok
+
+
+def test_refuses_disposal_of_superseded_only_ink():   # spec § 8, strengthened D2
+    ok, _ = _conforms(_with_disposal(BFS, '"ROUND_TRIP_FAIL"'))   # 0 live / 6 superseded
+    assert not ok
+
+
+def test_refuses_disposal_on_the_wrong_document():
+    ok, _ = _conforms(_with_disposal(ONS, '"REGION_TILING_FAILED"'))  # ons: 0 live / 2 superseded
+    assert not ok
+
+
+def test_refuses_language_tagged_disposal():
+    """A reason code is a constant, not prose: "X"@en is a different term from the lifted "X",
+    and the join is on the term, so it is refused rather than silently matched by STR()."""
+    ok, _ = _conforms(_with_disposal(BFS, '"KIND_NOT_SUPPORTED"@en'))
+    assert not ok
