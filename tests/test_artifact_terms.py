@@ -368,6 +368,7 @@ DOCGOV = "https://w3id.org/iladub/docgov#"
 _SURPLUS_IN_CENSUS = {
     CORPUS + "Verdict", CORPUS + "Adjudication",   # 2026-08-30, R128's loop
     SRCCITE + "Citation",                          # 2026-08-31, R139's loop
+    CORPUS + "Firing",                             # 2026-10-17, R259: a CLASS demanded only as the range of cor:firing in the vocab (live tree), not by any shape
     # 2026-09-08, R187's figure gate. Two CLASSES and none of the nine properties
     # beside them. MEASURED, not assumed: `_demanded()` collects terms NAMED AS OBJECTS
     # (`etkl:namesTerm`), so `docgov:FigureOccurrence` and `docgov:Reading` are demanded
@@ -434,11 +435,11 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    # 71 / 76 since R259 task 1: cor:firing, :reason, :live, :superseded are demanded by
+    # 71 / 77 since R259 task 1: cor:firing, :reason, :live, :superseded are demanded by
     # `tests/corpus-shapes.ttl` (FiringShape), INSIDE the tree, and declared in the internal
     # `vocab/internal/corpus.ttl` — both numbers move by four, the surplus is unchanged.
     assert len(_census_over(_pre_loop_artifacts())) == 71
-    assert len(_census()) == 76
+    assert len(_census()) == 77
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
