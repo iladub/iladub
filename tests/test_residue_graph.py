@@ -264,4 +264,7 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # REMOVED = []. R319 and R320 were raised by the R318 spec and cite only [[R318]], their one
     # open neighbour until it closed. Controlled: `--candidates` over the register files before the
     # close is 95, after it 97, and the diff is exactly R319 and R320.
-    assert len(expected) == 97
+    # RE-MEASURED 2026-10-17 (R259 closed; R323, R324, R325 raised, branch r259-firings): 97 -> 100,
+    # ADDED = [323, 324, 325], REMOVED = []. The three cite only [[R259]], closed in the same change.
+    # Controlled: `--candidates` over `main`'s register files is 97, over the branch's 100.
+    assert len(expected) == 100
