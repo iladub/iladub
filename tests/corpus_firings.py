@@ -24,15 +24,24 @@ _REPO = Path(__file__).resolve().parent.parent
 
 
 def _recorded_in(path: Path) -> str:
+    """The path actually read: repo-relative when under the repo, else its absolute path.
+    Never a path that was not read (CLAUDE.md principle 7: emit only what the source supports)."""
+    resolved = path.resolve()
     try:
-        return path.resolve().relative_to(_REPO).as_posix()
+        return resolved.relative_to(_REPO).as_posix()
     except ValueError:
-        return f"tests/corpus-baseline/{path.name}"
+        return resolved.as_posix()
 
 
 def lift_firings(manifest: Graph, baseline_dir: Path) -> Graph:
     """Return only the lifted triples: one cor:Firing per (document, constant reason)."""
-    docs = {"corpus/" + str(f): d for d, f in manifest.subject_objects(COR.file)}
+    docs: dict[str, URIRef] = {}
+    for d, f in sorted(manifest.subject_objects(COR.file)):
+        key = "corpus/" + str(f)
+        if key in docs and docs[key] != d:
+            raise ValueError(f"cor:file {str(f)!r} is claimed by two manifest documents: "
+                             f"{sorted([str(docs[key]), str(d)])}")
+        docs[key] = d
     scoped: dict[str, tuple[Path, dict]] = {}
     for path in sorted(Path(baseline_dir).glob("*.json")):
         data = json.loads(path.read_text())

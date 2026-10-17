@@ -274,4 +274,4 @@ corpus:disposes a owl:DatatypeProperty ;
     rdfs:label "disposes"@en ;
     rdfs:domain corpus:Adjudication ;
     rdfs:range xsd:string ;
-    rdfs:comment "Names an escalation reason code that this adjudication disposes of — the authored half of the pair: a corpus:Firing says a reason fired (lifted), corpus:disposes says a human judged it (authored). The subject is an adjudication node. Its shape (D2) and the oracle that joins the two arrive with R259 task 3; nothing is disposed by declaring the term (spec 2026-09-18 § 2.1, § 8)."@en .
+    rdfs:comment "Names an escalation reason code that this adjudication disposes of — the authored half of the pair: a corpus:Firing says a reason fired (lifted), corpus:disposes says a human judged it (authored). The subject is an adjudication node. Its shape (D2) arrived with R259 task 3 and the oracle that joins the two (tests/test_corpus.py::test_escalation_reasons_are_adjudicated) with task 4; nothing is disposed by declaring the term (spec 2026-09-18 § 2.1, § 8)."@en .

@@ -146,7 +146,8 @@ def test_admits_disposal_of_a_live_firing():          # positive control (Review
 
 
 def test_admits_disposal_typed_xsd_string():
-    """RDF 1.1: "X" and "X"^^xsd:string are one term, so the join admits either spelling."""
+    """rdflib keeps "X" and "X"^^xsd:string as two distinct terms; the join is SPARQL VALUE
+    equality (`=`), under which they are equal, so the membrane admits either spelling."""
     ok, report = _conforms(_with_disposal(BFS, '"KIND_NOT_SUPPORTED"^^xsd:string'))
     assert ok, report
 
@@ -172,7 +173,7 @@ def test_refuses_disposal_on_the_wrong_document():
 
 
 def test_refuses_language_tagged_disposal():
-    """A reason code is a constant, not prose: "X"@en is a different term from the lifted "X",
-    and the join is on the term, so it is refused rather than silently matched by STR()."""
+    """A reason code is a constant, not prose: "X"@en is not value-equal to the lifted "X" under
+    SPARQL `=` (the join is value equality, not STR()), so it is refused, not silently matched."""
     ok, _ = _conforms(_with_disposal(BFS, '"KIND_NOT_SUPPORTED"@en'))
     assert not ok

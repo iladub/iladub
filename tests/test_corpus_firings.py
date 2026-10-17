@@ -94,10 +94,36 @@ def test_live_pairs_omit_zero_live(tmp_path):
 
 
 def test_recorded_in_is_repo_relative(tmp_path):
+    """In the repo, each firing records the repo-relative path of the very file it was lifted
+    from — not merely a path of the right shape — and that file holds the firing's reason."""
     g = lift_firings(Graph().parse(REPO / "tests" / "corpus-manifest.ttl", format="turtle"),
                      REPO / "tests" / "corpus-baseline")
-    paths = {str(o) for o in g.objects(None, COR.recordedIn)}
-    assert paths and all(p.startswith("tests/corpus-baseline/") and p.endswith(".json") for p in paths)
+    recorded = {(str(g.value(f, COR.reason)), str(g.value(f, COR.recordedIn)))
+                for f in g.subjects(None, COR.Firing)}
+    assert recorded
+    for reason, rel in recorded:
+        assert rel.startswith("tests/corpus-baseline/") and rel.endswith(".json"), rel
+        read = REPO / rel
+        assert read.is_file(), rel
+        regions = [r for pg in json.loads(read.read_text())["pages"] for r in pg["regions"]]
+        assert any(r.get("reason") == reason for r in regions), (reason, rel)
+
+
+def test_recorded_in_out_of_repo_is_the_path_read(tmp_path):
+    """Out of the repo nothing is invented: the firing records the absolute path actually read."""
+    m, d = _setup(tmp_path, [("R_X", "escalated")], [])
+    g = lift_firings(m, d)
+    assert {str(o) for o in g.objects(None, COR.recordedIn)} == {(d / "a.json").resolve().as_posix()}
+
+
+def test_duplicate_file_across_documents_raises(tmp_path):
+    """Two manifest documents claiming one cor:file would silently drop one (it would read as
+    firing nowhere); the lift refuses instead, naming both IRIs."""
+    m, d = _setup(tmp_path, [("R_X", "escalated")], [])
+    m.parse(data='@prefix cor: <https://w3id.org/iladub/corpus#> .\n'
+                 '<urn:d:z> a cor:Document ; cor:file "fam/a.pdf" .', format="turtle")
+    with pytest.raises(ValueError, match=r"urn:d:a.*urn:d:z"):
+        lift_firings(m, d)
 
 
 def test_real_lift_conforms_to_firing_shape():
