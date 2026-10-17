@@ -368,6 +368,7 @@ DOCGOV = "https://w3id.org/iladub/docgov#"
 _SURPLUS_IN_CENSUS = {
     CORPUS + "Verdict", CORPUS + "Adjudication",   # 2026-08-30, R128's loop
     SRCCITE + "Citation",                          # 2026-08-31, R139's loop
+    CORPUS + "Firing",                             # 2026-10-17, R259: a CLASS demanded only as the range of cor:firing in the vocab (live tree), not by any shape
     # 2026-09-08, R187's figure gate. Two CLASSES and none of the nine properties
     # beside them. MEASURED, not assumed: `_demanded()` collects terms NAMED AS OBJECTS
     # (`etkl:namesTerm`), so `docgov:FigureOccurrence` and `docgov:Reading` are demanded
@@ -434,8 +435,13 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     which exist because an author decided what the verdict individuals and the adjudication
     nodes ARE. A transcription of the census cannot move the census.
     """
-    assert len(_census_over(_pre_loop_artifacts())) == 67
-    assert len(_census()) == 72
+    # 71 / 77 since R259 task 1: cor:firing, :reason, :live, :superseded are demanded by
+    # `tests/corpus-shapes.ttl` (FiringShape), INSIDE the tree, and declared in the internal
+    # `vocab/internal/corpus.ttl` — both numbers move by four, the surplus is unchanged.
+    # 72 / 78 since R259 task 3: cor:disposes is demanded by `tests/corpus-shapes.ttl`
+    # (DisposalShape) and declared in the same internal vocabulary — both move by one.
+    assert len(_census_over(_pre_loop_artifacts())) == 72
+    assert len(_census()) == 78
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -519,8 +525,10 @@ def test_the_path_traversal_adds_exactly_two_terms():
 
     67, not 66, since 2026-09-09: `docgov:SourceFile` joined the same tree the same way the
     drain terms did — demanded by a shape inside it, declared in an internal vocabulary. The
-    two terms this test is about are still asserted by name and still unaffected."""
-    assert len(_census_over(_pre_loop_artifacts())) == 67
+    two terms this test is about are still asserted by name and still unaffected.
+    71 since R259 task 1 (four cor: firing terms, same way); 72 since R259 task 3
+    (cor:disposes, demanded by DisposalShape, same way)."""
+    assert len(_census_over(_pre_loop_artifacts())) == 72
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 

@@ -214,9 +214,9 @@ def compiled_graph(entry) -> tuple[Graph, float]:
 
 
 def grounded_graph(entry, source: Graph) -> tuple[Graph, object]:
-    """Ground a compiled document exactly as tests/test_corpus.py:146-166 does — the same
-    abstaining FakeGroundingProposer — so this oracle's numbers and the shipped battery's are
-    measurements of the same act. Returns (populated graph, FeedResult)."""
+    """Ground a compiled document exactly as tests/test_corpus.py::test_grounding_where_contracted
+    does — the same abstaining FakeGroundingProposer — so this oracle's numbers and the shipped
+    battery's are measurements of the same act. Returns (populated graph, FeedResult)."""
     from iladub.feed import ground_document
     from iladub.ground import load_contract
     from iladub.propose_ground import FakeGroundingProposer, GroundingProposal

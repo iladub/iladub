@@ -228,12 +228,50 @@ corpus:atCommit a owl:DatatypeProperty ;
 
 corpus:recordedIn a owl:DatatypeProperty ;
     rdfs:label "recorded in"@en ;
-    rdfs:domain corpus:Reading ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( corpus:Reading corpus:Firing ) ] ;
     rdfs:range xsd:string ;
-    rdfs:comment "A repo-relative path where this reading is transcribed — the provenance of the ROW, not of the measurement. Repeatable: the same value is often stated in a loop's evidence, in this register's own rationale prose, and in a code comment, and listing all of them is what lets a reader check the row rather than trust it. Every row carries at least one of this or corpus:atCommit; a row that carries neither is a number nobody can trace."@en .
+    rdfs:comment "A repo-relative path where this reading is transcribed — the provenance of the ROW, not of the measurement. Repeatable: the same value is often stated in a loop's evidence, in this register's own rationale prose, and in a code comment, and listing all of them is what lets a reader check the row rather than trust it. Every row carries at least one of this or corpus:atCommit; a row that carries neither is a number nobody can trace. The domain is widened (R259) to also admit a corpus:Firing, where it names the corpus-baseline file the firing was lifted from."@en .
 
 corpus:notQuotable a owl:DatatypeProperty ;
     rdfs:label "not quotable"@en ;
     rdfs:domain corpus:Reading ;
     rdfs:range xsd:boolean ;
     rdfs:comment "True when this reading's value is so ordinary that a literal matching it is more likely to mean something else — the exemption a figure gate needs in order to stay honest, marked ON THE READING and stated with its size rather than hidden in a consumer's filter. It removes the reading from a gate's FINDINGS and never from the register: the value goes on participating in every ambiguity test, because dropping a row would shrink the extension those tests are computed over and could silently promote a different literal to uniqueness. The price is explicit: nothing can catch an undated quotation of a reading marked this way."@en .
+
+#################################################################
+#  Firings — a reason that fired on a document (R259, spec 2026-09-18 § 2.1, § 8)
+#################################################################
+
+corpus:Firing a owl:Class ;
+    rdfs:label "Firing"@en ;
+    rdfs:comment "One escalation reason that fired on a corpus document, with how often. LIFTED, NEVER AUTHORED (spec 2026-09-18 § 8): a firing is read out of the committed corpus baseline (tests/corpus-baseline/*.json) by a procedural lift and exists only in the graph built for a test; no tracked .ttl carries a corpus:firing triple. It is a reading of what the compiler did, not a judgement about it — a judgement is a corpus:disposes on an adjudication. Two counts, never one (§ 2.1): corpus:live and corpus:superseded are reported separately, and a superseded firing is NOT a repaired one."@en .
+
+corpus:firing a owl:ObjectProperty ;
+    rdfs:label "firing"@en ;
+    rdfs:domain corpus:Document ;
+    rdfs:range corpus:Firing ;
+    rdfs:comment "Attaches a lifted corpus:Firing to a corpus document. Multi-valued: one per distinct escalation reason that fired. Lifted from the baseline, never authored in a tracked .ttl (spec 2026-09-18 § 8)."@en .
+
+corpus:reason a owl:DatatypeProperty ;
+    rdfs:label "reason"@en ;
+    rdfs:domain corpus:Firing ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The escalation reason code that fired, verbatim as the baseline spells it. Exactly one per firing. Lifted, never authored (spec 2026-09-18 § 8)."@en .
+
+corpus:live a owl:DatatypeProperty ;
+    rdfs:label "live count"@en ;
+    rdfs:domain corpus:Firing ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "How many times this reason fired and STANDS in the baseline. One of the two counts that are never collapsed into one (spec 2026-09-18 § 2.1). Lifted, never authored (§ 8)."@en .
+
+corpus:superseded a owl:DatatypeProperty ;
+    rdfs:label "superseded count"@en ;
+    rdfs:domain corpus:Firing ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "How many times this reason fired and was later superseded. Superseded is NOT repaired (spec 2026-09-18 § 2.1): it says a later decision displaced the firing, not that the cause was fixed, so it is carried beside corpus:live and never subtracted from it. Lifted, never authored (§ 8)."@en .
+
+corpus:disposes a owl:DatatypeProperty ;
+    rdfs:label "disposes"@en ;
+    rdfs:domain corpus:Adjudication ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Names an escalation reason code that this adjudication disposes of — the authored half of the pair: a corpus:Firing says a reason fired (lifted), corpus:disposes says a human judged it (authored). The subject is an adjudication node. Its shape (D2) arrived with R259 task 3 and the oracle that joins the two (tests/test_corpus.py::test_escalation_reasons_are_adjudicated) with task 4; nothing is disposed by declaring the term (spec 2026-09-18 § 2.1, § 8)."@en .
