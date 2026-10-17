@@ -13,13 +13,13 @@ import time
 from pathlib import Path
 
 import pytest
-from rdflib import Graph, Namespace, RDF
+from rdflib import Graph, Literal, Namespace, RDF, URIRef
 
 REPO = Path(__file__).resolve().parent.parent
 CORPUS = REPO / "corpus"
 COR = Namespace("https://w3id.org/iladub/corpus#")
 
-pytestmark = pytest.mark.corpus
+MANIFEST_GRAPH = Graph().parse(REPO / "tests" / "corpus-manifest.ttl", format="turtle")
 
 # Wall-clock ceiling per document — test infrastructure, not a tuned semantic
 # constant (precedent: tests/etkl/test_derivation_perf.py). Derivation (measured):
@@ -35,9 +35,9 @@ pytestmark = pytest.mark.corpus
 BUDGET_S = 320
 
 
-def manifest_entries(manifest_path):
-    """The register, read as the oracle it is: one dict per cor:Document."""
-    g = Graph().parse(manifest_path, format="turtle")
+def manifest_entries(manifest):
+    """The register, read as the oracle it is: one dict per cor:Document (a path, or a parse)."""
+    g = manifest if isinstance(manifest, Graph) else Graph().parse(manifest, format="turtle")
     out = []
     for doc in g.subjects(RDF.type, COR.Document):
         def v(p):
@@ -55,7 +55,7 @@ def manifest_entries(manifest_path):
     return sorted(out, key=lambda e: e["file"])
 
 
-ENTRIES = manifest_entries(REPO / "tests" / "corpus-manifest.ttl")
+ENTRIES = manifest_entries(MANIFEST_GRAPH)
 
 
 def require_pinned_edition(entry, corpus_root):
@@ -121,6 +121,7 @@ def check_verdict(rep, entry):
     return verdicts
 
 
+@pytest.mark.corpus
 @pytest.mark.parametrize("entry", ENTRIES, ids=[e["file"] for e in ENTRIES])
 def test_expected_verdict(entry):
     dest = require_pinned_edition(entry, CORPUS)
@@ -140,6 +141,7 @@ def test_expected_verdict(entry):
         print(f"  UNADJUDICATED — regions: {verdicts}")
 
 
+@pytest.mark.corpus
 @pytest.mark.parametrize(
     "entry", [e for e in ENTRIES if e["contract"]],
     ids=[e["file"] for e in ENTRIES if e["contract"]])
@@ -176,8 +178,52 @@ def test_grounding_where_contracted(entry):
     assert grounded, "a contracted document must ground SOMETHING"
 
 
+@pytest.mark.corpus
 def test_corpus_coverage_report():
     """Spec §4: absent documents skip WITH A VISIBLE COUNT — this is the count."""
     present = [e["file"] for e in ENTRIES if (CORPUS / e["file"]).is_file()]
     absent = [e["file"] for e in ENTRIES if not (CORPUS / e["file"]).is_file()]
     print(f"\ncorpus coverage: {len(present)}/{len(ENTRIES)} present; absent: {absent}")
+
+
+# ---------------------------------------------------------------------------------------------
+# D3, the shared oracle (R259, spec 2026-09-18 § 3 D3, § 8, § 8.3). It reads only committed files
+# — the manifest and tests/corpus-baseline/ — so it carries NO pytest.mark.corpus (§ 8.3 seam 3)
+# and runs in CI. CLAUDE.md § 8: PROCEDURAL test glue; the decision itself is a SPARQL ASK over
+# manifest ∪ lifted firings, the same value-equality join cor:DisposalShape uses.
+from tests.corpus_firings import lift_firings, live_pairs  # noqa: E402
+
+BASELINE_DIR = REPO / "tests" / "corpus-baseline"
+ADJUDICATED = MANIFEST_GRAPH + lift_firings(MANIFEST_GRAPH, BASELINE_DIR)
+
+# `?v = ?reason` is SPARQL VALUE equality, as in cor:DisposalShape (tests/corpus-shapes.ttl):
+# rdflib keeps plain "R" and "R"^^xsd:string as distinct terms, so term identity would refuse
+# a disposal the membrane admits; STR() would admit "R"@en, which the membrane refuses.
+_DISPOSED = """ASK {
+    ?doc <https://w3id.org/iladub/corpus#adjudication> ?a .
+    ?a <https://w3id.org/iladub/corpus#disposes> ?v .
+    FILTER(?v = ?reason) }"""
+
+
+def is_disposed(graph, doc, reason):
+    """Does `doc` hold an adjudication whose cor:disposes equals `reason` by SPARQL value?"""
+    return bool(graph.query(_DISPOSED, initBindings={
+        "doc": URIRef(doc), "reason": Literal(reason)}).askAnswer)
+
+
+def _adjudication_param(doc, reason):
+    marks = () if is_disposed(ADJUDICATED, doc, reason) else (pytest.mark.xfail(
+        strict=True, reason=f"{reason} fires live on {doc} and no adjudication disposes it"),)
+    return pytest.param(doc, reason, id=f"{doc.rsplit(':', 1)[-1]}-{reason}", marks=marks)
+
+
+@pytest.mark.parametrize("doc, reason", [_adjudication_param(d, r)
+                                         for d, r in live_pairs(ADJUDICATED)])
+def test_escalation_reasons_are_adjudicated(doc, reason):
+    """Every reason that fires LIVE on a corpus document is disposed by an adjudication of that
+    document. The lift supplies the firings (never authored); the manifest supplies the
+    disposals. Undisposed pairs are strict xfail, so a disposal landing turns its param green
+    and a disposal that the body cannot see turns it red."""
+    assert is_disposed(ADJUDICATED, doc, reason), (
+        f"{reason} fires live on {doc} (tests/corpus-baseline/) and no cor:adjudication of that "
+        f"document carries cor:disposes \"{reason}\"")
