@@ -121,7 +121,6 @@ def check_verdict(rep, entry):
     return verdicts
 
 
-@pytest.mark.corpus
 @pytest.mark.parametrize("entry", ENTRIES, ids=[e["file"] for e in ENTRIES])
 def test_expected_verdict(entry):
     dest = require_pinned_edition(entry, CORPUS)
@@ -141,7 +140,6 @@ def test_expected_verdict(entry):
         print(f"  UNADJUDICATED — regions: {verdicts}")
 
 
-@pytest.mark.corpus
 @pytest.mark.parametrize(
     "entry", [e for e in ENTRIES if e["contract"]],
     ids=[e["file"] for e in ENTRIES if e["contract"]])
@@ -178,13 +176,20 @@ def test_grounding_where_contracted(entry):
     assert grounded, "a contracted document must ground SOMETHING"
 
 
-@pytest.mark.corpus
 def test_corpus_coverage_report():
     """Spec §4: absent documents skip WITH A VISIBLE COUNT — this is the count."""
     present = [e["file"] for e in ENTRIES if (CORPUS / e["file"]).is_file()]
     absent = [e["file"] for e in ENTRIES if not (CORPUS / e["file"]).is_file()]
     print(f"\ncorpus coverage: {len(present)}/{len(ENTRIES)} present; absent: {absent}")
 
+
+# The corpus mark, per test rather than module-wide (R259 § 8.3 seam 3): exactly the three tests
+# that read corpus/ (via CORPUS) carry it; the adjudication oracle below reads only committed
+# files and carries none. Applied here, after the definitions, rather than as decorators, so the
+# edit is line-neutral above this point and no `tests/test_corpus.py:<line>` citation moves.
+for _reads_corpus in (test_expected_verdict, test_grounding_where_contracted,
+                      test_corpus_coverage_report):
+    pytest.mark.corpus(_reads_corpus)
 
 # ---------------------------------------------------------------------------------------------
 # D3, the shared oracle (R259, spec 2026-09-18 § 3 D3, § 8, § 8.3). It reads only committed files
