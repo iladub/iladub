@@ -228,7 +228,7 @@ corpus:atCommit a owl:DatatypeProperty ;
 
 corpus:recordedIn a owl:DatatypeProperty ;
     rdfs:label "recorded in"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( corpus:Reading corpus:Firing ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( corpus:Reading corpus:Firing corpus:Snapshot ) ] ;
     rdfs:range xsd:string ;
     rdfs:comment "A repo-relative path where this reading is transcribed — the provenance of the ROW, not of the measurement. Repeatable: the same value is often stated in a loop's evidence, in this register's own rationale prose, and in a code comment, and listing all of them is what lets a reader check the row rather than trust it. Every row carries at least one of this or corpus:atCommit; a row that carries neither is a number nobody can trace. The domain is widened (R259) to also admit a corpus:Firing, where it names the corpus-baseline file the firing was lifted from."@en .
 
@@ -248,7 +248,7 @@ corpus:Firing a owl:Class ;
 
 corpus:firing a owl:ObjectProperty ;
     rdfs:label "firing"@en ;
-    rdfs:domain corpus:Document ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( corpus:Document corpus:Snapshot ) ] ;
     rdfs:range corpus:Firing ;
     rdfs:comment "Attaches a lifted corpus:Firing to a corpus document. Multi-valued: one per distinct escalation reason that fired. Lifted from the baseline, never authored in a tracked .ttl (spec 2026-09-18 § 8)."@en .
 
@@ -275,3 +275,35 @@ corpus:disposes a owl:DatatypeProperty ;
     rdfs:domain corpus:Adjudication ;
     rdfs:range xsd:string ;
     rdfs:comment "Names an escalation reason code that this adjudication disposes of — the authored half of the pair: a corpus:Firing says a reason fired (lifted), corpus:disposes says a human judged it (authored). The subject is an adjudication node. Its shape (D2) arrived with R259 task 3 and the oracle that joins the two (tests/test_corpus.py::test_escalation_reasons_are_adjudicated) with task 4; nothing is disposed by declaring the term (spec 2026-09-18 § 2.1, § 8)."@en .
+
+#################################################################
+#  Snapshots — the reading a disposal was judged against (tab:07, spec 2026-10-19 § 4.2, R323)
+#################################################################
+
+corpus:Snapshot a owl:Class ;
+    rdfs:label "Snapshot"@en ;
+    rdfs:comment "A committed corpus-baseline file at one content address: the dated reading a disposal was judged against. Not a corpus:Reading — a Reading carries a decimal score and a baseline snapshot has none, and inventing one would break the register's rule that only what the source supports is emitted. Authored as a blank node with only corpus:recordedIn and corpus:blob; its firings, corpus:snapshotOf and corpus:durable are lifted, never authored (tests/corpus_firings.py lift_snapshots)."@en .
+
+corpus:judgedAgainst a owl:ObjectProperty ;
+    rdfs:label "judged against"@en ;
+    rdfs:domain corpus:Adjudication ;
+    rdfs:range corpus:Snapshot ;
+    rdfs:comment "The reading this adjudication was judged at. A disposal is admissible against ITS OWN snapshot, never the current baseline (R323 as ruled): a later repair of the cause must not unseat a judgement that was true when made. Exactly one per disposal, enforced by cor:DisposalShape."@en .
+
+corpus:blob a owl:DatatypeProperty ;
+    rdfs:label "git blob"@en ;
+    rdfs:domain corpus:Snapshot ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The git blob sha of the snapshot's baseline file. Content-addressed, so it survives a squash merge and can name a baseline regenerated inside the disposal's own PR, which a commit sha cannot."@en .
+
+corpus:durable a owl:DatatypeProperty ;
+    rdfs:label "durable"@en ;
+    rdfs:domain corpus:Snapshot ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True iff the snapshot's blob is the one at its path in HEAD's tree, or the one at that path in some commit on origin/main's first-parent history: a reading that will still be resolvable after this PR squashes. Lifted, never authored (spec 2026-10-19 § 4.3)."@en .
+
+corpus:snapshotOf a owl:ObjectProperty ;
+    rdfs:label "snapshot of"@en ;
+    rdfs:domain corpus:Snapshot ;
+    rdfs:range corpus:Document ;
+    rdfs:comment "The manifest document whose corpus:file the snapshot blob's own \"pdf\" field names. Lifted, never authored (spec 2026-10-19 § 4.3), so an adjudication cannot claim a reading of a document the blob is not of."@en .

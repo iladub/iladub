@@ -88,31 +88,56 @@ cor:FiringShape a sh:NodeShape ;
                   sh:datatype xsd:nonNegativeInteger ] ;
     sh:property [ sh:path cor:recordedIn ; sh:minCount 1 ] .
 
-# A disposal is an AUTHORED judgement on a LIFTED fact (spec 2026-09-18 § 3 D2, strengthened by
-# § 8): an adjudication may say cor:disposes "R" only if the document that holds it via
-# cor:adjudication carries a lifted cor:firing whose cor:reason is R with cor:live > 0. A reason
-# that never fired, a misspelt one, one that fired only on another document, and one whose ink is
-# all superseded (superseded is not repaired, § 2.1 — there is nothing live to dispose of) are
-# all refused. Target is sh:targetSubjectsOf because adjudications are untyped blank nodes in the
-# manifest, so a class target would never fire.
-# The closed-world guard is HOLON-SCOPED: NOT EXISTS closes over the one document holding $this,
-# never over the corpus. The reason join is SPARQL value equality (?reason = ?value), neither a
-# shared variable nor STR(). Measured: rdflib keeps plain "R" and "R"^^xsd:string as DISTINCT
-# terms (RDF 1.0 behaviour), so a shared-variable join refuses "R"^^xsd:string against the lift's
-# plain "R" although RDF 1.1 makes them one term; `=` admits both. STR() would go too far:
-# "R"@en (rdf:langString) and "R"^^<other> are not equal under `=`, and are refused — a reason
-# code is a constant, not prose.
-# Validated over manifest ∪ lift_firings(...) — the manifest alone carries no firing.
+# A disposal is an AUTHORED judgement on a LIFTED fact, judged at the reading it was made
+# against (spec 2026-10-19 § 4.4; R323 as ruled by the maintainer; supersedes the spec 2026-09-18
+# § 3 D2 that judged against the CURRENT baseline). An adjudication may say cor:disposes "R" only
+# if it names, by cor:judgedAgainst, exactly one cor:Snapshot -- a dated git blob of the baseline --
+# and that snapshot (2) is of the document holding the adjudication, (3) is durable on main, and
+# (4) carries a lifted cor:firing whose cor:reason is R with cor:live > 0. The current baseline
+# plays no part: a disposal is append-only and a later repair of the cause must not unseat it.
+# Four constraints, each with its own sh:message, so that a negative test can assert WHICH one
+# refused. Constraints 2-4 bind the existing ?snap via `$this cor:judgedAgainst ?snap`; a disposal
+# with none yields exactly constraint 1's refusal and nothing else.
+# A reason that never fired, a misspelt one, one that fired only on another document, and one
+# whose ink is all superseded (superseded is not repaired, spec 2026-09-18 § 2.1 -- there is
+# nothing live to dispose of) are all refused by (4). Target is sh:targetSubjectsOf because
+# adjudications are untyped blank nodes in the manifest, so a class target would never fire.
+# The closed-world guards are HOLON-SCOPED: NOT EXISTS closes over the one document holding $this
+# (2) or the one snapshot it names (4), never over the corpus.
+# The reason join in (4) is SPARQL value equality (?reason = ?value), neither a shared variable
+# nor STR(). Measured: rdflib keeps plain "R" and "R"^^xsd:string as DISTINCT terms (RDF 1.0
+# behaviour), so a shared-variable join refuses "R"^^xsd:string against the lift's plain "R"
+# although RDF 1.1 makes them one term; `=` admits both. STR() would go too far: "R"@en
+# (rdf:langString) and "R"^^<other> are not equal under `=`, and are refused -- a reason code is
+# a constant, not prose.
+# Validated over manifest U lift_firings(...) U lift_snapshots(...): the manifest alone carries
+# neither firings nor the snapshot facts (cor:snapshotOf, cor:durable, the snapshot's firings).
 cor:DisposalShape a sh:NodeShape ;
     sh:targetSubjectsOf cor:disposes ;
+    sh:property [ sh:path cor:judgedAgainst ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "cor:disposes without exactly one cor:judgedAgainst snapshot" ] ;
     sh:sparql [
-        sh:message "cor:disposes names a reason with no LIVE cor:firing on the document that holds this adjudication" ;
+        sh:message "cor:judgedAgainst names a snapshot of a different document than the one holding this adjudication" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this ?snap WHERE {
+            $this cor:judgedAgainst ?snap .
+            FILTER NOT EXISTS {
+                ?doc cor:adjudication $this .
+                ?snap cor:snapshotOf ?doc } }""" ] ;
+    sh:sparql [
+        sh:message "cor:judgedAgainst names a snapshot that is not durable on main" ;
+        sh:prefixes cor:prefixes ;
+        sh:select """SELECT $this ?snap WHERE {
+            $this cor:judgedAgainst ?snap .
+            FILTER NOT EXISTS { ?snap cor:durable true } }""" ] ;
+    sh:sparql [
+        sh:message "cor:disposes names a reason with no LIVE cor:firing in the snapshot this adjudication was judged against" ;
         sh:prefixes cor:prefixes ;
         sh:select """SELECT $this ?value WHERE {
-            $this cor:disposes ?value .
+            $this cor:disposes ?value ;
+                  cor:judgedAgainst ?snap .
             FILTER NOT EXISTS {
-                ?doc cor:adjudication $this ;
-                     cor:firing ?f .
+                ?snap cor:firing ?f .
                 ?f cor:reason ?reason ;
                    cor:live ?n .
                 FILTER(?reason = ?value && ?n > 0) } }""" ] .

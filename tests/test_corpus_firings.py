@@ -130,7 +130,7 @@ def test_duplicate_file_across_documents_raises(tmp_path):
 def test_real_lift_conforms_to_firing_shape():
     manifest = Graph().parse(REPO / "tests" / "corpus-manifest.ttl", format="turtle")
     lifted = lift_firings(manifest, REPO / "tests" / "corpus-baseline")
-    data = manifest + lifted
+    data = manifest + lifted + lift_snapshots(manifest)
     ok, _, report = validate(data, shacl_graph=Graph().parse(REPO / "tests" / "corpus-shapes.ttl",
                              format="turtle"), inference="rdfs", advanced=True)
     assert ok, report
