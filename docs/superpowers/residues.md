@@ -491,6 +491,7 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R320 | open | **Extractor drops interword spaces on arxiv and shatters rotated text** — upstream of `band_text`. See [[R318]] |
 | R321 | open | **No oracle disposes an escalated band's role from extracted text**, so no role worker yet; two oracle candidates refuted with a control. See [[R259]] |
 | R322 | open | **fed-h41 p6's data table never compiles**; its body rows escalate as REGION_TILING_FAILED, and p1's totals row is cut off from `htable2`. See [[R321]] |
-| R323 | open | **D2 vs the append-only manifest**: a repair of a disposed reason would strand its disposal; latent until the first `cor:disposes`. See [[R259]] |
+| R323 | closed | **D2 vs the append-only manifest**: a disposal is now judged at its own dated reading, so a repair no longer strands it. Closed 2026-10-19: `tab:07` met. See [[R259]], [[R326]] |
 | R324 | open | **Census `"["` boundary unpinned**; the widened mutant passes all three controls. See [[R259]] |
 | R325 | open | **Import-time lift reach**: a lift refusal is a session-wide collection error. See [[R259]] |
+| R326 | open | **Band-level relevance is unguarded**: a disposal covers every future firing of its (document, reason), including a real table the kind gate later refuses. See [[R323]], [[R44]] |
