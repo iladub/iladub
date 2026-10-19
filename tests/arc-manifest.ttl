@@ -1348,17 +1348,37 @@ prog:criterion:tab:06 a prog:Criterion ;
     prog:oracleArtifact "tests/etkl/fixtures.py:726" ;
     prog:oracleTest "tests/etkl/test_merge_resolution.py::test_offcenter_merge_escalates" .
 
-# FIRES 3 — bfs only (p0 the press-release masthead, p6 x2). Its adjudication names it and
-# HOLDs. R71 rides here as well as on criterion 03: the kind gate decides which bands reach
-# this reason at all, so the same unresolved defect blocks both, from opposite sides.
+# FIRES 5 LIVE — bfs 3 (p0 the press-release masthead, p5 the sources line and footnotes, p6 the
+# T3 title) and ons 2 (the baseline also holds 2 superseded ons firings, disposing of nothing).
+# Each document carries a dated cor:adjudication whose cor:disposes names this reason, judged vs its own
+# reading's snapshot (spec 2026-10-19-the-disposal-carries-its-reading §4.6). The oracle now
+# reads PASSED for both parameters:
+#   $ .venv/bin/python -m pytest tests/test_corpus.py::test_escalation_reasons_are_adjudicated
+#     2 passed, 4 xfailed  (bfs- and ons-KIND_NOT_SUPPORTED passed; the four other pairs stay
+#     strict xfail, the other criteria's parameters)
+# MET 2026-10-19, and the prog:blockedBy "R44" , "R71" edges are DELETED in the same act (M8
+# refuses a met criterion that is blocked). What stood here was: "R71 rides here as well as on
+# criterion 03: the kind gate decides which bands reach this reason at all, so the same unresolved
+# defect blocks both, from opposite sides", plus an R44 edge. Neither edge earns its place, and
+# the reason is an inference about what an edge MEANS (an edge names a row whose closure would
+# advance this criterion, :1174-1175), so it is argued rather than copied:
+#   * R71 concerns suppressing `looks_transposed` on two graincorp-stem bands. None of the five
+#     firings here is a stem band, so closing R71 would not dispose of a single one of them. R71
+#     stays OPEN and its edge on criterion 03 is untouched.
+#   * R44 is a three-reason bfs row with no shared root cause (its own 2026-09-15 triage). The
+#     KIND_NOT_SUPPORTED share is DISPOSED here, as not-a-table bands, not repaired; the row
+#     stays OPEN for ROUND_TRIP_FAIL, REGION_TILING_FAILED and DATAGRID_RESIDUE, whose edges on
+#     their own criteria are untouched.
+# The emitter is cited by symbol: the "KIND_NOT_SUPPORTED" literals sit inside `compile_tables`
+# (one `def` spans them, measured 2026-10-19), and a line number would rot with every edit above it.
 prog:criterion:tab:07 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "KIND_NOT_SUPPORTED (compile.py:978): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "KIND_NOT_SUPPORTED (compile_tables in compile.py): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-19"^^xsd:date ;
     prog:retrospective false ;
-    prog:blockedBy "R44" , "R71" ;
     prog:oracleTest "tests/test_corpus.py::test_escalation_reasons_are_adjudicated" .
 
 # FIRES 1 — apple p1, under the adoption doc URI (document.py:1473), the residue the data grid
