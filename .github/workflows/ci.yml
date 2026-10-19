@@ -14,6 +14,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # docgov extractor raises on shallow clones (R2 guard)
+      - name: PROBE origin/main present (tab:07 spec 8; throwaway)
+        run: |
+          set -x
+          git rev-parse HEAD HEAD^1 HEAD^2 || true
+          git branch -r
+          git rev-parse --verify origin/main || echo "ABSENT origin/main"
+          git log --first-parent --oneline -3 origin/main || true
+          git log --first-parent --raw --no-abbrev --format=%H -2 origin/main -- tests/corpus-baseline/bfs-*.json | head -20 || true
+          exit 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
