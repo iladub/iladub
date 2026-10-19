@@ -155,9 +155,18 @@ def lift_snapshots(manifest: Graph, repo: Path = _REPO) -> Graph:
         return out
     docs = _docs_by_pdf(manifest)
     for snap in snaps:
-        blob = str(manifest.value(snap, COR.blob))
-        path = str(manifest.value(snap, COR.recordedIn))
+        # PROCEDURAL extraction-side guard (CLAUDE.md principle 8; § Producer-side guards): reading
+        # a node's own blob/path literals is irreducibly procedural, and the membrane never sees
+        # this lift's input, so fail fast here, naming the snapshot.
+        blobs = list(manifest.objects(snap, COR.blob))
+        paths = list(manifest.objects(snap, COR.recordedIn))
+        if len(blobs) != 1 or len(paths) != 1:
+            raise ValueError(f"snapshot {snap}: needs exactly one cor:blob and one cor:recordedIn, "
+                             f"got {len(blobs)} and {len(paths)}")
+        blob, path = str(blobs[0]), str(paths[0])
         data = json.loads(_git(repo, "cat-file", "-p", blob))
+        if not isinstance(data, dict):
+            raise ValueError(f"snapshot {path}@{blob}: blob is not a JSON object")
         pdf = data.get("pdf")
         if pdf not in docs:
             raise ValueError(f"snapshot {path}@{blob}: pdf {pdf!r} matches no manifest cor:file")

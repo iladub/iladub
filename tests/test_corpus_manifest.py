@@ -143,15 +143,18 @@ M4 = ("cor:disposes names a reason with no LIVE cor:firing in the snapshot this 
       "was judged against")
 
 
-def _d2_refusals(g: Graph) -> set[str]:
+def _d2_refusals(g: Graph, focus=None) -> set[str]:
     """The sh:resultMessage of every result whose source shape is cor:DisposalShape or one of its
-    sh:property shapes: WHICH constraint refused, not merely that something did."""
+    sh:property shapes: WHICH constraint refused, not merely that something did. `focus`, when
+    given, keeps only results whose sh:focusNode is that adjudication."""
     shapes = Graph().parse(SHAPES, format="turtle")
     D = COR.DisposalShape
     own = {D, *shapes.objects(D, SH.property)}
     _, rg, _ = validate(g, shacl_graph=shapes, inference="rdfs", advanced=True)
     return {str(m) for r in rg.subjects(RDF.type, SH.ValidationResult)
-            if rg.value(r, SH.sourceShape) in own for m in rg.objects(r, SH.resultMessage)}
+            if rg.value(r, SH.sourceShape) in own
+            and (focus is None or rg.value(r, SH.focusNode) == focus)
+            for m in rg.objects(r, SH.resultMessage)}
 
 
 def _baseline_path(doc_iri: str) -> str:
@@ -273,3 +276,21 @@ def test_refuses_disposal_judged_against_a_non_durable_reading(tmp_path):
     mid = _commit(repo, [("R_X", "escalated")] * 2, "mid")         # the #354-shaped blob
     _commit(repo, [("R_X", "escalated")] * 3, "head")
     assert _d2_refusals(_lifted(_synthetic(mid), repo)) == {M3}
+
+
+def test_a_reading_less_disposal_is_refused_only_for_its_missing_reading(tmp_path):
+    """Review Focus 4: constraints 2-4 must bind `$this cor:judgedAgainst ?snap`. Rebound to any
+    `?snap a cor:Snapshot`, a reading-less disposal would also be refused by M3/M4 for ANOTHER
+    adjudication's non-durable snapshot: one negative, one message."""
+    repo = _repo(tmp_path)
+    _commit(repo, [("R_X", "escalated")], "base")
+    _publish(repo)
+    _git(repo, "checkout", "-q", "-b", "feat")
+    mid = _commit(repo, [], "mid")                                 # non-durable, holds NO live R_X
+    _commit(repo, [("R_X", "escalated")] * 3, "head")
+    m = _synthetic(mid)
+    m.parse(data=PREFIXES + """<urn:d:a> cor:adjudication [ cor:by "t" ;
+        cor:on "2026-10-19"^^xsd:date ; cor:rationale "t" ; cor:disposes "R_X" ] .""", format="turtle")
+    bare = next(a for a in m.objects(URIRef("urn:d:a"), COR.adjudication)
+                if m.value(a, COR.judgedAgainst) is None)
+    assert _d2_refusals(_lifted(m, repo), focus=bare) == {M1}

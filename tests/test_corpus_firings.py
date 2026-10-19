@@ -220,7 +220,7 @@ def test_unresolvable_blob_raises(tmp_path):
     repo = _repo(tmp_path)
     _commit(repo, [("R_X", "escalated")], "1")
     _publish(repo)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="cat-file -p 0{40} failed"):
         lift_snapshots(_manifest("0" * 40), repo=repo)
 
 
@@ -278,3 +278,45 @@ def test_deletion_commit_contributes_no_post_image(tmp_path):
     sha = _git(repo, "rev-parse", "HEAD")
     got = _main_blobs(str(repo.resolve()), sha, _PATH)
     assert got == frozenset({blob})                               # not the zero sha
+
+
+def _snap_node(m):
+    return next(m.objects(None, COR.judgedAgainst))
+
+
+def test_snapshot_without_a_blob_raises(tmp_path):
+    repo = _repo(tmp_path)
+    m = _manifest(_commit(repo, [("R_X", "escalated")], "1"))
+    _publish(repo)
+    m.remove((_snap_node(m), COR.blob, None))
+    with pytest.raises(ValueError, match="exactly one cor:blob.*got 0 and 1"):
+        lift_snapshots(m, repo=repo)
+
+
+def test_snapshot_with_two_blobs_raises(tmp_path):
+    repo = _repo(tmp_path)
+    blob = _commit(repo, [("R_X", "escalated")], "1")
+    _publish(repo)
+    m = _manifest(blob)
+    m.add((_snap_node(m), COR.blob, Literal("1" * 40)))
+    with pytest.raises(ValueError, match="exactly one cor:blob.*got 2 and 1"):
+        lift_snapshots(m, repo=repo)
+
+
+def test_snapshot_without_recorded_in_raises(tmp_path):
+    repo = _repo(tmp_path)
+    m = _manifest(_commit(repo, [("R_X", "escalated")], "1"))
+    _publish(repo)
+    m.remove((_snap_node(m), COR.recordedIn, None))
+    with pytest.raises(ValueError, match="exactly one cor:blob.*got 1 and 0"):
+        lift_snapshots(m, repo=repo)
+
+
+def test_snapshot_blob_that_is_not_a_json_object_raises(tmp_path):
+    repo = _repo(tmp_path)
+    _commit(repo, [("R_X", "escalated")], "1")
+    _publish(repo)
+    (repo / "list.json").write_text("[1, 2]")
+    blob = _git(repo, "hash-object", "-w", "list.json").strip()
+    with pytest.raises(ValueError, match="not a JSON object"):
+        lift_snapshots(_manifest(blob), repo=repo)

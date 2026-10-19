@@ -1348,9 +1348,9 @@ prog:criterion:tab:06 a prog:Criterion ;
     prog:oracleArtifact "tests/etkl/fixtures.py:726" ;
     prog:oracleTest "tests/etkl/test_merge_resolution.py::test_offcenter_merge_escalates" .
 
-# FIRES 5 LIVE — bfs 3 (p0 the press-release masthead, p6 x2) and ons 2 (the lifted baseline
-# also holds 2 superseded ons firings, which dispose of nothing). Each of the two documents
-# carries a dated cor:adjudication whose cor:disposes names this reason, judged against its own
+# FIRES 5 LIVE — bfs 3 (p0 the press-release masthead, p5 the sources line and footnotes, p6 the
+# T3 title) and ons 2 (the baseline also holds 2 superseded ons firings, disposing of nothing).
+# Each document carries a dated cor:adjudication whose cor:disposes names this reason, judged vs its own
 # reading's snapshot (spec 2026-10-19-the-disposal-carries-its-reading §4.6). The oracle now
 # reads PASSED for both parameters:
 #   $ .venv/bin/python -m pytest tests/test_corpus.py::test_escalation_reasons_are_adjudicated
