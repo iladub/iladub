@@ -368,7 +368,6 @@ DOCGOV = "https://w3id.org/iladub/docgov#"
 _SURPLUS_IN_CENSUS = {
     CORPUS + "Verdict", CORPUS + "Adjudication",   # 2026-08-30, R128's loop
     SRCCITE + "Citation",                          # 2026-08-31, R139's loop
-    CORPUS + "Snapshot",                           # 2026-10-19, tab:07 task 2: a CLASS demanded only as the range of cor:judgedAgainst in the vocab (live tree), like cor:Firing
     CORPUS + "Firing",                             # 2026-10-17, R259: a CLASS demanded only as the range of cor:firing in the vocab (live tree), not by any shape
     # 2026-09-08, R187's figure gate. Two CLASSES and none of the nine properties
     # beside them. MEASURED, not assumed: `_demanded()` collects terms NAMED AS OBJECTS
@@ -448,8 +447,13 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     # nodes, so they are demanded by nothing. cor:Snapshot is demanded only as the rdfs:range
     # of cor:judgedAgainst in the live vocabulary, like cor:Firing, so it joins
     # `_SURPLUS_IN_CENSUS` and the live count moves by two.
-    assert len(_census_over(_pre_loop_artifacts())) == 73
-    assert len(_census()) == 80
+    # 75 / 81 since tab:07 task 4 (MEASURED): the first two real disposals in
+    # `tests/corpus-manifest.ttl`, INSIDE the tree, use `a cor:Snapshot` and `cor:blob`, so both
+    # are demanded there and the historical count moves by two. cor:Snapshot was already in the
+    # live census, so it LEAVES `_SURPLUS_IN_CENSUS` and the live count moves by one (cor:blob).
+    # This is the spec's A9 prediction of 75/81, met one task later than it predicted.
+    assert len(_census_over(_pre_loop_artifacts())) == 75
+    assert len(_census()) == 81
     assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
 
 
@@ -536,8 +540,9 @@ def test_the_path_traversal_adds_exactly_two_terms():
     two terms this test is about are still asserted by name and still unaffected.
     71 since R259 task 1 (four cor: firing terms, same way); 72 since R259 task 3
     (cor:disposes, demanded by DisposalShape, same way); 73 since tab:07 task 2
-    (cor:judgedAgainst, a sh:path of DisposalShape, same way)."""
-    assert len(_census_over(_pre_loop_artifacts())) == 73
+    (cor:judgedAgainst, a sh:path of DisposalShape, same way); 75 since tab:07 task 4
+    (cor:Snapshot and cor:blob, used by the two real disposals in the manifest)."""
+    assert len(_census_over(_pre_loop_artifacts())) == 75
     assert {DOCGOV + "cites", DOCGOV + "citesExternal"} <= _census()
 
 
