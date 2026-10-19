@@ -88,6 +88,9 @@ what the page says, not what this table says.
   `vocab/internal/corpus.ttl:229-231`).
 - Widen `cor:firing`'s domain, which today is `cor:Document`, so that it also admits
   `cor:Snapshot`. (measured: `vocab/internal/corpus.ttl:249-252`).
+  Both widenings are **documentation**. `_conforms` passes no `ont_graph`, so no `rdfs:domain` is
+  in the validated graph, and RDFS ignores `owl:unionOf` anyway (§ 8 A7). They keep the vocabulary
+  honest. No test "verifies" them.
 - `cor:durable` (datatype, domain `cor:Snapshot`, `xsd:boolean`): **lifted, never authored** (§ 4.3).
 - `cor:snapshotOf` (object property, domain `cor:Snapshot`, range `cor:Document`): **lifted, never
   authored** (§ 4.3), from the blob's own `"pdf"` field.
@@ -100,32 +103,70 @@ pre-compute them here.
 
 Add an entry point beside `lift_firings`, with this signature contract only:
 
-- `lift_snapshots(manifest: Graph) -> Graph`. For every `(adj, cor:judgedAgainst, snap)` in the
-  manifest, it reads `snap`'s `cor:blob` with `git cat-file -p` and parses it as JSON. It attaches,
-  **to the same `snap` node** (adjudications and snapshots are blank nodes, and rdflib's `+` keeps
-  BNode identity; **measure that on the real manifest before relying on it**):
+- `lift_snapshots(manifest: Graph, repo: Path = _REPO) -> Graph`. Every git call runs in `repo`.
+  That parameter is what makes the R323 test constructible (§ 5, § 8 A1). For every
+  `(adj, cor:judgedAgainst, snap)` in the manifest, it reads `snap`'s `cor:blob` with
+  `git cat-file -p` and parses it as JSON. It attaches, **to the same `snap` node**. Adjudications
+  and snapshots are blank nodes, and rdflib's `+` keeps BNode identity, measured on the real
+  manifest 2026-10-19 (§ 8):
   - one `cor:firing` per constant reason, with `cor:live`, `cor:superseded` and `cor:recordedIn`,
-    built by the **same** counting code as `lift_firings`. Factor the shared `(path, data)` core out;
-    do not duplicate it.
-  - `cor:snapshotOf <doc>`: the manifest document whose `cor:file` matches the blob's `"pdf"` field.
-    A `"pdf"` matching no manifest document raises, as `lift_firings` does (`:53-58`).
-  - `cor:durable true|false`: true iff the blob equals `git rev-parse <c>:<recordedIn path>` for
-    `c = HEAD` or some commit on `git rev-list --first-parent HEAD`.
-    - In PR CI, HEAD is the merge ref, whose first parent is `main` and whose tree holds the PR's
-      final files. That is exactly the set that survives a squash, so the probe's intermediate blob
-      reads `false` there.
-    - Locally, on a multi-commit branch, intermediate commits sit on the first-parent chain and read
-      `true`. **That gap is recorded, not closed.** CI is where it binds.
+    built by the **same** counting code as `lift_firings`. Factor the shared core out and do not
+    duplicate it. The core takes the `recordedIn` string **as a parameter**. A snapshot firing
+    records `<path>@<blob>`, because the bytes at `<path>` in HEAD may differ from the ones read,
+    and `_recorded_in` promises "never a path that was not read" (`tests/corpus_firings.py:27-29`;
+    § 8 A6).
+  - `cor:snapshotOf <doc>`: the manifest document whose `cor:file` matches the blob's `"pdf"`
+    field. A `"pdf"` matching no manifest document raises, as `lift_firings` does (`:53-58`).
+  - `cor:durable true|false`: true iff the blob is the one at `<recordedIn path>` in **HEAD's
+    tree**, or the one at that path in some commit on
+    `git log --first-parent origin/main -- <path>` (one history query per path, cached for the
+    session; § 8 A4). This is anchored to `origin/main` and **not** to HEAD's first-parent chain
+    (§ 8 A3):
+    - in a stacked PR the merge ref's first parent is the base branch, whose intermediate commits
+      would read `true`;
+    - locally, the old definition admitted every commit of a multi-commit branch.
+
+    The anchored definition closes both cases.
+    **Unmeasured, probe before building:** that the `ci.yml` checkout (`fetch-depth: 0`) has
+    `origin/main` on a `pull_request` event. Run one CI step, as #354 did. If it is absent, the
+    lift **raises**. It never falls back to HEAD's chain.
 - A blob that `git cat-file` cannot resolve **raises**. It never yields an empty firing set,
   because a silent zero would make D2 refuse for the wrong reason, or admit nothing.
 
-**Call sites.** It is called only from the tests that validate D2 (`test_manifest_conforms` and the
-D2 negatives in `tests/test_corpus_manifest.py`, plus `test_is_disposed_agrees_with_disposal_shape`).
+**Call sites, enumerated 2026-10-19** (`grep -rn "lift_firings\|is_disposed\|corpus-shapes" tests/`).
+`lift_snapshots` is added wherever D2 is validated over the real manifest:
+
+- `test_manifest_conforms` (`tests/test_corpus_manifest.py:39`).
+- `_with_disposal` (`tests/test_corpus_manifest.py:132`). It must call `lift_snapshots` **after**
+  the injection, because the injected `judgedAgainst` node does not exist before it. The injection
+  must carry a **valid durable snapshot**: without one, constraint 1 refuses every injected
+  disposal. That breaks the two positive controls and the agreement test, and every D2 negative
+  passes for the wrong reason.
+- `test_real_lift_conforms_to_firing_shape` (`tests/test_corpus_firings.py:129`). It validates the
+  full `corpus-shapes.ttl`, D2 included, over manifest ∪ `lift_firings`, and refuses once
+  constraints 2–4 need lifted snapshot facts.
+
+**Every D2 negative asserts WHICH constraint refused** (its `sh:message`), not merely `not ok`.
+Otherwise constraint 1 makes the negatives vacuous.
+
 **Never at import of `tests/test_corpus.py`** (R325: a lift refusal at import is a session-wide
 collection error, and a git read makes it likelier). `is_disposed` and `ADJUDICATED`
-(`tests/test_corpus.py:202-215`) stay as they are, because whether a reason is disposed is a fact of
-the manifest, and whether the disposal is admissible is D2's question. **MEASURE whether any other
-D2-validating test exists before declaring the list closed.**
+(`tests/test_corpus.py:202-215`) are unchanged in code. Whether a reason is disposed is a fact of
+the manifest; whether the disposal is admissible is D2's question. **Their pins in
+`tests/test_corpus_is_disposed.py` are not unchanged.** Every pin built on the real bfs/ons KIND
+pair breaks or goes vacuous once the real disposal lands (§ 8 A2):
+
+- `test_no_disposal_is_not_disposed` fails;
+- `test_disposal_on_the_other_document_is_not_disposed` fails;
+- `test_language_tagged_disposal_is_not_disposed` fails;
+- the `@en` arm of `test_is_disposed_agrees_with_disposal_shape` fails for bfs-KIND and ons-KIND;
+- `test_disposal_of_a_live_firing_is_disposed` still passes with its injection deleted.
+
+Re-target each pin to a pair that stays undisposed (bfs `DATAGRID_RESIDUE` or
+`REGION_TILING_FAILED`). For the agreement test, compare over a manifest **without** the loop's
+disposal. **`live_pairs` filters its subjects to URIRefs**, so snapshot nodes can never be read as
+documents. No current caller passes it snapshot output (§ 8 A8), so this is a guard, pinned by a
+test.
 
 ### 4.4 D2, rewritten (`tests/corpus-shapes.ttl:106-118`)
 
@@ -187,8 +228,8 @@ body says so.
 - Strike R323 and record the ruling (§ 1) and this loop's closure evidence in its row.
 - Correct R44's KIND count ("4 (3 live + 1 superseded)" → 3 live, 0 superseded) **by appending a
   dated correction**, not by editing the old figure.
-- New rows, if raised, carry the `(c/t closed)` snapshot. The local-first-parent gap (§ 4.3) is a
-  candidate row.
+- New rows, if raised, carry the `(c/t closed)` snapshot. Raise one row for the band-level relevance
+  hole (§ 7, § 8 A5).
 
 ## 5. Oracles and falsification
 
@@ -206,9 +247,18 @@ body says so.
 
 **The R323 case needs a constructible setup** (CLAUDE.md plan rule 5). Construct it by injecting a
 disposal on a document where the reason has **0 live now**, judged against a durable historical
-blob where it had live > 0. **MEASURE that such a blob exists on `main`'s first-parent history**
-(R318 moved five documents' baselines, so one probably exists). If none exists, the test is built
-from a synthetic manifest plus a test-local git repo, and the task report says why.
+blob where it had live > 0. **Measured 2026-10-19: no such blob exists for any manifest document.**
+The one reason on `main`'s first-parent baseline history with historical live > 0 and current 0 is
+caltrain KIND_NOT_SUPPORTED (4 → 0, blob `6b11ea9f9f` at `fc0c24a5`). Caltrain is held-out, and
+`lift_firings` skips it. So the test is built from a **synthetic manifest plus a test-local git
+repo** (`tmp_path`, `git init`), passed as `lift_snapshots(..., repo=tmp_path)`. It has two
+commits on that repo's `main`:
+
+1. commits the baseline with live > 0;
+2. replaces it with live = 0.
+
+The disposal is judged against commit 1's blob. In that repo, `origin/main` is supplied as a ref
+the test creates.
 
 A strict xfail exits 0, so `met true` stays an authored claim (handoff § 2): five criteria share this
 oracle. The PR states the pytest line showing the two params **passed**, not merely the exit code.
@@ -220,8 +270,12 @@ oracle. The PR states the pytest line showing the two params **passed**, not mer
   else running) and commit `tests/corpus-baseline/`. Then write the blobs into the manifest (§ 4.5).
   The manifest is not a compile input (`scripts/corpus_baseline.py:56`, **measure**), so this ordering
   does not re-stale the gate.
-- `lift_snapshots` runs `git` subprocesses: a few per disposal, two disposals. Measure the added test
-  time.
+- `lift_snapshots` runs `git` subprocesses: one `cat-file` per disposal, plus one first-parent
+  history query per baseline path, cached for the session. `main` has 560 first-parent commits; a
+  `rev-parse` per commit costs about 8 ms, so 400 commits is 3.2 s per call. `git log
+  --first-parent --raw --no-abbrev -- <path>` takes 0.15 s (§ 8 A4). The lift is called by roughly
+  25 tests (D2 negatives, the agreement params × 3 spellings), so the uncached per-commit scan is
+  refused. Measure the added test time.
 
 ## 7. What is NOT done
 
@@ -231,5 +285,41 @@ oracle. The PR states the pytest line showing the two params **passed**, not mer
 - No disposal of DATAGRID_RESIDUE (apple, bfs, ons) or REGION_TILING_FAILED (bfs). Those are other
   criteria's parameters of the same oracle and stay strict xfail.
 - R325 (the import-time lift) is not fixed, only not worsened.
-- The local first-parent gap (§ 4.3) is not closed.
+- **Band-level relevance is unguarded** (§ 8 A5). This was already true before this loop.
+  `_DISPOSED` and D2 both work per document × reason. A disposal judged against today's bfs blob
+  also covers any **future** KIND_NOT_SUPPORTED on bfs, including a real table the kind gate starts
+  refusing after a regression. Neither D2 nor the oracle notices. That is consistent with R323's
+  ruling (disposals are append-only and judged at their own reading), but it is a hole. It is
+  recorded as a residue row. Any guard (for example current live ≤ snapshot live) is a count proxy
+  and needs its own gate classification first.
 - No superseding-adjudication machinery (rejected by R323's ruling).
+
+## 8. Adversarial premise review, 2026-10-19 (before any plan)
+
+The premises were probed by the controller, then attacked by an independent reviewer. Each finding
+below is measured. Each **BLOCKING** finding is folded into the section it cites.
+
+| # | Sev. | Finding | Measurement | Folded into |
+|---|---|---|---|---|
+| A0 | holds | rdflib keeps BNode identity across `Graph + Graph` on the real manifest | probe: injected triple on a manifest adjudication BNode survives `m + o` with its other triples | § 4.3 |
+| A1 | BLOCKING | The R323 test needs a test-local repo, but the lift as specified had no repo argument | `tests/corpus_firings.py:22` hard-codes `_REPO`; no manifest document has an R323 case on `main` (caltrain only, held-out) | § 4.3 signature, § 5 |
+| A2 | BLOCKING | Landing the real disposal breaks or empties every `is_disposed` pin built on bfs/ons KIND (5 sites) | in-memory simulation: lang-tag test gets `is_disposed = True`; agreement `@en` arm: `True` vs conforms `False`; the two "not disposed" tests assert the opposite of the new manifest | § 4.3 |
+| A2′ | BLOCKING | The call-site list was incomplete: `test_real_lift_conforms_to_firing_shape` validates D2. `_with_disposal` without a snapshot makes constraint 1 refuse everything, so the negatives go vacuous | `tests/test_corpus_firings.py:129-135`; `tests/test_corpus_manifest.py:132-138` | § 4.3 |
+| A3 | AMEND | `durable` = HEAD's first-parent chain is wrong for stacked PRs (`ci.yml:5` `pull_request:` has no branch filter) and locally | the merge ref's first parent is the PR's base | § 4.3, anchored to `origin/main`; § 7's local gap item withdrawn |
+| A4 | AMEND | Cost: an uncached per-commit scan, repeated per lift call | 560 first-parent commits; 8 ms per `rev-parse`; one `git log --raw` takes 0.15 s | § 4.3, § 6 |
+| A5 | AMEND | Relevance is unguarded at band level (an old hole, now explicit) | `tests/test_corpus.py:207-211` works per doc × reason | § 7, § 4.7 row |
+| A6 | AMEND | A snapshot firing's `recordedIn` would name a path whose HEAD bytes were not read | `tests/corpus_firings.py:27-29` docstring | § 4.3 (`path@blob`) |
+| A7 | NOTE | The domain widening has no validation effect: `_conforms` passes no `ont_graph`. RDFS ignores `owl:unionOf`, so the union domain never types a snapshot `cor:Document` | probe: a Snapshot with `cor:firing` conforms on data alone; with `corpus.ttl` as `ont_graph` and the **old** domain, DocumentShape fires | § 4.2 (the widening is documentation; do not "verify" it by test) |
+| A8 | NOTE | `live_pairs` reads every `cor:firing` subject as a document | `tests/corpus_firings.py:96-101`; today's callers never see snapshot output | § 4.3 (URIRef filter, pinned) |
+| A9 | NOTE | Census prediction 72/78 → 75/81 (`judgedAgainst`, `blob`, `Snapshot` demanded; `durable` and `snapshotOf` live only inside `sh:select` strings, which are not nodes). Writing constraint 3 as `sh:path cor:durable` adds 1 to each | reviewer probe | § 4.2: **still measure, do not transcribe** |
+| A10 | NOTE | The `snapshotOf` join could be AXIOM (lift a raw `cor:pdf` literal, join it to `cor:file` in constraint 2). It stays PROCEDURAL only because it mirrors `lift_firings`' refusal | — | § 4.1, left to the plan author to argue |
+
+Also checked, and they hold: the manifest is not a compile input (`scripts/corpus_baseline.py:55-56`),
+and nothing in `src/` reads `vocab/internal/`, so the regenerate is required ceremony and should
+move no bfs/ons byte. M8 is the only arc rule that `met true` touches, since no live `dependsOn`
+targets tab:07 (`tests/arc-manifest.ttl:1771-1781`). The R44/R71 arguments match the edge
+definition at `:1174-1178`.
+
+**Open premise, to probe first in the plan (proposed, may fail):** does the PR checkout carry
+`origin/main`? If it does not, A3's anchor needs `git fetch origin main` in `ci.yml`, or a
+different anchor. Either way the plan's first task finds out in one CI run, not after building on it.
