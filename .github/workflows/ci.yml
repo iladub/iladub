@@ -14,6 +14,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # docgov extractor raises on shallow clones (R2 guard)
+      - name: PROBE blob reachability (throwaway)
+        run: |
+          set -x
+          git log --oneline -3
+          for b in 53a24907046415e19d4d8672edcb602a28561ada b91d5f1a3ee5b3e871f36b4ecb53e98e80dfe0fa 2f01e0d24e9edf5683ce781a1334f7e3d87b06c4; do git cat-file -t $b && git cat-file -p $b | head -c 80; echo; done
+          exit 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
