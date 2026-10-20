@@ -23,7 +23,7 @@ jobs:
       - name: Generate baml_client (gitignored; 6 test modules import it)
         run: baml-cli generate --from baml_src
       - name: Tests (incl. doc-governance lint)
-        run: pytest -q -n auto -m "not serial"
+        run: pytest -q -n auto -m "not serial and not substrate"
       - name: Tests that read a wall-clock ratio, alone (R307)
         run: pytest -q -m serial
       - name: Site builds strict, internal trees excluded
@@ -32,3 +32,24 @@ jobs:
           for d in wiki superpowers loops w3id; do
             test ! -d "site/$d" || { echo "LEAK: site/$d published"; exit 1; }
           done
+  # substrate:02 -- NOT a required check (the ruleset requires `test` alone). It runs the oracle
+  # against the pinned Fluree 4.2.4 binary; the tarball hash is pinned here, never fetched.
+  substrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Fetch the pinned Fluree 4.2.4 tarball, verify its sha256, put it on PATH
+        run: |
+          f=fluree-db-cli-x86_64-unknown-linux-gnu.tar.xz
+          curl -sSL -o "$f" "https://github.com/fluree/db/releases/download/v4.2.4/$f"
+          echo "efe45dcfcf03549ea6ad475b76720188d60ca33196fef696628a9333e8aadc6f  $f" | sha256sum -c -
+          tar -xJf "$f"
+          echo "$PWD/fluree-db-cli-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+      - name: Install
+        run: pip install -e ".[dev,etkl,fluree]"
+      - name: Substrate oracle (path-restricted: this job has no baml_client)
+        run: pytest -q -m substrate tests/substrate
