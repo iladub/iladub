@@ -12,7 +12,7 @@ from rdflib import Graph, Literal, URIRef
 
 from iladub.substrate.fluree import FlureeEndpoint, FlureeEndpointError
 
-_STATUS = {"ok200": 200, "bad400": 400, "nf404": 404, "err500": 500}
+_STATUS = {"junk200": 200, "not200": 200, "ok200": 200, "bad400": 400, "nf404": 404, "err500": 500}
 
 
 class _Stub(ThreadingHTTPServer):
@@ -45,8 +45,16 @@ class _Handler(BaseHTTPRequestHandler):
         if m:
             self.server.inserts += 1
             status = _STATUS.get(m.group(1), 200)
-            body = '{"t": 7}' if status == 200 else '{"error":"SHACL validation failed"}'
+            body = {"junk200": "not json", "not200": "{}"}.get(m.group(1)) or \
+                ('{"t": 7}' if status == 200 else '{"error":"SHACL validation failed"}')
             return self._reply(status, body)
+        self._reply(404, "{}")
+
+    def do_GET(self):
+        m = re.fullmatch(r"/v1/fluree/info/(\w+)", self.path)
+        bodies = {"ok200": '{"ledger": {"t": 3}}', "junk200": "not json", "not200": "{}"}
+        if m and m.group(1) in bodies:
+            return self._reply(200, bodies[m.group(1)])
         self._reply(404, "{}")
 
 
@@ -93,9 +101,27 @@ def test_provision_empty_shapes_makes_no_commit(stub):
     assert srv.creates == 1 and srv.inserts == 0
 
 
+def test_provision_raises_when_the_shapes_commit_is_refused(stub):
+    srv, url = stub
+    with pytest.raises(FlureeEndpointError, match="shapes commit refused"):
+        FlureeEndpoint(url).provision("bad400", _g())
+    assert FlureeEndpoint(url).provision("ok200", _g()).accepted is True
+
+
+def test_a_2xx_body_without_t_raises_not_a_raw_parse_error(stub):
+    _, url = stub
+    ep = FlureeEndpoint(url)
+    assert ep.head_t("ok200") == 3
+    for name in ("junk200", "not200"):
+        with pytest.raises(FlureeEndpointError, match="lacks"):
+            ep.commit(name, _g())
+        with pytest.raises(FlureeEndpointError, match="lacks"):
+            ep.head_t(name)
+
+
 def test_plug_is_isolated():
     root = Path(__file__).resolve().parent.parent / "src" / "iladub"
-    pat = re.compile(r"iladub\.substrate|from \.+substrate")
+    pat = re.compile(r"iladub\.substrate|from \.+substrate|from iladub import .*substrate")
     offenders = []
     for p in root.rglob("*.py"):
         if "substrate" in p.relative_to(root).parts[:1]:
@@ -119,7 +145,7 @@ def test_in_process_membrane_agrees_on_the_ungoverned_input():
     assert gate_admits(compiled_interior(), Graph()).conforms  # control: the governed one passes
 
 
-def test_ungoverned_removes_exactly_the_one_promotion():
+def test_ungoverned_removes_every_promotion_link_and_nothing_else():
     from rdflib import Namespace
     from tests.substrate.doc_a import compiled_interior, ungoverned
 
@@ -133,7 +159,7 @@ def test_ungoverned_removes_exactly_the_one_promotion():
 _FAKE = """import socket, sys, time
 port = int(sys.argv[-1].rsplit(":", 1)[1])
 s = socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind(("127.0.0.1", port)); s.listen(5)
+s.bind(("127.0.0.1", port))  # bound, NOT listening: a ready server adds s.listen in its tail
 {tail}
 """
 
@@ -163,7 +189,7 @@ def test_start_helper_fails_at_the_bound_with_stderr_when_never_ready(tmp_path):
     from tests.substrate.server import running_server
 
     binary = _fake_binary(tmp_path, 'sys.stderr.write("boom-marker\\n"); sys.stderr.flush()\n'
-                                    "s.close(); time.sleep(60)")
+                                    "s.close(); time.sleep(60)")  # never listens, so no connect can ever complete
     with pytest.raises(pytest.fail.Exception, match="boom-marker"):
         with running_server(binary, ready_bound=1.0):
             pass
@@ -172,7 +198,7 @@ def test_start_helper_fails_at_the_bound_with_stderr_when_never_ready(tmp_path):
 def test_teardown_terminates_the_process_even_when_the_body_fails(tmp_path):
     from tests.substrate.server import running_server
 
-    binary = _fake_binary(tmp_path, "time.sleep(60)")
+    binary = _fake_binary(tmp_path, "s.listen(5); time.sleep(60)")
     seen = {}
     with pytest.raises(RuntimeError, match="test body failed"):
         with running_server(binary, ready_bound=10.0) as (proc, _url):

@@ -58,20 +58,26 @@ class FlureeEndpoint:
 
     def provision(self, ledger: str, shapes: Graph) -> CommitResult | None:
         """Create the ledger (201 required). Commit ``shapes`` first if non-empty; if empty,
-        make no commit and return None (the only way to get an ungoverned ledger)."""
+        make no commit and return None (the only way to get an ungoverned ledger). A shapes
+        commit that is not accepted raises ``FlureeEndpointError``: provisioning a ledger whose
+        membrane never loaded must not look like success (producer-side guard, CLAUDE.md § R89)."""
         status, body = self._post(
             "/v1/fluree/create", json.dumps({"ledger": ledger}).encode(), "application/json")
         if status != 201:
             raise FlureeEndpointError(f"create {ledger!r}: unexpected status {status}: {body}")
         if len(shapes) == 0:
             return None
-        return self.commit(ledger, shapes)
+        res = self.commit(ledger, shapes)
+        if not res.accepted:
+            raise FlureeEndpointError(
+                f"provision {ledger!r}: shapes commit refused ({res.status}): {res.report}")
+        return res
 
     def commit(self, ledger: str, data: Graph) -> CommitResult:
         body = data.serialize(format="turtle").encode("utf-8")
         status, text = self._post(f"/v1/fluree/insert/{ledger}", body, "text/turtle")
         if 200 <= status < 300:
-            return CommitResult(True, status, json.loads(text)["t"], text)
+            return CommitResult(True, status, self._field(text, ("t",), "insert", ledger), text)
         if status == 400:
             return CommitResult(False, status, None, text)
         raise FlureeEndpointError(f"insert {ledger!r}: unexpected status {status}: {text}")
@@ -81,4 +87,16 @@ class FlureeEndpoint:
             f"{self.base_url}/v1/fluree/info/{ledger}", method="GET"))
         if status != 200:
             raise FlureeEndpointError(f"info {ledger!r}: unexpected status {status}: {text}")
-        return json.loads(text)["ledger"]["t"]
+        return self._field(text, ("ledger", "t"), "info", ledger)
+
+    @staticmethod
+    def _field(text: str, path: tuple[str, ...], what: str, ledger: str) -> int:
+        """Read the commit ``t`` from a 2xx body; a body without it is an endpoint fault."""
+        try:
+            v = json.loads(text)
+            for k in path:
+                v = v[k]
+        except (ValueError, KeyError, TypeError) as e:
+            raise FlureeEndpointError(
+                f"{what} {ledger!r}: 2xx body lacks {'.'.join(path)}: {text[:200]!r}") from e
+        return v
