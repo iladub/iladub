@@ -101,4 +101,5 @@ pythonpath = ["."]
 markers = [
     "corpus: real third-party documents (gitignored corpus/; run with -m corpus)",
     "serial: reads a wall-clock ratio, so it runs alone and never beside other workers (R307)",
+    "substrate: needs the fluree 4.2.4 binary; runs only in the non-required substrate CI job (substrate:02)",
 ]

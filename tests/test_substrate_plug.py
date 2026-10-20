@@ -104,3 +104,88 @@ def test_plug_is_isolated():
             if pat.search(line):
                 offenders.append(f"{p}:{n}: {line.strip()}")
     assert offenders == []
+
+
+# ---- agreement + fixture-helper tests (substrate:02 task 2); none needs the fluree binary ----
+
+def test_in_process_membrane_agrees_on_the_ungoverned_input():
+    from iladub.etkl.writegate import gate_admits
+    from tests.substrate.doc_a import compiled_interior, ungoverned
+
+    res = gate_admits(ungoverned(compiled_interior()), Graph())
+    assert not res.conforms
+    assert "INVARIANT: every grounded node must be produced by a promotion decision." \
+        in res.report_text
+    assert gate_admits(compiled_interior(), Graph()).conforms  # control: the governed one passes
+
+
+def test_ungoverned_removes_exactly_the_one_promotion():
+    from rdflib import Namespace
+    from tests.substrate.doc_a import compiled_interior, ungoverned
+
+    wpb = Namespace("https://w3id.org/iladub#").wasPromotedBy
+    full = compiled_interior()
+    assert len(list(full.triples((None, wpb, None)))) >= 1
+    assert len(full) - len(ungoverned(full)) == len(list(full.triples((None, wpb, None))))
+    assert list(ungoverned(full).triples((None, wpb, None))) == []
+
+
+_FAKE = """import socket, sys, time
+port = int(sys.argv[-1].rsplit(":", 1)[1])
+s = socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(("127.0.0.1", port)); s.listen(5)
+{tail}
+"""
+
+
+def _fake_binary(tmp_path, tail):
+    import os
+    import sys
+    (tmp_path / "fake.py").write_text(_FAKE.format(tail=tail))
+    p = tmp_path / "fakefluree"  # a sh wrapper: a shebang cannot carry a path containing spaces
+    p.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{tmp_path / "fake.py"}" "$@"\n')
+    os.chmod(p, 0o755)
+    return str(p)
+
+
+def test_start_helper_fails_fast_when_the_binary_exits_immediately():
+    import time
+    from tests.substrate.server import running_server
+
+    t = time.monotonic()
+    with pytest.raises(pytest.fail.Exception, match="exited with"):
+        with running_server("/usr/bin/false", ready_bound=10.0):
+            pass
+    assert time.monotonic() - t < 10.0
+
+
+def test_start_helper_fails_at_the_bound_with_stderr_when_never_ready(tmp_path):
+    from tests.substrate.server import running_server
+
+    binary = _fake_binary(tmp_path, 'sys.stderr.write("boom-marker\\n"); sys.stderr.flush()\n'
+                                    "s.close(); time.sleep(60)")
+    with pytest.raises(pytest.fail.Exception, match="boom-marker"):
+        with running_server(binary, ready_bound=1.0):
+            pass
+
+
+def test_teardown_terminates_the_process_even_when_the_body_fails(tmp_path):
+    from tests.substrate.server import running_server
+
+    binary = _fake_binary(tmp_path, "time.sleep(60)")
+    seen = {}
+    with pytest.raises(RuntimeError, match="test body failed"):
+        with running_server(binary, ready_bound=10.0) as (proc, _url):
+            seen["proc"] = proc
+            assert proc.poll() is None
+            raise RuntimeError("test body failed")
+    assert seen["proc"].poll() is not None
+
+
+def test_ledger_names_are_distinct():
+    from tests.substrate.server import ledger_namer
+
+    f = ledger_namer()
+    names = [f() for _ in range(50)]
+    assert len(set(names)) == 50
+    assert ledger_namer()() != ledger_namer()()
