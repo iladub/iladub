@@ -16,7 +16,7 @@ changes the order of the oracle's steps.
 
 Meet `substrate:02`: *"a non-conforming write is refused AT THE WRITE ENDPOINT, not inside the
 process that produced it."* The endpoint is a Fluree 4.2.4 HTTP server, which is a separate process.
-Its ledger holds `vocab/shapes/iladub-shapes.ttl` and nothing else (§ 4.3). The refusal is the
+Its ledger holds `vocab/shapes/iladub-shapes.ttl` and nothing else (§ 7, parity of the full membrane). The refusal is the
 engine's own SHACL report, returned as an HTTP 400, and no commit is written.
 
 Fluree is a **plug and never a dependency**. The maintainer ruled this on 2026-10-14 (user memory
