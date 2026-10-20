@@ -593,12 +593,18 @@ prog:criterion:substrate:01 a prog:Criterion ;
     prog:retrospective false ;
     prog:oracleTest "tests/substrate/test_event_ledger.py::test_committed_events_are_immutable" .
 
+# substrate:02 met 2026-10-20: the `substrate` CI job went green on PR #361 (head f9b5495,
+# `1 passed`) — https://github.com/iladub/iladub/actions/runs/39393368932 — and again after the
+# sha-falsification revert: https://github.com/iladub/iladub/actions/runs/39393860461.
+# The `substrate` job is NOT a required check (the ruleset requires `test` alone), so `main`
+# can regress this proof without being blocked; see the register rows raised by that loop.
 prog:criterion:substrate:02 a prog:Criterion ;
     prog:ofRung "substrate" ;
     prog:statement "The membrane is enforced at runtime by validation-at-write (sensory): a non-conforming write is refused AT THE WRITE ENDPOINT, not inside the process that produced it." ;
     prog:source "docs/narrative/scope-evolution.md:99-101" ;
     prog:declaredOn "2026-07-03"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-20"^^xsd:date ;
     prog:retrospective false ;
     prog:oracleTest "tests/substrate/test_write_gate.py::test_engine_refuses_an_ungoverned_commit" .
 

@@ -38,6 +38,7 @@ Issues = "https://github.com/iladub/iladub/issues"
 "ET(K)L namespace" = "https://w3id.org/etkl"
 
 [project.optional-dependencies]
+fluree = []  # declares the substrate:02 HTTP plug; installs nothing (stdlib urllib + rdflib)
 baml = [
     "baml-py==0.222.0",
     "pydantic>=2.6",
@@ -100,4 +101,5 @@ pythonpath = ["."]
 markers = [
     "corpus: real third-party documents (gitignored corpus/; run with -m corpus)",
     "serial: reads a wall-clock ratio, so it runs alone and never beside other workers (R307)",
+    "substrate: needs the fluree 4.2.4 binary; runs only in the non-required substrate CI job (substrate:02)",
 ]

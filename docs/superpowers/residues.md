@@ -495,3 +495,8 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R324 | open | **Census `"["` boundary unpinned**; the widened mutant passes all three controls. See [[R259]] |
 | R325 | open | **Import-time lift reach**: a lift refusal is a session-wide collection error. See [[R259]] |
 | R326 | open | **Band-level relevance is unguarded**: a disposal covers every future firing of its (document, reason), including a real table the kind gate later refuses. See [[R323]], [[R44]] |
+| R327 | open | **The `substrate` proving job is not a required check.** |
+| R328 | open | **Whether the membrane protects itself.** See `prog:criterion:substrate:03`. |
+| R329 | open | **Parity of the full membrane is untested against Fluree's SHACL engine.** See [[R330]]. |
+| R330 | open | **RDFS-aware targeting in Fluree's `sh:targetClass` is unmeasured.** See [[R329]]. |
+| R331 | open | **Linux behaviour of the engine was unmeasured before the first `substrate` run.** See [[R327]]. |
