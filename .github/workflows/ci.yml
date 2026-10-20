@@ -46,7 +46,7 @@ jobs:
         run: |
           f=fluree-db-cli-x86_64-unknown-linux-gnu.tar.xz
           curl -sSL -o "$f" "https://github.com/fluree/db/releases/download/v4.2.4/$f"
-          echo "efe45dcfcf03549ea6ad475b76720188d60ca33196fef696628a9333e8aadc6f  $f" | sha256sum -c -
+          echo "afe45dcfcf03549ea6ad475b76720188d60ca33196fef696628a9333e8aadc6f  $f" | sha256sum -c -
           tar -xJf "$f"
           echo "$PWD/fluree-db-cli-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
       - name: Install
