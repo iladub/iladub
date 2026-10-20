@@ -267,4 +267,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # RE-MEASURED 2026-10-17 (R259 closed; R323, R324, R325 raised, branch r259-firings): 97 -> 100,
     # ADDED = [323, 324, 325], REMOVED = []. The three cite only [[R259]], closed in the same change.
     # Controlled: `--candidates` over `main`'s register files is 97, over the branch's 100.
-    assert len(expected) == 100
+    # RE-MEASURED 2026-10-20 (R327-R331 raised, branch substrate02-write-gate): 100 -> 101,
+    # ADDED = [328], REMOVED = []. R328 (the membrane protecting itself) cites no open row, only
+    # criterion substrate:03; R327 and R329-R331 cite one another, so none is a candidate.
+    # Controlled: `--candidates` over `main`'s register files is 100, over the branch's 101.
+    assert len(expected) == 101
