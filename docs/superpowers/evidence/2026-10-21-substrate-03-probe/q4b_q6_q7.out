@@ -1,0 +1,48 @@
+
+=== Q4 (SHACL on): trap 1
+  [q4bclass] guards: guardShapesClass; bnode=fdb-18e0816827c05b48--b1; head t=5
+    W insert invalid ex:Doc (control: gate up?)                        400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    W DELETE DATA { DocShape sh:targetClass ex:Doc }                   403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W SPARQL DELETE {?p sh:minCount ?m} WHERE {...}                    200 t 5->5 
+    W JSON-LD delete {@id _:fdb-18e0816827c05b48--b1, sh:minCount 1}   200 t 5->6 
+    W insert invalid ex:Doc (gate after W's attempts)                  200 t 6->7 
+  [q4bprops] guards: guardShapesClass + guardShapesProps; bnode=fdb-18e0816828a62768--b1; head t=6
+    W insert invalid ex:Doc (control: gate up?)                        400 t 6->6 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    W DELETE DATA { DocShape sh:targetClass ex:Doc }                   403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W SPARQL DELETE {?p sh:minCount ?m} WHERE {...}                    200 t 6->6 
+    W JSON-LD delete {@id _:fdb-18e0816828a62768--b1, sh:minCount 1}   403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W insert invalid ex:Doc (gate after W's attempts)                  400 t 6->6 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+
+=== Q4 steward retraction (SHACL on)
+  [q4bsteward] guards: guardShapesClass + guardShapesProps; bnode=fdb-18e0816829536310--b1; head t=6
+    S DELETE DATA { DocShape sh:targetClass ex:Doc }                   200 t 6->7 
+    W insert invalid ex:Doc after S retraction                         200 t 7->8 
+
+=== Q6 self-promotion
+  [q6noguard] guards: guardShapesClass; bnode=fdb-18e0816829d1ed98--b1; head t=5
+    W INSERT DATA { ex:W etkl:hasRole ex:roleSteward }                 200 t 5->6 
+    W now sees 3 docs (3 = steward-level view)
+    W DELETE DATA { DocShape sh:targetClass ex:Doc } (acting as steward) 200 t 6->7 
+    W insert invalid ex:Doc                                            200 t 7->8 
+    S INSERT DATA { ex:U etkl:hasRole ex:roleSteward } (steward grants) 200 t 8->9 
+  [q6roleguard] guards: guardShapesClass + guardRole; bnode=fdb-18e081682a664628--b1; head t=6
+    W INSERT DATA { ex:W etkl:hasRole ex:roleSteward }                 403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W now sees 2 docs (3 = steward-level view)
+    W DELETE DATA { DocShape sh:targetClass ex:Doc } (acting as steward) 403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W insert invalid ex:Doc                                            400 t 6->6 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    S INSERT DATA { ex:U etkl:hasRole ex:roleSteward } (steward grants) 200 t 6->7 
+
+=== Q7 config tamper
+  [q7noguard] guards: guardShapesClass; bnode=fdb-18e081682b2d10c8--b1; head t=5
+    W DELETE DATA { GRAPH #config { <..:shacl> f:shaclEnabled true } } 200 t 5->6 
+    W insert invalid ex:Doc (next tx; lagging config)                  200 t 6->7 
+    W DELETE DATA { GRAPH #config { <..:policy> f:defaultAllow false } } 200 t 7->8 
+    no-identity query rows after defaultAllow tamper: 0
+    no-identity write after defaultAllow tamper                        200 t 8->9 
+  [q7cfgguard] guards: guardShapesClass + guardConfig; bnode=fdb-18e081682bf9bb50--b1; head t=6
+    W DELETE DATA { GRAPH #config { <..:shacl> f:shaclEnabled true } } 403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W insert invalid ex:Doc (next tx; lagging config)                  400 t 6->6 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    W DELETE DATA { GRAPH #config { <..:policy> f:defaultAllow false } } 403 t 6->6 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    no-identity query rows after defaultAllow tamper: 0
+    no-identity write after defaultAllow tamper                        200 t 6->7 
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q4b_q6_q7.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q4b_q6_q7.policies.jsonld

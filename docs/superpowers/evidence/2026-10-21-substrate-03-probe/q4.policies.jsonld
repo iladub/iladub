@@ -1,0 +1,91 @@
+{
+ "@graph": [
+  [
+   {
+    "@id": "http://example.org/inlineAllowAll",
+    "@type": [
+     "https://ns.flur.ee/db#AccessPolicy"
+    ],
+    "https://ns.flur.ee/db#action": [
+     {
+      "@id": "https://ns.flur.ee/db#view"
+     },
+     {
+      "@id": "https://ns.flur.ee/db#modify"
+     }
+    ],
+    "https://ns.flur.ee/db#allow": true
+   }
+  ],
+  {
+   "@id": "https://w3id.org/iladub/etkl#sensitivityViewPolicyFixed",
+   "@type": [
+    "https://ns.flur.ee/db#AccessPolicy"
+   ],
+   "https://ns.flur.ee/db#action": [
+    {
+     "@id": "https://ns.flur.ee/db#view"
+    }
+   ],
+   "https://ns.flur.ee/db#required": true,
+   "https://ns.flur.ee/db#query": "{\"where\": [[\"union\", [{\"@id\": \"?$identity\", \"http://www.w3.org/ns/prov#actedOnBehalfOf\": {\"@id\": \"?principal\"}}, {\"@id\": \"?principal\", \"https://w3id.org/iladub/etkl#hasRole\": {\"@id\": \"?role\"}}], [{\"@id\": \"?$identity\", \"https://w3id.org/iladub/etkl#hasRole\": {\"@id\": \"?role\"}}]], {\"@id\": \"?role\", \"https://w3id.org/iladub/etkl#grantsTag\": {\"@id\": \"?tag\"}}, {\"@id\": \"?$this\", \"https://w3id.org/iladub/etkl#sensitivity\": {\"@id\": \"?tag\"}}]}"
+  },
+  {
+   "@id": "http://example.org/guardShapesClass",
+   "@type": [
+    "https://ns.flur.ee/db#AccessPolicy"
+   ],
+   "https://ns.flur.ee/db#action": [
+    {
+     "@id": "https://ns.flur.ee/db#modify"
+    }
+   ],
+   "https://ns.flur.ee/db#required": true,
+   "https://ns.flur.ee/db#query": "{\"where\": [{\"@id\": \"?$identity\", \"https://w3id.org/iladub/etkl#hasRole\": {\"@id\": \"http://example.org/roleSteward\"}}]}",
+   "https://ns.flur.ee/db#onClass": [
+    {
+     "@id": "http://www.w3.org/ns/shacl#NodeShape"
+    }
+   ]
+  },
+  {
+   "@id": "http://example.org/modifyCompanion",
+   "@type": [
+    "https://ns.flur.ee/db#AccessPolicy"
+   ],
+   "https://ns.flur.ee/db#action": [
+    {
+     "@id": "https://ns.flur.ee/db#modify"
+    }
+   ],
+   "https://ns.flur.ee/db#allow": true
+  },
+  {
+   "@id": "http://example.org/guardShapesProps",
+   "@type": [
+    "https://ns.flur.ee/db#AccessPolicy"
+   ],
+   "https://ns.flur.ee/db#action": [
+    {
+     "@id": "https://ns.flur.ee/db#modify"
+    }
+   ],
+   "https://ns.flur.ee/db#required": true,
+   "https://ns.flur.ee/db#query": "{\"where\": [{\"@id\": \"?$identity\", \"https://w3id.org/iladub/etkl#hasRole\": {\"@id\": \"http://example.org/roleSteward\"}}]}",
+   "https://ns.flur.ee/db#onProperty": [
+    {
+     "@id": "http://www.w3.org/ns/shacl#targetClass"
+    },
+    {
+     "@id": "http://www.w3.org/ns/shacl#property"
+    },
+    {
+     "@id": "http://www.w3.org/ns/shacl#path"
+    },
+    {
+     "@id": "http://www.w3.org/ns/shacl#minCount"
+    }
+   ]
+  }
+ ]
+}

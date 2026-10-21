@@ -1,0 +1,31 @@
+Q1 identity-only with node f:policyClass: rows 2
+head t before config 3
+[pre-config] no headers                               query 200 rows=3  | write 200 t 3->4 {"ledger_id":"q2","t":4,"tx-id":"fluree:tx:sha256:4d12ad043810a3bf0ceb0636160dbd92d5cff317
+[pre-config] default-allow:true                       query 200 rows=4  | write 200 t 4->5 {"ledger_id":"q2","t":5,"tx-id":"fluree:tx:sha256:70fed649cbe86228f056a1f43807700ca31930e7
+[pre-config] inline allow-all                         query 200 rows=5  | write 200 t 5->6 {"ledger_id":"q2","t":6,"tx-id":"fluree:tx:sha256:fb039f51c63044c6f4a666fce6dbc9a886d21673
+[pre-config] default-allow + inline                   query 200 rows=6  | write 200 t 6->7 {"ledger_id":"q2","t":7,"tx-id":"fluree:tx:sha256:e87cdb9ac1f2e1c2bf5cab4a44c1e9be9f5d589c
+[pre-config] policy-class only                        query 200 rows=0  | write 403 t 7->7 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[pre-config] identity S + class                       query 200 rows=3  | write 403 t 7->7 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[pre-config] identity S + class + default-allow       query 200 rows=3  | write 200 t 7->8 {"ledger_id":"q2","t":8,"tx-id":"fluree:tx:sha256:146ceb50c7547cda106799ace5ce065a683e3258
+[pre-config] identity B + class + inline allow-all    query 200 rows=0  | write 200 t 8->9 {"ledger_id":"q2","t":9,"tx-id":"fluree:tx:sha256:481d003b7e63b472a5e3943454e315da332e4d22
+[pre-config] identity B + default-allow               query 200 rows=9  | write 200 t 9->10 {"ledger_id":"q2","t":10,"tx-id":"fluree:tx:sha256:0cd60c3f9a8e82f9ee3d811a1429a2f8763b1f0
+[pre-config] PRAGMA default-allow: true               query 200 rows=10 | write 200 t 10->11 {"ledger_id":"q2","t":11,"tx-id":"fluree:tx:sha256:4ca2a121d1af89032199f6802fb983e2c23aa38
+[pre-config] json opts.default-allow query 200 rows=11 [["http://example.org/d1"],["http://example.org/d2"],["http://example.org/d3"],["http://ex
+CONFIG 200 {"ledger_id":"q2","t":12,"tx-id":"fluree:tx:sha256:11cdd27c217edf472ad1b2d082bd1c8b567367168b5dc3bb375f8269a1bf5706","commit":{"hash":"bagaybqabciqhol 11 -> 12
+config read 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q2' but SPARQL FROM targets 'urn:fluree:q2:main#config'","status":400,"@type":"err:api/BadRequest"}
+[post-config] no headers                               query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] default-allow:true                       query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] inline allow-all                         query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] default-allow + inline                   query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] policy-class only                        query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] identity S + class                       query 200 rows=3  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] identity S + class + default-allow       query 200 rows=3  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] identity B + class + inline allow-all    query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] identity B + default-allow               query 200 rows=0  | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] PRAGMA default-allow: true               query 200 rows=0 | write 403 t 12->12 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@typ
+[post-config] json opts.default-allow query 200 rows=0 []
+post-config view http://example.org/U 200 2
+post-config view http://example.org/A 200 2
+post-config view http://example.org/B 200 0
+post-config view http://example.org/S 200 3
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q2.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q2.policies.jsonld

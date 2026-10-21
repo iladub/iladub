@@ -1,0 +1,48 @@
+PREFIX ex: <http://example.org/>
+PREFIX etkl: <https://w3id.org/iladub/etkl#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX f: <https://ns.flur.ee/db#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+INSERT DATA {
+ex:DocShape a sh:NodeShape ; sh:targetClass ex:Doc ; sh:property [ sh:path ex:title ; sh:minCount 1 ] .
+ex:d1 a ex:Doc ; ex:title "one" ; etkl:sensitivity ex:tagPublic .
+ex:d2 a ex:Doc ; ex:title "two" ; etkl:sensitivity ex:tagClinical .
+ex:d3 a ex:Doc ; ex:title "three" ; etkl:sensitivity ex:tagSecret .
+ex:roleClinician etkl:grantsTag ex:tagPublic , ex:tagClinical .
+ex:roleSteward etkl:grantsTag ex:tagPublic , ex:tagClinical , ex:tagSecret .
+ex:U etkl:hasRole ex:roleClinician . ex:A prov:actedOnBehalfOf ex:U . ex:W etkl:hasRole ex:roleClinician .
+ex:S etkl:hasRole ex:roleSteward . ex:B a prov:SoftwareAgent . ex:A a prov:SoftwareAgent .
+<https://w3id.org/iladub/etkl#sensitivityViewPolicyFixed> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#view> ;
+  f:required true ;
+  f:query '''{"where": [["union", [{"@id": "?$identity", "http://www.w3.org/ns/prov#actedOnBehalfOf": {"@id": "?principal"}}, {"@id": "?principal", "https://w3id.org/iladub/etkl#hasRole": {"@id": "?role"}}], [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "?role"}}]], {"@id": "?role", "https://w3id.org/iladub/etkl#grantsTag": {"@id": "?tag"}}, {"@id": "?$this", "https://w3id.org/iladub/etkl#sensitivity": {"@id": "?tag"}}]}''' .
+<http://example.org/guardShapesClass> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#modify> ;
+  f:required true ;
+  f:onClass <http://www.w3.org/ns/shacl#NodeShape> ;
+  f:query '''{"where": [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "http://example.org/roleSteward"}}]}''' .
+<http://example.org/guardShapesProps> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#modify> ;
+  f:required true ;
+  f:onProperty <http://www.w3.org/ns/shacl#targetClass>, <http://www.w3.org/ns/shacl#property>, <http://www.w3.org/ns/shacl#path>, <http://www.w3.org/ns/shacl#minCount> ;
+  f:query '''{"where": [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "http://example.org/roleSteward"}}]}''' .
+<http://example.org/guardConfig> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#modify> ;
+  f:required true ;
+  f:onProperty <https://ns.flur.ee/db#shaclEnabled>, <https://ns.flur.ee/db#validationMode>, <https://ns.flur.ee/db#shaclDefaults>, <https://ns.flur.ee/db#policyDefaults>, <https://ns.flur.ee/db#defaultAllow>, <https://ns.flur.ee/db#policyClass>, <https://ns.flur.ee/db#overrideControl> ;
+  f:query '''{"where": [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "http://example.org/roleSteward"}}]}''' .
+<http://example.org/guardRoles> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#modify> ;
+  f:required true ;
+  f:onProperty <https://w3id.org/iladub/etkl#hasRole>, <http://www.w3.org/ns/prov#actedOnBehalfOf>, <https://w3id.org/iladub/etkl#grantsTag>, <https://w3id.org/iladub/etkl#sensitivity> ;
+  f:query '''{"where": [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "http://example.org/roleSteward"}}]}''' .
+<http://example.org/modifyCompanionRole> a f:AccessPolicy ;
+  f:action <https://ns.flur.ee/db#modify> ;
+  f:query '''{"where": [{"@id": "?$identity", "https://w3id.org/iladub/etkl#hasRole": {"@id": "?r"}}]}''' .
+ GRAPH <urn:fluree:q8one:main#config> {
+  <urn:fluree:q8one:main:config:ledger> a f:LedgerConfig ; f:policyDefaults <urn:fluree:q8one:main:config:policy> ; f:shaclDefaults <urn:fluree:q8one:main:config:shacl> .
+  <urn:fluree:q8one:main:config:policy> f:defaultAllow false ; f:policyClass f:AccessPolicy ; f:overrideControl f:OverrideNone .
+  <urn:fluree:q8one:main:config:shacl> f:shaclEnabled true ; f:validationMode f:ValidationReject ; f:overrideControl f:OverrideNone .
+} 
+}

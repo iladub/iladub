@@ -1,0 +1,58 @@
+== q8two: two-step provisioning, role-conditional companion
+  t after create 0
+  t after base data+shapes+roles 1
+  t after 6 policies 7
+  t after #config 8
+  (a) anonymous
+    anon INSERT valid doc (untagged)                                   403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + default-allow INSERT valid doc                              403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT ex:B hasRole roleSteward                               403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + default-allow INSERT ex:B hasRole roleSteward               403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+  (b) B (identity, no role)
+    B INSERT valid doc (untagged)                                      403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    B + default-allow INSERT valid doc                                 403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+  (c)/(g) W
+    W INSERT valid doc WITH etkl:sensitivity tag                       403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    (g) W INSERT doc-a style (ex:title, ex:note only)                  200 t 8->9 
+    W INSERT invalid doc (no title)                                    400 t 9->9 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    W DELETE DATA targetClass                                          403 t 9->9 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W JSON-LD delete _:fdb-18e081820ce5ed00--b1 sh:minCount 1          403 t 9->9 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W self-promotion hasRole roleSteward                               403 t 9->9 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W INSERT invalid doc again (gate still up?)                        400 t 9->9 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+  (d) S
+    S INSERT valid doc WITH sensitivity tag                            200 t 9->10 
+    S DELETE DATA targetClass                                          200 t 10->11 
+
+== q8e: two-step, ORIGINAL unconditional companion + hasRole guard (e)
+  t after create 0
+  t after base data+shapes+roles 1
+  t after 6 policies 7
+  t after #config 8
+    anon INSERT ex:B hasRole roleSteward                               403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + default-allow INSERT ex:B hasRole roleSteward               403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT valid doc (untagged)                                   200 t 8->9 
+
+== q8one: SINGLE-transaction provisioning, role-conditional companion (f)
+  t after create 0
+  single tx: 200 {"ledger_id":"q8one","t":1,"tx-id":"fluree:tx:sha256:c8dffe5d2b86a77bae2b83c92a27a4b1d5c6c0f4f9b5bd9fd6a1432d7793c7e1","commit":{"hash":"bag; t after 1
+  root read after single tx: 200 rows=0
+  S read of property bnode: rows=0 (view hides untagged shapes)
+  (a) anonymous
+    anon INSERT valid doc (untagged)                                   403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + default-allow INSERT valid doc                              403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT ex:B hasRole roleSteward                               403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + default-allow INSERT ex:B hasRole roleSteward               403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+  (b) B (identity, no role)
+    B INSERT valid doc (untagged)                                      403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    B + default-allow INSERT valid doc                                 403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+  (c)/(g) W
+    W INSERT valid doc WITH etkl:sensitivity tag                       403 t 1->1 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    (g) W INSERT doc-a style (ex:title, ex:note only)                  200 t 1->2 
+    W INSERT invalid doc (no title)                                    400 t 2->2 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+    W DELETE DATA targetClass                                          403 t 2->2 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W self-promotion hasRole roleSteward                               403 t 2->2 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    W INSERT invalid doc again (gate still up?)                        400 t 2->2 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 v
+  (d) S
+    S INSERT valid doc WITH sensitivity tag                            200 t 2->3 
+    S DELETE DATA targetClass                                          200 t 3->4 
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q8.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q8.policies.jsonld

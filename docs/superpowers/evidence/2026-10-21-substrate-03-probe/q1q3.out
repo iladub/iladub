@@ -1,0 +1,14 @@
+t 2
+AS-IS {'none': (200, 3), 'U': (200, 0), 'A': (200, 2), 'B': (200, 0), 'W': (200, 0), 'S': (200, 0), 'U-noclass': (200, 0, '{"head":{"vars":["d"]},"results":{"bindings":[]}}'), 'U-json': (404, None, '{"error":"Graph not found: <q3asis>","status":404,"@type":"err:db/GraphNotFound"}'), 'U-json-noclass': (404, None, '{"error":"Graph not found: <q3asis>","status":404,"@type":"err:db/GraphNotFound"}'), 'json-none': (404, None)}
+insert U aoBo U 200 2 -> 3
+AS-IS + U aoBo U {'none': (200, 3), 'U': (200, 2), 'A': (200, 2), 'B': (200, 0), 'W': (200, 0), 'S': (200, 0), 'U-noclass': (200, 0, '{"head":{"vars":["d"]},"results":{"bindings":[]}}'), 'U-json': (404, None, '{"error":"Graph not found: <q3asis>","status":404,"@type":"err:db/GraphNotFound"}'), 'U-json-noclass': (404, None, '{"error":"Graph not found: <q3asis>","status":404,"@type":"err:db/GraphNotFound"}'), 'json-none': (404, None)}
+FIXED {'none': (200, 3), 'U': (200, 2), 'A': (200, 2), 'B': (200, 0), 'W': (200, 2), 'S': (200, 3), 'U-noclass': (200, 0, '{"head":{"vars":["d"]},"results":{"bindings":[]}}'), 'U-json': (404, None, '{"error":"Graph not found: <q3fixed>","status":404,"@type":"err:db/GraphNotFound"}'), 'U-json-noclass': (404, None, '{"error":"Graph not found: <q3fixed>","status":404,"@type":"err:db/GraphNotFound"}'), 'json-none': (404, None)}
+/insert W 403 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/AccessDenied"} 3 -> 3
+/update W 403 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/AccessDenied"} 3 -> 3
+/update json opts W 403 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/AccessDenied"} 3 -> 3
+/insert S 200 {"ledger_id":"q3fixed","t":4,"tx-id":"fluree:tx:sha256:ae88a5761b78e8d6743b30fb8f55168c09207f2fc2124a5406fc14f5513cac68","commit":{"hash":"bagaybqabci 3 -> 4
+/update S 200 {"ledger_id":"q3fixed","t":5,"tx-id":"fluree:tx:sha256:25a02aac6b37b699e6bbf907c3f84cafe7dcfee8c2c9121b823f50d24f58de04","commit":{"hash":"bagaybqabci 4 -> 5
+/update json opts S 200 {"ledger_id":"q3fixed","t":6,"tx-id":"fluree:tx:sha256:9460d7dd1634c815e23566a375f4402a1d3f4bc08fce64299786dfe4ce55517c","commit":{"hash":"bagaybqabci 5 -> 6
+/update no identity 200 {"ledger_id":"q3fixed","t":7,"tx-id":"fluree:tx:sha256:7a8e35331a6eca79d34fa2c6ebbca85b1b38930fda55db37706e066119c190e7","commit":{"hash":"bagaybqabci 6 -> 7
+/update W identity no class 403 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/AccessDenied"} 7 -> 7
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q1q3.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q1q3.policies.jsonld
