@@ -9,7 +9,7 @@ released changes meaning, and the compile path still never imports the plug.
 
 **Approved:** the design in `docs/superpowers/2026-10-21-substrate-03-design-approved-handoff.md` § 3,
 which the maintainer approved in chat on 2026-10-21. That handoff ordered the Fluree findings
-re-measured before this spec was written. They were, and § 2 records **five departures** from the
+re-measured before this spec was written. **The written spec was approved by the maintainer on 2026-10-21 ("approved, write the plan"), with § 4.1's steward role as a parameter and § 7 as written.** They were, and § 2 records **five departures** from the
 approved design that those measurements force. Each is marked **[changed]** where it lands in § 4.
 
 ## 1. Goal
