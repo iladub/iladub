@@ -1,0 +1,31 @@
+
+== q5none: no config (control)
+  W (identity+class) insert invalid ex:Doc                400 t 3->3 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+  W + PRAGMA validation-mode: warn                        400 t 3->3 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+  no identity insert invalid ex:Doc                       400 t 3->3 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+  no identity + PRAGMA validation-mode: warn              400 t 3->3 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+
+== q5bare: bare f:LedgerConfig, no policies, no groups
+  config commit: 200 {"ledger_id":"q5bare","t":2,"tx-id":"fluree:tx:sha256:a83a7e62a33393637fee1dc274
+  config body: INSERT DATA { GRAPH <urn:fluree:q5bare:main#config> { <urn:fluree:q5bare:main:config:ledger> a f:LedgerConfig . } }
+  no identity insert invalid ex:Doc                       200 t 2->3 {"ledger_id":"q5bare","t":3,"tx-id":"fluree:tx:sha256:82cce3f6bece476f107140031cc625179b4b1329096bff892d2096390e90c16e","commit":{"hash":"ba
+  no identity + PRAGMA validation-mode: warn              200 t 3->4 {"ledger_id":"q5bare","t":4,"tx-id":"fluree:tx:sha256:ebdb7c324900eb6fdd9cbda44643e6443c7b2342f83217227b63a1956382adf5","commit":{"hash":"ba
+
+== q5pol: LedgerConfig with policyDefaults only
+  config commit: 200 {"ledger_id":"q5pol","t":4,"tx-id":"fluree:tx:sha256:ee11a5c303a18f527ec39f80673
+  config body: INSERT DATA { GRAPH <urn:fluree:q5pol:main#config> { <urn:fluree:q5pol:main:config:ledger> a f:LedgerConfig ; f:policyDefaults [ f:defaultAllow false ; f:policyClass f:AccessPolicy ; f:overrideControl f:OverrideNone ] . } }
+  W (identity+class) insert invalid ex:Doc                200 t 4->5 {"ledger_id":"q5pol","t":5,"tx-id":"fluree:tx:sha256:82cce3f6bece476f107140031cc625179b4b1329096bff892d2096390e90c16e","commit":{"hash":"bag
+  W + PRAGMA validation-mode: warn                        200 t 5->6 {"ledger_id":"q5pol","t":6,"tx-id":"fluree:tx:sha256:ebdb7c324900eb6fdd9cbda44643e6443c7b2342f83217227b63a1956382adf5","commit":{"hash":"bag
+
+== q5both: policyDefaults + explicit shaclDefaults
+  config commit: 200 {"ledger_id":"q5both","t":4,"tx-id":"fluree:tx:sha256:b5ec9808bdfdaf979752890494
+  config body: INSERT DATA { GRAPH <urn:fluree:q5both:main#config> { <urn:fluree:q5both:main:config:ledger> a f:LedgerConfig ; f:policyDefaults [ f:defaultAllow false ; f:policyClass f:AccessPolicy ; f:overrideControl f:OverrideNone ] ; f:shaclDefaults [ f:shaclEnabled true ; f:validationMode f:ValidationReject ; f:overrideControl f:OverrideNone ] . } }
+  W (identity+class) insert invalid ex:Doc                400 t 4->4 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+  W + PRAGMA validation-mode: warn                        400 t 4->4 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+
+== q5shonly: shaclDefaults only, no policies
+  config commit: 200 {"ledger_id":"q5shonly","t":2,"tx-id":"fluree:tx:sha256:2b678a1364181de25600acd9
+  config body: INSERT DATA { GRAPH <urn:fluree:q5shonly:main#config> { <urn:fluree:q5shonly:main:config:ledger> a f:LedgerConfig ; f:shaclDefaults [ f:shaclEnabled true ; f:validationMode f:ValidationReject ; f:overrideControl f:OverrideNone ] . } }
+  no identity insert invalid ex:Doc                       400 t 2->2 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+  no identity + PRAGMA validation-mode: warn              400 t 2->2 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. Expected at least 1 value(s) but found 0\n Focus node: http:/
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q5.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q5.policies.jsonld

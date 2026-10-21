@@ -1,0 +1,25 @@
+[anonA] config=bnode policyDefaults (Q2 form) companion=False
+    anon INSERT DATA valid ex:Doc                                      403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + fluree-default-allow:true INSERT                            403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon DELETE DATA { DocShape sh:targetClass ex:Doc }                403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT DATA { ex:B etkl:hasRole ex:roleSteward }              403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon view rows: 0
+[anonB] config=bnode policyDefaults (Q2 form) companion=True
+    anon INSERT DATA valid ex:Doc                                      200 t 5->6 
+    anon + fluree-default-allow:true INSERT                            200 t 6->7 
+    anon DELETE DATA { DocShape sh:targetClass ex:Doc }                403 t 7->7 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT DATA { ex:B etkl:hasRole ex:roleSteward }              200 t 7->8 
+    anon view rows: 0
+[anonC] config=explicit IRIs + shacl companion=False
+    anon INSERT DATA valid ex:Doc                                      403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon + fluree-default-allow:true INSERT                            403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon DELETE DATA { DocShape sh:targetClass ex:Doc }                403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT DATA { ex:B etkl:hasRole ex:roleSteward }              403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon view rows: 0
+[anonD] config=explicit IRIs + shacl companion=True
+    anon INSERT DATA valid ex:Doc                                      200 t 5->6 
+    anon + fluree-default-allow:true INSERT                            200 t 6->7 
+    anon DELETE DATA { DocShape sh:targetClass ex:Doc }                403 t 7->7 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:po
+    anon INSERT DATA { ex:B etkl:hasRole ex:roleSteward }              200 t 7->8 
+    anon view rows: 0
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/anon_companion.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/anon_companion.policies.jsonld

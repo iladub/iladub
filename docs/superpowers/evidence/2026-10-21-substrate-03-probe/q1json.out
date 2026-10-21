@@ -1,0 +1,12 @@
+None None 200 [["http://example.org/d1"],["http://example.org/d2"],["http://example.org/d3"]]
+None {'identity': 'http://example.org/U', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 200 [["http://example.org/d1"],["http://example.org/d2"]]
+None {'identity': 'http://example.org/U'} 200 []
+None {'identity': 'http://example.org/S', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 200 [["http://example.org/d1"],["http://example.org/d2"],["http://example.org/d3"]]
+None {'identity': 'http://example.org/B', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 200 []
+q1json:main None 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q1json' but query 'from' targets 'q1json
+q1json:main {'identity': 'http://example.org/U', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q1json' but query 'from' targets 'q1json
+q1json:main {'identity': 'http://example.org/U'} 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q1json' but query 'from' targets 'q1json
+q1json:main {'identity': 'http://example.org/S', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q1json' but query 'from' targets 'q1json
+q1json:main {'identity': 'http://example.org/B', 'policyClass': 'https://ns.flur.ee/db#AccessPolicy'} 400 {"error":"Bad request: Ledger mismatch: endpoint ledger is 'q1json' but query 'from' targets 'q1json
+/v1/fluree/query 200 [["http://example.org/d1"],["http://example.org/d2"]]
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q1json.log.json

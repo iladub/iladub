@@ -1,0 +1,49 @@
+
+== q4nocomp: guard onClass NodeShape; companion=False
+  post-config root read of targetClass rows: 0
+  property-shape bnode id: fdb-18e081687f650470--b1
+  W INSERT DATA valid ex:Doc                                             403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  S INSERT DATA valid ex:Doc                                             403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W DELETE DATA { DocShape sh:targetClass ex:Doc }                       403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W SPARQL DELETE{?p sh:minCount ?m} WHERE{DocShape sh:property ?p...}   200 t 4->4 
+  W JSON-LD delete {@id fdb-18e081687f650470--b1, sh:minCount 1}         403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W INSERT invalid ex:Doc (no title) — is the gate up?                   403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W DELETE guard policy's f:required (policy tamper)                     403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  S DELETE DATA { DocShape sh:targetClass ex:Doc }                       200 t 4->5 
+  W INSERT invalid ex:Doc (no title) after S retraction                  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+
+== q4class: guard onClass NodeShape; companion=True
+  post-config root read of targetClass rows: 0
+  property-shape bnode id: fdb-18e08168806282f8--b1
+  W INSERT DATA valid ex:Doc                                             200 t 5->6 
+  S INSERT DATA valid ex:Doc                                             200 t 6->7 
+  W DELETE DATA { DocShape sh:targetClass ex:Doc }                       403 t 7->7 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W SPARQL DELETE{?p sh:minCount ?m} WHERE{DocShape sh:property ?p...}   200 t 7->7 
+  W JSON-LD delete {@id fdb-18e08168806282f8--b1, sh:minCount 1}         200 t 7->7 
+  W INSERT invalid ex:Doc (no title) — is the gate up?                   200 t 7->8 
+  W DELETE guard policy's f:required (policy tamper)                     200 t 8->9 
+  S DELETE DATA { DocShape sh:targetClass ex:Doc }                       200 t 9->10 
+  W INSERT invalid ex:Doc (no title) after S retraction                  200 t 10->11 
+
+== q4props: guard onClass NodeShape + onProperty sh:*; companion=True
+  post-config root read of targetClass rows: 0
+  property-shape bnode id: fdb-18e081688164bc70--b1
+  W INSERT DATA valid ex:Doc                                             200 t 6->7 
+  S INSERT DATA valid ex:Doc                                             200 t 7->8 
+  W DELETE DATA { DocShape sh:targetClass ex:Doc }                       403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W SPARQL DELETE{?p sh:minCount ?m} WHERE{DocShape sh:property ?p...}   200 t 8->8 
+  W JSON-LD delete {@id fdb-18e081688164bc70--b1, sh:minCount 1}         403 t 8->8 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+  W INSERT invalid ex:Doc (no title) — is the gate up?                   200 t 8->9 
+  W DELETE guard policy's f:required (policy tamper)                     200 t 9->10 
+  S DELETE DATA { DocShape sh:targetClass ex:Doc }                       200 t 10->11 
+  W INSERT invalid ex:Doc (no title) after S retraction                  200 t 11->12 
+
+== q4trap2: trap 2 — DELETE…WHERE by an identity whose view hides the rows
+  post-config root read of targetClass rows: 0
+  http://example.org/B sees 0 docs
+  http://example.org/U sees 2 docs
+  B DELETE {?d ex:title ?t} WHERE {?d a ex:Doc; ex:title ?t}             200 t 6->6 
+  U DELETE {ex:d3 ex:title ?t} WHERE {ex:d3 ex:title ?t} (d3 secret)     200 t 6->6 
+  U DELETE DATA { ex:d3 ex:title "three" } (hidden row, ground)          200 t 6->7 
+  S (sees all tagged) title rows after: 2 {"head":{"vars":["d","t"]},"results":{"bindings":[{"d":{"type":"uri","value":"http://example.org/d1"},"t":{"type":"literal","value":"one"}},{"d":{"type":"uri","value":"http://example.org/d2"},"t":{"type":"literal","value":"two"}}]}}
+/private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q4.log.json /private/tmp/claude-501/-Volumes-WD-Green-dev-git-iladub/d343c64c-a661-46b4-bc50-f785746403fc/scratchpad/probe03/q4.policies.jsonld
