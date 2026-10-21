@@ -1,6 +1,8 @@
 # Handoff: substrate:03, spec approved and plan not yet written (2026-10-21)
 
-**Serves:** prog:criterion:substrate:03. Verify it is still `prog:met false` before starting.
+**Serves:** prog:criterion:substrate:03 — verify it is still `prog:met false` before starting.
+
+**Topic:** substrate · **Date:** 2026-10-21
 
 **Doc impact: none.** This is only a handoff.
 
