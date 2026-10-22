@@ -282,3 +282,8 @@ re-measures each fact below before relying on it.
   scorer joins accordingly or the spec is amended again.
 - The `row_occurrence` rule with a repeated label. Table 1 has none, so test 1's fixture is the only
   thing that exercises it.
+
+### 9.4 Approval
+
+**Approved by the maintainer on 2026-10-22 ("9 approved").** § 9.1's sign defect was raised as
+[[R332]] on the same day, at the maintainer's request.

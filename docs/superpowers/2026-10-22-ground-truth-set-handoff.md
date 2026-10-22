@@ -150,3 +150,9 @@ first scorer run must test. Separately, § 9.3's multi-level header join must be
 - The scratch artefacts (graph `.nt`, HTML snapshot, throwaway scripts) were not kept. Every
   § 9.1 figure is a subagent's measurement, spot-checked only for `feed.py:297` and the
   `MS Facilities` truth label.
+
+### Fourth session, addendum
+
+- **Spec § 9 was approved by the maintainer on 2026-10-22.** This is recorded in spec § 9.4. The
+  next action above is now asserted: write the plan in a fresh session.
+- The sign defect is raised as R332 (`residues-open.md`, `residues.md`).
