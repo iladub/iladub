@@ -199,3 +199,21 @@ defects, and crossed the 50K originating floor (~64K working tokens) before any 
 - **ASSERTED next action:** in a fresh session, write the plan from the spec, §§ 1-8 as amended by
   § 9 and § 10. Task 1's first scorer run must reproduce the counts above (CORRECT 0, REFUSED 4,
   LOST 45, MISATTACHED 71, MISSING 8). These are now measured, not predicted.
+
+## Sixth session (2026-10-22, in `../iladub`): the plan
+
+### Next concrete action (written first)
+
+**ASSERTED:** in a fresh session, execute `docs/superpowers/plans/2026-10-22-ground-truth-slice-one.md`
+with superpowers:subagent-driven-development, from Task 1. Task 3 step 4's counts are measured, not
+predicted. A difference there is a stop, not a tuning target.
+
+### Pointers
+
+- Plan committed at `7a851c8`, with four tasks. **Approved by the maintainer on 2026-10-22 ("approved,
+  subagent-driven")**, including the plan's one "FOR RULING" point. Check (ii)'s refused texts come
+  from `RegionReport.text` where `verdict != "asserted"` on a listed page, not from graph predicates.
+  The reason, measured: `etkl:bandText` exists only on `etkl:IgnoredBand`, and no graph fact marks an
+  escalated region as non-asserted.
+- Not done: CLAUDE.md § Corpus baseline's input list will miss `tests/ground-truth/` once Task 3
+  lands. That file is in the Contract class, so the edit is the maintainer's. The PR body flags it.
