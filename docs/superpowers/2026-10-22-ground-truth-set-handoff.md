@@ -1,0 +1,105 @@
+# Handoff: a ground-truth set for the document compiler's PDF tables (2026-10-22)
+
+Written in a strata session (strata may not write to neighbours). For a fresh session working in
+`../iladub`; François moves or copies it there.
+
+## Goal
+
+Turn "are the tables right?" into a number: a small, public, cell-checked ground-truth set and a scorer,
+so that a table release can be judged and progress measured. François (2026-10-22): "we need to make
+focused progress and accelerate, we are going too slow."
+
+## Where the primaries are (all in `../iladub`; establish each before relying on it)
+
+- `tests/corpus-baseline/*.json` (committed 2026-10-20): the only tracked number, document `"score"` =
+  asserted / (asserted + escalated) tokens (`src/iladub/etkl/compile.py:3-4`). Establish the per-region
+  structure: what a ground-truth comparison can key on (page, region, row, column).
+- `tests/corpus-manifest.ttl:74`: "A SCORE IS NOT AN ACCEPTANCE", and the three-step route to accepting the
+  nearest-to-acceptable document (contract triple; `tests/test_corpus.py::test_grounding_where_contracted`;
+  a dated reviewer note against the page). Read it: it is the repo's own closest thing to this goal.
+- `tests/held-out-manifest.ttl`: the 4 held-out PDFs (Fed H.4.1, arXiv 1706.03762v7, Caltrain weekend
+  timetable, WHO COVID sitrep 41), URLs and hashes. Main corpus of 7 in `tests/corpus-manifest.ttl`.
+- `docs/superpowers/residues-open.md`: R240 (score blind to cell-carriage defects), R295 (blind to a table
+  classified NON_TABLE), R247 (the deciding comparison never run; Docling stack two releases stale),
+  R246 (positioning unaccepted). Table-output defects to use as test cases: R230, R322, R166, R241, R289,
+  R294, R74, R292, R279, R308, R320, R215, R239, R242, R243, R261, R278, R306.
+- `docs/superpowers/2026-08-15-docling-positioning.md:138-162` (worse on unruled / merged headers, better on
+  ruled and cross-page); `docs/superpowers/2026-10-06-held-out-corpus.md` §3-4 (reach vs score; "The score
+  cannot see a table the compiler ignored").
+- `tests/arc-manifest.ttl` (progress criteria; 36 met / 14 unmet per a subagent count) and `RELEASE.md`
+  (procedure, no quality bar): where a "table release" criterion would be recorded.
+- Latest handoff: `docs/superpowers/2026-10-21-substrate-03-spec-approved-handoff.md` (storage ledger and
+  policy, not tables). This work competes with it for the next session.
+
+## What was decided, and where it is recorded
+
+- Build the ground-truth set next, for focus and speed (François, 2026-10-22): **recorded only here.**
+- Whether the substrate arc pauses while this runs: **not decided.** François's call; recorded nowhere.
+- Everything under "Proposed" is a proposal from this session, not a decision.
+
+## Proposed (for the spec session to accept, change or drop)
+
+- Size: 20 to 30 tables from the 11 corpus PDFs, both corpora, weighted to the held-out four and to the
+  documents with open defects above. Public documents only.
+- Ground truth source, cheapest first: (1) the publisher's own machine-readable release of the same table
+  (statistics offices and the Fed often publish CSV/XLSX next to the PDF); (2) hand transcription with a
+  second, independent check. Record which per table.
+- Metrics: cell accuracy on exact text after a declared normalisation; tables found vs missed vs spurious;
+  header-to-cell attachment. Report refusals separately: a refused cell is not a wrong cell, and the
+  compiler's stance (refuse rather than invent) must stay visible in the number.
+- Speed: time-box the first slice to one document end to end (graincorp-capacity, per manifest :74, or ONS
+  if a publisher CSV exists), scorer plus CI floor, before widening. Merge the first slice in days, not an arc.
+- Later, not in this slice: one public benchmark (FinTabNet or OmniDocBench) and a current-Docling re-run
+  (closes R247).
+
+## Unverified or assumed
+
+- That the publishers (ONS, BFS, Fed H.4.1, WHO) release the same tables as CSV/XLSX: not checked.
+- The residue list, the 36/14 arc count and the "~30 confirmed defects" are a subagent's keyword and hand
+  count, spot-checked only for R230, R240, R247, R322, manifest :74, tags and baseline scores.
+- That 20 to 30 tables is enough to separate progress from noise: an assumption.
+- That the baseline JSON carries enough per-cell structure to compare against truth: not checked.
+
+## Findings, second session (2026-10-22, read only in `../iladub`; web checks by a subagent)
+
+- Manifest :74 confirmed as quoted above (graincorp-capacity, 390 asserted / 0 escalated, HOLD).
+- **The baseline JSON carries no cell values.** Per page it has regions with `kind`, `verdict`, `cells`
+  (a count), `reason`, and the `table` IRI (e.g. graincorp-capacity `p0#htable3`, 406 cells); plus
+  `graph_sha256` and `graph_triples`. A scorer must compile the PDF and read the RDF graph: `tab:cellText`,
+  `tab:value`, `tab:columnIndex`/`tab:colIndex`, `tab:headerText` (`vocab/ontology/tab.ttl:121,194,326,558,551`).
+  Exact row/column keying on the graph: not yet established. PDFs live in `corpus/` (gitignored).
+- Fed H.4.1 baseline: score 0.805, 11 pages, 2,413 cells over region verdicts asserted 15, escalated 19,
+  superseded 9, ignored 39 (NON_TABLE); 36 of its table regions are UNSUPPORTED_TABLE.
+- Publisher machine-readable releases (subagent opened each URL; not re-checked by me):
+
+  | Document | Source | Verdict |
+  | --- | --- | --- |
+  | Fed H.4.1 2025-01-02 | HTML of the dated release, https://www.federalreserve.gov/releases/h41/20250102/ (21 tables) | exact match |
+  | Apple FY26 Q3 | 10-Q XBRL, EDGAR 0000320193-26-000020 (period 2026-06-27) | exact values; label-to-concept mapping needed |
+  | arXiv 1706.03762v7 | e-print LaTeX, https://arxiv.org/e-print/1706.03762v7 | exact; LaTeX parsing needed |
+  | BFS bilan 2023 | PxWeb px-x-0102020000_101 (T1, T2); one row matched exactly | same data, other layout |
+  | ONS IoS Feb 2026 | ios1 v131 minus v130 (beware: the previous-versions page mislabels v130's date) | derived only |
+  | WHO wfa boys | expanded daily XLSX; monthly needs LMS recompute | other layout |
+  | Caltrain weekend | GTFS starts 2026-01-31, PDF Aug 2024 | other vintage |
+  | WHO sitrep 41 | global CSV is back-revised | none |
+  | GrainCorp, CBH stems | PDF only, daily files overwritten | none |
+
+- Consequence: the proposed first document (graincorp-capacity) has no publisher truth; it would need
+  hand transcription with a second check (406 cells on one page, small).
+
+## Next concrete action
+
+**Decided (François, 2026-10-22): slice one is Fed H.4.1 2025-01-02**, truth from the dated HTML release,
+time-boxed to its first one or two tables. Recorded only here.
+
+In a fresh `../iladub` session: (1) establish how a cell's row and column are read from the compiled graph
+for the Fed document; (2) fetch the dated HTML, pick the first one or two tables, and confirm they map to
+regions in the baseline; (3) then write the slice-one spec (scorer, normalisation, refusals counted
+separately, CI floor) for François's approval.
+
+## Third session (2026-10-22, in `../iladub`)
+
+- **Decided (François, 2026-10-22): the substrate arc pauses while slice one runs.** The substrate:03
+  amendment (PR #364) stays as approved and is picked up after.
+- Steps 1 and 2 were done and step 3 was drafted:
+  `docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md` (DRAFT, awaiting approval).
