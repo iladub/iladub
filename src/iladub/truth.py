@@ -7,7 +7,9 @@ Nothing here reads a document, reads geometry, or decides a reading. Irreducible
 the product is a tally of outcomes against an external truth file, not a fact of the evidence graph
 (the graph is read, never grown, and the closed-world counting is the point of a scorer), and
 irreducible to NEURAL because nothing is underdetermined. It carries no tolerance and no tuned
-constant (spec 2026-10-22 sections 3.2, 3.3, 9.2, 10.2, 10.3).
+constant (spec 2026-10-22 sections 3.2, 3.3, 9.2, 10.2, 10.3, 11). Regrouping the per-cell
+record shape into rows ([[R333]]) is the same class of step: it reads header paths the compile
+already asserted and decides nothing.
 """
 from __future__ import annotations
 
@@ -51,6 +53,11 @@ class TruthMarkupError(ValueError):
     text containing the path separator)."""
 
 
+class TruthShapeError(ValueError):
+    """A compiled record the scorer cannot read exactly: a per-cell key's region names two
+    header paths ([[R333]])."""
+
+
 OUTCOMES = ("CORRECT", "WRONG_VALUE", "MISATTACHED", "LOST", "MISSING", "REFUSED")
 _SEP = " \u203a "          # the CSV's column-path separator, ' › '
 
@@ -80,8 +87,8 @@ def score_table(graph, truth: Sequence[TruthRow], pages: Sequence[int],
 
     cands = [r for r in table_records(graph, per_cell=True)
              if any(_on_pages(c.region, pages) for c in r.concepts)]
-    # (normalised text, normalised value) per concept, kept parallel to r.concepts
-    norm = [[(normalise(c.text), normalise(c.value)) for c in r.concepts] for r in cands]
+    # (normalised text, normalised value) per concept of one scored row
+    norm = [[(normalise(t), normalise(v)) for t, v in row] for row in _scored_rows(graph, cands)]
     refused = [normalise(t) for t in refused_texts]
     out = {k: 0 for k in OUTCOMES} | {"SPURIOUS": 0, "MARKED_LABEL": 0}
 
@@ -111,6 +118,68 @@ def score_table(graph, truth: Sequence[TruthRow], pages: Sequence[int],
             verdict = "MISSING"
         out[verdict] += len(cells)
     return out
+
+
+def _scored_rows(graph, records) -> list[list[tuple[str, str]]]:
+    """Each compiled row as its (text, value) pairs, in record order.
+
+    A one-record-per-row record is its concepts. The PER-CELL shape ([[R333]]; `table_records`'
+    `per_cell`) mints one record per cell of a row covered by a row header, and both its keys'
+    texts are space-joined, so neither the row's leaf label nor a multi-level column path can be
+    read off them. Its records are regrouped into one row by the row key's region, and both
+    paths are read off the header node that region names: the row as the pair (leaf, leaf), the
+    label the truth file prints, and each cell as (column path joined ' > ', value), the join
+    `_header_path` gives the one-record-per-row shape. Role-less riders join the row once."""
+    from iladub.ground import ROLE_CELL_VALUE, ROLE_COLUMN_KEY
+
+    rows: list[list[tuple[str, str]]] = []
+    at: dict[str, int] = {}
+    paths = None
+    for r in records:
+        by_role = {c.role: c for c in r.concepts if c.role}
+        cell = by_role.get(ROLE_CELL_VALUE)
+        if cell is None:
+            rows.append([(c.text, c.value) for c in r.concepts])
+            continue
+        if paths is None:
+            paths = _paths_by_region(graph)
+        (key,) = [c for c in r.concepts if c.role and c.role not in (ROLE_CELL_VALUE, ROLE_COLUMN_KEY)]
+        if key.region not in at:
+            leaf = _path(paths, key.region)[-1]
+            at[key.region] = len(rows)
+            rows.append([(leaf, leaf)] + [(c.text, c.value) for c in r.concepts if not c.role])
+        col = by_role.get(ROLE_COLUMN_KEY)
+        rows[at[key.region]].append((" > ".join(_path(paths, col.region)) if col else "", cell.value))
+    return rows
+
+
+_AMBIGUOUS = object()
+
+
+def _paths_by_region(graph) -> dict:
+    """Every chosen header node's label path, keyed by both forms of region a per-cell key can
+    carry: `_label_region`'s readable form and the label cell's whole IRI (the form the feed
+    gives a second label cell whose readable form is taken). A readable form two different
+    paths share is marked ambiguous, and reading it raises."""
+    from iladub.feed import TAB, _header_parts, _label_region
+
+    tables = set(graph.subjects(TAB.hasHeaderNode, None))
+    out: dict = {}
+    for pred in (TAB.coversRow, TAB.coversColumn):
+        for labels, node in _header_parts(graph, tables, pred).values():
+            cell, region = _label_region(graph, node)
+            out[str(cell)] = labels
+            if out.setdefault(region, labels) != labels:
+                out[region] = _AMBIGUOUS
+    return out
+
+
+def _path(paths: dict, region: str) -> tuple:
+    labels = paths.get(region)
+    if labels is None or labels is _AMBIGUOUS:
+        raise TruthShapeError(f"per-cell key region {region!r} names "
+                              f"{'no' if labels is None else 'more than one'} header path")
+    return labels
 
 
 def _score_row(cells: Sequence[TruthRow], compiled: list[tuple[str, str]], out: dict) -> None:
