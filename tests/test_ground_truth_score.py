@@ -148,3 +148,70 @@ def test_the_page_comes_from_the_concept_regions_never_from_the_row_id():
     assert [r.row_id for r in table_records(g, per_cell=True)] == ["p1 h0-r0"]
     assert score_table(g, [_truth("Mu", "X", "3")], [0], [])["CORRECT"] == 1
     assert score_table(g, [_truth("Mu", "X", "3")], [1], [])["MISSING"] == 1
+
+
+# ---------------------------------------------------------------- the per-cell shape (R333)
+#
+# Under `per_cell=True` a row covered by a row header (`tab:coversRow`) mints one record PER
+# CELL: a row key, a column key and the cell. Both keys' texts are SPACE-joined, so neither
+# the multi-level column path nor the row's leaf label can be read off a concept's text. The
+# scorer regroups the row's records and reads both paths off the header nodes the keys' regions
+# name. The fixtures are `tests/test_feed_matrix_cell.py`'s, the shape `holon` emits.
+
+import pytest
+
+from tests.test_feed_matrix_cell import _matrix
+from iladub.truth import TruthShapeError
+
+AVG = [("Averages", "Week ended"), ("Averages", "Change")]
+M = URIRef("urn:doc/p0#m")
+
+
+def test_a_per_cell_row_is_scored_as_one_row_under_its_multi_level_column_paths():
+    g = _matrix(Graph(), M, 0, AVG, [("Reserve credit1", {0: "6,819", 1: "-20"}),
+                                     ("Bills", {0: "5", 1: "7"})])
+    truth = [_truth("Reserve credit", "Averages › Week ended", "6,819", marked="Reserve credit1"),
+             _truth("Reserve credit", "Averages › Change", "-20", marked="Reserve credit1"),
+             _truth("Bills", "Averages › Week ended", "5"),
+             _truth("Bills", "Averages › Change", "8")]
+    got = score_table(g, truth, [0], [])
+    assert got == {"CORRECT": 3, "WRONG_VALUE": 1, "MISATTACHED": 0, "LOST": 0, "MISSING": 0,
+                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 1}, got
+
+
+def test_a_per_cell_row_under_a_nested_row_header_matches_by_its_leaf_label():
+    g = _matrix(Graph(), M, 0, AVG, [("Bills", {0: "5", 1: "7"})])
+    group, glabel = URIRef(f"{M}-rg0"), URIRef(f"{M}-rgl0")
+    g.add((group, RDF.type, TAB.HeaderNode))
+    g.add((M, TAB.hasHeaderNode, group))
+    g.add((group, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
+    g.add((group, TAB.coversRow, URIRef(f"{M}-r0")))
+    g.add((glabel, RDF.type, TAB.LabelCell))
+    g.add((glabel, TAB.cellText, Literal("Securities held outright")))
+    g.add((glabel, TAB.onPage, Literal(0, datatype=XSD.integer)))
+    g.add((group, TAB.hasLabel, glabel))
+    leaf = URIRef(f"{M}-rh0")
+    g.set((leaf, TAB.headerLevel, Literal(1, datatype=XSD.integer)))
+    g.add((leaf, TAB.parentHeader, group))
+    (rk,) = {c.text for r in table_records(g, per_cell=True) for c in r.concepts
+             if c.role.endswith("RowKey")}
+    assert rk == "Securities held outright Bills"     # the precondition: the text is the path
+    truth = [_truth("Bills", "Averages › Week ended", "5"), _truth("Bills", "Averages › Change", "7")]
+    assert score_table(g, truth, [0], [])["CORRECT"] == 2
+
+
+def test_a_multi_level_column_path_joins_with_the_separator_the_scorer_expects():
+    # No row header covers the row, so this is the one-record-per-row shape: the label is a cell.
+    g = _matrix(Graph(), M, 0, [("Item",)] + AVG, [(None, {0: "Alpha", 1: "5", 2: "6"})])
+    truth = [_truth("Alpha", "Averages › Week ended", "5"), _truth("Alpha", "Averages › Change", "6")]
+    got = score_table(g, truth, [0], [])
+    assert got["CORRECT"] == 2 and got["SPURIOUS"] == 0, got
+
+
+def test_two_label_cells_naming_one_region_with_different_paths_refuse_loudly():
+    # Two tables on one page whose label cells share an IRI fragment: the feed gives the second
+    # its whole IRI as a region, and the readable region then names two different paths.
+    g = _matrix(Graph(), URIRef("urn:a#m"), 0, AVG, [("Bills", {0: "5"})])
+    _matrix(g, URIRef("urn:b#m"), 0, AVG, [("Notes", {0: "6"})])
+    with pytest.raises(TruthShapeError):
+        score_table(g, [_truth("Bills", "Averages › Week ended", "5")], [0], [])

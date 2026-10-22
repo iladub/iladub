@@ -256,3 +256,34 @@ fix, `score_table` on table 1 gives `CORRECT > 0`. Refuted in minutes by one com
 - The floor test proves only that the instrument exists: `CORRECT >= 0` cannot fail, and the
   six-outcome sum holds by construction.
 - CLAUDE.md § Corpus baseline's input list omits `tests/ground-truth/` (Contract class; maintainer's edit).
+
+## Eighth session (2026-10-22): R333 closed
+
+### Next concrete action (written first)
+
+**PROPOSED:** fix [[R166]] on Fed H.4.1 page 0, where a data row is read as the column header. The
+prediction to run first is that after the fix `score_table` on table 1 gives `CORRECT > 0`. One
+compile (about 4 minutes, `held-out/fed-h41-2025-01-02.pdf`) and one score refute it. Second
+prediction, also unrun: the fix produces the per-cell shape. If it produces one-record-per-row
+records instead, the § 11 regrouping is never entered on this document, and that is still correct.
+
+### Pointers
+
+- Branch `r333-per-cell-scorer`. Code: `src/iladub/truth.py` (`_scored_rows`, `_paths_by_region`,
+  `_path`, `TruthShapeError`). Tests: the four R333 tests at the end of
+  `tests/test_ground_truth_score.py`. Spec: § 11 of `specs/2026-10-22-ground-truth-slice-one-design.md`.
+- Probe: Fed page 0 has 31 records and 0 per-cell records. The truth block is byte-equal to the
+  committed one.
+
+### Decided, and where recorded
+
+- The per-cell shape is regrouped by the row key's region, and an ambiguous region refuses: spec § 11.
+- R333 is closed: `residues-closed.md`.
+
+### Unverified
+
+- The per-cell path has never run on a real compile. Only synthetic fixtures exercise it.
+- `_paths_by_region` passes every table that has a header node to `_header_parts`, while the feed
+  passes one logical table. A wider candidate set could choose a different deepest node for a row.
+  If it does, the scorer raises (the region is unknown); it does not misscore. This is argued from
+  the code, not measured.

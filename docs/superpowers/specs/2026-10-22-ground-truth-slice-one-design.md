@@ -311,3 +311,26 @@ ruled both items on 2026-10-22, choosing the recommended option each time.
    document. If one appears, it scores as `MISATTACHED` or `LOST`, and that case needs an amendment.
 4. **No new dependency.** The extractor uses stdlib `html.parser`. `beautifulsoup4` is not in CI's
    extras.
+
+## 11. Amendment 3: the per-cell record shape is scored, not misread (2026-10-22, R333)
+
+Supersedes § 10.3's last two sentences. Closes [[R333]].
+
+1. **What changes.** `score_table` regroups the per-cell records of one row (one record per cell
+   under `table_records(graph, per_cell=True)`, for a row covered by a row header) into one scored
+   row, keyed by the row key's region. Both paths are read off the header node that a key's region
+   names, through `feed._header_parts` and `feed._label_region`. The concept texts are space-joined,
+   so they are not used. The row becomes the pair (leaf label, leaf label), and each cell becomes
+   (column labels joined `" > "`, value), which is the join `_header_path` gives the
+   one-record-per-row shape. Role-less riders join the row once. The ladder, the occurrence rule and
+   the "exactly one concept equals the label" rule are unchanged.
+2. **What refuses.** If a key's region names no header path, or its readable form names two different
+   paths (two label cells on one page sharing an IRI fragment), the scorer raises
+   `TruthShapeError`. It does not guess.
+3. **Measured on this document.** Fed H.4.1 page 0 mints 0 per-cell records today (31 records, all
+   one-per-row). The truth block is unchanged: CORRECT 0, MISATTACHED 71, LOST 45, MISSING 8,
+   REFUSED 4, SPURIOUS 57, MARKED_LABEL 17.
+4. **Unverified.** The per-cell path is exercised only by synthetic fixtures
+   (`tests/test_ground_truth_score.py`, in the shape of `tests/test_feed_matrix_cell.py::_matrix`).
+   Whether an [[R166]] fix on page 0 produces this shape at all, and whether it then gives
+   `CORRECT > 0`, is that loop's prediction to run.
