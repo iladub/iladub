@@ -1,0 +1,22 @@
+closure-set shape predicates: 16
+== seams: full bundle on iladub-shapes.ttl, blank node fdb-18e0849cea3fe918--b8
+  delete body (rdflib): {"delete": [{"@id": "_:fdb-18e0849cea3fe918--b8", "http://www.w3.org/ns/shacl#minCount": [{"@type": "http://www.w3.org/2001/XMLSchema#integer", "@value": 1}]}]}
+    count(U) = 2  (200)
+    count(A) = 2  (200)
+    count(B) = 0  (200)
+    count(W) = 2  (200)
+    count(S) = 3  (200)
+    SEAM B: W DELETE DATA GroundedNodeShape a sh:NodeShape           403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    W DELETE DATA GroundedNodeShape sh:targetClass                   403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    SEAM A: W JSON-LD (rdflib bytes, header id) delete minCount      403 t 4->4 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    COMPOSITE: W commit ungoverned(doc-a)                            400 t 4->4 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
+      INVARIANT in report: True
+    control: W commit compiled_interior()                            200 t 4->5 
+    W self-promotion                                                 403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    anon commit compiled_interior()                                  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    B commit compiled_interior()                                     403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+    control: S JSON-LD (rdflib bytes, header id) delete minCount     200 t 5->6 
+    control: S DELETE DATA GroundedNodeShape a sh:NodeShape          200 t 6->7 
+== seams-nomin: falsification arm, minCount guard dropped, blank node fdb-18e0849cf5f360f0--b8
+    ARM: W JSON-LD (rdflib bytes, header id) delete minCount         200 t 4->5 
+    after: W commit ungoverned(doc-a)                                200 t 5->6 

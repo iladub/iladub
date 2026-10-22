@@ -1,0 +1,30 @@
+== tamper0
+    W DELETE guardShapesProps f:onProperty sh:targetClass            200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W commit ungoverned(doc-a)                               400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
+== tamper1
+    W DELETE guardShapesProps f:required true                        200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W commit ungoverned(doc-a)                               400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
+== tamper2
+    W DELETE guardShapesProps a f:AccessPolicy                       200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  200 t 5->6 
+      then: W commit ungoverned(doc-a)                               200 t 6->7 
+== tamper3
+    W DELETE guardShapesProps f:action f:modify                      200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W commit ungoverned(doc-a)                               400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
+== tamper4
+    W INSERT a non-required modify allow-true policy                 200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W commit ungoverned(doc-a)                               400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
+== tamper5
+    W INSERT a required modify allow-true policy onProperty targetClass 200 t 4->5 
+      then: W DELETE DATA GroundedNodeShape sh:targetClass           403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W delete blank-node sh:minCount (guardShapesProps only)  403 t 5->5 {"error":"Transaction error: Policy enforcement prevents modification.","status":403,"@type":"err:policy/Acces
+      then: W commit ungoverned(doc-a)                               400 t 5->5 {"error":"Transaction error: SHACL validation failed with 1 violation(s):\n 1. INVARIANT: every grounded node 
