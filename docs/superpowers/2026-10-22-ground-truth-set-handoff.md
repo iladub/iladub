@@ -156,3 +156,37 @@ first scorer run must test. Separately, § 9.3's multi-level header join must be
 - **Spec § 9 was approved by the maintainer on 2026-10-22.** This is recorded in spec § 9.4. The
   next action above is now asserted: write the plan in a fresh session.
 - The sign defect is raised as R332 (`residues-open.md`, `residues.md`).
+
+## Fifth session (2026-10-22, in `../iladub`): the plan session's measurements
+
+### Next concrete action (written first)
+
+**PROPOSED, pending two maintainer rulings (below):** write the plan in a fresh session from the spec
+as amended by those rulings. The plan is NOT written. This session measured first, found two spec
+defects, and crossed the 50K originating floor (~64K working tokens) before any plan text existed.
+
+### Measured (one offline compile at `4ed74f8`, 21,446 triples, score 0.8051146384479718)
+
+- **§ 9.2 item 5's prediction holds**, on a throwaway scorer that implements § 9.2 as written
+  (scratch, not kept): CORRECT 0, MISATTACHED 71, LOST 45, MISSING 8, REFUSED 4; sum 128;
+  MARKED_LABEL 17; SPURIOUS 57. MISSING rows: `Reserve Bank credit` (consumed as header) and
+  `Net portfolio holdings of MS Facilities 2020 LLC (Main Street Lending Program)` (split over
+  r20/r21). REFUSED: `Total factors supplying reserve funds` (`p0#ignored4`).
+- **§ 9.3's join is answered.** The record branch joins a column path with ASCII `" > "`
+  (`_header_path`, `src/iladub/feed.py`); the per-cell branch joins with one space and carries the
+  column key as a separate concept, the cell's own `text` set to `""`. Today every Fed record takes
+  the record branch. The scorer must therefore compare truth paths joined with `" > "`, not ` › `.
+- **Defect 1: the whole-page SHA-256 cannot be reproduced.** Two fetches 6 s apart, both 722,459
+  bytes, hash `ffd2e532…` and `88c46ed0…`; § 9.1 recorded `bbe64539…`. The diff is two per-request
+  tokens (a `data-injected="worker-…"` id and a Cloudflare `__CF$cv$params` script). The byte span
+  of the 2nd `<table …>` … `</table>` (78,874 bytes, no nested table) hashes to
+  `964e62c8ed5f3742b24df41f846950b3bcde45e97bbff92664cb84cda89a00fa` in both fetches.
+- **Defect 2: the row_id page filter (§ 9.2 item 2) goes stale on the R166 fix.** `rid` is the row's
+  header path when one covers it, and `p<page> <frag>` (`_row_discriminator`) only when none does.
+  A fix that gives table 1's rows a row header tree removes the `p0 ` prefix, so every row stops
+  being a candidate and the score cannot rise. Entry-cell concept regions are prov fragments of the
+  form `p0-43-218`. Region subjects carry `prov:wasDerivedFrom <…/p0>` (the page document), which is
+  how check (ii) can find a page's non-asserted text without parsing an IRI.
+- **`beautifulsoup4` is not in CI's extras** (`readers` only; CI installs `baml,dev,docs,etkl`). The
+  extractor must use stdlib `html.parser`. The throwaway did, and got 128 cells and the four paths.
+- The `header` attribute values end with a space; split on whitespace.
