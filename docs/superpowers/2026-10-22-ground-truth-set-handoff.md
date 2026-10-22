@@ -1,5 +1,9 @@
 # Handoff: a ground-truth set for the document compiler's PDF tables (2026-10-22)
 
+**Serves:** maintenance — proposes prog:criterion:tab:13.
+
+**Topic:** tab · **Date:** 2026-10-22
+
 Written in a strata session (strata may not write to neighbours). For a fresh session working in
 `../iladub`; François moves or copies it there.
 
