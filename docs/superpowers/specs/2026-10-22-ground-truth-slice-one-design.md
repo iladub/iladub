@@ -287,3 +287,27 @@ re-measures each fact below before relying on it.
 
 **Approved by the maintainer on 2026-10-22 ("9 approved").** § 9.1's sign defect was raised as
 [[R332]] on the same day, at the maintainer's request.
+
+## 10. Amendment 2: the hash pin and the page key (2026-10-22, APPROVED)
+
+Measured in the plan session and recorded in the handoff's "Fifth session" section. The maintainer
+ruled both items on 2026-10-22, choosing the recommended option each time.
+
+1. **The pin is the table's bytes, not the page's (supersedes § 3.1's hash).** The publisher's page
+   carries two per-request tokens, so the whole-file SHA-256 differs on every fetch. The extractor
+   pins and checks the SHA-256 of the byte span from the 2nd `<table` to its `</table>`, inclusive
+   (table 1 holds no nested table). Measured as `964e62c8ed5f3742b24df41f846950b3bcde45e97bbff92664cb84cda89a00fa`,
+   78,874 bytes, equal across two fetches. The provenance header records this hash. A differing
+   span is refused.
+2. **A record's page is read from its concepts' regions (supersedes § 9.2 item 2's row_id prefix).**
+   A record is a candidate when at least one of its concepts has a `region` that begins with
+   `p<page>` immediately followed by `-` or `#`, for a listed page. The row_id is not read. It loses
+   its `p<page> ` prefix as soon as a row header path covers the row, which is the R166 fix this
+   floor exists to reward.
+3. **§ 9.3's join, measured.** The record branch joins a column path with ASCII `" > "`. The scorer
+   compares a truth cell's `col_path` parts joined with `" > "`. The CSV keeps ` › ` as § 3.1 says,
+   and the extractor refuses a header text containing ` › `, so the split back into parts is total.
+   Per-cell-branch records (column key as its own concept, cell `text` empty) do not occur on this
+   document. If one appears, it scores as `MISATTACHED` or `LOST`, and that case needs an amendment.
+4. **No new dependency.** The extractor uses stdlib `html.parser`. `beautifulsoup4` is not in CI's
+   extras.

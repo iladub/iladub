@@ -190,3 +190,12 @@ defects, and crossed the 50K originating floor (~64K working tokens) before any 
 - **`beautifulsoup4` is not in CI's extras** (`readers` only; CI installs `baml,dev,docs,etkl`). The
   extractor must use stdlib `html.parser`. The throwaway did, and got 128 cells and the four paths.
 - The `header` attribute values end with a space; split on whitespace.
+
+### Fifth session, addendum
+
+- **Both defects were ruled by the maintainer on 2026-10-22** and are recorded as spec § 10
+  (amendment 2): the pin is the table-1 byte span, and a record's page is read from its concepts'
+  region prefix.
+- **ASSERTED next action:** in a fresh session, write the plan from the spec, §§ 1-8 as amended by
+  § 9 and § 10. Task 1's first scorer run must reproduce the counts above (CORRECT 0, REFUSED 4,
+  LOST 45, MISATTACHED 71, MISSING 8). These are now measured, not predicted.
