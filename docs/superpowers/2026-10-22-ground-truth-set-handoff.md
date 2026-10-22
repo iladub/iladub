@@ -103,3 +103,22 @@ separately, CI floor) for François's approval.
   amendment (PR #364) stays as approved and is picked up after.
 - Steps 1 and 2 were done and step 3 was drafted:
   `docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md` (DRAFT, awaiting approval).
+
+## Next concrete action (third session, written before the pointers below)
+
+**ASSERTED:** the spec was approved on 2026-10-22, with all three decisions as recommended (spec § 8).
+In a fresh session, write the plan from
+`docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md`. This session stopped at about
+58K working tokens, past the originating floor, so it did not write the plan.
+
+**PROPOSED (the plan's task 1 must run it, and it may fail):** seams (a) and (b) in spec § 3.3. Seam
+(a) is which concept of a `Record` is the row label; seam (b) is which PDF regions HTML table 1's 36
+rows span. Also § 3.5's prediction: `CORRECT` is about 0 on today's compile. If seam (b) shows table 1
+split across regions or pages in a way `row_occurrence` cannot key, the matching key in § 3.3 needs
+a spec amendment before any scorer code is written.
+
+Pointers:
+- The Fed graph compiles in 3m47s offline. Run it with `BAML_LIVE` and `ILADUB_RECORD_READINGS`
+  unset (`scripts/corpus_baseline.py:60`); the API keys in the shell do not matter.
+- The HTML snapshot is `https://www.federalreserve.gov/releases/h41/20250102/`. Table 1 is the
+  2nd `<table>`; its cells carry `header=` (not `headers=`).

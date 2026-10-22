@@ -175,3 +175,13 @@ in the baseline. The criterion is met by the instrument existing, not by its sco
   across lines differently, rule 2 covers it. If its wording differs, `CORRECT` is unreachable for
   that column, and the spec must say how that is handled before the floor means anything.
 - The time a baseline regeneration takes once the `truth` block is added (24 minutes today, per CLAUDE.md).
+
+## 8. Approval
+
+**Approved by the maintainer on 2026-10-22 ("I will follow your recommendations here").** The three
+open decisions are settled as recommended:
+
+1. The score lives in the committed corpus baseline (§ 3.4). `scripts/corpus_verdict_snapshot.py` and
+   `tests/ground-truth/` become baseline inputs, and this loop pays one regeneration.
+2. The arc criterion in § 6 is added.
+3. The slice is table 1 only.
