@@ -1,11 +1,19 @@
 {
- "cols_seen": 6,
+ "cols_seen": 9,
  "leaf_labels": [
   [
    0,
    [
     [
-     7,
+     3,
+     0
+    ],
+    [
+     3,
+     1
+    ],
+    [
+     4,
      0
     ]
    ]
@@ -14,20 +22,8 @@
    1,
    [
     [
-     4,
-     0
-    ],
-    [
-     5,
-     0
-    ],
-    [
-     6,
-     0
-    ],
-    [
-     7,
-     1
+     3,
+     2
     ]
    ]
   ],
@@ -35,31 +31,11 @@
    2,
    [
     [
-     4,
-     1
-    ],
-    [
-     5,
-     1
-    ],
-    [
-     5,
-     2
-    ],
-    [
-     6,
-     1
-    ],
-    [
-     7,
-     2
-    ],
-    [
-     7,
+     3,
      3
     ],
     [
-     7,
+     3,
      4
     ]
    ]
@@ -68,32 +44,12 @@
    3,
    [
     [
-     4,
-     2
-    ],
-    [
-     5,
-     3
-    ],
-    [
-     5,
-     4
-    ],
-    [
-     6,
-     2
-    ],
-    [
-     7,
+     3,
      5
     ],
     [
-     7,
+     3,
      6
-    ],
-    [
-     7,
-     7
     ]
    ]
   ],
@@ -102,22 +58,10 @@
    [
     [
      3,
-     0
+     7
     ],
     [
-     4,
-     3
-    ],
-    [
-     5,
-     5
-    ],
-    [
-     6,
-     3
-    ],
-    [
-     7,
+     3,
      8
     ]
    ]
@@ -127,32 +71,99 @@
    [
     [
      3,
+     9
+    ],
+    [
+     3,
+     10
+    ]
+   ]
+  ],
+  [
+   6,
+   [
+    [
+     3,
+     11
+    ],
+    [
+     3,
+     12
+    ],
+    [
+     3,
+     13
+    ],
+    [
+     3,
+     14
+    ]
+   ]
+  ],
+  [
+   7,
+   [
+    [
+     3,
+     15
+    ],
+    [
+     3,
+     16
+    ],
+    [
+     4,
      1
     ],
     [
-     4,
-     4
-    ],
-    [
-     4,
-     5
+     5,
+     0
     ],
     [
      5,
-     6
+     1
+    ],
+    [
+     5,
+     2
+    ]
+   ]
+  ],
+  [
+   8,
+   [
+    [
+     3,
+     17
+    ],
+    [
+     3,
+     18
+    ],
+    [
+     4,
+     2
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
     ],
     [
      6,
-     4
+     0
     ],
     [
-     7,
-     9
+     6,
+     1
     ]
    ]
   ]
  ],
- "note": "I matched each stacked header line to its column by position, joining hyphenated and multi-line words into single column labels, and separated the overarching sections label as a spanning header.",
+ "note": "I matched each header word to its column by horizontal position, treating Grandes r\u00e9gions/Cantons as the row-label column and pairing the two multi-line dependence ratio labels with their respective footnote columns.",
  "other_words": [
   [
    0,
@@ -169,14 +180,6 @@
   [
    0,
    3
-  ],
-  [
-   0,
-   4
-  ],
-  [
-   0,
-   5
   ],
   [
    1,
@@ -229,27 +232,20 @@
   [
    1,
    12
+  ],
+  [
+   2,
+   0
+  ],
+  [
+   2,
+   1
+  ],
+  [
+   2,
+   2
   ]
  ],
  "refuses_grid": false,
- "spanning_labels": [
-  [
-   1,
-   5,
-   [
-    [
-     2,
-     0
-    ],
-    [
-     2,
-     1
-    ],
-    [
-     2,
-     2
-    ]
-   ]
-  ]
- ]
+ "spanning_labels": []
 }

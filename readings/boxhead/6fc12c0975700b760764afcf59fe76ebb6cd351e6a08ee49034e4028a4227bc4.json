@@ -1,20 +1,24 @@
 {
- "cols_seen": 9,
+ "cols_seen": 14,
  "leaf_labels": [
   [
    0,
    [
     [
-     3,
+     4,
      0
     ],
     [
-     3,
+     4,
      1
     ],
     [
      4,
-     0
+     2
+    ],
+    [
+     4,
+     3
     ]
    ]
   ],
@@ -22,8 +26,8 @@
    1,
    [
     [
-     3,
-     2
+     4,
+     4
     ]
    ]
   ],
@@ -31,12 +35,8 @@
    2,
    [
     [
-     3,
-     3
-    ],
-    [
-     3,
-     4
+     4,
+     5
     ]
    ]
   ],
@@ -44,12 +44,12 @@
    3,
    [
     [
-     3,
-     5
+     4,
+     6
     ],
     [
-     3,
-     6
+     4,
+     7
     ]
    ]
   ],
@@ -57,11 +57,7 @@
    4,
    [
     [
-     3,
-     7
-    ],
-    [
-     3,
+     4,
      8
     ]
    ]
@@ -70,12 +66,8 @@
    5,
    [
     [
-     3,
+     4,
      9
-    ],
-    [
-     3,
-     10
     ]
    ]
   ],
@@ -83,20 +75,8 @@
    6,
    [
     [
-     3,
-     11
-    ],
-    [
-     3,
-     12
-    ],
-    [
-     3,
-     13
-    ],
-    [
-     3,
-     14
+     4,
+     10
     ]
    ]
   ],
@@ -104,24 +84,8 @@
    7,
    [
     [
-     3,
-     15
-    ],
-    [
-     3,
-     16
-    ],
-    [
      4,
-     1
-    ],
-    [
-     5,
-     0
-    ],
-    [
-     5,
-     1
+     11
     ]
    ]
   ],
@@ -129,49 +93,74 @@
    8,
    [
     [
-     3,
-     17
-    ],
+     4,
+     12
+    ]
+   ]
+  ],
+  [
+   9,
+   [
     [
-     3,
-     18
+     4,
+     13
     ],
     [
      4,
-     2
-    ],
+     14
+    ]
+   ]
+  ],
+  [
+   10,
+   [
     [
      4,
-     3
+     15
+    ]
+   ]
+  ],
+  [
+   11,
+   [
+    [
+     3,
+     0
     ],
     [
      5,
-     3
+     0
+    ]
+   ]
+  ],
+  [
+   12,
+   [
+    [
+     4,
+     16
+    ]
+   ]
+  ],
+  [
+   13,
+   [
+    [
+     3,
+     1
     ],
     [
-     6,
-     0
+     5,
+     1
     ]
    ]
   ]
  ],
- "note": "Read title lines as caption, mapped two-line row-label header, six age-group columns, and two dependency-ratio columns each spanning three lines with a footnote digit set aside.",
+ "note": "Matched wrapped two-line city names (Kansas City, San Francisco) to their single columns, and treated the title, units, and 'Liabilities' row label as non-header text.",
  "other_words": [
   [
    0,
    0
-  ],
-  [
-   0,
-   1
-  ],
-  [
-   0,
-   2
-  ],
-  [
-   0,
-   3
   ],
   [
    1,
@@ -238,12 +227,8 @@
    2
   ],
   [
-   5,
-   2
-  ],
-  [
    6,
-   1
+   0
   ]
  ],
  "refuses_grid": false,

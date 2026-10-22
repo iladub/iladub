@@ -52,8 +52,18 @@ def test_the_header_block_is_the_refused_run_directly_above_the_first_row():
 
 
 def test_the_listing_numbers_lines_within_the_block_and_words_left_to_right():
-    assert listing_of(_lines(), (0, 1)) == ("L0: [0]Quarterly [1]index\n"
-                                            "L1: [0]Period [1]Total [2]Retail")
+    assert listing_of(_lines(), (0, 1)) == ("L0: [0]Quarterly@80-150 [1]index@155-210\n"
+                                            "L1: [0]Period@10-60 [1]Total@120-170 [2]Retail@220-280")
+
+
+def test_the_listing_shows_where_each_word_sits_so_one_line_can_hold_two_columns():
+    """R166, Fed H.4.1 p0. One text line holds `Week ended` at x 272-317 and the Wednesday
+    column's `Jan 1, 2025` at x 526-567. In a text-only listing those read as one label, and the
+    reader answered that way 3 times out of 3. The disposal places by x, so it dropped both
+    columns. With each word's extent in the listing, 3 of 3 live asks placed both correctly."""
+    line = SimpleNamespace(words=[_w("2025", 550.4, 567.4), _w("Week", 271.8, 292.3),
+                                  _w("Jan", 526.0, 538.0)], top=0, bottom=1)
+    assert listing_of([line], (0,)) == "L0: [0]Week@272-292 [1]Jan@526-538 [2]2025@550-567"
 
 
 def test_a_good_reading_labels_every_column_and_the_text_comes_from_the_text_layer():

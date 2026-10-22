@@ -84,10 +84,6 @@
     [
      7,
      5
-    ],
-    [
-     7,
-     6
     ]
    ]
   ],
@@ -164,7 +160,7 @@
    ]
   ]
  ],
- "note": "I read the header top-down, matching each label line with its data column under the grouping terms, and put the source line, footnotes, and title in other_words.",
+ "note": "Matched column headers by horizontal position across the multi-line header, treating grouping phrases as spanning labels and footnote digits plus the title/source/footnote-text lines as non-header words.",
  "other_words": [
   [
    0,
@@ -601,6 +597,14 @@
   [
    4,
    11
+  ],
+  [
+   5,
+   14
+  ],
+  [
+   7,
+   6
   ]
  ],
  "refuses_grid": false,
@@ -656,10 +660,6 @@
     [
      5,
      13
-    ],
-    [
-     5,
-     14
     ]
    ]
   ]

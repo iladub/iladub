@@ -1,0 +1,8 @@
+{
+ "cols_seen": 5,
+ "leaf_labels": [],
+ "note": "The header shows only five columns (row label, eliminations, one date value, and two change-since values), not six.",
+ "other_words": [],
+ "refuses_grid": true,
+ "spanning_labels": []
+}

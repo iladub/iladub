@@ -50,9 +50,14 @@ function ReadBoxhead(page: image, ncols: int, listing: string) -> BoxheadReading
     the leftmost column(s) of row labels (dates, names, categories) as well as the columns of
     figures. So if the rows begin with a date or a name, that is column 0, not a header.
 
-    Below is every word of the header area, line by line, each word with its index:
+    Below is every word of the header area, line by line. Each word has its index and, after
+    the @, its left and right edge on the page in points, which increase to the right:
 
     {{ listing }}
+
+    One line of this listing can hold words that sit far apart on the page and belong to
+    different columns. Use the positions and the image to tell which column a word sits over,
+    and do not assume the words of one line form one label.
 
     READ THE HEADER AS A PERSON READS A TABLE, and sort every listed word into exactly one place:
 

@@ -8,8 +8,8 @@
       "https://example.org/etkl/doc/p4#htable3"
     ]
   ],
-  "graph_sha256": "2cc77111f167a072dfc4b62496d7d307b6202fc4a27ac40e644a1fe485c5cd71",
-  "graph_triples": 13902,
+  "graph_sha256": "83ab8260c26b40cdf378a7a1dda42daa328067fc6b4b3874fa167427c279edc3",
+  "graph_triples": 13885,
   "notes": [
     "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
   ],
@@ -599,8 +599,8 @@
       "score": 0.860655737704918
     },
     {
-      "asserted": 316,
-      "escalated": 34,
+      "asserted": 306,
+      "escalated": 44,
       "regions": [
         {
           "anchor": null,
@@ -691,12 +691,12 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9028571428571428
+      "score": 0.8742857142857143
     }
   ],
   "pdf": "corpus/gov-stats/ons-index-of-services-2026-02.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.8684895833333334
+  "score": 0.85546875
 }

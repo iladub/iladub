@@ -1,0 +1,8 @@
+{
+ "cols_seen": 5,
+ "leaf_labels": [],
+ "note": "The header shows a row-label column plus four data columns (eliminations, one date column, and two change columns), totaling five, not six.",
+ "other_words": [],
+ "refuses_grid": true,
+ "spanning_labels": []
+}

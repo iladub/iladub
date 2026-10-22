@@ -36,7 +36,7 @@
    ]
   ]
  ],
- "note": "I matched the two date sub-lines under the spanning 'Nine Months Ended' label to their respective data columns, and grouped title/unit lines as non-header text.",
+ "note": "I identified the two date-labeled data columns under the spanning 'Nine Months Ended' header, separating title and unit lines as non-header text.",
  "other_words": [
   [
    0,

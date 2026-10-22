@@ -4,8 +4,8 @@
     6
   ],
   "chains": [],
-  "graph_sha256": "9010c2198d28063c6dc826ebe08631c4429577495d0552fc0cd30aba040db029",
-  "graph_triples": 18199,
+  "graph_sha256": "4b4ec75944afd7912ebd02094ed09b5cf5bd881942039704735d16e624aa7278",
+  "graph_triples": 18201,
   "notes": [
     "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
     "page 4: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
@@ -335,8 +335,8 @@
       "score": 0.0
     },
     {
-      "asserted": 947,
-      "escalated": 83,
+      "asserted": 936,
+      "escalated": 76,
       "regions": [
         {
           "anchor": null,
@@ -408,7 +408,7 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "REGION_TILING_FAILED",
           "table": null,
-          "verdict": "superseded"
+          "verdict": "escalated"
         },
         {
           "anchor": null,
@@ -499,11 +499,11 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9194174757281554
+      "score": 0.924901185770751
     },
     {
-      "asserted": 522,
-      "escalated": 25,
+      "asserted": 528,
+      "escalated": 19,
       "regions": [
         {
           "anchor": null,
@@ -616,22 +616,14 @@
           "reason": null,
           "table": "https://example.org/etkl/doc/p6/adopt#p6-datagrid",
           "verdict": "asserted"
-        },
-        {
-          "anchor": "https://w3id.org/iladub/tab#DataGrid",
-          "cells": 0,
-          "kind": "RegionKind.UNSUPPORTED_TABLE",
-          "reason": "DATAGRID_RESIDUE",
-          "table": null,
-          "verdict": "escalated"
         }
       ],
-      "score": 0.9542961608775137
+      "score": 0.9652650822669104
     }
   ],
   "pdf": "corpus/gov-stats/bfs-population-bilan-2023.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.907350216182829
+  "score": 0.9144284821986258
 }
