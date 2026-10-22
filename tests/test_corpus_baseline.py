@@ -48,6 +48,7 @@ def test_the_fingerprint_moves_with_every_input_class_and_only_with_inputs(tmp_p
         "pyproject.toml": "[project]\n",
         "scripts/corpus_baseline.py": "# s\n",
         "scripts/corpus_verdict_snapshot.py": "# s\n",
+        "tests/ground-truth/d/t.csv": "a,b\n",
         "tests/t.py": "# not an input\n",
         "docs/d.md": "not an input\n",
     }
@@ -62,6 +63,6 @@ def test_the_fingerprint_moves_with_every_input_class_and_only_with_inputs(tmp_p
         (tmp_path / rel).write_text(text + "#\n")
         moved = corpus_baseline.fingerprint(tmp_path) != base
         (tmp_path / rel).write_text(text)
-        is_input = not rel.startswith(("tests/", "docs/"))
+        is_input = rel.startswith("tests/ground-truth/") or not rel.startswith(("tests/", "docs/"))
         assert moved == is_input, f"{rel}: fingerprint moved={moved}, is an input={is_input}"
     assert corpus_baseline.fingerprint(tmp_path) == base
