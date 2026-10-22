@@ -122,3 +122,31 @@ Pointers:
   unset (`scripts/corpus_baseline.py:60`); the API keys in the shell do not matter.
 - The HTML snapshot is `https://www.federalreserve.gov/releases/h41/20250102/`. Table 1 is the
   2nd `<table>`; its cells carry `header=` (not `headers=`).
+
+## Fourth session (2026-10-22, in `../iladub`)
+
+### Next concrete action (written first)
+
+**ASSERTED, if the maintainer approves spec § 9:** in a fresh session, write the plan from
+`docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md`, sections 1-8 as amended by § 9.
+**PROPOSED:** § 9.2 item 5's prediction (`CORRECT` 0, `REFUSED` 4, `LOST` ≥ 36), which the plan's
+first scorer run must test. Separately, § 9.3's multi-level header join must be measured in
+`src/iladub/feed.py` before the scorer compares a `col_path`.
+
+### Pointers
+
+- The seam measurements, the reasons for them and the outcome rules they forced are spec § 9,
+  commit `259c6e3`. **Approval of § 9 is recorded nowhere yet.**
+- Two plan seams were measured in this session:
+  - The baseline inputs are `INPUTS` at `scripts/corpus_baseline.py:56`; the truth directory and
+    the scorer must be added there.
+  - The snapshot's per-document hook is `snapshot()` in `scripts/corpus_verdict_snapshot.py`. Its
+    document stem (`fed-h41-2025-01-02`) names `tests/ground-truth/<stem>/`.
+- The minus-sign drop at `src/iladub/feed.py:297` is proposed in § 9.1 as a residue row. No row has
+  been raised.
+
+### Unverified
+
+- The scratch artefacts (graph `.nt`, HTML snapshot, throwaway scripts) were not kept. Every
+  § 9.1 figure is a subagent's measurement, spot-checked only for `feed.py:297` and the
+  `MS Facilities` truth label.
