@@ -185,3 +185,100 @@ open decisions are settled as recommended:
    `tests/ground-truth/` become baseline inputs, and this loop pays one regeneration.
 2. The arc criterion in § 6 is added.
 3. The slice is table 1 only.
+
+## 9. Amendment 1: the seams measured, and § 3.3 repaired (2026-10-22, DRAFT, awaiting approval)
+
+The plan session measured seams (a) and (b) before writing anything. **§ 3.5's prediction is
+refuted, and § 3.3's outcomes are not total.** Measured by a subagent on one offline compile of
+`held-out/fed-h41-2025-01-02.pdf` (21,446 triples, score 0.8051146384479718, so it matches the
+baseline). The HTML snapshot SHA-256 was `bbe64539607728edc082b19f18a967c6764d0240daaaef76cd714486242699b0`
+(722,459 bytes, fetched 2026-10-22). The scratch artefacts were not kept, and the plan's first task
+re-measures each fact below before relying on it.
+
+### 9.1 What was measured
+
+- **Truth.** Table 1 has 36 `<tr>`: 3 header rows and 33 body rows. Row `t1r32` is an empty spacer.
+  That leaves 32 labelled rows × 4 columns = **128 non-empty truth cells**. No label repeats.
+  17 labels carry a super-span mark. There are four column paths. Header cells separate their
+  lines with `<br>`, and without a separator `get_text()` yields `Week endedJan 1, 2025`.
+- **The `t1r…` id in a data cell's `header` is not the cell's own row.** Every data cell on every row
+  names `t1r1c1`, the row group. `row_label` comes from the row's first cell, as § 3.1 already says,
+  and never from that id.
+- **Seam (b).** Table 1 lies on page 0 in three regions:
+  - The header block is `p0#region2`, escalated.
+  - 30 labelled rows are `p0#htable3`, asserted, records `p0 htable3-r0…r30`. The first data row,
+    `Reserve Bank credit`, is consumed as htable3's header. The `MS Facilities` label is split over
+    `r20` (label, no values) and `r21` (`Street Lending Program)8` plus the values).
+  - `Total factors supplying reserve funds` is `p0#ignored4`, an `etkl:IgnoredBand`.
+
+  There is no cross-page chain. `Foreign official` and `Others` also label rows of table 2 on page 1.
+- **Seam (a).** `table_records(per_cell=True)` returns the record-branch shape for the whole
+  document: 139 records, identical to `per_cell=False`, with every `role` `None`. **No field of a
+  `Record` says which concept is the row label.** The only ways to find it are position (concepts are
+  x0-sorted, `src/iladub/feed.py:656`), which is geometry, or the header-node label, which on this
+  page is a data value.
+- **No `col_path` can be equal today.** The graph holds 0 `tab:headerText` triples. htable3's header
+  nodes carry data values, and the true header wording exists only as `p0#region2`'s
+  `iladub:surfaceText`.
+- **Sign loss in the feed.** Each of htable3's 36 entry cells whose `tab:cellText` is `-` is
+  dropped at `src/iladub/feed.py:297` (`if is_blank(txt): continue`), because
+  `vocab/ontology/tab.ttl:388` spells `tab:Blank` as `"(blank)", "-", "–", "—"`. A `+` survives as
+  a cell of its own. This is a carriage defect that the baseline score cannot see. **Proposed** as a
+  residue row; it is not fixed in this slice (§ 5a).
+- **Throwaway prediction**, taking the first concept as the label: CORRECT 0, MISATTACHED 71,
+  REFUSED 4, MISSING 8, and **45 cells that fit no § 3.3 outcome**. All 45 are signed values whose
+  row matched but whose value appears nowhere on that row, because no compiled cell has an equal
+  `col_path`. § 3.3 placed a lost sign under `WRONG_VALUE`, which needs an equal `col_path`, so
+  when every column key is wrong a lost sign has no outcome.
+
+### 9.2 What changes (supersedes the named parts of § 3.1, § 3.3 and § 3.5)
+
+1. **Truth cells (§ 3.1).** A cell with an empty normalised value is not emitted, so the spacer
+   row emits nothing. Header text joins `<br>`-separated parts with one space before § 3.2
+   normalisation.
+2. **Candidate records.** The truth provenance names the table's **pages**, by hand, once (here
+   `[0]`). Region ids are not named. Candidates are the records whose `row_id` page prefix is listed.
+   Pinning `p0#htable3` would go stale in exactly the change this floor exists to reward, the R166
+   fix that re-cuts the region.
+3. **The label is found by the truth, not by position.** A candidate record matches truth row R
+   when exactly one of its concepts has a normalised `value` equal to R's `row_label` or
+   `row_label_marked`, at R's `row_occurrence` among the matching candidates in output order. That
+   concept is the label and takes no part in cell scoring. If a record has two such concepts, it
+   matches nothing, which is a refusal by the scorer and is never a guess. No x0 is read.
+4. **The outcomes, made total.** For each truth cell of a matched row, the steps run in order and
+   the first that applies is the outcome:
+
+   | step | outcome |
+   | --- | --- |
+   | a compiled cell has an equal `col_path` and an equal `value` | `CORRECT` |
+   | a compiled cell has an equal `col_path` and another `value` | `WRONG_VALUE` |
+   | no equal `col_path`, but an unclaimed compiled cell on the row has an equal `value` | `MISATTACHED` |
+   | no equal `col_path`, and no unclaimed cell on the row carries the value | `LOST` (**new**: covers the 45, sign loss among them) |
+
+   A compiled cell's `col_path` is its concept's normalised `text`. Each compiled cell is claimed at
+   most once. Truth cells are taken in column order, with every cell's `CORRECT`/`WRONG_VALUE` step
+   run before any `MISATTACHED` step.
+   For a truth row with **no matching record**, the checks run in order. (i) If the normalised label
+   equals any concept's `text` or `value` in a candidate record, every cell is `MISSING`: the row was
+   asserted, but not as a row. That is the case of `Reserve Bank credit`, consumed as htable3's
+   header. (ii) Otherwise, if the label is a substring of the normalised text (`etkl:bandText` or
+   `iladub:surfaceText`) of a non-asserted region on a listed page, every cell is `REFUSED`.
+   (iii) Otherwise every cell is `MISSING`. Check (i) runs first because `p0#region2`'s title text
+   contains `Reserve Bank credit` by coincidence. `SPURIOUS` and
+   `MARKED_LABEL` are unchanged.
+5. **§ 3.5's prediction is replaced** by a falsifiable one for the first real run: `CORRECT` = 0,
+   `REFUSED` = 4, and `MISATTACHED` + `LOST` + `MISSING` = 124, with `LOST` ≥ 36. The 36 is the
+   count of dropped `-` cells, though not every one of them is a truth cell's sign.
+   `CORRECT` > 0 means the scorer is wrong.
+6. **§ 6's criterion is `prog:criterion:tab:13`, not `etkl:<next>`.** The `etkl` rung is one criterion
+   per corpus document, enforced by `tests/test_arc_manifest.py:180-196` and the equality at
+   `:802-839`, so a criterion that names no document fails there.
+
+### 9.3 Still unverified
+
+- That a compiled multi-level header path joins its levels in a form § 3.2 can make equal to
+  ` › `. No column path exists on this page to measure it against. The plan must name, from
+  `src/iladub/feed.py`, how `SurfaceConcept.text` is built for a multi-level header, and the
+  scorer joins accordingly or the spec is amended again.
+- The `row_occurrence` rule with a repeated label. Table 1 has none, so test 1's fixture is the only
+  thing that exercises it.
