@@ -287,3 +287,68 @@ records instead, the § 11 regrouping is never entered on this document, and tha
   passes one logical table. A wider candidate set could choose a different deepest node for a row.
   If it does, the scorer raises (the region is unknown); it does not misscore. This is argued from
   the code, not measured.
+
+## Ninth session (2026-10-22): R166 on Fed page 0 is a NEURAL question defect, not a missing worker
+
+Written at about 55,000 working tokens, past the 50K originating floor. Part 5 was written first,
+and it is graded per action below.
+
+### Next concrete action (written first)
+
+**PROPOSED, graded LOW-MEDIUM (written past the floor):** change how `ReadBoxhead` is asked so the
+reader can see word *position*, then re-record Fed p0 and run the original prediction (`CORRECT > 0`
+on table 1). The defect is in the question, not the oracle. `listing_of` (`src/iladub/etkl/boxhead.py`)
+lists words in text-line order, and on this page the text layer interleaves two header rows. The
+reader answers by text, and `dispose_boxhead` places by x, so it refutes the answer every time.
+Candidate remedies, none measured:
+(a) address words with their x-extent in the listing;
+(b) a second ask that carries the oracle's refutation ("a fragment of col 1 centres in col 3").
+(a) changes `question_key` for every recorded boxhead (`readings/boxhead/`), so every grid's reading
+re-asks. That is a corpus-wide blast radius, and the 24-minute baseline regenerate comes with it.
+**Refuted in minutes if:** a re-asked reading with the new question still drops col 1 or col 6.
+Measure that with one live call before building anything else.
+
+**ASSERTED:** a hand-edited recording is not a remedy. The recording is the worker's proposal, and
+authoring it would make a person the proposer while the file claims to be reader output (§3).
+
+### Measured (branch `r166-fed-header-row`, off `main` at `c63f5c2`, 2026-10-22)
+
+- PR #367 (R333) merged as `c63f5c2`.
+- Fed p0 derives one data grid: 7 columns, 32 rows. Its first admitted row is `Reserve Bank credit`,
+  the true first data row. `header_block` = page lines 0–10. Lines 7–10 are the true boxhead; lines
+  0–6 are the release title.
+- **There is no recorded boxhead reading for it** (key `c5ab6578…f3acd6`). Offline, the boxhead is
+  empty, nothing is carried, and adoption refuses ("the data grid left no less ink unread than the
+  bands did", baseline `notes`). htable3 then asserts its own line 0 as the header: R166.
+- **Three live asks (`ClaudeLongAnswer`, `claude-sonnet-5`) gave the same reading** and the same
+  disposal. Col 0 (the stub label) stands. Four spanners stand: `Averages of daily figures` 1–5,
+  `Change from week ended` 2–5, `Dec 25, 2024` 2–3, `Jan 3, 2024` 4–5. **Cols 1 and 6 are DROPPED.**
+  The reader took col 1 = L9 words 0–4 (`Week ended Jan 1, 2025`), whose fragment spans
+  x 271.8–567.4 with centre 419.6, and col 3 = [364.6, 419.4). It took col 6 = L8 word 10
+  (`Wednesday`) + L10 words 3–5, whose L10 fragment centres at 294.2 in col 1. The page: L9's
+  `Jan 1, 2025` sits at x≈530–567 (Wednesday's date), and L10's sits at x≈273–315 (Week ended's).
+  The dates are swapped between text lines. `carried_lines` = (), so the ledger cannot improve.
+- With cols 1 and 6 read correctly, every word of L7–L10 would be claimed by a standing label. That
+  is argued from the addresses above and not measured, because no such reading exists.
+- The grid splits each sign into a column of its own (7 columns against the truth's 5; [[R332]]).
+  The reader's own note says it treated sign and value as two sub-columns. Even after a fix, the
+  signed `Change` cells cannot score CORRECT until R332 moves. The unsigned `Week ended` and
+  `Wednesday` columns can, which is what `CORRECT > 0` predicts.
+- `scripts/header_row_census.py` on Fed found a second R166 instance: p3 band 2's labels are
+  `Loans1, 3,621, 4,046, 365, 1,597, 0, ..., 9,629`. The census does not cover htable3, which is a
+  hierarchical reading and not a record table.
+
+### Pointers
+
+- The three refuted readings are kept outside the repo. None is committed; `readings/boxhead/` is
+  unchanged.
+- Probes: `derive_data_grids` + `header_block` + `listing_of` + `question_key`; placement is
+  `dispose_boxhead`'s fragment-centre check. A live call needs `PYTHONPATH=.:src` (the generated
+  `baml_client` is at the repo root) and `BAML_LIVE=1`.
+
+### Unverified
+
+- That a correct boxhead would open adoption on p0. The ledger also books title lines 0–6 and the
+  other bands' ink.
+- That adoption puts the grid's labels where `table_records` and `score_table` read a `col_path`.
+  The second prediction of the eighth session (the per-cell shape) is still unrun.
