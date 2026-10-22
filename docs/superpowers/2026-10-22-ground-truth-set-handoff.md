@@ -1,5 +1,9 @@
 # Handoff: a ground-truth set for the document compiler's PDF tables (2026-10-22)
 
+**Serves:** maintenance — proposes prog:criterion:tab:13.
+
+**Topic:** tab · **Date:** 2026-10-22
+
 Written in a strata session (strata may not write to neighbours). For a fresh session working in
 `../iladub`; François moves or copies it there.
 
@@ -122,3 +126,133 @@ Pointers:
   unset (`scripts/corpus_baseline.py:60`); the API keys in the shell do not matter.
 - The HTML snapshot is `https://www.federalreserve.gov/releases/h41/20250102/`. Table 1 is the
   2nd `<table>`; its cells carry `header=` (not `headers=`).
+
+## Fourth session (2026-10-22, in `../iladub`)
+
+### Next concrete action (written first)
+
+**ASSERTED, if the maintainer approves spec § 9:** in a fresh session, write the plan from
+`docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md`, sections 1-8 as amended by § 9.
+**PROPOSED:** § 9.2 item 5's prediction (`CORRECT` 0, `REFUSED` 4, `LOST` ≥ 36), which the plan's
+first scorer run must test. Separately, § 9.3's multi-level header join must be measured in
+`src/iladub/feed.py` before the scorer compares a `col_path`.
+
+### Pointers
+
+- The seam measurements, the reasons for them and the outcome rules they forced are spec § 9,
+  commit `259c6e3`. **Approval of § 9 is recorded nowhere yet.**
+- Two plan seams were measured in this session:
+  - The baseline inputs are `INPUTS` at `scripts/corpus_baseline.py:56`; the truth directory and
+    the scorer must be added there.
+  - The snapshot's per-document hook is `snapshot()` in `scripts/corpus_verdict_snapshot.py`. Its
+    document stem (`fed-h41-2025-01-02`) names `tests/ground-truth/<stem>/`.
+- The minus-sign drop at `src/iladub/feed.py:297` is proposed in § 9.1 as a residue row. No row has
+  been raised.
+
+### Unverified
+
+- The scratch artefacts (graph `.nt`, HTML snapshot, throwaway scripts) were not kept. Every
+  § 9.1 figure is a subagent's measurement, spot-checked only for `feed.py:297` and the
+  `MS Facilities` truth label.
+
+### Fourth session, addendum
+
+- **Spec § 9 was approved by the maintainer on 2026-10-22.** This is recorded in spec § 9.4. The
+  next action above is now asserted: write the plan in a fresh session.
+- The sign defect is raised as R332 (`residues-open.md`, `residues.md`).
+
+## Fifth session (2026-10-22, in `../iladub`): the plan session's measurements
+
+### Next concrete action (written first)
+
+**PROPOSED, pending two maintainer rulings (below):** write the plan in a fresh session from the spec
+as amended by those rulings. The plan is NOT written. This session measured first, found two spec
+defects, and crossed the 50K originating floor (~64K working tokens) before any plan text existed.
+
+### Measured (one offline compile at `4ed74f8`, 21,446 triples, score 0.8051146384479718)
+
+- **§ 9.2 item 5's prediction holds**, on a throwaway scorer that implements § 9.2 as written
+  (scratch, not kept): CORRECT 0, MISATTACHED 71, LOST 45, MISSING 8, REFUSED 4; sum 128;
+  MARKED_LABEL 17; SPURIOUS 57. MISSING rows: `Reserve Bank credit` (consumed as header) and
+  `Net portfolio holdings of MS Facilities 2020 LLC (Main Street Lending Program)` (split over
+  r20/r21). REFUSED: `Total factors supplying reserve funds` (`p0#ignored4`).
+- **§ 9.3's join is answered.** The record branch joins a column path with ASCII `" > "`
+  (`_header_path`, `src/iladub/feed.py`); the per-cell branch joins with one space and carries the
+  column key as a separate concept, the cell's own `text` set to `""`. Today every Fed record takes
+  the record branch. The scorer must therefore compare truth paths joined with `" > "`, not ` › `.
+- **Defect 1: the whole-page SHA-256 cannot be reproduced.** Two fetches 6 s apart, both 722,459
+  bytes, hash `ffd2e532…` and `88c46ed0…`; § 9.1 recorded `bbe64539…`. The diff is two per-request
+  tokens (a `data-injected="worker-…"` id and a Cloudflare `__CF$cv$params` script). The byte span
+  of the 2nd `<table …>` … `</table>` (78,874 bytes, no nested table) hashes to
+  `964e62c8ed5f3742b24df41f846950b3bcde45e97bbff92664cb84cda89a00fa` in both fetches.
+- **Defect 2: the row_id page filter (§ 9.2 item 2) goes stale on the R166 fix.** `rid` is the row's
+  header path when one covers it, and `p<page> <frag>` (`_row_discriminator`) only when none does.
+  A fix that gives table 1's rows a row header tree removes the `p0 ` prefix, so every row stops
+  being a candidate and the score cannot rise. Entry-cell concept regions are prov fragments of the
+  form `p0-43-218`. Region subjects carry `prov:wasDerivedFrom <…/p0>` (the page document), which is
+  how check (ii) can find a page's non-asserted text without parsing an IRI.
+- **`beautifulsoup4` is not in CI's extras** (`readers` only; CI installs `baml,dev,docs,etkl`). The
+  extractor must use stdlib `html.parser`. The throwaway did, and got 128 cells and the four paths.
+- The `header` attribute values end with a space; split on whitespace.
+
+### Fifth session, addendum
+
+- **Both defects were ruled by the maintainer on 2026-10-22** and are recorded as spec § 10
+  (amendment 2): the pin is the table-1 byte span, and a record's page is read from its concepts'
+  region prefix.
+- **ASSERTED next action:** in a fresh session, write the plan from the spec, §§ 1-8 as amended by
+  § 9 and § 10. Task 1's first scorer run must reproduce the counts above (CORRECT 0, REFUSED 4,
+  LOST 45, MISATTACHED 71, MISSING 8). These are now measured, not predicted.
+
+## Sixth session (2026-10-22, in `../iladub`): the plan
+
+### Next concrete action (written first)
+
+**ASSERTED:** in a fresh session, execute `docs/superpowers/plans/2026-10-22-ground-truth-slice-one.md`
+with superpowers:subagent-driven-development, from Task 1. Task 3 step 4's counts are measured, not
+predicted. A difference there is a stop, not a tuning target.
+
+### Pointers
+
+- Plan committed at `7a851c8`, with four tasks. **Approved by the maintainer on 2026-10-22 ("approved,
+  subagent-driven")**, including the plan's one "FOR RULING" point. Check (ii)'s refused texts come
+  from `RegionReport.text` where `verdict != "asserted"` on a listed page, not from graph predicates.
+  The reason, measured: `etkl:bandText` exists only on `etkl:IgnoredBand`, and no graph fact marks an
+  escalated region as non-asserted.
+- Not done: CLAUDE.md § Corpus baseline's input list will miss `tests/ground-truth/` once Task 3
+  lands. That file is in the Contract class, so the edit is the maintainer's. The PR body flags it.
+
+## Seventh session (2026-10-22, in `../iladub`): slice one executed
+
+### Next concrete action (written first)
+
+**PROPOSED:** the next loop fixes [[R166]] on Fed H.4.1 page 0 (a data row taken as header). Before
+any compiler change it must close [[R333]] (amend the scorer for the per-cell record shape), else the
+floor cannot move and `CORRECT` stays 0 whatever the fix does. Prediction to RUN first: after an R166
+fix, `score_table` on table 1 gives `CORRECT > 0`. Refuted in minutes by one compile and one score.
+
+### Pointers
+
+- Commits: `9c15e50` (extractor and truth file), `87916db` (scorer), `ef73357` (snapshot hook),
+  `8335cdd` (floor, `tab:13`), `ac5fc4d` (baseline truth block).
+- Measured truth block: CORRECT 0, WRONG_VALUE 0, MISATTACHED 71, LOST 45, MISSING 8, REFUSED 4,
+  SPURIOUS 57, MARKED_LABEL 17. Equal to the plan's oracle.
+- The truth file has 18 marked labels (72 cells), not spec § 9.1's 17. The scorer's `MARKED_LABEL` is
+  17 because the MS Facilities row is split in the PDF and never matches.
+- `tab:13` carries `retrospective true` (`prog.ttl` M4 requires it when metOn == declaredOn).
+
+### Decided, and where recorded
+
+- The per-cell record shape is a known blind spot, deferred: [[R333]] (`residues-open.md`).
+- The sign-cell asymmetry is measured, not fixed: [[R332]].
+- The input-list gap in CLAUDE.md is the maintainer's edit: the PR body, and Unverified below.
+- Slice one measures and does not change the compiler: spec § 5a.
+
+### Unverified
+
+- The multi-level `" > "` join (no equal col_paths in the real run). [[R333]].
+- The per-cell shape: read from `src/iladub/feed.py:664,694,701`, never compiled. [[R333]].
+- Byte-equality of the baseline: `corpus_baseline.py verify` was not run; one regenerate only.
+- The floor test proves only that the instrument exists: `CORRECT >= 0` cannot fail, and the
+  six-outcome sum holds by construction.
+- CLAUDE.md § Corpus baseline's input list omits `tests/ground-truth/` (Contract class; maintainer's edit).

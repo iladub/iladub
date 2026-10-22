@@ -1226,7 +1226,8 @@ prog:rung:tab prog:criterion
     prog:criterion:tab:01 , prog:criterion:tab:02 , prog:criterion:tab:03 ,
     prog:criterion:tab:04 , prog:criterion:tab:05 , prog:criterion:tab:06 ,
     prog:criterion:tab:07 , prog:criterion:tab:08 , prog:criterion:tab:09 ,
-    prog:criterion:tab:10 , prog:criterion:tab:11 , prog:criterion:tab:12 .
+    prog:criterion:tab:10 , prog:criterion:tab:11 , prog:criterion:tab:12 ,
+    prog:criterion:tab:13 .
 
 # --- the nine escalation reasons, in call-site order ------------------------------------
 #
@@ -1535,6 +1536,26 @@ prog:criterion:tab:12 a prog:Criterion ;
     prog:oracleTest "tests/test_carriage.py::test_o2_t1_reads_the_seven_column_boxhead" ;
     prog:oracleTest "tests/test_carriage.py::test_o2_t2_reads_the_two_column_no_boxhead" ;
     prog:oracleTest "tests/test_carriage.py::test_o2_note_block_is_not_carried_as_a_cell" .
+
+# tab:13 — ground-truth slice one (spec 2026-10-22 § 6, § 9.2 item 6). MET BY THE INSTRUMENT
+# EXISTING, never by a high score: the score is a committed, CI-gated number whose floor
+# (tests/ground-truth/<stem>/floor.json) may be raised freely and lowered only with a dated note.
+# retrospective true: M4 requires it when metOn == declaredOn (declared the day the instrument was built).
+prog:criterion:tab:13 a prog:Criterion ;
+    prog:ofRung "tab" ;
+    prog:statement "Carried table cells are scored against independent truth, and the score is a committed, CI-gated number." ;
+    prog:source "docs/superpowers/specs/2026-10-22-ground-truth-slice-one-design.md" ;
+    prog:declaredOn "2026-10-22"^^xsd:date ;
+    prog:met true ;
+    prog:metOn "2026-10-22"^^xsd:date ;
+    prog:retrospective true ;
+    prog:oracleArtifact "tests/test_ground_truth_floor.py" ;
+    prog:oracleTest "tests/test_ground_truth_floor.py::test_truth_block_meets_floor_and_accounts_for_every_csv_row[fed-h41-2025-01-02]" ;
+    prog:oracleTest "tests/test_ground_truth_extract.py::test_fixture_extracts_exact_rows" ;
+    prog:oracleTest "tests/test_ground_truth_extract.py::test_span_hash_mismatch_refused" ;
+    prog:oracleTest "tests/test_ground_truth_extract.py::test_unknown_header_id_refused" ;
+    prog:oracleTest "tests/test_ground_truth_extract.py::test_header_text_containing_separator_refused" ;
+    prog:oracleTest "tests/test_ground_truth_score.py::test_every_truth_cell_gets_exactly_one_outcome_and_the_eight_keys_are_exact" .
 
 
 # ================================================== the dependency graph — authored 2026-08-22

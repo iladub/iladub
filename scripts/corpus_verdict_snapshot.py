@@ -63,10 +63,43 @@ def _canonical_hash(graph) -> str:
     return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
 
+def refused_texts(rep, pages) -> list[str]:
+    """The `text` of every non-asserted region on the listed pages (spec 3.4, 9.2 item 4).
+
+    A page's number IS its index into `rep.pages`: `compile_document` appends one report per page
+    in `range(n_pages)` order (`document.py`, the `for p in range(n_pages)` loop at `pages.append(
+    compile_tables(..., page_number=p`), and the graph's region IRIs use the same 0-based `p`."""
+    return [r.text for p in pages for r in rep.pages[p].regions if r.verdict != "asserted"]
+
+
+def truth_block(stem: str, rep, root: pathlib.Path):
+    """Score every `tests/ground-truth/<stem>/<table>.csv` against `rep`; None when there is no
+    such directory (so a document without truth gains no key at all). PROCEDURAL: file reading and
+    a call to `iladub.truth.score_table`, which carries the decisions."""
+    from iladub.truth import load_truth, score_table
+
+    d = pathlib.Path(root) / "tests" / "ground-truth" / stem
+    if not d.is_dir():
+        return None
+    out = {}
+    for csv_path in sorted(d.glob("*.csv")):
+        rows, pages = load_truth(d, csv_path.stem)
+        out[csv_path.stem] = score_table(rep.graph, rows, pages, refused_texts(rep, pages))
+    return out
+
+
 def snapshot(pdf_path: str) -> dict:
     from iladub.etkl.document import compile_document
 
     rep = compile_document(pdf_path)
+    snap = _snapshot_of(rep, pdf_path)
+    truth = truth_block(pathlib.Path(pdf_path).stem, rep, pathlib.Path(__file__).resolve().parent.parent)
+    if truth is not None:
+        snap["truth"] = truth
+    return snap
+
+
+def _snapshot_of(rep, pdf_path: str) -> dict:
     return {
         "pdf": pdf_path,
         "score": rep.score,

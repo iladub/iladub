@@ -786,5 +786,17 @@
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.8051146384479718
+  "score": 0.8051146384479718,
+  "truth": {
+    "table-1": {
+      "CORRECT": 0,
+      "LOST": 45,
+      "MARKED_LABEL": 17,
+      "MISATTACHED": 71,
+      "MISSING": 8,
+      "REFUSED": 4,
+      "SPURIOUS": 57,
+      "WRONG_VALUE": 0
+    }
+  }
 }

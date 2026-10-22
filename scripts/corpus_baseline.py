@@ -53,7 +53,7 @@ DOCUMENTS = (
 )
 
 # Everything a compile reads from the repo (spec § 1), plus the two scripts that shape the bytes.
-INPUTS = ("src", "vocab", "readings", "pyproject.toml",
+INPUTS = ("src", "vocab", "readings", "tests/ground-truth", "pyproject.toml",
           "scripts/corpus_baseline.py", "scripts/corpus_verdict_snapshot.py")
 
 # Either one makes a compile call a live model, so it is neither offline nor reproducible.
