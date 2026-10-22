@@ -501,3 +501,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R330 | open | **RDFS-aware targeting in Fluree's `sh:targetClass` is unmeasured.** See [[R329]]. |
 | R331 | open | **Linux behaviour of the engine was unmeasured before the first `substrate` run.** See [[R327]]. |
 | R332 | open | **A `-` sign cell is dropped as blank while `+` is carried as its own cell.** See [[R240]]. |
+| R333 | open | **The ground-truth scorer cannot see the per-cell record shape that an R166 fix will produce.** See [[R166]], [[R240]]. |

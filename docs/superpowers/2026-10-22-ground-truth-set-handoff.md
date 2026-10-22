@@ -221,3 +221,38 @@ predicted. A difference there is a stop, not a tuning target.
   escalated region as non-asserted.
 - Not done: CLAUDE.md § Corpus baseline's input list will miss `tests/ground-truth/` once Task 3
   lands. That file is in the Contract class, so the edit is the maintainer's. The PR body flags it.
+
+## Seventh session (2026-10-22, in `../iladub`): slice one executed
+
+### Next concrete action (written first)
+
+**PROPOSED:** the next loop fixes [[R166]] on Fed H.4.1 page 0 (a data row taken as header). Before
+any compiler change it must close [[R333]] (amend the scorer for the per-cell record shape), else the
+floor cannot move and `CORRECT` stays 0 whatever the fix does. Prediction to RUN first: after an R166
+fix, `score_table` on table 1 gives `CORRECT > 0`. Refuted in minutes by one compile and one score.
+
+### Pointers
+
+- Commits: `9c15e50` (extractor and truth file), `87916db` (scorer), `ef73357` (snapshot hook),
+  `8335cdd` (floor, `tab:13`), `ac5fc4d` (baseline truth block).
+- Measured truth block: CORRECT 0, WRONG_VALUE 0, MISATTACHED 71, LOST 45, MISSING 8, REFUSED 4,
+  SPURIOUS 57, MARKED_LABEL 17. Equal to the plan's oracle.
+- The truth file has 18 marked labels (72 cells), not spec § 9.1's 17. The scorer's `MARKED_LABEL` is
+  17 because the MS Facilities row is split in the PDF and never matches.
+- `tab:13` carries `retrospective true` (`prog.ttl` M4 requires it when metOn == declaredOn).
+
+### Decided, and where recorded
+
+- The per-cell record shape is a known blind spot, deferred: [[R333]] (`residues-open.md`).
+- The sign-cell asymmetry is measured, not fixed: [[R332]].
+- The input-list gap in CLAUDE.md is the maintainer's edit: the PR body, and Unverified below.
+- Slice one measures and does not change the compiler: spec § 5a.
+
+### Unverified
+
+- The multi-level `" > "` join (no equal col_paths in the real run). [[R333]].
+- The per-cell shape: read from `src/iladub/feed.py:664,694,701`, never compiled. [[R333]].
+- Byte-equality of the baseline: `corpus_baseline.py verify` was not run; one regenerate only.
+- The floor test proves only that the instrument exists: `CORRECT >= 0` cannot fail, and the
+  six-outcome sum holds by construction.
+- CLAUDE.md § Corpus baseline's input list omits `tests/ground-truth/` (Contract class; maintainer's edit).
