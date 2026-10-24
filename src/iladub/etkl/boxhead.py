@@ -92,6 +92,10 @@ class DisposedBoxhead:
     refused: str | None = None
     spanners_dropped: tuple[int, ...] = ()      # indices into reading.spanning_labels
     spanner_refusal: str | None = None
+    # The words the reading filed as NOT a header (R336), for a non-refused disposal only; a
+    # refused one leaves it empty. The caption worker's candidate lines are built from it
+    # (`caption.candidate_lines`).
+    other_words: tuple[Address, ...] = ()
 
 
 class BoxheadReader(Protocol):
@@ -255,7 +259,8 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
     if _crossed() or _below_a_leaf():
         return DisposedBoxhead(labels=labels, dropped=tuple(sorted(dropped)),
                                spanners_dropped=tuple(range(len(reading.spanning_labels))),
-                               spanner_refusal="spanners are not laminar")
+                               spanner_refusal="spanners are not laminar",
+                               other_words=tuple(sorted(reading.other_words)))
 
     # EXTENT WITHIN GROUP (check 5). A spanner with no words has no line to stand on: dropped.
     survivors, gone = [], [n for n in range(len(reading.spanning_labels)) if n not in placeable]
@@ -270,7 +275,8 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
         else:
             gone.append(n)
     return DisposedBoxhead(labels=labels, spanners=tuple(survivors),
-                           dropped=tuple(sorted(dropped)), spanners_dropped=tuple(sorted(gone)))
+                           dropped=tuple(sorted(dropped)), spanners_dropped=tuple(sorted(gone)),
+                           other_words=tuple(sorted(reading.other_words)))
 
 
 def label_text(lines, block, addresses) -> str:
@@ -280,18 +286,28 @@ def label_text(lines, block, addresses) -> str:
     return " ".join(words[a].text for a in sorted(addresses))
 
 
+def boxhead_region(lines, grid, data_rows_shown: int = 3):
+    """The region a grid's header questions are asked over: the header block's lines followed by
+    the grid's first `data_rows_shown` data rows, with the vertical extent of them all. Shared by
+    `read_grid_boxhead` and the caption worker (`caption.read_grid_captions`), so both readers see
+    the one crop. PROCEDURAL — a selection of the grid's own lines; it decides nothing."""
+    block = header_block(lines, grid)
+    shown = [lines[j] for j in block] + [lines[j] for j in sorted(grid.rows)[:data_rows_shown]]
+    return SimpleNamespace(lines=shown, top=min(ln.top for ln in shown),
+                           bottom=max(ln.bottom for ln in shown))
+
+
 def read_grid_boxhead(pdf_path: str, page_number: int, lines, grid, reader,
                       data_rows_shown: int = 3) -> DisposedBoxhead:
-    """One ask per grid. The crop runs from the top of the header block through the grid's first
-    few data rows, so the reader sees which columns the labels head. Every failure path is NO
-    CLAIM — a reader that cannot be reached, raises, or is refused labels nothing."""
+    """One ask per grid. The crop (`boxhead_region`) runs from the top of the header block through
+    the grid's first few data rows, so the reader sees which columns the labels head. Every
+    failure path is NO CLAIM — a reader that cannot be reached, raises, or is refused labels
+    nothing."""
     block = header_block(lines, grid)
     if reader is None or not block:
         return DisposedBoxhead(refused="no header block" if reader is not None else "no reader")
     from .unshownink import render_region
-    shown = [lines[j] for j in block] + [lines[j] for j in sorted(grid.rows)[:data_rows_shown]]
-    region = SimpleNamespace(lines=shown, top=min(ln.top for ln in shown),
-                             bottom=max(ln.bottom for ln in shown))
+    region = boxhead_region(lines, grid, data_rows_shown)
     try:
         crop = render_region(pdf_path, page_number, region)
         reading = reader.read_boxhead(crop, len(grid.columns), listing_of(lines, block))
