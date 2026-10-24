@@ -370,3 +370,16 @@ def test_a_reading_without_spanners_emits_exactly_the_triples_it_emits_today():
     g, n, _ = _emitted(r)
     assert n == 4 and set(_levels(g).values()) == {0}
     assert _normalised_nt(g) == EXPECTED_NO_SPANNER_NT
+
+
+def test_a_spanner_on_or_below_a_leaf_it_covers_is_not_laminar():
+    """Review reproducer (Task 2, fix round 1): leaves 0-2 on L2, col 3's leaf `Right` on L1, and a
+    one-column spanner (3,3) `c` on L2 — BELOW the leaf it covers. Pairwise nesting alone admits it
+    ({3} ⊆ {3}), and the tree it would make fails `tab:NoOverlapShape` (h3 and s2 both level 1 over
+    col 3). LAMINAR drops every spanner and keeps the leaves."""
+    r = BoxheadReading(leaf_labels=((0, ((2, 0),)), (1, ((2, 1),)), (2, ((2, 2),)), (3, ((1, 1),))),
+                       spanning_labels=((1, 3, ((0, 0),)), (1, 2, ((1, 0),)), (3, 3, ((2, 3),))))
+    d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
+    assert d.refused is None and d.spanner_refusal == "spanners are not laminar"
+    assert d.spanners == () and d.spanners_dropped == (0, 1, 2)
+    assert sorted(d.labels) == [0, 1, 2, 3]

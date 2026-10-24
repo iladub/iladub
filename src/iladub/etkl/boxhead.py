@@ -48,7 +48,10 @@ SPANNERS (R334) get two further exact checks, no tolerance, run after the leaves
   4. LAMINAR. A node is (column set, topmost block line); a surviving leaf is a one-column node,
      a spanner covers first..last. Any two nodes whose columns intersect must be nested, the one
      on the strictly lower line inside the one above; two intersecting nodes on one line violate,
-     equal sets included. A violation drops EVERY spanner and keeps the leaves (the status quo).
+     equal sets included. And a spanner's topmost line lies strictly above the topmost line of
+     every surviving leaf in a column it covers (else a one-column spanner below its leaf nests
+     by set and still overlaps it at one level). A violation drops EVERY spanner and keeps the
+     leaves (the status quo).
   5. EXTENT WITHIN GROUP. On every line a spanner occupies, its ink run lies inside
      [columns[first].x0, columns[last].x1]. A failure drops that spanner only. Grid columns tile,
      so this is exact — and it has ONE BLIND SPOT: a group claimed TOO WIDE passes, because a
@@ -224,15 +227,35 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
     for n in placeable:
         a, b, ws = reading.spanning_labels[n]
         nodes.append((frozenset(range(a, b + 1)), min(x[0] for x in ws)))
-    for i, (ci, li) in enumerate(nodes):
-        for cj, lj in nodes[i + 1:]:
-            if not (ci & cj):
-                continue
-            upper, lower = ((ci, cj) if li < lj else (cj, ci)) if li != lj else (None, None)
-            if upper is None or not lower <= upper:
-                return DisposedBoxhead(labels=labels, dropped=tuple(sorted(dropped)),
-                                       spanners_dropped=tuple(range(len(reading.spanning_labels))),
-                                       spanner_refusal="spanners are not laminar")
+
+    def _crossed():
+        for i, (ci, li) in enumerate(nodes):
+            for cj, lj in nodes[i + 1:]:
+                if not (ci & cj):
+                    continue
+                upper, lower = ((ci, cj) if li < lj else (cj, ci)) if li != lj else (None, None)
+                if upper is None or not lower <= upper:
+                    return True
+        return False
+
+    # A SPANNER SITS STRICTLY ABOVE EVERY LEAF IT COVERS. Pairwise nesting alone admits a
+    # one-column spanner {c} on a line at or below leaf c ({c} ⊆ {c}), and the tree `_tree` would
+    # build from it puts two nodes at one level over column c — `tab:NoOverlapShape` refuses it
+    # (Task 2 review, fix round 1). Same response as any other violation.
+    leaf_top = {c: min(a[0] for a in ws) for c, ws in labels.items()}
+
+    def _below_a_leaf():
+        for n in placeable:
+            a, b, ws = reading.spanning_labels[n]
+            top = min(x[0] for x in ws)
+            if any(c in leaf_top and top >= leaf_top[c] for c in range(a, b + 1)):
+                return True
+        return False
+
+    if _crossed() or _below_a_leaf():
+        return DisposedBoxhead(labels=labels, dropped=tuple(sorted(dropped)),
+                               spanners_dropped=tuple(range(len(reading.spanning_labels))),
+                               spanner_refusal="spanners are not laminar")
 
     # EXTENT WITHIN GROUP (check 5). A spanner with no words has no line to stand on: dropped.
     survivors, gone = [], [n for n in range(len(reading.spanning_labels)) if n not in placeable]
@@ -369,7 +392,10 @@ def _tree(disposed: DisposedBoxhead):
     column set contains the node's own and whose topmost line is STRICTLY HIGHER than the node's
     — the smallest such set, and among equal sets the lowest such line. `dispose_boxhead`'s
     LAMINAR check guarantees those candidates form one chain (they all contain the node's set, so
-    they intersect, so they nest), which is what makes "innermost" a single answer. A root has
+    they intersect, so they nest), which is what makes "innermost" a single answer. The
+    strictly-higher rule loses nothing for a leaf because the same check also refuses any spanner
+    on or below a leaf it covers, so every spanner covering a leaf's column is a candidate for
+    that leaf: the tree relies on that half of LAMINAR as much as on the nesting half. A root has
     level 0 and a child its parent's level + 1; a leaf under no spanner is a root, so a reading
     without spanners is the flat level-0 row it has always been (spec 2026-10-24 §3.2)."""
     span = [(frozenset(range(a, b + 1)), min(x[0] for x in ws)) for a, b, ws in disposed.spanners]
