@@ -6,7 +6,7 @@ truth scorer of `prog:criterion:tab:13` (already met; this loop moves its number
 **Doc impact: increment.** A grid gains spanner header nodes and caption nodes, the corpus baseline
 moves, and one recordings directory is added. No released meaning changes.
 
-**Status: DRAFT, for the maintainer's approval.** §8 lists the two decisions that belong to the
+**Status: APPROVED by the maintainer 2026-10-24 (both §8 decisions accepted as proposed).** §8 lists the two decisions that belong to the
 maintainer. The design comes from the twelfth-session section of
 `docs/superpowers/2026-10-22-ground-truth-set-handoff.md` (PR #371). It changes two things there,
 marked **CHANGED** in §3.
@@ -183,3 +183,7 @@ None proposed. `tab:13` is already met, and this loop moves its number.
    recorded once (`BAML_LIVE=1 ILADUB_RECORD_READINGS=1`). The count of such grids is the plan's
    first measurement.
 2. **§3.1's change:** a laminar violation drops the spanners, not the whole reading.
+
+**Ruled 2026-10-24 by the maintainer:** (1) accepted. One live caption-worker sample per grid with
+candidate lines, across `corpus/` and `held-out/`, recorded once. (2) accepted. A laminar violation drops
+the spanners and keeps the leaves.
