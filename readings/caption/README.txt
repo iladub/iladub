@@ -22,3 +22,17 @@ no live reader the caption path is the identity.
 
 | recorded | document | page | result |
 | --- | --- | --- | --- |
+| 2026-10-24 | apple-fy2026q3-statements | p2 | disposed: 3 lines (0, 1, 2) |
+| 2026-10-24 | bfs-population-bilan-2023 | p5 (2 grids), p6 | disposed: 1, 1, 2 lines |
+| 2026-10-24 | ons-index-of-services-2026-02 | p7 / p8 | disposed 2 lines / NO CLAIM (answer {0,1}; which disposal check refused it is not measured) |
+| 2026-10-24 | arxiv-1706.03762v7 | p9 | disposed: 2 lines |
+| 2026-10-24 | caltrain-weekend-timetable | p0-p3 | NO CLAIM on all four (which disposal check refused each is not measured) |
+| 2026-10-24 | fed-h41-2025-01-02 | p0 | **NO CLAIM**: answer {C1 `H.4.1`, C5 title, C6 `Millions of dollars`}, not contiguous. Spec §7's last bullet asked for {L6}, {L5, L6} or wider: the model returned none of these. |
+| 2026-10-24 | fed-h41-2025-01-02 | p1, p2, p3, p7, p8, p10 | disposed: 2 lines each (1, 2) |
+| 2026-10-24 | who-covid-sitrep-41 | p2 / p3 | disposed: 2 lines / 2 lines |
+
+Recorded with only the caption reader live (`BamlCaptionReader` patched in, `BAML_LIVE` unset, so
+every other worker replays offline), one ask per question, 20 questions across `corpus/` and
+`held-out/`. A first sweep wrote nothing: `baml_client` (repo root) was not on `sys.path`, and the
+reader's `ModuleNotFoundError` was swallowed at the perceptual edge as NO CLAIM. Record with
+`PYTHONPATH=src:.`.
