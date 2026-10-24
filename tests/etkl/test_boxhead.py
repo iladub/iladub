@@ -189,3 +189,61 @@ def test_a_reader_that_RAISES_labels_nothing_and_does_not_propagate():
     assert got.labels == {} and got.refused == "the reader raised"
     assert read_grid_boxhead(ONS, 7, lines, grid, None).refused == "no reader"
     assert read_grid_boxhead(ONS, 7, lines, grid, FakeBoxheadReader(None)).refused == "no reading"
+
+
+def _wide_grid():
+    """Four columns at [0,100) … [300,400); block lines 0-2 refused, rows 3-4 admitted."""
+    cols = tuple(SimpleNamespace(x0=float(a), x1=float(a + 100)) for a in (0, 100, 200, 300))
+    return SimpleNamespace(rows=(3, 4), columns=cols,
+                           refusals={j: "HeterogeneousColumn/every-measure" for j in (0, 1, 2)})
+
+
+def _wide_lines():
+    """L0 spans cols 1-3; L1 has two words, over cols 1-2 and col 3; L2 holds the leaves."""
+    return [SimpleNamespace(words=[_w("Group", 150, 350)], top=0, bottom=1),
+            SimpleNamespace(words=[_w("Left", 120, 280), _w("Right", 310, 390)], top=2, bottom=3),
+            SimpleNamespace(words=[_w("Id", 10, 40), _w("a", 140, 160), _w("b", 240, 260),
+                                   _w("c", 340, 360)], top=4, bottom=5),
+            SimpleNamespace(words=[_w("x", 10, 20), _w("1", 140, 150), _w("2", 240, 250),
+                                   _w("3", 340, 350)], top=6, bottom=7),
+            SimpleNamespace(words=[_w("y", 10, 20), _w("4", 140, 150), _w("5", 240, 250),
+                                   _w("6", 340, 350)], top=8, bottom=9)]
+
+
+def _leaves():
+    return ((0, ((2, 0),)), (1, ((2, 1),)), (2, ((2, 2),)), (3, ((2, 3),)))
+
+
+def test_a_laminar_reading_keeps_every_spanner():
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((1, 3, ((0, 0),)), (1, 2, ((1, 0),)), (3, 3, ((1, 1),))))
+    d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
+    assert d.refused is None and d.spanner_refusal is None
+    assert [s[:2] for s in d.spanners] == [(1, 3), (1, 2), (3, 3)] and d.spanners_dropped == ()
+
+
+def test_laminar_violation_drops_every_spanner_and_keeps_the_leaves():
+    """(1,2) on L1 and (2,3) on L1 cross: one line, intersecting sets."""
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((1, 3, ((0, 0),)), (1, 2, ((1, 0),)), (2, 3, ((1, 1),))))
+    d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
+    assert d.refused is None and d.spanner_refusal == "spanners are not laminar"
+    assert d.spanners == () and d.spanners_dropped == (0, 1, 2)
+    assert sorted(d.labels) == [0, 1, 2, 3]
+
+
+def test_a_lower_spanner_wider_than_the_one_above_violates():
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((2, 3, ((0, 0),)), (1, 3, ((1, 0), (1, 1)))))
+    d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
+    assert d.spanners == () and d.spanner_refusal == "spanners are not laminar"
+
+
+def test_extent_too_narrow_drops_that_spanner_only():
+    """`Right` (310-390) claimed over col 3 is inside [300,400): stands. `Left` (120-280) claimed over
+    col 2 alone overflows [200,300) on the left: dropped."""
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((1, 3, ((0, 0),)), (2, 2, ((1, 0),)), (3, 3, ((1, 1),))))
+    d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
+    assert d.spanner_refusal is None and d.spanners_dropped == (1,)
+    assert [s[:2] for s in d.spanners] == [(1, 3), (3, 3)]

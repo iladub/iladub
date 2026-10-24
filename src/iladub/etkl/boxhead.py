@@ -43,9 +43,18 @@ THE DISPOSAL — two whole-reading refusals and one per-label one:
      lies between its first and last word's centres, so this admits every label the per-word
      rule admitted (`docs/superpowers/2026-10-05-r293-p6-adopts.md` § 2.3).
 
-A spanning label's geometry is NOT disposed beyond range and order: a spanner is typically
-centred over its group and its ink covers a fraction of it, so extent proves nothing. Spanners
-are therefore REPORTED and not yet carried — what would dispose them is the open question here.
+SPANNERS (R334) get two further exact checks, no tolerance, run after the leaves are placed:
+
+  4. LAMINAR. A node is (column set, topmost block line); a surviving leaf is a one-column node,
+     a spanner covers first..last. Any two nodes whose columns intersect must be nested, the one
+     on the strictly lower line inside the one above; two intersecting nodes on one line violate,
+     equal sets included. A violation drops EVERY spanner and keeps the leaves (the status quo).
+  5. EXTENT WITHIN GROUP. On every line a spanner occupies, its ink run lies inside
+     [columns[first].x0, columns[last].x1]. A failure drops that spanner only. Grid columns tile,
+     so this is exact — and it has ONE BLIND SPOT: a group claimed TOO WIDE passes, because a
+     spanner is typically centred and covers a fraction of its group. Only the truth scorer sees it.
+
+`DisposedBoxhead.spanners` holds the surviving spanners only.
 """
 from __future__ import annotations
 
@@ -78,6 +87,8 @@ class DisposedBoxhead:
     spanners: tuple = ()
     dropped: tuple[int, ...] = ()
     refused: str | None = None
+    spanners_dropped: tuple[int, ...] = ()      # indices into reading.spanning_labels
+    spanner_refusal: str | None = None
 
 
 class BoxheadReader(Protocol):
@@ -200,8 +211,43 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
             labels[c] = tuple(sorted(ws))
         else:
             dropped.append(c)
-    return DisposedBoxhead(labels=labels, spanners=tuple(reading.spanning_labels),
-                           dropped=tuple(sorted(dropped)))
+
+    # LAMINAR (check 4). This is the ONLY guard on a grid's column-path ambiguity: on a grid the
+    # membrane's CoverageShape and UnambiguousAccessShape never target `tab:GridColumn`, so no
+    # shape covers what this checks. Under CLAUDE.md § Producer-side guards (R89) it may NOT be
+    # deleted as a duplicate of the membrane (spec 2026-10-24 §2).
+    nodes = []                                   # (column set, topmost line)
+    for c, ws in reading.leaf_labels:
+        if c in labels:
+            nodes.append((frozenset((c,)), min(a[0] for a in labels[c])))
+    placeable = [n for n, (_a, _b, ws) in enumerate(reading.spanning_labels) if ws]
+    for n in placeable:
+        a, b, ws = reading.spanning_labels[n]
+        nodes.append((frozenset(range(a, b + 1)), min(x[0] for x in ws)))
+    for i, (ci, li) in enumerate(nodes):
+        for cj, lj in nodes[i + 1:]:
+            if not (ci & cj):
+                continue
+            upper, lower = ((ci, cj) if li < lj else (cj, ci)) if li != lj else (None, None)
+            if upper is None or not lower <= upper:
+                return DisposedBoxhead(labels=labels, dropped=tuple(sorted(dropped)),
+                                       spanners_dropped=tuple(range(len(reading.spanning_labels))),
+                                       spanner_refusal="spanners are not laminar")
+
+    # EXTENT WITHIN GROUP (check 5). A spanner with no words has no line to stand on: dropped.
+    survivors, gone = [], [n for n in range(len(reading.spanning_labels)) if n not in placeable]
+    for n in placeable:
+        a, b, ws = reading.spanning_labels[n]
+        runs = {}
+        for x in ws:
+            lo, hi = runs.get(x[0], (words[x].x0, words[x].x1))
+            runs[x[0]] = (min(lo, words[x].x0), max(hi, words[x].x1))
+        if all(grid.columns[a].x0 <= lo and hi <= grid.columns[b].x1 for lo, hi in runs.values()):
+            survivors.append(reading.spanning_labels[n])
+        else:
+            gone.append(n)
+    return DisposedBoxhead(labels=labels, spanners=tuple(survivors),
+                           dropped=tuple(sorted(dropped)), spanners_dropped=tuple(sorted(gone)))
 
 
 def label_text(lines, block, addresses) -> str:
