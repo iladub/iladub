@@ -436,3 +436,67 @@ boxhead, so reading the boxhead touches that band and turns them into residue.
 
 - Whether refused pages in other documents share the title-in-touched-band shape. No census was run.
 - Whether L32 on p0 (still residue in every variant) matters to the truth scorer.
+
+## Twelfth session (2026-10-24): R334 + R336 measured, design proposed, spec not written
+
+Merged #370 (`4face0d`). Started the design loop, measured, and stopped at 51.7K working tokens, over
+the 50K originating floor (plimslop log: `handoff`). **No spec exists.** The next session writes it.
+
+### Next concrete action (written first; graded)
+
+**PROPOSED, graded MEDIUM:** in a fresh session, write the R334 + R336 spec from the design below. Before
+writing, measure the three seams under *Unverified*. **Refuted in minutes if** a scratchpad emission of
+the spanner tree (below) fails `CoverageShape`, `NoOverlapShape` or the leaf-header shape
+(`vocab/shapes/tab-shapes.ttl:14,40,130-150`) on Fed p0. If so, the level scheme is wrong, so redesign it
+before writing the spec.
+
+### Proposed design (a proposition. It is recorded nowhere but here)
+
+- **R334, spanner disposal (oracle).** Two exact checks, no tolerance. (a) LAMINAR: any two spanners are
+  disjoint or nested, and a spanner on a lower line nests inside every overlapping spanner above it. A
+  violation refuses the whole reading. (b) EXTENT ⊆ GROUP: on every line, the spanner's ink extent lies
+  inside `[columns[first].x0, columns[last].x1]`. A violation drops that spanner only. (b) is exact
+  because the grid's columns tile with no gaps. It refutes a group that is too narrow, and **it cannot
+  refute one that is too wide**, which only the truth scorer sees. A dropped spanner leaves its line
+  uncarried, the status quo, so a refusal never fabricates.
+- **R334, carriage.** A surviving spanner's words count as kept in `carried_lines`. Emit one
+  `tab:HeaderNode` per spanner with `coversColumn` over first..last, `headerLevel` = depth in the spanner
+  tree, and `parentHeader` to the innermost containing spanner. A leaf gets `parentHeader` to the
+  innermost spanner that covers its column, and level = parent depth + 1. Vocabulary exists
+  (`tab.ttl:55,58,73`), and `assert_hier_region` is the emitter precedent (`holon.py:747-789`). The
+  scorer takes the deepest covering node per column and walks `parentHeader` (`feed.py:790-823`). So col
+  2, which has no leaf, would read `Averages › Change from week ended › Dec 25, 2024`, which is a truth
+  path verbatim.
+- **R336, a separate NEURAL worker, not a widened ReadBoxhead.** Reason: the recording key is
+  `sha256(ncols, listing)` (`boxhead.py:254`), not the prompt or schema. Widening `other_words` would
+  silently replay all 24 recordings as answers to a question that is no longer asked. Re-recording them
+  reopens R335's drift. The worker is asked only over block lines that the disposed boxhead filed
+  *entirely* as `other_words`. It answers with a closed set of line addresses: *which of these lines are
+  this table's own caption (title, unit)?* Disposal: address space; whole lines; a contiguous run ending
+  at the line directly above the topmost label line. Carry these lines as `tab:RegionCaption` only, never
+  `tab:SectionCaption`. Precedents are the box title bar (`compile.py:291`) and row-role furniture
+  (`rowrole.py:219`). `feed.py:426-458` turns SectionCaption text into concepts, which become SPURIOUS
+  riders in the scorer. Leave unit semantics (scale, currency, QUDT) to a new residue. Neither the truth
+  nor the scorer reads a unit (agent grep, `truth.py`, `ground_truth_extract.py`).
+
+### Measured (offline, `main` at `0ffa420`/`4face0d`, Fed p0, recorded reading `be21900e…`)
+
+- One grid, 7 columns that **tile exactly** (x: 35.00 | 249.55 | 336.15 | 364.64 | 419.40 | 447.74 |
+  507.55 | 572.15). Families: Text, Quantity, None, Quantity, None, Quantity, Quantity. Cols 2 and 4 are
+  the sign sub-columns. Rows 11–31 and 33–43. `header_block` = page lines 0..10.
+- The reading files all of L0–L6 as `other_words`. Leaves: col 0 = L7[0-5]+L8[0-5]+L10[0-2]; col 1 =
+  L9[0,1]+L10[3-5]; col 6 = L8[10]+L9[2-4]. Spanners: (1,5) L7 `Averages of daily figures` 333.7–421.3;
+  (2,5) L8 `Change from week ended` 374.4–466.1; (2,3) L10 `Dec 25, 2024` 353.7–401.3; (4,5) L10
+  `Jan 3, 2024` 439.8–481.7. All four pass both (a) and (b). Every leaf line's centre is in its own
+  column. `carried_lines` = (9,) only.
+- Truth: `tests/ground-truth/fed-h41-2025-01-02/table-1.csv`, paths joined by ` › `. Verdict logic is in
+  `src/iladub/truth.py:79-118,187-210`.
+
+### Unverified
+
+- Whether the tree emission passes `CoverageShape` (leaf columns 2–5 have no leaf label; check
+  `boxheadAbsentBy`) and the leaf-header shape at `tab-shapes.ttl:130-150`.
+- Whether carriage for real reproduces the probe's ledger of 27, and whether `truth.table-1` CORRECT
+  rises above 0. The sign/number split (cols 2/4 vs 3/5) may decide which cells match a path.
+- Blast radius: other recordings with spanners (bfs, ons) will start carrying lines. Nobody counted them.
+- Whether any document besides Fed needs the caption worker. No census.
