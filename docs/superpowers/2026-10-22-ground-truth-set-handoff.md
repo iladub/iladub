@@ -396,3 +396,43 @@ until an omission oracle exists ([[R335]]).
 - That the bfs and ons differences are sampling variance and not caused by the new prompt. It is one
   sample per question, with no repeat run.
 - That carrying spanners would open adoption on p0 (see the next action).
+
+## Eleventh session (2026-10-24): the tenth session's probe, run — spanners are not enough
+
+### Next concrete action (written first; graded)
+
+**PROPOSED, graded MEDIUM:** one design loop, in a fresh session, that carries both a boxhead's spanners
+([[R334]]) and a grid's title and unit lines ([[R336]]), with the spec written first. Fed p0 adopts only
+when both are carried. Score it with ground-truth slice one's scorer on Fed table 1. **Refuted in minutes
+if:** with both carried for real (not patched), p0's ledger still books 31 or more escalated tokens, or
+`truth.table-1` stays at `CORRECT: 0` after adoption. In that case, read the column paths the adopted grid
+emits before designing anything else. The neurosymbolic gate applies: what a title or a unit *is* is a
+reading judgment, so it is NEURAL with an oracle, and it is not a line-position heuristic.
+
+**ASSERTED:** lines 0–4 (the release masthead, band 1) need no carrying. Band 1 is never touched, so its
+18 tokens stay booked verbatim, and p0 adopts anyway.
+
+### Measured (offline, at `0ffa420`, `held-out/fed-h41-2025-01-02.pdf`, with `boxhead.carried_lines` patched in a scratchpad probe)
+
+| carried on p0 | ledger escalated (page total 31) | residue | p0 adopted |
+|---|---|---|---|
+| (9,), as shipped | — | — | no |
+| (7, 8, 9, 10), spanners | 38 = band 1's 18 + L5, L6, L32 | (5, 6, 32) | **no** |
+| (5, 6, 7, 8, 9, 10) | 27 | (32,) | **yes** |
+| 0–10, everything | 9 | (32,) | yes |
+
+The tenth session's refutation clause fired: carrying the spanners alone leaves p0 refused. But the
+blocker is not "the title lines 0–6", as that clause guessed. It is only L5 (`1. Factors Affecting
+Reserve Balances of Depository Institutions`) and L6 (`Millions of dollars`). They share band 2 with the
+boxhead, so reading the boxhead touches that band and turns them into residue.
+
+### Pointers
+
+- Probe scripts: the session scratchpad holds a `carried_lines` patch and a `build_ledger` printer, each
+  under 30 lines. One full Fed compile takes about 4.5 minutes.
+- [[R336]] is new. [[R334]]'s index line is annotated *necessary, not sufficient*.
+
+### Unverified
+
+- Whether refused pages in other documents share the title-in-touched-band shape. No census was run.
+- Whether L32 on p0 (still residue in every variant) matters to the truth scorer.

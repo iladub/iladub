@@ -502,5 +502,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R331 | open | **Linux behaviour of the engine was unmeasured before the first `substrate` run.** See [[R327]]. |
 | R332 | open | **A `-` sign cell is dropped as blank while `+` is carried as its own cell.** See [[R240]]. |
 | R333 | closed | **The scorer reads the per-cell record shape**: a row's per-cell records are regrouped and their paths read off the header nodes; an ambiguous region refuses. Closed 2026-10-22, spec § 11; synthetic only, Fed mints 0 such records today. See [[R166]], [[R240]] |
-| R334 | open | **A boxhead spanner is reported and not carried, so a header line holding one is never read in full.** Blocks Fed p0 adoption and every spanner path in the truth. See [[R166]], [[R240]]. |
+| R334 | open | **A boxhead spanner is reported and not carried, so a header line holding one is never read in full.** Blocks every spanner path in the truth. ✎ **2026-10-24: necessary, not sufficient** — with spanners carried, p0 still refuses until its title and unit lines are carried too ([[R336]]). See [[R166]], [[R240]]. |
 | R335 | open | **An omitted leaf label cannot be disposed: a header word filed as an other word passes the oracle.** ons p8's stub `Section`, re-asked 2026-10-22. See [[R166]]. |
+| R336 | open | **A grid's title and unit lines are never carried, so they become residue once the boxhead is read.** Fed p0 adopts only with spanners AND L5/L6 carried (ledger 27 < 31). See [[R334]]. |
