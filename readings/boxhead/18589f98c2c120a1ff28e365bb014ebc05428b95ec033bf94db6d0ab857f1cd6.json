@@ -177,7 +177,7 @@
    ]
   ]
  ],
- "note": "Read top-to-bottom, matching each of the three header lines under the two spanning groups to its column, treating merged OCR tokens like 'laComposantes' and 'laVariation' as belonging to the spanning label they introduce.",
+ "note": "I read each header word by its horizontal position to match it to the data column beneath it, grouping multi-line labels per column and treating the two merged '\u00c9tat de la'+next-label words as part of the wider spanning labels they introduce.",
  "other_words": [
   [
    0,

@@ -168,7 +168,7 @@
    ]
   ]
  ],
- "note": "Each train number heads its own column after the row-label 'Train No.' column; the title, subtitle, section heading, and the 6XX Local note are non-header text.",
+ "note": "Treated the title, subtitle, direction caption, and legend box as non-column text, and matched each train number to its own column after the Train No. label column.",
  "other_words": [
   [
    0,

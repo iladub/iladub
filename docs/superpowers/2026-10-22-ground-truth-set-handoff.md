@@ -352,3 +352,47 @@ authoring it would make a person the proposer while the file claims to be reader
   other bands' ink.
 - That adoption puts the grid's labels where `table_records` and `score_table` read a `col_path`.
   The second prediction of the eighth session (the per-cell shape) is still unrun.
+
+## Tenth session (2026-10-22): the boxhead question shows positions; p0 is now blocked on spanners
+
+### Next concrete action (written first, at about 80,000 working tokens; graded per action)
+
+**PROPOSED, graded MEDIUM:** design a disposal for boxhead spanning labels and their carriage into a
+grid's column paths ([[R334]]). This is a design loop, so start it in a fresh session with a spec.
+Without spanners, Fed p0's L7, L8 and L10 are never read in full, and every column path in the Fed
+truth starts with a spanner. **Refuted in minutes if:** a reading with spanners carried still leaves
+p0's data grid unadopted. Hand-patch `carried_lines` to count L7–L10 in one offline probe, rerun p0
+and read the adoption verdict. That check is a probe, never a commit. If p0 still refuses, the
+blocker is the title lines 0–6 in the ledger, and R334 is not the next loop.
+
+**ASSERTED:** do not re-ask ons p8 to get `Section` back. One sample per question is the policy
+until an omission oracle exists ([[R335]]).
+
+### Measured (branch `r166-boxhead-positions`, off `main` at `ad43125`)
+
+- `boxhead.listing_of` now gives each word as `[i]word@x0-x1` (whole points), and `boxhead.baml`
+  says what the numbers are. Word order and addresses are unchanged, so `dispose_boxhead` is
+  unchanged.
+- Before any code change, three live asks with a positioned listing on Fed p0 all gave the true
+  reading (cols 1 and 6 stand, none dropped). The recorded reading under the final prompt agrees.
+- Every boxhead recording was re-asked: 23 questions, 23 files, 0 offline misses. The 10 old files
+  are asked by no compile and were removed. Method and the reason for it: `readings/boxhead/README.txt`,
+  last row. A fully live compile crashed on Fed with `UnshownCarriageError` before any boxhead ask,
+  and that crash is live-only.
+- Blast radius (`tests/corpus-baseline/`): Fed 0.8051 → 0.8128 (pp 2, 3, 8, 10), bfs 0.9074 → 0.9144,
+  who-covid up (pp 2, 3), ons 0.8685 → 0.8555 (p8, [[R335]]). The other seven documents are byte-identical.
+- **The ninth session's prediction `CORRECT > 0` on Fed table 1 is REFUTED:** truth is unchanged,
+  `CORRECT: 0`. p0 still does not adopt ([[R334]]).
+
+### Pointers
+
+- Probes in the session scratchpad, not committed: an offline hit/miss logger wrapped around
+  `RecordedBoxheadReader.read_boxhead`, a recorder with only the boxhead reader live, and an old/new
+  disposal diff per grid. Each is under 30 lines and simple to rewrite.
+- The 11 `readings/header_lines/` files the live compile wrote were set aside and not committed.
+
+### Unverified
+
+- That the bfs and ons differences are sampling variance and not caused by the new prompt. It is one
+  sample per question, with no repeat run.
+- That carrying spanners would open adoption on p0 (see the next action).

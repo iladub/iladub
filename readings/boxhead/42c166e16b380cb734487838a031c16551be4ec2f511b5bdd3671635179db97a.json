@@ -2,15 +2,6 @@
  "cols_seen": 6,
  "leaf_labels": [
   [
-   0,
-   [
-    [
-     8,
-     0
-    ]
-   ]
-  ],
-  [
    1,
    [
     [
@@ -152,7 +143,7 @@
    ]
   ]
  ],
- "note": "Read left-to-right, top-to-bottom, grouping wrapped header words under each data column and treating the SIC2007 line as a span over the five industry columns.",
+ "note": "Read top band as spanning header over five data columns, then matched each stacked word to its column by horizontal position, keeping title/caption/unit lines and the row-label header as non-header text.",
  "other_words": [
   [
    0,
@@ -232,6 +223,10 @@
   ],
   [
    2,
+   0
+  ],
+  [
+   8,
    0
   ]
  ],

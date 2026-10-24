@@ -38,8 +38,8 @@
       "https://example.org/etkl/doc/p10#htable3"
     ]
   ],
-  "graph_sha256": "a735fc4c06e91e91a5c61f5c347a8c99ba79105305487915fa4d76a0eba3dadc",
-  "graph_triples": 21446,
+  "graph_sha256": "2cf9b599098ac0e5e884ecad90aea0bc8808a10351250ed918c40e56f9d78aa2",
+  "graph_triples": 21877,
   "notes": [
     "page 0: adoption refused \u2014 the data grid left no less ink unread than the bands did",
     "page 1: adoption refused \u2014 the data grid left no less ink unread than the bands did",
@@ -175,8 +175,8 @@
       "score": 0.944
     },
     {
-      "asserted": 72,
-      "escalated": 133,
+      "asserted": 77,
+      "escalated": 128,
       "regions": [
         {
           "anchor": null,
@@ -192,7 +192,7 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "KIND_NOT_SUPPORTED",
           "table": null,
-          "verdict": "escalated"
+          "verdict": "superseded"
         },
         {
           "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
@@ -235,10 +235,10 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.35121951219512193
+      "score": 0.375609756097561
     },
     {
-      "asserted": 307,
+      "asserted": 338,
       "escalated": 33,
       "regions": [
         {
@@ -322,7 +322,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9029411764705882
+      "score": 0.9110512129380054
     },
     {
       "asserted": 265,
@@ -585,8 +585,8 @@
       "score": 0.0
     },
     {
-      "asserted": 231,
-      "escalated": 31,
+      "asserted": 252,
+      "escalated": 28,
       "regions": [
         {
           "anchor": null,
@@ -602,7 +602,7 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "KIND_NOT_SUPPORTED",
           "table": null,
-          "verdict": "escalated"
+          "verdict": "superseded"
         },
         {
           "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
@@ -669,7 +669,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.8816793893129771
+      "score": 0.9
     },
     {
       "asserted": 431,
@@ -727,8 +727,8 @@
       "score": 1.0
     },
     {
-      "asserted": 136,
-      "escalated": 24,
+      "asserted": 145,
+      "escalated": 15,
       "regions": [
         {
           "anchor": null,
@@ -779,14 +779,14 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.85
+      "score": 0.90625
     }
   ],
   "pdf": "held-out/fed-h41-2025-01-02.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.8051146384479718,
+  "score": 0.812807881773399,
   "truth": {
     "table-1": {
       "CORRECT": 0,

@@ -1,18 +1,14 @@
 {
   "adopted": [
+    2,
     3
   ],
-  "chains": [
-    [
-      "https://example.org/etkl/doc/p2#table3"
-    ]
-  ],
-  "graph_sha256": "b08701a6fb10b6319bedb127f6174481ac94c434cb8915553a897fc4e3ae7fae",
-  "graph_triples": 14298,
+  "chains": [],
+  "graph_sha256": "870911ec9459334a647c39220bb25a1f99747fe4c6fc8c769629771d8b271417",
+  "graph_triples": 17653,
   "notes": [
     "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
     "page 1: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
-    "page 2: adoption refused \u2014 the data grid left no less ink unread than the bands did",
     "page 4: adoption refused \u2014 the data grid left no less ink unread than the bands did",
     "page 5: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
     "page 6: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
@@ -137,8 +133,8 @@
       "score": 0.0
     },
     {
-      "asserted": 245,
-      "escalated": 15,
+      "asserted": 263,
+      "escalated": 3,
       "regions": [
         {
           "anchor": null,
@@ -162,22 +158,38 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "KIND_NOT_SUPPORTED",
           "table": null,
-          "verdict": "escalated"
+          "verdict": "superseded"
         },
         {
           "anchor": "https://w3id.org/iladub/tab#RecordTable",
-          "cells": 238,
+          "cells": 0,
           "kind": "RegionKind.RECORD_TABLE",
           "reason": null,
-          "table": "https://example.org/etkl/doc/p2#table3",
+          "table": null,
+          "verdict": "superseded"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#DataGrid",
+          "cells": 245,
+          "kind": "RegionKind.RECORD_TABLE",
+          "reason": null,
+          "table": "https://example.org/etkl/doc/p2/adopt#p2-datagrid",
           "verdict": "asserted"
+        },
+        {
+          "anchor": "https://w3id.org/iladub/tab#DataGrid",
+          "cells": 0,
+          "kind": "RegionKind.UNSUPPORTED_TABLE",
+          "reason": "DATAGRID_RESIDUE",
+          "table": null,
+          "verdict": "escalated"
         }
       ],
-      "score": 0.9423076923076923
+      "score": 0.9887218045112782
     },
     {
-      "asserted": 401,
-      "escalated": 47,
+      "asserted": 416,
+      "escalated": 32,
       "regions": [
         {
           "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
@@ -204,7 +216,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.8950892857142857
+      "score": 0.9285714285714286
     },
     {
       "asserted": 0,
@@ -328,5 +340,5 @@
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.5617391304347826
+  "score": 0.5873702422145328
 }

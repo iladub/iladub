@@ -145,10 +145,20 @@ def _ordered(line):
 
 
 def listing_of(lines, block) -> str:
-    """The numbered listing the reader answers against: `L<k>: [0]word [1]word …`, where k is the
-    line's position IN THE BLOCK (not its page index) and words run left to right."""
+    """The numbered listing the reader answers against: `L<k>: [0]word@x0-x1 [1]word@x0-x1 …`,
+    where k is the line's position IN THE BLOCK (not its page index), words run left to right, and
+    each carries its left and right edge on the page, in whole points.
+
+    WHY THE EXTENT (R166, 2026-10-22). A text line is not a label: Fed H.4.1 p0's L9 holds `Week
+    ended` at x 272-317 and the Wednesday column's `Jan 1, 2025` at x 526-567. Listed as text,
+    those read as one label, and three live asks out of three answered that way. The disposal
+    places by x, so it dropped both columns. With the extents listed, three of three placed both.
+    PROCEDURAL — a rendering of the text layer's own coordinates. It decides nothing and has no
+    tolerance: the reader sees on the image where the gaps are, and here it sees them in the
+    listing as well."""
     return "\n".join(
-        f"L{k}: " + " ".join(f"[{i}]{w.text}" for i, w in enumerate(_ordered(lines[j])))
+        f"L{k}: " + " ".join(f"[{i}]{w.text}@{w.x0:.0f}-{w.x1:.0f}"
+                             for i, w in enumerate(_ordered(lines[j])))
         for k, j in enumerate(block))
 
 

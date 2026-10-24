@@ -99,7 +99,12 @@ P5_CELLS_WHEN_CARRIED = 496
 #: `tab:RuleSpan` (192 rules) and `tab:firstGlyphEnd`/`tab:lastGlyphStart` triples; with them
 #: stripped, bfs's canonical hash equals main's, and so does every other corpus document's.
 #: P5_CELLS is unchanged at 496.
-DOC_TRIPLES_WHEN_CARRIED = 18199
+#: 18199 -> 18201 on 2026-10-22, R166: every boxhead was re-asked with word positions in the
+#: listing. The two bfs readings differ from the old ones only in where they put footnote marks.
+#: p5 now files `1` and `2` as other words (line 32 no longer carried). p6 now attaches its `1`
+#: and `2` to the two `Rapport de dépendance` labels (lines 5-6 now carried). Every column keeps
+#: its label, and P5_CELLS is unchanged at 496.
+DOC_TRIPLES_WHEN_CARRIED = 18201
 
 #: The control, and it passes TODAY. Page 6 carries 267 cells across six asserted regions
 #: and the switch must not move it: a change that alters page 6 is not the change the
