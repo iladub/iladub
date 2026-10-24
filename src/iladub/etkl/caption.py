@@ -168,17 +168,24 @@ def read_grid_captions(pdf_path: str, page_number: int, lines, grid, disposed: D
                        reader: "CaptionReader | None") -> tuple[int, ...]:
     """One ask per grid that has candidate lines, over the crop `read_grid_boxhead` renders
     (`boxhead.boxhead_region`). Returns the disposed caption lines as PAGE-LINE indices. Asks
-    nothing when there is no reader or no candidate; every exception is NO CLAIM, `()`."""
+    nothing when there is no reader or no candidate.
+
+    ONLY THE PERCEPTUAL EDGE SWALLOWS ERRORS — the render and the reader, as in
+    `boxhead.read_grid_boxhead`: a renderer or reader that raises is NO CLAIM, `()`. The
+    deterministic code around them (the block, the candidates, the disposal) raises, so a
+    programming error there is never mistaken for a refusal on every grid."""
+    block = header_block(lines, grid)
+    candidates = candidate_lines(lines, block, disposed)
+    if reader is None or not candidates:
+        return ()
+    region = boxhead_region(lines, grid)
+    listing = listing_of(lines, block, candidates)
     try:
-        block = header_block(lines, grid)
-        candidates = candidate_lines(lines, block, disposed)
-        if reader is None or not candidates:
-            return ()
-        crop = _render_crop(pdf_path, page_number, boxhead_region(lines, grid))
-        reading = reader.read_caption(crop, len(grid.columns), listing_of(lines, block, candidates))
-        return tuple(block[k] for k in dispose_captions(reading, candidates, block, lines, disposed))
+        crop = _render_crop(pdf_path, page_number, region)
+        reading = reader.read_caption(crop, len(grid.columns), listing)
     except Exception:
         return ()
+    return tuple(block[k] for k in dispose_captions(reading, candidates, block, lines, disposed))
 
 
 # ---------------------------------------------------------------------------------------------

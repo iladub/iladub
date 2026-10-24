@@ -215,6 +215,32 @@ def test_a_reader_that_raises_is_no_claim(monkeypatch):
     assert read_grid_captions("unused.pdf", 0, LINES, GRID, _disposed(), None) == ()
 
 
+def test_a_raising_renderer_is_no_claim(monkeypatch):
+    from iladub.etkl import caption
+
+    def boom(pdf, page, region):
+        raise OSError("no pdf")
+
+    monkeypatch.setattr(caption, "_render_crop", boom)
+    assert read_grid_captions("unused.pdf", 0, LINES, GRID, _disposed(),
+                              FakeCaptionReader(CaptionReading(caption_lines=(2,)))) == ()
+
+
+def test_a_disposal_error_propagates_and_is_not_read_as_no_claim(monkeypatch):
+    """Only the render and the reader are swallowed; deterministic code raises (fix round 1)."""
+    import pytest
+    from iladub.etkl import caption
+
+    def broken(*a, **k):
+        raise ZeroDivisionError("a bug in the disposal")
+
+    monkeypatch.setattr(caption, "_render_crop", lambda pdf, page, region: b"png")
+    monkeypatch.setattr(caption, "dispose_captions", broken)
+    with pytest.raises(ZeroDivisionError):
+        read_grid_captions("unused.pdf", 0, LINES, GRID, _disposed(),
+                           FakeCaptionReader(CaptionReading(caption_lines=(2,))))
+
+
 def test_the_recorded_reader_replays_and_misses_to_none(tmp_path, monkeypatch):
     import json
     from iladub.etkl import caption
