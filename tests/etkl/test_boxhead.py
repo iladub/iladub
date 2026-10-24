@@ -247,3 +247,126 @@ def test_extent_too_narrow_drops_that_spanner_only():
     d = dispose_boxhead(r, _wide_lines(), (0, 1, 2), _wide_grid())
     assert d.spanner_refusal is None and d.spanners_dropped == (1,)
     assert [s[:2] for s in d.spanners] == [(1, 3), (3, 3)]
+
+
+# ---------------------------------------------------------------------------------------------
+# R334 carriage (spec 2026-10-24 §3.2): surviving spanners are carried as a leveled header tree
+# ---------------------------------------------------------------------------------------------
+
+def _emitted(reading):
+    from rdflib import Graph, URIRef
+    lines, block, grid = _wide_lines(), (0, 1, 2), _wide_grid()
+    d = dispose_boxhead(reading, lines, block, grid)
+    g = Graph()
+    from iladub.etkl.boxhead import emit_boxhead
+    n = emit_boxhead(g, URIRef("urn:g"), lines, block, d, 0)
+    return g, n, d
+
+
+def _levels(g):
+    from iladub.etkl.holon import TAB
+    return {str(h).rsplit("-", 1)[1]: int(lv) for h, lv in g.subject_objects(TAB.headerLevel)}
+
+
+def _normalised_nt(g):
+    """Sorted N-Triples, blank nodes rewritten to `_:b` — the rule of
+    `scripts/corpus_verdict_snapshot.py` (`_BNODE`)."""
+    import re
+    bn = re.compile(r"_:[A-Za-z0-9]+")
+    return tuple(sorted(bn.sub("_:b", ln) for ln in g.serialize(format="nt").splitlines()
+                        if ln.strip()))
+
+
+def test_spanners_are_carried_as_a_leveled_tree():
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((1, 3, ((0, 0),)), (1, 2, ((1, 0),)), (3, 3, ((1, 1),))))
+    g, n, d = _emitted(r)
+    assert n == 7
+    assert _levels(g) == {"h0": 0, "s0": 0, "s1": 1, "s2": 1, "h1": 2, "h2": 2, "h3": 2}
+    from iladub.etkl.boxhead import carried_lines
+    assert carried_lines(_wide_lines(), (0, 1, 2), d) == (0, 1, 2)
+
+
+def test_equal_sets_on_different_lines_nest_and_the_lower_one_is_innermost():
+    """`Group` (L0) and `Left Right` (L1) both claim cols 1-3; both runs lie inside [100,400)."""
+    r = BoxheadReading(leaf_labels=_leaves(),
+                       spanning_labels=((1, 3, ((0, 0),)), (1, 3, ((1, 0), (1, 1)))))
+    g, _, d = _emitted(r)
+    assert d.spanner_refusal is None and d.spanners_dropped == ()
+    assert _levels(g) == {"h0": 0, "s0": 0, "s1": 1, "h1": 2, "h2": 2, "h3": 2}
+
+
+# MEASURED, not written from reading the code: the sorted N-Triples that the pre-R334
+# `emit_boxhead` (`git archive 8f3e5ad src` into a scratch dir, `PYTHONPATH=<scratch>/src`)
+# emits for the reading below on `_wide_grid`/`_wide_lines`, blank nodes normalised to `_:b`.
+_NO_SPANNER_LINES = (
+    '<urn:g-h0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}HeaderNode> .',
+    '<urn:g-h0> <{T}coversColumn> <urn:g-c0> .',
+    '<urn:g-h0> <{T}hasLabel> <urn:g-lc0> .',
+    '<urn:g-h0> <{T}headerLevel> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-h1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}HeaderNode> .',
+    '<urn:g-h1> <{T}coversColumn> <urn:g-c1> .',
+    '<urn:g-h1> <{T}hasLabel> <urn:g-lc1> .',
+    '<urn:g-h1> <{T}headerLevel> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-h2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}HeaderNode> .',
+    '<urn:g-h2> <{T}coversColumn> <urn:g-c2> .',
+    '<urn:g-h2> <{T}hasLabel> <urn:g-lc2> .',
+    '<urn:g-h2> <{T}headerLevel> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-h3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}HeaderNode> .',
+    '<urn:g-h3> <{T}coversColumn> <urn:g-c3> .',
+    '<urn:g-h3> <{T}hasLabel> <urn:g-lc3> .',
+    '<urn:g-h3> <{T}headerLevel> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-lc0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}LabelCell> .',
+    '<urn:g-lc0> <{T}cellText> "Id" .',
+    '<urn:g-lc0> <{T}hasBBox> _:b .',
+    '<urn:g-lc0> <{T}onPage> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-lc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}LabelCell> .',
+    '<urn:g-lc1> <{T}cellText> "a" .',
+    '<urn:g-lc1> <{T}hasBBox> _:b .',
+    '<urn:g-lc1> <{T}onPage> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-lc2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}LabelCell> .',
+    '<urn:g-lc2> <{T}cellText> "b" .',
+    '<urn:g-lc2> <{T}hasBBox> _:b .',
+    '<urn:g-lc2> <{T}onPage> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g-lc3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}LabelCell> .',
+    '<urn:g-lc3> <{T}cellText> "c" .',
+    '<urn:g-lc3> <{T}hasBBox> _:b .',
+    '<urn:g-lc3> <{T}onPage> "0"^^<http://www.w3.org/2001/XMLSchema#integer> .',
+    '<urn:g> <{T}hasCell> <urn:g-lc0> .',
+    '<urn:g> <{T}hasCell> <urn:g-lc1> .',
+    '<urn:g> <{T}hasCell> <urn:g-lc2> .',
+    '<urn:g> <{T}hasCell> <urn:g-lc3> .',
+    '<urn:g> <{T}hasHeaderNode> <urn:g-h0> .',
+    '<urn:g> <{T}hasHeaderNode> <urn:g-h1> .',
+    '<urn:g> <{T}hasHeaderNode> <urn:g-h2> .',
+    '<urn:g> <{T}hasHeaderNode> <urn:g-h3> .',
+    '_:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}BBox> .',
+    '_:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}BBox> .',
+    '_:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}BBox> .',
+    '_:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{T}BBox> .',
+    '_:b <{T}x0> "10"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x0> "140"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x0> "240"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x0> "340"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x1> "160"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x1> "260"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x1> "360"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}x1> "40"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y0> "0.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y0> "0.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y0> "0.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y0> "0.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y1> "1.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y1> "1.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y1> "1.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+    '_:b <{T}y1> "1.0"^^<http://www.w3.org/2001/XMLSchema#decimal> .',
+)
+EXPECTED_NO_SPANNER_NT = tuple(sorted(l.replace("{T}", "https://w3id.org/iladub/tab#")
+                                      for l in _NO_SPANNER_LINES))
+
+
+def test_a_reading_without_spanners_emits_exactly_the_triples_it_emits_today():
+    r = BoxheadReading(leaf_labels=_leaves(), other_words=((0, 0), (1, 0), (1, 1)))
+    g, n, _ = _emitted(r)
+    assert n == 4 and set(_levels(g).values()) == {0}
+    assert _normalised_nt(g) == EXPECTED_NO_SPANNER_NT

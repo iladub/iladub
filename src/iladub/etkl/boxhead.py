@@ -351,30 +351,76 @@ def default_reader() -> RecordedBoxheadReader:
 
 def carried_lines(lines, block, disposed: DisposedBoxhead) -> tuple[int, ...]:
     """Page-line indices of the header lines that were READ IN FULL: every word of the line
-    belongs to a label that survived disposal. The adoption ledger is line-granular (spec §5.3),
-    so a line with one unread word — a spanner, a title, a dropped label — is not carried and
-    stays where the ledger already books it. Never rounds up."""
+    belongs to a label that survived disposal — a leaf or, since R334, a surviving spanner. The
+    adoption ledger is line-granular (spec §5.3), so a line with one unread word — a title, a
+    dropped label or spanner — is not carried and stays where the ledger already books it. Never
+    rounds up."""
     kept = {a for ws in disposed.labels.values() for a in ws}
+    kept |= {a for _a, _b, ws in disposed.spanners for a in ws}
     return tuple(j for k, j in enumerate(block)
                  if lines[j].words and all((k, i) in kept for i in range(len(lines[j].words))))
 
 
+def _tree(disposed: DisposedBoxhead):
+    """The header tree over the disposed labels: `(parent, level)` per node, a node being
+    `("h", column)` for a leaf or `("s", n)` for `disposed.spanners[n]`.
+
+    AXIOM-shaped, exact, no geometry: a node's parent is the INNERMOST surviving spanner whose
+    column set contains the node's own and whose topmost line is STRICTLY HIGHER than the node's
+    — the smallest such set, and among equal sets the lowest such line. `dispose_boxhead`'s
+    LAMINAR check guarantees those candidates form one chain (they all contain the node's set, so
+    they intersect, so they nest), which is what makes "innermost" a single answer. A root has
+    level 0 and a child its parent's level + 1; a leaf under no spanner is a root, so a reading
+    without spanners is the flat level-0 row it has always been (spec 2026-10-24 §3.2)."""
+    span = [(frozenset(range(a, b + 1)), min(x[0] for x in ws)) for a, b, ws in disposed.spanners]
+    nodes = {("s", n): v for n, v in enumerate(span)}
+    nodes.update({("h", c): (frozenset((c,)), min(a[0] for a in ws))
+                  for c, ws in disposed.labels.items()})
+    parent = {}
+    for key, (cols, top) in nodes.items():
+        up = [(len(sc), -st, n) for n, (sc, st) in enumerate(span)
+              if ("s", n) != key and cols <= sc and st < top]
+        parent[key] = ("s", min(up)[2]) if up else None
+    level: dict = {}
+
+    def lv(key):
+        if key not in level:
+            level[key] = 0 if parent[key] is None else lv(parent[key]) + 1
+        return level[key]
+    return {key: (parent[key], lv(key)) for key in nodes}
+
+
 def emit_boxhead(g, grid_uri, lines, block, disposed: DisposedBoxhead, page: int) -> int:
-    """One `tab:HeaderNode` + `tab:LabelCell` per disposed label, in the shape
-    `holon.assert_record_region` gives a record table's header: level 0, `tab:coversColumn` the
-    grid's own column node, the label's text read back from the TEXT LAYER by address, and a box
-    that is the union of its words (provenance to the page; the membrane requires the box of any
-    LabelCell that carries text — R179). Returns the number of labels emitted."""
+    """One `tab:HeaderNode` + `tab:LabelCell` per disposed label — leaf or surviving spanner — in
+    the shape `holon.assert_record_region` gives a record table's header: `tab:coversColumn` the
+    grid's own column nodes (a spanner covers first..last), the label's text read back from the
+    TEXT LAYER by address, and a box that is the union of its words (provenance to the page; the
+    membrane requires the box of any LabelCell that carries text — R179). `tab:parentHeader`
+    points child -> parent (`tab.ttl`: domain and range `tab:HeaderNode`, "child span must be a
+    subset of the parent's"), the direction `feed._header_parts` walks; levels and parents are
+    `_tree`'s. Leaf URIs are `-h<col>`/`-lc<col>`, spanner URIs `-s<n>`/`-ls<n>` with n the
+    spanner's index in `disposed.spanners`. Returns the number of nodes emitted."""
     from rdflib import Literal, URIRef
     from rdflib.namespace import RDF, XSD
     from .holon import TAB, _bbox_node
     words = {(k, i): w for k, j in enumerate(block) for i, w in enumerate(_ordered(lines[j]))}
-    for c, ws in sorted(disposed.labels.items()):
-        h, lc = URIRef(f"{grid_uri}-h{c}"), URIRef(f"{grid_uri}-lc{c}")
-        own = [words[a] for a in sorted(ws)]
+    uri = {("h", c): (URIRef(f"{grid_uri}-h{c}"), URIRef(f"{grid_uri}-lc{c}"))
+           for c in disposed.labels}
+    uri.update({("s", n): (URIRef(f"{grid_uri}-s{n}"), URIRef(f"{grid_uri}-ls{n}"))
+                for n in range(len(disposed.spanners))})
+    cover = {("h", c): (c,) for c in disposed.labels}
+    cover.update({("s", n): tuple(range(a, b + 1)) for n, (a, b, _) in enumerate(disposed.spanners)})
+    addrs = {("h", c): ws for c, ws in disposed.labels.items()}
+    addrs.update({("s", n): ws for n, (_a, _b, ws) in enumerate(disposed.spanners)})
+    for key, (par, level) in sorted(_tree(disposed).items()):
+        h, lc = uri[key]
+        own = [words[a] for a in sorted(addrs[key])]
         g.add((h, RDF.type, TAB.HeaderNode))
-        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
-        g.add((h, TAB.coversColumn, URIRef(f"{grid_uri}-c{c}")))
+        g.add((h, TAB.headerLevel, Literal(level, datatype=XSD.integer)))
+        for c in cover[key]:
+            g.add((h, TAB.coversColumn, URIRef(f"{grid_uri}-c{c}")))
+        if par is not None:
+            g.add((h, TAB.parentHeader, uri[par][0]))
         g.add((grid_uri, TAB.hasHeaderNode, h))
         g.add((lc, RDF.type, TAB.LabelCell))
         g.add((grid_uri, TAB.hasCell, lc))
@@ -384,4 +430,4 @@ def emit_boxhead(g, grid_uri, lines, block, disposed: DisposedBoxhead, page: int
             min(w.x0 for w in own), min(w.top for w in own),
             max(w.x1 for w in own), max(w.bottom for w in own))))))
         g.add((h, TAB.hasLabel, lc))
-    return len(disposed.labels)
+    return len(disposed.labels) + len(disposed.spanners)
