@@ -272,4 +272,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # criterion substrate:03; R327 is cited by R331, R329 and R330 cite each other, and R331 cites R327,
     # so none of the four is a candidate.
     # Controlled: `--candidates` over `main`'s register files is 100, over the branch's 101.
-    assert len(expected) == 101
+    # RE-MEASURED 2026-10-26 (R334 closed; R337-R340 raised, branch r334-r336-impl): 101 -> 103,
+    # ADDED = [338, 339], REMOVED = []. R338 and R339 cite only [[R334]], closed in the same change;
+    # R337 and R340 cite the open R336. Controlled: `--candidates` over the register files before
+    # the edit is 101, after it 103, and the diff is exactly R338 and R339.
+    assert len(expected) == 103

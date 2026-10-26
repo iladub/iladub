@@ -4,8 +4,8 @@
     6
   ],
   "chains": [],
-  "graph_sha256": "4b4ec75944afd7912ebd02094ed09b5cf5bd881942039704735d16e624aa7278",
-  "graph_triples": 18201,
+  "graph_sha256": "44fac6bff0d06a44a4bf1091ed4f45e6222237b9dd8f53214e46abab1cff502b",
+  "graph_triples": 18207,
   "notes": [
     "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived",
     "page 4: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
@@ -335,7 +335,7 @@
       "score": 0.0
     },
     {
-      "asserted": 936,
+      "asserted": 959,
       "escalated": 76,
       "regions": [
         {
@@ -499,11 +499,11 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.924901185770751
+      "score": 0.9265700483091788
     },
     {
-      "asserted": 528,
-      "escalated": 19,
+      "asserted": 544,
+      "escalated": 3,
       "regions": [
         {
           "anchor": null,
@@ -519,7 +519,7 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "KIND_NOT_SUPPORTED",
           "table": null,
-          "verdict": "escalated"
+          "verdict": "superseded"
         },
         {
           "anchor": "https://w3id.org/iladub/tab#RecordTable",
@@ -618,12 +618,12 @@
           "verdict": "asserted"
         }
       ],
-      "score": 0.9652650822669104
+      "score": 0.9945155393053017
     }
   ],
   "pdf": "corpus/gov-stats/bfs-population-bilan-2023.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.9144284821986258
+  "score": 0.9254926108374384
 }

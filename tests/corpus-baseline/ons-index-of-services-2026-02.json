@@ -8,8 +8,8 @@
       "https://example.org/etkl/doc/p4#htable3"
     ]
   ],
-  "graph_sha256": "83ab8260c26b40cdf378a7a1dda42daa328067fc6b4b3874fa167427c279edc3",
-  "graph_triples": 13885,
+  "graph_sha256": "9b41dd1e64d65697c7d04d68a1a00b94ded7722f99db5b23ec113e17cad8e98b",
+  "graph_triples": 13933,
   "notes": [
     "page 0: adoption refused \u2014 the re-compile adopted nothing: nothing escalated, or no data grid was derived"
   ],
@@ -440,8 +440,8 @@
       "score": 1.0
     },
     {
-      "asserted": 315,
-      "escalated": 51,
+      "asserted": 337,
+      "escalated": 32,
       "regions": [
         {
           "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
@@ -449,7 +449,7 @@
           "kind": "RegionKind.UNSUPPORTED_TABLE",
           "reason": "KIND_NOT_SUPPORTED",
           "table": null,
-          "verdict": "escalated"
+          "verdict": "superseded"
         },
         {
           "anchor": null,
@@ -596,10 +596,10 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.860655737704918
+      "score": 0.9132791327913279
     },
     {
-      "asserted": 306,
+      "asserted": 309,
       "escalated": 44,
       "regions": [
         {
@@ -691,12 +691,12 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.8742857142857143
+      "score": 0.8753541076487252
     }
   ],
   "pdf": "corpus/gov-stats/ons-index-of-services-2026-02.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.85546875
+  "score": 0.8811369509043928
 }
