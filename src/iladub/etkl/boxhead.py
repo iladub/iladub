@@ -26,7 +26,8 @@ titles, wide labels.
 THE READER ANSWERS IN ADDRESSES, never text: a header word is (line, word) into the listing it
 was given, so the answer cannot carry a value that is on the page and cannot invent a label.
 
-THE DISPOSAL — two whole-reading refusals and one per-label one:
+THE DISPOSAL — checks 1-3 for the leaves (two whole-reading refusals and one per-label one),
+then checks 4-5 for the spanners:
 
   1. ADDRESS SPACE. Any address outside the listing, or any column index outside the grid, refuses
      the WHOLE reading: an answer in a different address space is not partly right.
@@ -181,7 +182,7 @@ def listing_of(lines, block) -> str:
 
 
 def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
-    """The three checks of the module docstring. `lines` are the page's text lines; `block` is
+    """Checks 1-5 of the module docstring. `lines` are the page's text lines; `block` is
     `header_block`'s output; `grid` is the derived DataGrid whose `columns` carry (x0, x1)."""
     if reading is None:
         return DisposedBoxhead(refused="no reading")
@@ -245,7 +246,8 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
     # A SPANNER SITS STRICTLY ABOVE EVERY LEAF IT COVERS. Pairwise nesting alone admits a
     # one-column spanner {c} on a line at or below leaf c ({c} ⊆ {c}), and the tree `_tree` would
     # build from it puts two nodes at one level over column c — `tab:NoOverlapShape` refuses it
-    # (Task 2 review, fix round 1). Same response as any other violation.
+    # (`test_a_spanner_on_or_below_a_leaf_it_covers_is_not_laminar`). Same response as any other
+    # violation.
     leaf_top = {c: min(a[0] for a in ws) for c, ws in labels.items()}
 
     def _below_a_leaf():

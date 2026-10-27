@@ -2123,6 +2123,10 @@ def compile_tables(pdf_path: str, page_number: int = 0,
                                   URIRef(f"{doc}#p{page_number}-datagrid-{_k}")
                                   if _k > 1 else None)
                 emit_boxhead(_new, _grid_uri, _lines, _block, _boxhead, page_number)
+                # UNMEASURED: two grids whose header blocks overlap could each dispose one page line
+                # as a caption, and it would be emitted under both grid URIs. The ledger unions read
+                # lines, so nothing is double-counted; only the graph would carry the line twice.
+                # No such page is known in the corpus.
                 _caption.emit_captions(_new, _grid_uri, _lines, _caps, page_number, _block)
                 _emitted.append((_grid_uri,
                                  len(list(_new.subjects(RDF.type, TAB.EntryCell))) - _before,

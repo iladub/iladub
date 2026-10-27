@@ -187,3 +187,23 @@ None proposed. `tab:13` is already met, and this loop moves its number.
 **Ruled 2026-10-24 by the maintainer:** (1) accepted. One live caption-worker sample per grid with
 candidate lines, across `corpus/` and `held-out/`, recorded once. (2) accepted. A laminar violation drops
 the spanners and keeps the leaves.
+
+## 9. Amendment, 2026-10-24: ship as is (the maintainer's decision)
+
+§5 item 6 was refuted at plan Task 5. The caption worker's recorded answer on Fed H.4.1 p0 is lines
+{1, 5, 6}: `H.4.1` from the band-1 masthead, the title and `Millions of dollars`. It is not
+contiguous, so the §3.3 disposal refuses it (NO CLAIM). The caption lines stay unread, the ledger
+books 38 > 31, and p0 does not adopt. Plan Task 6 Step 2 said to stop rather than tune. Three options
+were put to the maintainer: (a) ship as is, (b) a revised prompt plus one re-ask, (c) an oracle that
+admits the maximal contiguous run ending at the labels. **The maintainer chose (a).**
+
+§5 item 6 is therefore replaced by the following, in `tests/etkl/test_r334_r336_fed_p0.py`:
+
+- As recorded, p0's adoption is `ledger_refused`, at 285 asserted and 31 escalated.
+- As a control, the only change is that one recording replaced by {5, 6} in a scratch copy of
+  `readings/caption/`. p0 then adopts at 336 asserted and 27 escalated, which is the probe's
+  prediction exactly, with the title and the unit line carried as `tab:RegionCaption`. The caption
+  answer is the one remaining blocker.
+
+`truth.table-1` stays at `CORRECT: 0`, and `floor.json` is unchanged. The over-claim is residue R340.
+R336 stays open, and R334 closes.

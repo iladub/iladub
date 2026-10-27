@@ -1,5 +1,5 @@
 """R334 + R336 on Fed H.4.1 p0, as shipped (spec 2026-10-24 §5 item 6, amended by the maintainer's
-SHIP AS IS decision of 2026-10-24, recorded in the loop's SDD ledger).
+SHIP AS IS decision of 2026-10-24, recorded in the spec's §9 amendment and in residue R340).
 
 The spec predicted p0 would adopt once its spanners and its caption lines were carried, escalating
 27 tokens against the bands' 31. The spanners are carried (Task 2). The caption worker's recorded
