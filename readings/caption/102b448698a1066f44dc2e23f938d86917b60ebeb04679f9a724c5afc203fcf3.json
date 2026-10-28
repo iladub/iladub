@@ -1,0 +1,9 @@
+{
+ "caption_lines": [
+  0,
+  1,
+  2
+ ],
+ "note": "The first three lines together form the table's complete caption, identifying the schedule type, service direction, time period, and train class.",
+ "refuses": false
+}

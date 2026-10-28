@@ -26,7 +26,8 @@ titles, wide labels.
 THE READER ANSWERS IN ADDRESSES, never text: a header word is (line, word) into the listing it
 was given, so the answer cannot carry a value that is on the page and cannot invent a label.
 
-THE DISPOSAL — two whole-reading refusals and one per-label one:
+THE DISPOSAL — checks 1-3 for the leaves (two whole-reading refusals and one per-label one),
+then checks 4-5 for the spanners:
 
   1. ADDRESS SPACE. Any address outside the listing, or any column index outside the grid, refuses
      the WHOLE reading: an answer in a different address space is not partly right.
@@ -43,9 +44,21 @@ THE DISPOSAL — two whole-reading refusals and one per-label one:
      lies between its first and last word's centres, so this admits every label the per-word
      rule admitted (`docs/superpowers/2026-10-05-r293-p6-adopts.md` § 2.3).
 
-A spanning label's geometry is NOT disposed beyond range and order: a spanner is typically
-centred over its group and its ink covers a fraction of it, so extent proves nothing. Spanners
-are therefore REPORTED and not yet carried — what would dispose them is the open question here.
+SPANNERS (R334) get two further exact checks, no tolerance, run after the leaves are placed:
+
+  4. LAMINAR. A node is (column set, topmost block line); a surviving leaf is a one-column node,
+     a spanner covers first..last. Any two nodes whose columns intersect must be nested, the one
+     on the strictly lower line inside the one above; two intersecting nodes on one line violate,
+     equal sets included. And a spanner's topmost line lies strictly above the topmost line of
+     every surviving leaf in a column it covers (else a one-column spanner below its leaf nests
+     by set and still overlaps it at one level). A violation drops EVERY spanner and keeps the
+     leaves (the status quo).
+  5. EXTENT WITHIN GROUP. On every line a spanner occupies, its ink run lies inside
+     [columns[first].x0, columns[last].x1]. A failure drops that spanner only. Grid columns tile,
+     so this is exact — and it has ONE BLIND SPOT: a group claimed TOO WIDE passes, because a
+     spanner is typically centred and covers a fraction of its group. Only the truth scorer sees it.
+
+`DisposedBoxhead.spanners` holds the surviving spanners only.
 """
 from __future__ import annotations
 
@@ -78,6 +91,12 @@ class DisposedBoxhead:
     spanners: tuple = ()
     dropped: tuple[int, ...] = ()
     refused: str | None = None
+    spanners_dropped: tuple[int, ...] = ()      # indices into reading.spanning_labels
+    spanner_refusal: str | None = None
+    # The words the reading filed as NOT a header (R336), for a non-refused disposal only; a
+    # refused one leaves it empty. The caption worker's candidate lines are built from it
+    # (`caption.candidate_lines`).
+    other_words: tuple[Address, ...] = ()
 
 
 class BoxheadReader(Protocol):
@@ -163,7 +182,7 @@ def listing_of(lines, block) -> str:
 
 
 def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
-    """The three checks of the module docstring. `lines` are the page's text lines; `block` is
+    """Checks 1-5 of the module docstring. `lines` are the page's text lines; `block` is
     `header_block`'s output; `grid` is the derived DataGrid whose `columns` carry (x0, x1)."""
     if reading is None:
         return DisposedBoxhead(refused="no reading")
@@ -200,8 +219,66 @@ def dispose_boxhead(reading, lines, block, grid) -> DisposedBoxhead:
             labels[c] = tuple(sorted(ws))
         else:
             dropped.append(c)
-    return DisposedBoxhead(labels=labels, spanners=tuple(reading.spanning_labels),
-                           dropped=tuple(sorted(dropped)))
+
+    # LAMINAR (check 4). This is the ONLY guard on a grid's column-path ambiguity: on a grid the
+    # membrane's CoverageShape and UnambiguousAccessShape never target `tab:GridColumn`, so no
+    # shape covers what this checks. Under CLAUDE.md § Producer-side guards (R89) it may NOT be
+    # deleted as a duplicate of the membrane (spec 2026-10-24 §2).
+    nodes = []                                   # (column set, topmost line)
+    for c, ws in reading.leaf_labels:
+        if c in labels:
+            nodes.append((frozenset((c,)), min(a[0] for a in labels[c])))
+    placeable = [n for n, (_a, _b, ws) in enumerate(reading.spanning_labels) if ws]
+    for n in placeable:
+        a, b, ws = reading.spanning_labels[n]
+        nodes.append((frozenset(range(a, b + 1)), min(x[0] for x in ws)))
+
+    def _crossed():
+        for i, (ci, li) in enumerate(nodes):
+            for cj, lj in nodes[i + 1:]:
+                if not (ci & cj):
+                    continue
+                upper, lower = ((ci, cj) if li < lj else (cj, ci)) if li != lj else (None, None)
+                if upper is None or not lower <= upper:
+                    return True
+        return False
+
+    # A SPANNER SITS STRICTLY ABOVE EVERY LEAF IT COVERS. Pairwise nesting alone admits a
+    # one-column spanner {c} on a line at or below leaf c ({c} ⊆ {c}), and the tree `_tree` would
+    # build from it puts two nodes at one level over column c — `tab:NoOverlapShape` refuses it
+    # (`test_a_spanner_on_or_below_a_leaf_it_covers_is_not_laminar`). Same response as any other
+    # violation.
+    leaf_top = {c: min(a[0] for a in ws) for c, ws in labels.items()}
+
+    def _below_a_leaf():
+        for n in placeable:
+            a, b, ws = reading.spanning_labels[n]
+            top = min(x[0] for x in ws)
+            if any(c in leaf_top and top >= leaf_top[c] for c in range(a, b + 1)):
+                return True
+        return False
+
+    if _crossed() or _below_a_leaf():
+        return DisposedBoxhead(labels=labels, dropped=tuple(sorted(dropped)),
+                               spanners_dropped=tuple(range(len(reading.spanning_labels))),
+                               spanner_refusal="spanners are not laminar",
+                               other_words=tuple(sorted(reading.other_words)))
+
+    # EXTENT WITHIN GROUP (check 5). A spanner with no words has no line to stand on: dropped.
+    survivors, gone = [], [n for n in range(len(reading.spanning_labels)) if n not in placeable]
+    for n in placeable:
+        a, b, ws = reading.spanning_labels[n]
+        runs = {}
+        for x in ws:
+            lo, hi = runs.get(x[0], (words[x].x0, words[x].x1))
+            runs[x[0]] = (min(lo, words[x].x0), max(hi, words[x].x1))
+        if all(grid.columns[a].x0 <= lo and hi <= grid.columns[b].x1 for lo, hi in runs.values()):
+            survivors.append(reading.spanning_labels[n])
+        else:
+            gone.append(n)
+    return DisposedBoxhead(labels=labels, spanners=tuple(survivors),
+                           dropped=tuple(sorted(dropped)), spanners_dropped=tuple(sorted(gone)),
+                           other_words=tuple(sorted(reading.other_words)))
 
 
 def label_text(lines, block, addresses) -> str:
@@ -211,18 +288,28 @@ def label_text(lines, block, addresses) -> str:
     return " ".join(words[a].text for a in sorted(addresses))
 
 
+def boxhead_region(lines, grid, data_rows_shown: int = 3):
+    """The region a grid's header questions are asked over: the header block's lines followed by
+    the grid's first `data_rows_shown` data rows, with the vertical extent of them all. Shared by
+    `read_grid_boxhead` and the caption worker (`caption.read_grid_captions`), so both readers see
+    the one crop. PROCEDURAL — a selection of the grid's own lines; it decides nothing."""
+    block = header_block(lines, grid)
+    shown = [lines[j] for j in block] + [lines[j] for j in sorted(grid.rows)[:data_rows_shown]]
+    return SimpleNamespace(lines=shown, top=min(ln.top for ln in shown),
+                           bottom=max(ln.bottom for ln in shown))
+
+
 def read_grid_boxhead(pdf_path: str, page_number: int, lines, grid, reader,
                       data_rows_shown: int = 3) -> DisposedBoxhead:
-    """One ask per grid. The crop runs from the top of the header block through the grid's first
-    few data rows, so the reader sees which columns the labels head. Every failure path is NO
-    CLAIM — a reader that cannot be reached, raises, or is refused labels nothing."""
+    """One ask per grid. The crop (`boxhead_region`) runs from the top of the header block through
+    the grid's first few data rows, so the reader sees which columns the labels head. Every
+    failure path is NO CLAIM — a reader that cannot be reached, raises, or is refused labels
+    nothing."""
     block = header_block(lines, grid)
     if reader is None or not block:
         return DisposedBoxhead(refused="no header block" if reader is not None else "no reader")
     from .unshownink import render_region
-    shown = [lines[j] for j in block] + [lines[j] for j in sorted(grid.rows)[:data_rows_shown]]
-    region = SimpleNamespace(lines=shown, top=min(ln.top for ln in shown),
-                             bottom=max(ln.bottom for ln in shown))
+    region = boxhead_region(lines, grid, data_rows_shown)
     try:
         crop = render_region(pdf_path, page_number, region)
         reading = reader.read_boxhead(crop, len(grid.columns), listing_of(lines, block))
@@ -305,30 +392,79 @@ def default_reader() -> RecordedBoxheadReader:
 
 def carried_lines(lines, block, disposed: DisposedBoxhead) -> tuple[int, ...]:
     """Page-line indices of the header lines that were READ IN FULL: every word of the line
-    belongs to a label that survived disposal. The adoption ledger is line-granular (spec §5.3),
-    so a line with one unread word — a spanner, a title, a dropped label — is not carried and
-    stays where the ledger already books it. Never rounds up."""
+    belongs to a label that survived disposal — a leaf or, since R334, a surviving spanner. The
+    adoption ledger is line-granular (spec §5.3), so a line with one unread word — a title, a
+    dropped label or spanner — is not carried and stays where the ledger already books it. Never
+    rounds up."""
     kept = {a for ws in disposed.labels.values() for a in ws}
+    kept |= {a for _a, _b, ws in disposed.spanners for a in ws}
     return tuple(j for k, j in enumerate(block)
                  if lines[j].words and all((k, i) in kept for i in range(len(lines[j].words))))
 
 
+def _tree(disposed: DisposedBoxhead):
+    """The header tree over the disposed labels: `(parent, level)` per node, a node being
+    `("h", column)` for a leaf or `("s", n)` for `disposed.spanners[n]`.
+
+    AXIOM-shaped, exact, no geometry: a node's parent is the INNERMOST surviving spanner whose
+    column set contains the node's own and whose topmost line is STRICTLY HIGHER than the node's
+    — the smallest such set, and among equal sets the lowest such line. `dispose_boxhead`'s
+    LAMINAR check guarantees those candidates form one chain (they all contain the node's set, so
+    they intersect, so they nest), which is what makes "innermost" a single answer. The
+    strictly-higher rule loses nothing for a leaf because the same check also refuses any spanner
+    on or below a leaf it covers, so every spanner covering a leaf's column is a candidate for
+    that leaf: the tree relies on that half of LAMINAR as much as on the nesting half. A root has
+    level 0 and a child its parent's level + 1; a leaf under no spanner is a root, so a reading
+    without spanners is the flat level-0 row it has always been (spec 2026-10-24 §3.2)."""
+    span = [(frozenset(range(a, b + 1)), min(x[0] for x in ws)) for a, b, ws in disposed.spanners]
+    nodes = {("s", n): v for n, v in enumerate(span)}
+    nodes.update({("h", c): (frozenset((c,)), min(a[0] for a in ws))
+                  for c, ws in disposed.labels.items()})
+    parent = {}
+    for key, (cols, top) in nodes.items():
+        up = [(len(sc), -st, n) for n, (sc, st) in enumerate(span)
+              if ("s", n) != key and cols <= sc and st < top]
+        parent[key] = ("s", min(up)[2]) if up else None
+    level: dict = {}
+
+    def lv(key):
+        if key not in level:
+            level[key] = 0 if parent[key] is None else lv(parent[key]) + 1
+        return level[key]
+    return {key: (parent[key], lv(key)) for key in nodes}
+
+
 def emit_boxhead(g, grid_uri, lines, block, disposed: DisposedBoxhead, page: int) -> int:
-    """One `tab:HeaderNode` + `tab:LabelCell` per disposed label, in the shape
-    `holon.assert_record_region` gives a record table's header: level 0, `tab:coversColumn` the
-    grid's own column node, the label's text read back from the TEXT LAYER by address, and a box
-    that is the union of its words (provenance to the page; the membrane requires the box of any
-    LabelCell that carries text — R179). Returns the number of labels emitted."""
+    """One `tab:HeaderNode` + `tab:LabelCell` per disposed label — leaf or surviving spanner — in
+    the shape `holon.assert_record_region` gives a record table's header: `tab:coversColumn` the
+    grid's own column nodes (a spanner covers first..last), the label's text read back from the
+    TEXT LAYER by address, and a box that is the union of its words (provenance to the page; the
+    membrane requires the box of any LabelCell that carries text — R179). `tab:parentHeader`
+    points child -> parent (`tab.ttl`: domain and range `tab:HeaderNode`, "child span must be a
+    subset of the parent's"), the direction `feed._header_parts` walks; levels and parents are
+    `_tree`'s. Leaf URIs are `-h<col>`/`-lc<col>`, spanner URIs `-s<n>`/`-ls<n>` with n the
+    spanner's index in `disposed.spanners`. Returns the number of nodes emitted."""
     from rdflib import Literal, URIRef
     from rdflib.namespace import RDF, XSD
     from .holon import TAB, _bbox_node
     words = {(k, i): w for k, j in enumerate(block) for i, w in enumerate(_ordered(lines[j]))}
-    for c, ws in sorted(disposed.labels.items()):
-        h, lc = URIRef(f"{grid_uri}-h{c}"), URIRef(f"{grid_uri}-lc{c}")
-        own = [words[a] for a in sorted(ws)]
+    uri = {("h", c): (URIRef(f"{grid_uri}-h{c}"), URIRef(f"{grid_uri}-lc{c}"))
+           for c in disposed.labels}
+    uri.update({("s", n): (URIRef(f"{grid_uri}-s{n}"), URIRef(f"{grid_uri}-ls{n}"))
+                for n in range(len(disposed.spanners))})
+    cover = {("h", c): (c,) for c in disposed.labels}
+    cover.update({("s", n): tuple(range(a, b + 1)) for n, (a, b, _) in enumerate(disposed.spanners)})
+    addrs = {("h", c): ws for c, ws in disposed.labels.items()}
+    addrs.update({("s", n): ws for n, (_a, _b, ws) in enumerate(disposed.spanners)})
+    for key, (par, level) in sorted(_tree(disposed).items()):
+        h, lc = uri[key]
+        own = [words[a] for a in sorted(addrs[key])]
         g.add((h, RDF.type, TAB.HeaderNode))
-        g.add((h, TAB.headerLevel, Literal(0, datatype=XSD.integer)))
-        g.add((h, TAB.coversColumn, URIRef(f"{grid_uri}-c{c}")))
+        g.add((h, TAB.headerLevel, Literal(level, datatype=XSD.integer)))
+        for c in cover[key]:
+            g.add((h, TAB.coversColumn, URIRef(f"{grid_uri}-c{c}")))
+        if par is not None:
+            g.add((h, TAB.parentHeader, uri[par][0]))
         g.add((grid_uri, TAB.hasHeaderNode, h))
         g.add((lc, RDF.type, TAB.LabelCell))
         g.add((grid_uri, TAB.hasCell, lc))
@@ -338,4 +474,4 @@ def emit_boxhead(g, grid_uri, lines, block, disposed: DisposedBoxhead, page: int
             min(w.x0 for w in own), min(w.top for w in own),
             max(w.x1 for w in own), max(w.bottom for w in own))))))
         g.add((h, TAB.hasLabel, lc))
-    return len(disposed.labels)
+    return len(disposed.labels) + len(disposed.spanners)

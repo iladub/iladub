@@ -2054,15 +2054,29 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # header lines; the ledger books their union, so a line is counted once whichever
             # grid read it. Each grid's OWN ledger names the bands that grid touched, which is
             # what the document driver attributes supersession by.
+            #
+            # THE GRID'S OWN CAPTION (R336, spec 2026-10-24 § 3.4). After the boxhead is read and
+            # its spanners disposed (R334: survivors are in `_boxhead.spanners` and
+            # `carried_lines` already counts their words), a SEPARATE NEURAL worker is asked which
+            # of the block's leftover lines are the table's title and unit line (`caption.py`,
+            # recorded, replayed offline, disposed on every compile). A disposed caption line joins
+            # the grid's read lines exactly as a header line does, and is emitted as a
+            # `tab:RegionCaption` beside the boxhead. With no recording and no live reader the
+            # worker returns `()` and this is the identity for captions.
             from .boxhead import (carried_lines, default_reader, emit_boxhead, header_block,
                                   read_grid_boxhead)
+            from . import caption as _caption
             _reader = default_reader()
-            _read = []                                   # (grid, block, boxhead, read lines)
+            _cap_reader = _caption.default_reader()
+            _read = []                          # (grid, block, boxhead, captions, read lines)
             for _grid in _grids:
                 _block = header_block(_lines, _grid)
                 _boxhead = read_grid_boxhead(pdf_path, page_number, _lines, _grid, _reader)
-                _read.append((_grid, _block, _boxhead,
-                              tuple(_grid.rows) + carried_lines(_lines, _block, _boxhead)))
+                _caps = _caption.read_grid_captions(pdf_path, page_number, _lines, _grid,
+                                                    _boxhead, _cap_reader)
+                _read.append((_grid, _block, _boxhead, _caps,
+                              tuple(_grid.rows) + carried_lines(_lines, _block, _boxhead)
+                              + _caps))
             _led = build_ledger(_lines, tuple(j for *_, rl in _read for j in rl),
                                 bands, reports)
         else:
@@ -2103,12 +2117,17 @@ def compile_tables(pdf_path: str, page_number: int = 0,
             # The first grid keeps the URI a one-grid page has always had; a further grid is
             # numbered from 2, so no single-grid page mints a different triple.
             _emitted = []                                # (uri, cells, read lines)
-            for _k, (_grid, _block, _boxhead, _rl) in enumerate(_read, start=1):
+            for _k, (_grid, _block, _boxhead, _caps, _rl) in enumerate(_read, start=1):
                 _before = len(list(_new.subjects(RDF.type, TAB.EntryCell)))
                 _grid_uri = _emit(_new, _grid, _lines, doc, page_number,
                                   URIRef(f"{doc}#p{page_number}-datagrid-{_k}")
                                   if _k > 1 else None)
                 emit_boxhead(_new, _grid_uri, _lines, _block, _boxhead, page_number)
+                # UNMEASURED: two grids whose header blocks overlap could each dispose one page line
+                # as a caption, and it would be emitted under both grid URIs. The ledger unions read
+                # lines, so nothing is double-counted; only the graph would carry the line twice.
+                # No such page is known in the corpus.
+                _caption.emit_captions(_new, _grid_uri, _lines, _caps, page_number, _block)
                 _emitted.append((_grid_uri,
                                  len(list(_new.subjects(RDF.type, TAB.EntryCell))) - _before,
                                  _rl))

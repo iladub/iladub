@@ -38,8 +38,8 @@
       "https://example.org/etkl/doc/p10#htable3"
     ]
   ],
-  "graph_sha256": "2cf9b599098ac0e5e884ecad90aea0bc8808a10351250ed918c40e56f9d78aa2",
-  "graph_triples": 21877,
+  "graph_sha256": "537bd4b748239864a85fa9885fb20aab67a2b528a13ee8a2bc4f37bd15014b44",
+  "graph_triples": 21998,
   "notes": [
     "page 0: adoption refused \u2014 the data grid left no less ink unread than the bands did",
     "page 1: adoption refused \u2014 the data grid left no less ink unread than the bands did",
@@ -175,8 +175,8 @@
       "score": 0.944
     },
     {
-      "asserted": 77,
-      "escalated": 128,
+      "asserted": 103,
+      "escalated": 102,
       "regions": [
         {
           "anchor": null,
@@ -235,10 +235,10 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.375609756097561
+      "score": 0.5024390243902439
     },
     {
-      "asserted": 338,
+      "asserted": 356,
       "escalated": 33,
       "regions": [
         {
@@ -322,7 +322,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9110512129380054
+      "score": 0.9151670951156813
     },
     {
       "asserted": 265,
@@ -585,8 +585,8 @@
       "score": 0.0
     },
     {
-      "asserted": 252,
-      "escalated": 28,
+      "asserted": 268,
+      "escalated": 12,
       "regions": [
         {
           "anchor": null,
@@ -669,7 +669,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9
+      "score": 0.9571428571428572
     },
     {
       "asserted": 431,
@@ -727,8 +727,8 @@
       "score": 1.0
     },
     {
-      "asserted": 145,
-      "escalated": 15,
+      "asserted": 159,
+      "escalated": 1,
       "regions": [
         {
           "anchor": null,
@@ -779,14 +779,14 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.90625
+      "score": 0.99375
     }
   ],
   "pdf": "held-out/fed-h41-2025-01-02.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.812807881773399,
+  "score": 0.8299221677716921,
   "truth": {
     "table-1": {
       "CORRECT": 0,

@@ -10,8 +10,8 @@
       "https://example.org/etkl/doc/p1#mtable2"
     ]
   ],
-  "graph_sha256": "b9a63078466bd7dd2d0cd2af2f9fadb131d14090fb8caa4daff722fbd88b2c5a",
-  "graph_triples": 15648,
+  "graph_sha256": "3f4e83480a8fc53f5a88776920fd1b40156c9e4b36f40d93312737d5354da346",
+  "graph_triples": 15683,
   "notes": [],
   "pages": [
     {
@@ -77,8 +77,8 @@
       "score": 1.0
     },
     {
-      "asserted": 216,
-      "escalated": 30,
+      "asserted": 230,
+      "escalated": 27,
       "regions": [
         {
           "anchor": null,
@@ -161,12 +161,12 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.8780487804878049
+      "score": 0.8949416342412452
     }
   ],
   "pdf": "corpus/financial/apple-fy2026q3-statements.pdf",
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.9418604651162791
+  "score": 0.9487666034155597
 }

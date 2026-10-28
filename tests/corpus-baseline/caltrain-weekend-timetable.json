@@ -6,13 +6,13 @@
     3
   ],
   "chains": [],
-  "graph_sha256": "a810fe56cdb8001585a93ea9977707cc5ea94d3f7eacbd67872c699d397bf5c3",
-  "graph_triples": 35665,
+  "graph_sha256": "17d10ac4ebe516699317ea3de2f5e3f82cdb827327571d8b0ac049d8aa1d2a26",
+  "graph_triples": 35715,
   "notes": [],
   "pages": [
     {
-      "asserted": 435,
-      "escalated": 48,
+      "asserted": 442,
+      "escalated": 41,
       "regions": [
         {
           "anchor": "https://w3id.org/iladub/tab#HierarchicalTable",
@@ -39,7 +39,7 @@
           "verdict": "escalated"
         }
       ],
-      "score": 0.9006211180124224
+      "score": 0.9151138716356108
     },
     {
       "asserted": 460,
@@ -139,5 +139,5 @@
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.9031281533804238
+  "score": 0.9066599394550958
 }
