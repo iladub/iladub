@@ -317,3 +317,9 @@ Any other line in the diff refutes the prediction and must be explained before m
 - ***"Test A reads bytes that CI cannot regenerate."*** True (R305: `check` proves freshness, not
   byte-equality). It is the strongest collectable form available, and Test B carries the
   real-input proof locally.
+
+## Ruled 2026-10-28 by the maintainer (in chat)
+
+- **D1 and D3:** close R74 by deriving the re-worded `tab:StackedGrids`, which means tables on one page linked by `tab:continuesTable`. The derivation is a SPARQL CONSTRUCT, and a SHACL shape checks it. Deprecating the term instead was rejected.
+- **D2:** the gate's tuned `_GUTTER_DOMINANCE = 2.0` gets a new residue row. That row records that the next change to the gate is a NEURAL proposer (the 2026-09-17 ruling). It does **not** block tab:01.
+- **D4:** stale `file:line` citations in `prog:statement`s are corrected in place. The same change removes tab:04's edge to the closed R77.
