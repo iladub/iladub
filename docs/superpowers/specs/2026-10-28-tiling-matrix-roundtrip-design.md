@@ -331,3 +331,12 @@ corpus-dead as the statement already says.
 4. **tab:09's oracle:** (i) the forced test plus the unit predicate, or (ii) a natural fixture.
 5. **Stale `prog:statement` line citations:** edit them to symbols, or leave them.
 6. **Held-out (b) defects:** one register row (recommended), or a separate loop now.
+
+## Ruled 2026-10-28 by the maintainer (in chat)
+
+1. **bfs p5 r8:** dispose of it now. The bfs adjudication disposes `REGION_TILING_FAILED` band by band. The header-carriage defect, 20 tokens of a header whose labels are carried but whose lines never count as read, is recorded in that note and in a new residue row.
+2. **Refusals superseded by adoption:** a reason whose emitters run on corpus documents, and whose every output adoption replaces, counts as **"fires nowhere"**. The recorded reason is "superseded by adoption: neither a corpus gap nor a dead path". It is stated on the criterion.
+3. **tab:09's oracle:** a new natural synthetic fixture that reaches ROUND_TRIP_FAIL with no patching. The forced test is not used.
+4. **The six real held-out defects:** one new residue row now, not a loop.
+5. **Criterion statements:** stale `file:line` citations are corrected in place.
+6. **R44:** follows from 1. It closes once the bfs disposal lands, and its edges are removed. R43 and R62 are struck as stale.
