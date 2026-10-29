@@ -284,4 +284,10 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # ADDED = [346, 347, 348], REMOVED = []. R346 cites only the closed R333 and R341, R347 cites
     # no row, and R348 cites only R341. Controlled: `--candidates` over 8012247's register files is
     # 107, over the branch's 110, and the diff is exactly R346-R348.
-    assert len(expected) == 110
+    # RE-MEASURED 2026-10-30 (R74 closed; R349 + R350 raised; tab:01 and tab:04 lose their R74 and
+    # R77 edges, branch r74-stacked-grids-plan): 110 -> 112, ADDED = [349, 350], REMOVED = []. R349
+    # and R350 cite only [[R74]], closed in the same change. R261 links [[R74]] and stays no
+    # candidate: its open neighbours R47, R243, R262, R272 and R284-R287 remain. Controlled:
+    # `--candidates` over HEAD's register files and manifest (c5f113b) is 110, over the branch's 112,
+    # and the diff is exactly R349 and R350.
+    assert len(expected) == 112

@@ -29,18 +29,17 @@ grand-dependency is not still appears here, and transitive readiness follows by 
 A criterion for which no dependency has been read is ready by the same open-world reading:
 there is no criterion this work is known to wait for.
 
-**10 ready.**
+**9 ready.**
 
 | rung | criterion | statement |
 | --- | --- | --- |
 | `substrate` | `substrate:01` | The membrane is enforced at runtime by an immutable event ledger (memory): the holon's history is kept by the substrate itself, not reconstructed by the compiler process. |
 | `substrate` | `substrate:03` | The membrane is enforced at runtime by in-engine policy (motor): access policy is evaluated by the engine on every read and write, not held in a template this repo only parses. |
-| `tab` | `tab:01` | MULTI_TABLE_AMBIGUOUS (compile.py:596): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
-| `tab` | `tab:02` | REGION_TILING_FAILED (compile.py:656, :763, :939): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
-| `tab` | `tab:03` | TRANSPOSED (compile.py:688): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
-| `tab` | `tab:04` | ROW_GROUP_AMBIGUOUS (compile.py:739): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
-| `tab` | `tab:05` | MATRIX_AMBIGUOUS (compile.py:830): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
-| `tab` | `tab:08` | DATAGRID_RESIDUE (compile.py:1145): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
+| `tab` | `tab:02` | REGION_TILING_FAILED (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
+| `tab` | `tab:03` | TRANSPOSED (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
+| `tab` | `tab:04` | ROW_GROUP_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
+| `tab` | `tab:05` | MATRIX_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
+| `tab` | `tab:08` | DATAGRID_RESIDUE (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:09` | ROUND_TRIP_FAIL (holon.py:493, region-level; the cell-level emitter at holon.py:55 shares the label and is corpus-dead): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path. |
 | `tab` | `tab:10` | Every shape wired into the compile membrane is live, or registered idle with an adjudicated reason distinguishing corpus gap from dead shape; four VACUITY_REGISTRY rows still read 'corpus gap or dead shape, not adjudicated here'. |
 
@@ -85,10 +84,8 @@ not a recommendation; which residue to close is a judgment and stays the reader'
 | --- | --- |
 | `R44` | 2 |
 | `R62` | 2 |
-| `R74` | 2 |
 | `R43` | 1 |
 | `R71` | 1 |
-| `R77` | 1 |
 | `R79` | 1 |
 | `R80` | 1 |
 | `R83` | 1 |

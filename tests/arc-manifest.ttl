@@ -1242,25 +1242,42 @@ prog:rung:tab prog:criterion
 # rationale. WHETHER `cor:` SHOULD GAIN SUCH A TERM IS LEFT OPEN, and is named here rather
 # than decided silently. Until it does, the target names where the proof would have to live.
 
-# CORPUS-DEAD (0 firings). BLOCKED: R74 measures the cbh data grid leaking one row from a
-# SECOND table on the same page — which is this reason's exact subject matter, and therefore
-# a corpus place where its silence may be FALSE silence rather than absence. Closing R74 is
-# what would let arm (b) speak.
+# CORPUS-DEAD (0 firings). MET 2026-10-30 on arm (b), and the RECORDED REASON is: CORPUS GAP,
+# not dead path. The path is live (O3: tests/etkl/test_closing_slice.py::
+# test_multi_table_ambiguous_escalates drives it to the escalation on a synthetic fixture). The
+# corpus reaches the predicate once, on cbh p0's T1. That is a single table the author closed in
+# a box, and the ruled frame skip (box-split § 9, an AXIOM) overrules it. No unframed band on 64
+# pages trips it (spec 2026-10-28-r74-stacked-grids-design.md, M2). The predicate's one real-input
+# verdict is a false positive, recorded as R349; per the maintainer's 2026-10-28 D2 ruling R349
+# does NOT block this criterion. Test A reads the committed baseline (no region carries the reason
+# anywhere); Test B pins the one corpus trip and its frame disposal on real input.
+#
+# DELETED 2026-10-30 (branch r74-stacked-grids-plan): the prog:blockedBy edge naming R74, for two
+# reasons. (1) R74 is CLOSED (by derivation of tab:StackedGrids, vocab/queries/stacked-grids.rq),
+# and per the maintainer's 2026-08-22 ruling in the R108 row, closing a residue deletes every
+# blocking edge naming it. (2) The edge's premise was FALSE (spec M5): the comment that stood here
+# called R74's leaked row "this reason's exact subject matter", but is_multi_table_ambiguous cuts
+# at a vertical gutter (x), while R74 is about tables stacked in y; and the leak itself was
+# measured false at HEAD on 2026-10-05 (docs/superpowers/2026-10-05-cbh-carried-grid-read.md
+# § 2.3). Leaving the edge would trip arc-shapes M8 (a met criterion may not be prog:blockedBy
+# anything). Recorded here rather than silently dropped.
 prog:criterion:tab:01 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "MULTI_TABLE_AMBIGUOUS (compile.py:596): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "MULTI_TABLE_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
-    prog:met false ;
+    prog:met true ;
+    prog:metOn "2026-10-30"^^xsd:date ;
     prog:retrospective false ;
-    prog:blockedBy "R74" ;
-    prog:oracleTest "tests/etkl/test_closing_slice.py::test_multi_table_ambiguous_escalates" .
+    prog:oracleTest "tests/etkl/test_closing_slice.py::test_multi_table_ambiguous_escalates" ,
+        "tests/test_corpus_baseline.py::test_multi_table_ambiguous_fires_nowhere_in_the_baseline" ,
+        "tests/etkl/test_boxsplit.py::test_cbh_p0_the_one_corpus_trip_is_a_framed_single_table" .
 
 # FIRES 10 — apple x8 (p0 x4, p2 x4), bfs x2 (p4, p5). Both documents' 2026-08-20 adjudications
 # name it; both HOLD. R43 is the stale row noted in this section's header.
 prog:criterion:tab:02 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "REGION_TILING_FAILED (compile.py:656, :763, :939): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "REGION_TILING_FAILED (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
@@ -1284,7 +1301,7 @@ prog:criterion:tab:02 a prog:Criterion ;
 #     suppresses that reading." Neither corpus gap nor dead path. BLOCKED on R71.
 prog:criterion:tab:03 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "TRANSPOSED (compile.py:688): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "TRANSPOSED (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
@@ -1292,19 +1309,26 @@ prog:criterion:tab:03 a prog:Criterion ;
     prog:blockedBy "R71" ;
     prog:oracleTest "tests/etkl/test_closing_slice.py::test_false_positive_transpose_escalates" .
 
-# CORPUS-DEAD (0 firings). BLOCKED: R80 (apple p1's indent hierarchy is read by nobody), R74
-# (the cbh leaked row), R77 (cbh's four panel totals missed for the no-label reason) — three
-# corpus places where row-group structure goes unread WITHOUT this reason firing. Its oracle
+# CORPUS-DEAD (0 firings). BLOCKED: R80 (apple p1's indent hierarchy is read by nobody) — a
+# corpus place where row-group structure goes unread WITHOUT this reason firing. Its oracle
 # reaches the path only by monkeypatching `tiling.region_tiles` to reject, which is honest and
 # is stated here: no fixture drives ROW_GROUP_AMBIGUOUS through the live oracle.
+#
+# DELETED 2026-10-30 (branch r74-stacked-grids-plan): two of this criterion's three blocking
+# edges, the ones naming R74 (the cbh leaked row) and R77 (cbh's four panel totals missed for the
+# no-label reason). Both residues are CLOSED: R77 on 2026-10-01 (cbh's adjudication), R74 on
+# 2026-10-30 by derivation of tab:StackedGrids. Per the maintainer's 2026-08-22 ruling in the R108
+# row, closing a residue deletes every blocking edge naming it; the R77 edge was stale from
+# 2026-10-01 until now (spec 2026-10-28-r74-stacked-grids-design.md M9, ruled D4). The edge naming
+# R80 stays: R80 is open. Recorded here rather than silently dropped.
 prog:criterion:tab:04 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "ROW_GROUP_AMBIGUOUS (compile.py:739): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "ROW_GROUP_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
     prog:retrospective false ;
-    prog:blockedBy "R74" , "R77" , "R80" ;
+    prog:blockedBy "R80" ;
     prog:oracleTest "tests/etkl/test_tiling_gate.py::test_gate_reject_escalates_gracefully" .
 
 # FIRES 5 — who-wfa x3 (one z-score header block, once per page) and apple x2 (p0, p2, the
@@ -1316,7 +1340,7 @@ prog:criterion:tab:04 a prog:Criterion ;
 # R62 alone. The line above is the 2026-08-20 record and is kept, not repaired.
 prog:criterion:tab:05 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "MATRIX_AMBIGUOUS (compile.py:830): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "MATRIX_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
@@ -1346,7 +1370,7 @@ prog:criterion:tab:05 a prog:Criterion ;
 # to catch.
 prog:criterion:tab:06 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "MERGE_AMBIGUOUS (compile.py:911): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "MERGE_AMBIGUOUS (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met true ;
@@ -1392,7 +1416,7 @@ prog:criterion:tab:07 a prog:Criterion ;
 # leaves behind when it supersedes the page's other escalations. One firing, three open rows.
 prog:criterion:tab:08 a prog:Criterion ;
     prog:ofRung "tab" ;
-    prog:statement "DATAGRID_RESIDUE (compile.py:1145): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
+    prog:statement "DATAGRID_RESIDUE (compile.py, every escalate_region call carrying this reason string): this escalation reason is disposed — either it fires on the 7-document corpus and every firing document carries a dated cor:adjudication naming and disposing of it, or it fires nowhere on the corpus and names a collectable prog:oracleTest that exercises the path, plus a recorded reason distinguishing corpus gap from dead path." ;
     prog:source "docs/superpowers/plans/2026-08-20-the-arc-has-a-denominator.md:91-97" ;
     prog:declaredOn "2026-08-20"^^xsd:date ;
     prog:met false ;
