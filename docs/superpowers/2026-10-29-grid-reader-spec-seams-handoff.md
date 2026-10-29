@@ -177,3 +177,20 @@ truth.
 - Session 3's unverified items still stand: p2 periods under the contract, and a multi-stub truth
   set that does not exist.
 - What "Lane-C spec ruling 2" refers to (§ 2, last item).
+
+## Addendum (same session, after the maintainer's answers)
+
+- **"Lane-C spec ruling 2" is found.** "Lane C" was one of three parallel worktree lanes run on
+  2026-10-28. Its spec is `docs/superpowers/specs/2026-10-28-tiling-matrix-roundtrip-design.md`, and
+  it exists only on the unpushed branch `worktree-agent-a01aeed979f6fdbc2` (commit `14da956`). Its
+  § "Ruled 2026-10-28" item 2 says: *"a reason whose emitters run on corpus documents, and whose every
+  output adoption replaces, counts as 'fires nowhere'"*. The loop-A/B spec records that this is
+  **superseded by publisher truth** (the 2026-10-29 choice, previous handoff § 3): a superseded
+  firing is disposed only when truth proves the adopted reading correct, never by counting it as
+  absent. The two sibling lanes' specs are also unpushed: `worktree-agent-a51177a6c496621db` (R74 /
+  tab:01) and `worktree-agent-a43d70af34250ea25` (tab:08).
+- **SEC-value licensing:** the maintainer cleared committing the apple truth CSV ("no worries",
+  2026-10-29, in chat). Remove it from § 4.
+- **Parallel lanes are the standing pattern** (maintainer, 2026-10-29, in chat). Wherever loops are
+  independent, run them in parallel worktrees. Loop B cannot start before A merges, because it reads
+  A's truth block. Spec work for an independent tab criterion can run beside it.
