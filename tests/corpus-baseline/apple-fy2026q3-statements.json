@@ -10,8 +10,8 @@
       "https://example.org/etkl/doc/p1#mtable2"
     ]
   ],
-  "graph_sha256": "3f4e83480a8fc53f5a88776920fd1b40156c9e4b36f40d93312737d5354da346",
-  "graph_triples": 15683,
+  "graph_sha256": "cf32c97417ca054b50096cd3cac1b1ab58470d66d4bdab222e060b8da527d3ca",
+  "graph_triples": 15715,
   "notes": [],
   "pages": [
     {
@@ -168,5 +168,18 @@
   "recognized": [],
   "refused_licences": [],
   "repaired_bands": [],
-  "score": 0.9487666034155597
+  "score": 0.9487666034155597,
+  "truth": {
+    "table-1": {
+      "CORRECT": 57,
+      "LOST": 0,
+      "MARKED_LABEL": 0,
+      "MISATTACHED": 0,
+      "MISSING": 0,
+      "REFUSED": 0,
+      "SPURIOUS": 0,
+      "UNCLAIMED": 0,
+      "WRONG_VALUE": 0
+    }
+  }
 }

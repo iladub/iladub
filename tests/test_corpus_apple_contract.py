@@ -10,6 +10,12 @@ concepts; 128 unshared and 52 shared row keys; six column-key texts; seven figur
 from `examples/finance/`, then compared with the run. A count that moves is a reading that moved
 or a contract that changed, and the comment says which arithmetic to redo.
 
+RE-MEASURED 2026-10-29 (spec 2026-10-29-an-adopted-grid-is-read § 8, § 12.2): the feed now reads
+apple p2's adopted data grid, 57 per-cell records (the cash-flow statement, two periods). The
+regenerated run delivers 237 records (124 p0, 56 p1, 57 p2): 179 unshared row keys (65 distinct
+texts) and 58 shared. p2's two column paths ground to the two existing `Nine Months Ended`
+periods, so the period count stays 6. Every count below is that run's.
+
 One compile for the module: `ground_document` writes into the graph it is handed and never into
 the compiled one.
 """
@@ -35,26 +41,29 @@ pytestmark = [pytest.mark.corpus,
 # DERIVED, label -> row-key concepts, from the 128 unshared row keys the feed delivers (44
 # distinct texts) and the 13 prefLabels of `fin:scheme-line-item`. A label on the four-period
 # statement mints 4 row keys, one on the two-period statement mints 2.
+# Re-measured with p2 read: `Net income` (+2), `Inventories` (+2) and `Accounts payable` (+2) also
+# label rows of p2's two-period cash-flow statement, so each gains 2.
 SCHEME_COVER = {
     "Gross margin": 4,
     "Total operating expenses": 4,
     "Operating income": 4,
     "Provision for income taxes": 4,
-    "Net income": 4,
+    "Net income": 6,
     "Cash and cash equivalents": 2,
-    "Inventories": 2,
+    "Inventories": 4,
     "Total current assets": 2,
     "Total assets": 2,
-    "Accounts payable": 2,
+    "Accounts payable": 4,
     "Total current liabilities": 2,
     "Total liabilities": 2,
 }
 # The thirteenth prefLabel, `Total net sales`, is on 8 SHARED row keys and on no unshared one:
 # the unshared line prints as `Total net sales (1)`, a different text. So it grounds nothing.
-ROW_KEYS_GROUNDED = sum(SCHEME_COVER.values())          # 5 x 4 + 7 x 2 = 34 of the 128
-# grounded = 34 row keys + 180 periods + 180 figures; proposed = (128 - 34) + 52 shared.
-GROUNDED = ROW_KEYS_GROUNDED + 180 + 180                # 394
-PROPOSED = (128 - ROW_KEYS_GROUNDED) + 52               # 146
+ROW_KEYS_GROUNDED = sum(SCHEME_COVER.values())          # 34 + 3 x 2 = 40 of the 179
+RECORDS = 237                                           # 124 p0 + 56 p1 + 57 p2
+# grounded = 40 row keys + 237 periods + 237 figures; proposed = (179 - 40) + 58 shared.
+GROUNDED = ROW_KEYS_GROUNDED + RECORDS + RECORDS        # 514
+PROPOSED = (179 - ROW_KEYS_GROUNDED) + 58               # 197
 
 
 class _Recording:
@@ -126,34 +135,37 @@ def _concept(record, role):
 
 def test_p1_one_record_per_cell(abstaining):
     result, _, _ = abstaining
-    assert result.records == 180
-    assert result.grounded + result.proposed == 540
+    assert result.records == RECORDS == 237
+    assert result.grounded + result.proposed == 3 * RECORDS == 711
 
 
 def test_no_two_cells_share_a_subject(records, abstaining):
     _, g, _ = abstaining
-    assert len({_subject_of(r) for r in records}) == 180
-    assert len(set(g.subjects(RDF.type, FIN.StatementFigure))) == 180
+    assert len({_subject_of(r) for r in records}) == RECORDS
+    assert len(set(g.subjects(RDF.type, FIN.StatementFigure))) == RECORDS
 
 
 def test_p2_every_period_grounds(abstaining):
     _, g, _ = abstaining
     periods = _by_subject(g, FIN.period)
     counts = Counter(v for vs in periods.values() for v in vs)
-    assert sum(counts.values()) == 180, counts
-    assert len(periods) == 180 and all(len(v) == 1 for v in periods.values())
+    assert sum(counts.values()) == RECORDS, counts
+    assert len(periods) == RECORDS and all(len(v) == 1 for v in periods.values())
+    # p2's `Nine Months Ended > June 27, 2026` / `… June 28, 2025` ground to the same two periods
+    # p0 prints: measured 59 and 60 (31 + 28, 31 + 29), and no new period.
     assert len(counts) == 6, counts
 
 
 def test_p4_every_figure_grounds(records, abstaining):
     """D7: the numeral pattern admits a leading `$ `, which 40 of the 180 cells carry inside
-    the cell text, and the value is carried as printed. Predicted 180 under that choice."""
+    the cell text, and the value is carried as printed. Predicted 180 under that choice;
+    re-measured 237 with p2 read, whose cash-flow cells print no `$ `, so the 40 stands."""
     from iladub.ground import ROLE_CELL_VALUE
     _, g, _ = abstaining
     values = _by_subject(g, FIN.value)
     refused = sorted(_concept(r, ROLE_CELL_VALUE).value for r in records
                      if _subject_of(r) not in values)
-    assert sum(len(v) for v in values.values()) == 180, f"refused figures: {refused}"
+    assert sum(len(v) for v in values.values()) == RECORDS, f"refused figures: {refused}"
     assert refused == []
     assert sum(1 for vs in values.values() for v in vs if v.startswith("$ ")) == 40
 
@@ -162,13 +174,13 @@ def test_the_scheme_grounds_the_row_keys_it_carries(abstaining):
     _, g, _ = abstaining
     counts = Counter(v for vs in _by_subject(g, FIN.lineItem).values() for v in vs)
     assert dict(counts) == SCHEME_COVER
-    assert sum(counts.values()) == ROW_KEYS_GROUNDED == 34
+    assert sum(counts.values()) == ROW_KEYS_GROUNDED == 40
 
 
 def test_the_tally_is_the_sum_of_its_three_roles(abstaining):
     from iladub.feed import FeedResult
     result, _, proposer = abstaining
-    assert result == FeedResult(180, GROUNDED, PROPOSED) == FeedResult(180, 394, 146)
+    assert result == FeedResult(RECORDS, GROUNDED, PROPOSED) == FeedResult(237, 514, 197)
     # Every concept of a matrix record has a role, and apple's rows carry no role-less rider
     # (no section marker, no group key): nothing is left for a proposer.
     assert proposer.asked == []
@@ -177,12 +189,19 @@ def test_the_tally_is_the_sum_of_its_three_roles(abstaining):
 def test_p3_a_shared_row_label_never_grounds(records, naming):
     """Spec § 9.2: 52 row keys are shared, 8 of them `Total net sales`, which the scheme
     admits. Under a proposer that names the row-key field none of the 52 grounds, and no line
-    item is carried twice under one period."""
+    item is carried twice under one period.
+
+    Re-measured with p2 read (2026-10-29): 58 shared (apple p2's three `Other` rows add 6
+    records), still 8 `Total net sales`, none grounds. The no-twice rule now has exactly two
+    measured exceptions, and they are not shared labels: `Net income` for each nine-month
+    period is printed on the income statement (p0, `$ 101,464` / `$ 84,544`) and again as the
+    cash-flow statement's first line (p2, `101,464` / `84,544`). One figure, two statements,
+    two subjects. The contract has no cross-statement identity for it; registered, not fixed."""
     from iladub.feed import FeedResult
     from iladub.ground import SHARED_ROW_KEY
     result, g, proposer = naming
     shared = [r for r in records if any(c.role == SHARED_ROW_KEY for c in r.concepts)]
-    assert len(shared) == 52
+    assert len(shared) == 58
     assert sum(1 for r in shared
                if _concept(r, SHARED_ROW_KEY).value == "Total net sales") == 8
     line_items = _by_subject(g, FIN.lineItem)
@@ -193,11 +212,13 @@ def test_p3_a_shared_row_label_never_grounds(records, naming):
     assert all(len(v) == 1 for v in line_items.values())
     # a subject whose period did not ground has no pair to collide on, and is P2's to report
     keyed = Counter((line_items[s][0], periods[s][0]) for s in line_items if s in periods)
-    assert [k for k, n in keyed.items() if n > 1] == []
+    assert sorted(k for k, n in keyed.items() if n > 1) == [
+        ("Net income", "Nine Months Ended June 27, 2026"),
+        ("Net income", "Nine Months Ended June 28, 2025")]
     # the rule refuses before any field is looked for, so the proposer is never asked and the
     # tally is the abstaining arm's
     assert proposer.asked == []
-    assert result == FeedResult(180, GROUNDED, PROPOSED)
+    assert result == FeedResult(RECORDS, GROUNDED, PROPOSED)
 
 
 def test_p6_the_promotion_membrane_conforms(abstaining, naming):

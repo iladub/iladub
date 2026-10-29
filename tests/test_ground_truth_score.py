@@ -279,3 +279,23 @@ def test_c_an_adopted_grid_scores_per_cell_all_correct_and_its_row_regions_agree
     for _row, (text, region) in keys.items():
         assert fed[text] == {region}, (text, fed[text], region)
         assert paths[region] == (text,)
+
+
+# ---------------------------------------------------------------- O1, exact (loop A, Task 6)
+
+def test_O1_apple_p2_is_scored_57_of_57_through_shipped_code():
+    """Spec 2026-10-29-an-adopted-grid-is-read § 3 O1, as ruled in § 12.4 item 1: apple's
+    committed baseline truth block is 57 CORRECT and every other outcome 0, UNCLAIMED included.
+    `test_ground_truth_floor.py` enforces only `CORRECT >= floor` (§ 12.2, extractor bullet),
+    which is why the exact form is its own test. MARKED_LABEL is recorded as measured, not
+    predicted, so it is not asserted here."""
+    import json
+
+    snap = json.loads((Path(__file__).resolve().parent / "corpus-baseline"
+                       / "apple-fy2026q3-statements.json").read_text(encoding="utf-8"))
+    assert "truth" in snap, "apple's committed baseline has no `truth` block"
+    counts = snap["truth"]["table-1"]
+    assert counts["CORRECT"] == 57, counts
+    for key in ("WRONG_VALUE", "MISATTACHED", "LOST", "MISSING", "REFUSED", "SPURIOUS",
+                "UNCLAIMED"):
+        assert counts[key] == 0, (key, counts)

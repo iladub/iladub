@@ -276,4 +276,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # ADDED = [338, 339], REMOVED = []. R338 and R339 cite only [[R334]], closed in the same change;
     # R337 and R340 cite the open R336. Controlled: `--candidates` over the register files before
     # the edit is 101, after it 103, and the diff is exactly R338 and R339.
-    assert len(expected) == 103
+    # RE-MEASURED 2026-10-29 (R341 closed; R342-R345 raised, branch an-adopted-grid-is-read):
+    # 103 -> 107, ADDED = [342, 343, 344, 345], REMOVED = []. Each cites only closed rows (R341,
+    # and R334 for R344). Controlled: `--candidates` over HEAD's register files (git archive of
+    # 7fada04) is 103, over the branch's 107, and the diff is exactly R342-R345.
+    assert len(expected) == 107
