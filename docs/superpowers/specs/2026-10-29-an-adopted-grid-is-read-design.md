@@ -294,3 +294,10 @@ new register row (next free number at implementation) records the refusal and na
 3. **`tab:colIndex`'s range stays `xsd:integer`** beside `tab:rowIndex`'s `xsd:nonNegativeInteger`.
    Changing a released term's range is a contradiction-class doc impact; leaving them unequal is not.
    Recommended: leave it.
+
+## Ruled 2026-10-29 by the maintainer (in chat)
+
+1. **`UNCLAIMED`**, under that name, ships in loop A (§ 6.3, § 11 item 1).
+2. **`tab:colIndex` is emitted on every grid column** (§ 6.1, § 11 item 2).
+3. **`tab:colIndex`'s range stays `xsd:integer`**, unequal to `tab:rowIndex`'s
+   `xsd:nonNegativeInteger` (§ 11 item 3).
