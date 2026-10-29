@@ -1,0 +1,9 @@
+{
+  "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm",
+  "retrieved": "2026-10-29",
+  "table_ordinal": 17,
+  "span_sha256": "7999b55068408a5893304f0cc2d88af54a295b322a468803e0df31c68326b11d",
+  "span_bytes": 49055,
+  "pages": [2],
+  "source_note": "A US SEC public filing (Apple Inc. Form 10-Q, quarter ended June 27, 2026), EDGAR. Licensing cleared by the maintainer on 2026-10-29."
+}
