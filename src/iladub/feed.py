@@ -261,56 +261,112 @@ def _read_table(graph: Graph, t) -> tuple[list, dict, dict]:
     for e in graph.subjects(RDF.type, TAB.EntryCell):
         if (t, TAB.hasCell, e) not in graph:
             continue
-        row = graph.value(e, TAB.atRow)
-        if row is not None and (row, RDF.type, TAB.AggregationRow) in graph:
-            continue          # a subtotal is not a record (§7): its cells mint no subject
-        col = graph.value(e, TAB.atColumn)
-        txt = str(graph.value(e, TAB.cellText))
-        unshown = graph.value(e, TAB.unshownText)
-        if unshown is not None:
-            # R213, § 8.5 clause 2 in its ONLY honest form. No asserted contract value may be
-            # sourced from a cell whose ink the page does not show: grounding it would assert a
-            # tonnage no reader of that page can see, the § 7 false assertion this term exists
-            # to refuse.
-            #
-            # WHY A PRODUCER-SIDE GUARD AND NOT SHACL. Measured, not supposed
-            # (scripts/unshown_ink_prov_probe.py): the grounding membrane validates the GROUNDED
-            # graph, which holds 0 tab: triples of any kind, while every tab:EntryCell lives in
-            # the DOCUMENT graph. A shape over tab:EntryCell written into the grounding membrane
-            # has zero focus nodes, forever — a green suite pinning nothing. The two graphs are
-            # deliberately not unioned to manufacture a subject (§ 8.5: do not invent a path).
-            # PROCEDURAL, and that is the irreducibility: no declarative constraint can see both
-            # ends of a join whose two halves are never in one graph.
-            #
-            # It is NOT a duplicate of the empty tab:cellText that already makes is_blank skip
-            # below. CLAUDE.md § Producer-side guards vs the membrane: a guard is deleted only on
-            # PROVABLE total coverage, and the emptying is a convention six minting sites must
-            # each honour, not a proof. This raise names the one site that broke it, with that
-            # site on the stack — where a silent is_blank skip would ground the value and say
-            # nothing.
-            if not is_blank(txt):
-                raise AssertionError(
-                    f"{e}: carries tab:unshownText {unshown!r} AND a non-empty tab:cellText "
-                    f"{txt!r} — a cell cannot simultaneously be read and not read. The two "
-                    f"crossings disagree (spec 2026-09-17 § 8.6); refusing to ground it.")
+        entry = _read_entry(graph, e, header)
+        if entry is None:
             continue
-        if is_blank(txt):
-            continue          # loop K: a placeholder has no content to ground — dropping
-                              # it also leaves the column OPEN for group-key injection
-        prov = graph.value(e, PROV.wasDerivedFrom)
-        region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
-        concept = SurfaceConcept(header.get(col, ""), txt, region)
-        x0, y0 = _bbox_xy(graph, e)
-        # THE COLUMN IS CARRIED ALONGSIDE ([[R211]] Layer B). It was dropped here, and the flat
-        # per-record cell list is precisely what a key split cannot work from: deciding which
-        # record a cell belongs to is a question about its COLUMN. Nothing reads it unless the
-        # table carries spanning keys, so every other table's reading is untouched.
-        entry = _CellEntry((x0, y0, concept, col))
-        entry.cell = e
+        row = graph.value(e, TAB.atRow)
         rows.setdefault(row, []).append(entry)
-        row_cols.setdefault(row, set()).add(_logical_column(graph, col))
+        row_cols.setdefault(row, set()).add(_logical_column(graph, entry[3]))
     ordered = sorted(rows, key=lambda r: min(y0 for _, y0, _, _ in rows[r]))
     return ordered, rows, row_cols
+
+
+def _read_entry(graph: Graph, e, header: dict) -> _CellEntry | None:
+    """One entry cell read through THE skip rules, or None when the cell is not an entry.
+
+    The ONE site for them (spec 2026-10-29 § 6.2, O6): `_read_table` and `_read_grid` both call
+    it, so a record table and an adopted grid cannot drift apart on what counts as a record's
+    content. In order: a cell of an aggregation row is skipped; a cell carrying
+    `tab:unshownText` raises if it also carries text and is otherwise skipped; a blank cell —
+    `is_blank`, which includes the declared nil spellings ([[R167]]) — is skipped.
+    """
+    row = graph.value(e, TAB.atRow)
+    if row is not None and (row, RDF.type, TAB.AggregationRow) in graph:
+        return None           # a subtotal is not a record (§7): its cells mint no subject
+    col = graph.value(e, TAB.atColumn)
+    txt = str(graph.value(e, TAB.cellText))
+    unshown = graph.value(e, TAB.unshownText)
+    if unshown is not None:
+        # R213, § 8.5 clause 2 in its ONLY honest form. No asserted contract value may be
+        # sourced from a cell whose ink the page does not show: grounding it would assert a
+        # tonnage no reader of that page can see, the § 7 false assertion this term exists
+        # to refuse.
+        #
+        # WHY A PRODUCER-SIDE GUARD AND NOT SHACL. Measured, not supposed
+        # (scripts/unshown_ink_prov_probe.py): the grounding membrane validates the GROUNDED
+        # graph, which holds 0 tab: triples of any kind, while every tab:EntryCell lives in
+        # the DOCUMENT graph. A shape over tab:EntryCell written into the grounding membrane
+        # has zero focus nodes, forever — a green suite pinning nothing. The two graphs are
+        # deliberately not unioned to manufacture a subject (§ 8.5: do not invent a path).
+        # PROCEDURAL, and that is the irreducibility: no declarative constraint can see both
+        # ends of a join whose two halves are never in one graph.
+        #
+        # It is NOT a duplicate of the empty tab:cellText that already makes is_blank skip
+        # below. CLAUDE.md § Producer-side guards vs the membrane: a guard is deleted only on
+        # PROVABLE total coverage, and the emptying is a convention six minting sites must
+        # each honour, not a proof. This raise names the one site that broke it, with that
+        # site on the stack — where a silent is_blank skip would ground the value and say
+        # nothing.
+        if not is_blank(txt):
+            raise AssertionError(
+                f"{e}: carries tab:unshownText {unshown!r} AND a non-empty tab:cellText "
+                f"{txt!r} — a cell cannot simultaneously be read and not read. The two "
+                f"crossings disagree (spec 2026-09-17 § 8.6); refusing to ground it.")
+        return None
+    if is_blank(txt):
+        return None           # loop K: a placeholder has no content to ground — dropping
+                              # it also leaves the column OPEN for group-key injection
+    prov = graph.value(e, PROV.wasDerivedFrom)
+    region = str(prov).split("#")[-1] if prov is not None else str(e).split("#")[-1]
+    concept = SurfaceConcept(header.get(col, ""), txt, region)
+    x0, y0 = _bbox_xy(graph, e)
+    # THE COLUMN IS CARRIED ALONGSIDE ([[R211]] Layer B). It was dropped here, and the flat
+    # per-record cell list is precisely what a key split cannot work from: deciding which
+    # record a cell belongs to is a question about its COLUMN. Nothing reads it unless the
+    # table carries spanning keys, so every other table's reading is untouched.
+    entry = _CellEntry((x0, y0, concept, col))
+    entry.cell = e
+    return entry
+
+
+def _read_grid(graph: Graph, grid, *, stubs_are_entries: bool) -> tuple[list, dict, dict, tuple]:
+    """An adopted `tab:DataGrid`'s CELL reading: `(ordered, rows, row_cols, stubs)`.
+
+    `ordered`, `rows` and `row_cols` have `_read_table`'s shape and meaning, so the passes after
+    it run unchanged. It differs from `_read_table` in three places only (spec § 6.2, § 12):
+
+    * JOIN — entries are the `tab:EntryCell`s the grid names by `tab:hasDataCell`.
+    * ORDER — `ordered` is by the row's asserted `tab:rowIndex`, its position top-to-bottom in
+      the grid the compiler admitted. No y0 is read here: the order is a fact in the graph, so
+      re-deriving it from geometry would be a second answer to a question already answered.
+    * STUBS — `stubs` is the grid's columns NOT typed `tab:MeasureColumn`, ordered by their
+      asserted `tab:colIndex`. When `stubs_are_entries` is false a stub cell is not an entry
+      (it is the row's key, not a value); when true it is read like any other cell.
+
+    Every cell passes through `_read_entry`, the skip rules `_read_table` uses (O6). RDF reads
+    only; no tuned constant, no IRI-name parsing.
+    """
+    stubs = tuple(sorted(
+        (c for c in graph.objects(grid, TAB.hasGridColumn)
+         if (c, RDF.type, TAB.MeasureColumn) not in graph),
+        key=lambda c: int(graph.value(c, TAB.colIndex))))
+    stub_set = set(stubs)
+    header = _column_header_path(graph, grid)
+    rows: dict = {}
+    row_cols: dict = {}
+    for e in graph.objects(grid, TAB.hasDataCell):
+        if (e, RDF.type, TAB.EntryCell) not in graph:
+            continue
+        if not stubs_are_entries and graph.value(e, TAB.atColumn) in stub_set:
+            continue
+        entry = _read_entry(graph, e, header)
+        if entry is None:
+            continue
+        row = graph.value(e, TAB.atRow)
+        rows.setdefault(row, []).append(entry)
+        row_cols.setdefault(row, set()).add(_logical_column(graph, entry[3]))
+    ordered = sorted(rows, key=lambda r: int(graph.value(r, TAB.rowIndex)))
+    return ordered, rows, row_cols, stubs
 
 
 def _spanning_keys(graph: Graph, table) -> tuple:
