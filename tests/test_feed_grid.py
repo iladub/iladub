@@ -12,13 +12,16 @@ would fail here, not pass by coincidence.
 """
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 
 import pytest
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, XSD
 
-from iladub.feed import TAB, _read_grid, _read_table
+from iladub.feed import (TAB, _grid_row_keys, _read_grid, _read_table, _row_discriminator,
+                         table_records)
+from iladub.ground import ROLE_CELL_VALUE, ROLE_ROW_KEY, SHARED_ROW_KEY
 
 G = "urn:test:doc#p1-datagrid"
 
@@ -194,3 +197,213 @@ def test_O4_stubs_follow_col_index_not_iri_and_not_col_x0():
     g, grid = _grid(cols, rows)
     _o, _r, _rc, stubs = _read_grid(g, grid, stubs_are_entries=False)
     assert stubs == (URIRef(f"{G}-c2"), URIRef(f"{G}-c0"), URIRef(f"{G}-c1"))
+
+
+# ===================================================================== Task 3: table_records
+#
+# The grid branch of `table_records` (spec § 6.2 as amended by § 12.2). Every fixture below is
+# built with `_grid`, so a grid row carries no `tab:onPage` and no `tab:hasLabel`, as on every
+# corpus grid (§ 12.2, row-region bullet): its region is `_label_region(graph, row)[1]`.
+
+def _row(r: str) -> URIRef:
+    return URIRef(f"{G}-r{r}")
+
+
+def _concepts_by_role(recs, role):
+    return [c for rec in recs for c in rec.concepts if c.role == role]
+
+
+def _O3_grid():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0), ("2", 2, True, 110.0)]
+    rows = [
+        ("0", 0, 10.0, False, {"0": ("Revenue", None), "1": ("100", None), "2": ("90", None)}),
+        ("1", 1, 20.0, False, {"0": ("Cost", None), "1": ("40", None), "2": ("35", None)}),
+    ]
+    return _grid(cols, rows)
+
+
+def test_a_O3_per_row_one_record_per_row_and_the_stub_is_a_concept():
+    g, _grid_ = _O3_grid()
+    recs = table_records(g)
+    assert len(recs) == 2
+    assert [sorted(c.value for c in r.concepts) for r in recs] == [
+        ["100", "90", "Revenue"], ["35", "40", "Cost"]]
+
+
+def test_a_O3_per_cell_the_stub_is_the_row_key_and_never_a_value():
+    g, _grid_ = _O3_grid()
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 4
+    values = {c.value for c in _concepts_by_role(recs, ROLE_CELL_VALUE)}
+    assert values == {"100", "90", "40", "35"}
+    assert not values & {"Revenue", "Cost"}
+    for rec in recs:
+        keys = [c for c in rec.concepts if c.role == ROLE_ROW_KEY]
+        assert len(keys) == 1
+        (cell,) = [c for c in rec.concepts if c.role == ROLE_CELL_VALUE]
+        assert keys[0].text == keys[0].value == {"100": "Revenue", "90": "Revenue",
+                                                 "40": "Cost", "35": "Cost"}[cell.value]
+
+
+def test_b_O4_the_row_key_joins_the_stubs_in_col_index_order():
+    # colIndex order c2, c0, c1 -> "c a b"; IRI order would give "a b c", colX0 "b c a".
+    cols = [("0", 1, False, 25.0), ("1", 2, False, 5.0), ("2", 0, False, 15.0),
+            ("3", 3, True, 80.0)]
+    rows = [("0", 0, 10.0, False, {"0": ("a", None), "1": ("b", None), "2": ("c", None),
+                                   "3": ("7", None)})]
+    g, grid = _grid(cols, rows)
+    assert _grid_row_keys(g, grid) == {_row("0"): ("c a b", str(_row("0")))}
+    recs = table_records(g, per_cell=True)
+    assert [c.text for c in _concepts_by_role(recs, ROLE_ROW_KEY)] == ["c a b"]
+
+
+def test_c_O5_a_stubless_grid_contributes_nothing_and_raises_nothing():
+    cols = [("0", 0, True, 10.0), ("1", 1, True, 60.0)]
+    rows = [("0", 0, 10.0, False, {"0": ("1", None), "1": ("2", None)})]
+    g, _grid_ = _grid(cols, rows)
+    assert table_records(g) == []
+    assert table_records(g, per_cell=True) == []
+
+
+def test_d_O7_three_Other_rows_are_three_shared_rows_of_six_records():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0), ("2", 2, True, 110.0)]
+    rows = [(str(i), i, 10.0 * (i + 1), False,
+             {"0": ("Other", None), "1": (f"{i}1", None), "2": (f"{i}2", None)})
+            for i in range(3)]
+    g, _grid_ = _grid(cols, rows)
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 6
+    keys = [c for rec in recs for c in rec.concepts
+            if c.role in (ROLE_ROW_KEY, SHARED_ROW_KEY)]
+    assert len(keys) == 6
+    assert {c.role for c in keys} == {SHARED_ROW_KEY}
+    assert len({r.row_id for r in recs}) == 6
+    assert {c.region for c in keys} == {str(_row(str(i))) for i in range(3)}
+
+
+def test_e_O2_per_row_records_follow_row_index():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    rows = [
+        ("0", 2, 20.0, False, {"0": ("Gamma", None), "1": ("3", None)}),
+        ("1", 0, 30.0, False, {"0": ("Alpha", None), "1": ("1", None)}),
+        ("2", 1, 10.0, False, {"0": ("Beta", None), "1": ("2", None)}),
+    ]
+    g, _grid_ = _grid(cols, rows)
+    assert [r.row_id for r in table_records(g)] == ["Alpha", "Beta", "Gamma"]
+
+
+def test_f_a_grid_with_a_spanning_key_raises_naming_the_grid():
+    g, grid = _O3_grid()
+    h = URIRef(f"{G}-h0")
+    lab = URIRef(f"{G}-h0-label")
+    g.add((grid, TAB.hasHeaderNode, h))
+    g.add((h, TAB.hasLabel, lab))
+    g.add((lab, TAB.cellText, Literal("Spanner")))
+    g.add((h, TAB.coversColumn, URIRef(f"{G}-c1")))
+    g.add((h, TAB.coversColumn, URIRef(f"{G}-c2")))
+    for per_cell in (False, True):
+        with pytest.raises(AssertionError, match=re.escape(str(grid))):
+            table_records(g, per_cell=per_cell)
+
+
+def test_g_O6_an_aggregation_row_mints_no_record_in_either_mode():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    rows = [
+        ("0", 0, 10.0, False, {"0": ("A", None), "1": ("1", None)}),
+        ("1", 1, 20.0, True, {"0": ("Total", None), "1": ("1", None)}),
+    ]
+    g, _grid_ = _grid(cols, rows)
+    for per_cell in (False, True):
+        recs = table_records(g, per_cell=per_cell)
+        assert len(recs) == 1
+        assert "Total" not in {c.value for c in recs[0].concepts}
+        assert "Total" not in recs[0].row_id
+
+
+def test_h_review_focus_1_a_table_row_and_a_grid_row_sharing_a_rid():
+    tg, t = _record_table([("0", 0, 10.0, False, {"1": ("Gamma", None)})])
+    table_row = URIRef(f"{t}-r0")
+    rid = _row_discriminator(tg, table_row)
+    gg, _grid_ = _grid([("0", 0, False, 10.0), ("1", 1, True, 60.0)],
+                       [("0", 0, 10.0, False, {"0": (rid, None), "1": ("5", None)})])
+    alone = table_records(tg)
+    both = table_records(tg + gg)
+    assert len(both) == 2
+    assert len({r.row_id for r in both}) == 2
+    table_rec = [r for r in both if "Gamma" in {c.value for c in r.concepts}]
+    assert len(table_rec) == 1
+    assert table_rec[0].concepts == alone[0].concepts
+
+
+def test_i_review_focus_2_no_header_node_gives_one_id_per_value_cell():
+    g, _grid_ = _O3_grid()
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 4
+    assert len({r.row_id for r in recs}) == 4
+
+
+def test_j_review_focus_3_a_blank_stub_row_takes_the_opaque_path():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0), ("2", 2, True, 110.0)]
+    rows = [("0", 0, 10.0, False, {"0": ("", None), "1": ("1", None), "2": ("2", None)})]
+    g, grid = _grid(cols, rows)
+    assert _grid_row_keys(g, grid) == {}
+    opaque = _row_discriminator(g, _row("0"))
+    for per_cell in (False, True):
+        recs = table_records(g, per_cell=per_cell)
+        assert {c.value for rec in recs for c in rec.concepts} == {"1", "2"}
+        assert {r.row_id for r in recs} == {opaque}
+
+
+def test_k_review_focus_4_a_label_only_row():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    g, _grid_ = _grid(cols, [("0", 0, 10.0, False, {"0": ("Assets", None)})])
+    per_row = table_records(g)
+    assert len(per_row) == 1
+    assert [c.value for c in per_row[0].concepts] == ["Assets"]
+    assert table_records(g, per_cell=True) == []
+
+
+def test_k_review_focus_4_a_label_only_Other_makes_a_valued_Other_shared():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    rows = [
+        ("0", 0, 10.0, False, {"0": ("Other", None)}),
+        ("1", 1, 20.0, False, {"0": ("Other", None), "1": ("9", None)}),
+    ]
+    g, _grid_ = _grid(cols, rows)
+    recs = table_records(g, per_cell=True)
+    assert len(recs) == 1
+    (key,) = [c for c in recs[0].concepts if c.text == "Other"]
+    assert key.role == SHARED_ROW_KEY
+
+
+def test_grid_row_keys_covers_aggregation_rows_and_rows_with_no_value_cell():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    rows = [
+        ("0", 0, 10.0, False, {"0": ("A", None)}),
+        ("1", 1, 20.0, True, {"0": ("Total", None), "1": ("1", None)}),
+    ]
+    g, grid = _grid(cols, rows)
+    assert _grid_row_keys(g, grid) == {_row("0"): ("A", str(_row("0"))),
+                                       _row("1"): ("Total", str(_row("1")))}
+
+
+# R213 on stub cells (controller ruling, Task 2 review): a stub cell is the row's key, so it
+# never reaches `_read_entry` in per-cell mode. `_grid_row_keys` applies the same rules.
+
+def test_an_unshown_stub_with_text_raises():
+    cols = [("0", 0, False, 10.0), ("1", 1, True, 60.0)]
+    rows = [("0", 0, 10.0, False, {"0": ("Revenue", "Revenue"), "1": ("1", None)})]
+    g, grid = _grid(cols, rows)
+    with pytest.raises(AssertionError, match="unshownText"):
+        _grid_row_keys(g, grid)
+    with pytest.raises(AssertionError, match="unshownText"):
+        table_records(g, per_cell=True)
+
+
+@pytest.mark.parametrize("stub", [("", "Revenue"), ("—", None), ("", None)],
+                         ids=["unshown-empty", "nil-spelling", "blank"])
+def test_an_unshown_empty_or_blank_stub_contributes_no_text(stub):
+    cols = [("0", 0, False, 10.0), ("1", 1, False, 30.0), ("2", 2, True, 60.0)]
+    rows = [("0", 0, 10.0, False, {"0": stub, "1": ("Revenue", None), "2": ("1", None)})]
+    g, grid = _grid(cols, rows)
+    assert _grid_row_keys(g, grid) == {_row("0"): ("Revenue", str(_row("0")))}
