@@ -725,6 +725,9 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         if col.is_measure:
             g.add((c_uri, RDF.type, TAB.MeasureColumn))
         g.add((grid_uri, TAB.hasGridColumn, c_uri))
+        # tab:colIndex (tab.ttl, domain tab:GridColumn): left-to-right position in grid.columns.
+        # NOT tab:columnIndex, which is celltype evidence with no domain.
+        g.add((c_uri, TAB.colIndex, Literal(k, datatype=XSD.integer)))
         # R61: a column has an x-INTERVAL, not a box. tab:x0/x1 are rdfs:domain tab:BBox,
         # so emitting them here made every grid column a tab:BBox for any consumer running
         # our published axioms (R182 SS 2.3). tab:colX0/colX1 are domained on tab:GridColumn.
@@ -739,6 +742,8 @@ def emit_data_grid(g: "Graph", grid: "DataGrid", lines: list, doc_uri: "URIRef",
         line = lines[line_idx]
         r_uri = row_uri_by_line[line_idx]
         g.add((r_uri, RDF.type, TAB.LeafRow))
+        # The row's ordinal: its position in grid.rows, which is top-to-bottom.
+        g.add((r_uri, TAB.rowIndex, Literal(r_i, datatype=XSD.nonNegativeInteger)))
         # G8: an aggregate row is typed with the classes the extraction path ALREADY uses
         # (tab.ttl:379, loop H) and carries its member rows as operands, so the shipped
         # tab:DetectedAggregationRowShape is satisfied without being edited. No new class

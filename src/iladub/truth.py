@@ -81,16 +81,24 @@ def score_table(graph, truth: Sequence[TruthRow], pages: Sequence[int],
     """Score the compiler's carried cells against the truth cells of one table (spec 3.3, 9.2, 10).
 
     Every truth cell gets exactly one of CORRECT, WRONG_VALUE, MISATTACHED, LOST, MISSING, REFUSED;
-    SPURIOUS and MARKED_LABEL are reported beside them. `refused_texts` is the text of the
-    non-asserted regions on `pages`, supplied by the caller (the compiler's own verdicts)."""
+    SPURIOUS, MARKED_LABEL and UNCLAIMED are reported beside them. `refused_texts` is the text of
+    the non-asserted regions on `pages`, supplied by the caller (the compiler's own verdicts).
+
+    UNCLAIMED (spec 2026-10-29 § 12.4 item 2) is the number of per-cell VALUE cells of the scored
+    rows that no truth cell claims, claims taken as the UNION across all truth groups. SPURIOUS
+    stays per group: a cell two matched groups each leave unclaimed counts twice there, and a
+    cell of a row no group matched counts nowhere there. A row's label pair, its role-less
+    riders, and every cell of a one-record-per-row record are not value cells."""
     from iladub.feed import table_records      # local: feed imports are heavy and truth.py is light
 
     cands = [r for r in table_records(graph, per_cell=True)
              if any(_on_pages(c.region, pages) for c in r.concepts)]
+    scored = _scored_rows(graph, cands)
     # (normalised text, normalised value) per concept of one scored row
-    norm = [[(normalise(t), normalise(v)) for t, v in row] for row in _scored_rows(graph, cands)]
+    norm = [[(normalise(t), normalise(v)) for t, v in row] for row, _values in scored]
     refused = [normalise(t) for t in refused_texts]
-    out = {k: 0 for k in OUTCOMES} | {"SPURIOUS": 0, "MARKED_LABEL": 0}
+    out = {k: 0 for k in OUTCOMES} | {"SPURIOUS": 0, "MARKED_LABEL": 0, "UNCLAIMED": 0}
+    claimed: set[tuple[int, int]] = set()     # (row i, position in norm[i]), over ALL groups
 
     groups: dict[tuple, list[TruthRow]] = {}
     for t in truth:
@@ -108,7 +116,10 @@ def score_table(graph, truth: Sequence[TruthRow], pages: Sequence[int],
             i, j = hits[occ]
             if norm[i][j][1] != normalise(label):
                 out["MARKED_LABEL"] += 1
-            _score_row(cells, [n for k, n in enumerate(norm[i]) if k != j], out)
+            # `_score_row` sees norm[i] minus position j; map its claims back into norm[i]
+            rest = [k for k in range(len(norm[i])) if k != j]
+            claimed.add((i, j))                 # the matched label is consumed, never a value
+            claimed.update((i, rest[k]) for k in _score_row(cells, [norm[i][k] for k in rest], out))
             continue
         if any(wanted & {x for pair in ns for x in pair} for ns in norm):       # (i)
             verdict = "MISSING"
@@ -117,11 +128,15 @@ def score_table(graph, truth: Sequence[TruthRow], pages: Sequence[int],
         else:                                                                   # (iii)
             verdict = "MISSING"
         out[verdict] += len(cells)
+    out["UNCLAIMED"] = sum(1 for i, (_row, values) in enumerate(scored)
+                           for k in values if (i, k) not in claimed)
     return out
 
 
-def _scored_rows(graph, records) -> list[list[tuple[str, str]]]:
-    """Each compiled row as its (text, value) pairs, in record order.
+def _scored_rows(graph, records) -> list[tuple[list[tuple[str, str]], list[int]]]:
+    """Each compiled row as its (text, value) pairs, in record order, with the positions among
+    them that are VALUE cells (a per-cell record's `ROLE_CELL_VALUE` concept; none for a
+    one-record-per-row record, whose concepts carry no role to tell a value from a label).
 
     A one-record-per-row record is its concepts. The PER-CELL shape ([[R333]]; `table_records`'
     `per_cell`) mints one record per cell of a row covered by a row header, and both its keys'
@@ -132,14 +147,14 @@ def _scored_rows(graph, records) -> list[list[tuple[str, str]]]:
     `_header_path` gives the one-record-per-row shape. Role-less riders join the row once."""
     from iladub.ground import ROLE_CELL_VALUE, ROLE_COLUMN_KEY
 
-    rows: list[list[tuple[str, str]]] = []
+    rows: list[tuple[list[tuple[str, str]], list[int]]] = []
     at: dict[str, int] = {}
     paths = None
     for r in records:
         by_role = {c.role: c for c in r.concepts if c.role}
         cell = by_role.get(ROLE_CELL_VALUE)
         if cell is None:
-            rows.append([(c.text, c.value) for c in r.concepts])
+            rows.append(([(c.text, c.value) for c in r.concepts], []))
             continue
         if paths is None:
             paths = _paths_by_region(graph)
@@ -147,9 +162,11 @@ def _scored_rows(graph, records) -> list[list[tuple[str, str]]]:
         if key.region not in at:
             leaf = _path(paths, key.region)[-1]
             at[key.region] = len(rows)
-            rows.append([(leaf, leaf)] + [(c.text, c.value) for c in r.concepts if not c.role])
+            rows.append(([(leaf, leaf)] + [(c.text, c.value) for c in r.concepts if not c.role], []))
         col = by_role.get(ROLE_COLUMN_KEY)
-        rows[at[key.region]].append((" > ".join(_path(paths, col.region)) if col else "", cell.value))
+        pairs, values = rows[at[key.region]]
+        values.append(len(pairs))
+        pairs.append((" > ".join(_path(paths, col.region)) if col else "", cell.value))
     return rows
 
 
@@ -160,17 +177,30 @@ def _paths_by_region(graph) -> dict:
     """Every chosen header node's label path, keyed by both forms of region a per-cell key can
     carry: `_label_region`'s readable form and the label cell's whole IRI (the form the feed
     gives a second label cell whose readable form is taken). A readable form two different
-    paths share is marked ambiguous, and reading it raises."""
-    from iladub.feed import TAB, _header_parts, _label_region
+    paths share is marked ambiguous, and reading it raises.
+
+    An adopted grid's row is keyed the same way, as a one-level path `(text,)`: its text and
+    region are `feed._grid_row_keys`', the one function the feed's row key is also read from
+    (spec 2026-10-29 § 6.3, § 12.2). The truth file prints the row label, and the label is the
+    row's key text."""
+    from rdflib.namespace import RDF
+
+    from iladub.feed import TAB, _grid_row_keys, _header_parts, _label_region
 
     tables = set(graph.subjects(TAB.hasHeaderNode, None))
     out: dict = {}
+
+    def put(cell, region, labels) -> None:
+        out[str(cell)] = labels
+        if out.setdefault(region, labels) != labels:
+            out[region] = _AMBIGUOUS
+
     for pred in (TAB.coversRow, TAB.coversColumn):
         for labels, node in _header_parts(graph, tables, pred).values():
-            cell, region = _label_region(graph, node)
-            out[str(cell)] = labels
-            if out.setdefault(region, labels) != labels:
-                out[region] = _AMBIGUOUS
+            put(*_label_region(graph, node), labels)
+    for grid in graph.subjects(RDF.type, TAB.DataGrid):
+        for row, (text, region) in _grid_row_keys(graph, grid).items():
+            put(row, region, (text,))
     return out
 
 
@@ -182,10 +212,11 @@ def _path(paths: dict, region: str) -> tuple:
     return labels
 
 
-def _score_row(cells: Sequence[TruthRow], compiled: list[tuple[str, str]], out: dict) -> None:
+def _score_row(cells: Sequence[TruthRow], compiled: list[tuple[str, str]], out: dict) -> set[int]:
     """The outcome ladder of one matched row (spec 9.2 item 4). `compiled` is the record's
     (col_path, value) cells minus the label. Pass 1 gives every cell its CORRECT/WRONG_VALUE step
-    before pass 2 gives any cell its MISATTACHED/LOST step, and each compiled cell is claimed once."""
+    before pass 2 gives any cell its MISATTACHED/LOST step, and each compiled cell is claimed once.
+    Returns the claimed positions, in `compiled`'s indexing."""
     claimed: set[int] = set()
     todo = []
     for t in cells:
@@ -208,3 +239,4 @@ def _score_row(cells: Sequence[TruthRow], compiled: list[tuple[str, str]], out: 
         else:
             out["LOST"] += 1
     out["SPURIOUS"] += len(compiled) - len(claimed)
+    return claimed

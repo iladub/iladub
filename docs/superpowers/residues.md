@@ -509,4 +509,11 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R338 | open | **No membrane shape sees an ambiguous column path on a data grid**: the laminar check is the only guard. See [[R334]]. |
 | R339 | open | **A spanner whose group is too wide passes the disposal**; only the scorer would see it. See [[R334]]. |
 | R340 | open | **The caption worker's Fed p0 answer includes the masthead release number** ({1, 5, 6}), so the disposal refuses it and p0 does not adopt. See [[R336]]. |
-| R341 | open | **The feed never reads an adopted data grid**: `table_records` reads only `tab:RecordTable`/`tab:HierarchicalTable`, so apple p2's 87-cell `tab:DataGrid` yields 0 rows and the truth scorer marks all 58 truth cells `REFUSED`. It is what stands between [[R62]]'s superseded p2 firings and a disposal. See [[R238]]. |
+| R341 | closed | **The feed reads an adopted data grid**: keyed by its stub cells in `tab:colIndex` order; apple p2 scores 57/57 through `score_table` (truth drops the nil `—`), every other outcome and `UNCLAIMED` 0. Closed 2026-10-29. See [[R342]], [[R62]]. |
+| R342 | open | **A stubless adopted data grid yields no records** (ruling 3): bfs p5-datagrid-2 reaches no record, contract or score. See [[R341]]. |
+| R343 | open | **`tab:GridColumn`'s released comment says "never asserted into a holon"**, but `emit_data_grid` asserts it; the fix is contradiction-class. See [[R341]]. |
+| R344 | open | **Fed p5's adopted grid has no header node**, so its grid records carry no column key. See [[R334]], [[R341]]. |
+| R345 | open | **One figure printed on two statements is carried twice**: apple's nine-month `Net income` grounds from p0 and p2. See [[R341]]. |
+| R346 | open | **`UNCLAIMED` is structurally 0 for one-record-per-row records**: Fed's `UNCLAIMED: 0` beside `SPURIOUS: 57` measures nothing, and blank-stub grid rows are excluded the same way. See [[R333]], [[R341]]. |
+| R347 | open | **`test_expected_verdict[bfs]` fails only under xdist** with a pyparsing SPARQL `ParseException`; it passes alone and is unattributed. |
+| R348 | open | **`feed._shown_text` turns a missing `tab:cellText` into `"None"`**: pre-existing, and since loop A it reaches grid stub keys too. See [[R341]]. |

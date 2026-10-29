@@ -1555,7 +1555,7 @@ prog:criterion:tab:13 a prog:Criterion ;
     prog:oracleTest "tests/test_ground_truth_extract.py::test_span_hash_mismatch_refused" ;
     prog:oracleTest "tests/test_ground_truth_extract.py::test_unknown_header_id_refused" ;
     prog:oracleTest "tests/test_ground_truth_extract.py::test_header_text_containing_separator_refused" ;
-    prog:oracleTest "tests/test_ground_truth_score.py::test_every_truth_cell_gets_exactly_one_outcome_and_the_eight_keys_are_exact" .
+    prog:oracleTest "tests/test_ground_truth_score.py::test_every_truth_cell_gets_exactly_one_outcome_and_the_nine_keys_are_exact" .
 
 
 # ================================================== the dependency graph — authored 2026-08-22

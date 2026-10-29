@@ -86,6 +86,15 @@ tab:hasGridRow a owl:ObjectProperty ; rdfs:domain tab:DataGrid ;
     rdfs:label "has grid row"@en ;
     rdfs:comment "A row admitted to this grid. Admission is mutual with the columns (§1)."@en .
 
+tab:rowIndex a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:label "row index"@en ;
+    rdfs:comment """The row's ordinal in its grid: its position top-to-bottom among the rows the
+grid admitted, from 0. Asserted by the emitter and read by whatever reads the grid; one value per
+row, distinct across a grid's rows (tab:GridRowIndexShape, tab:GridRowIndexUniqueShape).
+Deliberately NO rdfs:domain: a choice, not an omission (R61 is about the domain of tab:x0/x1
+making a column a BBox). A row is already typed tab:LeafRow and reaches the grid by
+tab:hasGridRow, so a domain would add a type to every subject of the property for no reader."""@en .
+
 tab:columnFamily a owl:ObjectProperty ; rdfs:range tab:CellDatatypeFamily ;
     rdfs:label "column family"@en ;
     rdfs:comment """The single datatype family this grid column agreed on, after abstaining

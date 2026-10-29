@@ -38,8 +38,8 @@
       "https://example.org/etkl/doc/p10#htable3"
     ]
   ],
-  "graph_sha256": "537bd4b748239864a85fa9885fb20aab67a2b528a13ee8a2bc4f37bd15014b44",
-  "graph_triples": 21998,
+  "graph_sha256": "4eb17543d2d87ea1706c46a93096c59033c2e6994ce1f8580b2c3e3c4f8d763e",
+  "graph_triples": 22102,
   "notes": [
     "page 0: adoption refused \u2014 the data grid left no less ink unread than the bands did",
     "page 1: adoption refused \u2014 the data grid left no less ink unread than the bands did",
@@ -796,6 +796,7 @@
       "MISSING": 8,
       "REFUSED": 4,
       "SPURIOUS": 57,
+      "UNCLAIMED": 0,
       "WRONG_VALUE": 0
     }
   }

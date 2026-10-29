@@ -13,7 +13,7 @@ snap = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(snap)
 
 KEYS = {"CORRECT", "WRONG_VALUE", "MISATTACHED", "LOST", "MISSING", "REFUSED",
-        "SPURIOUS", "MARKED_LABEL"}
+        "SPURIOUS", "MARKED_LABEL", "UNCLAIMED"}
 
 
 def _rep():
