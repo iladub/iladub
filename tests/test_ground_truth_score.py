@@ -23,7 +23,7 @@ from iladub.truth import TruthRow, load_truth, score_table
 TAB = Namespace("https://w3id.org/iladub/tab#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 KEYS = {"CORRECT", "WRONG_VALUE", "MISATTACHED", "LOST", "MISSING", "REFUSED", "SPURIOUS",
-        "MARKED_LABEL"}
+        "MARKED_LABEL", "UNCLAIMED"}
 
 
 def _table(g, table, page, headers, rows, region_page=None):
@@ -71,7 +71,7 @@ def _truth(label, col, value, marked=None, occ=0):
     return TruthRow(label, marked or label, occ, col, value)
 
 
-def test_every_truth_cell_gets_exactly_one_outcome_and_the_eight_keys_are_exact():
+def test_every_truth_cell_gets_exactly_one_outcome_and_the_nine_keys_are_exact():
     g = Graph()
     _table(g, P0, 0, HEAD, {
         0: {0: "Alpha", 1: "1", 2: "2", 3: "3", 4: "42"},
@@ -92,9 +92,9 @@ def test_every_truth_cell_gets_exactly_one_outcome_and_the_eight_keys_are_exact(
     refused = ["Gamma and Epsilon\nsit in a band nobody asserted"]
     got = score_table(g, truth, [0], refused)
     assert got == {"CORRECT": 2, "WRONG_VALUE": 1, "MISATTACHED": 1, "LOST": 1, "MISSING": 3,
-                   "REFUSED": 1, "SPURIOUS": 2, "MARKED_LABEL": 1}, got
+                   "REFUSED": 1, "SPURIOUS": 2, "MARKED_LABEL": 1, "UNCLAIMED": 0}, got
     assert set(got) == KEYS
-    assert sum(got[k] for k in KEYS - {"SPURIOUS", "MARKED_LABEL"}) == len(truth)
+    assert sum(got[k] for k in KEYS - {"SPURIOUS", "MARKED_LABEL", "UNCLAIMED"}) == len(truth)
 
 
 def test_a_page_one_record_is_not_a_candidate():
@@ -112,7 +112,7 @@ def test_a_record_with_two_concepts_equal_to_the_label_matches_nothing():
     truth = [_truth("Dup", "Y", "4")]
     got = score_table(g, truth, [0], [])
     assert got == {"CORRECT": 0, "WRONG_VALUE": 0, "MISATTACHED": 0, "LOST": 0, "MISSING": 1,
-                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 0}, got
+                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 0, "UNCLAIMED": 0}, got
 
 
 def test_a_repeated_value_pairs_by_path_first_and_claims_each_cell_once():
@@ -176,7 +176,7 @@ def test_a_per_cell_row_is_scored_as_one_row_under_its_multi_level_column_paths(
              _truth("Bills", "Averages › Change", "8")]
     got = score_table(g, truth, [0], [])
     assert got == {"CORRECT": 3, "WRONG_VALUE": 1, "MISATTACHED": 0, "LOST": 0, "MISSING": 0,
-                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 1}, got
+                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 1, "UNCLAIMED": 0}, got
 
 
 def test_a_per_cell_row_under_a_nested_row_header_matches_by_its_leaf_label():
@@ -215,3 +215,67 @@ def test_two_label_cells_naming_one_region_with_different_paths_refuse_loudly():
     _matrix(g, URIRef("urn:b#m"), 0, AVG, [("Notes", {0: "6"})])
     with pytest.raises(TruthShapeError):
         score_table(g, [_truth("Bills", "Averages › Week ended", "5")], [0], [])
+
+
+# ------------------------------------------- UNCLAIMED, and the grid row (loop A, Task 4)
+#
+# Spec 2026-10-29 § 12.4 item 2: UNCLAIMED is the number of per-cell VALUE cells on the scored
+# pages that no truth cell claims, claims taken as the UNION across all truth groups. A row's
+# (leaf, leaf) label pair and its role-less riders are not value cells; SPURIOUS is unchanged.
+
+AVG3 = AVG + [("Averages", "Level")]
+
+
+def test_O9a_an_unmatched_per_cell_row_gives_all_its_value_cells_and_not_its_label():
+    g = _matrix(Graph(), M, 0, AVG, [("Bills", {0: "5", 1: "7"}),
+                                     ("Notes", {0: "8", 1: "9"})])
+    truth = [_truth("Bills", "Averages › Week ended", "5"), _truth("Bills", "Averages › Change", "7")]
+    got = score_table(g, truth, [0], [])
+    assert got["CORRECT"] == 2 and got["SPURIOUS"] == 0, got
+    assert got["UNCLAIMED"] == 2, got           # Notes' two value cells; its label pair is not one
+
+
+def test_O9b_a_matched_row_with_one_spurious_value_cell():
+    g = _matrix(Graph(), M, 0, AVG, [("Bills", {0: "5", 1: "7"})])
+    got = score_table(g, [_truth("Bills", "Averages › Week ended", "5")], [0], [])
+    assert got["CORRECT"] == 1, got
+    assert got["UNCLAIMED"] == got["SPURIOUS"] == 1, got
+
+
+def test_O9c_two_groups_on_one_row_claim_against_the_union_not_per_group():
+    # Two truth groups match the one compiled row: 'Bills' by its label, 'Other' by its marked
+    # form. Each claims a different one of the row's three value cells.
+    g = _matrix(Graph(), M, 0, AVG3, [("Bills", {0: "5", 1: "7", 2: "9"})])
+    truth = [_truth("Bills", "Averages › Week ended", "5"),
+             _truth("Other", "Averages › Change", "7", marked="Bills")]
+    got = score_table(g, truth, [0], [])
+    assert got["CORRECT"] == 2 and got["MARKED_LABEL"] == 1, got
+    assert got["SPURIOUS"] == 4, got            # per group, as today: 2 + 2
+    assert got["UNCLAIMED"] == 1, got           # only 'Level' 9 is claimed by no group
+
+
+def test_c_an_adopted_grid_scores_per_cell_all_correct_and_its_row_regions_agree_with_the_feed():
+    from iladub.feed import _grid_row_keys
+    from iladub.ground import ROLE_CELL_VALUE, ROLE_ROW_KEY, SHARED_ROW_KEY
+    from iladub.truth import _paths_by_region
+    from tests.test_feed_grid import _O3_grid
+
+    g, grid = _O3_grid()
+    truth = [_truth("Revenue", "", "100"), _truth("Revenue", "", "90"),
+             _truth("Cost", "", "40"), _truth("Cost", "", "35")]
+    got = score_table(g, truth, [1], [])
+    assert got == {"CORRECT": 4, "WRONG_VALUE": 0, "MISATTACHED": 0, "LOST": 0, "MISSING": 0,
+                   "REFUSED": 0, "SPURIOUS": 0, "MARKED_LABEL": 0, "UNCLAIMED": 0}, got
+    # Controller ruling (Task 3 review): the region the scorer resolves for each grid row is
+    # the region on the feed's row-key concept for that row.
+    keys = _grid_row_keys(g, grid)
+    paths = _paths_by_region(g)
+    fed: dict = {}
+    for rec in table_records(g, per_cell=True):
+        (rk,) = [c for c in rec.concepts if c.role in (ROLE_ROW_KEY, SHARED_ROW_KEY)]
+        assert any(c.role == ROLE_CELL_VALUE for c in rec.concepts)
+        fed.setdefault(rk.text, set()).add(rk.region)
+    assert len(keys) == 2
+    for _row, (text, region) in keys.items():
+        assert fed[text] == {region}, (text, fed[text], region)
+        assert paths[region] == (text,)
