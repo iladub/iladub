@@ -3,6 +3,8 @@
 **Serves:** prog:criterion:tab:05 — and, by the same mechanism, part of tab:02 and tab:09.
 `prog:met false` on all three at `087c1ca` (`tests/arc-manifest.ttl`, `prog:criterion:tab:05 a`).
 
+**Topic:** tab · **Date:** 2026-10-29
+
 **Doc impact: none** (a handoff; the spec it asks for will carry its own).
 
 Written at ~77K working tokens, **1.5× the originating floor**, so the spec was not started. Parts
