@@ -286,6 +286,25 @@ These are inputs no oracle O1–O5 exercises. Each line names its owning task.
 - [ ] **Step 5:** Commit: `test: corpus baseline regenerated — cbh carries one tab:StackedGrids (+5 triples)`. Push, open the PR with `**Serves:** prog:criterion:tab:01`, and do not merge until `test` is green.
 - **If loop B merged first and touched an input** (spec § 11.2 F9): rebase, then repeat Steps 1–4 on the rebased tree.
 
+### Task 7: the contradiction drain (added 2026-10-29, per the maintainer's ruling on PR #384)
+
+**Ruled 2026-10-29 (directly):** one PR carries this plan, its execution and the drain. This plan's
+`Doc impact: contradiction` blocks `tests/test_release_gate.py::test_live_repo_gate_is_clear_and_it_is_the_REGISTER_that_clears_it`
+until a `docgov:ContradictionDrain` names it. **Run after Task 5, before Task 6.**
+
+**Files:** `tests/docgov-drains.ttl`; `tests/test_release_gate.py` (the stripped-drains list).
+
+- Append one `docgov:ContradictionDrain` for `plans/2026-10-29-r74-stacked-grids.md`, following the
+  file's own "HOW TO ADD ONE". `docgov:drainedOn` is the **date of Task 2's commit** (git, not today).
+  `docgov:drainEvidence` names that commit and the re-worded `tab:StackedGrids` comment and widened
+  `tab:inStack` domain by symbol (no line numbers).
+- The stripped-drains assertion in the live-repo test then lists three documents; add this plan in
+  sorted position. Do not edit `test_the_two_drained_docs_still_declare_contradiction_verbatim`'s
+  subject list unless a test demands it; if you add this plan to it, say why.
+- **FALSIFICATION:** remove the new drain from a scratch copy of the register (or from the graph in
+  a scratch run) and show the live-repo test fails naming this plan. Restore with `cp`.
+- Commit: `docs(docgov): drain the R74 plan's contradiction — tab:StackedGrids re-worded in the vocab`.
+
 ## Unverified (carried, not assumed)
 
 - K2 relies on the membrane's subclass closure seeing `tab:HierarchicalTable ⊑ tab:Table`. That is measured in Task 2, not here.
