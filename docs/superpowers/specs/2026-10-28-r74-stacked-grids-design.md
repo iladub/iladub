@@ -532,3 +532,12 @@ and regenerates. There is nothing to rule; it is sequencing.
     statements?
   - (ii) Replace each line number with the current line, or with the reason literal (e.g.
     `compile.py, escalate_region(…, "MULTI_TABLE_AMBIGUOUS", …)`), which does not go stale?
+
+## Ruled 2026-10-29 by the maintainer (directly, AskUserQuestion)
+
+- **Q1:** a table's page is the page of its **entry cells** (`tab:EntryCell`), arm (a). This
+  holds in both the derivation and the shape.
+- **Q2:** the `Doc impact` of the re-wording is **`contradiction`**.
+- **Q3:** fix **all seven** stale tab criterion statements (tab:01, :02, :03, :04, :05, :06,
+  :08), and cite the **reason string** (e.g. `"MULTI_TABLE_AMBIGUOUS"`), not a `compile.py`
+  line number.

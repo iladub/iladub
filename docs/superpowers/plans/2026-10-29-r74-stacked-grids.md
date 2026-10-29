@@ -6,9 +6,9 @@
 
 **Topic:** tab · **Date:** 2026-10-29
 
-**Execution: subagent-driven.** Start in a fresh session, on a branch off `main` after this plan's PR merges and after the maintainer has answered spec § 11.4 Q1–Q3. A fresh worktree lacks the gitignored `baml_client/`, `corpus/`, `held-out/` and `.venv`. Symlink them from the main checkout before any probe, or every corpus number is wrong.
+**Execution: subagent-driven.** Start in a fresh session, on a branch off `main` after this plan's PR merges. Spec § 11.4's Q1–Q3 are ruled (spec, "Ruled 2026-10-29 by the maintainer"). A fresh worktree lacks the gitignored `baml_client/`, `corpus/`, `held-out/` and `.venv`. Symlink them from the main checkout before any probe, or every corpus number is wrong.
 
-**Doc impact: contradiction.** Task 2 re-words `tab:StackedGrids` and widens `tab:inStack`'s domain. Both shipped in `v0.0.4` (`git show v0.0.4:vocab/ontology/tab-datagrid.ttl`, `:128-135`). Loop A's R343 classes this kind of edit as contradiction (spec § 11.2 F2). **Pending Q2:** if the maintainer rules `increment`, change this line before the plan merges. The declared value is frozen once it merges.
+**Doc impact: contradiction.** Task 2 re-words `tab:StackedGrids` and widens `tab:inStack`'s domain. Both shipped in `v0.0.4` (`git show v0.0.4:vocab/ontology/tab-datagrid.ttl`, `:128-135`). Loop A's R343 classes this kind of edit as contradiction (spec § 11.2 F2). **Ruled 2026-10-29 (Q2): `contradiction`.** It blocks the next release tag until drained.
 
 **Goal:** after this loop:
 
@@ -42,7 +42,7 @@
   - Running the query and merging its triples: PROCEDURAL glue that decides nothing.
   - **No tuned constant and no geometry.** A diff that introduces either fails review.
   - **The derivation never reads an IRI string to decide anything** (spec M7: "same page" is a graph fact). It may *mint* the stack IRI from the head's IRI.
-- **A table's page is the page of its `tab:EntryCell`s** (spec § 11.2 F1; § 11.4 Q1 arm (a)). It is never the page of "any cell", because a continuation table carries the head page's `tab:LabelCell`s (graincorp-stem: `p1#htable1` holds 17 `LabelCell`s on page 0 and 825 `EntryCell`s on page 1). **If the maintainer rules Q1 arm (b)**, three things change: Task 3's query and Task 2's shape close over all `tab:hasCell` cells with a query-local `NOT EXISTS`, and Task 3 drops test (d). Every oracle stays the same.
+- **A table's page is the page of its `tab:EntryCell`s** (spec § 11.2 F1; ruled 2026-10-29, Q1 arm (a)). It is never the page of "any cell", because a continuation table carries the head page's `tab:LabelCell`s (graincorp-stem: `p1#htable1` holds 17 `LabelCell`s on page 0 and 825 `EntryCell`s on page 1).
 - **`is_multi_table_ambiguous`, `_GUTTER_DOMINANCE` and the frame skip are not touched** (spec § 7).
 - **No consumer reads `tab:StackedGrids`** (spec § 7). The feed, the scorer and the snapshot do not change.
 - **Corpus baseline:** regenerate exactly once, in Task 6, after the last input edit and after `git add` of every new input file (CLAUDE.md § Corpus baseline). Do not edit inputs while it runs. Corpus compiles are serial, one at a time, and never run beside pytest.
@@ -168,7 +168,7 @@ These are inputs no oracle O1–O5 exercises. Each line names its owning task.
 - (a) Two tables on page 0, `B continuesTable A` → one stack with head `A` and members `{A, B}`: exactly 3 triples.
 - (b) A four-table run on page 0 (cbh's shape) → one stack, 4 `tab:inStack`, 5 triples.
 - (c) `B` on page 1 `continuesTable` `A` on page 0, with `B` holding `A`'s `tab:LabelCell`s on page 0 → **no stack**. This is the graincorp-stem miniature (spec § 11.2 F1).
-- (d) `A` on page 0 ← `B` on page 1 ← `C` on page 1, with `B` carrying `A`'s labels on page 0 → one stack, `{B, C}`, head `B` (Review Focus 1). **Drop this test if Q1 is ruled arm (b).**
+- (d) `A` on page 0 ← `B` on page 1 ← `C` on page 1, with `B` carrying `A`'s labels on page 0 → one stack, `{B, C}`, head `B` (Review Focus 1).
 - (e) A link whose earlier table has no `tab:EntryCell` → no stack, no error (Review Focus 2).
 - (f) Determinism: running twice gives isomorphic graphs with identical stack IRIs.
 
@@ -220,16 +220,30 @@ These are inputs no oracle O1–O5 exercises. Each line names its owning task.
 - `docs/superpowers/residues.md`, `residues-open.md`, `residues-closed.md`
 - `tests/etkl/test_datagrid.py`: the R74 pin's docstring only
 - `tests/test_residue_graph.py`: the candidate pin
+- `tests/test_arc_manifest.py`: the no-line-citation check (D4)
 - `docs/superpowers/arc-dependency-landscape.md`: regenerated, never hand-edited
 
-**Manifest** (spec § 4.1 plus the rulings; Q3 settles the statement scope):
+**Manifest** (spec § 4.1 plus the rulings of 2026-10-28 and 2026-10-29):
 - **tab:01:**
   - Delete `prog:blockedBy "R74"`. Record it in a `# DELETED <date>` comment naming both reasons: R74 is closed (R108 ruling), and the edge's premise was false (spec M5).
   - Set `prog:met true` and `prog:metOn` to the merge date. Keep `prog:retrospective false`, since `declaredOn` 2026-08-20 is before `metOn` (M4).
   - Add Test A and Test B as further `prog:oracleTest` values, keeping the existing one.
   - Rewrite the comment above the criterion with the recorded reason in spec § 4.1: CORPUS GAP, not dead path.
 - **tab:04:** remove `"R74"` and `"R77"` from `prog:blockedBy`, keeping `"R80"`, with a `# DELETED` comment. Update the comment above the criterion, which still names R74 and R77.
-- **D4:** correct the stale `compile.py:NNN` in tab:01's and tab:04's `prog:statement`. Extend to the other five tab statements if Q3(i) says so, in the form Q3(ii) rules. MEASURED call sites at `123301e` are in spec § 11.2 F6. Re-measure them: Task 4 touches `document.py`, not `compile.py`, so they should not move, but measure anyway.
+- **D4 (ruled 2026-10-29, Q3): all seven stale tab statements, citing the reason string.** In each `prog:statement`, replace the parenthesised `compile.py:NNN` with the reason string's call-site form, e.g. `MULTI_TABLE_AMBIGUOUS (compile.py, the escalate_region call carrying this reason string)`. The statement already opens with the reason string, so the citation needs no inner quotes; if the implementer adds some, they must be `\"`-escaped in Turtle. Use one wording for all seven. Change nothing else in a statement. MEASURED at `123301e`, with `awk '/^prog:criterion:[a-z]+:[0-9]+ a prog:Criterion/{c=$1} /prog:statement/ && /compile\.py:[0-9]/{print c, substr($0, index($0,"\"")+1, 50)}' tests/arc-manifest.ttl`, and the call sites with `grep -rnE '"(MULTI_TABLE_AMBIGUOUS|…|DATAGRID_RESIDUE)"' src/iladub` filtered to `escalate_region` calls:
+
+  | Criterion | Reason | Stale citation | Call sites at `123301e` |
+  |---|---|---|---|
+  | tab:01 | `MULTI_TABLE_AMBIGUOUS` | `:596` | `compile.py:1301` |
+  | tab:02 | `REGION_TILING_FAILED` | `:656, :763, :939` | `:1380`, `:1617`, `:1841` (three sites, one reason) |
+  | tab:03 | `TRANSPOSED` | `:688` | `:1420` |
+  | tab:04 | `ROW_GROUP_AMBIGUOUS` | `:739` | `:1486` |
+  | tab:05 | `MATRIX_AMBIGUOUS` | `:830` | `:1724` |
+  | tab:06 | `MERGE_AMBIGUOUS` | `:911` | `:1810` |
+  | tab:08 | `DATAGRID_RESIDUE` | `:1145` | `:2215` |
+
+  Every call site is in `compile.py`, and nothing in `scripts/` or `tests/` parses these citations (`grep` for `compile.py:` in `scripts/*.py tests/*.py vocab/queries/arc-*.rq` finds no parser). The landscape renders statements, so its regeneration below picks up the edit. **tab:05 is loop B's criterion, and tab:08 has its own open spec (#380).** If either lane merges a manifest edit to those blocks first, rebase and re-apply only the citation change.
+- **Check (add to `tests/test_arc_manifest.py`):** `test_no_tab_statement_cites_a_compile_line`. Parse the live manifest. For every criterion with `prog:ofRung "tab"`, assert its `prog:statement` does not match `compile\.py:\d`, and that at least 7 tab statements were read (no vacuous pass). FALSIFICATION: put `compile.py:596` back into tab:01's statement and show the test fails.
 
 **Register:**
 - **Close R74.** Strike the number (`~~R74~~`), move the full row to `residues-closed.md` with its closure evidence, and set the index row to `closed`. This follows R341's closure in loop A. The evidence names the query, the shape and the O4/O5 tests.
@@ -253,7 +267,7 @@ These are inputs no oracle O1–O5 exercises. Each line names its owning task.
   - Restore `prog:blockedBy "R74"` on tab:01 while it is met. Show that `tests/test_arc_manifest.py::test_a_rung_with_no_criteria_conforms_and_is_not_a_refusal` fails with an M8 refusal; that test validates the live manifest against both membrane legs.
   - Restore the landscape from `HEAD` and show the byte-identity gate fails.
   - Restore each with `cp`.
-- [ ] **Step 3:** Commit: `chore(arc): tab:01 met on arm (b); R74 closed by derivation; tab:04 loses R74 and R77; R-new, R-new′ raised`.
+- [ ] **Step 3:** Commit: `chore(arc): tab:01 met on arm (b); R74 closed by derivation; tab:04 loses R74 and R77; seven tab statements cite reason strings; R-new, R-new′ raised`.
 
 ### Task 6: the one regenerate, and the blast radius against § 6
 
@@ -274,7 +288,6 @@ These are inputs no oracle O1–O5 exercises. Each line names its owning task.
 
 ## Unverified (carried, not assumed)
 
-- Q1–Q3 (spec § 11.4) are unanswered when this plan is written. Q1 and Q2 change wording, not oracles.
 - K2 relies on the membrane's subclass closure seeing `tab:HierarchicalTable ⊑ tab:Table`. That is measured in Task 2, not here.
 - Whether rudof evaluates K3's `sh:sparql` on an IRI focus node. The blank-node failure mode is documented; the IRI case is not. Task 2 runs both engines.
 - The § 6 byte-identity prediction for the ten other documents rests on reading `_seal` (spec § 11.1). Only Task 6 measures it.
