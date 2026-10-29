@@ -212,9 +212,18 @@ def test_p3_a_shared_row_label_never_grounds(records, naming):
     assert all(len(v) == 1 for v in line_items.values())
     # a subject whose period did not ground has no pair to collide on, and is P2's to report
     keyed = Counter((line_items[s][0], periods[s][0]) for s in line_items if s in periods)
-    assert sorted(k for k, n in keyed.items() if n > 1) == [
+    dup = sorted(k for k, n in keyed.items() if n > 1)
+    assert dup == [
         ("Net income", "Nine Months Ended June 27, 2026"),
         ("Net income", "Nine Months Ended June 28, 2025")]
+    # "One figure, two statements" is the justification, so it is checked: the colliding
+    # subjects of each key carry one value once the printed leading "$ " is set aside (R345).
+    values = _by_subject(g, FIN.value)
+    for key in dup:
+        colliding = [s for s in line_items if s in periods
+                     and (line_items[s][0], periods[s][0]) == key]
+        figures = {v.removeprefix("$ ") for s in colliding for v in values[s]}
+        assert len(colliding) == 2 and len(figures) == 1, (key, colliding, figures)
     # the rule refuses before any field is looked for, so the proposer is never asked and the
     # tally is the abstaining arm's
     assert proposer.asked == []

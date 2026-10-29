@@ -514,3 +514,6 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R343 | open | **`tab:GridColumn`'s released comment says "never asserted into a holon"**, but `emit_data_grid` asserts it; the fix is contradiction-class. See [[R341]]. |
 | R344 | open | **Fed p5's adopted grid has no header node**, so its grid records carry no column key. See [[R334]], [[R341]]. |
 | R345 | open | **One figure printed on two statements is carried twice**: apple's nine-month `Net income` grounds from p0 and p2. See [[R341]]. |
+| R346 | open | **`UNCLAIMED` is structurally 0 for one-record-per-row records**: Fed's `UNCLAIMED: 0` beside `SPURIOUS: 57` measures nothing, and blank-stub grid rows are excluded the same way. See [[R333]], [[R341]]. |
+| R347 | open | **`test_expected_verdict[bfs]` fails only under xdist** with a pyparsing SPARQL `ParseException`; it passes alone and is unattributed. |
+| R348 | open | **`feed._shown_text` turns a missing `tab:cellText` into `"None"`**: pre-existing, and since loop A it reaches grid stub keys too. See [[R341]]. |

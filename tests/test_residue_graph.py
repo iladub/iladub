@@ -280,4 +280,8 @@ def test_the_graph_reports_parked_rows_and_the_structural_candidates():
     # 103 -> 107, ADDED = [342, 343, 344, 345], REMOVED = []. Each cites only closed rows (R341,
     # and R334 for R344). Controlled: `--candidates` over HEAD's register files (git archive of
     # 7fada04) is 103, over the branch's 107, and the diff is exactly R342-R345.
-    assert len(expected) == 107
+    # RE-MEASURED 2026-10-29 (R346-R348 raised, same branch, final-review fix wave): 107 -> 110,
+    # ADDED = [346, 347, 348], REMOVED = []. R346 cites only the closed R333 and R341, R347 cites
+    # no row, and R348 cites only R341. Controlled: `--candidates` over 8012247's register files is
+    # 107, over the branch's 110, and the diff is exactly R346-R348.
+    assert len(expected) == 110
