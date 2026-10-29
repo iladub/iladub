@@ -3,6 +3,8 @@
 **Serves:** prog:criterion:tab:05 — the spec for the superseded arm, settled by publisher truth.
 `prog:met false` at `087c1ca`.
 
+**Topic:** tab · **Date:** 2026-10-29
+
 **Doc impact: none** (a handoff; the spec it asks for will carry its own).
 
 This follows `2026-10-29-superseded-arm-by-publisher-truth-handoff.md`. Read that file's § 3 for the
