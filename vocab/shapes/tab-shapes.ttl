@@ -676,3 +676,54 @@ tab:GridColumnIndexUniqueShape a sh:NodeShape ;
                 FILTER (sameTerm(?value, ?value2))
             }
         """ ] .
+
+#################################################################
+#  R74: a stack of tables on one page (tab:StackedGrids, re-worded
+#  2026-10-29 in tab-datagrid.ttl). The membrane that disposes of
+#  every stack the derivation mints. Closed world, scoped to the
+#  one stack: a stack is two or more tables (K1), every member a
+#  tab:Table (K2), and every ENTRY cell of every member on one and
+#  the same page (K3). A table's page is the page of its entry
+#  cells, never of any cell (spec 2026-10-28 § 11.2 F1): a
+#  continuation table carries the head page's tab:LabelCells.
+#  No sh:class / sh:targetClass on tab:DataGrid here (R103).
+#################################################################
+
+tab:StackedGridsShape a sh:NodeShape ;
+    sh:targetClass tab:StackedGrids ;
+    sh:property [
+        sh:name "StackedGridsMemberCount" ;
+        sh:path [ sh:inversePath tab:inStack ] ;
+        sh:minCount 2 ;
+        sh:message "A stack holds at least two tables via tab:inStack (stack has fewer than two members)." ] ;
+    sh:property [
+        sh:name "StackedGridsMemberIsTable" ;
+        sh:path [ sh:inversePath tab:inStack ] ;
+        sh:class tab:Table ;
+        sh:message "Every member of a stack is a tab:Table (stack member is not a table)." ] ;
+    sh:sparql [
+        sh:name "StackedGridsOnePage" ;
+        sh:message "Every member of a stack holds a tab:EntryCell, and every entry cell of every member lies on one tab:onPage value (stack members are not on one page)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                {
+                    ?value tab:inStack $this .
+                    FILTER NOT EXISTS { ?value tab:hasCell ?e . ?e a tab:EntryCell . }
+                }
+                UNION
+                {
+                    ?m tab:inStack $this ;
+                       tab:hasCell ?e .
+                    ?e a tab:EntryCell ;
+                       tab:onPage ?value .
+                    FILTER EXISTS {
+                        ?m2 tab:inStack $this ;
+                            tab:hasCell ?e2 .
+                        ?e2 a tab:EntryCell ;
+                            tab:onPage ?p2 .
+                        FILTER (?p2 != ?value)
+                    }
+                }
+            }
+        """ ] .

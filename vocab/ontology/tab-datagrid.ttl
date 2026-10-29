@@ -135,13 +135,31 @@ aggregate sits DEEPER than its own members — 'Total current assets' at x=88.6 
 x=70.6), whereas the arithmetic is decidable. Reuses the shipped exact-Decimal detection."""@en .
 
 tab:StackedGrids a owl:Class ; rdfs:label "Stacked grids"@en ;
-    rdfs:comment """Two or more data grids on one page whose admitted column extents are
-identical. Purely data-defined: no separator, caption or footnote mark is consulted, because
-those are metadata and are not yet known. The panels of a stack are read as distinct grids that
-happen to share an addressing."""@en .
+    rdfs:comment """Two or more tables on one page, each continuing the one before it
+(tab:continuesTable), sharing logical columns while each keeps its own header, rows and totals.
+The panels of a stack are read as distinct tables that happen to share an addressing.
 
-tab:inStack a owl:ObjectProperty ; rdfs:domain tab:DataGrid ; rdfs:range tab:StackedGrids ;
-    rdfs:label "in stack"@en .
+"On one page" means the page of the tables' ENTRY cells (spec 2026-10-28 § 11.2 F1), never the
+page of any cell: a continuation table carries the head page's tab:LabelCells, so a table whose
+entries all sit on page 1 may still hold label cells measured on page 0.
+
+The stack is recognised from the author's REPEATED SECTION SHAPE (the repeated-header
+signature tab:continuesTable is licensed from, read between sections of one page): metadata that
+was "not yet known" when this term was first written, and now is.
+
+WHY THE DATA-ONLY WORDING WAS WITHDRAWN (2026-10-29, spec 2026-10-28 M6). This term used to read
+"two or more data grids on one page whose admitted column extents are identical", purely
+data-defined. Under R290's maximality that has no instance and cannot have one: derive_data_grids
+re-seeds only on lines no earlier grid admitted, so a panel sharing the first panel's column
+signature is admitted by the first, maximal rectangle. Identical extents cannot yield two grids.
+The membrane is tab:StackedGridsShape (tab-shapes.ttl)."""@en .
+
+tab:inStack a owl:ObjectProperty ; rdfs:domain tab:Table ; rdfs:range tab:StackedGrids ;
+    rdfs:label "in stack"@en ;
+    rdfs:comment """This table is one member of that stack. DOMAIN IS tab:Table (was tab:DataGrid
+until 2026-10-29): a stack's members are the continuation-linked tables, which are typed
+tab:HierarchicalTable, a subclass of tab:Table (tab.ttl). The membrane never loads this file
+(R103), so the widening has no inference effect there."""@en .
 
 #################################################################
 #  3. The axioms — named, so a grid can cite the ones it satisfied
