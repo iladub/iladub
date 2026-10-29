@@ -148,3 +148,71 @@ questions from the addendum.
    invented (bfs `p5-datagrid-2`).
 4. **Row order: adoption asserts an ordinal on each `tab:hasGridRow`.** This is a vocabulary change in
    `tab` plus its shape. Order is not derived from cell bboxes, and the `-rN` IRI suffix stays forbidden.
+
+## Session 3 (2026-10-29): rulings taken, seams measured, spec still owed
+
+Written at ~53K working tokens (plimslop's figure), just past the originating floor. The spec was not
+started. The resume note had already put it in a fresh session.
+
+### 5. The next concrete action (written first)
+
+1. **ASSERTED — write the spec** `docs/superpowers/specs/2026-10-30-<topic>-design.md` from the
+   previous handoff's § 3, § 2 and the addendum of this file, the four rulings above, and the seams
+   below. No ruling it needs is open.
+2. **PROPOSED — split the spec into two loops**, and let the spec author confirm or refuse:
+   - (A) the grid reader: the row ordinal, the feed branch, the scorer seam, and the apple truth set.
+     Its oracle: apple p2 scores 58 CORRECT, 0 unclaimed, through shipped code.
+   - (B) the disposal arm: `cor:` shape and SPARQL over a lifted truth block.
+
+   The reason is size. (B) depends on how `lift_snapshots` lifts a truth block, which is unmeasured
+   (prior handoff § 4). The split is refuted if (B) turns out to be a few triples in
+   `tests/corpus-shapes.ttl`. Opening `cor:DisposalShape` takes minutes and settles it.
+
+### Seams measured this session, at `087c1ca` (all `file:line` read in this session)
+
+- **Row order in the feed is geometry today** for record and hierarchical tables:
+  `sorted(rows, key=min y0)` at `src/iladub/feed.py:312`. Ruling 4 makes the grid branch read the
+  asserted ordinal instead. The other kinds keep y0, and the spec should say so rather than unify them.
+- **The ordinal's source exists:** `emit_data_grid` (`src/iladub/etkl/datagrid.py:692`) loops
+  `for r_i, line_idx in enumerate(grid.rows)` (:738). `r_i` is in scope where the row is minted
+  (`tab:LeafRow` :741, `tab:hasGridRow` :759) and is not asserted.
+  - There is no row-ordinal property in `tab`. `tab:colIndex` exists for `tab:GridColumn`
+    (`vocab/ontology/tab.ttl:558`) but is not emitted by `emit_data_grid`.
+  - No SHACL shape targets `tab:DataGrid` (declared in `vocab/ontology/tab-datagrid.ttl:68`).
+- **Why grids are invisible (R341):** `_read_table` joins entries by `tab:hasCell`
+  (`feed.py:261-263`), while grids join them by `tab:hasDataCell` (`datagrid.py:766`). Grids use
+  `tab:hasCell` only for boxhead label cells (`boxhead.py:470`).
+- **The scorer seam is the second one.** `truth._scored_rows` resolves a per-cell row key's path
+  through `_paths_by_region`, which reads header nodes over `tab:coversRow`/`tab:coversColumn`
+  (`src/iladub/truth.py:159-183`).
+  - Grids emit no `tab:coversRow` anywhere, so a grid row key raises `TruthShapeError` unless the
+    spec gives it a path. The ruled stub tuple is a natural row path.
+  - The column side already works: `emit_boxhead` gives the grid `tab:hasHeaderNode` with
+    `tab:coversColumn` (`boxhead.py:463-468`).
+- **Grid cells carry no `prov:wasDerivedFrom`** (only the row does, `datagrid.py:760`). `region`
+  therefore falls back to the IRI fragment (`feed.py:300-302`), e.g. `p2-datagrid-r3c1`, which
+  `_on_pages` still matches (`truth.py:75`).
+- **Contract blast: apple only.** Among the documents with grids (apple 1, bfs 3, ons 2, fed 5,
+  caltrain 4, who-covid 2, by `grep -c datagrid tests/corpus-baseline/*.json`), only apple carries a
+  `cor:contract` (`tests/corpus-manifest.ttl`).
+  - On the apple graph (offline compile, dumped to N-Triples): `table_records` returns 180 per-cell
+    and 59 per-row records today, and `p2-datagrid` has 29 rows with 58 non-blank measure cells.
+  - So the per-cell count should rise to about 238 and the per-row count to about 88. Every pinned
+    count in `tests/test_corpus_apple_contract.py` moves (lines 129, 130, 135, 136, 143, 156, 158, 165,
+    171, 185). Those are predictions; re-measure them after implementation.
+- **Baseline blast:** the ordinal triple changes `graph_sha256` (`scripts/corpus_verdict_snapshot.py`
+  `_snapshot_of`) in every baseline with a grid: apple, bfs, ons, fed, caltrain and who-covid.
+  Apple also gains a `truth` block once `tests/ground-truth/apple-fy2026q3-statements/` exists.
+- **The truth extractor needs a second mode.** `scripts/ground_truth_extract.py` reads the Fed's
+  `id`/`header` attributes (`_HEADER_ID`, `extract_table`, :93). The SEC table has none, so its header
+  paths come from colspan intervals (§ 2 of this file). Classified PROCEDURAL (raw extraction from
+  publisher markup, exact integer intervals); the spec states it.
+- **Compile cost, re-measured:** an offline apple compile took **~2 minutes**, not 19.5. The
+  19.5 minutes was likely the live/recording configuration. Unverified beyond this one run.
+
+### Unverified or assumed (this session)
+
+- Whether p2's periods ground under the apple contract. `test_p2_every_period_grounds` pins 6 periods;
+  p2's "Nine Months Ended › June 27, 2026" path may add more or be refused.
+- The multi-stub tuple (ruling 2) has no truth set to score against. Its tests are fixtures only.
+- SEC-value licensing for committing the apple truth CSV (prior handoff § 4) is still unread.
