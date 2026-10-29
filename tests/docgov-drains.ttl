@@ -43,3 +43,10 @@
     docgov:drainedOn "2026-08-11"^^xsd:date ;
     docgov:drainedBy "François Rosselet" ;
     docgov:drainEvidence "The plan declares the contradiction as INHERITED from its spec ('contradiction — inherited from the spec, and resolved by Task 8 Step 3') and names no page of its own. It is drained by the same commit 3251d5f and the same two repaired wiki pages as the spec drain above; it is recorded separately rather than derived from the spec's drain because inheritance is stated in prose the extractor does not read, and a derivation that guessed at it would be inferring a release-clearing fact from an unparsed sentence." .
+
+<https://w3id.org/iladub/docgov/drain/2026-10-29-r74-stacked-grids-plan>
+    a docgov:ContradictionDrain ;
+    docgov:drains <https://w3id.org/iladub/docgov/doc/docs/superpowers/plans/2026-10-29-r74-stacked-grids.md> ;
+    docgov:drainedOn "2026-10-29"^^xsd:date ;
+    docgov:drainedBy "François Rosselet" ;
+    docgov:drainEvidence "The plan declares that re-wording tab:StackedGrids and widening tab:inStack's domain contradicts the released vocabulary. Commit 488d439 (2026-10-29, 'feat(tab): re-word tab:StackedGrids to tables on one page linked by continuesTable; StackedGridsShape') made the vocabulary say the new thing: in vocab/ontology/tab-datagrid.ttl the rdfs:comment of tab:StackedGrids now names two or more tables on one page (the page of their entry cells) linked by tab:continuesTable and withdraws the data-only wording under R290 maximality; tab:inStack's rdfs:domain is widened from tab:DataGrid to tab:Table; and tab:StackedGridsShape in vocab/shapes/tab-shapes.ttl is the membrane. Verified present by symbol 2026-10-29." .
