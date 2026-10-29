@@ -134,3 +134,17 @@ suffix is not an option.
 
 The dumps were in this session's scratchpad and do not outlive it. Recompile serially, about 15 minutes
 for the five documents plus about 19.5 for apple, and dump once.
+
+## Rulings, confirmed directly (maintainer, 2026-10-29, next session, in chat)
+
+These four answers were given directly in chat (AskUserQuestion), not relayed by a subagent. They settle § 5 item 1 and both open
+questions from the addendum.
+
+1. **The adopted-grid reader goes in `feed.table_records`.** Contracts receive grid cells too, and [[R341]]
+   closes everywhere. The PR carries the corpus-baseline diff.
+2. **Several non-measure columns: the row key is the ordered tuple of the row's non-measure cells, in
+   column order.** Each text column is a key dimension and none is dropped (fed p2, fed p5, who p3).
+3. **No non-measure column: the feed refuses the grid, and the refusal is a recorded residue.** No label is
+   invented (bfs `p5-datagrid-2`).
+4. **Row order: adoption asserts an ordinal on each `tab:hasGridRow`.** This is a vocabulary change in
+   `tab` plus its shape. Order is not derived from cell bboxes, and the `-rN` IRI suffix stays forbidden.
