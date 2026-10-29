@@ -1471,3 +1471,49 @@ def test_a_page_with_two_tables_yields_two_grids_r290(tmp_path):
     assert not (set(grids[1].refusals) & b_rows)
     # The single-grid API is unchanged: it still returns the seed winner alone.
     assert set(derive_data_grid(path, 0).rows) == b_rows
+
+
+# --- emission: the row ordinal and the column index (loop A, task 1) ---------------
+
+def _emitted_conforming_grid(tmp_path):
+    from rdflib import Graph, URIRef
+    from iladub.etkl.datagrid import emit_data_grid
+
+    path = _conforming_page(tmp_path)
+    lines = [l for l in sorted(text_lines(extract_words(path, 0)), key=lambda l: l.top)
+             if l.words]
+    grid = derive_data_grid(path, 0)
+    g = Graph()
+    uri = emit_data_grid(g, grid, lines, URIRef("urn:test:conforming"), 0)
+    return g, uri, grid
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_every_row_carries_its_position_as_a_typed_ordinal(tmp_path):
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import XSD
+    from iladub.etkl.datagrid import TAB
+
+    g, uri, grid = _emitted_conforming_grid(tmp_path)
+    rows = list(g.objects(uri, TAB.hasGridRow))
+    assert len(rows) == len(grid.rows) == 4
+    for r_i in range(len(grid.rows)):
+        r_uri = URIRef(f"{uri}-r{r_i}")
+        assert list(g.objects(r_uri, TAB.rowIndex)) == [
+            Literal(r_i, datatype=XSD.nonNegativeInteger)], r_i
+    assert sorted(int(next(g.objects(r, TAB.rowIndex))) for r in rows) == [0, 1, 2, 3]
+
+
+@pytest.mark.skipif(pytest.importorskip("reportlab") is None, reason="reportlab missing")
+def test_every_column_carries_its_left_to_right_index(tmp_path):
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import XSD
+    from iladub.etkl.datagrid import TAB
+
+    g, uri, grid = _emitted_conforming_grid(tmp_path)
+    for k, col in enumerate(grid.columns):
+        c_uri = URIRef(f"{uri}-c{k}")
+        assert list(g.objects(c_uri, TAB.colIndex)) == [Literal(k, datatype=XSD.integer)], k
+    x0s = [float(next(g.objects(URIRef(f"{uri}-c{k}"), TAB.colX0)))
+           for k in range(len(grid.columns))]
+    assert x0s == sorted(x0s), "colIndex must be left-to-right"

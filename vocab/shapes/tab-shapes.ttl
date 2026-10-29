@@ -616,3 +616,63 @@ tab:RuleSeparatedInkShape a sh:NodeShape ;
                 FILTER ((IF(?y1 < ?rb, ?y1, ?rb)) - (IF(?y0 > ?rt, ?y0, ?rt)) > 0)
             }
         """ ] .
+
+#################################################################
+#  Grid row ordinal and column index (loop A, task 1).
+#
+#  Every row of a grid carries exactly one tab:rowIndex, and every column
+#  exactly one tab:colIndex; within one grid no two rows (columns) share
+#  one. Targets are reached through tab:hasGridRow / tab:hasGridColumn,
+#  with no sh:targetClass and no sh:class on tab:DataGrid (R103: the
+#  membrane's class-targeted shapes must not see the grid as a class
+#  instance). Uniqueness is closed world, scoped to the one grid: it
+#  compares the rows of $this only.
+#################################################################
+
+tab:GridRowIndexShape a sh:NodeShape ;
+    sh:targetObjectsOf tab:hasGridRow ;
+    sh:property [
+        sh:path tab:rowIndex ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:nonNegativeInteger ;
+        sh:message "A grid row must carry exactly one tab:rowIndex, typed xsd:nonNegativeInteger (grid row index)." ] .
+
+tab:GridColumnIndexShape a sh:NodeShape ;
+    sh:targetObjectsOf tab:hasGridColumn ;
+    sh:property [
+        sh:path tab:colIndex ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:message "A grid column must carry exactly one tab:colIndex, typed xsd:integer (grid column index)." ] .
+
+tab:GridRowIndexUniqueShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:hasGridRow ;
+    sh:sparql [
+        sh:name "GridRowIndexUniqueShape" ;
+        sh:message "Two distinct rows of this grid share a tab:rowIndex (grid rows share an index)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this tab:hasGridRow ?a , ?b .
+                FILTER (?a != ?b)
+                ?a tab:rowIndex ?value .
+                ?b tab:rowIndex ?value2 .
+                FILTER (sameTerm(?value, ?value2))
+            }
+        """ ] .
+
+tab:GridColumnIndexUniqueShape a sh:NodeShape ;
+    sh:targetSubjectsOf tab:hasGridColumn ;
+    sh:sparql [
+        sh:name "GridColumnIndexUniqueShape" ;
+        sh:message "Two distinct columns of this grid share a tab:colIndex (grid columns share an index)." ;
+        sh:prefixes tab:prefixes ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this tab:hasGridColumn ?a , ?b .
+                FILTER (?a != ?b)
+                ?a tab:colIndex ?value .
+                ?b tab:colIndex ?value2 .
+                FILTER (sameTerm(?value, ?value2))
+            }
+        """ ] .
