@@ -181,3 +181,73 @@ def test_the_derived_stack_conforms_to_stacked_grids_shape():
     (stack,) = _stacks(out)
     on_stack = list(results.subjects(SH.focusNode, stack))
     assert on_stack == [], text
+
+
+def _add_entries(g, t, page, n=2, tag="x"):
+    """Give table `t` `n` more EntryCells on `page` (a table whose entries span pages)."""
+    for i in range(n):
+        c = URIRef(f"{t}-{tag}{page}-{i}")
+        g.add((t, TAB.hasCell, c))
+        g.add((c, RDF.type, TAB.EntryCell))
+        g.add((c, TAB.onPage, _page(page)))
+
+
+def _stack_results(g, out):
+    """{stack: number of tab-shapes results focused on it}, data = input + derived."""
+    shapes = Graph().parse(TAB_SHAPES, format="turtle")
+    ont = Graph().parse(TAB_TTL, format="turtle")
+    _, results, _ = validate(g + out, shacl_graph=shapes, ont_graph=ont,
+                             inference="rdfs", advanced=True)
+    return {s: len(list(results.subjects(SH.focusNode, s))) for s in _stacks(out)}
+
+
+def test_cbh_sized_run_is_still_exactly_one_stack_of_five_triples():
+    """SIZE-BEARING. cbh's four same-page tables hold 170/268/228/84 entry cells (spec § 11.2
+    F1, measured on compile_document(cbh)); 300 per table is just above the largest. The
+    pre-fix query (cell-level joins) did not finish at 40 cells per table; this pins that the
+    result at real size is exact. No wall-clock threshold is asserted: timing is reported in
+    the task report, never used to decide."""
+    g = Graph()
+    ts = [_table(g, n, 0, label_page=0, entries=300, labels=20)
+          for n in ("T1", "T2", "T3", "T4")]
+    for prev, cur in zip(ts, ts[1:]):
+        g.add((cur, TAB.continuesTable, prev))
+    out = interpret.run(RQ, g)
+    assert len(out) == 5
+    _only_stack_vocabulary(out)
+    assert list(_stacks(out).values()) == [frozenset(ts)]
+
+
+def test_h_a_head_of_runs_on_two_pages_mints_one_merged_stack_that_k3_refuses():
+    """H and S each hold entry cells on pages 0 AND 1; S continues H. H heads a run on both
+    pages, so both runs mint the same H-stack IRI and merge. The query does not split it;
+    tab:StackedGridsShape K3 refuses it (members' entry cells are not on one page)."""
+    g = Graph()
+    h = _table(g, "H", 0)
+    s = _table(g, "S", 0)
+    _add_entries(g, h, 1)
+    _add_entries(g, s, 1)
+    g.add((s, TAB.continuesTable, h))
+    out = interpret.run(RQ, g)
+    assert len(out) == 3
+    assert _stacks(out) == {URIRef(str(h) + "-stack"): frozenset({h, s})}
+    assert _stack_results(g, out)[URIRef(str(h) + "-stack")] >= 1
+
+
+def test_i_a_two_page_table_is_member_of_one_stack_and_head_of_another():
+    """A (p0) <- X (p0 and p1) <- B (p1). X is a member of A's page-0 stack and the head of its
+    own page-1 stack. Both stacks hold X, whose entry cells span two pages, so K3 refuses both."""
+    g = Graph()
+    a = _table(g, "A", 0)
+    x = _table(g, "X", 0)
+    _add_entries(g, x, 1)
+    b = _table(g, "B", 1)
+    g.add((x, TAB.continuesTable, a))
+    g.add((b, TAB.continuesTable, x))
+    out = interpret.run(RQ, g)
+    _only_stack_vocabulary(out)
+    assert _stacks(out) == {URIRef(str(a) + "-stack"): frozenset({a, x}),
+                            URIRef(str(x) + "-stack"): frozenset({x, b})}
+    assert len(out) == 6
+    refused = _stack_results(g, out)
+    assert all(n >= 1 for n in refused.values()), refused

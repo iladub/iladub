@@ -1,4 +1,3 @@
-
 # stacked-grids.rq — a stack of tables on one page, named (R74; spec
 # 2026-10-28-r74-stacked-grids-design.md § 4.2 as corrected by § 11.2 F1 and F4).
 #
@@ -10,8 +9,12 @@
 # OPEN WORLD, evidence-positive. A stack is grown only from a tab:continuesTable link that is
 # PRESENT between two tables whose entry cells share one tab:onPage value. Absence of a link
 # never mints, never removes, and never closes anything. The one closed-world guard — the
-# head's FILTER NOT EXISTS — is query-local and closes WITHIN THE PAGE: the head is the table
-# with a same-page successor and no same-page predecessor. The graph stays open.
+# head test, "no same-page predecessor" — is query-local and closes WITHIN THE PAGE: the head
+# is the table with a same-page successor and no same-page predecessor. The graph stays open.
+# The guard is written as MINUS over the (head, page) rows rather than FILTER NOT EXISTS. With
+# ?head and ?page always bound on both sides the two are equivalent here; the difference is
+# cost. rdflib 7.6 evaluates a MINUS's right side ONCE (evaluate.py evalMinus), where a FILTER
+# NOT EXISTS re-runs its pattern for every left row.
 #
 # A TABLE'S PAGE IS THE PAGE OF ITS tab:EntryCells, never of any cell (spec § 11.2 F1; ruled
 # 2026-10-29, Q1 arm (a)). A continuation table carries the head page's tab:LabelCells:
@@ -21,19 +24,40 @@
 # subclass closure, and the producers type entry cells explicitly. The membrane
 # (tab:StackedGridsShape, K3) closes over the same notion of page.
 #
-# MEMBERS. The head plus every table reaching it by tab:continuesTable* (zero hops is the head
-# itself) whose entry cells lie on the head's page. Chains never fork and pages never decrease
-# along a chain (F4: document.py's stitching loop refuses to fork the successor map; loop M
-# pairs only page N-1 with page N), so that set is one contiguous same-page run. This query
-# does not re-prove that; K1-K3 of tab:StackedGridsShape dispose of any violation. A chain that
-# crosses pages contributes only its same-page runs, each with its own head.
+# MEMBERS. The head, plus every table reaching it by tab:continuesTable+ whose entry cells lie
+# on the head's page. A chain that crosses pages contributes only its same-page runs, each with
+# its own head.
 #
-# CARTESIAN NOTE. Every table holds many entry cells, so each page join multiplies rows (one
-# per entry-cell pairing). That multiplicity carries no meaning: every row for one head binds
-# the same ?stack and the same member set, and CONSTRUCT emits a set of triples.
+# F4 IS RELIED ON, NOT RE-PROVEN. Chains never fork and pages never decrease along a chain
+# (F4: document.py's stitching loop refuses to fork the successor map; loop M pairs only page
+# N-1 with page N), so the member set is one CONTIGUOUS same-page run. This query does not
+# check that. A hypothetical chain H(p1) <- X(p2) <- Y(p1) would make Y a member of H's stack
+# across a gap, and K3 would not see it, because every entry cell is on p1. F4 is what rules
+# that out, not this query.
+#
+# A TABLE ON TWO PAGES belongs to K3, not to this query. If a table's entry cells span two
+# pages, it can be a member of one page's stack and the head of another's. If it heads runs on
+# two pages, both runs mint the same "?head-stack" IRI and merge into one stack across pages.
+# tab:StackedGridsShape K3 refuses such a stack (its members' entry cells are not on one page);
+# the query does not try to split it. Pinned by tests (h) and (i).
+#
+# COST: NEAR-LINEAR IN ENTRY CELLS. A table holds hundreds of entry cells (cbh: 170/268/228/84),
+# so a join made at cell level multiplies rows per page-equality join. CONSTRUCT dedupes the
+# OUTPUT, not the cost, and an earlier draft measured 131.8 s at 20 cells per table. So every
+# table is reduced ONCE to its DISTINCT (table, page) rows, in a sub-SELECT, before any
+# table-to-table join. Each sub-SELECT scans the entry cells once. Every later join runs over
+# (table, page) rows, which number tables x pages, not cells.
+#
+# The rdflib evaluation is measured, not assumed. A Join with a DISTINCT sub-SELECT child is
+# non-lazy (algebra.py analyse): each side is evaluated once and then joined, so no sub-SELECT
+# is re-run per left binding. tab:continuesTable* is NOT used for the members: with both ends
+# unbound it yields one (n, n) row for every node in the graph, and the non-lazy join's set()
+# over those rows was the remaining quadratic term (1.6M FrozenBindings __eq__ calls at 400
+# cells per table). The head is emitted from its own row instead, and the members are reached
+# with "+", which yields chain pairs only.
 #
 # OUTPUT, exactly and nothing else: per stack S, (S rdf:type tab:StackedGrids) and one
-# (m tab:inStack S) per member. No label, no provenance triple.
+# (m tab:inStack S) per member, the head included. No label, no provenance triple.
 #
 # STACK IRI. Minted from the head's IRI with the fixed suffix "-stack":
 #     S = IRI(CONCAT(STR(?head), "-stack"))
@@ -49,31 +73,47 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 CONSTRUCT {
   ?stack rdf:type tab:StackedGrids .
+  ?head tab:inStack ?stack .
   ?member tab:inStack ?stack .
 }
 WHERE {
-  # The evidence: a present link between two tables whose entry cells share one page.
-  ?succ tab:continuesTable ?head .
-  ?head tab:hasCell ?headCell .
-  ?headCell rdf:type tab:EntryCell ;
-            tab:onPage ?page .
-  ?succ tab:hasCell ?succCell .
-  ?succCell rdf:type tab:EntryCell ;
-            tab:onPage ?page .
-
-  # The head: no same-page predecessor (query-local, closed within the page).
-  FILTER NOT EXISTS {
-    ?head tab:continuesTable ?pred .
-    ?pred tab:hasCell ?predCell .
-    ?predCell rdf:type tab:EntryCell ;
-              tab:onPage ?page .
+  # 1. HEADS, one row per (head, page). The evidence is a present link whose two tables have
+  #    entry cells on one page; each table's pages are reduced to DISTINCT (table, page) rows
+  #    before any table-to-table join.
+  {
+    SELECT DISTINCT ?head ?page WHERE {
+      ?succ tab:continuesTable ?head .
+      { SELECT DISTINCT ?succ ?page WHERE {
+          ?succ tab:hasCell ?succCell .
+          ?succCell rdf:type tab:EntryCell ;
+                    tab:onPage ?page . } }
+      { SELECT DISTINCT ?head ?page WHERE {
+          ?head tab:hasCell ?headCell .
+          ?headCell rdf:type tab:EntryCell ;
+                    tab:onPage ?page . } }
+      # The head test: no same-page predecessor. Closed within the page, query-local.
+      MINUS {
+        ?head tab:continuesTable ?pred .
+        { SELECT DISTINCT ?head ?page WHERE {
+            ?head tab:hasCell ?hc .
+            ?hc rdf:type tab:EntryCell ;
+                tab:onPage ?page . } }
+        { SELECT DISTINCT ?pred ?page WHERE {
+            ?pred tab:hasCell ?predCell .
+            ?predCell rdf:type tab:EntryCell ;
+                      tab:onPage ?page . } }
+      }
+    }
   }
 
-  # The members: the head and every table that reaches it, whose entry cells are on its page.
-  ?member tab:continuesTable* ?head .
-  ?member tab:hasCell ?memberCell .
-  ?memberCell rdf:type tab:EntryCell ;
-              tab:onPage ?page .
+  # 2. MEMBERS: the head (emitted from its own row, above) and every table reaching it by
+  #    tab:continuesTable+ whose entry cells are on its page. Every head has at least one such
+  #    member -- its same-page successor -- so this join drops no head.
+  ?member tab:continuesTable+ ?head .
+  { SELECT DISTINCT ?member ?page WHERE {
+      ?member tab:hasCell ?memberCell .
+      ?memberCell rdf:type tab:EntryCell ;
+                  tab:onPage ?page . } }
 
   BIND(IRI(CONCAT(STR(?head), "-stack")) AS ?stack)
 }
