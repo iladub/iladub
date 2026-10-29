@@ -6,6 +6,8 @@
 
 **Topic:** tab · **Date:** 2026-10-29
 
+**Execution: subagent-driven** (maintainer, 2026-10-29, in chat). Start in a fresh session, on a branch off `main` after PR #381 merges.
+
 **Doc impact: increment.** As the spec states it (spec header): one new property, one property newly emitted, one new shape. Nothing released changes meaning.
 
 **Goal:** apple p2's adopted `tab:DataGrid` reaches `feed.table_records`, and `truth.score_table` scores it **57 `CORRECT`, every other outcome 0, `SPURIOUS` 0, `UNCLAIMED` 0** against a committed SEC truth set (spec § 1 as overridden by § 12.4 item 1).
