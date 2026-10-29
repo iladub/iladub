@@ -301,3 +301,142 @@ new register row (next free number at implementation) records the refusal and na
 2. **`tab:colIndex` is emitted on every grid column** (§ 6.1, § 11 item 2).
 3. **`tab:colIndex`'s range stays `xsd:integer`**, unequal to `tab:rowIndex`'s
    `xsd:nonNegativeInteger` (§ 11 item 3).
+
+## 12. Adversarial review of § 6 against § 4 (2026-10-29, session 6)
+
+Two read-only reviewers. Lane 1 took § 6.2–6.3: it simulated the grid branch over the committed-`src`
+graph dumps of all six documents that carry a grid (`git log 087c1ca..HEAD -- src vocab` is empty,
+so the dumps are current). Passes 2 and 3 were left byte-unchanged. Lane 2 took § 6.1, § 6.4, § 5,
+§ 8 and § 9; its only compute was `derive_data_grids` over the 17 grid pages, with no compile.
+Verdicts are measured unless marked.
+
+### 12.1 Findings that block a plan
+
+1. **O1 cannot reach 58 as written.**
+   - Apple `p2-datagrid-r21c1` carries `cellText "—"`, and `is_blank("—")` is True: the em-dash is a
+     declared nil spelling ([[R167]]).
+   - The shared skip rule that O6 requires drops that cell. The truth row "Proceeds from issuance of
+     term debt, net" keeps the displayed `—` (§ 6.4), so the cell scores LOST.
+   - Simulated result: **57 CORRECT, 1 LOST**, every other outcome 0.
+   - The handoff's 58/58 came from a probe that did not apply `is_blank`. The per-cell prediction of
+     ~238 records is 237 for the same reason.
+   - **Needs a ruling** (§ 12.3 item 1).
+2. **`UNCLAIMED` is under-defined.**
+   - "Every cell of a compiled row" does not say whether the `(leaf, leaf)` label pair counts, or
+     whether role-less riders do. On Fed the choice gives 57+7 or 57+5.
+   - **"`UNCLAIMED ≥ SPURIOUS` always" is false in general.** `_score_row` runs once per truth group,
+     each time with a fresh claimed set, so two groups hitting one compiled row double-count that
+     row's unclaimed cells in SPURIOUS. This happens 0 times today.
+   - **Needs a ruling** (§ 12.3 item 2).
+3. **The shape must not target `tab:DataGrid`.**
+   - `tests/etkl/test_compile_membrane_shapes.py:266` fails if any membrane shape uses
+     `sh:targetClass`/`sh:class` on a superclass that `tab-datagrid.ttl` adds ([[R103]]), and
+     `tab:DataGrid` is one of them.
+   - § 6.1's "or" resolves to **`sh:targetSubjectsOf tab:hasGridRow` / `tab:hasGridColumn`**. Columns
+     link by `tab:hasGridColumn` (`datagrid.py:727`).
+4. **`tab:rowIndex` needs an explicit datatype at the emitter.**
+   - `Literal(r_i)` is `xsd:integer`, which disagrees with the declared `xsd:nonNegativeInteger`.
+   - No gate catches the mismatch: `scripts/probe_domain_range_agreement.py` skips `xsd:` ranges.
+   - The emitter writes `datatype=XSD.nonNegativeInteger`. The uniqueness check joins on terms, so
+     one datatype per grid is required.
+5. **Columns need `exactly one tab:colIndex`, not uniqueness alone.** O4's stub order depends on it,
+   so the shape gains `sh:targetObjectsOf tab:hasGridColumn`, `minCount 1`, `maxCount 1`.
+
+### 12.2 Premises that hold, and corrections that do not block
+
+- **The § 4 MEASURE seams are both closed (HOLDS), and the plan drops them.**
+  - Evidence-graph `GridColumn` nodes live in fresh `Graph()`s under `urn:iladub:span:` and
+    `urn:iladub:header:`. They feed `run_*` and never reach the document graph (`donation.py:333`,
+    `headers.py:454`).
+  - `k` follows x0. `ink_runs` sorts by x0 (`datagrid.py:134`), and the columns are built in bound
+    order (`:291-299`, `:465-473`). All 17 grid pages are strictly left-to-right, and the stub
+    census matches § 4.
+- **"Which file the ontology union loads" decides nothing.**
+  - `_build_membrane` (`compile.py:883-898`) parses `tab.ttl`, `dec.ttl` and `iladub.ttl`, and reads
+    only `rdfs:subClassOf`. `tab-datagrid.ttl` is deliberately absent (R103).
+  - Both files are declaring files (`tests/query_terms.py:68`). `tab-datagrid.ttl`, beside
+    `hasGridRow`, is the home.
+- **§ 6.1's "no test catches an undeclared term" is half false.**
+  - `test_artifact_declarations.py` covers every tracked `.ttl`, and `test_query_declarations.py`
+    covers every `.rq`. Only a term emitted from Python goes unchecked.
+  - Any new tracked `.ttl` outside `tests/artifact-fixtures/` moves the `== 189` pin at
+    `test_artifact_declarations.py:298`. That is missing from § 9.
+- **`tab:columnIndex` exists** (`tab.ttl:326`, no domain, on celltype evidence). The plan states why
+  it uses `tab:colIndex` and not that one.
+- **R61 does not require omitting the domain.**
+  - R61 says a published domain is a claim the emitter must honour. Grid rows are already typed
+    `tab:LeafRow` (`datagrid.py:740`), so a domain would be honoured.
+  - Omitting it stays allowed, but as a choice, not by R61.
+- **The shape will see adopted grids.**
+  - The page leg skips grid-only pages (`compile.py:2244-2246`).
+  - The document leg runs, because adoption sets `section_facts` (`document.py:2015`), and
+    `tab-shapes.ttl` is in `_TAB_SHAPE_FILES` (`compile.py:840`).
+  - The membrane is rudof, with no RDFS inference. "`inference="rdfs"`" applies to
+    `tests/test_vocab_shapes.py` only.
+- **Passes 2 and 3 run unchanged (HOLDS).**
+  - `_spanning_keys` is `()` on all 17 grids. No grid caption is a `SectionCaption`, and no grid
+    carries a `DerivedRowGroup` or `coversRow`.
+  - **Unguarded:** a future grid with a childless multi-column spanner would take the key-split
+    branch and drop its stub key, since stubs are not entries in per-cell mode. The plan adds a
+    guard or a register row.
+- **Row region (HOLDS, by a fallback only).**
+  - `row_keys[r] = (text, row, shared)` gives `_key_region(row) = str(row)`. That holds only because
+    grid rows carry no `tab:hasLabel` and no `tab:onPage` (0 on every grid).
+  - The feed and the scorer share one function for the region; neither hardcodes `str(row)`.
+  - An optional shape check, "a grid row has no `tab:onPage`", would close the fragility.
+- **Skip rules (O6) can be shared.**
+  - Grid cells carry `cellText`, `onPage`, `hasBBox`, `atRow` and `atColumn`. Their region is the
+    fragment, because they have no `prov:wasDerivedFrom`.
+  - 0 corpus grid rows are `AggregationRow`, and 0 cells are `unshownText`, so fixtures alone pin
+    those two rules.
+- **SHARED_ROW_KEY needs the explicit addition § 6.2 names.** The existing count runs only over
+  `coversRow` paths.
+  - O7 reads "three distinct **rows** (6 per-cell records)".
+  - The plan states whether aggregation rows and all-blank stub rows (apple's 7 section labels)
+    enter the count. The existing rule includes them.
+- **Column paths need nothing for apple (HOLDS).**
+  - `emit_boxhead` (`compile.py:2125`) writes s0, h1 and h2. Paths read
+    `Nine Months Ended > June 27, 2026`.
+  - **Fed p5 has 0 header nodes**, so its grid records carry no column key. Record it.
+- **`_on_pages`, the REFUSED 58 pre-state, contracts, and Fed's truth block (HOLD).**
+  - Contracted documents are stem, capacity, cbh and apple. Apple is the only one with a grid, so
+    § 9's "apple only" means "the only gridded document with a contract".
+  - The simulation leaves Fed's block identical.
+  - Simulated apple contract counts are per-row 59 → 88 and per-cell 180 → 237.
+- **Extractor (HOLDS).**
+  - `extract_table(html, ordinal, expected_sha256)` already takes both as arguments
+    (`scripts/ground_truth_extract.py:93`). Only `main` hardcodes them. The 4 tests call
+    `extract_table`, so the SEC mode is a new function or a keyword argument with a default.
+  - `floor.json` enforces only `CORRECT ≥ floor` and the outcome sum. **O1's "every other outcome 0,
+    UNCLAIMED 0" needs its own test.**
+  - `tests/ground-truth/` is a baseline input, so `inputs.json` moves.
+- **§ 5: the SEC mode needs its own irreducibility statement.**
+  - "A header row's first cell is empty" is a reading convention, not markup the publisher states.
+  - It carries no tuned constant. It is defended by the span sha and the measured intersection.
+- **The doc impact stays `increment`, but one released comment is already contradicted.**
+  - `tab.ttl:547-548` (as in `v0.0.4`) calls `tab:GridColumn` "transient… never asserted into a
+    holon", yet `emit_data_grid` already asserts it.
+  - Record it as a register row, and do not fix it in this loop: a fix is contradiction-class.
+
+### 12.3 Rulings owed before the plan
+
+1. **The "—" cell.** Choose (a), (b) or (c):
+   - (a) truth drops a cell whose displayed value is a declared nil spelling, giving 57 truth cells
+     and O1 = 57 CORRECT, all else 0;
+   - (b) truth keeps 58 cells, and O1 and the floor read 57 CORRECT + 1 LOST;
+   - (c) the grid branch keeps nil spellings, which forks O6.
+2. **`UNCLAIMED`'s exact definition**, including whether the label pair and riders count, and
+   whether SPURIOUS is deduplicated per compiled row.
+
+### 12.4 Ruled 2026-10-29 by the maintainer (in chat, session 6)
+
+1. **Truth drops nil.** The SEC extraction treats a displayed value that is a declared nil spelling
+   as no cell. Apple's truth set therefore has **57** cells, and **O1 is 57 `CORRECT`, every other
+   outcome 0, `UNCLAIMED` 0**. The floor is 57. The apple per-cell prediction is ~237.
+2. **`UNCLAIMED` counts value cells against the union of claims.** It is the number of per-cell
+   value records on the scored pages that no truth cell claims, with claims taken as the **union
+   across all truth groups**. Label pairs and role-less riders are excluded. `SPURIOUS` is
+   unchanged, and § 6.3's "`UNCLAIMED ≥ SPURIOUS` always" is withdrawn.
+
+§ 12.1 items 3–5 are adopted as written: they are forced by an existing test or by O4, so no
+ruling is needed. The plan cites § 12, not § 6, wherever the two differ.
