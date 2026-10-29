@@ -1,0 +1,102 @@
+# Handoff: the three predictions are run; the scorer cannot read an adopted grid (spec owed)
+
+**Serves:** prog:criterion:tab:05 — the spec for the superseded arm, settled by publisher truth.
+`prog:met false` at `087c1ca`.
+
+**Doc impact: none** (a handoff; the spec it asks for will carry its own).
+
+This follows `2026-10-29-superseded-arm-by-publisher-truth-handoff.md`. Read that file's § 3 for the
+two maintainer choices and the design shape; neither is re-opened here. This session ran that file's
+§ 5 item 2 and stopped at ~72K working tokens, past the originating floor, on the maintainer's choice
+(2026-10-29, in chat: "Evidence + handoff"). Part 5 is written first and was written under the floor's
+overrun, so each action carries its own grade.
+
+## 5. The next concrete action (written first)
+
+1. **ASSERTED — before writing any spec section, the maintainer rules ONE scope question:** does the
+   adopted-grid reader go into `feed.table_records` (the shared reader, so the grid also reaches
+   contracts) or into the scorer only? The probe in § 2 shows the reading is the same either way. The
+   difference is blast radius: in the feed it changes every document whose adopted grid the feed
+   cannot see today ([[R341]]), and so a corpus baseline diff. Do not choose it on the maintainer's
+   behalf.
+2. **ASSERTED — then write the spec** `docs/superpowers/specs/2026-10-29-<topic>-design.md` from the
+   previous handoff's § 3, this file's § 2, and the ruling in item 1. The three predictions are no
+   longer propositions, and the spec may rely on them **for apple p2 only**.
+3. **PROPOSED — the reading rule for a grid row** (§ 2, "the reader") is a derivation over asserted
+   facts, so it is AXIOM-shaped (a SPARQL `SELECT` over `tab:hasDataCell`/`tab:MeasureColumn`/
+   `tab:coversColumn`). That classification is a proposition. It fails if a grid ever has no non-measure
+   column or more than one: the probe asserts exactly one and would raise. Whether a stub-less grid
+   (pure matrix) or a two-text-column grid exists on the corpus is **not measured**. Find out in
+   minutes by running the probe's `assert` over the six documents' adopted grids before the spec fixes
+   the rule.
+
+## 1. Goal
+
+Unchanged: make tab:05 (and later tab:02 and tab:09) satisfiable by disposing of superseded-only
+firings when publisher truth proves the adopted reading correct.
+
+## 2. What was measured (2026-10-29, at `087c1ca`, branch `spec-superseded-arm-truth`)
+
+**Prediction (b) holds: the 10-Q table can be read from markup alone.**
+- Source: `https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm`,
+  fetched with User-Agent `iladub-research contact@iladub.dev`. Table #17 (1-based, as
+  `scripts/ground_truth_extract.py`'s `_span` counts): 49,055 bytes, sha256 starts `7999b55068408a58`,
+  as the previous handoff recorded.
+- The table is 12 grid columns wide. Header rows are those whose first cell is empty:
+  `Nine Months Ended` spans columns [3,12), `June 27, 2026` [3,6) and `June 28, 2025` [9,12).
+- **Rule:** a value cell's column path is every header whose interval contains the cell's interval,
+  in header-row order. 58 truth cells result, each with a two-level path.
+- Three markup facts the extractor must rule on:
+  - a cell whose whole text is `$` is a unit glyph, not a value (4 rows carry one);
+  - `<br>` inside the date headers must become a space: plain text reads `June 27,2026`;
+  - `Other` occurs three times, so `row_occurrence` is 0, 1, 2.
+- 7 section-label rows (e.g. `Operating activities:`) carry no value and yield no truth cell.
+
+**Prediction (a) holds — but only through a reader that does not exist in the repo.**
+- `iladub.truth.score_table` on the real compile, with a scratch truth CSV and `pages: [2]`, returns
+  `REFUSED: 58`, every other outcome 0. The cause is that it finds **0 compiled rows** on p2.
+- **The cause:** `feed.table_records` (`src/iladub/feed.py`, `table_records`) reads only subjects typed
+  `tab:RecordTable` or `tab:HierarchicalTable`, joined by `tab:hasCell`. Apple's graph has 2
+  `tab:HierarchicalTable`s (p0, p1) and 1 `tab:DataGrid` (`…/doc/p2/adopt#p2-datagrid`, also
+  `tab:UniformGrid`, label "29 rows x 3 columns", 87 `tab:hasDataCell`). Measured on that graph:
+  `table_records` yields rows on p0 and p1 (31/28, or 124/56 per-cell) and **none on p2**, in both modes.
+- **The reader (throwaway probe, not committed):** for each `tab:hasGridRow` of the grid,
+  - the row label is the text of its one cell whose `tab:atColumn` is **not** a `tab:MeasureColumn`
+    (here `c0`, `tab:columnFamily tab:Text`);
+  - each measure cell's column path is the labels of the grid's header nodes that `tab:coversColumn`
+    its column, ordered by `tab:headerLevel` (`s0` "Nine Months Ended" at level 0, `h1`/`h2` the dates
+    at level 1, both `tab:parentHeader s0`);
+  - occurrence counts repeated labels in row order, with rows ordered by their `-rN` suffix. That
+    suffix is an IRI-name read and is **not** acceptable in shipped code (feed reads no IRI names).
+    The spec must name the asserted order fact instead (row bbox or another asserted ordinal).
+- **Result:** truth 58, compiled 58, exact multiset intersection **58**, on (label, occurrence, path,
+  value) after `iladub.truth.normalise`.
+
+**Prediction (c) holds on p2:** compiled minus truth is empty, so no grid cell is unclaimed. The new
+count's definition is still the spec's to write. The probe's version is "compiled cells of the page's
+grid not in the truth multiset".
+
+**How the result was obtained**, so it can be re-run: one full compile of
+`corpus/financial/apple-fy2026q3-statements.pdf` takes **~19.5 minutes wall clock, ~100 s CPU**. Most of
+the wall time is spent waiting. The graph was dumped to N-Triples once and every probe ran over the
+dump. Do the same. Never compile twice to answer two questions.
+
+## 3. What was decided, and where it is recorded
+
+- The two choices and the design shape: the previous handoff § 3. Unchanged.
+- Stopping here for the floor: the maintainer, 2026-10-29, in chat. **Recorded only in this file.**
+- [[R341]] raised (below and in the register): the feed never reads an adopted data grid.
+
+## 4. Unverified or assumed
+
+- **Whether apple p2's 87 cells are absent from every contract output**, rather than only from
+  `table_records`. That is likely, because `ground_document` reads `table_records`
+  (`feed.py:1001,1003`), but no contract run was made.
+- **Which other documents' adopted grids are invisible to the feed.** The baselines carry
+  `DataGrid`-anchored regions in apple, bfs, ons, fed, caltrain and who
+  (`grep -c DataGrid tests/corpus-baseline/*.json`). The count is **not** split by verdict, so how many
+  are asserted is unmeasured. bfs p5 (496 cells, R238) and ons p7/p8 are the likely asserted ones, and
+  they are the documents tab:09 and tab:02 need.
+- That the row-order fact the spec needs exists in the graph without the IRI suffix.
+- The previous handoff's § 4 items still stand: snapshot JSON carrying per-table pages and the new
+  count, `lift_snapshots` lifting a truth block, R62 looking stale, R237, and SEC-value licensing.

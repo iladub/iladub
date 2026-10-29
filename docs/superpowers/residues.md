@@ -509,3 +509,4 @@ and R88 propagated wrong. The index tells you *whether* to read; the detail file
 | R338 | open | **No membrane shape sees an ambiguous column path on a data grid**: the laminar check is the only guard. See [[R334]]. |
 | R339 | open | **A spanner whose group is too wide passes the disposal**; only the scorer would see it. See [[R334]]. |
 | R340 | open | **The caption worker's Fed p0 answer includes the masthead release number** ({1, 5, 6}), so the disposal refuses it and p0 does not adopt. See [[R336]]. |
+| R341 | open | **The feed never reads an adopted data grid**: `table_records` reads only `tab:RecordTable`/`tab:HierarchicalTable`, so apple p2's 87-cell `tab:DataGrid` yields 0 rows and the truth scorer marks all 58 truth cells `REFUSED`. It is what stands between [[R62]]'s superseded p2 firings and a disposal. See [[R238]]. |
