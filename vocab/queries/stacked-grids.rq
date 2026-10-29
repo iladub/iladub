@@ -1,0 +1,79 @@
+
+# stacked-grids.rq — a stack of tables on one page, named (R74; spec
+# 2026-10-28-r74-stacked-grids-design.md § 4.2 as corrected by § 11.2 F1 and F4).
+#
+# GATE (CLAUDE.md §8): AXIOM, derivation form. Which tables form a stack is declarative over
+# facts already in the merged document graph — tab:continuesTable, tab:hasCell, the explicit
+# rdf:type tab:EntryCell, and tab:onPage. No geometry, no tuned constant, no numeric literal;
+# the only comparison is page EQUALITY, made as a shared-variable join on ?page.
+#
+# OPEN WORLD, evidence-positive. A stack is grown only from a tab:continuesTable link that is
+# PRESENT between two tables whose entry cells share one tab:onPage value. Absence of a link
+# never mints, never removes, and never closes anything. The one closed-world guard — the
+# head's FILTER NOT EXISTS — is query-local and closes WITHIN THE PAGE: the head is the table
+# with a same-page successor and no same-page predecessor. The graph stays open.
+#
+# A TABLE'S PAGE IS THE PAGE OF ITS tab:EntryCells, never of any cell (spec § 11.2 F1; ruled
+# 2026-10-29, Q1 arm (a)). A continuation table carries the head page's tab:LabelCells:
+# graincorp-stem's p1#htable1 holds 17 LabelCells on page 0 and 825 EntryCells on page 1, so
+# reading "any cell" would put a cross-page link on page 0 and mint a stack that does not
+# exist. The type test is an EXPLICIT `a tab:EntryCell`: this runs on the merged graph with no
+# subclass closure, and the producers type entry cells explicitly. The membrane
+# (tab:StackedGridsShape, K3) closes over the same notion of page.
+#
+# MEMBERS. The head plus every table reaching it by tab:continuesTable* (zero hops is the head
+# itself) whose entry cells lie on the head's page. Chains never fork and pages never decrease
+# along a chain (F4: document.py's stitching loop refuses to fork the successor map; loop M
+# pairs only page N-1 with page N), so that set is one contiguous same-page run. This query
+# does not re-prove that; K1-K3 of tab:StackedGridsShape dispose of any violation. A chain that
+# crosses pages contributes only its same-page runs, each with its own head.
+#
+# CARTESIAN NOTE. Every table holds many entry cells, so each page join multiplies rows (one
+# per entry-cell pairing). That multiplicity carries no meaning: every row for one head binds
+# the same ?stack and the same member set, and CONSTRUCT emits a set of triples.
+#
+# OUTPUT, exactly and nothing else: per stack S, (S rdf:type tab:StackedGrids) and one
+# (m tab:inStack S) per member. No label, no provenance triple.
+#
+# STACK IRI. Minted from the head's IRI with the fixed suffix "-stack":
+#     S = IRI(CONCAT(STR(?head), "-stack"))
+# so the same input yields the same IRI. The IRI string is only WRITTEN, never read to decide
+# anything (spec M7: "same page" is a graph fact, not a name).
+#
+# Pinned by tests/etkl/test_stacked_grids_query.py.
+#
+# © 2026 François Rosselet · CC-BY-4.0
+
+PREFIX tab: <https://w3id.org/iladub/tab#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+CONSTRUCT {
+  ?stack rdf:type tab:StackedGrids .
+  ?member tab:inStack ?stack .
+}
+WHERE {
+  # The evidence: a present link between two tables whose entry cells share one page.
+  ?succ tab:continuesTable ?head .
+  ?head tab:hasCell ?headCell .
+  ?headCell rdf:type tab:EntryCell ;
+            tab:onPage ?page .
+  ?succ tab:hasCell ?succCell .
+  ?succCell rdf:type tab:EntryCell ;
+            tab:onPage ?page .
+
+  # The head: no same-page predecessor (query-local, closed within the page).
+  FILTER NOT EXISTS {
+    ?head tab:continuesTable ?pred .
+    ?pred tab:hasCell ?predCell .
+    ?predCell rdf:type tab:EntryCell ;
+              tab:onPage ?page .
+  }
+
+  # The members: the head and every table that reaches it, whose entry cells are on its page.
+  ?member tab:continuesTable* ?head .
+  ?member tab:hasCell ?memberCell .
+  ?memberCell rdf:type tab:EntryCell ;
+              tab:onPage ?page .
+
+  BIND(IRI(CONCAT(STR(?head), "-stack")) AS ?stack)
+}
