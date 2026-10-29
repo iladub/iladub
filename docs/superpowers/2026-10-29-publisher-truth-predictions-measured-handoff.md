@@ -100,3 +100,35 @@ dump. Do the same. Never compile twice to answer two questions.
 - That the row-order fact the spec needs exists in the graph without the IRI suffix.
 - The previous handoff's § 4 items still stand: snapshot JSON carrying per-table pages and the new
   count, `lift_snapshots` lifting a truth block, R62 looking stale, R237, and SEC-value licensing.
+
+## Addendum: § 5 item 3 run, and refuted (2026-10-29, same session)
+
+**Ruling, reported, not yet confirmed directly:** the adopted-grid reader goes in `feed.table_records`,
+not in the scorer only. The maintainer gave this "yes" to a subagent of this session. It reached the
+controller only through that subagent's report, so **confirm it before the spec relies on it.**
+
+**The one-stub-column rule is REFUTED: it holds on 13 of 17 adopted grids.** Each was compiled offline
+(`BAML_LIVE` and `ILADUB_RECORD_READINGS` unset) from apple, bfs, ons, fed, caltrain and who-covid,
+dumped to N-Triples, and the columns that are not `tab:MeasureColumn` were counted per grid:
+
+| grid | non-measure columns | non-measure cells per row |
+| --- | --- | --- |
+| apple p2; bfs p5, p6; ons p7, p8; fed p3, p8, p10; caltrain p0–p3; who p2 | 1 | 1 on every row |
+| bfs `p5-datagrid-2` (12 cols, 19 rows) | **0** | 0 |
+| fed p2 (7 cols, 8 rows) | **3** | 3 ×7, 1 ×1 |
+| fed p5 (6 cols, 23 rows) | **3** | 1 ×2, 2 ×5, 3 ×16 |
+| who-covid p3 (5 cols, 45 rows) | **4** | 4 ×45 |
+
+The probe's `assert` would crash the shared feed on 4 grids. **Because the reader goes in the feed, the
+spec must rule on 0 and on several stub columns.** They are not corner cases. The criterion's own
+documents (apple p2; bfs p5 primary; ons p7, p8) all have exactly one.
+
+**Grid rows carry no order fact.** On all 17 grids, all 442 `tab:hasGridRow` nodes carry only
+`rdf:type` and `prov:wasDerivedFrom`, whose target (e.g. `…p2-line16`) has no triples. The only
+asserted order evidence is on cells: `tab:hasBBox`, `tab:firstGlyphEnd` and `tab:lastGlyphStart`. Row order,
+and therefore `row_occurrence` for repeated labels, must come either from cell bboxes or from a new
+row ordinal that adoption asserts, which is a vocabulary change. **The spec chooses.** The `-rN` IRI
+suffix is not an option.
+
+The dumps were in this session's scratchpad and do not outlive it. Recompile serially, about 15 minutes
+for the five documents plus about 19.5 for apple, and dump once.
