@@ -87,6 +87,16 @@ Items 12–15 were settled in this session after the builder check (owner: "agre
     comparison, scoring and bench. Its untyped-clause arbitration and `corrections/hero.yaml`
     process are retired once contract:02 lands, so only one system decides a clause.
 
+Item 16 was given after the design was first committed (`754d938`), and it governs items 5 and 15.
+
+16. **hdc-contract is paused, and out of scope, from 2026-10-30.** Work focuses on iladub and on
+    contract compiling with concrete GAFTA examples. hdc-contract imports iladub's methods
+    **only once they work in iladub, and not before**. No change to hdc-contract is part of
+    contract:01, contract:02 or their plans. Its code and ontology may still be **read** as a
+    source to port from, and `gco:` is still consumed through the read-only vendored snapshot.
+    Decision 5's "hdc-contract imports it" and decision 15's retirement step happen after the
+    pause ends, and are outside this design.
+
 ## 3. Goals, non-goals, anti-goals
 
 **Goals**
@@ -98,7 +108,8 @@ Items 12–15 were settled in this session after the builder check (owner: "agre
 - G3. Every decision carries a **trace that renders as plain GAFTA prose**, generated from its RDF.
 - G4. **No hand-tuned threshold** anywhere in the decision path. Thresholds are statistics from
   data (conformal quantiles, data-derived bandwidths) or a declared risk tolerance (α).
-- G5. The HDC core is **an iladub package**, and hdc-contract imports it.
+- G5. The HDC core is **an iladub package**, ported from hdc-contract's code, and it works in
+  iladub on GAFTA examples. hdc-contract importing it is outside this design (decision 16).
 
 **Non-goals**
 
@@ -282,16 +293,14 @@ dependencies are torch, `torch-hd==5.8.4` (hdc-contract `pyproject.toml:8`), msg
 
 None of the four imports arbitration, comparison, scoring or bench code. The move lands as
 `src/iladub/hdc/`, with those two couplings replaced by iladub types: the concept scheme is read
-from RDF, and `CompiledClause` becomes the `ctr:Clause` graph. hdc-contract then imports
-`iladub.hdc`. The exact replacement is the plan's, and the plan must **measure** every call site
-of the two couplings in hdc-contract first.
+from RDF, and `CompiledClause` becomes the `ctr:Clause` graph. The exact replacement is the
+plan's. It is a **port, not a move**: hdc-contract is left untouched (decision 16).
 
 **The moved code carries tuned constants**, and they do not come along — my call: hdc-contract
 `text.py` has `MIN_MARGIN = 0.02`, `MAP_THRESHOLD = 0.75` and `MAX_WINDOW = 4`, and
 `eval/hdc_sweep.py` sweeps D. `iladub.hdc` exposes similarities and leaves admission to the
-calibrated check (§ 4.5). hdc-contract keeps its constants in its own wrapper, so its suite stays
-green and its behaviour unchanged after it imports `iladub.hdc`. The move is staged: iladub ships
-`iladub.hdc`, then hdc-contract switches its imports in its own PR.
+calibrated check (§ 4.5). hdc-contract keeps its own code and constants, unchanged, while it is
+paused. How it adopts `iladub.hdc` later is its own question (decision 16).
 
 **Torch is a heavy dependency** for iladub's install. Whether `iladub.hdc` is an optional extra
 (`pip install iladub[hdc]`) is the plan's call. Making it optional is my lean.
@@ -340,8 +349,10 @@ is not entailment (research § B). Treating HDC as a proposer keeps it under § 
 - **D (HDC dimension)** is chosen from published capacity figures (research § A: exact recovery
   100% at D=8192 for 50 facts) and recorded. It must not be swept to fit a score.
 - **Source ownership** (CLAUDE.md): `gco:` is consumed, never edited. Written-back labels go into
-  the family model, not into `gco-concepts.ttl`. A label that belongs in the scheme is proposed
-  upstream to hdc-contract.
+  the family model, not into `gco-concepts.ttl`. A label that belongs in the scheme is recorded
+  as a proposal for hdc-contract, to raise when its pause ends. While it is paused, a disagreement
+  such as 48 cl.7 (contract-rung spec Q6) is disposed by a dated adjudication or by the trader,
+  not by a scheme edit.
 - **GAFTA text is never committed** (contract-rung spec § 6.6). Family-model examples store a
   reference (form, clause number, sha of the pinned PDF) **and** the n-gram vector or features, not
   the clause text. Whether the encoded vector counts as redistribution is part of § 11 O4. **Until
