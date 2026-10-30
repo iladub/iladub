@@ -93,9 +93,14 @@ Item 16 was given after the design was first committed (`754d938`), and it gover
     contract compiling with concrete GAFTA examples. hdc-contract imports iladub's methods
     **only once they work in iladub, and not before**. No change to hdc-contract is part of
     contract:01, contract:02 or their plans. Its code and ontology may still be **read** as a
-    source to port from, and `gco:` is still consumed through the read-only vendored snapshot.
+    reference, and `gco:` is still consumed through the read-only vendored snapshot.
     Decision 5's "hdc-contract imports it" and decision 15's retirement step happen after the
     pause ends, and are outside this design.
+17. **HDC is developed natively in iladub, as a domain in its own right, not a project imported
+    or ported.** It is built here on `torchhd`, and it gets a **dedicated skill**, because it is a
+    new domain for this repo. hdc-contract's `src/hdcc/hdc/` is prior art that may be read, not a
+    source to port. Decision 5 reads, under 16 and 17: *iladub develops HDC; hdc-contract may
+    later use iladub's.*
 
 ## 3. Goals, non-goals, anti-goals
 
@@ -108,8 +113,8 @@ Item 16 was given after the design was first committed (`754d938`), and it gover
 - G3. Every decision carries a **trace that renders as plain GAFTA prose**, generated from its RDF.
 - G4. **No hand-tuned threshold** anywhere in the decision path. Thresholds are statistics from
   data (conformal quantiles, data-derived bandwidths) or a declared risk tolerance (α).
-- G5. The HDC core is **an iladub package**, ported from hdc-contract's code, and it works in
-  iladub on GAFTA examples. hdc-contract importing it is outside this design (decision 16).
+- G5. HDC is **a native iladub domain** (`iladub.hdc`, on `torchhd`), with its own skill, and it
+  works on GAFTA examples. hdc-contract importing it is outside this design (decision 16).
 
 **Non-goals**
 
@@ -281,26 +286,28 @@ contract:02, **the family is declared by the caller** (`--family gafta`) — my 
 HDC "which family?" decider over the family models' prototypes is the natural later step, and it
 enters as one more named question.
 
-### 4.8 HDC core in iladub (decision 5)
+### 4.8 HDC in iladub: a native domain (decisions 5, 17)
 
-Measured at hdc-contract (its working tree, 2026-10-30): `src/hdcc/hdc/` is 501 lines over
-`codebook.py` (96), `encode.py` (81), `explain.py` (59) and `text.py` (265). Its third-party
-dependencies are torch, `torch-hd==5.8.4` (hdc-contract `pyproject.toml:8`), msgspec and numpy.
-**Two couplings must be cut before the move:**
+`iladub.hdc` is designed and written in iladub, on `torchhd`, as its own domain. Its operations
+are the ones this design needs and the research names (§ A): records as Σ bind(role, value) with
+unbind-and-clean-up, permutation for order and depth, prototypes rebuilt from durable examples,
+per-n-gram attribution for traces, and similarity as the only output. **Admission is never
+inside `iladub.hdc`**: it returns similarities, and the calibrated check (§ 4.5) decides. Its
+inputs are iladub's own types (the concept scheme read from RDF, the `ctr:Clause` graph), not
+hdc-contract's.
 
-- `codebook.py:10` and `text.py:13` import `hdcc.ontology.scheme.ConceptScheme`;
-- `encode.py:17` imports `hdcc.compile.model.CompiledClause, Filler`.
+**hdc-contract's `src/hdcc/hdc/` is prior art only** (read 2026-10-30: 501 lines; torch,
+`torch-hd==5.8.4`, msgspec, numpy). It is a cautionary one as well: its `text.py` carries
+`MIN_MARGIN = 0.02`, `MAP_THRESHOLD = 0.75` and `MAX_WINDOW = 4`, and `eval/hdc_sweep.py` sweeps
+D. Those are the tuned-constant class G4 forbids, and nothing in `iladub.hdc` reproduces them.
 
-None of the four imports arbitration, comparison, scoring or bench code. The move lands as
-`src/iladub/hdc/`, with those two couplings replaced by iladub types: the concept scheme is read
-from RDF, and `CompiledClause` becomes the `ctr:Clause` graph. The exact replacement is the
-plan's. It is a **port, not a move**: hdc-contract is left untouched (decision 16).
-
-**The moved code carries tuned constants**, and they do not come along — my call: hdc-contract
-`text.py` has `MIN_MARGIN = 0.02`, `MAP_THRESHOLD = 0.75` and `MAX_WINDOW = 4`, and
-`eval/hdc_sweep.py` sweeps D. `iladub.hdc` exposes similarities and leaves admission to the
-calibrated check (§ 4.5). hdc-contract keeps its own code and constants, unchanged, while it is
-paused. How it adopts `iladub.hdc` later is its own question (decision 16).
+**A dedicated skill comes first** (decision 17). HDC is new to this repo, so before `iladub.hdc`
+is planned, a skill is written (superpowers:writing-skills, with its RED/GREEN evidence) that
+fixes how HDC is done here: `torchhd` idioms and its pinned version, the VSA model choice, how D
+is chosen and recorded, capacity limits, the "similarities out, admission elsewhere" rule, trace
+attribution, and the traps the research names (bundling capacity, crosstalk, no meaning from a
+random codebook). The skill's content is its own design. This design only requires that it exist
+before the HDC plan.
 
 **Torch is a heavy dependency** for iladub's install. Whether `iladub.hdc` is an optional extra
 (`pip install iladub[hdc]`) is the plan's call. Making it optional is my lean.

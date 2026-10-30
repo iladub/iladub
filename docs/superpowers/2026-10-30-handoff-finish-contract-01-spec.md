@@ -14,6 +14,11 @@ the open review items 4–9 and put the § 5 segmenter rewrite to the owner.
 "what contract:02 reads", because contract:02 consumes the same graph. Check § 4.1 and § 7 of the
 HDC-first design before deleting.
 
+**Also queued (asserted, owner decision 17), and independent of contract:01:** write the
+dedicated HDC skill with superpowers:writing-skills (RED baseline first) before any `iladub.hdc`
+plan. HDC is a native iladub domain on `torchhd`, not a port of hdc-contract. Scope: the
+HDC-first design § 4.8.
+
 ## 1. Goal
 
 Get contract:01's spec to a state the owner approves, so its plan can be written and it can merge
