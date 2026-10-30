@@ -16,7 +16,7 @@ HDC-first design before deleting.
 
 **Also queued (asserted, owner decision 17), and independent of contract:01:** write the
 dedicated HDC skill with superpowers:writing-skills (RED baseline first) before any `iladub.hdc`
-plan. HDC is a native iladub domain on `torchhd`, not a port of hdc-contract. Scope: the
+plan. HDC is a native iladub domain on `torchhd`, learned from scratch: **do not read hdc-contract's HDC code** (decision 17). Scope: the
 HDC-first design § 4.8.
 
 ## 1. Goal

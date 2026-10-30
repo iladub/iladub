@@ -92,14 +92,15 @@ Item 16 was given after the design was first committed (`754d938`), and it gover
 16. **hdc-contract is paused, and out of scope, from 2026-10-30.** Work focuses on iladub and on
     contract compiling with concrete GAFTA examples. hdc-contract imports iladub's methods
     **only once they work in iladub, and not before**. No change to hdc-contract is part of
-    contract:01, contract:02 or their plans. Its code and ontology may still be **read** as a
-    reference, and `gco:` is still consumed through the read-only vendored snapshot.
+    contract:01, contract:02 or their plans. `gco:` is still consumed through the read-only
+    vendored snapshot. Its HDC code is not read at all (decision 17).
     Decision 5's "hdc-contract imports it" and decision 15's retirement step happen after the
     pause ends, and are outside this design.
 17. **HDC is developed natively in iladub, as a domain in its own right, not a project imported
     or ported.** It is built here on `torchhd`, and it gets a **dedicated skill**, because it is a
-    new domain for this repo. hdc-contract's `src/hdcc/hdc/` is prior art that may be read, not a
-    source to port. Decision 5 reads, under 16 and 17: *iladub develops HDC; hdc-contract may
+    new domain for this repo. **Nothing of hdc-contract's HDC is read** (owner, 2026-10-30): it
+    serves contract arbitrage, not compiling. HDC is learned from scratch, from the published
+    sources (research file), and applied to iladub natively, without that bias. Decision 5 reads, under 16 and 17: *iladub develops HDC; hdc-contract may
     later use iladub's.*
 
 ## 3. Goals, non-goals, anti-goals
@@ -296,10 +297,11 @@ inside `iladub.hdc`**: it returns similarities, and the calibrated check (§ 4.5
 inputs are iladub's own types (the concept scheme read from RDF, the `ctr:Clause` graph), not
 hdc-contract's.
 
-**hdc-contract's `src/hdcc/hdc/` is prior art only** (read 2026-10-30: 501 lines; torch,
-`torch-hd==5.8.4`, msgspec, numpy). It is a cautionary one as well: its `text.py` carries
-`MIN_MARGIN = 0.02`, `MAP_THRESHOLD = 0.75` and `MAX_WINDOW = 4`, and `eval/hdc_sweep.py` sweeps
-D. Those are the tuned-constant class G4 forbids, and nothing in `iladub.hdc` reproduces them.
+**hdc-contract's HDC code is not a source** (decision 17). It serves arbitrage, not compiling, and
+is not to be read by the skill's author, the plan's author or the implementer. The only inputs
+are the published sources in `docs/superpowers/research/2026-10-30-hdc-capabilities-research.md`
+and `torchhd`'s own documentation. (An earlier draft of this section summarised that code; that
+summary was withdrawn, and nothing in this design depends on it.)
 
 **A dedicated skill comes first** (decision 17). HDC is new to this repo, so before `iladub.hdc`
 is planned, a skill is written (superpowers:writing-skills, with its RED/GREEN evidence) that
