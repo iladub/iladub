@@ -63,7 +63,11 @@ the session scratchpad and are reproduced inline where they are short.
 | M-f | **an exact heading-to-label match** (casefold, whitespace collapsed, against the English `skos:prefLabel`/`altLabel` of the 37 `gco:ClauseType` concepts in hdc-contract `ontology/gco-concepts.ttl`) **types 39 of the 40 primary hero rows correctly** | `heading_match.py`. The one miss is 48 cl.7, heading `SALES BY NAMED VESSELS`: hero says `LoadingTerms`, the label match says `VesselNomination`, and the hero row is `needs_trader_check: true` |
 | M-g | the 6 `also` rows (WarRisk ×2, Prohibition ×2, Demurrage, VesselNomination) **are not reachable from headings**. Each clause's heading names only its primary type | same run: each `also` clause got its heading type only |
 | M-h | **111 of the 113 hero clauses** match some label. The 2 that don't are `EXPORT LICENCE -` and `SHIP'S CLASSIFICATION.` (stray trailing punctuation) | `coverage.py` |
-| M-i | across **all 80 compiled forms, 1,770 of 2,011 clauses** match some label (241 would fall back to gUFO only) | `coverage.py`. **This is coverage, not correctness.** No truth exists beyond the 4 hero forms |
+| M-i | across **all 80 compiled forms, 1,770 of 2,011 clauses** match some label. **But 15 of those 80 forms fail the § 5 membrane (M-o), so 241 is not what would fall back.** Over the forms the membrane admits, with the § 5 segmenter: **67 forms, 1,723 clauses, 1,503 match a label, 220 fall back to gUFO only.** With today's segmenter ported verbatim, the figures are 65 forms, 1,672 clauses, 1,485 matches and 187 fallbacks | `coverage.py` and `variants.py`. **This is coverage, not correctness.** No truth exists beyond the 4 hero forms |
+| M-o | **today's segmentation is not contiguous on 15 of the 80 forms.** 3 forms start above clause 1: 120 and 202 at 2, and 129 at 3. 14 forms, holding 311 clauses, have gaps. **The gaps are the segmenter's misses, not gaps in the forms.** For every missing number checked, the PDF text has the clause, written in a shape `_CLAUSE`/`_HEAD_TOKEN` do not take: <br>- no period after the number: `26 INSOLVENCY` (103), `12 PAYMENT` (62), `17 FUMIGATION` (202); <br>- a curly apostrophe: `SHIP’S` (62), `TRIBUNAL’S` (125); <br>- a colon: `GOODS: BIOMASS` (202), `GOODS: Rice` (120); <br>- sentence case: `Issues of Substantive Jurisdiction` (126), and all of 129. <br>**A missed clause is folded into the previous clause's body**, so today's output for those forms asserts wrong clause text | a `select form_no, clause_no from clause_spans` contiguity check, then a search of the `pdftotext -layout` text for each missing number (`gaps.py`). Re-measured 2026-10-30. The reviewer's "3 above 1, 14 forms / 311 clauses" holds, but the reviewer named only 120 and 129 |
+| M-p | **the truth is mostly unconfirmed: 42 of the 49 hero rows are `needs_trader_check: true`.** That is 34 of the 40 primary rows, all 6 `also` rows, and 2 of the 3 `absent` rows. The 6 confirmed primary rows are 48 cl.5, 16, 17, 18 and 49 cl.5, 16 | a yaml count over `corrections/hero.yaml`. The handoff's "43" counted the header comment at `hero.yaml:4` |
+| M-q | **the source does not mark where the text around the clauses begins and ends.** The last clause of each of the 4 hero forms runs to the end of the text, so its body includes the signature block and the `Printed in England and issued by GAFTA …` footer. The lines before clause 1 (title, contract number, parties block) are discarded by today's segmenter (`cur is None`, `extract.py:112`) | `clause_spans` rows for each form's highest clause number, read |
+| M-r | **untuned restatements of the segmenter's enumerated patterns, compared over the 80 forms** (`variants.py`): <br>- `\d+` for `\d{1,2}`: 0 forms change; <br>- `[….]{2,}` for `[….]{3,}`: 0 forms change; <br>- a heading carried over all following uppercase lines, instead of exactly one: 0 forms change (the corpus has 1 or 2 carry-overs, none over one line); <br>- a heading token defined as "no lowercase letter and no digit", instead of `[A-Z,&/()\-.']+`: 12 forms change, **no hero heading changes**, M-d holds 28/28, and 120 and 125 become contiguous. It brings in some new noise as well: `BROKERAGE %` (3), `PRICE US$ (US` (1), `OPTIONAL CLAUSES \| METHOD OF …` (1). <br>Dropping the digit condition too ("no lowercase letter") changes 39 forms and lowers matches to 1,480 | `variants.py`, in the hdc-contract session scratchpad |
 | M-j | **circularity:** the uppercase `altLabel`s (`"QUALITY"`, `"SAMPLING, ANALYSIS AND CERTIFICATES OF ANALYSIS"`, `"PERIOD FOR PRESENTATION OF THE VESSEL"`) are GAFTA headings, added to the scheme by people who read these forms | `ontology/gco-concepts.ttl:21,58,76`. M-f therefore measures label coverage on the forms the labels were written from. It does not show that the labels generalise |
 | M-k | gUFO is absent from both repos | `git grep -il gufo main` in iladub: empty. `grep -ri gufo ontology/` in hdc-contract: empty |
 | M-l | iladub's PDF reader is pdfminer (`src/iladub/readers.py:44-49`). hdc-contract's segmenter is written against **`pdftotext -layout`** output (`extract.py:35-43`), including its line-number margin (`_MARGIN`, `extract.py:12`) | read. **Not measured: whether pdfminer text segments the same way.** See § 9 seam S1 |
@@ -91,9 +95,16 @@ oracle tests; and a contract-corpus manifest for the 4 forms.
 | decision | class | why |
 | --- | --- | --- |
 | PDF → page text | PROCEDURAL, raw extraction | the source's text layer, read and not judged |
-| strip the line-number margin and the `page N of M` lines | PROCEDURAL, raw extraction | these are print furniture with an exact lexical form (`^\s*\d{1,4}\s{2,}`, `^page \d+ of \d+$`). Nothing is measured against a tolerance. The `\d{1,4}` and `\s{2,}` are the furniture's literal shape, not a fitted threshold. **A plan must keep this justification in the code, at the regex** |
-| **clause boundaries**: a clause starts at a line `^\s*(\d{1,2})\.\s+` whose number is greater than the previous start, followed by an uppercase heading run | PROCEDURAL, raw extraction + decidable exact arithmetic | the source declares the boundary typographically: a clause number and an uppercase heading. Extraction records that declaration. "Greater than the previous start" is an integer comparison. No geometry is involved and no tolerance is tuned. **The membrane, not the extractor, is the oracle:** if the numbering is not contiguous from the first clause, the compile is refused (next row). An earlier version of this design made segmentation a SPARQL derivation, which was rejected: "the previous chosen start" is recursive, and SPARQL 1.1 cannot express it without an iteration driver, which would be procedural again |
-| clause numbers contiguous, one heading per clause, spans non-overlapping and in line order | AXIOM, constraint → SHACL | closed-world over one holon (the contract): `sh:minCount`/`sh:maxCount 1` plus a holon-scoped `sh:sparql` constraint for contiguity and overlap |
+| a form feed (`\f`) becomes a space | PROCEDURAL, raw extraction | `\f` is the reader's page-break control character, not text. Replacing it keeps the line count, so line spans still point into the reader's output |
+| strip the line-number margin (`^\s*\d{1,4}\s{2,}`) | PROCEDURAL, raw extraction | print furniture with an exact lexical form. Nothing is measured against a tolerance. `\d{1,4}` and `\s{2,}` are the furniture's literal shape: line numbers on these forms run to 4 digits and are set off by a gutter of at least two spaces. They are not fitted thresholds. **A plan must keep this justification in the code, at the regex.** This rule is also why a clause number with no period (`26 INSOLVENCY`, M-o) is **not** taken as a boundary. `3        PRICE` and a margin line `12   text` have the same shape, so admitting the period-less form would make extraction ambiguous. Those forms are refused instead (the contiguity row) |
+| a line that is only a number (`^\s*\d{1,4}\s*$`) becomes empty | PROCEDURAL, raw extraction | the same furniture as the margin, on a line with no text after it (a margin number or a page number). The emptied line keeps its index |
+| drop `page N of M` lines (`^\s*page\s+\d+\s+of\s+\d+\s*$`, case-insensitive) | PROCEDURAL, raw extraction | print furniture with an exact lexical form |
+| **a clause start is a line `^\s*(\d+)\.\s+` followed by a non-empty heading** | PROCEDURAL, raw extraction | the source declares the boundary typographically: a number with a period, then a heading. `\d+` replaces today's `\d{1,2}`, which was an unexplained cap. On the 80 forms the change alters nothing (M-r). A line whose remainder has no heading (`7 or 8 days …`) is not a start |
+| **the heading is the maximal leading run of tokens with no lowercase letter and no digit**, after runs of two or more dot characters (`[….]{2,}`) become spaces | PROCEDURAL, raw extraction | "set in capitals" is the typographic declaration, stated by letter case and not by a list of allowed characters. Today's `[A-Z,&/()\-.']+` is an enumerated list, and that list is why `SHIP’S`, `TRIBUNAL’S` and `GOODS:` were missed (M-o). Digits are excluded because a number is not a heading word, and adding them back is measured to lower matches (M-r). A dot run of two or more is a leader: a single dot is punctuation (`ETC.`), and no heading uses two in a row. `[….]{2,}` replaces today's `{3,}` and alters nothing on the corpus (M-r). **Measured effect:** 12 forms change, no hero heading changes, 28/28 refs still resolve, and new noise enters a few headings (M-r). That noise only costs a label match. It never moves a boundary, so the clause is typed at gUFO and arbitrated |
+| **a heading with no run-in body continues over the following non-empty lines while each is entirely heading tokens and is not a clause start** | PROCEDURAL, raw extraction | a heading wrapped over several lines is still one heading. "Maximal" replaces today's "exactly one line", which was a cap with no reason. On the corpus they differ nowhere (M-r) |
+| **a candidate start is taken only if its number is greater than the previous start's** | PROCEDURAL, decidable exact arithmetic, **and a filter, paired with the membrane** | this row is a judgement about which lines are clauses, and is classed as one. It drops a numbered line whose number is ≤ the last start, such as a cross-reference or a numbered sub-list inside a clause body. In a document numbered in ascending order, a line like that cannot open a new clause. The membrane catches the filter's mistakes: a wrongly taken line with a number above the next expected one leaves a gap, and the compile is refused. **Two failures it cannot catch** (§ 10): <br>- a non-clause line numbered exactly next-expected that has a heading; <br>- a missing final clause, absorbed into the clause before it. <br>Emitting every candidate and letting a declared rule pick was considered. The pick would still need the ascending rule, so it moves the filter without removing it. An earlier version of this design made segmentation a SPARQL derivation, which was rejected: "the previous chosen start" is recursive, and SPARQL 1.1 cannot express it without an iteration driver, which would be procedural again |
+| **the lines before the first start are the contract's `ctr:preamble`; the last clause's body runs to the end of the text** | PROCEDURAL, raw extraction | the source declares no end for the clause sequence (M-q). Any trim, such as cutting at a signature block, would be a judgement about what a signature block looks like, so none is made. The last clause's `ctr:text` therefore includes the signature block and the printer's footer, and the consumer is told so (§ 6.5). The preamble is kept, where today's segmenter drops it, so no source text is lost. Parsing it (parties, dates) is a later criterion |
+| **clause numbers contiguous from 1**, one heading per clause, spans non-overlapping and in line order | AXIOM, constraint → SHACL | closed-world over one holon (the contract): `sh:minCount`/`sh:maxCount 1` plus a holon-scoped `sh:sparql` constraint for contiguity and overlap. **The first clause must be 1.** Every start above 1 and every gap measured on the 80 forms is a missed clause, not a feature of the form (M-o). A missed clause is folded into the previous clause's body, so admitting gaps would assert wrong `ctr:text`. **Measured consequence:** with the rows above, 67 of the 80 forms compile and 13 are refused (101, 103, 104, 114, 122, 126, 129, 201, 202, 62, 79b, 83, 94a), mostly for period-less numbers and sentence-case headings. All 4 hero forms compile. A refusal names the form and its missing numbers, and is the finding a later criterion works from |
 | **domain type of a clause** = the scheme concept whose label equals the clause heading (casefold, collapsed whitespace) | AXIOM, derivation → SPARQL `CONSTRUCT` | open-world and evidence-positive. The type is derived only when a label equal to the heading is **present**. Equality is exact, and no similarity score or cut-off is involved |
 | **the gUFO type of every clause** | AXIOM, by alignment (no derivation step) | `ctr:Clause rdfs:subClassOf <gUFO class>` in `ctr-gufo-align.ttl`. Every clause is asserted `a ctr:Clause` on the positive evidence that it is a numbered clause of the contract. So the coarse type is never inferred from the **absence** of a domain type, and § 7 holds. "Fallback-typed" means a clause that carries the gUFO type and no domain type. That is a holon-scoped closed **read** by the consumer (hdc-contract), not a fact derived into the graph |
 | a heading that matches two concepts' labels | AXIOM, constraint → SHACL | `sh:maxCount 1` on `ctr:clauseType`. If the scheme gives two concepts the same label, the compile is refused and the fault is reported against the **scheme**, not resolved here |
@@ -140,6 +151,7 @@ contract:01 is declared `prog:met false`, `prog:retrospective false`, with
   - `ctr:heading` (`xsd:string`).
   - `ctr:text` (`xsd:string`, the clause body).
   - `ctr:lineStart`/`ctr:lineEnd` (`xsd:positiveInteger`).
+  - `ctr:preamble` (Contract → `xsd:string`, at most one): the text before clause 1 (§ 5).
   - `ctr:clauseType` (Clause → `skos:Concept`, **no `rdfs:range` narrower than `skos:Concept`**,
     because the domain module is external).
   - How each `ctr:Contract`/`ctr:Clause` relates to the etkl holon classes
@@ -185,8 +197,15 @@ ContractResult`, in six steps:
 1. **Read.** Get the text layer (seam S1 decides pdfminer or `pdftotext -layout`). Refuse when
    there is zero non-whitespace text.
 2. **Extract (PROCEDURAL).** Port `segment_clauses` and its helpers from hdc-contract
-   `extract.py:48-116`, with the § 5 justification at each regex. Emit RDF directly:
-   - one `ctr:Contract`;
+   `extract.py:48-116` **as § 5 restates them**, not verbatim. Four changes:
+   - `\d+`;
+   - `[….]{2,}`;
+   - the letter-case heading token;
+   - the maximal carry-over.
+
+   Put the § 5 justification at each regex. A port test pins the M-r figures (hero counts
+   30/26/27/30, 28/28 refs, 67 admitted forms) so that a later drift is caught. Emit RDF directly:
+   - one `ctr:Contract`, with its `ctr:preamble`;
    - one `ctr:Clause` per segment, with number, heading (whitespace collapsed, and **nothing
      else normalised**, see § 11 Q4), text and line span.
 3. **Derive (AXIOM).** Run `vocab/queries/contract-clause-type.rq` as a `CONSTRUCT ?clause
@@ -219,8 +238,14 @@ The only contract between the repos is the `asserted` graph:
 - the gUFO type through the alignment module.
 
 A clause without `ctr:clauseType` is what hdc-contract arbitrates. On the hero forms that is 2
-clauses (M-h), and across the 80 forms it would be 241 (M-i). The companion spec owns everything
+clauses (M-h). Across the 67 forms the membrane admits, it would be 220 (M-i). The 13 refused
+forms produce no graph, so hdc-contract has nothing of theirs to read. The companion spec owns everything
 downstream.
+
+Two properties of the text that the consumer must not mistake for clause content (M-q):
+
+- the last clause's `ctr:text` includes the signature block and the printer's footer;
+- the preamble is on `ctr:Contract`, not on any clause.
 
 ### 6.6 GAFTA text
 
@@ -263,6 +288,8 @@ Each oracle test above, and each unit test on the synthetic contract, ships with
 | --- | --- |
 | hero forms conform | drop `sh:maxCount 1` from `ctr:clauseType`, then give two concepts the same label in a test scheme: the shape must be what refuses |
 | contiguity constraint | delete clause 3's start line from the synthetic contract |
+| contiguity starts at 1 | delete clause 1's start line from the synthetic contract: numbering 2..3 is contiguous but must still be refused |
+| letter-case heading token | put `SHIP’S` (curly apostrophe) in a synthetic heading: reverting to today's enumerated class must lose the clause and turn the port test red |
 | primary rows agree | change the `CONSTRUCT`'s equality to always-false: 0 rows agree |
 | absent types | inject a `ctr:clauseType gco:Deficiency` on a 49 clause |
 | gold refs resolve | renumber one clause in the extractor's output |
@@ -293,10 +320,17 @@ Each oracle test above, and each unit test on the synthetic contract, ships with
   go to hdc-contract, which is the arbitration loop's job. Do not read 39/40 as accuracy on
   GAFTA as a whole.
 - **Segmentation is the one PROCEDURAL step that a reviewer could call a heuristic** (the
-  uppercase heading run, `_HEAD_TOKEN`). § 5 argues it is typographic raw extraction, with the
-  membrane as the oracle. If review rejects that argument, the § 8 route is NEURAL, which
-  ruling 1 rules out for this slice. **That conflict goes to the maintainer and is not resolved in
-  the plan.**
+  letter-case heading run and the ascending-number filter). § 5 argues that each construct is
+  typographic raw extraction or exact arithmetic, with the membrane as the oracle. If review
+  rejects that argument, the § 8 route is NEURAL, which ruling 1 rules out for this slice.
+  **That conflict goes to the maintainer and is not resolved in the plan.**
+- **The membrane does not see two segmentation failures** (§ 5, the filter row):
+  - a non-clause line that is numbered exactly next-expected and has a heading;
+  - a final clause that was missed.
+
+  Both leave the numbering contiguous. None was found on the 4 hero forms: M-d resolves 28/28
+  refs, and each last clause is `METHODS OF ANALYSIS`, the true final heading. The 63 other
+  admitted forms were not checked for them.
 - **Scheme drift.** The vendored gco snapshot can diverge from hdc-contract. The pin, and a test
   that fails when the snapshot's sha header doesn't match its content hash, keep that visible.
 

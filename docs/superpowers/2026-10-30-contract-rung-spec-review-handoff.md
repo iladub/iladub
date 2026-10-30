@@ -70,6 +70,20 @@ below were not all re-measured (see § 4).
 - Everything in spec § 11.
 - The hdc-contract companion spec has not been started.
 
+## 4b. Done in the follow-up session (2026-10-30, uncommitted)
+
+- The § 4 counts were re-measured and folded into spec § 3 as M-o and M-p. 3 forms start above 1
+  (120, 202, 129); 14 forms / 311 clauses have gaps; 42 of the 49 rows are flagged (not 43).
+- Items 1-3 are folded into spec § 5, with one row per construct. Gaps are the segmenter's misses
+  (M-o), so the membrane is **contiguous from 1**: 67/80 forms are admitted and 13 refused. M-i is
+  restated over the admitted forms (220 fallback). The extractor is restated untuned (M-r):
+  `\d+`, `[….]{2,}`, the letter-case heading token, the maximal carry-over, and a kept
+  `ctr:preamble`. The trailing signature/footer is documented in § 6.5.
+- Scripts: `gaps.py`, `variants.py`, `refused.py`, `coverage.py` and `heading_match.py`, in
+  `/private/tmp/claude-501/-Volumes-WD-Green-dev-git-hdc-contract/9b1760f4-94d2-4cf9-8ac4-1361fa846c8e/scratchpad/`.
+  They are ephemeral.
+- Still open: § 3 items 4-9.
+
 ## 5. Next concrete action
 
 In a fresh session, re-measure the two counts in § 4. Then rewrite spec § 5 with one row per
