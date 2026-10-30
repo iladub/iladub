@@ -19,6 +19,14 @@ dedicated HDC skill with superpowers:writing-skills (RED baseline first) before 
 plan. HDC is a native iladub domain on `torchhd`, learned from scratch: **do not read hdc-contract's HDC code** (decision 17). Scope: the
 HDC-first design § 4.8.
 
+**SUPERSEDES the asserted action above (owner decision 18, given after it was written).**
+Nothing comes from hdc-contract, and contract compiling is domain-agnostic, with GAFTA as one
+example family among several. contract:01 therefore needs a **rescope**, not a ruling update: its
+`gco` snapshot, its hero truth, its ported segmenter and its § 3 measurements all came from
+hdc-contract. The next action is **proposed**: re-brainstorm contract:01 with the owner from the
+HDC-first design's decision 18 and its "Consequence for contract:01" paragraph, starting from
+which second contract domain to bring in (§ 11 O5).
+
 ## 1. Goal
 
 Get contract:01's spec to a state the owner approves, so its plan can be written and it can merge

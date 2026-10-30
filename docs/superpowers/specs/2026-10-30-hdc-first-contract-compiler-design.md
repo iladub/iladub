@@ -92,16 +92,28 @@ Item 16 was given after the design was first committed (`754d938`), and it gover
 16. **hdc-contract is paused, and out of scope, from 2026-10-30.** Work focuses on iladub and on
     contract compiling with concrete GAFTA examples. hdc-contract imports iladub's methods
     **only once they work in iladub, and not before**. No change to hdc-contract is part of
-    contract:01, contract:02 or their plans. `gco:` is still consumed through the read-only
-    vendored snapshot. Its HDC code is not read at all (decision 17).
+    contract:01, contract:02 or their plans. Nothing comes from it (decision 18).
     Decision 5's "hdc-contract imports it" and decision 15's retirement step happen after the
     pause ends, and are outside this design.
 17. **HDC is developed natively in iladub, as a domain in its own right, not a project imported
     or ported.** It is built here on `torchhd`, and it gets a **dedicated skill**, because it is a
     new domain for this repo. **Nothing of hdc-contract's HDC is read** (owner, 2026-10-30): it
     serves contract arbitrage, not compiling. HDC is learned from scratch, from the published
-    sources (research file), and applied to iladub natively, without that bias. Decision 5 reads, under 16 and 17: *iladub develops HDC; hdc-contract may
-    later use iladub's.*
+    sources (research file), and applied to iladub natively, without that bias.
+18. **Nothing comes from hdc-contract, and iladub's contract compiling is domain-agnostic**
+    (owner, 2026-10-30). Not its code, not its `gco:` scheme, not its `hero.yaml`/`gold.yaml`
+    truth, not its segmenter, not its compiled store. **GAFTA forms are used as examples**, one
+    interesting case among several, and **other contract types from other domains are brought in**
+    alongside them. iladub models each contract family itself (§ 4.3), so the GAFTA family model,
+    its clause types and its truth are authored in iladub from the GAFTA PDFs. Decision 5 reads,
+    under 16–18: *iladub develops HDC; hdc-contract may later use iladub's.*
+
+**Consequence for contract:01 (decision 18), not yet worked through.** The contract-rung spec
+depends on hdc-contract throughout: the `gco` scheme snapshot (its § 6.3), the hero truth from
+`hero.yaml`/`gold.yaml` (§ 6.3, § 7), the segmenter ported from `extract.py` (§ 6.4), and
+measurements taken on hdc-contract's compiled store (§ 3). Under decision 18 each of these must be
+replaced by iladub's own: its own GAFTA family model and truth, its own segmenter, and
+re-measurement on the PDFs. That is a rescope of contract:01, not a ruling update.
 
 ## 3. Goals, non-goals, anti-goals
 
@@ -132,7 +144,8 @@ Item 16 was given after the design was first committed (`754d938`), and it gover
 - A model call that recurs on the same gap.
 - A model answer entering the graph without a `PromotionDecision`.
 - A second layer of hand-tuned constants replacing the first.
-- Re-authoring HGA, or editing the GAFTA scheme (`gco:`), which is hdc-contract's.
+- Re-authoring HGA.
+- A design that only works for GAFTA (decision 18).
 
 ## 4. The architecture
 
@@ -144,7 +157,7 @@ covers these:
 | question | its answer | first decider tried |
 | --- | --- | --- |
 | Q-start: where does clause *n* begin? | a line | exact rule (contract:01 § 5) |
-| Q-type: what kind of clause is this? | a `gco:ClauseType` concept, or "none of these" | exact rule (heading = label), then HDC |
+| Q-type: what kind of clause is this? | a clause-type concept of the family model, or "none of these" | exact rule (heading = label), then HDC |
 | Q-family: which family model does this PDF belong to? | a family model IRI | declared by the caller (§ 4.7) |
 
 **contract:02 answers Q-type only (decision 14).** Q-start stays exactly as contract:01 has it.
@@ -186,10 +199,11 @@ is cheap and typed. Haiku is the most capable and the least owned.
 ### 4.3 The family model
 
 The family model is what makes "compile against the model" true (the parallel handoff's two
-phases: **model once per family, compile per PDF**). For GAFTA it holds:
+phases: **model once per family, compile per PDF**). The format is the same for every family,
+whatever its domain; GAFTA is one family. A family model holds:
 
-- the clause types: a **reference** to the `gco:` scheme (hdc-contract's, consumed, vendored
-  read-only per the contract-rung spec § 6.3), never a copy;
+- the family's **clause types**, a SKOS scheme authored in iladub from the family's own
+  documents (decision 18);
 - the **durable examples** behind each HDC prototype: clause-type label, the example's text
   source (form and clause number, not GAFTA text where licensing forbids it, § 8), who
   admitted it, and when. Prototypes are rebuilt from examples, never stored (research § A,
@@ -357,11 +371,10 @@ is not entailment (research § B). Treating HDC as a proposer keeps it under § 
   arrive, are computed from data. The § 4.9 3-point A/B margin is declared before the A/B runs.
 - **D (HDC dimension)** is chosen from published capacity figures (research § A: exact recovery
   100% at D=8192 for 50 facts) and recorded. It must not be swept to fit a score.
-- **Source ownership** (CLAUDE.md): `gco:` is consumed, never edited. Written-back labels go into
-  the family model, not into `gco-concepts.ttl`. A label that belongs in the scheme is recorded
-  as a proposal for hdc-contract, to raise when its pause ends. While it is paused, a disagreement
-  such as 48 cl.7 (contract-rung spec Q6) is disposed by a dated adjudication or by the trader,
-  not by a scheme edit.
+- **Source ownership** (CLAUDE.md): every family model, its clause types and its truth are
+  iladub's own (decision 18). Nothing is vendored from hdc-contract.
+- **Domain-agnostic** (decision 18): nothing in the compiler, the ladder, the check or the trace
+  names GAFTA. A test that only one family passes does not show the design works.
 - **GAFTA text is never committed** (contract-rung spec § 6.6). Family-model examples store a
   reference (form, clause number, sha of the pinned PDF) **and** the n-gram vector or features, not
   the clause text. Whether the encoded vector counts as redistribution is part of § 11 O4. **Until
@@ -444,8 +457,9 @@ handoff § 2 are not to be trusted by then). This design hands it:
 - **The calibration set does not exist.** Of the 49 hero rows, 42 are `needs_trader_check: true`
   (contract-rung spec M-p). The check starts by admitting nothing, and contract:02's test 4 needs
   owner labels first. Cold start is safe, because it means asking, not guessing. But it is slow.
-- **Lexical HDC on GAFTA headings is circular.** The `gco` altLabels were written from these
-  forms (contract-rung spec M-j). The A/B must hold out whole forms.
+- **Lexical HDC on headings is circular** when a family's labels are written from the forms it
+  is tested on (contract-rung spec M-j showed this for hdc-contract's scheme). The A/B must hold
+  out whole forms, and a second family checks it is not GAFTA-shaped.
 - **Haiku is a vendor dependency.** Decision 6 accepts it. Decision 8 bounds it: its calls should
   trend to zero.
 - **Jev is a second vendor** (`typesafeai`). It is used only on candidate sets, and the ladder
@@ -464,6 +478,8 @@ handoff § 2 are not to be trusted by then). This design hands it:
 - **O2. The starting α** for Q-type.
 - **O3. Record decision 1 in CLAUDE.md?** CLAUDE.md is edited only on explicit request. § 5
   argues no edit is required.
+- **O5. Which other contract domains**, and where their documents come from (public templates,
+  synthetic forms), so the second family is chosen before the contract:02 plan.
 - **O4. GAFTA licence**, including whether stored n-gram vectors of clause text count as
   redistribution (the contract-rung spec's Q5, widened).
 
