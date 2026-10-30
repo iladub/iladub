@@ -1362,9 +1362,10 @@ def test_cbh_p0_admits_no_metadata():
 @pytest.mark.corpus
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
-    """LEAK, still open as R74: line 75 belongs to the SECOND table on the page (stock at
-    port) and is admitted into the roster's grid. Recorded in the data-grid spec §8.4 as
-    'cbh's rectangle spans a stacked panel'; tab:StackedGrids is defined and not derived.
+    """LEAK, recorded as R74 (R74 closed by derivation on 2026-10-30): line 75 belongs to the
+    SECOND table on the page (stock at port) and was admitted into the roster's grid. Recorded
+    in the data-grid spec §8.4 as 'cbh's rectangle spans a stacked panel'; tab:StackedGrids was
+    then defined and not derived.
 
     Its measure is in fact table A's exact grand total (374,904 + 737,289 + 660,363 +
     178,708 = 1,951,264 — spec 2026-08-09 §3.6), so the line carries two tables' ink.
@@ -1372,9 +1373,10 @@ def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
     THE LEAK STOPPED, 2026-09-17, and this test now pins its ABSENCE. Refusing the
     decoration universe left line 75 outside the grid: the rectangle that spanned the
     stacked panel was the drawn one. This is a REPAIR that fell out of a change aimed
-    elsewhere, so it is pinned rather than celebrated — and it does NOT close R74, which
-    is about `tab:StackedGrids` being defined and underived, not about this one line. One
-    page's leak closing by side effect is evidence for that row, not a disposal of it."""
+    elsewhere, so it is pinned rather than celebrated. R74 closed by derivation on 2026-10-30,
+    not by this line: `vocab/queries/stacked-grids.rq` derives `tab:StackedGrids` (cbh p0's four
+    rosters, `…p0/r2#htable1-stack`). One page's leak closing by side effect was evidence for
+    that row, not a disposal of it."""
     g = derive_data_grid(CBH, 0)
     assert set(g.rows) & CBH_P0_TABLE_B == set(), "the table-B leak changed"
 

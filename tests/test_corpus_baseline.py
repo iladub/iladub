@@ -66,3 +66,23 @@ def test_the_fingerprint_moves_with_every_input_class_and_only_with_inputs(tmp_p
         is_input = rel.startswith("tests/ground-truth/") or not rel.startswith(("tests/", "docs/"))
         assert moved == is_input, f"{rel}: fingerprint moved={moved}, is an input={is_input}"
     assert corpus_baseline.fingerprint(tmp_path) == base
+
+
+def _region_reasons(baseline_dir: Path) -> list[str]:
+    """Every `pages[*].regions[*].reason` of the documents `corpus_baseline.DOCUMENTS` lists,
+    read from the snapshots under `baseline_dir`."""
+    assert corpus_baseline.DOCUMENTS, "no documents listed: a vacuous scan"
+    reasons: list[str] = []
+    for p in corpus_baseline.DOCUMENTS:
+        snap = json.loads((baseline_dir / f"{Path(p).stem}.json").read_text())
+        for page in snap["pages"]:
+            reasons.extend(r["reason"] for r in page["regions"])
+    return reasons
+
+
+def test_multi_table_ambiguous_fires_nowhere_in_the_baseline():
+    """tab:01 (R74 spec § 4.1, § 11.2 F8): no region of any baseline document escalates
+    MULTI_TABLE_AMBIGUOUS, and the scan read at least one region (a vacuous pass fails)."""
+    reasons = _region_reasons(BASELINE)
+    assert reasons, "no region was read"
+    assert "MULTI_TABLE_AMBIGUOUS" not in reasons

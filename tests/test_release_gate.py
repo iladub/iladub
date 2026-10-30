@@ -106,7 +106,7 @@ def test_live_repo_gate_is_clear_and_it_is_the_REGISTER_that_clears_it():
     """O1 + O2 on the live repo (spec §5). O1 alone cannot tell a gate that
     passes because a drain was recorded from one that passes because the query
     stopped matching, so the same facts are re-run with the drains stripped and
-    must block on exactly the two documents that declare a contradiction."""
+    must block on exactly the three documents that declare a contradiction."""
     facts = extract(REPO)
     since = date(2026, 8, 2)  # v0.0.3; pinned, not read from tags (they move)
     assert blocking_docs(facts, since) == []
@@ -115,6 +115,7 @@ def test_live_repo_gate_is_clear_and_it_is_the_REGISTER_that_clears_it():
         facts.remove((d, None, None))
     assert blocking_docs(facts, since) == [
         "docs/superpowers/plans/2026-08-10-the-decision-membrane.md",
+        "docs/superpowers/plans/2026-10-29-r74-stacked-grids.md",
         "docs/superpowers/specs/2026-08-10-the-decision-membrane-design.md",
     ]
 

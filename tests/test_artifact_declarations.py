@@ -295,8 +295,12 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # RE-MEASURED 2026-10-15 (holon:06 Task 4, the generated worked example): the `.ttl` population
     # is **189** — `examples/raw-to-clean-traversal.ttl`; added = exactly that one file, removed =
     # none (set-measured after `git add`). The `.rq` population does not move.
+    # RE-MEASURED 2026-10-29 (R74 stacked-grids Task 3): the `.rq` population is **59** —
+    # `vocab/queries/stacked-grids.rq`, the AXIOM derivation of tab:StackedGrids. Measured as a SET
+    # against `488d439`'s `vocab/queries/*.rq`: added = exactly that one file, removed = none.
+    # Every `tab:` term it names was already declared. The `.ttl` population does not move.
     assert len(vocab_nodes) == len(artifact_files()) == 189
-    assert len(query_nodes) == len(query_files()) == 58
+    assert len(query_nodes) == len(query_files()) == 59
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

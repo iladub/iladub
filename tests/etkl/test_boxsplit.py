@@ -599,3 +599,18 @@ def test_a_title_is_typed_by_its_carried_origin_not_by_the_frame(frame):
     assert set(types) == {title, peeled}, types
     assert types[title] == {"RegionCaption"}, types
     assert types[peeled] == {"RegionCaption", "SectionCaption"}, types
+
+
+@corpus_only
+def test_cbh_p0_the_one_corpus_trip_is_a_framed_single_table():
+    """tab:01 (R74 spec § 4.1): on cbh p0 exactly one band trips the gate once its frame is
+    cleared; that band is framed, and `compile_tables` judges it a single table from the frame."""
+    bands = page_bands(CBH, 0)
+    trips = [i for i, b in enumerate(bands)
+             if is_multi_table_ambiguous(dataclasses.replace(b, frame=None))]
+    assert len(trips) == 1, trips
+    idx = trips[0]
+    assert bands[idx].frame is not None
+    chosen, why = _multi_table_judgement(compile_tables(CBH, 0).graph, idx)
+    assert chosen == "single"
+    assert "frame" in why, why

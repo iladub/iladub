@@ -139,6 +139,13 @@ ESCALATION_FURNISH_RQ = _QUERIES / "escalation-furnish.rq"
 # once per compile, by `_seal`'s derivation step — `grep -n MEMBRANE_HEALTH_RQ` finds both.
 MEMBRANE_HEALTH_RQ = _QUERIES / "membrane-health.rq"
 
+# STACKED GRIDS (R74, spec 2026-10-28 § 5, § 11). The derivation that names a stack of tables
+# on one page — tables linked by `tab:continuesTable` whose entry cells share one `tab:onPage`.
+# Named beside the two derivations above for the same reason they are: a reader of the seam has
+# to be able to see which derivations run in it. `grep -n STACKED_GRIDS_RQ` finds its one call,
+# in `compile_document`, after the adoption loop and before `_seal`.
+STACKED_GRIDS_RQ = _QUERIES / "stacked-grids.rq"
+
 _ONTOLOGY = _QUERIES.parent / "ontology"
 _ESCALATION_VOCAB_FILES = ("risk.ttl", "etkl.ttl")
 _ESCALATION_VOCAB = None
@@ -2031,6 +2038,21 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     #   of them BELOW this comment and tripped `tests/test_source_citations.py`. A same-file
     #   downward line citation is a hazard, not a measurement (CLAUDE.md plan rule 7): the edit
     #   that corrects it is itself capable of invalidating it.
+    # THE STACK DERIVATION (R74). PROCEDURAL glue over an AXIOM (spec § 5): which tables form a
+    # stack is decided by `stacked-grids.rq`, a CONSTRUCT over `tab:continuesTable` and the
+    # `tab:onPage` of each table's entry cells; whether a stack is well formed is decided by
+    # `tab:StackedGridsShape` at the seal. This line only runs the query and merges its triples
+    # — the step is irreducible because a CONSTRUCT does not write its own output into the graph
+    # it reads, so something must merge it, and that is all this does. It decides nothing.
+    #   WHERE, and why here: after the adoption loop, the last step that changes which tables
+    #   the graph holds (it may withdraw one, never a member of a multi-member chain), with no
+    #   write of `tab:continuesTable` or `tab:onPage` between it and here; and before `_seal`,
+    #   so the membrane sees the stack. UNCONDITIONAL — it does not read `validate_shapes`: the
+    #   stack is part of the document's record, not validation fodder. It writes neither
+    #   `recognized` nor `section_facts`, so the comment above still describes their last writers;
+    #   a document carrying a stack carries a same-page `continuesTable`, which only the stitching
+    #   loop writes, and that loop sets `section_facts` — so the TAB leg runs on it.
+    graph += interpret.run(STACKED_GRIDS_RQ, graph)
     _seal(graph, _legs_for_document(recognized, section_facts), validate_shapes)
 
     asserted = sum(rep.asserted for rep in pages)

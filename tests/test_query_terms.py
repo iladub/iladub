@@ -104,6 +104,11 @@ def test_the_population_is_every_file_in_vocab_queries():
     RE-MEASURED 2026-10-15 (holon:06 Task 2): 57 -> 58, `raw-to-clean-traversal.rq` — the AXIOM
     derivation of the grounding portal and Clean holon from present promotions (spec
     `2026-10-15-raw-to-clean-traversal-design.md` § 3.3). Measured as a set against `c92aae3`:
-    added = exactly that file, removed = none."""
+    added = exactly that file, removed = none.
+
+    RE-MEASURED 2026-10-29 (R74 stacked-grids Task 3): 58 -> 59, `stacked-grids.rq` — the AXIOM
+    derivation of tab:StackedGrids from intra-page tab:continuesTable runs (spec
+    `2026-10-28-r74-stacked-grids-design.md` § 4.2, § 11.2 F1/F4). Measured as a set against
+    `488d439`: added = exactly that file, removed = none."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 58, len(query_files())
+    assert len(query_files()) == 59, len(query_files())

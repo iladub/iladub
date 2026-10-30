@@ -323,3 +323,221 @@ Any other line in the diff refutes the prediction and must be explained before m
 - **D1 and D3:** close R74 by deriving the re-worded `tab:StackedGrids`, which means tables on one page linked by `tab:continuesTable`. The derivation is a SPARQL CONSTRUCT, and a SHACL shape checks it. Deprecating the term instead was rejected.
 - **D2:** the gate's tuned `_GUTTER_DOMINANCE = 2.0` gets a new residue row. That row records that the next change to the gate is a NEURAL proposer (the 2026-09-17 ruling). It does **not** block tab:01.
 - **D4:** stale `file:line` citations in `prog:statement`s are corrected in place. The same change removes tab:04's edge to the closed R77.
+
+## 11. Adversarial review after loop A (2026-10-29)
+
+Re-measured at `main` `123301e` (loop A, PR #382, merged after this spec's `087c1ca`), in an
+isolated worktree, with page-scope and single-document probes only: no full-corpus compile and no
+`corpus_baseline.py regenerate`. Each finding is typed in this repo's epistemics. An
+**assertion** is measured here, with its measurement inline. A **proposition** rests on a
+prediction the implementing loop must run. Findings that need the maintainer are collected in
+§ 11.4. The rulings above are not re-opened.
+
+### 11.1 Drift since `087c1ca`
+
+Loop A changed compile inputs (`git diff --stat 087c1ca HEAD -- src vocab`):
+
+- `etkl/datagrid.py` (+5): `tab:rowIndex` and `tab:colIndex` are emitted.
+- `feed.py` and `truth.py`.
+- `tab-datagrid.ttl` (+9): `tab:rowIndex`.
+- `tab-shapes.ttl` (+60): four grid-index shapes.
+
+`compile.py`, `segment.py` and `document.py` are untouched, and so is
+`tests/corpus-baseline/cbh-stem-2026-08-03.json`.
+
+| Spec claim | At `123301e` | Drift |
+|---|---|---|
+| M1: no snapshot region carries `MULTI_TABLE_AMBIGUOUS` | `grep -h '"reason"' tests/corpus-baseline/*.json \| sort \| uniq -c` finds 0 such lines. Each document's set of escalated reasons is identical to M1's table | none |
+| M2: one trip, on cbh p0 band 10, which is framed; 27 + 37 pages; 0 errors | A scratch probe ran `page_bands`, then `is_multi_table_ambiguous(dataclasses.replace(b, frame=None))` on every band. Output: `pages {'corpus': 27, 'held-out': 37}`, `trips [('cbh-stem-202', 0, 10, True, 'PORT WHEAT MAIN WHEAT GRADES BARLEY CANOLA OTHER TOTAL')]`, `errs []` | none |
+| M3: bands 10 and 11 choose `single` with the frame rationale; the skip is at compile.py:1298-1310 | Both rationales are reproduced byte for byte. `if band.frame is not None:` is at `compile.py:1282`, and the escalation at `:1301` | none. The spec's range starts at the `else` arm's record; the branch itself is at `:1282` |
+| M4: 3 passed | `3 passed, 28 deselected in 9.22s` | none |
+| M6: bfs p5, fed p1 and fed p6 each yield two grids; cbh p0 yields (45, 16); apple p0 yields (31, 5) | `derive_data_grids` gives identical tuples on all 64 pages | none |
+| M7: cbh offline: 16,154 triples; 4 HierarchicalTables; 3 links; 60/80/0; 0/0/0 | identical (`env -u BAML_LIVE`) | none |
+| M8: one intra-page chain (cbh) and one cross-page chain (graincorp-stem) | identical, read from the `chains` of the eleven snapshots | none |
+| M9: highest row R340; 96 closed of 330 | Highest row is now **R348**, raised at **97/338** (`residues-open.md`). Loop A closed R341 | **drift**: the implementing loop computes the tally when it raises a row |
+| § 8: "whether a validation report … enters every document's graph" | `_seal` writes only the act's `rdf:type`, `prov:used` and `sh:conforms`, plus one `etkl:refusingLeg` per *refusing* leg (`document.py`, `_seal`, the `act = URIRef(...)` block). A new shape that conforms adds no triple to any document | **resolved by reading**. The regenerate confirms it |
+| § 8: whether `tab:` is published | see F2 | **resolved, against the spec** |
+
+### 11.2 Findings
+
+**F1 — ASSERTION, blocking. The § 4.2 evidence rule fires on graincorp-stem.** So the design as
+written refutes O5, and the § 4.2 shape would then refuse the stem document.
+
+§ 4.2's rule is *"a `tab:continuesTable` link whose two tables have cells sharing one
+`tab:onPage` value"*. But a continuation table carries the head page's header labels as its own
+`tab:LabelCell`s, and those are measured on page 0. Counting each table's cells by
+`(onPage, rdf:type)` over `tab:hasCell`, after an offline `compile_document(graincorp-stem)`:
+
+```
+p0#htable2 [(('0','EntryCell'), 586), (('0','LabelCell'), 17)]
+p1#htable1 [(('0','LabelCell'), 17), (('1','EntryCell'), 825)]
+p2#htable1 [(('0','LabelCell'), 17), (('2','EntryCell'), 741)]
+```
+
+The spec's own rule, written as a query:
+
+```
+SELECT ?a ?b ?pg WHERE { ?a tab:continuesTable ?b .
+  ?a tab:hasCell ?ca . ?ca tab:onPage ?pg . ?b tab:hasCell ?cb . ?cb tab:onPage ?pg }
+→ [('p1#htable1','p0#htable2','0'), ('p2#htable1','p1#htable1','0')]
+```
+
+Consequences:
+
+- Both cross-page links share page 0. So the spec's derivation mints a three-member stack on
+  graincorp-stem, which is exactly what O5 forbids.
+- § 4.2's constraint (*"every member's cells lie on one page"*) then fails on `p1#htable1` and
+  `p2#htable1`. The document membrane refuses, and `compile_document(graincorp-stem)` raises
+  `MembraneRefusal`. The regenerate breaks instead of showing a diff.
+- No cell carries two `tab:onPage` values (0 on cbh, 0 on the stem). The defect is in which cells
+  the rule reads, not in the data.
+- On cbh every cell of every member is on page 0 (`EntryCell` 170/268/228/84, `LabelCell` 20
+  each), so cbh cannot tell the two rules apart. Only the stem can, and that is what O5 is for.
+
+**The remedy fits the ruling's words ("tables on one page"), but it decides what a table's page
+is, so it is Q1.**
+
+**F2 — ASSERTION. By loop A's own precedent the re-wording is `contradiction`, not
+`increment`.** The released tag ships the wording this spec rewrites:
+
+- `git show v0.0.4:vocab/ontology/tab-datagrid.ttl` holds the old `tab:StackedGrids` comment at
+  `:128-132`, and `tab:inStack … rdfs:domain tab:DataGrid` at `:134`. v0.0.4 is `1007d48`,
+  2026-09-08.
+- Loop A raised R343 on the same class of edit: a released `tab:` comment that says something no
+  longer true. It recorded: *"A fix rewrites a released assertion, so it is contradiction-class
+  (`Doc impact: contradiction` blocks the release tag)"* (`residues-open.md`, R343).
+- The spec's `increment` rests only on a grep of the site pages under `docs/`.
+- `docs/w3id/iladub-htaccess.md` has no `tab` rewrite rule, so the term is not served by w3id. But
+  it is in the release.
+
+This spec's own declared value is frozen (CLAUDE.md § Documentation governance), so the open
+question is the plan's value. That is Q2.
+
+**F3 — ASSERTION. The ordering seam § 4.2 asked for is measured, and it is safe.**
+
+- In `compile_document`, intra-page links are written in the `page_section_groups` stitching loop
+  (`document.py:1751-1762`). That loop also sets `section_facts = True` at `:1762`.
+- No later pass removes a member:
+  - The adoption loop refuses to withdraw any table in a chain longer than one
+    (`if chain is not None and len(chain) > 1:` at `:1919`).
+  - It also refuses any table that a document-level triple points into.
+- The `/r2` re-read runs *before* stitching (the `r2_doc` loop, `:1651`), not after.
+- So the derivation goes after the adoption loop and before
+  `_seal(graph, _legs_for_document(...))` (`:2034`), where the tab leg validates it.
+- It cannot fire with the tab leg off. A same-page link exists only where the stitching loop wrote
+  one, and that loop sets `section_facts`.
+- The spec's "R7 adoption" is the R73 adoption pass.
+
+**Seam hazard for the plan:** the comment block above `_seal` (`:2016-2033`) claims the adoption
+write is "immediately above this comment". Code inserted between the two must keep that true, or
+re-word it to cite by symbol (CLAUDE.md plan rule 7).
+
+**F4 — ASSERTION. Chains are linear, so a stack is a run, not a general component.**
+
+- The stitching loop refuses to fork the successor map
+  (`if cur_uri in links or prev_uri in set(links.values()): continue`, `document.py:1757`).
+- Loop M pairs only page N-1 with page N.
+
+So every table has at most one predecessor and one successor, and pages never decrease along a
+chain. A same-page run is then:
+
+- its head, a member with a same-page successor and no same-page predecessor;
+- plus every table that reaches the head by `tab:continuesTable+` on the same page.
+
+The SHACL constraint disposes of any violation of this, so the derivation need not re-prove it.
+§ 4.2's "connected component" is correct, but more general than needed.
+
+**F5 — ASSERTION. The ruled D4 edits contradict § 7.** § 7 says *"tab:04's stale R77 edge and its
+R80 edge are untouched"*. The ruling says *"the same change removes tab:04's edge to the closed
+R77"*. The ruling prevails. The plan reconciles its tests against § 7 as amended by the ruling
+(CLAUDE.md plan rule 5). R80 stays.
+
+**F6 — ASSERTION. D4's scope is wider than tab:01.** Seven tab statements cite `compile.py` lines,
+and all seven are stale at `123301e` (`grep -n 'compile.py:[0-9]' tests/arc-manifest.ttl | grep
+prog:statement`):
+
+| Criterion | Cites | The reason's call site now |
+|---|---|---|
+| tab:01 | `:596` | `:1301` |
+| tab:02 | `:656, :763, :939` | `:1380`, `:1617`, `:1841` |
+| tab:03 | `:688` | `:1420` |
+| tab:04 | `:739` | `:1486` |
+| MATRIX_AMBIGUOUS | `:830` | `:1724` |
+| MERGE_AMBIGUOUS | `:911` | `:1810` |
+| DATAGRID_RESIDUE | `:1145` | `:2215`. `:1145` is now an unrelated `printed_total` record |
+
+A line number into a 2,000-line module goes stale whenever anything above it is edited. The reason
+literal (`"MULTI_TABLE_AMBIGUOUS"`) does not. Scope and form are Q3.
+
+**F7 — ASSERTION. The spec does not name two generated caches and one pin that move.**
+
+- `docs/superpowers/arc-dependency-landscape.md` is regenerated from the manifest and diffed
+  (`tests/test_arc_landscape.py::test_the_tracked_landscape_is_byte_identical_to_a_fresh_regeneration`).
+  Regenerate it with `./.venv/bin/python scripts/arc_depends.py`.
+- `tests/test_residue_graph.py` pins the count of structural candidates at 110, as loop A last
+  measured it. Closing R74 and raising new rows moves that count. R261 is open and links
+  [[R74]], so its candidacy may change too.
+
+Neither is an input of the corpus baseline.
+
+**F8 — ASSERTION, minor. Test A reads the wrong list.** `tests/corpus-baseline/inputs.json` lists
+PDF paths under `documents`, not snapshots. The neighbouring test reads `corpus_baseline.DOCUMENTS`
+and maps each path to its snapshot by stem
+(`tests/test_corpus_baseline.py::test_the_baseline_holds_exactly_the_listed_documents`). Test A
+should do the same. It should read reasons from `pages[*].regions[*].reason`, where the snapshot
+keeps them.
+
+**F9 — PROPOSITION. Loop B may race this loop on `tests/corpus-baseline/`.** A loop-B spec (tab:05
+disposal) is being written concurrently. If it touches `scripts/corpus_verdict_snapshot.py` or any
+other input, both PRs carry a regenerate. Under `strict: false`, the second to merge can then pass
+CI on a stale baseline (CLAUDE.md § Corpus baseline, second gap). The second loop to merge rebases
+and regenerates. There is nothing to rule; it is sequencing.
+
+**F10 — ASSERTION. Loop A does not touch this design's premises.**
+
+- Loop A's feed now reads adopted `tab:DataGrid`s (`feed.table_records`). cbh adopts nothing
+  (`"adopted": []` in its snapshot) and holds 0 `tab:DataGrid`.
+- `grep -rn 'StackedGrids\|inStack' src vocab tests scripts` finds only the ontology lines and the
+  docstring of the R74 pin in `tests/etkl/test_datagrid.py`. § 7's "no consumer reads
+  `tab:StackedGrids`" still holds.
+- Loop A's grid-index shapes target the objects and subjects of `tab:hasGridRow` and
+  `tab:hasGridColumn`, which cbh does not carry.
+- The R103 pin (`test_tab_datagrid_axioms_are_unreachable_by_every_membrane_shape`) covers
+  `tab:DataGrid`, `tab:ColumnUniverse` and `tab:SuppressedRepeat`, not `tab:StackedGrids`. So a
+  `sh:targetClass tab:StackedGrids` does not reopen R103.
+
+### 11.3 What the implementing loop must therefore do differently
+
+- Read a table's page from its **`tab:EntryCell`s**, not from all its cells (Q1, recommended arm).
+  Do so in both the derivation and the shape, so the two close over the same notion.
+- Falsify F1 on real input: pointing the query back at `tab:hasCell` (the spec's rule) must make
+  the graincorp-stem O5 test fail.
+- Declare `Doc impact: contradiction`, unless Q2 rules otherwise.
+- Regenerate the arc landscape and re-measure the residue-candidate pin.
+
+### 11.4 Questions for the maintainer
+
+- **Q1 — what is a table's page?**
+  - **(a) Recommended:** the one page its `tab:EntryCell`s lie on. This is evidence-positive. A
+    cross-page continuation that is then section-stitched on its own page stays stackable.
+  - **(b)** The page all its cells lie on, closed by a query-local `NOT EXISTS`. This is simpler,
+    but a continuation table that carries head-page labels can never be stacked, even when it has
+    a same-page sibling.
+  - Both pass O4 and O5 on today's corpus. They differ only on a case no corpus document has.
+- **Q2 — the `Doc impact` of the re-wording.** Is it `contradiction`, per R343's precedent and
+  v0.0.4's content (F2)? That blocks the next release tag until it is drained. Or is a term with
+  no instance in any release (M6) an exception, ruled `increment`?
+- **Q3 — the scope and form of D4.**
+  - (i) Correct only tab:01 and tab:04, the criteria this change edits, or all seven stale tab
+    statements?
+  - (ii) Replace each line number with the current line, or with the reason literal (e.g.
+    `compile.py, escalate_region(…, "MULTI_TABLE_AMBIGUOUS", …)`), which does not go stale?
+
+## Ruled 2026-10-29 by the maintainer (directly, AskUserQuestion)
+
+- **Q1:** a table's page is the page of its **entry cells** (`tab:EntryCell`), arm (a). This
+  holds in both the derivation and the shape.
+- **Q2:** the `Doc impact` of the re-wording is **`contradiction`**.
+- **Q3:** fix **all seven** stale tab criterion statements (tab:01, :02, :03, :04, :05, :06,
+  :08), and cite the **reason string** (e.g. `"MULTI_TABLE_AMBIGUOUS"`), not a `compile.py`
+  line number.

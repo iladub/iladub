@@ -892,3 +892,26 @@ def test_a_rung_with_no_criteria_conforms_and_is_not_a_refusal():
     z = Graph().parse(ZERO_CRITERIA, format="turtle")
     assert set(z.subjects(RDF.type, PROG.Rung)), "the fixture must declare a rung"
     assert list(oracle_rows(z)) == [], "…and that rung must declare no criteria"
+
+
+# ------------------------------------------------------- statements cite reasons, not lines
+
+_COMPILE_LINE = re.compile(r"compile\.py:\d")
+
+
+def test_no_tab_statement_cites_a_compile_line():
+    """D4 (spec 2026-10-28-r74-stacked-grids-design.md, ruled 2026-10-29 Q3): a tab criterion's
+    `prog:statement` cites its escalation reason's call site by the REASON STRING, never by a
+    `compile.py:<line>`. M10 checks `prog:source` only, so seven statements went stale unseen
+    (`compile.py:596` for MULTI_TABLE_AMBIGUOUS while the call sat at :1301). A line number moves
+    with every edit above it; the reason string does not.
+
+    Reads the live manifest. At least seven tab statements must be read, so an empty or renamed
+    rung cannot pass vacuously."""
+    g = Graph().parse(MANIFEST, format="turtle")
+    tab = [c for c in g.subjects(PROG.ofRung, rdflib.Literal("tab"))]
+    statements = {str(c): str(g.value(c, PROG.statement)) for c in tab
+                  if g.value(c, PROG.statement) is not None}
+    assert len(statements) >= 7, f"read only {len(statements)} tab statements"
+    stale = sorted(c for c, s in statements.items() if _COMPILE_LINE.search(s))
+    assert stale == [], f"tab statements citing a compile.py line: {stale}"
