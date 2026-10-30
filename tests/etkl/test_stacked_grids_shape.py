@@ -129,3 +129,49 @@ def test_f_a_member_that_is_not_a_table_is_refused_by_k2(engine):
     closure reading `tab:HierarchicalTable rdfs:subClassOf tab:Table` out of tab.ttl."""
     _, text = _verdict(_stack(_member_not_a_table), engine)
     assert MSG_K2 in text, text
+
+
+def _sized_stack(entries):
+    """Four `tab:HierarchicalTable`s in one stack, each with `entries` entry cells on page 0."""
+    g = Graph()
+    stack = URIRef(f"{D}#stack")
+    g.add((stack, RDF.type, TAB.StackedGrids))
+    for t in range(4):
+        tbl = URIRef(f"{D}#htable{t}")
+        g.add((tbl, RDF.type, TAB.HierarchicalTable))
+        g.add((tbl, TAB.inStack, stack))
+        for k in range(entries):
+            c = URIRef(f"{D}#t{t}-e{k}")
+            g.add((c, RDF.type, TAB.EntryCell))
+            g.add((c, TAB.onPage, _page(0)))
+            g.add((tbl, TAB.hasCell, c))
+    return g
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_g_cbh_sized_stack_conforms_on_k3(engine):
+    """SIZE-BEARING. cbh's four same-page tables hold 170/268/228/84 entry cells (spec § 11.2
+    F1); 300 per table is just above the largest. K3 as first written rescanned every member's
+    entry cells per entry cell (quadratic: ~47 s pyshacl at 800 cells); it now compares DISTINCT
+    (stack, page) rows. No wall-clock threshold is asserted: timing is reported, never decided."""
+    _, text = _verdict(_sized_stack(300), engine)
+    assert not [m for m in ALL if m in text], text
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_j_k3_is_scoped_to_its_own_stack(engine):
+    """Two stacks: one on page 0, one on page 1. Each is on one page, so K3 must not fire —
+    a K3 whose sub-selects did not join on `$this` would compare pages ACROSS stacks."""
+    g = _stack()
+    other = URIRef(f"{D}#stack2")
+    g.add((other, RDF.type, TAB.StackedGrids))
+    for t in range(2):
+        tbl = URIRef(f"{D}#other{t}")
+        g.add((tbl, RDF.type, TAB.HierarchicalTable))
+        g.add((tbl, TAB.inStack, other))
+        c = URIRef(f"{D}#other{t}-e")
+        g.add((c, RDF.type, TAB.EntryCell))
+        g.add((c, TAB.onPage, _page(1)))
+        g.add((tbl, TAB.hasCell, c))
+    _, text = _verdict(g, engine)
+    assert not [m for m in ALL if m in text], text

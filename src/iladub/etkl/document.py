@@ -2047,11 +2047,11 @@ def compile_document(pdf_path: str, validate_shapes: bool = True,
     #   WHERE, and why here: after the adoption loop, the last step that changes which tables
     #   the graph holds (it may withdraw one, never a member of a multi-member chain), with no
     #   write of `tab:continuesTable` or `tab:onPage` between it and here; and before `_seal`,
-    #   so the membrane sees the stack. UNCONDITIONAL — it does not read `validate_shapes`: the stack is
-    #   part of the document's record, not validation fodder. It writes neither `recognized` nor
-    #   `section_facts`, so the comment above still describes their last writers; a document
-    #   carrying a stack carries a same-page `continuesTable`, which only the stitching loop
-    #   writes, and that loop sets `section_facts` — so the TAB leg runs on it.
+    #   so the membrane sees the stack. UNCONDITIONAL — it does not read `validate_shapes`: the
+    #   stack is part of the document's record, not validation fodder. It writes neither
+    #   `recognized` nor `section_facts`, so the comment above still describes their last writers;
+    #   a document carrying a stack carries a same-page `continuesTable`, which only the stitching
+    #   loop writes, and that loop sets `section_facts` — so the TAB leg runs on it.
     graph += interpret.run(STACKED_GRIDS_RQ, graph)
     _seal(graph, _legs_for_document(recognized, section_facts), validate_shapes)
 

@@ -713,17 +713,27 @@ tab:StackedGridsShape a sh:NodeShape ;
                 }
                 UNION
                 {
-                    ?m tab:inStack $this ;
-                       tab:hasCell ?e .
-                    ?e a tab:EntryCell ;
-                       tab:onPage ?value .
-                    FILTER EXISTS {
-                        ?m2 tab:inStack $this ;
-                            tab:hasCell ?e2 .
-                        ?e2 a tab:EntryCell ;
-                            tab:onPage ?p2 .
-                        FILTER (?p2 != ?value)
+                    # Two DISTINCT (stack, page) row sets joined on $this: linear in
+                    # entry cells, where a per-cell FILTER EXISTS rescan was quadratic.
+                    # A member whose entry cells carry no tab:onPage is refused by
+                    # tab:EntryCellPhysicalShape (tab-physical-shapes.ttl), not by K3.
+                    {
+                        SELECT DISTINCT $this ?value WHERE {
+                            ?m tab:inStack $this ;
+                               tab:hasCell ?e .
+                            ?e a tab:EntryCell ;
+                               tab:onPage ?value .
+                        }
                     }
+                    {
+                        SELECT DISTINCT $this ?p2 WHERE {
+                            ?m2 tab:inStack $this ;
+                                tab:hasCell ?e2 .
+                            ?e2 a tab:EntryCell ;
+                                tab:onPage ?p2 .
+                        }
+                    }
+                    FILTER (?p2 != ?value)
                 }
             }
         """ ] .

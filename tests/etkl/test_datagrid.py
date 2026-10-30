@@ -1363,8 +1363,9 @@ def test_cbh_p0_admits_no_metadata():
 @pytest.mark.skipif(not os.path.exists(CBH), reason="corpus not fetched")
 def test_cbh_p0_table_b_leak_is_pinned_not_hidden():
     """LEAK, recorded as R74 (R74 closed by derivation on 2026-10-30): line 75 belongs to the
-    SECOND table on the page (stock at port) and was admitted into the roster's grid. Recorded in the data-grid spec §8.4 as
-    'cbh's rectangle spans a stacked panel'; tab:StackedGrids is defined and not derived.
+    SECOND table on the page (stock at port) and was admitted into the roster's grid. Recorded
+    in the data-grid spec §8.4 as 'cbh's rectangle spans a stacked panel'; tab:StackedGrids was
+    then defined and not derived.
 
     Its measure is in fact table A's exact grand total (374,904 + 737,289 + 660,363 +
     178,708 = 1,951,264 — spec 2026-08-09 §3.6), so the line carries two tables' ink.
