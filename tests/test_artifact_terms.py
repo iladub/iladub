@@ -169,7 +169,13 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # as a SET against HEAD's tracked `.ttl` files after `git add`: added = exactly that one file,
     # removed = none (191 tracked minus 2 carved). Not carved out: it names declared `etkl:` terms
     # and `ex:`/`tx:` terms outside the owned root, as the shipping examples do.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 189
+    # RE-MEASURED 2026-10-31 (synthetic contract set): 189 -> 253 — the 64 tracked `.ttl` under
+    # `examples/synthetic-contracts/`: `synthetic.ttl`, `shapes.ttl`, `templates.ttl`, `maps/` (4),
+    # `fills/` (12), `mixed/` (3), `negative/` (3) and `truth/` (39). Measured as a SET against
+    # `2eff2f0e`'s tracked `.ttl` files after `git add`: added = exactly those 64, removed = none
+    # (255 tracked minus 2 carved). Not carved out: the three negatives fail `shapes.ttl`, not this
+    # membrane — every `syn:` term they name is declared in `synthetic.ttl`.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 253
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -251,6 +257,15 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
 
     +1 occurrence, `xsd:anyURI` (`etkl#`); `prov#` and `sh#` are not owned. No new distinct value.
 
+    RE-MEASURED 2026-10-31 (synthetic contract set), which declares one `sh:prefixes` node in the
+    new `examples/synthetic-contracts/shapes.ttl` (`<urn:iladub:synthetic:shapes>`, for its
+    `sh:sparql` bodies):
+
+        occurrences 27   distinct values 10
+
+    +1 occurrence, `xsd:anyURI` (`synthetic#`), and it is a NEW distinct value: `synthetic.ttl`
+    carries no `vann:preferredNamespaceUri`, so no plain-string twin exists.
+
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
     floor — a floor cannot detect the guard silently collecting fewer, which is the failure
@@ -259,8 +274,8 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 26
-    assert len({str(o) for o in occurrences}) == 9
+    assert len(occurrences) == 27
+    assert len({str(o) for o in occurrences}) == 10
     assert not any(isinstance(o, URIRef) for o in occurrences)
 
 
@@ -380,6 +395,20 @@ _SURPLUS_IN_CENSUS = {
     DOCGOV + "FigureOccurrence", DOCGOV + "Reading",
 }
 
+#: 2026-10-31 (synthetic contract set). `syn:` is demanded only by files OUTSIDE the 136-artifact
+#: tree (all under `examples/synthetic-contracts/`) and declared in no published ontology, so every
+#: demanded `syn:` term is live-census surplus. The set is taken from the DECLARING file, not from
+#: the census, so the third census assertion compares two independent derivations. MEASURED: the
+#: 52 subjects `synthetic.ttl` declares under `syn:` are exactly the 52 `syn:` terms demanded.
+SYN = "https://w3id.org/iladub/synthetic#"
+
+
+def _syn_declared() -> set[str]:
+    from rdflib import Graph
+    from tests.query_terms import SYNTHETIC_VOCAB
+    return {str(s) for s in Graph().parse(SYNTHETIC_VOCAB, format="turtle").subjects()
+            if str(s).startswith(SYN)}
+
 
 def test_the_census_chain_from_53_to_57_with_every_step_earned():
     """Every step of the census is a NUMBER, and every step was EARNED by a named change in
@@ -452,9 +481,13 @@ def test_the_census_chain_from_53_to_57_with_every_step_earned():
     # are demanded there and the historical count moves by two. cor:Snapshot was already in the
     # live census, so it LEAVES `_SURPLUS_IN_CENSUS` and the live count moves by one (cor:blob).
     # This is the spec's A9 prediction of 75/81, met one task later than it predicted.
+    # 75 / 133 since 2026-10-31 (synthetic contract set, MEASURED): the 52 `syn:` terms are
+    # demanded only outside the 136-artifact tree, so the historical count does not move and the
+    # live count moves by 52; they join the surplus as `_syn_declared()`, which is exactly them.
+    assert len(_syn_declared()) == 52
     assert len(_census_over(_pre_loop_artifacts())) == 75
-    assert len(_census()) == 81
-    assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS
+    assert len(_census()) == 133
+    assert _census() - _census_over(_pre_loop_artifacts()) == _SURPLUS_IN_CENSUS | _syn_declared()
 
 
 def test_the_prog_vocabulary_is_21_terms():

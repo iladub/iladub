@@ -91,6 +91,16 @@ def test_the_declaring_graph_now_includes_the_internal_vocabularies():
     assert {p.name for p in declaring_files()} >= {"prog.ttl", "docgov.ttl", "corpus.ttl"}
 
 
+def test_the_declaring_graph_includes_the_synthetic_vocabulary():
+    """2026-10-31 (synthetic contract set): `syn:` is repo-internal like `cor:` and is declared
+    by ONE named file beside its examples, not under `vocab/` (a corpus-baseline input)."""
+    from tests.query_terms import REPO, declaring_files
+    synthetic = REPO / "examples" / "synthetic-contracts" / "synthetic.ttl"
+    assert synthetic in declaring_files()
+    # named, not globbed: no other file under examples/ is a declaring file
+    assert [p for p in declaring_files() if (REPO / "examples") in p.parents] == [synthetic]
+
+
 # =========================================================================================
 # The membrane over the `.ttl` corpus — O1, O2, O4, O5, O7 (spec §7).
 # =========================================================================================
@@ -299,7 +309,15 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # `vocab/queries/stacked-grids.rq`, the AXIOM derivation of tab:StackedGrids. Measured as a SET
     # against `488d439`'s `vocab/queries/*.rq`: added = exactly that one file, removed = none.
     # Every `tab:` term it names was already declared. The `.ttl` population does not move.
-    assert len(vocab_nodes) == len(artifact_files()) == 189
+    # RE-MEASURED 2026-10-31 (synthetic contract set): 189 -> 253 — the 64 tracked `.ttl` under
+    # `examples/synthetic-contracts/`: `synthetic.ttl` (the `syn:` vocabulary), `shapes.ttl`,
+    # `templates.ttl`, `maps/*.ttl` (4), `fills/*.ttl` (12), `mixed/*.ttl` (3), `negative/*.ttl`
+    # (3: map-, truth-, mixed-negative) and `truth/*.ttl` (39). Measured as a SET: `git ls-tree -r
+    # --name-only 2eff2f0e` vs `git ls-files` after `git add`, `*.ttl` (191 -> 255 tracked, minus
+    # the 2 carved fixtures); added = exactly those 64, removed = none. Not carved out: every
+    # `syn:` term they name is declared in `synthetic.ttl`, which joined `declaring_files()` in
+    # the same change. The `.rq` population does not move: the set authored no query.
+    assert len(vocab_nodes) == len(artifact_files()) == 253
     assert len(query_nodes) == len(query_files()) == 59
 
 
