@@ -234,3 +234,14 @@ def test_mixed_syn_terms_declared():
             used |= {x for x in t if isinstance(x, URIRef) and str(x).startswith(syn)}
     missing = [u for u in used if not (vocab.value(u, RDFS.label) and vocab.value(u, RDFS.comment))]
     assert not missing, missing
+
+
+# ------------------------------------------------------------------ build's root (CI)
+
+def test_build_refuses_a_non_default_root(tmp_path):
+    # The flavours read their templates under SYNTH_ROOT; another root would verify one set of
+    # templates and render another, so build refuses before verifying or writing anything.
+    from scripts.synthetic_contracts.build import NonDefaultRoot, build
+    with pytest.raises(NonDefaultRoot, match="build root must be"):
+        build(tmp_path)
+    assert list(tmp_path.iterdir()) == []

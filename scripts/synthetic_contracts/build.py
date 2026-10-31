@@ -145,24 +145,36 @@ def _write(doc_id: str, pdf: bytes, truth: Truth, out_dir: Path, truth_dir: Path
     return out
 
 
-def build(root: Path = SYNTH_ROOT, truth_dir: Path = TRUTH_DIR, fills_dir: Path = FILLS_DIR,
-          mixed_dir: Path = MIXED_DIR) -> list[Path]:
-    """Verify every template, then build every fill x flavour and every mixed document."""
+class NonDefaultRoot(ValueError):
+    pass
+
+
+def build(root: Path = SYNTH_ROOT) -> list[Path]:
+    """Verify every template, then build every fill x flavour and every mixed document.
+
+    `root` must be `SYNTH_ROOT`. The flavours (`render_formfill`, `render_handwriting`,
+    `render_wordexport`, Tasks 4 to 6) verify and read their templates under `SYNTH_ROOT`, so any
+    other root would verify one set of templates and render another. Rather than widening those
+    signatures, `build` refuses it before it verifies or writes anything."""
+    if Path(root).resolve() != SYNTH_ROOT.resolve():
+        raise NonDefaultRoot(f"build root must be {SYNTH_ROOT}, got {root}: the flavours read "
+                             "their templates there, so another root would verify one set of "
+                             "templates and render another")
     templates = load_manifest()
     for t in templates.values():  # refuse before writing anything (spec § 6)
         verify(t, root)
-    out_dir = Path(root) / "out"
+    out_dir, truth_dir = OUT_DIR, TRUTH_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
-    Path(truth_dir).mkdir(parents=True, exist_ok=True)
+    truth_dir.mkdir(parents=True, exist_ok=True)
     made: dict[str, tuple[bytes, Truth]] = {}
     written = []
-    for fid in sorted(p.stem for p in Path(fills_dir).glob("*.ttl")):
-        t = templates[load_fill(fid, fills_dir).template]
+    for fid in sorted(p.stem for p in FILLS_DIR.glob("*.ttl")):
+        t = templates[load_fill(fid).template]
         for fl in FLAVOURS:
             doc_id = f"{fid}.{fl}"
             made[doc_id] = _render(fl, t, fid)
             written.append(_write(doc_id, *made[doc_id], out_dir, truth_dir))
-    for spec in sorted(Path(mixed_dir).glob("*.ttl")):
+    for spec in sorted(MIXED_DIR.glob("*.ttl")):
         mid = mixed_id(spec)
         comps = []
         for c in load_mixed(spec):
