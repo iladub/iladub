@@ -1,0 +1,66 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-79b-1> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-79b-1" ;
+    syn:font "Courier" ;
+    syn:seed 506203202 ;
+    syn:size 9.5 ;
+    syn:template "gafta-79b" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "9 Dec 2027" ],
+        [ a syn:FillValue ;
+            syn:field "brokerage.per-tonne" ;
+            syn:text "347.77" ],
+        [ a syn:FillValue ;
+            syn:field "quality.guaranteed" ;
+            syn:text "lentils" ],
+        [ a syn:FillValue ;
+            syn:field "delivery.period" ;
+            syn:text "March 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Toukou Trading GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Nosrais Holdings BV" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Sonvox Souxzal" ],
+        [ a syn:FillValue ;
+            syn:field "price.amount" ;
+            syn:text "USD 109.19 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Nenaix Agri GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "quality.variety-purity" ;
+            syn:text "yellow maize" ],
+        [ a syn:FillValue ;
+            syn:field "payment.credit-deadline" ;
+            syn:text "11 December 2027" ],
+        [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "white rice" ],
+        [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "USD 194.26 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "price.delivered-place" ;
+            syn:text "Alexandria" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Dresdrux Korbrair" ],
+        [ a syn:FillValue ;
+            syn:field "price.collected-place" ;
+            syn:text "Piraeus" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "Odessa" ] .
+

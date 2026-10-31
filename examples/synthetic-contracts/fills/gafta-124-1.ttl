@@ -1,0 +1,60 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-124-1> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-124-1" ;
+    syn:font "Courier" ;
+    syn:seed 2610316410 ;
+    syn:size 10.0 ;
+    syn:template "gafta-124" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "sample.consigning-party" ;
+            syn:text "Nufix Trading Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "sample.set-number" ;
+            syn:text "SYN-2238" ],
+        [ a syn:FillValue ;
+            syn:field "sample.total-quantity" ;
+            syn:text "30000 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sender" ;
+            syn:text "Boltaix Shipping Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sealing" ;
+            syn:text "Braiq7" ],
+        [ a syn:FillValue ;
+            syn:field "sample.commodity" ;
+            syn:text "yellow maize" ],
+        [ a syn:FillValue ;
+            syn:field "sample.seals" ;
+            syn:text "Zerk4" ],
+        [ a syn:FillValue ;
+            syn:field "sample.quantity-represented" ;
+            syn:text "4000 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.terms-analysis" ;
+            syn:text "Riq9" ],
+        [ a syn:FillValue ;
+            syn:field "sample.destination" ;
+            syn:text "Santos" ],
+        [ a syn:FillValue ;
+            syn:field "sample.origin" ;
+            syn:text "Odessa" ],
+        [ a syn:FillValue ;
+            syn:field "sample.packing" ;
+            syn:text "Monk8" ],
+        [ a syn:FillValue ;
+            syn:field "sample.marks" ;
+            syn:text "Mox7" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sample-number" ;
+            syn:text "SYN-8502" ],
+        [ a syn:FillValue ;
+            syn:field "sample.transport" ;
+            syn:text "Kasx8" ] .
+

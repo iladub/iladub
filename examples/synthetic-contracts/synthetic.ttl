@@ -64,3 +64,21 @@ syn:colEdges a owl:DatatypeProperty ; rdfs:domain syn:Grid ; rdfs:label "column 
     rdfs:comment "Space-separated, strictly increasing x coordinates of a table's column rulings, outer edges included." .
 syn:rowEdges a owl:DatatypeProperty ; rdfs:domain syn:Grid ; rdfs:label "row edges" ;
     rdfs:comment "Space-separated, strictly increasing y coordinates of a table's row rulings, outer edges included." .
+
+# Fill specs (Task 3; spec § 4.2). Values are our own fake strings, never template text.
+syn:Fill a owl:Class ; rdfs:label "Fill" ;
+    rdfs:comment "A seeded set of fake values for one template's blanks, with the font drawn for them; committed as data." .
+syn:FillValue a owl:Class ; rdfs:label "FillValue" ;
+    rdfs:comment "One fake value for one blank of a template, keyed by the blank's field key." .
+syn:fillId a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "fill id" ;
+    rdfs:comment "Identifier of a fill: the template id and a number, e.g. gafta-48-1." .
+syn:seed a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "seed" ;
+    rdfs:comment "The integer seed the values were drawn from: the fill number mixed with a stable hash of the template id." .
+syn:font a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "font" ;
+    rdfs:comment "Base-14 font name the values are drawn in: Helvetica, Times-Roman or Courier." .
+syn:size a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "size" ;
+    rdfs:comment "Font size in points, between 8 and 10." .
+syn:value a owl:ObjectProperty ; rdfs:domain syn:Fill ; rdfs:range syn:FillValue ; rdfs:label "value" ;
+    rdfs:comment "A value of this fill." .
+syn:text a owl:DatatypeProperty ; rdfs:domain syn:FillValue ; rdfs:label "text" ;
+    rdfs:comment "The fake string written into the blank." .

@@ -1,0 +1,66 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-79b-3> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-79b-3" ;
+    syn:font "Courier" ;
+    syn:seed 506203204 ;
+    syn:size 10.0 ;
+    syn:template "gafta-79b" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "sorghum" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "Rosario" ],
+        [ a syn:FillValue ;
+            syn:field "price.amount" ;
+            syn:text "USD 281.25 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "EUR 265.98 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Daindron Bartai" ],
+        [ a syn:FillValue ;
+            syn:field "price.delivered-place" ;
+            syn:text "Alexandria" ],
+        [ a syn:FillValue ;
+            syn:field "quality.variety-purity" ;
+            syn:text "milling wheat" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Nounmex Grain Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "price.collected-place" ;
+            syn:text "Karachi" ],
+        [ a syn:FillValue ;
+            syn:field "quality.guaranteed" ;
+            syn:text "lentils" ],
+        [ a syn:FillValue ;
+            syn:field "delivery.period" ;
+            syn:text "September 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Gorzais Bairras" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "27 Aug 2027" ],
+        [ a syn:FillValue ;
+            syn:field "payment.credit-deadline" ;
+            syn:text "26 March 2027" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Noxven Marine LLC" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Perpa Trading SA" ],
+        [ a syn:FillValue ;
+            syn:field "brokerage.per-tonne" ;
+            syn:text "182.97" ] .
+

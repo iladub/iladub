@@ -1,0 +1,150 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:usda-ffp-cp-1> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "usda-ffp-cp-1" ;
+    syn:font "Courier" ;
+    syn:seed 4235930079 ;
+    syn:size 9.0 ;
+    syn:template "usda-ffp-cp" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "vessel.class-registry" ;
+            syn:text "Dror" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.rebuilt-year" ;
+            syn:text "1998" ],
+        [ a syn:FillValue ;
+            syn:field "cargo.description" ;
+            syn:text "rapeseed" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "21 May 2027" ],
+        [ a syn:FillValue ;
+            syn:field "laydays.start-day" ;
+            syn:text "16th" ],
+        [ a syn:FillValue ;
+            syn:field "freight.rate.1" ;
+            syn:text "USD 40.56 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.net-tonnage" ;
+            syn:text "15500" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.built-year" ;
+            syn:text "1999" ],
+        [ a syn:FillValue ;
+            syn:field "freight.rate.4" ;
+            syn:text "USD 42.15 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.name" ;
+            syn:text "Nir" ],
+        [ a syn:FillValue ;
+            syn:field "loading.port.2" ;
+            syn:text "Rotterdam" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.flag" ;
+            syn:text "Lar" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.built-place" ;
+            syn:text "Valencia" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.point" ;
+            syn:text "Rour" ],
+        [ a syn:FillValue ;
+            syn:field "notice.discharge-place" ;
+            syn:text "Bri" ],
+        [ a syn:FillValue ;
+            syn:field "signature.charterer" ;
+            syn:text "Vunvi Nunbol" ],
+        [ a syn:FillValue ;
+            syn:field "inland-contractor.3" ;
+            syn:text "Noubro Shipping GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.class" ;
+            syn:text "Koun" ],
+        [ a syn:FillValue ;
+            syn:field "laydays.cancel-day" ;
+            syn:text "11th" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.place" ;
+            syn:text "Tai" ],
+        [ a syn:FillValue ;
+            syn:field "loading.daily-rate" ;
+            syn:text "427.12" ],
+        [ a syn:FillValue ;
+            syn:field "cargo.quantity" ;
+            syn:text "21000 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "inland-contractor.1" ;
+            syn:text "Tunrur Trading Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "demurrage.rate" ;
+            syn:text "274.88" ],
+        [ a syn:FillValue ;
+            syn:field "vessel.position" ;
+            syn:text "Re" ],
+        [ a syn:FillValue ;
+            syn:field "laydays.cancel-month" ;
+            syn:text "Jun." ],
+        [ a syn:FillValue ;
+            syn:field "loading.port.1" ;
+            syn:text "Alexandria" ],
+        [ a syn:FillValue ;
+            syn:field "freight.reduced-rate" ;
+            syn:text "331.96" ],
+        [ a syn:FillValue ;
+            syn:field "laydays.start-month" ;
+            syn:text "Sep." ],
+        [ a syn:FillValue ;
+            syn:field "despatch.rate" ;
+            syn:text "290.53" ],
+        [ a syn:FillValue ;
+            syn:field "inland-contractor.4" ;
+            syn:text "Boule" ],
+        [ a syn:FillValue ;
+            syn:field "contract.number" ;
+            syn:text "SYN-1169" ],
+        [ a syn:FillValue ;
+            syn:field "party.owner" ;
+            syn:text "Laszon Marine LLC" ],
+        [ a syn:FillValue ;
+            syn:field "commission.amount" ;
+            syn:text "36.22" ],
+        [ a syn:FillValue ;
+            syn:field "freight.rate.2" ;
+            syn:text "USD 12.68 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "commission.payee.1" ;
+            syn:text "Zountun Trading LLC" ],
+        [ a syn:FillValue ;
+            syn:field "notice.days" ;
+            syn:text "2 days" ],
+        [ a syn:FillValue ;
+            syn:field "commission.payee.2" ;
+            syn:text "Baixbol Marine SA" ],
+        [ a syn:FillValue ;
+            syn:field "signature.owner" ;
+            syn:text "Dousgun Zollal" ],
+        [ a syn:FillValue ;
+            syn:field "delivery.inland-place" ;
+            syn:text "Dos" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.inland-place" ;
+            syn:text "Vil" ],
+        [ a syn:FillValue ;
+            syn:field "freight.rate.3" ;
+            syn:text "USD 59.36 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "lightening.cost" ;
+            syn:text "167.52" ],
+        [ a syn:FillValue ;
+            syn:field "freight.rate.5" ;
+            syn:text "EUR 232.01 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "inland-contractor.2" ;
+            syn:text "Borvux" ] .
+
