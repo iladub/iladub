@@ -1,0 +1,34 @@
+# NEGATIVE truth record: MUST NOT conform to ../shapes.ttl. Three planted faults, one each:
+#   1. the output PDF's own hash on the document node (G6; caught by sh:closed);
+#   2. a flavour outside the set ("photocopy");
+#   3. a value with two boxes.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:truth:negative> a syn:Truth ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:docId "negative" ;
+    syn:flavour "photocopy" ;
+    syn:review "draft" ;
+    syn:sha256 "0000000000000000000000000000000000000000000000000000000000000000" ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:negative:template:0001> .
+
+<urn:iladub:synthetic:truth:negative:template:0001> a syn:TemplateUse ;
+    syn:order 1 ;
+    syn:sha256 "ed2e58f37433221155c43e33763d956807ff50a54b32ec97bf5fd5dd8aeb5103" .
+
+<urn:iladub:synthetic:truth:negative:value:0001> a syn:ValueTruth ;
+    syn:inDocument <urn:iladub:synthetic:truth:negative> ;
+    syn:order 1 ;
+    syn:field "party.seller" ;
+    syn:text "Example Seller" ;
+    syn:box <urn:iladub:synthetic:truth:negative:value:0001:box:a> ,
+        <urn:iladub:synthetic:truth:negative:value:0001:box:b> .
+
+<urn:iladub:synthetic:truth:negative:value:0001:box:a> a syn:Box ;
+    syn:page 1 ; syn:x0 10.0 ; syn:top 10.0 ; syn:x1 50.0 ; syn:bottom 20.0 .
+
+<urn:iladub:synthetic:truth:negative:value:0001:box:b> a syn:Box ;
+    syn:page 1 ; syn:x0 60.0 ; syn:top 10.0 ; syn:x1 90.0 ; syn:bottom 20.0 .

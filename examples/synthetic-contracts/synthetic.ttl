@@ -16,7 +16,7 @@ syn:id a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "id" ;
     rdfs:comment "Short template identifier; also the file stem under synthetic/templates/." .
 syn:url a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "url" ;
     rdfs:comment "Where the pinned edition is served." .
-syn:sha256 a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "sha256" ;
+syn:sha256 a owl:DatatypeProperty ; rdfs:label "sha256" ;
     rdfs:comment "Hex sha256 of the pinned edition; build refuses on mismatch." .
 syn:pages a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "pages" ;
     rdfs:comment "Page count of the pinned edition." .
@@ -34,19 +34,19 @@ syn:Grid a owl:Class ; rdfs:label "Grid" ;
     rdfs:comment "The hand-measured column and row edges of a table on one page, used to rebuild the table without table-finding." .
 syn:template a owl:DatatypeProperty ; rdfs:domain syn:PartMap ; rdfs:label "template" ;
     rdfs:comment "The syn:id of the template this map describes." .
-syn:review a owl:DatatypeProperty ; rdfs:domain syn:PartMap ; rdfs:label "review" ;
+syn:review a owl:DatatypeProperty ; rdfs:label "review" ;
     rdfs:comment "Review state: \"draft\" as drafted by the builder, \"owner-reviewed\" once the owner has reviewed it (spec § 4.5)." .
 syn:inMap a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:PartMap ; rdfs:label "in map" ;
     rdfs:comment "The part map this part belongs to." .
-syn:partId a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "part id" ;
+syn:partId a owl:DatatypeProperty ; rdfs:label "part id" ;
     rdfs:comment "Our own lowercase key for a non-blank part, unique within its map." .
-syn:partType a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "part type" ;
+syn:partType a owl:DatatypeProperty ; rdfs:label "part type" ;
     rdfs:comment "Plain label from the closed set contract-form, rules, charter-party, table, blank; no type tree (spec § 4.5)." .
-syn:field a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "field" ;
+syn:field a owl:DatatypeProperty ; rdfs:label "field" ;
     rdfs:comment "Our own lowercase field key for a blank, never a template label copied; unique within its map." .
-syn:parent a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Part ; rdfs:label "parent" ;
+syn:parent a owl:ObjectProperty ; rdfs:label "parent" ;
     rdfs:comment "The part that contains this one (a table or blank inside its form)." .
-syn:box a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Box ; rdfs:label "box" ;
+syn:box a owl:ObjectProperty ; rdfs:range syn:Box ; rdfs:label "box" ;
     rdfs:comment "One box per page the part covers." .
 syn:grid a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Grid ; rdfs:label "grid" ;
     rdfs:comment "A table part's grid, one per page it covers." .
@@ -70,9 +70,9 @@ syn:Fill a owl:Class ; rdfs:label "Fill" ;
     rdfs:comment "A seeded set of fake values for one template's blanks, with the font drawn for them; committed as data." .
 syn:FillValue a owl:Class ; rdfs:label "FillValue" ;
     rdfs:comment "One fake value for one blank of a template, keyed by the blank's field key." .
-syn:fillId a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "fill id" ;
+syn:fillId a owl:DatatypeProperty ; rdfs:label "fill id" ;
     rdfs:comment "Identifier of a fill: the template id and a number, e.g. gafta-48-1." .
-syn:seed a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "seed" ;
+syn:seed a owl:DatatypeProperty ; rdfs:label "seed" ;
     rdfs:comment "The integer seed the values were drawn from: the fill number mixed with a stable hash of the template id." .
 syn:font a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "font" ;
     rdfs:comment "Base-14 font name the values are drawn in: Helvetica, Times-Roman or Courier." .
@@ -80,5 +80,39 @@ syn:size a owl:DatatypeProperty ; rdfs:domain syn:Fill ; rdfs:label "size" ;
     rdfs:comment "Font size in points, between 8 and 10." .
 syn:value a owl:ObjectProperty ; rdfs:domain syn:Fill ; rdfs:range syn:FillValue ; rdfs:label "value" ;
     rdfs:comment "A value of this fill." .
-syn:text a owl:DatatypeProperty ; rdfs:domain syn:FillValue ; rdfs:label "text" ;
+syn:text a owl:DatatypeProperty ; rdfs:label "text" ;
     rdfs:comment "The fake string written into the blank." .
+
+# Truth records (Task 4; spec § 4.5). Output-document coordinates; no template text; never the
+# output PDF's hash (G6). Every node has a stable IRI under urn:iladub:synthetic:truth:<doc-id>.
+# The shared properties above (sha256, review, seed, fillId, partId, partType, field, parent, box,
+# text) carry NO rdfs:domain since this task: they are used on map/fill nodes and on truth nodes
+# alike, and a domain would make RDFS inference retype a truth node as a map node.
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+syn:Truth a owl:Class ; rdfs:label "Truth" ;
+    rdfs:comment "The truth record of one generated PDF: its templates, flavour, fills, seed and review state; written by the generator, never read by a router." .
+syn:TemplateUse a owl:Class ; rdfs:label "TemplateUse" ;
+    rdfs:comment "One template a generated document was made from, by its manifest sha256, at a position in the document's template order." .
+syn:FillUse a owl:Class ; rdfs:label "FillUse" ;
+    rdfs:comment "One fill spec a generated document carries, by its fill id, at a position in the document's fill order." .
+syn:PartTruth a owl:Class ; rdfs:label "PartTruth" ;
+    rdfs:comment "One part of a generated document at the router's granularity: its id, plain-label type, page boxes and parent, in the output's coordinates." .
+syn:ValueTruth a owl:Class ; rdfs:label "ValueTruth" ;
+    rdfs:comment "One filled value of a generated document: the field it fills, the string drawn, and the box it was drawn in, in the output's coordinates." .
+syn:docId a owl:DatatypeProperty ; rdfs:domain syn:Truth ; rdfs:label "document id" ;
+    rdfs:comment "Identifier of a generated document: <fill-id>.<flavour>, or a mixed document's id." .
+syn:flavour a owl:DatatypeProperty ; rdfs:domain syn:Truth ; rdfs:label "flavour" ;
+    rdfs:comment "How the document was made: form-fill, word-export, handwriting-scan, or mixed." .
+syn:transform a owl:DatatypeProperty ; rdfs:domain syn:Truth ; rdfs:label "transform" ;
+    rdfs:comment "The 2x3 affine matrix (six space-separated decimals, row-major, in points) the scan step applied to the page; absent when the page was not transformed." .
+syn:usesTemplate a owl:ObjectProperty ; rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain syn:Truth ; rdfs:range syn:TemplateUse ; rdfs:label "uses template" ;
+    rdfs:comment "A template the document was derived from." .
+syn:usesFill a owl:ObjectProperty ; rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain syn:Truth ; rdfs:range syn:FillUse ; rdfs:label "uses fill" ;
+    rdfs:comment "A fill spec whose values the document carries." .
+syn:order a owl:DatatypeProperty ; rdfs:label "order" ;
+    rdfs:comment "1-based position of a template, fill, part or value within its document's sequence of that kind." .
+syn:inDocument a owl:ObjectProperty ; rdfs:range syn:Truth ; rdfs:label "in document" ;
+    rdfs:comment "The truth record a part or value belongs to." .
