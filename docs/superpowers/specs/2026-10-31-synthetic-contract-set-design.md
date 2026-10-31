@@ -135,9 +135,12 @@ grow: adding a template means adding a fill spec, not changing the generator.
   the builder checks first.
 - **Word export.** A Word document carries the values inline in running text, and is exported to
   PDF. Two things to settle:
-  - Word-exported PDFs are a different object from filled templates, so this flavour has to rebuild
-    the template's **structure** (headings, clause numbering, the table) in Word, but **not its
-    text**. Text is the open question **O1** (§ 7).
+  - Word-exported PDFs are a different object from filled templates, so this flavour rebuilds the
+    template in Word: its **structure** (headings, clause numbering, the table) and its **real
+    text**, extracted from the downloaded template at build time (owner, 2026-10-31). The same
+    words then appear in all three flavours, so the agreement check of § 4.5 means something. The
+    text never enters committed code or files; like the others, this flavour depends on the local
+    template.
   - The machine has Microsoft Word and neither LibreOffice nor pandoc (measured 2026-10-31).
     Automating Word on macOS is not portable; the builder picks the converter and records it.
 - **Simulated handwriting.** The values are drawn in handwriting-style fonts with per-glyph jitter,
@@ -195,6 +198,7 @@ Designing the type tree and its DoCO/FaBiO alignment is the router's job (projec
 8. The contracts are fake: never enforced, reproduced or shared.
 9. The generator, the fill specs and the truth are committed. The filled PDFs are regenerated
    locally from templates the owner downloads.
+10. The Word flavour uses the template's real text, extracted at build time and never committed.
 
 ## 6. Left to the builder
 
@@ -212,11 +216,7 @@ Designing the type tree and its DoCO/FaBiO alignment is the router's job (projec
 
 ## 7. Open
 
-- **O1. The Word flavour's text.** The Word document needs the contract's words to be a contract.
-  Retyping GAFTA text into a generated docx is fine locally (A1), but the docx **generator** must
-  not carry that text in committed code. Either the generator extracts the text from the
-  downloaded template at build time (so the Word flavour also depends on the local template), or
-  the Word flavour uses placeholder prose with the real structure. The two give the router
-  different evidence.
+- ~~O1. The Word flavour's text.~~ **Ruled (owner, 2026-10-31): real text**, extracted from the
+  local template at build time (§ 4.3).
 - **O2.** The USDA form's public-domain status rests on the general rule for US federal works and a
   2014 OMB filing. Under A1 it no longer blocks anything; it matters only if the set is ever shared.
