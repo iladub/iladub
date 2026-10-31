@@ -28,6 +28,7 @@ _DOC = "https://w3id.org/iladub/docgov/doc/"
 
 MANUAL_ALLOWLIST = frozenset({
     "README.md", "vocab/README.md", "demo/README-etkl-showcase.md", "RELEASE.md",
+    "examples/synthetic-contracts/README.md",
 })
 EVIDENCE_DIRS = ("docs/superpowers/", "docs/loops/", "docs/w3id/")
 EXEMPT_PREFIXES = (".claude/", ".agents/")

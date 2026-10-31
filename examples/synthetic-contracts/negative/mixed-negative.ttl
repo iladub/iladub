@@ -1,0 +1,19 @@
+# NEGATIVE mixed-document spec: MUST NOT conform to ../shapes.ttl. Three planted faults, one each:
+#   1. only one component (a mixed document joins at least two);
+#   2. a flavour outside the set ("photocopy");
+#   3. a component naming both a fill and a template.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:mixed:negative> a syn:MixedDocument ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:mixedId "negative" ;
+    syn:component <urn:iladub:synthetic:mixed:negative:component:0001> .
+
+<urn:iladub:synthetic:mixed:negative:component:0001> a syn:Component ;
+    syn:order 1 ;
+    syn:fillId "gafta-48-1" ;
+    syn:componentTemplate "gafta-124" ;
+    syn:componentFlavour "photocopy" .

@@ -123,3 +123,20 @@ syn:inDocument a owl:ObjectProperty ; rdfs:range syn:Truth ; rdfs:label "in docu
 syn:converter a owl:DatatypeProperty ; rdfs:label "converter" ;
     rdfs:comment "The program and version that exports the Word flavour's .docx to PDF, and how it is driven." .
 <https://w3id.org/iladub/synthetic> syn:converter "Microsoft Word 16.114.3 via osascript" .
+
+# Mixed documents (Task 7; spec § 4.4). A mixed document is the concatenation of parts the set
+# already has; its spec names them in order. Its truth is composed by the build (syn:Truth, flavour
+# "mixed"), each component's part ids prefixed with its letter (a., b., ...).
+syn:MixedDocument a owl:Class ; rdfs:label "MixedDocument" ;
+    rdfs:comment "The committed spec of one mixed document: the components it concatenates, in order." .
+syn:Component a owl:Class ; rdfs:label "Component" ;
+    rdfs:comment "One component of a mixed document: a fill in a flavour, or a template left unfilled." .
+syn:mixedId a owl:DatatypeProperty ; rdfs:domain syn:MixedDocument ; rdfs:label "mixed id" ;
+    rdfs:comment "Identifier of a mixed document; also its truth record's syn:docId and its PDF's stem." .
+syn:component a owl:ObjectProperty ; rdfs:domain syn:MixedDocument ; rdfs:range syn:Component ;
+    rdfs:label "component" ;
+    rdfs:comment "A component of the mixed document; ordered by syn:order." .
+syn:componentFlavour a owl:DatatypeProperty ; rdfs:domain syn:Component ; rdfs:label "component flavour" ;
+    rdfs:comment "The flavour the component is taken in: form-fill, word-export, handwriting-scan, or unfilled (the template's pages as-is)." .
+syn:componentTemplate a owl:DatatypeProperty ; rdfs:domain syn:Component ; rdfs:label "component template" ;
+    rdfs:comment "The syn:id of the template an unfilled component takes as-is." .

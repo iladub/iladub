@@ -1,0 +1,674 @@
+# Truth record (spec 2026-10-31 § 4.5), written by the generator; never read by a router.
+# Output-page coordinates. Our own part ids, field keys and fake values; no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> a syn:Truth ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:docId "gafta-48-2.handwriting-scan" ;
+    syn:flavour "handwriting-scan" ;
+    syn:review "draft" ;
+    syn:seed 2006874060 ;
+    syn:transform "0.9997714754770628 0.021377484005767472 -8.932311995139358 -0.021377484005767472 0.9997714754770628 6.460717932844113" ;
+    syn:usesFill <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:fill:0001> ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:template:0001> .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:fill:0001> a syn:FillUse ;
+    syn:fillId "gafta-48-2" ;
+    syn:order 1 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0001> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0002> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0003> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0004> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0005> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0006> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0007> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0008> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 1 ;
+    syn:partId "contract-form" ;
+    syn:partType "contract-form" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0001> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 1 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0002> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 2 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0003> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 3 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0004> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 4 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0005> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 5 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0006> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 6 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0007> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 7 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001:box:0008> a syn:Box ;
+    syn:bottom 841.9199829101562 ;
+    syn:page 8 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.3200073242188 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0002> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0002:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 2 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.contract.date" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0002:box:0001> a syn:Box ;
+    syn:bottom 247.4467683916897 ;
+    syn:page 1 ;
+    syn:top 234.12057937722105 ;
+    syn:x0 391.69719112296804 ;
+    syn:x1 547.5753846948044 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0003> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0003:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 3 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.destination.cfr" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0003:box:0001> a syn:Box ;
+    syn:bottom 548.9240970959999 ;
+    syn:page 1 ;
+    syn:top 530.5464086109685 ;
+    syn:x0 162.08954691809123 ;
+    syn:x1 554.2137401451575 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0004> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0004:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 4 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.destination.cfr-free-out" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0004:box:0001> a syn:Box ;
+    syn:bottom 571.8892118329302 ;
+    syn:page 1 ;
+    syn:top 554.3409697273224 ;
+    syn:x0 201.38946428593852 ;
+    syn:x1 554.7225242644948 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0005> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0005:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 5 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.destination.cif" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0005:box:0001> a syn:Box ;
+    syn:bottom 499.9110847892246 ;
+    syn:page 1 ;
+    syn:top 482.5573777880694 ;
+    syn:x0 208.95248136116572 ;
+    syn:x1 553.1876209128807 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0006> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0006:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 6 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.destination.cif-free-out" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0006:box:0001> a syn:Box ;
+    syn:bottom 523.0761538212504 ;
+    syn:page 1 ;
+    syn:top 506.55189319951893 ;
+    syn:x0 248.2566742258142 ;
+    syn:x1 553.7006805290191 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0007> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0007:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 7 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.discharge.daily-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0007:box:0001> a syn:Box ;
+    syn:bottom 405.5357411977188 ;
+    syn:page 4 ;
+    syn:top 394.81497045627384 ;
+    syn:x0 258.2483765438015 ;
+    syn:x1 296.95121544132553 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0008> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0008:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 8 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.goods.description" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0008:box:0001> a syn:Box ;
+    syn:bottom 359.0221522686446 ;
+    syn:page 1 ;
+    syn:top 339.59647004005114 ;
+    syn:x0 104.01878779722826 ;
+    syn:x1 549.8285715090122 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0009> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0009:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 9 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.party.broker" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0009:box:0001> a syn:Box ;
+    syn:bottom 298.9583596608902 ;
+    syn:page 1 ;
+    syn:top 280.90988442954756 ;
+    syn:x0 171.84813844155474 ;
+    syn:x1 548.5758509462743 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0010> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0010:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 10 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.party.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0010:box:0001> a syn:Box ;
+    syn:bottom 324.3000039526995 ;
+    syn:page 1 ;
+    syn:top 304.4045141032586 ;
+    syn:x0 85.97025383447205 ;
+    syn:x1 549.0782218204098 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0011> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0011:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 11 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.party.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0011:box:0001> a syn:Box ;
+    syn:bottom 277.3679667848137 ;
+    syn:page 1 ;
+    syn:top 257.5152319033843 ;
+    syn:x0 86.96719278555568 ;
+    syn:x1 548.0756178205393 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0012> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0012:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 12 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.payment.cash-location" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0012:box:0001> a syn:Box ;
+    syn:bottom 89.17160841510538 ;
+    syn:page 3 ;
+    syn:top 75.61618329449564 ;
+    syn:x0 374.81194498911356 ;
+    syn:x1 546.0844815348961 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0013> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0013:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 13 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.payment.cash-percent" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0013:box:0001> a syn:Box ;
+    syn:bottom 94.59935160416974 ;
+    syn:page 3 ;
+    syn:top 82.16196889706164 ;
+    syn:x0 120.96996736548725 ;
+    syn:x1 239.95445574381944 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0014> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0014:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 14 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.payment.option-detail" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0014:box:0001> a syn:Box ;
+    syn:bottom 155.754988507909 ;
+    syn:page 3 ;
+    syn:top 135.65164003633268 ;
+    syn:x0 67.56511669723798 ;
+    syn:x1 545.0676561816448 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0015> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0015:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 15 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.price.per-tonne" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0015:box:0001> a syn:Box ;
+    syn:bottom 473.33203156147783 ;
+    syn:page 1 ;
+    syn:top 458.5628623766199 ;
+    syn:x0 329.3117931302042 ;
+    syn:x1 552.6745612967422 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0016> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0016:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 16 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.quality.certifier" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0016:box:0001> a syn:Box ;
+    syn:bottom 715.5789421462621 ;
+    syn:page 1 ;
+    syn:top 696.9147953755534 ;
+    syn:x0 151.9498910426152 ;
+    syn:x1 557.4710220410741 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0017> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0017:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 17 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.quality.specification" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0017:box:0001> a syn:Box ;
+    syn:bottom 692.1301992435222 ;
+    syn:page 1 ;
+    syn:top 673.3201885542946 ;
+    syn:x0 139.94801045209283 ;
+    syn:x1 556.9643756701374 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0018> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0018:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 18 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.quantity.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0018:box:0001> a syn:Box ;
+    syn:bottom 382.0875915411191 ;
+    syn:page 1 ;
+    syn:top 364.4704444594135 ;
+    syn:x0 119.91550164530999 ;
+    syn:x1 481.14461853173447 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0019> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0019:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 19 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.shipment.period" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0019:box:0001> a syn:Box ;
+    syn:bottom 773.2650133958654 ;
+    syn:page 1 ;
+    syn:top 756.9010839041771 ;
+    syn:x0 260.8079508442932 ;
+    syn:x1 558.7536710814202 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0020> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0020:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 20 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.signature.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0020:box:0001> a syn:Box ;
+    syn:bottom 543.5240431062905 ;
+    syn:page 8 ;
+    syn:top 529.8529818233361 ;
+    syn:x0 335.13502508436676 ;
+    syn:x1 553.8774669797046 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0021> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0021:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 21 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.signature.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:part:0021:box:0001> a syn:Box ;
+    syn:bottom 548.552027344447 ;
+    syn:page 8 ;
+    syn:top 535.1332203727608 ;
+    syn:x0 99.98877405216159 ;
+    syn:x1 306.9339125368701 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:template:0001> a syn:TemplateUse ;
+    syn:order 1 ;
+    syn:sha256 "ed2e58f37433221155c43e33763d956807ff50a54b32ec97bf5fd5dd8aeb5103" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0001> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0001:box> ;
+    syn:field "contract.date" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 1 ;
+    syn:text "8 May 2027" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0001:box> a syn:Box ;
+    syn:bottom 248.80915737393659 ;
+    syn:page 1 ;
+    syn:top 238.5943903883265 ;
+    syn:x0 394.6856875042717 ;
+    syn:x1 443.27464536907405 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0002> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0002:box> ;
+    syn:field "destination.cfr" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 2 ;
+    syn:text "Tema" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0002:box> a syn:Box ;
+    syn:bottom 547.1794562764418 ;
+    syn:page 1 ;
+    syn:top 540.7688201546157 ;
+    syn:x0 167.7612193202172 ;
+    syn:x1 188.59818944482947 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0003> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0003:box> ;
+    syn:field "destination.cfr-free-out" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 3 ;
+    syn:text "Chittagong" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0003:box> a syn:Box ;
+    syn:bottom 572.6718315160562 ;
+    syn:page 1 ;
+    syn:top 563.4959843945423 ;
+    syn:x0 202.01001085023557 ;
+    syn:x1 244.11376063988473 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0004> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0004:box> ;
+    syn:field "destination.cif" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 4 ;
+    syn:text "Rosario" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0004:box> a syn:Box ;
+    syn:bottom 499.3864254754299 ;
+    syn:page 1 ;
+    syn:top 490.13625795022153 ;
+    syn:x0 212.79930507626943 ;
+    syn:x1 240.72296712359963 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0005> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0005:box> ;
+    syn:field "destination.cif-free-out" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 5 ;
+    syn:text "Durban" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0005:box> a syn:Box ;
+    syn:bottom 522.3790448781772 ;
+    syn:page 1 ;
+    syn:top 514.7156519166673 ;
+    syn:x0 250.75425188223608 ;
+    syn:x1 279.61689999745806 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0006> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0006:box> ;
+    syn:field "discharge.daily-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 6 ;
+    syn:text "273.64" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0006:box> a syn:Box ;
+    syn:bottom 406.2599466099878 ;
+    syn:page 4 ;
+    syn:top 397.1311231097012 ;
+    syn:x0 260.1058739873125 ;
+    syn:x1 289.0137339329589 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0007> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0007:box> ;
+    syn:field "goods.description" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 7 ;
+    syn:text "soya beans" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0007:box> a syn:Box ;
+    syn:bottom 359.9867787763 ;
+    syn:page 1 ;
+    syn:top 349.94587715076585 ;
+    syn:x0 108.1966816352598 ;
+    syn:x1 149.4910840263941 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0008> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0008:box> ;
+    syn:field "party.broker" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 8 ;
+    syn:text "Vortour Commodities LLC" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0008:box> a syn:Box ;
+    syn:bottom 298.50630015163557 ;
+    syn:page 1 ;
+    syn:top 288.4485723709513 ;
+    syn:x0 172.28292809302445 ;
+    syn:x1 270.3108466820679 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0009> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0009:box> ;
+    syn:field "party.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 9 ;
+    syn:text "Mourgol Shipping GmbH" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0009:box> a syn:Box ;
+    syn:bottom 326.45910689668796 ;
+    syn:page 1 ;
+    syn:top 313.0507113972667 ;
+    syn:x0 86.14189989707856 ;
+    syn:x1 181.19395097277635 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0010> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0010:box> ;
+    syn:field "party.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 10 ;
+    syn:text "Bairgon Marine LLC" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0010:box> a syn:Box ;
+    syn:bottom 276.9270700704313 ;
+    syn:page 1 ;
+    syn:top 267.78364886702764 ;
+    syn:x0 90.85514255936252 ;
+    syn:x1 171.88814678302583 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0011> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0011:box> ;
+    syn:field "payment.cash-location" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 11 ;
+    syn:text "Piraeus" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0011:box> a syn:Box ;
+    syn:bottom 88.76515474698945 ;
+    syn:page 3 ;
+    syn:top 79.56579117953841 ;
+    syn:x0 380.78321058178824 ;
+    syn:x1 409.04906272556536 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0012> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0012:box> ;
+    syn:field "payment.cash-percent" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 12 ;
+    syn:text "90 pct" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0012:box> a syn:Box ;
+    syn:bottom 94.78415193216709 ;
+    syn:page 3 ;
+    syn:top 85.99841657489905 ;
+    syn:x0 123.59650559745468 ;
+    syn:x1 149.51712004056486 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0013> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0013:box> ;
+    syn:field "payment.option-detail" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 13 ;
+    syn:text "Palz8" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0013:box> a syn:Box ;
+    syn:bottom 155.40286636827733 ;
+    syn:page 3 ;
+    syn:top 147.43685549690153 ;
+    syn:x0 68.82736282606278 ;
+    syn:x1 89.91492210595075 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0014> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0014:box> ;
+    syn:field "price.per-tonne" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 14 ;
+    syn:text "USD 54.84 per tonne" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0014:box> a syn:Box ;
+    syn:bottom 473.7730203281569 ;
+    syn:page 1 ;
+    syn:top 463.82667893075956 ;
+    syn:x0 334.705226795288 ;
+    syn:x1 416.1576272861341 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0015> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0015:box> ;
+    syn:field "quality.certifier" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 15 ;
+    syn:text "Bisvel Shipping LLC" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0015:box> a syn:Box ;
+    syn:bottom 716.9018868108026 ;
+    syn:page 1 ;
+    syn:top 703.9337030062775 ;
+    syn:x0 153.99689921041238 ;
+    syn:x1 235.32187113147057 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0016> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0016:box> ;
+    syn:field "quality.specification" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 16 ;
+    syn:text "yellow maize" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0016:box> a syn:Box ;
+    syn:bottom 694.7467847624607 ;
+    syn:page 1 ;
+    syn:top 681.7709368733209 ;
+    syn:x0 140.42753179453064 ;
+    syn:x1 188.98594242266597 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0017> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0017:box> ;
+    syn:field "quantity.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 17 ;
+    syn:text "EUR 366.91 per tonne" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0017:box> a syn:Box ;
+    syn:bottom 383.62726825797665 ;
+    syn:page 1 ;
+    syn:top 372.72480933601696 ;
+    syn:x0 120.88726235273798 ;
+    syn:x1 203.5911687772334 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018:box> ;
+    syn:field "shipment.period" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 18 ;
+    syn:text "January 2027 seller's option" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018:box> a syn:Box ;
+    syn:bottom 775.2952357025093 ;
+    syn:page 1 ;
+    syn:top 762.2549118998678 ;
+    syn:x0 265.08050429337237 ;
+    syn:x1 374.7892216410759 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019:box> ;
+    syn:field "signature.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 19 ;
+    syn:text "Fousvoux Gonvoux" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019:box> a syn:Box ;
+    syn:bottom 543.3789398149487 ;
+    syn:page 8 ;
+    syn:top 534.4058047763698 ;
+    syn:x0 336.9540129720962 ;
+    syn:x1 407.95139651995265 .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020:box> ;
+    syn:field "signature.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
+    syn:order 20 ;
+    syn:text "Deldro Mundris" .
+
+<urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020:box> a syn:Box ;
+    syn:bottom 547.9608080974137 ;
+    syn:page 8 ;
+    syn:top 538.5688105459608 ;
+    syn:x0 100.4461011401502 ;
+    syn:x1 159.6853923280318 .

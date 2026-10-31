@@ -1,0 +1,673 @@
+# Truth record (spec 2026-10-31 § 4.5), written by the generator; never read by a router.
+# Output-page coordinates. Our own part ids, field keys and fake values; no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill> a syn:Truth ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:docId "gafta-48-3.form-fill" ;
+    syn:flavour "form-fill" ;
+    syn:review "draft" ;
+    syn:seed 2006874061 ;
+    syn:usesFill <urn:iladub:synthetic:truth:gafta-48-3.form-fill:fill:0001> ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:gafta-48-3.form-fill:template:0001> .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:fill:0001> a syn:FillUse ;
+    syn:fillId "gafta-48-3" ;
+    syn:order 1 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0001> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0002> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0003> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0004> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0005> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0006> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0007> ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0008> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 1 ;
+    syn:partId "contract-form" ;
+    syn:partType "contract-form" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0001> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 1 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0002> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 2 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0003> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 3 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0004> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 4 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0005> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 5 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0006> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 6 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0007> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 7 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001:box:0008> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 8 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.32 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0002> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0002:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 2 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.contract.date" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0002:box:0001> a syn:Box ;
+    syn:bottom 249.5 ;
+    syn:page 1 ;
+    syn:top 239.5 ;
+    syn:x0 395.6 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0003> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0003:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 3 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.destination.cfr" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0003:box:0001> a syn:Box ;
+    syn:bottom 546.0 ;
+    syn:page 1 ;
+    syn:top 536.0 ;
+    syn:x0 159.6 ;
+    syn:x1 551.6 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0004> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0004:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 4 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.destination.cfr-free-out" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0004:box:0001> a syn:Box ;
+    syn:bottom 569.8 ;
+    syn:page 1 ;
+    syn:top 559.8 ;
+    syn:x0 198.4 ;
+    syn:x1 551.6 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0005> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0005:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 5 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.destination.cif" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0005:box:0001> a syn:Box ;
+    syn:bottom 498.0 ;
+    syn:page 1 ;
+    syn:top 488.0 ;
+    syn:x0 207.5 ;
+    syn:x1 551.6 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0006> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0006:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 6 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.destination.cif-free-out" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0006:box:0001> a syn:Box ;
+    syn:bottom 522.0 ;
+    syn:page 1 ;
+    syn:top 512.0 ;
+    syn:x0 246.3 ;
+    syn:x1 551.6 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0007> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0007:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 7 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.discharge.daily-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0007:box:0001> a syn:Box ;
+    syn:bottom 404.7 ;
+    syn:page 4 ;
+    syn:top 394.8 ;
+    syn:x0 258.8 ;
+    syn:x1 297.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0008> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0008:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 8 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.goods.description" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0008:box:0001> a syn:Box ;
+    syn:bottom 354.9 ;
+    syn:page 1 ;
+    syn:top 345.0 ;
+    syn:x0 105.6 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0009> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0009:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 9 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.party.broker" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0009:box:0001> a syn:Box ;
+    syn:bottom 296.3 ;
+    syn:page 1 ;
+    syn:top 286.3 ;
+    syn:x0 174.7 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0010> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0010:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 10 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.party.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0010:box:0001> a syn:Box ;
+    syn:bottom 319.8 ;
+    syn:page 1 ;
+    syn:top 309.8 ;
+    syn:x0 88.3 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0011> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0011:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 11 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.party.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0011:box:0001> a syn:Box ;
+    syn:bottom 272.9 ;
+    syn:page 1 ;
+    syn:top 262.9 ;
+    syn:x0 90.3 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0012> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0012:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 12 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.payment.cash-location" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0012:box:0001> a syn:Box ;
+    syn:bottom 90.9 ;
+    syn:page 3 ;
+    syn:top 81.0 ;
+    syn:x0 382.1 ;
+    syn:x1 553.2 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0013> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0013:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 13 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.payment.cash-percent" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0013:box:0001> a syn:Box ;
+    syn:bottom 90.9 ;
+    syn:page 3 ;
+    syn:top 81.0 ;
+    syn:x0 128.2 ;
+    syn:x1 247.0 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0014> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0014:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 14 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.payment.option-detail" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0014:box:0001> a syn:Box ;
+    syn:bottom 150.9 ;
+    syn:page 3 ;
+    syn:top 141.0 ;
+    syn:x0 73.5 ;
+    syn:x1 550.9 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0015> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0015:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 15 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.price.per-tonne" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0015:box:0001> a syn:Box ;
+    syn:bottom 474.0 ;
+    syn:page 1 ;
+    syn:top 464.0 ;
+    syn:x0 328.4 ;
+    syn:x1 551.6 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0016> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0016:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 16 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.quality.certifier" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0016:box:0001> a syn:Box ;
+    syn:bottom 712.4 ;
+    syn:page 1 ;
+    syn:top 702.4 ;
+    syn:x0 145.9 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0017> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0017:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 17 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.quality.specification" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0017:box:0001> a syn:Box ;
+    syn:bottom 688.7 ;
+    syn:page 1 ;
+    syn:top 678.8 ;
+    syn:x0 134.4 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0018> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0018:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 18 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.quantity.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0018:box:0001> a syn:Box ;
+    syn:bottom 378.3 ;
+    syn:page 1 ;
+    syn:top 368.4 ;
+    syn:x0 121.0 ;
+    syn:x1 482.1 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0019> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0019:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 19 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.shipment.period" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0019:box:0001> a syn:Box ;
+    syn:bottom 772.4 ;
+    syn:page 1 ;
+    syn:top 762.4 ;
+    syn:x0 253.5 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0020> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0020:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 20 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.signature.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0020:box:0001> a syn:Box ;
+    syn:bottom 544.3 ;
+    syn:page 8 ;
+    syn:top 535.3 ;
+    syn:x0 332.7 ;
+    syn:x1 551.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0021> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0021:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 21 ;
+    syn:parent <urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0001> ;
+    syn:partId "blank.signature.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:part:0021:box:0001> a syn:Box ;
+    syn:bottom 544.3 ;
+    syn:page 8 ;
+    syn:top 535.3 ;
+    syn:x0 97.5 ;
+    syn:x1 304.3 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:template:0001> a syn:TemplateUse ;
+    syn:order 1 ;
+    syn:sha256 "ed2e58f37433221155c43e33763d956807ff50a54b32ec97bf5fd5dd8aeb5103" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0001> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0001:box> ;
+    syn:field "contract.date" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 1 ;
+    syn:text "18 Sep 2027" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0001:box> a syn:Box ;
+    syn:bottom 249.363 ;
+    syn:page 1 ;
+    syn:top 241.038 ;
+    syn:x0 400.9030214109355 ;
+    syn:x1 451.94202141093547 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0002> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0002:box> ;
+    syn:field "destination.cfr" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 2 ;
+    syn:text "Lagos" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0002:box> a syn:Box ;
+    syn:bottom 545.863 ;
+    syn:page 1 ;
+    syn:top 537.538 ;
+    syn:x0 163.80472793796167 ;
+    syn:x1 188.32072793796166 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0003> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0003:box> ;
+    syn:field "destination.cfr-free-out" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 3 ;
+    syn:text "Alexandria" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0003:box> a syn:Box ;
+    syn:bottom 569.663 ;
+    syn:page 1 ;
+    syn:top 561.338 ;
+    syn:x0 202.02901741954648 ;
+    syn:x1 244.54501741954647 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0004> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0004:box> ;
+    syn:field "destination.cif" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 4 ;
+    syn:text "Gdansk" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0004:box> a syn:Box ;
+    syn:bottom 497.863 ;
+    syn:page 1 ;
+    syn:top 489.538 ;
+    syn:x0 211.12824739227523 ;
+    syn:x1 242.14224739227524 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0005> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0005:box> ;
+    syn:field "destination.cif-free-out" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 5 ;
+    syn:text "Constanta" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0005:box> a syn:Box ;
+    syn:bottom 521.863 ;
+    syn:page 1 ;
+    syn:top 513.538 ;
+    syn:x0 251.62815157191994 ;
+    syn:x1 292.65015157191993 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0006> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0006:box> ;
+    syn:field "discharge.daily-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 6 ;
+    syn:text "96.42" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0006:box> a syn:Box ;
+    syn:bottom 404.58299999999997 ;
+    syn:page 4 ;
+    syn:top 396.258 ;
+    syn:x0 261.946719981294 ;
+    syn:x1 284.464719981294 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0007> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0007:box> ;
+    syn:field "goods.description" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 7 ;
+    syn:text "soya beans" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0007:box> a syn:Box ;
+    syn:bottom 354.78299999999996 ;
+    syn:page 1 ;
+    syn:top 346.45799999999997 ;
+    syn:x0 109.89884185787393 ;
+    syn:x1 155.92484185787393 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0008> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0008:box> ;
+    syn:field "party.broker" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 8 ;
+    syn:text "Dirbun Holdings GmbH" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0008:box> a syn:Box ;
+    syn:bottom 296.163 ;
+    syn:page 1 ;
+    syn:top 287.838 ;
+    syn:x0 174.96415243521147 ;
+    syn:x1 267.48415243521146 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0009> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0009:box> ;
+    syn:field "party.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 9 ;
+    syn:text "Dorges Commodities SA" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0009:box> a syn:Box ;
+    syn:bottom 319.663 ;
+    syn:page 1 ;
+    syn:top 311.338 ;
+    syn:x0 92.348665550988 ;
+    syn:x1 190.871665550988 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0010> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0010:box> ;
+    syn:field "party.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 10 ;
+    syn:text "Brosdrun Commodities LLC" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0010:box> a syn:Box ;
+    syn:bottom 272.763 ;
+    syn:page 1 ;
+    syn:top 264.438 ;
+    syn:x0 91.7240043283772 ;
+    syn:x1 202.25300432837722 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0011> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0011:box> ;
+    syn:field "payment.cash-location" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 11 ;
+    syn:text "Vancouver" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0011:box> a syn:Box ;
+    syn:bottom 90.783 ;
+    syn:page 3 ;
+    syn:top 82.458 ;
+    syn:x0 385.67342260175343 ;
+    syn:x1 428.6934226017534 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0012> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0012:box> ;
+    syn:field "payment.cash-percent" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 12 ;
+    syn:text "30 pct" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0012:box> a syn:Box ;
+    syn:bottom 90.783 ;
+    syn:page 3 ;
+    syn:top 82.458 ;
+    syn:x0 131.22829748770368 ;
+    syn:x1 155.74429748770368 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0013> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0013:box> ;
+    syn:field "payment.option-detail" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 13 ;
+    syn:text "Gusk2" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0013:box> a syn:Box ;
+    syn:bottom 150.78300000000002 ;
+    syn:page 3 ;
+    syn:top 142.45800000000003 ;
+    syn:x0 76.840618075538 ;
+    syn:x1 102.85061807553801 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0014> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0014:box> ;
+    syn:field "price.per-tonne" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 14 ;
+    syn:text "USD 355.81 per tonne" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0014:box> a syn:Box ;
+    syn:bottom 473.863 ;
+    syn:page 1 ;
+    syn:top 465.538 ;
+    syn:x0 330.5026943216302 ;
+    syn:x1 420.0526943216302 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0015> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0015:box> ;
+    syn:field "quality.certifier" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 15 ;
+    syn:text "Goxzos Commodities SA" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0015:box> a syn:Box ;
+    syn:bottom 712.263 ;
+    syn:page 1 ;
+    syn:top 703.938 ;
+    syn:x0 151.3945098301273 ;
+    syn:x1 251.42050983012732 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0016> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0016:box> ;
+    syn:field "quality.specification" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 16 ;
+    syn:text "white rice" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0016:box> a syn:Box ;
+    syn:bottom 688.5830000000001 ;
+    syn:page 1 ;
+    syn:top 680.258 ;
+    syn:x0 140.06974960586845 ;
+    syn:x1 178.07674960586846 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0017> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0017:box> ;
+    syn:field "quantity.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 17 ;
+    syn:text "EUR 16.70 per tonne" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0017:box> a syn:Box ;
+    syn:bottom 378.183 ;
+    syn:page 1 ;
+    syn:top 369.858 ;
+    syn:x0 126.73815547306987 ;
+    syn:x1 211.28415547306986 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018:box> ;
+    syn:field "shipment.period" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 18 ;
+    syn:text "December 2027 seller's option" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018:box> a syn:Box ;
+    syn:bottom 772.263 ;
+    syn:page 1 ;
+    syn:top 763.938 ;
+    syn:x0 256.07512969104096 ;
+    syn:x1 377.341129691041 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019:box> ;
+    syn:field "signature.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 19 ;
+    syn:text "Tordro Kolai" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019:box> a syn:Box ;
+    syn:bottom 544.363 ;
+    syn:page 8 ;
+    syn:top 536.038 ;
+    syn:x0 334.31173681657526 ;
+    syn:x1 383.3257368165753 .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020:box> ;
+    syn:field "signature.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
+    syn:order 20 ;
+    syn:text "Draixgur Gaitur" .
+
+<urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020:box> a syn:Box ;
+    syn:bottom 544.363 ;
+    syn:page 8 ;
+    syn:top 536.038 ;
+    syn:x0 99.47341003845744 ;
+    syn:x1 160.48441003845744 .

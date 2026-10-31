@@ -1,0 +1,1439 @@
+# Truth record (spec 2026-10-31 § 4.5), written by the generator; never read by a router.
+# Output-page coordinates. Our own part ids, field keys and fake values; no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> a syn:Truth ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:docId "usda-ffp-cp-2.handwriting-scan" ;
+    syn:flavour "handwriting-scan" ;
+    syn:review "draft" ;
+    syn:seed 4235930080 ;
+    syn:transform "0.9999791657791695 0.006455076110806242 -2.549834868305125 -0.006455076110806242 0.9999791657791695 1.9835036413556062" ;
+    syn:usesFill <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:fill:0001> ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:template:0001> .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:fill:0001> a syn:FillUse ;
+    syn:fillId "usda-ffp-cp-2" ;
+    syn:order 1 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0001> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0002> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0003> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0004> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0005> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0006> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0007> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0008> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0009> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0010> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0011> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0012> ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0013> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 1 ;
+    syn:partId "charter-party" ;
+    syn:partType "charter-party" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0001> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 1 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0002> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 2 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0003> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 3 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0004> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 4 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0005> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 5 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0006> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 6 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0007> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 7 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0008> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 8 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0009> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 9 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0010> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 10 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0011> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 11 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0012> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 12 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001:box:0013> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 13 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0002> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0002:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 2 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.cargo.description" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0002:box:0001> a syn:Box ;
+    syn:bottom 447.992596720749 ;
+    syn:page 1 ;
+    syn:top 435.63024720640226 ;
+    syn:x0 90.36657419837604 ;
+    syn:x1 456.4234996346602 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0003> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0003:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 3 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.cargo.quantity" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0003:box:0001> a syn:Box ;
+    syn:bottom 436.59283423086646 ;
+    syn:page 1 ;
+    syn:top 425.4698593297945 ;
+    syn:x0 90.29298633071285 ;
+    syn:x1 264.35391193739645 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0004> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0004:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 4 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.commission.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0004:box:0001> a syn:Box ;
+    syn:bottom 254.0283563087484 ;
+    syn:page 6 ;
+    syn:top 243.64126008430833 ;
+    syn:x0 239.11761937586587 ;
+    syn:x1 299.1809200837241 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0005> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0005:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 5 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.commission.payee.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0005:box:0001> a syn:Box ;
+    syn:bottom 266.39638021525184 ;
+    syn:page 6 ;
+    syn:top 254.26641344089413 ;
+    syn:x0 89.19433237665363 ;
+    syn:x1 419.25200784488766 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0006> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0006:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 6 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.commission.payee.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0006:box:0001> a syn:Box ;
+    syn:bottom 277.69614478855647 ;
+    syn:page 6 ;
+    syn:top 264.94649070756134 ;
+    syn:x0 89.26727473670574 ;
+    syn:x1 515.3229501197401 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0007> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0007:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 7 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.contract.date" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0007:box:0001> a syn:Box ;
+    syn:bottom 208.59057172570925 ;
+    syn:page 1 ;
+    syn:top 197.66124910796148 ;
+    syn:x0 244.8244339151103 ;
+    syn:x1 388.8859845484188 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0008> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0008:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 8 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.contract.number" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0008:box:0001> a syn:Box ;
+    syn:bottom 174.99477810928246 ;
+    syn:page 1 ;
+    syn:top 164.33656868818855 ;
+    syn:x0 166.60594088895658 ;
+    syn:x1 268.66836655953995 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0009> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0009:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 9 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.delivery.inland-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0009:box:0001> a syn:Box ;
+    syn:bottom 151.38825708938748 ;
+    syn:page 8 ;
+    syn:top 141.03989132161226 ;
+    syn:x0 322.4568060304028 ;
+    syn:x1 376.520231743586 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0010> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0010:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 10 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.demurrage.rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0010:box:0001> a syn:Box ;
+    syn:bottom 94.55071001646581 ;
+    syn:page 4 ;
+    syn:top 84.24107470535543 ;
+    syn:x0 328.090032701984 ;
+    syn:x1 376.15358342049217 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0011> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0011:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 11 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.despatch.rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0011:box:0001> a syn:Box ;
+    syn:bottom 150.80730023941493 ;
+    syn:page 4 ;
+    syn:top 140.49766492830452 ;
+    syn:x0 412.454930950528 ;
+    syn:x1 460.51848166903625 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0012> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0012:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 12 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.discharge.inland-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0012:box:0001> a syn:Box ;
+    syn:bottom 538.6745136035031 ;
+    syn:page 1 ;
+    syn:top 528.2486869223982 ;
+    syn:x0 108.9523200932623 ;
+    syn:x1 175.01549579579557 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0013> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0013:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 13 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.discharge.place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0013:box:0001> a syn:Box ;
+    syn:bottom 242.58986336220102 ;
+    syn:page 4 ;
+    syn:top 232.2414975944258 ;
+    syn:x0 245.0439065028777 ;
+    syn:x1 299.1073322160609 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0014> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0014:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 14 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.discharge.point" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0014:box:0001> a syn:Box ;
+    syn:bottom 243.5968552354868 ;
+    syn:page 4 ;
+    syn:top 232.7837239877335 ;
+    syn:x0 89.04715664132725 ;
+    syn:x1 215.1090822906107 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0015> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0015:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 15 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.rate.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0015:box:0001> a syn:Box ;
+    syn:bottom 311.7954343416261 ;
+    syn:page 2 ;
+    syn:top 299.045780260631 ;
+    syn:x0 89.48739283208424 ;
+    syn:x1 515.5430682151186 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0016> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0016:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 16 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.rate.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0016:box:0001> a syn:Box ;
+    syn:bottom 334.4949614048133 ;
+    syn:page 2 ;
+    syn:top 321.74530732381817 ;
+    syn:x0 89.63392305979954 ;
+    syn:x1 515.6895984428339 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0017> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0017:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 17 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.rate.3" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0017:box:0001> a syn:Box ;
+    syn:bottom 345.79472597811787 ;
+    syn:page 2 ;
+    syn:top 334.7104815337107 ;
+    syn:x0 89.70686541985165 ;
+    syn:x1 257.7679160318602 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0018> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0018:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 18 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.rate.4" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0018:box:0001> a syn:Box ;
+    syn:bottom 357.19448846800043 ;
+    syn:page 2 ;
+    syn:top 345.45182626029106 ;
+    syn:x0 89.78045328751485 ;
+    syn:x1 359.8393788089987 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0019> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0019:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 19 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.rate.5" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0019:box:0001> a syn:Box ;
+    syn:bottom 368.49425304130506 ;
+    syn:page 2 ;
+    syn:top 355.74459896030993 ;
+    syn:x0 89.85339564756696 ;
+    syn:x1 515.9090710306014 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0020> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0020:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 20 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.freight.reduced-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0020:box:0001> a syn:Box ;
+    syn:bottom 525.725532847027 ;
+    syn:page 2 ;
+    syn:top 515.4933584492463 ;
+    syn:x0 348.87373201259976 ;
+    syn:x1 384.937532741758 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0021> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0021:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 21 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.inland-contractor.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0021:box:0001> a syn:Box ;
+    syn:bottom 311.7954343416261 ;
+    syn:page 4 ;
+    syn:top 299.045780260631 ;
+    syn:x0 89.48739283208424 ;
+    syn:x1 515.5430682151186 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0022> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0022:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 22 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.inland-contractor.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0022:box:0001> a syn:Box ;
+    syn:bottom 323.09519891493073 ;
+    syn:page 4 ;
+    syn:top 312.86302451715 ;
+    syn:x0 89.56033519213635 ;
+    syn:x1 125.6241359212945 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0023> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0023:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 23 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.inland-contractor.3" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0023:box:0001> a syn:Box ;
+    syn:bottom 334.4949614048133 ;
+    syn:page 4 ;
+    syn:top 321.74530732381817 ;
+    syn:x0 89.63392305979954 ;
+    syn:x1 515.6895984428339 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0024> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0024:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 24 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.inland-contractor.4" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0024:box:0001> a syn:Box ;
+    syn:bottom 345.79472597811787 ;
+    syn:page 4 ;
+    syn:top 335.601282037002 ;
+    syn:x0 89.70686541985165 ;
+    syn:x1 119.7707911543348 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0025> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0025:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 25 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.laydays.cancel-day" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0025:box:0001> a syn:Box ;
+    syn:bottom 252.86644260880328 ;
+    syn:page 3 ;
+    syn:top 242.63426821102254 ;
+    syn:x0 419.11386921611637 ;
+    syn:x1 455.17766994527454 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0026> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0026:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 26 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.laydays.cancel-month" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0026:box:0001> a syn:Box ;
+    syn:bottom 266.39638021525184 ;
+    syn:page 3 ;
+    syn:top 256.0092839908118 ;
+    syn:x0 89.19433237665363 ;
+    syn:x1 149.25763308451187 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0027> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0027:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 27 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.laydays.start-day" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0027:box:0001> a syn:Box ;
+    syn:bottom 230.59295056892935 ;
+    syn:page 3 ;
+    syn:top 220.36077617114864 ;
+    syn:x0 352.9687140469759 ;
+    syn:x1 389.03251477613406 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0028> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0028:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 28 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.laydays.start-month" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0028:box:0001> a syn:Box ;
+    syn:bottom 243.5968552354868 ;
+    syn:page 3 ;
+    syn:top 233.13229809771707 ;
+    syn:x0 89.04715664132725 ;
+    syn:x1 161.11020733853553 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0029> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0029:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 29 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.lightening.cost" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0029:box:0001> a syn:Box ;
+    syn:bottom 560.1895899634969 ;
+    syn:page 2 ;
+    syn:top 549.6088414557327 ;
+    syn:x0 277.094704664267 ;
+    syn:x1 367.1573803455003 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0030> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0030:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 30 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.loading.daily-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0030:box:0001> a syn:Box ;
+    syn:bottom 639.6104727296112 ;
+    syn:page 2 ;
+    syn:top 629.3395678751656 ;
+    syn:x0 289.6076332044261 ;
+    syn:x1 331.6713089282593 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0031> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0031:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 31 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.loading.port.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0031:box:0001> a syn:Box ;
+    syn:bottom 379.79401761460963 ;
+    syn:page 1 ;
+    syn:top 367.43166810026287 ;
+    syn:x0 89.92633800761907 ;
+    syn:x1 455.9832634439032 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0032> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0032:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 32 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.loading.port.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0032:box:0001> a syn:Box ;
+    syn:bottom 391.1937801044922 ;
+    syn:page 1 ;
+    syn:top 378.44412602349706 ;
+    syn:x0 89.99992587528226 ;
+    syn:x1 516.0556012583166 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0033> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0033:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 33 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.notice.days" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0033:box:0001> a syn:Box ;
+    syn:bottom 571.3182392567255 ;
+    syn:page 1 ;
+    syn:top 560.8536821189558 ;
+    syn:x0 319.1674174946553 ;
+    syn:x1 391.23046819186357 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0034> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0034:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 34 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.notice.discharge-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0034:box:0001> a syn:Box ;
+    syn:bottom 152.78255352932163 ;
+    syn:page 2 ;
+    syn:top 142.39545730488155 ;
+    syn:x0 106.46130622210217 ;
+    syn:x1 166.5246069299604 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0035> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0035:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 35 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.party.owner" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0035:box:0001> a syn:Box ;
+    syn:bottom 232.2970906621822 ;
+    syn:page 1 ;
+    syn:top 220.24458480115413 ;
+    syn:x0 88.97421428127514 ;
+    syn:x1 407.0321397601591 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0036> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0036:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 36 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.signature.charterer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0036:box:0001> a syn:Box ;
+    syn:bottom 333.0232040515495 ;
+    syn:page 11 ;
+    syn:top 322.3262641737907 ;
+    syn:x0 317.6291728574502 ;
+    syn:x1 425.6914735227085 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0037> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0037:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 37 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.signature.owner" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0037:box:0001> a syn:Box ;
+    syn:bottom 334.34003957815395 ;
+    syn:page 11 ;
+    syn:top 323.64309970039517 ;
+    syn:x0 113.6334230384996 ;
+    syn:x1 221.69572370375798 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0038> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0038:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 38 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.built-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0038:box:0001> a syn:Box ;
+    syn:bottom 277.1926488519136 ;
+    syn:page 1 ;
+    syn:top 265.48871710086905 ;
+    syn:x0 167.26564966748097 ;
+    syn:x1 431.32470019428973 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0039> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0039:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 39 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.built-year" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0039:box:0001> a syn:Box ;
+    syn:bottom 265.46684925529576 ;
+    syn:page 1 ;
+    syn:top 255.23467485751505 ;
+    syn:x0 233.19133224885405 ;
+    syn:x1 269.2551329780122 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0040> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0040:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 40 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.class" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0040:box:0001> a syn:Box ;
+    syn:bottom 286.71081241863567 ;
+    syn:page 1 ;
+    syn:top 276.2849857375308 ;
+    syn:x0 443.33284178258384 ;
+    syn:x1 509.3960174851171 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0041> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0041:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 41 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.class-registry" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0041:box:0001> a syn:Box ;
+    syn:bottom 300.24075002508425 ;
+    syn:page 1 ;
+    syn:top 289.892384257309 ;
+    syn:x0 113.4133049431211 ;
+    syn:x1 167.47673065630434 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0042> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0042:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 42 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.flag" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0042:box:0001> a syn:Box ;
+    syn:bottom 266.39638021525184 ;
+    syn:page 1 ;
+    syn:top 255.81563170748763 ;
+    syn:x0 89.19433237665363 ;
+    syn:x1 179.25700805788694 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0043> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0043:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 43 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.name" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0043:box:0001> a syn:Box ;
+    syn:bottom 254.99661772536933 ;
+    syn:page 1 ;
+    syn:top 244.10602556428637 ;
+    syn:x0 89.12074450899044 ;
+    syn:x1 227.1824201476239 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0044> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0044:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 44 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.net-tonnage" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0044:box:0001> a syn:Box ;
+    syn:bottom 288.84098753520175 ;
+    syn:page 1 ;
+    syn:top 278.53135222409134 ;
+    syn:x0 113.33971707545791 ;
+    syn:x1 161.4032677939661 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0045> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0045:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 45 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.position" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0045:box:0001> a syn:Box ;
+    syn:bottom 311.7954343416261 ;
+    syn:page 1 ;
+    syn:top 301.33087720385635 ;
+    syn:x0 89.48739283208424 ;
+    syn:x1 161.5504435292925 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0046> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0046:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 46 ;
+    syn:parent <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0001> ;
+    syn:partId "blank.vessel.rebuilt-year" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:part:0046:box:0001> a syn:Box ;
+    syn:bottom 277.69614478855647 ;
+    syn:page 1 ;
+    syn:top 267.4639703907757 ;
+    syn:x0 89.26727473670574 ;
+    syn:x1 125.3310754658639 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:template:0001> a syn:TemplateUse ;
+    syn:order 1 ;
+    syn:sha256 "d677ebc9d0b5523e1997469b4370602ca58c4f3074c7efbd4c30ad450b40018f" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0001> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0001:box> ;
+    syn:field "cargo.description" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 1 ;
+    syn:text "sunflower meal" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0001:box> a syn:Box ;
+    syn:bottom 447.6618462716668 ;
+    syn:page 1 ;
+    syn:top 436.5598181901008 ;
+    syn:x0 95.80087707463228 ;
+    syn:x1 165.686225269487 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0002> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0002:box> ;
+    syn:field "cargo.quantity" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 2 ;
+    syn:text "16000 metric tonnes" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0002:box> a syn:Box ;
+    syn:bottom 436.50832254532503 ;
+    syn:page 1 ;
+    syn:top 424.91136388019663 ;
+    syn:x0 93.11494443476498 ;
+    syn:x1 188.32964598979444 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0003> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0003:box> ;
+    syn:field "commission.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 3 ;
+    syn:text "207.68" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0003:box> a syn:Box ;
+    syn:bottom 253.164354628242 ;
+    syn:page 6 ;
+    syn:top 242.24407904711734 ;
+    syn:x0 244.2354939629265 ;
+    syn:x1 277.51281699258544 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0004> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0004:box> ;
+    syn:field "commission.payee.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 4 ;
+    syn:text "Zelfain Holdings BV" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0004:box> a syn:Box ;
+    syn:bottom 267.8849662934014 ;
+    syn:page 6 ;
+    syn:top 255.15278347785497 ;
+    syn:x0 95.03267017617446 ;
+    syn:x1 187.48463406729687 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0005> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0005:box> ;
+    syn:field "commission.payee.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 5 ;
+    syn:text "Dospir Trading LLC" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0005:box> a syn:Box ;
+    syn:bottom 279.4306661032868 ;
+    syn:page 6 ;
+    syn:top 266.2623272910707 ;
+    syn:x0 93.06725930007141 ;
+    syn:x1 181.7414672877597 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0006> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0006:box> ;
+    syn:field "contract.date" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 6 ;
+    syn:text "12 Apr 2027" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0006:box> a syn:Box ;
+    syn:bottom 209.50229269621923 ;
+    syn:page 1 ;
+    syn:top 197.2331370572244 ;
+    syn:x0 249.62893445916953 ;
+    syn:x1 308.7539103800169 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0007> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0007:box> ;
+    syn:field "contract.number" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 7 ;
+    syn:text "SYN-1728" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0007:box> a syn:Box ;
+    syn:bottom 174.52389563425496 ;
+    syn:page 1 ;
+    syn:top 164.09616453737766 ;
+    syn:x0 169.41976601391323 ;
+    syn:x1 217.37136527074313 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0008> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0008:box> ;
+    syn:field "delivery.inland-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 8 ;
+    syn:text "Sun46" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0008:box> a syn:Box ;
+    syn:bottom 151.17776479092927 ;
+    syn:page 8 ;
+    syn:top 141.9369541181928 ;
+    syn:x0 326.4689177862272 ;
+    syn:x1 354.37479987393317 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0009> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0009:box> ;
+    syn:field "demurrage.rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 9 ;
+    syn:text "386.44" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0009:box> a syn:Box ;
+    syn:bottom 94.02858512480611 ;
+    syn:page 4 ;
+    syn:top 83.50380812076922 ;
+    syn:x0 330.83766942109725 ;
+    syn:x1 363.2891699783574 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0010> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0010:box> ;
+    syn:field "despatch.rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 10 ;
+    syn:text "357.94" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0010:box> a syn:Box ;
+    syn:bottom 149.55208191043974 ;
+    syn:page 4 ;
+    syn:top 139.4676443135506 ;
+    syn:x0 415.65847026577705 ;
+    syn:x1 448.4233724088977 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0011> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0011:box> ;
+    syn:field "discharge.inland-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 11 ;
+    syn:text "Zox86" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0011:box> a syn:Box ;
+    syn:bottom 537.854659707612 ;
+    syn:page 1 ;
+    syn:top 528.2817602104965 ;
+    syn:x0 109.50111915886423 ;
+    syn:x1 138.2669923286978 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0012> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0012:box> ;
+    syn:field "discharge.place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 12 ;
+    syn:text "Dux62" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0012:box> a syn:Box ;
+    syn:bottom 242.2017611752281 ;
+    syn:page 4 ;
+    syn:top 231.7271860818884 ;
+    syn:x0 248.1405577020887 ;
+    syn:x1 276.3838643187826 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0013> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0013:box> ;
+    syn:field "discharge.point" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 13 ;
+    syn:text "Drain95" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0013:box> a syn:Box ;
+    syn:bottom 243.08799762327143 ;
+    syn:page 4 ;
+    syn:top 233.80762471400556 ;
+    syn:x0 92.18602631256512 ;
+    syn:x1 128.8850756282757 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0014> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0014:box> ;
+    syn:field "freight.rate.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 14 ;
+    syn:text "EUR 298.15 per tonne" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0014:box> a syn:Box ;
+    syn:bottom 311.951291402896 ;
+    syn:page 2 ;
+    syn:top 300.2222986047168 ;
+    syn:x0 91.62039746413264 ;
+    syn:x1 192.48901673028274 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0015> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0015:box> ;
+    syn:field "freight.rate.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 15 ;
+    syn:text "EUR 410.15 per tonne" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0015:box> a syn:Box ;
+    syn:bottom 334.89833891207047 ;
+    syn:page 2 ;
+    syn:top 322.55721537367947 ;
+    syn:x0 91.70564251811469 ;
+    syn:x1 191.90150916025576 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0016> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0016:box> ;
+    syn:field "freight.rate.3" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 16 ;
+    syn:text "EUR 460.31 per tonne" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0016:box> a syn:Box ;
+    syn:bottom 347.3515150114551 ;
+    syn:page 2 ;
+    syn:top 334.82355420466115 ;
+    syn:x0 94.23926826484342 ;
+    syn:x1 194.91833072709827 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0017> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0017:box> ;
+    syn:field "freight.rate.4" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 17 ;
+    syn:text "EUR 58.66 per tonne" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0017:box> a syn:Box ;
+    syn:bottom 357.56147688343634 ;
+    syn:page 2 ;
+    syn:top 345.78135803696074 ;
+    syn:x0 93.41552363646522 ;
+    syn:x1 191.18692431690855 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0018> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0018:box> ;
+    syn:field "freight.rate.5" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 18 ;
+    syn:text "USD 407.69 per tonne" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0018:box> a syn:Box ;
+    syn:bottom 368.9941509298493 ;
+    syn:page 2 ;
+    syn:top 357.4646545107332 ;
+    syn:x0 95.3219934891152 ;
+    syn:x1 200.2949473969297 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0019> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0019:box> ;
+    syn:field "freight.reduced-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 19 ;
+    syn:text "192.89" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0019:box> a syn:Box ;
+    syn:bottom 525.1145291020349 ;
+    syn:page 2 ;
+    syn:top 514.3482963644291 ;
+    syn:x0 350.3688290333554 ;
+    syn:x1 381.77639749042413 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0020> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0020:box> ;
+    syn:field "inland-contractor.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 20 ;
+    syn:text "Buxpix Marine Ltd" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0020:box> a syn:Box ;
+    syn:bottom 313.6854111298975 ;
+    syn:page 4 ;
+    syn:top 300.37390636200723 ;
+    syn:x0 93.66111830407998 ;
+    syn:x1 178.1177498172459 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0021> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0021:box> ;
+    syn:field "inland-contractor.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 21 ;
+    syn:text "Mu81" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0021:box> a syn:Box ;
+    syn:bottom 322.3764439830388 ;
+    syn:page 4 ;
+    syn:top 312.1478937444682 ;
+    syn:x0 90.75300326886341 ;
+    syn:x1 115.63070119264997 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0022> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0022:box> ;
+    syn:field "inland-contractor.3" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 22 ;
+    syn:text "Brulgor Marine GmbH" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0022:box> a syn:Box ;
+    syn:bottom 334.82466426717696 ;
+    syn:page 4 ;
+    syn:top 322.7430611834873 ;
+    syn:x0 91.63946585106962 ;
+    syn:x1 192.30480507495253 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0023> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0023:box> ;
+    syn:field "inland-contractor.4" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 23 ;
+    syn:text "Ge25" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0023:box> a syn:Box ;
+    syn:bottom 344.6040424504192 ;
+    syn:page 4 ;
+    syn:top 334.2792247010423 ;
+    syn:x0 93.52238892165279 ;
+    syn:x1 118.36999744115069 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0024> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0024:box> ;
+    syn:field "laydays.cancel-day" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 24 ;
+    syn:text "8th" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0024:box> a syn:Box ;
+    syn:bottom 251.97104009991278 ;
+    syn:page 3 ;
+    syn:top 242.10243129549514 ;
+    syn:x0 419.4260013027429 ;
+    syn:x1 434.98257156343635 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0025> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0025:box> ;
+    syn:field "laydays.cancel-month" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 25 ;
+    syn:text "Oct." .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0025:box> a syn:Box ;
+    syn:bottom 265.00645017901496 ;
+    syn:page 3 ;
+    syn:top 256.00869772681995 ;
+    syn:x0 89.46763626254257 ;
+    syn:x1 108.78705806117782 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0026> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0026:box> ;
+    syn:field "laydays.start-day" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 26 ;
+    syn:text "22th" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0026:box> a syn:Box ;
+    syn:bottom 229.4834267797782 ;
+    syn:page 3 ;
+    syn:top 220.0602102085621 ;
+    syn:x0 354.43429652754935 ;
+    syn:x1 376.1296494115299 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0027> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0027:box> ;
+    syn:field "laydays.start-month" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 27 ;
+    syn:text "Sep." .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0027:box> a syn:Box ;
+    syn:bottom 245.66652040071992 ;
+    syn:page 3 ;
+    syn:top 233.47509759206403 ;
+    syn:x0 90.3510598180924 ;
+    syn:x1 109.31177630279794 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0028> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0028:box> ;
+    syn:field "lightening.cost" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 28 ;
+    syn:text "225.53" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0028:box> a syn:Box ;
+    syn:bottom 559.4993171026638 ;
+    syn:page 2 ;
+    syn:top 549.1068743954486 ;
+    syn:x0 277.47412324291514 ;
+    syn:x1 309.7538311455124 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0029> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0029:box> ;
+    syn:field "loading.daily-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 29 ;
+    syn:text "191.70" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0029:box> a syn:Box ;
+    syn:bottom 638.8538327187586 ;
+    syn:page 2 ;
+    syn:top 628.3349443946016 ;
+    syn:x0 295.1208668425047 ;
+    syn:x1 323.669613558138 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0030> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0030:box> ;
+    syn:field "loading.port.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 30 ;
+    syn:text "New Orleans" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0030:box> a syn:Box ;
+    syn:bottom 379.40050320498403 ;
+    syn:page 1 ;
+    syn:top 368.7721382487555 ;
+    syn:x0 94.28280399694786 ;
+    syn:x1 152.90404780746078 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0031> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0031:box> ;
+    syn:field "loading.port.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 31 ;
+    syn:text "Hamburg" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0031:box> a syn:Box ;
+    syn:bottom 392.71316895150125 ;
+    syn:page 1 ;
+    syn:top 379.86029554101555 ;
+    syn:x0 92.02783539407243 ;
+    syn:x1 132.88502045249658 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0032> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0032:box> ;
+    syn:field "notice.days" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 32 ;
+    syn:text "5 days" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0032:box> a syn:Box ;
+    syn:bottom 571.7541079284156 ;
+    syn:page 1 ;
+    syn:top 560.1301897832183 ;
+    syn:x0 319.1739134854422 ;
+    syn:x1 350.24962549610115 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0033> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0033:box> ;
+    syn:field "notice.discharge-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 33 ;
+    syn:text "Fus16" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0033:box> a syn:Box ;
+    syn:bottom 152.48528320447423 ;
+    syn:page 2 ;
+    syn:top 141.4802068501676 ;
+    syn:x0 111.97598212525071 ;
+    syn:x1 137.30320321505388 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0034> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0034:box> ;
+    syn:field "party.owner" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 34 ;
+    syn:text "Tailgair Commodities GmbH" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0034:box> a syn:Box ;
+    syn:bottom 233.66056570056318 ;
+    syn:page 1 ;
+    syn:top 221.03430120930872 ;
+    syn:x0 92.97448338548622 ;
+    syn:x1 222.50988243935203 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0035> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0035:box> ;
+    syn:field "signature.charterer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 35 ;
+    syn:text "Baima Rosfas" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0035:box> a syn:Box ;
+    syn:bottom 332.05631771317474 ;
+    syn:page 11 ;
+    syn:top 321.7700239717353 ;
+    syn:x0 318.1486796666879 ;
+    syn:x1 378.43192445140926 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0036> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0036:box> ;
+    syn:field "signature.owner" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 36 ;
+    syn:text "Bexbro Moldrux" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0036:box> a syn:Box ;
+    syn:bottom 333.78241456303505 ;
+    syn:page 11 ;
+    syn:top 323.7789392786536 ;
+    syn:x0 118.41164970910046 ;
+    syn:x1 192.45748727586673 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0037> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0037:box> ;
+    syn:field "vessel.built-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 37 ;
+    syn:text "Alexandria" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0037:box> a syn:Box ;
+    syn:bottom 276.8619913151963 ;
+    syn:page 1 ;
+    syn:top 266.3246576051511 ;
+    syn:x0 172.8313857038504 ;
+    syn:x1 222.81797140552248 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0038> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0038:box> ;
+    syn:field "vessel.built-year" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 38 ;
+    syn:text "'71" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0038:box> a syn:Box ;
+    syn:bottom 264.7113458344625 ;
+    syn:page 1 ;
+    syn:top 255.64404278473296 ;
+    syn:x0 234.05609707791862 ;
+    syn:x1 247.21979384860236 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0039> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0039:box> ;
+    syn:field "vessel.class" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 39 ;
+    syn:text "Sin35" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0039:box> a syn:Box ;
+    syn:bottom 285.15479787225007 ;
+    syn:page 1 ;
+    syn:top 275.50565508615153 ;
+    syn:x0 444.53260112248194 ;
+    syn:x1 472.14724490487134 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0040> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0040:box> ;
+    syn:field "vessel.class-registry" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 40 ;
+    syn:text "Zis89" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0040:box> a syn:Box ;
+    syn:bottom 299.531212467769 ;
+    syn:page 1 ;
+    syn:top 290.13337960486245 ;
+    syn:x0 119.28914616041372 ;
+    syn:x1 146.35488885214636 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0041> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0041:box> ;
+    syn:field "vessel.flag" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 41 ;
+    syn:text "Ki57" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0041:box> a syn:Box ;
+    syn:bottom 265.99882272166985 ;
+    syn:page 1 ;
+    syn:top 256.75361834886553 ;
+    syn:x0 92.42356099652872 ;
+    syn:x1 112.63997431724167 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0042> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0042:box> ;
+    syn:field "vessel.name" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 42 ;
+    syn:text "Vou79" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0042:box> a syn:Box ;
+    syn:bottom 254.37923427762706 ;
+    syn:page 1 ;
+    syn:top 244.67984335946508 ;
+    syn:x0 94.48069722915331 ;
+    syn:x1 122.73980208018581 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0043> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0043:box> ;
+    syn:field "vessel.net-tonnage" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 43 ;
+    syn:text "13500" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0043:box> a syn:Box ;
+    syn:bottom 288.35773498034195 ;
+    syn:page 1 ;
+    syn:top 277.9341492536421 ;
+    syn:x0 114.541939152046 ;
+    syn:x1 143.42222681399127 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0044> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0044:box> ;
+    syn:field "vessel.position" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 44 ;
+    syn:text "For39" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0044:box> a syn:Box ;
+    syn:bottom 311.20684283987265 ;
+    syn:page 1 ;
+    syn:top 300.53160531631573 ;
+    syn:x0 93.72010961396188 ;
+    syn:x1 122.27716483889573 .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0045> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0045:box> ;
+    syn:field "vessel.rebuilt-year" ;
+    syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan> ;
+    syn:order 45 ;
+    syn:text "'89" .
+
+<urn:iladub:synthetic:truth:usda-ffp-cp-2.handwriting-scan:value:0045:box> a syn:Box ;
+    syn:bottom 277.1077706322838 ;
+    syn:page 1 ;
+    syn:top 265.96645985464113 ;
+    syn:x0 93.01623165206114 ;
+    syn:x1 108.3795983946345 .

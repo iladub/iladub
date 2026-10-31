@@ -184,3 +184,23 @@
     sh:property [ sh:path syn:text ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
                   sh:minLength 1 ] ;
     sh:property [ sh:path syn:box ; sh:class syn:Box ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+# ------------------------------------------------------------------ mixed document specs (Task 7; § 4.4)
+<urn:iladub:synthetic:shape:MixedDocument> a sh:NodeShape ;
+    sh:targetClass syn:MixedDocument ;
+    sh:property [ sh:path syn:mixedId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z0-9][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:component ; sh:class syn:Component ; sh:minCount 2 ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] .
+
+<urn:iladub:synthetic:shape:Component> a sh:NodeShape ;
+    sh:targetClass syn:Component ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] ;
+    sh:property [ sh:path syn:componentFlavour ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "form-fill" "word-export" "handwriting-scan" "unfilled" ) ] ;
+    sh:xone ( [ sh:path syn:fillId ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:pattern "^[a-z][a-z0-9.-]*$" ]
+              [ sh:path syn:componentTemplate ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:pattern "^[a-z][a-z0-9.-]*$" ] ) .
