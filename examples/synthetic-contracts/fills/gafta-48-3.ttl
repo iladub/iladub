@@ -13,14 +13,47 @@
     syn:size 9.0 ;
     syn:template "gafta-48" ;
     syn:value [ a syn:FillValue ;
-            syn:field "destination.cif-free-out" ;
-            syn:text "Constanta" ],
+            syn:field "signature.buyer" ;
+            syn:text "Tordro Kolai" ],
         [ a syn:FillValue ;
             syn:field "payment.cash-percent" ;
             syn:text "30 pct" ],
         [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "EUR 16.70 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Dorges Commodities SA" ],
+        [ a syn:FillValue ;
             syn:field "payment.cash-location" ;
             syn:text "Vancouver" ],
+        [ a syn:FillValue ;
+            syn:field "shipment.period" ;
+            syn:text "December 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Dirbun Holdings GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "payment.option-detail" ;
+            syn:text "Gusk2" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Draixgur Gaitur" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Brosdrun Commodities LLC" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.daily-rate" ;
+            syn:text "96.42" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "18 Sep 2027" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cif-free-out" ;
+            syn:text "Constanta" ],
+        [ a syn:FillValue ;
+            syn:field "quality.certifier" ;
+            syn:text "Goxzos Commodities SA" ],
         [ a syn:FillValue ;
             syn:field "price.per-tonne" ;
             syn:text "USD 355.81 per tonne" ],
@@ -28,47 +61,14 @@
             syn:field "destination.cfr-free-out" ;
             syn:text "Alexandria" ],
         [ a syn:FillValue ;
-            syn:field "discharge.daily-rate" ;
-            syn:text "96.42" ],
-        [ a syn:FillValue ;
-            syn:field "party.broker" ;
-            syn:text "Dirbun Holdings GmbH" ],
-        [ a syn:FillValue ;
-            syn:field "quality.certifier" ;
-            syn:text "Goxzos Commodities SA" ],
-        [ a syn:FillValue ;
-            syn:field "party.buyer" ;
-            syn:text "Dorges Commodities SA" ],
-        [ a syn:FillValue ;
-            syn:field "quality.specification" ;
-            syn:text "white rice" ],
-        [ a syn:FillValue ;
-            syn:field "payment.option-detail" ;
-            syn:text "Gusk2" ],
-        [ a syn:FillValue ;
-            syn:field "party.seller" ;
-            syn:text "Brosdrun Commodities LLC" ],
-        [ a syn:FillValue ;
-            syn:field "contract.date" ;
-            syn:text "18 Sep 2027" ],
-        [ a syn:FillValue ;
-            syn:field "signature.seller" ;
-            syn:text "Draixgur Gaitur" ],
-        [ a syn:FillValue ;
             syn:field "destination.cif" ;
             syn:text "Gdansk" ],
         [ a syn:FillValue ;
-            syn:field "shipment.period" ;
-            syn:text "December 2027 seller's option" ],
-        [ a syn:FillValue ;
-            syn:field "quantity.amount" ;
-            syn:text "EUR 16.70 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "signature.buyer" ;
-            syn:text "Tordro Kolai" ],
-        [ a syn:FillValue ;
             syn:field "goods.description" ;
             syn:text "soya beans" ],
+        [ a syn:FillValue ;
+            syn:field "quality.specification" ;
+            syn:text "white rice" ],
         [ a syn:FillValue ;
             syn:field "destination.cfr" ;
             syn:text "Lagos" ] .

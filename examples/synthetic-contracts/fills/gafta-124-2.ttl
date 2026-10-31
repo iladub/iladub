@@ -13,8 +13,26 @@
     syn:size 8.5 ;
     syn:template "gafta-124" ;
     syn:value [ a syn:FillValue ;
+            syn:field "sample.set-number" ;
+            syn:text "SYN-4220" ],
+        [ a syn:FillValue ;
+            syn:field "sample.quantity-represented" ;
+            syn:text "9500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.seals" ;
+            syn:text "Brek6" ],
+        [ a syn:FillValue ;
+            syn:field "sample.origin" ;
+            syn:text "Lagos" ],
+        [ a syn:FillValue ;
             syn:field "sample.transport" ;
             syn:text "Pez9" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sample-number" ;
+            syn:text "SYN-1081" ],
+        [ a syn:FillValue ;
+            syn:field "sample.commodity" ;
+            syn:text "milling wheat" ],
         [ a syn:FillValue ;
             syn:field "sample.marks" ;
             syn:text "Druq5" ],
@@ -22,39 +40,21 @@
             syn:field "sample.packing" ;
             syn:text "Bourx8" ],
         [ a syn:FillValue ;
-            syn:field "sample.consigning-party" ;
-            syn:text "Bundrou Holdings GmbH" ],
-        [ a syn:FillValue ;
             syn:field "sample.terms-analysis" ;
             syn:text "Sox7" ],
-        [ a syn:FillValue ;
-            syn:field "sample.origin" ;
-            syn:text "Lagos" ],
-        [ a syn:FillValue ;
-            syn:field "sample.sender" ;
-            syn:text "Taispoun Marine LLC" ],
-        [ a syn:FillValue ;
-            syn:field "sample.sealing" ;
-            syn:text "Terx4" ],
         [ a syn:FillValue ;
             syn:field "sample.destination" ;
             syn:text "Gdansk" ],
         [ a syn:FillValue ;
-            syn:field "sample.seals" ;
-            syn:text "Brek6" ],
+            syn:field "sample.consigning-party" ;
+            syn:text "Bundrou Holdings GmbH" ],
         [ a syn:FillValue ;
-            syn:field "sample.set-number" ;
-            syn:text "SYN-4220" ],
-        [ a syn:FillValue ;
-            syn:field "sample.quantity-represented" ;
-            syn:text "9500 metric tonnes" ],
-        [ a syn:FillValue ;
-            syn:field "sample.commodity" ;
-            syn:text "milling wheat" ],
-        [ a syn:FillValue ;
-            syn:field "sample.sample-number" ;
-            syn:text "SYN-1081" ],
+            syn:field "sample.sealing" ;
+            syn:text "Terx4" ],
         [ a syn:FillValue ;
             syn:field "sample.total-quantity" ;
-            syn:text "2500 metric tonnes" ] .
+            syn:text "2500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sender" ;
+            syn:text "Taispoun Marine LLC" ] .
 

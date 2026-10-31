@@ -13,48 +13,48 @@
     syn:size 8.5 ;
     syn:template "gafta-124" ;
     syn:value [ a syn:FillValue ;
-            syn:field "sample.origin" ;
-            syn:text "Constanta" ],
-        [ a syn:FillValue ;
-            syn:field "sample.sender" ;
-            syn:text "Kuxnail Holdings GmbH" ],
-        [ a syn:FillValue ;
-            syn:field "sample.consigning-party" ;
-            syn:text "Sinmin Holdings SA" ],
-        [ a syn:FillValue ;
             syn:field "sample.transport" ;
             syn:text "Bek3" ],
-        [ a syn:FillValue ;
-            syn:field "sample.total-quantity" ;
-            syn:text "11000 metric tonnes" ],
-        [ a syn:FillValue ;
-            syn:field "sample.marks" ;
-            syn:text "Broq4" ],
-        [ a syn:FillValue ;
-            syn:field "sample.sample-number" ;
-            syn:text "SYN-3773" ],
-        [ a syn:FillValue ;
-            syn:field "sample.commodity" ;
-            syn:text "white rice" ],
         [ a syn:FillValue ;
             syn:field "sample.set-number" ;
             syn:text "SYN-2055" ],
         [ a syn:FillValue ;
-            syn:field "sample.terms-analysis" ;
-            syn:text "Lenx4" ],
-        [ a syn:FillValue ;
-            syn:field "sample.packing" ;
-            syn:text "Morz3" ],
-        [ a syn:FillValue ;
-            syn:field "sample.seals" ;
-            syn:text "Brerz8" ],
+            syn:field "sample.origin" ;
+            syn:text "Constanta" ],
         [ a syn:FillValue ;
             syn:field "sample.quantity-represented" ;
             syn:text "5500 metric tonnes" ],
         [ a syn:FillValue ;
+            syn:field "sample.sample-number" ;
+            syn:text "SYN-3773" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sender" ;
+            syn:text "Kuxnail Holdings GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "sample.marks" ;
+            syn:text "Broq4" ],
+        [ a syn:FillValue ;
+            syn:field "sample.seals" ;
+            syn:text "Brerz8" ],
+        [ a syn:FillValue ;
+            syn:field "sample.terms-analysis" ;
+            syn:text "Lenx4" ],
+        [ a syn:FillValue ;
+            syn:field "sample.consigning-party" ;
+            syn:text "Sinmin Holdings SA" ],
+        [ a syn:FillValue ;
+            syn:field "sample.total-quantity" ;
+            syn:text "11000 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.commodity" ;
+            syn:text "white rice" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sealing" ;
+            syn:text "Rask5" ],
+        [ a syn:FillValue ;
             syn:field "sample.destination" ;
             syn:text "Valencia" ],
         [ a syn:FillValue ;
-            syn:field "sample.sealing" ;
-            syn:text "Rask5" ] .
+            syn:field "sample.packing" ;
+            syn:text "Morz3" ] .
 

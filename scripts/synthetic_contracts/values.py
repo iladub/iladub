@@ -35,9 +35,15 @@ def _token(rng: random.Random) -> str:
     return _syll(rng, 1) + rng.choice("xzqk") + str(rng.randint(2, 9))
 
 
+def _tag(rng: random.Random) -> str:
+    """A short capitalised syllable carrying two digits: distinctive by construction, so it
+    does not occur in contract text (a compact stand-in for a name where the blank is narrow)."""
+    return _syll(rng, 1) + str(rng.randint(10, 99))
+
+
 def party(rng: random.Random, compact: bool) -> str:
     if compact:
-        return _syll(rng, 2)
+        return _tag(rng)
     return f"{_syll(rng, 2)} {rng.choice(SUFFIXES)} {rng.choice(LEGAL)}"
 
 
@@ -71,14 +77,14 @@ def draw(key: str, rng: random.Random, width: float) -> str:
     if kind == "day":
         return f"{rng.randint(1, 28)}th"
     if kind == "year":
-        return str(rng.randint(1985, 2019))
+        return f"'{rng.randint(60, 99)}"
     if kind == "month":
         return rng.choice(MONTHS)[:3] + "."
     if kind == "date":
         d, m = rng.randint(1, 28), rng.choice(MONTHS)
         return f"{d} {m[:3] if compact else m} 2027"
     if kind == "port":
-        return rng.choice(PORTS) if not compact else _syll(rng, 1)
+        return rng.choice(PORTS) if not compact else _tag(rng)
     if kind == "party":
         return party(rng, compact)
     if kind == "price":
@@ -95,9 +101,9 @@ def draw(key: str, rng: random.Random, width: float) -> str:
         m = rng.choice(MONTHS)
         return f"{m[:3]} 2027" if compact else f"{m} 2027 seller's option"
     if kind == "goods":
-        return rng.choice(COMMODITIES) if not compact else _token(rng)
+        return rng.choice(COMMODITIES) if not compact else _tag(rng)
     if kind == "number":
         return f"SYN-{rng.randint(1000, 9999)}"
     if kind == "vessel":
-        return f"MV {_syll(rng, 2)}" if not compact else _syll(rng, 1)
+        return f"MV {_syll(rng, 2)}" if not compact else _tag(rng)
     return _token(rng)

@@ -13,54 +13,54 @@
     syn:size 9.5 ;
     syn:template "gafta-79b" ;
     syn:value [ a syn:FillValue ;
-            syn:field "brokerage.per-tonne" ;
-            syn:text "84.60" ],
-        [ a syn:FillValue ;
-            syn:field "quality.variety-purity" ;
-            syn:text "feed barley" ],
-        [ a syn:FillValue ;
             syn:field "payment.credit-deadline" ;
             syn:text "26 January 2027" ],
-        [ a syn:FillValue ;
-            syn:field "price.collected-place" ;
-            syn:text "Karachi" ],
-        [ a syn:FillValue ;
-            syn:field "signature.seller" ;
-            syn:text "Tatex Furmil" ],
-        [ a syn:FillValue ;
-            syn:field "party.broker" ;
-            syn:text "Nexdour Shipping SA" ],
-        [ a syn:FillValue ;
-            syn:field "contract.date" ;
-            syn:text "26 Dec 2027" ],
-        [ a syn:FillValue ;
-            syn:field "party.seller" ;
-            syn:text "Goulmar Trading SA" ],
-        [ a syn:FillValue ;
-            syn:field "quantity.amount" ;
-            syn:text "USD 201.15 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "delivery.period" ;
-            syn:text "November 2027 seller's option" ],
-        [ a syn:FillValue ;
-            syn:field "price.amount" ;
-            syn:text "USD 398.95 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "payment.cash-location" ;
-            syn:text "New Orleans" ],
-        [ a syn:FillValue ;
-            syn:field "signature.buyer" ;
-            syn:text "Brourke Naskoux" ],
-        [ a syn:FillValue ;
-            syn:field "goods.description" ;
-            syn:text "white rice" ],
         [ a syn:FillValue ;
             syn:field "quality.guaranteed" ;
             syn:text "sorghum" ],
         [ a syn:FillValue ;
+            syn:field "price.collected-place" ;
+            syn:text "Karachi" ],
+        [ a syn:FillValue ;
             syn:field "price.delivered-place" ;
             syn:text "Antwerp" ],
         [ a syn:FillValue ;
+            syn:field "quality.variety-purity" ;
+            syn:text "feed barley" ],
+        [ a syn:FillValue ;
+            syn:field "price.amount" ;
+            syn:text "USD 398.95 per tonne" ],
+        [ a syn:FillValue ;
             syn:field "party.buyer" ;
-            syn:text "Taxnoun Agri Ltd" ] .
+            syn:text "Taxnoun Agri Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Brourke Naskoux" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "26 Dec 2027" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Tatex Furmil" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Goulmar Trading SA" ],
+        [ a syn:FillValue ;
+            syn:field "delivery.period" ;
+            syn:text "November 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Nexdour Shipping SA" ],
+        [ a syn:FillValue ;
+            syn:field "brokerage.per-tonne" ;
+            syn:text "84.60" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "New Orleans" ],
+        [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "USD 201.15 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "white rice" ] .
 

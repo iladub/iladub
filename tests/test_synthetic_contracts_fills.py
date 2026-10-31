@@ -65,3 +65,23 @@ def test_write_refuses_overwrite(tmp_path):
     with pytest.raises(FileExistsError):
         fl.write_fill(f, tmp_path)
     assert fl.load_fill(f.id, tmp_path) == f
+
+
+def test_no_value_is_template_text():
+    """Local only: Task 6 locates values by exact match, so none may occur in template text."""
+    import pdfplumber
+
+    bad, seen = [], 0
+    for t in TEMPLATES:
+        path = mf.template_path(mf.load_manifest()[t])
+        if not path.exists():
+            pytest.skip("synthetic/templates/ absent (local-only test)")
+        with pdfplumber.open(path) as pdf:
+            text = "\n".join((pg.extract_text() or "") for pg in pdf.pages)
+        flat = " ".join(text.split())
+        for n in (1, 2, 3):
+            for k, v in fl.load_fill(fl.fill_id(t, n)).values.items():
+                seen += 1
+                if v in text or v in flat:
+                    bad.append((t, n, k, v))
+    assert seen and not bad, bad

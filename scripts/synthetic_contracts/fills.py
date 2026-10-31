@@ -15,7 +15,8 @@ import zlib
 from dataclasses import dataclass
 from pathlib import Path
 
-from rdflib import RDF, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import DCTERMS, XSD
 from reportlab.pdfbase.pdfmetrics import stringWidth
 
 from scripts.synthetic_contracts.manifest import REPO
@@ -87,8 +88,6 @@ def write_fill(f: Fill, fills_dir: Path = FILLS_DIR) -> Path:
     p = fill_path(f.id, fills_dir)
     if p.exists():
         raise FileExistsError(p)
-    from rdflib.namespace import DCTERMS, XSD
-
     g = Graph()
     g.bind("syn", SYN)
     g.bind("dcterms", DCTERMS)
@@ -111,8 +110,6 @@ def write_fill(f: Fill, fills_dir: Path = FILLS_DIR) -> Path:
 
 
 def _vnode(g: Graph, f: Fill, key: str):
-    from rdflib import BNode
-
     b = BNode()
     g.add((b, RDF.type, SYN.FillValue))
     g.add((b, SYN.field, Literal(key)))
