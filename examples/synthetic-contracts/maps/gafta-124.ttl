@@ -1,0 +1,93 @@
+# Part map for template gafta-124 (spec 2026-10-31 § 4.1, § 4.5). Drafted by the builder in the template's
+# own coordinates: points, top-left origin, (x0, top, x1, bottom), 1-based pages. Labels, field
+# keys, page numbers and coordinates only. syn:review "draft" until the owner reviews it.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<urn:iladub:synthetic:map:gafta-124> a syn:PartMap ; syn:template "gafta-124" ; syn:review "draft" ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<urn:iladub:synthetic:map:gafta-124:part:rules> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partId "rules" ; syn:partType "rules" ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 2 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 3 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 4 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 5 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 6 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 7 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 8 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 9 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 10 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 11 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 12 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 13 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] ,
+        [ a syn:Box ; syn:page 14 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.2 ; syn:bottom 841.8 ] .
+
+<urn:iladub:synthetic:map:gafta-124:part:table.metric> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partId "table.metric" ; syn:partType "table" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 6 ; syn:x0 47.5 ; syn:top 253.9 ; syn:x1 529.7 ; syn:bottom 382.4 ] ;
+    syn:grid [ a syn:Grid ; syn:page 6 ;
+        syn:colEdges "47.5 190.9 247.4 303.8 385.0 473.2 529.7" ;
+        syn:rowEdges "253.9 270.6 287.2 303.8 320.5 337.2 365.8 382.4" ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.sender> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.sender" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 100.8 ; syn:top 186.3 ; syn:x1 523.9 ; syn:bottom 196.2 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.transport> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.transport" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 136.8 ; syn:top 200.3 ; syn:x1 523.9 ; syn:bottom 210.3 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.origin> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.origin" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 96.0 ; syn:top 214.4 ; syn:x1 523.9 ; syn:bottom 224.3 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.destination> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.destination" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 81.6 ; syn:top 228.4 ; syn:x1 523.9 ; syn:bottom 238.4 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.commodity> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.commodity" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 117.6 ; syn:top 242.4 ; syn:x1 523.9 ; syn:bottom 252.4 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.packing> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.packing" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 110.3 ; syn:top 256.5 ; syn:x1 523.9 ; syn:bottom 266.4 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.marks> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.marks" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 98.3 ; syn:top 270.5 ; syn:x1 523.9 ; syn:bottom 280.5 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.consigning-party> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.consigning-party" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 163.1 ; syn:top 284.6 ; syn:x1 523.7 ; syn:bottom 294.5 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.set-number> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.set-number" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 98.3 ; syn:top 298.6 ; syn:x1 223.4 ; syn:bottom 308.6 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.sample-number> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.sample-number" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 271.1 ; syn:top 298.6 ; syn:x1 523.6 ; syn:bottom 308.6 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.sealing> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.sealing" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 172.7 ; syn:top 312.7 ; syn:x1 523.7 ; syn:bottom 322.6 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.quantity-represented> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.quantity-represented" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 215.9 ; syn:top 326.7 ; syn:x1 523.6 ; syn:bottom 336.7 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.total-quantity> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.total-quantity" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 160.7 ; syn:top 340.7 ; syn:x1 523.7 ; syn:bottom 350.7 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.terms-analysis> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.terms-analysis" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 261.5 ; syn:top 368.8 ; syn:x1 523.6 ; syn:bottom 378.8 ] .
+
+<urn:iladub:synthetic:map:gafta-124:blank:sample.seals> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-124> ;
+    syn:partType "blank" ; syn:field "sample.seals" ; syn:parent <urn:iladub:synthetic:map:gafta-124:part:rules> ;
+    syn:box [ a syn:Box ; syn:page 7 ; syn:x0 93.4 ; syn:top 453.1 ; syn:x1 523.8 ; syn:bottom 463.1 ] .

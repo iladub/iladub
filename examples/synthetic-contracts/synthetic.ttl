@@ -20,3 +20,47 @@ syn:sha256 a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "sha25
     rdfs:comment "Hex sha256 of the pinned edition; build refuses on mismatch." .
 syn:pages a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "pages" ;
     rdfs:comment "Page count of the pinned edition." .
+
+# Part maps (Task 2; spec § 4.1, § 4.5). Coordinates: points, top-left origin, 1-based pages.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+syn:PartMap a owl:Class ; rdfs:label "PartMap" ;
+    rdfs:comment "A per-template map of parts, authored once in the template's coordinates; labels and coordinates only, never template text." .
+syn:Part a owl:Class ; rdfs:label "Part" ;
+    rdfs:comment "A region of a template at the router's granularity; its type is a plain label from the closed set contract-form, rules, charter-party, table, blank." .
+syn:Box a owl:Class ; rdfs:label "Box" ;
+    rdfs:comment "One rectangle on one page: (x0, top, x1, bottom) in points, top-left origin." .
+syn:Grid a owl:Class ; rdfs:label "Grid" ;
+    rdfs:comment "The hand-measured column and row edges of a table on one page, used to rebuild the table without table-finding." .
+syn:template a owl:DatatypeProperty ; rdfs:domain syn:PartMap ; rdfs:label "template" ;
+    rdfs:comment "The syn:id of the template this map describes." .
+syn:review a owl:DatatypeProperty ; rdfs:domain syn:PartMap ; rdfs:label "review" ;
+    rdfs:comment "Review state: \"draft\" as drafted by the builder, \"owner-reviewed\" once the owner has reviewed it (spec § 4.5)." .
+syn:inMap a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:PartMap ; rdfs:label "in map" ;
+    rdfs:comment "The part map this part belongs to." .
+syn:partId a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "part id" ;
+    rdfs:comment "Our own lowercase key for a non-blank part, unique within its map." .
+syn:partType a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "part type" ;
+    rdfs:comment "Plain label from the closed set contract-form, rules, charter-party, table, blank; no type tree (spec § 4.5)." .
+syn:field a owl:DatatypeProperty ; rdfs:domain syn:Part ; rdfs:label "field" ;
+    rdfs:comment "Our own lowercase field key for a blank, never a template label copied; unique within its map." .
+syn:parent a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Part ; rdfs:label "parent" ;
+    rdfs:comment "The part that contains this one (a table or blank inside its form)." .
+syn:box a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Box ; rdfs:label "box" ;
+    rdfs:comment "One box per page the part covers." .
+syn:grid a owl:ObjectProperty ; rdfs:domain syn:Part ; rdfs:range syn:Grid ; rdfs:label "grid" ;
+    rdfs:comment "A table part's grid, one per page it covers." .
+syn:page a owl:DatatypeProperty ; rdfs:label "page" ;
+    rdfs:comment "1-based page number of a box or grid." .
+syn:x0 a owl:DatatypeProperty ; rdfs:domain syn:Box ; rdfs:label "x0" ;
+    rdfs:comment "Left edge, points from the page's left." .
+syn:top a owl:DatatypeProperty ; rdfs:domain syn:Box ; rdfs:label "top" ;
+    rdfs:comment "Top edge, points from the page's top." .
+syn:x1 a owl:DatatypeProperty ; rdfs:domain syn:Box ; rdfs:label "x1" ;
+    rdfs:comment "Right edge, points from the page's left." .
+syn:bottom a owl:DatatypeProperty ; rdfs:domain syn:Box ; rdfs:label "bottom" ;
+    rdfs:comment "Bottom edge, points from the page's top." .
+syn:colEdges a owl:DatatypeProperty ; rdfs:domain syn:Grid ; rdfs:label "column edges" ;
+    rdfs:comment "Space-separated, strictly increasing x coordinates of a table's column rulings, outer edges included." .
+syn:rowEdges a owl:DatatypeProperty ; rdfs:domain syn:Grid ; rdfs:label "row edges" ;
+    rdfs:comment "Space-separated, strictly increasing y coordinates of a table's row rulings, outer edges included." .
