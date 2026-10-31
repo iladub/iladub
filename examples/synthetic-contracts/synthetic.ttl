@@ -1,0 +1,22 @@
+# syn: — repo-internal vocabulary of the synthetic contract set (spec 2026-10-31).
+# Not published, not w3id-registered (like cor:). Later tasks extend this file.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://w3id.org/iladub/synthetic> a owl:Ontology ;
+    rdfs:label "synthetic contract set vocabulary" ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+syn:Template a owl:Class ; rdfs:label "Template" ;
+    rdfs:comment "A downloaded third-party contract template PDF, pinned by sha256; fetched, never committed." .
+syn:id a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "id" ;
+    rdfs:comment "Short template identifier; also the file stem under synthetic/templates/." .
+syn:url a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "url" ;
+    rdfs:comment "Where the pinned edition is served." .
+syn:sha256 a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "sha256" ;
+    rdfs:comment "Hex sha256 of the pinned edition; build refuses on mismatch." .
+syn:pages a owl:DatatypeProperty ; rdfs:domain syn:Template ; rdfs:label "pages" ;
+    rdfs:comment "Page count of the pinned edition." .

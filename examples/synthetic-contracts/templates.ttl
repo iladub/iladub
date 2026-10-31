@@ -1,0 +1,24 @@
+# Template manifest for the synthetic contract set (spec 2026-10-31). syn: is repo-internal
+# (like cor:), not published. Templates are FETCHED, never committed; sha256 pins the edition.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:templates> dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<urn:iladub:synthetic:template:gafta-48> a syn:Template ; syn:id "gafta-48" ;
+    syn:url "https://www.gafta.com/media/tthjkq34/48_2026.pdf" ;
+    syn:sha256 "ed2e58f37433221155c43e33763d956807ff50a54b32ec97bf5fd5dd8aeb5103" ; syn:pages 8 .
+
+<urn:iladub:synthetic:template:gafta-79b> a syn:Template ; syn:id "gafta-79b" ;
+    syn:url "https://www.gafta.com/media/xw4nroew/79b_2026.pdf" ;
+    syn:sha256 "8daad72c5cc0230a933a3f9b457f3069f7d1a98cd9d9f0e1852831a3e3359dfa" ; syn:pages 6 .
+
+<urn:iladub:synthetic:template:gafta-124> a syn:Template ; syn:id "gafta-124" ;
+    syn:url "https://www.gafta.com/media/5qynr511/124_2026.pdf" ;
+    syn:sha256 "76bb91193bf4607c848c16dc398d41ee7047700d7653fa6b42744491aea3fde4" ; syn:pages 14 .
+
+<urn:iladub:synthetic:template:usda-ffp-cp> a syn:Template ; syn:id "usda-ffp-cp" ;
+    syn:url "https://omb.report/icr/201404-0551-002/doc/47577601.pdf" ;
+    syn:sha256 "d677ebc9d0b5523e1997469b4370602ca58c4f3074c7efbd4c30ad450b40018f" ; syn:pages 13 .

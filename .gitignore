@@ -50,6 +50,9 @@ htmlcov/
 
 # Real third-party document corpus — fetched by scripts/fetch_corpus.py, never committed
 corpus/
+# Synthetic contract set: templates, PDFs, .docx, rasters are generated/fetched, never committed
+# (docs/superpowers/specs/2026-10-31-synthetic-contract-set-design.md § 3).
+/synthetic/
 # Held-out documents (docs/superpowers/2026-10-06-held-out-corpus.md) — fetched, never committed,
 # and kept OUT of corpus/ so corpus_verdict_snapshot.py's rglob never sweeps them into the seven
 held-out/
