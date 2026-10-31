@@ -8,7 +8,7 @@
 **Doc impact: none.** It adds a generator script, fill specs and a truth format. No vocabulary,
 shape or released page changes.
 
-**Status: DRAFT for the maintainer.** It writes up the 2026-10-31 brainstorm. Each statement is
+**Status: APPROVED by the maintainer (2026-10-31, in chat).** It writes up the 2026-10-31 brainstorm. Each statement is
 marked **(owner)** if the owner decided it in chat, and **(call)** if it is the author's call, open
 to correction.
 
