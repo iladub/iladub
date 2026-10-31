@@ -4,6 +4,8 @@
 
 **Serves:** maintenance — project 1 of the contract:01 rescope; no criterion yet.
 
+**Execution method: subagent-driven** (ruled by the maintainer 2026-10-31, in chat).
+
 **Doc impact: none.** A generator under `scripts/`, fixture data under `examples/`, tests. No vocabulary,
 shape or released page changes.
 
