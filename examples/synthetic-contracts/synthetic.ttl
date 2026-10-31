@@ -116,3 +116,10 @@ syn:order a owl:DatatypeProperty ; rdfs:label "order" ;
     rdfs:comment "1-based position of a template, fill, part or value within its document's sequence of that kind." .
 syn:inDocument a owl:ObjectProperty ; rdfs:range syn:Truth ; rdfs:label "in document" ;
     rdfs:comment "The truth record a part or value belongs to." .
+
+# Word export (Task 6; spec § 4.3, § 6 "record each choice and its version"). Measured 2026-10-31:
+# Word saves to PDF without a dialog only inside its own sandbox container; see
+# scripts/synthetic_contracts/word.py.
+syn:converter a owl:DatatypeProperty ; rdfs:label "converter" ;
+    rdfs:comment "The program and version that exports the Word flavour's .docx to PDF, and how it is driven." .
+<https://w3id.org/iladub/synthetic> syn:converter "Microsoft Word 16.114.3 via osascript" .
