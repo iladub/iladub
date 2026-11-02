@@ -62,3 +62,12 @@ All owner decisions of the brainstorm are marked **(owner)** in the spec. Record
 - Jev is unreachable from iladub's `baml_src/` (builder: no Jev client there; Haiku and Sonnet exist) —
   not re-measured by the author.
 - The scan measurement covers `gafta-48-1` only; the other scans are assumed alike.
+
+## 6. Owner answers (appended 2026-11-02, same session)
+
+- **Q2: scans are deferred to phase 2**, when OCR is done; once lines exist, the router logic is the
+  same. The bar for this loop is restated without the 12 scan PDFs (m3's scan half: see the spec fold-in).
+- **Q4: yes, the router may assert "not a contract" when the document actually is not one.** Author's
+  reading, to confirm in the fold-in: asserted from positive evidence of another type (e.g. a rules
+  document), never from a missing party (open world, spec § 3).
+- **Q1: to be rediscussed.** **Q3: the owner did not follow it**; re-explained in chat.
