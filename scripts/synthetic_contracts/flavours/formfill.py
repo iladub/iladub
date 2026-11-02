@@ -73,6 +73,15 @@ def render_formfill(t: Template, m: PartMap, f: Fill) -> tuple[bytes, Truth]:
                 c.drawString(v.box.x0, h - baseline, v.value)
 
     pdf = to_bytes(overlay(template_path(t), draw))
-    truth = Truth(doc_id=f"{f.id}.{FLAVOUR}", flavour=FLAVOUR, templates=(t.sha256,), fills=(f.id,),
-                  seed=f.seed, review=m.review, parts=map_parts(m), values=values, transform=None)
-    return pdf, truth
+    return pdf, formfill_truth(t, m, f, values)
+
+
+def formfill_truth(t: Template, m: PartMap, f: Fill,
+                   values: tuple[ValueTruth, ...] | None = None) -> Truth:
+    """The form-fill truth record, from the manifest entry, the map and the fill alone: it needs no
+    template file (only `t.sha256` and reportlab's core-font metrics), so CI can check that a
+    committed record is still what its map and fill produce."""
+    if values is None:
+        values = place_values(m, f)
+    return Truth(doc_id=f"{f.id}.{FLAVOUR}", flavour=FLAVOUR, templates=(t.sha256,), fills=(f.id,),
+                 seed=f.seed, review=m.review, parts=map_parts(m), values=values, transform=None)

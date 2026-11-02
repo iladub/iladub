@@ -245,3 +245,33 @@ def test_build_refuses_a_non_default_root(tmp_path):
     with pytest.raises(NonDefaultRoot, match="build root must be"):
         build(tmp_path)
     assert list(tmp_path.iterdir()) == []
+
+
+# ------------------------------------------------------------------ committed truth is current (CI; final review I3)
+
+@pytest.mark.parametrize("fid", FILLS)
+def test_committed_formfill_truth_is_current(fid):
+    """Each committed `<fid>.form-fill.ttl` is byte-for-byte what its committed map and fill produce.
+    The form-fill record needs no template file (`formfill_truth`), so this runs in CI; a box edit
+    or a review flip in a map, or a regenerated fill, without a rebuild fails here."""
+    from scripts.synthetic_contracts.fills import load_fill
+    from scripts.synthetic_contracts.flavours.formfill import formfill_truth
+
+    f = load_fill(fid)
+    t = mf.load_manifest()[f.template]
+    want = formfill_truth(t, load_map(f.template), f).to_turtle()
+    assert (TRUTH_DIR / f"{fid}.form-fill.ttl").read_text(encoding="utf-8") == want, fid
+
+
+def test_committed_truth_review_is_its_maps_review():
+    """Every truth record's syn:review is its maps' review state: "owner-reviewed" only if every map
+    of every template it was made from is (the rule `compose` applies to mixed records), else
+    "draft". The other flavours' records copy `m.review` too, so this covers what CI cannot rebuild."""
+    by_sha = {t.sha256: t.id for t in mf.load_manifest().values()}
+    files = _truth_files()
+    assert len(files) == 39
+    for p in files:
+        tr = Truth.from_turtle(p)
+        reviews = {load_map(by_sha[s]).review for s in tr.templates}
+        want = "owner-reviewed" if reviews == {"owner-reviewed"} else "draft"
+        assert tr.review == want, (p.name, tr.review, reviews)
