@@ -85,3 +85,46 @@ def test_no_value_is_template_text():
                 if v in text or v in flat:
                     bad.append((t, n, k, v))
     assert seen and not bad, bad
+
+
+# ------------------------------------------------------------------ fill shapes (CI; final review I2)
+
+EX = mf.REPO / "examples" / "synthetic-contracts"
+FILL_NEGATIVE = EX / "negative" / "fill-negative.ttl"
+
+
+def _validate_fills(*files):
+    from pyshacl import validate
+    from rdflib import Graph
+
+    g = Graph()
+    for f in files:
+        g.parse(f, format="turtle")
+    return validate(g, shacl_graph=Graph().parse(EX / "shapes.ttl"),
+                    ont_graph=Graph().parse(EX / "synthetic.ttl"), inference="rdfs", advanced=True)
+
+
+def test_committed_fills_conform():
+    """All 12 committed fills conform under the repo's standard validation (rdfs inference).
+
+    Until 2026-11-02 `syn:template` carried `rdfs:domain syn:PartMap`, so every fill was inferred
+    to be a PartMap and failed the PartMap shape's `syn:review minCount 1` (final review I2)."""
+    files = sorted(fl.FILLS_DIR.glob("*.ttl"))
+    assert len(files) == 12
+    ok, _, report = _validate_fills(*files)
+    assert ok, report
+
+
+def test_fill_negative_fails_each_planted_fault():
+    from rdflib.namespace import SH
+
+    ok, rg, report = _validate_fills(FILL_NEGATIVE)
+    assert not ok
+    viol = list(rg.subjects(SH.resultSeverity, SH.Violation))
+    paths = {str(rg.value(r, SH.resultPath)) for r in viol}
+    comps = {rg.value(r, SH.sourceConstraintComponent) for r in viol}
+    syn = "https://w3id.org/iladub/synthetic#"
+    assert syn + "font" in paths, report        # 1. a font outside the base-14 three
+    assert syn + "text" in paths, report        # 2. a value with an empty text
+    assert SH.SPARQLConstraintComponent in comps, report  # 3. two values fill one field key
+    assert SH.ClosedConstraintComponent in comps, report  # 4. a property no fill may carry

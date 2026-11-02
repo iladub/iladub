@@ -175,7 +175,12 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # `2eff2f0e`'s tracked `.ttl` files after `git add`: added = exactly those 64, removed = none
     # (255 tracked minus 2 carved). Not carved out: the three negatives fail `shapes.ttl`, not this
     # membrane — every `syn:` term they name is declared in `synthetic.ttl`.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 253
+    # RE-MEASURED 2026-11-02 (synthetic contract set, final-review fix wave): 253 -> 254 —
+    # `examples/synthetic-contracts/negative/fill-negative.ttl`, the fill shapes' negative. Measured
+    # as a SET: `git ls-tree -r --name-only ca22a4c3` vs `git ls-files` after `git add`, `*.ttl`
+    # (255 -> 256 tracked, minus the 2 carved); added = exactly that one file, removed = none. Not
+    # carved out: every `syn:` term it names is declared in `synthetic.ttl`.
+    assert len(artifact_files()) == len(tracked) - len(carved) == 254
 
 
 def test_each_file_gets_its_own_named_graph():

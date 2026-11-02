@@ -204,3 +204,47 @@
                 sh:pattern "^[a-z][a-z0-9.-]*$" ]
               [ sh:path syn:componentTemplate ; sh:minCount 1 ; sh:maxCount 1 ;
                 sh:pattern "^[a-z][a-z0-9.-]*$" ] ) .
+
+# ------------------------------------------------------------------ fill specs (Task 3; § 4.2)
+# Added 2026-11-02 (final review I2): fills had no shape and no conformance test. The fill node is
+# sh:closed, so a property no fill writes (fills.py `write_fill`) fails it.
+<urn:iladub:synthetic:shape:Fill> a sh:NodeShape ;
+    sh:targetClass syn:Fill ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:path syn:fillId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*-[1-9][0-9]*$" ] ;
+    sh:property [ sh:path syn:template ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:seed ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 0 ] ;
+    sh:property [ sh:path syn:font ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "Helvetica" "Times-Roman" "Courier" ) ] ;
+    sh:property [ sh:path syn:size ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 8 ; sh:maxInclusive 10 ] ;
+    sh:property [ sh:path syn:value ; sh:class syn:FillValue ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] ;
+    sh:sparql [
+        sh:message "a fill's id is not its template id and a number" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:fillId ?value ; syn:template ?t .
+                FILTER (!STRSTARTS(?value, CONCAT(?t, "-")))
+            }""" ] ;
+    sh:sparql [
+        sh:message "two values of one fill fill the same field key" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:value ?a , ?b . FILTER (?a != ?b)
+                ?a syn:field ?value . ?b syn:field ?value .
+            }""" ] .
+
+<urn:iladub:synthetic:shape:FillValue> a sh:NodeShape ;
+    sh:targetClass syn:FillValue ;
+    sh:property [ sh:path syn:field ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:text ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minLength 1 ] .
