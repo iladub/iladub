@@ -1,7 +1,11 @@
 """CLI: python -m scripts.synthetic_contracts {fetch,fills,build}. Licence: Apache-2.0.
 
-Justified PROCEDURAL (CLAUDE.md § 8): argument dispatch only."""
+Justified PROCEDURAL (CLAUDE.md § 8): argument dispatch only. A build refusal (a template absent or
+of another edition, Word failing or timing out, the Word flavour refusing its layout) is printed as
+one line on stderr with exit 1, not a traceback."""
 import argparse
+import subprocess
+import sys
 
 from scripts.synthetic_contracts import manifest
 
@@ -23,8 +27,16 @@ def main(argv=None) -> int:
         return 0
     if args.cmd == "build":
         from scripts.synthetic_contracts import build
+        from scripts.synthetic_contracts.flavours.wordexport import BuildRefused
+        from scripts.synthetic_contracts.word import WordFailed
 
-        paths = build.build()
+        try:
+            paths = build.build()
+        except (manifest.TemplateMissing, manifest.TemplateMismatch, WordFailed,
+                subprocess.TimeoutExpired, BuildRefused) as e:
+            first = (str(e).splitlines() or [type(e).__name__])[0]
+            print(f"build refused: {type(e).__name__}: {first}", file=sys.stderr)
+            return 1
         print(f"built {len(paths)} PDF(s) under {build.OUT_DIR}, truth under {build.TRUTH_DIR}")
         return 0
     return 2

@@ -39,6 +39,11 @@ template whose sha256 differs is reported and removed (the URL now serves anothe
 refuses unless every template matches, then writes 39 PDFs to `synthetic/out/` (12 fills in three
 flavours, plus the three mixed documents `m1`, `m2`, `m3`) and their 39 truth records to `truth/`.
 
+`fetch` cannot download the USDA charter party: its host (omb.report) answers a scripted request
+with HTTP 403. Download it in a browser from the `syn:url` in `templates.ttl` and save it as
+`synthetic/templates/usda-ffp-cp.pdf`; `fetch` then leaves the file in place and checks its sha256
+like any other (and removes it if it is another edition).
+
 The build is local: the handwriting flavour needs OpenCV and the macOS handwriting fonts under
 `/System/Library/Fonts/Supplemental/`, and the Word flavour drives Microsoft Word for macOS through
 `osascript` (the converter is recorded as `syn:converter` in `synthetic.ttl`). It rebuilds the same

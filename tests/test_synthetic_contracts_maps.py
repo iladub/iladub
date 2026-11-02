@@ -153,3 +153,33 @@ def test_no_template_text_committed(tid):
         text = " ".join(f.read_text(encoding="utf-8", errors="ignore").split())
         hits = [ln for ln in lines if ln in text]
         assert not hits, (str(f), hits[:3])
+
+
+def test_no_tracked_file_carries_template_text(tmp_path):
+    """Local only: no tracked file contains any template text line of four or more words (spec § 3).
+
+    The final review's ad-hoc scan, made a test (2026-11-02): 1,525 such lines over the four
+    templates, matched as fixed strings by `git grep -F` over every tracked file. Its one hit was a
+    quoted footer in docs/superpowers/specs/2026-10-30-contract-rung-design.md (minor 7)."""
+    import subprocess
+
+    import pdfplumber
+
+    lines = set()
+    for t in mf.load_manifest().values():
+        path = mf.template_path(t)
+        if not path.is_file():
+            pytest.skip("synthetic/templates/ absent (local-only test)")
+        with pdfplumber.open(path) as pdf:
+            for pg in pdf.pages:
+                for line in (pg.extract_text() or "").splitlines():
+                    line = " ".join(line.split())
+                    if len(line.split()) >= 4:
+                        lines.add(line)
+    assert len(lines) > 1000
+    pats = tmp_path / "template-lines.txt"
+    pats.write_text("\n".join(sorted(lines)) + "\n", encoding="utf-8")
+    r = subprocess.run(["git", "grep", "-l", "-F", "-f", str(pats)], cwd=mf.REPO,
+                       capture_output=True, text=True)
+    assert r.returncode in (0, 1), r.stderr
+    assert r.stdout == "", r.stdout

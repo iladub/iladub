@@ -275,3 +275,30 @@ def test_committed_truth_review_is_its_maps_review():
         reviews = {load_map(by_sha[s]).review for s in tr.templates}
         want = "owner-reviewed" if reviews == {"owner-reviewed"} else "draft"
         assert tr.review == want, (p.name, tr.review, reviews)
+
+
+# ------------------------------------------------------------------ CLI refusals (CI; final review minor 2)
+
+def _boom(exc):
+    def f(*a, **k):
+        raise exc
+    return f
+
+
+@pytest.mark.parametrize("exc", [
+    mf.TemplateMissing("gafta-48"),
+    mf.TemplateMismatch("gafta-48", "a" * 64, "b" * 64),
+    __import__("scripts.synthetic_contracts.word", fromlist=["WordFailed"]).WordFailed("no Word"),
+    __import__("subprocess").TimeoutExpired(["osascript"], 330),
+    __import__("scripts.synthetic_contracts.flavours.wordexport",
+               fromlist=["BuildRefused"]).BuildRefused("page 3 overflowed"),
+], ids=["missing", "mismatch", "word-failed", "timeout", "refused"])
+def test_build_refusal_is_one_line_and_exit_1(exc, monkeypatch, capsys):
+    from scripts.synthetic_contracts import __main__ as cli
+    from scripts.synthetic_contracts import build as b
+
+    monkeypatch.setattr(b, "build", _boom(exc))
+    assert cli.main(["build"]) == 1
+    out = capsys.readouterr()
+    assert out.out == "" and out.err.count("\n") == 1 and out.err.startswith("build refused: "), out
+    assert str(exc).splitlines()[0] in out.err
