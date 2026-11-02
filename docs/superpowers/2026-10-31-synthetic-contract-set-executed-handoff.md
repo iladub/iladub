@@ -88,3 +88,14 @@ All in the PR body; each with what it costs if wrong.
   - the leak guard is literal-form only;
   - rewriting a fill reorders its blank nodes, which makes the diffs noisy.
 - Unverified: Word-export and scan geometry has no CI rebuild check; it rebuilds locally only.
+
+## 8. Owner ruling (appended 2026-11-02)
+
+- The owner looked at the generated PDFs (`synthetic/out/`, all three flavours plus m3) and ruled the set **good
+  enough to move to the compiler**.
+- The realism gaps the controller listed are **not** pursued now, and stay recorded here only:
+  - values that don't fit together (random-syllable names, goods "white rice" but specification "oats");
+  - a Word export that reads like a text dump (line numbers inline, no headings);
+  - uniform scans.
+- Next action (**proposed**): brainstorm the compiler for this set, starting from project 2 (the document router)
+  per § 5 item 3, in a fresh session. It consumes `synthetic/out/*.pdf` and `examples/synthetic-contracts/truth/`.
