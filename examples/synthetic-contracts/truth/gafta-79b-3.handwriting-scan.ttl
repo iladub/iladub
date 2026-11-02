@@ -578,28 +578,28 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan> ;
     syn:order 15 ;
-    syn:text "EUR 265.98 per tonne" .
+    syn:text "18500 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0015:box> a syn:Box ;
-    syn:bottom 331.2387763804491 ;
+    syn:bottom 328.6892491281817 ;
     syn:page 1 ;
-    syn:top 316.879091977257 ;
-    syn:x0 130.48114078548352 ;
-    syn:x1 232.39747720726325 .
+    syn:top 317.5951333195438 ;
+    syn:x0 126.47183074849755 ;
+    syn:x1 221.63052240380858 .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0016> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0016:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan> ;
     syn:order 16 ;
-    syn:text "Gorzais Bairras" .
+    syn:text "Velnoul Bairras" .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0016:box> a syn:Box ;
-    syn:bottom 208.71814142049504 ;
+    syn:bottom 208.91482585821362 ;
     syn:page 6 ;
-    syn:top 196.99568738588343 ;
-    syn:x0 331.4218388814153 ;
-    syn:x1 403.29985764495206 .
+    syn:top 197.15492079399155 ;
+    syn:x0 334.86422176184453 ;
+    syn:x1 404.55798593515726 .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0017> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0017:box> ;
@@ -609,8 +609,8 @@
     syn:text "Daindron Bartai" .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.handwriting-scan:value:0017:box> a syn:Box ;
-    syn:bottom 204.5902835719771 ;
+    syn:bottom 204.3741562917881 ;
     syn:page 6 ;
-    syn:top 193.20915233275483 ;
-    syn:x0 111.57314562064272 ;
-    syn:x1 184.34183094015353 .
+    syn:top 192.74419704657407 ;
+    syn:x0 108.24088463688771 ;
+    syn:x1 180.60850747700533 .

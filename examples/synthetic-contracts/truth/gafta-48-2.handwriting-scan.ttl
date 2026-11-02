@@ -622,42 +622,42 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
     syn:order 17 ;
-    syn:text "EUR 366.91 per tonne" .
+    syn:text "25000 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0017:box> a syn:Box ;
-    syn:bottom 383.62726825797665 ;
+    syn:bottom 381.7665122155864 ;
     syn:page 1 ;
-    syn:top 372.72480933601696 ;
-    syn:x0 120.88726235273798 ;
-    syn:x1 203.5911687772334 .
+    syn:top 372.0942266908305 ;
+    syn:x0 125.11485570751607 ;
+    syn:x1 202.27274963693236 .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
     syn:order 18 ;
-    syn:text "January 2027 seller's option" .
+    syn:text "December 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0018:box> a syn:Box ;
     syn:bottom 775.2952357025093 ;
     syn:page 1 ;
-    syn:top 762.2549118998678 ;
-    syn:x0 265.08050429337237 ;
-    syn:x1 374.7892216410759 .
+    syn:top 761.7723545270785 ;
+    syn:x0 265.0701113817416 ;
+    syn:x1 374.6258572402217 .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan> ;
     syn:order 19 ;
-    syn:text "Fousvoux Gonvoux" .
+    syn:text "Vanvoux Gonvoux" .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0019:box> a syn:Box ;
-    syn:bottom 543.3789398149487 ;
+    syn:bottom 544.5529700905689 ;
     syn:page 8 ;
-    syn:top 534.4058047763698 ;
-    syn:x0 336.9540129720962 ;
-    syn:x1 407.95139651995265 .
+    syn:top 535.2053589362315 ;
+    syn:x0 339.4879799551326 ;
+    syn:x1 408.1063416704366 .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020:box> ;
@@ -667,8 +667,8 @@
     syn:text "Deldro Mundris" .
 
 <urn:iladub:synthetic:truth:gafta-48-2.handwriting-scan:value:0020:box> a syn:Box ;
-    syn:bottom 547.9608080974137 ;
+    syn:bottom 548.0010086126179 ;
     syn:page 8 ;
-    syn:top 538.5688105459608 ;
-    syn:x0 100.4461011401502 ;
-    syn:x1 159.6853923280318 .
+    syn:top 538.6828561307779 ;
+    syn:x0 104.44343157827943 ;
+    syn:x1 163.99251314439618 .

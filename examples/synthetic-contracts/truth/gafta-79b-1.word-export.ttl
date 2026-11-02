@@ -81,11 +81,11 @@
     syn:partType "table" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0002:box:0001> a syn:Box ;
-    syn:bottom 597.6777599999999 ;
+    syn:bottom 598.0799999999999 ;
     syn:page 1 ;
-    syn:top 563.8377599999999 ;
-    syn:x0 28.320072 ;
-    syn:x1 460.306992 .
+    syn:top 561.5999999999999 ;
+    syn:x0 27.84 ;
+    syn:x1 486.72 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0003> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0003:box:0001> ;
@@ -96,11 +96,11 @@
     syn:partType "table" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0003:box:0001> a syn:Box ;
-    syn:bottom 248.47775999999988 ;
+    syn:bottom 248.88 ;
     syn:page 2 ;
-    syn:top 202.63775999999996 ;
-    syn:x0 28.320072 ;
-    syn:x1 462.183168 .
+    syn:top 200.39999999999998 ;
+    syn:x0 27.84 ;
+    syn:x1 487.44 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0004> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0004:box:0001> ;
@@ -111,11 +111,11 @@
     syn:partType "table" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0004:box:0001> a syn:Box ;
-    syn:bottom 453.4377599999999 ;
+    syn:bottom 453.84 ;
     syn:page 2 ;
-    syn:top 371.59775999999994 ;
-    syn:x0 28.320072 ;
-    syn:x1 381.85968 .
+    syn:top 369.59999999999997 ;
+    syn:x0 27.84 ;
+    syn:x1 487.44 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0005> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0005:box:0001> ;
@@ -340,7 +340,7 @@
     syn:page 1 ;
     syn:top 247.75775999999996 ;
     syn:x0 96.279288 ;
-    syn:x1 190.07570399999994 .
+    syn:x1 185.31996 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0020> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0020:box:0001> ;
@@ -354,8 +354,8 @@
     syn:bottom 39.22463999999991 ;
     syn:page 6 ;
     syn:top 30.104639999999904 ;
-    syn:x0 159.03175199999998 ;
-    syn:x1 230.45411999999996 .
+    syn:x0 168.60204 ;
+    syn:x1 230.45661599999997 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0021> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:part:0021:box:0001> ;
@@ -370,7 +370,7 @@
     syn:page 6 ;
     syn:top 29.357759999999985 ;
     syn:x0 58.86036 ;
-    syn:x1 124.86016799999996 .
+    syn:x1 134.43012 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:template:0001> a syn:TemplateUse ;
     syn:order 1 ;
@@ -577,39 +577,39 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-1.word-export> ;
     syn:order 15 ;
-    syn:text "USD 194.26 per tonne" .
+    syn:text "14500 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0015:box> a syn:Box ;
     syn:bottom 257.8377599999999 ;
     syn:page 1 ;
     syn:top 247.75775999999996 ;
     syn:x0 96.279288 ;
-    syn:x1 190.07570399999994 .
+    syn:x1 185.31996 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0016> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0016:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-1.word-export> ;
     syn:order 16 ;
-    syn:text "Dresdrux Korbrair" .
+    syn:text "Kudres Druxkor" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0016:box> a syn:Box ;
     syn:bottom 39.22463999999991 ;
     syn:page 6 ;
     syn:top 30.104639999999904 ;
-    syn:x0 159.03175199999998 ;
-    syn:x1 230.45411999999996 .
+    syn:x0 168.60204 ;
+    syn:x1 230.45661599999997 .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0017> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0017:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-1.word-export> ;
     syn:order 17 ;
-    syn:text "Sonvox Souxzal" .
+    syn:text "Brairson Voxsoux" .
 
 <urn:iladub:synthetic:truth:gafta-79b-1.word-export:value:0017:box> a syn:Box ;
     syn:bottom 39.43775999999991 ;
     syn:page 6 ;
     syn:top 29.357759999999985 ;
     syn:x0 58.86036 ;
-    syn:x1 124.86016799999996 .
+    syn:x1 134.43012 .

@@ -1135,14 +1135,14 @@
     syn:field "laydays.cancel-day" ;
     syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-1.handwriting-scan> ;
     syn:order 24 ;
-    syn:text "22th" .
+    syn:text "22nd" .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-1.handwriting-scan:value:0024:box> a syn:Box ;
-    syn:bottom 254.30624220702978 ;
+    syn:bottom 254.35628177534593 ;
     syn:page 3 ;
-    syn:top 244.00755434711454 ;
+    syn:top 244.00310265551025 ;
     syn:x0 425.9121707202952 ;
-    syn:x1 444.3239243827687 .
+    syn:x1 448.03947491799363 .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-1.handwriting-scan:value:0025> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-1.handwriting-scan:value:0025:box> ;

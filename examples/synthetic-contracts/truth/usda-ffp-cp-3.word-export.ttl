@@ -1134,7 +1134,7 @@
     syn:field "laydays.cancel-day" ;
     syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-3.word-export> ;
     syn:order 24 ;
-    syn:text "23th" .
+    syn:text "23rd" .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-3.word-export:value:0024:box> a syn:Box ;
     syn:bottom 189.74400000000003 ;

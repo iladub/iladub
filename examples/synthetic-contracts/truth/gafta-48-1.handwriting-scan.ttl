@@ -622,53 +622,53 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan> ;
     syn:order 17 ;
-    syn:text "USD 295.92 per tonne" .
+    syn:text "20500 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0017:box> a syn:Box ;
-    syn:bottom 377.9050828383541 ;
+    syn:bottom 376.2539552081282 ;
     syn:page 1 ;
-    syn:top 364.5733478841141 ;
-    syn:x0 125.34579135761881 ;
-    syn:x1 230.0515146342579 .
+    syn:top 364.4083491201535 ;
+    syn:x0 122.68594264298453 ;
+    syn:x1 220.22681290806938 .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0018> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0018:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan> ;
     syn:order 18 ;
-    syn:text "March 2027 seller's option" .
+    syn:text "December 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0018:box> a syn:Box ;
-    syn:bottom 774.1434591017586 ;
+    syn:bottom 775.3566989766043 ;
     syn:page 1 ;
-    syn:top 760.5660535589891 ;
-    syn:x0 249.59441956527547 ;
-    syn:x1 374.5919863031345 .
+    syn:top 759.8432478689342 ;
+    syn:x0 249.9681689285381 ;
+    syn:x1 392.03782434627095 .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0019> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0019:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan> ;
     syn:order 19 ;
-    syn:text "Sorkon Vouxdoul" .
+    syn:text "Drounsor Konvoux" .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0019:box> a syn:Box ;
-    syn:bottom 546.3599056059211 ;
+    syn:bottom 546.4377032417634 ;
     syn:page 8 ;
-    syn:top 535.0706920436322 ;
-    syn:x0 335.53567837740576 ;
-    syn:x1 412.7020643888272 .
+    syn:top 534.0379608557903 ;
+    syn:x0 332.586895123832 ;
+    syn:x1 416.70404222209686 .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0020> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0020:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan> ;
     syn:order 20 ;
-    syn:text "Maxbras Doundrous" .
+    syn:text "Doulmax Brasdoun" .
 
 <urn:iladub:synthetic:truth:gafta-48-1.handwriting-scan:value:0020:box> a syn:Box ;
-    syn:bottom 541.982869192961 ;
+    syn:bottom 542.306671005378 ;
     syn:page 8 ;
-    syn:top 529.6007240099286 ;
-    syn:x0 95.58746530477632 ;
-    syn:x1 189.5684372676427 .
+    syn:top 529.1037009099375 ;
+    syn:x0 100.70853812798153 ;
+    syn:x1 186.58616843110823 .

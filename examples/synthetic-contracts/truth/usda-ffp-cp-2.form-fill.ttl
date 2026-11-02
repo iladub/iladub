@@ -1162,14 +1162,14 @@
     syn:field "laydays.start-day" ;
     syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.form-fill> ;
     syn:order 26 ;
-    syn:text "22th" .
+    syn:text "22nd" .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-2.form-fill:value:0026:box> a syn:Box ;
     syn:bottom 230.97 ;
     syn:page 3 ;
     syn:top 221.72 ;
     syn:x0 358.941479199235 ;
-    syn:x1 378.401479199235 .
+    syn:x1 381.181479199235 .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-2.form-fill:value:0027> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:usda-ffp-cp-2.form-fill:value:0027:box> ;

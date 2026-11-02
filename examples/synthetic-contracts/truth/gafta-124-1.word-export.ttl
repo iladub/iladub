@@ -145,11 +145,11 @@
     syn:partType "table" .
 
 <urn:iladub:synthetic:truth:gafta-124-1.word-export:part:0002:box:0001> a syn:Box ;
-    syn:bottom 277.2715199999999 ;
+    syn:bottom 277.67999999999995 ;
     syn:page 6 ;
-    syn:top 180.31151999999997 ;
-    syn:x0 28.320072 ;
-    syn:x1 486.706848 .
+    syn:top 177.5999999999999 ;
+    syn:x0 27.84 ;
+    syn:x1 510.48 .
 
 <urn:iladub:synthetic:truth:gafta-124-1.word-export:part:0003> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-124-1.word-export:part:0003:box:0001> ;

@@ -621,53 +621,53 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
     syn:order 17 ;
-    syn:text "EUR 16.70 per tonne" .
+    syn:text "3000 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0017:box> a syn:Box ;
     syn:bottom 378.183 ;
     syn:page 1 ;
     syn:top 369.858 ;
     syn:x0 126.73815547306987 ;
-    syn:x1 211.28415547306986 .
+    syn:x1 203.27415547306987 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
     syn:order 18 ;
-    syn:text "December 2027 seller's option" .
+    syn:text "September 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0018:box> a syn:Box ;
     syn:bottom 772.263 ;
     syn:page 1 ;
     syn:top 763.938 ;
     syn:x0 256.07512969104096 ;
-    syn:x1 377.341129691041 .
+    syn:x1 379.85212969104094 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
     syn:order 19 ;
-    syn:text "Tordro Kolai" .
+    syn:text "Nailsix Droko" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0019:box> a syn:Box ;
     syn:bottom 544.363 ;
     syn:page 8 ;
     syn:top 536.038 ;
     syn:x0 334.31173681657526 ;
-    syn:x1 383.3257368165753 .
+    syn:x1 387.31273681657524 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.form-fill> ;
     syn:order 20 ;
-    syn:text "Draixgur Gaitur" .
+    syn:text "Laidraix Gurgai" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.form-fill:value:0020:box> a syn:Box ;
     syn:bottom 544.363 ;
     syn:page 8 ;
     syn:top 536.038 ;
     syn:x0 99.47341003845744 ;
-    syn:x1 160.48441003845744 .
+    syn:x1 160.49341003845745 .

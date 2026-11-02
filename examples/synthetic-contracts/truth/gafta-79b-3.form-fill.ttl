@@ -577,21 +577,21 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-3.form-fill> ;
     syn:order 15 ;
-    syn:text "EUR 265.98 per tonne" .
+    syn:text "18500 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.form-fill:value:0015:box> a syn:Box ;
     syn:bottom 330.07 ;
     syn:page 1 ;
     syn:top 322.21 ;
     syn:x0 124.95724999846153 ;
-    syn:x1 244.95724999846152 .
+    syn:x1 238.95724999846152 .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.form-fill:value:0016> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-3.form-fill:value:0016:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-3.form-fill> ;
     syn:order 16 ;
-    syn:text "Gorzais Bairras" .
+    syn:text "Velnoul Bairras" .
 
 <urn:iladub:synthetic:truth:gafta-79b-3.form-fill:value:0016:box> a syn:Box ;
     syn:bottom 206.76999999999998 ;

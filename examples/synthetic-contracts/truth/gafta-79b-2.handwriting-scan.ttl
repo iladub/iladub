@@ -578,39 +578,39 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan> ;
     syn:order 15 ;
-    syn:text "USD 201.15 per tonne" .
+    syn:text "14500 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0015:box> a syn:Box ;
-    syn:bottom 330.8066193284679 ;
+    syn:bottom 329.81048758317394 ;
     syn:page 1 ;
-    syn:top 322.1630581865492 ;
-    syn:x0 124.54874036436681 ;
-    syn:x1 216.8363642738182 .
+    syn:top 321.1353799869083 ;
+    syn:x0 123.95213126958022 ;
+    syn:x1 211.4271221255081 .
 
 <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0016> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0016:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan> ;
     syn:order 16 ;
-    syn:text "Brourke Naskoux" .
+    syn:text "Drasbrour Kenas" .
 
 <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0016:box> a syn:Box ;
-    syn:bottom 206.97369848295014 ;
+    syn:bottom 206.69856372520067 ;
     syn:page 6 ;
-    syn:top 198.14821028554792 ;
-    syn:x0 328.9135107354564 ;
-    syn:x1 400.86465715453136 .
+    syn:top 198.1865193082873 ;
+    syn:x0 327.51612291784113 ;
+    syn:x1 395.64211377954666 .
 
 <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0017> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0017:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan> ;
     syn:order 17 ;
-    syn:text "Tatex Furmil" .
+    syn:text "Kouxta Texfur" .
 
 <urn:iladub:synthetic:truth:gafta-79b-2.handwriting-scan:value:0017:box> a syn:Box ;
-    syn:bottom 206.48711710607296 ;
+    syn:bottom 208.91892378173836 ;
     syn:page 6 ;
-    syn:top 197.66200216855293 ;
-    syn:x0 107.92742230114257 ;
-    syn:x1 163.87516642105285 .
+    syn:top 198.41701127697263 ;
+    syn:x0 107.92426694265565 ;
+    syn:x1 169.11122638510147 .

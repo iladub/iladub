@@ -341,7 +341,7 @@
     syn:page 1 ;
     syn:top 284.23776 ;
     syn:x0 99.375 ;
-    syn:x1 187.98626399999995 .
+    syn:x1 182.87872800000002 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0019> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0019:box:0001> ;
@@ -356,7 +356,7 @@
     syn:page 1 ;
     syn:top 632.23776 ;
     syn:x0 221.81774400000018 ;
-    syn:x1 352.4021280000004 .
+    syn:x1 355.2960960000005 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0020> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0020:box:0001> ;
@@ -370,8 +370,8 @@
     syn:bottom 453.2246399999999 ;
     syn:page 8 ;
     syn:top 444.1046399999999 ;
-    syn:x0 146.91914400000002 ;
-    syn:x1 196.0358160000001 .
+    syn:x0 145.952424 ;
+    syn:x1 198.12976800000013 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0021> a syn:PartTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:part:0021:box:0001> ;
@@ -386,7 +386,7 @@
     syn:page 8 ;
     syn:top 444.1046399999999 ;
     syn:x0 55.78480799999999 ;
-    syn:x1 116.00781599999999 .
+    syn:x1 115.02285599999995 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:template:0001> a syn:TemplateUse ;
     syn:order 1 ;
@@ -621,53 +621,53 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.word-export> ;
     syn:order 17 ;
-    syn:text "EUR 16.70 per tonne" .
+    syn:text "3000 metric tonnes" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0017:box> a syn:Box ;
     syn:bottom 294.3177599999999 ;
     syn:page 1 ;
     syn:top 284.23776 ;
     syn:x0 99.375 ;
-    syn:x1 187.98626399999995 .
+    syn:x1 182.87872800000002 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0018> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0018:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.word-export> ;
     syn:order 18 ;
-    syn:text "December 2027 seller's option" .
+    syn:text "September 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0018:box> a syn:Box ;
     syn:bottom 642.3177599999999 ;
     syn:page 1 ;
     syn:top 632.23776 ;
     syn:x0 221.81774400000018 ;
-    syn:x1 352.4021280000004 .
+    syn:x1 355.2960960000005 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0019> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0019:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.word-export> ;
     syn:order 19 ;
-    syn:text "Tordro Kolai" .
+    syn:text "Nailsix Droko" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0019:box> a syn:Box ;
     syn:bottom 453.2246399999999 ;
     syn:page 8 ;
     syn:top 444.1046399999999 ;
-    syn:x0 146.91914400000002 ;
-    syn:x1 196.0358160000001 .
+    syn:x0 145.952424 ;
+    syn:x1 198.12976800000013 .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0020> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0020:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:gafta-48-3.word-export> ;
     syn:order 20 ;
-    syn:text "Draixgur Gaitur" .
+    syn:text "Laidraix Gurgai" .
 
 <urn:iladub:synthetic:truth:gafta-48-3.word-export:value:0020:box> a syn:Box ;
     syn:bottom 453.2246399999999 ;
     syn:page 8 ;
     syn:top 444.1046399999999 ;
     syn:x0 55.78480799999999 ;
-    syn:x1 116.00781599999999 .
+    syn:x1 115.02285599999995 .

@@ -1162,7 +1162,7 @@
     syn:field "laydays.start-day" ;
     syn:inDocument <urn:iladub:synthetic:truth:usda-ffp-cp-2.word-export> ;
     syn:order 26 ;
-    syn:text "22th" .
+    syn:text "22nd" .
 
 <urn:iladub:synthetic:truth:usda-ffp-cp-2.word-export:value:0026:box> a syn:Box ;
     syn:bottom 166.70400000000006 ;

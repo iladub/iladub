@@ -1000,56 +1000,56 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 17 ;
-    syn:text "EUR 16.70 per tonne" .
+    syn:text "3000 metric tonnes" .
 
 <urn:iladub:synthetic:truth:m3:value:0017:box> a syn:Box ;
     syn:bottom 378.183 ;
     syn:page 1 ;
     syn:top 369.858 ;
     syn:x0 126.73815547306987 ;
-    syn:x1 211.28415547306986 .
+    syn:x1 203.27415547306987 .
 
 <urn:iladub:synthetic:truth:m3:value:0018> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0018:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 18 ;
-    syn:text "December 2027 seller's option" .
+    syn:text "September 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:m3:value:0018:box> a syn:Box ;
     syn:bottom 772.263 ;
     syn:page 1 ;
     syn:top 763.938 ;
     syn:x0 256.07512969104096 ;
-    syn:x1 377.341129691041 .
+    syn:x1 379.85212969104094 .
 
 <urn:iladub:synthetic:truth:m3:value:0019> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0019:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 19 ;
-    syn:text "Tordro Kolai" .
+    syn:text "Nailsix Droko" .
 
 <urn:iladub:synthetic:truth:m3:value:0019:box> a syn:Box ;
     syn:bottom 544.363 ;
     syn:page 8 ;
     syn:top 536.038 ;
     syn:x0 334.31173681657526 ;
-    syn:x1 383.3257368165753 .
+    syn:x1 387.31273681657524 .
 
 <urn:iladub:synthetic:truth:m3:value:0020> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0020:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 20 ;
-    syn:text "Draixgur Gaitur" .
+    syn:text "Laidraix Gurgai" .
 
 <urn:iladub:synthetic:truth:m3:value:0020:box> a syn:Box ;
     syn:bottom 544.363 ;
     syn:page 8 ;
     syn:top 536.038 ;
     syn:x0 99.47341003845744 ;
-    syn:x1 160.48441003845744 .
+    syn:x1 160.49341003845745 .
 
 <urn:iladub:synthetic:truth:m3:value:0021> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0021:box> ;
@@ -1280,53 +1280,53 @@
     syn:field "quantity.amount" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 37 ;
-    syn:text "EUR 16.70 per tonne" .
+    syn:text "3000 metric tonnes" .
 
 <urn:iladub:synthetic:truth:m3:value:0037:box> a syn:Box ;
-    syn:bottom 382.23564985460155 ;
+    syn:bottom 381.78898638288337 ;
     syn:page 9 ;
-    syn:top 370.52673228325665 ;
-    syn:x0 122.96532540531508 ;
-    syn:x1 208.9275084824045 .
+    syn:top 371.26911411929535 ;
+    syn:x0 122.25597067034634 ;
+    syn:x1 204.59229310509858 .
 
 <urn:iladub:synthetic:truth:m3:value:0038> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0038:box> ;
     syn:field "shipment.period" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 38 ;
-    syn:text "December 2027 seller's option" .
+    syn:text "September 2027 seller's option" .
 
 <urn:iladub:synthetic:truth:m3:value:0038:box> a syn:Box ;
     syn:bottom 774.4886461865433 ;
     syn:page 9 ;
-    syn:top 759.6656392931476 ;
+    syn:top 759.5830432713002 ;
     syn:x0 264.0743678146393 ;
-    syn:x1 395.4632887513077 .
+    syn:x1 399.62311161351244 .
 
 <urn:iladub:synthetic:truth:m3:value:0039> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0039:box> ;
     syn:field "signature.buyer" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 39 ;
-    syn:text "Tordro Kolai" .
+    syn:text "Nailsix Droko" .
 
 <urn:iladub:synthetic:truth:m3:value:0039:box> a syn:Box ;
-    syn:bottom 543.325585306859 ;
+    syn:bottom 543.3727524562606 ;
     syn:page 16 ;
-    syn:top 532.8945580696947 ;
-    syn:x0 336.90180967769595 ;
-    syn:x1 389.27397579042145 .
+    syn:top 532.2518654420745 ;
+    syn:x0 339.89349660057695 ;
+    syn:x1 397.1261532555895 .
 
 <urn:iladub:synthetic:truth:m3:value:0040> a syn:ValueTruth ;
     syn:box <urn:iladub:synthetic:truth:m3:value:0040:box> ;
     syn:field "signature.seller" ;
     syn:inDocument <urn:iladub:synthetic:truth:m3> ;
     syn:order 40 ;
-    syn:text "Draixgur Gaitur" .
+    syn:text "Laidraix Gurgai" .
 
 <urn:iladub:synthetic:truth:m3:value:0040:box> a syn:Box ;
-    syn:bottom 549.7383233809963 ;
+    syn:bottom 548.6434868372663 ;
     syn:page 16 ;
-    syn:top 536.9672690120004 ;
-    syn:x0 101.7686948622878 ;
-    syn:x1 167.33365373783187 .
+    syn:top 537.6021394470673 ;
+    syn:x0 102.92071336125454 ;
+    syn:x1 166.3291171092987 .
