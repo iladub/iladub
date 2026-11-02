@@ -9,7 +9,7 @@
 is new, but it lives in an `*-align` module or in the router's own owned terms, and no released page
 changes. (If the plan finds an owned class must enter `etkl.ttl`, this becomes `increment`.)
 
-**Status: DRAFT — owner answers folded in (2026-11-02), awaiting the maintainer's approval.** It
+**Status: APPROVED (owner, 2026-11-02), with the fold-in's calls (§ 9, last bullet) approved as written.** It
 writes up the 2026-11-02 brainstorm and the owner's answers to the handoff's questions
 (`docs/superpowers/2026-11-02-document-router-spec-handoff.md` § 6). Each statement is marked
 **(owner)** if the owner decided it in chat, and **(call)** if it is the author's call, open to
@@ -235,7 +235,7 @@ generator (`scripts/synthetic_contracts/`, spec `2026-10-31-synthetic-contract-s
 - ~~**Jev** reachability~~ → settled as § 8's first MEASURE seam (owner: Jev, Haiku fallback).
 - ~~**Scans**~~ → phase 2 (owner, 2026-11-02; § 2).
 - ~~**α**~~ → gates nothing in this loop (§ 4, call).
-- **Open, for approval:** the (call)s of this fold-in, chiefly: "not a contract" only from positive
+- **Approved 2026-11-02 (owner):** the (call)s of this fold-in, chiefly: "not a contract" only from positive
   evidence (§ 4); a refusal minting a decision holon (§ 5); filled No. 124 is one rules document
   (§ 6 B2); the learning / held-out split (§ 6).
 
