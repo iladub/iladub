@@ -74,3 +74,17 @@ All in the PR body; each with what it costs if wrong.
 - Ruling: mixed-truth value keys stay unprefixed (m3 same fill twice, page-scoped) — cost if wrong: prefix values later.
 - Ruling: wrote the executed-handoff early (at ~130K) with a **Topic:** line, which clears the pre-existing cockpit failure — cost if wrong: none
 - Task 7: minor (deferred): unfilled() truth labelled form-fill; load_mixed doesn't refuse duplicate syn:order; source PdfDocuments del'd not closed; 5047 warnings in run unattributed
+
+## 7. Final review (appended 2026-11-02)
+
+- Final whole-branch review: "with fixes", 0 Critical, 4 Important. One fix wave (aa97c41f..85757c73) closed all four
+  plus minors 1, 2, 6, 7; the scoped re-review found every finding addressed. Report and fix report are in the
+  gitignored ledger directory, not committed.
+- Tests: 348 scoped tests passed and `corpus_baseline.py check` is fresh. The full local suite was stopped by the
+  owner's ruling: the branch touches no compile input, and CI's `test` runs the suite anyway.
+- New owner items, added to § 5 item 1:
+  - mixed truth drops each component's flavour (m3's typed→handwritten change is in `mixed/m3.ttl` only);
+  - the 79B quality tables are never filled;
+  - the leak guard is literal-form only;
+  - rewriting a fill reorders its blank nodes, which makes the diffs noisy.
+- Unverified: Word-export and scan geometry has no CI rebuild check; it rebuilds locally only.
