@@ -82,3 +82,13 @@ All owner decisions of the brainstorm are marked **(owner)** in the spec. Record
 - **Open, measured by the builder only:** no Jev client in iladub's `baml_src/` (Haiku, Sonnet exist).
   Jev must be reachable from iladub (nothing comes from hdc-contract, decision 18) — the plan's first
   MEASURE seam.
+
+## 7. Fold-in done (appended 2026-11-02, fresh session)
+
+Part 5 action 2 is done, except APPROVED: the answers in § 6 and the § 3a calls are folded into the
+spec (§§ 2, 4, 5, 6, 7, 8, 9, 10). Status still reads DRAFT until the owner approves. New calls,
+for approval, are listed in spec § 9's last bullet. Measured in this session: every No. 124 truth
+file and m1's has exactly one `rules` part, with the filled sample-label blanks inside it (Q4's
+second half, answered from the truth); m3's second component is a scan, so m3 moves to phase 2. The
+scored set is 27 text PDFs: 18 learning, 9 held out. Part 5 action 3's risk (Q1) is gone: no
+minimum asserted share.
