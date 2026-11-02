@@ -31,6 +31,11 @@ REPO = Path(__file__).resolve().parent.parent
 QUERY_DIR = REPO / "vocab" / "queries"
 ONTOLOGY_DIR = REPO / "vocab" / "ontology"
 INTERNAL_DIR = REPO / "vocab" / "internal"
+#: `syn:`, the synthetic contract set's vocabulary (spec 2026-10-31). Repo-internal like `cor:`:
+#: "Not published, not w3id-registered" (its own header, line 2). It lives beside its examples
+#: rather than under `vocab/internal/` because `vocab/` is a corpus-baseline input (CLAUDE.md
+#: § Corpus baseline) and this vocabulary feeds no compile.
+SYNTHETIC_VOCAB = REPO / "examples" / "synthetic-contracts" / "synthetic.ttl"
 
 ETKL = Namespace("https://w3id.org/iladub/etkl#")
 
@@ -64,9 +69,13 @@ def declaring_files() -> list[Path]:
     Align modules are excluded deliberately. `iladub-hga-align.ttl` makes
     `etkl:CleanDocumentHolon` a subject; counting that would let a term declared ONLY in an
     align file pass, which is precisely R117's dangling case — the hole next door.
+
+    EXTENDED 2026-10-31 (synthetic contract set) by ONE named file, `SYNTHETIC_VOCAB` (`syn:`),
+    on the same reading: an owned vocabulary this repo authors and records as unpublished and
+    not w3id-registered. Named, not globbed: `examples/` holds worked examples, not vocabularies.
     """
     published = (p for p in ONTOLOGY_DIR.glob("*.ttl") if not p.name.endswith("-align.ttl"))
-    return sorted([*published, *INTERNAL_DIR.glob("*.ttl")])
+    return sorted([*published, *INTERNAL_DIR.glob("*.ttl"), SYNTHETIC_VOCAB])
 
 
 def query_iri(path: Path) -> URIRef:

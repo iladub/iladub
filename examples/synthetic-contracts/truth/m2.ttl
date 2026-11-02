@@ -1,0 +1,2039 @@
+# Truth record (spec 2026-10-31 § 4.5), written by the generator; never read by a router.
+# Output-page coordinates. Our own part ids, field keys and fake values; no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:truth:m2> a syn:Truth ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:docId "m2" ;
+    syn:flavour "mixed" ;
+    syn:review "draft" ;
+    syn:usesFill <urn:iladub:synthetic:truth:m2:fill:0001> ;
+    syn:usesFill <urn:iladub:synthetic:truth:m2:fill:0002> ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:m2:template:0001> ;
+    syn:usesTemplate <urn:iladub:synthetic:truth:m2:template:0002> .
+
+<urn:iladub:synthetic:truth:m2:fill:0001> a syn:FillUse ;
+    syn:fillId "gafta-79b-2" ;
+    syn:order 1 .
+
+<urn:iladub:synthetic:truth:m2:fill:0002> a syn:FillUse ;
+    syn:fillId "usda-ffp-cp-2" ;
+    syn:order 2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0001> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0002> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0003> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0004> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0005> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0001:box:0006> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 1 ;
+    syn:partId "a.contract-form" ;
+    syn:partType "contract-form" .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0001> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 1 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0002> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 2 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0003> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 3 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0004> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 4 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0005> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 5 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0001:box:0006> a syn:Box ;
+    syn:bottom 841.92 ;
+    syn:page 6 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 595.2 .
+
+<urn:iladub:synthetic:truth:m2:part:0002> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0002:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 2 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.table.clause-6" ;
+    syn:partType "table" .
+
+<urn:iladub:synthetic:truth:m2:part:0002:box:0001> a syn:Box ;
+    syn:bottom 598.0799999999999 ;
+    syn:page 1 ;
+    syn:top 561.5999999999999 ;
+    syn:x0 27.84 ;
+    syn:x1 486.72 .
+
+<urn:iladub:synthetic:truth:m2:part:0003> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0003:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 3 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.table.clause-7" ;
+    syn:partType "table" .
+
+<urn:iladub:synthetic:truth:m2:part:0003:box:0001> a syn:Box ;
+    syn:bottom 248.88 ;
+    syn:page 2 ;
+    syn:top 200.39999999999998 ;
+    syn:x0 27.84 ;
+    syn:x1 487.44 .
+
+<urn:iladub:synthetic:truth:m2:part:0004> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0004:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 4 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.table.clause-8" ;
+    syn:partType "table" .
+
+<urn:iladub:synthetic:truth:m2:part:0004:box:0001> a syn:Box ;
+    syn:bottom 453.84 ;
+    syn:page 2 ;
+    syn:top 369.59999999999997 ;
+    syn:x0 27.84 ;
+    syn:x1 487.44 .
+
+<urn:iladub:synthetic:truth:m2:part:0005> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0005:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 5 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.brokerage.per-tonne" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0005:box:0001> a syn:Box ;
+    syn:bottom 476.23775999999987 ;
+    syn:page 1 ;
+    syn:top 466.1577599999999 ;
+    syn:x0 108.99141599999996 ;
+    syn:x1 135.05224799999996 .
+
+<urn:iladub:synthetic:truth:m2:part:0006> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0006:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 6 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.contract.date" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0006:box:0001> a syn:Box ;
+    syn:bottom 163.51775999999995 ;
+    syn:page 1 ;
+    syn:top 153.43776000000003 ;
+    syn:x0 171.019536 ;
+    syn:x1 224.59473599999998 .
+
+<urn:iladub:synthetic:truth:m2:part:0007> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0007:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 7 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.delivery.period" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0007:box:0001> a syn:Box ;
+    syn:bottom 484.6377599999999 ;
+    syn:page 2 ;
+    syn:top 474.5577599999999 ;
+    syn:x0 150.430656 ;
+    syn:x1 282.2710080000001 .
+
+<urn:iladub:synthetic:truth:m2:part:0008> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0008:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 8 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.goods.description" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0008:box:0001> a syn:Box ;
+    syn:bottom 236.9577599999999 ;
+    syn:page 1 ;
+    syn:top 226.87775999999997 ;
+    syn:x0 79.477536 ;
+    syn:x1 122.21371199999999 .
+
+<urn:iladub:synthetic:truth:m2:part:0009> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0009:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 9 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.party.broker" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0009:box:0001> a syn:Box ;
+    syn:bottom 195.67775999999992 ;
+    syn:page 1 ;
+    syn:top 185.59776 ;
+    syn:x0 161.699232 ;
+    syn:x1 252.040224 .
+
+<urn:iladub:synthetic:truth:m2:part:0010> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0010:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 10 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.party.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0010:box:0001> a syn:Box ;
+    syn:bottom 216.3177599999999 ;
+    syn:page 1 ;
+    syn:top 206.23775999999998 ;
+    syn:x0 73.33008 ;
+    syn:x1 147.80615999999998 .
+
+<urn:iladub:synthetic:truth:m2:part:0011> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0011:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 11 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.party.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0011:box:0001> a syn:Box ;
+    syn:bottom 175.03775999999993 ;
+    syn:page 1 ;
+    syn:top 164.95776 ;
+    syn:x0 75.932616 ;
+    syn:x1 162.35853600000002 .
+
+<urn:iladub:synthetic:truth:m2:part:0012> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0012:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 12 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.payment.cash-location" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0012:box:0001> a syn:Box ;
+    syn:bottom 374.9577599999999 ;
+    syn:page 1 ;
+    syn:top 364.8777599999999 ;
+    syn:x0 161.0485680000001 ;
+    syn:x1 215.73256800000013 .
+
+<urn:iladub:synthetic:truth:m2:part:0013> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0013:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 13 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.payment.credit-deadline" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0013:box:0001> a syn:Box ;
+    syn:bottom 397.99775999999986 ;
+    syn:page 1 ;
+    syn:top 387.9177599999999 ;
+    syn:x0 332.9377679999999 ;
+    syn:x1 403.69533599999966 .
+
+<urn:iladub:synthetic:truth:m2:part:0014> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0014:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 14 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.price.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0014:box:0001> a syn:Box ;
+    syn:bottom 301.51775999999984 ;
+    syn:page 1 ;
+    syn:top 291.4377599999999 ;
+    syn:x0 78.68750399999999 ;
+    syn:x1 172.48391999999996 .
+
+<urn:iladub:synthetic:truth:m2:part:0015> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0015:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 15 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.price.collected-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0015:box:0001> a syn:Box ;
+    syn:bottom 342.7977599999999 ;
+    syn:page 1 ;
+    syn:top 332.71775999999994 ;
+    syn:x0 101.725752 ;
+    syn:x1 134.651064 .
+
+<urn:iladub:synthetic:truth:m2:part:0016> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0016:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 16 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.price.delivered-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0016:box:0001> a syn:Box ;
+    syn:bottom 322.15775999999994 ;
+    syn:page 1 ;
+    syn:top 312.07776 ;
+    syn:x0 91.775784 ;
+    syn:x1 129.33184799999998 .
+
+<urn:iladub:synthetic:truth:m2:part:0017> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0017:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 17 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.quality.guaranteed" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0017:box:0001> a syn:Box ;
+    syn:bottom 48.55775999999992 ;
+    syn:page 2 ;
+    syn:top 38.47775999999999 ;
+    syn:x0 90.284952 ;
+    syn:x1 128.387352 .
+
+<urn:iladub:synthetic:truth:m2:part:0018> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0018:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 18 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.quality.variety-purity" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0018:box:0001> a syn:Box ;
+    syn:bottom 293.35775999999987 ;
+    syn:page 2 ;
+    syn:top 283.27775999999994 ;
+    syn:x0 116.41432800000004 ;
+    syn:x1 168.114648 .
+
+<urn:iladub:synthetic:truth:m2:part:0019> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0019:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 19 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.quantity.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0019:box:0001> a syn:Box ;
+    syn:bottom 257.8377599999999 ;
+    syn:page 1 ;
+    syn:top 247.75775999999996 ;
+    syn:x0 96.279288 ;
+    syn:x1 185.31996 .
+
+<urn:iladub:synthetic:truth:m2:part:0020> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0020:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 20 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.signature.buyer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0020:box:0001> a syn:Box ;
+    syn:bottom 39.22463999999991 ;
+    syn:page 6 ;
+    syn:top 30.104639999999904 ;
+    syn:x0 153.782712 ;
+    syn:x1 219.205944 .
+
+<urn:iladub:synthetic:truth:m2:part:0021> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0021:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 21 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0001> ;
+    syn:partId "a.blank.signature.seller" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0021:box:0001> a syn:Box ;
+    syn:bottom 39.43775999999991 ;
+    syn:page 6 ;
+    syn:top 29.357759999999985 ;
+    syn:x0 58.86036 ;
+    syn:x1 119.64679199999998 .
+
+<urn:iladub:synthetic:truth:m2:part:0022> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0001> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0002> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0003> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0004> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0005> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0006> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0007> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0008> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0009> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0010> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0011> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0012> ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0022:box:0013> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 22 ;
+    syn:partId "b.charter-party" ;
+    syn:partType "charter-party" .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0001> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 7 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0002> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 8 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0003> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 9 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0004> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 10 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0005> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 11 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0006> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 12 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0007> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 13 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0008> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 14 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0009> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 15 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0010> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 16 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0011> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 17 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0012> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 18 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0022:box:0013> a syn:Box ;
+    syn:bottom 792.0 ;
+    syn:page 19 ;
+    syn:top 0.0 ;
+    syn:x0 0.0 ;
+    syn:x1 612.0 .
+
+<urn:iladub:synthetic:truth:m2:part:0023> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0023:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 23 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.cargo.description" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0023:box:0001> a syn:Box ;
+    syn:bottom 446.6 ;
+    syn:page 7 ;
+    syn:top 436.6 ;
+    syn:x0 90.1 ;
+    syn:x1 456.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0024> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0024:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 24 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.cargo.quantity" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0024:box:0001> a syn:Box ;
+    syn:bottom 435.2 ;
+    syn:page 7 ;
+    syn:top 425.2 ;
+    syn:x0 90.1 ;
+    syn:x1 264.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0025> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0025:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 25 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.commission.amount" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0025:box:0001> a syn:Box ;
+    syn:bottom 253.6 ;
+    syn:page 12 ;
+    syn:top 243.6 ;
+    syn:x0 240.1 ;
+    syn:x1 300.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0026> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0026:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 26 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.commission.payee.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0026:box:0001> a syn:Box ;
+    syn:bottom 265.0 ;
+    syn:page 12 ;
+    syn:top 255.0 ;
+    syn:x0 90.1 ;
+    syn:x1 420.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0027> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0027:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 27 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.commission.payee.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0027:box:0001> a syn:Box ;
+    syn:bottom 276.3 ;
+    syn:page 12 ;
+    syn:top 266.3 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0028> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0028:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 28 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.contract.date" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0028:box:0001> a syn:Box ;
+    syn:bottom 208.2 ;
+    syn:page 7 ;
+    syn:top 198.2 ;
+    syn:x0 246.1 ;
+    syn:x1 390.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0029> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0029:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 29 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.contract.number" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0029:box:0001> a syn:Box ;
+    syn:bottom 174.1 ;
+    syn:page 7 ;
+    syn:top 164.1 ;
+    syn:x0 168.1 ;
+    syn:x1 270.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0030> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0030:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 30 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.delivery.inland-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0030:box:0001> a syn:Box ;
+    syn:bottom 151.5 ;
+    syn:page 14 ;
+    syn:top 141.5 ;
+    syn:x0 324.1 ;
+    syn:x1 378.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0031> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0031:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 31 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.demurrage.rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0031:box:0001> a syn:Box ;
+    syn:bottom 94.7 ;
+    syn:page 10 ;
+    syn:top 84.7 ;
+    syn:x0 330.1 ;
+    syn:x1 378.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0032> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0032:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 32 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.despatch.rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0032:box:0001> a syn:Box ;
+    syn:bottom 151.5 ;
+    syn:page 10 ;
+    syn:top 141.5 ;
+    syn:x0 414.1 ;
+    syn:x1 462.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0033> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0033:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 33 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.discharge.inland-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0033:box:0001> a syn:Box ;
+    syn:bottom 537.4 ;
+    syn:page 7 ;
+    syn:top 527.4 ;
+    syn:x0 108.1 ;
+    syn:x1 174.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0034> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0034:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 34 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.discharge.place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0034:box:0001> a syn:Box ;
+    syn:bottom 242.2 ;
+    syn:page 10 ;
+    syn:top 232.2 ;
+    syn:x0 246.1 ;
+    syn:x1 300.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0035> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0035:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 35 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.discharge.point" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0035:box:0001> a syn:Box ;
+    syn:bottom 242.2 ;
+    syn:page 10 ;
+    syn:top 232.2 ;
+    syn:x0 90.1 ;
+    syn:x1 216.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0036> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0036:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 36 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.rate.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0036:box:0001> a syn:Box ;
+    syn:bottom 310.4 ;
+    syn:page 8 ;
+    syn:top 300.4 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0037> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0037:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 37 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.rate.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0037:box:0001> a syn:Box ;
+    syn:bottom 333.1 ;
+    syn:page 8 ;
+    syn:top 323.1 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0038> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0038:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 38 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.rate.3" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0038:box:0001> a syn:Box ;
+    syn:bottom 344.4 ;
+    syn:page 8 ;
+    syn:top 334.4 ;
+    syn:x0 90.1 ;
+    syn:x1 258.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0039> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0039:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 39 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.rate.4" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0039:box:0001> a syn:Box ;
+    syn:bottom 355.8 ;
+    syn:page 8 ;
+    syn:top 345.8 ;
+    syn:x0 90.1 ;
+    syn:x1 360.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0040> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0040:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 40 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.rate.5" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0040:box:0001> a syn:Box ;
+    syn:bottom 367.1 ;
+    syn:page 8 ;
+    syn:top 357.1 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0041> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0041:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 41 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.freight.reduced-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0041:box:0001> a syn:Box ;
+    syn:bottom 526.0 ;
+    syn:page 8 ;
+    syn:top 516.0 ;
+    syn:x0 348.1 ;
+    syn:x1 384.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0042> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0042:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 42 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.inland-contractor.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0042:box:0001> a syn:Box ;
+    syn:bottom 310.4 ;
+    syn:page 10 ;
+    syn:top 300.4 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0043> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0043:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 43 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.inland-contractor.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0043:box:0001> a syn:Box ;
+    syn:bottom 321.7 ;
+    syn:page 10 ;
+    syn:top 311.7 ;
+    syn:x0 90.1 ;
+    syn:x1 126.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0044> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0044:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 44 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.inland-contractor.3" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0044:box:0001> a syn:Box ;
+    syn:bottom 333.1 ;
+    syn:page 10 ;
+    syn:top 323.1 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0045> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0045:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 45 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.inland-contractor.4" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0045:box:0001> a syn:Box ;
+    syn:bottom 344.4 ;
+    syn:page 10 ;
+    syn:top 334.4 ;
+    syn:x0 90.1 ;
+    syn:x1 120.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0046> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0046:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 46 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.laydays.cancel-day" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0046:box:0001> a syn:Box ;
+    syn:bottom 253.6 ;
+    syn:page 9 ;
+    syn:top 243.6 ;
+    syn:x0 420.1 ;
+    syn:x1 456.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0047> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0047:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 47 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.laydays.cancel-month" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0047:box:0001> a syn:Box ;
+    syn:bottom 265.0 ;
+    syn:page 9 ;
+    syn:top 255.0 ;
+    syn:x0 90.1 ;
+    syn:x1 150.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0048> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0048:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 48 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.laydays.start-day" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0048:box:0001> a syn:Box ;
+    syn:bottom 230.9 ;
+    syn:page 9 ;
+    syn:top 220.9 ;
+    syn:x0 354.1 ;
+    syn:x1 390.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0049> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0049:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 49 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.laydays.start-month" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0049:box:0001> a syn:Box ;
+    syn:bottom 242.2 ;
+    syn:page 9 ;
+    syn:top 232.2 ;
+    syn:x0 90.1 ;
+    syn:x1 162.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0050> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0050:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 50 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.lightening.cost" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0050:box:0001> a syn:Box ;
+    syn:bottom 560.0 ;
+    syn:page 8 ;
+    syn:top 550.0 ;
+    syn:x0 276.1 ;
+    syn:x1 366.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0051> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0051:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 51 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.loading.daily-rate" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0051:box:0001> a syn:Box ;
+    syn:bottom 639.5 ;
+    syn:page 8 ;
+    syn:top 629.5 ;
+    syn:x0 288.1 ;
+    syn:x1 330.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0052> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0052:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 52 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.loading.port.1" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0052:box:0001> a syn:Box ;
+    syn:bottom 378.4 ;
+    syn:page 7 ;
+    syn:top 368.4 ;
+    syn:x0 90.1 ;
+    syn:x1 456.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0053> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0053:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 53 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.loading.port.2" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0053:box:0001> a syn:Box ;
+    syn:bottom 389.8 ;
+    syn:page 7 ;
+    syn:top 379.8 ;
+    syn:x0 90.1 ;
+    syn:x1 516.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0054> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0054:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 54 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.notice.days" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0054:box:0001> a syn:Box ;
+    syn:bottom 571.4 ;
+    syn:page 7 ;
+    syn:top 561.4 ;
+    syn:x0 318.1 ;
+    syn:x1 390.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0055> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0055:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 55 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.notice.discharge-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0055:box:0001> a syn:Box ;
+    syn:bottom 151.5 ;
+    syn:page 8 ;
+    syn:top 141.5 ;
+    syn:x0 108.1 ;
+    syn:x1 168.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0056> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0056:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 56 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.party.owner" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0056:box:0001> a syn:Box ;
+    syn:bottom 230.9 ;
+    syn:page 7 ;
+    syn:top 220.9 ;
+    syn:x0 90.1 ;
+    syn:x1 408.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0057> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0057:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 57 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.signature.charterer" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0057:box:0001> a syn:Box ;
+    syn:bottom 333.1 ;
+    syn:page 17 ;
+    syn:top 323.1 ;
+    syn:x0 318.1 ;
+    syn:x1 426.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0058> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0058:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 58 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.signature.owner" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0058:box:0001> a syn:Box ;
+    syn:bottom 333.1 ;
+    syn:page 17 ;
+    syn:top 323.1 ;
+    syn:x0 114.1 ;
+    syn:x1 222.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0059> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0059:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 59 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.built-place" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0059:box:0001> a syn:Box ;
+    syn:bottom 276.3 ;
+    syn:page 7 ;
+    syn:top 266.3 ;
+    syn:x0 168.1 ;
+    syn:x1 432.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0060> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0060:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 60 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.built-year" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0060:box:0001> a syn:Box ;
+    syn:bottom 265.0 ;
+    syn:page 7 ;
+    syn:top 255.0 ;
+    syn:x0 234.1 ;
+    syn:x1 270.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0061> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0061:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 61 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.class" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0061:box:0001> a syn:Box ;
+    syn:bottom 287.6 ;
+    syn:page 7 ;
+    syn:top 277.6 ;
+    syn:x0 444.1 ;
+    syn:x1 510.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0062> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0062:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 62 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.class-registry" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0062:box:0001> a syn:Box ;
+    syn:bottom 299.0 ;
+    syn:page 7 ;
+    syn:top 289.0 ;
+    syn:x0 114.1 ;
+    syn:x1 168.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0063> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0063:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 63 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.flag" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0063:box:0001> a syn:Box ;
+    syn:bottom 265.0 ;
+    syn:page 7 ;
+    syn:top 255.0 ;
+    syn:x0 90.1 ;
+    syn:x1 180.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0064> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0064:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 64 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.name" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0064:box:0001> a syn:Box ;
+    syn:bottom 253.6 ;
+    syn:page 7 ;
+    syn:top 243.6 ;
+    syn:x0 90.1 ;
+    syn:x1 228.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0065> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0065:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 65 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.net-tonnage" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0065:box:0001> a syn:Box ;
+    syn:bottom 287.6 ;
+    syn:page 7 ;
+    syn:top 277.6 ;
+    syn:x0 114.1 ;
+    syn:x1 162.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0066> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0066:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 66 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.position" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0066:box:0001> a syn:Box ;
+    syn:bottom 310.4 ;
+    syn:page 7 ;
+    syn:top 300.4 ;
+    syn:x0 90.1 ;
+    syn:x1 162.1 .
+
+<urn:iladub:synthetic:truth:m2:part:0067> a syn:PartTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:part:0067:box:0001> ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 67 ;
+    syn:parent <urn:iladub:synthetic:truth:m2:part:0022> ;
+    syn:partId "b.blank.vessel.rebuilt-year" ;
+    syn:partType "blank" .
+
+<urn:iladub:synthetic:truth:m2:part:0067:box:0001> a syn:Box ;
+    syn:bottom 276.3 ;
+    syn:page 7 ;
+    syn:top 266.3 ;
+    syn:x0 90.1 ;
+    syn:x1 126.1 .
+
+<urn:iladub:synthetic:truth:m2:template:0001> a syn:TemplateUse ;
+    syn:order 1 ;
+    syn:sha256 "8daad72c5cc0230a933a3f9b457f3069f7d1a98cd9d9f0e1852831a3e3359dfa" .
+
+<urn:iladub:synthetic:truth:m2:template:0002> a syn:TemplateUse ;
+    syn:order 2 ;
+    syn:sha256 "d677ebc9d0b5523e1997469b4370602ca58c4f3074c7efbd4c30ad450b40018f" .
+
+<urn:iladub:synthetic:truth:m2:value:0001> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0001:box> ;
+    syn:field "brokerage.per-tonne" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 1 ;
+    syn:text "84.60" .
+
+<urn:iladub:synthetic:truth:m2:value:0001:box> a syn:Box ;
+    syn:bottom 476.23775999999987 ;
+    syn:page 1 ;
+    syn:top 466.1577599999999 ;
+    syn:x0 108.99141599999996 ;
+    syn:x1 135.05224799999996 .
+
+<urn:iladub:synthetic:truth:m2:value:0002> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0002:box> ;
+    syn:field "contract.date" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 2 ;
+    syn:text "26 Dec 2027" .
+
+<urn:iladub:synthetic:truth:m2:value:0002:box> a syn:Box ;
+    syn:bottom 163.51775999999995 ;
+    syn:page 1 ;
+    syn:top 153.43776000000003 ;
+    syn:x0 171.019536 ;
+    syn:x1 224.59473599999998 .
+
+<urn:iladub:synthetic:truth:m2:value:0003> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0003:box> ;
+    syn:field "delivery.period" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 3 ;
+    syn:text "November 2027 seller's option" .
+
+<urn:iladub:synthetic:truth:m2:value:0003:box> a syn:Box ;
+    syn:bottom 484.6377599999999 ;
+    syn:page 2 ;
+    syn:top 474.5577599999999 ;
+    syn:x0 150.430656 ;
+    syn:x1 282.2710080000001 .
+
+<urn:iladub:synthetic:truth:m2:value:0004> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0004:box> ;
+    syn:field "goods.description" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 4 ;
+    syn:text "white rice" .
+
+<urn:iladub:synthetic:truth:m2:value:0004:box> a syn:Box ;
+    syn:bottom 236.9577599999999 ;
+    syn:page 1 ;
+    syn:top 226.87775999999997 ;
+    syn:x0 79.477536 ;
+    syn:x1 122.21371199999999 .
+
+<urn:iladub:synthetic:truth:m2:value:0005> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0005:box> ;
+    syn:field "party.broker" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 5 ;
+    syn:text "Nexdour Shipping SA" .
+
+<urn:iladub:synthetic:truth:m2:value:0005:box> a syn:Box ;
+    syn:bottom 195.67775999999992 ;
+    syn:page 1 ;
+    syn:top 185.59776 ;
+    syn:x0 161.699232 ;
+    syn:x1 252.040224 .
+
+<urn:iladub:synthetic:truth:m2:value:0006> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0006:box> ;
+    syn:field "party.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 6 ;
+    syn:text "Taxnoun Agri Ltd" .
+
+<urn:iladub:synthetic:truth:m2:value:0006:box> a syn:Box ;
+    syn:bottom 216.3177599999999 ;
+    syn:page 1 ;
+    syn:top 206.23775999999998 ;
+    syn:x0 73.33008 ;
+    syn:x1 147.80615999999998 .
+
+<urn:iladub:synthetic:truth:m2:value:0007> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0007:box> ;
+    syn:field "party.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 7 ;
+    syn:text "Goulmar Trading SA" .
+
+<urn:iladub:synthetic:truth:m2:value:0007:box> a syn:Box ;
+    syn:bottom 175.03775999999993 ;
+    syn:page 1 ;
+    syn:top 164.95776 ;
+    syn:x0 75.932616 ;
+    syn:x1 162.35853600000002 .
+
+<urn:iladub:synthetic:truth:m2:value:0008> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0008:box> ;
+    syn:field "payment.cash-location" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 8 ;
+    syn:text "New Orleans" .
+
+<urn:iladub:synthetic:truth:m2:value:0008:box> a syn:Box ;
+    syn:bottom 374.9577599999999 ;
+    syn:page 1 ;
+    syn:top 364.8777599999999 ;
+    syn:x0 161.0485680000001 ;
+    syn:x1 215.73256800000013 .
+
+<urn:iladub:synthetic:truth:m2:value:0009> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0009:box> ;
+    syn:field "payment.credit-deadline" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 9 ;
+    syn:text "26 January 2027" .
+
+<urn:iladub:synthetic:truth:m2:value:0009:box> a syn:Box ;
+    syn:bottom 397.99775999999986 ;
+    syn:page 1 ;
+    syn:top 387.9177599999999 ;
+    syn:x0 332.9377679999999 ;
+    syn:x1 403.69533599999966 .
+
+<urn:iladub:synthetic:truth:m2:value:0010> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0010:box> ;
+    syn:field "price.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 10 ;
+    syn:text "USD 398.95 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0010:box> a syn:Box ;
+    syn:bottom 301.51775999999984 ;
+    syn:page 1 ;
+    syn:top 291.4377599999999 ;
+    syn:x0 78.68750399999999 ;
+    syn:x1 172.48391999999996 .
+
+<urn:iladub:synthetic:truth:m2:value:0011> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0011:box> ;
+    syn:field "price.collected-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 11 ;
+    syn:text "Karachi" .
+
+<urn:iladub:synthetic:truth:m2:value:0011:box> a syn:Box ;
+    syn:bottom 342.7977599999999 ;
+    syn:page 1 ;
+    syn:top 332.71775999999994 ;
+    syn:x0 101.725752 ;
+    syn:x1 134.651064 .
+
+<urn:iladub:synthetic:truth:m2:value:0012> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0012:box> ;
+    syn:field "price.delivered-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 12 ;
+    syn:text "Antwerp" .
+
+<urn:iladub:synthetic:truth:m2:value:0012:box> a syn:Box ;
+    syn:bottom 322.15775999999994 ;
+    syn:page 1 ;
+    syn:top 312.07776 ;
+    syn:x0 91.775784 ;
+    syn:x1 129.33184799999998 .
+
+<urn:iladub:synthetic:truth:m2:value:0013> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0013:box> ;
+    syn:field "quality.guaranteed" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 13 ;
+    syn:text "sorghum" .
+
+<urn:iladub:synthetic:truth:m2:value:0013:box> a syn:Box ;
+    syn:bottom 48.55775999999992 ;
+    syn:page 2 ;
+    syn:top 38.47775999999999 ;
+    syn:x0 90.284952 ;
+    syn:x1 128.387352 .
+
+<urn:iladub:synthetic:truth:m2:value:0014> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0014:box> ;
+    syn:field "quality.variety-purity" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 14 ;
+    syn:text "feed barley" .
+
+<urn:iladub:synthetic:truth:m2:value:0014:box> a syn:Box ;
+    syn:bottom 293.35775999999987 ;
+    syn:page 2 ;
+    syn:top 283.27775999999994 ;
+    syn:x0 116.41432800000004 ;
+    syn:x1 168.114648 .
+
+<urn:iladub:synthetic:truth:m2:value:0015> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0015:box> ;
+    syn:field "quantity.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 15 ;
+    syn:text "14500 metric tonnes" .
+
+<urn:iladub:synthetic:truth:m2:value:0015:box> a syn:Box ;
+    syn:bottom 257.8377599999999 ;
+    syn:page 1 ;
+    syn:top 247.75775999999996 ;
+    syn:x0 96.279288 ;
+    syn:x1 185.31996 .
+
+<urn:iladub:synthetic:truth:m2:value:0016> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0016:box> ;
+    syn:field "signature.buyer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 16 ;
+    syn:text "Drasbrour Kenas" .
+
+<urn:iladub:synthetic:truth:m2:value:0016:box> a syn:Box ;
+    syn:bottom 39.22463999999991 ;
+    syn:page 6 ;
+    syn:top 30.104639999999904 ;
+    syn:x0 153.782712 ;
+    syn:x1 219.205944 .
+
+<urn:iladub:synthetic:truth:m2:value:0017> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0017:box> ;
+    syn:field "signature.seller" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 17 ;
+    syn:text "Kouxta Texfur" .
+
+<urn:iladub:synthetic:truth:m2:value:0017:box> a syn:Box ;
+    syn:bottom 39.43775999999991 ;
+    syn:page 6 ;
+    syn:top 29.357759999999985 ;
+    syn:x0 58.86036 ;
+    syn:x1 119.64679199999998 .
+
+<urn:iladub:synthetic:truth:m2:value:0018> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0018:box> ;
+    syn:field "cargo.description" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 18 ;
+    syn:text "sunflower meal" .
+
+<urn:iladub:synthetic:truth:m2:value:0018:box> a syn:Box ;
+    syn:bottom 446.67 ;
+    syn:page 7 ;
+    syn:top 437.42 ;
+    syn:x0 90.85286256938338 ;
+    syn:x1 158.09286256938339 .
+
+<urn:iladub:synthetic:truth:m2:value:0019> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0019:box> ;
+    syn:field "cargo.quantity" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 19 ;
+    syn:text "16000 metric tonnes" .
+
+<urn:iladub:synthetic:truth:m2:value:0019:box> a syn:Box ;
+    syn:bottom 435.27 ;
+    syn:page 7 ;
+    syn:top 426.02 ;
+    syn:x0 95.5757913763921 ;
+    syn:x1 186.1757913763921 .
+
+<urn:iladub:synthetic:truth:m2:value:0020> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0020:box> ;
+    syn:field "commission.amount" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 20 ;
+    syn:text "207.68" .
+
+<urn:iladub:synthetic:truth:m2:value:0020:box> a syn:Box ;
+    syn:bottom 253.67 ;
+    syn:page 12 ;
+    syn:top 244.42 ;
+    syn:x0 241.16192473289328 ;
+    syn:x1 271.74192473289327 .
+
+<urn:iladub:synthetic:truth:m2:value:0021> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0021:box> ;
+    syn:field "commission.payee.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 21 ;
+    syn:text "Zelfain Holdings BV" .
+
+<urn:iladub:synthetic:truth:m2:value:0021:box> a syn:Box ;
+    syn:bottom 265.07 ;
+    syn:page 12 ;
+    syn:top 255.82 ;
+    syn:x0 94.6946045631138 ;
+    syn:x1 182.5046045631138 .
+
+<urn:iladub:synthetic:truth:m2:value:0022> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0022:box> ;
+    syn:field "commission.payee.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 22 ;
+    syn:text "Dospir Trading LLC" .
+
+<urn:iladub:synthetic:truth:m2:value:0022:box> a syn:Box ;
+    syn:bottom 276.37 ;
+    syn:page 12 ;
+    syn:top 267.12 ;
+    syn:x0 93.09978676686242 ;
+    syn:x1 179.78978676686242 .
+
+<urn:iladub:synthetic:truth:m2:value:0023> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0023:box> ;
+    syn:field "contract.date" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 23 ;
+    syn:text "12 Apr 2027" .
+
+<urn:iladub:synthetic:truth:m2:value:0023:box> a syn:Box ;
+    syn:bottom 208.26999999999998 ;
+    syn:page 7 ;
+    syn:top 199.01999999999998 ;
+    syn:x0 246.86687285103963 ;
+    syn:x1 301.3468728510396 .
+
+<urn:iladub:synthetic:truth:m2:value:0024> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0024:box> ;
+    syn:field "contract.number" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 24 ;
+    syn:text "SYN-1728" .
+
+<urn:iladub:synthetic:truth:m2:value:0024:box> a syn:Box ;
+    syn:bottom 174.17 ;
+    syn:page 7 ;
+    syn:top 164.92 ;
+    syn:x0 169.53484612103009 ;
+    syn:x1 215.66484612103008 .
+
+<urn:iladub:synthetic:truth:m2:value:0025> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0025:box> ;
+    syn:field "delivery.inland-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 25 ;
+    syn:text "Sun46" .
+
+<urn:iladub:synthetic:truth:m2:value:0025:box> a syn:Box ;
+    syn:bottom 151.57 ;
+    syn:page 14 ;
+    syn:top 142.32 ;
+    syn:x0 329.1741778082203 ;
+    syn:x1 358.0841778082203 .
+
+<urn:iladub:synthetic:truth:m2:value:0026> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0026:box> ;
+    syn:field "demurrage.rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 26 ;
+    syn:text "386.44" .
+
+<urn:iladub:synthetic:truth:m2:value:0026:box> a syn:Box ;
+    syn:bottom 94.77 ;
+    syn:page 10 ;
+    syn:top 85.52000000000001 ;
+    syn:x0 331.3107617207974 ;
+    syn:x1 361.8907617207974 .
+
+<urn:iladub:synthetic:truth:m2:value:0027> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0027:box> ;
+    syn:field "despatch.rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 27 ;
+    syn:text "357.94" .
+
+<urn:iladub:synthetic:truth:m2:value:0027:box> a syn:Box ;
+    syn:bottom 151.57 ;
+    syn:page 10 ;
+    syn:top 142.32 ;
+    syn:x0 415.8695409215943 ;
+    syn:x1 446.4495409215943 .
+
+<urn:iladub:synthetic:truth:m2:value:0028> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0028:box> ;
+    syn:field "discharge.inland-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 28 ;
+    syn:text "Zox86" .
+
+<urn:iladub:synthetic:truth:m2:value:0028:box> a syn:Box ;
+    syn:bottom 537.47 ;
+    syn:page 7 ;
+    syn:top 528.22 ;
+    syn:x0 109.09424334757637 ;
+    syn:x1 136.88424334757636 .
+
+<urn:iladub:synthetic:truth:m2:value:0029> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0029:box> ;
+    syn:field "discharge.place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 29 ;
+    syn:text "Dux62" .
+
+<urn:iladub:synthetic:truth:m2:value:0029:box> a syn:Box ;
+    syn:bottom 242.26999999999998 ;
+    syn:page 10 ;
+    syn:top 233.01999999999998 ;
+    syn:x0 250.51632115653078 ;
+    syn:x1 279.4163211565308 .
+
+<urn:iladub:synthetic:truth:m2:value:0030> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0030:box> ;
+    syn:field "discharge.point" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 30 ;
+    syn:text "Drain95" .
+
+<urn:iladub:synthetic:truth:m2:value:0030:box> a syn:Box ;
+    syn:bottom 242.26999999999998 ;
+    syn:page 10 ;
+    syn:top 233.01999999999998 ;
+    syn:x0 90.7664679055584 ;
+    syn:x1 125.7764679055584 .
+
+<urn:iladub:synthetic:truth:m2:value:0031> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0031:box> ;
+    syn:field "freight.rate.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 31 ;
+    syn:text "EUR 298.15 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0031:box> a syn:Box ;
+    syn:bottom 310.46999999999997 ;
+    syn:page 8 ;
+    syn:top 301.21999999999997 ;
+    syn:x0 95.4680027573339 ;
+    syn:x1 194.96800275733392 .
+
+<urn:iladub:synthetic:truth:m2:value:0032> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0032:box> ;
+    syn:field "freight.rate.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 32 ;
+    syn:text "EUR 410.15 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0032:box> a syn:Box ;
+    syn:bottom 333.17 ;
+    syn:page 8 ;
+    syn:top 323.92 ;
+    syn:x0 96.09502903907335 ;
+    syn:x1 195.59502903907338 .
+
+<urn:iladub:synthetic:truth:m2:value:0033> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0033:box> ;
+    syn:field "freight.rate.3" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 33 ;
+    syn:text "EUR 460.31 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0033:box> a syn:Box ;
+    syn:bottom 344.46999999999997 ;
+    syn:page 8 ;
+    syn:top 335.21999999999997 ;
+    syn:x0 92.00299611938283 ;
+    syn:x1 191.50299611938283 .
+
+<urn:iladub:synthetic:truth:m2:value:0034> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0034:box> ;
+    syn:field "freight.rate.4" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 34 ;
+    syn:text "EUR 58.66 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0034:box> a syn:Box ;
+    syn:bottom 355.87 ;
+    syn:page 8 ;
+    syn:top 346.62 ;
+    syn:x0 90.77310633080279 ;
+    syn:x1 184.7131063308028 .
+
+<urn:iladub:synthetic:truth:m2:value:0035> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0035:box> ;
+    syn:field "freight.rate.5" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 35 ;
+    syn:text "USD 407.69 per tonne" .
+
+<urn:iladub:synthetic:truth:m2:value:0035:box> a syn:Box ;
+    syn:bottom 367.17 ;
+    syn:page 8 ;
+    syn:top 357.92 ;
+    syn:x0 91.36517196020883 ;
+    syn:x1 190.86517196020884 .
+
+<urn:iladub:synthetic:truth:m2:value:0036> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0036:box> ;
+    syn:field "freight.reduced-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 36 ;
+    syn:text "192.89" .
+
+<urn:iladub:synthetic:truth:m2:value:0036:box> a syn:Box ;
+    syn:bottom 526.07 ;
+    syn:page 8 ;
+    syn:top 516.82 ;
+    syn:x0 348.9199556418932 ;
+    syn:x1 379.49995564189317 .
+
+<urn:iladub:synthetic:truth:m2:value:0037> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0037:box> ;
+    syn:field "inland-contractor.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 37 ;
+    syn:text "Buxpix Marine Ltd" .
+
+<urn:iladub:synthetic:truth:m2:value:0037:box> a syn:Box ;
+    syn:bottom 310.46999999999997 ;
+    syn:page 10 ;
+    syn:top 301.21999999999997 ;
+    syn:x0 96.03144388114991 ;
+    syn:x1 176.0614438811499 .
+
+<urn:iladub:synthetic:truth:m2:value:0038> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0038:box> ;
+    syn:field "inland-contractor.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 38 ;
+    syn:text "Mu81" .
+
+<urn:iladub:synthetic:truth:m2:value:0038:box> a syn:Box ;
+    syn:bottom 321.77 ;
+    syn:page 10 ;
+    syn:top 312.52 ;
+    syn:x0 92.76465005062914 ;
+    syn:x1 117.77465005062913 .
+
+<urn:iladub:synthetic:truth:m2:value:0039> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0039:box> ;
+    syn:field "inland-contractor.3" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 39 ;
+    syn:text "Brulgor Marine GmbH" .
+
+<urn:iladub:synthetic:truth:m2:value:0039:box> a syn:Box ;
+    syn:bottom 333.17 ;
+    syn:page 10 ;
+    syn:top 323.92 ;
+    syn:x0 90.90363267276122 ;
+    syn:x1 188.1436326727612 .
+
+<urn:iladub:synthetic:truth:m2:value:0040> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0040:box> ;
+    syn:field "inland-contractor.4" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 40 ;
+    syn:text "Ge25" .
+
+<urn:iladub:synthetic:truth:m2:value:0040:box> a syn:Box ;
+    syn:bottom 344.46999999999997 ;
+    syn:page 10 ;
+    syn:top 335.21999999999997 ;
+    syn:x0 94.71802125612568 ;
+    syn:x1 119.17802125612567 .
+
+<urn:iladub:synthetic:truth:m2:value:0041> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0041:box> ;
+    syn:field "laydays.cancel-day" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 41 ;
+    syn:text "8th" .
+
+<urn:iladub:synthetic:truth:m2:value:0041:box> a syn:Box ;
+    syn:bottom 253.67 ;
+    syn:page 9 ;
+    syn:top 244.42 ;
+    syn:x0 425.2672556151369 ;
+    syn:x1 439.16725561513687 .
+
+<urn:iladub:synthetic:truth:m2:value:0042> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0042:box> ;
+    syn:field "laydays.cancel-month" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 42 ;
+    syn:text "Oct." .
+
+<urn:iladub:synthetic:truth:m2:value:0042:box> a syn:Box ;
+    syn:bottom 265.07 ;
+    syn:page 9 ;
+    syn:top 255.82 ;
+    syn:x0 94.16839456936694 ;
+    syn:x1 112.50839456936694 .
+
+<urn:iladub:synthetic:truth:m2:value:0043> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0043:box> ;
+    syn:field "laydays.start-day" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 43 ;
+    syn:text "22nd" .
+
+<urn:iladub:synthetic:truth:m2:value:0043:box> a syn:Box ;
+    syn:bottom 230.97 ;
+    syn:page 9 ;
+    syn:top 221.72 ;
+    syn:x0 358.941479199235 ;
+    syn:x1 381.181479199235 .
+
+<urn:iladub:synthetic:truth:m2:value:0044> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0044:box> ;
+    syn:field "laydays.start-month" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 44 ;
+    syn:text "Sep." .
+
+<urn:iladub:synthetic:truth:m2:value:0044:box> a syn:Box ;
+    syn:bottom 242.26999999999998 ;
+    syn:page 9 ;
+    syn:top 233.01999999999998 ;
+    syn:x0 95.31319979332922 ;
+    syn:x1 115.88319979332923 .
+
+<urn:iladub:synthetic:truth:m2:value:0045> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0045:box> ;
+    syn:field "lightening.cost" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 45 ;
+    syn:text "225.53" .
+
+<urn:iladub:synthetic:truth:m2:value:0045:box> a syn:Box ;
+    syn:bottom 560.07 ;
+    syn:page 8 ;
+    syn:top 550.82 ;
+    syn:x0 277.87223459685197 ;
+    syn:x1 308.45223459685195 .
+
+<urn:iladub:synthetic:truth:m2:value:0046> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0046:box> ;
+    syn:field "loading.daily-rate" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 46 ;
+    syn:text "191.70" .
+
+<urn:iladub:synthetic:truth:m2:value:0046:box> a syn:Box ;
+    syn:bottom 639.57 ;
+    syn:page 8 ;
+    syn:top 630.32 ;
+    syn:x0 291.14246532611446 ;
+    syn:x1 321.72246532611445 .
+
+<urn:iladub:synthetic:truth:m2:value:0047> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0047:box> ;
+    syn:field "loading.port.1" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 47 ;
+    syn:text "New Orleans" .
+
+<urn:iladub:synthetic:truth:m2:value:0047:box> a syn:Box ;
+    syn:bottom 378.46999999999997 ;
+    syn:page 7 ;
+    syn:top 369.21999999999997 ;
+    syn:x0 90.83650746974406 ;
+    syn:x1 148.62650746974407 .
+
+<urn:iladub:synthetic:truth:m2:value:0048> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0048:box> ;
+    syn:field "loading.port.2" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 48 ;
+    syn:text "Hamburg" .
+
+<urn:iladub:synthetic:truth:m2:value:0048:box> a syn:Box ;
+    syn:bottom 389.87 ;
+    syn:page 7 ;
+    syn:top 380.62 ;
+    syn:x0 91.45071626571846 ;
+    syn:x1 132.57071626571846 .
+
+<urn:iladub:synthetic:truth:m2:value:0049> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0049:box> ;
+    syn:field "notice.days" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 49 ;
+    syn:text "5 days" .
+
+<urn:iladub:synthetic:truth:m2:value:0049:box> a syn:Box ;
+    syn:bottom 571.47 ;
+    syn:page 7 ;
+    syn:top 562.22 ;
+    syn:x0 318.1780869550301 ;
+    syn:x1 347.6380869550301 .
+
+<urn:iladub:synthetic:truth:m2:value:0050> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0050:box> ;
+    syn:field "notice.discharge-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 50 ;
+    syn:text "Fus16" .
+
+<urn:iladub:synthetic:truth:m2:value:0050:box> a syn:Box ;
+    syn:bottom 151.57 ;
+    syn:page 8 ;
+    syn:top 142.32 ;
+    syn:x0 108.67637308209514 ;
+    syn:x1 136.46637308209515 .
+
+<urn:iladub:synthetic:truth:m2:value:0051> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0051:box> ;
+    syn:field "party.owner" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 51 ;
+    syn:text "Tailgair Commodities GmbH" .
+
+<urn:iladub:synthetic:truth:m2:value:0051:box> a syn:Box ;
+    syn:bottom 230.97 ;
+    syn:page 7 ;
+    syn:top 221.72 ;
+    syn:x0 91.31485667445426 ;
+    syn:x1 216.88485667445428 .
+
+<urn:iladub:synthetic:truth:m2:value:0052> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0052:box> ;
+    syn:field "signature.charterer" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 52 ;
+    syn:text "Baima Rosfas" .
+
+<urn:iladub:synthetic:truth:m2:value:0052:box> a syn:Box ;
+    syn:bottom 333.17 ;
+    syn:page 17 ;
+    syn:top 323.92 ;
+    syn:x0 320.994940978801 ;
+    syn:x1 383.23494097880103 .
+
+<urn:iladub:synthetic:truth:m2:value:0053> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0053:box> ;
+    syn:field "signature.owner" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 53 ;
+    syn:text "Bexbro Moldrux" .
+
+<urn:iladub:synthetic:truth:m2:value:0053:box> a syn:Box ;
+    syn:bottom 333.17 ;
+    syn:page 17 ;
+    syn:top 323.92 ;
+    syn:x0 115.99288629079292 ;
+    syn:x1 186.01288629079292 .
+
+<urn:iladub:synthetic:truth:m2:value:0054> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0054:box> ;
+    syn:field "vessel.built-place" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 54 ;
+    syn:text "Alexandria" .
+
+<urn:iladub:synthetic:truth:m2:value:0054:box> a syn:Box ;
+    syn:bottom 276.37 ;
+    syn:page 7 ;
+    syn:top 267.12 ;
+    syn:x0 170.1787177593273 ;
+    syn:x1 217.4187177593273 .
+
+<urn:iladub:synthetic:truth:m2:value:0055> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0055:box> ;
+    syn:field "vessel.built-year" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 55 ;
+    syn:text "'71" .
+
+<urn:iladub:synthetic:truth:m2:value:0055:box> a syn:Box ;
+    syn:bottom 265.07 ;
+    syn:page 7 ;
+    syn:top 255.82 ;
+    syn:x0 237.40921579536945 ;
+    syn:x1 250.43921579536945 .
+
+<urn:iladub:synthetic:truth:m2:value:0056> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0056:box> ;
+    syn:field "vessel.class" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 56 ;
+    syn:text "Sin35" .
+
+<urn:iladub:synthetic:truth:m2:value:0056:box> a syn:Box ;
+    syn:bottom 287.67 ;
+    syn:page 7 ;
+    syn:top 278.42 ;
+    syn:x0 448.81213189738975 ;
+    syn:x1 474.38213189738974 .
+
+<urn:iladub:synthetic:truth:m2:value:0057> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0057:box> ;
+    syn:field "vessel.class-registry" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 57 ;
+    syn:text "Zis89" .
+
+<urn:iladub:synthetic:truth:m2:value:0057:box> a syn:Box ;
+    syn:bottom 299.07 ;
+    syn:page 7 ;
+    syn:top 289.82 ;
+    syn:x0 119.10396369859579 ;
+    syn:x1 143.5539636985958 .
+
+<urn:iladub:synthetic:truth:m2:value:0058> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0058:box> ;
+    syn:field "vessel.flag" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 58 ;
+    syn:text "Ki57" .
+
+<urn:iladub:synthetic:truth:m2:value:0058:box> a syn:Box ;
+    syn:bottom 265.07 ;
+    syn:page 7 ;
+    syn:top 255.82 ;
+    syn:x0 90.87689158718032 ;
+    syn:x1 110.88689158718032 .
+
+<urn:iladub:synthetic:truth:m2:value:0059> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0059:box> ;
+    syn:field "vessel.name" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 59 ;
+    syn:text "Vou79" .
+
+<urn:iladub:synthetic:truth:m2:value:0059:box> a syn:Box ;
+    syn:bottom 253.67 ;
+    syn:page 7 ;
+    syn:top 244.42 ;
+    syn:x0 95.26282513660163 ;
+    syn:x1 124.17282513660163 .
+
+<urn:iladub:synthetic:truth:m2:value:0060> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0060:box> ;
+    syn:field "vessel.net-tonnage" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 60 ;
+    syn:text "13500" .
+
+<urn:iladub:synthetic:truth:m2:value:0060:box> a syn:Box ;
+    syn:bottom 287.67 ;
+    syn:page 7 ;
+    syn:top 278.42 ;
+    syn:x0 116.47476659553071 ;
+    syn:x1 144.2747665955307 .
+
+<urn:iladub:synthetic:truth:m2:value:0061> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0061:box> ;
+    syn:field "vessel.position" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 61 ;
+    syn:text "For39" .
+
+<urn:iladub:synthetic:truth:m2:value:0061:box> a syn:Box ;
+    syn:bottom 310.46999999999997 ;
+    syn:page 7 ;
+    syn:top 301.21999999999997 ;
+    syn:x0 95.16679364153617 ;
+    syn:x1 121.28679364153618 .
+
+<urn:iladub:synthetic:truth:m2:value:0062> a syn:ValueTruth ;
+    syn:box <urn:iladub:synthetic:truth:m2:value:0062:box> ;
+    syn:field "vessel.rebuilt-year" ;
+    syn:inDocument <urn:iladub:synthetic:truth:m2> ;
+    syn:order 62 ;
+    syn:text "'89" .
+
+<urn:iladub:synthetic:truth:m2:value:0062:box> a syn:Box ;
+    syn:bottom 276.37 ;
+    syn:page 7 ;
+    syn:top 267.12 ;
+    syn:x0 91.5256769814401 ;
+    syn:x1 104.5556769814401 .

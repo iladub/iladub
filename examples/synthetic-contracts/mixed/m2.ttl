@@ -1,0 +1,21 @@
+# Mixed document m2: a GAFTA form and the charter party in one PDF (spec 4.4).
+# Components by fill id and flavour, or by template id when unfilled; no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:mixed:m2> a syn:MixedDocument ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:mixedId "m2" ;
+    syn:component <urn:iladub:synthetic:mixed:m2:component:0001> , <urn:iladub:synthetic:mixed:m2:component:0002> .
+
+<urn:iladub:synthetic:mixed:m2:component:0001> a syn:Component ;
+    syn:order 1 ;
+    syn:fillId "gafta-79b-2" ;
+    syn:componentFlavour "word-export" .
+
+<urn:iladub:synthetic:mixed:m2:component:0002> a syn:Component ;
+    syn:order 2 ;
+    syn:fillId "usda-ffp-cp-2" ;
+    syn:componentFlavour "form-fill" .

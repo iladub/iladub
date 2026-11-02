@@ -1,0 +1,100 @@
+# Part map for template gafta-48 (spec 2026-10-31 § 4.1, § 4.5). Drafted by the builder in the template's
+# own coordinates: points, top-left origin, (x0, top, x1, bottom), 1-based pages. Labels, field
+# keys, page numbers and coordinates only. syn:review "draft" until the owner reviews it.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<urn:iladub:synthetic:map:gafta-48> a syn:PartMap ; syn:template "gafta-48" ; syn:review "draft" ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<urn:iladub:synthetic:map:gafta-48:part:contract-form> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partId "contract-form" ; syn:partType "contract-form" ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 2 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 3 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 4 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 5 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 6 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 7 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] ,
+        [ a syn:Box ; syn:page 8 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:contract.date> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "contract.date" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 395.6 ; syn:top 239.5 ; syn:x1 551.3 ; syn:bottom 249.5 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:party.seller> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "party.seller" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.3 ; syn:top 262.9 ; syn:x1 551.3 ; syn:bottom 272.9 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:party.broker> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "party.broker" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 174.7 ; syn:top 286.3 ; syn:x1 551.3 ; syn:bottom 296.3 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:party.buyer> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "party.buyer" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 88.3 ; syn:top 309.8 ; syn:x1 551.3 ; syn:bottom 319.8 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:goods.description> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "goods.description" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 105.6 ; syn:top 345.0 ; syn:x1 551.3 ; syn:bottom 354.9 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:quantity.amount> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "quantity.amount" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 121.0 ; syn:top 368.4 ; syn:x1 482.1 ; syn:bottom 378.3 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:price.per-tonne> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "price.per-tonne" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 328.4 ; syn:top 464.0 ; syn:x1 551.6 ; syn:bottom 474.0 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:destination.cif> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "destination.cif" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 207.5 ; syn:top 488.0 ; syn:x1 551.6 ; syn:bottom 498.0 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:destination.cif-free-out> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "destination.cif-free-out" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 246.3 ; syn:top 512.0 ; syn:x1 551.6 ; syn:bottom 522.0 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:destination.cfr> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "destination.cfr" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 159.6 ; syn:top 536.0 ; syn:x1 551.6 ; syn:bottom 546.0 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:destination.cfr-free-out> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "destination.cfr-free-out" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 198.4 ; syn:top 559.8 ; syn:x1 551.6 ; syn:bottom 569.8 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:quality.specification> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "quality.specification" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 134.4 ; syn:top 678.8 ; syn:x1 551.3 ; syn:bottom 688.7 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:quality.certifier> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "quality.certifier" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 145.9 ; syn:top 702.4 ; syn:x1 551.3 ; syn:bottom 712.4 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:shipment.period> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "shipment.period" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 253.5 ; syn:top 762.4 ; syn:x1 551.3 ; syn:bottom 772.4 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:payment.cash-percent> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "payment.cash-percent" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 128.2 ; syn:top 81.0 ; syn:x1 247.0 ; syn:bottom 90.9 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:payment.cash-location> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "payment.cash-location" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 382.1 ; syn:top 81.0 ; syn:x1 553.2 ; syn:bottom 90.9 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:payment.option-detail> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "payment.option-detail" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 73.5 ; syn:top 141.0 ; syn:x1 550.9 ; syn:bottom 150.9 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:discharge.daily-rate> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "discharge.daily-rate" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 258.8 ; syn:top 394.8 ; syn:x1 297.3 ; syn:bottom 404.7 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:signature.seller> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "signature.seller" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 8 ; syn:x0 97.5 ; syn:top 535.3 ; syn:x1 304.3 ; syn:bottom 544.3 ] .
+
+<urn:iladub:synthetic:map:gafta-48:blank:signature.buyer> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:gafta-48> ;
+    syn:partType "blank" ; syn:field "signature.buyer" ; syn:parent <urn:iladub:synthetic:map:gafta-48:part:contract-form> ;
+    syn:box [ a syn:Box ; syn:page 8 ; syn:x0 332.7 ; syn:top 535.3 ; syn:x1 551.3 ; syn:bottom 544.3 ] .

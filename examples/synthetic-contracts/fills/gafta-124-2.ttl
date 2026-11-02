@@ -1,0 +1,60 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-124-2> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-124-2" ;
+    syn:font "Courier" ;
+    syn:seed 2610316411 ;
+    syn:size 8.5 ;
+    syn:template "gafta-124" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "sample.set-number" ;
+            syn:text "SYN-4220" ],
+        [ a syn:FillValue ;
+            syn:field "sample.quantity-represented" ;
+            syn:text "9500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.seals" ;
+            syn:text "Brek6" ],
+        [ a syn:FillValue ;
+            syn:field "sample.origin" ;
+            syn:text "Lagos" ],
+        [ a syn:FillValue ;
+            syn:field "sample.transport" ;
+            syn:text "Pez9" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sample-number" ;
+            syn:text "SYN-1081" ],
+        [ a syn:FillValue ;
+            syn:field "sample.commodity" ;
+            syn:text "milling wheat" ],
+        [ a syn:FillValue ;
+            syn:field "sample.marks" ;
+            syn:text "Druq5" ],
+        [ a syn:FillValue ;
+            syn:field "sample.packing" ;
+            syn:text "Bourx8" ],
+        [ a syn:FillValue ;
+            syn:field "sample.terms-analysis" ;
+            syn:text "Sox7" ],
+        [ a syn:FillValue ;
+            syn:field "sample.destination" ;
+            syn:text "Gdansk" ],
+        [ a syn:FillValue ;
+            syn:field "sample.consigning-party" ;
+            syn:text "Bundrou Holdings GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sealing" ;
+            syn:text "Terx4" ],
+        [ a syn:FillValue ;
+            syn:field "sample.total-quantity" ;
+            syn:text "2500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "sample.sender" ;
+            syn:text "Taispoun Marine LLC" ] .
+

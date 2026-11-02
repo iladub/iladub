@@ -1,0 +1,21 @@
+# NEGATIVE part map: MUST NOT conform to ../shapes.ttl. Three planted faults, one each:
+#   1. a part type outside the closed set ("appendix");
+#   2. a field key with a space ("seller name");
+#   3. a box with x1 < x0.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<urn:iladub:synthetic:map:negative> a syn:PartMap ; syn:template "negative" ; syn:review "draft" ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<urn:iladub:synthetic:map:negative:part:form> a syn:Part ;
+    syn:inMap <urn:iladub:synthetic:map:negative> ;
+    syn:partId "form" ; syn:partType "appendix" ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 595.32 ; syn:bottom 841.92 ] .
+
+<urn:iladub:synthetic:map:negative:blank:seller> a syn:Part ;
+    syn:inMap <urn:iladub:synthetic:map:negative> ;
+    syn:partType "blank" ; syn:field "seller name" ;
+    syn:parent <urn:iladub:synthetic:map:negative:part:form> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 300.0 ; syn:top 100.0 ; syn:x1 120.0 ; syn:bottom 110.0 ] .

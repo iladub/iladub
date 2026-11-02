@@ -1,0 +1,205 @@
+# Part map for template usda-ffp-cp (spec 2026-10-31 § 4.1, § 4.5). Drafted by the builder in the template's
+# own coordinates: points, top-left origin, (x0, top, x1, bottom), 1-based pages. Labels, field
+# keys, page numbers and coordinates only. syn:review "draft" until the owner reviews it.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<urn:iladub:synthetic:map:usda-ffp-cp> a syn:PartMap ; syn:template "usda-ffp-cp" ; syn:review "draft" ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partId "charter-party" ; syn:partType "charter-party" ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 2 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 3 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 4 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 5 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 6 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 7 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 8 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 9 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 10 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 11 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 12 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] ,
+        [ a syn:Box ; syn:page 13 ; syn:x0 0.0 ; syn:top 0.0 ; syn:x1 612.0 ; syn:bottom 792.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:contract.number> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "contract.number" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 168.1 ; syn:top 164.1 ; syn:x1 270.1 ; syn:bottom 174.1 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:contract.date> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "contract.date" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 246.1 ; syn:top 198.2 ; syn:x1 390.1 ; syn:bottom 208.2 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:party.owner> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "party.owner" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 220.9 ; syn:x1 408.1 ; syn:bottom 230.9 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.name> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.name" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 243.6 ; syn:x1 228.1 ; syn:bottom 253.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.flag> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.flag" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 255.0 ; syn:x1 180.1 ; syn:bottom 265.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.built-year> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.built-year" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 234.1 ; syn:top 255.0 ; syn:x1 270.1 ; syn:bottom 265.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.rebuilt-year> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.rebuilt-year" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 266.3 ; syn:x1 126.1 ; syn:bottom 276.3 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.built-place> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.built-place" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 168.1 ; syn:top 266.3 ; syn:x1 432.1 ; syn:bottom 276.3 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.net-tonnage> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.net-tonnage" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 114.1 ; syn:top 277.6 ; syn:x1 162.1 ; syn:bottom 287.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.class> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.class" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 444.1 ; syn:top 277.6 ; syn:x1 510.1 ; syn:bottom 287.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.class-registry> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.class-registry" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 114.1 ; syn:top 289.0 ; syn:x1 168.1 ; syn:bottom 299.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:vessel.position> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "vessel.position" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 300.4 ; syn:x1 162.1 ; syn:bottom 310.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:loading.port.1> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "loading.port.1" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 368.4 ; syn:x1 456.1 ; syn:bottom 378.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:loading.port.2> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "loading.port.2" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 379.8 ; syn:x1 516.1 ; syn:bottom 389.8 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:cargo.quantity> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "cargo.quantity" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 425.2 ; syn:x1 264.1 ; syn:bottom 435.2 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:cargo.description> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "cargo.description" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 90.1 ; syn:top 436.6 ; syn:x1 456.1 ; syn:bottom 446.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:discharge.inland-place> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "discharge.inland-place" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 108.1 ; syn:top 527.4 ; syn:x1 174.1 ; syn:bottom 537.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:notice.days> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "notice.days" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 1 ; syn:x0 318.1 ; syn:top 561.4 ; syn:x1 390.1 ; syn:bottom 571.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:notice.discharge-place> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "notice.discharge-place" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 108.1 ; syn:top 141.5 ; syn:x1 168.1 ; syn:bottom 151.5 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.rate.1> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.rate.1" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 90.1 ; syn:top 300.4 ; syn:x1 516.1 ; syn:bottom 310.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.rate.2> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.rate.2" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 90.1 ; syn:top 323.1 ; syn:x1 516.1 ; syn:bottom 333.1 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.rate.3> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.rate.3" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 90.1 ; syn:top 334.4 ; syn:x1 258.1 ; syn:bottom 344.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.rate.4> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.rate.4" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 90.1 ; syn:top 345.8 ; syn:x1 360.1 ; syn:bottom 355.8 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.rate.5> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.rate.5" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 90.1 ; syn:top 357.1 ; syn:x1 516.1 ; syn:bottom 367.1 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:freight.reduced-rate> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "freight.reduced-rate" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 348.1 ; syn:top 516.0 ; syn:x1 384.1 ; syn:bottom 526.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:lightening.cost> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "lightening.cost" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 276.1 ; syn:top 550.0 ; syn:x1 366.1 ; syn:bottom 560.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:loading.daily-rate> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "loading.daily-rate" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 2 ; syn:x0 288.1 ; syn:top 629.5 ; syn:x1 330.1 ; syn:bottom 639.5 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:laydays.start-day> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "laydays.start-day" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 354.1 ; syn:top 220.9 ; syn:x1 390.1 ; syn:bottom 230.9 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:laydays.start-month> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "laydays.start-month" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 90.1 ; syn:top 232.2 ; syn:x1 162.1 ; syn:bottom 242.2 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:laydays.cancel-day> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "laydays.cancel-day" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 420.1 ; syn:top 243.6 ; syn:x1 456.1 ; syn:bottom 253.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:laydays.cancel-month> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "laydays.cancel-month" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 3 ; syn:x0 90.1 ; syn:top 255.0 ; syn:x1 150.1 ; syn:bottom 265.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:demurrage.rate> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "demurrage.rate" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 330.1 ; syn:top 84.7 ; syn:x1 378.1 ; syn:bottom 94.7 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:despatch.rate> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "despatch.rate" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 414.1 ; syn:top 141.5 ; syn:x1 462.1 ; syn:bottom 151.5 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:discharge.point> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "discharge.point" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 90.1 ; syn:top 232.2 ; syn:x1 216.1 ; syn:bottom 242.2 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:discharge.place> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "discharge.place" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 246.1 ; syn:top 232.2 ; syn:x1 300.1 ; syn:bottom 242.2 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:inland-contractor.1> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "inland-contractor.1" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 90.1 ; syn:top 300.4 ; syn:x1 516.1 ; syn:bottom 310.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:inland-contractor.2> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "inland-contractor.2" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 90.1 ; syn:top 311.7 ; syn:x1 126.1 ; syn:bottom 321.7 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:inland-contractor.3> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "inland-contractor.3" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 90.1 ; syn:top 323.1 ; syn:x1 516.1 ; syn:bottom 333.1 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:inland-contractor.4> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "inland-contractor.4" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 4 ; syn:x0 90.1 ; syn:top 334.4 ; syn:x1 120.1 ; syn:bottom 344.4 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:commission.amount> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "commission.amount" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 6 ; syn:x0 240.1 ; syn:top 243.6 ; syn:x1 300.1 ; syn:bottom 253.6 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:commission.payee.1> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "commission.payee.1" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 6 ; syn:x0 90.1 ; syn:top 255.0 ; syn:x1 420.1 ; syn:bottom 265.0 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:commission.payee.2> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "commission.payee.2" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 6 ; syn:x0 90.1 ; syn:top 266.3 ; syn:x1 516.1 ; syn:bottom 276.3 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:delivery.inland-place> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "delivery.inland-place" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 8 ; syn:x0 324.1 ; syn:top 141.5 ; syn:x1 378.1 ; syn:bottom 151.5 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:signature.owner> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "signature.owner" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 11 ; syn:x0 114.1 ; syn:top 323.1 ; syn:x1 222.1 ; syn:bottom 333.1 ] .
+
+<urn:iladub:synthetic:map:usda-ffp-cp:blank:signature.charterer> a syn:Part ; syn:inMap <urn:iladub:synthetic:map:usda-ffp-cp> ;
+    syn:partType "blank" ; syn:field "signature.charterer" ; syn:parent <urn:iladub:synthetic:map:usda-ffp-cp:part:charter-party> ;
+    syn:box [ a syn:Box ; syn:page 11 ; syn:x0 318.1 ; syn:top 323.1 ; syn:x1 426.1 ; syn:bottom 333.1 ] .

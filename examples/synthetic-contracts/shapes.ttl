@@ -1,0 +1,250 @@
+# SHACL shapes for the synthetic contract set's part maps (spec 2026-10-31 § 4.5).
+# Closed-world membrane over a hand-authored map: what a map may say, not what it derives.
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<urn:iladub:synthetic:shapes> dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    sh:declare [ sh:prefix "syn" ; sh:namespace "https://w3id.org/iladub/synthetic#"^^xsd:anyURI ] .
+
+<urn:iladub:synthetic:shape:PartMap> a sh:NodeShape ;
+    sh:targetClass syn:PartMap ;
+    sh:property [ sh:path syn:template ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:review ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "draft" "owner-reviewed" ) ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] ;
+    sh:sparql [
+        sh:message "two blanks of one map fill the same field key" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                ?a syn:inMap $this ; syn:field ?value .
+                ?b syn:inMap $this ; syn:field ?value .
+                FILTER (?a != ?b)
+            }""" ] .
+
+<urn:iladub:synthetic:shape:Part> a sh:NodeShape ;
+    sh:targetClass syn:Part ;
+    sh:property [ sh:path syn:inMap ; sh:class syn:PartMap ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:partType ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "contract-form" "rules" "charter-party" "table" "blank" ) ] ;
+    sh:property [ sh:path syn:partId ; sh:datatype xsd:string ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:field ; sh:datatype xsd:string ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:parent ; sh:class syn:Part ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:box ; sh:class syn:Box ; sh:minCount 1 ] ;
+    sh:property [ sh:path syn:grid ; sh:class syn:Grid ] ;
+    sh:sparql [
+        sh:message "a blank needs exactly one box, a field key and a parent; other parts need a part id and no field" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this syn:partType ?t .
+                FILTER (
+                  (?t = "blank" && (
+                      NOT EXISTS { $this syn:field ?f } || NOT EXISTS { $this syn:parent ?p } ||
+                      EXISTS { $this syn:box ?b1 , ?b2 . FILTER (?b1 != ?b2) } ))
+                  ||
+                  (?t != "blank" && (
+                      NOT EXISTS { $this syn:partId ?i } || EXISTS { $this syn:field ?f } )) )
+            }""" ] ;
+    sh:sparql [
+        sh:message "a table needs a parent and at least one grid; only a table carries a grid" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this syn:partType ?t .
+                FILTER (
+                  (?t = "table" && (NOT EXISTS { $this syn:parent ?p } || NOT EXISTS { $this syn:grid ?g }))
+                  || (?t != "table" && EXISTS { $this syn:grid ?g }) )
+            }""" ] ;
+    sh:sparql [
+        sh:message "one part has two boxes on the same page" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:box ?b1 , ?b2 . FILTER (?b1 != ?b2)
+                ?b1 syn:page ?value . ?b2 syn:page ?value .
+            }""" ] .
+
+<urn:iladub:synthetic:shape:Page> a sh:NodeShape ;
+    sh:targetClass syn:Box , syn:Grid ;
+    sh:property [ sh:path syn:page ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] .
+
+<urn:iladub:synthetic:shape:Box> a sh:NodeShape ;
+    sh:targetClass syn:Box ;
+    sh:property [ sh:path syn:x0 ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path syn:top ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path syn:x1 ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:bottom ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:sparql [
+        sh:message "a box needs x0 < x1 and top < bottom" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this syn:x0 ?x0 ; syn:x1 ?x1 ; syn:top ?t ; syn:bottom ?b .
+                FILTER (?x0 >= ?x1 || ?t >= ?b)
+            }""" ] .
+
+<urn:iladub:synthetic:shape:Grid> a sh:NodeShape ;
+    sh:targetClass syn:Grid ;
+    sh:property [ sh:path syn:colEdges ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[0-9]+(\\.[0-9]+)?( [0-9]+(\\.[0-9]+)?){2,}$" ] ;
+    sh:property [ sh:path syn:rowEdges ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[0-9]+(\\.[0-9]+)?( [0-9]+(\\.[0-9]+)?){2,}$" ] .
+
+# ------------------------------------------------------------------ truth records (Task 4; § 4.5)
+# The document node is sh:closed: a property not listed here — the output PDF's own syn:sha256
+# above all (G6) — fails it. Template hashes live only on the syn:TemplateUse nodes.
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<urn:iladub:synthetic:shape:Truth> a sh:NodeShape ;
+    sh:targetClass syn:Truth ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type prov:wasDerivedFrom ) ;
+    sh:property [ sh:path syn:docId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z0-9][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:flavour ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "form-fill" "word-export" "handwriting-scan" "mixed" ) ] ;
+    sh:property [ sh:path syn:review ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "draft" "owner-reviewed" ) ] ;
+    sh:property [ sh:path syn:seed ; sh:datatype xsd:integer ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:transform ; sh:datatype xsd:string ; sh:maxCount 1 ;
+                  sh:pattern "^-?[0-9]+\\.[0-9]+( -?[0-9]+\\.[0-9]+){5}$" ] ;
+    sh:property [ sh:path syn:usesTemplate ; sh:class syn:TemplateUse ; sh:minCount 1 ] ;
+    sh:property [ sh:path syn:usesFill ; sh:class syn:FillUse ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] ;
+    sh:sparql [
+        sh:message "two parts of one truth record share a part id" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                ?a syn:inDocument $this ; syn:partId ?value .
+                ?b syn:inDocument $this ; syn:partId ?value .
+                FILTER (?a != ?b)
+            }""" ] .
+
+<urn:iladub:synthetic:shape:TemplateUse> a sh:NodeShape ;
+    sh:targetClass syn:TemplateUse ;
+    sh:property [ sh:path syn:sha256 ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[0-9a-f]{64}$" ] ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] .
+
+<urn:iladub:synthetic:shape:FillUse> a sh:NodeShape ;
+    sh:targetClass syn:FillUse ;
+    sh:property [ sh:path syn:fillId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] .
+
+<urn:iladub:synthetic:shape:PartTruth> a sh:NodeShape ;
+    sh:targetClass syn:PartTruth ;
+    sh:property [ sh:path syn:inDocument ; sh:class syn:Truth ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] ;
+    sh:property [ sh:path syn:partId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:partType ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "contract-form" "rules" "charter-party" "table" "blank" ) ] ;
+    sh:property [ sh:path syn:parent ; sh:class syn:PartTruth ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:box ; sh:class syn:Box ; sh:minCount 1 ] ;
+    sh:sparql [
+        sh:message "a part's parent belongs to another truth record" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:parent ?value ; syn:inDocument ?d .
+                FILTER NOT EXISTS { ?value syn:inDocument ?d }
+            }""" ] ;
+    sh:sparql [
+        sh:message "one part has two boxes on the same page" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:box ?b1 , ?b2 . FILTER (?b1 != ?b2)
+                ?b1 syn:page ?value . ?b2 syn:page ?value .
+            }""" ] .
+
+<urn:iladub:synthetic:shape:ValueTruth> a sh:NodeShape ;
+    sh:targetClass syn:ValueTruth ;
+    sh:property [ sh:path syn:inDocument ; sh:class syn:Truth ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] ;
+    sh:property [ sh:path syn:field ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:text ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minLength 1 ] ;
+    sh:property [ sh:path syn:box ; sh:class syn:Box ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+# ------------------------------------------------------------------ mixed document specs (Task 7; § 4.4)
+<urn:iladub:synthetic:shape:MixedDocument> a sh:NodeShape ;
+    sh:targetClass syn:MixedDocument ;
+    sh:property [ sh:path syn:mixedId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z0-9][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:component ; sh:class syn:Component ; sh:minCount 2 ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] .
+
+<urn:iladub:synthetic:shape:Component> a sh:NodeShape ;
+    sh:targetClass syn:Component ;
+    sh:property [ sh:path syn:order ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 1 ] ;
+    sh:property [ sh:path syn:componentFlavour ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "form-fill" "word-export" "handwriting-scan" "unfilled" ) ] ;
+    sh:xone ( [ sh:path syn:fillId ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:pattern "^[a-z][a-z0-9.-]*$" ]
+              [ sh:path syn:componentTemplate ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:pattern "^[a-z][a-z0-9.-]*$" ] ) .
+
+# ------------------------------------------------------------------ fill specs (Task 3; § 4.2)
+# Added 2026-11-02 (final review I2): fills had no shape and no conformance test. The fill node is
+# sh:closed, so a property no fill writes (fills.py `write_fill`) fails it.
+<urn:iladub:synthetic:shape:Fill> a sh:NodeShape ;
+    sh:targetClass syn:Fill ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:path syn:fillId ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*-[1-9][0-9]*$" ] ;
+    sh:property [ sh:path syn:template ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:seed ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 0 ] ;
+    sh:property [ sh:path syn:font ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( "Helvetica" "Times-Roman" "Courier" ) ] ;
+    sh:property [ sh:path syn:size ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minInclusive 8 ; sh:maxInclusive 10 ] ;
+    sh:property [ sh:path syn:value ; sh:class syn:FillValue ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:creator ; sh:minCount 1 ] ;
+    sh:property [ sh:path dcterms:license ; sh:minCount 1 ] ;
+    sh:sparql [
+        sh:message "a fill's id is not its template id and a number" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:fillId ?value ; syn:template ?t .
+                FILTER (!STRSTARTS(?value, CONCAT(?t, "-")))
+            }""" ] ;
+    sh:sparql [
+        sh:message "two values of one fill fill the same field key" ;
+        sh:prefixes <urn:iladub:synthetic:shapes> ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this syn:value ?a , ?b . FILTER (?a != ?b)
+                ?a syn:field ?value . ?b syn:field ?value .
+            }""" ] .
+
+<urn:iladub:synthetic:shape:FillValue> a sh:NodeShape ;
+    sh:targetClass syn:FillValue ;
+    sh:property [ sh:path syn:field ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:pattern "^[a-z][a-z0-9.-]*$" ] ;
+    sh:property [ sh:path syn:text ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:minLength 1 ] .

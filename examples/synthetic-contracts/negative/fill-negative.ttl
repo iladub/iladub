@@ -1,0 +1,21 @@
+# NEGATIVE fill spec: MUST NOT conform to ../shapes.ttl. Four planted faults, one each:
+#   1. a font outside the base-14 three ("Comic");
+#   2. a value with an empty text;
+#   3. two values filling the same field key;
+#   4. a property no fill carries (syn:review; caught by sh:closed).
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+
+<urn:iladub:synthetic:fill:negative-1> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "negative-1" ;
+    syn:template "negative" ;
+    syn:seed 7 ;
+    syn:font "Comic" ;
+    syn:size 9.0 ;
+    syn:review "draft" ;
+    syn:value [ a syn:FillValue ; syn:field "party.seller" ; syn:text "" ] ,
+        [ a syn:FillValue ; syn:field "party.buyer" ; syn:text "Zorvak Grain BV" ] ,
+        [ a syn:FillValue ; syn:field "party.buyer" ; syn:text "Melk Trading SA" ] .

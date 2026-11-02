@@ -1,0 +1,66 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-79b-2> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-79b-2" ;
+    syn:font "Helvetica" ;
+    syn:seed 506203203 ;
+    syn:size 9.5 ;
+    syn:template "gafta-79b" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "white rice" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Goulmar Trading SA" ],
+        [ a syn:FillValue ;
+            syn:field "price.amount" ;
+            syn:text "USD 398.95 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "14500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Drasbrour Kenas" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "New Orleans" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "26 Dec 2027" ],
+        [ a syn:FillValue ;
+            syn:field "price.delivered-place" ;
+            syn:text "Antwerp" ],
+        [ a syn:FillValue ;
+            syn:field "price.collected-place" ;
+            syn:text "Karachi" ],
+        [ a syn:FillValue ;
+            syn:field "quality.variety-purity" ;
+            syn:text "feed barley" ],
+        [ a syn:FillValue ;
+            syn:field "quality.guaranteed" ;
+            syn:text "sorghum" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Taxnoun Agri Ltd" ],
+        [ a syn:FillValue ;
+            syn:field "brokerage.per-tonne" ;
+            syn:text "84.60" ],
+        [ a syn:FillValue ;
+            syn:field "delivery.period" ;
+            syn:text "November 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Kouxta Texfur" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Nexdour Shipping SA" ],
+        [ a syn:FillValue ;
+            syn:field "payment.credit-deadline" ;
+            syn:text "26 January 2027" ] .
+

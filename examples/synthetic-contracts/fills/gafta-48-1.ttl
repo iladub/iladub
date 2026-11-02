@@ -1,0 +1,75 @@
+# Fill spec (spec 2026-10-31 § 4.2): our own fake values, no template text.
+# CC-BY-4.0, François Rosselet.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix syn: <https://w3id.org/iladub/synthetic#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iladub:synthetic:fill:gafta-48-1> a syn:Fill ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    syn:fillId "gafta-48-1" ;
+    syn:font "Helvetica" ;
+    syn:seed 2006874059 ;
+    syn:size 10.0 ;
+    syn:template "gafta-48" ;
+    syn:value [ a syn:FillValue ;
+            syn:field "payment.cash-percent" ;
+            syn:text "80 pct" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Daildrour Trading BV" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cfr-free-out" ;
+            syn:text "Alexandria" ],
+        [ a syn:FillValue ;
+            syn:field "quality.specification" ;
+            syn:text "oats" ],
+        [ a syn:FillValue ;
+            syn:field "quality.certifier" ;
+            syn:text "Murdux Agri BV" ],
+        [ a syn:FillValue ;
+            syn:field "price.per-tonne" ;
+            syn:text "EUR 241.92 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cfr" ;
+            syn:text "Klaipeda" ],
+        [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "2 Sep 2027" ],
+        [ a syn:FillValue ;
+            syn:field "payment.option-detail" ;
+            syn:text "Dreq2" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "Karachi" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Railnel Shipping BV" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cif-free-out" ;
+            syn:text "Durban" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.daily-rate" ;
+            syn:text "78.83" ],
+        [ a syn:FillValue ;
+            syn:field "shipment.period" ;
+            syn:text "December 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "white rice" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Bista Grain SA" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cif" ;
+            syn:text "Genoa" ],
+        [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "20500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Drounsor Konvoux" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Doulmax Brasdoun" ] .
+
