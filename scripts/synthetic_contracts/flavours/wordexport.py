@@ -18,8 +18,15 @@ Truth is located in Word's output, never predicted (spec § 4.5: "the Word flavo
 own layout put each part"), by exact matching of strings this generator wrote (`locate`), which
 refuses on 0 or > 1 hits:
 - a value's box is `locate(value)` over the whole document; its blank part's box is the same box;
-- a sub-page part (a table) is, per page, the union of `locate(first line)` and `locate(last line)`
-  of its text on that output page (a table's line = its row's cells' k-th lines, joined);
+- a sub-page part (a table) is, per page, the bounding box of the borders Word drew for it
+  (`drawn_tables`): the output's filled rects, grouped into connected pieces by exact closed-interval
+  contact, and the one piece whose box contains both `locate(first line)` and `locate(last line)` of
+  the table's text on that page (a table's line = its row's cells' k-th lines, joined). The build
+  refuses unless the page has exactly one piece per table mapped on it and exactly one piece holds
+  the table's text. Measured 2026-11-02: Word draws a table's borders as 0.48 pt filled rects, one
+  per cell edge, and nothing else on these pages as a rect. The layout arithmetic (MARGIN to
+  MARGIN + the sum of the column widths) is NOT the drawn extent: gafta-79b clause 6 is 28 to 486.4
+  by arithmetic and 27.84 to 486.72 as drawn, so the box is read from what was drawn, not predicted;
 - a top-level part whose map box is the whole template page is the whole output page, on the same
   page number. That page correspondence is checked, not assumed: the first and the last line of
   every template page must each occur on the output page of the same number exactly as many times as
@@ -30,9 +37,10 @@ refuses on 0 or > 1 hits:
 Template text is written only under the gitignored `synthetic/` (the .docx and the PDF), never into
 a committed file (spec § 3).
 
-Justified PROCEDURAL (CLAUDE.md § 8): this module MAKES a document. Its two reads are raw extraction
-of the template's text layer (at build time) and decidable exact matching of strings it wrote, in
-the output it made. LINE_PITCH and the page margin are generation parameters (how to lay text out),
+Justified PROCEDURAL (CLAUDE.md § 8): this module MAKES a document. Its three reads are raw extraction
+of the template's text layer (at build time), decidable exact matching of strings it wrote, in the
+output it made, and raw extraction of the table borders it asked Word to draw, grouped by exact
+contact (no tolerance) and chosen by exact containment of its own located text. LINE_PITCH and the page margin are generation parameters (how to lay text out),
 not reading tolerances. No reader may call it (A3).
 """
 from __future__ import annotations
@@ -258,6 +266,37 @@ def _inside_box(a: Box, b: Box) -> bool:
     return b.x0 <= (a.x0 + a.x1) / 2 <= b.x1 and b.top <= (a.top + a.bottom) / 2 <= b.bottom
 
 
+def drawn_tables(page) -> list[Box]:
+    """The boxes of the connected pieces of the page's filled rects, by exact closed-interval
+    contact (rects that share an edge or overlap are one piece), top to bottom."""
+    rects = page.rects
+    root = list(range(len(rects)))
+
+    def find(i: int) -> int:
+        while root[i] != i:
+            root[i] = root[root[i]]
+            i = root[i]
+        return i
+
+    for i, a in enumerate(rects):
+        for j in range(i + 1, len(rects)):
+            b = rects[j]
+            if a["x0"] <= b["x1"] and b["x0"] <= a["x1"] and a["top"] <= b["bottom"] \
+                    and b["top"] <= a["bottom"]:
+                root[find(i)] = find(j)
+    pieces: dict[int, list] = {}
+    for i, r in enumerate(rects):
+        pieces.setdefault(find(i), []).append(r)
+    boxes = [Box(page.page_number, min(r["x0"] for r in rs), min(r["top"] for r in rs),
+                 max(r["x1"] for r in rs), max(r["bottom"] for r in rs)) for rs in pieces.values()]
+    return sorted(boxes, key=lambda b: (b.top, b.x0))
+
+
+def _contains(outer: Box, inner: Box) -> bool:
+    return (outer.page == inner.page and outer.x0 <= inner.x0 and inner.x1 <= outer.x1
+            and outer.top <= inner.top and inner.bottom <= outer.bottom)
+
+
 def _union(a: Box, b: Box) -> Box:
     if a.page != b.page:
         raise BuildRefused(f"first and last line on different output pages ({a.page}, {b.page})")
@@ -302,6 +341,14 @@ def render_wordexport(t: Template, m: PartMap, f: Fill, work_dir: Path = WORK_DI
         values = tuple(ValueTruth(b.field, f.values[b.field], locate_in(out, f.values[b.field]))
                        for b in m.blanks)
         vbox = {v.field: v.box for v in values}
+        tables_on = {}
+        for g in m.grids:
+            tables_on[g.page] = tables_on.get(g.page, 0) + 1
+        drawn = {n: drawn_tables(out.pages[n - 1]) for n in tables_on}
+        for n, k in tables_on.items():
+            if len(drawn[n]) != k:
+                raise BuildRefused(f"{doc_id}: output page {n} has {len(drawn[n])} drawn table(s), "
+                                   f"the map has {k} table(s) on it")
         boxes: dict[str, tuple[Box, ...]] = {}
         for p in m.parts:
             if p.parent is None:
@@ -315,8 +362,13 @@ def render_wordexport(t: Template, m: PartMap, f: Fill, work_dir: Path = WORK_DI
                     if (p.id, b.page) not in lay.table_lines:
                         raise BuildRefused(f"part {p.id} ({p.type}) has no layout on page {b.page}")
                     first, last = lay.table_lines[(p.id, b.page)]
-                    got.append(_union(locate_in(out, first, page=b.page),
-                                      locate_in(out, last, page=b.page)))
+                    text = _union(locate_in(out, first, page=b.page),
+                                  locate_in(out, last, page=b.page))
+                    holds = [d for d in drawn.get(b.page, []) if _contains(d, text)]
+                    if len(holds) != 1:
+                        raise BuildRefused(f"{doc_id}: part {p.id} ({p.type}): {len(holds)} drawn "
+                                           f"table(s) on page {b.page} hold its text")
+                    got.append(holds[0])
                 boxes[p.id] = tuple(got)
     parts = tuple(PartTruth(p.id, p.type, (vbox[p.id.removeprefix("blank.")],)
                             if p.type == "blank" else boxes[p.id], p.parent)

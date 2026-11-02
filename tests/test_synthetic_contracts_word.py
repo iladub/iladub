@@ -90,6 +90,27 @@ def test_locate_refuses_missing(tmp_path):
         locate(p, "Alpha Beta")
 
 
+def test_drawn_tables_groups_rects_by_exact_contact():
+    """CI: two touching-rect grids and one lone rect are three pieces, with their exact extents."""
+    import pdfplumber
+    from reportlab.pdfgen.canvas import Canvas
+
+    from scripts.synthetic_contracts.flavours.wordexport import drawn_tables
+
+    buf = BytesIO()
+    c = Canvas(buf, pagesize=(600.0, 800.0), invariant=1)
+    for x0, top, w, h in ((100, 100, 200, 1), (100, 101, 1, 50), (299, 101, 1, 50), (100, 151, 200, 1),
+                          (100, 300, 300, 1), (100, 301, 1, 20), (100, 321, 300, 1),
+                          (500, 600, 10, 10)):
+        c.rect(x0, 800 - top - h, w, h, stroke=0, fill=1)  # reportlab is bottom-left origin
+    c.showPage()
+    c.save()
+    with pdfplumber.open(BytesIO(buf.getvalue())) as pdf:
+        got = drawn_tables(pdf.pages[0])
+    assert [(b.page, b.x0, b.top, b.x1, b.bottom) for b in got] == [
+        (1, 100, 100, 300, 152), (1, 100, 300, 400, 322), (1, 500, 600, 510, 610)]
+
+
 # ---------------------------------------------------------------- Word (local only)
 
 def _need_word():
@@ -188,3 +209,40 @@ def test_converter_recorded_is_running_word():
                                           URIRef(SYN + "converter"))}
     assert recorded == {converter()}, (recorded, converter())
     assert Literal(converter()).value.startswith("Microsoft Word ")
+
+
+TABLE_FILLS = [fid for fid in FILLS
+               if any(p.type == "table" for p in load_map(load_fill(fid).template).parts)]
+
+
+@pytest.mark.parametrize("fid", TABLE_FILLS)
+def test_wordexport_table_truth_covers_the_drawn_table(fid):
+    """Every border segment Word drew lies inside its table's truth box (final review I1).
+
+    Until 2026-11-02 the box was the extent of the table's first and last text line, which missed
+    the ruling and every empty last cell (gafta-79b-1 clause 8: x 28->382 against rules to 487).
+    Each pdfplumber rect must lie, by exact comparison, inside exactly one table box of its page,
+    and every table box must hold at least one. pdfium, a second extractor, must count as many path
+    objects on the page as pdfplumber counts rects, so no drawn segment escapes the check. (Their
+    coordinates are not compared with each other: pdfium reports float32, pdfplumber float64.)"""
+    import pdfplumber
+    import pypdfium2 as pdfium
+    import pypdfium2.raw as pdfium_c
+
+    t, f, (pdf, truth) = _render(fid)
+    tables = [(p.id, b) for p in truth.parts if p.type == "table" for b in p.boxes]
+    assert tables
+    doc = pdfium.PdfDocument(pdf)
+    seen = Counter()
+    with pdfplumber.open(BytesIO(pdf)) as out:
+        for n in sorted({b.page for _, b in tables}):
+            page = out.pages[n - 1]
+            boxes = [(pid, b) for pid, b in tables if b.page == n]
+            paths = list(doc[n - 1].get_objects(filter=[pdfium_c.FPDF_PAGEOBJ_PATH]))
+            assert page.rects and len(paths) == len(page.rects), (fid, n, len(paths))
+            for r in page.rects:
+                inside = [pid for pid, b in boxes if b.x0 <= r["x0"] and r["x1"] <= b.x1
+                          and b.top <= r["top"] and r["bottom"] <= b.bottom]
+                assert len(inside) == 1, (fid, n, (r["x0"], r["top"], r["x1"], r["bottom"]), boxes)
+                seen[inside[0]] += 1
+    assert set(seen) == {pid for pid, _ in tables}, (fid, seen)
