@@ -4,6 +4,8 @@
 
 **Serves:** maintenance — project 2 of the contract:01 rescope; no criterion exists for it yet.
 
+**Execution method: subagent-driven** (owner, 2026-11-02, in chat).
+
 **Doc impact: none.** A new owned module `route:` and one generated test document; no released page
 changes, nothing enters `etkl.ttl` (spec header's condition for `increment` is not met).
 
