@@ -71,3 +71,14 @@ All owner decisions of the brainstorm are marked **(owner)** in the spec. Record
   reading, to confirm in the fold-in: asserted from positive evidence of another type (e.g. a rules
   document), never from a missing party (open world, spec § 3).
 - **Q1: to be rediscussed.** **Q3: the owner did not follow it**; re-explained in chat.
+- **Q3 (owner, second answer): models decide.** Model decisions are tolerated: Jev, with Haiku as
+  fallback. Models decide and **decidability must be traced** (every decision a `dec:DecisionHolon`
+  naming the rung and its evidence). The owner is not the cold-start decider; this relaxes compiler
+  design § 4.5 decision 12 (model admitted only below a measured error ≤ α) for the router — the
+  fold-in must say so explicitly. Author's proposal of per-PDF owner marking is withdrawn.
+- **Q1 (owner): a refusal is not wrong.** We are in the open world here; refusing is allowed with no
+  minimum asserted share. Strictness comes later, when SHACL is applied at the membrane.
+- **Q5 (α):** not asked again; with models deciding, whether α still gates anything is the fold-in's to state.
+- **Open, measured by the builder only:** no Jev client in iladub's `baml_src/` (Haiku, Sonnet exist).
+  Jev must be reachable from iladub (nothing comes from hdc-contract, decision 18) — the plan's first
+  MEASURE seam.
