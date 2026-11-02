@@ -56,8 +56,9 @@ def kind_of(key: str) -> str:
                   "point"}),
         ("party", {"party", "buyer", "seller", "owner", "broker", "charterer", "payee",
                    "contractor", "sender", "certifier", "payer", "consigning"}),
-        ("price", {"price", "rate", "amount", "cost", "brokerage", "commission", "freight"}),
+        # quantity before price: `amount` is a price word, but `quantity.amount` is a quantity
         ("quantity", {"quantity", "tonnage", "total", "represented"}),
+        ("price", {"price", "rate", "amount", "cost", "brokerage", "commission", "freight"}),
         ("percent", {"percent"}), ("days", {"days"}), ("period", {"period"}),
         ("goods", {"goods", "cargo", "commodity", "description", "specification", "guaranteed",
                    "variety", "purity"}),
@@ -70,12 +71,19 @@ def kind_of(key: str) -> str:
     return "token"
 
 
+def ordinal(n: int) -> str:
+    """English ordinal: 1st, 2nd, 3rd, 4th ... 11th, 12th, 13th ... 21st, 22nd, 23rd."""
+    if n % 100 in (11, 12, 13):
+        return f"{n}th"
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th') }"
+
+
 def draw(key: str, rng: random.Random, width: float) -> str:
     kind, compact = kind_of(key), width < SHORT_AT
     if kind == "signature":
         return _syll(rng, 2) + " " + _syll(rng, 2)
     if kind == "day":
-        return f"{rng.randint(1, 28)}th"
+        return ordinal(rng.randint(1, 28))
     if kind == "year":
         return f"'{rng.randint(60, 99)}"
     if kind == "month":

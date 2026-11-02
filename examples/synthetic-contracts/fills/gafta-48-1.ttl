@@ -13,44 +13,20 @@
     syn:size 10.0 ;
     syn:template "gafta-48" ;
     syn:value [ a syn:FillValue ;
-            syn:field "payment.cash-location" ;
-            syn:text "Karachi" ],
-        [ a syn:FillValue ;
-            syn:field "quantity.amount" ;
-            syn:text "USD 295.92 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "discharge.daily-rate" ;
-            syn:text "78.83" ],
-        [ a syn:FillValue ;
-            syn:field "quality.certifier" ;
-            syn:text "Murdux Agri BV" ],
-        [ a syn:FillValue ;
-            syn:field "signature.seller" ;
-            syn:text "Maxbras Doundrous" ],
+            syn:field "payment.cash-percent" ;
+            syn:text "80 pct" ],
         [ a syn:FillValue ;
             syn:field "party.buyer" ;
             syn:text "Daildrour Trading BV" ],
         [ a syn:FillValue ;
+            syn:field "destination.cfr-free-out" ;
+            syn:text "Alexandria" ],
+        [ a syn:FillValue ;
             syn:field "quality.specification" ;
             syn:text "oats" ],
         [ a syn:FillValue ;
-            syn:field "signature.buyer" ;
-            syn:text "Sorkon Vouxdoul" ],
-        [ a syn:FillValue ;
-            syn:field "party.broker" ;
-            syn:text "Railnel Shipping BV" ],
-        [ a syn:FillValue ;
-            syn:field "destination.cif" ;
-            syn:text "Genoa" ],
-        [ a syn:FillValue ;
-            syn:field "payment.option-detail" ;
-            syn:text "Dreq2" ],
-        [ a syn:FillValue ;
-            syn:field "goods.description" ;
-            syn:text "white rice" ],
-        [ a syn:FillValue ;
-            syn:field "payment.cash-percent" ;
-            syn:text "80 pct" ],
+            syn:field "quality.certifier" ;
+            syn:text "Murdux Agri BV" ],
         [ a syn:FillValue ;
             syn:field "price.per-tonne" ;
             syn:text "EUR 241.92 per tonne" ],
@@ -58,18 +34,42 @@
             syn:field "destination.cfr" ;
             syn:text "Klaipeda" ],
         [ a syn:FillValue ;
+            syn:field "contract.date" ;
+            syn:text "2 Sep 2027" ],
+        [ a syn:FillValue ;
+            syn:field "payment.option-detail" ;
+            syn:text "Dreq2" ],
+        [ a syn:FillValue ;
+            syn:field "payment.cash-location" ;
+            syn:text "Karachi" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Railnel Shipping BV" ],
+        [ a syn:FillValue ;
             syn:field "destination.cif-free-out" ;
             syn:text "Durban" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.daily-rate" ;
+            syn:text "78.83" ],
+        [ a syn:FillValue ;
+            syn:field "shipment.period" ;
+            syn:text "December 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "goods.description" ;
+            syn:text "white rice" ],
         [ a syn:FillValue ;
             syn:field "party.seller" ;
             syn:text "Bista Grain SA" ],
         [ a syn:FillValue ;
-            syn:field "shipment.period" ;
-            syn:text "March 2027 seller's option" ],
+            syn:field "destination.cif" ;
+            syn:text "Genoa" ],
         [ a syn:FillValue ;
-            syn:field "contract.date" ;
-            syn:text "2 Sep 2027" ],
+            syn:field "quantity.amount" ;
+            syn:text "20500 metric tonnes" ],
         [ a syn:FillValue ;
-            syn:field "destination.cfr-free-out" ;
-            syn:text "Alexandria" ] .
+            syn:field "signature.buyer" ;
+            syn:text "Drounsor Konvoux" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Doulmax Brasdoun" ] .
 

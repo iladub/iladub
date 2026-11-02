@@ -13,38 +13,14 @@
     syn:size 9.5 ;
     syn:template "gafta-79b" ;
     syn:value [ a syn:FillValue ;
-            syn:field "price.collected-place" ;
-            syn:text "Piraeus" ],
-        [ a syn:FillValue ;
-            syn:field "party.seller" ;
-            syn:text "Nenaix Agri GmbH" ],
-        [ a syn:FillValue ;
-            syn:field "party.broker" ;
-            syn:text "Nosrais Holdings BV" ],
-        [ a syn:FillValue ;
-            syn:field "signature.buyer" ;
-            syn:text "Dresdrux Korbrair" ],
-        [ a syn:FillValue ;
-            syn:field "party.buyer" ;
-            syn:text "Toukou Trading GmbH" ],
-        [ a syn:FillValue ;
-            syn:field "quantity.amount" ;
-            syn:text "USD 194.26 per tonne" ],
+            syn:field "quality.guaranteed" ;
+            syn:text "lentils" ],
         [ a syn:FillValue ;
             syn:field "payment.cash-location" ;
             syn:text "Odessa" ],
         [ a syn:FillValue ;
-            syn:field "payment.credit-deadline" ;
-            syn:text "11 December 2027" ],
-        [ a syn:FillValue ;
-            syn:field "quality.guaranteed" ;
-            syn:text "lentils" ],
-        [ a syn:FillValue ;
-            syn:field "brokerage.per-tonne" ;
-            syn:text "347.77" ],
-        [ a syn:FillValue ;
-            syn:field "quality.variety-purity" ;
-            syn:text "yellow maize" ],
+            syn:field "price.collected-place" ;
+            syn:text "Piraeus" ],
         [ a syn:FillValue ;
             syn:field "contract.date" ;
             syn:text "9 Dec 2027" ],
@@ -52,8 +28,14 @@
             syn:field "delivery.period" ;
             syn:text "March 2027 seller's option" ],
         [ a syn:FillValue ;
-            syn:field "price.amount" ;
-            syn:text "USD 109.19 per tonne" ],
+            syn:field "quantity.amount" ;
+            syn:text "14500 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "brokerage.per-tonne" ;
+            syn:text "347.77" ],
+        [ a syn:FillValue ;
+            syn:field "payment.credit-deadline" ;
+            syn:text "11 December 2027" ],
         [ a syn:FillValue ;
             syn:field "price.delivered-place" ;
             syn:text "Alexandria" ],
@@ -62,5 +44,23 @@
             syn:text "white rice" ],
         [ a syn:FillValue ;
             syn:field "signature.seller" ;
-            syn:text "Sonvox Souxzal" ] .
+            syn:text "Brairson Voxsoux" ],
+        [ a syn:FillValue ;
+            syn:field "quality.variety-purity" ;
+            syn:text "yellow maize" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Toukou Trading GmbH" ],
+        [ a syn:FillValue ;
+            syn:field "signature.buyer" ;
+            syn:text "Kudres Druxkor" ],
+        [ a syn:FillValue ;
+            syn:field "price.amount" ;
+            syn:text "USD 109.19 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "party.broker" ;
+            syn:text "Nosrais Holdings BV" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Nenaix Agri GmbH" ] .
 

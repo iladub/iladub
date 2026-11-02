@@ -13,63 +13,63 @@
     syn:size 8.5 ;
     syn:template "gafta-48" ;
     syn:value [ a syn:FillValue ;
+            syn:field "destination.cfr" ;
+            syn:text "Tema" ],
+        [ a syn:FillValue ;
             syn:field "destination.cif-free-out" ;
             syn:text "Durban" ],
-        [ a syn:FillValue ;
-            syn:field "discharge.daily-rate" ;
-            syn:text "273.64" ],
-        [ a syn:FillValue ;
-            syn:field "quality.specification" ;
-            syn:text "yellow maize" ],
-        [ a syn:FillValue ;
-            syn:field "price.per-tonne" ;
-            syn:text "USD 54.84 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "shipment.period" ;
-            syn:text "January 2027 seller's option" ],
-        [ a syn:FillValue ;
-            syn:field "quantity.amount" ;
-            syn:text "EUR 366.91 per tonne" ],
-        [ a syn:FillValue ;
-            syn:field "payment.cash-location" ;
-            syn:text "Piraeus" ],
         [ a syn:FillValue ;
             syn:field "destination.cif" ;
             syn:text "Rosario" ],
         [ a syn:FillValue ;
-            syn:field "party.broker" ;
-            syn:text "Vortour Commodities LLC" ],
+            syn:field "quality.certifier" ;
+            syn:text "Bisvel Shipping LLC" ],
+        [ a syn:FillValue ;
+            syn:field "party.buyer" ;
+            syn:text "Mourgol Shipping GmbH" ],
         [ a syn:FillValue ;
             syn:field "signature.buyer" ;
-            syn:text "Fousvoux Gonvoux" ],
+            syn:text "Vanvoux Gonvoux" ],
         [ a syn:FillValue ;
-            syn:field "destination.cfr-free-out" ;
-            syn:text "Chittagong" ],
-        [ a syn:FillValue ;
-            syn:field "signature.seller" ;
-            syn:text "Deldro Mundris" ],
-        [ a syn:FillValue ;
-            syn:field "payment.option-detail" ;
-            syn:text "Palz8" ],
-        [ a syn:FillValue ;
-            syn:field "party.seller" ;
-            syn:text "Bairgon Marine LLC" ],
+            syn:field "payment.cash-location" ;
+            syn:text "Piraeus" ],
         [ a syn:FillValue ;
             syn:field "payment.cash-percent" ;
             syn:text "90 pct" ],
         [ a syn:FillValue ;
+            syn:field "quantity.amount" ;
+            syn:text "25000 metric tonnes" ],
+        [ a syn:FillValue ;
+            syn:field "discharge.daily-rate" ;
+            syn:text "273.64" ],
+        [ a syn:FillValue ;
             syn:field "contract.date" ;
             syn:text "8 May 2027" ],
         [ a syn:FillValue ;
-            syn:field "quality.certifier" ;
-            syn:text "Bisvel Shipping LLC" ],
+            syn:field "price.per-tonne" ;
+            syn:text "USD 54.84 per tonne" ],
+        [ a syn:FillValue ;
+            syn:field "signature.seller" ;
+            syn:text "Deldro Mundris" ],
+        [ a syn:FillValue ;
+            syn:field "party.seller" ;
+            syn:text "Bairgon Marine LLC" ],
+        [ a syn:FillValue ;
+            syn:field "payment.option-detail" ;
+            syn:text "Palz8" ],
+        [ a syn:FillValue ;
+            syn:field "quality.specification" ;
+            syn:text "yellow maize" ],
+        [ a syn:FillValue ;
+            syn:field "shipment.period" ;
+            syn:text "December 2027 seller's option" ],
+        [ a syn:FillValue ;
+            syn:field "destination.cfr-free-out" ;
+            syn:text "Chittagong" ],
         [ a syn:FillValue ;
             syn:field "goods.description" ;
             syn:text "soya beans" ],
         [ a syn:FillValue ;
-            syn:field "destination.cfr" ;
-            syn:text "Tema" ],
-        [ a syn:FillValue ;
-            syn:field "party.buyer" ;
-            syn:text "Mourgol Shipping GmbH" ] .
+            syn:field "party.broker" ;
+            syn:text "Vortour Commodities LLC" ] .
 

@@ -128,3 +128,27 @@ def test_fill_negative_fails_each_planted_fault():
     assert syn + "text" in paths, report        # 2. a value with an empty text
     assert SH.SPARQLConstraintComponent in comps, report  # 3. two values fill one field key
     assert SH.ClosedConstraintComponent in comps, report  # 4. a property no fill may carry
+
+
+# ------------------------------------------------------------------ value kinds (CI; final review I4, minor 6)
+
+def test_quantity_amount_is_a_quantity_not_a_price():
+    """`amount` is a price word, but `quantity.amount` is a quantity: quantity is classified first.
+    Until 2026-11-02 all six GAFTA 48 / 79B fills carried a price per tonne in it (final review I4)."""
+    from scripts.synthetic_contracts.values import kind_of
+
+    assert kind_of("quantity.amount") == "quantity"
+    assert kind_of("price.per-tonne") == "price"
+    assert kind_of("discharge.daily-rate") == "price"
+    for t in ("gafta-48", "gafta-79b"):
+        for n in (1, 2, 3):
+            v = fl.load_fill(fl.fill_id(t, n)).values["quantity.amount"]
+            assert v.split()[0].isdigit() and "per tonne" not in v, (t, n, v)
+
+
+def test_ordinal_suffixes():
+    from scripts.synthetic_contracts.values import ordinal
+
+    got = {n: ordinal(n) for n in (1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 24, 28)}
+    assert got == {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 11: "11th", 12: "12th", 13: "13th",
+                   21: "21st", 22: "22nd", 23: "23rd", 24: "24th", 28: "28th"}
