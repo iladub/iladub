@@ -1,0 +1,49 @@
+# route-checklist.rq — the document router's checklist oracle for Q-doctype (spec 2026-11-02 § 4).
+# AXIOM, open world, evidence-positive: an answer is admitted only from lines it cites that are on
+# the extent; nothing is admitted from the absence of a line.
+#
+# Evidence graph (built per call by src/iladub/route/oracle.py, the closure boundary): the extent's
+# lines (route:Line, route:listPosition = position in the listing the proposer was shown), ONE answer
+# (dec:chosen one of route:ContractOption / route:NotAContractOption / route:RefusedOption; one
+# route:Citation per cited position), and the owner-admitted type names (route:ChecklistOracle
+# route:admitsType).
+#
+# Admitted iff ALL of:
+#   1. every citation names a position some line of the extent was listed at (in range, non-negative:
+#      a position no line carries is refused);
+#   2. EITHER the answer is a contract with two party citations at DIFFERENT positions and at least
+#      one commitment citation (FIBO's Contract restrictions read as a checklist),
+#      OR it is "not a contract" with at least one other-evidence citation (positive evidence of
+#      another kind of document — never a missing party or commitment);
+#   3. an admitted type the answer claims is one the owner admitted.
+# A refused answer (route:RefusedOption) matches neither arm of 2, so it is never admitted.
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX dec:   <https://w3id.org/iladub/dec#>
+PREFIX route: <https://w3id.org/iladub/route#>
+ASK {
+    ?a dec:chosen ?kind .
+    # 1. every citation is a line of the extent
+    FILTER NOT EXISTS {
+        ?a route:cites ?c .
+        ?c route:listPosition ?p .
+        FILTER NOT EXISTS { ?l a route:Line ; route:listPosition ?p . }
+    }
+    # 2. the checklist
+    {
+        ?a dec:chosen route:ContractOption ;
+           route:cites ?p1 , ?p2 , ?k .
+        ?p1 route:citedAs route:PartyRole ; route:listPosition ?n1 .
+        ?p2 route:citedAs route:PartyRole ; route:listPosition ?n2 .
+        FILTER(?n1 != ?n2)
+        ?k route:citedAs route:CommitmentRole .
+    } UNION {
+        ?a dec:chosen route:NotAContractOption ;
+           route:cites ?e .
+        ?e route:citedAs route:OtherEvidenceRole .
+    }
+    # 3. a claimed admitted type is listed
+    FILTER NOT EXISTS {
+        ?a route:admittedTypeName ?t .
+        FILTER NOT EXISTS { route:ChecklistOracle route:admitsType ?t . }
+    }
+}

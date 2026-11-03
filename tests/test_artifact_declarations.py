@@ -328,8 +328,14 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # as a SET: `git ls-tree -r --name-only HEAD` vs `git ls-files` after `git add`, `*.ttl` (added =
     # exactly those 10, removed = none). Not carved out: every `route:` term they name is declared
     # in `route.ttl`. The `.rq` population does not move: the router vocabulary authored no query.
+    # RE-MEASURED 2026-11-03 (document router, Task 3): the `.rq` population is **61** —
+    # `vocab/queries/route-checklist.rq` and `vocab/queries/route-boundary.rq`, the router's two
+    # oracles. Measured as a SET: `git ls-tree -r --name-only HEAD vocab/queries` vs `git ls-files
+    # vocab/queries` after `git add`, `*.rq` (59 -> 61; added = exactly those two, removed = none).
+    # Every `route:` term they name is declared in `route.ttl` (the answer terms were added there in
+    # the same change). The `.ttl` population does not move: `route.ttl` was edited, not added.
     assert len(vocab_nodes) == len(artifact_files()) == 264
-    assert len(query_nodes) == len(query_files()) == 59
+    assert len(query_nodes) == len(query_files()) == 61
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

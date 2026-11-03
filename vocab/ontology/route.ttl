@@ -221,3 +221,56 @@ route:verdict a owl:ObjectProperty ;
 route:conflicted a owl:DatatypeProperty ;
     rdfs:label "conflicted"@en ; rdfs:range xsd:boolean ;
     rdfs:comment "True when admitted answers disagree on the cue, so the rule must not fire."@en .
+
+#################################################################
+#  The proposer's answer, as the oracles read it
+#  (vocab/queries/route-checklist.rq, vocab/queries/route-boundary.rq)
+#################################################################
+
+route:Citation a owl:Class ;
+    rdfs:label "Citation"@en ;
+    rdfs:comment "A line a proposer cites in its answer: the line's position in the listing the proposer was shown, and the role the line is cited in. One citation per cited position, so a position cited twice is two citations."@en .
+
+route:CitationRole a owl:Class ;
+    rdfs:label "Citation role"@en ;
+    rdfs:comment "What a cited line is cited as. A closed space of five roles."@en .
+
+route:PartyRole a route:CitationRole ;
+    rdfs:label "Party"@en ;
+    rdfs:comment "The line names a party to a contract."@en .
+
+route:CommitmentRole a route:CitationRole ;
+    rdfs:label "Commitment"@en ;
+    rdfs:comment "The line states a commitment a party makes."@en .
+
+route:OtherEvidenceRole a route:CitationRole ;
+    rdfs:label "Other evidence"@en ;
+    rdfs:comment "The line is positive evidence that the document is of another kind than a contract."@en .
+
+route:StartLineRole a route:CitationRole ;
+    rdfs:label "Start line"@en ;
+    rdfs:comment "The line at which the proposer says a new document starts."@en .
+
+route:BoundaryEvidenceRole a route:CitationRole ;
+    rdfs:label "Boundary evidence"@en ;
+    rdfs:comment "The line is evidence for a boundary answer (starts or continues)."@en .
+
+route:cites a owl:ObjectProperty ;
+    rdfs:label "cites"@en ; rdfs:range route:Citation ;
+    rdfs:comment "A line the answer cites."@en .
+
+route:citedAs a owl:ObjectProperty ;
+    rdfs:label "cited as"@en ; rdfs:domain route:Citation ; rdfs:range route:CitationRole ;
+    rdfs:comment "The role the cited line is cited in."@en .
+
+route:listPosition a owl:DatatypeProperty ;
+    rdfs:label "list position"@en ; rdfs:range xsd:integer ;
+    rdfs:comment "Position, counted from 0, in the listing a proposer was shown: on a line, where it was listed; on a citation, which listed line it cites."@en .
+
+route:admittedTypeName a owl:DatatypeProperty ;
+    rdfs:label "admitted type name"@en ; rdfs:range xsd:string ;
+    rdfs:comment "The name of the admitted document type an answer claims for its extent."@en .
+
+route:admitsType a owl:DatatypeProperty ;
+    rdfs:label "admits type"@en ; rdfs:domain route:Oracle ; rdfs:range xsd:string ;
+    rdfs:comment "The name of a document type the owner has admitted, as known to the oracle checking an answer."@en .

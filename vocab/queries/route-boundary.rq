@@ -1,0 +1,72 @@
+# route-boundary.rq — the document router's boundary oracle for Q-boundary (spec 2026-11-02 § 8's
+# candidate, made exact). AXIOM, open world, evidence-positive; the per-call evidence graph built by
+# src/iladub/route/oracle.py is the closure boundary for every NOT EXISTS below.
+#
+# One oracle, two checks, one branch each; a call's graph carries the data of exactly one of them.
+#
+# LOCAL — one boundary answer about one page. Graph: the page's lines (route:Line,
+# route:listPosition), ONE answer (dec:chosen route:StartsOption / route:ContinuesOption /
+# route:RefusedOption; one route:Citation per cited position), and, on the PDF's first page only, the
+# given decision (route:rung route:GivenRung: the first line starts the first document).
+# Admitted iff every citation names a listed position, no position is cited twice in one role, and
+#   CONTINUES: at least one boundary-evidence citation, and the page is not the PDF's first;
+#   STARTS:    a start-line citation whose position is also cited as boundary evidence.
+# A refused answer matches neither arm.
+#
+# SPLIT — a start between two extents. Graph: each extent as a route:Document (route:startsAt its
+# first line), its lines (dcterms:isPartOf the document), and its doctype answer
+# (route:aboutDocument), carrying route:admittedBy route:ChecklistOracle only if route-checklist.rq
+# admitted it. Admitted iff BOTH answers were admitted AND
+#   their kinds differ, OR both are contracts AND
+#     (the two start lines have the same route:textSha — a restart —
+#      OR no party line of one has the route:textSha of a party line of the other — disjoint parties).
+# Symmetric in the two extents, so which one comes first is not consulted.
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX dec:     <https://w3id.org/iladub/dec#>
+PREFIX route:   <https://w3id.org/iladub/route#>
+ASK {
+    {
+        # ---- LOCAL ----
+        ?a dec:chosen ?v .
+        FILTER NOT EXISTS {
+            ?a route:cites ?c .
+            ?c route:listPosition ?p .
+            FILTER NOT EXISTS { ?l a route:Line ; route:listPosition ?p . }
+        }
+        FILTER NOT EXISTS {
+            ?a route:cites ?c1 , ?c2 .
+            FILTER(?c1 != ?c2)
+            ?c1 route:citedAs ?r ; route:listPosition ?q .
+            ?c2 route:citedAs ?r ; route:listPosition ?q .
+        }
+        {
+            ?a dec:chosen route:ContinuesOption ; route:cites ?e .
+            ?e route:citedAs route:BoundaryEvidenceRole .
+            FILTER NOT EXISTS { ?g route:rung route:GivenRung . }
+        } UNION {
+            ?a dec:chosen route:StartsOption ; route:cites ?s , ?e .
+            ?s route:citedAs route:StartLineRole ; route:listPosition ?n .
+            ?e route:citedAs route:BoundaryEvidenceRole ; route:listPosition ?n .
+        }
+    } UNION {
+        # ---- SPLIT ----
+        ?prev route:startsAt ?ps .
+        ?next route:startsAt ?ns .
+        FILTER(?prev != ?next)
+        ?pa route:aboutDocument ?prev ; route:admittedBy route:ChecklistOracle ; dec:chosen ?pk .
+        ?na route:aboutDocument ?next ; route:admittedBy route:ChecklistOracle ; dec:chosen ?nk .
+        FILTER(
+            ?pk != ?nk
+            || ( ?pk = route:ContractOption && ?nk = route:ContractOption
+                 && ( EXISTS { ?ps route:textSha ?h . ?ns route:textSha ?h . }
+                      || NOT EXISTS {
+                             ?pa route:cites ?pc .
+                             ?pc route:citedAs route:PartyRole ; route:listPosition ?pp .
+                             ?pl dcterms:isPartOf ?prev ; route:listPosition ?pp ; route:textSha ?sh .
+                             ?na route:cites ?nc .
+                             ?nc route:citedAs route:PartyRole ; route:listPosition ?np .
+                             ?nl dcterms:isPartOf ?next ; route:listPosition ?np ; route:textSha ?sh .
+                         } ) ) )
+    }
+}

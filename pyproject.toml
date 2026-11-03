@@ -52,6 +52,7 @@ etkl = [
     # tests/test_zero_etl_export.py on importorskip while still reporting green.
     "pandas>=2.0",      # the zero-ETL export leg: 1NF base facts -> dataframe
     "pyarrow>=15",      # ... -> parquet, round-tripped in tests/test_zero_etl_export.py
+    "pypdfium2>=4",     # the document router's line extraction (src/iladub/route/lines.py)
 ]
 demo = [
     # ET(K)L showcase notebook (no LLM/baml dependency). Assumes `etkl` alongside it —
