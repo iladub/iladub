@@ -1,0 +1,13 @@
+@prefix route: <https://w3id.org/iladub/route#> .
+@prefix dec:   <https://w3id.org/iladub/dec#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix ex:    <https://example.org/router#> .
+
+#  S2 negative: a Haiku rung with no route:modelId.
+ex:l1 a route:Line ; route:onPage 1 ; route:lineIndex 0 ; route:top 72.0 ; route:bottom 84.0 ;
+    route:textSha "0000000000000000000000000000000000000000000000000000000000000001" .
+ex:a a prov:SoftwareAgent .
+ex:b1 a route:BoundaryDecision ;
+    route:aboutPage 1 ; route:rung route:HaikuRung ; route:admittedBy route:BoundaryOracle ;
+    dec:optionSpace route:StartsOption , route:ContinuesOption ; dec:chosen route:StartsOption ;
+    dec:decidedBy ex:a ; prov:used ex:l1 ; dec:rationale "a model said so" .

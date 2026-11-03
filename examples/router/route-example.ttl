@@ -1,0 +1,54 @@
+@prefix route: <https://w3id.org/iladub/route#> .
+@prefix dec:   <https://w3id.org/iladub/dec#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix ex:    <https://example.org/router#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+#  Worked example: a two-page PDF holding one contract. Line hashes are
+#  synthetic placeholders; no document text is stored.
+
+ex:l1 a route:Line ; route:onPage 1 ; route:lineIndex 0 ; route:top 72.0 ; route:bottom 84.0 ;
+    route:textSha "0000000000000000000000000000000000000000000000000000000000000001" .
+ex:l2 a route:Line ; route:onPage 1 ; route:lineIndex 1 ; route:top 100.5 ; route:bottom 112.5 ;
+    route:textSha "0000000000000000000000000000000000000000000000000000000000000002" .
+ex:l3 a route:Line ; route:onPage 2 ; route:lineIndex 9 ; route:top 640.0 ; route:bottom 652.0 ;
+    route:textSha "0000000000000000000000000000000000000000000000000000000000000003" .
+
+ex:doc1 a route:ContractDocument ; route:order 1 ; route:startsAt ex:l1 ; route:endsAt ex:l3 .
+
+ex:agent-haiku a prov:SoftwareAgent .
+
+#  The first line of a PDF starts its first document: given, not checked.
+ex:b1 a route:BoundaryDecision ;
+    route:aboutPage 1 ; route:rung route:GivenRung ;
+    dec:optionSpace route:StartsOption , route:ContinuesOption ; dec:chosen route:StartsOption ;
+    dec:decidedBy ex:agent-haiku ; prov:used ex:l1 ;
+    dec:rationale "first line of the PDF starts its first document"@en .
+
+#  A model answered and the boundary oracle admitted it.
+ex:b2 a route:BoundaryDecision ;
+    route:aboutPage 2 ; route:rung route:HaikuRung ; route:modelId "claude-haiku-5-5" ;
+    route:admittedBy route:BoundaryOracle ;
+    dec:optionSpace route:StartsOption , route:ContinuesOption ; dec:chosen route:ContinuesOption ;
+    dec:decidedBy ex:agent-haiku ; prov:used ex:l3 ;
+    dec:rationale "page 2 continues the numbered clauses of page 1" .
+
+#  The checklist admitted a contract: parties and a commitment on the page.
+ex:t1 a route:DoctypeDecision ;
+    route:aboutDocument ex:doc1 ; route:rung route:HaikuRung ; route:modelId "claude-haiku-5-5" ;
+    route:admittedBy route:ChecklistOracle ;
+    dec:optionSpace route:ContractOption , route:NotAContractOption , route:RefusedOption ;
+    dec:chosen route:ContractOption ;
+    dec:decidedBy ex:agent-haiku ; prov:used ex:l1 , ex:l2 ;
+    dec:rationale "contract: two parties named (p1 l0, l1); commitment on p1"@en .
+
+#  A refusal is a decision too, with its reason and no oracle.
+ex:t2 a route:DoctypeDecision ;
+    route:aboutDocument ex:doc2 ; route:rung route:RuleRung ;
+    route:refusalReason "no cited line is on the page" ;
+    dec:optionSpace route:ContractOption , route:NotAContractOption , route:RefusedOption ;
+    dec:chosen route:RefusedOption ;
+    dec:decidedBy ex:agent-haiku ;
+    dec:rationale "refused: the proposer cited no line found on the page" .
+
+ex:doc2 a route:Document ; route:order 2 ; route:startsAt ex:l3 ; route:endsAt ex:l3 .

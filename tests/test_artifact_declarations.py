@@ -322,7 +322,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # as a SET: `git ls-tree -r --name-only ca22a4c3` vs `git ls-files` after `git add`, `*.ttl`
     # (255 -> 256 tracked, minus the 2 carved); added = exactly that one file, removed = none. Not
     # carved out: every `syn:` term it names is declared in `synthetic.ttl`.
-    assert len(vocab_nodes) == len(artifact_files()) == 254
+    # RE-MEASURED 2026-11-03 (document router, Task 2): 254 -> 264 — the 10 new `.ttl`:
+    # `vocab/ontology/route{,-align,-types}.ttl`, `vocab/shapes/route-shapes.ttl`,
+    # `examples/router/route-example.ttl` and the five `tests/route-negative-s{1..5}.ttl`. Measured
+    # as a SET: `git ls-tree -r --name-only HEAD` vs `git ls-files` after `git add`, `*.ttl` (added =
+    # exactly those 10, removed = none). Not carved out: every `route:` term they name is declared
+    # in `route.ttl`. The `.rq` population does not move: the router vocabulary authored no query.
+    assert len(vocab_nodes) == len(artifact_files()) == 264
     assert len(query_nodes) == len(query_files()) == 59
 
 

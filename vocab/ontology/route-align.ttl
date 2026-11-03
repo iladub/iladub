@@ -1,0 +1,30 @@
+@prefix route:  <https://w3id.org/iladub/route#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+
+#################################################################
+#  Alignment of the route vocabulary to gist and FIBO.
+#  ALIGNMENT, NOT IMPORT: rdfs:subClassOf only; no owl:imports; neither is
+#  loaded into a compile graph and no reasoner is run. gist/FIBO terms
+#  appear ONLY as objects (CLAUDE.md § Source ownership).
+#  The gist IRI was measured: `grep -rn semanticarts vocab/` returned
+#  nothing on 2026-11-03, so it is the gist namespace's published form.
+#  FIBO verified 2026-11-02 (spec 2026-11-02-document-router-design § 3).
+#################################################################
+
+<https://w3id.org/iladub/route/alignment> a owl:Ontology ;
+    dcterms:title "route → gist / FIBO alignment"@en ;
+    dcterms:description """Optional, separately loadable alignment of route to the upper
+ontology (gist) and to FIBO's contract document. route:Document is gist:Content; a
+route:ContractDocument is a FIBO ContractDocument."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-11-03"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/iladub/route> .
+
+route:Document rdfs:subClassOf <https://w3id.org/semanticarts/ns/ontology/gist/Content> .
+
+route:ContractDocument rdfs:subClassOf <https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractDocument> .

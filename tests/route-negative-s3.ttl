@@ -1,0 +1,12 @@
+@prefix route: <https://w3id.org/iladub/route#> .
+@prefix dec:   <https://w3id.org/iladub/dec#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix ex:    <https://example.org/router#> .
+
+#  S3 negative: a refused decision that has no refusal reason.
+ex:a a prov:SoftwareAgent .
+ex:t1 a route:DoctypeDecision ;
+    route:aboutDocument ex:doc1 ; route:rung route:RuleRung ;
+    dec:optionSpace route:ContractOption , route:NotAContractOption , route:RefusedOption ;
+    dec:chosen route:RefusedOption ; dec:decidedBy ex:a ; dec:rationale "refused" .
+ex:doc1 a route:Document ; route:order 1 .
