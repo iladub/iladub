@@ -126,3 +126,16 @@ def test_other_citing_parties_or_commitments_is_refused():
     ext = _ext(["Sellers: A", "Buyers: B", "Sellers shall ship", "Rules for sampling"])
     assert not check_doctype(DoctypeAnswer("OTHER", (0,), (), (3,), "X", None), ext, set()).admitted
     assert not check_doctype(DoctypeAnswer("OTHER", (), (2,), (3,), "X", None), ext, set()).admitted
+
+
+def test_running_header_split_at_page_two_is_refused():
+    """3 pages, the same header at line 0 of each; a split forced at page 2 leaves page 1 alone as
+    the previous extent, so only the header's recurrence on page 3 of the NEXT extent refuses it."""
+    hdr = "ACME SA - Contract 7"
+    body = [hdr, "Sellers: ACME SA", "Buyers: Beta Ltd", "Sellers shall ship"]
+    prev = _ext(body)
+    nxt = _ext(body, page=2) + [Line(3, 0, hdr, 0.0, 8.0, 0.0, 100.0),
+                                Line(3, 1, "terms continue", 10.0, 18.0, 0.0, 100.0)]
+    c = DoctypeAnswer("CONTRACT", (1, 2), (3,), (), None, None)
+    assert check_doctype(c, prev, set()).admitted and check_doctype(c, nxt, set()).admitted
+    assert not check_boundary_split(prev, c, nxt, c).admitted

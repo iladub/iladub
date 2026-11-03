@@ -20,7 +20,8 @@
 # admitted it; route:order tells which extent comes first. Admitted iff BOTH answers were admitted AND
 #   their kinds differ, OR both are contracts AND there is a restart: the next extent's start line
 #   has the route:textSha of the previous extent's start line, and of NO other line of the previous
-#   extent (a running header repeats on every page, so it is not a restart signal).
+#   extent, nor of any other line of the next extent (a running header repeats on every page, so
+#   it is not a restart signal).
 # RULED 2026-11-03 (controller, Task 3 fix round 1; spec § 8 "same type with a restart signal"
 # binds over the plan): disjoint party lines do NOT admit a same-kind split — "the Sellers" on a
 # continuation page differs in text from "Sellers: ACME SA" on the first, and was admitted as two
@@ -72,6 +73,12 @@ ASK {
                         ?ns route:textSha ?hr .
                         ?o route:textSha ?hr ; dcterms:isPartOf ?prev .
                         FILTER(?o != ?ps)
+                    }
+                 # ... nor on any OTHER line of the next extent (the header recurs on its later pages)
+                 && NOT EXISTS {
+                        ?ns route:textSha ?hn .
+                        ?m route:textSha ?hn ; dcterms:isPartOf ?next .
+                        FILTER(?m != ?ns)
                     } ) )
     }
 }
