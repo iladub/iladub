@@ -2,11 +2,12 @@
 
 AXIOM (CLAUDE.md § 8, derivation form, open world). Whether a rule fires, which lines it cites, and
 every abstention (two STARTS lines on a page, a conflicted rule, two firing doctype rules that
-disagree) are decided in vocab/queries/route-boundary-rule.rq and route-doctype-rule.rq. A rule only
+disagree) are decided in vocab/queries/route-boundary-rule.rq and route-doctype-rule.rq, and the extent-level conflict (a rule whose cues all occur in a recorded
+extent of the opposite kind) in route-extent-conflict.rq. A rule only
 PROPOSES: its answer is disposed by the same oracles as a model's (oracle.check_*), in the router.
 
 PROCEDURAL glue, each piece irreducible to a query: (1) loading the .rq files and reading their rows
-back into the answer dataclasses; (2) write-back, which is storage — it appends triples. Rule IRIs are
+back into the answer dataclasses; (2) write-back, which is storage — it appends triples (and the extent record the conflict query reads). Rule IRIs are
 content-addressed (the cue hashes, the roles and the verdict), so "is the opposite rule already
 there?" is a membership test on a name, not a judgement; finding it marks both rules
 `route:conflicted true`, and the queries do the refusing. Python decides nothing about a page.
@@ -29,6 +30,7 @@ from iladub.route.oracle import BoundaryAnswer, DoctypeAnswer, _QUERIES, _add_li
 RULES_PATH = Path(__file__).resolve().parents[3] / "readings" / "route" / "rules.ttl"
 BOUNDARY_RULE_RQ = _QUERIES / "route-boundary-rule.rq"
 DOCTYPE_RULE_RQ = _QUERIES / "route-doctype-rule.rq"
+EXTENT_CONFLICT_RQ = _QUERIES / "route-extent-conflict.rq"
 
 _BOUNDARY_VERDICT = {"STARTS": ROUTE.StartsOption, "CONTINUES": ROUTE.ContinuesOption}
 _DOCTYPE_KIND = {"CONTRACT": ROUTE.ContractOption, "OTHER": ROUTE.NotAContractOption}
@@ -59,6 +61,7 @@ def rule_doctype(extent: list[Line], rules: Graph) -> DoctypeAnswer | None:
     rows = _rows(extent, rules, DOCTYPE_RULE_RQ)
     if not rows:
         return None
+    # Several agreeing rules may fire; the query merges their cues per role (least position).
     by_role: dict[str, list[int]] = {name: [] for name in _ROLES.values()}
     for r in rows:
         by_role[_ROLES[r.role]].append(int(r["first"]))
@@ -122,3 +125,19 @@ def write_back_doctype(answer: DoctypeAnswer, extent: list[Line], rules: Graph) 
         opposite = ROUTE[f"doctype-rule-{key}-{other.fragment}"]
         if other != verdict and (opposite, RDF.type, ROUTE.DoctypeRule) in rules:
             _mark_conflicted(rules, rule, opposite)
+    # Record the extent (hashes only), then let route-extent-conflict.rq mark every rule, of either
+    # kind and in either write order, whose cues all occur in a recorded extent of the opposite kind.
+    shas = sorted({ln.sha for ln in extent})
+    ekey = hashlib.sha256(("\n".join(shas) + verdict.fragment).encode()).hexdigest()
+    learned = ROUTE[f"learned-extent-{ekey}"]
+    rules.add((learned, RDF.type, ROUTE.LearnedExtent))
+    rules.add((learned, ROUTE.verdict, verdict))
+    for sha in shas:
+        rules.add((learned, ROUTE.memberSha, Literal(sha)))
+    # Scoped to what this call added: the new rule against every extent, every rule against the new
+    # extent (pre-bound ?rule / ?e; the query's decision is unchanged, only its frontier is bounded).
+    query = EXTENT_CONFLICT_RQ.read_text(encoding="utf-8")
+    hits = list(rules.query(query, initBindings={"rule": rule})) + \
+        list(rules.query(query, initBindings={"e": learned}))
+    for row in hits:
+        _mark_conflicted(rules, row.rule)

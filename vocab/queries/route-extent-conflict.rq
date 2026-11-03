@@ -1,0 +1,17 @@
+# route-extent-conflict.rq — extent-level conflict for written-back doctype rules (Task 4 fix round 1).
+# AXIOM, open world, evidence-positive: a rule is conflicted only when a recorded extent of the OPPOSITE
+# kind PRESENTLY contains every one of its cue hashes (route:memberSha); a boilerplate line seen in a
+# contract cannot, alone, prove "not a contract". Graph: the whole rules graph (rules + route:LearnedExtent
+# records). Rows: ?rule — each to be marked route:conflicted true by write-back. A rule with no cue is
+# never conflicted here (it cannot fire anyway). Symmetric: CONTRACT rules against OTHER extents too.
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX route: <https://w3id.org/iladub/route#>
+SELECT DISTINCT ?rule WHERE {
+    ?rule a route:DoctypeRule ; route:verdict ?v ; route:hasCue ?c0 .
+    ?e a route:LearnedExtent ; route:verdict ?ev .
+    FILTER (?ev != ?v)
+    FILTER NOT EXISTS {
+        ?rule route:hasCue ?c1 . ?c1 route:cueSha ?s1 .
+        FILTER NOT EXISTS { ?e route:memberSha ?s1 }
+    }
+}

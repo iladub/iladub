@@ -174,9 +174,9 @@ def test_the_membrane_binds_one_focus_node_per_query_file():
     § 4, § 8). Measured as a set against HEAD `63899244`: added = exactly those two, removed = none."""
     data = evidence_graph() + declaring_graph()
     focus = set(data.subjects(RDF.type, ETKL.QueryArtifact))
-    # RE-MEASURED 2026-11-03 (document router, Task 4): 61 -> 63, `route-boundary-rule.rq` and
+    # RE-MEASURED 2026-11-03 (Task 4 fix round 1: +`route-extent-conflict.rq`, 63 -> 64; set vs `6b4b4cfd`, added = exactly that one): earlier note 61 -> 63, `route-boundary-rule.rq` and
     # `route-doctype-rule.rq`; added = exactly those two, removed = none (set vs HEAD `4d6a788d`).
-    assert len(focus) == len(query_files()) == 63, sorted(focus)
+    assert len(focus) == len(query_files()) == 64, sorted(focus)
 
 
 def test_the_leak_fixture_is_not_in_the_population():
