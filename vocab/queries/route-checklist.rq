@@ -11,10 +11,12 @@
 # Admitted iff ALL of:
 #   1. every citation names a position some line of the extent was listed at (in range, non-negative:
 #      a position no line carries is refused);
-#   2. EITHER the answer is a contract with two party citations at DIFFERENT positions and at least
-#      one commitment citation (FIBO's Contract restrictions read as a checklist),
+#   2. EITHER the answer is a contract with two party citations whose lines differ in route:textSha
+#      (so two different positions, and not the same text twice) and at least one commitment
+#      citation (FIBO's Contract restrictions read as a checklist), and no other-evidence citation,
 #      OR it is "not a contract" with at least one other-evidence citation (positive evidence of
-#      another kind of document — never a missing party or commitment);
+#      another kind of document — never a missing party or commitment) and no party or commitment
+#      citation. An answer citing both kinds of evidence contradicts itself and is refused;
 #   3. an admitted type the answer claims is one the owner admitted.
 # A refused answer (route:RefusedOption) matches neither arm of 2, so it is never admitted.
 # No numeric literal (test_no_tuned_constant_in_rq_files).
@@ -34,12 +36,22 @@ ASK {
            route:cites ?p1 , ?p2 , ?k .
         ?p1 route:citedAs route:PartyRole ; route:listPosition ?n1 .
         ?p2 route:citedAs route:PartyRole ; route:listPosition ?n2 .
-        FILTER(?n1 != ?n2)
+        ?l1 a route:Line ; route:listPosition ?n1 ; route:textSha ?s1 .
+        ?l2 a route:Line ; route:listPosition ?n2 ; route:textSha ?s2 .
+        FILTER(?s1 != ?s2)
         ?k route:citedAs route:CommitmentRole .
+        # contradictory: a contract answer that also cites evidence of another kind
+        FILTER NOT EXISTS { ?a route:cites ?ox . ?ox route:citedAs route:OtherEvidenceRole . }
     } UNION {
         ?a dec:chosen route:NotAContractOption ;
            route:cites ?e .
         ?e route:citedAs route:OtherEvidenceRole .
+        # contradictory: a "not a contract" answer that cites a party or a commitment
+        FILTER NOT EXISTS {
+            ?a route:cites ?px .
+            ?px route:citedAs ?pr .
+            FILTER(?pr IN (route:PartyRole, route:CommitmentRole))
+        }
     }
     # 3. a claimed admitted type is listed
     FILTER NOT EXISTS {

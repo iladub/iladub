@@ -141,9 +141,11 @@ def check_boundary_split(prev_extent: list[Line], prev_doctype: DoctypeAnswer,
     these two extents? `admitted_types` is passed through to each side's checklist."""
     g = Graph()
     sides = []
-    for extent, doctype in ((prev_extent, prev_doctype), (next_extent, next_doctype)):
+    for order, (extent, doctype) in enumerate(((prev_extent, prev_doctype),
+                                                (next_extent, next_doctype)), start=1):
         doc = BNode()
         g.add((doc, RDF.type, ROUTE.Document))
+        g.add((doc, ROUTE.order, Literal(order, datatype=XSD.integer)))
         nodes = _add_lines(g, extent, document=doc)
         if nodes:
             g.add((doc, ROUTE.startsAt, nodes[0]))

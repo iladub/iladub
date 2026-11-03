@@ -9,18 +9,22 @@
 # route:RefusedOption; one route:Citation per cited position), and, on the PDF's first page only, the
 # given decision (route:rung route:GivenRung: the first line starts the first document).
 # Admitted iff every citation names a listed position, no position is cited twice in one role, and
-#   CONTINUES: at least one boundary-evidence citation, and the page is not the PDF's first;
+#   CONTINUES: at least one boundary-evidence citation, no start-line citation (contradictory), and
+#              the page is not the PDF's first;
 #   STARTS:    a start-line citation whose position is also cited as boundary evidence.
 # A refused answer matches neither arm.
 #
 # SPLIT — a start between two extents. Graph: each extent as a route:Document (route:startsAt its
 # first line), its lines (dcterms:isPartOf the document), and its doctype answer
 # (route:aboutDocument), carrying route:admittedBy route:ChecklistOracle only if route-checklist.rq
-# admitted it. Admitted iff BOTH answers were admitted AND
-#   their kinds differ, OR both are contracts AND
-#     (the two start lines have the same route:textSha — a restart —
-#      OR no party line of one has the route:textSha of a party line of the other — disjoint parties).
-# Symmetric in the two extents, so which one comes first is not consulted.
+# admitted it; route:order tells which extent comes first. Admitted iff BOTH answers were admitted AND
+#   their kinds differ, OR both are contracts AND there is a restart: the next extent's start line
+#   has the route:textSha of the previous extent's start line, and of NO other line of the previous
+#   extent (a running header repeats on every page, so it is not a restart signal).
+# RULED 2026-11-03 (controller, Task 3 fix round 1; spec § 8 "same type with a restart signal"
+# binds over the plan): disjoint party lines do NOT admit a same-kind split — "the Sellers" on a
+# continuation page differs in text from "Sellers: ACME SA" on the first, and was admitted as two
+# documents. Same-kind splits are admitted by restart only.
 # No numeric literal (test_no_tuned_constant_in_rq_files).
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX dec:     <https://w3id.org/iladub/dec#>
@@ -44,6 +48,8 @@ ASK {
             ?a dec:chosen route:ContinuesOption ; route:cites ?e .
             ?e route:citedAs route:BoundaryEvidenceRole .
             FILTER NOT EXISTS { ?g route:rung route:GivenRung . }
+            # contradictory: a CONTINUES answer that names a start line
+            FILTER NOT EXISTS { ?a route:cites ?sx . ?sx route:citedAs route:StartLineRole . }
         } UNION {
             ?a dec:chosen route:StartsOption ; route:cites ?s , ?e .
             ?s route:citedAs route:StartLineRole ; route:listPosition ?n .
@@ -51,22 +57,21 @@ ASK {
         }
     } UNION {
         # ---- SPLIT ----
-        ?prev route:startsAt ?ps .
-        ?next route:startsAt ?ns .
-        FILTER(?prev != ?next)
+        ?prev route:order ?po ; route:startsAt ?ps .
+        ?next route:order ?no ; route:startsAt ?ns .
+        FILTER(?po < ?no)
         ?pa route:aboutDocument ?prev ; route:admittedBy route:ChecklistOracle ; dec:chosen ?pk .
         ?na route:aboutDocument ?next ; route:admittedBy route:ChecklistOracle ; dec:chosen ?nk .
         FILTER(
             ?pk != ?nk
             || ( ?pk = route:ContractOption && ?nk = route:ContractOption
-                 && ( EXISTS { ?ps route:textSha ?h . ?ns route:textSha ?h . }
-                      || NOT EXISTS {
-                             ?pa route:cites ?pc .
-                             ?pc route:citedAs route:PartyRole ; route:listPosition ?pp .
-                             ?pl dcterms:isPartOf ?prev ; route:listPosition ?pp ; route:textSha ?sh .
-                             ?na route:cites ?nc .
-                             ?nc route:citedAs route:PartyRole ; route:listPosition ?np .
-                             ?nl dcterms:isPartOf ?next ; route:listPosition ?np ; route:textSha ?sh .
-                         } ) ) )
+                 # restart: the next start line repeats the previous start line ...
+                 && EXISTS { ?ps route:textSha ?h . ?ns route:textSha ?h . }
+                 # ... and occurs on no OTHER line of the previous extent (a running header does)
+                 && NOT EXISTS {
+                        ?ns route:textSha ?hr .
+                        ?o route:textSha ?hr ; dcterms:isPartOf ?prev .
+                        FILTER(?o != ?ps)
+                    } ) )
     }
 }

@@ -50,14 +50,15 @@ def test_starts_must_cite_its_start_line():
     assert check_boundary_local(BoundaryAnswer("STARTS", 1, (1,)), page, False).admitted
     assert not check_boundary_local(BoundaryAnswer("STARTS", 1, (0,)), page, False).admitted
 
-def test_split_same_kind_needs_restart_or_disjoint_parties():
+def test_split_same_kind_needs_a_restart():
+    # RULED 2026-11-03 (Task 3 fix round 1): spec § 8 "same type with a restart signal" binds over the plan; disjoint parties no longer admit.
     a, b = _ext(["T", "Sellers: A", "Buyers: B", "shall"]), _ext(["T2", "Sellers: A", "Buyers: B", "shall"], page=2)
     ca = cb = DoctypeAnswer("CONTRACT", (1, 2), (3,), (), None, None)
     assert not check_boundary_split(a, ca, b, cb).admitted            # same parties, no restart
     b_restart = _ext(["T", "Sellers: A", "Buyers: B", "shall"], page=2)
     assert check_boundary_split(a, ca, b_restart, cb).admitted          # restart: same title text
     b_other = _ext(["T2", "Owners: C", "Charterers: D", "shall"], page=2)
-    assert check_boundary_split(a, ca, b_other, cb).admitted            # different parties
+    assert not check_boundary_split(a, ca, b_other, cb).admitted        # different parties, no restart
 
 def test_split_refused_when_a_side_is_refused():
     a, b = _ext(["T", "x"]), _ext(["U", "y"], page=2)
@@ -91,3 +92,37 @@ def test_split_kinds_differ_is_admitted_and_same_other_is_refused():
     assert check_boundary_split(a, contract, b, other).admitted
     c = _ext(["Rules for weighing", "z"], page=3)
     assert not check_boundary_split(b, other, c, other).admitted
+
+
+def test_running_header_is_not_a_restart():
+    """A header repeated on every page matches the previous start line, but also another line of the
+    previous extent, so it is not a restart signal (Task 3 fix round 1)."""
+    hdr = "ACME SA - Contract 7"
+    prev = _ext([hdr, "Sellers: ACME SA", "Buyers: Beta Ltd", "Sellers shall ship"]) + [
+        Line(2, 0, hdr, 0.0, 8.0, 0.0, 100.0), Line(2, 1, "terms continue", 10.0, 18.0, 0.0, 100.0)]
+    nxt = _ext([hdr, "Sellers: ACME SA", "Buyers: Beta Ltd", "Sellers shall ship"], page=3)
+    c = DoctypeAnswer("CONTRACT", (1, 2), (3,), (), None, None)
+    assert check_doctype(c, prev, set()).admitted and check_doctype(c, nxt, set()).admitted
+    assert not check_boundary_split(prev, c, nxt, c).admitted
+
+
+def test_party_lines_must_differ_in_text():
+    ext = _ext(["Sellers: A", "Sellers: A", "Sellers shall ship"])
+    assert not check_doctype(DoctypeAnswer("CONTRACT", (0, 1), (2,), (), None, None), ext, set()).admitted
+
+
+def test_continues_naming_a_start_line_is_refused():
+    page = _ext(["a", "b"])
+    assert check_boundary_local(BoundaryAnswer("CONTINUES", None, (0,)), page, False).admitted
+    assert not check_boundary_local(BoundaryAnswer("CONTINUES", 0, (0,)), page, False).admitted
+
+
+def test_contract_citing_other_evidence_is_refused():
+    ext = _ext(["Sellers: A", "Buyers: B", "Sellers shall ship", "Rules for sampling"])
+    assert not check_doctype(DoctypeAnswer("CONTRACT", (0, 1), (2,), (3,), None, None), ext, set()).admitted
+
+
+def test_other_citing_parties_or_commitments_is_refused():
+    ext = _ext(["Sellers: A", "Buyers: B", "Sellers shall ship", "Rules for sampling"])
+    assert not check_doctype(DoctypeAnswer("OTHER", (0,), (), (3,), "X", None), ext, set()).admitted
+    assert not check_doctype(DoctypeAnswer("OTHER", (), (2,), (3,), "X", None), ext, set()).admitted
