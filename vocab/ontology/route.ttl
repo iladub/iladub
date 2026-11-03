@@ -218,6 +218,10 @@ route:verdict a owl:ObjectProperty ;
     rdfs:label "verdict"@en ; rdfs:range dec:Option ;
     rdfs:comment "The option a rule gives for its cue."@en .
 
+route:hasCue a owl:ObjectProperty ;
+    rdfs:label "has cue"@en ; rdfs:domain route:DoctypeRule ; rdfs:range route:Citation ;
+    rdfs:comment "A cue of a doctype rule: a hashed line (route:cueSha) and the role it was cited in (route:citedAs). The rule fires only when every one of its cues is present in the extent."@en .
+
 route:conflicted a owl:DatatypeProperty ;
     rdfs:label "conflicted"@en ; rdfs:range xsd:boolean ;
     rdfs:comment "True when admitted answers disagree on the cue, so the rule must not fire."@en .

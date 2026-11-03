@@ -186,7 +186,9 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # `tests/route-negative-s{1..5}.ttl`. Measured as a SET: `git ls-tree -r --name-only 5d9d1116` vs
     # `git ls-files`, `*.ttl`; added = exactly those 10, removed = none. Not carved out: every
     # `route:` term they name is declared in `route.ttl`.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 264
+    # RE-MEASURED 2026-11-03 (document router, Task 4): 264 -> 265 — `readings/route/rules.ttl`;
+    # added = exactly that file, removed = none (set vs HEAD `4d6a788d`).
+    assert len(artifact_files()) == len(tracked) - len(carved) == 265
 
 
 def test_each_file_gets_its_own_named_graph():

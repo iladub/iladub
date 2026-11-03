@@ -113,6 +113,10 @@ def test_the_population_is_every_file_in_vocab_queries():
 
     RE-MEASURED 2026-11-03 (document router, Task 3): 59 -> 61, `route-checklist.rq` and
     `route-boundary.rq` — the router's two AXIOM oracles (spec `2026-11-02-document-router-design.md`
-    § 4, § 8). Measured as a set against HEAD `63899244`: added = exactly those two, removed = none."""
+    § 4, § 8). Measured as a set against HEAD `63899244`: added = exactly those two, removed = none.
+
+    RE-MEASURED 2026-11-03 (document router, Task 4): 61 -> 63, `route-boundary-rule.rq` and
+    `route-doctype-rule.rq` — the rule rung (AXIOM). Measured as a set against HEAD `4d6a788d`: added =
+    exactly those two, removed = none."""
     assert query_files() == sorted(QUERY_DIR.glob("*.rq"))
-    assert len(query_files()) == 61, len(query_files())
+    assert len(query_files()) == 63, len(query_files())

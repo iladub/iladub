@@ -1,0 +1,33 @@
+# route-doctype-rule.rq — the rule rung for Q-doctype (document-router plan, Task 4; spec § 6 B5).
+# AXIOM, open-world derivation, evidence-positive; the per-call graph (written-back rules + ONE extent's
+# route:Line facts) is the closure boundary for the NOT EXISTS below.
+#
+# A rule FIRES when it has at least one route:hasCue, is not route:conflicted, and EVERY one of its cue
+# hashes is the route:textSha of some line of the extent. A firing rule reproduces its answer: its
+# route:verdict, its route:admittedTypeName if any, and, per cue, the role it was cited in and the
+# FIRST (least) route:listPosition holding that hash. Two firing rules that differ in verdict or in
+# type name abstain: no row for either.
+# Rows: ?verdict ?type ?role ?first (?type unbound when the rule names none).
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX route: <https://w3id.org/iladub/route#>
+SELECT ?verdict ?type ?role (MIN(?p) AS ?first) WHERE {
+    ?r a route:DoctypeRule ; route:verdict ?verdict ; route:hasCue ?cue .
+    OPTIONAL { ?r route:admittedTypeName ?type }
+    ?cue route:cueSha ?sha ; route:citedAs ?role .
+    ?l a route:Line ; route:textSha ?sha ; route:listPosition ?p .
+    FILTER NOT EXISTS { ?r route:conflicted true }
+    FILTER NOT EXISTS {
+        ?r route:hasCue ?c2 . ?c2 route:cueSha ?s2 .
+        FILTER NOT EXISTS { ?l2 a route:Line ; route:textSha ?s2 . }
+    }
+    FILTER NOT EXISTS {
+        ?r4 a route:DoctypeRule ; route:verdict ?v4 ; route:hasCue ?x4 .
+        OPTIONAL { ?r4 route:admittedTypeName ?t4 }
+        FILTER NOT EXISTS { ?r4 route:conflicted true }
+        FILTER NOT EXISTS {
+            ?r4 route:hasCue ?c5 . ?c5 route:cueSha ?s5 .
+            FILTER NOT EXISTS { ?l5 a route:Line ; route:textSha ?s5 . }
+        }
+        FILTER (?v4 != ?verdict || COALESCE(STR(?t4), "") != COALESCE(STR(?type), ""))
+    }
+} GROUP BY ?verdict ?type ?role ?cue

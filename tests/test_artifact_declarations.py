@@ -334,8 +334,13 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # vocab/queries` after `git add`, `*.rq` (59 -> 61; added = exactly those two, removed = none).
     # Every `route:` term they name is declared in `route.ttl` (the answer terms were added there in
     # the same change). The `.ttl` population does not move: `route.ttl` was edited, not added.
-    assert len(vocab_nodes) == len(artifact_files()) == 264
-    assert len(query_nodes) == len(query_files()) == 61
+    # RE-MEASURED 2026-11-03 (document router, Task 4): `.ttl` 264 -> 265 (`readings/route/rules.ttl`,
+    # the written-back rules' file) and `.rq` 61 -> 63 (`route-boundary-rule.rq`, `route-doctype-rule.rq`).
+    # Measured as a SET: `git ls-tree -r --name-only HEAD` vs `git ls-files` after `git add`; added =
+    # exactly those three, removed = none. Every `route:` term they name is declared in `route.ttl`
+    # (`route:hasCue` added there in the same change).
+    assert len(vocab_nodes) == len(artifact_files()) == 265
+    assert len(query_nodes) == len(query_files()) == 63
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

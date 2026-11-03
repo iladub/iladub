@@ -1,0 +1,9 @@
+# Written-back router rules: hashed cues only, never line text (src/iladub/route/rules.py).
+# Rules are appended by write_back_*; each is a route:BoundaryRule or route:DoctypeRule.
+@prefix route:   <https://w3id.org/iladub/route#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://w3id.org/iladub/route/rules> a owl:Ontology ;
+    dcterms:title "Router rules — written-back hashed cues"@en ;
+    dcterms:creator "François Rosselet" .
