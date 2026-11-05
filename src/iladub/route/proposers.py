@@ -152,25 +152,31 @@ class BamlProposer:
         return getattr(sync_client.b, f"{stem}{self._suffix}")
 
     def boundary(self, listing, previous_tail):
-        # Only the perceptual edge swallows errors (as caption.read_grid_captions): a failed call,
-        # parse or conversion is NO ANSWER, so nothing is recorded and the question is asked again.
+        # Only the model edge is NO ANSWER (the precedent is caption.read_grid_captions: it wraps the
+        # render and the reader call only). Resolving the function and the model id is configuration;
+        # a missing client or a misspelt name raises, never reads as a refusal. A failed call or a
+        # malformed reply is no answer, so nothing is recorded and the question is asked again.
+        fn = self._fn("RouteBoundary")
+        model = MODEL_IDS[self.client]
         try:
-            r = self._fn("RouteBoundary")(listing, previous_tail)
+            r = fn(listing, previous_tail)
             answer = BoundaryAnswer(_plain(r.verdict), None if r.start_line is None else int(r.start_line),
                                     tuple(int(i) for i in r.evidence_lines))
-            return Proposed(answer, MODEL_IDS[self.client])
         except Exception:
             return None
+        return Proposed(answer, model)
 
     def doctype(self, listing, admitted):
+        fn = self._fn("RouteDoctype")
+        model = MODEL_IDS[self.client]
         try:
-            r = self._fn("RouteDoctype")(listing, list(admitted))
+            r = fn(listing, list(admitted))
             ints = lambda xs: tuple(int(i) for i in xs)
             answer = DoctypeAnswer(_plain(r.kind), ints(r.party_lines), ints(r.commitment_lines),
                                    ints(r.other_evidence_lines), r.proposed_type, r.admitted_type)
-            return Proposed(answer, MODEL_IDS[self.client])
         except Exception:
             return None
+        return Proposed(answer, model)
 
 
 def default_proposers() -> list[RecordedProposer]:

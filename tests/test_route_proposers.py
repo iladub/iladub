@@ -173,3 +173,24 @@ def test_generated_reading_types_declare_the_fields_the_conversion_reads():
     assert set(types.BoundaryReading.model_fields) == {"verdict", "start_line", "evidence_lines"}
     assert set(types.DoctypeReading.model_fields) == {
         "kind", "party_lines", "commitment_lines", "other_evidence_lines", "proposed_type", "admitted_type"}
+
+
+def test_config_errors_raise_rather_than_read_as_no_answer():
+    import pytest
+    bad_name = P.BamlProposer("RouterHaiku")
+    bad_name._suffix = "Nonexistent"
+    pytest.importorskip("baml_client")
+    with pytest.raises(AttributeError):
+        bad_name.boundary("l", "t")
+    with pytest.raises(AttributeError):
+        bad_name.doctype("l", [])
+
+
+def test_unknown_client_raises(monkeypatch):
+    import pytest
+    prop = P.BamlProposer("RouterNope")
+    monkeypatch.setattr(prop, "_fn", lambda stem: (lambda *a: (_ for _ in ()).throw(AssertionError("unreached"))))
+    with pytest.raises(KeyError):
+        prop.boundary("l", "t")
+    with pytest.raises(KeyError):
+        prop.doctype("l", [])
