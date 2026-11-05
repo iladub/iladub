@@ -143,3 +143,33 @@ def test_baml_proposer_converts_a_reading(monkeypatch):
     assert prop.boundary("l", "t") == P.Proposed(BoundaryAnswer("STARTS", 2, (2,)), "claude-haiku-5-5")
     got = prop.doctype("l", ["x"])
     assert got.answer.kind == "OTHER" and type(got.answer.kind) is not K and got.answer.other_evidence_lines == (3,)
+
+
+def test_live_failure_is_no_answer_and_records_nothing(tmp_path, monkeypatch):
+    monkeypatch.setenv("ILADUB_RECORD_READINGS", "1")
+
+    def boom(*a):
+        raise RuntimeError("rate limit")
+
+    prop = P.BamlProposer("RouterHaiku")
+    monkeypatch.setattr(prop, "_fn", lambda stem: boom)
+    assert prop.boundary("l", "t") is None
+    assert prop.doctype("l", []) is None
+    rp = P.RecordedProposer(live=prop, client="RouterHaiku", directory=tmp_path)
+    assert rp.boundary("l", "t") is None and rp.doctype("l", []) is None
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_keys_do_not_run_fields_together():
+    assert P.boundary_key("c", "a\nb", "c") != P.boundary_key("c", "a", "b\nc")
+    assert P.boundary_key("c", "a", "b") != P.boundary_key("c", "", "a\nb")
+    assert P.doctype_key("c", ["a\nb"], "L") != P.doctype_key("c", ["a", "b"], "L")
+    assert P.doctype_key("c", ["a"], "b\nL") != P.doctype_key("c", ["a", "b"], "L")
+
+
+def test_generated_reading_types_declare_the_fields_the_conversion_reads():
+    import pytest
+    types = pytest.importorskip("baml_client.types")
+    assert set(types.BoundaryReading.model_fields) == {"verdict", "start_line", "evidence_lines"}
+    assert set(types.DoctypeReading.model_fields) == {
+        "kind", "party_lines", "commitment_lines", "other_evidence_lines", "proposed_type", "admitted_type"}

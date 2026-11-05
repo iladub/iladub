@@ -56,13 +56,20 @@ def listing(lines: list[Line]) -> str:
     return "\n".join(f"{i}\t{ln.text}" for i, ln in enumerate(lines))
 
 
+def _field(x: str) -> str:
+    """A variable field with its length in front, so no field can run into its neighbour."""
+    return f"{len(x)}:{x}"
+
+
 def boundary_key(client: str, previous_tail: str, listing: str) -> str:
-    return hashlib.sha256(f"route-boundary\n{client}\n{previous_tail}\n{listing}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(
+        f"route-boundary\n{client}\n{_field(previous_tail)}\n{_field(listing)}".encode("utf-8")).hexdigest()
 
 
 def doctype_key(client: str, admitted: list[str], listing: str) -> str:
-    names = "\n".join(sorted(admitted))
-    return hashlib.sha256(f"route-doctype\n{client}\n{names}\n{listing}".encode("utf-8")).hexdigest()
+    names = "\n".join(_field(n) for n in sorted(admitted))
+    return hashlib.sha256(
+        f"route-doctype\n{client}\n{len(admitted)}\n{names}\n{_field(listing)}".encode("utf-8")).hexdigest()
 
 
 def _boundary_json(p: Proposed[BoundaryAnswer]) -> dict:
@@ -145,17 +152,25 @@ class BamlProposer:
         return getattr(sync_client.b, f"{stem}{self._suffix}")
 
     def boundary(self, listing, previous_tail):
-        r = self._fn("RouteBoundary")(listing, previous_tail)
-        answer = BoundaryAnswer(_plain(r.verdict), None if r.start_line is None else int(r.start_line),
-                                tuple(int(i) for i in r.evidence_lines))
-        return Proposed(answer, MODEL_IDS[self.client])
+        # Only the perceptual edge swallows errors (as caption.read_grid_captions): a failed call,
+        # parse or conversion is NO ANSWER, so nothing is recorded and the question is asked again.
+        try:
+            r = self._fn("RouteBoundary")(listing, previous_tail)
+            answer = BoundaryAnswer(_plain(r.verdict), None if r.start_line is None else int(r.start_line),
+                                    tuple(int(i) for i in r.evidence_lines))
+            return Proposed(answer, MODEL_IDS[self.client])
+        except Exception:
+            return None
 
     def doctype(self, listing, admitted):
-        r = self._fn("RouteDoctype")(listing, list(admitted))
-        ints = lambda xs: tuple(int(i) for i in xs)
-        answer = DoctypeAnswer(_plain(r.kind), ints(r.party_lines), ints(r.commitment_lines),
-                               ints(r.other_evidence_lines), r.proposed_type, r.admitted_type)
-        return Proposed(answer, MODEL_IDS[self.client])
+        try:
+            r = self._fn("RouteDoctype")(listing, list(admitted))
+            ints = lambda xs: tuple(int(i) for i in xs)
+            answer = DoctypeAnswer(_plain(r.kind), ints(r.party_lines), ints(r.commitment_lines),
+                                   ints(r.other_evidence_lines), r.proposed_type, r.admitted_type)
+            return Proposed(answer, MODEL_IDS[self.client])
+        except Exception:
+            return None
 
 
 def default_proposers() -> list[RecordedProposer]:
