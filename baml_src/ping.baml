@@ -11,3 +11,12 @@ function PingExtract(text: string) -> Ping {
     {{ ctx.output_format }}
   "#
 }
+
+function RouterHaikuPing(text: string) -> Ping {
+  client RouterHaiku
+  prompt #"
+    Return ok=true and echo the input verbatim.
+    Input: {{ text }}
+    {{ ctx.output_format }}
+  "#
+}

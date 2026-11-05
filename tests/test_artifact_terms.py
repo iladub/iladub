@@ -180,7 +180,15 @@ def test_the_population_is_every_tracked_ttl_outside_the_fixture_directory():
     # as a SET: `git ls-tree -r --name-only ca22a4c3` vs `git ls-files` after `git add`, `*.ttl`
     # (255 -> 256 tracked, minus the 2 carved); added = exactly that one file, removed = none. Not
     # carved out: every `syn:` term it names is declared in `synthetic.ttl`.
-    assert len(artifact_files()) == len(tracked) - len(carved) == 254
+    # RE-MEASURED 2026-11-03 (document router, Task 3 fix round 1; Task 2 added the files and left
+    # this pin at 254): 254 -> 264 — `vocab/ontology/route{,-align,-types}.ttl`,
+    # `vocab/shapes/route-shapes.ttl`, `examples/router/route-example.ttl` and
+    # `tests/route-negative-s{1..5}.ttl`. Measured as a SET: `git ls-tree -r --name-only 5d9d1116` vs
+    # `git ls-files`, `*.ttl`; added = exactly those 10, removed = none. Not carved out: every
+    # `route:` term they name is declared in `route.ttl`.
+    # RE-MEASURED 2026-11-03 (document router, Task 4): 264 -> 265 — `readings/route/rules.ttl`;
+    # added = exactly that file, removed = none (set vs HEAD `4d6a788d`).
+    assert len(artifact_files()) == len(tracked) - len(carved) == 265
 
 
 def test_each_file_gets_its_own_named_graph():
@@ -271,6 +279,15 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     +1 occurrence, `xsd:anyURI` (`synthetic#`), and it is a NEW distinct value: `synthetic.ttl`
     carries no `vann:preferredNamespaceUri`, so no plain-string twin exists.
 
+    RE-MEASURED 2026-11-03 (document router, Task 3 fix round 1; Task 2 authored the literals and
+    left this pin at 27/10):
+
+        occurrences 30   distinct values 11
+
+    +3 occurrences: `route-shapes.ttl` `sh:namespace` `xsd:anyURI` for `dec#` and for `route#`, and
+    `route.ttl` `vann:preferredNamespaceUri` plain string `route#`. One NEW distinct value,
+    `https://w3id.org/iladub/route#` (its anyURI and plain-string forms count once, by `str`).
+
     (§2.7's sub-breakdown "×12, ×8" does not reproduce; the total 18 does. Recorded as a
     correction, not adjusted away.) Asserted here as EXACT NUMBERS rather than the plan's
     floor — a floor cannot detect the guard silently collecting fewer, which is the failure
@@ -279,8 +296,8 @@ def test_owned_prefixed_literals_are_not_mistaken_for_terms():
     ds = artifact_dataset()
     occurrences = [o for _, _, o, _ in ds.quads((None, None, None, None))
                    if isinstance(o, Literal) and str(o).startswith(OWNED_ROOT)]
-    assert len(occurrences) == 27
-    assert len({str(o) for o in occurrences}) == 10
+    assert len(occurrences) == 30
+    assert len({str(o) for o in occurrences}) == 11
     assert not any(isinstance(o, URIRef) for o in occurrences)
 
 

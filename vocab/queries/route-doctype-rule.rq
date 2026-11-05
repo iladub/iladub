@@ -1,0 +1,44 @@
+# route-doctype-rule.rq — the rule rung for Q-doctype (document-router plan, Task 4; spec § 6 B5).
+# AXIOM, open-world derivation, evidence-positive; the per-call graph (written-back rules + ONE extent's
+# route:Line facts) is the closure boundary for the NOT EXISTS below.
+#
+# A rule FIRES when it has at least one route:hasCue, is not route:conflicted, and EVERY one of its cue
+# hashes is the route:textSha of some line of the extent. The FIRING pattern appears twice below, once
+# per sub-select, each evaluated once (never per result row): the first folds every firing rule's
+# (verdict, type name) into a key and keeps the answer only if all firing rules share one key
+# (MIN = MAX; two firing rules that differ in verdict or type abstain: no row); the second enumerates the
+# firing rules' cues. A firing rule reproduces its route:verdict, its route:admittedTypeName if any, and,
+# per cue, the role it was cited in and the FIRST (least) route:listPosition holding that hash.
+# Rows: ?verdict ?type ?role ?first, one per distinct (role, cue hash) (?type unbound when the rule names
+# none). When several agreeing rules fire, their cues merge: a hash cited by two rules is one row.
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX route: <https://w3id.org/iladub/route#>
+SELECT ?verdict ?type ?role (MIN(?p) AS ?first) WHERE {
+    {
+        SELECT (MIN(?k) AS ?lo) (MAX(?k) AS ?hi) WHERE {
+            ?r0 a route:DoctypeRule ; route:verdict ?v0 ; route:hasCue ?c0 .
+            OPTIONAL { ?r0 route:admittedTypeName ?t0 }
+            FILTER NOT EXISTS { ?r0 route:conflicted true }
+            FILTER NOT EXISTS {
+                ?r0 route:hasCue ?c1 . ?c1 route:cueSha ?s1 .
+                FILTER NOT EXISTS { ?l1 a route:Line ; route:textSha ?s1 . }
+            }
+            BIND(CONCAT(STR(?v0), "|", COALESCE(STR(?t0), "")) AS ?k)
+        }
+    }
+    FILTER (?lo = ?hi)
+    {
+        SELECT DISTINCT ?r WHERE {
+            ?r a route:DoctypeRule ; route:hasCue ?c0 .
+            FILTER NOT EXISTS { ?r route:conflicted true }
+            FILTER NOT EXISTS {
+                ?r route:hasCue ?c1 . ?c1 route:cueSha ?s1 .
+                FILTER NOT EXISTS { ?l1 a route:Line ; route:textSha ?s1 . }
+            }
+        }
+    }
+    ?r route:verdict ?verdict ; route:hasCue ?cue .
+    OPTIONAL { ?r route:admittedTypeName ?type }
+    ?cue route:cueSha ?sha ; route:citedAs ?role .
+    ?l a route:Line ; route:textSha ?sha ; route:listPosition ?p .
+} GROUP BY ?verdict ?type ?role ?sha

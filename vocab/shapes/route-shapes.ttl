@@ -1,0 +1,114 @@
+@prefix route: <https://w3id.org/iladub/route#> .
+@prefix dec:   <https://w3id.org/iladub/dec#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+#################################################################
+#  The router's membrane (spec 2026-11-02-document-router-design § 4, § 6 B6).
+#  CONSTRAINT form, closed world (CLAUDE.md § 8): it validates what may cross,
+#  it derives nothing. Needs advanced=True (sh:sparql).
+#################################################################
+
+route:prefixes
+    sh:declare [ sh:prefix "route" ; sh:namespace "https://w3id.org/iladub/route#"^^xsd:anyURI ] ,
+               [ sh:prefix "dec"   ; sh:namespace "https://w3id.org/iladub/dec#"^^xsd:anyURI ] ,
+               [ sh:prefix "prov"  ; sh:namespace "http://www.w3.org/ns/prov#"^^xsd:anyURI ] .
+
+#  S1 -- a routing decision is accountable: who, which rung, why, on what evidence.
+route:RoutingDecisionShape a sh:NodeShape ;
+    sh:targetClass route:BoundaryDecision , route:DoctypeDecision ;
+    sh:property [ sh:path dec:decidedBy ; sh:minCount 1 ;
+        sh:message "A routing decision must record who decided it (dec:decidedBy)." ] ;
+    sh:property [ sh:path route:rung ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A routing decision must record exactly one rung (route:rung)." ] ;
+    sh:property [ sh:path dec:rationale ; sh:minCount 1 ;
+        sh:or ( [ sh:datatype rdf:langString ] [ sh:datatype xsd:string ] ) ;
+        sh:message "A routing decision must record a rationale (plain or language-tagged)." ] ;
+    sh:sparql [
+        sh:message "A routing decision that is not refused must use evidence (prov:used)." ;
+        sh:prefixes route:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                $this dec:chosen ?c .
+                FILTER (?c != route:RefusedOption)
+                FILTER NOT EXISTS { $this prov:used ?e }
+            }
+        """ ;
+    ] .
+
+#  S2 -- a model rung names its model, exactly once; no other rung does.
+route:ModelRungShape a sh:NodeShape ;
+    sh:targetClass route:BoundaryDecision , route:DoctypeDecision ;
+    sh:sparql [
+        sh:message "A Jev or Haiku rung requires exactly one model identifier (route:modelId); no other rung carries one." ;
+        sh:prefixes route:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                {   $this route:rung ?r . FILTER (?r IN (route:JevRung, route:HaikuRung))
+                    FILTER NOT EXISTS { $this route:modelId ?m }
+                } UNION {
+                    $this route:modelId ?m1 , ?m2 . FILTER (?m1 != ?m2)
+                } UNION {
+                    $this route:modelId ?m3 .
+                    FILTER NOT EXISTS { $this route:rung ?r2 . FILTER (?r2 IN (route:JevRung, route:HaikuRung)) }
+                }
+            }
+        """ ;
+    ] .
+
+#  S3 -- refused <=> exactly one reason and no oracle. An answered decision carries
+#  no reason and names the oracle that admitted it (a GivenRung is given, not
+#  checked, so it alone may omit the oracle).
+route:RefusalShape a sh:NodeShape ;
+    sh:targetClass route:BoundaryDecision , route:DoctypeDecision ;
+    sh:sparql [
+        sh:message "A refusal needs exactly one refusal reason (route:refusalReason) and no admitting oracle; an answered decision has no refusal reason and names its oracle." ;
+        sh:prefixes route:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                {   $this dec:chosen route:RefusedOption .
+                    {   FILTER NOT EXISTS { $this route:refusalReason ?r } }
+                    UNION { $this route:admittedBy ?a }
+                    UNION { $this route:refusalReason ?r1 , ?r2 . FILTER (?r1 != ?r2) }
+                } UNION {
+                    $this dec:chosen ?c . FILTER (?c != route:RefusedOption)
+                    {   $this route:refusalReason ?r3 }
+                    UNION {
+                        FILTER NOT EXISTS { $this route:admittedBy ?a2 }
+                        FILTER NOT EXISTS { $this route:rung route:GivenRung }
+                    }
+                }
+            }
+        """ ;
+    ] .
+
+#  S4 -- a contract document is only ever the product of the checklist.
+route:ContractDocumentShape a sh:NodeShape ;
+    sh:targetClass route:ContractDocument ;
+    sh:sparql [
+        sh:message "A contract document needs a doctype decision choosing the contract option, admitted by the checklist oracle." ;
+        sh:prefixes route:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS {
+                    ?d a route:DoctypeDecision ; route:aboutDocument $this ;
+                       dec:chosen route:ContractOption ; route:admittedBy route:ChecklistOracle .
+                }
+            }
+        """ ;
+    ] .
+
+#  S5 -- "not a contract" is asserted, so it can never also be a contract.
+route:NotAContractShape a sh:NodeShape ;
+    sh:targetClass route:ContractDocument ;
+    sh:sparql [
+        sh:message "Nothing chosen as not a contract may be a contract document." ;
+        sh:prefixes route:prefixes ;
+        sh:select """
+            SELECT $this WHERE {
+                ?d route:aboutDocument $this ; dec:chosen route:NotAContractOption .
+            }
+        """ ;
+    ] .

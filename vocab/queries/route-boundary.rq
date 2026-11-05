@@ -1,0 +1,84 @@
+# route-boundary.rq — the document router's boundary oracle for Q-boundary (spec 2026-11-02 § 8's
+# candidate, made exact). AXIOM, open world, evidence-positive; the per-call evidence graph built by
+# src/iladub/route/oracle.py is the closure boundary for every NOT EXISTS below.
+#
+# One oracle, two checks, one branch each; a call's graph carries the data of exactly one of them.
+#
+# LOCAL — one boundary answer about one page. Graph: the page's lines (route:Line,
+# route:listPosition), ONE answer (dec:chosen route:StartsOption / route:ContinuesOption /
+# route:RefusedOption; one route:Citation per cited position), and, on the PDF's first page only, the
+# given decision (route:rung route:GivenRung: the first line starts the first document).
+# Admitted iff every citation names a listed position, no position is cited twice in one role, and
+#   CONTINUES: at least one boundary-evidence citation, no start-line citation (contradictory), and
+#              the page is not the PDF's first;
+#   STARTS:    a start-line citation whose position is also cited as boundary evidence.
+# A refused answer matches neither arm.
+#
+# SPLIT — a start between two extents. Graph: each extent as a route:Document (route:startsAt its
+# first line), its lines (dcterms:isPartOf the document), and its doctype answer
+# (route:aboutDocument), carrying route:admittedBy route:ChecklistOracle only if route-checklist.rq
+# admitted it; route:order tells which extent comes first. Admitted iff BOTH answers were admitted AND
+#   their kinds differ, OR both are contracts AND there is a restart: the next extent's start line
+#   has the route:textSha of the previous extent's start line, and of NO other line of the previous
+#   extent, nor of any other line of the next extent (a running header repeats on every page, so
+#   it is not a restart signal).
+# RULED 2026-11-03 (controller, Task 3 fix round 1; spec § 8 "same type with a restart signal"
+# binds over the plan): disjoint party lines do NOT admit a same-kind split — "the Sellers" on a
+# continuation page differs in text from "Sellers: ACME SA" on the first, and was admitted as two
+# documents. Same-kind splits are admitted by restart only.
+# No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX dec:     <https://w3id.org/iladub/dec#>
+PREFIX route:   <https://w3id.org/iladub/route#>
+ASK {
+    {
+        # ---- LOCAL ----
+        ?a dec:chosen ?v .
+        FILTER NOT EXISTS {
+            ?a route:cites ?c .
+            ?c route:listPosition ?p .
+            FILTER NOT EXISTS { ?l a route:Line ; route:listPosition ?p . }
+        }
+        FILTER NOT EXISTS {
+            ?a route:cites ?c1 , ?c2 .
+            FILTER(?c1 != ?c2)
+            ?c1 route:citedAs ?r ; route:listPosition ?q .
+            ?c2 route:citedAs ?r ; route:listPosition ?q .
+        }
+        {
+            ?a dec:chosen route:ContinuesOption ; route:cites ?e .
+            ?e route:citedAs route:BoundaryEvidenceRole .
+            FILTER NOT EXISTS { ?g route:rung route:GivenRung . }
+            # contradictory: a CONTINUES answer that names a start line
+            FILTER NOT EXISTS { ?a route:cites ?sx . ?sx route:citedAs route:StartLineRole . }
+        } UNION {
+            ?a dec:chosen route:StartsOption ; route:cites ?s , ?e .
+            ?s route:citedAs route:StartLineRole ; route:listPosition ?n .
+            ?e route:citedAs route:BoundaryEvidenceRole ; route:listPosition ?n .
+        }
+    } UNION {
+        # ---- SPLIT ----
+        ?prev route:order ?po ; route:startsAt ?ps .
+        ?next route:order ?no ; route:startsAt ?ns .
+        FILTER(?po < ?no)
+        ?pa route:aboutDocument ?prev ; route:admittedBy route:ChecklistOracle ; dec:chosen ?pk .
+        ?na route:aboutDocument ?next ; route:admittedBy route:ChecklistOracle ; dec:chosen ?nk .
+        FILTER(
+            ?pk != ?nk
+            || ( ?pk = route:ContractOption && ?nk = route:ContractOption
+                 # restart: the next start line repeats the previous start line ...
+                 && EXISTS { ?ps route:textSha ?h . ?ns route:textSha ?h . }
+                 # ... and occurs on no OTHER line of the previous extent (a running header does)
+                 && NOT EXISTS {
+                        ?ns route:textSha ?hr .
+                        ?o route:textSha ?hr ; dcterms:isPartOf ?prev .
+                        FILTER(?o != ?ps)
+                    }
+                 # ... nor on any OTHER line of the next extent (the header recurs on its later pages)
+                 && NOT EXISTS {
+                        ?ns route:textSha ?hn .
+                        ?m route:textSha ?hn ; dcterms:isPartOf ?next .
+                        FILTER(?m != ?ns)
+                    } ) )
+    }
+}

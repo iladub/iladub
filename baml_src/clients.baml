@@ -36,3 +36,16 @@ client<llm> ClaudeLongAnswer {
     max_tokens 16000
   }
 }
+
+// The document router's decider (spec 2026-11-02 document-router § 4). Haiku 5.5 with a generous
+// answer budget and NO temperature (compiler design § 8 call). The shared `Claude` /
+// `ClaudeLongAnswer` clients are untouched. There is no RouterJev: measured 2026-11-03, TypeSafe
+// documents no OpenAI-compatible endpoint and BAML 0.222 has no typesafe provider (task-1 report).
+client<llm> RouterHaiku {
+  provider anthropic
+  options {
+    model "claude-haiku-5-5"
+    api_key env.ANTHROPIC_API_KEY
+    max_tokens 8192
+  }
+}

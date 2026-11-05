@@ -1,0 +1,19 @@
+@prefix route: <https://w3id.org/iladub/route#> .
+@prefix dec:   <https://w3id.org/iladub/dec#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix ex:    <https://example.org/router#> .
+
+#  S5 negative: a contract document that is also the subject of a "not a contract" decision.
+#  (The checklist-admitted contract decision is present, so S4 is satisfied and only S5 fires.)
+ex:l1 a route:Line ; route:onPage 1 ; route:lineIndex 0 ; route:top 72.0 ; route:bottom 84.0 ;
+    route:textSha "0000000000000000000000000000000000000000000000000000000000000001" .
+ex:a a prov:SoftwareAgent .
+ex:doc1 a route:ContractDocument ; route:order 1 ; route:startsAt ex:l1 ; route:endsAt ex:l1 .
+ex:t1 a route:DoctypeDecision ;
+    route:aboutDocument ex:doc1 ; route:rung route:RuleRung ; route:admittedBy route:ChecklistOracle ;
+    dec:optionSpace route:ContractOption , route:NotAContractOption , route:RefusedOption ;
+    dec:chosen route:ContractOption ; dec:decidedBy ex:a ; prov:used ex:l1 ; dec:rationale "contract" .
+ex:t2 a route:DoctypeDecision ;
+    route:aboutDocument ex:doc1 ; route:rung route:RuleRung ; route:admittedBy route:ChecklistOracle ;
+    dec:optionSpace route:ContractOption , route:NotAContractOption , route:RefusedOption ;
+    dec:chosen route:NotAContractOption ; dec:decidedBy ex:a ; prov:used ex:l1 ; dec:rationale "not a contract" .

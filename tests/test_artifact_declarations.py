@@ -322,8 +322,25 @@ def test_the_membrane_binds_one_focus_node_per_artifact():
     # as a SET: `git ls-tree -r --name-only ca22a4c3` vs `git ls-files` after `git add`, `*.ttl`
     # (255 -> 256 tracked, minus the 2 carved); added = exactly that one file, removed = none. Not
     # carved out: every `syn:` term it names is declared in `synthetic.ttl`.
-    assert len(vocab_nodes) == len(artifact_files()) == 254
-    assert len(query_nodes) == len(query_files()) == 59
+    # RE-MEASURED 2026-11-03 (document router, Task 2): 254 -> 264 — the 10 new `.ttl`:
+    # `vocab/ontology/route{,-align,-types}.ttl`, `vocab/shapes/route-shapes.ttl`,
+    # `examples/router/route-example.ttl` and the five `tests/route-negative-s{1..5}.ttl`. Measured
+    # as a SET: `git ls-tree -r --name-only HEAD` vs `git ls-files` after `git add`, `*.ttl` (added =
+    # exactly those 10, removed = none). Not carved out: every `route:` term they name is declared
+    # in `route.ttl`. The `.rq` population does not move: the router vocabulary authored no query.
+    # RE-MEASURED 2026-11-03 (document router, Task 3): the `.rq` population is **61** —
+    # `vocab/queries/route-checklist.rq` and `vocab/queries/route-boundary.rq`, the router's two
+    # oracles. Measured as a SET: `git ls-tree -r --name-only HEAD vocab/queries` vs `git ls-files
+    # vocab/queries` after `git add`, `*.rq` (59 -> 61; added = exactly those two, removed = none).
+    # Every `route:` term they name is declared in `route.ttl` (the answer terms were added there in
+    # the same change). The `.ttl` population does not move: `route.ttl` was edited, not added.
+    # RE-MEASURED 2026-11-03 (Task 4 fix round 1: +`route-extent-conflict.rq`, 63 -> 64; set vs `6b4b4cfd`, added = exactly that one): earlier note `.ttl` 264 -> 265 (`readings/route/rules.ttl`,
+    # the written-back rules' file) and `.rq` 61 -> 63 (`route-boundary-rule.rq`, `route-doctype-rule.rq`).
+    # Measured as a SET: `git ls-tree -r --name-only HEAD` vs `git ls-files` after `git add`; added =
+    # exactly those three, removed = none. Every `route:` term they name is declared in `route.ttl`
+    # (`route:hasCue` added there in the same change).
+    assert len(vocab_nodes) == len(artifact_files()) == 265
+    assert len(query_nodes) == len(query_files()) == 64
 
 
 def test_a_ttl_naming_an_undeclared_term_is_refused():

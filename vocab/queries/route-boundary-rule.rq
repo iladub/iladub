@@ -1,0 +1,37 @@
+# route-boundary-rule.rq — the rule rung for Q-boundary (document-router plan, Task 4; spec § 6 B5).
+# AXIOM, open-world derivation, evidence-positive: a verdict is derived only from a rule cue whose
+# hash is PRESENT among the page's lines. The per-call graph (written-back rules + ONE page's route:Line
+# facts, route:textSha / route:listPosition) is the closure boundary for every NOT EXISTS below, so the
+# counting guards are page-scoped.
+#
+# Rows: ?verdict (route:StartsOption / route:ContinuesOption) and ?p, one row per evidence position.
+#   STARTS:    a non-conflicted STARTS rule matches exactly ONE line of the page -> that line. Two or more
+#              matching lines (different positions) abstain: no row.
+#   CONTINUES: no STARTS rule fires or abstains (none matches at all), and a non-conflicted CONTINUES rule
+#              matches -> one row per matching line.
+# A route:conflicted rule never matches. No numeric literal (test_no_tuned_constant_in_rq_files).
+PREFIX route: <https://w3id.org/iladub/route#>
+SELECT DISTINCT ?verdict ?p WHERE {
+    {
+        BIND(route:StartsOption AS ?verdict)
+        ?l a route:Line ; route:textSha ?sha ; route:listPosition ?p .
+        ?r a route:BoundaryRule ; route:cueSha ?sha ; route:verdict route:StartsOption .
+        FILTER NOT EXISTS { ?r route:conflicted true }
+        FILTER NOT EXISTS {
+            ?l2 a route:Line ; route:textSha ?sha2 ; route:listPosition ?p2 .
+            ?r2 a route:BoundaryRule ; route:cueSha ?sha2 ; route:verdict route:StartsOption .
+            FILTER NOT EXISTS { ?r2 route:conflicted true }
+            FILTER (?p2 != ?p)
+        }
+    } UNION {
+        BIND(route:ContinuesOption AS ?verdict)
+        ?l a route:Line ; route:textSha ?sha ; route:listPosition ?p .
+        ?r a route:BoundaryRule ; route:cueSha ?sha ; route:verdict route:ContinuesOption .
+        FILTER NOT EXISTS { ?r route:conflicted true }
+        FILTER NOT EXISTS {
+            ?l3 a route:Line ; route:textSha ?sha3 .
+            ?r3 a route:BoundaryRule ; route:cueSha ?sha3 ; route:verdict route:StartsOption .
+            FILTER NOT EXISTS { ?r3 route:conflicted true }
+        }
+    }
+}

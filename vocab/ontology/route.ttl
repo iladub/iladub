@@ -1,0 +1,288 @@
+@prefix route:  <https://w3id.org/iladub/route#> .
+@prefix iladub: <https://w3id.org/iladub#> .
+@prefix dec:    <https://w3id.org/iladub/dec#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  Ontology metadata. STANDALONE: no gist, FIBO or HGA IRI appears here
+#  (alignment lives in route-align.ttl; CLAUDE.md § Source ownership).
+#################################################################
+
+<https://w3id.org/iladub/route> a owl:Ontology ;
+    dcterms:title "route — document-router vocabulary"@en ;
+    dcterms:description """The terms a document router needs to say where one document starts in a
+PDF, what kind of document it is, and who decided each of the two. A route:Document is an extent
+of route:Lines; each answer to a named question (where a document starts, what type it is) is a
+dec:DecisionHolon that records the rung that decided it, the model if one did, the oracle that
+admitted the answer, or the reason it was refused. A refusal is a decision too."""@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-11-03"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    vann:preferredNamespacePrefix "route" ;
+    vann:preferredNamespaceUri "https://w3id.org/iladub/route#" ;
+    rdfs:seeAlso <https://w3id.org/iladub/dec> , <https://w3id.org/iladub> .
+
+#################################################################
+#  Classes — the extent
+#################################################################
+
+route:Line a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Line"@en ;
+    rdfs:comment "One line of text extracted from a PDF page, located by page, index and vertical position. Only its hash is stored, never its text."@en .
+
+route:Document a owl:Class ;
+    rdfs:label "Document"@en ;
+    rdfs:comment "One document found in a PDF: an extent from a first line to a last line."@en .
+
+route:ContractDocument a owl:Class ;
+    rdfs:subClassOf route:Document ;
+    rdfs:label "Contract Document"@en ;
+    rdfs:comment "A document that records a contract, admitted only through the contract checklist (at least two parties and one commitment, each on the page)."@en .
+
+route:ProposedType a owl:Class ;
+    rdfs:subClassOf iladub:CandidateConcept ;
+    rdfs:label "Proposed Type"@en ;
+    rdfs:comment "A new document type proposed because none of the known types fit. A proposition: it stays a candidate until a promotion decision admits it."@en .
+
+#################################################################
+#  Classes — the decisions
+#################################################################
+
+route:BoundaryDecision a owl:Class ;
+    rdfs:subClassOf dec:DecisionHolon ;
+    rdfs:label "Boundary Decision"@en ;
+    rdfs:comment "The answer to: does a new document start at this line? One per page decided."@en .
+
+route:DoctypeDecision a owl:Class ;
+    rdfs:subClassOf dec:DecisionHolon ;
+    rdfs:label "Doctype Decision"@en ;
+    rdfs:comment "The answer to: what kind of document is this extent? One per document."@en .
+
+route:Rung a owl:Class ;
+    rdfs:label "Rung"@en ;
+    rdfs:comment "A level of the ladder that can decide: exact rules, a first-line convention, Jev or a language model."@en .
+
+route:Oracle a owl:Class ;
+    rdfs:label "Oracle"@en ;
+    rdfs:comment "The check that admits a proposed answer; an answer no oracle admits is refused."@en .
+
+#################################################################
+#  Classes — written-back rules
+#################################################################
+
+route:BoundaryRule a owl:Class ;
+    rdfs:label "Boundary Rule"@en ;
+    rdfs:comment "A rule written back from an admitted boundary answer: a line hash and the verdict it earned."@en .
+
+route:DoctypeRule a owl:Class ;
+    rdfs:label "Doctype Rule"@en ;
+    rdfs:comment "A rule written back from an admitted doctype answer: a line hash and the verdict it earned."@en .
+
+#################################################################
+#  Individuals — the closed spaces
+#################################################################
+
+route:StartsOption a dec:Option ;
+    rdfs:label "Starts"@en ;
+    rdfs:comment "A new document starts at this line."@en .
+
+route:ContinuesOption a dec:Option ;
+    rdfs:label "Continues"@en ;
+    rdfs:comment "This line continues the current document."@en .
+
+route:ContractOption a dec:Option ;
+    rdfs:label "Contract"@en ;
+    rdfs:comment "The extent is a contract document."@en .
+
+route:NotAContractOption a dec:Option ;
+    rdfs:label "Not a contract"@en ;
+    rdfs:comment "The extent is not a contract document; asserted only from cited positive evidence of another kind of document."@en .
+
+route:RefusedOption a dec:Option ;
+    rdfs:label "Refused"@en ;
+    rdfs:comment "The ladder stopped without an admitted answer; the decision carries the reason."@en .
+
+route:RuleRung a route:Rung ;
+    rdfs:label "Rule rung"@en ;
+    rdfs:comment "Decided by an exact rule."@en .
+
+route:JevRung a route:Rung ;
+    rdfs:label "Jev rung"@en ;
+    rdfs:comment "Decided by Jev; carries a model identifier. Part of the closed rung space; nothing produces it until Jev is reachable."@en .
+
+route:HaikuRung a route:Rung ;
+    rdfs:label "Haiku rung"@en ;
+    rdfs:comment "Decided by a Haiku model; carries a model identifier."@en .
+
+route:GivenRung a route:Rung ;
+    rdfs:label "Given rung"@en ;
+    rdfs:comment "Given, not decided: a PDF's first line starts its first document."@en .
+
+route:ChecklistOracle a route:Oracle ;
+    rdfs:label "Checklist oracle"@en ;
+    rdfs:comment "Admits a contract answer only when the cited parties and commitment are lines on the page."@en .
+
+route:BoundaryOracle a route:Oracle ;
+    rdfs:label "Boundary oracle"@en ;
+    rdfs:comment "Admits a boundary answer when the cited evidence is a line on the page."@en .
+
+#################################################################
+#  Properties — the line
+#################################################################
+
+route:onPage a owl:DatatypeProperty ;
+    rdfs:label "on page"@en ; rdfs:domain route:Line ; rdfs:range xsd:integer ;
+    rdfs:comment "Page of the line, counted from 1."@en .
+
+route:lineIndex a owl:DatatypeProperty ;
+    rdfs:label "line index"@en ; rdfs:domain route:Line ; rdfs:range xsd:integer ;
+    rdfs:comment "Position of the line within its page, counted from 0."@en .
+
+route:top a owl:DatatypeProperty ;
+    rdfs:label "top"@en ; rdfs:domain route:Line ; rdfs:range xsd:decimal ;
+    rdfs:comment "Distance of the line's top edge from the page top, in output-page points."@en .
+
+route:bottom a owl:DatatypeProperty ;
+    rdfs:label "bottom"@en ; rdfs:domain route:Line ; rdfs:range xsd:decimal ;
+    rdfs:comment "Distance of the line's bottom edge from the page top, in output-page points."@en .
+
+route:textSha a owl:DatatypeProperty ;
+    rdfs:label "text sha"@en ; rdfs:domain route:Line ; rdfs:range xsd:string ;
+    rdfs:comment "Hex sha256 of the line's text. The text itself is never stored."@en .
+
+#################################################################
+#  Properties — the document
+#################################################################
+
+route:order a owl:DatatypeProperty ;
+    rdfs:label "order"@en ; rdfs:domain route:Document ; rdfs:range xsd:integer ;
+    rdfs:comment "Position of the document among those found in the PDF, counted from 1."@en .
+
+route:startsAt a owl:ObjectProperty ;
+    rdfs:label "starts at"@en ; rdfs:domain route:Document ; rdfs:range route:Line ;
+    rdfs:comment "The first line of the document."@en .
+
+route:endsAt a owl:ObjectProperty ;
+    rdfs:label "ends at"@en ; rdfs:domain route:Document ; rdfs:range route:Line ;
+    rdfs:comment "The last line of the document."@en .
+
+route:proposedFor a owl:ObjectProperty ;
+    rdfs:label "proposed for"@en ; rdfs:domain route:ProposedType ; rdfs:range route:Document ;
+    rdfs:comment "The document the proposed type was proposed for."@en .
+
+#################################################################
+#  Properties — the decision
+#################################################################
+
+route:aboutPage a owl:DatatypeProperty ;
+    rdfs:label "about page"@en ; rdfs:domain route:BoundaryDecision ; rdfs:range xsd:integer ;
+    rdfs:comment "The page whose boundary the decision settles."@en .
+
+route:aboutDocument a owl:ObjectProperty ;
+    rdfs:label "about document"@en ; rdfs:domain route:DoctypeDecision ; rdfs:range route:Document ;
+    rdfs:comment "The document whose type the decision settles."@en .
+
+route:rung a owl:ObjectProperty ;
+    rdfs:label "rung"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range route:Rung ;
+    rdfs:comment "The rung of the ladder that decided."@en .
+
+route:modelId a owl:DatatypeProperty ;
+    rdfs:label "model id"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range xsd:string ;
+    rdfs:comment "Identifier of the model that decided. Required exactly when the rung is Jev or Haiku."@en .
+
+route:admittedBy a owl:ObjectProperty ;
+    rdfs:label "admitted by"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range route:Oracle ;
+    rdfs:comment "The oracle that admitted the answer. Absent on a refusal."@en .
+
+route:refusalReason a owl:DatatypeProperty ;
+    rdfs:label "refusal reason"@en ; rdfs:domain dec:DecisionHolon ; rdfs:range xsd:string ;
+    rdfs:comment "Why the ladder stopped. Required exactly when the chosen option is Refused."@en .
+
+#################################################################
+#  Properties — written-back rules
+#################################################################
+
+route:cueSha a owl:DatatypeProperty ;
+    rdfs:label "cue sha"@en ; rdfs:range xsd:string ;
+    rdfs:comment "Hex sha256 of the line text a rule keys on."@en .
+
+route:verdict a owl:ObjectProperty ;
+    rdfs:label "verdict"@en ; rdfs:range dec:Option ;
+    rdfs:comment "The option a rule gives for its cue."@en .
+
+route:LearnedExtent a owl:Class ;
+    rdfs:label "Learned extent"@en ;
+    rdfs:comment "A record, in the rules file, of an extent a doctype answer was written back from: its kind (route:verdict) and the hashes of its lines (route:memberSha), never their text. Used to refuse a rule whose cues all occur in an extent of the opposite kind."@en .
+
+route:memberSha a owl:DatatypeProperty ;
+    rdfs:label "member sha"@en ; rdfs:domain route:LearnedExtent ; rdfs:range xsd:string ;
+    rdfs:comment "Hex sha256 of the text of one line of a learned extent."@en .
+
+route:hasCue a owl:ObjectProperty ;
+    rdfs:label "has cue"@en ; rdfs:domain route:DoctypeRule ; rdfs:range route:Citation ;
+    rdfs:comment "A cue of a doctype rule: a hashed line (route:cueSha) and the role it was cited in (route:citedAs). The rule fires only when every one of its cues is present in the extent."@en .
+
+route:conflicted a owl:DatatypeProperty ;
+    rdfs:label "conflicted"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "True when admitted answers disagree on the cue, so the rule must not fire."@en .
+
+#################################################################
+#  The proposer's answer, as the oracles read it
+#  (vocab/queries/route-checklist.rq, vocab/queries/route-boundary.rq)
+#################################################################
+
+route:Citation a owl:Class ;
+    rdfs:label "Citation"@en ;
+    rdfs:comment "A line a proposer cites in its answer: the line's position in the listing the proposer was shown, and the role the line is cited in. One citation per cited position, so a position cited twice is two citations."@en .
+
+route:CitationRole a owl:Class ;
+    rdfs:label "Citation role"@en ;
+    rdfs:comment "What a cited line is cited as. A closed space of five roles."@en .
+
+route:PartyRole a route:CitationRole ;
+    rdfs:label "Party"@en ;
+    rdfs:comment "The line names a party to a contract."@en .
+
+route:CommitmentRole a route:CitationRole ;
+    rdfs:label "Commitment"@en ;
+    rdfs:comment "The line states a commitment a party makes."@en .
+
+route:OtherEvidenceRole a route:CitationRole ;
+    rdfs:label "Other evidence"@en ;
+    rdfs:comment "The line is positive evidence that the document is of another kind than a contract."@en .
+
+route:StartLineRole a route:CitationRole ;
+    rdfs:label "Start line"@en ;
+    rdfs:comment "The line at which the proposer says a new document starts."@en .
+
+route:BoundaryEvidenceRole a route:CitationRole ;
+    rdfs:label "Boundary evidence"@en ;
+    rdfs:comment "The line is evidence for a boundary answer (starts or continues)."@en .
+
+route:cites a owl:ObjectProperty ;
+    rdfs:label "cites"@en ; rdfs:range route:Citation ;
+    rdfs:comment "A line the answer cites."@en .
+
+route:citedAs a owl:ObjectProperty ;
+    rdfs:label "cited as"@en ; rdfs:domain route:Citation ; rdfs:range route:CitationRole ;
+    rdfs:comment "The role the cited line is cited in."@en .
+
+route:listPosition a owl:DatatypeProperty ;
+    rdfs:label "list position"@en ; rdfs:range xsd:integer ;
+    rdfs:comment "Position, counted from 0, in the listing a proposer was shown: on a line, where it was listed; on a citation, which listed line it cites."@en .
+
+route:admittedTypeName a owl:DatatypeProperty ;
+    rdfs:label "admitted type name"@en ; rdfs:range xsd:string ;
+    rdfs:comment "The name of the admitted document type an answer claims for its extent."@en .
+
+route:admitsType a owl:DatatypeProperty ;
+    rdfs:label "admits type"@en ; rdfs:domain route:Oracle ; rdfs:range xsd:string ;
+    rdfs:comment "The name of a document type the owner has admitted, as known to the oracle checking an answer."@en .

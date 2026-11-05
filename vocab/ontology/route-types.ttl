@@ -1,0 +1,19 @@
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+
+#################################################################
+#  Document types admitted by the owner. HEADER ONLY: this loop admits
+#  none. Each admitted type lands here as an owned class anchored by
+#  rdfs:subClassOf to gist (or FIBO where it fits) -- the only file besides
+#  route-align.ttl where those IRIs may appear -- and is the product of an
+#  iladub:PromotionDecision.
+#################################################################
+
+<https://w3id.org/iladub/route/types> a owl:Ontology ;
+    dcterms:title "route — admitted document types"@en ;
+    dcterms:description "Owned document types the owner has admitted through promotion decisions. Empty until the first admission."@en ;
+    dcterms:creator "François Rosselet" ;
+    dcterms:created "2026-11-03"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" .
